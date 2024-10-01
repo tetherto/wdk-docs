@@ -95,27 +95,17 @@ The library  comes with all the components needed to build a wallet. You can als
 
 The best way to get started developing:
 
-1. Setup local development enviroment.
+1. Setup local development environment.
 2. Configure example apps to connect to your local blockchains.
 3. Start hacking on example apps.
 After you have example apps running:
 - Fork/modify existing assets
 - Build new assets.
 
-## 🐚 Seashell Example Wallet
-There is a working example wallet that supports. This wallet can be used as an example for making your own integrations.
-- [Node.js cli wallet](./example/node)
-- [Bare runtime cli wallet](./example/bare)
-- [Browser web wallet](./example/web)
-
-
-## 🛠️ Dev Enviroment
-The wallet is designed to work with local test enviroments. 
-- See [Wallet test tools repo](https://github.com/tetherto/wallet-lib-test-tools) to setup local enviroments 
+## 🛠️ Dev Environment
+The wallet is designed to work with local test environments. 
+- See [Wallet test tools repo](https://github.com/tetherto/wallet-lib-test-tools) to setup local environments 
 - Setup [wallet indexer](https://github.com/tetherto/lib-wallet-indexer) service
-
-## 🍱 Building your own asset
-See [guide](./docs) for how to add new assets
 
 ## 🧪 Testing
 - [Brittle](https://github.com/holepunchto/brittle) is used for testing

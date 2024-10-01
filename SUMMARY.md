@@ -5,11 +5,11 @@
 ### Blockchains
 
 * [Bitcoin](./blockchains/wallet-pay-btc.md)
-* [Ethereum](./blockchains/wallet-pay-eth.md)
+* [Ethereum](./blockchains/wallet-pay-eth-erc20.md)
 
 ### Components
 
-* [BIP39 Seed](./components/bip39-seed.md)
+* [BIP39 Seed](./components/wallet-seed.md)
 * [Key value store](./components/wallet-indexer.md)
 * [Blockchain indexer](./components/wallet-test-tools.md)
 * [Test tools](./components/wallet-store.md)
