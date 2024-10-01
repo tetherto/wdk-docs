@@ -4,8 +4,8 @@
 
 ### Blockchains
 
-* [Bitcoin](./blockchains/bitcoin.md)
-* [Ethereum](./blockchains/ethereum.md)
+* [Bitcoin](./blockchains/wallet-pay-btc.md)
+* [Ethereum](./blockchains/wallet-pay-eth.md)
 
 ### Components
 
@@ -16,7 +16,7 @@
 
 ### Guides
 
-* [Integrating new assets](./guide/integrating-new-assets.md)
+* [Integrating new assets](./guides/integrating-new-assets.md)
 
 ### Examples
 
