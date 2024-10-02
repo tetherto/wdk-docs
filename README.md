@@ -16,23 +16,23 @@ Supported on 3 platforms:  Node.js, Browser, Bare Runtime
 
 ## 🔗 Blockchains
 
-### [Bitcoin](https://github.com/tetherto/lib-wallet-pay-btc)
+### [Bitcoin](./blockchains/wallet-pay-btc.md)
 - Electrum block data source. Support for TCP and Websocket on browser. 
 - P2WPKH / BIP84 address support.
 
-### [USDT-Ethereum](https://github.com/tetherto/lib-wallet-pay-eth)
-- Web3 and [Indexer](https://github.com/tetherto/lib-wallet-indexer) block data source.
+### [USDT-Ethereum](./blockchains/wallet-pay-eth-erc20.md)
+- Web3 and [Indexer](./components/wallet-indexer.md) block data source.
 - ERC20 support.
 - BIP44 address generation.
 
-**addtional asset support coming soon**
+**additional asset support coming soon**
 
 
 ### 🏗️ Architecture
 ![Architecture](./assets/architecture.png)
 
 ### 🧩 Components
-The library  comes with all the components needed to build a wallet. You can also use these as an example to build your own components.
+The library comes with all the components needed to build a wallet. You can also use these as an example to build your own components.
 
 - [BIP39 Seed](./components/wallet-seed.md): Generate BIP39 seed for all assets 
 - [Key value store](./components/wallet-store.md): Store transaction history and track state.

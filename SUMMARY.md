@@ -23,5 +23,3 @@
 * [Seashell Node](./examples/node/seashell-node.md)
 * [Seashell Bare](./examples/bare/seashell-bare.md)
 * [Seashell Web](./examples/web/seashell-web.md)
-
-### Development
