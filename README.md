@@ -34,10 +34,10 @@ Supported on 3 platforms:  Node.js, Browser, Bare Runtime
 ### 🧩 Components
 The library  comes with all the components needed to build a wallet. You can also use these as an example to build your own components.
 
-- [BIP39 Seed](https://github.com/tetherto/lib-wallet-seed-bip39): Generate BIP39 seed for all assets 
-- [Key value store](https://github.com/tetherto/lib-wallet-store): Store transaction history and track state.
-- [Blockchain indexer](https://github.com/tetherto/lib-wallet-indexer): Remote blockchain data provider
-- [Test tools](https://github.com/tetherto/wallet-lib-test-tools): Tools for development and testing 
+- [BIP39 Seed](./components/wallet-seed.md): Generate BIP39 seed for all assets 
+- [Key value store](./components/wallet-store.md): Store transaction history and track state.
+- [Blockchain indexer](./components/wallet-indexer.md): Remote blockchain data provider
+- [Test tools](./components/wallet-test-tools.md): Tools for development and testing 
 
 ### **</>**  Example Usage
 
