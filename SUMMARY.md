@@ -5,7 +5,7 @@
 ### Blockchains
 
 * [Bitcoin](./blockchains/wallet-pay-btc.md)
-* [Ethereum](./blockchains/wallet-pay-eth-erc20.md)
+* [Ethereum and ERC20](./blockchains/wallet-pay-eth-erc20.md)
 
 ### Components
 
