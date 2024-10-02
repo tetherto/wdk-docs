@@ -102,10 +102,19 @@ After you have example apps running:
 - Fork/modify existing assets
 - Build new assets.
 
+## 🐚 Seashell Example Wallet
+There is a working example wallet that supports. This wallet can be used as an example for making your own integrations.
+- [Node.js cli wallet](./examples/node/seashell-node.md)
+- [Bare runtime cli wallet](./examples/bare/seashell-bare.md)
+- [Browser web wallet](./examples/web/seashell-web.md)
+
 ## 🛠️ Dev Environment
 The wallet is designed to work with local test environments. 
-- See [Wallet test tools repo](https://github.com/tetherto/wallet-lib-test-tools) to setup local environments 
-- Setup [wallet indexer](https://github.com/tetherto/lib-wallet-indexer) service
+- See [Wallet test tools repo](./components/wallet-test-tools.md) to setup local environments 
+- Setup [wallet indexer](./components/wallet-indexer.md) service
+
+## 🍱 Building your own asset
+See [guide](./guides/integrating-new-assets.md) for how to add new assets
 
 ## 🧪 Testing
 - [Brittle](https://github.com/holepunchto/brittle) is used for testing
