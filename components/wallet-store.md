@@ -73,7 +73,7 @@ To set up the development environment:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/lib-wallet-store.git
+   git clone git@github.com:tetherto/lib-wallet-store.git
    cd lib-wallet-store
    ```
 
