@@ -15,7 +15,7 @@ An example cli wallet used to demo the wallet lib.
 
 
 ### Configuration
-all the available config items for config.json
+All the available config items for config.json
 ```json
 {
     "store_path" :  "./data",
@@ -31,18 +31,30 @@ all the available config items for config.json
 ```
 
 ### Setup
-```bash
-# Install parent dep
-cd ../../
-npm install
 
-# install bare dependencies
+Clone the Lib Wallet repo
+```bash
+git clone git@github.com:tetherto/lib-wallet.git
+cd lib-wallet
+```
+
+Install dependencies
+```bash
+npm install
+```
+
+Install Bare dependencies
+```bash
 cd ./example/bare
 npm install
+```
 
-# Create config.json file. This stores your seed phrase
+Create `config.json` file. This stores the seed phrase.
+```bash
 echo "{}" > config.json
+```
 
-# Run!
+Run the file
+```bash
 bare ./cli.js
 ```
