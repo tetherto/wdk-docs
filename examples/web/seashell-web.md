@@ -17,7 +17,7 @@ Use your voice to control wallet!
 
 
 ### Configuration
-all the available config items for config.json.
+All the available config items for config.json.
 ```json
 {
     "network" : "regtest",
@@ -33,17 +33,23 @@ all the available config items for config.json.
 
 ### Setup
 ```bash
-# install parent deps
-cd ../../
+git clone git@github.com:tetherto/lib-wallet.git
+cd lib-wallet
+```
+
+Install dependencies
+```bash
 npm install
+```
 
+Update config in `./index.js`
 
-# update config in ./index.js
-
-# Run webpack config to build dependecies for the web
+Run webpack config to build dependencies for the web
+```bash
 npm run build
+```
 
-# Run!
+Run the file
+```bash
 npm run serve
-
 ```
