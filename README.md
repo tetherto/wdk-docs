@@ -21,7 +21,7 @@ Supported on 3 platforms:  Node.js, Browser, Bare Runtime
 - P2WPKH / BIP84 address support.
 
 ### [USDT-Ethereum](./blockchains/wallet-pay-eth-erc20.md)
-- Web3 and [Indexer](./components/wallet-indexer.md) block data source.
+- Web3 and [Wallet indexer](./components/wallet-indexer.md) block data source.
 - ERC20 support.
 - BIP44 address generation.
 
@@ -34,10 +34,10 @@ Supported on 3 platforms:  Node.js, Browser, Bare Runtime
 ### 🧩 Components
 The library comes with all the components needed to build a wallet. You can also use these as an example to build your own components.
 
-- [Wallet Seed](./components/wallet-seed.md): Generate BIP39 seed for all assets 
+- [Wallet seed](./components/wallet-seed.md): Generate BIP39 seed for all assets 
 - [Wallet store](./components/wallet-store.md): Store transaction history and track state.
 - [Wallet indexer](./components/wallet-indexer.md): Remote blockchain data provider
-- [Wallet test tools](./components/wallet-test-tools.md): Tools for development and testing 
+- [Wallet test-tools](./components/wallet-test-tools.md): Tools for development and testing 
 
 ### **</>**  Example Usage
 
