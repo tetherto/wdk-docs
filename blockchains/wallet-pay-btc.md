@@ -144,7 +144,7 @@ The following methods are available on this module:
 * **Description**: Generates a new Bitcoin address.
 * **Return Value**: A Promise that resolves to the newly generated address.
 * **Parameters**:
-        + `opts` (optional): An object containing configuration options for the method. Currently, no specific properties are required.
+  * `opts` (optional): An object containing configuration options for the method. Currently, no specific properties are required.
 
 Example usage:
 ```javascript
@@ -158,8 +158,8 @@ console.log(newAddress); // Output: a newly generated Bitcoin address
 * **Description**: Retrieves the balance of an address or the entire wallet.
 * **Return Value**: A Promise that resolves to the balance in BTC (or a rejection with an error message).
 * **Parameters**:
-        + `opts` (optional): An object containing configuration options for the method. Currently, no specific properties are required.
-        + `addr`: The address or a filter object to retrieve balances for multiple addresses.
+  - `opts` (optional): An object containing configuration options for the method. Currently, no specific properties are required.
+  - `addr`: The address or a filter object to retrieve balances for multiple addresses.
 
 Example usage:
 ```javascript
@@ -175,7 +175,7 @@ console.log(balanceForAddress); // Output: the balance for a specific address
 * **Description**: Syncs transactions with Electrum.
 * **Return Value**: A Promise that resolves when syncing is complete (or a rejection with an error message).
 * **Parameters**:
-        + `opts` (optional): An object containing configuration options for the method. Currently, no specific properties are required.
+    - `opts` (optional): An object containing configuration options for the method. Currently, no specific properties are required.
 
 Example usage:
 ```javascript
@@ -199,12 +199,12 @@ console.log('Syncing paused!'); // Output: confirmation message when syncing is 
 * **Description**: Sends a transaction to a specified address.
 * **Return Value**: A Promise that resolves when the transaction is sent (or a rejection with an error message).
 * **Parameters**:
-        + `outgoing`: An object containing configuration options for the method. Required properties include:
-                - `address`
-                - `amount`
-                - `unit` `main` for btc and `base` for sats 
-                - `fee` in sats per byte: 
-        + `opts`: 
+  - `outgoing`: An object containing configuration options for the method. Required properties include:
+      * `address`
+      * `amount`
+      * `unit` `main` for btc and `base` for sats 
+      * `fee` in sats per byte: 
+  - `opts`: 
 
 Example usage:
 ```javascript
@@ -222,7 +222,7 @@ console.log('Transaction sent!'); // Output: confirmation message when the trans
 * **Description**: Retrieves transaction history from the history store. This method iterates through all entries in the history store and processes transactions using the provided callback function.
 * **Return Value**: A Promise that resolves when all transactions have been processed (or a rejection with an error if an exception occurs).
 * **Parameters**:
-  + `fn` (Function): A callback function to process each set of transactions.
+  * `fn` (Function): A callback function to process each set of transactions.
 
 Example usage:
 ```javascript
@@ -287,17 +287,36 @@ btcPay.on('new-tx', (transaction) => {
 
 ## 🛠️ Development
 
-1. [Setup local bitcoin environment](https://github.com/tetherto/wallet-lib-test-tools/blob/main/src/bitcoin/README.md)
-2. clone repo
-3. `npm install`
-4. run various test: `npm run test:pay`
+To set up the development environment for the Bitcoin payment module, follow these steps:
+
+1. Set up a local Bitcoin environment:
+   - Follow the instructions in the [Test tools : Bitcoin](../test-tools/btc-testing.md)
+   - This will help you set up a local Bitcoin regtest network for development and testing
+
+2. Clone the repository:
+   ```
+   git clone git@github.com:tetherto/lib-wallet-pay-btc.git
+   cd lib-wallet-pay-btc
+   ```
+
+3. Install dependencies:
+   ```
+   npm install
+   ```
+
+4. Run tests:
+   - To run all tests:
+     ```
+     npm run test
+     ```
+      (Check the `package.json` file for all available test scripts)
 
 ### 🧪 Testing
 
 - There is extensive integration tests for this package. 
 - We use Brittle for testing. Checkout package.json for various test commands.
 - Integration tests need a electrum server connected to a regtest bitcoin node.
-- To setup testing enviroment see: [Test tools repo](https://github.com/tetherto/wallet-lib-test-tools/blob/main/src/bitcoin/README.md)
+- To setup testing environment see: [Test tools](../components/wallet-test-tools.md)
 
 to run tests, take a look at `package.json` for the various test scripts.
 ```
