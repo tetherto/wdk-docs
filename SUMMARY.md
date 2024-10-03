@@ -9,10 +9,10 @@
 
 ### Components
 
-* [BIP39 Seed](./components/wallet-seed.md)
-* [Key value store](./components/wallet-store.md)
-* [Blockchain indexer](./components/wallet-indexer.md)
-* [Test tools](./components/wallet-test-tools.md)
+* [Wallet seed](./components/wallet-seed.md)
+* [Wallet store](./components/wallet-store.md)
+* [Wallet indexer](./components/wallet-indexer.md)
+* [Wallet test-tools](./components/wallet-test-tools.md)
     * [Bitcoin](./test-tools/btc-testing.md)
     * [Ethereum](./test-tools/eth-testing.md)
 
