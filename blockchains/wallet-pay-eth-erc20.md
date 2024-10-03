@@ -247,14 +247,18 @@ await wallet.resumeSync();
 
 ## 🛠️ Development
 
-1. [Setup local Ethereum Hardhat enviroment](https://github.com/tetherto/wallet-lib-test-tools/blob/main/src/eth/README.md)
-2. Clone the repository:
-3. Install dependencies:
+1. [Setup local Ethereum Hardhat environment](../test-tools/eth-testing.md)
+2. Clone the repository 
+   ```bash
+   git clone git@github.com:tetherto/lib-wallet-pay-eth.git
+   cd lib-wallet-pay-eth
    ```
+3. Install dependencies:
+   ```bash
    npm install
    ```
 4. Run various tests:
-   ```
+   ```bash
    npm run test:pay
    ```
 
@@ -263,10 +267,10 @@ await wallet.resumeSync();
 - This package includes extensive integration tests.
 - We use [Brittle](https://github.com/holepunchto/brittle) for testing.
 - Integration tests require an Ethereum node connected to a testnet or local network.
-- To set up the testing environment, see: [Test tools repo](https://github.com/tetherto/wallet-lib-test-tools/blob/main/src/eth/README.md)
+- To set up the testing environment, see: [Test tools repo](../components/wallet-test-tools.md)
 
 To run tests, check `package.json` for the various test scripts. You can run them using:
 
-```
+```bash
 npm run test:*
 ```
