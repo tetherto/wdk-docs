@@ -31,6 +31,8 @@ All the available config items for config.json
 ```
 
 ### Setup
+
+Clone the Lib Wallet repo
 ```bash
 git clone git@github.com:tetherto/lib-wallet.git
 cd lib-wallet
