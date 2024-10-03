@@ -34,10 +34,10 @@ Supported on 3 platforms:  Node.js, Browser, Bare Runtime
 ### 🧩 Components
 The library comes with all the components needed to build a wallet. You can also use these as an example to build your own components.
 
-- [BIP39 Seed](./components/wallet-seed.md): Generate BIP39 seed for all assets 
-- [Key value store](./components/wallet-store.md): Store transaction history and track state.
-- [Blockchain indexer](./components/wallet-indexer.md): Remote blockchain data provider
-- [Test tools](./components/wallet-test-tools.md): Tools for development and testing 
+- [Wallet Seed](./components/wallet-seed.md): Generate BIP39 seed for all assets 
+- [Wallet store](./components/wallet-store.md): Store transaction history and track state.
+- [Wallet indexer](./components/wallet-indexer.md): Remote blockchain data provider
+- [Wallet test tools](./components/wallet-test-tools.md): Tools for development and testing 
 
 ### **</>**  Example Usage
 
@@ -110,8 +110,8 @@ There is a working example wallet that supports. This wallet can be used as an e
 
 ## 🛠️ Dev Environment
 The wallet is designed to work with local test environments. 
-- See [Wallet test tools repo](./components/wallet-test-tools.md) to setup local environments 
-- Setup [wallet indexer](./components/wallet-indexer.md) service
+- See [Wallet test tools](./components/wallet-test-tools.md) to setup local environments 
+- Setup [Wallet indexer](./components/wallet-indexer.md) service
 
 ## 🍱 Building your own asset
 See [guide](./guides/integrating-new-assets.md) for how to add new assets
