@@ -25,7 +25,7 @@ the library `bitcoin-core.js` uses local bitcoin and electrum node for testing.
 
 ## Setting up Bitcoin Core in Regtest Mode
 
-Learn about (Bitcoin Regtest)[https://developer.bitcoin.org/examples/testing.html]
+Learn about [Bitcoin Regtest](https://developer.bitcoin.org/examples/testing.html)
 
 1. Download and install Bitcoin Core from the official website: https://bitcoincore.org/en/download/
 
