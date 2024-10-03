@@ -2,7 +2,7 @@
 
 Node.js indexer for Ethereum with JSON-RPC and Websocket api
 
-## Feaures:
+## Features:
 
 ### JSON-RPC
 **getTransactionsByAddress:** Get ETH transactions by address
@@ -12,10 +12,22 @@ Node.js indexer for Ethereum with JSON-RPC and Websocket api
 **subscribeToAccount:** Websocket events for new transactions for an address. Supports ERC20 tokens and ETH transactions.
 
 
-## Run
+## Setup and Run
+
+### Clone the wallet indexer repo
+```bash
+git clone git@github.com:tetherto/lib-wallet-indexer.git
+cd lib-wallet-indexer
 ```
+
+### Install dependencies and copy config
+```bash
 npm install
 cp ./config.json.example ./config.json 
+```
+
+### Run
+```bash
 npm run start
 ```
 
