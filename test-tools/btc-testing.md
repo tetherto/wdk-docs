@@ -1,7 +1,7 @@
 
-# Setting up Bitcoin Core and Fulcrum
+# Setting up Bitcoin Core and Electrum (Fulcrum)
 
-This guide will walk you through the process of setting up a Bitcoin regtest network and Fulcrum, an SPV server for Bitcoin.
+This guide will walk you through the process of setting up a Bitcoin regtest network and Fulcrum Electrum server.
 
 the library `bitcoin-core.js` uses local bitcoin and electrum node for testing.
 
@@ -19,13 +19,13 @@ the library `bitcoin-core.js` uses local bitcoin and electrum node for testing.
 
 ## Prerequisites
 
-- Bitcoin Core (version 0.21.0 or later)
+- Bitcoin Core 
 - Fulcrum (latest version)
 - Basic knowledge of command-line operations
 
 ## Setting up Bitcoin Core in Regtest Mode
 
-Learn about [Bitcoin Regtest](https://developer.bitcoin.org/examples/testing.html)
+Learn about (Bitcoin Regtest)[https://developer.bitcoin.org/examples/testing.html]
 
 1. Download and install Bitcoin Core from the official website: https://bitcoincore.org/en/download/
 
@@ -51,7 +51,6 @@ server=1
 rpcuser=user
 rpcpassword=password
 regtest=1
-debug=1
 zmqpubrawblock=tcp://0.0.0.0:28334
 zmqpubrawtx=tcp://0.0.0.0:28335
 zmqpubhashblock=tcp://0.0.0.0:28336
@@ -75,7 +74,7 @@ Save and close the file.
 Start Bitcoin Core in regtest mode:
 
 ```bash
-bitcoind --regtest
+bitcoind --regtest -conf=<path to config file>
 ```
 
 
@@ -88,15 +87,21 @@ bitcoin-cli -regtest createwallet main
 ```
 
 
-## Generating Initial Blocks
+## Using bitcoin-cli
 
-Generate some initial blocks to work with:
+These are some common commands for the cli:
 
 ```bash
-bitcoin-cli -regtest generatetoaddress 101 $(bitcoin-cli -regtest getnewaddress)
-```
+# Get new address 
+bitcoin-cli -regtest getnewaddress
 
-This command generates 101 blocks and sends the block reward to a new address.
+# Mine some bitcoin blocks
+bitcoin-cli -regtest generatetoaddress 1 <bitcoin address>
+
+### send some bitcoin
+bitcoin-cli -regtest sendtoaddress 1.1 <bitcoin address>
+
+```
 
 ## Setting up Fulcrum
 
@@ -138,7 +143,7 @@ Start Fulcrum:
 2. Ensure Fulcrum is running and connected to your Bitcoin Core regtest node.
 3. Use a compatible wallet (e.g., Electrum) to connect to your Fulcrum server (usually at 127.0.0.1:50001).
 
-You should now have a working Bitcoin regtest network with Fulcrum as an SPV server.
+You should now have a working Bitcoin regtest network with Fulcrum as Electrum server.
 
 Remember to stop both Bitcoin Core and Fulcrum when you're done testing:
 
