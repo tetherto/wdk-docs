@@ -16,13 +16,15 @@ See the module in action [here](https://github.com/tetherto/lib-wallet/tree/main
 - 🔍 Transaction history retrieval
 
 ## 🗄️ Indexer
-This module requires a indexer server. See [lib-wallet-indexer](https://github.com/tetherto/lib-wallet-indexer)
+This module requires an indexer server. See [lib-wallet-indexer](https://github.com/tetherto/lib-wallet-indexer)
 
 ## 🚀 Usage
 
 ```javascript
 // Start with a storage engine
-const storeEngine = new WalletStoreMemory()
+const storeEngine = new WalletStoreHyperbee({
+  store_path: './db'
+})
 await storeEngine.init()
 
 // Generate a seed or use a mnemonic phrase
@@ -32,17 +34,17 @@ const seed = await BIP39Seed.generate(/** Can enter mnemonic phrase here too */)
 const USDT = currencyFac({
   name: 'USDT',
   base_name: 'USDT',
-  contractAddress: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
+  contractAddress: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
   decimal_places: 6
 })
 
 // Connect to a provider 
 const provider = await Provider({ 
-    web3: 'localhost:8888',         // URI to Web3 provider
-    indexer: 'localhost:8000',      // URI to lib-wallet-indexer-eth rpc
-    indexerws: 'localhost:1211'     // URI to lib-wallet-indexer-eth websocket
+    web3: 'localhost:8888',          // URI to Web3 provider
+    indexer: 'localhost:8000/rpc',   // URI to lib-wallet-indexer-eth rpc
+    indexerWs: 'localhost:8000/ws',  // URI to lib-wallet-indexer-eth ws
 })
-// Start asset
+// Start provider
 await provider.init()
 
 // Start new eth wallet 
@@ -66,18 +68,18 @@ ethPay.on('synced-path', (path) => {
 })
 
 // Parse blockchain for transactions to your wallet 
-const pay = ethPay.syncTransactions({ 
+const pay = await  ethPay.syncTransactions({ 
     reset: false,  // Passing true will resync from scratch 
     token: "USDT"  // Passing token name will sync token transaction
 })
 
-// Pause the sync process ⏸️
+// Pause the sync process
 await ethPay.pauseSync()
 
 // Get a new address
 const { address } = await ethPay.getNewAddress()
 
-// Get balance of an address 
+// Get token balance   
 const addrBalance = await ethPay.getBalance({
     token: "USDT"  // send token name to get balance of token
 }, address)
@@ -87,17 +89,17 @@ const walletBalance = await ethPay.getBalance({})
 
 // Send ETH to an address 
 const result = await ethPay.sendTransaction({
-    token: "USDT"  // pass token's key to send token instead of ETH
-}, {
     address: '0xaaa...',  // ETH address of the recipient
-    amount: 0.0001,       // Value of amount 
+    amount: '1',       // Value of amount 
     unit: 'main',         // unit of amount: main = ETH and base = wei unit
-    gasPrice: ,           // optional
-    gasLimit:             // optional
 })
 
 // Get a list of transactions 
-const txs = await ethPay.getTransactions(query)
+await ethPay.getTransactions({
+    token : "USDT",
+}, (txs) => {
+    //iterate through entire tx history
+})
 
 // Is address a valid Ethereum address? 
 const isvalid = await ethPay.isValidAddress('0xaaa...')
@@ -247,18 +249,14 @@ await wallet.resumeSync();
 
 ## 🛠️ Development
 
-1. [Setup local Ethereum Hardhat environment](../test-tools/eth-testing.md)
-2. Clone the repository 
-   ```bash
-   git clone git@github.com:tetherto/lib-wallet-pay-eth.git
-   cd lib-wallet-pay-eth
-   ```
+1. [Setup local Ethereum Hardhat enviroment](https://github.com/tetherto/wallet-lib-test-tools/blob/main/src/eth/README.md)
+2. Clone the repository:
 3. Install dependencies:
-   ```bash
+   ```
    npm install
    ```
 4. Run various tests:
-   ```bash
+   ```
    npm run test:pay
    ```
 
@@ -267,10 +265,10 @@ await wallet.resumeSync();
 - This package includes extensive integration tests.
 - We use [Brittle](https://github.com/holepunchto/brittle) for testing.
 - Integration tests require an Ethereum node connected to a testnet or local network.
-- To set up the testing environment, see: [Test tools repo](../components/wallet-test-tools.md)
+- To set up the testing environment, see: [Test tools repo](https://github.com/tetherto/wallet-lib-test-tools/blob/main/src/eth/README.md)
 
 To run tests, check `package.json` for the various test scripts. You can run them using:
 
-```bash
+```
 npm run test:*
 ```
