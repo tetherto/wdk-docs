@@ -9,8 +9,8 @@ See the module in action [here](https://github.com/tetherto/lib-wallet/tree/main
 
 ## ✨ Features:
 - 🔑 Support for P2WPKH/BIP84 HD path traversal.
-- 💰 Internal UTXO management not reliant on electrum.
-- 🧮 Internal balance calculation. not reliant on electrum.
+- 💰 Internal UTXO management 
+- 🧮 Internal balance calculation. 
 - 📡 Transaction broadcasting
 - 🧩 Modular design. drop in seed/storage/block source components
 
@@ -18,7 +18,7 @@ See the module in action [here](https://github.com/tetherto/lib-wallet/tree/main
 
 ```javascript
 // Start with a storage engine
-const storeEngine = new WalletStoreMemory()
+const storeEngine = new WalletStoreHyperbee()
 await storeEngine.init()
 
 // Generate a seed or use a mnemonic phrase
@@ -67,20 +67,24 @@ btcPay.on('sync-path', (pathType, path, hasTx, progress) => {
 // Parse blockchain for transactions to your wallet.
 // This needs to be run when recreating a wallet. 
 // This can take long depending on the number of addresses a wallet has created.
-const pay = btcPay.syncTransactions({ 
+await btcPay.syncTransactions({ 
   reset : false // Passing true will resync from scratch 
 })
-
-pay.broadcasted((tx)=>{
-  // transaction is broadcasted but not updated internal state
-})
-
-const tx = await pay
-// transaction has been broadcasted and internal state is updated 
 
 // Pause the sync process. 
 // If the application needs to sleep and come back to resume syncing.
 await btcPay.pauseSync()
+btcPay.broadcasted((tx)=>{
+  // transaction is broadcasted but not updated internal state
+})
+
+const tx = await btcPay.sendTransaction({}, {
+    amount: 0.1,
+    unit: 'main',
+    address: "bcr11",
+    fee: 10
+})
+
 
 
 // Get a new address. This will add the address to watch list for incoming payments. You should limit address generation to prevent spam.
@@ -143,14 +147,12 @@ The following methods are available on this module:
 
 * **Description**: Generates a new Bitcoin address.
 * **Return Value**: A Promise that resolves to the newly generated address.
-* **Parameters**:
-  * `opts` (optional): An object containing configuration options for the method. Currently, no specific properties are required.
 
 Example usage:
 ```javascript
 const wallet = new WalletPayBitcoin();
 const newAddress = await wallet.getNewAddress();
-console.log(newAddress); // Output: a newly generated Bitcoin address
+console.log(newAddress); // Output: a newly generated Bitcoin address object.
 ```
 
 #### 💰 `getBalance(opts, addr)`
@@ -158,15 +160,15 @@ console.log(newAddress); // Output: a newly generated Bitcoin address
 * **Description**: Retrieves the balance of an address or the entire wallet.
 * **Return Value**: A Promise that resolves to the balance in BTC (or a rejection with an error message).
 * **Parameters**:
-  - `opts` (optional): An object containing configuration options for the method. Currently, no specific properties are required.
-  - `addr`: The address or a filter object to retrieve balances for multiple addresses.
+        + `opts` (optional): An object containing configuration options for the method. Currently, no specific properties are required.
+        + `addr`: The address you want to get the balance for
 
 Example usage:
 ```javascript
 const balance = await wallet.getBalance();
 console.log(balance); // Output: the balance of the entire wallet
 
-const balanceForAddress = await wallet.getBalance({ address: '<addr>' });
+const balanceForAddress = await wallet.getBalance(opts, { address: '<addr>' });
 console.log(balanceForAddress); // Output: the balance for a specific address
 ```
 
@@ -175,11 +177,12 @@ console.log(balanceForAddress); // Output: the balance for a specific address
 * **Description**: Syncs transactions with Electrum.
 * **Return Value**: A Promise that resolves when syncing is complete (or a rejection with an error message).
 * **Parameters**:
-    - `opts` (optional): An object containing configuration options for the method. Currently, no specific properties are required.
+        + `opts` (optional): An object containing configuration options for the method. Currently, no specific properties are required.
+            - `reset` Boolean, if you want to resync from start
 
 Example usage:
 ```javascript
-await wallet.syncTransactions();
+await wallet.syncTransactions(opts);
 console.log('Syncing complete!'); // Output: confirmation message when syncing is done
 ```
 
@@ -199,18 +202,18 @@ console.log('Syncing paused!'); // Output: confirmation message when syncing is 
 * **Description**: Sends a transaction to a specified address.
 * **Return Value**: A Promise that resolves when the transaction is sent (or a rejection with an error message).
 * **Parameters**:
-  - `outgoing`: An object containing configuration options for the method. Required properties include:
-      * `address`
-      * `amount`
-      * `unit` `main` for btc and `base` for sats 
-      * `fee` in sats per byte: 
-  - `opts`: 
+        + `outgoing`: An object containing configuration options for the method. Required properties include:
+                - `address`
+                - `amount`
+                - `unit` `main` for btc and `base` for sats 
+                - `fee` in sats per byte: 
+        + `opts`: 
 
 Example usage:
 ```javascript
 const txOpts = {
   address: '',
-  unit: 'sats',
+  unit: 'base',
   amount: 10000,
   fee: 10  
 };
@@ -218,19 +221,19 @@ const tx = await wallet.sendTransaction({}, txOpts);
 console.log('Transaction sent!'); // Output: confirmation message when the transaction is sent
 ```
 
-#### 📜 `getTransactions(fn)`
+#### 📜 `getTransactions(opts, fn)`
 * **Description**: Retrieves transaction history from the history store. This method iterates through all entries in the history store and processes transactions using the provided callback function.
 * **Return Value**: A Promise that resolves when all transactions have been processed (or a rejection with an error if an exception occurs).
 * **Parameters**:
-  * `fn` (Function): A callback function to process each set of transactions.
+  + `fn` (Function): A callback function to process each set of transactions.
 
 Example usage:
 ```javascript
 await wallet.getTransactions({}, async (txs) => {
+    console.log('iterate through tx', txs)
 
 });
 
-console.log(`Retrieved ${transactions.length} transactions`);
 ```
 
 Notes:
@@ -287,36 +290,17 @@ btcPay.on('new-tx', (transaction) => {
 
 ## 🛠️ Development
 
-To set up the development environment for the Bitcoin payment module, follow these steps:
-
-1. Set up a local Bitcoin environment:
-   - Follow the instructions in the [Test tools : Bitcoin](../test-tools/btc-testing.md)
-   - This will help you set up a local Bitcoin regtest network for development and testing
-
-2. Clone the repository:
-   ```
-   git clone git@github.com:tetherto/lib-wallet-pay-btc.git
-   cd lib-wallet-pay-btc
-   ```
-
-3. Install dependencies:
-   ```
-   npm install
-   ```
-
-4. Run tests:
-   - To run all tests:
-     ```
-     npm run test
-     ```
-      (Check the `package.json` file for all available test scripts)
+1. [Setup local bitcoin environment](https://github.com/tetherto/wallet-lib-test-tools/blob/main/src/bitcoin/README.md)
+2. clone repo
+3. `npm install`
+4. run various test: `npm run test:pay`
 
 ### 🧪 Testing
 
 - There is extensive integration tests for this package. 
 - We use Brittle for testing. Checkout package.json for various test commands.
 - Integration tests need a electrum server connected to a regtest bitcoin node.
-- To setup testing environment see: [Test tools](../components/wallet-test-tools.md)
+- To setup testing environment see: [Test tools repo](https://github.com/tetherto/wallet-lib-test-tools/blob/main/src/bitcoin/README.md)
 
 to run tests, take a look at `package.json` for the various test scripts.
 ```
