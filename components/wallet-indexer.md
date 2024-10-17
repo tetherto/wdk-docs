@@ -35,7 +35,12 @@ cp ./config.json.example ./config.json
 ```
 
 ### Run
+For running with hardhat backend:
 ```bash
-npm run start
+npm run start-hardhat
 ```
 
+For running against ankr:
+```bash
+npm run start-ankr
+```
