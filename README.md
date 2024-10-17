@@ -25,7 +25,7 @@ Supported on 3 platforms:  Node.js, Browser, Bare Runtime
 - ERC20 support.
 - BIP44 address generation.
 
-**additional asset support coming soon**
+**additional support coming soon**
 
 
 ### 🏗️ Architecture
@@ -64,7 +64,7 @@ The library comes with all the components needed to build a wallet. You can also
     store,
     seed,
     // List of assets 
-    assets: [ btcPay, ]
+    assets: [ btcPay ]
   })
 
   // Start wallet and initialize
