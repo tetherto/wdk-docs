@@ -1,6 +1,6 @@
 # 🏦 lib-wallet-pay-btc
 
-Bitcoin payment method for the wallet library. Powered by Electrum. ⚡
+Bitcoin payment method for WDK. Powered by Electrum protocol ⚡
 
 ## 💼 Wallet SDK
 This library is part of the [Wallet SDK](https://github.com/tetherto/lib-wallet)
@@ -13,6 +13,26 @@ See the module in action [here](https://github.com/tetherto/lib-wallet/tree/main
 - 🧮 Internal balance calculation. 
 - 📡 Transaction broadcasting
 - 🧩 Modular design. drop in seed/storage/block source components
+
+## Terminology
+### Wallet Software
+- **Electrum**: A popular, feature-rich Bitcoin wallet software that supports various advanced features like multi-signature wallets, hardware wallet integration, and coin control. It uses a distributed network of servers to verify transactions and broadcast them to the Bitcoin network.
+
+- **Fulcrum**: An open-source implementation of the Electrum Server protocol. It allows users to run their own Electrum server, providing enhanced privacy and independence from third-party servers when using Electrum wallet software.
+
+### Bitcoin Improvement Proposals (BIPs)
+BIPs are design documents for introducing features or information to Bitcoin. Here are links to the repositories of three important BIPs related to wallet management:
+
+- [BIP39 (Mnemonic code for generating deterministic keys)](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki)
+
+- [BIP44 (Multi-Account Hierarchy for Deterministic Wallets)](https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki)
+
+- [BIP84 (Derivation scheme for P2WPKH based accounts)](https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki)
+
+These BIPs work together to provide a standardized way of generating and managing Bitcoin addresses and keys, enhancing interoperability between different wallet implementations.
+
+These BIPs work together to provide a standardized way of generating and managing Bitcoin addresses and keys, enhancing interoperability between different wallet implementations.
+To learn more about Bitcoin check out the [Plan B school](https://planb.network/courses)
 
 ## 🚀 Usage
 
