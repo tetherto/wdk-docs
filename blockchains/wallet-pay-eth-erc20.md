@@ -2,12 +2,7 @@
 
 Ethereum and ERC20 payment method for the wallet library. Using lib-wallet-indexer-eth and Web3 backend.
 
-## 💼 Wallet SDK
-This library is part of the [Wallet SDK](https://github.com/tetherto/lib-wallet)
-See the module in action [here](https://github.com/tetherto/lib-wallet/tree/main/example)
-
-
-## 📚 Key Features
+## ✨ Features
 - 🔐 Secure wallet management for Ethereum and ERC20 tokens
 - 🔄 Transaction syncing and balance tracking
 - 🏠 Address generation and validation
