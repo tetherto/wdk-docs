@@ -1,3 +1,10 @@
+
+<p align="center" width="100">
+<a href="https://github.com/tetherto/lib-wallet">
+<img src="./assets/logo.png" width="200"/>
+</a>
+</p>
+
 # Wallet Dev Kit by Tether
 
 Multi asset cryptocurrency wallet library in JavaScript.
