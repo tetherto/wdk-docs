@@ -290,10 +290,27 @@ btcPay.on('new-tx', (transaction) => {
 
 ## 🛠️ Development
 
-1. [Setup local bitcoin environment](https://github.com/tetherto/wallet-lib-test-tools/blob/main/src/bitcoin/README.md)
-2. clone repo
-3. `npm install`
-4. run various test: `npm run test:pay`
+To set up the development environment for the Bitcoin payment module, follow these steps:
+
+1. Set up a local Bitcoin environment:
+   - Follow the instructions in the [Test tools : Bitcoin](../test-tools/btc-testing.md)
+   - This will help you set up a local Bitcoin regtest network for development and testing
+
+2. Clone the repository:
+   ```bash
+   git clone git@github.com:tetherto/lib-wallet-pay-btc.git
+   cd lib-wallet-pay-btc
+   ```
+
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+4. Run tests:
+    ```bash
+    npm run test:pay
+    ```
 
 ### 🧪 Testing
 

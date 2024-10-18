@@ -249,16 +249,22 @@ await wallet.resumeSync();
 
 ## 🛠️ Development
 
-1. [Setup local Ethereum Hardhat enviroment](https://github.com/tetherto/wallet-lib-test-tools/blob/main/src/eth/README.md)
+1. [Setup local Ethereum Hardhat environment](../test-tools/eth-testing.md)
 2. Clone the repository:
-3. Install dependencies:
+   ```bash
+   git clone git@github.com:tetherto/lib-wallet-pay-eth.git
+   cd lib-wallet-pay-eth
    ```
+
+3. Install dependencies:
+   ```bash
    npm install
    ```
-4. Run various tests:
-   ```
-   npm run test:pay
-   ```
+
+4. Run tests:
+    ```bash
+    npm run test:pay
+    ```
 
 ### 🧪 Testing
 
