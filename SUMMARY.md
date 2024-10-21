@@ -1,6 +1,6 @@
 # Table of contents
 
-* [Wallet by Tether](./README.md)
+* [Wallet Dev Kit by Tether](./README.md)
 
 ### Blockchains
 

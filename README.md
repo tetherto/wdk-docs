@@ -1,7 +1,7 @@
 
 <p align="center" width="100">
 <a href="https://github.com/tetherto/lib-wallet">
-<img src="./assets/logo.png" width="200"/>
+<img src="./assets/logo.png" width="200" align="center"/>
 </a>
 </p>
 
@@ -27,7 +27,7 @@ Supported on 3 platforms:  Node.js, Browser, Bare Runtime
 - Electrum block data source. Support for TCP and Websocket on browser. 
 - P2WPKH / BIP84 address support.
 
-### [USDT-Ethereum](./blockchains/wallet-pay-eth-erc20.md)
+### [USDt on Ethereum](./blockchains/wallet-pay-eth-erc20.md)
 - Web3 and [Wallet indexer](./components/wallet-indexer.md) block data source.
 - ERC20 support.
 - BIP44 address generation.
