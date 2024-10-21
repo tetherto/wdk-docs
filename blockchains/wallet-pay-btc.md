@@ -327,12 +327,15 @@ To set up the development environment for the Bitcoin payment module, follow the
     npm run test:pay
     ```
 
+### 🔗 Links
+- [List of Electrum nodes](https://1209k.com/bitcoin-eye/ele.php) (Fulcrum recommended)
+
 ### 🧪 Testing
 
 - There is extensive integration tests for this package. 
 - We use Brittle for testing. Checkout package.json for various test commands.
 - Integration tests need a electrum server connected to a regtest bitcoin node.
-- To setup testing environment see: [Test tools repo](https://github.com/tetherto/wallet-lib-test-tools/blob/main/src/bitcoin/README.md)
+- To setup testing environment see: [WDK test tools](https://github.com/tetherto/wallet-lib-test-tools/blob/main/src/bitcoin/README.md)
 
 to run tests, take a look at `package.json` for the various test scripts.
 ```
