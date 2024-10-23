@@ -48,6 +48,8 @@ The library comes with all the components needed to build a wallet. You can also
 
 ### **</>**  Example Usage
 
+Checkout [Quick start guide](./guides/getting-started.md) for a more detailed guide.
+
 ```javascript
 
   const seed = await BIP39Seed.generate(/** seed phrase or leave empty to generate one */)
