@@ -18,6 +18,7 @@
 
 ### Guides
 
+* [Getting Started](./guides/getting-started.md)
 * [Integrating new assets](./guides/integrating-new-assets.md)
 
 ### Examples
