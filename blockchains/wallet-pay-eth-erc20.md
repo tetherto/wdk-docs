@@ -25,13 +25,17 @@ await storeEngine.init()
 // Generate a seed or use a mnemonic phrase
 const seed = await BIP39Seed.generate(/** Can enter mnemonic phrase here too */)
 
-// Setting up ERC20 tokens 
+// Setting up any ERC20 tokens 
 const USDT = currencyFac({
   name: 'USDT',
   base_name: 'USDT',
   contractAddress: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
   decimal_places: 6
 })
+
+// We provide various tether contract info in the lib-wallet class.
+const { TetherCurrency } = require('lib-wallet')
+const USDT = currencyFac(TetherCurrency.ERC20())
 
 // Connect to a provider 
 const provider = await Provider({ 
