@@ -83,12 +83,19 @@ const provider = new Provider({
 
 await provider.init()
 
+// ERC20 class: encapsulates logic for any ERC20 token
+// erc20CurrencyFacade: Generate Erc20 Currency class, that encapsulates params like contract address for an ERC 20
+// TetherCurrency.ERC20(): Erc20 USDT mainnet configuration:
+const USDT = new ERC20({
+    currency: erc20CurrencyFac(TetherCurrency.ERC20())
+})
+
 const ethPay = new EthPay({
     asset_name: 'eth',
     provider,
     network : 'sepolia'
     token: [
-        TetherCurrency.ERC20()
+        USDT
     ]
 })
 
