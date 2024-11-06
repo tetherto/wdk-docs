@@ -25,4 +25,4 @@
 
 * [Seashell Node](./examples/node/seashell-node.md)
 * [Seashell Bare](./examples/bare/seashell-bare.md)
-* [AI Demo App](./examples/web/seashell-web.md)
+* [AI Demo App](./examples/web/ai-demo-app.md)
