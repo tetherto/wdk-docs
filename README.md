@@ -114,7 +114,7 @@ After you have example apps running:
 There is a working example wallet that supports. This wallet can be used as an example for making your own integrations.
 - [Node.js cli wallet](./examples/node/seashell-node.md)
 - [Bare runtime cli wallet](./examples/bare/seashell-bare.md)
-- [Browser web wallet](./examples/web/seashell-web.md)
+- [AI Demo Web wallet](./examples/web/ai-demo-app.md)
 
 ## 🛠️ Dev Environment
 The wallet is designed to work with local test environments. 
