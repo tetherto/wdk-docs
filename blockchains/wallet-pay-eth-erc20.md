@@ -1,18 +1,16 @@
-# Ethereum and ERC20
+# 🏦 lib-wallet-pay-eth
 
 Ethereum and ERC20 payment method for the wallet library. Using lib-wallet-indexer-eth and Web3 backend.
 
 ## ✨ Features
-
-* 🔐 Secure wallet management for Ethereum and ERC20 tokens
-* 🔄 Transaction syncing and balance tracking
-* 🏠 Address generation and validation
-* 💸 Send and receive transactions
-* ⏸️ Pausable sync process
-* 🔍 Transaction history retrieval
+- 🔐 Secure wallet management for Ethereum and ERC20 tokens
+- 🔄 Transaction syncing and balance tracking
+- 🏠 Address generation and validation
+- 💸 Send and receive transactions
+- ⏸️ Pausable sync process
+- 🔍 Transaction history retrieval
 
 ## 🗄️ Indexer
-
 This module requires an indexer server. See [lib-wallet-indexer](https://github.com/tetherto/lib-wallet-indexer)
 
 ## 🚀 Usage
@@ -112,41 +110,35 @@ await ethPay.destroy()
 ## 📚 Methods
 
 #### 🚀 `initialize(ctx)`
-
 * **Description**: Initializes the wallet, setting up the key manager, HD wallet, and state database.
 * **Return Value**: A Promise that resolves when initialization is complete.
 * **Parameters**:
-  * `ctx`: Context object for initialization (optional).
+  + `ctx`: Context object for initialization (optional).
 
 Example usage:
-
 ```javascript
 await wallet.initialize();
 ```
 
 #### 🏠 `getNewAddress()`
-
 * **Description**: Generates a new Ethereum address for the wallet.
 * **Return Value**: A Promise that resolves to an object containing the new address details.
 
 Example usage:
-
 ```javascript
 const newAddress = await wallet.getNewAddress();
 console.log(newAddress); // Output: { address: '0x...', path: 'm/44'/60'/0'/0/0', ... }
 ```
 
 #### 📜 `getTransactions(opts, fn)`
-
 * **Description**: Retrieves the transaction history for the wallet or a specific token.
 * **Return Value**: A Promise that resolves when all transactions have been processed.
 * **Parameters**:
-  * `opts` (optional): An object containing options.
-    * `token` (optional): Name of the token for token transaction history.
-  * `fn`: Callback function to handle each block of transactions.
+  + `opts` (optional): An object containing options.
+    - `token` (optional): Name of the token for token transaction history.
+  + `fn`: Callback function to handle each block of transactions.
 
 Example usage:
-
 ```javascript
 await wallet.getTransactions({}, (block) => {
   console.log(block); // Output: Array of transactions in this block
@@ -154,16 +146,14 @@ await wallet.getTransactions({}, (block) => {
 ```
 
 #### 💰 `getBalance(opts, addr)`
-
 * **Description**: Retrieves the balance of an address or the entire wallet.
 * **Return Value**: A Promise that resolves to a Balance object.
 * **Parameters**:
-  * `opts` (optional): An object containing options.
-    * `token` (optional): Name of the token to get balance for.
-  * `addr` (optional): Specific address to get balance for.
+  + `opts` (optional): An object containing options.
+    - `token` (optional): Name of the token to get balance for.
+  + `addr` (optional): Specific address to get balance for.
 
 Example usage:
-
 ```javascript
 const totalBalance = await wallet.getBalance({});
 console.log(totalBalance); // Output: Balance object for the entire wallet
@@ -176,37 +166,33 @@ console.log(tokenBalance); // Output: Balance object for the specified token
 ```
 
 #### 📊 `syncTransactions(opts)`
-
 * **Description**: Synchronizes transactions for the wallet, updating balances and transaction history.
 * **Return Value**: A Promise that resolves when synchronization is complete.
 * **Parameters**:
-  * `opts` (optional): An object containing options.
-    * `reset` (optional): If true, resets all state and resyncs.
-    * `token` (optional): Name of the token to sync transactions for.
+  + `opts` (optional): An object containing options.
+    - `reset` (optional): If true, resets all state and resyncs.
+    - `token` (optional): Name of the token to sync transactions for.
 
 Example usage:
-
 ```javascript
 await wallet.syncTransactions({ reset: true });
 ```
 
 #### 📤 `sendTransaction(opts, outgoing)`
-
 * **Description**: Sends a transaction from the wallet.
 * **Return Value**: A Promise that resolves when the transaction is confirmed.
 * **Parameters**:
-  * `opts` (optional): An object containing options.
-    * `token` (optional): Name of the token to send.
-  * `outgoing`: An object containing transaction details.
-    * `amount`: Number of units being sent.
-    * `unit`: Unit of amount ('main' or 'base').
-    * `address`: Address of the receiver.
-    * `sender` (optional): Address of the sender.
-    * `gasLimit` (optional): ETH gas limit.
-    * `gasPrice` (optional): ETH gas price.
+  + `opts` (optional): An object containing options.
+    - `token` (optional): Name of the token to send.
+  + `outgoing`: An object containing transaction details.
+    - `amount`: Number of units being sent.
+    - `unit`: Unit of amount ('main' or 'base').
+    - `address`: Address of the receiver.
+    - `sender` (optional): Address of the sender.
+    - `gasLimit` (optional): ETH gas limit.
+    - `gasPrice` (optional): ETH gas price.
 
 Example usage:
-
 ```javascript
 const txPromise = wallet.sendTransaction({}, {
   amount: 1,
@@ -223,37 +209,31 @@ console.log('Transaction confirmed:', confirmedTx);
 ```
 
 #### ✅ `isValidAddress(address)`
-
 * **Description**: Checks if the given address is a valid Ethereum address.
 * **Return Value**: A boolean indicating whether the address is valid.
 * **Parameters**:
-  * `address`: The Ethereum address to validate.
+  + `address`: The Ethereum address to validate.
 
 Example usage:
-
 ```javascript
 const isValid = wallet.isValidAddress('0x1234...');
 console.log(isValid); // Output: true or false
 ```
 
 #### ⏸️ `pauseSync()`
-
 * **Description**: Pauses the synchronization process.
 * **Return Value**: A Promise that resolves when synchronization is paused.
 
 Example usage:
-
 ```javascript
 await wallet.pauseSync();
 ```
 
 #### ▶️ `resumeSync()`
-
 * **Description**: Resumes the synchronization process.
 * **Return Value**: A Promise that resolves when synchronization is resumed.
 
 Example usage:
-
 ```javascript
 await wallet.resumeSync();
 ```
@@ -269,29 +249,28 @@ await wallet.resumeSync();
 ## 🛠️ Development
 
 1. [Setup local Ethereum Hardhat environment](../test-tools/eth-testing.md)
-2.  Clone the repository:
+2. Clone the repository:
+   ```bash
+   git clone git@github.com:tetherto/lib-wallet-pay-eth.git
+   cd lib-wallet-pay-eth
+   ```
 
-    ```bash
-    git clone git@github.com:tetherto/lib-wallet-pay-eth.git
-    cd lib-wallet-pay-eth
-    ```
-3.  Install dependencies:
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-    ```bash
-    npm install
-    ```
-4.  Run tests:
-
+4. Run tests:
     ```bash
     npm run test:pay
     ```
 
 ### 🧪 Testing
 
-* This package includes extensive integration tests.
-* We use [Brittle](https://github.com/holepunchto/brittle) for testing.
-* Integration tests require an Ethereum node connected to a testnet or local network.
-* To set up the testing environment, see: [Test tools repo](https://github.com/tetherto/wallet-lib-test-tools/blob/main/src/eth/README.md)
+- This package includes extensive integration tests.
+- We use [Brittle](https://github.com/holepunchto/brittle) for testing.
+- Integration tests require an Ethereum node connected to a testnet or local network.
+- To set up the testing environment, see: [Test tools repo](https://github.com/tetherto/wallet-lib-test-tools/blob/main/src/eth/README.md)
 
 To run tests, check `package.json` for the various test scripts. You can run them using:
 

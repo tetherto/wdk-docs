@@ -1,10 +1,10 @@
-# Wallet seed
+# 🌱 lib-wallet-seed-bip39
 
 A robust implementation of BIP39 seed generation and management. This is lib is a wrapper around [bip32](https://www.npmjs.com/package/bip32) and [bip39](https://www.npmjs.com/package/bip39)
 
 ## 💼 Wallet SDK
+This library is part of the [Wallet SDK](https://github.com/tetherto/lib-wallet). 
 
-This library is part of the [Wallet SDK](https://github.com/tetherto/lib-wallet).
 
 ## 🚀 Installation
 
@@ -45,25 +45,26 @@ example();
 
 #### Constructor
 
-* `new Bip39Seed(config)`
-  * `config.seed`: (optional) The seed buffer
-  * `config.mnemonic`: (required) The mnemonic phrase
+- `new Bip39Seed(config)`
+  - `config.seed`: (optional) The seed buffer
+  - `config.mnemonic`: (required) The mnemonic phrase
 
 #### Static Methods
 
-* `Bip39Seed.generate(mnemonic)`
-  * Generates a new Bip39Seed instance
-  * `mnemonic`: (optional) A specific mnemonic phrase to use
+- `Bip39Seed.generate(mnemonic)`
+  - Generates a new Bip39Seed instance
+  - `mnemonic`: (optional) A specific mnemonic phrase to use
 
 #### Instance Methods
 
-* `exportSeed(opts)`
-  * Exports the seed and mnemonic
-  * `opts.string`: (optional) If false, returns an object instead of a JSON string
+- `exportSeed(opts)`
+  - Exports the seed and mnemonic
+  - `opts.string`: (optional) If false, returns an object instead of a JSON string
 
 ## 🧪 Testing
 
-We use the [Brittle](https://github.com/holepunchto/brittle) testing framework for our unit tests. To run the tests for this package, use the following command:
+We use the [Brittle](https://github.com/holepunchto/brittle) testing framework for our unit tests.
+To run the tests for this package, use the following command:
 
 ```bash
 npm run test

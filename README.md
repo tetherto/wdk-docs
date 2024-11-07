@@ -1,31 +1,16 @@
----
-cover: .gitbook/assets/1.png
-coverY: 0
-layout:
-  cover:
-    visible: true
-    size: full
-  title:
-    visible: true
-  description:
-    visible: true
-  tableOfContents:
-    visible: true
-  outline:
-    visible: true
-  pagination:
-    visible: true
----
+<p align="center" width="100">
+<a href="https://github.com/tetherto/lib-wallet">
+<img src="./assets/logo.png" width="200" align="center"/>
+</a>
+</p>
 
 # Wallet Dev Kit by Tether
 
-[![](assets/logo.png)](https://github.com/tetherto/lib-wallet)
+Multi asset cryptocurrency wallet library in JavaScript.
+Supported on 3 platforms:  Node.js, Browser, Bare Runtime
 
-## Wallet Dev Kit by Tether
 
-Multi asset cryptocurrency wallet library in JavaScript. Supported on 3 platforms: Node.js, Browser, Bare Runtime
-
-### ⭐ Features
+## ⭐ Features
 
 🔑 **Non custodial:** not your keys, not your coins.
 
@@ -35,37 +20,34 @@ Multi asset cryptocurrency wallet library in JavaScript. Supported on 3 platform
 
 🛠️ **Extensible:** Easily add new asset, seed source, block source...etc
 
-### 🔗 Blockchains
+## 🔗 Blockchains
 
-#### [Bitcoin](blockchains/wallet-pay-btc.md)
+### [Bitcoin](./blockchains/wallet-pay-btc.md)
+- Electrum block data source. Support for TCP and Websocket on browser. 
+- P2WPKH / BIP84 address support.
 
-* Electrum block data source. Support for TCP and Websocket on browser.
-* P2WPKH / BIP84 address support.
-
-#### [USDt on Ethereum](blockchains/wallet-pay-eth-erc20.md)
-
-* Web3 and [Wallet indexer](components/wallet-indexer.md) block data source.
-* ERC20 support.
-* BIP44 address generation.
+### [USDt on Ethereum](./blockchains/wallet-pay-eth-erc20.md)
+- Web3 and [Wallet indexer](./components/wallet-indexer.md) block data source.
+- ERC20 support.
+- BIP44 address generation.
 
 **additional support coming soon**
 
-#### 🏗️ Architecture
 
-![Architecture](assets/architecture.png)
+### 🏗️ Architecture
+![Architecture](./assets/architecture.png)
 
-#### 🧩 Components
-
+### 🧩 Components
 The library comes with all the components needed to build a wallet. You can also use these as an example to build your own components.
 
-* [Wallet seed](components/wallet-seed.md): Generate BIP39 seed for all assets
-* [Wallet store](components/wallet-store.md): Store transaction history and track state.
-* [Wallet indexer](components/wallet-indexer.md): Remote blockchain data provider
-* [Wallet test-tools](components/wallet-test-tools.md): Tools for development and testing
+- [Wallet seed](./components/wallet-seed.md): Generate BIP39 seed for all assets 
+- [Wallet store](./components/wallet-store.md): Store transaction history and track state.
+- [Wallet indexer](./components/wallet-indexer.md): Remote blockchain data provider
+- [Wallet test-tools](./components/wallet-test-tools.md): Tools for development and testing 
 
-#### **\</>** Example Usage
+### **</>**  Example Usage
 
-Checkout [Quick start guide](guides/getting-started.md) for a more detailed guide.
+Checkout [Quick start guide](./guides/getting-started.md) for a more detailed guide.
 
 ```javascript
 
@@ -115,42 +97,36 @@ Checkout [Quick start guide](guides/getting-started.md) for a more detailed guid
 
 ```
 
-## Development
+# Development
 
-### 🚀 Getting started
+## 🚀 Getting started
 
 The best way to get started developing:
 
 1. Setup local development environment.
 2. Configure example apps to connect to your local blockchains.
-3. Start hacking on example apps. After you have example apps running:
+3. Start hacking on example apps.
+After you have example apps running:
+- Fork/modify existing assets
+- Build new assets.
 
-* Fork/modify existing assets
-* Build new assets.
-
-### 🐚 Seashell Example Wallet
-
+## 🐚 Seashell Example Wallet
 There is a working example wallet that supports. This wallet can be used as an example for making your own integrations.
+- [Node.js cli wallet](./examples/node/seashell-node.md)
+- [Bare runtime cli wallet](./examples/bare/seashell-bare.md)
+- [AI Demo Web wallet](./examples/web/ai-demo-app.md)
 
-* [Node.js cli wallet](examples/node/seashell-node.md)
-* [Bare runtime cli wallet](examples/bare/seashell-bare.md)
-* [AI Demo Web wallet](examples/web/ai-demo-app.md)
+## 🛠️ Dev Environment
+The wallet is designed to work with local test environments. 
+- See [Wallet test tools](./components/wallet-test-tools.md) to setup local environments 
+- Setup [Wallet indexer](./components/wallet-indexer.md) service
 
-### 🛠️ Dev Environment
+## 🍱 Building your own asset
+See [guide](./guides/integrating-new-assets.md) for how to add new assets
 
-The wallet is designed to work with local test environments.
-
-* See [Wallet test tools](components/wallet-test-tools.md) to setup local environments
-* Setup [Wallet indexer](components/wallet-indexer.md) service
-
-### 🍱 Building your own asset
-
-See [guide](guides/integrating-new-assets.md) for how to add new assets
-
-### 🧪 Testing
-
-* [Brittle](https://github.com/holepunchto/brittle) is used for testing
-* Tests included in this repo cover
-  * Shared modules
-  * Integration of various blockchains
-* Each asset has it's own tests included in it's repo.
+## 🧪 Testing
+- [Brittle](https://github.com/holepunchto/brittle) is used for testing
+- Tests included in this repo cover
+    - Shared modules
+    - Integration of various blockchains
+- Each asset has it's own tests included in it's repo.
