@@ -1,28 +1,28 @@
 # Table of contents
 
-* [Wallet Dev Kit by Tether](./README.md)
+* [Wallet Dev Kit by Tether](README.md)
 
-### Blockchains
+## Blockchains
 
-* [Bitcoin](./blockchains/wallet-pay-btc.md)
-* [Ethereum and ERC20](./blockchains/wallet-pay-eth-erc20.md)
+* [Bitcoin](blockchains/wallet-pay-btc.md)
+* [Ethereum and ERC20](blockchains/wallet-pay-eth-erc20.md)
 
-### Components
+## Components
 
-* [Wallet seed](./components/wallet-seed.md)
-* [Wallet store](./components/wallet-store.md)
-* [Wallet indexer](./components/wallet-indexer.md)
-* [Wallet test-tools](./components/wallet-test-tools.md)
-    * [Bitcoin](./test-tools/btc-testing.md)
-    * [Ethereum](./test-tools/eth-testing.md)
+* [Wallet seed](components/wallet-seed.md)
+* [Wallet store](components/wallet-store.md)
+* [Wallet indexer](components/wallet-indexer.md)
+* [Wallet test-tools](components/wallet-test-tools.md)
+  * [Bitcoin](test-tools/btc-testing.md)
+  * [Ethereum](test-tools/eth-testing.md)
 
-### Guides
+## Guides
 
-* [Getting Started](./guides/getting-started.md)
-* [Integrating new assets](./guides/integrating-new-assets.md)
+* [Getting Started](guides/getting-started.md)
+* [Integrating new assets](guides/integrating-new-assets.md)
 
-### Examples
+## Examples
 
-* [Seashell Node](./examples/node/seashell-node.md)
-* [Seashell Bare](./examples/bare/seashell-bare.md)
-* [AI Demo App](./examples/web/ai-demo-app.md)
+* [Seashell Node](examples/node/seashell-node.md)
+* [Seashell Bare](examples/bare/seashell-bare.md)
+* [AI Demo App](examples/web/ai-demo-app.md)
