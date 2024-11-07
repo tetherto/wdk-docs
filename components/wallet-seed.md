@@ -11,7 +11,7 @@ This library is part of the [Wallet SDK](https://github.com/tetherto/lib-wallet)
 Install the package using npm:
 
 ```bash
-npm install lib-wallet-seed-bip39
+npm install @tetherio/lib-wallet-seed-bip39
 ```
 
 ## 🔧 Usage
