@@ -31,7 +31,7 @@ lib-wallet-store provides a consistent interface for wallet data storage, allowi
 To install lib-wallet-store and its core dependencies, run:
 
 ```bash
-npm install @tetherio/lib-wallet-store
+npm install lib-wallet-store
 ```
 
 ## 🔧 Usage

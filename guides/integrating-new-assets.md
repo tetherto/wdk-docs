@@ -30,7 +30,7 @@ This is a guide for developers looking to extend the `WalletPay` base class to i
 2. Initialize a new npm project and install necessary dependencies:
    ```
    npm init -y
-   npm install @tetherio/lib-wallet 
+   npm install lib-wallet 
    ```
 
 ## Implementing XYZCoin Class
@@ -86,7 +86,7 @@ module.exports = WalletPayXYZ;
 Wallet components are modular by design. There are other components you can either integrate, develop or your own.
 
 #### Block Data Provider
-you should be splitting up your data provider into a separate class.
+you should be splitting up your data provider into a seperate class.
 
 ### Data Store
 Transaction history and wallet state is tracked using a key value store. We provide a key-value data store with WalletStoreHyperBee. You can build your own storage engine too! 
