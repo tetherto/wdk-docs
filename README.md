@@ -4,7 +4,6 @@
 </a>
 </p>
 
-# Wallet Dev Kit by Tether
 
 Multi asset cryptocurrency wallet library in JavaScript.
 Supported on 3 platforms:  Node.js, Browser, Bare Runtime
@@ -130,3 +129,7 @@ See [guide](./guides/integrating-new-assets.md) for how to add new assets
     - Shared modules
     - Integration of various blockchains
 - Each asset has it's own tests included in it's repo.
+
+## 🔒 Security 
+For vulnerabilities and bug reports, please reach out to us at bounty@tether.io.
+Your insights help us keep WDK by Tether secure and reliable!
