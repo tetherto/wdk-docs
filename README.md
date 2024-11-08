@@ -146,7 +146,7 @@ See [guide](./guides/integrating-new-assets.md) for how to add new assets
 - Tests included in this repo cover
     - Shared modules
     - Integration of various blockchains
-- Each asset has it's own tests included in it's repo.
+- Each asset has its own tests included in its repo.
 
 ## 🔒 Security 
 For vulnerabilities and bug reports, please reach out to us at bounty@tether.io.
