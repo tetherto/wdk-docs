@@ -48,7 +48,7 @@ await store.init()
 If you do not want persistance storage and want to use in memory storage leave the `store_path` field as empty.
 
 #### 3. Setup assets
-Each blockchain/asset has it's own module that encapsulates all of the logic. Each asset can have it's own configuration.
+Each blockchain/asset has its own module that encapsulates all of the logic. Each asset can have its own configuration.
 
 
 Lets setup Bitcoin:

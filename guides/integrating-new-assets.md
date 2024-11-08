@@ -86,7 +86,7 @@ module.exports = WalletPayXYZ;
 Wallet components are modular by design. There are other components you can either integrate, develop or your own.
 
 #### Block Data Provider
-you should be splitting up your data provider into a seperate class.
+you should be splitting up your data provider into a separate class.
 
 ### Data Store
 Transaction history and wallet state is tracked using a key value store. We provide a key-value data store with WalletStoreHyperBee. You can build your own storage engine too! 

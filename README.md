@@ -4,7 +4,6 @@
 </a>
 </p>
 
-# Wallet Dev Kit by Tether
 
 Multi asset cryptocurrency wallet library in JavaScript.
 Supported on 3 platforms:  Node.js, Browser, Bare Runtime
@@ -129,7 +128,7 @@ After you have example apps running:
 - Build new assets.
 
 ## 🐚 Seashell Example Wallet
-There is a working example wallet that supports. This wallet can be used as an example for making your own integrations.
+There is a working example wallet that supports Ethereum/BTC. This wallet can be used as an example for making your own integrations.
 - [Node.js cli wallet](./examples/node/seashell-node.md)
 - [Bare runtime cli wallet](./examples/bare/seashell-bare.md)
 - [AI Demo Web wallet](./examples/web/ai-demo-app.md)
@@ -147,4 +146,8 @@ See [guide](./guides/integrating-new-assets.md) for how to add new assets
 - Tests included in this repo cover
     - Shared modules
     - Integration of various blockchains
-- Each asset has it's own tests included in it's repo.
+- Each asset has its own tests included in its repo.
+
+## 🔒 Security 
+For vulnerabilities and bug reports, please reach out to us at bounty@tether.io.
+Your insights help us keep WDK by Tether secure and reliable!
