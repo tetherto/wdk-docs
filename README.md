@@ -4,7 +4,6 @@
 </a>
 </p>
 
-# Wallet Dev Kit by Tether
 
 Multi asset cryptocurrency wallet library in JavaScript.
 Supported on 3 platforms:  Node.js, Browser, Bare Runtime
