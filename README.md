@@ -31,7 +31,18 @@ Supported on 3 platforms:  Node.js, Browser, Bare Runtime
 - ERC20 support.
 - BIP44 address generation.
 
-**additional support coming soon**
+### More assets coming soon
+
+| Blockchain   	|  Supported 	|
+|---	          |---	        |
+|  Bitcoin 	    |  ✅ 	      |
+|  Ethereum  	  |  ✅ 	      |
+|  Tron 	      |  ⌛ 	      |
+|  TON 	        |   ⌛	      |
+|  Avalanche 	  |   ⌛	      |
+|  Solana 	    |  ⌛ 	      |
+|  Celo 	      |   ⌛	      |
+|  Liquid 	    |  ⌛ 	      |
 
 
 ### 🏗️ Architecture
