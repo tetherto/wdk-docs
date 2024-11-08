@@ -1,3 +1,5 @@
+{% embed url="https://www.youtube.com/watch?v=OHaHckk3AyM" %}
+
 # 🤖 AI Demo App
 
 An example local ai app powered by OLLAMA, Whispr and WSDK
