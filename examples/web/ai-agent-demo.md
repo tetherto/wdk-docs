@@ -1,9 +1,9 @@
 {% embed url="https://www.youtube.com/watch?v=OHaHckk3AyM" %}
 
-# 🤖 AI Demo App
+# 🤖 AI Agent Demo
 
 An example local ai app powered by OLLAMA, Whispr and WSDK
-Use your voice to control wallet!
+Use your voice to control the wallet!
 
 
 ⚠️ THIS IS A TEST WALLET ONLY. DON'T RISK REAL FUNDS ⚠️
