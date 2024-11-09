@@ -131,7 +131,7 @@ After you have example apps running:
 There is a working example wallet that supports Ethereum/BTC. This wallet can be used as an example for making your own integrations.
 - [Node.js cli wallet](./examples/node/seashell-node.md)
 - [Bare runtime cli wallet](./examples/bare/seashell-bare.md)
-- [AI Demo Web wallet](./examples/web/ai-demo-app.md)
+- [AI Agent Demo](./examples/web/ai-agent-demo.md)
 
 ## 🛠️ Dev Environment
 The wallet is designed to work with local test environments. 
