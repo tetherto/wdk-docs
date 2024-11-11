@@ -21,13 +21,21 @@ This README guides you through setting up a local Ethereum network using Hardhat
 
 ## Installation
 
-1. Clone this repository and navigate to this directory
+1. Clone the wallet-test-tools repo
+  ```bash
+  git clone https://github.com/tetherto/wallet-lib-test-tools
+  cd wallet-lib-test-tools
+  ```
+  Install the dependencies
+  ```
+  npm install
+  ```
 
-
-2. Install the dependencies:
-   ```
-   npm install
-   ```
+2. Navigate to the eth directory and install the dependencies:
+  ```bash
+  cd src/eth
+  npm install
+  ```
 
 ## Project Structure
 
