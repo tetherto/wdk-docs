@@ -26,13 +26,6 @@ lib-wallet-store provides a consistent interface for wallet data storage, allowi
 - 🧩 Support for multiple instances
 - 🔐 Designed for wallet data management
 
-## 🚀 Installation
-
-To install lib-wallet-store and its core dependencies, run:
-
-```bash
-npm install lib-wallet-store
-```
 
 ## 🔧 Usage
 
@@ -159,10 +152,9 @@ To run the tests:
 
 2. Run the tests:
    ```bash
-   node wallet-store-hyperbee-tests.js
+   npm run test
    ```
 
-To add new tests, create test cases in the `wallet-store-hyperbee-tests.js` file or create new test files for different storage engines.
 
 ## 🤝 Contributing
 
