@@ -1,6 +1,6 @@
 # lib-wallet-indexer
 
-indexer service for Ethereum with JSON-RPC and Websocket api
+indexer service for various assets  with JSON-RPC and Websocket api
 
 ## Features:
 
