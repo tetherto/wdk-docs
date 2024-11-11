@@ -109,7 +109,7 @@ It's important to create new addresses using a [HD path standard](https://learnm
 
 ```javascript
 async getNewAddress() {
-  const res = await this._hdWallet.getNewAddress((path) => {
+  const res = await this._hdWallet.getNewAddress('ext', (path) => {
     return this.keyManager.addrFromPath(path);
   });
   // Subscribe to updates for this address if necessary
