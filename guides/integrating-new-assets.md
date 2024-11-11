@@ -30,7 +30,7 @@ This is a guide for developers looking to extend the `WalletPay` base class to i
 2. Initialize a new npm project and install necessary dependencies:
    ```
    npm init -y
-   npm install lib-wallet 
+   npm install https://github.com/tetherto/lib-wallet
    ```
 
 ## Implementing XYZCoin Class
