@@ -30,7 +30,7 @@ This is a guide for developers looking to extend the `WalletPay` base class to i
 2. Initialize a new npm project and install necessary dependencies:
    ```
    npm init -y
-   npm install lib-wallet 
+   npm install https://github.com/tetherto/lib-wallet
    ```
 
 ## Implementing XYZCoin Class
@@ -109,7 +109,7 @@ It's important to create new addresses using a [HD path standard](https://learnm
 
 ```javascript
 async getNewAddress() {
-  const res = await this._hdWallet.getNewAddress((path) => {
+  const res = await this._hdWallet.getNewAddress('ext', (path) => {
     return this.keyManager.addrFromPath(path);
   });
   // Subscribe to updates for this address if necessary
