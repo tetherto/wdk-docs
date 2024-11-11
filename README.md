@@ -83,13 +83,33 @@ Checkout [Quick start guide](./guides/getting-started.md) for a more detailed gu
     // Bitcoin network you'll be using
     network: 'regtest'
   })
+  
+
+  // Setup Usdt on Ethereum
+
+
+  // Prepare USDT ERC20 configuration
+  const USDT = erc20CurrencyFac(TetherCurrency.ERC20())
+
+  // Setup Ethereum with USDT
+  const ethPay = new EthPay({
+    asset_name: 'eth',
+    provider,
+    store,
+    network: 'sepolia',
+    token: [
+      new Erc20({
+        currency: USDT
+      })
+    ]
+  })
 
   // Setup main wallet class
   const wallet = new Wallet({
     store,
     seed,
     // List of assets 
-    assets: [ btcPay ]
+    assets: [ btcPay, ethPay ]
   })
 
   // Start wallet and initialize
@@ -105,12 +125,42 @@ Checkout [Quick start guide](./guides/getting-started.md) for a more detailed gu
   // Get a new bitcoin address using api below
   const btcAddress = await wallet.pay.btc.getNewAddress()
 
-  // Get Tx history
+  // Get new Eth account for  ETH and USDT.
+  const ethAcct = await wallet.pay.eth.getNewAddress()
 
+  // Get Tx history
   await wallet.pay.btc.getTransactions((tx) =>{
     // do something here 
   }))
-  //done 
+
+
+  // get balances
+  const btcBalance = await wallet.pay.btc.getBalance()
+  // USDT balance
+  const usdtBalance = await wallet.pay.eth.getBalance({ token : 'USDT' })
+
+  // get list of eth addresses and their token holdings
+  const addrBal = await wallet.pay.eth.getFundedTokenAddresses({ token : 'USDT' })
+
+
+  // Sending Transactions:
+  // Send 0,1 bitcoin
+  const send = await wallet.pay.btc.sendTransaction({}, {
+    amount: 0.1, // quantity of bitcoin
+    unit: 'main', // unit: main = bitcoin, base = satoshi
+    address: 'bcr111', // recipient
+    fee: 10 // 10 satVbyte in fees
+  })
+  // Send 10 USDT
+  const send = await wallet.pay.eth.sendTransaction({
+      token: 'USDT', // name of the token
+  }, {
+    amount: '10', // quantity of USDT
+    unit: 'main', // main unit of USDT: 10 USDT
+    address: '0x0000', // recipient
+    sender: '0x1111' // ETH account sending from
+  })
+
 
 ```
 

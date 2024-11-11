@@ -6,13 +6,6 @@ A robust implementation of BIP39 seed generation and management. This is lib is 
 This library is part of the [Wallet SDK](https://github.com/tetherto/lib-wallet). 
 
 
-## 🚀 Installation
-
-Install the package using npm:
-
-```bash
-npm install lib-wallet-seed-bip39
-```
 
 ## 🔧 Usage
 
