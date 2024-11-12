@@ -3,8 +3,8 @@
 
 
 ## Table of Contents
-1. [Simple CLI wallet](#create-your-own-wallet)
-2. [Build a New Asset](./new-asset.md)
+1. [Create your own wallet](#create-your-own-wallet)
+2. [Integrating new assets](./integrating-new-assets.md)
 
 ## Create your own wallet
 
