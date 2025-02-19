@@ -358,7 +358,7 @@ interface WDKResponse {
   // For error responses
   error?: {
     code: number;      // Error code (e.g., -32700 for invalid JSON)
-    msg: string;       // Error message
+    msg: string;       
   };
 
   // For status notifications
