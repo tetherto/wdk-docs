@@ -4,7 +4,7 @@
 
 In this guide, we'll work through the process of integrating the WDK (Wallet Development Kit) into your mobile application.
 
-We will be using the `lib-wallet-bare` library, it's designed to seamlessly integrate WDK into React Native Bare Kit projects. 
+We will be using the [`lib-wallet-bare`](https://github.com/tetherto/lib-wallet-bare) library, it's designed to seamlessly integrate WDK into React Native Bare Kit projects. 
 
 ## Key Features of lib-wallet-bare
 
@@ -496,7 +496,7 @@ function WalletComponent() {
 }
 ```
 
-Please refer to wdk-bare-expo for a complete example.
+Please refer to [WDK-Bare-Expo](https://github.com/tetherto/wdk-bare-expo) for a complete example of WDK integration in a React Native Expo project.
 
 ## Best Practices
 
