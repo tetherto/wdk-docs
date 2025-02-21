@@ -209,20 +209,22 @@ const createWallet = () => {
       {
         module: 'lib-wallet-pay-btc',
         name: 'btc',
-        network: 'regtest',
+        network: 'mainnet', // or 'testnet' for testing
         endpoints: {
-          host: 'ws://34.65.144.199',
-          port: '8001'
+          // Configure your BTC endpoints
+          host: 'YOUR_ELECTRUM_HOST',
+          port: 'YOUR_ELECTRUM_PORT'
         }
       },
       {
         module: 'lib-wallet-pay-eth',
         name: 'eth',
-        network: 'sepolia',
+        network: 'mainnet', // or network of your choice
         endpoints: {
-          web3: 'ws://34.65.144.199/eth/hardhat/indexer/web3',
-          indexerWs: 'ws://34.65.144.199/eth/hardhat/indexer/ws',
-          indexer: 'http://34.65.144.199/eth/hardhat/indexer/rpc'
+          // Configure your ETH endpoints
+          web3: 'YOUR_WEB3_ENDPOINT',
+          indexerWs: 'YOUR_INDEXER_WS_ENDPOINT',
+          indexer: 'YOUR_INDEXER_ENDPOINT'
         }
       },
       // Add more assets here as needed
@@ -237,7 +239,11 @@ const createWallet = () => {
 };
 ```
 
-Note : Always make sure to check if the IPC connection is available before making any calls.
+Note: You will need to:
+1. Replace the endpoint placeholders with your own infrastructure endpoints
+2. Choose appropriate networks ('mainnet', 'testnet', etc.) based on your requirements
+3. Provide a secure way to generate or manage mnemonics
+4. Consider implementing proper error handling for endpoint connectivity issues
 
 #### Load an Existing Wallet
 ```typescript
