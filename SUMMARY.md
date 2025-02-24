@@ -20,6 +20,7 @@
 
 * [Getting Started](./guides/getting-started.md)
 * [Integrating new assets](./guides/integrating-new-assets.md)
+* [Mobile Integration](./guides/mobile-integration.md)
 
 ### Examples
 
