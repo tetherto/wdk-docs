@@ -1,6 +1,6 @@
 # 🌱 lib-wallet-seed-bip39
 
-A robust implementation of BIP39 seed generation and management. This is lib is a wrapper around [bip32](https://www.npmjs.com/package/bip32) and [bip39](https://www.npmjs.com/package/bip39)
+A robust implementation of BIP39 seed generation and management. This lib is a wrapper around [bip32](https://www.npmjs.com/package/bip32) and [bip39](https://www.npmjs.com/package/bip39)
 
 ## 💼 Wallet SDK
 This library is part of the [Wallet SDK](https://github.com/tetherto/lib-wallet). 

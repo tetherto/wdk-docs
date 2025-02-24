@@ -89,7 +89,7 @@ await btcPay.syncTransactions({
 // Pause the sync process. 
 // If the application needs to sleep and come back to resume syncing.
 await btcPay.pauseSync()
-btcPay.broadcasted((tx)=>{
+btcPay.broadcasted((tx) => {
   // transaction is broadcasted but not updated internal state
 })
 
@@ -136,7 +136,7 @@ const result = await btcPay.sendTransaction({}, {
   unit: 'main', // unit of amount: main = Bitcoin and base = satoshi unit
 
   fee: 10, // Fees in sats per vbyte. 10 = 10 sat/vByte
-}))
+})
 
 // Get a list of transactions
 const txs = await btcPay.getTransactions(query)

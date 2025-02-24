@@ -129,9 +129,9 @@ Checkout [Quick start guide](./guides/getting-started.md) for a more detailed gu
   const ethAcct = await wallet.pay.eth.getNewAddress()
 
   // Get Tx history
-  await wallet.pay.btc.getTransactions((tx) =>{
+  await wallet.pay.btc.getTransactions((tx) => {
     // do something here 
-  }))
+  })
 
 
   // get balances
