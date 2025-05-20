@@ -39,9 +39,4 @@ Security is paramount when building with WDK. Follow these best practices to pro
 
 ---
 
-## Further Reading
-- [OWASP Top Ten](https://owasp.org/www-project-top-ten/)
-- [Ethereum Security Best Practices](https://consensys.github.io/smart-contract-best-practices/)
-- [Bitcoin OpSec Guide](https://en.bitcoin.it/wiki/Securing_your_wallet)
-
 See also: [Core Concepts](core-concepts.md) | [FAQ](faq.md) 
