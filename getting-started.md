@@ -1,89 +1,67 @@
 # Getting Started
 
-Welcome to the Wallet Development Kit (WDK)! This guide will help you set up and start building with WDK in minutes.
-
----
-
-## Prerequisites
-- Node.js v14 or higher
-- npm
-- Basic knowledge of JavaScript/TypeScript
-- Familiarity with blockchain concepts
+The Wallet Development Kit (WDK) enables developers to build secure, non-custodial blockchain wallets with minimal effort. This guide provides a streamlined introduction to installing, configuring, and initializing WDK in your project.
 
 ---
 
 ## Installation
-Install WDK via npm:
+
+Install the WDK core package using npm:
+
 ```bash
 npm install wdk-core
 ```
 
 ---
 
-## Hello World Example
-A minimal example to get your first wallet address:
+## Quick Start
+
+The following example demonstrates how to initialize WDK and generate two addresses from the same seed phrase:
+- An ERC-4337 abstracted address for Polygon
+- A Spark address
+
 ```javascript
 import WdkManager from 'wdk-core';
 
 const seedPhrase = "your twelve word seed phrase goes here";
 const config = {
-  ethereum: {
-    chainId: 1,
-    blockchain: "ethereum",
-    rpcUrl: "https://rpc.ankr.com/eth/YOUR_API_KEY"
+  polygon: {
+    "chainId": 137,
+    "rpcUrl": "https://polygon",
+    "bundlerUrl": "https://api.pimlico.io/v2/137/rpc",
+    "paymasterUrl": "https://api.pimlico.io/v2/137/rpc",
+    "paymasterAddress": "0x777777777777AeC03fd955926DbF81597e66834C",
+    "entryPointAddress": "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
+    "safeModulesVersion": "0.3.0",
+    "paymasterToken": {
+        "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+    }
+  },
+  spark: {
+    blockchain: "MAINNET"
   }
 };
 
 const wdk = new WdkManager(seedPhrase, config);
-const address = await wdk.getAbstractedAddress("ethereum", 0);
-console.log("Your Ethereum address:", address);
+
+// Generate an ERC-4337 abstracted address for Polygon
+const polygonAddress = await wdk.getAbstractedAddress("polygon", 0);
+console.log("Your Polygon ERC-4337 address:", polygonAddress);
+
+// Generate a Spark address
+const sparkAddress = await wdk.getAddress("spark", 0);
+console.log("Your Spark address:", sparkAddress);
 ```
-
----
-
-## Initialization
-Import and initialize WDK with your seed phrase and blockchain configuration:
-```javascript
-import WdkManager from 'wdk-core';
-
-const seedPhrase = "your twelve word seed phrase goes here";
-const config = {
-  ethereum: {
-    chainId: 1,
-    blockchain: "ethereum",
-    rpcUrl: "https://rpc.ankr.com/eth/YOUR_API_KEY",
-    // ...other config fields
-  },
-  // Add more blockchains as needed
-};
-
-const wdk = new WdkManager(seedPhrase, config);
-```
-> **Security Tip:** Never expose your seed phrase or API keys in client-side code or public repositories.
-
----
-
-## Configuration
-Each blockchain requires a configuration object. Example fields:
-
-| Field             | Description                                 |
-|-------------------|---------------------------------------------|
-| chainId           | Network chain ID                            |
-| blockchain        | Blockchain name (e.g., "ethereum")          |
-| rpcUrl            | RPC endpoint URL                            |
-| ...               | ...                                         |
-
-See [Core Concepts](core-concepts.md) for more details on statelessness and abstraction.
-
----
-
-## Troubleshooting
-- **Missing dependencies?** Ensure you are using Node.js v14+ and have run `npm install`.
-- **Network errors?** Double-check your RPC URLs and API keys.
-- **React Native?** You may need to polyfill Node.js modules like `crypto`, `buffer`, and `stream`.
-- **Still stuck?** See the [FAQ](faq.md) or open an issue.
 
 ---
 
 ## Next Steps
-> 🚀 Now that you're set up, explore [Core Concepts](core-concepts.md) and dive into the [API Reference](api-reference.md) to unlock the full power of WDK! 
+
+- Explore [Core Concepts](core-concepts.md) for architectural details
+- Review the [API Reference](api-reference.md) for available methods
+- See [Supported Blockchains](supported-blockchains.md)
+- For troubleshooting, consult the [FAQ](faq.md)
+
+---
+
+For further assistance, please open an issue or contact support as described in the [README](README.md). 
