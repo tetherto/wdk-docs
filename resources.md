@@ -2,10 +2,7 @@
 
 Expand your knowledge with these helpful resources:
 
-- [BIP39 Standard](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki)
-- [Ethereum Official Documentation](https://ethereum.org/en/developers/docs/)
-- [Polygon Documentation](https://wiki.polygon.technology/docs/)
-- [Arbitrum Documentation](https://docs.arbitrum.io/)
-- [TON Documentation](https://ton.org/docs)
-- [Bitcoin Developer Guide](https://developer.bitcoin.org/devguide/)
-- [Lightning Network Docs](https://lightning.network/docs/) 
+- [ERC-4337 Documentation](https://www.erc4337.io/docs)
+- [TON Wallet V5 (Gasless) & Gasless Transactions](https://docs.ton.org/v3/documentation/smart-contracts/contracts-specs/wallet-contracts#wallet-v5)
+- [USDT₮0 (Omnichain) Documentation](https://docs.usdt0.to)
+- [Spark](https://docs.spark.money/home/welcome)

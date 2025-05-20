@@ -42,6 +42,8 @@ const config = {
   }
 };
 
+> **See a full working config example in the [API Reference](api-reference.md#configuration).**
+
 const wdk = new WdkManager(seedPhrase, config);
 
 // Generate an ERC-4337 abstracted address for Polygon

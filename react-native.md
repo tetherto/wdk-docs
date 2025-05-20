@@ -60,11 +60,11 @@ export default function App() {
         ethereum: {
           chainId: 1,
           blockchain: 'ethereum',
-          rpcUrl: 'https://rpc.ankr.com/eth/YOUR_API_KEY',
+          rpcUrl: 'https://arbitrum.drpc.org',
         },
       };
       const wdk = new WdkManager(seedPhrase, config);
-      const ethAddress = await wdk.getAbstractedAddress('ethereum', 0);
+      const ethAddress = await wdk.getAddress('ethereum', 0);
       setAddress(ethAddress);
     }
     getAddress();
