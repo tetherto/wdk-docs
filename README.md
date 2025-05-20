@@ -64,9 +64,9 @@ WDK acts as a thin, stateless abstraction layer between your app and multiple bl
 We welcome contributions! Please see our [contributing guidelines](CONTRIBUTING.md) and open issues or pull requests.
 
 ## 💬 Support
-- For questions, open an [issue](https://github.com/your-org/wdk-core/issues)
-- For security concerns, email: security@yourdomain.com
+- For questions, open an [issue](https://github.com/tetherto/wdk-core/issues)
+- For security concerns, email support@tether.to
 
 ---
 
-© Wallet Development Kit Team
+© Wallet Development Kit by Tether
