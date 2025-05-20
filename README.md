@@ -5,7 +5,8 @@
 
 # Wallet Development Kit (WDK)
 
-WDK provides a unified, stateless, and non-custodial interface for wallet applications, abstracting away blockchain complexity while ensuring users retain full control of their assets. Whether you're building for Ethereum, Bitcoin, TON, or the Lightning Network, WDK empowers you to deliver seamless multi-chain experiences.
+The Wallet Development Kit (WDK) is Tether's comprehensive open-source solution for building non-custodial blockchain wallets across multiple chains. WDK provides developers with a standardized interface to create wallet applications that hide blockchain complexity from end users while maintaining full user control over their assets.
+
 
 <p align="center">
   <a href="https://www.npmjs.com/package/wdk-core"><img src="https://img.shields.io/npm/v/wdk-core.svg" alt="npm version"></a>
