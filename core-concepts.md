@@ -47,6 +47,13 @@ WDK supports account abstraction features such as:
 - Gasless transactions (pay fees in tokens like USDT)
 - Flexible fee payments
 
+### Implementation Details
+
+- **EVM Chains:** WDK uses the ERC-4337 standard to enable account abstraction for EVM-compatible addresses. This allows features like gasless transactions and flexible fee payments.
+- **TON:** For TON, WDK leverages Wallet V5R1 to provide account abstraction capabilities.
+- **Bitcoin & Spark:** Account abstraction does not apply to Bitcoin and Spark, as transaction fees are always paid in BTC.
+- **Spark:** Spark enables you to receive and pay Lightning Network invoices.
+
 ---
 
 ## Learn More

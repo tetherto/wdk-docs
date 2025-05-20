@@ -12,12 +12,60 @@ import WdkManager from './index.js';
 const seedPhrase = ""; // Add your 12-word seed phrase here
 
 const config = {
-  ethereum: { /* ... see below for full config ... */ },
-  arbitrum: { /* ... */ },
-  polygon: { /* ... */ },
-  ton: { /* ... */ },
-  bitcoin: { /* ... */ },
-  spark: { /* ... */ }
+  ethereum: {
+    chainId: 1,
+    blockchain: "ethereum",
+    rpcUrl: "https://0xrpc.io/eth",
+    bundlerUrl: "https://api.pimlico.io/v2/1/rpc",
+    paymasterUrl: "https://api.pimlico.io/v2/1/rpc",
+    paymasterAddress: "0x777777777777AeC03fd955926DbF81597e66834C",
+    entryPointAddress: "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
+    transferMaxFee: 5000000,
+    swapMaxFee: 5000000,
+    bridgeMaxFee: 5000000,
+    paymasterToken: { address: "0xdAC17F958D2ee523a2206206994597C13D831ec7" }
+  },
+  arbitrum: {
+    chainId: 42161,
+    blockchain: "arbitrum",
+    rpcUrl: "https://arbitrum.drpc.org",
+    bundlerUrl: "https://api.pimlico.io/v2/42161/rpc",
+    paymasterUrl: "https://api.pimlico.io/v2/42161/rpc",
+    paymasterAddress: "0x777777777777AeC03fd955926DbF81597e66834C",
+    entryPointAddress: "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
+    transferMaxFee: 5000000,
+    swapMaxFee: 5000000,
+    bridgeMaxFee: 5000000,
+    paymasterToken: { address: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9" }
+  },
+  polygon: {
+    chainId: 137,
+    blockchain: "polygon",
+    rpcUrl: "https://polygon-rpc.com",
+    bundlerUrl: "https://api.pimlico.io/v2/137/rpc",
+    paymasterUrl: "https://api.pimlico.io/v2/137/rpc",
+    paymasterAddress: "0x777777777777AeC03fd955926DbF81597e66834C",
+    entryPointAddress: "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
+    transferMaxFee: 5000000,
+    swapMaxFee: 5000000,
+    bridgeMaxFee: 5000000,
+    paymasterToken: { address: "0xdAC17F958D2ee523a2206206994597C13D831ec7" },
+    safeModulesVersion: "0.3.0"
+  },
+  ton: {
+    tonApiUrl: "https://tonapi.io",
+    tonApiSecretKey: "...",
+    tonCenterUrl: "https://toncenter.com/api/v2/jsonRPC",
+    tonCenterSecretKey: "...",
+    paymasterToken: { address: "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs" }
+  },
+  bitcoin: {
+    host: "BITCOIN_NODE",
+    port: 8000
+  },
+  spark: {
+    network: "MAINNET"
+  }
 };
 
 const wdk = new WdkManager(seedPhrase, config);
@@ -156,10 +204,10 @@ const config = {
   ethereum: {
     chainId: 1,
     blockchain: "ethereum",
-    rpcUrl: "https://rpc.ankr.com/eth/8XgNbW9oGuvBpx8wwk5TQIOwzIm4On3z",
-    bundlerUrl: "https://api.candide.dev/bundler/v3/ethereum/2fef8e5b64f377372f3bd2a4b77829f1",
-    paymasterUrl: "https://api.candide.dev/paymaster/v3/ethereum/2fef8e5b64f377372f3bd2a4b77829f1",
-    paymasterAddress: "0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba",
+    rpcUrl: "https://0xrpc.io/eth",
+    bundlerUrl: "https://api.pimlico.io/v2/1/rpc",
+    paymasterUrl: "https://api.pimlico.io/v2/1/rpc",
+    paymasterAddress: "0x777777777777AeC03fd955926DbF81597e66834C",
     entryPointAddress: "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
     transferMaxFee: 5000000,
     swapMaxFee: 5000000,
@@ -169,11 +217,11 @@ const config = {
   arbitrum: {
     chainId: 42161,
     blockchain: "arbitrum",
-    rpcUrl: "https://rpc.ankr.com/arbitrum/8XgNbW9oGuvBpx8wwk5TQIOwzIm4On3z",
-    bundlerUrl: "https://api.pimlico.io/v2/42161/rpc?apikey=pim_7uK1GRXGthE6Z1vrgEnVvH",
-    paymasterUrl: "https://api.pimlico.io/v2/42161/rpc?apikey=pim_7uK1GRXGthE6Z1vrgEnVvH",
+    rpcUrl: "https://arbitrum.drpc.org",
+    bundlerUrl: "https://api.pimlico.io/v2/42161/rpc",
+    paymasterUrl: "https://api.pimlico.io/v2/42161/rpc",
     paymasterAddress: "0x777777777777AeC03fd955926DbF81597e66834C",
-    entrypointAddress: "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
+    entryPointAddress: "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
     transferMaxFee: 5000000,
     swapMaxFee: 5000000,
     bridgeMaxFee: 5000000,
@@ -183,9 +231,9 @@ const config = {
     chainId: 137,
     blockchain: "polygon",
     rpcUrl: "https://polygon-rpc.com",
-    bundlerUrl: "https://api.candide.dev/bundler/v3/polygon/2fef8e5b64f377372f3bd2a4b77829f1",
-    paymasterUrl: "https://api.candide.dev/paymaster/v3/polygon/2fef8e5b64f377372f3bd2a4b77829f1",
-    paymasterAddress: "0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba",
+    bundlerUrl: "https://api.pimlico.io/v2/137/rpc",
+    paymasterUrl: "https://api.pimlico.io/v2/137/rpc",
+    paymasterAddress: "0x777777777777AeC03fd955926DbF81597e66834C",
     entryPointAddress: "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
     transferMaxFee: 5000000,
     swapMaxFee: 5000000,
@@ -201,7 +249,7 @@ const config = {
     paymasterToken: { address: "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs" }
   },
   bitcoin: {
-    host: "34.65.170.159",
+    host: "BITCOIN_NODE",
     port: 8000
   },
   spark: {
@@ -209,18 +257,3 @@ const config = {
   }
 };
 ```
-
----
-
-## Common Patterns
-- Always `quote` before `execute` for transactions.
-- Use `getAccount` and `getAbstractedAddress` to manage accounts across chains.
-- Use account methods for chain-specific actions (e.g., Lightning, Spark, Bitcoin).
-
-## Error Handling
-- All async methods throw on error. Use `try/catch` for robust error handling.
-- Inspect error messages for details on network, config, or validation issues.
-
----
-
-For conceptual background, see [Core Concepts](../core-concepts.md). 
