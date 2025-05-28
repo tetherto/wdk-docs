@@ -9,7 +9,7 @@ Install the following packages:
 
 ```bash
 npm install expo-crypto stream-browserify @craftzdog/react-native-buffer \
-react-native-tcp-socket react-native-tls react-native-url-polyfill \
+react-native-tcp-socket react-native-url-polyfill \
 stream-http https-browserify http2-wrapper browserify-zlib path-browserify nice-grpc-web
 ```
 
@@ -28,7 +28,7 @@ config.resolver.extraNodeModules = {
   stream: require.resolve('stream-browserify'),
   buffer: require.resolve('@craftzdog/react-native-buffer'),
   net: require.resolve('react-native-tcp-socket'),
-  tls: require.resolve('react-native-tls'),
+  tls: require.resolve('react-native-tcp-socket'),
   url: require.resolve('react-native-url-polyfill'),
   http: require.resolve('stream-http'),
   https: require.resolve('https-browserify'),
@@ -36,6 +36,23 @@ config.resolver.extraNodeModules = {
   zlib: require.resolve('browserify-zlib'),
   path: require.resolve('path-browserify'),
   'nice-grpc': require.resolve('nice-grpc-web'),
+};
+
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName === '@buildonspark/spark-sdk/signer') {
+    return context.resolveRequest(
+      context,
+      '@buildonspark/spark-sdk/dist/native',
+      platform
+    );
+  } else if (moduleName === '@buildonspark/lrc20-sdk/grpc') {
+    return context.resolveRequest(
+      context,
+      '@buildonspark/lrc20-sdk/dist/lrc/api/grpc/index.js',
+      platform
+    );
+  }
+  return context.resolveRequest(context, moduleName, platform);
 };
 
 module.exports = config;
