@@ -91,11 +91,11 @@ const wdk = new WdkManager(seedPhrase, config);
 - WdkConfig
 - IWalletAccount
 
-##### class WdkManager
+### class WdkManager
 
 Creates a new wallet development kit manager.
 
-###### constructor(seed: string | Seeds, config: WdkConfig)
+##### constructor(seed: string | Seeds, config: WdkConfig)
 
 **Parameters**
 - `seed: string | Seeds` - A BIP-39 seed phrase to use for all blockchains, or an object mapping each blockchain to a different seed phrase.
@@ -288,9 +288,9 @@ Methods:
 - EvmTransaction
 - KeyPair
 
-##### class WalletManagerEvm
+### class WalletManagerEvm
 
-###### constructor(seedPhrase: string, config?: EvmWalletConfig)
+##### constructor(seedPhrase: string, config?: EvmWalletConfig)
 
 Creates a new wallet manager for evm blockchains.
 
@@ -349,11 +349,11 @@ Parameters:
 Return value:
 - `boolean` - True if the seed phrase is valid.
 
-##### class WalletAccountEvm
+### class WalletAccountEvm
 
 Implements: `IWalletAccount`
 
-###### constructor(seedPhrase: string, path: string, config?: EvmWalletConfig)
+##### constructor(seedPhrase: string, path: string, config?: EvmWalletConfig)
 
 Creates a new wallet account for a specific BIP-44 derivation path.
 
@@ -415,9 +415,9 @@ Properties:
 - TonTransaction
 - KeyPair
 
-##### class WalletManagerTon
+### class WalletManagerTon
 
-###### constructor(seedPhrase: string, config?: TonWalletConfig)
+##### constructor(seedPhrase: string, config?: TonWalletConfig)
 
 Creates a new wallet manager for the ton blockchain.
 
@@ -476,11 +476,11 @@ Parameters:
 Return value:
 - `boolean` - True if the seed phrase is valid.
 
-##### class WalletAccountTon
+### class WalletAccountTon
 
 Implements: `IWalletAccount`
 
-###### constructor(seedPhrase: string, path: string, config?: TonWalletConfig)
+##### constructor(seedPhrase: string, path: string, config?: TonWalletConfig)
 
 Creates a new wallet account for a specific BIP-44 derivation path.
 
@@ -539,9 +539,9 @@ Properties:
 - BtcTransaction
 - KeyPair
 
-##### class WalletManagerBtc
+### class WalletManagerBtc
 
-###### constructor(seedPhrase: string, config?: BtcWalletConfig)
+##### constructor(seedPhrase: string, config?: BtcWalletConfig)
 
 Creates a new wallet manager for the bitcoin blockchain.
 
@@ -600,11 +600,11 @@ Parameters:
 Return value:
 - `boolean` - True if the seed phrase is valid.
 
-##### class WalletAccountBtc
+### class WalletAccountBtc
 
 Implements: `IWalletAccount`
 
-###### constructor(seedPhrase: string, path: string, config?: BtcWalletConfig)
+##### constructor(seedPhrase: string, path: string, config?: BtcWalletConfig)
 
 Creates a new wallet account for a specific BIP-44 derivation path.
 
@@ -689,9 +689,9 @@ Properties:
 - SparkTransaction
 - KeyPair
 
-##### class WalletManagerSpark
+### class WalletManagerSpark
 
-###### constructor(seedPhrase: string, config?: SparkWalletConfig)
+##### constructor(seedPhrase: string, config?: SparkWalletConfig)
 
 Creates a new wallet manager for the spark blockchain.
 
@@ -750,13 +750,13 @@ Parameters:
 Return value:
 - `boolean` - True if the seed phrase is valid.
 
-##### class WalletAccountSpark
+### class WalletAccountSpark
 
 Implements: `IWalletAccount`
 
-###### Methods
+#### Methods
 
-**sendTransaction(tx: SparkTransaction): Promise<string>**
+##### sendTransaction(tx: SparkTransaction): Promise<string>
 
 Sends a transaction.
 
@@ -766,7 +766,7 @@ Parameters:
 Return value:
 - `Promise<string>` - The transaction's hash.
 
-**quoteTransaction(tx: SparkTransaction): Promise<number>**
+##### quoteTransaction(tx: SparkTransaction): Promise<number>
 
 Quotes a transaction.
 
@@ -776,7 +776,7 @@ Parameters:
 Return value:
 - `Promise<number>` - The transaction's fee (in satoshis).
 
-**getSingleUseDepositAddress(): Promise<string>**
+##### getSingleUseDepositAddress(): Promise<string>
 
 Generates a single-use deposit address for bitcoin deposits from layer 1.
 
@@ -785,7 +785,7 @@ Once you deposit funds to this address, it cannot be used again.
 Return value:
 - `Promise<string>` - The single-use deposit address.
 
-**claimDeposit(txId: string): Promise<WalletLeaf[] | undefined>**
+##### claimDeposit(txId: string): Promise<WalletLeaf[] | undefined>
 
 Claims a deposit to the wallet.
 
@@ -795,7 +795,7 @@ Parameters:
 Return value:
 - `Promise<WalletLeaf[] | undefined>` - The single-use deposit address.
 
-**getLatestDepositTxId(depositAddress: string): Promise<string | null>**
+##### getLatestDepositTxId(depositAddress: string): Promise<string | null>
 
 Checks for a confirmed deposit to the specified deposit address.
 
@@ -805,7 +805,7 @@ Parameters:
 Return value:
 - `Promise<string | null>` - The transaction id if found, null otherwise.
 
-**withdraw(options:{ to: string, value: number }): Promise<CoopExitRequest | null | undefined>**
+##### withdraw(options:{ to: string, value: number }): Promise<CoopExitRequest | null | undefined>
 
 Initiates a withdrawal to move funds from the Spark network to an on-chain Bitcoin address.
 
@@ -817,7 +817,7 @@ Parameters:
 Return value:
 - `Promise<CoopExitRequest | null | undefined>` - The withdrawal request details, or null/undefined if the request cannot be completed.
 
-**createLightningInvoice(options:{ value: number, memo?: string }): Promise<LightningReceiveRequest>**
+##### createLightningInvoice(options:{ value: number, memo?: string }): Promise<LightningReceiveRequest>
 
 Creates a lightning invoice for receiving payments.
 
@@ -829,7 +829,7 @@ Parameters:
 Return value:
 - `Promise<LightningReceiveRequest>` - The BOLT11-encoded invoice.
 
-**getLightningReceiveRequest(invoiceId: string): Promise<LightningReceiveRequest | null>**
+##### getLightningReceiveRequest(invoiceId: string): Promise<LightningReceiveRequest | null>
 
 Gets a lightning receive request by id.
 
@@ -839,7 +839,7 @@ Parameters:
 Return value:
 - `Promise<LightningReceiveRequest | null>` - The lightning receive request.
 
-**payLightningInvoice(options:{ invoice: string, maxFeeSats: number }): Promise<LightningSendRequest>**
+##### payLightningInvoice(options:{ invoice: string, maxFeeSats: number }): Promise<LightningSendRequest>
 
 Pays a lightning invoice.
 
@@ -851,7 +851,7 @@ Parameters:
 Return value:
 - `Promise<LightningSendRequest>` - The lightning payment request details.
 
-**getLightningSendFeeEstimate(options:{ invoice: string }): Promise<number>**
+##### getLightningSendFeeEstimate(options:{ invoice: string }): Promise<number>
 
 Gets fee estimate for sending Lightning payments.
 
@@ -862,7 +862,7 @@ Parameters:
 Return value:
 - `Promise<number>` - Fee estimate for sending Lightning payments.
 
-**getTransfers(options?: Object): Promise<SparkTransfer[]>**
+##### getTransfers(options?: Object): Promise<SparkTransfer[]>
 
 Returns the bitcoin transfers history of the account.
 
@@ -912,9 +912,9 @@ To be defined…
 - BridgeOptions
 - BridgeResult
 
-##### class AccountAbstractionManagerEvm
+### class AccountAbstractionManagerEvm
 
-###### constructor(account: Account, config: EvmAccountAbstractionConfig)
+##### constructor(account: Account, config: EvmAccountAbstractionConfig)
 
 Creates a new account abstraction manager for evm blockchains.
 
@@ -1103,9 +1103,9 @@ Properties:
 - BridgeOptions
 - BridgeResult
 
-##### class AccountAbstractionManagerTon
+### class AccountAbstractionManagerTon
 
-###### constructor(account: Account, config: TonAccountAbstractionConfig)
+##### constructor(account: Account, config: TonAccountAbstractionConfig)
 
 Creates a new account abstraction manager for the ton blockchain.
 
