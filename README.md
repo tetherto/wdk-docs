@@ -49,6 +49,8 @@ WDK acts as a thin, stateless abstraction layer between your app and multiple bl
 
 ## 📚 Documentation Overview
 
+🚧 This documentation is being updated. For the latest integration guide, see the [One Pager](one-pager.md).
+
 - [Getting Started](getting-started.md)
 - [React Native Usage](react-native.md)
 - [Core Concepts](core-concepts.md)
