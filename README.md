@@ -91,18 +91,6 @@ WDK never stores or transmits secrets. Developers are responsible for key storag
 
 ---
 
-## 📬 Contact us to get started!
-
-WDK is currently in **private beta**. If you're building wallet products, protocols, or integrations and want early access:
-
-👉 **Email us at [support@tether.to](mailto:support@tether.to)**
-
-We’re especially excited to partner with:
-- Layer 1/2 chains looking for wallet integrations
-- Fintech and crypto startups building novel user experiences
-
----
-
 ## 🌐 Open Source Vision
 
 We are committed to making WDK fully open-source in 2025. Join us now to shape its roadmap and be part of a growing ecosystem of developers creating the next generation of crypto wallets.
