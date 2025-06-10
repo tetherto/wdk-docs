@@ -1,203 +1,110 @@
-<p align="center" width="100">
-<a href="https://github.com/tetherto/lib-wallet">
-<img src="./assets/logo.png" width="200" align="center"/>
-</a>
+<!-- LOGO PLACEHOLDER -->
+<p align="center">
+  <img src="./logo.png" alt="WDK Logo" width="120" />
 </p>
 
+# Wallet Development Kit (WDK)
 
-Multi asset cryptocurrency wallet library in JavaScript.
-Supported on 3 platforms:  Node.js, Browser, Bare Runtime
+**Tether’s open-source Wallet Development Kit (WDK)** empowers developers to build secure, non-custodial wallets with unified blockchain access, stateless architecture, and complete user control. WDK simplifies the complexity of blockchain infrastructure without compromising on flexibility or security.
 
+---
 
-## ⭐ Features
+## What is WDK?
 
-🔑 **Non custodial:** not your keys, not your coins.
+WDK is a **developer-first framework** to create cross-chain wallets that are secure, extensible, and production-ready. It provides a single, stateless API to interact with Ethereum, Bitcoin, TON, and Spark (Lightning Network)—abstracting blockchain-specific complexity while keeping developers in full control of keys and data.
 
-🧩 **Composable:** Single facade to interact with multiple assets and wallets
+---
 
-📦 **Modular:** All components are modular and can be used independently.
+## 🔑 Key Features
 
-🛠️ **Extensible:** Easily add new asset, seed source, block source...etc
+- **Multi-Blockchain Support**: Ethereum, Polygon, Arbitrum, Bitcoin, TON, Spark
+- **Unified API Layer**: A single interface across chains
+- **Account Abstraction**: Enable gasless transactions & custom fee logic on EVM & TON
+- **Stateless & Secure**: No secrets or data are stored by WDK
+- **Non-Custodial by Design**: You manage keys; WDK never sees them
+- **DeFi Ready**: Built-in support for swaps, token transfers, and cross-chain actions
+- **Modular & Extensible**: Add your own chains, tokens, or business logic
 
-## 🔗 Blockchains
+---
 
-### [Bitcoin](./blockchains/wallet-pay-btc.md)
-- Electrum block data source. Support for TCP and Websocket on browser. 
-- P2WPKH / BIP84 address support.
+## 👤 Who is WDK for?
 
-### [USDt on Ethereum](./blockchains/wallet-pay-eth-erc20.md)
-- Web3 and [Wallet indexer](./components/wallet-indexer.md) block data source.
-- ERC20 support.
-- BIP44 address generation.
+### Developers & Builders
+- Create mobile/web wallets in minutes using a familiar JS/TS interface
+- Integrate advanced features like account abstraction without reinventing the wheel
 
-### More assets coming soon
+### Startups & Enterprises
+- Launch wallet products with full ownership of UX, logic, and keys
+- Customize flows like tipping, swapping, buying/selling, and more
 
-| Blockchain   	|  Supported  | Token Protocol
-|---	        |---	      |--
-|  Bitcoin 	    |  ✅ 	      | -
-|  Ethereum  	|  ✅ 	      | ERC20
-|  Tron 	    |  ⌛ 	      | TRC20
-|  TON 	        |   ⌛	      | Jettons
-|  Avalanche 	|   ⌛	      | C-Chain
-|  Solana 	    |  ⌛ 	      | Solana Token
-|  Celo 	    |   ⌛	      | ERC20
-|  Liquid 	    |  ⌛ 	      | Liquid Asset
-|  Tezos 	    |  ⌛ 	      | Tezos Token
-|  Aptos 	    |  ⌛ 	      | Fungible Asset
-|  Cosmos 	    |  ⌛ 	      | ERC20
-|  Near 	    |  ⌛ 	      | Near Token
-|  Polkadot 	|  ⌛ 	      | AssetHub
+### Educators & Innovators
+- Use WDK to prototype, test, and teach wallet development across major blockchains
 
-**additional support coming soon**
+---
 
+## 🔍 How It Works
 
-### 🏗️ Architecture
-![Architecture](./assets/architecture.png)
-
-### 🧩 Components
-The library comes with all the components needed to build a wallet. You can also use these as an example to build your own components.
-
-- [Wallet seed](./components/wallet-seed.md): Generate BIP39 seed for all assets 
-- [Wallet store](./components/wallet-store.md): Store transaction history and track state.
-- [Wallet indexer](./components/wallet-indexer.md): Remote blockchain data provider
-- [Wallet test-tools](./components/wallet-test-tools.md): Tools for development and testing 
-
-### **</>**  Example Usage
-
-Checkout [Quick start guide](./guides/getting-started.md) for a more detailed guide.
-
-```javascript
-
-  const seed = await BIP39Seed.generate(/** seed phrase or leave empty to generate one */)
-
-  // Setup wallet store. Modular data store for  writing data
-  const store = new WalletStoreHyperbee({
-    store_path: './wallet-store' // Leave empty to use in-memory store
-  })
-
-  // Setup Bitcoin asset
-  const btcPay = new BitcoinPay({
-    // Asset name is used to identify the asset in the wallet.
-    // You can have multiple assets of same currency
-    asset_name: 'btc',
-    // Bitcoin network you'll be using
-    network: 'regtest'
-  })
-  
-
-  // Setup Usdt on Ethereum
-
-
-  // Prepare USDT ERC20 configuration
-  const USDT = erc20CurrencyFac(TetherCurrency.ERC20())
-
-  // Setup Ethereum with USDT
-  const ethPay = new EthPay({
-    asset_name: 'eth',
-    provider,
-    store,
-    network: 'sepolia',
-    token: [
-      new Erc20({
-        currency: USDT
-      })
-    ]
-  })
-
-  // Setup main wallet class
-  const wallet = new Wallet({
-    store,
-    seed,
-    // List of assets 
-    assets: [ btcPay, ethPay ]
-  })
-
-  // Start wallet and initialize
-  // Connect to block source 
-  // Add asset to wallet registry 
-  await wallet.initialize()
-
-  // Traverse wallet history of all assets and sync them. This might take a while depending on wallet size 
-  await wallet.syncHistory(opts)
-
-
-  // All payment features are namespaced under wallet.pay[asset_name][action](opts, ...args)
-  // Get a new bitcoin address using api below
-  const btcAddress = await wallet.pay.btc.getNewAddress()
-
-  // Get new Eth account for  ETH and USDT.
-  const ethAcct = await wallet.pay.eth.getNewAddress()
-
-  // Get Tx history
-  await wallet.pay.btc.getTransactions((tx) =>{
-    // do something here 
-  }))
-
-
-  // get balances
-  const btcBalance = await wallet.pay.btc.getBalance()
-  // USDT balance
-  const usdtBalance = await wallet.pay.eth.getBalance({ token : 'USDT' })
-
-  // get list of eth addresses and their token holdings
-  const addrBal = await wallet.pay.eth.getFundedTokenAddresses({ token : 'USDT' })
-
-
-  // Sending Transactions:
-  // Send 0,1 bitcoin
-  const send = await wallet.pay.btc.sendTransaction({}, {
-    amount: 0.1, // quantity of bitcoin
-    unit: 'main', // unit: main = bitcoin, base = satoshi
-    address: 'bcr111', // recipient
-    fee: 10 // 10 satVbyte in fees
-  })
-  // Send 10 USDT
-  const send = await wallet.pay.eth.sendTransaction({
-      token: 'USDT', // name of the token
-  }, {
-    amount: '10', // quantity of USDT
-    unit: 'main', // main unit of USDT: 10 USDT
-    address: '0x0000', // recipient
-    sender: '0x1111' // ETH account sending from
-  })
-
+WDK is **stateless**: it processes requests but stores nothing. All sensitive data (keys, sessions, configs) stays in your hands.
 
 ```
 
-# Development
+[Your App] → [WDK API] → [Ethereum | Bitcoin | TON | Spark]
 
-## 🚀 Getting started
+```
 
-The best way to get started developing:
+This guarantees:
+- No custodial risk
+- Full user control
+- Flexibility to scale or pivot
 
-1. Setup local development environment.
-2. Configure example apps to connect to your local blockchains.
-3. Start hacking on example apps.
-After you have example apps running:
-- Fork/modify existing assets
-- Build new assets.
+---
 
-## 🐚 Seashell Example Wallet
-There is a working example wallet that supports Ethereum/BTC. This wallet can be used as an example for making your own integrations.
-- [Node.js cli wallet](./examples/node/seashell-node.md)
-- [Bare runtime cli wallet](./examples/bare/seashell-bare.md)
-- [AI Agent Demo](./examples/web/ai-agent-demo.md)
+## 🛠️ Use Cases
 
-## 🛠️ Dev Environment
-The wallet is designed to work with local test environments. 
-- See [Wallet test tools](./components/wallet-test-tools.md) to setup local environments 
-- Setup [Wallet indexer](./components/wallet-indexer.md) service
+- Build wallets for creators, communities, or DAOs
+- Integrate wallet functions into DeFi, payments, gaming, or tipping apps
+- Develop cross-platform wallet experiences (React Native, Electron, Web)
 
-## 🍱 Building your own asset
-See [guide](./guides/integrating-new-assets.md) for how to add new assets
+---
 
-## 🧪 Testing
-- [Brittle](https://github.com/holepunchto/brittle) is used for testing
-- Tests included in this repo cover
-    - Shared modules
-    - Integration of various blockchains
-- Each asset has its own tests included in its repo.
+## 🌍 Supported Blockchains
 
-## 🔒 Security 
-For vulnerabilities and bug reports, please reach out to us at bounty@tether.io.
-Your insights help us keep WDK by Tether secure and reliable!
+WDK supports a growing set of blockchains. This list is continuously expanding, with **more integrations coming soon**. Chains marked with ⏳ are in active development.
+
+| Chain      | Type        | Supported | Description                                                                   |
+|------------|-------------|-----------|-------------------------------------------------------------------------------|
+| Ethereum   | EVM         | ✅        | Leading smart contract platform, supports ERC-20 tokens and DeFi.             |
+| Arbitrum   | L2 / EVM    | ✅        | Layer 2 scaling solution for Ethereum, fast and cost-effective.               |
+| Polygon    | L2 / EVM    | ✅        | Scalable, low-fee EVM chain, ideal for dApps and DeFi.                        |
+| Bitcoin    | Native      | ✅        | The original cryptocurrency, secure and widely adopted.                       |
+| TON        | Non-EVM     | ✅        | High-performance blockchain for decentralized apps and payments.              |
+| Spark      | *           | ✅        | Fast, low-fee Bitcoin payments via Lightning Network.                         |
+| Solana     | Non-EVM     | ⏳        | Ultra-fast, low-fee chain for DeFi and NFTs with a unique parallel runtime.   |
+| TRON       | Non-EVM     | ⏳        | High-throughput blockchain optimized for stablecoin transfers and payments.   |
+
+
+---
+
+## 🔐 Completely non custodial
+
+WDK never stores or transmits secrets. Developers are responsible for key storage using secure techniques like OS keychain, HSMs, or hardware wallets. All operations are performed in-memory.
+
+---
+
+## 📬 Contact us to get started!
+
+WDK is currently in **private beta**. If you're building wallet products, protocols, or integrations and want early access:
+
+👉 **Email us at [support@tether.to](mailto:support@tether.to)**
+
+We’re especially excited to partner with:
+- Layer 1/2 chains looking for wallet integrations
+- Fintech and crypto startups building novel user experiences
+
+---
+
+## 🌐 Open Source Vision
+
+We are committed to making WDK fully open-source in 2025. Join us now to shape its roadmap and be part of a growing ecosystem of developers creating the next generation of crypto wallets.
+
+---
