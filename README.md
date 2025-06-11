@@ -97,7 +97,7 @@ WDK is currently in **private beta**. If you're building wallet products, protoc
 
 👉 **Please [fill out this form](https://docs.google.com/forms/d/e/1FAIpQLSfh3UKsQ-PwJCQOQyJ3EVMKVyHTuqK1XndyiKe4uLslEEtWSw/viewform)** 👈
 
-We’re especially excited to partner with:
+We’re especially excited to collaborate with:
 - Layer 1/2 chains looking for wallet integrations
 - Fintech and crypto startups building novel user experiences
 
