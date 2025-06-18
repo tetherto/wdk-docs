@@ -1,6 +1,13 @@
+---
+title: Wallet Development Kit (WDK)
+description: Wallet Development Kit (WDK) home page.
+author: Raquel Carrasco Gonzalez
+lastReviewed: 2025-06-18
+---
+
 <!-- LOGO PLACEHOLDER -->
 <p align="center">
-  <img src="./logo.png" alt="WDK Logo" width="120" />
+  <img src="./assets/logo.png" alt="WDK Logo" width="120" />
 </p>
 
 # Wallet Development Kit (WDK)
