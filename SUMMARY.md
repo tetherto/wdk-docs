@@ -1,35 +1,34 @@
 # Wallet Development Kit Documentation
 
 * [1 · Executive Summary & Overview](1-executive-summary/README.md)
-    <!-- * [Product Vision](1-executive-summary/product-vision.md)
-    * [Target Use Cases](1-executive-summary/use-cases.md)
-    * [Key Benefits](1-executive-summary/key-benefits.md)
-    * [Integration Complexity](1-executive-summary/integration-complexity.md) -->
+
 * [2 · Getting Started](2-getting-started/README.md)
     * [Prerequisites](2-getting-started/prerequisites.md)
     * [Quick‑Start Guide](2-getting-started/quick-start.md)
-* [3 · Product Architecture & Core Concepts](3-architecture/README.md)
+
+<!-- * [3 · Product Architecture & Core Concepts](3-architecture/README.md)
     * [Architecture Overview](3-architecture/architecture-overview.md)
-    * [Core Concepts](3-architecture/core-concepts.md)
+    * [Core Concepts](3-architecture/core-concepts.md) -->
+
 * [4 · SDK Reference Documentation](4-sdk-reference/README.md)
-    * [Installation & Setup](4-sdk-reference/installation.md)
+    <!-- * [Installation & Setup](4-sdk-reference/installation.md)
     * [Core APIs](4-sdk-reference/core-apis.md)
-    * [Advanced Features](4-sdk-reference/advanced-features.md)
+    * [Advanced Features](4-sdk-reference/advanced-features.md) -->
 * [5 · Integration Patterns & Best Practices](5-integration-patterns/README.md)
     * [Common Patterns](5-integration-patterns/common-patterns.md)
     * [Customization Options](5-integration-patterns/customization.md)
 * [6 · Capabilities & Limitations](6-capabilities/README.md)
-    * [Supported Features](6-capabilities/supported-features.md)
-    * [Current Limitations](6-capabilities/current-limitations.md)
+    <!-- * [Supported Features](6-capabilities/supported-features.md)
+    * [Current Limitations](6-capabilities/current-limitations.md) -->
 * [7 · Code Examples & Tutorials](7-examples/README.md)
-    * [Integration Examples](7-examples/integration-examples.md)
+    <!-- * [Integration Examples](7-examples/integration-examples.md)
     * [Use‑Case Tutorials](7-examples/use-case-tutorials.md)
-    * [Samples Repository](7-examples/samples-repo.md)
+    * [Samples Repository](7-examples/samples-repo.md) -->
 * [8 · Troubleshooting & Support](8-troubleshooting/README.md)
-    * [Common Issues & Solutions](8-troubleshooting/common-issues.md)
-    * [Support Channels](8-troubleshooting/support-channels.md)
+    <!-- * [Common Issues & Solutions](8-troubleshooting/common-issues.md)
+    * [Support Channels](8-troubleshooting/support-channels.md) -->
 * [9 · Compliance & Legal](9-compliance/README.md)
-    * [Terms & Agreements](9-compliance/terms.md)
+    <!-- * [Terms & Agreements](9-compliance/terms.md) -->
 * [10 · Appendices](10-appendices/README.md)
     * [API Reference](10-appendices/api-reference.md)
     * [SDK Changelog](10-appendices/changelog.md)

@@ -1,3 +1,10 @@
+---
+title: Prerequisites
+description: Set up in your development environment to work with Wallet Development Kit (WDK).
+author: Raquel Carrasco Gonzalez
+lastReviewed: 2025-06-16
+---
+
 # Prerequisites
 
 Before you start using the Wallet Development Kit (WDK), ensure you have the following prerequisites set up in your development environment.
@@ -11,8 +18,8 @@ Before you start using the Wallet Development Kit (WDK), ensure you have the fol
   node --version
   
   # Using nvm (recommended)
-  nvm install 16
-  nvm use 16
+  nvm install 20
+  nvm use 20
   ```
 
 - **npm** or **yarn**
@@ -132,12 +139,12 @@ echo "ENTRY_POINT_ADDRESS=<entry_point_contract_address>" >> .env
 
 After setting up your environment:
 1. Proceed to the [Quick Start Guide](quick-start.md)
-2. Learn about [Core Concepts](../3-core-concepts/README.md)
-3. Explore [Advanced Features](../4-advanced-features/README.md)
+<!-- 2. Learn about [Core Concepts](../3-core-concepts/README.md)
+3. Explore [Advanced Features](../4-advanced-features/README.md) -->
 
 ## Troubleshooting
 
-If you encounter setup issues:
+<!-- If you encounter setup issues:
 - Check [Troubleshooting Guide](../8-troubleshooting/README.md)
 - Visit [Support Channels](../8-troubleshooting/support.md)
-- Join our [Discord Community](https://discord.gg/wdk) 
+- Join our [Discord Community](https://discord.gg/wdk)  -->

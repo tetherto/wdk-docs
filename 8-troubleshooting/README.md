@@ -1,3 +1,12 @@
-* [8 · Troubleshooting & Support](8-troubleshooting/README.md)
+---
+title: Troubleshooting & Support
+description: 
+author: Raquel Carrasco Gonzalez
+lastReviewed: 2025-06-12
+---
+
+# Troubleshooting & Support
+
+<!-- * [8 · Troubleshooting & Support](8-troubleshooting/README.md)
     * [Common Issues & Solutions](8-troubleshooting/common-issues.md)
-    * [Support Channels](8-troubleshooting/support-channels.md)
+    * [Support Channels](8-troubleshooting/support-channels.md) -->

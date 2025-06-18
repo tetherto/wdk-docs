@@ -1,3 +1,10 @@
+---
+title: Quick Start Guide
+description: Transaction tutorial using Wallet Development Kit (WDK)
+author: Raquel Carrasco Gonzalez
+lastReviewed: 2025-06-16
+---
+
 # Quick Start Guide
 
 This guide will walk you through performing your first transaction using the Wallet Development Kit (WDK) in just 15 minutes.
@@ -12,7 +19,7 @@ This guide will walk you through performing your first transaction using the Wal
 ## Step 1: Installation
 
 ```bash
-npm install @wdk/wdk-core
+npm install 
 ```
 
 ## Step 2: Import or Create a New Seed Phrase

@@ -1,3 +1,10 @@
+---
+title: Getting Started with WDK
+description: Introduction to the seccion Getting Started with WDK.
+author: Raquel Carrasco Gonzalez
+lastReviewed: 2025-06-16
+---
+
 # Getting Started with WDK
 
 Welcome to the Wallet Development Kit (WDK) getting started guide. This section will help you set up and start using WDK for your blockchain wallet development needs.
