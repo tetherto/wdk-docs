@@ -1,5 +1,5 @@
 ---
-title: Getting Started with WDK
+title: 2 · Getting Started
 description: Introduction to the seccion Getting Started with WDK.
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-16

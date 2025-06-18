@@ -1,5 +1,5 @@
 ---
-title: Introduction to Wallet Development Kit (WDK)
+title: 1 · Executive Summary & Overview
 description: One Pager about Wallet Development Kit (WDK).
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-12

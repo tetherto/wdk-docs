@@ -1,5 +1,5 @@
 ---
-title: Product Architecture & Core Concepts
+title: 3 · Product Architecture & Core Concepts
 description: Entry point for architectural overview and foundational concepts of the Wallet Development Kit.
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-12
