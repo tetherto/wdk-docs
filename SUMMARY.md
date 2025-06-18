@@ -3,6 +3,8 @@
 * [Wallet Development Kit (WDK)](README.md)
 * [1 · Executive Summary & Overview](1-executive-summary/README.md)
 * [2 · Getting Started](2-getting-started/README.md)
+    * [Prerequisites](2-getting-started/prerequisites.md)
+    * [Quick-Start Guide](2-getting-started/quick-start.md)
 * [3 · Product Architecture & Core Concepts](3-architecture/README.md)
 * [4 · SDK Reference Documentation](4-sdk-reference/README.md)
 * [5 · Integration Patterns & Best Practices](5-integration-patterns/README.md)
