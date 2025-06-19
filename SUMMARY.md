@@ -1,5 +1,7 @@
 # Summary
 
+[Wallet Development Kit (WDK)](README.md)
+
 ## Overview
 * [Introduction](1-executive-summary/README.md)
   * [Manifesto](README.md)
