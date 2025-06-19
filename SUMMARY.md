@@ -17,25 +17,32 @@
 ## Getting started
 * [Prerequisites set up](2-getting-started/prerequisites.md)
 * [Quick-Start Guide](2-getting-started/quick-start.md)
+* [Explore supported blockchains](2-getting-started/supported-blockchains.md)
+
 
 ## Developer Guide
 * [Create your first Wallet](7-examples/README.md) 
-* [WDK Address](7-examples/README.md)
-* [Deposit](7-examples/README.md)
+* [Get WDK Address](7-examples/README.md)
+* [Deposit to your wallet](7-examples/README.md)
 * [Get your balance](7-examples/README.md)
-* [Set up Paymaster](7-examples/README.md)
-* [Fee Estimates](7-examples/README.md)
-* [Your first transaction](7-examples/README.md)
-* [Swap tokens](7-examples/README.md)
-* [Bridge tokens](7-examples/README.md)
+* [Account Abstraction](7-developer-guide/account-abstraction.md)
+* [Fee Estimates](7-developer-guide/quote.md)
+* [Send & Receive on WDK](7-developer-guide/transfer.md)
+* [DeFi Actions](7-examples/defi.md)
+* [Cross-chain Actions](7-developer-guide/cross-chain.md)
+* [View transaction history](7-developer-guide/transaction-history.md)
 * **Tutorials**
   * [WDK Browser Wallet Integration Example](7-examples/README.md)
   * [WDK React Native Wallet Integration Example](7-examples/README.md)
 
+
 ## Documentation
+
 * [API Reference](4-sdk-reference/README.md)
-* [Paymaster](4-sdk-reference/README.md)
-* [Indexer](4-sdk-reference/README.md)
+* [Capabilities & Limitations](6-capabilities/README.md)
+* [Troubleshooting](8-troubleshooting/README.md)
+<!-- - [Compliance & Legal](9-compliance/README.md) -->
+* [Appendices](10-appendices/README.md)
 
 ## UX Guidelines
 * [Integration Patterns & Best Practices](5-integration-patterns/README.md)
