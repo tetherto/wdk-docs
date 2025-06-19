@@ -1,6 +1,7 @@
 # Summary
 
 * [Wallet Development Kit (WDK)](README.md)
+# GETTING STARTED
 * [1 · Executive Summary & Overview](1-executive-summary/README.md)
 * [2 · Getting Started](2-getting-started/README.md)
     * [Prerequisites](2-getting-started/prerequisites.md)
