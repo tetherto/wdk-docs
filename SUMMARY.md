@@ -4,12 +4,12 @@
 
 ## Overview
 * [Introduction](1-executive-summary/README.md)
-  * [Manifesto](README.md)
+  <!-- * [Manifesto](README.md)
   * [Beta Program](README.md)
   * [Core Concepts](3-architecture/README.md)
   * [Arquitecture](3-architecture/README.md)
   * [Capabilities & Limitations](6-capabilities/README.md)
-  * [Supported Features](6-capabilities/supported-features.md)
+  * [Supported Features](6-capabilities/supported-features.md) -->
 * [Testing Guide](README.md)
 * [Quick start](2-getting-started/README.md)
 * [FAQ](README.md)
