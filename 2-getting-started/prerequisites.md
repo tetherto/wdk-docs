@@ -2,6 +2,7 @@
 title: Prerequisites
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-16
+icon: clipboard
 ---
 
 # Prerequisites

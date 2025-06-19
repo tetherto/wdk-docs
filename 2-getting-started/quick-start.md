@@ -13,12 +13,13 @@ This guide will walk you through performing your first transaction using the Wal
 
 - Node.js installed
 - Basic understanding of blockchain concepts
-- Some ETH on Arbitrum for gas fees
-- Some USDT on Arbitrum for testing
+- Some USDT on Arbitrum Mainnet for testing
 
 ## Step 1: Installation
 
 ```bash
+git clone https://github.com/tetherto/wdk-core.git
+cd wdk-core
 npm install 
 ```
 
@@ -136,15 +137,5 @@ console.log("Transaction Hash:", transferResult.hash);
 console.log("Gas Cost:", transferResult.gasCost);
 ```
 
-## Resources
-
-- [Arbitrum Bridge](https://bridge.arbitrum.io/)
-- [Arbitrum Explorer](https://arbiscan.io/)
-- [WDK Documentation](https://docs.wallet.tether.io/)
-
 ## Next Steps
-
-<!-- - Learn about [Account Abstraction](../3-core-concepts/account-abstraction.md)
-- Explore [Swap Functionality](../4-advanced-features/swaps.md)
-- Try [Bridging Tokens](../4-advanced-features/bridging.md)
-- Implement [Error Handling](../8-troubleshooting/error-handling.md) -->
+- [Explore supported blockchains](2-getting-started/supported-blockchains.md)
