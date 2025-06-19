@@ -1,16 +1,13 @@
 ---
-title: 1 · Executive Summary & Overview
-description: One Pager about Wallet Development Kit (WDK).
+title: Introduction to Wallet Development Kit (WDK)
+description: Official documentation for Tether’s open-source Wallet Development Kit (WDK)— a stateless, multi-chain framework that lets developers build secure, non-custodial wallets with a unified API, account-abstraction support, and DeFi-ready modules.
 author: Raquel Carrasco Gonzalez
-lastReviewed: 2025-06-12
+lastReviewed: 2025-06-19
+icon: book-open       
 ---
-
-<!-- LOGO PLACEHOLDER -->
 <p align="center">
-  <img src="../assets/logo.png" alt="WDK Logo" width="120" />
+  <img src="./assets/logo.png" alt="WDK Logo" width="120" />
 </p>
-
-# Wallet Development Kit (WDK)
 
 **Tether’s open-source Wallet Development Kit (WDK)** empowers developers to build secure, non-custodial wallets with unified blockchain access, stateless architecture, and complete user control. WDK simplifies the complexity of blockchain infrastructure without compromising on flexibility or security.
 

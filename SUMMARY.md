@@ -9,13 +9,13 @@
   * [Core Concepts](3-architecture/README.md)
   * [Arquitecture](3-architecture/README.md)
   * [Capabilities & Limitations](6-capabilities/README.md)
-  * [Supported Features](6-capabilities/supported-features.md) -->
-* [Testing Guide](README.md)
+  * [Supported Features](6-capabilities/supported-features.md)
+<!-- * [Testing Guide](README.md)
 * [Quick start](2-getting-started/README.md)
-* [FAQ](README.md)
+* [FAQ](README.md) --> -->
 
 ## Getting started
-* [Prerequisites](2-getting-started/prerequisites.md)
+* [Prerequisites set up](2-getting-started/prerequisites.md)
 * [Quick-Start Guide](2-getting-started/quick-start.md)
 
 ## Developer Guide
