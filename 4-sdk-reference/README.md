@@ -1,3 +1,10 @@
+---
+title: SDK Reference
+author: Raquel Carrasco Gonzalez
+lastReviewed: 2025-06-16
+icon: info
+---
+
 # SDK Reference
 
 ### 🚧 Work in progress

@@ -3,6 +3,7 @@ title: Quick Start Guide
 description: Transaction tutorial using Wallet Development Kit (WDK)
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-16
+icon: rocket
 ---
 
 # Quick Start Guide
