@@ -7,7 +7,7 @@ lastReviewed: 2025-06-12
 
 <!-- LOGO PLACEHOLDER -->
 <p align="center">
-  <img src="./assets/logo.png" alt="WDK Logo" width="120" />
+  <img src="../assets/logo.png" alt="WDK Logo" width="120" />
 </p>
 
 # Wallet Development Kit (WDK)
