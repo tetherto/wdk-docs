@@ -12,7 +12,21 @@ WDK’s architecture is modular. You use the same seed phrase for different bloc
 
 Each manager knows how to derive accounts and addresses according to that blockchain’s standards (BIP-44, BIP-84, etc.).
 
-### Validate or generate a new seed phrase
+### How does this work?
+
+- The **seed phrase** is the root of all your keys and accounts, for any supported blockchain.
+
+- Each **WalletManager** (EVM, BTC, TON, etc.) knows how to derive the correct keys and addresses for its blockchain from the same seed.
+
+- You don’t need to specify the blockchain when generating or validating the seed phrase, but you do when creating a wallet manager or account.
+
+### Summary:
+
+- The seed phrase is universal and blockchain-agnostic.
+
+- The wallet/account derivation is blockchain-specific, handled by the appropriate WDK manager.
+
+## Validate or generate a new seed phrase
 
 ```javascript
 import WdkManager from '@wdk/wdk-core';
@@ -128,21 +142,6 @@ console.log("Account address:", await account.getAddress());
 ### Example: Getting a Spark account
 > 🚧 Work in progress
 
----
-
-### How does this work?
-
-- The **seed phrase** is the root of all your keys and accounts, for any supported blockchain.
-
-- Each **WalletManager** (EVM, BTC, TON, etc.) knows how to derive the correct keys and addresses for its blockchain from the same seed.
-
-- You don’t need to specify the blockchain when generating or validating the seed phrase, but you do when creating a wallet manager or account.
-
-### Summary:
-
-- The seed phrase is universal and blockchain-agnostic.
-
-- The wallet/account derivation is blockchain-specific, handled by the appropriate WDK manager.
 
 
 
