@@ -46,7 +46,7 @@ In this step, you will either import an existing seed phrase or generate a new o
 First, in your `test.js` file, import a seed phrase as shown below and check if it's valid.
 
 ```javascript
-import WdkManager from '@wdk/wdk-core';
+import WdkManager from './src/wdk-manager.js';
 
 // Check if seed phrase is valid
 const isValid = WdkManager.isValidSeedPhrase(process.env.SEED_PHRASE);
@@ -58,7 +58,7 @@ Or, if you don’t have an existing seed phrase, you can generate a new one as s
 If you have already imported a seed phrase, you do not need to create a new one.
 
 ```javascript
-import WdkManager from '@wdk/wdk-core';
+import WdkManager from './src/wdk-manager.js';
 
 // Or, generate a new seed phrase
 const seedPhrase = WdkManager.getRandomSeedPhrase();
