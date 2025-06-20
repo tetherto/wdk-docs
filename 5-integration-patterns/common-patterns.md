@@ -7,7 +7,7 @@ lastReviewed: 2025-06-16
 
 # Common Integration Patterns
 
-Aquí encontrarás los arquetipos de integración más habituales y los criterios para escoger cada uno.
+<!-- Aquí encontrarás los arquetipos de integración más habituales y los criterios para escoger cada uno.
 
 ## Tabla de decisión rápida
 | Necesidad principal | Patrón recomendado | Tutorial |
@@ -18,10 +18,10 @@ Aquí encontrarás los arquetipos de integración más habituales y los criterio
 ---
 
 <!-- Inyectamos el contenido del patrón Web/React -->
-@[include](./common-patterns/web-react.md)
+<!-- @[include](./common-patterns/web-react.md) -->
 
 <!-- Inyectamos el contenido del patrón Mobile/React Native -->
-@[include](./common-patterns/mobile-rn.md)
+<!-- @[include](./common-patterns/mobile-rn.md) -->
 
-<!-- !INCLUDE "./common-patterns/server-node.md" -->
+<!-- !INCLUDE "./common-patterns/server-node.md" --> -->
 
