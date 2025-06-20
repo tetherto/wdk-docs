@@ -1,9 +1,10 @@
 ---
-title: Scaffold in JS for Browser
-description: 
+title: Scaffold in React
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-18
 ---
+
+# Arbitrum
 
 # Scaffold in JS for Browser
 

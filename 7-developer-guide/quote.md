@@ -4,7 +4,9 @@ author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-20
 ---
 
-## Step 5: Estimate Fee
+# Ethereum
+
+# Arbitrum
 
 ```javascript
 // Estimate the cost of a transfer operation
@@ -22,3 +24,11 @@ const quote = await arbitrum.quoteTransfer({
 console.log("Gas Cost:", quote.gasCost);
 console.log("Gas Cost in USDT:", (quote.gasCost / 1_000_000).toFixed(6), "USDT");
 ```
+
+# Polygon
+
+# Bitcoin
+
+# TON
+
+# Spark

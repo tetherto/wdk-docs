@@ -4,6 +4,9 @@ author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-20
 ---
 
+# Ethereum 
+
+# Arbitrum
 
 ```javascript
 import WdkManager from '@wdk/wdk-core';
@@ -40,3 +43,17 @@ const wallet = new WalletManagerEvm(process.env.SEED_PHRASE, {
 // Get the first account
 const account = await wallet.getAccount(0);
 console.log("Account address:", await account.getAddress());
+```
+
+# Polygon
+
+# Bitcoin
+
+# TON
+
+# Spark
+
+
+
+
+
