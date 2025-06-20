@@ -52,13 +52,13 @@ We're especially excited to collaborate with:
 #### Developer Guide
 
 - [Create Your First Wallet](7-developer-guide/create-wallet.md)
-- [Get WDK Address](7-examples/get-address.md)
+- [Get WDK Address](7-developer-guide/get-address.md)
 - [Deposit to your wallet](7-developer-guide/create-wallet.md)
 - [Get your balance](7-developer-guide/get-balance.md)
 - [Account Abstraction](7-developer-guide/account-abstraction.md)
 - [Fee Estimates](7-developer-guide/quote.md)
 - [Send & Receive on WDK](7-developer-guide/transfer.md)
-- [DeFi Actions](7-examples/defi.md)
+- [DeFi Actions](7-developer-guide/defi.md)
 - [Cross-chain Actions](7-developer-guide/cross-chain.md)
 - [View transaction history](7-developer-guide/transaction-history.md)
 - [Tutorials](7-developer-guide/tutorials.md)
