@@ -86,11 +86,11 @@ const wallet = new WalletManagerEvm(process.env.SEED_PHRASE, {
 const account = await wallet.getAccount(0);
 console.log("Account address:", await account.getAddress());
 ```
-> Note:
+> **Note**:
 > In blockchain systems, a private key is a secret value that proves ownership and allows you to sign transactions. The public key is mathematically derived from the private key and is used to generate your account address—the identifier you share to receive funds.
-> - Private key: Keep this secret; it controls your assets.
-> - Public key: Used to verify signatures, not secret.
-> - Account/address: The public-facing identifier (e.g., 0x... for Ethereum) that others use to send you assets.
+> - **Private key**: Keep this secret; it controls your assets.
+> - **Public key**: Used to verify signatures, not secret.
+> - **Account/address**: The public-facing identifier (e.g., 0x... for Ethereum) that others use to send you assets.
 >
 > Your seed phrase is the master key that can generate all private keys, public keys, and addresses for your wallet. 
 >
@@ -121,7 +121,7 @@ const arbitrum = new AccountAbstractionManagerEvm(account, {
     }
 });
 ```
-> Note:
+> **Note**:
 >
 > **Account Abstraction** is a concept in Ethereum and EVM-compatible blockchains that allows for more flexible and programmable accounts. Instead of being limited to standard externally owned accounts (EOAs), account abstraction enables custom logic for transaction validation, gas payment, and signature schemes. This makes features like social recovery, multi-signature wallets, and gasless transactions possible.
 >
@@ -153,7 +153,7 @@ const usdtBalance = await arbitrum.getAbstractedAddressTokenBalance(usdtAddress)
 console.log("USDT Balance:", usdtBalance);
 ```
 
-> Note:
+> **Note**:
 > On blockchains like Ethereum and Arbitrum, tokens such as USDT are implemented as smart contracts —programs deployed on the blockchain that manage balances and transfers. Each token contract has its own unique address, just like user accounts. When you interact with a token (e.g., to check your balance or send tokens), you are actually interacting with its smart contract at that address. This is why you need to provide the token’s contract address to check its balance or perform transfers.
 
 ## Step 5: Get USDT Transfer Quote
@@ -178,7 +178,7 @@ const quote = await arbitrum.quoteTransfer({
 console.log("Gas Cost:", quote.gasCost);
 console.log("Gas Cost in USDT:", (quote.gasCost / 1_000_000).toFixed(6), "USDT");
 ```
-> Note:
+> **Note**:
 >
 > **Gas cost** is the fee you pay to process transactions and execute smart contracts on a blockchain. Gas fees compensate network validators (or miners) for the computational resources required to verify and include your transaction in a block.
 > - On networks like Ethereum and Arbitrum, every operation that **changes the blockchain’s state** — such as sending tokens, deploying a contract, or interacting with DeFi protocols — requires gas.
@@ -211,7 +211,7 @@ console.log("Transaction Hash:", transferResult.hash);
 console.log("Gas Cost:", transferResult.gasCost);
 ```
 
-> Note:
+> **Note**:
 > - **Sufficient USDT balance**: To successfully complete the transfer, your wallet must have enough USDT to cover both the amount you want to send and the transaction fee (gas cost) if you are using a paymaster to pay fees in USDT. This means your required balance will be slightly higher than the transfer amount.
 > - **Typical transfer cost**: On the Arbitrum network, the transaction fee for a simple token transfer is usually very low—often less than $0.10 USD (but this can vary with network conditions). Always check the quoted gas cost before confirming.
 > - **On-chain transactions**: Sending tokens is a state-changing operation, meaning it updates the blockchain’s ledger. This is why you pay a gas fee for the transfer.
