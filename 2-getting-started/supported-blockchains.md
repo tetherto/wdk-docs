@@ -3,7 +3,7 @@ title: Supported Blockchains
 description: Transaction tutorial using Wallet Development Kit (WDK)
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-16
-icon: link
+icon: layers
 ---
 
 WDK supports a growing set of blockchains. This list is continuously expanding, with **more integrations coming soon**. Chains marked with ⏳ are in active development.
