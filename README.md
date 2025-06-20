@@ -52,7 +52,7 @@ We're especially excited to collaborate with:
 #### Developer Guide
 
 - [Create Your First Wallet](7-developer-guide/create-wallet.md)
-- [Get WDK Address](7-examples/README.md)
+- [Get WDK Address](7-examples/get-address.md)
 - [Deposit to your wallet](7-developer-guide/create-wallet.md)
 - [Get your balance](7-developer-guide/get-balance.md)
 - [Account Abstraction](7-developer-guide/account-abstraction.md)

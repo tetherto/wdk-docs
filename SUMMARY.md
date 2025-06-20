@@ -22,9 +22,9 @@
 
 ## Developer Guide
 * [Create your first Wallet](7-examples/README.md) 
-* [Get WDK Address](7-examples/README.md)
-* [Deposit to your wallet](7-examples/README.md)
-* [Get your balance](7-examples/README.md)
+* [Get WDK Address](7-examples/get-address.md)
+* [Deposit to your wallet](7-examples/deposit.md)
+* [Get your balance](7-examples/get-balance.md)
 * [Account Abstraction](7-developer-guide/account-abstraction.md)
 * [Fee Estimates](7-developer-guide/quote.md)
 * [Send & Receive on WDK](7-developer-guide/transfer.md)
@@ -32,8 +32,8 @@
 * [Cross-chain Actions](7-developer-guide/cross-chain.md)
 * [View transaction history](7-developer-guide/transaction-history.md)
 * **Tutorials**
-  * [WDK Browser Wallet Integration Example](7-examples/README.md)
-  * [WDK React Native Wallet Integration Example](7-examples/README.md)
+  * [WDK Browser Wallet Integration Example](7-examples/scaffold-browser.md)
+  * [WDK React Native Wallet Integration Example](#)
 
 
 ## Documentation
