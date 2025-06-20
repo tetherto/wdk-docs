@@ -1,10 +1,10 @@
 ---
-title: Create Wallet
+title: Wallet & Account
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-20
 ---
 
-# Create Wallet
+#  Seed Phrase, Wallet & Account
 
 ## The same seed phrase for different blockchains
 

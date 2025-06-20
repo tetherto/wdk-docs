@@ -22,7 +22,7 @@
 
 ## Developer Guide
 * [Create Wallet](7-developer-guide/create-wallet.md) 
-* [Get WDK Address](7-developer-guide/get-address.md)
+
 * [Deposit to your wallet](7-developer-guide/deposit.md)
 * [Get balance](7-developer-guide/get-balance.md)
 * [Account Abstraction](7-developer-guide/account-abstraction.md)
