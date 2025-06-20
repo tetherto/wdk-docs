@@ -228,6 +228,6 @@ This quick start guide has shown you how to perform a basic USDT transfer on Arb
 
 To explore the full capabilities of WDK and learn how to build your own custom wallet, check out the [Developer Guide](../7-examples/README.md) section. There you’ll find detailed examples and tutorials covering wallet creation, balance checks, DeFi integrations, transaction history, and more.
 
-- Explore [Supported Blockchains](2-getting-started/supported-blockchains.md)
+- Explore [Supported Blockchains](./2-getting-started/supported-blockchains.md)
 - [Developer Guide](../7-examples/README.md)
 
