@@ -1,5 +1,6 @@
 ---
 title: Wallet & Account
+description: How to generate, validate, and use a universal seed phrase to create wallets and accounts for multiple blockchains with WDK.
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-20
 ---
