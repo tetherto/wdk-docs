@@ -226,8 +226,8 @@ console.log("Gas Cost:", transferResult.gasCost);
 
 This quick start guide has shown you how to perform a basic USDT transfer on Arbitrum using the WDK SDK. However, WDK is designed to support much more: you can interact with multiple blockchains, manage different tokens, and leverage advanced features such as account abstraction, DeFi actions, and cross-chain operations.
 
-To explore the full capabilities of WDK and learn how to build your own custom wallet, check out the [Developer Guide](../7-examples/README.md) section. There you’ll find detailed examples and tutorials covering wallet creation, balance checks, DeFi integrations, transaction history, and more.
+To explore the full capabilities of WDK and learn how to build your own custom wallet, check out the [Developer Guide](../7-developer-guide/README.md) section. There you’ll find detailed examples and tutorials covering wallet creation, balance checks, DeFi integrations, transaction history, and more.
 
-- Explore [Supported Blockchains](./2-getting-started/supported-blockchains.md)
-- [Developer Guide](../7-examples/README.md)
+- Explore [Supported Blockchains](./supported-blockchains.md)
+- [Developer Guide](../7-developer-guide/README.md)
 
