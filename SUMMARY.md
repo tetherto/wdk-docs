@@ -28,12 +28,12 @@
 * [Account Abstraction](7-developer-guide/account-abstraction.md)
 * [Fee Estimates](7-developer-guide/quote.md)
 * [Send & Receive on WDK](7-developer-guide/transfer.md)
-* [DeFi Actions](7-examples/defi.md)
+* [DeFi Actions](7-developer-guide/defi.md)
 * [Cross-chain Actions](7-developer-guide/cross-chain.md)
 * [View transaction history](7-developer-guide/transaction-history.md)
 * **Tutorials**
-  * [WDK Browser Wallet Integration Example](7-examples/scaffold-browser.md)
-  * [WDK React Native Wallet Integration Example](7-examples/scaffold-native.md)
+  * [WDK Browser Wallet Integration Example](7-developer-guide/scaffold-browser.md)
+  * [WDK React Native Wallet Integration Example](7-developer-guide/scaffold-native.md)
 
 
 ## Documentation
