@@ -4,9 +4,9 @@ author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-20
 ---
 
-# Ethereum
+## Ethereum
 
-# Arbitrum
+## Arbitrum
 
 ```javascript
 // Estimate the cost of a transfer operation
@@ -25,10 +25,10 @@ console.log("Gas Cost:", quote.gasCost);
 console.log("Gas Cost in USDT:", (quote.gasCost / 1_000_000).toFixed(6), "USDT");
 ```
 
-# Polygon
+## Polygon
 
-# Bitcoin
+## Bitcoin
 
-# TON
+## TON
 
-# Spark
+## Spark

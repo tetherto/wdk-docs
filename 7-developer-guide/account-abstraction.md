@@ -4,9 +4,9 @@ author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-20
 ---
 
-# Ethereum
+## Ethereum
 
-#Arbitrum
+## Arbitrum
 
 ```javascript
 import AccountAbstractionManagerEvm from '@wdk/account-abstraction-evm';
@@ -26,11 +26,10 @@ const arbitrum = new AccountAbstractionManagerEvm(account, {
     }
 });
 ```
+## Polygon
 
-# Polygon
+## Bitcoin
 
-# Bitcoin
+## TON
 
-# TON
-
-# Spark
+## Spark

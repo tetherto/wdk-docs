@@ -4,9 +4,10 @@ author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-20
 ---
 
-# Ethereum
+## Ethereum
 
-# Arbitrum
+## Arbitrum
+
 
 ```javascript
 // Check native token balance (ETH)
@@ -20,10 +21,10 @@ const usdtBalance = await arbitrum.getAbstractedAddressTokenBalance(usdtAddress)
 console.log("USDT Balance:", usdtBalance);
 ```
 
-# Polygon
+## Polygon
 
-# Bitcoin
+## Bitcoin
 
-# TON
+## TON
 
-# Spark
+## Spark

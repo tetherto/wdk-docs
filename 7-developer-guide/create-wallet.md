@@ -4,9 +4,9 @@ author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-20
 ---
 
-# Ethereum 
+## Ethereum
 
-# Arbitrum
+## Arbitrum
 
 ```javascript
 import WdkManager from '@wdk/wdk-core';
@@ -45,13 +45,13 @@ const account = await wallet.getAccount(0);
 console.log("Account address:", await account.getAddress());
 ```
 
-# Polygon
+## Polygon
 
-# Bitcoin
+## Bitcoin
 
-# TON
+## TON
 
-# Spark
+## Spark
 
 
 

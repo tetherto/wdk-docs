@@ -4,9 +4,9 @@ author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-20
 ---
 
-# Ethereum
+## Ethereum
 
-# Arbitrum
+## Arbitrum
 
 ```javascript
 const transferResult = await arbitrum.transfer({
@@ -25,10 +25,10 @@ console.log("Transaction Hash:", transferResult.hash);
 console.log("Gas Cost:", transferResult.gasCost);
 ```
 
-# Polygon
+## Polygon
 
-# Bitcoin
+## Bitcoin
 
-# TON
+## TON
 
-# Spark
+## Spark
