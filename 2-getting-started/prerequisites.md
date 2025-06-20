@@ -9,7 +9,7 @@ icon: clipboard
 
 Before you start using the Wallet Development Kit (WDK), ensure you have the following prerequisites set up in your development environment.
 
-- Node.js installed (16 or later)
+- Node.js installed (20 or later)
 - Access to the official WDK Core repository
 
 
