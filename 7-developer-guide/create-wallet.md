@@ -12,7 +12,7 @@ WDK’s architecture is modular. You use the same seed phrase for different bloc
 
 Each manager knows how to derive accounts and addresses according to that blockchain’s standards (BIP-44, BIP-84, etc.).
 
-### Validate or Generate a new seed phrase
+### Validate or generate a new seed phrase
 
 ```javascript
 import WdkManager from '@wdk/wdk-core';
@@ -36,9 +36,9 @@ const isValid = WdkManager.isValidSeedPhrase(seedPhrase);
 console.log("Seed phrase is valid:", isValid);
 ```
 
-## Create Wallet Manager
+## Initiate Wallet Manager
 
-### Ethereum
+### Example: Getting an Ethereum account
 
 ```javascript
 import WalletManagerEvm from '@wdk/wallet-evm';
@@ -54,7 +54,7 @@ const account = await wallet.getAccount(0);
 console.log("Account address:", await account.getAddress());
 ```
 
-### Arbitrum
+### Example: Getting an Arbitrum account
 
 ```javascript
 import WalletManagerEvm from '@wdk/wallet-evm';
@@ -70,7 +70,7 @@ const account = await wallet.getAccount(0);
 console.log("Account address:", await account.getAddress());
 ```
 
-### Polygon
+### Example: Getting an Polygon account
 
 ```javascript
 import WalletManagerEvm from '@wdk/wallet-evm';
@@ -86,7 +86,7 @@ const account = await wallet.getAccount(0);
 console.log("Account address:", await account.getAddress());
 ```
 
-### Bitcoin
+### Example: Getting a Bitcoin account
 
 ```javascript
 import WalletManagerBtc from '@wdk/wallet-btc';
@@ -105,7 +105,7 @@ console.log("Account address:", await account.getAddress());
 ```
 
 
-### TON
+### Example: Getting a TON account
 
 ```js
 import WalletManagerTonGasless from '@wdk/wallet-ton-gasless';
@@ -125,10 +125,12 @@ console.log("Account address:", await account.getAddress());
 ```
 
 
-### Spark
+### Example: Getting a Spark account
 > 🚧 Work in progress
 
-## How does this work?
+---
+
+### How does this work?
 
 - The **seed phrase** is the root of all your keys and accounts, for any supported blockchain.
 
@@ -136,7 +138,7 @@ console.log("Account address:", await account.getAddress());
 
 - You don’t need to specify the blockchain when generating or validating the seed phrase, but you do when creating a wallet manager or account.
 
-Summary:
+### Summary:
 
 - The seed phrase is universal and blockchain-agnostic.
 
