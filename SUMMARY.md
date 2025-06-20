@@ -21,10 +21,10 @@
 
 
 ## Developer Guide
-* [Create your first Wallet](7-examples/create-wallet.md) 
+* [Create Wallet](7-examples/create-wallet.md) 
 * [Get WDK Address](7-examples/get-address.md)
 * [Deposit to your wallet](7-examples/deposit.md)
-* [Get your balance](7-examples/get-balance.md)
+* [Get balance](7-examples/get-balance.md)
 * [Account Abstraction](7-developer-guide/account-abstraction.md)
 * [Fee Estimates](7-developer-guide/quote.md)
 * [Send & Receive on WDK](7-developer-guide/transfer.md)

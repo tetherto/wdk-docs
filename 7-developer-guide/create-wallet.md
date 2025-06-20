@@ -4,7 +4,6 @@ author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-20
 ---
 
-#### Verify Seed Phrase
 
 ```javascript
 import WdkManager from '@wdk/wdk-core';

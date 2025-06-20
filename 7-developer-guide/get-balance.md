@@ -1,5 +1,5 @@
 ---
-title: WDK Wallet Balance
+title: Get Balance
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-20
 ---
