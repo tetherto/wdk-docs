@@ -21,7 +21,7 @@
 
 
 ## Developer Guide
-* [Create your first Wallet](7-examples/README.md) 
+* [Create your first Wallet](7-examples/create-wallet.md) 
 * [Get WDK Address](7-examples/get-address.md)
 * [Deposit to your wallet](7-examples/deposit.md)
 * [Get your balance](7-examples/get-balance.md)
