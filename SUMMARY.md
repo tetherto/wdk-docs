@@ -33,7 +33,7 @@
 * [View transaction history](7-developer-guide/transaction-history.md)
 * **Tutorials**
   * [WDK Browser Wallet Integration Example](7-examples/scaffold-browser.md)
-  * [WDK React Native Wallet Integration Example](#)
+  * [WDK React Native Wallet Integration Example](7-examples/scaffold-native.md)
 
 
 ## Documentation
