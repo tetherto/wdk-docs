@@ -52,4 +52,4 @@ ENTRY_POINT_ADDRESS=<entry_point_contract_address>
 
 ## Next Steps
 
-* [Create your first wallet](.quick-start.md)
+* [Create your first wallet](./quick-start.md)
