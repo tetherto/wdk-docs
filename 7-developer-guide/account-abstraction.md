@@ -1,7 +1,9 @@
 ---
 title: WDK Account Abstraction
+description: Learn how WDK enables advanced account abstraction features—such as gasless transactions and custom validation—across supported blockchains.
+icon: key
 author: Raquel Carrasco Gonzalez
-lastReviewed: 2025-06-20
+lastReviewed: 2025-06-23
 ---
 
 # Account abstraction (AA) wallets
