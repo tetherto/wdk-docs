@@ -161,30 +161,35 @@ sequenceDiagram
     AccountAbstractionManagerEvm->>RPC: eth_getBalance(aaAddress)
 ```
 
-### EVM ERC-4337 example (balance + transfer)
+### EVM ERC-4337 example (native & token balance) in Arbitrum
 
 ```js
-import WdkManager, { Blockchain } from './wdk-manager.js';
+import AccountAbstractionManagerEvm from '@wdk/account-abstraction-evm';
 
-const wdk = new WdkManager(seed, {
-  ethereum: {
-    provider: 'https://rpc.ankr.com/eth',
-    entryPointAddress: '0x5ff1…',
-    paymasterUrl: 'https://pm.tether.io',
-    paymasterToken: { address: process.env.USDT_ETH }
-  }
+// Initialize Account Abstraction
+const wdk = new AccountAbstractionManagerEvm(account, {
+    "chainId": 42161, // Arbitrum
+    "rpcUrl": process.env.RPC_URL,
+    "bundlerUrl": process.env.BUNDLER_URL,
+    "paymasterUrl": process.env.PAYMASTER_URL,
+    "paymasterAddress": process.env.PAYMASTER_ADDRESS,
+    "entryPointAddress": process.env.ENTRY_POINT_ADDRESS,
+    "safeModulesVersion": "0.3.0",
+    "transferMaxFee": 5_000_000,
+    "paymasterToken": {
+        "address": "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9" // USDT on Arbitrum
+    }
 });
 
-// 1. Read AA balance
-const aaBal = await wdk.getAbstractedAddressBalance(Blockchain.Ethereum, 0);
-console.log('AA ETH (wei):', aaBal);
+// Check native token balance (ETH)
+const nativeBalance = await wdk.getAbstractedAddressBalance();
+console.log("ETH Balance:", nativeBalance);
 
-// 2. Transfer 1 USDT from the AA wallet
-await wdk.transfer(Blockchain.Ethereum, 0, {
-  recipient: '0xabc…',
-  token: process.env.USDT_ETH,
-  amount: 1_000_000            // 6-decimals base units
-});
+// Check USDT balance
+const usdtAddress = "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9"; // USDT on Arbitrum
+​
+const usdtBalance = await arbitrum.getAbstractedAddressTokenBalance(usdtAddress);
+console.log("USDT Balance:", usdtBalance);
 ```
 
 ### TON gas-sponsored example
@@ -218,22 +223,6 @@ console.log('AA TON (nanoTON):', bal);
 
 > Tip: Start with classic wallets; switch to AA helpers when you need gasless UX or custom fee logic.
 
-## 6 · Work-in-progress chains
-
-- Spark (Lightning) – wallet manager API stabilising.
-
-- Solana AA – planned Q3 2025 merge.
-
-- TRON gas-free – prototype live; expect SDK wrapper soon.
-
-## Recap
-
-- Universal seed → one phrase for all chains.
-
-- WalletManager → derives classic accounts.
-
-- AccountAbstractionManager → optional layer for gas-sponsored or
-contract wallets, exposed via simple helpers on WdkManager.
 
 
 
