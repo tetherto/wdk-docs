@@ -27,16 +27,6 @@ This is just the beginning. If there's something you wish the SDK did—tell us.
 - **DeFi Ready**: Built-in support for swaps, token transfers, and cross-chain actions
 - **Modular & Extensible**: Add your own chains, tokens, or business loging
 
-### Contact & Feedback
-
-WDK is currently in **private beta**. If you're building wallet products, protocols, or integrations and want early access:
-
-👉 **Please [fill out this form](https://docs.google.com/forms/d/e/1FAIpQLSfh3UKsQ-PwJCQOQyJ3EVMKVyHTuqK1XndyiKe4uLslEEtWSw/viewform)** 👈
-
-We're especially excited to collaborate with:
-- Layer 1/2 chains looking for wallet integrations
-- Fintech and crypto startups building novel user experiences
-
 ---
 
 #### Overview
