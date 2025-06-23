@@ -4,6 +4,8 @@
 
 ## Overview
 * [Introduction](1-executive-summary/README.md)
+* [Explore supported blockchains](1-executive-summary/supported-blockchains.md)
+
   <!-- * [Manifesto](README.md)
   * [Beta Program](README.md)
   * [Core Concepts](3-architecture/README.md)
@@ -17,7 +19,6 @@
 ## Getting started
 * [Prerequisites set up](2-getting-started/prerequisites.md)
 * [Quick-Start Guide](2-getting-started/quick-start.md)
-* [Explore supported blockchains](2-getting-started/supported-blockchains.md)
 
 
 ## Developer Guide
