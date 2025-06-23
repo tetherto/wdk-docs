@@ -5,7 +5,7 @@ lastReviewed: 2025-06-19
 icon: book-open
 ---
 <p align="center">
-  <img src="./assets/logo.png" alt="WDK Logo" width="120" />
+  <img src="./assets/logo.png" width="120" />
 </p>
 
 # Introduction

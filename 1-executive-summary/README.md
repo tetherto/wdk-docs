@@ -7,8 +7,10 @@ icon: lightbulb
 ---
 
 <p align="center">
-  <img src="../assets/logo.png" alt="WDK Logo" width="120" />
+  <img src="../assets/logo.png" width="120" />
 </p>
+
+
 
 ## What is WDK?
 
