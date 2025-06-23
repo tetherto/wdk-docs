@@ -6,7 +6,7 @@ icon: coins
 lastReviewed: 2025-06-23
 ---
 
-# Getting an account’s balance 
+# Getting an account's balance 
 
 WDK offers **two complementary APIs** for balance queries:
 
@@ -118,7 +118,7 @@ console.log("USDT Balance:", usdtBalance);
 
 ## 4 · Bitcoin balance (UTXO) using `@wdk/wallet-btc`
 
-| Field         | Type                                      | Default                       | Why you’d change it                                                                                                        |
+| Field         | Type                                      | Default                       | Why you'd change it                                                                                                        |
 | ------------- | ----------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | **`network`** | `"bitcoin"` \| `"testnet"` \| `"regtest"` | `"bitcoin"`                   | Point the wallet at main-net, public test-net, or a local regtest node.                                                    |
 | **`host`**    | `string`                                  | `"electrum.blockstream.info"` | Use your own Electrum server for privacy or faster sync.                                                                   |
@@ -173,15 +173,14 @@ const nano   = await account.getBalance();               // nanoTON (1 TON = 1e9
 console.log('TON (nano):', nano);
 ```
 
-\| Field | Type | Default | Purpose |
+| Field                | Type     | Default | Purpose                                 |
+|----------------------|----------|---------|-----------------------------------------|
+| `tonClient.url`      | string   | —       | gRPC endpoint for full-node access      |
+| `tonClient.secretKey`| string   | —       | API key for the node (if required)      |
+| `tonApiClient.url`   | string   | —       | Public REST endpoint (used for Jetton look-ups) |
+| `tonApiClient.secretKey` | string | —     | API key for the REST endpoint           |
 
-> \|-------|------|---------|---------|
-> \| `tonClient.url` | `string` | — | gRPC endpoint for full-node access |
-> \| `tonClient.secretKey` | `string` | — | API key for the node (if required) |
-> \| `tonApiClient.url` | `string` | — | Public REST endpoint (used for Jetton look-ups) |
-> \| `tonApiClient.secretKey` | `string` | — | API key for the REST endpoint |
-
-## 7 · TON balance (gas-sponsored v4 wallet) using `WdkManager``
+## 7 · TON balance (gas-sponsored v4 wallet) using `WdkManager`
 
 ```js
 import WdkManager, { Blockchain } from './wdk-manager.js';
@@ -192,7 +191,7 @@ const wdk = new WdkManager(process.env.MNEMONIC, {
   ton: {
     tonClient:    { url: process.env.TON_CENTER_URL, secretKey: process.env.TON_CENTER_SK },
     tonApiClient: { url: process.env.TON_API_URL,    secretKey: process.env.TON_API_SK },
-    /* paymaster Jetton → enables “gasless” mode */
+    /* paymaster Jetton → enables "gasless" mode */
     paymasterToken: { address: USDT_TON}     // e.g. USDT-TON master
   }
 });
@@ -224,6 +223,6 @@ console.log('AA USDT (base):', aaUsdt);
 | Get address              | `account.getAddress()`               | `wdk.getAbstractedAddress()`                            |
 | Native balance           | `account.getBalance()`               | `wdk.getAbstractedAddressBalance()`                     |
 | Token balance            | `account.getTokenBalance(token)`     | `wdk.getAbstractedAddressTokenBalance()`                |
-| Transfer / Swap / Bridge | Use account’s `sendTransaction` etc. | `wdk.transfer / swap / bridge` (handles paymaster & AA) |
+| Transfer / Swap / Bridge | Use account's `sendTransaction` etc. | `wdk.transfer / swap / bridge` (handles paymaster & AA) |
 
 > Tip: Start with classic wallets; switch to AA helpers when you need gasless UX or custom fee logic.
