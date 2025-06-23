@@ -1,15 +1,13 @@
 ---
-title: Code Examples & Tutorials
+title: Developers Introduction to WDK
 description: 
 author: Raquel Carrasco Gonzalez
-lastReviewed: 2025-06-12
+lastReviewed: 2025-06-23
 ---
 
-# Code Examples & Tutorials
+# Developers Introduction to WDK
 > 🚧 Work in progress
-
-
-<!-- * [7 · Code Examples & Tutorials](7-examples/README.md)
-    * [Integration Examples](7-examples/integration-examples.md)
-    * [Use‑Case Tutorials](7-examples/use-case-tutorials.md)
-    * [Samples Repository](7-examples/samples-repo.md) -->
+>
+> 1 · Direct chain packages (@wdk/wallet-evm, …-btc, etc.) – full control, per-chain quirks.
+>
+> 2 · Unified wrapper (WdkManager, Blockchain) – one call-shape across all chains + AA/paymaster logic.
