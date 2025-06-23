@@ -1,17 +1,23 @@
 ---
 title: Wallet & Account
-description: How to generate, validate, and use a universal seed phrase to create wallets and accounts for multiple blockchains with WDK.
+description: How to generate, validate and reuse a universal seed phrase, create blockchain-specific wallets, **and work with account-abstraction addresses** in WDK.
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-20
 ---
 
 #  Seed Phrase, Wallet & Account
 
-## The same seed phrase for different blockchains
+## 1 · One seed phrase → many blockchains
 
 WDK’s architecture is modular. You use the same seed phrase for different blockchains, but instantiate a different wallet manager for each blockchain. 
 
 Each manager knows how to derive accounts and addresses according to that blockchain’s standards (BIP-44, BIP-84, etc.).
+
+| Concept | Universal? | Blockchain-specific? | Who handles it |
+|---------|------------|----------------------|----------------|
+| Seed phrase | ✔ | — | `WdkManager.isValidSeedPhrase` / `getRandomSeedPhrase` |
+| Key derivation | — | ✔ BIP-44/84/2017-TON | The corresponding **WalletManager** |
+| Account abstraction | — | ✔ (EVM ERC-4337, TON gasless) | `AccountAbstractionManager*` spun up by **WdkManager** |
 
 ### How does this work?
 
@@ -21,16 +27,12 @@ Each manager knows how to derive accounts and addresses according to that blockc
 
 - You don’t need to specify the blockchain when generating or validating the seed phrase, but you do when creating a wallet manager or account.
 
-### Summary:
+- Using **Account-Abstraction Manager** (optional) wraps that account in a smart-contract wallet or gasless proxy.
 
-- The seed phrase is universal and blockchain-agnostic.
-
-- The wallet/account derivation is blockchain-specific, handled by the appropriate WDK manager.
-
-## Validate or generate a new seed phrase
+## 2 · Validate or generate a seed phrase
 
 ```javascript
-import WdkManager from '@wdk/wdk-core';
+import WdkManager from './wdk-core/wdk-manager.js';
 
 // Check if seed phrase is valid
 const isValid = WdkManager.isValidSeedPhrase(process.env.SEED_PHRASE);
@@ -51,7 +53,7 @@ const isValid = WdkManager.isValidSeedPhrase(seedPhrase);
 console.log("Seed phrase is valid:", isValid);
 ```
 
-## Initiate Wallet Manager
+## 3 · Instantiate classic wallet managers
 
 ### Example: Getting an Ethereum account
 
@@ -129,9 +131,6 @@ import WalletManagerTonGasless from '@wdk/wallet-ton-gasless';
 const wallet = new WalletManagerTonGasless(process.env.SEED_PHRASE, {
     tonClient: { url: process.env.TON_CENTER_URL, secretKey: process.env.TON_CENTER_SECRET },
     tonApiClient: { url: process.env.TON_API_URL, secretKey: process.env.TON_API_SECRET },
-    paymasterToken: {
-        address: process.env.PAYMASTER_TOKEN_ADDRESS // e.g., USDT or other token address on TON
-    }
 });
 
 // Get the first account (BIP-44 path, e.g., "0'/0/0")
@@ -143,8 +142,98 @@ console.log("Account address:", await account.getAddress());
 ### Example: Getting a Spark account
 > 🚧 Work in progress
 
+## 4 · Account abstraction (AA) wallets
 
+### What is it?
 
+- **Smart-contract wallet address** distinct from the EOA key.
+- Gas can be sponsored via **paymaster tokens**.
+- EVM chains: **ERC-4337** (entry-point contract).
+- TON: **gasless v4 contract** with paymaster callback.
+
+WDK hides the boilerplate:
+
+```
+sequenceDiagram
+    participant Dev
+    Dev->>WdkManager: getAbstractedAddressBalance('ethereum',0)
+    WdkManager->>AccountAbstractionManagerEvm: (instantiate)
+    AccountAbstractionManagerEvm->>RPC: eth_getBalance(aaAddress)
+```
+
+### EVM ERC-4337 example (balance + transfer)
+
+```js
+import WdkManager, { Blockchain } from './wdk-manager.js';
+
+const wdk = new WdkManager(seed, {
+  ethereum: {
+    provider: 'https://rpc.ankr.com/eth',
+    entryPointAddress: '0x5ff1…',
+    paymasterUrl: 'https://pm.tether.io',
+    paymasterToken: { address: process.env.USDT_ETH }
+  }
+});
+
+// 1. Read AA balance
+const aaBal = await wdk.getAbstractedAddressBalance(Blockchain.Ethereum, 0);
+console.log('AA ETH (wei):', aaBal);
+
+// 2. Transfer 1 USDT from the AA wallet
+await wdk.transfer(Blockchain.Ethereum, 0, {
+  recipient: '0xabc…',
+  token: process.env.USDT_ETH,
+  amount: 1_000_000            // 6-decimals base units
+});
+```
+
+### TON gas-sponsored example
+
+```js 
+import WdkManager, { Blockchain } from './wdk-manager.js';
+
+const ton = new WdkManager(seed, {
+  ton: {
+    tonClient: { url: process.env.TON_CENTER_URL, secretKey: process.env.TON_CENTER_SK },
+    tonApiClient: { url: process.env.TON_API_URL, secretKey: process.env.TON_API_SK },
+    paymasterToken: { address: process.env.USDT_TON }
+  }
+});
+
+const aaTon = await ton.getAbstractedAddress(Blockchain.Ton, 0);
+console.log('AA TON address:', aaTon);
+
+const bal = await ton.getAbstractedAddressBalance(Blockchain.Ton, 0);
+console.log('AA TON (nanoTON):', bal);
+```
+
+## 5 · Quick reference
+
+| Task                     | Classic account                      | Account-abstracted address                              |
+| ------------------------ | ------------------------------------ | ------------------------------------------------------- |
+| Get address              | `account.getAddress()`               | `wdk.getAbstractedAddress()`                            |
+| Native balance           | `account.getBalance()`               | `wdk.getAbstractedAddressBalance()`                     |
+| Token balance            | `account.getTokenBalance(token)`     | `wdk.getAbstractedAddressTokenBalance()`                |
+| Transfer / Swap / Bridge | Use account’s `sendTransaction` etc. | `wdk.transfer / swap / bridge` (handles paymaster & AA) |
+
+> Tip: Start with classic wallets; switch to AA helpers when you need gasless UX or custom fee logic.
+
+## 6 · Work-in-progress chains
+
+- Spark (Lightning) – wallet manager API stabilising.
+
+- Solana AA – planned Q3 2025 merge.
+
+- TRON gas-free – prototype live; expect SDK wrapper soon.
+
+## Recap
+
+- Universal seed → one phrase for all chains.
+
+- WalletManager → derives classic accounts.
+
+- AccountAbstractionManager → optional layer for gas-sponsored or
+contract wallets, exposed via simple helpers on WdkManager.
 
 
 
