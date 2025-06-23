@@ -27,6 +27,17 @@ This is just the beginning. If there's something you wish the SDK did—tell us.
 - **DeFi Ready**: Built-in support for swaps, token transfers, and cross-chain actions
 - **Modular & Extensible**: Add your own chains, tokens, or business loging
 
+## Your Responsibilities as a Private Beta Partner
+
+As a participant in the WDK private beta, you have early access to powerful wallet development tools and features. In return, we ask that you:
+
+- **Provide Feedback**: Share your experiences, suggestions, and any issues you encounter. Your feedback is essential for improving WDK before public release.
+- **Report Bugs**: If you find any bugs or unexpected behavior, please let us know as soon as possible.
+- **Respect Confidentiality**: Do not share access, documentation, or code outside your organization or team without prior approval.
+- **Collaborate**: Engage with our team if you have questions, need support, or want to propose new features.
+
+Your input will help shape the future of WDK and ensure it meets the needs of the developer community. Thank you for partnering with us!
+
 ---
 
 #### Overview
