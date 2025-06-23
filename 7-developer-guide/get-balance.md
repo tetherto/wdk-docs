@@ -98,3 +98,14 @@ console.log("USDT Balance:", usdtBalance);
 
 ## Spark
 > 🚧 Work in progress
+
+## 4 · Quick reference
+
+| Task                     | Classic account                      | Account-abstracted address                              |
+| ------------------------ | ------------------------------------ | ------------------------------------------------------- |
+| Get address              | `account.getAddress()`               | `wdk.getAbstractedAddress()`                            |
+| Native balance           | `account.getBalance()`               | `wdk.getAbstractedAddressBalance()`                     |
+| Token balance            | `account.getTokenBalance(token)`     | `wdk.getAbstractedAddressTokenBalance()`                |
+| Transfer / Swap / Bridge | Use account’s `sendTransaction` etc. | `wdk.transfer / swap / bridge` (handles paymaster & AA) |
+
+> Tip: Start with classic wallets; switch to AA helpers when you need gasless UX or custom fee logic.

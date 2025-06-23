@@ -21,11 +21,10 @@
 
 
 ## Developer Guide
-* [Create Wallet](7-developer-guide/create-wallet.md) 
-
+* [Create Wallet](7-developer-guide/create-wallet.md)
 * [Deposit to your wallet](7-developer-guide/deposit.md)
-* [Get balance](7-developer-guide/get-balance.md)
 * [Account Abstraction](7-developer-guide/account-abstraction.md)
+* [Get balance](7-developer-guide/get-balance.md)
 * [Fee Estimates](7-developer-guide/quote.md)
 * [Send & Receive on WDK](7-developer-guide/transfer.md)
 * [DeFi Actions](7-developer-guide/defi.md)
