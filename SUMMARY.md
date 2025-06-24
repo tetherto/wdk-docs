@@ -22,20 +22,24 @@
 
 
 ## Developer Guide
-** [Developers Introduction to WDK](7-developer-guide/README.md)
-* [Create Wallet](7-developer-guide/create-wallet.md)
-* [Deposit to your wallet](7-developer-guide/deposit.md)
-* [Account Abstraction](7-developer-guide/account-abstraction.md)
-* [Get balance](7-developer-guide/get-balance.md)
-* [Fee Estimates](7-developer-guide/quote.md)
-* [Send & Receive on WDK](7-developer-guide/transfer.md)
-* [DeFi Actions](7-developer-guide/defi.md)
-* [Cross-chain Actions](7-developer-guide/cross-chain.md)
-* [View transaction history](7-developer-guide/transaction-history.md)
-* **Tutorials**
-  * [WDK Browser Wallet Integration Example](7-developer-guide/scaffold-browser.md)
-  * [WDK React Native Wallet Integration Example](7-developer-guide/scaffold-native.md)
-
+* [Developers Introduction to WDK](7-developer-guide/README.md)
+* [WDK Manager](7-developer-guide/wdk-manager.md)
+* [WDK for EVM](7-developer-guide/wdk-evm.md)
+  * [Create Wallet](7-developer-guide/wdk-evm/create-wallet.md)
+  * [Deposit to your wallet](7-developer-guide/wdk-evm/deposit.md)
+  * [Account Abstraction](7-developer-guide/wdk-evm/account-abstraction.md)
+  * [Get balance](7-developer-guide/wdk-evm/get-balance.md)
+  * [Fee Estimates](7-developer-guide/wdk-evm/quote.md)
+  * [Send & Receive on WDK](7-developer-guide/wdk-evm/transfer.md)
+  * [DeFi Actions](7-developer-guide/wdk-evm/defi.md)
+  * [Cross-chain Actions](7-developer-guide/wdk-evm/cross-chain.md)
+  * [View transaction history](7-developer-guide/wdk-evm/transaction-history.md)
+  * **Tutorials**
+    * [WDK Browser Wallet Integration Example](7-developer-guide/wdk-evm/scaffold-browser.md)
+    * [WDK React Native Wallet Integration Example](7-developer-guide/wdk-evm/scaffold-native.md)
+* [WDK for Bitcoin](7-developer-guide/wdk-bitcoin.md)
+* [WDK for TON](7-developer-guide/wdk-ton.md)
+* [WDK for Spark](7-developer-guide/wdk-spark.md)
 
 ## Documentation
 
