@@ -56,6 +56,7 @@
 * [API Reference](4-sdk-reference/README.md)
 * [Capabilities & Limitations](6-capabilities/README.md)
 * [Troubleshooting](8-troubleshooting/README.md)
+* [Glossary](./10-appendices/glossary.md)
 <!-- - [Compliance & Legal](9-compliance/README.md) -->
 * [Appendices](10-appendices/README.md)
 

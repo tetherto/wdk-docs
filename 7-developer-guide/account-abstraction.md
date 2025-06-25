@@ -84,6 +84,45 @@ Below is a sample configuration object for account abstraction across multiple b
 This structure shows the required fields for each supported network, including EVM chains (Ethereum, Arbitrum, Polygon), as well as TRON, TON, Bitcoin, and Spark.  
 You can use and adapt these settings when initializing your account abstraction managers in WDK.
 
+### RPC Provider API Key
+
+Below is a quick explainer you can drop into the docs.
+
+|                           |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **What is it?**           | A unique identifier issued by an RPC-as-a-service provider (e.g., Alchemy, Infura, QuickNode, Chainstack, Ankr). It’s appended to the RPC URL, e.g. `https://eth-mainnet.g.alchemy.com/v2/<API_KEY>`.                                                                                                                                                                                                                            |
+| **Why do I need it?**     | • **Authentication & rate-limits** – lets the provider know who’s calling and apply usage quotas.<br>• **Reliability** – paid tiers include SLAs, archival data, websockets, etc.<br>• **Analytics & billing** – the key ties requests to your project so you can track traffic and costs.<br>• **Access to extras** – some endpoints (trace, debug, mempool, NFT APIs) require an authenticated key.                            |
+| **How do I get one?**     | 1. **Choose a provider** (Alchemy, Infura, QuickNode, …).<br>2. **Create an account** (email + password or OAuth).<br>3. **Create a project/app** inside the dashboard.<br>4. The dashboard will display an **HTTP** and **WebSocket** endpoint containing your key—copy it.<br>5. **Store it securely** (environment variable or secrets manager), e.g. `export ETH_RPC_URL="https://eth-mainnet.g.alchemy.com/v2/abcdef123…"`. |
+| **Free vs. paid?**        | Most providers offer a free tier (≈ 300k–500k requests/month). Upgrade for higher throughput, WebSocket support, archive data, or dedicated nodes.                                                                                                                                                                                                                                                                               |
+| **Self-host alternative** | You can run your own node (e.g. Geth, Erigon, Nethermind) and skip API keys entirely, but you must maintain hardware, sync, and uptime yourself.                                                                                                                                                                                                                                                                                 |
+
+> **Tip:** Never commit API keys to Git. Use `.env` files and a secrets manager in CI/CD.
+
+### Bundler URL
+
+Use the table below as a drop-in FAQ for your docs.
+
+|                           |                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **What is it?**           | An HTTP (or WebSocket) endpoint exposed by an **ERC-4337 Bundler**. A Bundler collects `UserOperation`s from the AA mempool and submits them to the on-chain `EntryPoint` contract. Example: <br>`https://api.pimlico.io/v1/matic/bundler` <br>`https://bundler.stackup.sh/v1/testnet`                                                                                                                                                             |
+| **Why do I need it?**     | • **Account Abstraction flow** – without a Bundler your Smart Account’s `UserOperation`s never reach the chain.<br>• **Batching & fee optimisation** – Bundlers aggregate multiple ops into a single transaction, saving gas.<br>• **Mempool propagation** – they gossip your `UserOperation` to other nodes so it can be picked up quickly.<br>• **Spam & replay protection** – good providers run validators to drop malformed or malicious ops. |
+| **How do I get one?**     | 1. **Pick a provider** (Pimlico, Candide, Biconomy, StackUp, Alchemy AA, etc.).<br>2. **Sign up / create a project** in their dashboard.<br>3. Copy the **Bundler URL** (often shown alongside a Paymaster URL or API key).<br>4. Save it in an environment variable: <br>`export BUNDLER_URL="https://api.pimlico.io/v1/matic/bundler"`                                                                                                           |
+| **Free vs. paid?**        | Most providers offer a free community tier (rate-limited); paid plans unlock higher TPS, private mempools, and SLA guarantees.                                                                                                                                                                                                                                                                                                                     |
+| **Self-host alternative** | Run your own Bundler (open-source implementations from StackUp, Pimlico, Biconomy). You’ll need:<br>• A synced RPC node<br>• Persistent storage for the AA mempool<br>• Cron job or service to mine & broadcast bundles                                                                                                                                                                                                                            |
+| **Security tip**          | Treat Bundler URLs with API tokens the same as RPC keys—keep them in `.env` files or a secrets manager and never commit them to Git.                                                                                                                                                                                                                                                                                                               |
+
+> **Quick test:**
+>
+> ```bash
+> curl -X POST $BUNDLER_URL \
+>   -H "Content-Type: application/json" \
+>   -d '{"jsonrpc":"2.0","id":1,"method":"eth_supportedEntryPoints","params":[]}'
+> ```
+>
+> A healthy Bundler should return the address of the supported `EntryPoint` contract.
+
+
+
 ```json
 {
     "ethereum": {
