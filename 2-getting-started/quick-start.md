@@ -1,29 +1,27 @@
 ---
-title: Quick Start (EVM + ERC-4337)
+title: Quick Start (EVM-ERC-4337)
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-25
 icon: rocket
 ---
 
-> 🚧 Work in progress
-
-This guide will walk you through the essential steps to set up a Node.js project and create your **first WDK wallet** using **account abstraction** and a **paymaster**.
+This guide will walk you through the essential steps to set up a Node.js project and create your **first WDK smart wallet** with **account abstraction** and **paymaster** configuration.
 
 The objective is to help you quickly get hands-on experience with the Wallet Development Kit (WDK), so you can understand how to **initialize a wallet**, **configure account abstraction**, and **perform basic blockchain operations** using `@wdk-wallet-evm-erc-4337`.
 
 By the end of this guide, you will have:
 - Initialized a Node.js project
-- Created a simple script (`test.js`) to interact with [WDK EVM](../7-developer-guide/wdk-evm.md) and EVM Account Abstraction packages. 
-- [Set up a wallet](../7-developer-guide/wdk-evm/create-wallet.md) with [account abstraction](./account-abstraction-basics.md) and [paymaster support](./account-abstraction-basics.md)
-- Learned the basics of [sending transactions](../7-developer-guide/wdk-evm/transfer.md) and managing your wallet programmatically
+- Created a simple script (`test.js`) to interact with [WDK EVM Account Abstraction package](../7-developer-guide/wdk-evm.md).
+- [Set up a wallet](../7-developer-guide/wdk-evm/create-wallet.md) with [account abstraction](./account-abstraction-basics.md) and [paymaster support](./account-abstraction-basics.md).
+- Learned the basics of [sending transactions](../7-developer-guide/wdk-evm/transfer.md) and managing your wallet programmatically.
 
 ---
 
 ## 0 · Prerequisites (what you need)
 
-You can use your preferred Bundler & Paymaster service provider. But in this example we will use:  
-- `BUNDLER_URL`, `PAYMASTER_URL`, `ENTRY_POINT_ADDRESS` (4337 v0.6)  from the [configuration page](../7-developer-guide/account-abstraction.md)
-- RPC public endpoint: `https://polygon-rpc.com` 
+You can use your preferred RPC, Bundler & Paymaster service provider. But in this example we will use:  
+- `BUNDLER_URL`, `PAYMASTER_URL`, `ENTRY_POINT_ADDRESS` (4337 v0.6)  from the [configuration page](../7-developer-guide/account-abstraction.md).
+- And a public RPC endpoint: `https://polygon-rpc.com` .
 
 | Tool | Version | Why |
 |------|---------|-----|
@@ -32,7 +30,7 @@ You can use your preferred Bundler & Paymaster service provider. But in this exa
 | **Some USDT on Polygon** | test | Send + cover *transfer* amount |
 
 > **Note**:
-> For USDT transactions, we provide a test seed phrase that is pre-funded to sponsor a limited number of test transactions. This allows you to experiment with WDK features without needing to fund your own wallet initially.
+> For USDT transactions, we provide a test [seed phrase](../10-appendices/glossary.md#seed-phrase "A sequence of words that encodes the private key to your blockchain wallet.") that is pre-funded to sponsor a limited number of test transactions. This allows you to experiment with WDK features without needing to fund your own wallet initially.
 
 ---
 
@@ -46,22 +44,20 @@ npm install @wdk/wallet-evm @wdk/wallet-evm-erc-4337
 
 ## 2 · Bootstrap script
 
-The script that follows does five things:
+The script below demonstrates five fundamental steps in setting up and using your WDK wallet:
 
 | # | Step | What it does | Why it matters |
 |---|------|--------------|----------------|
-| 1 | **Load deps** | Imports `@wdk/wallet-evm-erc-4337` | Gives the SDK what it needs to talk to any EVM Chain. |
-| 2 | **Declare [Seed Phrase](../10-appendices/glossary.md#seed-phrase "A sequence of words that encodes the private key to your blockchain wallet.") and Account [Abstraction Configuration](../7-developer-guide/account-abstraction.md) for Polygon** | Declares the Seed Phrase and the configuration necessary to set up the chain and account abstraction for `WalletManagerEvm`| You always start with an EOA; it can sign messages and fund contract deployments. |
-| 3 | **Create/attach a Smart Account** | Wraps that EOA in an ERC-4337 Smart Account via `SmartAccount4337.fromEOA()`. Uses your seed phrase to obtain the first Externally Owned Account (index 0) and attaches it to the RPC URL. | You always start with an EOA; it can sign messages and fund contract deployments, and with the `WalletManagerEvm` configuration turns your bare key into a programmable wallet that supports paymasters, social recovery, batching, etc. |
-| 4 | **Read balances** | Queries Pol (Polygon gas and native token) and USDT balances from the Smart Account’s address. | Confirms you’re connected and have funds before attempting a transfer. |
-| 5 | **Send a gas-sponsored transfer** | Calls `quoteTransfer` to calculate the cost of transfering 1 USDT and `transfer` to execute the transfer transaccion, with the paymaster covering the gas, and getting paid in the paymaster Token (USDT).| Demonstrates a real ERC-4337 flow: you sign a *UserOperation*, the paymaster sponsors fees, and a bundler posts the tx. |
-
+| 1 | **Load dependencies** | Imports `@wdk/wallet-evm-erc-4337` | Provides the SDK needed to interact with EVM chains and use account abstraction features. |
+| 2 | **Declare Seed Phrase and [Account Abstraction Configuration](../7-developer-guide/account-abstraction.md) for Polygon** | Sets up the seed phrase and the configuration object required to initialize the smart wallet with account abstraction and paymaster support. | Prepares all necessary parameters for creating a programmable wallet on Polygon. |
+| 3 | **Create Smart Wallet instance** | Instantiates `WalletManagerEvm` with the seed phrase and configuration, then derives the first account (index 0). | Establishes your smart wallet and obtains the address you’ll use for transactions. |
+| 4 | **Check balances** | Reads the USDT and native token (POL) balances from the smart wallet’s address. | Ensures your wallet is connected and funded before attempting a transfer. |
+| 5 | **Quote and send a gas-sponsored transfer** | Uses `quoteTransfer` to estimate the cost of sending 1 USDT, then calls `transfer` to execute the transaction with the paymaster covering the gas fees. | Demonstrates a real ERC-4337 flow: you sign a UserOperation, the paymaster sponsors the gas, and the bundler posts the transaction. |
 
 ```js
 // ---------- 1. Load deps  ---------- //
 
 import WalletManagerEvm from '@wdk/wallet-evm-erc-4337';
-
 
 // ---------- 2. Declares seed phrase & Account Abstraction Configuration ---------- //
 
