@@ -33,7 +33,6 @@
   * [Get balance](7-developer-guide/wdk-bitcoin/get-balance.md)
   * [Send & Receive on WDK](7-developer-guide/wdk-bitcoin/transfer.md)
 
-
 * [WDK for TON](7-developer-guide/wdk-ton.md)
   * [Create Wallet](7-developer-guide/wdk-ton/create-wallet.md)
   * [Get balance](7-developer-guide/wdk-ton/get-balance.md)
