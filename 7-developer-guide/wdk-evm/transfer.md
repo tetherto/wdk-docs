@@ -2,7 +2,7 @@
 title: Estimate Fee & Execute Transactions (EVM)
 description: Quote gas costs and execute ERC‑20 transaction on classic EOAs and ERC‑4337 smart‑accounts with the Wallet Development Kit.
 author: Raquel Carrasco Gonzalez
-icon: send
+icon: arrow-right
 lastReviewed: 2025‑06‑25
 ---
 
