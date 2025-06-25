@@ -5,12 +5,9 @@ lastReviewed: 2025-06-25
 icon: clipboard
 ---
 
-> 🚧 Work in progress
-
-
 # Prerequisites
 
-Before using the Wallet Development Kit (WDK), ensure your development environment is properly set up with the following prerequisites:
+Before using the **Wallet Development Kit (WDK)**, ensure your development environment is properly set up with the following prerequisites:
 
 - Node.js installed (20 or later)
 
@@ -39,26 +36,30 @@ This documentation will introduce the fundamental concepts required to use WDK. 
 
 ## Development Setup
 
-### Configuration
+### **Smart Wallet Configuration**
 
 For a detailed example, check the Account Abstraction Configuration, but feel free to choose a configuration that best fits your needs.
 
 - [Account Abstraction Configuration](../7-developer-guide/account-abstraction.md)
 
-> **Provider Flexibility:**
-> You are free to use any RPC, bundler, or paymaster provider or endpoint that is compatible with your target EVM chain. WDK works with both public and private endpoints.
-> 
-> **Recommended public endpoints:**
-> - **Ethereum Mainnet RPC:** `https://rpc.mevblocker.io/fast` or `https://eth.llamarpc.com`
-> - **Polygon Mainnet RPC:** `https://polygon-rpc.com`
-> - **Arbitrum One RPC:** `https://1rpc.io/arb`
-> - **Bundler/Paymaster Providers:** [Candide](https://candide.dev), [Pimlico](https://pimlico.io), or any other compatible service.
-> 
-> Substitute these URLs in your wallet configuration, or use your own infrastructure for enhanced reliability and privacy.
+**Provider Flexibility:**
+
+You are free to use any RPC, bundler, or paymaster provider or endpoint that is compatible with your target chain. WDK works with both public and private endpoints.
+
+-  **Example public endpoints:**
+  - **Ethereum Mainnet RPC:** `https://rpc.mevblocker.io/fast` or `https://eth.llamarpc.com`
+   - **Polygon Mainnet RPC:** `https://polygon-rpc.com`
+   - **Arbitrum One RPC:** `https://1rpc.io/arb`
+   - **Bundler/Paymaster Providers:** [Candide](https://candide.dev), [Pimlico](https://pimlico.io), or any other compatible service.
+ 
+Fell free to substitute these URLs in your wallet configuration, or use your own infrastructure for enhanced reliability and privacy.
 
 ---
 
 ## Next Steps
 
-* [Learn more about Account Abstraction](./account-abstraction-basics.md)
 * [Create your first wallet using WDK](./quick-start.md)
+
+or 
+
+* [Learn more about Account Abstraction](./account-abstraction-basics.md)
