@@ -10,20 +10,22 @@ icon: clipboard
 Before you start using the Wallet Development Kit (WDK), ensure you have the following prerequisites set up in your development environment.
 
 - Node.js installed (20 or later)
-- Access to the official WDK Core repository
 
 
 ## Blockchain Knowledge
 
 While this documentation will introduce and explain the fundamental concepts required to use WDK, having prior knowledge of the topics below will help you get started more quickly and confidently.
 
-### Required Understanding
+### Required Knowladge
 
-- Basic blockchain concepts
+- [Account abstraction basics](./account-abstraction-basics.md)
+
+### Optional but Helpful
+
+- Basic blockchain concepts ()
 - Ethereum and EVM fundamentals
 - Bitcoin fundamentals
 - TON fundamentals
-- Account abstraction basics
 - Gas fees and transaction mechanics
 
 ## Development Setup
