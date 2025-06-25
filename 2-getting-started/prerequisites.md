@@ -1,7 +1,7 @@
 ---
 title: Prerequisites
 author: Raquel Carrasco Gonzalez
-lastReviewed: 2025-06-16
+lastReviewed: 2025-06-25
 icon: clipboard
 ---
 
@@ -22,36 +22,23 @@ While this documentation will introduce and explain the fundamental concepts req
 
 ### Optional but Helpful
 
-- Basic blockchain concepts ()
-- Ethereum and EVM fundamentals
-- Bitcoin fundamentals
-- TON fundamentals
-- Gas fees and transaction mechanics
+- Basic blockchain concepts
+- [Ethereum fundamentals](https://ethereum.org/en/what-is-ethereum/)
+  - [Ethereum Virtual Machine fundamentals](https://ethereum.org/en/developers/docs/evm/)
+  - [Gas fees](https://ethereum.org/en/gas/)
+- [TON fundamentals](https://docs.ton.org/v3/concepts/dive-into-ton/introduction)
+- [Bitcoin fundamentals](https://developer.bitcoin.org/devguide/block_chain.html)
+- [Spark fundamentals](https://docs.spark.money/home/welcome)
+- [Tether Tokens](https://tether.to/en/)
 
 ## Development Setup
 
-### API Keys and Configuration
+### Configuration
 
-- RPC Provider API Key
-
-### Environment Setup
-
-#### Environment Configuration
-
-```bash
-SEED_PHRASE=<seed_phrase>
-CHAIN_ID=<chain_id>
-RPC_URL=<your_rpc_url>
-BUNDLER_URL=<your_bundler_url>
-PAYMASTER_URL=<your_paymaster_url>
-PAYMASTER_ADDRESS=<paymaster_contract_address>
-ENTRY_POINT_ADDRESS=<entry_point_contract_address>
-```
-
-> **Note**: For development purposes, you can store your seed phrase in the `.env` file. Make sure `.env` is in your `.gitignore` to prevent accidentally committing sensitive data.
-
+- [Account Abstraction Configuration](../7-developer-guide/account-abstraction.md)
 
 
 ## Next Steps
 
-* [Create your first wallet](./quick-start.md)
+* [Learn more about Account Abstraction](./account-abstraction-basics.md)
+* [Create your first wallet using WDK](./quick-start.md)
