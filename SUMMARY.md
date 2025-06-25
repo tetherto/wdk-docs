@@ -19,6 +19,7 @@
 ## Getting started
 * [Prerequisites set up](2-getting-started/prerequisites.md)
 * [Quick-Start Guide](2-getting-started/quick-start.md)
+* [Account Abstraction Basics](2-getting-started/account-abstraction-basics.md)
 
 
 ## Developer Guide
