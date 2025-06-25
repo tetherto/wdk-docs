@@ -1,6 +1,6 @@
 ---
-Wallet & Account (EVM)
-description: Generate, validate and reuse a universal seed phrase, create EVM‑specific wallets, and derive accounts (classic & ERC‑4337) in WDK
+title: Wallet & Account (EVM)
+description: Generate, validate and reuse a universal seed phrase, create EVM‑specific wallets, and derive accounts(classic & ERC‑4337) in WDK
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-24
 icon: wallet
