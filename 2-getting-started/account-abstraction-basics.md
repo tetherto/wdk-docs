@@ -26,7 +26,7 @@ Most users today control an **Externally Owned Account (EOA)**—a simple public
 | **Gas payment** | Must be paid from the same EOA balance and in the chain’s native coin. |
 | **Upgradeability / recovery** | Impossible without rotating keys or migrating funds. |
 
-EOAs are simple but brittle: lose the key, lose the funds. They also limit UX—every user must hold native gas and sign each transaction.  :contentReference[oaicite:0]{index=0}
+EOAs are simple but brittle: lose the key, lose the funds. They also limit UX—every user must hold native gas and sign each transaction.
 
 ---
 
@@ -38,7 +38,7 @@ A **Smart Account** is an on-chain smart contract that *owns* your funds and *en
 * Let someone else pay gas (via *paymasters*).  
 * Support built-in recovery or upgrade paths.
 
-Put simply, a Smart Account *is* a smart contract; the contract’s code is the wallet.  :contentReference[oaicite:1]{index=1}
+Put simply, a Smart Account *is* a smart contract; the contract’s code is the wallet.
 
 ---
 
@@ -52,7 +52,6 @@ Put simply, a Smart Account *is* a smart contract; the contract’s code is the 
 | Recovery | Manual key management | Social recovery, guardians, time-locks |
 | Upgrades | Impossible | Versioned contract modules |
 
-:contentReference[oaicite:2]{index=2}
 
 ---
 
@@ -63,7 +62,7 @@ ERC-4337 introduces a new object, **UserOperation**, and a shared **EntryPoint**
 2. A **Bundler** (relayer) wraps many `UserOperation`s into one on-chain tx.  
 3. The Smart Account’s `validateUserOp()` decides if the action is allowed and **who** pays the gas (it can invoke a **Paymaster**).  
 
-No consensus-layer changes are required—ERC-4337 lives entirely in contracts and mempool-like infrastructure.  :contentReference[oaicite:3]{index=3}
+No consensus-layer changes are required—ERC-4337 lives entirely in contracts and mempool-like infrastructure. 
 
 ---
 
