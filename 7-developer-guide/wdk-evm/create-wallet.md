@@ -1,155 +1,238 @@
 ---
-title: Wallet & Account
-description: How to generate, validate and reuse a universal seed phrase, create blockchain-specific wallets, **and work with account-abstraction addresses** in WDK.
+Wallet & Account (EVM)
+description: Generate, validate and reuse a universal seed phrase, create EVM‑specific wallets, and derive accounts (classic & ERC‑4337) in WDK
 author: Raquel Carrasco Gonzalez
-lastReviewed: 2025-06-23
+lastReviewed: 2025-06-24
 icon: wallet
 ---
 
-#  Seed Phrase, Wallet & Account
+# Seed Phrase, Wallet & Account – **EVM Edition**
 
-## 1 · One seed phrase → many blockchains
+> **Scope:** This guide covers **Ethereum‑compatible chains only**. For Bitcoin, TON or other blockchains, refer to their dedicated sections.
 
-WDK’s architecture is modular. You use the same seed phrase for different blockchains, but instantiate a different wallet manager for each blockchain. 
+---
 
-Each manager knows how to derive accounts and addresses according to that blockchain’s standards (BIP-44, BIP-84, etc.).
+## 1 · One seed phrase → many EVM chains
 
-| Concept | Universal? | Blockchain-specific? | Who handles it |
-|---------|------------|----------------------|----------------|
-| Seed phrase | ✔ | — | `WdkManager.isValidSeedPhrase` / `getRandomSeedPhrase` |
-| Key derivation | — | ✔ BIP-44/84/2017-TON | The corresponding **WalletManager** |
-| Account abstraction | — | ✔ (EVM ERC-4337, TON gasless) | `AccountAbstractionManager*` spun up by **WdkManager** |
+WDK is modular: one BIP‑39 seed phrase can drive wallets on **any** EVM chain—Ethereum, Arbitrum, Polygon, etc.
+Each chain simply gets its own *wallet manager* instance that knows how to derive addresses at the standard BIP‑44 path `m/44'/60'/0'/0/index`.
 
-### How does this work?
+| Concept                         | Universal? | Chain‑specific? | Responsibility                                                   |
+| ------------------------------- | ---------- | --------------- | ---------------------------------------------------------------- |
+| Seed phrase                     | ✔          | —               | `WalletManagerEvm.isValidSeedPhrase()` / `getRandomSeedPhrase()` |
+| Key derivation + address format | —          | ✔ (BIP‑44)      | **WalletManagerEvm**                                             |
+| Account abstraction             | —          | ✔ (ERC‑4337)    | **WalletManagerEvmErc4337**                                      |
 
-- The **seed phrase** is the root of all your keys and accounts, for any supported blockchain.
+### How it fits together
 
-- Each **WalletManager** (EVM, BTC, TON, etc.) knows how to derive the correct keys and addresses for its blockchain from the same seed.
+1. **Seed phrase** – root entropy; never leaves your secure storage.
+2. **Wallet manager** – derives the private key for a given account index.
+3. **Account** – exposes helpers to sign, send and query on‑chain.
+4. *(Optional)* **ERC‑4337 account** – smart‑contract wallet driven by the same key, sponsored by a bundler + paymaster.
 
-- You don’t need to specify the blockchain when generating or validating the seed phrase, but you do when creating a wallet manager or account.
-
-- Using **Account-Abstraction Manager** (optional) wraps that account in a smart-contract wallet or gasless proxy.
+---
 
 ## 2 · Validate or generate a seed phrase
 
-```javascript
-import WdkManager from './wdk-core/wdk-manager.js';
+```js
+import { WalletManagerEvm } from "@wdk/wallet-evm";
 
-// Check if seed phrase is valid
-const isValid = WdkManager.isValidSeedPhrase(process.env.SEED_PHRASE);
-console.log("Seed phrase is valid:", isValid);
+// Example seed phrase for demonstration purposes only.
+// Never use this seed phrase in production or with real funds.
+const seedPhrase = 'choose indicate barrel slush penalty hollow box exchange soldier gentle memory rare'
+
+// Validate an existing phrase (12/24 words)
+const isValid = WalletManagerEvm.isValidSeedPhrase(seedPhrase);
+console.log("Seed is valid:", isValid);
+```
+Or you can generate a new seed phrase. 
+
+```js
+// Or create a fresh one
+const seedPhrase = WalletManagerEvm.getRandomSeedPhrase();
+console.log("Your new seed:", seedPhrase);
+
+// Validate the generated phrase (12 words)
+const isValid = WalletManagerEvm.isValidSeedPhrase(seedPhrase);
+console.log("Seed is valid:", isValid);
 ```
 
-Or you can also create a new seed phrase, you can generate a secure seed phrase using WDK:
+*Tip – The same helpers exist on every other `WalletManager*`; all delegate to the same internal BIP‑39 implementation.*
 
-```javascript
-import WdkManager from '@wdk/wdk-core';
-
-// Or, generate a new seed phrase
-const seedPhrase = WdkManager.getRandomSeedPhrase();
-console.log("Your seed phrase:", seedPhrase);
-
-// Verify the seed phrase
-const isValid = WdkManager.isValidSeedPhrase(seedPhrase);
-console.log("Seed phrase is valid:", isValid);
-```
+---
 
 ## 3 · Instantiate classic wallet managers
 
-### Example: Getting an Ethereum account
-
-```javascript
-import WalletManagerEvm from '@wdk/wallet-evm';
-
-// Create wallet manager
-const wallet = new WalletManagerEvm(process.env.SEED_PHRASE, {
-    "chainId": 1, // Ethereum
-    "rpcUrl": process.env.RPC_URL
-});
-
-// Get the first account
-const account = await wallet.getAccount(0);
-console.log("Account address:", await account.getAddress());
-```
-
-### Example: Getting an Arbitrum account
-
-```javascript
-import WalletManagerEvm from '@wdk/wallet-evm';
-
-// Create wallet manager
-const wallet = new WalletManagerEvm(process.env.SEED_PHRASE, {
-    "chainId": 42161, // Arbitrum
-    "rpcUrl": process.env.RPC_URL
-});
-
-// Get the first account
-const account = await wallet.getAccount(0);
-console.log("Account address:", await account.getAddress());
-```
-
-### Example: Getting an Polygon account
-
-```javascript
-import WalletManagerEvm from '@wdk/wallet-evm';
-
-// Create wallet manager
-const wallet = new WalletManagerEvm(process.env.SEED_PHRASE, {
-    "chainId": 137, // Polygon
-    "rpcUrl": process.env.RPC_URL
-});
-
-// Get the first account
-const account = await wallet.getAccount(0);
-console.log("Account address:", await account.getAddress());
-```
-
-### Example: Getting a Bitcoin account
-
-```javascript
-import WalletManagerBtc from '@wdk/wallet-btc';
-
-// Create wallet manager for Bitcoin
-const wallet = new WalletManagerBtc(process.env.SEED_PHRASE, {
-    network: "bitcoin", // or "testnet" if you want to use testnet
-    host: "electrum.blockstream.info", // optional, default is this value
-    port: 50001, // optional, default is this value
-    bip: 84 // optional, default is 84 (for native segwit addresses)
-});
-
-// Get the first account (BIP-44/84 path, e.g., "0'/0/0")
-const account = await wallet.getAccount("0'/0/0");
-console.log("Account address:", await account.getAddress());
-```
+> **Note**: This configuration is for a classic EOA wallet only. 
+>
+>If you want to use Account Abstraction (ERC-4337) features, see the section 4 for the required configuration and modules.
 
 
-### Example: Getting a TON account
+### 3.1 Ethereum Mainnet (provider‑only)
 
 ```js
-import WalletManagerTonGasless from '@wdk/wallet-ton-gasless';
+import { WalletManagerEvm } from "@wdk/wallet-evm";
 
-// Create wallet manager for TON (account abstraction)
-const wallet = new WalletManagerTonGasless(process.env.SEED_PHRASE, {
-    tonClient: { url: process.env.TON_CENTER_URL, secretKey: process.env.TON_CENTER_SECRET },
-    tonApiClient: { url: process.env.TON_API_URL, secretKey: process.env.TON_API_SECRET },
-    paymasterToken: { address: process.env.USDT_TON } // Check the Account Abstraction section
-
+const eth = new WalletManagerEvm(seedPhrase, {
+  chainId: 1,
+  provider: "https://rpc.mevblocker.io/fast"
 });
 
-// Get the first account (BIP-44 path, e.g., "0'/0/0")
-const account = await wallet.getAccount("0'/0/0");
-console.log("Account address:", await account.getAddress());
+const account = await eth.getAccount(); // index 0
+console.log("EOA:", await account.getAddress());
 ```
 
+### 3.2 Arbitrum One (provider‑only)
 
-### Example: Getting a Spark account
-> 🚧 Work in progress
+```js
+import { WalletManagerEvm } from "@wdk/wallet-evm";
+
+const arb = new WalletManagerEvm(seedPhrase, {
+  chainId: 42161,
+  provider: "https://1rpc.io/arb"
+});
+
+const account = await arb.getAccount(1); // index 1
+console.log("EOA:", await account.getAddress());
+```
+
+### 3. Polygon (provider‑only)
+
+```js
+import { WalletManagerEvm } from "@wdk/wallet-evm";
+
+const pol = new WalletManagerEvm(seedPhrase, {
+  chainId: 137,
+  provider: "https://polygon-rpc.com"
+});
+
+const account = await pol.getAccount(1); // index 1
+console.log("EOA:", await account.getAddress());
+```
+
+> **Gas policy** – With a plain EOA the user pays network fees in the chain’s native token (ETH (mainnet), ETH (arbitrum), POL, etc.).
+---
+
+## 4 · Opt‑in to ERC‑4337 account abstraction
+
+If you want sponsored or token‑denominated gas, create an **ERC‑4337 wallet manager** instead.
+
+For the examples in this documentation, we use **Candide** and **Pimlico** as service providers for `bundlerUrl` and `paymasterUrl`. However, you are free to choose any compatible service provider that meets your configuration needs.
+
+*WDK does not favour any service providers – choose the one you prefer.*
+
+### 4.1 Ethereum
+
+```js
+import { WalletManagerEvm } from "@wdk/wallet-evm-erc-4337";
+
+const ethereumConfig = {
+  chainId: 1,
+  blockchain: "ethereum",
+  provider: "https://rpc.mevblocker.io/fast",
+  // You can use any compatible service provider for bundlerUrl and paymasterUrl.
+  // The URLs below use Candide as an example.
+  bundlerUrl: "https://api.candide.dev/public/v3/ethereum",
+  paymasterUrl: "https://api.candide.dev/public/v3/ethereum",
+  // The paymasterAddress below is for example/testing purposes and works with the example provider.
+  // If you use a different service provider or deploy your own paymaster, be sure to use your own paymaster address/key.
+  paymasterAddress: "0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba",
+  entrypointAddress: "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
+  transferMaxFee: 5_000_000,
+  swapMaxFee:     5_000_000,
+  bridgeMaxFee:   5_000_000,
+  paymasterToken: {
+    address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+  }
+};
+
+const ethereumClient = new WalletManagerEvm(seedPhrase, ethereumConfig)
+
+const aaEthereumAccount = await ethereumClient.getAccount();
+console.log("Smart‑account:", await aaEthereumAccount.getAddress()); // 0x… counterfactual
+```
+
+### 4.2 Arbitrum One
+
+```js
+
+const arbitrumConfig = {
+ "chainId": 42161,
+ "blockchain": "arbitrum",
+ "provider": "https://1rpc.io/arb",
+  // You can use any compatible service provider for bundlerUrl and paymasterUrl.
+  // The URLs below use Pimlico as an example.
+ "bundlerUrl": "https://public.pimlico.io/v2/42161/rpc",
+ "paymasterUrl": "https://public.pimlico.io/v2/42161/rpc",
+  // The paymasterAddress below is for example/testing purposes and works with the example provider.
+  // If you use a different service provider or deploy your own paymaster, be sure to use your own paymaster address/key.
+ "paymasterAddress": "0x777777777777AeC03fd955926DbF81597e66834C",
+ "entrypointAddress": "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
+ "transferMaxFee": 5000000,
+ "swapMaxFee": 5000000,
+ "bridgeMaxFee": 5000000,
+ "paymasterToken": {
+     "address": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
+ }
+}
+
+const arbitrumClient = new WalletManagerEvm(seedPhrase, arbitrumConfig)
 
 
+const aaArbitrumAccount = await arbitrumClient.getAccount();
+console.log("Smart‑account:", await aaArbitrumAccount.getAddress()); // 0x… counterfactual
+```
 
+### 4.3 Polygon
 
+```js
+const polygonConfig = {
+ "chainId": 137,
+ "blockchain": "polygon",
+ "provider": "https://polygon-rpc.com",
+  // You can use any compatible service provider for bundlerUrl and paymasterUrl.
+  // The URLs below use Pimlico as an example.
+ "bundlerUrl": "https://api.candide.dev/public/v3/polygon",
+ "paymasterUrl": "https://api.candide.dev/public/v3/polygon",
+  // The paymasterAddress below is for example/testing purposes and works with the example provider.
+  // If you use a different service provider or deploy your own paymaster, be sure to use your own paymaster address/key.
+ "paymasterAddress": "0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba",
+ "entryPointAddress": "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
+ "transferMaxFee": 5000000,
+ "swapMaxFee": 5000000,
+ "bridgeMaxFee": 5000000,
+ "paymasterToken": {
+     "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+ },
+ "safeModulesVersion": "0.3.0"
+}
 
+const polygonClient = new WalletManagerEvm(seedPhrase, polygonConfig)
 
+const aaPolygonAccount = await polygonClient.getAccount();
+console.log("Smart‑account:", await aaPolygonAccount.getAddress()); // 0x… counterfactual
+```
 
+> **Important:** `bundlerUrl`, `paymasterUrl` *and* `paymasterAddress` **must always be updated together** when switching providers or networks.
 
+---
 
+## 5 · Summary cheat‑sheet
+
+| Task           | Classic EOA                                | ERC‑4337 smart‑account                                           |
+| -------------- | ------------------------------------------ | ---------------------------------------------------------------- |
+| Instantiate    | `new WalletManagerEvm(seed, { provider })` | `new WalletManagerEvm(seed, { provider, bundlerUrl, … })` |
+| Derive account | `manager.getAccount(index)`                | same API                                                         |
+| Derive address | `account.getAddress()`              | same API                            |
+
+---
+
+## Next steps
+
+* **Account's balance & Deposit →** [Getting an account's balance](./get-balance.md)
+* **Transactions & gas strategy →** [Sending EVM transactions](./transfer.md)
+* **Swaps & bridges →** [DeFi protocols](../defi.md)
+
+---
+
+© 2025 Wallet Development Kit contributors 
