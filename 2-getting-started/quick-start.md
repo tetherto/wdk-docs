@@ -57,8 +57,6 @@ The script that follows does five things:
 | 5 | **Send a gas-sponsored transfer** | Calls `quoteTransfer` to calculate the cost of transfering 1 USDT and `transfer` to execute the transfer transaccion, with the paymaster covering the gas, and getting paid in the paymaster Token (USDT).| Demonstrates a real ERC-4337 flow: you sign a *UserOperation*, the paymaster sponsors fees, and a bundler posts the tx. |
 
 
-
-
 ```js
 // ---------- 1. Load deps  ---------- //
 
