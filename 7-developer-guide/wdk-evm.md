@@ -5,7 +5,10 @@ author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-24
 ---
 
-## ✨ Features
+> 🚧 Work in progress
+
+<!-- 
+## Features
 
 | Capability                    | Details                                                          |
 | ----------------------------- | ---------------------------------------------------------------- |
@@ -20,21 +23,12 @@ lastReviewed: 2025-06-24
 
 ---
 
-## 📦 Installation
+## Installation
 
 ```bash
 # With npm
 npm install @wdk/wallet-evm
 ```
-
-<details>
-<summary>Peer-dependencies</summary>
-
-| Package                | Why                                         | Version        |
-| ---------------------- | ------------------------------------------- | -------------- |
-| `ethers` **or** `viem` | Low-level encoding, signing & RPC utilities | ^6.0 or latest |
-
-</details>
 
 ---
 
@@ -189,4 +183,4 @@ Please follow the repo's Conventional Commits policy; CI enforces lint, type-che
 
 ## 📝 License
 
-MIT © 2025 Wallet Development Kit
+MIT © 2025 Wallet Development Kit -->

@@ -4,6 +4,7 @@ description: Learn how WDK enables advanced account abstraction features—such 
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-25
 ---
+> 🚧 Work in progress
 
 # Account abstraction (AA) wallets
 
