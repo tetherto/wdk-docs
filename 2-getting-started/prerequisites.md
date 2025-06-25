@@ -42,17 +42,24 @@ For a detailed example, check the Account Abstraction Configuration, but feel fr
 
 - [Account Abstraction Configuration](../7-developer-guide/account-abstraction.md)
 
-**Provider Flexibility:**
+### **Provider Flexibility**
 
-You are free to use any RPC, bundler, or paymaster provider or endpoint that is compatible with your target chain. WDK works with both public and private endpoints.
+You can use any RPC, bundler, or paymaster provider that is compatible with your target blockchain. WDK supports both public and private endpoints, giving you full control over your infrastructure.
 
--  **Example public endpoints:**
-  - **Ethereum Mainnet RPC:** `https://rpc.mevblocker.io/fast` or `https://eth.llamarpc.com`
-   - **Polygon Mainnet RPC:** `https://polygon-rpc.com`
-   - **Arbitrum One RPC:** `https://1rpc.io/arb`
-   - **Bundler/Paymaster Providers:** [Candide](https://candide.dev), [Pimlico](https://pimlico.io), or any other compatible service.
- 
-Fell free to substitute these URLs in your wallet configuration, or use your own infrastructure for enhanced reliability and privacy.
+**Recommended public endpoints:**
+- **Ethereum Mainnet RPC:** `https://rpc.mevblocker.io/fast` or `https://eth.llamarpc.com`
+- **Polygon Mainnet RPC:** `https://polygon-rpc.com`
+- **Arbitrum One RPC:** `https://1rpc.io/arb`
+- **Bundler/Paymaster Providers:** [Candide](https://candide.dev), [Pimlico](https://pimlico.io), or any other compatible service.
+
+Feel free to substitute these URLs in your wallet configuration, or use your own infrastructure for greater reliability, privacy, or performance.
+
+> **How can I obtain this?**
+> You can use the public endpoints listed above, find others in official network documentation, or set up your own node or service provider for maximum control.
+>
+> **Why are they needed?**
+> These endpoints connect your wallet to the blockchain and to services that enable advanced features like account abstraction and gas sponsorship. Without them, your wallet cannot send transactions, check balances, or interact with smart contracts.
+
 
 ---
 
