@@ -59,6 +59,10 @@
   * [Configuration](wdk-modules/wallet-spark/configuration.md)
   * [API Reference](wdk-modules/wallet-spark/api-reference.md)
 
+* [wallet-tron](wdk-modules/wallet-tron/overview.md)
+  * [Guides](wdk-modules/wallet-tron/guides.md)
+  * [Configuration](wdk-modules/wallet-tron/configuration.md)
+  * [API Reference](wdk-modules/wallet-tron/api-reference.md)
 
 ## Developer Guides
 * [WDK for EVM](7-developer-guide/evm/overview.md)
