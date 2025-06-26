@@ -39,6 +39,11 @@
   * [Configuration](wdk-modules/wallet-evm-erc-4337/configuration.md)
   * [API Reference](wdk-modules/wallet-evm-erc-4337/api-reference.md)
 
+* [wallet-btc](wdk-modules/wallet-btc/overview.md)
+  * [Guides](wdk-modules/wallet-btc/guides.md)
+  * [Configuration](wdk-modules/wallet-btc/configuration.md)
+  * [API Reference](wdk-modules/wallet-btc/api-reference.md)
+
 ## Developer Guides
 * [WDK for EVM](7-developer-guide/evm/overview.md)
   * [Wallet & Account (EVM)](7-developer-guide/evm/create-wallet.md)
