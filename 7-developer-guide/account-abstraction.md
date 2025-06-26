@@ -42,7 +42,7 @@ That is why the config needs:
 | `bundlerUrl` | REST/WebSocket endpoint that queues your `UserOp`. |
 | `entryPointAddress` | Chain-specific EntryPoint (same for all users). |
 | `paymasterUrl` / `paymasterAddress` | Optional; lets you go **gasless** or pay fees in USDT, etc. |
-| `paymasterToken.address` | ERC-20 the paymaster bills (USDT, USDC…). |
+| `paymasterToken.address` | ERC-20 the paymaster bills (USDT…). |
 | `safeModulesVersion` | Minor version of the Safe module bundle inside the wallet contract. |
 | `transferMaxFee` | Client-side cap so unexpected spikes fail fast. |
 

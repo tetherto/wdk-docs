@@ -34,6 +34,11 @@
   * [Configuration](wdk-modules/wallet-evm/configuration.md)
   * [API Reference](wdk-modules/wallet-evm/api-reference.md)
 
+* [wallet-evm-erc-4337](wdk-modules/wallet-evm-erc-4337/overview.md)
+  * [Guides](wdk-modules/wallet-evm-erc-4337/guides.md)
+  * [Configuration](wdk-modules/wallet-evm-erc-4337/configuration.md)
+  * [API Reference](wdk-modules/wallet-evm-erc-4337/api-reference.md)
+
 ## Developer Guides
 * [WDK for EVM](7-developer-guide/evm/overview.md)
   * [Wallet & Account (EVM)](7-developer-guide/evm/create-wallet.md)
