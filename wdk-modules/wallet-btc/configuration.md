@@ -70,9 +70,9 @@ The `network` option specifies which Bitcoin network to use.
 **Type:** `string`
 
 **Values:**
-- `"bitcoin"` - Bitcoin mainnet (production)
-- `"testnet"` - Bitcoin testnet (development)
-- `"regtest"` - Bitcoin regtest (local testing)
+- `"bitcoin"` - Bitcoin [mainnet](../../../resources/concepts.md#mainnet) (production)
+- `"testnet"` - Bitcoin [testnet](../../../resources/concepts.md#testnet) (development)
+- `"regtest"` - Bitcoin [regtest](../../../resources/concepts.md#regtest) (local testing)
 
 **Default:** `"bitcoin"`
 

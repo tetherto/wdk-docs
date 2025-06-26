@@ -25,7 +25,7 @@ new WalletManagerBtc(seed, config)
 ```
 
 **Parameters:**
-- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
+- `seed` (string | Uint8Array): [BIP-39](../../../resources/concepts.md#bip-39-mnemonic-seed-phrases) mnemonic seed phrase or seed bytes
 - `config` (BtcWalletConfig, optional): Configuration object
   - `host` (string, optional): Electrum server hostname (default: "electrum.blockstream.info")
   - `port` (number, optional): Electrum server port (default: 50001)
@@ -45,7 +45,7 @@ const wallet = new WalletManagerBtc(seedPhrase, {
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getAccount(index)` | Returns a wallet account at the specified index | `Promise<WalletAccountBtc>` |
-| `getAccountByPath(path)` | Returns a wallet account at the specified BIP-84 derivation path | `Promise<WalletAccountBtc>` |
+| `getAccountByPath(path)` | Returns a wallet account at the specified [BIP-84](../../../resources/concepts.md#bip-84-native-segwit) derivation path | `Promise<WalletAccountBtc>` |
 | `getFeeRates()` | Returns current fee rates from mempool.space | `Promise<FeeRates>` |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
 
@@ -63,7 +63,7 @@ const account = await wallet.getAccount(0)
 ```
 
 #### `getAccountByPath(path)`
-Returns a wallet account at the specified BIP-84 derivation path.
+Returns a wallet account at the specified [BIP-84](../../../resources/concepts.md#bip-84-native-segwit) derivation path.
 
 **Parameters:**
 - `path` (string): The derivation path (e.g., "0'/0/0")
@@ -118,8 +118,8 @@ new WalletAccountBtc(seed, path, config)
 ```
 
 **Parameters:**
-- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
-- `path` (string): BIP-84 derivation path
+- `seed` (string | Uint8Array): [BIP-39](../../../resources/concepts.md#bip-39-mnemonic-seed-phrases) mnemonic seed phrase or seed bytes
+- `path` (string): [BIP-84](../../../resources/concepts.md#bip-84-native-segwit) derivation path
 - `config` (BtcWalletConfig, optional): Configuration object (same as WalletManagerBtc)
 
 **Example:**
@@ -224,7 +224,7 @@ console.log('Estimated fee:', quote.fee, 'satoshis')
 #### `getBalance()`
 Returns the Bitcoin balance in satoshis.
 
-**Returns:** `Promise<number>` - Balance in satoshis
+**Returns:** `Promise<number>` - The account balance in satoshis
 
 **Example:**
 ```javascript
