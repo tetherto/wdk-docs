@@ -39,6 +39,12 @@
   * [Configuration](wdk-modules/wallet-evm-erc-4337/configuration.md)
   * [API Reference](wdk-modules/wallet-evm-erc-4337/api-reference.md)
 
+* [wallet-ton](wdk-modules/wallet-ton/overview.md)
+  * [Guides](wdk-modules/wallet-ton/guides.md)
+  * [Configuration](wdk-modules/wallet-ton/configuration.md)
+  * [API Reference](wdk-modules/wallet-ton/api-reference.md)
+
+
 ## Developer Guides
 * [WDK for EVM](7-developer-guide/evm/overview.md)
   * [Wallet & Account (EVM)](7-developer-guide/evm/create-wallet.md)
