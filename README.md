@@ -52,7 +52,6 @@ Your input will help shape the future of WDK and ensure it meets the needs of th
 #### Developer Guide
 
 - [Create Your First Wallet](7-developer-guide/create-wallet.md)
-
 - [Deposit to your wallet](7-developer-guide/create-wallet.md)
 - [Get your balance](7-developer-guide/get-balance.md)
 - [Account Abstraction](7-developer-guide/account-abstraction.md)
