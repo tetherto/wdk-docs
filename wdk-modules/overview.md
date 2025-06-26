@@ -26,9 +26,9 @@ Standard wallet implementations that use native blockchain tokens for transactio
 | Module | Blockchain | Status | Documentation | GitHub |
 |--------|------------|--------|---------------|---------|
 | `@wdk/wallet-evm` | EVM | ✅ Ready | [Documentation](./wallet-evm/overview.md) | [Repository](https://github.com/tetherto/wdk-wallet-evm) |
-| `@wdk/wallet-ton` | TON | ✅ Ready | [Documentation](./wdk-ton.md) | [Repository](https://github.com/tetherto/wdk-wallet-ton) |
-| `@wdk/wallet-btc` | Bitcoin | ✅ Ready | - | [Repository](https://github.com/tetherto/wdk-wallet-btc) |
-| `@wdk/wallet-spark` | Spark | ✅ Ready | - | [Repository](https://github.com/tetherto/wdk-wallet-spark) |
+| `@wdk/wallet-ton` | TON | ✅ Ready | [Documentation](./wallet-ton/overview.md) | [Repository](https://github.com/tetherto/wdk-wallet-ton) |
+| `@wdk/wallet-btc` | Bitcoin | ✅ Ready | [Documentation](./wallet-btc/overview.md) | [Repository](https://github.com/tetherto/wdk-wallet-btc) |
+| `@wdk/wallet-spark` | Spark | ✅ Ready | [Documentation](./wallet-spark/overview.md) | [Repository](https://github.com/tetherto/wdk-wallet-spark) |
 | `@wdk/wallet-tron` | TRON | In progress | - | [Repository](https://github.com/tetherto/wdk-wallet-tron) |
 | `@wdk/wallet-solana` | Solana | In progress | - | [Repository](https://github.com/tetherto/wdk-wallet-solana) |
 
