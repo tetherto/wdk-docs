@@ -44,10 +44,16 @@
   * [Configuration](wdk-modules/wallet-btc/configuration.md)
   * [API Reference](wdk-modules/wallet-btc/api-reference.md)
 
+* [wallet-ton](wdk-modules/wallet-ton/overview.md)
+  * [Guides](wdk-modules/wallet-ton/guides.md)
+  * [Configuration](wdk-modules/wallet-ton/configuration.md)
+  * [API Reference](wdk-modules/wallet-ton/api-reference.md)
+
 * [wallet-spark](wdk-modules/wallet-spark/overview.md)
   * [Guides](wdk-modules/wallet-spark/guides.md)
   * [Configuration](wdk-modules/wallet-spark/configuration.md)
   * [API Reference](wdk-modules/wallet-spark/api-reference.md)
+
 
 ## Developer Guides
 * [WDK for EVM](7-developer-guide/evm/overview.md)
