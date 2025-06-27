@@ -31,38 +31,34 @@ Your input will help shape the future of WDK and ensure it meets the needs of th
 
 #### Overview
 
-- [Introduction to WDK](1-executive-summary/README.md)
+- [Introduction](overview/introduction.md)
+- [Beta Program](overview/beta-program.md)
 
 #### Getting Started
 
-- [Prerequisites set up](2-getting-started/prerequisites.md)
-- [Create your first wallet](2-getting-started/quick-start.md)
-- [Explore supported blockchains](2-getting-started/supported-blockchains.md)
+- [Prerequisites set up](getting-started/prerequisites.md)
+- [Create your first wallet](getting-started/quick-start.md)
 
-#### Developer Guide
+#### Building Blocks
+- [Modules Overview](wdk-modules/overview.md)
 
-- [Create Your First Wallet](7-developer-guide/create-wallet.md)
-- [Deposit to your wallet](7-developer-guide/create-wallet.md)
-- [Get your balance](7-developer-guide/get-balance.md)
-- [Account Abstraction](7-developer-guide/account-abstraction.md)
-- [Fee Estimates](7-developer-guide/quote.md)
-- [Send & Receive on WDK](7-developer-guide/transfer.md)
-- [DeFi Actions](7-developer-guide/defi.md)
-- [Cross-chain Actions](7-developer-guide/cross-chain.md)
-- [View transaction history](7-developer-guide/transaction-history.md)
-- [Tutorials](7-developer-guide/tutorials.md)
+  - [wallet-evm](wdk-modules/wallet-evm/overview.md)
+  - [wallet-evm-erc-4337](wdk-modules/wallet-evm-erc-4337/overview.md)
+  - [wallet-btc](wdk-modules/wallet-btc/overview.md)
+  - [wallet-ton](wdk-modules/wallet-ton/overview.md)
+  - [wallet-ton-gasless](wdk-modules/wallet-ton/overview.md)
+  - [wallet-spark](wdk-modules/wallet-spark/overview.md)
+  - [wallet-tron](wdk-modules/wallet-tron/overview.md)
+  - [wallet-tron-gasfree](wdk-modules/wallet-tron-gasfree/overview.md)
+  - [wallet-solana](wdk-modules/wallet-solana/overview.md)
 
 #### Documentation
 
-- [API Reference](4-sdk-reference/README.md)
-- [Capabilities & Limitations](6-capabilities/README.md)
-- [Troubleshooting](8-troubleshooting/README.md)
-<!-- - [Compliance & Legal](9-compliance/README.md) -->
-- [Appendices](10-appendices/README.md)
+- [Transaction History](documentation/transaction-history.md)
+- [Preparing for Production](documentation/preparing-for-production.md)
 
-#### UX Guidelines
-
-- [Integration Patterns & Best Practices](5-integration-patterns/README.md)
+#### Resources
+- [Concepts](resources/concepts.md)
 
 ---
 
