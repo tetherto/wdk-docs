@@ -3,6 +3,7 @@ title: Wallet Spark Configuration
 description: Configuration options and settings for @wdk/wallet-spark
 author: Matteo Giardino
 lastReviewed: 2025-06-26
+icon: settings
 ---
 
 # Configuration

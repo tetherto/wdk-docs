@@ -3,6 +3,7 @@ title: Wallet TON API Reference
 description: Complete API documentation for @wdk/wallet-ton
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
+icon: code
 ---
 
 ## API Reference

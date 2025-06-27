@@ -3,6 +3,7 @@ title: Wallet Modules Overview
 description: Overview of all available wallet modules in the Wallet Development Kit
 author: Matteo Giardino
 lastReviewed: 2025-06-23
+icon: puzzle
 ---
 
 # Wallet Modules Overview
