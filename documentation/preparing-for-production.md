@@ -127,13 +127,12 @@ const passkey = getUserPasskey(); // e.g., from device biometrics
 const salt = getStoredSalt(); // Should be a 16-byte Buffer
 const encryptedMnemonic = getEncryptedMnemonic(); // Buffer
 
-// 2. Initialize the secret manager and decrypt the mnemonic
+// 2. Initialize the secret manager and decrypt the seed buffer
 const secretManager = new WdkSecretManager(passkey, salt);
-const mnemonicBuffer = secretManager.decrypt(encryptedMnemonic);
-const mnemonic = mnemonicBuffer.toString('utf8'); // Convert buffer to string if needed
+const seedBuffer = secretManager.decrypt(encryptedMnemonic);
 
-// 3. Use the mnemonic with WalletManagerEvm
-const wallet = new WalletManagerEvm(mnemonic, {
+// 3. Use the seed buffer with WalletManagerEvm
+const wallet = new WalletManagerEvm(seedBuffer, {
   provider: 'https://rpc.mevblocker.io/fast' // or your preferred RPC provider
 });
 
@@ -143,7 +142,7 @@ const address = await account.getAddress();
 console.log('Account address:', address);
 
 // 5. Purge sensitive data from memory
-secretManager.destructor(mnemonicBuffer);
+secretManager.destructor(seedBuffer);
 ```
 
 > **Note:** Replace `getUserPasskey`, `getStoredSalt`, and `getEncryptedMnemonic` with your actual secure implementations. Always ensure sensitive buffers are purged from memory after use.
