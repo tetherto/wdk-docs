@@ -1,5 +1,5 @@
 ---
-title: Transaction History: Architecture & Integration
+title: Transaction History - Architecture & Integration
 description: Guidelines and best practices for integrating robust transaction history in wallet applications using the WDK Indexer.
 lastReviewed: 2025-06-27
 ---
