@@ -16,16 +16,6 @@ Whether you're building for your own custody or shipping self-custodial wallets 
 
 This is just the beginning. If there's something you wish the SDK did—tell us. We're listening.
 
-### Key Features
-
-- **Multi-Blockchain Support**: Ethereum, Polygon, Arbitrum, Bitcoin, TON, Spark
-- **Unified API Layer**: A single interface across chains
-- **Account Abstraction**: Enable gasless transactions & custom fee logic on EVM & TON
-- **Stateless & Secure**: No secrets or data are stored by WDK
-- **Non-Custodial by Design**: You manage keys; WDK never sees them
-- **DeFi Ready**: Built-in support for swaps, token transfers, and cross-chain actions
-- **Modular & Extensible**: Add your own chains, tokens, or business loging
-
 ## Your Responsibilities as a Private Beta Partner
 
 As a participant in the WDK private beta, you have early access to powerful wallet development tools and features. In return, we ask that you:

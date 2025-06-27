@@ -29,9 +29,6 @@ You can use your preferred RPC, Bundler & Paymaster service provider. But in thi
 | **npm** | latest | Package manager |
 | **Some USDT on Polygon** | test | Send + cover *transfer* amount |
 
-> **Note**:
-> For USDT transactions, we provide a test [seed phrase](../10-appendices/glossary.md#seed-phrase "A sequence of words that encodes the private key to your blockchain wallet.") that is pre-funded to sponsor a limited number of test transactions. This allows you to experiment with WDK features without needing to fund your own wallet initially.
-
 ---
 
 ## 1 · Project setup
@@ -61,7 +58,7 @@ import WalletManagerEvm from '@wdk/wallet-evm-erc-4337';
 
 // ---------- 2. Declares seed phrase & Account Abstraction Configuration ---------- //
 
-const seed = 'choose indicate barrel slush penalty hollow box exchange soldier gentle memory rare'
+const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about' // Use your own seed phrase
 
 const polygonConfig = {
  "chainId": 137,
