@@ -64,6 +64,11 @@
   * [Configuration](wdk-modules/wallet-tron/configuration.md)
   * [API Reference](wdk-modules/wallet-tron/api-reference.md)
 
+* [wallet-tron-gasfree](wdk-modules/wallet-tron-gasfree/overview.md)
+  * [Guides](wdk-modules/wallet-tron-gasfree/guides.md)
+  * [Configuration](wdk-modules/wallet-tron-gasfree/configuration.md)
+  * [API Reference](wdk-modules/wallet-tron-gasfree/api-reference.md)
+
 ## Developer Guides
 * [WDK for EVM](7-developer-guide/evm/overview.md)
   * [Wallet & Account (EVM)](7-developer-guide/evm/create-wallet.md)
