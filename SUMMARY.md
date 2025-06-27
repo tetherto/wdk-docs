@@ -32,10 +32,30 @@
   * [Configuration](wdk-modules/wallet-ton/configuration.md)
   * [API Reference](wdk-modules/wallet-ton/api-reference.md)
 
+* [wallet-ton-gasless](wdk-modules/wallet-ton/overview.md)
+  * [Guides](wdk-modules/wallet-ton-gasless/guides.md)
+  * [Configuration](wdk-modules/wallet-ton-gasless/configuration.md)
+  * [API Reference](wdk-modules/wallet-ton-gasless/api-reference.md)
+
 * [wallet-spark](wdk-modules/wallet-spark/overview.md)
   * [Guides](wdk-modules/wallet-spark/guides.md)
   * [Configuration](wdk-modules/wallet-spark/configuration.md)
   * [API Reference](wdk-modules/wallet-spark/api-reference.md)
+
+* [wallet-tron](wdk-modules/wallet-tron/overview.md)
+  * [Guides](wdk-modules/wallet-tron/guides.md)
+  * [Configuration](wdk-modules/wallet-tron/configuration.md)
+  * [API Reference](wdk-modules/wallet-tron/api-reference.md)
+
+* [wallet-tron-gasfree](wdk-modules/wallet-tron-gasfree/overview.md)
+  * [Guides](wdk-modules/wallet-tron-gasfree/guides.md)
+  * [Configuration](wdk-modules/wallet-tron-gasfree/configuration.md)
+  * [API Reference](wdk-modules/wallet-tron-gasfree/api-reference.md)
+
+* [wallet-solana](wdk-modules/wallet-solana/overview.md)
+  * [Guides](wdk-modules/wallet-solana/guides.md)
+  * [Configuration](wdk-modules/wallet-solana/configuration.md)
+  * [API Reference](wdk-modules/wallet-solana/api-reference.md)
 
 <!-- ## Templates & Samples
 * [Templates & Samples Overview](templates-samples/README.md)
