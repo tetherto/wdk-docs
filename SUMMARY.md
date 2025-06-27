@@ -69,6 +69,11 @@
   * [Configuration](wdk-modules/wallet-tron-gasfree/configuration.md)
   * [API Reference](wdk-modules/wallet-tron-gasfree/api-reference.md)
 
+* [wallet-spark](wdk-modules/wallet-solana/overview.md)
+  * [Guides](wdk-modules/wallet-solana/guides.md)
+  * [Configuration](wdk-modules/wallet-solana/configuration.md)
+  * [API Reference](wdk-modules/wallet-solana/api-reference.md)
+
 ## Developer Guides
 * [WDK for EVM](7-developer-guide/evm/overview.md)
   * [Wallet & Account (EVM)](7-developer-guide/evm/create-wallet.md)
