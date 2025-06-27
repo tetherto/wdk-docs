@@ -3,7 +3,6 @@ title: Transaction History: Architecture & Integration
 description: Guidelines and best practices for integrating robust transaction history in wallet applications using the WDK Indexer.
 lastReviewed: 2025-06-27
 ---
-
 # Transaction History: Architecture & Integration
 
 ## Overview
@@ -123,4 +122,4 @@ async function getTransactionHistory(userId, walletAddress) {
 ## References
 - WDK Indexer repositories (contact for access)
 - [Holepunch Hyper technology](https://hypercore-protocol.org/)
-- [WDK Documentation](../)
+- [WDK Documentation](../README.md)
