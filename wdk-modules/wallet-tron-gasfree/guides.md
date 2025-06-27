@@ -21,7 +21,8 @@ npm install @wdk/wallet-tron-gasfree
 import WalletManagerTronGasfree from '@wdk/wallet-tron-gasfree'
 
 // Use a BIP-39 seed phrase (replace with your own secure phrase)
-const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
+const seedPhrase = 'your twelve word seed phrase here' // Replace with actual seed generation
+
 
 // Create wallet manager with Tron RPC provider and gas-free service provider
 const wallet = new WalletManagerTronGasfree(seedPhrase, {
@@ -116,7 +117,8 @@ import WalletManagerTronGasfree from '@wdk/wallet-tron-gasfree'
 
 async function setupWallet() {
   // Use a BIP-39 seed phrase (replace with your own secure phrase)
-  const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
+  const seedPhrase = 'your twelve word seed phrase here' // Replace with actual seed generation
+
   
   // Create gas-free wallet manager
   const wallet = new WalletManagerTronGasfree(seedPhrase, {

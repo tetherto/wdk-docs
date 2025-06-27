@@ -22,7 +22,7 @@ npm install @wdk/wallet-ton
 import WalletManagerTon from '@wdk/wallet-ton'
 
 // Use a BIP-39 seed phrase (replace with your own secure phrase)
-const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
+const seedPhrase = 'your twelve word seed phrase here' // Replace with actual seed generation
 
 // Create wallet manager with TON RPC provider
 const wallet = new WalletManagerTon(seedPhrase, {
@@ -144,7 +144,8 @@ import WalletManagerTon from '@wdk/wallet-ton'
 
 async function setupWallet() {
   // Use a BIP-39 seed phrase (replace with your own secure phrase)
-  const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
+  const seedPhrase = 'your twelve word seed phrase here' // Replace with actual seed generation
+
   
   // Create wallet manager
   const wallet = new WalletManagerTon(seedPhrase, {

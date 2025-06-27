@@ -22,7 +22,8 @@ npm install @wdk/wallet-btc
 import WalletManagerBtc from '@wdk/wallet-btc'
 
 // Use a BIP-39 seed phrase (replace with your own secure phrase)
-const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
+const seedPhrase = 'your twelve word seed phrase here' // Replace with actual seed generation
+
 
 // Create wallet manager with default configuration
 const wallet = new WalletManagerBtc(seedPhrase)
@@ -142,7 +143,8 @@ import WalletManagerBtc from '@wdk/wallet-btc'
 
 async function setupBitcoinWallet() {
   // Use a BIP-39 seed phrase (replace with your own secure phrase)
-  const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
+  const seedPhrase = 'your twelve word seed phrase here' // Replace with actual seed generation
+
   
   // Create Bitcoin wallet manager
   const wallet = new WalletManagerBtc(seedPhrase, {

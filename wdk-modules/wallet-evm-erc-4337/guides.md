@@ -22,7 +22,8 @@ npm install @wdk/wallet-evm-erc-4337
 import WalletManagerEvmErc4337 from '@wdk/wallet-evm-erc-4337'
 
 // Use a BIP-39 seed phrase (replace with your own secure phrase)
-const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
+const seedPhrase = 'your twelve word seed phrase here' // Replace with actual seed generation
+
 
 // Create wallet manager with ERC-4337 configuration
 const wallet = new WalletManagerEvmErc4337(seedPhrase, {
@@ -145,7 +146,8 @@ import WalletManagerEvmErc4337 from '@wdk/wallet-evm-erc-4337'
 
 async function setupErc4337Wallet() {
   // Use a BIP-39 seed phrase (replace with your own secure phrase)
-  const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
+  const seedPhrase = 'your twelve word seed phrase here' // Replace with actual seed generation
+
   
   // Create ERC-4337 wallet manager
   const wallet = new WalletManagerEvmErc4337(seedPhrase, {

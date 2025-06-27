@@ -21,7 +21,8 @@ npm install @wdk/wallet-ton-gasless
 import WalletManagerTonGasless from '@wdk/wallet-ton-gasless'
 
 // Use a BIP-39 seed phrase (replace with your own secure phrase)
-const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
+const seedPhrase = 'your twelve word seed phrase here' // Replace with actual seed generation
+
 
 // Create gasless wallet manager with TON RPC and TON API endpoints, and paymaster token config
 const wallet = new WalletManagerTonGasless(seedPhrase, {
@@ -114,7 +115,8 @@ import WalletManagerTonGasless from '@wdk/wallet-ton-gasless'
 
 async function setupWallet() {
   // Use a BIP-39 seed phrase (replace with your own secure phrase)
-  const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
+  const seedPhrase = 'your twelve word seed phrase here' // Replace with actual seed generation
+
   
   // Create gasless wallet manager
   const wallet = new WalletManagerTonGasless(seedPhrase, {
