@@ -3,6 +3,7 @@ title: Wallet BTC Configuration
 description: Configuration options and settings for @wdk/wallet-btc
 author: Matteo Giardino
 lastReviewed: 2025-06-26
+icon: settings
 ---
 
 # Configuration

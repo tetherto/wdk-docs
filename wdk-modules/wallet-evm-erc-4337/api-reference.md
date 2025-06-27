@@ -3,6 +3,7 @@ title: Wallet EVM ERC-4337 API Reference
 description: Complete API documentation for @wdk/wallet-evm-erc-4337
 author: Matteo Giardino
 lastReviewed: 2025-06-26
+icon: code
 ---
 
 # API Reference

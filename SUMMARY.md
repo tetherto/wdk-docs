@@ -1,32 +1,15 @@
 # Summary
-* [Wallet Development Kit (WDK)](README.md)
+* [Welcome to WDK](README.md)
 
 ## Overview
-* [Introduction](1-executive-summary/README.md)
-* [Explore supported blockchains](1-executive-summary/supported-blockchains.md)
+* [Introduction](overview/introduction.md)
+* [Beta Program](overview/beta-program.md)
 
-<!-- 
-* [Manifesto](README.md)
-* [Beta Program](README.md)
-* [Core Concepts](3-architecture/README.md)
-* [Arquitecture](3-architecture/README.md)
-* [Capabilities & Limitations](6-capabilities/README.md)
-* [Supported Features](6-capabilities/supported-features.md)
--->
+## [Getting Started](getting-started/README.md)
+* [Prerequisites](getting-started/prerequisites.md)
+* [Quick Start](getting-started/quick-start.md)
 
-<!-- 
-* [Testing Guide](README.md)
-* [Quick start](2-getting-started/README.md)
-* [FAQ](README.md) 
--->
-
-## Getting started
-* [Prerequisites set up](2-getting-started/prerequisites.md)
-* [Quick-Start Guide](2-getting-started/quick-start.md)
-* [Account Abstraction Basics](2-getting-started/account-abstraction-basics.md)
-
-
-## Modules
+## Building Blocks
 * [Modules Overview](wdk-modules/overview.md)
 
 * [wallet-evm](wdk-modules/wallet-evm/overview.md)
@@ -54,45 +37,26 @@
   * [Configuration](wdk-modules/wallet-spark/configuration.md)
   * [API Reference](wdk-modules/wallet-spark/api-reference.md)
 
-
-## Developer Guides
-* [WDK for EVM](7-developer-guide/evm/overview.md)
-  * [Wallet & Account (EVM)](7-developer-guide/evm/create-wallet.md)
-  * [Get Balance & Deposit (EVM)](7-developer-guide/evm/get-balance.md)
-  * [Estimate Fee & Execute Transactions (EVM)](7-developer-guide/evm/transfer.md)
-
-* [WDK for Bitcoin](7-developer-guide/wdk-bitcoin.md)
-  * [Create Wallet](7-developer-guide/wdk-bitcoin/create-wallet.md)
-  * [Get balance](7-developer-guide/wdk-bitcoin/get-balance.md)
-  * [Send & Receive on WDK](7-developer-guide/wdk-bitcoin/transfer.md)
-
-* [WDK for TON](7-developer-guide/wdk-ton.md)
-  * [Create Wallet](7-developer-guide/wdk-ton/create-wallet.md)
-  * [Get balance](7-developer-guide/wdk-ton/get-balance.md)
-  * [Send & Receive on WDK](7-developer-guide/wdk-ton/transfer.md)
-
-* [WDK for Spark](7-developer-guide/wdk-spark.md)
-  * [Create Wallet](7-developer-guide/wdk-spark/create-wallet.md)
-  * [Get balance](7-developer-guide/wdk-spark/get-balance.md)
-  * [Send & Receive on WDK](7-developer-guide/wdk-spark/transfer.md)
- 
-* [**Tutorials**](./7-developer-guide/tutorials.md)
-  * [WDK Browser Wallet Integration Example](7-developer-guide/scaffold-browser.md)
-  * [WDK React Native Wallet Integration Example](7-developer-guide/scaffold-native.md)
-* [WDK Account Abstraction Configuration](./7-developer-guide//account-abstraction.md)
-* [DeFi Actions](7-developer-guide/defi.md)
-* [Cross-chain Actions](7-developer-guide/cross-chain.md)
-* [View transaction history](7-developer-guide/transaction-history.md)
+<!-- ## Templates & Samples
+* [Templates & Samples Overview](templates-samples/README.md)
+* [Web Templates](templates-samples/web-templates/)
+  * [React Wallet](templates-samples/web-templates/react-wallet.md)
+  * [Vue Wallet](templates-samples/web-templates/vue-wallet.md)
+  * [Vanilla JS Wallet](templates-samples/web-templates/vanilla-js-wallet.md)
+* [Mobile Templates](templates-samples/mobile-templates/)
+  * [React Native Wallet](templates-samples/mobile-templates/react-native-wallet.md)
+  * [Flutter Wallet](templates-samples/mobile-templates/flutter-wallet.md)
+* [Server Templates](templates-samples/server-templates/)
+  * [Node.js Backend](templates-samples/server-templates/nodejs-backend.md)
+  * [Python Backend](templates-samples/server-templates/python-backend.md)
+* [Integration Samples](templates-samples/integration-samples/)
+  * [DeFi Integration](templates-samples/integration-samples/defi-integration.md)
+  * [Payment Integration](templates-samples/integration-samples/payment-integration.md)
+  * [Cross-Chain Integration](templates-samples/integration-samples/cross-chain-integration.md) -->
 
 ## Documentation
-* [Concepts & Definitions](resources/concepts.md)
-* [API Reference](4-sdk-reference/README.md)
-* [Capabilities & Limitations](6-capabilities/README.md)
-* [Troubleshooting](8-troubleshooting/README.md)
-* [Glossary](./10-appendices/glossary.md)
-<!-- - [Compliance & Legal](9-compliance/README.md) -->
-* [Appendices](10-appendices/README.md)
+* [Transaction History](documentation/transaction-history.md)
+* [Preparing for Production](documentation/preparing-for-production.md)
 
-
-## UX Guidelines
-* [Integration Patterns & Best Practices](5-integration-patterns/README.md)
+## Resources
+* [Concepts](resources/concepts.md)

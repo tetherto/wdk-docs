@@ -3,6 +3,7 @@ title: Wallet EVM API Reference
 description: Complete API documentation for @wdk/wallet-evm
 author: Matteo Giardino
 lastReviewed: 2025-06-26
+icon: code
 ---
 
 # API Reference
