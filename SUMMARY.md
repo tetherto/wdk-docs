@@ -32,7 +32,7 @@
   * [Configuration](wdk-modules/wallet-ton/configuration.md)
   * [API Reference](wdk-modules/wallet-ton/api-reference.md)
 
-* [wallet-ton-gasless](wdk-modules/wallet-ton/overview.md)
+* [wallet-ton-gasless](wdk-modules/wallet-ton-gasless/overview.md)
   * [Guides](wdk-modules/wallet-ton-gasless/guides.md)
   * [Configuration](wdk-modules/wallet-ton-gasless/configuration.md)
   * [API Reference](wdk-modules/wallet-ton-gasless/api-reference.md)

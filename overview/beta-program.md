@@ -140,7 +140,7 @@ As a valued beta partner, we ask for your collaboration in making WDK the best p
 
 ### Resources
 - **Documentation**: This site is updated regularly with new information
-- **Examples**: Check the [templates and samples](../templates-samples/) section
+- **Examples**: Check the [templates and samples](../wdk-modules/overview.md) section
 - **Community**: Connect with other beta partners through our channels
 
 ## Success Stories
