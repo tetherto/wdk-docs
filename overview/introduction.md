@@ -18,7 +18,7 @@ WDK is a **developer-first framework** to create cross-chain wallets that are se
 
 ---
 
-## 🔑 Key Features
+## Key Features
 
 - **Multi-Blockchain Support**: Ethereum, Polygon, Arbitrum, Bitcoin, TON, Spark
 - **Unified API Layer**: A single interface across chains
@@ -30,7 +30,7 @@ WDK is a **developer-first framework** to create cross-chain wallets that are se
 
 ---
 
-## 👤 Who is WDK for?
+## Who is WDK for?
 
 ### Developers & Builders
 - Create mobile/web wallets in minutes using a familiar JS/TS interface
@@ -45,7 +45,7 @@ WDK is a **developer-first framework** to create cross-chain wallets that are se
 
 ---
 
-## 🔍 How It Works
+## How It Works
 
 WDK is **stateless**: it processes requests but stores nothing. All sensitive data (keys, sessions, configs) stays in your hands.
 
@@ -62,7 +62,7 @@ This guarantees:
 
 ---
 
-## 🛠️ Use Cases
+## Use Cases
 
 - Build wallets for creators, communities, or DAOs
 - Integrate wallet functions into DeFi, payments, gaming, or tipping apps
@@ -70,7 +70,7 @@ This guarantees:
 
 ---
 
-## 🌍 Supported Blockchains
+## Supported Blockchains
 
 WDK supports a growing set of blockchains. This list is continuously expanding, with **more integrations coming soon**. Chains marked with ⏳ are in active development.
 
@@ -88,13 +88,13 @@ WDK supports a growing set of blockchains. This list is continuously expanding, 
 
 ---
 
-## 🔐 Completely non custodial
+## Completely non custodial
 
 WDK never stores or transmits secrets. Developers are responsible for key storage using secure techniques like OS keychain, HSMs, or hardware wallets. All operations are performed in-memory.
 
 ---
 
-## 🌐 Open Source Vision
+## Open Source Vision
 
 We are committed to making WDK fully open-source in 2025. Join us now to shape its roadmap and be part of a growing ecosystem of developers creating the next generation of crypto wallets.
 
