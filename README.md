@@ -10,7 +10,7 @@ icon: book-open
 
 # Introduction
 
-The Wallet Development Kit (WDK) lets you deploy stateless, non-custodial wallets across multiple blockchains in the most scalable and developer-friendly way possible.
+The Wallet Development Kit (WDK) lets you deploy non-custodial wallets supporting multiple blockchains in the most developer-friendly way possible and zero lock-in.
 
 Whether you're building for your own custody or shipping self-custodial wallets for your users, WDK is flexible by design. If you want to go deeper, the lower-level APIs give you everything you need to build custom integrations from scratch.
 
