@@ -69,7 +69,7 @@
   * [Configuration](wdk-modules/wallet-tron-gasfree/configuration.md)
   * [API Reference](wdk-modules/wallet-tron-gasfree/api-reference.md)
 
-* [wallet-spark](wdk-modules/wallet-solana/overview.md)
+* [wallet-solana](wdk-modules/wallet-solana/overview.md)
   * [Guides](wdk-modules/wallet-solana/guides.md)
   * [Configuration](wdk-modules/wallet-solana/configuration.md)
   * [API Reference](wdk-modules/wallet-solana/api-reference.md)
