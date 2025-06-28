@@ -1,8 +1,8 @@
 ---
 title: WDK Private Beta Program
 description: Join the WDK Private Beta Program to get early access to powerful wallet development tools and help shape the future of cross-chain wallet infrastructure.
-author: Raquel Carrasco Gonzalez
-lastReviewed: 2025-01-27
+author: Matteo Giardino
+lastReviewed: 2025-06-28
 icon: users
 ---
 
@@ -19,27 +19,6 @@ The WDK Private Beta Program gives you **exclusive early access** to our compreh
 - **Access premium support** from our engineering team
 - **Shape the future** of cross-chain wallet infrastructure
 - **Get ahead** of the competition with early adoption
-
-## Beta Program Benefits
-
-### Early Access Features
-- **Full SDK Access**: Complete access to all WDK modules and features
-- **Multi-Blockchain Support**: Test with Ethereum, Polygon, Arbitrum, Bitcoin, TON, and Spark
-- **Account Abstraction**: Early access to gasless transaction capabilities
-- **DeFi Integration**: Built-in swap and bridge functionality
-- **Production-Ready Templates**: Ready-to-use integration patterns
-
-### Exclusive Support
-- **Direct Engineering Support**: Direct access to our development team
-- **Priority Bug Fixes**: Expedited resolution of issues you encounter
-- **Feature Requests**: Direct input on upcoming features and improvements
-- **Technical Guidance**: Personalized assistance with your integration
-
-### Community Benefits
-- **Beta Partner Network**: Connect with other early adopters
-- **Exclusive Events**: Access to webinars, workshops, and technical sessions
-- **Recognition**: Featured as a beta partner in our launch materials
-- **Influence**: Help shape the public release roadmap
 
 ## Your Responsibilities as a Beta Partner
 
@@ -78,10 +57,10 @@ As a valued beta partner, we ask for your collaboration in making WDK the best p
 - **Regular usage** helps us identify and resolve issues faster
 
 ### Communication Channels
-- **Technical Support**: [support@wdk.dev](mailto:support@wdk.dev)
+- **Technical Support**: [support@tether.io](mailto:support@tether.io)
 - **Bug Reports**: [GitHub Issues](https://github.com/tetherto/wdk/issues)
 - **Feature Requests**: [GitHub Discussions](https://github.com/tetherto/wdk/discussions)
-- **General Inquiries**: [beta@wdk.dev](mailto:beta@wdk.dev)
+- **General Inquiries**: [support@tether.io](mailto:support@tether.io)
 
 ### Feedback Schedule
 - **Weekly check-ins** for active users (optional)
@@ -109,58 +88,37 @@ As a valued beta partner, we ask for your collaboration in making WDK the best p
 - **Feature Requests**: Considered for future releases based on community needs
 - **Documentation Updates**: Regular updates based on feedback and new features
 
-## Beta Program Timeline
-
-### Current Phase: Private Beta (Q1 2025)
-- **Duration**: 3-6 months
-- **Focus**: Core functionality, stability, and developer experience
-- **Activities**: Regular feedback sessions, bug fixes, feature refinement
-
-### Next Phase: Public Beta (Q2 2025)
-- **Expansion**: Broader developer community access
-- **Focus**: Scale testing, performance optimization, documentation completion
-- **Activities**: Community events, case studies, preparation for public launch
-
-### Final Phase: Public Launch (Q3 2025)
-- **Release**: Full public availability
-- **Focus**: Production readiness, ecosystem growth, community building
-- **Activities**: Launch events, partner showcases, continued development
-
-## Getting Help and Support
-
-### Immediate Support
-- **Critical Issues**: Email [support@wdk.dev](mailto:support@wdk.dev) with "URGENT" in subject
-- **Technical Questions**: Use GitHub Discussions for community help
-- **Feature Requests**: Submit via GitHub Issues with detailed use cases
-
-### Scheduled Support
-- **Office Hours**: Weekly technical Q&A sessions (invitations sent separately)
-- **1:1 Sessions**: Available for complex integration challenges
-- **Code Reviews**: Request review of your WDK integration
-
-### Resources
-- **Documentation**: This site is updated regularly with new information
-- **Examples**: Check the [templates and samples](../wdk-modules/overview.md) section
-- **Community**: Connect with other beta partners through our channels
-
-## Success Stories
-
-We're excited to showcase how our beta partners are using WDK to build innovative wallet solutions. If you'd like to share your story or be featured in our materials, please let us know!
-
-### What We're Looking For
+## What We're Looking For
 - **Innovative Use Cases**: Unique applications of WDK technology
 - **Integration Challenges**: How you solved complex technical problems
 - **Performance Improvements**: Optimizations and best practices you've discovered
 - **User Experience**: Creative approaches to wallet UX/UI
+- **Modules Expansion**: Adding support for new WDK modules or blockchain integrations
+
+We're excited to showcase how our beta partners are using WDK to build innovative wallet solutions. If you'd like to share your story or be featured in our materials, please let us know!
+
+## Beta Program Timeline
+
+### Current Phase: Private Beta (Q2 - Q3 2025)
+- **Duration**: 3-6 months
+- **Focus**: Core functionality, stability, and developer experience
+- **Activities**: Regular feedback sessions, bug fixes, feature refinement
+
+### Next Phase: Public Beta (Q3 2025)
+- **Expansion**: Broader developer community access
+- **Focus**: Scale testing, performance optimization, documentation completion
+- **Activities**: Community events, case studies, preparation for public launch
+
+### Final Phase: Public Launch (Q4 2025)
+- **Release**: Full public availability
+- **Focus**: Production readiness, ecosystem growth, community building
+- **Activities**: Launch events, partner showcases, continued development
 
 ## Quick Links
 
 - **[Getting Started](../getting-started/README.md)** - Set up your development environment
-- **[Core Concepts](../core-concepts/README.md)** - Understand WDK fundamentals
+- **[Core Concepts](../resources/concepts.md)** - Understand WDK fundamentals
 - **[Wallet Modules](../wdk-modules/overview.md)** - Explore available blockchain modules
-- **[Templates & Samples](../templates-samples/README.md)** - Ready-to-use integration examples
-- **[Documentation](../documentation/README.md)** - Complete API reference and guides
-- **[Troubleshooting](../documentation/troubleshooting.md)** - Common issues and solutions
 
 ---
 
@@ -168,7 +126,7 @@ We're excited to showcase how our beta partners are using WDK to build innovativ
 
 If you haven't already, begin your WDK journey with our [Quick Start Guide](../getting-started/quick-start.md). We're excited to see what you'll build with WDK!
 
-**Questions?** Don't hesitate to reach out to our team at [beta@wdk.dev](mailto:beta@wdk.dev).
+**Questions?** Don't hesitate to reach out to our team at [support@tether.io](mailto:support@tether.io).
 
 ---
 

@@ -50,9 +50,7 @@ WDK is a **developer-first framework** to create cross-chain wallets that are se
 WDK is **stateless**: it processes requests but stores nothing. All sensitive data (keys, sessions, configs) stays in your hands.
 
 ```
-
 [Your App] → [WDK API] → [Ethereum | Bitcoin | TON | Spark]
-
 ```
 
 This guarantees:

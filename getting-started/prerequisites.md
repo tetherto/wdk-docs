@@ -1,7 +1,7 @@
 ---
 title: Prerequisites
 author: Raquel Carrasco Gonzalez
-lastReviewed: 2025-06-25
+lastReviewed: 2025-06-28
 icon: clipboard
 ---
 
@@ -19,7 +19,7 @@ This documentation will introduce the fundamental concepts required to use WDK. 
 
 ### **Required Knowladge**
 
-- [Account abstraction basics](./account-abstraction-basics.md)
+- [Account abstraction basics](../resources/concepts.md#account-abstraction)
 
 ### **Optional but Helpful**
 
@@ -40,7 +40,7 @@ This documentation will introduce the fundamental concepts required to use WDK. 
 
 For a detailed example, check the Account Abstraction Configuration, but feel free to choose a configuration that best fits your needs.
 
-- [Account Abstraction Configuration](../7-developer-guide/account-abstraction.md)
+- [Account Abstraction Configuration](../resources/concepts.md#account-abstraction)
 
 ### **Provider Flexibility**
 
@@ -69,4 +69,4 @@ Feel free to substitute these URLs in your wallet configuration, or use your own
 
 or 
 
-* [Learn more about Account Abstraction](./account-abstraction-basics.md)
+* [Learn more about Account Abstraction](../resources/concepts.md#account-abstraction)
