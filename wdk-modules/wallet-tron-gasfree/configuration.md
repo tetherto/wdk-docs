@@ -3,6 +3,7 @@ title: Wallet Tron Gas-Free Configuration
 description: Configuration options and settings for @wdk/wallet-tron-gasfree
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
+icon: gear
 ---
 
 # Configuration

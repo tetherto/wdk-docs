@@ -3,6 +3,7 @@ title: Wallet Tron Guides
 description: Installation, quick start, and usage examples for @wdk/wallet-tron
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
+icon: book-open
 ---
 
 # Guides

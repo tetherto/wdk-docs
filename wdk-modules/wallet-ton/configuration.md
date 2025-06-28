@@ -3,7 +3,7 @@ title: Wallet TON Configuration
 description: Configuration options and settings for @wdk/wallet-ton
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
-icon: settings
+icon: gear
 ---
 # Configuration
 

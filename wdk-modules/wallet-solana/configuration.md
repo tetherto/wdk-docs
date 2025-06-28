@@ -3,6 +3,7 @@ title: Wallet Solana Configuration
 description: Configuration options and settings for @wdk/wallet-solana
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
+icon: gear
 ---
 
 # Configuration

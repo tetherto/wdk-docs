@@ -3,6 +3,7 @@ title: Wallet Tron Configuration
 description: Configuration options and settings for @wdk/wallet-tron
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
+icon: gear
 ---
 
 # Configuration

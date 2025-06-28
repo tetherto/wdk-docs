@@ -3,6 +3,7 @@ title: Wallet Tron API Reference
 description: Complete API documentation for @wdk/wallet-tron
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
+icon: code
 ---
 
 # API Reference
