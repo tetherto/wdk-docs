@@ -5,7 +5,7 @@
 * [Introduction](overview/introduction.md)
 * [Beta Program](overview/beta-program.md)
 
-## [Getting Started](getting-started/README.md)
+## [Getting Started](getting-started/overview.md)
 * [Prerequisites](getting-started/prerequisites.md)
 * [Quick Start](getting-started/quick-start.md)
 
