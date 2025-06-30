@@ -36,6 +36,7 @@ Your input will help shape the future of WDK and ensure it meets the needs of th
 
 #### Getting Started
 
+- [Getting Started with WDK](getting-started/overview.md)
 - [Prerequisites set up](getting-started/prerequisites.md)
 - [Create your first wallet](getting-started/quick-start.md)
 
