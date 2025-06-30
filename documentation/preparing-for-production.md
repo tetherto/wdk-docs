@@ -63,7 +63,7 @@ This ephemeral flow minimizes the in-memory attack surface.
 
 ### What is WdkSecretManager?
 
-[WdkSecretManager](https://github.com/noxtton/wdk-secret-manager-internal) is a JavaScript library for secure management of BIP39 mnemonic phrases and related cryptographic secrets. It uses a user-provided passkey and salt to derive a strong cryptographic key (via libsodium pwhash), which is then used to encrypt and decrypt mnemonics using sodium-universal. It is designed for use in production wallet applications, with a focus on minimizing memory exposure and following best practices for secret handling.
+[WdkSecretManager](https://github.com/tetherto/wdk-secret-manager) is a JavaScript library for secure management of BIP39 mnemonic phrases and related cryptographic secrets. It uses a user-provided passkey and salt to derive a strong cryptographic key (via libsodium pwhash), which is then used to encrypt and decrypt mnemonics using sodium-universal. It is designed for use in production wallet applications, with a focus on minimizing memory exposure and following best practices for secret handling.
 
 **Key Features:**
 - **Strong Key Derivation:** Uses PBKDF2 (via `react-native-quick-crypto`) to derive a 256-bit cryptographic key from a user-provided passkey and a unique, random salt. This process is resistant to brute-force and rainbow table attacks.
