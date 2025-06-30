@@ -38,9 +38,12 @@ This documentation will introduce the fundamental concepts required to use WDK. 
 
 ### **Smart Wallet Configuration**
 
-For a detailed example, check the Account Abstraction Configuration, but feel free to choose a configuration that best fits your needs.
+WDK packages support both account abstraction and gasless configurations. The setup process varies depending on the blockchain and package you wish to integrate. The [Quick Start](./quick-start.md) guide demonstrates configuration for EVM, while detailed, chain-specific instructions can be found on each module's dedicated documentation page. You are encouraged to select the providers and options that best fit your project's requirements.
 
-- [Account Abstraction Configuration](../resources/concepts.md#account-abstraction)
+- **[EVM Account Abstraction Configuration](../wdk-modules/wallet-ton-gasless/configuration.md)**
+- [TON Gasless Configuration](../wdk-modules/wallet-ton-gasless/configuration.md)
+- [TRON Gasfree Configuration](../wdk-modules/wallet-tron-gasfree//configuration.md)
+
 
 ### **Provider Flexibility**
 
