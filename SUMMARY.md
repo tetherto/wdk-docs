@@ -5,8 +5,7 @@
 * [Introduction](overview/introduction.md)
 * [Beta Program](overview/beta-program.md)
 
-## [Getting Started]
-* [Getting Started with WDK](getting-started/overview.md)
+## Getting Started
 * [Prerequisites](getting-started/prerequisites.md)
 * [Quick Start](getting-started/quick-start.md)
 
