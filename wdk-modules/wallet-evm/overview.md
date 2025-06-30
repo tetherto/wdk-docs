@@ -39,7 +39,7 @@ This package works with any EVM-compatible blockchain, including:
 
 ## Next Steps
 
-- Read the **[Guides](./guides.md)** for quick start, and usage examples
+- Read the **[Guides](guides.md)** for quick start, and usage examples
 - Check the **[API Reference](./api-reference.md)**
 - Review **[Configuration](./configuration.md)** options
 - Want to contribute? **[Open a PR on Github](https://github.com/tetherto/wdk-wallet-evm)**
