@@ -8,7 +8,7 @@ icon: users
 
 # WDK Private Beta Program
 
-Welcome to the **Wallet Development Kit (WDK) Private Beta Program**! You're among the select group of developers and organizations who will have early access to our cutting-edge wallet development framework before its public release.
+Welcome to the **Wallet Development Kit (WDK) Private Beta Program**! You're among the select group of developers and organizations who will have early access to our wallet development framework before its public release.
 
 ## What is the Beta Program?
 

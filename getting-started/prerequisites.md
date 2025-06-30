@@ -46,7 +46,7 @@ For a detailed example, check the Account Abstraction Configuration, but feel fr
 
 You can use any RPC, bundler, or paymaster provider that is compatible with your target blockchain. WDK supports both public and private endpoints, giving you full control over your infrastructure.
 
-**Recommended public endpoints:**
+**Example public endpoints:**
 - **Ethereum Mainnet RPC:** `https://rpc.mevblocker.io/fast` or `https://eth.llamarpc.com`
 - **Polygon Mainnet RPC:** `https://polygon-rpc.com`
 - **Arbitrum One RPC:** `https://1rpc.io/arb`
