@@ -83,7 +83,7 @@ WDK supports a growing set of blockchains. This list is continuously expanding, 
 | [Solana](../wdk-modules/wallet-solana/overview.md)                   | Non-EVM          | ✅        |
 | [TRON](../wdk-modules/wallet-tron/overview.md)                       | Non-EVM          | ✅        |
 | [TRON Gasfree](../wdk-modules/wallet-tron-gasfree/overview.md)       | TRON Gasfree     | ✅        |
-| Ark     | *    | ⏳        |
+| [Ark](https://github.com/tetherto/wdk-wallet-ark)    | *    | ⏳        |
 
 ---
 

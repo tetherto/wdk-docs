@@ -116,10 +116,12 @@ We're excited to showcase how our beta partners are using WDK to build innovativ
 
 ## Quick Links
 
-- **[Prerequisites](prerequisites.md)** - Set up your development environment
-- **[Quick Start Guide](quick-start.md)** - 15-minute integration walkthrough
-- **[Core Concepts](../resources/concepts.md)** - Understand WDK fundamentals
+<!-- - **[Prerequisites](../getting-started/prerequisites.md)** - Set up your development environment
+- **[Quick Start Guide](../getting-started/quick-start.md)** - 15-minute integration walkthrough -->
 - **[Wallet Modules](../wdk-modules/overview.md)** - Explore available blockchain modules
+- **[Preparing for production](../documentation/preparing-for-production.md)** - Guidelines for securely handle and persist seedphrases
+- **[Core Concepts](../resources/concepts.md)** - Understand WDK fundamentals
+
 
 ---
 
