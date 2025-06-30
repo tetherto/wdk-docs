@@ -72,17 +72,17 @@ This guarantees:
 
 WDK supports a growing set of blockchains. This list is continuously expanding, with **more integrations coming soon**. Chains marked with ⏳ are in active development.
 
-| Chain      | Type        | Supported |
-|------------|-------------|-----------|
-| [Ethereum](https://github.com/tetherto/wdk-wallet-evm)   | EVM         | ✅        |
-| [Arbitrum](https://github.com/tetherto/wdk-wallet-evm)   | L2 / EVM    | ✅        |
-| [Polygon](https://github.com/tetherto/wdk-wallet-evm)    | L2 / EVM    | ✅        |
-| [Bitcoin](https://github.com/tetherto/wdk-wallet-btc)    | Native      | ✅        |
-| [TON](https://github.com/tetherto/wdk-wallet-ton)        | Non-EVM     | ✅        |
-| [Spark](https://github.com/tetherto/wdk-wallet-spark)    | *           | ✅        |
-| [Solana](https://github.com/tetherto/wdk-wallet-solana)  | Non-EVM     | ⏳        |
-| [TRON](https://github.com/tetherto/wdk-wallet-tron)      | Non-EVM     | ⏳        |
-
+| Chain/Module                                                      | Type             | Supported |
+|-------------------------------------------------------------------|------------------|-----------|
+| [Ethereum/Arbitrum/Polygon](../wdk-modules/wallet-evm/overview)   | EVM  /  L2       | ✅        |
+| [EVM ERC-4337](../wdk-modules/wallet-evm-erc-4337/overview)       | EVM Gasless      | ✅        |
+| [Bitcoin](../wdk-modules/wallet-btc/overview)                     | Native           | ✅        |
+| [TON](../wdk-modules/wallet-ton/overview)                         | Non-EVM          | ✅        |
+| [TON Gasless](../wdk-modules/wallet-ton-gasless/overview)         | TON Gasless      | ✅        |
+| [Spark](../wdk-modules/wallet-spark/overview)                     | *                | ✅        |
+| [Solana](../wdk-modules/wallet-solana/overview)                   | Non-EVM          | ⏳        |
+| [TRON](../wdk-modules/wallet-tron/overview)                       | Non-EVM          | ⏳        |
+| [TRON Gasfree](../wdk-modules/wallet-tron-gasfree/overview)       | TRON Gasfree     | ⏳        |
 
 ---
 
