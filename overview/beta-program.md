@@ -116,7 +116,7 @@ We're excited to showcase how our beta partners are using WDK to build innovativ
 
 ## Quick Links
 
-- **[Getting Started](../getting-started/README.md)** - Set up your development environment
+- **[Getting Started](../getting-started/README)** - Set up your development environment
 - **[Core Concepts](../resources/concepts.md)** - Understand WDK fundamentals
 - **[Wallet Modules](../wdk-modules/overview.md)** - Explore available blockchain modules
 
