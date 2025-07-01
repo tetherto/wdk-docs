@@ -34,9 +34,9 @@ This package works with the TON blockchain (The Open Network), including:
 
 ## Next Steps
 
-- Read the **[Guides](./guides.md)** for quick start, and usage examples
-- Check the **[API Reference](./api-reference.md)**
-- Review **[Configuration](./configuration.md)** options
+- Read the **[Guides](guides.md)** for quick start, and usage examples
+- Check the **[API Reference](api-reference.md)**
+- Review **[Configuration](configuration.md)** options
 - Want to contribute? **[Open a PR on Github](https://github.com/tetherto/wdk-wallet-ton-gasless)**
 - Found a bug? **[Open an issue on Github](https://github.com/tetherto/wdk-wallet-ton-gasless/issues)** 
 

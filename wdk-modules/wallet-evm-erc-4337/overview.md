@@ -39,7 +39,7 @@ This package works with any EVM-compatible blockchain that supports ERC-4337, in
 ## Next Steps
 
 - Read the **[Guides](guides.md)** for quick start, and usage examples
-- Check the **[API Reference](./api-reference.md)** 
-- Review **[Configuration](./configuration.md)** options
+- Check the **[API Reference](api-reference.md)** 
+- Review **[Configuration](configuration.md)** options
 - Want to contribute? **[Open a PR on Github](https://github.com/tetherto/wdk-wallet-evm-erc-4337)**
 - Found a bug? **[Open an issue on Github](https://github.com/tetherto/wdk-wallet-evm-erc-4337/issues)** 

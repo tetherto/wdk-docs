@@ -32,9 +32,9 @@ This package works with the Tron blockchain, including:
 
 ## Next Steps
 
-- Read the **[Guides](./guides.md)** for quick start, and usage examples
-- Check the **[API Reference](./api-reference.md)**
-- Review **[Configuration](./configuration.md)** options
+- Read the **[Guides](guides.md)** for quick start, and usage examples
+- Check the **[API Reference](api-reference.md)**
+- Review **[Configuration](configuration.md)** options
 - Want to contribute? **[Open a PR on Github](https://github.com/tetherto/wdk-wallet-tron-gasfree)**
 - Found a bug? **[Open an issue on Github](https://github.com/tetherto/wdk-wallet-tron-gasfree/issues)** 
 
