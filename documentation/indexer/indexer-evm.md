@@ -1,0 +1,808 @@
+# EVM Indexer
+
+## Overview
+
+The WDK EVM Indexer provides comprehensive indexing for Ethereum and all EVM-compatible blockchains including Binance Smart Chain, Polygon, Avalanche, and others. It supports both native tokens (ETH, BNB, MATIC) and ERC-20 token contracts with automatic contract detection and normalization.
+
+### Key Features
+
+- **Multi-Chain Support**: Ethereum, BSC, Polygon, Avalanche, Arbitrum, Optimism, and more
+- **ERC-20 Token Indexing**: Automatic token contract detection and transfer logging
+- **Gas Optimization**: Efficient batch processing with configurable gas limits
+- **Contract Interaction**: Smart contract call detection and parsing
+- **Address Validation**: Comprehensive Ethereum address format validation
+- **Multi-Token Support**: Index multiple tokens per chain simultaneously
+
+## Architecture
+
+The EVM indexer extends the base WDK indexer architecture with Ethereum-specific components:
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Ethereum      │    │    Infura/       │    │   Other EVM     │
+│   Mainnet       │    │    Alchemy       │    │   RPC Nodes     │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 ▼
+                    ┌──────────────────────┐
+                    │   Ethers.js Client   │
+                    │   (JSON-RPC)         │
+                    └──────────────────────┘
+                                 │
+                                 ▼
+                    ┌──────────────────────┐
+                    │   EVM Processor      │
+                    │   (Block + Logs)     │
+                    └──────────────────────┘
+                                 │
+                    ┌────────────┴────────────┐
+                    ▼                         ▼
+          ┌─────────────────┐       ┌─────────────────┐
+          │  Native Token   │       │   ERC-20 Token  │
+          │   Processor     │       │   Processor     │
+          └─────────────────┘       └─────────────────┘
+```
+
+## Supported Networks
+
+| Network | Chain ID | Native Token | RPC Endpoint Examples |
+|---------|----------|--------------|----------------------|
+| Ethereum Mainnet | 1 | ETH | `https://mainnet.infura.io/v3/PROJECT_ID` |
+| Ethereum Goerli | 5 | ETH | `https://goerli.infura.io/v3/PROJECT_ID` |
+| Ethereum Sepolia | 11155111 | ETH | `https://sepolia.infura.io/v3/PROJECT_ID` |
+| Binance Smart Chain | 56 | BNB | `https://bsc-dataseed.binance.org/` |
+| BSC Testnet | 97 | BNB | `https://data-seed-prebsc-1-s1.binance.org:8545/` |
+| Polygon | 137 | MATIC | `https://polygon-mainnet.infura.io/v3/PROJECT_ID` |
+| Polygon Mumbai | 80001 | MATIC | `https://polygon-mumbai.infura.io/v3/PROJECT_ID` |
+| Avalanche C-Chain | 43114 | AVAX | `https://api.avax.network/ext/bc/C/rpc` |
+| Arbitrum One | 42161 | ETH | `https://arb1.arbitrum.io/rpc` |
+| Optimism | 10 | ETH | `https://mainnet.optimism.io` |
+
+## Configuration
+
+### Required Configuration Files
+
+Create these configuration files in your `config/` directory:
+
+**config/common.json**
+```json
+{
+  "debug": 0,
+  "chain": "ethereum",
+  "topicConf": {
+    "crypto": {
+      "algo": "hmac-sha384",
+      "key": "your-secret-encryption-key"
+    }
+  }
+}
+```
+
+**config/ethereum.json** (Native ETH indexing)
+```json
+{
+  "chain": "ethereum",
+  "token": "eth",
+  "rpcUrl": "https://mainnet.infura.io/v3/YOUR_PROJECT_ID",
+  "network": "mainnet",
+  "txConcurrency": 2,
+  "blockBatchSize": 10,
+  "gasOptimization": {
+    "enabled": true,
+    "maxGasPerBatch": "1000000"
+  }
+}
+```
+
+**config/ethereum-usdt.json** (ERC-20 USDT indexing)
+```json
+{
+  "chain": "ethereum", 
+  "token": "usdt",
+  "rpcUrl": "https://mainnet.infura.io/v3/YOUR_PROJECT_ID",
+  "network": "mainnet",
+  "contractAddress": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+  "decimals": 6,
+  "txConcurrency": 2,
+  "blockBatchSize": 5
+}
+```
+
+### Configuration Options
+
+#### Network Settings
+
+- **chain**: Blockchain identifier ("ethereum", "bsc", "polygon", etc.)
+- **token**: Token symbol ("eth", "bnb", "matic", "usdt", etc.)
+- **rpcUrl**: JSON-RPC endpoint URL
+- **network**: Network type ("mainnet", "testnet", "goerli", etc.)
+
+#### Performance Settings
+
+- **txConcurrency**: Concurrent transaction processing (default: 2)
+- **blockBatchSize**: Blocks processed per batch (default: 10)
+- **gasOptimization**: Gas usage optimization settings
+
+#### ERC-20 Token Settings
+
+- **contractAddress**: Token contract address (required for ERC-20)
+- **decimals**: Token decimal places
+- **transferEventTopic**: Custom transfer event topic (optional)
+
+### Network-Specific Examples
+
+**Binance Smart Chain (BSC)**:
+```json
+{
+  "chain": "bsc",
+  "token": "bnb", 
+  "rpcUrl": "https://bsc-dataseed.binance.org/",
+  "network": "mainnet",
+  "txConcurrency": 3,
+  "blockBatchSize": 15
+}
+```
+
+**Polygon (MATIC)**:
+```json
+{
+  "chain": "polygon",
+  "token": "matic",
+  "rpcUrl": "https://polygon-mainnet.infura.io/v3/PROJECT_ID",
+  "network": "mainnet", 
+  "txConcurrency": 5,
+  "blockBatchSize": 20
+}
+```
+
+**ERC-20 USDC on Ethereum**:
+```json
+{
+  "chain": "ethereum",
+  "token": "usdc",
+  "rpcUrl": "https://mainnet.infura.io/v3/PROJECT_ID",
+  "contractAddress": "0xa0b86a33e6b8c66e29e8bb8a87e8e76e6d6e5e6f",
+  "decimals": 6,
+  "network": "mainnet"
+}
+```
+
+## Provider Setup
+
+### Infura Setup
+
+1. **Create Account**: Sign up at [infura.io](https://infura.io)
+2. **Create Project**: Select Ethereum or your target network
+3. **Get Project ID**: Copy from project settings
+4. **Configure Endpoints**:
+   ```
+   Mainnet: https://mainnet.infura.io/v3/YOUR_PROJECT_ID
+   Goerli: https://goerli.infura.io/v3/YOUR_PROJECT_ID
+   Polygon: https://polygon-mainnet.infura.io/v3/YOUR_PROJECT_ID
+   ```
+
+### Alchemy Setup
+
+1. **Create Account**: Sign up at [alchemy.com](https://alchemy.com)
+2. **Create App**: Choose your network
+3. **Get API Key**: Copy from app settings
+4. **Configure Endpoints**:
+   ```
+   Ethereum: https://eth-mainnet.g.alchemy.com/v2/YOUR_API_KEY
+   Polygon: https://polygon-mainnet.g.alchemy.com/v2/YOUR_API_KEY
+   ```
+
+### Public RPC Endpoints
+
+**Free public endpoints** (use with caution in production):
+
+```json
+{
+  "ethereum": "https://cloudflare-eth.com",
+  "bsc": "https://bsc-dataseed.binance.org/",
+  "polygon": "https://polygon-rpc.com/",
+  "avalanche": "https://api.avax.network/ext/bc/C/rpc",
+  "arbitrum": "https://arb1.arbitrum.io/rpc",
+  "optimism": "https://mainnet.optimism.io"
+}
+```
+
+### Self-Hosted Node
+
+**Geth (Ethereum)**:
+```bash
+# Install Geth
+sudo apt-get install ethereum
+
+# Start with JSON-RPC enabled
+geth --http --http.addr 127.0.0.1 --http.port 8545 --http.api eth,net,web3
+```
+
+**BSC Node**:
+```bash
+# Clone BSC repository
+git clone https://github.com/binance-chain/bsc
+cd bsc && make geth
+
+# Start BSC node
+./build/bin/geth --config ./config.toml --datadir ./node
+```
+
+## Deployment
+
+### Basic Deployment
+
+1. **Clone and Install**:
+   ```bash
+   git clone https://github.com/tetherto/wdk-indexer-wrk-evm.git
+   cd wdk-indexer-wrk-evm
+   npm install
+   ```
+
+2. **Setup Configuration**:
+   ```bash
+   # Native token indexing
+   cp config/ethereum.json.example config/ethereum.json
+   
+   # ERC-20 token indexing  
+   cp config/ethereum.json.example config/ethereum-usdt.json
+   
+   cp config/common.json.example config/common.json
+   ```
+
+3. **Start Native Token Processor**:
+   ```bash
+   NODE_CONFIG_DIR=./config node worker.js \
+     --env=production \
+     --wtype=proc.indexer.evm.wrk \
+     --rack=r0 \
+     --chain=ethereum
+   ```
+
+4. **Start ERC-20 Token Processor**:
+   ```bash
+   NODE_CONFIG_DIR=./config node worker.js \
+     --env=production \
+     --wtype=proc.indexer.erc20.wrk \
+     --rack=r0 \
+     --chain=ethereum \
+     --token=usdt
+   ```
+
+5. **Start API Workers**:
+   ```bash
+   # Native token API
+   NODE_CONFIG_DIR=./config node worker.js \
+     --env=production \
+     --wtype=api.indexer.evm.wrk \
+     --rack=r0 \
+     --chain=ethereum \
+     --procRpc=<processor-rpc-key>
+   
+   # ERC-20 token API
+   NODE_CONFIG_DIR=./config node worker.js \
+     --env=production \
+     --wtype=api.indexer.erc20.wrk \
+     --rack=r0 \
+     --chain=ethereum \
+     --token=usdt \
+     --procRpc=<erc20-processor-rpc-key>
+   ```
+
+### Docker Deployment
+
+**Multi-Service Docker Compose**:
+```yaml
+version: '3.8'
+services:
+  # Ethereum Native Token Indexer
+  ethereum-processor:
+    build: .
+    environment:
+      - NODE_CONFIG_DIR=/app/config
+    command: >
+      node worker.js 
+      --env=production 
+      --wtype=proc.indexer.evm.wrk 
+      --rack=r0 
+      --chain=ethereum
+    volumes:
+      - ./config:/app/config
+      - ethereum-data:/app/store
+    restart: unless-stopped
+
+  ethereum-api:
+    build: .
+    environment:
+      - NODE_CONFIG_DIR=/app/config
+    command: >
+      node worker.js 
+      --env=production 
+      --wtype=api.indexer.evm.wrk 
+      --rack=r0 
+      --chain=ethereum
+      --procRpc=${ETH_PROC_RPC_KEY}
+    ports:
+      - "8081:8080"
+    depends_on:
+      - ethereum-processor
+    restart: unless-stopped
+
+  # USDT ERC-20 Token Indexer  
+  usdt-processor:
+    build: .
+    environment:
+      - NODE_CONFIG_DIR=/app/config
+    command: >
+      node worker.js 
+      --env=production 
+      --wtype=proc.indexer.erc20.wrk 
+      --rack=r0 
+      --chain=ethereum
+      --token=usdt
+    volumes:
+      - ./config:/app/config
+      - usdt-data:/app/store
+    restart: unless-stopped
+
+  usdt-api:
+    build: .
+    environment:
+      - NODE_CONFIG_DIR=/app/config
+    command: >
+      node worker.js 
+      --env=production 
+      --wtype=api.indexer.erc20.wrk 
+      --rack=r0 
+      --chain=ethereum
+      --token=usdt
+      --procRpc=${USDT_PROC_RPC_KEY}
+    ports:
+      - "8082:8080"
+    depends_on:
+      - usdt-processor
+    restart: unless-stopped
+
+volumes:
+  ethereum-data:
+  usdt-data:
+```
+
+## EVM-Specific Features
+
+### Native Token Processing
+
+Processes native blockchain transfers (ETH, BNB, MATIC, etc.):
+
+- **Value Transfers**: Direct ETH/token transfers between addresses
+- **Contract Interactions**: Calls to smart contracts with value
+- **Gas Optimization**: Efficient batching to reduce RPC calls
+- **Wei Conversion**: Automatic conversion from wei to decimal format
+
+### ERC-20 Token Processing
+
+Dedicated processing for ERC-20 token contracts:
+
+- **Transfer Event Monitoring**: Listens for Transfer events from token contracts
+- **Multi-Contract Support**: Index multiple tokens simultaneously
+- **Decimal Normalization**: Handles different token decimal places
+- **Contract Validation**: Verifies ERC-20 compliance
+
+### Smart Contract Support
+
+- **Contract Detection**: Identifies contract addresses vs. EOAs
+- **Event Log Processing**: Parses relevant contract events
+- **Function Call Tracking**: Monitors specific contract interactions
+- **Multi-Signature Support**: Handles multi-sig wallet transactions
+
+### Address Validation
+
+Comprehensive Ethereum address validation:
+
+```javascript
+// Standard Ethereum addresses
+"0x742d35cc6266c0c7e4c4b5c7f2b8e6f5f8c3e1a2" ✓
+
+// Checksummed addresses (EIP-55)
+"0x742d35Cc6266C0C7e4C4b5C7f2B8E6f5F8c3E1A2" ✓
+
+// Contract addresses
+"0xA0b86a33E6b8c66E29E8bb8A87E8e76e6D6e5E6f" ✓
+```
+
+## API Behavior
+
+### Native Token Responses
+
+**Transaction Response**:
+```json
+{
+  "blockchain": "ethereum",
+  "blockNumber": 18500000,
+  "transactionHash": "0x1a2b3c4d5e6f...",
+  "transactionIndex": 45,
+  "from": "0x742d35cc6266c0c7e4c4b5c7f2b8e6f5f8c3e1a2",
+  "to": "0xa0b86a33e6b8c66e29e8bb8a87e8e76e6d6e5e6f",
+  "token": "eth",
+  "amount": "1.5",
+  "timestamp": "2024-01-15T10:30:00.000Z"
+}
+```
+
+### ERC-20 Token Responses
+
+**Token Transfer Response**:
+```json
+{
+  "blockchain": "ethereum",
+  "blockNumber": 18500000,
+  "transactionHash": "0x1a2b3c4d5e6f...",
+  "transactionIndex": 45,
+  "logIndex": 12,
+  "from": "0x742d35cc6266c0c7e4c4b5c7f2b8e6f5f8c3e1a2",
+  "to": "0xa0b86a33e6b8c66e29e8bb8a87e8e76e6d6e5e6f",
+  "token": "usdt",
+  "amount": "1000.0",
+  "timestamp": "2024-01-15T10:30:00.000Z"
+}
+```
+
+### Query Examples
+
+```javascript
+// Get ETH balance
+const ethBalance = await ethIndexer.getBalance('0x742d35cc...');
+
+// Get USDT balance
+const usdtBalance = await usdtIndexer.getBalance('0x742d35cc...');
+
+// Query ETH transactions for specific addresses
+const ethTransactions = await ethIndexer.queryTransactions({
+  fromBlock: 18500000,
+  toBlock: 18500100,
+  addresses: ['0x742d35cc6266c0c7e4c4b5c7f2b8e6f5f8c3e1a2']
+});
+
+// Query USDT transfers
+const usdtTransfers = await usdtIndexer.queryTransactions({
+  fromTs: '2024-01-01T00:00:00Z',
+  toTs: '2024-01-31T23:59:59Z',
+  addresses: ['0x742d35cc6266c0c7e4c4b5c7f2b8e6f5f8c3e1a2']
+});
+
+// Get specific transaction
+const tx = await ethIndexer.getTransaction('0x1a2b3c4d5e6f...');
+```
+
+## Performance Optimization
+
+### Recommended Settings by Network
+
+**Ethereum Mainnet**:
+```json
+{
+  "txConcurrency": 2,
+  "blockBatchSize": 5,
+  "gasOptimization": {
+    "enabled": true,
+    "maxGasPerBatch": "500000"
+  }
+}
+```
+
+**BSC (Higher throughput)**:
+```json
+{
+  "txConcurrency": 5,
+  "blockBatchSize": 20,
+  "gasOptimization": {
+    "enabled": true,
+    "maxGasPerBatch": "2000000"
+  }
+}
+```
+
+**Polygon (Fast finality)**:
+```json
+{
+  "txConcurrency": 10,
+  "blockBatchSize": 50,
+  "gasOptimization": {
+    "enabled": true,
+    "maxGasPerBatch": "5000000"
+  }
+}
+```
+
+### RPC Optimization
+
+**Connection Pooling**:
+```json
+{
+  "rpcUrl": "https://mainnet.infura.io/v3/PROJECT_ID",
+  "rpcOptions": {
+    "timeout": 30000,
+    "retries": 3,
+    "retryDelay": 1000
+  }
+}
+```
+
+**Batch Processing Tuning**:
+```json
+{
+  "blockBatchSize": 10,
+  "txConcurrency": 3,
+  "logBatchSize": 1000,
+  "eventFilterBatchSize": 10000
+}
+```
+
+## Multi-Chain Deployment
+
+### Running Multiple Networks
+
+Deploy separate indexers for each network:
+
+```bash
+# Ethereum mainnet
+NODE_CONFIG_DIR=./config node worker.js --chain=ethereum
+
+# BSC mainnet  
+NODE_CONFIG_DIR=./config node worker.js --chain=bsc
+
+# Polygon mainnet
+NODE_CONFIG_DIR=./config node worker.js --chain=polygon
+```
+
+### Cross-Chain Configuration
+
+**config/multi-chain.json**:
+```json
+{
+  "networks": {
+    "ethereum": {
+      "rpcUrl": "https://mainnet.infura.io/v3/PROJECT_ID",
+      "chainId": 1,
+      "token": "eth"
+    },
+    "bsc": {
+      "rpcUrl": "https://bsc-dataseed.binance.org/",
+      "chainId": 56, 
+      "token": "bnb"
+    },
+    "polygon": {
+      "rpcUrl": "https://polygon-mainnet.infura.io/v3/PROJECT_ID",
+      "chainId": 137,
+      "token": "matic"
+    }
+  }
+}
+```
+
+## Token Contract Management
+
+### Adding New ERC-20 Tokens
+
+1. **Identify Contract**: Get token contract address from Etherscan
+2. **Check Decimals**: Verify token decimal places
+3. **Create Configuration**:
+   ```json
+   {
+     "chain": "ethereum",
+     "token": "newtoken",
+     "contractAddress": "0x...",
+     "decimals": 18,
+     "rpcUrl": "https://mainnet.infura.io/v3/PROJECT_ID"
+   }
+   ```
+4. **Deploy Workers**: Start processor and API workers for new token
+
+### Popular Token Configurations
+
+**USDC (Ethereum)**:
+```json
+{
+  "chain": "ethereum",
+  "token": "usdc", 
+  "contractAddress": "0xa0b86a33e6b8c66e29e8bb8a87e8e76e6d6e5e6f",
+  "decimals": 6
+}
+```
+
+**USDT (BSC)**:
+```json
+{
+  "chain": "bsc",
+  "token": "usdt",
+  "contractAddress": "0x55d398326f99059ff775485246999027b3197955", 
+  "decimals": 18
+}
+```
+
+**LINK (Ethereum)**:
+```json
+{
+  "chain": "ethereum", 
+  "token": "link",
+  "contractAddress": "0x514910771af9ca656af840dff83e8264ecf986ca",
+  "decimals": 18
+}
+```
+
+## Monitoring and Maintenance
+
+### Key Metrics
+
+```bash
+# Check sync status across networks
+curl -X POST http://localhost:8081/rpc -d '{
+  "method": "getBlockFromChain",
+  "params": {"blockNumber": "latest"}
+}'
+
+# Monitor gas usage and performance
+tail -f logs/ethereum-indexer.log | grep -E "(gas|performance|rpc)"
+
+# ERC-20 event processing status
+curl -X POST http://localhost:8082/rpc -d '{
+  "method": "queryTransactions", 
+  "params": {"fromBlock": "latest"}
+}'
+```
+
+### Performance Monitoring
+
+**Network-Specific Metrics**:
+- Block processing speed vs. network block time
+- RPC endpoint response times and errors
+- Event log processing efficiency
+- Memory usage during large block processing
+
+**Token-Specific Metrics**:
+- Transfer event detection rate
+- Contract interaction success rate
+- Decimal conversion accuracy
+- Balance calculation consistency
+
+## Troubleshooting
+
+### Common Issues
+
+**RPC Rate Limiting**:
+```bash
+# Symptoms: 429 errors, slow sync
+# Solutions:
+# 1. Reduce concurrency
+# 2. Add multiple RPC endpoints 
+# 3. Upgrade to paid RPC service
+```
+
+**Large Block Processing**:
+```bash
+# Symptoms: Memory errors, timeouts
+# Solutions:
+# 1. Increase Node.js heap size
+# 2. Reduce blockBatchSize
+# 3. Lower txConcurrency
+```
+
+**ERC-20 Event Missing**:
+```bash
+# Check contract address
+curl -X POST $RPC_URL -d '{
+  "method": "eth_getCode",
+  "params": ["0xCONTRACT_ADDRESS", "latest"]
+}'
+
+# Verify Transfer event topic
+curl -X POST $RPC_URL -d '{
+  "method": "eth_getLogs",
+  "params": [{
+    "address": "0xCONTRACT_ADDRESS",
+    "topics": ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"],
+    "fromBlock": "0x1234567",
+    "toBlock": "0x1234567"
+  }]
+}'
+```
+
+### Debugging Commands
+
+```bash
+# Test RPC connectivity
+curl -X POST $RPC_URL -d '{
+  "method": "eth_blockNumber",
+  "params": []
+}'
+
+# Check contract code existence
+curl -X POST $RPC_URL -d '{
+  "method": "eth_getCode", 
+  "params": ["0xCONTRACT_ADDRESS", "latest"]
+}'
+
+# Verify address balance
+curl -X POST $RPC_URL -d '{
+  "method": "eth_getBalance",
+  "params": ["0xADDRESS", "latest"]
+}'
+```
+
+## Security Considerations
+
+### RPC Security
+
+- **API Key Protection**: Never expose API keys in client-side code
+- **Rate Limiting**: Implement application-level rate limiting
+- **Endpoint Rotation**: Use multiple RPC providers for redundancy
+- **HTTPS Only**: Always use encrypted connections
+
+### Smart Contract Security
+
+- **Contract Verification**: Verify contracts on Etherscan before indexing
+- **Event Validation**: Validate Transfer event signatures and topics
+- **Decimal Validation**: Verify token decimal places match expected values
+- **Address Validation**: Check contract addresses against known lists
+
+### Data Integrity
+
+- **Checksum Validation**: Use checksummed addresses (EIP-55)
+- **Block Hash Verification**: Verify block hashes during processing
+- **Transaction Receipt Validation**: Confirm transaction success status
+- **Balance Reconciliation**: Periodically verify balance calculations
+
+## Advanced Configuration
+
+### Custom Event Processing
+
+```javascript
+// Custom ERC-20 event processor
+class CustomTokenProcessor extends ERC20Processor {
+  constructor(config, ctx) {
+    super(config, ctx);
+    this.customEventTopics = [
+      '0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925' // Approval
+    ];
+  }
+
+  async processCustomEvents(logs) {
+    // Custom event processing logic
+  }
+}
+```
+
+### Multi-Network Load Balancing
+
+```json
+{
+  "loadBalancing": {
+    "enabled": true,
+    "strategy": "round-robin",
+    "endpoints": [
+      "https://mainnet.infura.io/v3/PROJECT_ID_1",
+      "https://eth-mainnet.g.alchemy.com/v2/API_KEY_1", 
+      "https://rpc.ankr.com/eth"
+    ],
+    "healthCheck": {
+      "interval": 30000,
+      "timeout": 5000
+    }
+  }
+}
+```
+
+### Gas Price Optimization
+
+```json
+{
+  "gasOptimization": {
+    "enabled": true,
+    "strategy": "adaptive",
+    "maxGasPerBatch": "2000000",
+    "dynamicBatching": true,
+    "priorityFeeAdjustment": 1.1
+  }
+}
+```
