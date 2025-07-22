@@ -57,24 +57,21 @@
   * [Configuration](wdk-modules/wallet-solana/configuration.md)
   * [API Reference](wdk-modules/wallet-solana/api-reference.md)
 
-<!-- ## Templates & Samples
-* [Templates & Samples Overview](templates-samples/README.md)
-* [Web Templates](templates-samples/web-templates/)
-  * [React Wallet](templates-samples/web-templates/react-wallet.md)
-  * [Vue Wallet](templates-samples/web-templates/vue-wallet.md)
-  * [Vanilla JS Wallet](templates-samples/web-templates/vanilla-js-wallet.md)
-* [Mobile Templates](templates-samples/mobile-templates/)
-  * [React Native Wallet](templates-samples/mobile-templates/react-native-wallet.md)
-  * [Flutter Wallet](templates-samples/mobile-templates/flutter-wallet.md)
-* [Server Templates](templates-samples/server-templates/)
-  * [Node.js Backend](templates-samples/server-templates/nodejs-backend.md)
-  * [Python Backend](templates-samples/server-templates/python-backend.md)
-* [Integration Samples](templates-samples/integration-samples/)
-  * [DeFi Integration](templates-samples/integration-samples/defi-integration.md)
-  * [Payment Integration](templates-samples/integration-samples/payment-integration.md)
-  * [Cross-Chain Integration](templates-samples/integration-samples/cross-chain-integration.md) -->
+## Core Services
+* [Secret Manager](documentation/secret-manager.md)
+* [Paymaster Service](documentation/paymaster.md)
 
-## Documentation
+## Indexer
+* [Overview](documentation/indexer.md)
+* [Chain-Specific Indexers](documentation/indexer/)
+  * [Bitcoin](documentation/indexer/indexer-btc.md)
+  * [EVM Chains](documentation/indexer/indexer-evm.md)
+  * [Solana](documentation/indexer/indexer-solana.md)
+  * [Spark](documentation/indexer/indexer-spark.md)
+  * [TON](documentation/indexer/indexer-ton.md)
+  * [TRON](documentation/indexer/indexer-tron.md)
+
+## Integration Guides
 * [Transaction History](documentation/transaction-history.md)
 * [Preparing for Production](documentation/preparing-for-production.md)
 
