@@ -271,47 +271,48 @@ Comprehensive Spark address validation:
 
 ## API Behavior
 
-### Spark Transaction Responses
+The Spark indexer implements the [standard WDK Indexer API](indexer-api-reference.md) with Spark-specific behaviors:
 
-**Transaction Response**:
+### Spark-Specific Features
+
+**Network Characteristics:**
+- Optimized for Spark network's consensus mechanism
+- Support for native SPARK token transfers
+- Smart contract interaction monitoring
+- Faster block times requiring optimized processing
+
+**Transaction Processing:**
+- Native SPARK token transfers between addresses
+- Smart contract deployment and interaction tracking
+- Gas fee calculation and optimization
+- Block time synchronization with network consensus
+
+**Address Validation:**
+- Spark network address format validation
+- Support for both regular and contract addresses
+- Multi-signature wallet address handling
+
+### Example Spark Response
+
 ```json
 {
   "blockchain": "spark",
   "blockNumber": 1500000,
   "transactionHash": "0x1a2b3c4d5e6f7890abcdef...",
   "transactionIndex": 5,
+  "direction": "out",
   "from": "spark1sender1234567890abcdef...",
   "to": "spark1receiver1234567890abcdef...",
   "token": "spark",
   "amount": "10.5",
-  "timestamp": "2024-01-15T10:30:00.000Z"
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "status": "confirmed",
+  "confirmations": 12,
+  "fee": "0.001"
 }
 ```
 
-**Balance Response**:
-```json
-"125.75"  // SPARK balance as decimal string
-```
-
-### Query Examples
-
-```javascript
-// Get SPARK balance
-const balance = await sparkIndexer.getBalance('spark1address1234567890abcdef...');
-
-// Validate Spark address
-const isValid = await sparkIndexer.validAddress('spark1address1234567890abcdef...');
-
-// Query transactions in block range
-const transactions = await sparkIndexer.queryTransactions({
-  fromBlock: 1500000,
-  toBlock: 1500100,
-  addresses: ['spark1address1234567890abcdef...']
-});
-
-// Get specific transaction
-const tx = await sparkIndexer.getTransaction('0x1a2b3c4d5e6f7890abcdef...');
-```
+For complete API documentation, method signatures, and examples, see the [WDK Indexer API Reference](indexer-api-reference.md).
 
 ## Performance Optimization
 

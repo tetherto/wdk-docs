@@ -434,26 +434,51 @@ Enhanced data retrieval through Bitquery GraphQL:
 
 ## API Behavior
 
-### Native SOL Responses
+The Solana indexer implements the [standard WDK Indexer API](indexer-api-reference.md) with Solana-specific behaviors:
 
-**Transaction Response**:
+### Solana-Specific Features
+
+**Slot-Based Processing:**
+- `blockNumber` represents Solana slots, not traditional blocks
+- Slot-based pagination and querying
+- Automatic handling of empty slots and skipped slots
+- Lamport to SOL conversion (1 SOL = 1,000,000,000 lamports)
+
+**Program Instructions:**
+- Multiple instructions per transaction parsed individually
+- SPL token transfers show actual token account owners
+- Associated token account resolution
+- Support for complex program interactions (DEX, lending, etc.)
+
+**Address Formats:**
+- Base58-encoded addresses (32 bytes)
+- System program, token program, and custom program addresses
+- Associated token account derivation and validation
+
+### Example Solana Responses
+
+**Native SOL Transfer:**
 ```json
 {
   "blockchain": "solana",
   "blockNumber": 250000000,
   "transactionHash": "5j7s8K9m2N3o4P5q6R7s8T9u0V1w2X3y4Z5a6B7c8D9e0F1g2H3i4J5k6L7m8N9o0P",
   "transactionIndex": 12,
+  "direction": "out",
   "from": "11111111111111111111111111111112",
   "to": "22222222222222222222222222222223",
   "token": "sol",
   "amount": "1.5",
-  "timestamp": "2024-01-15T10:30:00.000Z"
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "status": "confirmed",
+  "confirmations": 32,
+  "metadata": {
+    "slotIndex": 12
+  }
 }
 ```
 
-### SPL Token Responses
-
-**Token Transfer Response**:
+**SPL Token Transfer:**
 ```json
 {
   "blockchain": "solana",
@@ -461,40 +486,22 @@ Enhanced data retrieval through Bitquery GraphQL:
   "transactionHash": "5j7s8K9m2N3o4P5q6R7s8T9u0V1w2X3y4Z5a6B7c8D9e0F1g2H3i4J5k6L7m8N9o0P",
   "transactionIndex": 12,
   "logIndex": 3,
+  "direction": "in",
   "from": "TokenOwnerAddress1111111111111111111111111111",
   "to": "TokenOwnerAddress2222222222222222222222222222",
   "token": "usdc",
-  "amount": "1000.0",
-  "timestamp": "2024-01-15T10:30:00.000Z"
+  "amount": "1000.000000",
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "status": "confirmed",
+  "confirmations": 32,
+  "metadata": {
+    "mintAddress": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    "slotIndex": 12
+  }
 }
 ```
 
-### Query Examples
-
-```javascript
-// Get SOL balance
-const solBalance = await solIndexer.getBalance('11111111111111111111111111111112');
-
-// Get USDC balance
-const usdcBalance = await usdcIndexer.getBalance('TokenOwnerAddress1111111111111111111111111111');
-
-// Query SOL transactions for specific addresses
-const solTransactions = await solIndexer.queryTransactions({
-  fromBlock: 250000000,
-  toBlock: 250000100,
-  addresses: ['11111111111111111111111111111112']
-});
-
-// Query USDC transfers with timestamp filtering
-const usdcTransfers = await usdcIndexer.queryTransactions({
-  fromTs: '2024-01-01T00:00:00Z',
-  toTs: '2024-01-31T23:59:59Z',
-  addresses: ['TokenOwnerAddress1111111111111111111111111111']
-});
-
-// Get specific transaction
-const tx = await solIndexer.getTransaction('5j7s8K9m2N3o4P5q6R7s8T9u0V1w2X3y4Z5a6B7c8D9e0F1g2H3i4J5k6L7m8N9o0P');
-```
+For complete API documentation, method signatures, and examples, see the [WDK Indexer API Reference](indexer-api-reference.md).
 
 ## Performance Optimization
 

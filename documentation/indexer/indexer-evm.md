@@ -49,15 +49,9 @@ The EVM indexer extends the base WDK indexer architecture with Ethereum-specific
 | Network | Chain ID | Native Token | RPC Endpoint Examples |
 |---------|----------|--------------|----------------------|
 | Ethereum Mainnet | 1 | ETH | `https://mainnet.infura.io/v3/PROJECT_ID` |
-| Ethereum Goerli | 5 | ETH | `https://goerli.infura.io/v3/PROJECT_ID` |
 | Ethereum Sepolia | 11155111 | ETH | `https://sepolia.infura.io/v3/PROJECT_ID` |
-| Binance Smart Chain | 56 | BNB | `https://bsc-dataseed.binance.org/` |
-| BSC Testnet | 97 | BNB | `https://data-seed-prebsc-1-s1.binance.org:8545/` |
 | Polygon | 137 | MATIC | `https://polygon-mainnet.infura.io/v3/PROJECT_ID` |
-| Polygon Mumbai | 80001 | MATIC | `https://polygon-mumbai.infura.io/v3/PROJECT_ID` |
-| Avalanche C-Chain | 43114 | AVAX | `https://api.avax.network/ext/bc/C/rpc` |
 | Arbitrum One | 42161 | ETH | `https://arb1.arbitrum.io/rpc` |
-| Optimism | 10 | ETH | `https://mainnet.optimism.io` |
 
 ## Configuration
 
@@ -113,10 +107,10 @@ Create these configuration files in your `config/` directory:
 
 #### Network Settings
 
-- **chain**: Blockchain identifier ("ethereum", "bsc", "polygon", etc.)
-- **token**: Token symbol ("eth", "bnb", "matic", "usdt", etc.)
+- **chain**: Blockchain identifier ("ethereum", "arb", "polygon", etc.)
+- **token**: Token symbol ("eth", "usdt", etc.)
 - **rpcUrl**: JSON-RPC endpoint URL
-- **network**: Network type ("mainnet", "testnet", "goerli", etc.)
+- **network**: Network type ("mainnet", "testnet", etc.)
 
 #### Performance Settings
 
@@ -132,18 +126,6 @@ Create these configuration files in your `config/` directory:
 
 ### Network-Specific Examples
 
-**Binance Smart Chain (BSC)**:
-```json
-{
-  "chain": "bsc",
-  "token": "bnb", 
-  "rpcUrl": "https://bsc-dataseed.binance.org/",
-  "network": "mainnet",
-  "txConcurrency": 3,
-  "blockBatchSize": 15
-}
-```
-
 **Polygon (MATIC)**:
 ```json
 {
@@ -156,13 +138,13 @@ Create these configuration files in your `config/` directory:
 }
 ```
 
-**ERC-20 USDC on Ethereum**:
+**ERC-20 USDT on Ethereum**:
 ```json
 {
   "chain": "ethereum",
-  "token": "usdc",
+  "token": "usdt",
   "rpcUrl": "https://mainnet.infura.io/v3/PROJECT_ID",
-  "contractAddress": "0xa0b86a33e6b8c66e29e8bb8a87e8e76e6d6e5e6f",
+  "contractAddress": "0xdac17f958d2ee523a2206206994597c13d831ec7",
   "decimals": 6,
   "network": "mainnet"
 }
@@ -170,7 +152,7 @@ Create these configuration files in your `config/` directory:
 
 ## Provider Setup
 
-### Infura Setup
+### Infura Setup (or any other provider of your preference)
 
 1. **Create Account**: Sign up at [infura.io](https://infura.io)
 2. **Create Project**: Select Ethereum or your target network
@@ -178,33 +160,19 @@ Create these configuration files in your `config/` directory:
 4. **Configure Endpoints**:
    ```
    Mainnet: https://mainnet.infura.io/v3/YOUR_PROJECT_ID
-   Goerli: https://goerli.infura.io/v3/YOUR_PROJECT_ID
+   Sepolia: https://sepolia.infura.io/v3/YOUR_PROJECT_ID
    Polygon: https://polygon-mainnet.infura.io/v3/YOUR_PROJECT_ID
    ```
 
-### Alchemy Setup
-
-1. **Create Account**: Sign up at [alchemy.com](https://alchemy.com)
-2. **Create App**: Choose your network
-3. **Get API Key**: Copy from app settings
-4. **Configure Endpoints**:
-   ```
-   Ethereum: https://eth-mainnet.g.alchemy.com/v2/YOUR_API_KEY
-   Polygon: https://polygon-mainnet.g.alchemy.com/v2/YOUR_API_KEY
-   ```
-
-### Public RPC Endpoints
+### Public RPC Endpoints (or any other public provider of your preference)
 
 **Free public endpoints** (use with caution in production):
 
 ```json
 {
   "ethereum": "https://cloudflare-eth.com",
-  "bsc": "https://bsc-dataseed.binance.org/",
   "polygon": "https://polygon-rpc.com/",
-  "avalanche": "https://api.avax.network/ext/bc/C/rpc",
   "arbitrum": "https://arb1.arbitrum.io/rpc",
-  "optimism": "https://mainnet.optimism.io"
 }
 ```
 
@@ -413,26 +381,51 @@ Comprehensive Ethereum address validation:
 
 ## API Behavior
 
-### Native Token Responses
+The EVM indexer implements the [standard WDK Indexer API](indexer-api-reference.md) with EVM-specific behaviors:
 
-**Transaction Response**:
+### EVM-Specific Features
+
+**Transaction Types:**
+- Native token transfers (ETH, BNB, MATIC, etc.)
+- ERC-20 token transfers via event logs
+- Smart contract interactions with value transfers
+- Multiple token transfers within single transactions
+
+**Event Log Processing:**
+- `logIndex` field for ERC-20 transfers to identify event position
+- `contractAddress` in metadata for token contract identification
+- Automatic parsing of Transfer events (topic: `0xddf252ad...`)
+- Support for custom event signatures
+
+**Gas and Fee Tracking:**
+- `gasUsed` included in metadata for transaction cost analysis
+- Wei to Ether conversion for native token amounts
+- ERC-20 decimal normalization based on contract specifications
+
+### Example EVM Responses
+
+**Native ETH Transfer:**
 ```json
 {
   "blockchain": "ethereum",
   "blockNumber": 18500000,
   "transactionHash": "0x1a2b3c4d5e6f...",
   "transactionIndex": 45,
+  "direction": "out",
   "from": "0x742d35cc6266c0c7e4c4b5c7f2b8e6f5f8c3e1a2",
   "to": "0xa0b86a33e6b8c66e29e8bb8a87e8e76e6d6e5e6f",
   "token": "eth",
   "amount": "1.5",
-  "timestamp": "2024-01-15T10:30:00.000Z"
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "status": "confirmed",
+  "confirmations": 12,
+  "metadata": {
+    "gasUsed": "21000"
+  }
 }
 ```
 
-### ERC-20 Token Responses
-
-**Token Transfer Response**:
+**ERC-20 Token Transfer:**
 ```json
 {
   "blockchain": "ethereum",
@@ -440,40 +433,22 @@ Comprehensive Ethereum address validation:
   "transactionHash": "0x1a2b3c4d5e6f...",
   "transactionIndex": 45,
   "logIndex": 12,
+  "direction": "in",
   "from": "0x742d35cc6266c0c7e4c4b5c7f2b8e6f5f8c3e1a2",
   "to": "0xa0b86a33e6b8c66e29e8bb8a87e8e76e6d6e5e6f",
   "token": "usdt",
-  "amount": "1000.0",
-  "timestamp": "2024-01-15T10:30:00.000Z"
+  "amount": "1000.000000",
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "status": "confirmed",
+  "confirmations": 12,
+  "metadata": {
+    "contractAddress": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+    "gasUsed": "65000"
+  }
 }
 ```
 
-### Query Examples
-
-```javascript
-// Get ETH balance
-const ethBalance = await ethIndexer.getBalance('0x742d35cc...');
-
-// Get USDT balance
-const usdtBalance = await usdtIndexer.getBalance('0x742d35cc...');
-
-// Query ETH transactions for specific addresses
-const ethTransactions = await ethIndexer.queryTransactions({
-  fromBlock: 18500000,
-  toBlock: 18500100,
-  addresses: ['0x742d35cc6266c0c7e4c4b5c7f2b8e6f5f8c3e1a2']
-});
-
-// Query USDT transfers
-const usdtTransfers = await usdtIndexer.queryTransactions({
-  fromTs: '2024-01-01T00:00:00Z',
-  toTs: '2024-01-31T23:59:59Z',
-  addresses: ['0x742d35cc6266c0c7e4c4b5c7f2b8e6f5f8c3e1a2']
-});
-
-// Get specific transaction
-const tx = await ethIndexer.getTransaction('0x1a2b3c4d5e6f...');
-```
+For complete API documentation, method signatures, and examples, see the [WDK Indexer API Reference](indexer-api-reference.md).
 
 ## Performance Optimization
 

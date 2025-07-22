@@ -406,26 +406,53 @@ Comprehensive TRON address validation:
 
 ## API Behavior
 
-### Native TRX Responses
+The TRON indexer implements the [standard WDK Indexer API](indexer-api-reference.md) with TRON-specific behaviors:
 
-**Transaction Response**:
+### TRON-Specific Features
+
+**Resource Model:**
+- Energy and bandwidth consumption tracking
+- `energyUsed` and bandwidth details in metadata
+- Resource cost calculation for transaction fees
+- Sun to TRX conversion (1 TRX = 1,000,000 SUN)
+
+**TRC-20 Token Support:**
+- TRC-20 token transfers via event log processing
+- Contract address identification in metadata
+- Support for custom TRC-20 implementations
+- Automatic decimal normalization for different tokens
+
+**Address Formats:**
+- Base58 address encoding (similar to Bitcoin)
+- Support for regular addresses (T...) and contract addresses
+- Multi-signature wallet address handling
+- Address validation with checksum verification
+
+### Example TRON Responses
+
+**Native TRX Transfer:**
 ```json
 {
   "blockchain": "tron",
   "blockNumber": 55000000,
   "transactionHash": "0x1a2b3c4d5e6f7890abcdef...",
   "transactionIndex": 8,
+  "direction": "out",
   "from": "TLPuzoqeWd8JWqamCNKXP6Y4FbH1H3a3H8",
   "to": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
   "token": "trx",
   "amount": "100.5",
-  "timestamp": "2024-01-15T10:30:00.000Z"
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "status": "confirmed",
+  "confirmations": 19,
+  "metadata": {
+    "energyUsed": "0",
+    "bandwidthUsed": "267"
+  }
 }
 ```
 
-### TRC-20 Token Responses
-
-**Token Transfer Response**:
+**TRC-20 Token Transfer:**
 ```json
 {
   "blockchain": "tron",
@@ -433,40 +460,23 @@ Comprehensive TRON address validation:
   "transactionHash": "0x1a2b3c4d5e6f7890abcdef...",
   "transactionIndex": 8,
   "logIndex": 2,
+  "direction": "in",
   "from": "TLPuzoqeWd8JWqamCNKXP6Y4FbH1H3a3H8",
   "to": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
   "token": "usdt",
-  "amount": "5000.0",
-  "timestamp": "2024-01-15T10:30:00.000Z"
+  "amount": "5000.000000",
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "status": "confirmed",
+  "confirmations": 19,
+  "metadata": {
+    "contractAddress": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+    "energyUsed": "13000",
+    "bandwidthUsed": "345"
+  }
 }
 ```
 
-### Query Examples
-
-```javascript
-// Get TRX balance
-const trxBalance = await tronIndexer.getBalance('TLPuzoqeWd8JWqamCNKXP6Y4FbH1H3a3H8');
-
-// Get USDT balance
-const usdtBalance = await usdtIndexer.getBalance('TLPuzoqeWd8JWqamCNKXP6Y4FbH1H3a3H8');
-
-// Query TRX transactions for specific addresses
-const trxTransactions = await tronIndexer.queryTransactions({
-  fromBlock: 55000000,
-  toBlock: 55000100,
-  addresses: ['TLPuzoqeWd8JWqamCNKXP6Y4FbH1H3a3H8']
-});
-
-// Query USDT transfers with timestamp filtering
-const usdtTransfers = await usdtIndexer.queryTransactions({
-  fromTs: '2024-01-01T00:00:00Z',
-  toTs: '2024-01-31T23:59:59Z',
-  addresses: ['TLPuzoqeWd8JWqamCNKXP6Y4FbH1H3a3H8']
-});
-
-// Get specific transaction
-const tx = await tronIndexer.getTransaction('0x1a2b3c4d5e6f7890abcdef...');
-```
+For complete API documentation, method signatures, and examples, see the [WDK Indexer API Reference](indexer-api-reference.md).
 
 ## Performance Optimization
 

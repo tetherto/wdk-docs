@@ -63,6 +63,7 @@
 
 ## Indexer
 * [Overview](documentation/indexer.md)
+* [API Reference](documentation/indexer/indexer-api-reference.md)
 * [Chain-Specific Indexers](documentation/indexer/)
   * [Bitcoin](documentation/indexer/indexer-btc.md)
   * [EVM Chains](documentation/indexer/indexer-evm.md)

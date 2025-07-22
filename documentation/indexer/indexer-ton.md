@@ -401,26 +401,52 @@ Comprehensive TON address validation:
 
 ## API Behavior
 
-### Native TON Responses
+The TON indexer implements the [standard WDK Indexer API](indexer-api-reference.md) with TON-specific behaviors:
 
-**Transaction Response**:
+### TON-Specific Features
+
+**Message-Based Architecture:**
+- Complex transactions may span multiple blocks via message propagation
+- Message chain tracking for complete transaction picture
+- Automatic resolution of internal messages and responses
+- Nanoton to TON conversion (1 TON = 1,000,000,000 nanotons)
+
+**Jetton Token Support:**
+- Jetton transfers processed through wallet contracts
+- Master contract and wallet contract interaction tracking
+- Automatic jetton wallet discovery and association
+- Support for custom jetton implementations
+
+**Address Formats:**
+- User-friendly format (EQ...) and raw format (0:...)
+- Automatic address format conversion and validation
+- Workchain-aware address handling
+- Smart contract address identification
+
+### Example TON Responses
+
+**Native TON Transfer:**
 ```json
 {
   "blockchain": "ton",
   "blockNumber": 35000000,
   "transactionHash": "0x1a2b3c4d5e6f7890abcdef...",
   "transactionIndex": 3,
+  "direction": "out",
   "from": "EQD4FPq-PRDieyQKkizFTRtSDyucUIqrj0v_zXJmqaDp6_0t",
   "to": "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs",
   "token": "ton",
   "amount": "5.5",
-  "timestamp": "2024-01-15T10:30:00.000Z"
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "status": "confirmed",
+  "confirmations": 16,
+  "metadata": {
+    "messageCount": 1
+  }
 }
 ```
 
-### Jetton Token Responses
-
-**Token Transfer Response**:
+**Jetton Token Transfer:**
 ```json
 {
   "blockchain": "ton",
@@ -428,40 +454,22 @@ Comprehensive TON address validation:
   "transactionHash": "0x1a2b3c4d5e6f7890abcdef...",
   "transactionIndex": 3,
   "logIndex": 1,
+  "direction": "in",
   "from": "EQD4FPq-PRDieyQKkizFTRtSDyucUIqrj0v_zXJmqaDp6_0t",
   "to": "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs",
   "token": "usdt",
-  "amount": "1000.0",
-  "timestamp": "2024-01-15T10:30:00.000Z"
+  "amount": "1000.000000",
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "status": "confirmed",
+  "confirmations": 16,
+  "metadata": {
+    "contractAddress": "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs",
+    "messageCount": 2
+  }
 }
 ```
 
-### Query Examples
-
-```javascript
-// Get TON balance
-const tonBalance = await tonIndexer.getBalance('EQD4FPq-PRDieyQKkizFTRtSDyucUIqrj0v_zXJmqaDp6_0t');
-
-// Get USDT balance
-const usdtBalance = await usdtIndexer.getBalance('EQD4FPq-PRDieyQKkizFTRtSDyucUIqrj0v_zXJmqaDp6_0t');
-
-// Query TON transactions for specific addresses
-const tonTransactions = await tonIndexer.queryTransactions({
-  fromBlock: 35000000,
-  toBlock: 35000100,
-  addresses: ['EQD4FPq-PRDieyQKkizFTRtSDyucUIqrj0v_zXJmqaDp6_0t']
-});
-
-// Query USDT transfers with timestamp filtering
-const usdtTransfers = await usdtIndexer.queryTransactions({
-  fromTs: '2024-01-01T00:00:00Z',
-  toTs: '2024-01-31T23:59:59Z',
-  addresses: ['EQD4FPq-PRDieyQKkizFTRtSDyucUIqrj0v_zXJmqaDp6_0t']
-});
-
-// Get specific transaction
-const tx = await tonIndexer.getTransaction('0x1a2b3c4d5e6f7890abcdef...');
-```
+For complete API documentation, method signatures, and examples, see the [WDK Indexer API Reference](indexer-api-reference.md).
 
 ## Performance Optimization
 

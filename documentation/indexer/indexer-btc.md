@@ -347,47 +347,45 @@ Intelligent provider management:
 
 ## API Behavior
 
-### Bitcoin-Specific Responses
+The Bitcoin indexer implements the [standard WDK Indexer API](indexer-api-reference.md) with Bitcoin-specific behaviors:
 
-**Transaction Response**:
+### Bitcoin-Specific Features
+
+**UTXO Model:**
+- Single Bitcoin transaction may generate multiple `Transaction` records (one per relevant output)
+- Change outputs to user addresses are marked with `direction: 'self'`
+- Complex multi-input/output transactions automatically parsed
+
+**Address Formats:**
+- Legacy addresses (1...), SegWit (3...), and Bech32 (bc1...) supported
+- Automatic address format detection and validation
+- Multi-signature address support
+
+**Amount Handling:**
+- Satoshi amounts automatically converted to BTC decimal format
+- Transaction fees calculated from input/output differences
+- Proper handling of dust amounts and minimum transaction sizes
+
+### Example Bitcoin Response
+
 ```json
 {
   "blockchain": "bitcoin",
   "blockNumber": 850000,
   "transactionHash": "1a2b3c4d5e6f...",
   "transactionIndex": 1,
+  "direction": "in",
   "from": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
   "to": "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy", 
   "token": "btc",
   "amount": "0.001",
-  "timestamp": "2024-01-15T10:30:00.000Z"
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "status": "confirmed",
+  "confirmations": 6
 }
 ```
 
-**Balance Response**:
-```json
-"0.05234567"  // BTC balance as decimal string
-```
-
-### Query Examples
-
-```javascript
-// Get Bitcoin address balance
-const balance = await indexer.getBalance('1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa');
-
-// Validate Bitcoin address
-const isValid = await indexer.validAddress('bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4');
-
-// Query transactions in block range
-const transactions = await indexer.queryTransactions({
-  fromBlock: 850000,
-  toBlock: 850100,
-  addresses: ['1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa']
-});
-
-// Get specific transaction
-const tx = await indexer.getTransaction('1a2b3c4d5e6f7890abcdef...');
-```
+For complete API documentation, method signatures, and examples, see the [WDK Indexer API Reference](indexer-api-reference.md).
 
 ## Performance Optimization
 

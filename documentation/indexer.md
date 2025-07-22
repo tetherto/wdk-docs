@@ -86,7 +86,26 @@ interface Block {
 }
 ```
 
+## WDK Indexer vs. Direct RPC Calls
+
+WDK Indexers provide a unified, developer-friendly API for wallet applications by pre-processing and normalizing blockchain data. In contrast, direct RPC calls to a node return raw, chain-specific data and require complex, manual parsing for transaction history and balances.
+
+| Feature                | Direct RPC Node         | WDK Indexer                |
+|------------------------|------------------------|----------------------------|
+| Data format            | Raw, chain-specific    | Unified, normalized        |
+| Querying history       | Manual, slow           | Fast, single API call      |
+| Address tracking       | Manual, complex        | Handled by indexer         |
+| Pagination/filtering   | Manual                 | Built-in                   |
+| Cross-chain support    | No                     | Yes                        |
+| Caching/performance    | No                     | Yes                        |
+| Setup complexity       | Node only              | Node + indexer             |
+
+**Summary:** Use the WDK Indexer for fast, reliable, and scalable wallet data integration. Use direct RPC only if you need raw access and are prepared to handle all blockchain-specific logic yourself.
+
+
 ## Quick Start
+
+This section explains how to download, install, and set up the WDK Indexer for your target blockchain. You'll learn how to clone the repository, install dependencies, and prepare configuration files for your environment.
 
 ### Prerequisites
 
@@ -145,48 +164,43 @@ NODE_CONFIG_DIR=./config node worker.js --env=development --wtype=api.indexer.bt
 
 ## API Reference
 
-### Core Methods
+All WDK Indexers expose a unified, standardized API regardless of the underlying blockchain. The API follows JSON-RPC 2.0 specification and provides consistent integration patterns across all supported networks.
 
-#### `validAddress(address: string): Promise<boolean>`
-Validates if an address is properly formatted for the blockchain.
+**Key Features:**
+- Unified data schema across all blockchains
+- Standardized method names and parameters
+- Chain-specific metadata where needed
+- Comprehensive error handling and pagination
 
-#### `getBalance(address: string): Promise<string>`
-Returns the balance for a given address in the native token.
+For complete API documentation, method signatures, examples, and chain-specific notes, see the **[WDK Indexer API Reference](indexer/indexer-api-reference.md)**.
 
-#### `getBalanceMulti(addresses: string[]): Promise<Record<string, string>>`
-Returns balances for multiple addresses in a single call.
+### Quick API Overview
 
-#### `getTransaction(hash: string): Promise<Transaction[]>`
-Retrieves a transaction by its hash/ID.
-
-#### `queryTransactions(params): Promise<Transaction[]>`
-Queries transactions with flexible filtering:
-
-```typescript
-interface QueryParams {
-  fromTs?: string;      // Start timestamp
-  toTs?: string;        // End timestamp  
-  fromBlock?: bigint;   // Start block
-  toBlock?: bigint;     // End block
-  addresses?: string[]; // Filter by addresses
-}
-```
-
-#### `getBlock(blockNumber: bigint): Promise<Block>`
-Retrieves a block and its transactions by block number.
+| Method | Purpose | Returns |
+|--------|---------|---------|
+| `validAddress(address)` | Validate address format | `boolean` |
+| `getBalance(address)` | Get balance for address | `string` |
+| `getBalanceMulti(addresses)` | Get multiple balances | `Record<string, string>` |
+| `getTransaction(hash)` | Get transaction by hash | `Transaction[]` |
+| `queryTransactions(params)` | Query with filters | `Transaction[]` |
+| `getBlock(blockNumber)` | Get block data | `Block` |
 
 ### Example Usage
 
 ```javascript
-// Query transactions for specific addresses in a time range
+// Initialize indexer client
+const indexer = new WDKIndexerClient('http://localhost:8080');
+
+// Get balance
+const balance = await indexer.getBalance('1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa');
+
+// Query transactions with filters
 const transactions = await indexer.queryTransactions({
   fromTs: '2024-01-01T00:00:00Z',
   toTs: '2024-01-31T23:59:59Z', 
-  addresses: ['1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa']
+  addresses: ['1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'],
+  limit: 50
 });
-
-// Get current balance
-const balance = await indexer.getBalance('1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa');
 ```
 
 ## Configuration Reference
