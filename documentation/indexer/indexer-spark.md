@@ -46,23 +46,11 @@ The Spark indexer extends the base WDK indexer architecture with Spark-specific 
 
 ## Configuration
 
-### Required Configuration Files
+For general configuration concepts and shared options, see the [WDK Indexer Configuration](indexer-configuration.md) reference.
 
-Create these configuration files in your `config/` directory:
+### Spark-Specific Configuration
 
-**config/common.json**
-```json
-{
-  "debug": 0,
-  "chain": "spark",
-  "topicConf": {
-    "crypto": {
-      "algo": "hmac-sha384",
-      "key": "your-secret-encryption-key"
-    }
-  }
-}
-```
+Spark indexers are optimized for the Spark network's consensus mechanism and faster block times:
 
 **config/spark.json**
 ```json
@@ -78,26 +66,21 @@ Create these configuration files in your `config/` directory:
 }
 ```
 
-### Configuration Options
+### Spark-Specific Options
 
-#### Network Settings
-
-- **chain**: Always "spark"
-- **token**: Token symbol (usually "spark")
+**Network Settings:**
 - **rpcUrl**: Spark JSON-RPC endpoint URL
-- **network**: Network type ("mainnet", "testnet")
-- **decimals**: Token decimal places (typically 18)
+- **decimals**: Always 18 for SPARK token
+- **syncInterval**: Recommend "*/2 * * * *" (every 2 minutes) for mainnet
 
-#### Performance Settings
+**Performance Tuning:**
+- **txConcurrency**: Recommend 5-10 for Spark network
+- **blockBatchSize**: Recommend 10-20 for optimal throughput
+- **rpcTimeout**: RPC request timeout in milliseconds (default: 30000)
 
-- **txConcurrency**: Concurrent transaction processing (default: 5)
-- **blockBatchSize**: Blocks processed per batch (default: 10)
-- **syncInterval**: Sync frequency cron expression
-- **rpcTimeout**: RPC request timeout in milliseconds
+### Example Configurations
 
-### Network-Specific Examples
-
-**Mainnet Configuration**:
+**Mainnet Optimized:**
 ```json
 {
   "chain": "spark",
@@ -106,11 +89,13 @@ Create these configuration files in your `config/` directory:
   "network": "mainnet",
   "decimals": 18,
   "txConcurrency": 5,
-  "blockBatchSize": 10
+  "blockBatchSize": 10,
+  "syncInterval": "*/2 * * * *",
+  "rpcTimeout": 30000
 }
 ```
 
-**Testnet Configuration**:
+**Testnet High-Throughput:**
 ```json
 {
   "chain": "spark",
@@ -119,7 +104,9 @@ Create these configuration files in your `config/` directory:
   "network": "testnet",
   "decimals": 18,
   "txConcurrency": 10,
-  "blockBatchSize": 20
+  "blockBatchSize": 20,
+  "syncInterval": "*/1 * * * *",
+  "rpcTimeout": 15000
 }
 ```
 

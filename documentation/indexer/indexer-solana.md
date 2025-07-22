@@ -64,23 +64,11 @@ The Solana indexer extends the base WDK indexer architecture with Solana-specifi
 
 ## Configuration
 
-### Required Configuration Files
+For general configuration concepts and shared options, see the [WDK Indexer Configuration](indexer-configuration.md) reference.
 
-Create these configuration files in your `config/` directory:
+### Solana-Specific Configuration
 
-**config/common.json**
-```json
-{
-  "debug": 0,
-  "chain": "solana",
-  "topicConf": {
-    "crypto": {
-      "algo": "hmac-sha384",
-      "key": "your-secret-encryption-key"
-    }
-  }
-}
-```
+Solana indexers support both native SOL and SPL token indexing with unique slot-based processing and Bitquery integration:
 
 **config/solana.json** (Native SOL indexing)
 ```json
@@ -113,37 +101,26 @@ Create these configuration files in your `config/` directory:
 }
 ```
 
-### Configuration Options
+### Solana-Specific Options
 
-#### Network Settings
+**Slot Processing:**
+- **queryBlockLimit**: Slots processed per batch (recommend 2 for mainnet, 5-10 for testnet)
+- **slotConcurrency**: Concurrent slot processing (recommend 3-5)
+- **network**: Solana cluster ("mainnet-beta", "testnet", "devnet")
 
-- **chain**: Always "solana"
-- **token**: Token symbol ("sol", "usdc", "usdt", etc.)
-- **rpcUrl**: Solana JSON-RPC endpoint URL
-- **network**: Network cluster ("mainnet-beta", "testnet", "devnet")
-- **decimals**: Token decimal places (9 for SOL, varies for SPL tokens)
-
-#### Performance Settings
-
-- **queryBlockLimit**: Slots processed per batch (default: 2)
-- **slotConcurrency**: Concurrent slot processing (default: 3)
-- **txBatchSize**: Transaction batch size for processing
-
-#### Bitquery Integration
-
-- **bitqueryApiKey**: API key for Bitquery service
+**Bitquery Integration:**
+- **bitqueryApiKey**: API key for Bitquery GraphQL service
 - **bitqueryAuthToken**: Authentication token for Bitquery
 - **bitqueryEndpoint**: Custom Bitquery endpoint (optional)
 
-#### SPL Token Settings
-
+**SPL Token Settings:**
 - **mintAddress**: SPL token mint address (required for SPL tokens)
 - **programId**: Custom SPL token program ID (optional)
 - **associatedTokenProgram**: Associated token program ID (optional)
 
-### Network-Specific Examples
+### Example Configurations
 
-**Testnet Configuration**:
+**Testnet with Higher Throughput:**
 ```json
 {
   "chain": "solana",
@@ -156,7 +133,7 @@ Create these configuration files in your `config/` directory:
 }
 ```
 
-**Devnet Configuration**:
+**Devnet for Development:**
 ```json
 {
   "chain": "solana",
@@ -166,6 +143,21 @@ Create these configuration files in your `config/` directory:
   "decimals": 9,
   "queryBlockLimit": 10,
   "slotConcurrency": 10
+}
+```
+
+**SPL Token with Custom Settings:**
+```json
+{
+  "chain": "solana",
+  "token": "ray",
+  "rpcUrl": "https://api.mainnet-beta.solana.com",
+  "network": "mainnet-beta",
+  "mintAddress": "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+  "decimals": 6,
+  "queryBlockLimit": 3,
+  "slotConcurrency": 4,
+  "bitqueryApiKey": "YOUR_API_KEY"
 }
 ```
 

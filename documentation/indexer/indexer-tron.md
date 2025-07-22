@@ -64,23 +64,11 @@ The TRON indexer extends the base WDK indexer architecture with TRON-specific co
 
 ## Configuration
 
-### Required Configuration Files
+For general configuration concepts and shared options, see the [WDK Indexer Configuration](indexer-configuration.md) reference.
 
-Create these configuration files in your `config/` directory:
+### TRON-Specific Configuration
 
-**config/common.json**
-```json
-{
-  "debug": 0,
-  "chain": "tron",
-  "topicConf": {
-    "crypto": {
-      "algo": "hmac-sha384",
-      "key": "your-secret-encryption-key"
-    }
-  }
-}
-```
+TRON indexers support native TRX transfers and TRC-20 token processing with energy/bandwidth resource tracking:
 
 **config/tron.json** (Native TRX indexing)
 ```json
@@ -112,32 +100,27 @@ Create these configuration files in your `config/` directory:
 }
 ```
 
-### Configuration Options
+### TRON-Specific Options
 
-#### Network Settings
-
-- **chain**: Always "tron"
-- **token**: Token symbol ("trx", "usdt", "usdc", etc.)
-- **rpcUrl**: TRON HTTP API endpoint URL
+**API Configuration:**
+- **rpcUrl**: TRON HTTP API endpoint URL (TronGrid format)
+- **apiKey**: TronGrid API key for enhanced rate limits and priority access
 - **network**: Network type ("mainnet", "testnet", "nile")
-- **decimals**: Token decimal places (6 for TRX, varies for TRC-20)
+- **decimals**: 6 for TRX, varies for TRC-20 tokens
 
-#### Performance Settings
+**Resource Optimization:**
+- **txConcurrency**: Recommend 3-5 for mainnet, 5-10 for testnets
+- **blockBatchSize**: Recommend 5-10 for TRON block processing
+- **syncInterval**: Recommend "*/1 * * * *" (every minute) for TRON
 
-- **txConcurrency**: Concurrent transaction processing (default: 5)
-- **blockBatchSize**: Blocks processed per batch (default: 10)
-- **syncInterval**: Sync frequency cron expression
-- **apiKey**: TronGrid API key for enhanced rate limits
-
-#### TRC-20 Token Settings
-
+**TRC-20 Token Settings:**
 - **contractAddress**: TRC-20 contract address (required for TRC-20 tokens)
 - **transferMethodId**: Custom transfer method ID (optional)
 - **eventSignature**: Custom Transfer event signature (optional)
 
-### Network-Specific Examples
+### Example Configurations
 
-**Mainnet Configuration**:
+**Mainnet Production:**
 ```json
 {
   "chain": "tron",
@@ -146,11 +129,14 @@ Create these configuration files in your `config/` directory:
   "network": "mainnet",
   "decimals": 6,
   "txConcurrency": 5,
-  "blockBatchSize": 10
+  "blockBatchSize": 10,
+  "apiKey": "YOUR_PRODUCTION_API_KEY",
+  "syncInterval": "*/1 * * * *",
+  "rpcTimeout": 30000
 }
 ```
 
-**Testnet (Shasta) Configuration**:
+**Shasta Testnet:**
 ```json
 {
   "chain": "tron",
@@ -159,7 +145,24 @@ Create these configuration files in your `config/` directory:
   "network": "testnet",
   "decimals": 6,
   "txConcurrency": 10,
-  "blockBatchSize": 20
+  "blockBatchSize": 20,
+  "syncInterval": "*/30 * * * * *",
+  "rpcTimeout": 15000
+}
+```
+
+**Custom TRC-20 Token:**
+```json
+{
+  "chain": "tron",
+  "token": "custom-trc20",
+  "rpcUrl": "https://api.trongrid.io",
+  "network": "mainnet",
+  "contractAddress": "TCustomTRC20ContractAddress...",
+  "decimals": 8,
+  "txConcurrency": 3,
+  "blockBatchSize": 5,
+  "apiKey": "YOUR_API_KEY"
 }
 ```
 

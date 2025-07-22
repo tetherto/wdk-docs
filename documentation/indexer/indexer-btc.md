@@ -39,23 +39,11 @@ The Bitcoin indexer extends the base WDK indexer architecture with Bitcoin-speci
 
 ## Configuration
 
-### Required Configuration Files
+For general configuration concepts and shared options, see the [WDK Indexer Configuration](indexer-configuration.md) reference.
 
-Create these configuration files in your `config/` directory:
+### Bitcoin-Specific Configuration
 
-**config/common.json**
-```json
-{
-  "debug": 0,
-  "chain": "bitcoin",
-  "topicConf": {
-    "crypto": {
-      "algo": "hmac-sha384",
-      "key": "your-secret-encryption-key"
-    }
-  }
-}
-```
+Bitcoin indexers support unique multi-provider configurations for enhanced reliability:
 
 **config/bitcoin.json**
 ```json
@@ -90,54 +78,49 @@ Create these configuration files in your `config/` directory:
 }
 ```
 
-### Configuration Options
+### Bitcoin-Specific Options
 
-#### Network Settings
+**Provider Configuration:**
+- **providers.rpc**: Array of Bitcoin Core nodes with failover priorities
+- **providers.apis.blockstream**: Blockstream.info API integration for redundancy
 
+**Network Options:**
 - **network**: `"mainnet"`, `"testnet"`, or `"regtest"`
-- **token**: Token symbol (usually `"btc"`)
-- **txConcurrency**: Number of concurrent transaction processing (default: 10)
+- **txConcurrency**: Concurrent transaction processing (recommend 5-10 for Bitcoin)
 
-#### Provider Configuration
+### Example Configurations
 
-**RPC Providers** (Array of Bitcoin Core nodes):
-- **name**: Identifier for logging and monitoring
-- **uri**: Full RPC URL with authentication
-- **timeout**: Request timeout in milliseconds
-- **priority**: Provider preference (higher = preferred)
-
-**API Providers** (External services):
-- **blockstream**: Blockstream.info API integration
-- **enabled**: Whether to use this provider
-- **baseUrl**: API endpoint URL
-- **timeout**: Request timeout
-- **priority**: Failover priority
-
-### Network-Specific Examples
-
-**Mainnet Configuration:**
+**Mainnet with Multiple RPC Nodes:**
 ```json
 {
   "network": "mainnet",
   "token": "btc",
+  "txConcurrency": 5,
   "providers": {
     "rpc": [
       {
         "name": "local-mainnet",
         "uri": "http://user:pass@localhost:8332",
-        "timeout": 30000,
+        "timeout": 60000,
         "priority": 100
+      },
+      {
+        "name": "remote-mainnet",
+        "uri": "http://user:pass@remote.example.com:8332",
+        "timeout": 30000,
+        "priority": 90
       }
     ]
   }
 }
 ```
 
-**Testnet Configuration:**
+**Testnet with API Fallback:**
 ```json
 {
   "network": "testnet",
   "token": "btc",
+  "txConcurrency": 10,
   "providers": {
     "rpc": [
       {

@@ -18,7 +18,7 @@ WDK Indexers follow a consistent two-worker architecture across all supported ch
 
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Blockchain    │───▶│  Processor       │───▶│  Hyperbee       │
+│   Blockchain    │───▶│  Processor       │───▶│  Hypercore      │
 │   RPC/APIs      │    │  Worker          │    │  Database       │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
                                                          │
@@ -32,8 +32,8 @@ WDK Indexers follow a consistent two-worker architecture across all supported ch
 ### Processor Worker
 
 - **Purpose**: Continuously polls blockchain data and normalizes it
-- **Storage**: Commits normalized transactions to Hyperbee distributed database
-- **Schedule**: Configurable sync frequency (default: every 5 minutes)
+- **Storage**: Commits normalized transactions to Hypercore-based distributed database
+- **Schedule**: Configurable sync frequency (varies by chain: from 1 second to 5 minutes)
 - **Data Structure**: Organizes data into `blocks`, `block-ts`, and `tx-block-map` indexes
 
 ### API Worker
@@ -102,67 +102,13 @@ WDK Indexers provide a unified, developer-friendly API for wallet applications b
 
 **Summary:** Use the WDK Indexer for fast, reliable, and scalable wallet data integration. Use direct RPC only if you need raw access and are prepared to handle all blockchain-specific logic yourself.
 
+## Getting Started
 
-## Quick Start
+### Quick Start
 
-This section explains how to download, install, and set up the WDK Indexer for your target blockchain. You'll learn how to clone the repository, install dependencies, and prepare configuration files for your environment.
+For step-by-step setup instructions, see the **[Quick Start Guide](indexer/indexer-quick-start.md)**.
 
-### Prerequisites
-
-- Node.js ≥ 16
-- Network access to blockchain RPC endpoints
-- Storage space for blockchain data
-
-### Installation
-
-```bash
-# Clone the indexer for your target chain
-git clone https://github.com/tetherto/wdk-indexer-wrk-btc.git
-cd wdk-indexer-wrk-btc
-
-# Install dependencies
-npm install
-
-# Set up configuration
-cp config/bitcoin.json.example config/bitcoin.json
-cp config/common.json.example config/common.json
-
-# Edit configuration files with your settings
-```
-
-### Configuration
-
-Create configuration files in the `config/` directory:
-
-**config/common.json**
-```json
-{
-  "debug": 0,
-  "chain": "bitcoin",
-  "topicConf": {
-    "crypto": {
-      "algo": "hmac-sha384", 
-      "key": "your-secret-key"
-    }
-  }
-}
-```
-
-**Chain-specific configuration** (see individual chain documentation for details)
-
-### Running the Services
-
-**Start Processor Worker:**
-```bash
-NODE_CONFIG_DIR=./config node worker.js --env=development --wtype=proc.indexer.btc.wrk --rack=r0 --chain=bitcoin
-```
-
-**Start API Worker:**
-```bash
-NODE_CONFIG_DIR=./config node worker.js --env=development --wtype=api.indexer.btc.wrk --rack=r0 --chain=bitcoin --procRpc=<processor-rpc-key>
-```
-
-## API Reference
+### API Reference
 
 All WDK Indexers expose a unified, standardized API regardless of the underlying blockchain. The API follows JSON-RPC 2.0 specification and provides consistent integration patterns across all supported networks.
 
@@ -174,7 +120,7 @@ All WDK Indexers expose a unified, standardized API regardless of the underlying
 
 For complete API documentation, method signatures, examples, and chain-specific notes, see the **[WDK Indexer API Reference](indexer/indexer-api-reference.md)**.
 
-### Quick API Overview
+#### Quick API Overview
 
 | Method | Purpose | Returns |
 |--------|---------|---------|
@@ -185,7 +131,7 @@ For complete API documentation, method signatures, examples, and chain-specific 
 | `queryTransactions(params)` | Query with filters | `Transaction[]` |
 | `getBlock(blockNumber)` | Get block data | `Block` |
 
-### Example Usage
+#### Example Usage
 
 ```javascript
 // Initialize indexer client
@@ -203,107 +149,43 @@ const transactions = await indexer.queryTransactions({
 });
 ```
 
-## Configuration Reference
+## Operations and Maintenance
 
-### Common Configuration
+> **Note**: The following sections provide operational guidance and best practices that extend beyond the basic repository implementations. Core architecture and API details are based directly on the repository code, while deployment, monitoring, and optimization strategies are recommended practices for production use.
 
-All indexers support these common configuration options:
+### Deployment
 
-- **debug**: Log level (0-3)
-- **chain**: Chain identifier
-- **topicConf**: P2P topic encryption settings
+WDK Indexers support multiple deployment strategies including Docker, Kubernetes, and bare metal installations. The architecture is designed for horizontal scaling of API workers while maintaining single processor instances per chain.
 
-### Chain-Specific Configuration
+For comprehensive deployment guides including Docker Compose, Kubernetes manifests, and scaling strategies, see the **[Deployment Guide](indexer/indexer-deployment.md)**.
 
-Each chain has its own configuration file with options like:
+### Configuration
 
-- **rpcUrl**: Blockchain RPC endpoint
-- **token**: Primary token symbol
-- **network**: Network type (mainnet/testnet)
-- **providers**: Provider configuration and failover
-- **performance tuning**: Batch sizes, concurrency limits
+WDK Indexers use a standardized configuration system with both common settings and chain-specific options. All configuration follows the `bfx-svc-boot-js` framework conventions.
 
-See individual chain documentation for complete configuration options.
-
-## Scaling and Operations
-
-### Horizontal Scaling
-
-- **Processor**: Usually single instance per chain
-- **API Workers**: Deploy multiple replicas for load distribution
-- **Database**: Hyperbee handles P2P replication automatically
-
-### Monitoring
-
-Monitor these key metrics:
-
-- Sync lag (latest indexed block vs. chain height)
-- RPC endpoint health and response times
-- Database replication status
-- API worker response times
+For complete configuration documentation including common settings, chain-specific options, and performance tuning, see the **[Configuration Reference](indexer/indexer-configuration.md)**.
 
 ### Performance Optimization
 
-- **Batch Sizes**: Tune transaction batch sizes per chain
-- **Concurrency**: Adjust concurrent RPC requests
-- **Provider Failover**: Configure multiple RPC providers
-- **Caching**: API workers automatically cache recent data
+Performance optimization involves tuning RPC provider settings, memory management, CPU utilization, and database configuration. Each blockchain has specific optimization strategies while sharing common principles.
 
-## Troubleshooting
+For comprehensive performance optimization strategies, benchmarking guidelines, and chain-specific tuning, see the **[Performance Guide](indexer/indexer-performance.md)**.
 
-### Common Issues
+### Monitoring
 
-**Sync Lag**
-- Check RPC provider response times
-- Verify network connectivity
-- Increase batch sizes if provider supports it
+Comprehensive monitoring is essential for production deployments. WDK Indexers expose Prometheus metrics and support various alerting and dashboard configurations.
 
-**API Errors**
-- Ensure API worker can connect to processor RPC
-- Verify P2P swarm connectivity
-- Check database replication status
+For complete monitoring setup including Prometheus configuration, Grafana dashboards, alerting rules, and observability best practices, see the **[Monitoring Guide](indexer/indexer-monitoring.md)**.
 
-**Provider Failures**
-- Configure multiple providers for redundancy
-- Monitor provider health endpoints
-- Implement proper failover timeouts
+### Troubleshooting
 
-### Health Checks
+Common issues include sync lag, API performance problems, RPC provider failures, and resource constraints. Most troubleshooting procedures are universal across chains with some blockchain-specific considerations.
 
-```bash
-# Check processor status
-curl http://localhost:8080/health
-
-# Check database core key
-curl -X POST http://localhost:8080/rpc -d '{"method":"getDbCoreKey"}'
-```
+For comprehensive troubleshooting procedures, common issue resolution, and debugging strategies, see the **[Troubleshooting Guide](indexer/indexer-troubleshooting.md)**.
 
 ## Extending to New Chains
 
-To add support for a new blockchain:
-
-1. **Implement ChainBaseClient**
-   ```javascript
-   class ChainNewClient extends ChainBaseClient {
-     async getBlockHeight() { /* implementation */ }
-     async validAddress(address) { /* implementation */ }
-     async getBalance(address) { /* implementation */ }
-     async getTransaction(hash) { /* implementation */ }
-     async getBlocks(from, to) { /* implementation */ }
-   }
-   ```
-
-2. **Create Worker Subclasses**
-   - Extend `proc.indexer.wrk` for processor
-   - Extend `api.indexer.wrk` for API worker
-
-3. **Configuration**
-   - Create chain-specific configuration template
-   - Document required RPC endpoints and API keys
-
-4. **Testing**
-   - Implement integration tests
-   - Validate against mainnet and testnet
+For instructions on adding support for a new blockchain, see **[Extending WDK Indexers](indexer/indexer-extending.md)**.
 
 ## License and Contributing
 
@@ -311,7 +193,10 @@ WDK Indexers are licensed under Apache-2.0. For contributing guidelines, see the
 
 ## Next Steps
 
-- Choose your target blockchain from the [supported networks](#supported-networks)
-- Follow the chain-specific setup guide
-- Deploy processor and API workers
-- Integrate with your WDK wallet application
+1. **Choose Your Blockchain**: Select from the [supported networks](#supported-networks)
+2. **Quick Start**: Follow the [Quick Start Guide](indexer/indexer-quick-start.md)
+3. **Deploy**: Use the [Deployment Guide](indexer/indexer-deployment.md) for production setup
+4. **Configure Monitoring**: Set up observability with the [Monitoring Guide](indexer/indexer-monitoring.md)
+5. **Integrate**: Use the [API Reference](indexer/indexer-api-reference.md) for wallet integration
+
+For detailed chain-specific instructions, configuration options, and deployment notes, refer to the individual blockchain documentation pages.

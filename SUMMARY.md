@@ -63,7 +63,13 @@
 
 ## Indexer
 * [Overview](documentation/indexer.md)
+* [Quick Start](documentation/indexer/indexer-quick-start.md)
 * [API Reference](documentation/indexer/indexer-api-reference.md)
+* [Configuration](documentation/indexer/indexer-configuration.md)
+* [Deployment](documentation/indexer/indexer-deployment.md)
+* [Performance](documentation/indexer/indexer-performance.md)
+* [Monitoring](documentation/indexer/indexer-monitoring.md)
+* [Troubleshooting](documentation/indexer/indexer-troubleshooting.md)
 * [Chain-Specific Indexers](documentation/indexer/)
   * [Bitcoin](documentation/indexer/indexer-btc.md)
   * [EVM Chains](documentation/indexer/indexer-evm.md)
@@ -71,6 +77,7 @@
   * [Spark](documentation/indexer/indexer-spark.md)
   * [TON](documentation/indexer/indexer-ton.md)
   * [TRON](documentation/indexer/indexer-tron.md)
+  * [Extending to New Chains](documentation/indexer/indexer-extending.md)
 
 ## Integration Guides
 * [Transaction History](documentation/transaction-history.md)

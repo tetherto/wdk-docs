@@ -61,23 +61,11 @@ The TON indexer extends the base WDK indexer architecture with TON-specific comp
 
 ## Configuration
 
-### Required Configuration Files
+For general configuration concepts and shared options, see the [WDK Indexer Configuration](indexer-configuration.md) reference.
 
-Create these configuration files in your `config/` directory:
+### TON-Specific Configuration
 
-**config/common.json**
-```json
-{
-  "debug": 0,
-  "chain": "ton",
-  "topicConf": {
-    "crypto": {
-      "algo": "hmac-sha384",
-      "key": "your-secret-encryption-key"
-    }
-  }
-}
-```
+TON indexers support native TON transfers and Jetton token processing with message-based architecture handling:
 
 **config/ton.json** (Native TON indexing)
 ```json
@@ -109,32 +97,26 @@ Create these configuration files in your `config/` directory:
 }
 ```
 
-### Configuration Options
+### TON-Specific Options
 
-#### Network Settings
-
-- **chain**: Always "ton"
-- **token**: Token symbol ("ton", "usdt", "usdc", etc.)
-- **rpcUrl**: TON HTTP API endpoint URL
-- **network**: Network type ("mainnet", "testnet")
-- **decimals**: Token decimal places (9 for TON, varies for Jettons)
-
-#### Performance Settings
-
-- **txConcurrency**: Concurrent transaction processing (default: 5)
-- **blockBatchSize**: Blocks processed per batch (default: 10)
-- **syncInterval**: Sync frequency cron expression
+**API Configuration:**
+- **rpcUrl**: TON HTTP API endpoint URL (TONCenter format)
 - **apiKey**: TONCenter API key for enhanced rate limits
+- **decimals**: 9 for native TON, varies for Jettons
 
-#### Jetton Token Settings
+**Message Processing:**
+- **txConcurrency**: Recommend 3-5 for TON's message complexity
+- **blockBatchSize**: Recommend 5-10 for TON block processing
+- **syncInterval**: Recommend "*/1 * * * *" (every minute) for TON
 
+**Jetton Token Settings:**
 - **contractAddress**: Jetton master contract address (required for Jettons)
 - **jettonWalletCode**: Custom jetton wallet code hash (optional)
 - **transferOpCode**: Custom transfer operation code (optional)
 
-### Network-Specific Examples
+### Example Configurations
 
-**Mainnet Configuration**:
+**Mainnet Production:**
 ```json
 {
   "chain": "ton",
@@ -143,11 +125,14 @@ Create these configuration files in your `config/` directory:
   "network": "mainnet",
   "decimals": 9,
   "txConcurrency": 5,
-  "blockBatchSize": 10
+  "blockBatchSize": 10,
+  "apiKey": "YOUR_PRODUCTION_API_KEY",
+  "syncInterval": "*/1 * * * *",
+  "rpcTimeout": 30000
 }
 ```
 
-**Testnet Configuration**:
+**Testnet Development:**
 ```json
 {
   "chain": "ton",
@@ -156,7 +141,24 @@ Create these configuration files in your `config/` directory:
   "network": "testnet",
   "decimals": 9,
   "txConcurrency": 10,
-  "blockBatchSize": 20
+  "blockBatchSize": 20,
+  "syncInterval": "*/30 * * * * *",
+  "rpcTimeout": 15000
+}
+```
+
+**Custom Jetton Configuration:**
+```json
+{
+  "chain": "ton",
+  "token": "custom-jetton",
+  "rpcUrl": "https://toncenter.com/api/v2/",
+  "network": "mainnet",
+  "contractAddress": "EQCustomJettonMasterContract...",
+  "decimals": 8,
+  "txConcurrency": 3,
+  "blockBatchSize": 5,
+  "apiKey": "YOUR_API_KEY"
 }
 ```
 

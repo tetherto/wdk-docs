@@ -55,23 +55,11 @@ The EVM indexer extends the base WDK indexer architecture with Ethereum-specific
 
 ## Configuration
 
-### Required Configuration Files
+For general configuration concepts and shared options, see the [WDK Indexer Configuration](indexer-configuration.md) reference.
 
-Create these configuration files in your `config/` directory:
+### EVM-Specific Configuration
 
-**config/common.json**
-```json
-{
-  "debug": 0,
-  "chain": "ethereum",
-  "topicConf": {
-    "crypto": {
-      "algo": "hmac-sha384",
-      "key": "your-secret-encryption-key"
-    }
-  }
-}
-```
+EVM indexers support both native token and ERC-20 token indexing with different configuration patterns:
 
 **config/ethereum.json** (Native ETH indexing)
 ```json
@@ -103,30 +91,23 @@ Create these configuration files in your `config/` directory:
 }
 ```
 
-### Configuration Options
+### EVM-Specific Options
 
-#### Network Settings
+**ERC-20 Token Settings:**
+- **contractAddress**: Token contract address (required for ERC-20 tokens)
+- **transferEventTopic**: Custom transfer event topic (optional, default: standard Transfer event)
 
-- **chain**: Blockchain identifier ("ethereum", "arb", "polygon", etc.)
-- **token**: Token symbol ("eth", "usdt", etc.)
-- **rpcUrl**: JSON-RPC endpoint URL
-- **network**: Network type ("mainnet", "testnet", etc.)
+**Gas Optimization:**
+- **gasOptimization.enabled**: Enable gas usage optimization
+- **gasOptimization.maxGasPerBatch**: Maximum gas consumption per batch
 
-#### Performance Settings
+**Performance Tuning:**
+- **txConcurrency**: Recommend 2-5 for Ethereum mainnet, 5-10 for faster networks
+- **blockBatchSize**: Recommend 5-10 for Ethereum, 10-50 for faster networks
 
-- **txConcurrency**: Concurrent transaction processing (default: 2)
-- **blockBatchSize**: Blocks processed per batch (default: 10)
-- **gasOptimization**: Gas usage optimization settings
+### Example Configurations
 
-#### ERC-20 Token Settings
-
-- **contractAddress**: Token contract address (required for ERC-20)
-- **decimals**: Token decimal places
-- **transferEventTopic**: Custom transfer event topic (optional)
-
-### Network-Specific Examples
-
-**Polygon (MATIC)**:
+**Polygon Mainnet:**
 ```json
 {
   "chain": "polygon",
@@ -134,19 +115,41 @@ Create these configuration files in your `config/` directory:
   "rpcUrl": "https://polygon-mainnet.infura.io/v3/PROJECT_ID",
   "network": "mainnet", 
   "txConcurrency": 5,
-  "blockBatchSize": 20
+  "blockBatchSize": 20,
+  "gasOptimization": {
+    "enabled": true,
+    "maxGasPerBatch": "5000000"
+  }
 }
 ```
 
-**ERC-20 USDT on Ethereum**:
+**BSC with Higher Throughput:**
+```json
+{
+  "chain": "bsc",
+  "token": "bnb",
+  "rpcUrl": "https://bsc-dataseed.binance.org/",
+  "network": "mainnet",
+  "txConcurrency": 10,
+  "blockBatchSize": 50,
+  "gasOptimization": {
+    "enabled": true,
+    "maxGasPerBatch": "10000000"
+  }
+}
+```
+
+**Custom ERC-20 Token:**
 ```json
 {
   "chain": "ethereum",
-  "token": "usdt",
+  "token": "custom",
   "rpcUrl": "https://mainnet.infura.io/v3/PROJECT_ID",
-  "contractAddress": "0xdac17f958d2ee523a2206206994597c13d831ec7",
-  "decimals": 6,
-  "network": "mainnet"
+  "contractAddress": "0x1234567890123456789012345678901234567890",
+  "decimals": 18,
+  "network": "mainnet",
+  "txConcurrency": 3,
+  "blockBatchSize": 8
 }
 ```
 
