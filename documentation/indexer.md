@@ -149,17 +149,17 @@ const transactions = await indexer.queryTransactions({
 });
 ```
 
-## Operations and Maintenance
+<!-- ## Operations and Maintenance
 
 > **Note**: The following sections provide operational guidance and best practices that extend beyond the basic repository implementations. Core architecture and API details are based directly on the repository code, while deployment, monitoring, and optimization strategies are recommended practices for production use.
 
-<!-- ### Deployment
+ ### Deployment
 
 WDK Indexers support multiple deployment strategies including Docker, Kubernetes, and bare metal installations. The architecture is designed for horizontal scaling of API workers while maintaining single processor instances per chain.
 
 For comprehensive deployment guides including Docker Compose, Kubernetes manifests, and scaling strategies, see the **[Deployment Guide](indexer/indexer-deployment.md)**. -->
 
-### Configuration
+## Configuration
 
 WDK Indexers use a standardized configuration system with both common settings and chain-specific options. All configuration follows the `bfx-svc-boot-js` framework conventions.
 
