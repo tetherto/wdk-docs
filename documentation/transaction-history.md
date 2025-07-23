@@ -57,7 +57,6 @@ GET /v1/transactions
 ### Minimal client example
 
 ```js
-import { WDKClient } from '@wdk/sdk';
 
 const wdk = new WDKClient({
   baseURL: 'https://api.your-wdk.com',
