@@ -66,10 +66,11 @@
 * [Quick Start](documentation/indexer/indexer-quick-start.md)
 * [API Reference](documentation/indexer/indexer-api-reference.md)
 * [Configuration](documentation/indexer/indexer-configuration.md)
-* [Deployment](documentation/indexer/indexer-deployment.md)
+<!-- * [Deployment](documentation/indexer/indexer-deployment.md)
 * [Performance](documentation/indexer/indexer-performance.md)
 * [Monitoring](documentation/indexer/indexer-monitoring.md)
-* [Troubleshooting](documentation/indexer/indexer-troubleshooting.md)
+* [Troubleshooting](documentation/indexer/indexer-troubleshooting.md) -->
+* [Testing Strategies](documentation/indexer/indexer-testing.md)
 * [Chain-Specific Indexers](documentation/indexer/)
   * [Bitcoin](documentation/indexer/indexer-btc.md)
   * [EVM Chains](documentation/indexer/indexer-evm.md)
@@ -81,6 +82,8 @@
 
 ## Integration Guides
 * [Transaction History](documentation/transaction-history.md)
+  * [UI Patterns](documentation/transaction-history-ui-patterns.md)
+  * [Code Examples](documentation/transaction-history-examples.md)
 * [Preparing for Production](documentation/preparing-for-production.md)
 
 ## Resources
