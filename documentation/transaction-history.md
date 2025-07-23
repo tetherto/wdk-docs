@@ -29,8 +29,25 @@ A chronological list of all transfers for a user’s addresses, enriched with to
 | Grouping     | Show related transfers together |
 
 ---
+## 2. Why Use the WDK Indexer for Transaction History?
 
-## 2. Blockchain Models (Retrieval Nuances)
+Building multi-chain transaction history directly from **raw node / RPC calls** is painful: each chain exposes different schemas, encodings, pagination models, and event structures. The [**WDK Indexer**](./indexer.md) pre-processes, normalizes, enriches, and caches that data so your wallet can ship fast and stay sane.
+
+| Capability | Direct RPC to Nodes | WDK Indexer |
+|------------|--------------------|-------------|
+| Data format | Chain-specific (UTXO vs logs vs instructions) | Unified tx schema across chains |
+| Token decoding | Manual ABI / log parsing | Parsed + normalized token transfers |
+| Multi-chain join | Your problem | Built-in |
+| Pagination | Varies by node | Consistent cursor pagination |
+| Metadata (fiat, logos) | Manual enrichment | Provided / pluggable enrichment layer |
+| Performance | Many calls per screen | Aggregated, cached responses |
+| Reliability | Node quirks, reorg handling per chain | Centralized reorg + retry logic |
+
+> **TL;DR:** Use the **WDK Indexer** for fast, reliable, multi-chain transaction history. Use **direct RPC** only if you need raw chain data *and* you're prepared to implement all parsing, enrichment, caching, and reconciliation yourself.
+
+---
+
+## 3. Blockchain Models (Retrieval Nuances)
 
 | Model | Examples | Integration Hint |
 |-------|----------|------------------|
@@ -40,7 +57,7 @@ A chronological list of all transfers for a user’s addresses, enriched with to
 
 ---
 
-## 3. WDK API Integration
+## 4. WDK API Integration
 
 The WDK exposes a single **`/v1/transactions`** endpoint that normalises data across chains.
 
@@ -57,7 +74,6 @@ GET /v1/transactions
 ### Minimal client example
 
 ```js
-
 const wdk = new WDKClient({
   baseURL: 'https://api.your-wdk.com',
   apiKey: process.env.WDK_API_KEY
@@ -89,7 +105,7 @@ interface Transaction {
 
 ---
 
-## 4. Client‑Side Patterns
+## 5. Client‑Side Patterns
 
 | Goal       | Approach                                                                   |
 | ---------- | -------------------------------------------------------------------------- |
@@ -100,7 +116,7 @@ interface Transaction {
 
 ---
 
-## 5. Security & Privacy
+## 6. Security & Privacy
 
 * Request only the addresses you must display.
 * Hash addresses before sending to analytics (`SHA‑256 + salt`).
@@ -108,7 +124,7 @@ interface Transaction {
 
 ---
 
-## 6. Performance Tips
+## 7. Performance Tips
 
 | Technique              | Benefit                                                  |
 | ---------------------- | -------------------------------------------------------- |
@@ -118,7 +134,7 @@ interface Transaction {
 
 <!-- ---
 
-## 7. Next Steps
+## 8. Next Steps
 
 1. **UI patterns** → [Transaction History UI Patterns](transaction-history-ui-patterns.md)
 2. **Full examples** → [`/examples/transaction-history`](transaction-history-examples.md)
