@@ -69,8 +69,8 @@
 <!-- * [Deployment](documentation/indexer/indexer-deployment.md)
 * [Performance](documentation/indexer/indexer-performance.md)
 * [Monitoring](documentation/indexer/indexer-monitoring.md)
-* [Troubleshooting](documentation/indexer/indexer-troubleshooting.md) -->
-* [Testing Strategies](documentation/indexer/indexer-testing.md)
+* [Troubleshooting](documentation/indexer/indexer-troubleshooting.md) 
+* [Testing Strategies](documentation/indexer/indexer-testing.md)-->
 * [Chain-Specific Indexers](documentation/indexer/)
   * [Bitcoin](documentation/indexer/indexer-btc.md)
   * [EVM Chains](documentation/indexer/indexer-evm.md)
