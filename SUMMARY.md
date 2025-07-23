@@ -82,8 +82,8 @@
 
 ## Integration Guides
 * [Transaction History](documentation/transaction-history.md)
-  * [UI Patterns](documentation/transaction-history-ui-patterns.md)
-  * [Code Examples](documentation/transaction-history-examples.md)
+  <!-- * [UI Patterns](documentation/transaction-history-ui-patterns.md)
+  * [Code Examples](documentation/transaction-history-examples.md) -->
 * [Preparing for Production](documentation/preparing-for-production.md)
 
 <!-- ## Integration Examples
