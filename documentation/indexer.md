@@ -153,11 +153,11 @@ const transactions = await indexer.queryTransactions({
 
 > **Note**: The following sections provide operational guidance and best practices that extend beyond the basic repository implementations. Core architecture and API details are based directly on the repository code, while deployment, monitoring, and optimization strategies are recommended practices for production use.
 
-### Deployment
+<!-- ### Deployment
 
 WDK Indexers support multiple deployment strategies including Docker, Kubernetes, and bare metal installations. The architecture is designed for horizontal scaling of API workers while maintaining single processor instances per chain.
 
-For comprehensive deployment guides including Docker Compose, Kubernetes manifests, and scaling strategies, see the **[Deployment Guide](indexer/indexer-deployment.md)**.
+For comprehensive deployment guides including Docker Compose, Kubernetes manifests, and scaling strategies, see the **[Deployment Guide](indexer/indexer-deployment.md)**. -->
 
 ### Configuration
 
@@ -165,38 +165,34 @@ WDK Indexers use a standardized configuration system with both common settings a
 
 For complete configuration documentation including common settings, chain-specific options, and performance tuning, see the **[Configuration Reference](indexer/indexer-configuration.md)**.
 
-### Performance Optimization
+<!-- ### Performance Optimization
 
 Performance optimization involves tuning RPC provider settings, memory management, CPU utilization, and database configuration. Each blockchain has specific optimization strategies while sharing common principles.
 
-For comprehensive performance optimization strategies, benchmarking guidelines, and chain-specific tuning, see the **[Performance Guide](indexer/indexer-performance.md)**.
+For comprehensive performance optimization strategies, benchmarking guidelines, and chain-specific tuning, see the **[Performance Guide](indexer/indexer-performance.md)**. -->
 
-### Monitoring
+<!-- ### Monitoring
 
 Comprehensive monitoring is essential for production deployments. WDK Indexers expose Prometheus metrics and support various alerting and dashboard configurations.
 
-For complete monitoring setup including Prometheus configuration, Grafana dashboards, alerting rules, and observability best practices, see the **[Monitoring Guide](indexer/indexer-monitoring.md)**.
+For complete monitoring setup including Prometheus configuration, Grafana dashboards, alerting rules, and observability best practices, see the **[Monitoring Guide](indexer/indexer-monitoring.md)**. -->
 
-### Troubleshooting
+<!-- ### Troubleshooting
 
 Common issues include sync lag, API performance problems, RPC provider failures, and resource constraints. Most troubleshooting procedures are universal across chains with some blockchain-specific considerations.
 
-For comprehensive troubleshooting procedures, common issue resolution, and debugging strategies, see the **[Troubleshooting Guide](indexer/indexer-troubleshooting.md)**.
+For comprehensive troubleshooting procedures, common issue resolution, and debugging strategies, see the **[Troubleshooting Guide](indexer/indexer-troubleshooting.md)**. -->
 
 ## Extending to New Chains
 
 For instructions on adding support for a new blockchain, see **[Extending WDK Indexers](indexer/indexer-extending.md)**.
 
-## License and Contributing
-
-WDK Indexers are licensed under Apache-2.0. For contributing guidelines, see the individual repository CONTRIBUTING.md files.
-
 ## Next Steps
 
 1. **Choose Your Blockchain**: Select from the [supported networks](#supported-networks)
 2. **Quick Start**: Follow the [Quick Start Guide](indexer/indexer-quick-start.md)
-3. **Deploy**: Use the [Deployment Guide](indexer/indexer-deployment.md) for production setup
-4. **Configure Monitoring**: Set up observability with the [Monitoring Guide](indexer/indexer-monitoring.md)
+<!-- 3. **Deploy**: Use the [Deployment Guide](indexer/indexer-deployment.md) for production setup -->
+<!-- 4. **Configure Monitoring**: Set up observability with the [Monitoring Guide](indexer/indexer-monitoring.md) -->
 5. **Integrate**: Use the [API Reference](indexer/indexer-api-reference.md) for wallet integration
 
 For detailed chain-specific instructions, configuration options, and deployment notes, refer to the individual blockchain documentation pages.
