@@ -15,7 +15,7 @@ import WalletManagerTron from '@wdk/wallet-tron'
 
 const config = {
   provider: 'https://api.trongrid.io', // Tron RPC endpoint
-  transferMaxFee: 10000000 // Maximum fee in sun (optional, e.g., 10 TRX)
+  transferMaxFee: 10000000 // Maximum fee in sun (optional)
 }
 
 const wallet = new WalletManagerTron(seedPhrase, config)
@@ -24,11 +24,11 @@ const wallet = new WalletManagerTron(seedPhrase, config)
 ## Account Configuration
 
 ```javascript
-import WalletAccountTron from '@wdk/wallet-tron'
+import { WalletAccountTron } from '@wdk/wallet-tron'
 
 const accountConfig = {
-  provider: 'https://api.trongrid.io', // Tron RPC endpoint
-  transferMaxFee: 10000000 // Maximum fee in sun (optional, e.g., 10 TRX)
+  provider: 'https://api.trongrid.io',
+  transferMaxFee: 10000000 // Maximum fee in sun (optional)
 }
 
 const account = new WalletAccountTron(seedPhrase, "0'/0/0", accountConfig)
@@ -36,14 +36,11 @@ const account = new WalletAccountTron(seedPhrase, "0'/0/0", accountConfig)
 
 ## Configuration Options
 
-### provider
+### Provider
 
-The `provider` option specifies the Tron RPC endpoint for blockchain interactions.
+The `provider` option specifies the Tron RPC endpoint or TronWeb instance for blockchain interactions.
 
-**Type:**
-```typescript
-string // e.g., 'https://api.trongrid.io'
-```
+**Type:** `string | TronWeb`
 
 **Example:**
 ```javascript
@@ -52,11 +49,12 @@ const config = {
 }
 ```
 
-### transferMaxFee
+### Transfer Max Fee
 
 The `transferMaxFee` option sets the maximum fee amount (in sun) for transfer operations. This helps prevent transactions from being sent with unexpectedly high fees.
 
-**Type:** `number` (sun)
+**Type:** `number` (optional)  
+**Unit:** Sun (1 TRX = 1,000,000 Sun)
 
 **Example:**
 ```javascript

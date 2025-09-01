@@ -10,18 +10,45 @@ icon: book-open
 
 ## Installation
 
+To install the `@wdk/wallet-tron` package, follow these instructions:
+
+### Public Release
+
+Once the package is publicly available, you can install it using npm:
+
 ```bash
 npm install @wdk/wallet-tron
+```
+### Private Access
+
+If you have access to the private repository, install the package from the develop branch on GitHub:
+
+```bash
+npm install git+https://github.com/tetherto/wdk-wallet-tron.git#develop
+```
+
+After installation, ensure your package.json includes the dependency correctly:
+
+```json
+"dependencies": {
+  // ... other dependencies ...
+  "@wdk/wallet-tron": "git+ssh://git@github.com:tetherto/wdk-wallet-tron.git#develop"
+  // ... other dependencies ...
+}
 ```
 
 ## Quick Start
 
-## Quick Start
+### Importing from `@wdk/wallet-tron`
+
+1. WalletManagerTron: This is the main class for managing wallets.
+2. WalletAccountTron: Use this for full access accounts.
+3. WalletAccountReadOnlyTron: Use this for read-only accounts.
 
 ### Creating a New Wallet
 
 ```javascript
-import WalletManagerTron from '@wdk/wallet-tron'
+import WalletManagerTron, { WalletAccountTron, WalletAccountReadOnlyTron } from '@wdk/wallet-tron'
 
 // Use a BIP-39 seed phrase (replace with your own secure phrase)
 const seedPhrase = 'your twelve word seed phrase here' // Replace with actual seed generation
@@ -30,6 +57,12 @@ const seedPhrase = 'your twelve word seed phrase here' // Replace with actual se
 const wallet = new WalletManagerTron(seedPhrase, {
   provider: 'https://api.trongrid.io' // or any other Tron RPC provider
 })
+
+// Get a full access account
+const account = await wallet.getAccount(0)
+
+// Convert to a read-only account
+const readOnlyAccount = await account.toReadOnlyAccount()
 ```
 
 ### Managing Multiple Accounts
@@ -53,7 +86,13 @@ console.log('Custom account address:', customAddress)
 
 ### Checking Balances
 
+#### Owned Account
+
+For accounts where you have the seed phrase and full access:
+
 ```javascript
+import WalletManagerTron from '@wdk/wallet-tron'
+
 // Get native TRX balance (in sun)
 const balance = await account.getBalance()
 console.log('Native TRX balance:', balance, 'sun')
@@ -64,7 +103,28 @@ const trc20Balance = await account.getTokenBalance(trc20Address);
 console.log('TRC20 token balance:', trc20Balance);
 ```
 
+#### Read-Only Account
+
+For addresses where you don't have the seed phrase:
+
+```javascript
+import { WalletAccountReadOnlyTron } from '@wdk/wallet-tron'
+
+// Use the address directly
+const address = 'T...'; // Replace with the actual Tron address
+
+// Create a read-only account
+const readOnlyAccount = new WalletAccountReadOnlyTron(address, {
+  provider: 'https://api.trongrid.io'
+})
+// Check the balance
+const balance = await readOnlyAccount.getBalance()
+console.log('Read-only account balance:', balance)
+```
+
 ### Sending Transactions
+
+Send TRX and estimate fees using `WalletAccountTron`. Ensure connection to TronWeb.
 
 ```javascript
 // Send native TRX
@@ -84,6 +144,8 @@ console.log('Estimated fee:', quote.fee, 'sun');
 ```
 
 ### Token Transfers
+
+Transfer TRC20 tokens and estimate fees using `WalletAccountTron`. Ensure connection to TronWeb.
 
 ```javascript
 // Transfer TRC20 tokens
@@ -106,6 +168,8 @@ console.log('Transfer fee estimate:', transferQuote.fee, 'sun')
 
 ### Message Signing and Verification
 
+Sign and verify messages using `WalletAccountTron`. Ensure connection to TronWeb.
+
 ```javascript
 // Sign a message
 const message = 'Hello, Tron!'
@@ -119,6 +183,9 @@ console.log('Signature valid:', isValid)
 
 ### Fee Management
 
+Retrieve current fee rates using `WalletManagerTron`. Ensure connection to TronWeb.
+
+
 ```javascript
 // Get current fee rates
 const feeRates = await wallet.getFeeRates();
@@ -127,6 +194,8 @@ console.log('Fast fee rate:', feeRates.fast, 'sun');
 ```
 
 ### Memory Management
+
+Clear sensitive data from memory using `dispose` methods in `WalletAccountTron` and `WalletManagerTron`.
 
 ```javascript
 // Dispose wallet accounts to clear private keys from memory

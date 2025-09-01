@@ -7,7 +7,7 @@ lastReviewed: 2025-06-26
 
 # @wdk/wallet-tron Overview
 
-A simple and secure package to manage BIP-32 wallets for the Tron blockchain. This package provides a clean API for creating, managing, and interacting with Tron wallets using BIP-39 seed phrases and Tron-specific derivation paths.
+A simple and secure package to manage BIP-44 wallets for the Tron blockchain. This package provides a clean API for creating, managing, and interacting with Tron wallets using BIP-39 seed phrases and Tron-specific derivation paths.
 
 ## Features
 
