@@ -2,25 +2,27 @@
 title: Wallet Solana Overview
 description: Overview of the @wdk/wallet-solana module
 author: Raquel Carrasco Gonzalez
-lastReviewed: 2025-06-26
+lastReviewed: 2025-09-01
 ---
 
 # @wdk/wallet-solana Overview
 
-A simple and secure package to manage BIP-32 wallets for the Solana blockchain. This package provides a clean API for creating, managing, and interacting with Solana wallets using BIP-39 seed phrases and Solana-specific derivation paths.
+A simple and secure package to manage BIP-44 wallets for the Solana blockchain. This package provides a clean API for creating, managing, and interacting with Solana wallets using BIP-39 seed phrases and Solana-specific derivation paths.
 
 ## Features
 
 - **BIP-39 Seed Phrase Support**: Generate and validate BIP-39 mnemonic seed phrases
-- **Solana Derivation Paths**: Support for BIP-44 standard derivation paths for Solana
+- **Solana Derivation Paths**: Support for BIP-44 standard derivation paths for Solana (m/44'/501')
 - **Multi-Account Management**: Create and manage multiple accounts from a single seed phrase
-- **Solana Address Support:** Generate and manage Solana addresses
-- **Message Signing:** Sign and verify messages using Solana cryptography
-- **Transaction Management**: Send SOL and SPL token transactions, get fee estimates
-- **Token Support:** Query native SOL and SPL token balances
+- **Solana Address Support**: Generate and manage Solana public keys and addresses
+- **Message Signing**: Sign and verify messages using Ed25519 cryptography
+- **Transaction Management**: Send transactions and get fee estimates
+- **SPL Token Support**: Query native SOL and SPL token balances
 - **TypeScript Support**: Full TypeScript definitions included
-- **Memory Safety**: Secure private key management with automatic memory cleanup
-- **Provider Flexibility:** Support for custom Solana RPC endpoints
+- **Memory Safety**: Secure private key management with memory-safe implementation
+- **Provider Flexibility**: Support for custom Solana RPC endpoints
+- **Fee Estimation**: Dynamic fee calculation with recent blockhash
+- **Program Interaction**: Support for interacting with Solana programs
 
 ## Supported Networks
 
