@@ -48,13 +48,20 @@ npm init -y
 
 # Install WDK EVM-ERC-4337 module
 npm install @wdk/wallet-evm-erc-4337
+
+# OR - with private access granted
+npm install git+https://github.com/tetherto/wdk-wallet-evm-erc-4337.git
 ```
 
 Create a file called `package.json` and add this line to enable modern JavaScript features:
 
 ```json
 {
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+  "@wdk/wallet-evm-erc-4337": "git+ssh://git@github.com:tetherto/wdk-wallet-evm-erc-4337.git#develop"
+  // ... other dependencies ...
+}
 }
 ```
 
@@ -92,6 +99,7 @@ const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon aban
 
 // Step 2: Configure for Polygon testnet
 const config = {
+ // Required parameters
   chainId: 137, // Polygon mainnet
   provider: 'https://polygon-rpc.com',
   bundlerUrl: 'https://api.candide.dev/public/v3/polygon',
@@ -101,7 +109,10 @@ const config = {
   safeModulesVersion: '0.3.0',
   paymasterToken: {
     address: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f' // USDT on Polygon
-  }
+  },
+
+  // Optional parameters
+  transferMaxFee: 100000000000000 // Optional: Maximum fee in wei
 }
 
 // Step 3: Create wallet manager
@@ -138,7 +149,8 @@ import WalletManagerEvmErc4337 from '@wdk/wallet-evm-erc-4337'
 const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
 
 const config = {
-  chainId: 137,
+ // Required parameters
+  chainId: 137, // Polygon mainnet
   provider: 'https://polygon-rpc.com',
   bundlerUrl: 'https://api.candide.dev/public/v3/polygon',
   paymasterUrl: 'https://api.candide.dev/public/v3/polygon',
@@ -146,8 +158,11 @@ const config = {
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f'
-  }
+    address: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f' // USDT on Polygon
+  },
+
+  // Optional parameters
+  transferMaxFee: 100000000000000 // Optional: Maximum fee in wei
 }
 
 const wallet = new WalletManagerEvmErc4337(seedPhrase, config)
@@ -188,7 +203,8 @@ import WalletManagerEvmErc4337 from '@wdk/wallet-evm-erc-4337'
 const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
 
 const config = {
-  chainId: 137,
+ // Required parameters
+  chainId: 137, // Polygon mainnet
   provider: 'https://polygon-rpc.com',
   bundlerUrl: 'https://api.candide.dev/public/v3/polygon',
   paymasterUrl: 'https://api.candide.dev/public/v3/polygon',
@@ -196,8 +212,11 @@ const config = {
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f'
-  }
+    address: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f' // USDT on Polygon
+  },
+
+  // Optional parameters
+  transferMaxFee: 100000000000000 // Optional: Maximum fee in wei
 }
 
 const wallet = new WalletManagerEvmErc4337(seedPhrase, config)
@@ -212,7 +231,7 @@ const transferQuote = await account.quoteTransfer({
 
 console.log('📊 Transfer cost estimate:', transferQuote.fee, 'USDT units')
 
-// Estimate cost of sending native token
+// Estimate cost of sending native token with default paymaster token
 const transactionQuote = await account.quoteSendTransaction({
   to: '0xd3D224Ca27C4b4350b8BCD52c9381E1a8CEEFcf0',
   value: '1000000000000000000' // 1 MATIC (18 decimals)
@@ -243,7 +262,8 @@ import WalletManagerEvmErc4337 from '@wdk/wallet-evm-erc-4337'
 const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
 
 const config = {
-  chainId: 137,
+ // Required parameters
+  chainId: 137, // Polygon mainnet
   provider: 'https://polygon-rpc.com',
   bundlerUrl: 'https://api.candide.dev/public/v3/polygon',
   paymasterUrl: 'https://api.candide.dev/public/v3/polygon',
@@ -251,8 +271,11 @@ const config = {
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f'
-  }
+    address: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f' // USDT on Polygon
+  },
+
+  // Optional parameters
+  transferMaxFee: 100000000000000 // Optional: Maximum fee in wei
 }
 
 const wallet = new WalletManagerEvmErc4337(seedPhrase, config)
@@ -301,8 +324,10 @@ async function main() {
   
   // Configuration
   const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
+
   const config = {
-    chainId: 137,
+  // Required parameters
+    chainId: 137, // Polygon mainnet
     provider: 'https://polygon-rpc.com',
     bundlerUrl: 'https://api.candide.dev/public/v3/polygon',
     paymasterUrl: 'https://api.candide.dev/public/v3/polygon',
@@ -310,8 +335,11 @@ async function main() {
     entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
     safeModulesVersion: '0.3.0',
     paymasterToken: {
-      address: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f'
-    }
+      address: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f' // USDT on Polygon
+    },
+
+    // Optional parameters
+    transferMaxFee: 100000000000000 // Optional: Maximum fee in wei
   }
   
   try {
@@ -409,6 +437,7 @@ Congratulations! You've successfully built your first WDK application. Here's wh
 - **Bitcoin**: `@wdk/wallet-btc`
 - **Solana**: `@wdk/wallet-solana`
 - **TON**: `@wdk/wallet-ton`
+- **TON**: `@wdk/wallet-tron`
 
 ### Advanced Features
 - [Multi-account management](../wdk-modules/wallet-evm-erc-4337/guides.md)
