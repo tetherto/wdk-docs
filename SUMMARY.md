@@ -85,6 +85,8 @@
   <!-- * [UI Patterns](documentation/transaction-history-ui-patterns.md)
   * [Code Examples](documentation/transaction-history-examples.md) -->
 * [Preparing for Production](documentation/preparing-for-production.md)
+* [Using WDK in Bare Runtimes](documentation/using-bare-runtime.md)
+
 
 <!-- ## Integration Examples
 
