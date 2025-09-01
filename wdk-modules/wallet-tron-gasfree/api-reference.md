@@ -8,17 +8,17 @@ icon: code
 
 # API Reference
 
-### Table of Contents
+## Table of Contents
 
 | Class | Description | Methods |
 |-------|-------------|---------|
-| [WalletManagerTronGasfree](#walletmanagertrongasfree) | Main class for managing gas-free Tron wallets | [Constructor](#constructor), [Methods](#methods), [Properties](#properties) |
-| [WalletAccountTronGasfree](#walletaccounttrongasfree) | Individual gas-free Tron wallet account implementation | [Constructor](#constructor-1), [Methods](#methods), [Properties](#properties-1) |
-
+| [WalletManagerTronGasfree](#walletmanagertrongasfree) | Main class for managing gas-free Tron wallets. Extends `WalletManagerTron`. | [Constructor](#constructor), [Methods](#methods) |
+| [WalletAccountTronGasfree](#walletaccounttrongasfree) | Individual gas-free Tron wallet account implementation. Extends `WalletAccountReadOnlyTronGasfree`. | [Constructor](#constructor-1), [Methods](#methods-1) |
+| [WalletAccountReadOnlyTronGasfree](#walletaccountreadonlytrongasfree) | Read-only gas-free Tron wallet account. | [Constructor](#constructor-2), [Methods](#methods-2) |
 
 ### WalletManagerTronGasfree
 
-The main class for managing gas-free Tron wallets. Extends `WalletManagerTron` from `@wdk/wallet-tron`.
+The main class for managing gas-free Tron wallets.
 
 #### Constructor
 
@@ -28,27 +28,27 @@ new WalletManagerTronGasfree(seed, config)
 
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
-- `config` (object, optional): Configuration object
-  - `provider` (string, optional): Tron RPC endpoint URL (e.g., 'https://api.trongrid.io')
-  - `gasFreeProvider` (string, required): Gas-free service endpoint
-  - `apiKey` (string, required): API key for gas-free provider
-  - `apiSecret` (string, required): API secret for gas-free provider
-  - `serviceProvider` (string, required): Service provider Tron address
-  - `verifyingContract` (string, required): Gas-free verifying contract address
-  - `chainId` (number, required): Tron chain ID
-  - `transferMaxFee` (number, optional): Maximum fee for transfer operations (in token base units)
+- `config` (object): Configuration object
+  - `chainId` (string): The blockchain's id
+  - `provider` (string): Tron RPC endpoint URL
+  - `gasFreeProvider` (string): Gas-free service endpoint
+  - `gasFreeApiKey` (string): API key for gas-free provider
+  - `gasFreeApiSecret` (string): API secret for gas-free provider
+  - `serviceProvider` (string): Service provider Tron address
+  - `verifyingContract` (string): Gas-free verifying contract address
+  - `transferMaxFee` (number, optional): Maximum fee for transfer operations
 
 **Example:**
 ```javascript
 const wallet = new WalletManagerTronGasfree(seedPhrase, {
+  chainId: '728126428',
   provider: 'https://api.trongrid.io',
-  gasFreeProvider: 'https://your-gasfree-provider',
-  apiKey: 'your-api-key',
-  apiSecret: 'your-api-secret',
+  gasFreeProvider: 'https://gasfree.provider.url',
+  gasFreeApiKey: 'your-api-key',
+  gasFreeApiSecret: 'your-api-secret',
   serviceProvider: 'T...',
   verifyingContract: 'T...',
-  chainId: 728126428,
-  transferMaxFee: 10000000
+  transferMaxFee: 10000000 // Optional
 })
 ```
 
@@ -56,8 +56,9 @@ const wallet = new WalletManagerTronGasfree(seedPhrase, {
 
 | Method | Description | Returns |
 |--------|-------------|---------|
-| `getAccount(index)` | Returns a gas-free wallet account at the specified index | `Promise<WalletAccountTronGasfree>` |
-| `getAccountByPath(path)` | Returns a gas-free wallet account at the specified BIP-44 derivation path | `Promise<WalletAccountTronGasfree>` |
+| `getAccount(index)` | Returns a wallet account at the specified index | `Promise<WalletAccountTronGasfree>` |
+| `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise<WalletAccountTronGasfree>` |
+| `getFeeRates()` | Returns current fee rates for normal and fast transactions | `Promise<{normal: number, fast: number}>` |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
 
 ##### `getAccount(index)`
@@ -86,29 +87,32 @@ Returns a gas-free wallet account at the specified BIP-44 derivation path.
 const account = await wallet.getAccountByPath("0'/0/1")
 ```
 
+##### `getFeeRates()`
+Returns current fee rates for normal and fast transactions.
+
+**Returns:** `Promise<{normal: number, fast: number}>` - Object containing fee rates in sun
+- `normal`: Fee rate for normal priority transactions
+- `fast`: Fee rate for high priority transactions
+
+**Example:**
+```javascript
+const feeRates = await wallet.getFeeRates()
+console.log('Normal fee rate:', feeRates.normal, 'sun')
+console.log('Fast fee rate:', feeRates.fast, 'sun')
+```
+
 ##### `dispose()`
-Disposes all wallet accounts, clearing private keys from memory.
+Disposes all wallet accounts, clearing private keys from memory. This method should be called when you're done using the wallet to ensure sensitive data is removed.
 
 **Example:**
 ```javascript
 wallet.dispose()
 ```
 
-#### Properties
-
-##### `seed`
-The wallet's seed phrase.
-
-**Type:** `string | Uint8Array`
-
-**Example:**
-```javascript
-console.log('Seed phrase:', wallet.seed)
-```
 
 ### WalletAccountTronGasfree
 
-Represents an individual gas-free wallet account. Extends `WalletAccountTron` from `@wdk/wallet-tron`.
+Individual gas-free Tron wallet account implementation.
 
 #### Constructor
 
@@ -119,43 +123,96 @@ new WalletAccountTronGasfree(seed, path, config)
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `path` (string): BIP-44 derivation path (e.g., "0'/0/0")
-- `config` (object, optional): Configuration object (see above)
-
-**Example:**
-```javascript
-const account = new WalletAccountTronGasfree(seedPhrase, "0'/0/0", {
-  provider: 'https://api.trongrid.io',
-  gasFreeProvider: 'https://your-gasfree-provider',
-  apiKey: 'your-api-key',
-  apiSecret: 'your-api-secret',
-  serviceProvider: 'T...',
-  verifyingContract: 'T...',
-  chainId: 728126428,
-  transferMaxFee: 10000000
-})
-```
+- `config` (object): Same configuration object as WalletManagerTronGasfree
 
 #### Methods
 
 | Method | Description | Returns |
 |--------|-------------|---------|
-| [`getAddress()`](#getaddress) | Returns the account's gas-free Tron address | `Promise<string>` |
-| [`sign(message)`](#signmessage) | Signs a message using the account's private key | `Promise<string>` |
-| [`verify(message, signature)`](#verifymessage-signature) | Verifies a message signature | `Promise<boolean>` |
-| [`transfer(options)`](#transferoptions) | Gas-free TRC20 token transfer to another address | `Promise<{id: string, fee: number}>` |
-| [`quoteTransfer(options)`](#quotetransferoptions) | Estimates the fee for a gas-free TRC20 transfer | `Promise<{fee: number}>` |
-| [`getTransferHash(id)`](#gettransferhashid) | Gets the transaction hash for a submitted transfer | `Promise<string>` |
-| [`dispose()`](#dispose-1) | Disposes the wallet account, clearing private keys from memory | `void` |
+| `getAddress()` | Returns the account's address | `Promise<string>` |
+| `getBalance()` | Returns the native TRX balance (in sun) | `Promise<number>` |
+| `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise<number>` |
+| `transfer(options)` | Transfers TRC20 tokens to another address | `Promise<{hash: string, fee: number}>` |
+| `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise<{fee: number}>` |
+| `sign(message)` | Signs a message using the account's private key | `Promise<string>` |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
+| `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
+
 
 ##### `getAddress()`
 Returns the account's gas-free Tron address.
 
-**Returns:** `Promise<string>` - The account's gas-free Tron address
+**Returns:** `Promise<string>` - The account's Tron address
 
 **Example:**
 ```javascript
 const address = await account.getAddress()
-console.log('Gas-free account address:', address)
+console.log('Account address:', address)
+```
+
+##### `getBalance()`
+Returns the native TRX balance in sun units.
+
+**Returns:** `Promise<number>` - Balance in sun
+
+**Example:**
+```javascript
+const balance = await account.getBalance()
+console.log('TRX Balance:', balance, 'sun')
+```
+
+##### `getTokenBalance(tokenAddress)`
+Returns the balance of a specific TRC20 token.
+
+**Parameters:**
+- `tokenAddress` (string): The TRC20 contract address (e.g., 'T...')
+
+**Returns:** `Promise<number>` - Token balance in base units
+
+**Example:**
+```javascript
+const tokenBalance = await account.getTokenBalance('T...')
+console.log('Token balance:', tokenBalance)
+```
+
+##### `transfer(options)`
+Transfers TRC20 tokens to another address using the gas-free service.
+
+**Parameters:**
+- `options` (TransferOptions): Transfer options
+  - `token` (string): TRC20 contract address
+  - `recipient` (string): Recipient's Tron address
+  - `amount` (number): Amount in token base units
+
+**Returns:** `Promise<{hash: string, fee: number}>` - Object containing transaction hash and fee paid in token base units
+
+**Example:**
+```javascript
+const result = await account.transfer({
+  token: 'T...',      // TRC20 contract address
+  recipient: 'T...',  // Recipient's address
+  amount: 1000000     // Amount in token base units
+})
+console.log('Transaction hash:', result.hash)
+console.log('Fee paid:', result.fee, 'token base units')
+```
+
+##### `quoteTransfer(options)`
+Estimates the fee for a TRC20 token transfer.
+
+**Parameters:**
+- `options` (TransferOptions): Transfer options (same as transfer method)
+
+**Returns:** `Promise<{fee: number}>` - Estimated fee in token base units
+
+**Example:**
+```javascript
+const quote = await account.quoteTransfer({
+  token: 'T...',
+  recipient: 'T...',
+  amount: 1000000
+})
+console.log('Estimated fee:', quote.fee, 'token base units')
 ```
 
 ##### `sign(message)`
@@ -187,63 +244,6 @@ const isValid = await account.verify('Hello, World!', signature)
 console.log('Signature valid:', isValid)
 ```
 
-##### `transfer(options)`
-Gas-free TRC20 token transfer to another address.
-
-**Parameters:**
-- `options` (object): Transfer options
-  - `token` (string): TRC20 contract address (e.g., 'T...')
-  - `recipient` (string): Recipient Tron address (e.g., 'T...')
-  - `amount` (number): Amount in TRC20's base units
-
-**Returns:** `Promise<{id: string, fee: number}>` - Object containing transfer ID and fee (in token base units)
-
-**Example:**
-```javascript
-const result = await account.transfer({
-  token: 'T...',
-  recipient: 'T...',
-  amount: 1000000
-});
-console.log('Transfer ID:', result.id);
-console.log('Fee (token base units):', result.fee);
-```
-
-##### `quoteTransfer(options)`
-Estimates the fee for a gas-free TRC20 token transfer.
-
-**Parameters:**
-- `options` (object): Transfer options (same as transfer)
-  - `token` (string): TRC20 contract address (e.g., 'T...')
-  - `recipient` (string): Recipient Tron address (e.g., 'T...')
-  - `amount` (number): Amount in TRC20's base units
-
-**Returns:** `Promise<{fee: number}>` - Object containing fee estimate (in token base units)
-
-**Example:**
-```javascript
-const quote = await account.quoteTransfer({
-  token: 'T...',
-  recipient: 'T...',
-  amount: 1000000
-});
-console.log('Estimated fee (token base units):', quote.fee);
-```
-
-##### `getTransferHash(id)`
-Gets the transaction hash for a submitted transfer.
-
-**Parameters:**
-- `id` (string): The transfer ID returned by `transfer()`
-
-**Returns:** `Promise<string>` - The transaction hash
-
-**Example:**
-```javascript
-const txnHash = await account.getTransferHash(result.id)
-console.log('Transaction hash:', txnHash)
-```
-
 ##### `dispose()`
 Disposes the wallet account, clearing private keys from memory.
 
@@ -252,37 +252,225 @@ Disposes the wallet account, clearing private keys from memory.
 account.dispose()
 ```
 
-#### Properties
+### WalletAccountReadOnlyTronGasfree
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `index` | `number` | The derivation path's index of this account |
-| `path` | `string` | The full derivation path of this account |
-| `keyPair` | `{publicKey: Buffer, privateKey: Buffer}` | The account's public and private key pair as buffers |
+Read-only gas-free Tron wallet account.
+
+#### Constructor
+
+```javascript
+new WalletAccountReadOnlyTronGasfree(address, config)
+```
+
+**Parameters:**
+- `address` (string): The account's Tron address
+- `config` (object): Configuration object
+  - `chainId` (string): The blockchain's id
+  - `provider` (string): Tron RPC endpoint URL
+  - `gasFreeProvider` (string): Gas-free service endpoint
+  - `gasFreeApiKey` (string): API key for gas-free provider
+  - `gasFreeApiSecret` (string): API secret for gas-free provider
+  - `serviceProvider` (string): Service provider Tron address
+  - `verifyingContract` (string): Gas-free verifying contract address
+
+#### Methods
+
+| Method | Description | Returns |
+|--------|-------------|---------|
+| `getAddress()` | Returns the account's address | `Promise<string>` |
+| `getBalance()` | Returns the native TRX balance (in sun) | `Promise<number>` |
+| `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise<number>` |
+| `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise<{fee: number}>` |
+
+##### `getAddress()`
+Returns the account's gas-free Tron address.
+
+**Returns:** `Promise<string>` - The account's Tron address
 
 **Example:**
 ```javascript
-const { publicKey, privateKey } = account.keyPair
-console.log('Public key length:', publicKey.length)
-console.log('Private key length:', privateKey.length)
+const address = await readOnlyAccount.getAddress()
+console.log('Account address:', address)
+```
+
+##### `getBalance()`
+Returns the native TRX balance in sun units.
+
+**Returns:** `Promise<number>` - Balance in sun
+
+**Example:**
+```javascript
+const balance = await readOnlyAccount.getBalance()
+console.log('TRX Balance:', balance, 'sun')
+```
+
+##### `getTokenBalance(tokenAddress)`
+Returns the balance of a specific TRC20 token.
+
+**Parameters:**
+- `tokenAddress` (string): The TRC20 contract address (e.g., 'T...')
+
+**Returns:** `Promise<number>` - Token balance in base units
+
+**Example:**
+```javascript
+const tokenBalance = await readOnlyAccount.getTokenBalance('T...')
+console.log('Token balance:', tokenBalance)
+```
+
+##### `quoteTransfer(options)`
+Estimates the fee for a TRC20 token transfer without requiring private keys.
+
+**Parameters:**
+- `options` (TransferOptions): Transfer options
+  - `token` (string): TRC20 contract address
+  - `recipient` (string): Recipient's Tron address
+  - `amount` (number): Amount in token base units
+
+**Returns:** `Promise<{fee: number}>` - Estimated fee in token base units
+
+**Example:**
+```javascript
+const quote = await readOnlyAccount.quoteTransfer({
+  token: 'T...',
+  recipient: 'T...',
+  amount: 1000000
+})
+console.log('Estimated fee:', quote.fee, 'token base units')
 ```
 
 ## Types
 
-## TransferOptions
+### TransferOptions
+Configuration options for token transfers.
 
 ```typescript
 interface TransferOptions {
+  /**
+   * The TRC20 token contract address
+   * @example 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t' // USDT contract
+   */
   token: string;
+
+  /**
+   * The recipient's Tron address
+   * @example 'TJYeasTPa6gpEEfQa7s9CqqqgvYh6JtpAR'
+   */
   recipient: string;
+
+  /**
+   * Amount to transfer in token base units
+   * @example 1000000 // 1 USDT (6 decimals)
+   */
   amount: number;
 }
 ```
-## KeyPair
+
+### TransferResult
+Result object returned by transfer operations.
+
+```typescript
+interface TransferResult {
+  /**
+   * The transaction hash
+   * @example '0x123...'
+   */
+  hash: string;
+
+  /**
+   * Fee paid in token base units
+   * @example 1000 // Fee in token base units
+   */
+  fee: number;
+}
+```
+
+### FeeRates
+Fee rate information for transactions.
+
+```typescript
+interface FeeRates {
+  /**
+   * Fee rate for normal priority transactions (in sun)
+   * @example 1000
+   */
+  normal: number;
+
+  /**
+   * Fee rate for high priority transactions (in sun)
+   * @example 2000
+   */
+  fast: number;
+}
+```
+
+### TronGasfreeWalletConfig
+Configuration options for wallet initialization.
+
+```typescript
+interface TronGasfreeWalletConfig {
+  /**
+   * The blockchain's ID
+   * @example '728126428' // Tron Mainnet
+   */
+  chainId: string;
+
+  /**
+   * Tron RPC endpoint URL or TronWeb instance
+   * @example 'https://api.trongrid.io'
+   */
+  provider: string | TronWeb;
+
+  /**
+   * Gas-free service endpoint
+   * @example 'https://gasfree.trongrid.io'
+   */
+  gasFreeProvider: string;
+
+  /**
+   * API key for gas-free provider
+   */
+  gasFreeApiKey: string;
+
+  /**
+   * API secret for gas-free provider
+   */
+  gasFreeApiSecret: string;
+
+  /**
+   * Service provider Tron address
+   * @example 'T...'
+   */
+  serviceProvider: string;
+
+  /**
+   * Gas-free verifying contract address
+   * @example 'T...'
+   */
+  verifyingContract: string;
+
+  /**
+   * Maximum fee for transfer operations (in token base units)
+   * @optional
+   * @example 10000000
+   */
+  transferMaxFee?: number;
+}
+```
+
+### KeyPair
+Account key pair information.
 
 ```typescript
 interface KeyPair {
-  publicKey: Uint8Array
-  privateKey: Uint8Array
+  /**
+   * Public key as buffer
+   */
+  publicKey: Buffer;
+
+  /**
+   * Private key as buffer (sensitive data)
+   */
+  privateKey: Buffer;
 }
 ```
