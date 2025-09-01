@@ -57,10 +57,8 @@ As a valued beta partner, we ask for your collaboration in making WDK the best p
 - **Regular usage** helps us identify and resolve issues faster
 
 ### Communication Channels
-- **Technical Support**: [support@tether.io](mailto:support@tether.io)
-- **Bug Reports**: [GitHub Issues](https://github.com/tetherto/wdk/issues)
-- **Feature Requests**: [GitHub Discussions](https://github.com/tetherto/wdk/discussions)
-- **General Inquiries**: [support@tether.io](mailto:support@tether.io)
+- **Technical Support**: [raquel.carrasco@tether.io](mailto:raquel.carrasco@tether.io)
+- **Bug Reports**: GitHub Issues
 
 ### Feedback Schedule
 - **Weekly check-ins** for active users (optional)
