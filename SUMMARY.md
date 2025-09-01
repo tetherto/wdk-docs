@@ -61,31 +61,31 @@
 * [Secret Manager](documentation/secret-manager.md)
 * [Paymaster Service](documentation/paymaster.md)
 
-## Indexer
+<!-- ## Indexer
 * [Overview](documentation/indexer.md)
 * [Quick Start](documentation/indexer/indexer-quick-start.md)
 * [API Reference](documentation/indexer/indexer-api-reference.md)
-* [Configuration](documentation/indexer/indexer-configuration.md)
+* [Configuration](documentation/indexer/indexer-configuration.md) -->
 <!-- * [Deployment](documentation/indexer/indexer-deployment.md)
 * [Performance](documentation/indexer/indexer-performance.md)
 * [Monitoring](documentation/indexer/indexer-monitoring.md)
 * [Troubleshooting](documentation/indexer/indexer-troubleshooting.md) 
 * [Testing Strategies](documentation/indexer/indexer-testing.md)-->
-* [Chain-Specific Indexers](documentation/indexer/)
+<!-- * [Chain-Specific Indexers](documentation/indexer/)
   * [Bitcoin](documentation/indexer/indexer-btc.md)
   * [EVM Chains](documentation/indexer/indexer-evm.md)
   * [Solana](documentation/indexer/indexer-solana.md)
   * [Spark](documentation/indexer/indexer-spark.md)
   * [TON](documentation/indexer/indexer-ton.md)
   * [TRON](documentation/indexer/indexer-tron.md)
-  * [Extending to New Chains](documentation/indexer/indexer-extending.md)
+  * [Extending to New Chains](documentation/indexer/indexer-extending.md) -->
 
 ## Integration Guides
 * [Transaction History](documentation/transaction-history.md)
   <!-- * [UI Patterns](documentation/transaction-history-ui-patterns.md)
   * [Code Examples](documentation/transaction-history-examples.md) -->
 * [Preparing for Production](documentation/preparing-for-production.md)
-* [Using WDK in Bare Runtimes](documentation/using-bare-runtime.md)
+* [Runtime Compatibility](documentation/using-bare-runtime.md)
 
 
 <!-- ## Integration Examples
