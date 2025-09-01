@@ -12,13 +12,16 @@ icon: code
 
 | Class | Description | Methods |
 |-------|-------------|---------|
-| [WalletManagerTon](#walletmanagerton) | Main class for managing TON wallets | [Constructor](#constructor), [Methods](#methods), [Properties](#properties) |
-| [WalletAccountTon](#walletaccountton) | Individual TON wallet account implementation | [Constructor](#constructor-1), [Methods](#methods), [Properties](#properties-1) |
+| [WalletManagerTon](#walletmanagerton) | Main class for managing TON wallets | [Constructor](#constructor), [Methods](#methods) |
+| [WalletAccountTon](#walletaccountton) | Individual TON wallet account implementation | [Constructor](#constructor-1), [Methods](#methods-1) |
+| [WalletAccountReadOnlyTon](#walletaccountreadonlyton) | Read-only TON wallet account | [Constructor](#constructor-2), [Methods](#methods-2) |
+
 
 
 ### WalletManagerTon
 
-The main class for managing TON wallets. Extends `AbstractWalletManager` from `@wdk/wallet`.
+The main class for managing TON wallets.  
+Extends `WalletManager` from `@wdk/wallet`.
 
 #### Constructor
 
@@ -28,28 +31,34 @@ new WalletManagerTon(seed, config)
 
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
-- `config` (object, optional): Configuration object
-  - `tonClient` (object, optional): TON client configuration
-    - `url` (string): TON RPC endpoint URL (e.g., 'https://toncenter.com/api/v2/jsonRPC')
-    - `secretKey` (string, optional): API key for the TON RPC endpoint, if required
+- `config` (object): Configuration object
+  - `tonClient` (object | TonClient): TON client configuration or instance
+    - `url` (string): TON Center API URL (e.g., 'https://toncenter.com/api/v3')
+    - `secretKey` (string, optional): API key for TON Center
   - `transferMaxFee` (number, optional): Maximum fee amount for transfer operations (in nanotons)
+
 
 **Example:**
 ```javascript
 const wallet = new WalletManagerTon(seedPhrase, {
-  tonClient: { url: 'https://toncenter.com/api/v2/jsonRPC' },
-  transferMaxFee: 10000000 // Maximum fee in nanotons (e.g., 0.01 TON)
+  tonClient: {
+    url: 'https://toncenter.com/api/v3',
+    secretKey: 'your-api-key'
+  },
+  transferMaxFee: 1000000000 // Maximum fee in nanotons (1 TON)
 })
 ```
 
 #### Methods
 
+
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getAccount(index)` | Returns a wallet account at the specified index | `Promise<WalletAccountTon>` |
 | `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise<WalletAccountTon>` |
-| `getFeeRates()` | Returns current fee rates for normal and fast transactions | `Promise<{normal: number, fast: number}>` |
+| `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: number, fast: number}>` |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
+
 
 ##### `getAccount(index)`
 Returns a wallet account at the specified index.
@@ -111,7 +120,8 @@ console.log('Seed phrase:', wallet.seed)
 
 ### WalletAccountTon
 
-Represents an individual wallet account. Implements `IWalletAccount` from `@wdk/wallet`.
+Individual TON wallet account implementation. Extends `WalletAccountReadOnlyTon` and implements `IWalletAccount`.
+
 
 #### Constructor
 
@@ -122,16 +132,20 @@ new WalletAccountTon(seed, path, config)
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `path` (string): BIP-44 derivation path (e.g., "0'/0/0")
-- `config` (object, optional): Configuration object
-  - `tonClient` (object, optional): TON client configuration
-    - `url` (string): TON RPC endpoint URL (e.g., 'https://toncenter.com/api/v2/jsonRPC')
-    - `secretKey` (string, optional): API key for the TON RPC endpoint, if required
-  - `transferMaxFee` (number, optional): Maximum fee amount for transfer operations (in nanotons)
+- `config` (object): Configuration object
+  - `tonClient` (object | TonClient): TON client configuration or instance
+    - `url` (string): TON Center API URL
+    - `secretKey` (string, optional): API key for TON Center
+  - `transferMaxFee` (number, optional): Maximum fee amount for transfer operations
+
 
 **Example:**
 ```javascript
 const account = new WalletAccountTon(seedPhrase, "0'/0/0", {
-  tonClient: { url: 'https://toncenter.com/api/v2/jsonRPC' },
+  tonClient: {
+    url: 'https://toncenter.com/api/v3',
+    secretKey: 'your-api-key'
+  },,
   transferMaxFee: 10000000 // Maximum fee in nanotons (e.g., 0.01 TON)
 })
 ```
@@ -140,16 +154,16 @@ const account = new WalletAccountTon(seedPhrase, "0'/0/0", {
 
 | Method | Description | Returns |
 |--------|-------------|---------|
-| [`getAddress()`](#getaddress) | Returns the account's TON address | `Promise<string>` |
-| [`sign(message)`](#signmessage) | Signs a message using the account's private key | `Promise<string>` |
-| [`verify(message, signature)`](#verifymessage-signature) | Verifies a message signature | `Promise<boolean>` |
-| [`sendTransaction(tx)`](#sendtransactiontx) | Sends a TON transaction and returns the result with hash and fee | `Promise<{hash: string, fee: number}>` |
-| [`quoteSendTransaction(tx)`](#quotesendtransactiontx) | Estimates the fee for a TON transaction | `Promise<{fee: number}>` |
-| [`transfer(options)`](#transferoptions) | Transfers Jettons (TON tokens) to another address | `Promise<{hash: string, fee: number}>` |
-| [`quoteTransfer(options)`](#quotetransferoptions) | Estimates the fee for a Jetton transfer | `Promise<{fee: number}>` |
-| [`getBalance()`](#getbalance) | Returns the native TON balance (in nanotons) | `Promise<number>` |
-| [`getTokenBalance(tokenAddress)`](#gettokenbalancetokenaddress) | Returns the balance of a specific Jetton (TON token) | `Promise<number>` |
-| [`dispose()`](#dispose-1) | Disposes the wallet account, clearing private keys from memory | `void` |
+| `getAddress()` | Returns the account's TON address | `Promise<string>` |
+| `sign(message)` | Signs a message using the account's private key | `Promise<string>` |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
+| `sendTransaction(tx)` | Sends a TON transaction | `Promise<{hash: string, fee: number}>` |
+| `quoteSendTransaction(tx)` | Estimates the fee for a TON transaction | `Promise<{fee: number}>` |
+| `transfer(options)` | Transfers Jetton tokens to another address | `Promise<{hash: string, fee: number}>` |
+| `quoteTransfer(options)` | Estimates the fee for a Jetton transfer | `Promise<{fee: number}>` |
+| `getBalance()` | Returns the native TON balance (in nanotons) | `Promise<number>` |
+| `getTokenBalance(tokenAddress)` | Returns the balance of a specific Jetton token | `Promise<number>` |
+| `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
 
 ##### `getAddress()`
 Returns the account's address.
@@ -196,7 +210,7 @@ Sends a TON transaction and returns the result with hash and fee.
 
 **Parameters:**
 - `tx` (object): The transaction object
-  - `to` (string): Recipient TON address (e.g., 'EQC...')
+  - `to` (string): Recipient TON address (e.g., 'EQ...')
   - `value` (number): Amount in nanotons (1 TON = 1,000,000,000 nanotons)
   - `bounceable` (boolean, optional): Whether the address is bounceable (TON-specific, optional)
 
@@ -206,7 +220,7 @@ Sends a TON transaction and returns the result with hash and fee.
 **Example:**
 ```javascript
 const result = await account.sendTransaction({
-  to: 'EQC...', // TON address
+  to: 'EQ...', // TON address
   value: 1000000000 // 1 TON in nanotons
 });
 console.log('Transaction hash:', result.hash);
@@ -218,7 +232,7 @@ Estimates the fee for a transaction.
 
 **Parameters:**
 - `tx` (object): The transaction object (same as sendTransaction)
-  - `to` (string): Recipient TON address (e.g., 'EQC...')
+  - `to` (string): Recipient TON address (e.g., 'EQ...')
   - `value` (number): Amount in nanotons (1 TON = 1,000,000,000 nanotons)
   - `bounceable` (boolean, optional): Whether the address is bounceable (TON-specific, optional)
 
@@ -227,7 +241,7 @@ Estimates the fee for a transaction.
 **Example:**
 ```javascript
 const quote = await account.quoteSendTransaction({
-  to: 'EQC...', // TON address
+  to: 'EQ...', // TON address
   value: 1000000000 // 1 TON in nanotons
 });
 console.log('Estimated fee:', quote.fee, 'nanotons');
@@ -238,8 +252,8 @@ Transfers Jettons (TON tokens) to another address.
 
 **Parameters:**
 - `options` (object): Transfer options
-  - `token` (string): Jetton master contract address (TON format, e.g., 'EQC...')
-  - `recipient` (string): Recipient TON address (e.g., 'EQC...')
+  - `token` (string): Jetton master contract address (TON format, e.g., 'EQ...')
+  - `recipient` (string): Recipient TON address (e.g., 'EQ...')
   - `amount` (number): Amount in Jetton's base units
 
 **Returns:** `Promise<{hash: string, fee: number}>` - Object containing hash and fee (in nanotons)
@@ -247,8 +261,8 @@ Transfers Jettons (TON tokens) to another address.
 **Example:**
 ```javascript
 const result = await account.transfer({
-  token: 'EQC...',      // Jetton master contract address
-  recipient: 'EQC...',  // Recipient's TON address
+  token: 'EQ...',      // Jetton master contract address
+  recipient: 'EQ...',  // Recipient's TON address
   amount: 1000000000    // Amount in Jetton's base units
 });
 console.log('Transfer hash:', result.hash);
@@ -260,8 +274,8 @@ Estimates the fee for a Jetton (TON token) transfer.
 
 **Parameters:**
 - `options` (object): Transfer options (same as transfer)
-  - `token` (string): Jetton master contract address (TON format, e.g., 'EQC...')
-  - `recipient` (string): Recipient TON address (e.g., 'EQC...')
+  - `token` (string): Jetton master contract address (TON format, e.g., 'EQ...')
+  - `recipient` (string): Recipient TON address (e.g., 'EQ...')
   - `amount` (number): Amount in Jetton's base units
 
 **Returns:** `Promise<{fee: number}>` - Object containing fee estimate (in nanotons)
@@ -269,8 +283,8 @@ Estimates the fee for a Jetton (TON token) transfer.
 **Example:**
 ```javascript
 const quote = await account.quoteTransfer({
-  token: 'EQC...',      // Jetton master contract address
-  recipient: 'EQC...',  // Recipient's TON address
+  token: 'EQ...',      // Jetton master contract address
+  recipient: 'EQ...',  // Recipient's TON address
   amount: 1000000000    // Amount in Jetton's base units
 });
 console.log('Transfer fee estimate:', quote.fee, 'nanotons');
@@ -291,13 +305,13 @@ console.log('Balance:', balance, 'nanotons');
 Returns the balance of a specific Jetton (TON token).
 
 **Parameters:**
-- `tokenAddress` (string): The Jetton master contract address (TON format, e.g., 'EQC...')
+- `tokenAddress` (string): The Jetton master contract address (TON format, e.g., 'EQ...')
 
 **Returns:** `Promise<number>` - Token balance in base units 
 
 **Example:**
 ```javascript
-const tokenBalance = await account.getTokenBalance('EQC...');
+const tokenBalance = await account.getTokenBalance('EQ...');
 console.log('Token balance:', tokenBalance, 'nanotons');
 ```
 
@@ -324,73 +338,143 @@ console.log('Public key length:', publicKey.length)
 console.log('Private key length:', privateKey.length)
 ```
 
-
 ## Types
 
-## TonTransaction
+### TonTransaction
 
 ```typescript
 interface TonTransaction {
-  to: string;                
-  value: number;            
-  bounceable?: boolean;      
+  /**
+   * Recipient's TON address in base64 format
+   * @example 'EQD4FPq...'
+   */
+  to: string;
+
+  /**
+   * Amount to send in nanotons (1 TON = 1,000,000,000 nanotons)
+   * @example 1000000000 // 1 TON
+   */
+  value: number;
+
+  /**
+   * Whether the destination address is bounceable
+   * @default true
+   */
+  bounceable?: boolean;
+
+  /**
+   * Optional message payload
+   */
+  payload?: string;
+
+  /**
+   * Optional contract initialization state
+   */
+  stateInit?: Cell | null;
 }
 ```
 
-## TransferOptions
+### TransferOptions
 
 ```typescript
 interface TransferOptions {
-  token: string;           
-  recipient: string;        
-  amount: number;            
+  /**
+   * Jetton master contract address
+   * @example 'EQD4FPq...'
+   */
+  token: string;
+
+  /**
+   * Recipient's TON address
+   * @example 'EQD4FPq...'
+   */
+  recipient: string;
+
+  /**
+   * Amount in Jetton's base units
+   * @example 1000000000 // Amount depends on token decimals
+   */
+  amount: number;
 }
 ```
 
-## TransactionResult
+### TransactionResult
 
 ```typescript
 interface TransactionResult {
-  hash: string
-  fee: number
+  /**
+   * Transaction hash in base64 format
+   * @example 'EQD4FPq...'
+   */
+  hash: string;
+
+  /**
+   * Transaction fee in nanotons
+   * @example 100000 // 0.0001 TON
+   */
+  fee: number;
 }
 ```
 
-## TransferResult
-
-```typescript
-interface TransferResult {
-  hash: string
-  fee: number
-}
-```
-
-## FeeRates
+### FeeRates
 
 ```typescript
 interface FeeRates {
-  normal: number
-  fast: number
+  /**
+   * Fee rate for normal priority transactions (in nanotons)
+   * @example 100000000 // 0.1 TON
+   */
+  normal: number;
+
+  /**
+   * Fee rate for high priority transactions (in nanotons)
+   * @example 200000000 // 0.2 TON
+   */
+  fast: number;
 }
 ```
 
-## KeyPair
+### KeyPair
 
 ```typescript
 interface KeyPair {
-  publicKey: Uint8Array
-  privateKey: Uint8Array
+  /**
+   * Ed25519 public key
+   */
+  publicKey: Buffer;
+
+  /**
+   * Ed25519 private key (sensitive data)
+   * @security Never expose or log this value
+   */
+  privateKey: Buffer;
 }
 ```
 
-## TonWalletConfig
+### TonWalletConfig
 
 ```typescript
 interface TonWalletConfig {
+  /**
+   * TON Center client configuration
+   */
   tonClient?: {
-    url: string;             
-    secretKey?: string;      
+    /**
+     * TON Center API endpoint
+     * @example 'https://toncenter.com/api/v3'
+     */
+    url: string;
+
+    /**
+     * Optional API key for higher rate limits
+     */
+    secretKey?: string;
   };
-  transferMaxFee?: number;  
+
+  /**
+   * Maximum allowed fee for transfers (in nanotons)
+   * @example 1000000000 // 1 TON
+   */
+  transferMaxFee?: number;
 }
-``` 
+```
