@@ -1,7 +1,7 @@
 ---
 title: Wallet Development Kit (WDK) Documentation
 author: Raquel Carrasco Gonzalez
-lastReviewed: 2025-06-19
+lastReviewed: 2025-08-31
 icon: book-open
 ---
 <p align="center">

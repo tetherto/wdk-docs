@@ -2,7 +2,7 @@
 title: Introduction to Wallet Development Kit (WDK)
 description: Tether's open-source Wallet Development Kit (WDK) empowers developers to build secure, non-custodial wallets with unified blockchain access, stateless architecture, and complete user control. WDK simplifies the complexity of blockchain infrastructure without compromising on flexibility or security.
 author: Raquel Carrasco Gonzalez
-lastReviewed: 2025-06-19
+lastReviewed: 2025-08-31
 icon: lightbulb    
 ---
 
@@ -14,15 +14,15 @@ icon: lightbulb
 
 ## What is WDK?
 
-WDK is a **developer-first framework** to create cross-chain wallets that are secure, extensible, and production-ready. It provides a single, stateless API to interact with Ethereum, Bitcoin, TON, and Spark (Lightning Network)—abstracting blockchain-specific complexity while keeping developers in full control of keys and data.
+WDK is a **developer-first framework** to create cross-chain wallets that are secure, extensible, and production-ready. It provides a single, stateless API to interact with EVM, TON, TRON, Solana, Bitcoin and Spark (Lightning Network)—abstracting blockchain-specific complexity while keeping developers in full control of keys and data.
 
 ---
 
 ## Key Features
 
-- **Multi-Blockchain Support**: Ethereum, Polygon, Arbitrum, Bitcoin, TON, Spark
+- **Multi-Blockchain Support**: Ethereum, Polygon, Arbitrum, Bitcoin, TON, Spark, Solana
 - **Unified API Layer**: A single interface across chains
-- **Account Abstraction**: Enable gasless transactions & custom fee logic on EVM & TON
+- **Account Abstraction**: Enable gasless transactions & custom fee logic on EVM, TON & Tron
 - **Stateless & Secure**: No secrets or data are stored by WDK
 - **Non-Custodial by Design**: You manage keys; WDK never sees them
 - **DeFi Ready**: Built-in support for swaps, token transfers, and cross-chain actions
@@ -50,7 +50,7 @@ WDK is a **developer-first framework** to create cross-chain wallets that are se
 WDK is **stateless**: it processes requests but stores nothing. All sensitive data (keys, sessions, configs) stays in your hands.
 
 ```
-[Your App] → [WDK API] → [Ethereum | Bitcoin | TON | Spark]
+[Your App] → [WDK API] → [Ethereum | Bitcoin | TON | Spark | Tron | Solana]
 ```
 
 This guarantees:
