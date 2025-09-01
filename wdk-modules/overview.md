@@ -1,6 +1,5 @@
 ---
 title: Wallet Modules Overview
-description: Overview of all available wallet modules in the Wallet Development Kit
 author: Matteo Giardino
 lastReviewed: 2025-06-28
 icon: puzzle
@@ -15,8 +14,8 @@ The Wallet Development Kit (WDK) provides a set of modules that support multiple
 WDK modules are organized into three main categories:
 
 1. **Wallet Modules** - Core wallet implementations for different blockchains
-2. **Swap Protocol Modules** - DeFi swap functionality across various DEXs
-3. **Bridge Protocol Modules** - Cross-chain bridge functionality
+2. **Swap Protocol Modules** - DeFi swap functionality across various DEXs ⏳ 
+3. **Bridge Protocol Modules** - Cross-chain bridge functionality ⏳ 
 
 ## Wallet Modules
 
