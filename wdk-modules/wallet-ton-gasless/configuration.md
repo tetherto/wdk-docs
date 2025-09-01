@@ -14,10 +14,20 @@ icon: gear
 import WalletManagerTonGasless from '@wdk/wallet-ton-gasless'
 
 const config = {
-  tonClient: { url: 'https://toncenter.com/api/v2/jsonRPC' },
-  tonApiClient: { url: 'https://tonapi.io', secretKey: 'your-tonapi-key' }, // optional but recommended
-  paymasterToken: { address: 'EQC...' }, // REQUIRED: replace with your paymaster Jetton address
-  transferMaxFee: 10000000 // Maximum fee in paymaster Jetton base units (optional)
+  // Required parameters
+  tonClient: {
+    url: 'https://toncenter.com/api/v3',
+    secretKey: 'your-api-key' // Optional
+  },
+  gasFreeProvider: 'https://your-gasfree-provider.com',
+  gasFreeApiKey: 'your-gasfree-api-key',
+  gasFreeApiSecret: 'your-gasfree-api-secret',
+  serviceProvider: 'EQ...', // Service provider's TON address
+  verifyingContract: 'EQ...', // Verifying contract address
+  chainId: '1', // TON chain ID
+  
+  // Optional parameters
+  transferMaxFee: 10000000 // Maximum fee in token base units
 }
 
 const wallet = new WalletManagerTonGasless(seedPhrase, config)
@@ -26,13 +36,23 @@ const wallet = new WalletManagerTonGasless(seedPhrase, config)
 ## Account Configuration
 
 ```javascript
-import WalletAccountTonGasless from '@wdk/wallet-ton-gasless'
+import { WalletAccountTonGasless } from '@wdk/wallet-ton-gasless'
 
 const accountConfig = {
-  tonClient: { url: 'https://toncenter.com/api/v2/jsonRPC' },
-  tonApiClient: { url: 'https://tonapi.io', secretKey: 'your-tonapi-key' }, // optional but recommended
-  paymasterToken: { address: 'EQC...' }, // REQUIRED: replace with your paymaster Jetton address
-  transferMaxFee: 10000000 // Maximum fee in paymaster Jetton base units (optional)
+  // Required parameters
+  tonClient: {
+    url: 'https://toncenter.com/api/v3',
+    secretKey: 'your-api-key' // Optional
+  },
+  gasFreeProvider: 'https://your-gasfree-provider.com',
+  gasFreeApiKey: 'your-gasfree-api-key',
+  gasFreeApiSecret: 'your-gasfree-api-secret',
+  serviceProvider: 'EQ...', // Service provider's TON address
+  verifyingContract: 'EQ...', // Verifying contract address
+  chainId: '1', // TON chain ID
+  
+  // Optional parameters
+  transferMaxFee: 10000000 // Maximum fee in token base units
 }
 
 const account = new WalletAccountTonGasless(seedPhrase, "0'/0/0", accountConfig)
@@ -42,73 +62,150 @@ const account = new WalletAccountTonGasless(seedPhrase, "0'/0/0", accountConfig)
 
 ### tonClient
 
-The `tonClient` option specifies the TON RPC endpoint and (optionally) an API key for blockchain interactions.
+The `tonClient` option configures the TON Center API client for blockchain interactions.
 
 **Type:**
 ```typescript
-{
-  url: string;         
-  secretKey?: string;
-}
-```
-
-**Examples:**
-```javascript
-// Using TON RPC URL
-const config = {
-  tonClient: { url: 'https://toncenter.com/api/v2/jsonRPC' }
-}
-
-// Using TON RPC URL with API key
-const config = {
-  tonClient: { url: 'https://toncenter.com/api/v2/jsonRPC', secretKey: 'your-api-key' }
-}
-```
-### tonApiClient
-
-The `tonApiClient` option specifies the TON API endpoint and (optionally) an API key for advanced features and gasless operations.
-
-**Type:**
-```javascript
-{
+interface TonClientConfig {
+  /**
+   * TON Center API endpoint URL
+   * @example 'https://toncenter.com/api/v3'
+   */
   url: string;
+
+  /**
+   * Optional API key for TON Center
+   * Required for higher rate limits
+   */
   secretKey?: string;
 }
 ```
-**Example:**
-```javascript
-const config = {
-  tonApiClient: { url: 'https://tonapi.io', secretKey: 'your-tonapi-key' }
-}
-```
 
-### paymasterToken
+### gasFreeProvider
 
-The `paymasterToken` option specifies the Jetton (token) used to pay gas fees for gasless transactions.
+The `gasFreeProvider` option specifies the gas-free service endpoint.
 
-**Type:**
-```javascript
-{
-  address: string; // Jetton master contract address
-}
-```
+**Type:** `string`
+
+**Required:** Yes
 
 **Example:**
 ```javascript
 const config = {
-  paymasterToken: { address: 'EQC...' }
+  gasFreeProvider: 'https://your-gasfree-provider.com'
+}
+```
+
+### gasFreeApiKey and gasFreeApiSecret
+
+API credentials for the gas-free service.
+
+**Type:** `string`
+
+**Required:** Yes
+
+**Example:**
+```javascript
+const config = {
+  gasFreeApiKey: 'your-gasfree-api-key',
+  gasFreeApiSecret: 'your-gasfree-api-secret'
+}
+```
+
+### serviceProvider
+
+The TON address of the service provider that handles gas-free transactions.
+
+**Type:** `string`
+
+**Required:** Yes
+
+**Example:**
+```javascript
+const config = {
+  serviceProvider: 'EQ...' // TON address
+}
+```
+
+### verifyingContract
+
+The TON address of the contract that verifies gas-free transactions.
+
+**Type:** `string`
+
+**Required:** Yes
+
+**Example:**
+```javascript
+const config = {
+  verifyingContract: 'EQ...' // TON address
+}
+```
+
+### chainId
+
+The blockchain's identifier.
+
+**Type:** `string`
+
+**Required:** Yes
+
+**Example:**
+```javascript
+const config = {
+  chainId: '1' // TON mainnet
 }
 ```
 
 ### transferMaxFee
 
-The `transferMaxFee` option sets the maximum fee amount (in paymaster Jetton base units) for transfer operations. This helps prevent transactions from being sent with unexpectedly high fees.
+The `transferMaxFee` option sets the maximum allowed fee in token base units for transfer operations.
 
-**Type:** `number` (paymaster Jetton base units)
+**Type:** `number`
+
+**Required:** No
 
 **Example:**
 ```javascript
 const config = {
-  transferMaxFee: 10000000 
+  transferMaxFee: 10000000 // Maximum fee in token base units
 }
 ```
+
+## Complete Configuration Example
+
+Here's a complete configuration example with all options:
+
+```javascript
+const config = {
+  // TON Client (Required)
+  tonClient: {
+    url: 'https://toncenter.com/api/v3',
+    secretKey: 'your-api-key'
+  },
+  
+  // Gas-free Service (Required)
+  gasFreeProvider: 'https://your-gasfree-provider.com',
+  gasFreeApiKey: 'your-gasfree-api-key',
+  gasFreeApiSecret: 'your-gasfree-api-secret',
+  
+  // Contract Addresses (Required)
+  serviceProvider: 'EQ...', // Service provider's address
+  verifyingContract: 'EQ...', // Verifying contract address
+  
+  // Chain Configuration (Required)
+  chainId: '1', // TON mainnet
+  
+  // Fee Limits (Optional)
+  transferMaxFee: 10000000 // Maximum fee in token base units
+}
+```
+
+## Security Considerations
+
+- Keep API keys and secrets secure and never expose them in client-side code
+- Use environment variables for sensitive configuration values
+- Always use HTTPS URLs for API endpoints
+- Set appropriate `transferMaxFee` limits to prevent excessive fees
+- Validate contract addresses before using them in configuration
+
