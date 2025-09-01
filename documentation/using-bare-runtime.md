@@ -1,3 +1,8 @@
+---
+title: Runtime Compatibility
+lastReviewed: 2025-08-31
+---
+
 # Runtime Compatibility
 
 Your WDK module is designed to work seamlessly across both traditional and edge-optimized JavaScript runtimes.

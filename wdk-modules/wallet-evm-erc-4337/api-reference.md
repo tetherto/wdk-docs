@@ -2,7 +2,7 @@
 title: Wallet EVM ERC-4337 API Reference
 description: Complete API documentation for @wdk/wallet-evm-erc-4337
 author: Matteo Giardino
-lastReviewed: 2025-06-26
+lastReviewed: 2025-08-31
 icon: code
 ---
 
@@ -12,12 +12,21 @@ icon: code
 
 | Class | Description | Methods |
 |-------|-------------|---------|
-| [WalletManagerEvmErc4337](#walletmanagerevm-erc-4337) | Main class for managing ERC-4337 EVM wallets | [Constructor](#constructor), [Methods](#methods), [Properties](#properties) |
-| [WalletAccountEvmErc4337](#walletaccountevm-erc-4337) | Individual ERC-4337 wallet account implementation | [Constructor](#constructor-1), [Methods](#methods), [Properties](#properties-1) |
+| [WalletManagerEvmErc4337](#walletmanagerevmerc4337) | Main class for managing ERC-4337 EVM wallets. Extends `WalletManager` from `@wdk/wallet`. | [Constructor](#constructor), [Methods](#methods) |
+| [WalletAccountEvmErc4337](#walletaccountevmerc4337) | Individual ERC-4337 wallet account implementation. Extends `WalletAccountReadOnlyEvmErc4337` and implements `IWalletAccount`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties) |
+| [WalletAccountReadOnlyEvmErc4337](#walletaccountreadonlyevmerc4337) | Read-only ERC-4337 wallet account. Extends `WalletAccountReadOnly` from `@wdk/wallet`. | [Constructor](#constructor-2), [Methods](#methods-2) |
+
 
 ## WalletManagerEvmErc4337
 
-The main class for managing ERC-4337 EVM wallets. Extends `WalletManagerEvm` from `@wdk/wallet-evm`.
+The main class for managing ERC-4337 EVM wallets. Extends `WalletManager` from `@wdk/wallet`.
+
+### Fee Rate Constants
+
+```javascript
+const FEE_RATE_NORMAL_MULTIPLIER = 1.1
+const FEE_RATE_FAST_MULTIPLIER = 2.0
+```
 
 ### Constructor
 
@@ -52,19 +61,22 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
   paymasterToken: {
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
   }
-  transferMaxFee: 5000000
+  transferMaxFee: 100000 // Optional: Maximum fee in paymaster token units
 })
 ```
 
 ### Methods
 
-| Method | Description | Returns |
-|--------|-------------|---------|
-| `getAccount(index)` | Returns a wallet account at the specified index | `Promise<WalletAccountEvmErc4337>` |
-| `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise<WalletAccountEvmErc4337>` |
+| Method | Description | Returns | Throws |
+|--------|-------------|---------|--------|
+| `getAccount(index?)` | Returns a wallet account at the specified index | `Promise<WalletAccountEvmErc4337>` | - |
+| `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise<WalletAccountEvmErc4337>` | - |
+| `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: number, fast: number}>` | If no provider |
+| `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` | - |
+
 
 #### `getAccount(index)`
-Returns a wallet account at the specified index.
+Returns a wallet account at the specified index using BIP-44 derivation.
 
 **Parameters:**
 - `index` (number, optional): The index of the account to get (default: 0)
@@ -73,7 +85,11 @@ Returns a wallet account at the specified index.
 
 **Example:**
 ```javascript
+// Get first account (index 0)
 const account = await wallet.getAccount(0)
+
+// Get default account
+const defaultAccount = await wallet.getAccount()
 ```
 
 #### `getAccountByPath(path)`
@@ -86,24 +102,43 @@ Returns a wallet account at the specified BIP-44 derivation path.
 
 **Example:**
 ```javascript
+// Full derivation path: m/44'/60'/0'/0/1
 const account = await wallet.getAccountByPath("0'/0/1")
 ```
 
-### Properties
+##### `getFeeRates()`
+Returns current fee rates with ERC-4337 specific multipliers.
 
-#### `seed`
-The wallet's seed phrase.
+**Returns:** `Promise<{normal: number, fast: number}>` - Fee rates in wei
 
-**Type:** `string | Uint8Array`
+**Throws:** Error if no provider is configured
 
 **Example:**
 ```javascript
-console.log('Seed phrase:', wallet.seed)
+const feeRates = await wallet.getFeeRates()
+console.log('Normal fee rate:', feeRates.normal, 'wei') // base fee × 1.1
+console.log('Fast fee rate:', feeRates.fast, 'wei')     // base fee × 2.0
+```
+
+##### `dispose()`
+Disposes all wallet accounts, clearing private keys from memory.
+
+**Example:**
+```javascript
+// Clean up when done
+wallet.dispose()
 ```
 
 ## WalletAccountEvmErc4337
 
-Represents an individual ERC-4337 wallet account. Extends `WalletAccountEvm` from `@wdk/wallet-evm`.
+Represents an individual ERC-4337 wallet account. Extends `WalletAccountReadOnlyEvmErc4337` and implements `IWalletAccount`.
+
+### Constants
+
+```javascript
+const SALT_NONCE = '0x69b348339eea4ed93f9d11931c3b894c8f9d8c7663a053024b11cb7eb4e5a1f6'
+const FEE_TOLERANCE_COEFFICIENT = 1.2
+```
 
 ### Constructor
 
@@ -113,8 +148,9 @@ new WalletAccountEvmErc4337(seed, path, config)
 
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
-- `path` (string): BIP-44 derivation path
+- `path` (string): BIP-44 derivation path (e.g., "0'/0/0")
 - `config` (EvmErc4337WalletConfig): Configuration object (same as WalletManagerEvmErc4337)
+
 
 **Example:**
 ```javascript
@@ -134,130 +170,177 @@ const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 
 ### Methods
 
-| Method | Description | Returns |
-|--------|-------------|---------|
-| [`getAddress()`](#getaddress-1) | Returns the Safe account's address | `Promise<string>` |
-| [`getPaymasterTokenBalance()`](#getpaymastertokenbalance) | Returns the paymaster token balance | `Promise<number>` |
-| [`sendTransaction(tx, config)`](#sendtransactiontx-config) | Sends a gasless transaction | `Promise<TransactionResult>` |
-| [`quoteSendTransaction(tx, config)`](#quotesendtransactiontx-config) | Estimates the fee for a gasless transaction | `Promise<{fee: number}>` |
-| [`transfer(options, config)`](#transferoptions-config) | Transfers ERC-20 tokens using gasless transactions | `Promise<TransferResult>` |
-| [`quoteTransfer(options, config)`](#quotetransferoptions-config) | Estimates the fee for a token transfer | `Promise<{fee: number}>` |
-| [`getBalance()`](#getbalance-1) | Returns the native token balance | `Promise<bigint>` |
-| [`getTokenBalance(tokenAddress)`](#gettokenbalancetokenaddress-1) | Returns the balance of a specific ERC-20 token | `Promise<bigint>` |
-| [`dispose()`](#dispose-2) | Disposes the wallet account, clearing private keys from memory | `void` |
+### Methods
 
-#### `getAddress()`
-Returns the Safe account's address (different from the underlying EOA address).
+| Method | Description | Returns | Throws |
+|--------|-------------|---------|--------|
+| `getAddress()` | Returns the Safe account's address | `Promise<string>` | - |
+| `sign(message)` | Signs a message using the account's private key | `Promise<string>` | - |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
+| `sendTransaction(tx, config?)` | Sends a gasless transaction via UserOperation | `Promise<{hash: string, fee: number}>` | If fee exceeds max |
+| `quoteSendTransaction(tx, config?)` | Estimates the fee for a UserOperation | `Promise<{fee: number}>` | - |
+| `transfer(options, config?)` | Transfers ERC20 tokens via UserOperation | `Promise<{hash: string, fee: number}>` | If fee exceeds max |
+| `quoteTransfer(options, config?)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: number}>` | - |
+| `getBalance()` | Returns the native token balance (in wei) | `Promise<number>` | - |
+| `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<number>` | - |
+| `getPaymasterTokenBalance()` | Returns the paymaster token balance | `Promise<number>` | - |
+| `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlyEvmErc4337>` | - |
+| `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` | - |
+
+##### `getAddress()`
+Returns the Safe smart contract wallet address (not the underlying EOA address).
 
 **Returns:** `Promise<string>` - The Safe account's address
 
 **Example:**
 ```javascript
 const address = await account.getAddress()
-console.log('Safe account address:', address)
+console.log('Safe account address:', address) // 0x... (Smart contract address)
 ```
 
-#### `getPaymasterTokenBalance()`
-Returns the balance of the configured paymaster token.
-
-**Returns:** `Promise<number>` - The paymaster token balance in base units
-
-**Example:**
-```javascript
-const balance = await account.getPaymasterTokenBalance()
-console.log('Paymaster token balance:', balance)
-```
-
-#### `sendTransaction(tx, config)`
-Sends a gasless transaction using ERC-4337 account abstraction.
+##### `sign(message)`
+Signs a message using the underlying EOA private key.
 
 **Parameters:**
-- `tx` (EvmTransaction): The transaction object
-  - `to` (string): Recipient address
-  - `value` (number | bigint): Amount in wei
-  - `data` (string, optional): Transaction data
-- `config` (object, optional): Override configuration
-  - `paymasterToken` (object, optional): Override paymaster token configuration
+- `message` (string): The message to sign
 
-**Returns:** `Promise<TransactionResult>` - Object containing hash and fee
+**Returns:** `Promise<string>` - The message signature
 
 **Example:**
 ```javascript
+const message = 'Hello, ERC-4337!'
+const signature = await account.sign(message)
+console.log('Signature:', signature)
+```
+
+##### `verify(message, signature)`
+Verifies a message signature against the underlying EOA address.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify
+
+**Returns:** `Promise<boolean>` - True if signature is valid
+
+**Example:**
+```javascript
+const isValid = await account.verify(message, signature)
+console.log('Signature valid:', isValid)
+```
+
+##### `sendTransaction(tx, config?)`
+Sends a gasless transaction via UserOperation through the bundler.
+
+**Parameters:**
+- `tx` (EvmTransaction | EvmTransaction[]): Transaction object or array for batch transactions
+  - `to` (string): Recipient address
+  - `value` (number): Amount in wei
+  - `data` (string, optional): Transaction data in hex format
+- `config` (optional object): Override configuration
+  - `paymasterToken` (object): Override paymaster token
+
+**Returns:** `Promise<{hash: string, fee: number}>` - UserOperation hash and fee in paymaster token units
+
+**Throws:** Error if fee exceeds `transferMaxFee`
+
+**Example:**
+```javascript
+// Single transaction
 const result = await account.sendTransaction({
-  to: '0x...',
-  value: 1000000000000000000n, // 1 ETH
+  to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+  value: 1000000000000000000, // 1 ETH
   data: '0x'
 })
-console.log('Transaction hash:', result.hash)
-console.log('Transaction fee (in paymaster token):', result.fee)
+console.log('UserOperation hash:', result.hash)
+console.log('Fee paid (paymaster token units):', result.fee)
+
+// Batch transactions
+const batchResult = await account.sendTransaction([
+  { to: '0x...', value: 100000000000000000 },
+  { to: '0x...', value: 200000000000000000 }
+])
+
+// With custom paymaster token
+const customResult = await account.sendTransaction({
+  to: '0x...',
+  value: 1000000000000000000
+}, {
+  paymasterToken: { address: '0x...' }
+})
 ```
 
-#### `quoteSendTransaction(tx, config)`
-Estimates the fee for a gasless transaction.
+##### `quoteSendTransaction(tx, config?)`
+Estimates the fee for a UserOperation without sending it.
 
 **Parameters:**
-- `tx` (EvmTransaction): The transaction object (same as sendTransaction)
-- `config` (object, optional): Override configuration (same as sendTransaction)
+- `tx` (EvmTransaction | EvmTransaction[]): Transaction object or array (same as sendTransaction)
+- `config` (optional object): Override configuration (same as sendTransaction)
 
-**Returns:** `Promise<{fee: number}>` - Object containing fee estimate
+**Returns:** `Promise<{fee: number}>` - Fee estimate in paymaster token units
 
 **Example:**
 ```javascript
 const quote = await account.quoteSendTransaction({
-  to: '0x...',
-  value: 1000000000000000000n
+  to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+  value: 1000000000000000000
 })
-console.log('Estimated fee (in paymaster token):', quote.fee)
+console.log('Estimated fee (paymaster token units):', quote.fee)
 ```
 
-#### `transfer(options, config)`
-Transfers ERC-20 tokens using gasless transactions.
+##### `transfer(options, config?)`
+Transfers ERC20 tokens via UserOperation with gasless execution.
 
 **Parameters:**
 - `options` (TransferOptions): Transfer options
-  - `token` (string): Token contract address
+  - `token` (string): ERC20 token contract address
   - `recipient` (string): Recipient address
-  - `amount` (number | bigint): Amount in base units
-- `config` (object, optional): Override configuration
-  - `paymasterToken` (object, optional): Override paymaster token configuration
-  - `transferMaxFee` (number, optional): Override maximum fee limit
+  - `amount` (number | bigint): Amount in token base units
+- `config` (optional object): Override configuration
+  - `paymasterToken` (object): Override paymaster token
+  - `transferMaxFee` (number): Override maximum fee limit
 
-**Returns:** `Promise<TransferResult>` - Object containing hash and fee
+**Returns:** `Promise<{hash: string, fee: number}>` - UserOperation hash and fee in paymaster token units
+
+**Throws:** 
+- Error if fee exceeds `transferMaxFee`
+- Error if insufficient paymaster token balance
 
 **Example:**
 ```javascript
 const result = await account.transfer({
-  token: '0x...',
-  recipient: '0x...',
-  amount: 1000000000000000000n // 1 token
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
+  recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+  amount: 1000000 // 1 USDT (6 decimals)
+}, {
+  transferMaxFee: 50000 // Max 50,000 paymaster token units
 })
 console.log('Transfer hash:', result.hash)
-console.log('Transfer fee (in paymaster token):', result.fee)
+console.log('Transfer fee:', result.fee, 'paymaster token units')
 ```
 
-#### `quoteTransfer(options, config)`
-Estimates the fee for a token transfer.
+##### `quoteTransfer(options, config?)`
+Estimates the fee for an ERC20 token transfer.
 
 **Parameters:**
 - `options` (TransferOptions): Transfer options (same as transfer)
-- `config` (object, optional): Override configuration (same as transfer)
+- `config` (optional object): Override configuration (same as transfer)
 
-**Returns:** `Promise<{fee: number}>` - Object containing fee estimate
+**Returns:** `Promise<{fee: number}>` - Fee estimate in paymaster token units
 
 **Example:**
 ```javascript
 const quote = await account.quoteTransfer({
-  token: '0x...',
-  recipient: '0x...',
-  amount: 1000000000000000000n
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+  amount: 1000000
 })
-console.log('Transfer fee estimate (in paymaster token):', quote.fee)
+console.log('Transfer fee estimate:', quote.fee, 'paymaster token units')
 ```
 
-#### `getBalance()`
-Returns the native token balance.
+##### `getBalance()`
+Returns the Safe account's native token balance.
 
-**Returns:** `Promise<bigint>` - Balance in wei
+**Returns:** `Promise<number>` - Balance in wei
 
 **Example:**
 ```javascript
@@ -265,18 +348,48 @@ const balance = await account.getBalance()
 console.log('Native balance:', balance, 'wei')
 ```
 
-#### `getTokenBalance(tokenAddress)`
-Returns the balance of a specific ERC-20 token.
+##### `getTokenBalance(tokenAddress)`
+Returns the balance of a specific ERC20 token in the Safe account.
 
 **Parameters:**
-- `tokenAddress` (string): The token contract address
+- `tokenAddress` (string): The ERC20 token contract address
 
-**Returns:** `Promise<bigint>` - Token balance in base units
+**Returns:** `Promise<number>` - Token balance in base units
 
 **Example:**
 ```javascript
-const tokenBalance = await account.getTokenBalance('0x...')
-console.log('Token balance:', tokenBalance)
+const tokenBalance = await account.getTokenBalance('0xdAC17F958D2ee523a2206206994597C13D831ec7')
+console.log('USDT balance:', tokenBalance) // In 6 decimal units
+```
+
+##### `getPaymasterTokenBalance()`
+Returns the balance of the configured paymaster token used for paying fees.
+
+**Returns:** `Promise<number>` - Paymaster token balance in base units
+
+**Example:**
+```javascript
+const paymasterBalance = await account.getPaymasterTokenBalance()
+console.log('Paymaster token balance:', paymasterBalance)
+
+// Check if sufficient for transaction
+if (paymasterBalance < 10000) {
+  console.warn('Low paymaster token balance - may not cover fees')
+}
+```
+
+##### `toReadOnlyAccount()`
+Creates a read-only copy of the account with the same Safe address and configuration.
+
+**Returns:** `Promise<WalletAccountReadOnlyEvmErc4337>` - Read-only account instance
+
+**Example:**
+```javascript
+const readOnlyAccount = await account.toReadOnlyAccount()
+
+// Can check balances but cannot send transactions
+const balance = await readOnlyAccount.getBalance()
+// readOnlyAccount.sendTransaction() // Would not be available
 ```
 
 #### `dispose()`
@@ -289,86 +402,245 @@ account.dispose()
 
 ### Properties
 
+
 | Property | Type | Description |
 |----------|------|-------------|
 | `index` | `number` | The derivation path's index of this account |
-| `path` | `string` | The full derivation path of this account |
-| `keyPair` | `{publicKey: Buffer, privateKey: Buffer}` | The account's public and private key pair as buffers |
+| `path` | `string` | The full BIP-44 derivation path of this account |
+| `keyPair` | `{privateKey: Buffer, publicKey: Buffer}` | The account's key pair (⚠️ Contains sensitive data) |
 
 **Example:**
 ```javascript
-const { publicKey, privateKey } = account.keyPair
-console.log('Public key length:', publicKey.length)
-console.log('Private key length:', privateKey.length)
+console.log('Account index:', account.index) // 0, 1, 2, etc.
+console.log('Account path:', account.path) // m/44'/60'/0'/0/0
+
+// ⚠️ SENSITIVE: Handle with care
+const { privateKey, publicKey } = account.keyPair
+console.log('Public key length:', publicKey.length) // 65 bytes
+console.log('Private key length:', privateKey.length) // 32 bytes
+```
+
+⚠️ **Security Note**: The `keyPair` property contains sensitive cryptographic material. Never log, display, or expose the private key.
+
+## WalletAccountReadOnlyEvmErc4337
+Represents a read-only ERC-4337 wallet account that can query balances and estimate fees but cannot send transactions.
+
+### Constructor
+
+```javascript
+new WalletAccountReadOnlyEvmErc4337(address, config)
+```
+
+**Parameters:**
+- `address` (string): The EOA address (owner address)
+- `config` (Omit<EvmErc4337WalletConfig, 'transferMaxFee'>): Configuration object without transferMaxFee
+
+**Example:**
+```javascript
+const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337('0x...', {
+  chainId: 1,
+  provider: 'https://rpc.mevblocker.io/fast',
+  bundlerUrl: 'https://api.candide.dev/public/v3/ethereum',
+  paymasterUrl: 'https://api.candide.dev/public/v3/ethereum',
+  paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
+  entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
+  safeModulesVersion: '1.0.0',
+  paymasterToken: {
+    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+  }
+})
+```
+
+### Methods
+
+| Method | Description | Returns | Throws |
+|--------|-------------|---------|--------|
+| `getAddress()` | Returns the Safe account's address | `Promise<string>` | - |
+| `getBalance()` | Returns the native token balance (in wei) | `Promise<number>` | - |
+| `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<number>` | - |
+| `getPaymasterTokenBalance()` | Returns the paymaster token balance | `Promise<number>` | - |
+| `quoteSendTransaction(tx, config?)` | Estimates the fee for a UserOperation | `Promise<{fee: number}>` | If simulation fails |
+| `quoteTransfer(options, config?)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: number}>` | If simulation fails |
+| `getTransactionReceipt(hash)` | Returns a transaction's receipt by UserOperation hash | `Promise<EvmTransactionReceipt \| null>` | - |
+
+##### `getAddress()`
+Returns the Safe smart contract wallet address.
+
+**Returns:** `Promise<string>` - The Safe account's address
+
+**Example:**
+```javascript
+const address = await readOnlyAccount.getAddress()
+console.log('Safe address:', address)
+```
+##### `getBalance()`
+Returns the Safe account's native token balance.
+
+**Returns:** `Promise<number>` - Balance in wei
+
+**Example:**
+```javascript
+const balance = await readOnlyAccount.getBalance()
+console.log('Balance:', balance, 'wei')
+```
+
+##### `getTokenBalance(tokenAddress)`
+Returns the balance of a specific ERC20 token.
+
+**Parameters:**
+- `tokenAddress` (string): The ERC20 token contract address
+
+**Returns:** `Promise<number>` - Token balance in base units
+
+**Example:**
+```javascript
+const tokenBalance = await readOnlyAccount.getTokenBalance('0xdAC17F958D2ee523a2206206994597C13D831ec7')
+console.log('USDT balance:', tokenBalance)
+```
+
+##### `getPaymasterTokenBalance()`
+Returns the balance of the configured paymaster token.
+
+**Returns:** `Promise<number>` - Paymaster token balance in base units
+
+**Example:**
+```javascript
+const paymasterBalance = await readOnlyAccount.getPaymasterTokenBalance()
+console.log('Paymaster token balance:', paymasterBalance)
+```
+
+##### `quoteSendTransaction(tx, config?)`
+Estimates the fee for a UserOperation.
+
+**Parameters:**
+- `tx` (EvmTransaction | EvmTransaction[]): Transaction object or array
+- `config` (optional object): Override paymaster token
+
+**Returns:** `Promise<{fee: number}>` - Fee estimate in paymaster token units
+
+**Throws:** Error if simulation fails or insufficient paymaster funds
+
+**Example:**
+```javascript
+try {
+  const quote = await readOnlyAccount.quoteSendTransaction({
+    to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+    value: 1000000000000000000
+  })
+  console.log('Estimated fee:', quote.fee, 'paymaster token units')
+} catch (error) {
+  if (error.message.includes('not enough funds')) {
+    console.error('Insufficient paymaster token balance')
+  }
+}
+```
+
+##### `quoteTransfer(options, config?)`
+Estimates the fee for an ERC20 token transfer.
+
+**Parameters:**
+- `options` (TransferOptions): Transfer options
+- `config` (optional object): Override paymaster token
+
+**Returns:** `Promise<{fee: number}>` - Fee estimate in paymaster token units
+
+**Example:**
+```javascript
+const quote = await readOnlyAccount.quoteTransfer({
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+  amount: 1000000
+})
+console.log('Transfer fee estimate:', quote.fee, 'paymaster token units')
+```
+
+##### `getTransactionReceipt(hash)`
+Returns a transaction's receipt by UserOperation hash.
+
+**Parameters:**
+- `hash` (string): The UserOperation hash
+
+**Returns:** `Promise<EvmTransactionReceipt | null>` - Transaction receipt or null if not mined
+
+**Example:**
+```javascript
+const receipt = await readOnlyAccount.getTransactionReceipt('0x...')
+if (receipt) {
+  console.log('Transaction confirmed in block:', receipt.blockNumber)
+  console.log('Status:', receipt.status) // 1 = success, 0 = failed
+} else {
+  console.log('UserOperation not yet mined')
+}
 ```
 
 ## Types
 
-## EvmTransaction
-
-```typescript
-interface EvmTransaction {
-  to: string
-  value: number | bigint
-  data?: string
-  gasLimit?: number
-  gasPrice?: number
-  maxFeePerGas?: number
-  maxPriorityFeePerGas?: number
-}
-```
-
-## TransferOptions
-
-```typescript
-interface TransferOptions {
-  token: string
-  recipient: string
-  amount: number | bigint
-}
-```
-
-## TransactionResult
-
-```typescript
-interface TransactionResult {
-  hash: string
-  fee: number
-}
-```
-
-## TransferResult
-
-```typescript
-interface TransferResult {
-  hash: string
-  fee: number
-}
-```
-
-## KeyPair
-
-```typescript
-interface KeyPair {
-  publicKey: Uint8Array
-  privateKey: Uint8Array
-}
-```
-
-## EvmErc4337WalletConfig
+### EvmErc4337WalletConfig
 
 ```typescript
 interface EvmErc4337WalletConfig {
-  chainId: number
-  provider?: string | Eip1193Provider
-  bundlerUrl: string
-  paymasterUrl: string
-  paymasterAddress: string
-  entryPointAddress: string
-  safeModulesVersion: string
-  paymasterToken: {
-    address: string
-  }
-  transferMaxFee?: number
+  chainId: number;                          // Blockchain ID (required)
+  provider: string | Eip1193Provider;       // RPC provider (required)
+  bundlerUrl: string;                       // Bundler service URL (required)
+  paymasterUrl: string;                     // Paymaster service URL (required)
+  paymasterAddress: string;                 // Paymaster contract address (required)
+  entryPointAddress: string;                // EntryPoint contract address (required)
+  safeModulesVersion: string;               // Safe modules version (required)
+  paymasterToken: {                         // Paymaster token config (required)
+    address: string;                        // Token contract address
+  };
+  transferMaxFee?: number;                  // Maximum fee limit (optional)
 }
-``` 
+```
+### EvmTransaction
+
+```typescript
+interface EvmTransaction {
+  to: string;                               // Recipient address
+  value: number;                            // Amount in wei
+  data?: string;                            // Transaction data (optional)
+  gasLimit?: number;                        // Gas limit (optional)
+  gasPrice?: number;                        // Legacy gas price (optional)
+  maxFeePerGas?: number;                    // EIP-1559 max fee (optional)
+  maxPriorityFeePerGas?: number;            // EIP-1559 priority fee (optional)
+}
+```
+### TransferOptions
+
+```typescript
+interface TransferOptions {
+  token: string;                            // ERC20 token contract address
+  recipient: string;                        // Recipient address
+  amount: number | bigint;                  // Amount in token base units
+}
+```
+
+### TransactionResult
+
+```typescript
+interface TransactionResult {
+  hash: string;                             // UserOperation hash
+  fee: number;                              // Fee paid in paymaster token units
+}
+```
+
+### TransferResult
+
+```typescript
+interface TransferResult {
+  hash: string;                             // UserOperation hash
+  fee: number;                              // Fee paid in paymaster token units
+}
+```
+
+### Constants
+
+```typescript
+// ERC-4337 specific constants
+const SALT_NONCE: string = '0x69b348339eea4ed93f9d11931c3b894c8f9d8c7663a053024b11cb7eb4e5a1f6';
+const FEE_TOLERANCE_COEFFICIENT: number = 1.2;
+
+// Fee rate multipliers (inherited from WalletManager)
+const FEE_RATE_NORMAL_MULTIPLIER: number = 1.1;
+const FEE_RATE_FAST_MULTIPLIER: number = 2.0;
+```

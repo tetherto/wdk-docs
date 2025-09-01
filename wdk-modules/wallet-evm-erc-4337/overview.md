@@ -7,34 +7,33 @@ lastReviewed: 2025-06-26
 
 # @wdk/wallet-evm-erc-4337 Overview
 
-A simple and secure package to manage BIP-32 wallets for EVM (Ethereum Virtual Machine) blockchains with ERC-4337 account abstraction support. This package provides a clean API for creating, managing, and interacting with Ethereum-compatible wallets using BIP-39 seed phrases, BIP-44 derivation paths, and the ERC-4337 standard for gasless transactions and account abstraction.
+A simple and secure package to manage ERC-4337 compliant wallets for EVM-compatible blockchains. This package provides a clean API for creating, managing, and interacting with account abstraction wallets using BIP-39 seed phrases and EVM-specific derivation paths.
 
 ## Features
 
-- **ERC-4337 Account Abstraction**: Full support for ERC-4337 standard with account abstraction features
-- **Gasless Transactions**: Send transactions without holding native tokens for gas fees
-- **Paymaster Integration**: Support for paymaster services to sponsor transaction fees
-- **Safe Account Integration**: Built on Safe's 4337 implementation for enhanced security
 - **BIP-39 Seed Phrase Support**: Generate and validate BIP-39 mnemonic seed phrases
-- **BIP-44 Derivation Paths**: Support for standard BIP-44 derivation paths for EVM chains
-- **Multi-Account Management**: Create and manage multiple accounts from a single seed phrase
-- **EVM Chain Support**: Works with any EVM-compatible blockchain supporting ERC-4337
-- **Token-Based Fee Payment**: Pay transaction fees using ERC-20 tokens instead of native tokens
-- **Fee Estimation**: Accurate fee estimation for gasless transactions
+- **EVM Derivation Paths**: Support for BIP-44 standard derivation paths for Ethereum (m/44'/60')
+- **Multi-Account Management**: Create and manage multiple account abstraction wallets from a single seed phrase
+- **ERC-4337 Support**: Full implementation of ERC-4337 account abstraction standard
+- **UserOperation Management**: Create and send UserOperations through bundlers
+- **Message Signing**: Sign and verify messages using EVM cryptography
+- **ERC20 Support**: Query native token and ERC20 token balances using smart contract interactions
 - **TypeScript Support**: Full TypeScript definitions included
-- **Memory Safety**: Secure private key management with automatic memory cleanup
-- **Provider Flexibility**: Support for both RPC URLs and EIP-1193 providers
+- **Memory Safety**: Secure private key management with memory-safe HDNodeWallet implementation
+- **Bundler Integration**: Support for ERC-4337 bundler services
+- **Gas Optimization**: Paymaster support and gas estimation for UserOperations
+- **Fee Estimation**: Dynamic fee calculation with bundler-aware estimation
 
 ## Supported Networks
 
 This package works with any EVM-compatible blockchain that supports ERC-4337, including:
 
-- **Ethereum**: Mainnet, Goerli, Sepolia
-- **Polygon**: Mainnet, Mumbai
-- **Arbitrum**: One, Nova
-- **Optimism**: Mainnet, Goerli
-- **Base**: Mainnet, Goerli
-- **And other ERC-4337 compatible networks...**
+This package works with any EVM-compatible blockchain, including:
+
+- **Ethereum Mainnet**
+- **Ethereum Testnets** (Sepolia, etc.)
+- **Layer 2 Networks** (Arbitrum, Optimism, etc.)
+- **Other EVM Chains** (Polygon, Avalanche C-Chain, etc.)
 
 ## Next Steps
 
