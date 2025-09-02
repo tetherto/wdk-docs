@@ -416,3 +416,140 @@ account.dispose()
 | `index` | `number` | The derivation path index of this account |
 | `path` | `string` | The full BIP-44 derivation path |
 | `keyPair` | `KeyPair` | The account's public and private key pair |
+
+## Types
+
+### SparkWalletConfig
+
+```typescript
+interface SparkWalletConfig {
+  network?: 'MAINNET' | 'TESTNET' | 'REGTEST'  // The network (default: "MAINNET")
+}
+```
+
+### SparkTransaction
+
+```typescript
+interface SparkTransaction {
+  to: string     // The transaction's recipient (Spark address)
+  value: number  // The amount of bitcoins to send to the recipient (in satoshis)
+}
+```
+
+### TransactionResult
+
+```typescript
+interface TransactionResult {
+  hash: string  // Transaction hash/ID
+  fee: number   // Transaction fee in satoshis (always 0 for Spark)
+}
+```
+
+### KeyPair
+
+```typescript
+interface KeyPair {
+  publicKey: Uint8Array   // Public key bytes
+  privateKey: Uint8Array  // Private key bytes
+}
+```
+
+### LightningReceiveRequest
+
+```typescript
+interface LightningReceiveRequest {
+  invoice: string    // BOLT11 encoded Lightning invoice
+  id: string        // Invoice ID for tracking
+  amountSats: number // Amount in satoshis
+  memo?: string     // Optional description
+}
+```
+
+### LightningSendRequest
+
+```typescript
+interface LightningSendRequest {
+  id: string           // Payment request ID
+  invoice: string      // BOLT11 encoded invoice that was paid
+  maxFeeSats: number   // Maximum fee that was allowed
+  status: string       // Payment status
+}
+```
+
+### WalletLeaf
+
+```typescript
+interface WalletLeaf {
+  // Spark SDK internal structure for wallet state
+  // Exact properties depend on Spark SDK implementation
+}
+```
+
+### CoopExitRequest
+
+```typescript
+interface CoopExitRequest {
+  id: string              // Withdrawal request ID
+  onchainAddress: string  // Bitcoin address for withdrawal
+  amountSats: number      // Amount in satoshis
+  exitSpeed: string       // Withdrawal speed ('FAST', 'MEDIUM', 'SLOW')
+  status: string          // Withdrawal status
+}
+```
+
+### SparkTransactionReceipt
+
+```typescript
+interface SparkTransactionReceipt {
+  transferDirection: string  // 'INCOMING' or 'OUTGOING'
+  amountSats: number        // Transfer amount in satoshis
+  txId: string             // Transaction ID
+  timestamp: number        // Transaction timestamp
+  // Additional properties depend on Spark SDK implementation
+}
+```
+
+### TransferOptions
+
+```typescript
+interface TransferOptions {
+  direction?: 'incoming' | 'outgoing' | 'all'  // Filter by direction (default: 'all')
+  limit?: number                               // Number of transfers to return (default: 10)
+  skip?: number                                // Number of transfers to skip (default: 0)
+}
+```
+
+### Lightning Invoice Options
+
+```typescript
+interface LightningInvoiceOptions {
+  value: number     // Amount in satoshis
+  memo?: string     // Optional description for the invoice
+}
+```
+
+### Lightning Payment Options
+
+```typescript
+interface LightningPaymentOptions {
+  invoice: string      // BOLT11-encoded Lightning invoice to pay
+  maxFeeSats: number   // Maximum fee in satoshis to pay
+}
+```
+
+### Lightning Fee Estimate Options
+
+```typescript
+interface LightningFeeEstimateOptions {
+  invoice: string  // BOLT11-encoded Lightning invoice to estimate fees for
+}
+```
+
+### Withdrawal Options
+
+```typescript
+interface WithdrawalOptions {
+  to: string      // Bitcoin address where the funds should be sent
+  value: number   // Amount in satoshis to withdraw
+}
+```

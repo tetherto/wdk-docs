@@ -7,29 +7,46 @@ lastReviewed: 2025-06-26
 
 # @wdk/wallet-btc Overview
 
-A simple and secure package to manage BIP-32 wallets for the Bitcoin blockchain. This package provides a clean API for creating, managing, and interacting with Bitcoin wallets using [BIP-39](../../resources/concepts.md#bip-39-mnemonic-seed-phrases) seed phrases, [BIP-84](../../resources/concepts.md#bip-84-native-segwit) derivation paths for native SegWit addresses, and Electrum protocol for blockchain interaction.
+This module is part of the [**WDK (Wallet Development Kit)**](https://wallet.tether.io/) project, which empowers developers to build secure, non-custodial wallets with unified blockchain access, stateless architecture, and complete user control. 
+
+For detailed documentation about the complete WDK ecosystem, visit [docs.wallet.tether.io](https://docs.wallet.tether.io).
 
 ## Features
 
-- **[BIP-84 Native SegWit Support](../../resources/concepts.md#bip-84-native-segwit)**: Full support for BIP-84 derivation paths with native SegWit (P2WPKH) addresses
-- **[BIP-39 Seed Phrase Support](../../resources/concepts.md#bip-39-mnemonic-seed-phrases)**: Generate and validate BIP-39 mnemonic seed phrases
-- **Electrum Protocol Integration**: Direct connection to Electrum servers for blockchain data
-- **[UTXO Management](../../resources/concepts.md#utxo-unspent-transaction-output)**: Automatic UTXO selection and change address handling
-- **Fee Estimation**: Dynamic fee estimation using mempool.space API
-- **Transaction History**: Complete transaction history with incoming/outgoing transfers
-- **Message Signing**: Sign and verify messages using Bitcoin message signing standard
+- **BIP-39 Seed Phrase Support**: Generate and validate BIP-39 mnemonic seed phrases
+- **Bitcoin Derivation Paths**: Support for BIP-84 standard derivation paths for Bitcoin (m/84'/0')
 - **Multi-Account Management**: Create and manage multiple accounts from a single seed phrase
-- **Memory Safety**: Secure private key management with automatic memory cleanup
+- **Address Types Support**: Generate and manage Legacy, SegWit, and Native SegWit addresses
+- **UTXO Management**: Track and manage unspent transaction outputs
+- **Transaction Management**: Create, sign, and broadcast Bitcoin transactions
+- **Fee Estimation**: Dynamic fee calculation with different priority levels
+- **Electrum Support**: Connect to Electrum servers for network interaction
 - **TypeScript Support**: Full TypeScript definitions included
-- **Network Support**: Support for Bitcoin [mainnet](../../resources/concepts.md#mainnet), [testnet](../../resources/concepts.md#testnet), and [regtest](../../resources/concepts.md#regtest) networks
+- **Memory Safety**: Secure private key management with memory-safe implementation
+- **Network Flexibility**: Support for both mainnet and testnet
+- **Transaction Building**: Support for complex transaction construction with multiple inputs/outputs
 
 ## Supported Networks
 
-This package supports the following Bitcoin networks:
+This package works with Bitcoin networks:
 
-- **Bitcoin Mainnet**: Production Bitcoin network
-- **Bitcoin Testnet**: Bitcoin test network for development
-- **Bitcoin Regtest**: Local Bitcoin network for testing
+- **Bitcoin Mainnet** (`"bitcoin"`)
+- **Bitcoin Testnet** (`"testnet"`)  
+- **Bitcoin Regtest** (`"regtest"`)
+
+### Electrum Server Configuration
+
+**Important**: While the package defaults to `electrum.blockstream.info:50001` for convenience, **we strongly recommend configuring your own Electrum server** for production use.
+
+#### Recommended Approach:
+
+**For Production:**
+- Set up your own Fulcrum server for optimal performance and reliability
+- Use recent Fulcrum versions that support pagination for high-transaction addresses
+
+**For Development/Testing:**
+- `fulcrum.frznode.com:50001` - Generally faster than default
+- `electrum.blockstream.info:50001` - Default fallback
 
 ## Next Steps
 
