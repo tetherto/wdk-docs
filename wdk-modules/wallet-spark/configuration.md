@@ -18,14 +18,12 @@ const config = {
 const wallet = new WalletManagerSpark(seedPhrase, config)
 ```
 
-## Account Configuration
+## Account Creation
 
 ```javascript
-const accountConfig = {
-  network: 'MAINNET'
-}
-
-const account = new WalletAccountSpark(wallet)
+// WalletAccountSpark is created by the WalletManagerSpark
+// It does not take configuration parameters directly
+const account = await wallet.getAccount(0) // Get account at index 0
 ```
 
 ## Configuration Options
@@ -55,32 +53,17 @@ const config = {
 The wallet can be configured for different Spark networks:
 
 ```javascript
-const config = {
-  network: 'MAINNET' // 'MAINNET', 'TESTNET', or 'REGTEST'
-}
-```
-
-### Network-Specific Configuration
-
-#### Spark Mainnet
-
-```javascript
+// Mainnet configuration
 const mainnetConfig = {
   network: 'MAINNET'
 }
-```
 
-#### Spark Testnet
-
-```javascript
+// Testnet configuration  
 const testnetConfig = {
   network: 'TESTNET'
 }
-```
 
-#### Spark Regtest
-
-```javascript
+// Regtest configuration
 const regtestConfig = {
   network: 'REGTEST'
 }
@@ -90,7 +73,25 @@ const regtestConfig = {
 
 Spark uses the [BIP-44](../../../resources/concepts.md#bip-44-multi-account-hierarchy) coin type 998, resulting in derivation paths like:
 - `m/44'/998'/0'/0/0` for account 0
-- `m/44'/998'/0'/0/1` for account 1
+- `m/44'/998'/1'/0/0` for account 1
 - etc.
 
-This ensures compatibility with standard [BIP-44](../../../resources/concepts.md#bip-44-multi-account-hierarchy) wallets while using Spark's unique coin type identifier. 
+This ensures compatibility with standard [BIP-44](../../../resources/concepts.md#bip-44-multi-account-hierarchy) wallets while using Spark's unique coin type identifier.
+
+## Complete Configuration Example
+
+```javascript
+import WalletManagerSpark from '@wdk/wallet-spark'
+
+// Create wallet manager with configuration
+const wallet = new WalletManagerSpark(seedPhrase, {
+  network: 'MAINNET'
+})
+
+// Get accounts (no additional configuration needed)
+const account0 = await wallet.getAccount(0)
+const account1 = await wallet.getAccount(1)
+
+// Clean up when done
+wallet.dispose()
+```

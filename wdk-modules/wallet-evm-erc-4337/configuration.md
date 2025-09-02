@@ -88,8 +88,6 @@ const config = { chainId: 137 }
 // Arbitrum One
 const config = { chainId: 42161 }
 
-// Base Mainnet
-const config = { chainId: 8453 }
 ```
 
 ### Provider
