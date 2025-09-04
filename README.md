@@ -72,6 +72,7 @@ Your input will help shape the future of WDK and ensure it meets the needs of th
 
 - [Transaction History](documentation/transaction-history.md)
 - [Preparing for Production](documentation/preparing-for-production.md)
+- [Indexer](documentation/indexer-overview.md)
 
 #### Resources
 - [Concepts](resources/concepts.md)
