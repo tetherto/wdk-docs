@@ -74,15 +74,15 @@ WDK supports a growing set of blockchains. This list is continuously expanding, 
 
 | Chain/Module                                                      | Type             | Supported |
 |-------------------------------------------------------------------|------------------|-----------|
-| [Ethereum / Arbitrum / Polygon](../wdk-modules/wallet-evm/overview.md)   | EVM  /  L2       | ✅        |
-| [EVM ERC-4337](../wdk-modules/wallet-evm-erc-4337/overview.md)       | EVM Gasless      | ✅        |
-| [Bitcoin](../wdk-modules/wallet-btc/overview.md)                     | Native           | ✅        |
-| [TON](../wdk-modules/wallet-ton/overview.md)                         | Non-EVM          | ✅        |
-| [TON Gasless](../wdk-modules/wallet-ton-gasless/overview.md)         | TON Gasless      | ✅        |
-| [Spark](../wdk-modules/wallet-spark/overview.md)                     | *                | ✅        |
-| [Solana](../wdk-modules/wallet-solana/overview.md)                   | Non-EVM          | ✅        |
-| [TRON](../wdk-modules/wallet-tron/overview.md)                       | Non-EVM          | ✅        |
-| [TRON Gasfree](../wdk-modules/wallet-tron-gasfree/overview.md)       | TRON Gasfree     | ✅        |
+| [EVM](../wdk-modules/wallet-modules/wallet-evm/overview.md)   | EVM  /  L2       | ✅        |
+| [EVM ERC-4337](../wdk-modules/wallet-modules/wallet-evm-erc-4337/overview.md)       | EVM Gasless      | ✅        |
+| [Bitcoin](../wdk-modules/wallet-modules/wallet-btc/overview.md)                     | Native           | ✅        |
+| [TON](../wdk-modules/wallet-modules/wallet-ton/overview.md)                         | Non-EVM          | ✅        |
+| [TON Gasless](../wdk-modules/wallet-modules/wallet-ton-gasless/overview.md)         | TON Gasless      | ✅        |
+| [Spark](../wdk-modules/wallet-modules/wallet-spark/overview.md)                     | *                | ✅        |
+| [Solana](../wdk-modules/wallet-modules/wallet-solana/overview.md)                   | Non-EVM          | ✅        |
+| [TRON](../wdk-modules/wallet-modules/wallet-tron/overview.md)                       | Non-EVM          | ✅        |
+| [TRON Gasfree](../wdk-modules/wallet-modules/wallet-tron-gasfree/overview.md)       | TRON Gasfree     | ✅        |
 | [Ark](https://github.com/tetherto/wdk-wallet-ark)    | *    | ⏳        |
 
 ---

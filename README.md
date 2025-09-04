@@ -48,7 +48,7 @@ Your input will help shape the future of WDK and ensure it meets the needs of th
     - [wallet-evm-erc-4337](wdk-modules/wallet-modules/wallet-evm-erc-4337/overview.md)
     - [wallet-btc](wdk-modules/wallet-modules/wallet-btc/overview.md)
     - [wallet-ton](wdk-modules/wallet-modules/wallet-ton/overview.md)
-    - [wallet-ton-gasless](wdk-modules/wallet-modules/wallet-ton/overview.md)
+    - [wallet-ton-gasless](wdk-modules/wallet-modules/wallet-ton-gasless/overview.md)
     - [wallet-spark](wdk-modules/wallet-modules/wallet-spark/overview.md)
     - [wallet-tron](wdk-modules/wallet-modules/wallet-tron/overview.md)
     - [wallet-tron-gasfree](wdk-modules/wallet-modules/wallet-tron-gasfree/overview.md)
