@@ -2,20 +2,12 @@
 title: Wallet Modules Overview
 author: Matteo Giardino
 lastReviewed: 2025-06-28
-icon: puzzle
+icon:
 ---
 
 # Wallet Modules Overview
 
 The Wallet Development Kit (WDK) provides a set of modules that support multiple blockchain networks. All modules share a common interface, ensuring consistent behavior across different blockchain implementations.
-
-## Module Categories
-
-WDK modules are organized into three main categories:
-
-1. **Wallet Modules** - Core wallet implementations for different blockchains
-2. **Swap Protocol Modules** - DeFi swap functionality across various DEXs ⏳ 
-3. **Bridge Protocol Modules** - Cross-chain bridge functionality ⏳ 
 
 ## Wallet Modules
 
@@ -43,24 +35,6 @@ Wallet implementations that support [Account Abstraction](../resources/concepts.
 | `@wdk/wallet-ton-gasless` | TON | ✅ Ready | [Documentation](./wallet-ton-gasless/overview.md) | [Repository](https://github.com/tetherto/wdk-wallet-ton-gasless) |
 | `@wdk/wallet-tron-gasfree` | TRON | ✅ Ready | [Documentation](./wallet-tron-gasfree/overview.md) | [Repository](https://github.com/tetherto/wdk-wallet-tron-gasfree) |
 | `@wdk/wallet-solana-jupiterz` | Solana | In progress | - | [Repository](https://github.com/tetherto/wdk-wallet-solana-jupiterz) |
-
-## Swap Protocol Modules
-
-DeFi swap functionality for token exchanges across different DEXs:
-
-| Module | Blockchain | Status | Documentation | GitHub |
-|--------|------------|--------|---------------|---------|
-| `@wdk/protocol-swap-paraswap-evm` | EVM | In progress | - | [Repository](https://github.com/tetherto/wdk-protocol-swap-paraswap-evm) |
-| `@wdk/protocol-swap-dedust-ton` | TON | In progress | - | [Repository](https://github.com/tetherto/wdk-protocol-swap-dedust-ton) |
-
-## Bridge Protocol Modules
-
-Cross-chain bridge functionality for token transfers between blockchains:
-
-| Module | Route | Status | Documentation | GitHub |
-|--------|-------|--------|---------------|---------|
-| `@wdk/protocol-bridge-usdt0-evm` | EVM ↔ EVM | In progress | - | [Repository](https://github.com/tetherto/wdk-protocol-bridge-usdt0-evm) |
-| `@wdk/protocol-bridge-usdt0-ton` | TON ↔ EVM | In progress | - | [Repository](https://github.com/tetherto/wdk-protocol-bridge-usdt0-ton) |
 
 ## Next steps
 

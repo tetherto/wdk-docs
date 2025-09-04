@@ -2,7 +2,7 @@
 title: Wallet Modules Overview
 author: Matteo Giardino
 lastReviewed: 2025-06-28
-icon: puzzle
+icon:
 ---
 
 # Bridge Modules Overview
