@@ -90,6 +90,7 @@
 ## Core Services
 * [Secret Manager](documentation/secret-manager.md)
 * [Paymaster Service](documentation/paymaster.md)
+* [Indexer](documentation/indexer-overview.md)
 
 <!-- ## Indexer
 * [Overview](documentation/indexer.md)
