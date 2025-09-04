@@ -15,8 +15,8 @@ Cross-chain bridge functionality for token transfers between blockchains:
 
 | Module | Route | Status | Documentation | GitHub |
 |--------|-------|--------|---------------|---------|
-| `@wdk/protocol-bridge-usdt0-evm` | EVM ↔ EVM | In progress | [Documentation](./bridge-modules/wdk-protocol-bridge-usdt0-evm/overview.md) | [Repository](https://github.com/tetherto/wdk-protocol-bridge-usdt0-evm) |
-| `@wdk/protocol-bridge-usdt0-ton` | TON ↔ EVM | In progress | [Documentation](./bridge-modules/wdk-protocol-bridge-usdt0-ton/overview.md)  | [Repository](https://github.com/tetherto/wdk-protocol-bridge-usdt0-ton) |
+| `@wdk/protocol-bridge-usdt0-evm` | EVM ↔ EVM | In progress | [Documentation](./wdk-protocol-bridge-usdt0-evm/overview.md) | [Repository](https://github.com/tetherto/wdk-protocol-bridge-usdt0-evm) |
+| `@wdk/protocol-bridge-usdt0-ton` | TON ↔ EVM | In progress | [Documentation](./wdk-protocol-bridge-usdt0-ton/overview.md)  | [Repository](https://github.com/tetherto/wdk-protocol-bridge-usdt0-ton) |
 
 ## Next steps
 

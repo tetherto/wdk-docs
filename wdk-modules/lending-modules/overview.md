@@ -15,7 +15,7 @@ DeFi lending functionality different lending & borrowing protocols
 
 | Module | Route | Status | Documentation | GitHub |
 |--------|-------|--------|---------------|---------|
-| `@wdk/protocol-lending-aave-evm` | EVM | In progress | [Documentation](./lending-modules/wdk-protocol-lending-aave-evm/overview.md)  | [Repository](https://github.com/tetherto/wdk-protocol-lending-aave-evm) |
+| `@wdk/protocol-lending-aave-evm` | EVM | In progress | [Documentation](./wdk-protocol-lending-aave-evm/overview.md)  | [Repository](https://github.com/tetherto/wdk-protocol-lending-aave-evm) |
 
 
 ## Next steps
