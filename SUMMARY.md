@@ -43,7 +43,7 @@
     * [API Reference](wdk-modules/wallet-modules/wallet-spark/api-reference.md)
 
   * [wallet-tron](wdk-modules/wallet-modules/wallet-tron/overview.md)
-    * [Guides](wdk-moduleswallet-modules/wallet-tron/guides.md)
+    * [Guides](wdk-modules/wallet-modules/wallet-tron/guides.md)
     * [Configuration](wdk-modules/wallet-modules/wallet-tron/configuration.md)
     * [API Reference](wdk-modules/wallet-modules/wallet-tron/api-reference.md)
 
@@ -83,7 +83,7 @@
   * [lending-aave-evm](wdk-modules/lending-modules/wdk-protocol-lending-aave-evm/overview.md)
     * [Guides](wdk-modules/lending-modules/wdk-protocol-lending-aave-evm/guides.md)
     * [Configuration](wdk-modules/lending-modules/wdk-protocol-lending-aave-evm/configuration.md)
-    * [API Reference](wdk-modules/lending-modules/wdk-protocol-lending-aave-evm/api-reference.md)
+    * [API Reference](wdk-modules/bridge-modules/wdk-protocol-lending-aave-evm/api-reference.md)
 
 
 
