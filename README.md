@@ -42,15 +42,31 @@ Your input will help shape the future of WDK and ensure it meets the needs of th
 #### Building Blocks
 - [Modules Overview](wdk-modules/overview.md)
 
-  - [wallet-evm](wdk-modules/wallet-evm/overview.md)
-  - [wallet-evm-erc-4337](wdk-modules/wallet-evm-erc-4337/overview.md)
-  - [wallet-btc](wdk-modules/wallet-btc/overview.md)
-  - [wallet-ton](wdk-modules/wallet-ton/overview.md)
-  - [wallet-ton-gasless](wdk-modules/wallet-ton/overview.md)
-  - [wallet-spark](wdk-modules/wallet-spark/overview.md)
-  - [wallet-tron](wdk-modules/wallet-tron/overview.md)
-  - [wallet-tron-gasfree](wdk-modules/wallet-tron-gasfree/overview.md)
-  - [wallet-solana](wdk-modules/wallet-solana/overview.md)
+##### Wallet Modules
+  - [Wallet Modules Overview](wdk-modules/wallet-modules/overview.md)
+    - [wallet-evm](wdk-modules/wallet-modules/wallet-evm/overview.md)
+    - [wallet-evm-erc-4337](wdk-modules/wallet-modules/wallet-evm-erc-4337/overview.md)
+    - [wallet-btc](wdk-modules/wallet-modules/wallet-btc/overview.md)
+    - [wallet-ton](wdk-modules/wallet-modules/wallet-ton/overview.md)
+    - [wallet-ton-gasless](wdk-modules/wallet-modules/wallet-ton/overview.md)
+    - [wallet-spark](wdk-modules/wallet-modules/wallet-spark/overview.md)
+    - [wallet-tron](wdk-modules/wallet-modules/wallet-tron/overview.md)
+    - [wallet-tron-gasfree](wdk-modules/wallet-modules/wallet-tron-gasfree/overview.md)
+    - [wallet-solana](wdk-modules/wallet-modules/wallet-solana/overview.md)
+
+##### Swap Modules
+  - [Swap Modules Overview](wdk-modules/swap-modules/overview.md)
+    - [swap-paraswap-evm](wdk-modules/swap-modules/wdk-protocol-swap-paraswap-evm/overview.md)
+    - [swap-stonfi-ton](wdk-modules/swap-modules/wdk-protocol-swap-stonfi-ton/overview.md)
+
+##### Bridge Modules
+  - [Bridge Modules Overview](wdk-modules/bridge-modules/overview.md)
+    - [bridge-usdt0-evm](wdk-modules/bridge-modules/wdk-protocol-bridge-usdt0-evm/overview.md)
+    - [bridge-usdt0-ton](wdk-modules/bridge-modules/wdk-protocol-bridge-usdt0-ton/overview.md)
+
+ ##### Lending & Borrowing Modules
+  - [Lending & Borrowing Modules Overview](wdk-modules/lending-modules/overview.md)
+    - [lending-aave-evm](wdk-modules/lending-modules/wdk-protocol-lending-aave-evm/overview.md)
 
 #### Documentation
 
