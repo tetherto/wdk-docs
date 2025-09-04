@@ -15,18 +15,18 @@ Cross-chain bridge functionality for token transfers between blockchains:
 
 | Module | Route | Status | Documentation | GitHub |
 |--------|-------|--------|---------------|---------|
-| `@wdk/protocol-bridge-usdt0-evm` | EVM ↔ EVM | In progress | - | [Repository](https://github.com/tetherto/wdk-protocol-bridge-usdt0-evm) |
-| `@wdk/protocol-bridge-usdt0-ton` | TON ↔ EVM | In progress | - | [Repository](https://github.com/tetherto/wdk-protocol-bridge-usdt0-ton) |
+| `@wdk/protocol-bridge-usdt0-evm` | EVM ↔ EVM | In progress | [Documentation](./bridge-modules/wdk-protocol-bridge-usdt0-evm/overview.md) | [Repository](https://github.com/tetherto/wdk-protocol-bridge-usdt0-evm) |
+| `@wdk/protocol-bridge-usdt0-ton` | TON ↔ EVM | In progress | [Documentation](./bridge-modules/wdk-protocol-bridge-usdt0-ton/overview.md)  | [Repository](https://github.com/tetherto/wdk-protocol-bridge-usdt0-ton) |
 
 ## Next steps
 
 To get started with WDK modules, follow these steps:
 
-1. Get up and running quickly with our [Quick Start Guide](../getting-started/quick-start.md)
+1. Get up and running quickly with our [Quick Start Guide](../../getting-started/quick-start.md)
 2. Choose the modules that best fits your needs from the tables above 
 3. Check specific documentation for modules you wish to use
 
 You can also:
 
-- Learn about key concepts like [Account Abstraction](../resources/concepts.md) and other important definitions
+- Learn about key concepts like [Account Abstraction](../../resources/concepts.md) and other important definitions
 - Use one our ready-to-use examples to be production ready

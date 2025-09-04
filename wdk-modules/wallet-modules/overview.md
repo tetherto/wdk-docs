@@ -39,11 +39,11 @@ Wallet implementations that support [Account Abstraction](../resources/concepts.
 
 To get started with WDK modules, follow these steps:
 
-1. Get up and running quickly with our [Quick Start Guide](../getting-started/quick-start.md)
+1. Get up and running quickly with our [Quick Start Guide](../../getting-started/quick-start.md)
 2. Choose the modules that best fits your needs from the tables above 
 3. Check specific documentation for modules you wish to use
 
 You can also:
 
-- Learn about key concepts like [Account Abstraction](../resources/concepts.md) and other important definitions
+- Learn about key concepts like [Account Abstraction](../../resources/concepts.md) and other important definitions
 - Use one our ready-to-use examples to be production ready
