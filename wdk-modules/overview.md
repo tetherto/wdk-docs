@@ -42,7 +42,7 @@ Wallet implementations that support [Account Abstraction](../resources/concepts.
 |--------|------------|--------|---------------|---------|
 | `@wdk/wallet-evm-erc4337` | EVM | ✅ Ready | [Documentation](./wallet-modules/wallet-evm-erc-4337/overview.md) | [Repository](https://github.com/tetherto/wdk-wallet-evm-erc-4337) |
 | `@wdk/wallet-ton-gasless` | TON | ✅ Ready | [Documentation](./wallet-modules/wallet-ton-gasless/overview.md) | [Repository](https://github.com/tetherto/wdk-wallet-ton-gasless) |
-| `@wdk/wallet-tron-gasfree` | TRON | ✅ Ready | [Documentation](./wallet-tron-gasfree/overview.md) | [Repository](https://github.com/tetherto/wdk-wallet-tron-gasfree) |
+| `@wdk/wallet-tron-gasfree` | TRON | ✅ Ready | [Documentation](./wallet-modules/wallet-tron-gasfree/overview.md) | [Repository](https://github.com/tetherto/wdk-wallet-tron-gasfree) |
 | `@wdk/wallet-solana-jupiterz` | Solana | In progress | - | [Repository](https://github.com/tetherto/wdk-wallet-solana-jupiterz) |
 
 ## Swap Protocol Modules
