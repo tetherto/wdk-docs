@@ -1,7 +1,7 @@
 ---
-title: Wallet Modules Overview
-author: Matteo Giardino
-lastReviewed: 2025-06-28
+title: Bridge Modules Overview
+author: Raquel Carrasco Gonzalez
+lastReviewed: 2025-09-04
 icon:
 ---
 

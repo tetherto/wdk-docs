@@ -1,11 +1,11 @@
 ---
-title: Wallet Modules Overview
-author: Matteo Giardino
-lastReviewed: 2025-06-28
+title: Lending Modules Overview
+author: Raquel Carrasco Gonzalez
+lastReviewed: 2025-09-04
 icon:
 ---
 
-# Wallet Modules Overview
+# Lending Modules Overview
 
 The Wallet Development Kit (WDK) provides a set of modules that support connection with lending protocols on different blockchain networks. All modules share a common interface, ensuring consistent behavior across different blockchain implementations.
 
