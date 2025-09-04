@@ -7,9 +7,7 @@ lastReviewed: 2025-06-26
 
 # @wdk/wallet-btc Overview
 
-This module is part of the [**WDK (Wallet Development Kit)**](https://wallet.tether.io/) project, which empowers developers to build secure, non-custodial wallets with unified blockchain access, stateless architecture, and complete user control. 
-
-For detailed documentation about the complete WDK ecosystem, visit [docs.wallet.tether.io](https://docs.wallet.tether.io).
+A simple and secure package to manage BIP-84 (SegWit) wallets for the Bitcoin blockchain. This package provides a clean API for creating, managing, and interacting with Bitcoin wallets using BIP-39 seed phrases and BIP-84 derivation paths for Native SegWit addresses.
 
 ## Features
 
