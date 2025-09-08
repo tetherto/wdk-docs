@@ -88,6 +88,8 @@ async function getBalance(blockchain, token, address) {
 }
 ```
 
+<!-- No need thanks to openapi
+
 ## Response Format
 
 ### Token Transfers Response
@@ -117,7 +119,7 @@ async function getBalance(blockchain, token, address) {
     "amount": 5000000
   }
 }
-```
+``` -->
 
 ## Common Use Cases
 
