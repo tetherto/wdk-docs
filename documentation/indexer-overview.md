@@ -35,169 +35,35 @@ Include your API key in every request:
 X-API-KEY: your-api-key-here
 ```
 
-## API Reference/Specs
+## API Reference
+
+{% openapi src="./openapi.yaml" %}
+Interactive API documentation with authentication, parameters, and response schemas.
+{% endopenapi %}
 
 ### Authentication
-All requests require a valid API key in the header:
+All requests require a valid API key in the `X-API-KEY` header:
 ```http
 X-API-KEY: your-api-key-here
-```
-
-### Common Headers and Parameters
-**Required Headers:**
-- `X-API-KEY` - Your unique API key
-- `Content-Type: application/json` (for POST requests)
-
-**Common Path Parameters:**
-- `blockchain` - Network identifier (e.g., "eth", "btc", "tron")
-- `token` - Token/currency identifier (e.g., "usdt", "btc", "eth")
-- `address` - Wallet address to query
-
-### Error Handling
-The API returns standard HTTP status codes:
-
-**Success Codes:**
-- `200` - Request successful
-
-**Error Codes:**
-- `400` - Bad Request - Invalid parameters
-- `401` - Unauthorized - Invalid or missing API key
-- `404` - Not Found - Address or token not found
-- `429` - Too Many Requests - Rate limit exceeded
-- `500` - Internal Server Error - Server error
-
-**Error Response Format:**
-```json
-{
-  "error": {
-    "code": 400,
-    "message": "Invalid blockchain parameter",
-    "details": "Supported blockchains: eth, btc, tron"
-  }
-}
 ```
 
 ### Rate Limiting
 - **Limit:** 100 requests per minute per API key
-- **Headers:** Rate limit info included in response headers:
-  - `X-RateLimit-Limit` - Request limit per minute
-  - `X-RateLimit-Remaining` - Remaining requests
-  - `X-RateLimit-Reset` - Time when limit resets
+- **Headers:** Rate limit info included in response headers
 
-## Endpoints
+## API Endpoints
 
 ### Token Transfer History
-**Endpoint:** `GET /api/v1/:blockchain/:token/:address/token-transfers`
 
-**Endpoint Details:**
-Returns complete transfer history for any wallet address and token.
-
-**Path Parameters:**
-- `blockchain` - Network (e.g., "eth", "btc")
-- `token` - Token/currency (e.g., "usdt", "btc")  
-- `address` - Wallet address to query
-
-**Query Parameters:**
-- `limit` - Max transfers to return (default: 10)
-- `fromTs` - Start timestamp in milliseconds
-- `toTs` - End timestamp in milliseconds
-- `sort` - Order "asc" or "desc" (default: "desc")
-
-**Request Examples:**
-```http
-GET /api/v1/eth/usdt/0x123.../token-transfers?limit=20&sort=desc
-Host: your-indexer-url.com
-X-API-KEY: your-api-key-here
-```
-
-**Response Format:**
-```json
-{
-  "transfers": [
-    {
-      "transactionHash": "0xabc123...",
-      "blockchain": "eth",
-      "token": "usdt",
-      "from": "0x123...",
-      "to": "0x456...",
-      "amount": 1000000,
-      "type": "received",
-      "timestamp": "2023-11-15T10:30:00Z"
-    }
-  ]
-}
-```
-
-**Error Responses:**
-```json
-// Invalid blockchain
-{
-  "error": {
-    "code": 400,
-    "message": "Invalid blockchain parameter",
-    "details": "Supported blockchains: eth, btc, tron"
-  }
-}
-
-// Address not found
-{
-  "error": {
-    "code": 404,
-    "message": "Address not found",
-    "details": "No data available for this address"
-  }
-}
-```
+{% openapi src="./openapi.yaml" path="/api/v1/{blockchain}/{token}/{address}/token-transfers" method="get" %}
+Get token transfer history
+{% endopenapi %}
 
 ### Token Balances
-**Endpoint:** `GET /api/v1/:blockchain/:token/:address/token-balances`
 
-**Endpoint Details:**
-Returns current token balance for any wallet address.
-
-**Path Parameters:**
-- `blockchain` - Network (e.g., "eth", "btc")
-- `token` - Token/currency (e.g., "usdt", "btc")  
-- `address` - Wallet address to query
-
-**Request Examples:**
-```http
-GET /api/v1/eth/usdt/0x123.../token-balances
-Host: your-indexer-url.com
-X-API-KEY: your-api-key-here
-```
-
-**Response Format:**
-```json
-{
-  "tokenBalance": {
-    "blockchain": "eth",
-    "token": "usdt",
-    "amount": 5000000
-  }
-}
-```
-
-**Error Responses:**
-```json
-// Invalid token
-{
-  "error": {
-    "code": 400,
-    "message": "Invalid token parameter",
-    "details": "Token not supported on this blockchain"
-  }
-}
-
-// Unauthorized
-{
-  "error": {
-    "code": 401,
-    "message": "Unauthorized",
-    "details": "Invalid or missing API key"
-  }
-}
-```
+{% openapi src="./openapi.yaml" path="/api/v1/{blockchain}/{token}/{address}/token-balances" method="get" %}
+Get token balance
+{% endopenapi %}
 
 ## Integration Examples
 
