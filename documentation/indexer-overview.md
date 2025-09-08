@@ -37,7 +37,7 @@ X-API-KEY: your-api-key-here
 
 ## API Reference
 
-{% openapi src="./openapi.yaml" %}
+{% openapi src="../openapi.yaml" %}
 Interactive API documentation with authentication, parameters, and response schemas.
 {% endopenapi %}
 
@@ -55,13 +55,13 @@ X-API-KEY: your-api-key-here
 
 ### Token Transfer History
 
-{% openapi src="./openapi.yaml" path="/api/v1/{blockchain}/{token}/{address}/token-transfers" method="get" %}
+{% openapi src="../openapi.yaml" path="/api/v1/{blockchain}/{token}/{address}/token-transfers" method="get" %}
 Get token transfer history
 {% endopenapi %}
 
 ### Token Balances
 
-{% openapi src="./openapi.yaml" path="/api/v1/{blockchain}/{token}/{address}/token-balances" method="get" %}
+{% openapi src="../openapi.yaml" path="/api/v1/{blockchain}/{token}/{address}/token-balances" method="get" %}
 Get token balance
 {% endopenapi %}
 
