@@ -17,19 +17,18 @@ import WalletManagerEvmErc4337 from '@wdk/wallet-evm-erc-4337'
 
 const config = {
   // Required parameters
-  chainId: 1, // Ethereum mainnet
+  chainId: 1,
+  blockchain: 'ethereum',
   provider: 'https://rpc.mevblocker.io/fast',
-  bundlerUrl: 'https://api.candide.dev/public/v3/ethereum',
-  paymasterUrl: 'https://api.candide.dev/public/v3/ethereum',
-  paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
+  safeModulesVersion: '0.3.0', // optional as it defaults to '0.3.0', only '0.2.0' and '0.3.0' are valid
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
-  safeModulesVersion: '1.0.0',
+  bundlerUrl: `https://api.pimlico.io/v1/ethereum/rpc?apikey=${PIMLICO_API_KEY}`,
+  paymasterUrl: `https://api.pimlico.io/v2/ethereum/rpc?apikey=${PIMLICO_API_KEY}`,
+  paymasterAddress: '0x777777777777AeC03fd955926DbF81597e66834C',
+  transferMaxFee: 100000000000000,
   paymasterToken: {
-    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USDT
-  },
-  
-  // Optional parameter
-  transferMaxFee: 100000 // Maximum fee in paymaster token units
+    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+  }
 }
 
 const wallet = new WalletManagerEvmErc4337(seedPhrase, config)
@@ -54,17 +53,15 @@ const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337(
   '0x...', // Smart contract wallet address
   {
     chainId: 1,
-    blockchain: 'ethereum',
     provider: 'https://rpc.mevblocker.io/fast',
-    safeModulesVersion: '0.3.0', // optional as it defaults to '0.3.0', only '0.2.0' and '0.3.0' are valid
+    bundlerUrl: 'https://api.candide.dev/public/v3/ethereum',
+    paymasterUrl: 'https://api.candide.dev/public/v3/ethereum',
+    paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
     entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
-    bundlerUrl: `https://api.pimlico.io/v1/ethereum/rpc?apikey=${PIMLICO_API_KEY}`,
-    paymasterUrl: `https://api.pimlico.io/v2/ethereum/rpc?apikey=${PIMLICO_API_KEY}`,
-    paymasterAddress: '0x777777777777AeC03fd955926DbF81597e66834C',
-    transferMaxFee: 100000000000000,
+    safeModulesVersion: '0.3.0',
     paymasterToken: {
       address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
-    },
+    }
     // Note: transferMaxFee omitted for read-only accounts
   }
 )
@@ -184,7 +181,7 @@ The `safeModulesVersion` option specifies the Safe modules version for smart con
 **Example:**
 ```javascript
 const config = {
-  safeModulesVersion: '1.0.0'
+  safeModulesVersion: '0.3.0'
 }
 ```
 
@@ -242,16 +239,17 @@ try {
 ```javascript
 const ethereumConfig = {
   chainId: 1,
+  blockchain: 'ethereum',
   provider: 'https://rpc.mevblocker.io/fast',
   bundlerUrl: 'https://api.candide.dev/public/v3/ethereum',
   paymasterUrl: 'https://api.candide.dev/public/v3/ethereum',
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
-  safeModulesVersion: '1.0.0',
+  safeModulesVersion: '0.3.0',
   paymasterToken: {
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USDT
   },
-  transferMaxFee: 100000 // 0.1 USDT
+  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDT if 6 decimals)
 }
 ```
 
@@ -260,12 +258,13 @@ const ethereumConfig = {
 ```javascript
 const polygonConfig = {
   chainId: 137,
+  blockchain: 'polygon',
   provider: 'https://polygon-rpc.com',
   bundlerUrl: 'https://api.candide.dev/public/v3/polygon',
   paymasterUrl: 'https://api.candide.dev/public/v3/polygon',
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
-  safeModulesVersion: '1.0.0',
+  safeModulesVersion: '0.3.0',
   paymasterToken: {
     address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F' // USDT on Polygon
   },
@@ -278,12 +277,13 @@ const polygonConfig = {
 ```javascript
 const arbitrumConfig = {
   chainId: 42161,
+  blockchain: 'arbitrum',
   provider: 'https://arb1.arbitrum.io/rpc',
   bundlerUrl: 'https://public.pimlico.io/v2/42161/rpc',
   paymasterUrl: 'https://public.pimlico.io/v2/42161/rpc',
   paymasterAddress: '0x777777777777AeC03fd955926DbF81597e66834C',
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
-  safeModulesVersion: '1.0.0',
+  safeModulesVersion: '0.3.0',
   paymasterToken: {
     address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9' // USDT on Arbitrum
   },
