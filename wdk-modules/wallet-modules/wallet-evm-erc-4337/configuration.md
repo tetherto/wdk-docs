@@ -54,15 +54,17 @@ const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337(
   '0x...', // Smart contract wallet address
   {
     chainId: 1,
+    blockchain: 'ethereum',
     provider: 'https://rpc.mevblocker.io/fast',
-    bundlerUrl: 'https://api.candide.dev/public/v3/ethereum',
-    paymasterUrl: 'https://api.candide.dev/public/v3/ethereum',
-    paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
+    safeModulesVersion: '0.3.0', // optional as it defaults to '0.3.0', only '0.2.0' and '0.3.0' are valid
     entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
-    safeModulesVersion: '1.0.0',
+    bundlerUrl: `https://api.pimlico.io/v1/ethereum/rpc?apikey=${PIMLICO_API_KEY}`,
+    paymasterUrl: `https://api.pimlico.io/v2/ethereum/rpc?apikey=${PIMLICO_API_KEY}`,
+    paymasterAddress: '0x777777777777AeC03fd955926DbF81597e66834C',
+    transferMaxFee: 100000000000000,
     paymasterToken: {
       address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
-    }
+    },
     // Note: transferMaxFee omitted for read-only accounts
   }
 )

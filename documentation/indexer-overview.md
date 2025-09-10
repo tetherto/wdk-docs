@@ -29,11 +29,11 @@ Contact our admin team to request access. You'll receive:
 <!-- TODO: Need to double check this section -->
 
 
-### Authentication
+<!-- ### Authentication
 Include your API key in every request:
 ```http
 X-API-KEY: your-api-key-here
-```
+``` -->
 
 ## API Reference
 
