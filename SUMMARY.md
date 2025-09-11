@@ -8,7 +8,7 @@
 ## Getting Started
 * [Prerequisites](getting-started/prerequisites.md)
 * [Quick Start](getting-started/quick-start.md)
-* [Multichain Quick Start](getting-started/quick-start-advanced.md)
+* [Multichain Quick Start](getting-started/quick-start-advance.md)
 
 ## Building Blocks
 * [Modules Overview](wdk-modules/overview.md)
