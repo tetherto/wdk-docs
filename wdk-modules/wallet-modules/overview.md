@@ -10,6 +10,15 @@ The Wallet Development Kit (WDK) provides a set of modules that support multiple
 
 ## Wallet Modules
 
+## Core Module
+
+The unified core module that provides a single interface for managing all supported blockchains:
+
+| Module | Description | Status | Documentation | GitHub |
+|--------|-------------|--------|---------------|---------|
+| `@wdk/core` | Unified WDK Core | ✅ Ready | [Documentation](./wdk-core/overview.md) | [Repository](https://github.com/tetherto/wdk-core) |
+
+
 ### Classic Wallet Modules
 
 Standard wallet implementations that use native blockchain tokens for transaction fees:
