@@ -12,11 +12,11 @@
 
 ## Building Blocks
 * [Modules Overview](wdk-modules/overview.md)
-* [Wallet Modules Overview](wdk-modules/wallet-modules/overview.md)
- * [wallet-manager](wdk-modules/wallet-modules/wdk-core/overview.md)
+  * [wdk-manager](wdk-modules/wallet-modules/wdk-core/overview.md)
     * [Guides](wdk-modules/wallet-modules/wdk-core/guides.md)
     * [Configuration](wdk-modules/wallet-modules/wdk-core/configuration.md)
     * [API Reference](wdk-modules/wallet-modules/wdk-core/api-reference.md)
+* [Wallet Modules Overview](wdk-modules/wallet-modules/overview.md)
   * [wallet-evm](wdk-modules/wallet-modules/wallet-evm/overview.md)
     * [Guides](wdk-modules/wallet-modules/wallet-evm/guides.md)
     * [Configuration](wdk-modules/wallet-modules/wallet-evm/configuration.md)
