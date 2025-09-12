@@ -1,345 +1,313 @@
-openapi: 3.0.3
+openapi: 3.0.0
 info:
   title: WDK Indexer API
-  description: Fast access to blockchain transaction data across multiple networks
+  description: API for blockchain token transfers and balances
   version: 1.0.0
-  contact:
-    name: WDK Support
-    email: support@tether.to
-
-servers:
-  - url: https://your-indexer-url.com
-    description: Production server
-
-security:
-  - ApiKeyAuth: []
-
-tags:
-  - name: transfers
-    description: Token transfer operations
-  - name: balances
-    description: Token balance operations
-
+components:
+  schemas: {}
 paths:
+  /api/v1/health:
+    get:
+      summary: Health check endpoint
+      tags:
+        - Health
+      description: Check if the API server is running
+      responses:
+        "200":
+          description: Default Response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+                additionalProperties: false
   /api/v1/{blockchain}/{token}/{address}/token-transfers:
     get:
+      summary: Get token transfers for an address
       tags:
-        - transfers
-      summary: Get token transfer history
-      description: Returns complete transfer history for any wallet address and token. Token transfers are ordered by their timestamps.
-      operationId: getTokenTransfers
+        - Token Transfers
+      description: Retrieve the token transfer history for a specific address on a
+        given blockchain
       parameters:
-        - name: blockchain
-          in: path
-          required: true
-          description: Network identifier
-          schema:
-            type: string
-            enum: [eth, btc, tron]
-          example: eth
-        - name: token
-          in: path
-          required: true
-          description: Token/currency identifier
-          schema:
-            type: string
-          example: usdt
-        - name: address
-          in: path
-          required: true
-          description: Wallet address to query
-          schema:
-            type: string
-          example: "0x123..."
-        - name: limit
-          in: query
-          required: false
-          description: Maximum number of transfers to return
-          schema:
+        - schema:
             type: integer
             minimum: 1
             maximum: 1000
             default: 10
-        - name: fromTs
           in: query
+          name: limit
           required: false
-          description: Minimum timestamp of transfers to return in unix milliseconds
-          schema:
+        - schema:
             type: integer
-            format: int64
             minimum: 0
             default: 0
-        - name: toTs
           in: query
+          name: fromTs
           required: false
-          description: Maximum timestamp of transfers to return in unix milliseconds
-          schema:
+        - schema:
             type: integer
-            format: int64
-        - name: sort
+            minimum: 0
           in: query
+          name: toTs
           required: false
-          description: Order of the token transfers
-          schema:
+        - schema:
             type: string
-            enum: [asc, desc]
+            enum:
+              - asc
+              - desc
             default: desc
+          in: query
+          name: sort
+          required: false
+        - schema:
+            type: string
+            enum:
+              - ethereum
+              - arbitrum
+              - polygon
+              - tron
+              - ton
+              - solana
+              - bitcoin
+              - spark
+          in: path
+          name: blockchain
+          required: true
+        - schema:
+            type: string
+            enum:
+              - usdt
+              - xaut
+              - btc
+          in: path
+          name: token
+          required: true
+        - schema:
+            type: string
+            minLength: 1
+          in: path
+          name: address
+          required: true
+        - schema:
+            type: string
+          in: header
+          name: x-api-key
+          required: true
+          description: API Key for authentication
       responses:
-        '200':
-          description: Successful operation
-          headers:
-            X-RateLimit-Limit:
-              description: Request limit per minute
-              schema:
-                type: integer
-            X-RateLimit-Remaining:
-              description: Remaining requests
-              schema:
-                type: integer
-            X-RateLimit-Reset:
-              description: Time when limit resets
-              schema:
-                type: integer
+        "200":
+          description: Default Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TokenTransfersResponse'
-        '400':
-          description: Bad Request - Invalid parameters
+                type: object
+                properties:
+                  transfers:
+                    type: array
+                    description: The token transfer history
+                    items:
+                      type: object
+                      properties:
+                        blockchain:
+                          type: string
+                          description: The blockchain
+                        blockNumber:
+                          type: number
+                          description: The block number in which the transaction was included
+                        transactionHash:
+                          type: string
+                          description: The transaction's hash
+                        transferIndex:
+                          type: number
+                          description: The index of the transfer within the transaction
+                        token:
+                          type: string
+                          description: The token
+                        amount:
+                          type: string
+                          description: The amount of tokens transferred
+                        timestamp:
+                          type: number
+                          description: The timestamp when the transfer occurred
+                        transactionIndex:
+                          type: number
+                          description: The index of the transaction within the block
+                        logIndex:
+                          type: number
+                          description: The index of the token transfer's event log in the transaction
+                        from:
+                          type: string
+                          description: The sender's address
+                        to:
+                          type: string
+                          description: The recipient's address
+                      additionalProperties: false
+                additionalProperties: false
+        "400":
+          description: Default Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized - Invalid or missing API key
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error type or code
+                    example: Bad Request
+                  message:
+                    type: string
+                    description: Detailed error message
+                    example: Invalid parameter format
+                additionalProperties: false
+        "401":
+          description: Default Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Not Found - Address or token not found
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Authentication error type
+                    example: Unauthorized
+                  message:
+                    type: string
+                    description: Authentication error details
+                    example: Invalid or missing API key
+                additionalProperties: false
+        "500":
+          description: Default Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '429':
-          description: Too Many Requests - Rate limit exceeded
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Internal server error type
+                    example: Internal Server Error
+                  message:
+                    type: string
+                    description: Internal server error details
+                    example: An unexpected error occurred
+                additionalProperties: false
   /api/v1/{blockchain}/{token}/{address}/token-balances:
     get:
+      summary: Get token balance for an address
       tags:
-        - balances
-      summary: Get token balance
-      description: Returns current token balance for any wallet address.
-      operationId: getTokenBalance
+        - Token Balances
+      description: Retrieve the current token balance for a specific address on a
+        given blockchain
       parameters:
-        - name: blockchain
-          in: path
-          required: true
-          description: Network identifier
-          schema:
+        - schema:
             type: string
-            enum: [eth, btc, tron]
-          example: eth
-        - name: token
+            enum:
+              - ethereum
+              - arbitrum
+              - polygon
+              - tron
+              - ton
+              - solana
+              - bitcoin
+              - spark
           in: path
+          name: blockchain
           required: true
-          description: Token/currency identifier
-          schema:
+        - schema:
             type: string
-          example: usdt
-        - name: address
+            enum:
+              - usdt
+              - xaut
+              - btc
           in: path
+          name: token
           required: true
-          description: Wallet address to query
-          schema:
+        - schema:
             type: string
-          example: "0x123..."
+            minLength: 1
+          in: path
+          name: address
+          required: true
+        - schema:
+            type: string
+          in: header
+          name: x-api-key
+          required: true
+          description: API Key for authentication
       responses:
-        '200':
-          description: Successful operation
-          headers:
-            X-RateLimit-Limit:
-              description: Request limit per minute
-              schema:
-                type: integer
-            X-RateLimit-Remaining:
-              description: Remaining requests
-              schema:
-                type: integer
-            X-RateLimit-Reset:
-              description: Time when limit resets
-              schema:
-                type: integer
+        "200":
+          description: Default Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TokenBalanceResponse'
-        '400':
-          description: Bad Request - Invalid parameters
+                type: object
+                properties:
+                  tokenBalance:
+                    type: object
+                    description: The token balance
+                    properties:
+                      blockchain:
+                        type: string
+                        description: The blockchain
+                      token:
+                        type: string
+                        description: The token
+                      amount:
+                        type: string
+                        description: The amount of tokens
+                    additionalProperties: false
+                additionalProperties: false
+        "400":
+          description: Default Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized - Invalid or missing API key
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error type or code
+                    example: Bad Request
+                  message:
+                    type: string
+                    description: Detailed error message
+                    example: Invalid parameter format
+                additionalProperties: false
+        "401":
+          description: Default Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Not Found - Address or token not found
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Authentication error type
+                    example: Unauthorized
+                  message:
+                    type: string
+                    description: Authentication error details
+                    example: Invalid or missing API key
+                additionalProperties: false
+        "500":
+          description: Default Response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '429':
-          description: Too Many Requests - Rate limit exceeded
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-components:
-  securitySchemes:
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-KEY
-      description: Your unique API key for authentication
-
-  schemas:
-    TokenTransfersResponse:
-      type: object
-      properties:
-        transfers:
-          type: array
-          items:
-            $ref: '#/components/schemas/TokenTransfer'
-      required:
-        - transfers
-
-    TokenTransfer:
-      type: object
-      properties:
-        transactionHash:
-          type: string
-          description: The transaction's hash
-          example: "0xabc123..."
-        logIndex:
-          type: string
-          description: The index of the token transfer's event log in the transaction
-          example: "0"
-        blockchain:
-          type: string
-          description: The blockchain
-          example: "eth"
-        token:
-          type: string
-          description: The token
-          example: "usdt"
-        from:
-          type: string
-          description: The sender's address
-          example: "0x123..."
-        to:
-          type: string
-          description: The recipient's address
-          example: "0x456..."
-        blockNumber:
-          type: number
-          description: The block number in which the transaction was included
-          example: 18500000
-        amount:
-          type: number
-          description: The amount of tokens sent to the recipient
-          example: 1000000
-        type:
-          type: string
-          enum: [sent, received]
-          description: The token transfer type
-          example: "received"
-        timestamp:
-          type: string
-          format: date-time
-          description: The timestamp the token transfer was inserted into a block
-          example: "2023-11-15T10:30:00Z"
-      required:
-        - transactionHash
-        - logIndex
-        - blockchain
-        - token
-        - from
-        - to
-        - blockNumber
-        - amount
-        - type
-        - timestamp
-
-    TokenBalanceResponse:
-      type: object
-      properties:
-        tokenBalance:
-          $ref: '#/components/schemas/TokenBalance'
-      required:
-        - tokenBalance
-
-    TokenBalance:
-      type: object
-      properties:
-        blockchain:
-          type: string
-          description: The blockchain
-          example: "eth"
-        token:
-          type: string
-          description: The token
-          example: "usdt"
-        amount:
-          type: number
-          description: The amount of tokens
-          example: 5000000
-      required:
-        - blockchain
-        - token
-        - amount
-
-    ErrorResponse:
-      type: object
-      properties:
-        error:
-          type: object
-          properties:
-            code:
-              type: integer
-              description: Error code
-              example: 400
-            message:
-              type: string
-              description: Error message
-              example: "Invalid parameter"
-            details:
-              type: string
-              description: Additional error details
-              example: "Parameter validation failed"
-          required:
-            - code
-            - message
-      required:
-        - error
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Internal server error type
+                    example: Internal Server Error
+                  message:
+                    type: string
+                    description: Internal server error details
+                    example: An unexpected error occurred
+                additionalProperties: false
