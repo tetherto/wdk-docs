@@ -1,20 +1,61 @@
 ---
 title: Introduction to Wallet Development Kit (WDK)
-description: Tether's open-source Wallet Development Kit (WDK) empowers developers to build secure, non-custodial wallets with unified blockchain access, stateless architecture, and complete user control. WDK simplifies the complexity of blockchain infrastructure without compromising on flexibility or security.
+description: Build secure, multi-chain wallets with WDK's unified API and non-custodial architecture.
 author: Raquel Carrasco Gonzalez
-lastReviewed: 2025-08-31
-icon: lightbulb    
+lastReviewed: 2025-09-18
+icon: lightbulb  
+
 ---
 
-<p align="center">
-  <img src="../assets/logo.png" width="120" />
-</p>
+## Introduction
 
+The **Wallet Development Kit (WDK)** is Tether's open-source solution for building secure, non-custodial wallets across multiple blockchains. 
 
+This introduction covers WDK's core concepts, design philosophy, and key capabilities. For a structured learning path, see our [Recommended Reading Order](reading-order.md) to guide you through the complete documentation.
 
-## What is WDK?
+---
 
-WDK is a **developer-first framework** to create cross-chain wallets that are secure, extensible, and production-ready. It provides a single, stateless API to interact with EVM, TON, TRON, Solana, Bitcoin and Spark (Lightning Network)—abstracting blockchain-specific complexity while keeping developers in full control of keys and data.
+## Purpose & Design Goals
+
+### What Problems Does WDK Solve?
+Most wallets are built for a single blockchain or ecosystem (e.g., Ethereum, Solana, Bitcoin).
+
+This creates major challenges for developers who want to support multiple networks in one product:
+
+- Each network requires its own SDK or integration.  
+- Functions and methods vary across chains, making development inconsistent.  
+- Developers spend time re-learning patterns and maintaining fragmented codebases.  
+
+WDK removes these barriers by providing a **consistent SDK** that abstracts away blockchain differences.
+
+---
+
+### Use Cases
+
+- Build wallets for creators, communities, or DAOs
+- Integrate wallet functions into DeFi, payments, gaming, or tipping apps
+- Develop cross-platform wallet experiences (React Native, Electron, Web)
+
+---
+
+### Design Philosophy
+WDK is guided by three core principles:
+
+- **Consistency** – Unified interface and API patterns across all supported blockchains.
+- **Non-Custodial by Design** – users always control their keys; WDK never stores or manages them.  
+- **User Experience First** – support for Account Abstraction, gasless/gasfree transactions, and Paymaster integration to remove the friction of handling gas tokens.  
+
+---
+
+### Why Not Just Use Individual SDKs?
+Compared to ad hoc integrations or single-network SDKs, WDK offers:
+
+- **Faster Development** – single API instead of learning multiple SDKs.  
+- **Easier Maintenance** – one codebase instead of managing multiple integrations.  
+- **Modular Architecture** – add protocols and blockchains without redesign.  
+- **Production Ready** – built-in security, error handling, and best practices.  
+
+WDK helps developers build faster, maintain less, and deliver better experiences.
 
 ---
 
@@ -22,26 +63,16 @@ WDK is a **developer-first framework** to create cross-chain wallets that are se
 
 - **Multi-Blockchain Support**: Ethereum, Polygon, Arbitrum, Bitcoin, TON, Spark, Solana
 - **Unified API Layer**: A single interface across chains
-- **Account Abstraction**: Enable gasless transactions & custom fee logic on EVM, TON & Tron
-- **Stateless & Secure**: No secrets or data are stored by WDK
-- **Non-Custodial by Design**: You manage keys; WDK never sees them
+- **Account Abstraction**: Enable gasless transactions & custom fee logic on EVM, TON & TRON
+- **Stateless & Non-Custodial**: No data storage by WDK; developers control all keys and sensitive data
 - **DeFi Ready**: Built-in support for swaps, token transfers, and cross-chain actions
 - **Modular & Extensible**: Add your own chains, tokens, or business logic
 
 ---
 
-## Who is WDK for?
-
-### Developers & Builders
-- Create mobile/web wallets in minutes using a familiar JS/TS interface
-- Integrate advanced features like account abstraction without reinventing the wheel
-
-### Startups & Enterprises
-- Launch wallet products with full ownership of UX, logic, and keys
-- Customize flows like tipping, swapping, buying/selling, and more
-
-### Educators & Innovators
-- Use WDK to prototype, test, and teach wallet development across major blockchains
+### Key Takeaway
+WDK acts as a **bridge, not a custodian**.  
+It unifies access to blockchains and protocols through a modular design, while leaving keys and control entirely in the developer’s hands.  
 
 ---
 
@@ -59,40 +90,6 @@ This guarantees:
 - Flexibility to scale or pivot
 
 ---
-
-## Use Cases
-
-- Build wallets for creators, communities, or DAOs
-- Integrate wallet functions into DeFi, payments, gaming, or tipping apps
-- Develop cross-platform wallet experiences (React Native, Electron, Web)
-
----
-
-## Supported Blockchains
-
-WDK supports a growing set of blockchains. This list is continuously expanding, with **more integrations coming soon**. Chains marked with ⏳ are in active development.
-
-| Chain/Module                                                      | Type             | Supported |
-|-------------------------------------------------------------------|------------------|-----------|
-| [EVM](../wdk-modules/wallet-modules/wallet-evm/overview.md)   | EVM  /  L2       | ✅        |
-| [EVM ERC-4337](../wdk-modules/wallet-modules/wallet-evm-erc-4337/overview.md)       | EVM Gasless      | ✅        |
-| [Bitcoin](../wdk-modules/wallet-modules/wallet-btc/overview.md)                     | Native           | ✅        |
-| [TON](../wdk-modules/wallet-modules/wallet-ton/overview.md)                         | Non-EVM          | ✅        |
-| [TON Gasless](../wdk-modules/wallet-modules/wallet-ton-gasless/overview.md)         | TON Gasless      | ✅        |
-| [Spark](../wdk-modules/wallet-modules/wallet-spark/overview.md)                     | *                | ✅        |
-| [Solana](../wdk-modules/wallet-modules/wallet-solana/overview.md)                   | Non-EVM          | ✅        |
-| [TRON](../wdk-modules/wallet-modules/wallet-tron/overview.md)                       | Non-EVM          | ✅        |
-| [TRON Gasfree](../wdk-modules/wallet-modules/wallet-tron-gasfree/overview.md)       | TRON Gasfree     | ✅        |
-| [Ark](https://github.com/tetherto/wdk-wallet-ark)    | *    | ⏳        |
-
----
-
-## Completely non custodial
-
-WDK never stores or transmits secrets. Developers are responsible for key storage using secure techniques like OS keychain, HSMs, or hardware wallets. All operations are performed in-memory.
-
----
-
 ## Open Source Vision
 
 We are committed to making WDK fully open-source in 2025. Join us now to shape its roadmap and be part of a growing ecosystem of developers creating the next generation of crypto wallets.

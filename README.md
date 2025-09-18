@@ -29,11 +29,12 @@ WDK isn’t just another wallet SDK:
 
 ---
 
-## Who Should Use WDK
+## Who is WDK for?
 
-- **New developers**: Quickly set up a wallet and explore core functionalities.
-- **Experienced engineers**: Integrate our SDK to build **custom integrations** with advanced features.  
-- **Beta partners**: Get early access, help development with feedback, and experiment with features before public release.
+- **New developers**: Create mobile/web wallets in minutes using a familiar JS/TS interface
+- **Experienced engineers**: Integrate advanced features like account abstraction without reinventing the wheel. Customize flows like tipping, swapping, buying/selling, and more.
+- **Startups & Enterprises**:Launch wallet products with full ownership of UX, logic, and keys.
+- **Educators & Innovators**:Use WDK to prototype, test, and teach wallet development across major blockchains
 
 ---
 
@@ -65,14 +66,14 @@ Next, depending on your experience and goals:
 
 ## Key Resources
 
-- **WDK Manager**: [Core Module](./wdk-modules/wallet-modules/wdk-core/overview.md)
+- **WDK Manager**: [Core Module](./wdk-modules/wallet-modules/wdk-core/overview.md)  
 - **Core Concepts**: [Concepts](resources/concepts.md) – wallets, accounts, transactions  
 - **Production Readiness**: [Preparing for Production](documentation/preparing-for-production.md) – security & scaling best practices  
 - **Transaction History**: [Indexer Overview](documentation/indexer-overview.md) – history setup & queries  
 - **Secret Key Manager**: [Secret Manager](wdk-modules/wallet-modules/wdk-core/overview.md) – encrypted key storage, sync, recovery  
 - **Paymaster**: [Paymaster Guide](wdk-modules/wallet-modules/wallet-evm-erc-4337/guides.md) – gasless tx, sponsorships, fee management  
 - **Examples & Templates**: Ready-to-use wallet examples for fast integration  
-- **Runtimes**: [Compatibility](./documentation/using-bare-runtime.md) – Node & Bare Runtimes
+- **Runtimes**: [Compatibility](./documentation/using-bare-runtime.md) – Node & Bare 
 
 ---
 
@@ -96,3 +97,21 @@ As a beta partner, you get early access to WDK and **help shape its future**. In
 Your input is invaluable to making WDK the most developer-friendly wallet SDK.
 
 ---
+
+## Supported Blockchains
+
+WDK supports a growing set of blockchains. This list is continuously expanding, with **more integrations coming soon**. Chains marked with ⏳ are in active development.
+
+| Chain/Module                                                      | Type             | Supported |
+|-------------------------------------------------------------------|------------------|-----------|
+| [EVM](../wdk-modules/wallet-modules/wallet-evm/overview.md)   | EVM  /  L2       | ✅        |
+| [EVM ERC-4337](../wdk-modules/wallet-modules/wallet-evm-erc-4337/overview.md)       | EVM Gasless      | ✅        |
+| [Bitcoin](../wdk-modules/wallet-modules/wallet-btc/overview.md)                     | Native           | ✅        |
+| [TON](../wdk-modules/wallet-modules/wallet-ton/overview.md)                         | Non-EVM          | ✅        |
+| [TON Gasless](../wdk-modules/wallet-modules/wallet-ton-gasless/overview.md)         | TON Gasless      | ✅        |
+| [Spark](../wdk-modules/wallet-modules/wallet-spark/overview.md)                     | *                | ✅        |
+| [Solana](../wdk-modules/wallet-modules/wallet-solana/overview.md)                   | Non-EVM          | ✅        |
+| [TRON](../wdk-modules/wallet-modules/wallet-tron/overview.md)                       | Non-EVM          | ✅        |
+| [TRON Gasfree](../wdk-modules/wallet-modules/wallet-tron-gasfree/overview.md)       | TRON Gasfree     | ✅        |
+| [Ark](https://github.com/tetherto/wdk-wallet-ark)    | *    | ⏳        |
+
