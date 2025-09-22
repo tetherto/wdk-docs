@@ -3,7 +3,7 @@ title: Architecture
 description: WDK is a collection of modules that work together to build wallets. It includes wallet SDKs, protocol SDKs for DeFi features, WDK Core for management, Secret Manager and Indexer modules for data queries. Together, they help developers create complete, flexible, non-custodial wallet solutions.
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-09-15
-icon:    
+icon: building
 ---
 
 
