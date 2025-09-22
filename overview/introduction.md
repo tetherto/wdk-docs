@@ -1,6 +1,6 @@
 ---
 title: Introduction to Wallet Development Kit (WDK)
-description: Build secure, multi-chain wallets with WDK's unified API and non-custodial architecture.
+description: Build complete wallet solutions with WDK's modular ecosystem - wallet modules, protocols, indexer, and secret manager working together seamlessly. Much more than just an SDK. 
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-09-18
 icon: lightbulb  
@@ -9,24 +9,34 @@ icon: lightbulb
 
 ## Introduction
 
-The **Wallet Development Kit (WDK)** is Tether's open-source solution for building secure, non-custodial wallets across multiple blockchains. 
+The **Wallet Development Kit (WDK)** is Tether's open-source ecosystem for building complete wallet solutions across multiple blockchains. Much more than just an SDK, WDK provides a modular collection of components that work together seamlessly.
 
-This introduction covers WDK's core concepts, design philosophy, and key capabilities. For a structured learning path, see our [Recommended Reading Order](reading-order.md) to guide you through the complete documentation.
+This introduction covers WDK's core concepts, design philosophy, and key capabilities. To understand how all components fit together, see our [Architecture Overview](architecture.md). For a structured learning path, see our [Recommended Reading Order](#recommended-reading-order) to guide you through the complete documentation.
 
 ---
 
 ## Purpose & Design Goals
 
 ### What Problems Does WDK Solve?
-Most wallets are built for a single blockchain or ecosystem (e.g., Ethereum, Solana, Bitcoin).
 
-This creates major challenges for developers who want to support multiple networks in one product:
+Building a complete wallet requires many different parts working together:
 
-- Each network requires its own SDK or integration.  
-- Functions and methods vary across chains, making development inconsistent.  
-- Developers spend time re-learning patterns and maintaining fragmented codebases.  
+- **Wallet Core** - Create accounts, send transactions, check balances
+- **Multi-Chain Support** - Work with different blockchains (Ethereum, Bitcoin, TON, etc.)
+- **DeFi Features** - Swap tokens, bridge between chains, lend/borrow
+- **Data Access** - Get transaction history and real-time balances
+- **Security** - Safely manage user keys and seed phrases
+- **Account Abstraction** - Enable gasless transactions and smart accounts
 
-WDK removes these barriers by providing a **consistent SDK** that abstracts away blockchain differences.
+Most developers face major challenges:
+
+- Each blockchain needs its own SDK with different APIs
+- DeFi features require separate integrations for each protocol
+- Data access needs custom indexer solutions
+- Security requires complex key management systems
+- Everything works differently across chains
+
+WDK solves this by providing **all the pieces** in one modular system that works together seamlessly.
 
 ---
 
@@ -78,20 +88,60 @@ It unifies access to blockchains and protocols through a modular design, while l
 
 ## How It Works
 
+WDK brings together different parts that work as one system to build complete wallet solutions. Each part has its own job, but they all connect to give you everything you need.
+
+### The Complete Picture
+
+**Wallet Modules** handle the core wallet functions - creating accounts, sending money, and checking balances across different blockchains.
+
+**Protocol Modules** add advanced features like swapping tokens, moving money between chains, and lending.
+
+**Indexer API** gives you fast access to blockchain data without running your own node.
+
+**Secret Manager** keeps your users' keys safe in memory with strong protection.
+
+**WDK Core** ties everything together with one simple interface.
+
+### Working Together
+
+All these parts are designed to work together perfectly. You can use any combination you need:
+
+- Use just wallet modules for basic wallet functions
+- Add protocol modules for DeFi features  
+- Include the indexer for better data access
+- Use secret manager for secure key handling
+- Mix and match based on what your app needs
+
+### Developer Freedom
+
 WDK is **stateless**: it processes requests but stores nothing. All sensitive data (keys, sessions, configs) stays in your hands.
 
 ```
-[Your App] → [WDK API] → [Ethereum | Bitcoin | TON | Spark | Tron | Solana]
+[Your App] → [WDK Core] → [Wallet Modules + Protocol Modules + Indexer + Secret Manager] → [Blockchains]
 ```
 
-This guarantees:
+This gives you:
 - No custodial risk
-- Full user control
-- Flexibility to scale or pivot
+- Full control over your app
+- Freedom to build what you want
+- Easy to add or remove features
 
 ---
 ## Open Source Vision
 
 We are committed to making WDK fully open-source in 2025. Join us now to shape its roadmap and be part of a growing ecosystem of developers creating the next generation of crypto wallets.
+
+---
+
+## Recommended Reading Order
+
+To get the most out of WDK, we suggest reading the documentation in the following order:
+
+1. **Introduction** – high-level purpose and orientation  
+2. **Architecture** – how all components work together  
+3. **Getting Started** – prerequisites and [Quick Start](../getting-started/quick-start.md) guide  
+4. **Modules** – explore [Wallet Modules](../wdk-modules/overview.md) and Protocol Modules (Swaps, Bridges, Lending)  
+5. **Production** – best practices in [Preparing for Production](../documentation/preparing-for-production.md)  
+6. **Advanced Resources (Optional)** – Indexer, Secret Manager, and additional integrations  
 
 ---
