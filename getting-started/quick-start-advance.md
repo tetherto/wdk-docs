@@ -491,20 +491,6 @@ const wdk = new WdkManager(seedPhrase)
     provider: 'https://blockstream.info/api'
   })
 
-// Register protocols (example with placeholder protocols)
-console.log('🔧 Registering protocols...')
-
-// Register swap protocol for Ethereum
-// wdk.registerProtocol('ethereum', 'paraswap', ParaswapProtocolEvm, {
-//   apiKey: 'YOUR_PARASWAP_API_KEY'
-// })
-
-// Register bridge protocol for TRON
-// wdk.registerProtocol('tron', 'usdt0', Usdt0ProtocolTron, {
-//   tonApiKey: 'YOUR_TON_API_KEY'
-// })
-
-console.log('✅ Protocols registered!')
 
 // Get accounts with protocol support
 const ethAccount = await wdk.getAccount('ethereum', 0)
@@ -512,34 +498,6 @@ const tronAccount = await wdk.getAccount('tron', 0)
 
 console.log('\n🔄 Using protocols...')
 
-// Use swap protocol (if registered)
-try {
-  // const paraswap = ethAccount.getSwapProtocol('paraswap')
-  // const swapResult = await paraswap.swap({
-  //   tokenIn: '0x...',
-  //   tokenOut: '0x...',
-  //   amountIn: 1000000,
-  //   slippage: 0.01
-  // })
-  // console.log('✅ Swap successful:', swapResult.hash)
-  console.log('💡 Swap protocol not registered in this example')
-} catch (error) {
-  console.log('❌ Swap failed:', error.message)
-}
-
-// Use bridge protocol (if registered)
-try {
-  // const usdt0 = tronAccount.getBridgeProtocol('usdt0')
-  // const bridgeResult = await usdt0.bridge({
-  //   targetChain: 'ethereum',
-  //   recipient: '0x...',
-  //   amount: 1000000
-  // })
-  // console.log('✅ Bridge successful:', bridgeResult.hash)
-  console.log('💡 Bridge protocol not registered in this example')
-} catch (error) {
-  console.log('❌ Bridge failed:', error.message)
-}
 ```
 
 Run it:
@@ -659,11 +617,6 @@ async function main() {
         console.log(`   ❌ ${chain.toUpperCase()} transaction failed: ${error.message}`)
       }
     }
-    
-    // Step 8: Register protocols (example)
-    console.log('\n🔧 Protocol registration example...')
-    console.log('   💡 In a real application, you would register swap, bridge, and lending protocols here')
-    console.log('   💡 Example: wdk.registerProtocol("ethereum", "paraswap", ParaswapProtocolEvm, config)')
     
     // Step 9: Clean up
     console.log('\n🧹 Cleaning up...')
