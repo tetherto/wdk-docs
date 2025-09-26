@@ -12,12 +12,12 @@ icon: code
 
 | Class | Description | Methods |
 |-------|-------------|---------|
-| [Usdt0ProtocolEvm](#usdt0protocolevm) | Main class for bridging USDT0 tokens across blockchains. Extends `BridgeProtocol` from `@wdk/wallet/protocols`. | [Constructor](#constructor), [Methods](#methods) |
+| [Usdt0ProtocolEvm](#usdt0protocolevm) | Main class for bridging USDT0 tokens across blockchains. Extends `BridgeProtocol` from `@tetherto/wdk-wallet/protocols`. | [Constructor](#constructor), [Methods](#methods) |
 
 ## Usdt0ProtocolEvm
 
 The main class for bridging USDT0 tokens across different blockchains using the LayerZero protocol.  
-Extends `BridgeProtocol` from `@wdk/wallet/protocols`.
+Extends `BridgeProtocol` from `@tetherto/wdk-wallet/protocols`.
 
 ### Constructor
 
