@@ -15,8 +15,8 @@ DeFi swap functionality for token exchanges across different DEXs:
 
 | Module | Blockchain | Status | Documentation | GitHub |
 |--------|------------|--------|---------------|---------|
-| `@wdk/protocol-swap-paraswap-evm` | EVM | In progress | [Documentation](./wdk-protocol-swap-paraswap-evm/overview.md) | [Repository](https://github.com/tetherto/wdk-protocol-swap-paraswap-evm) |
-| `@wdk/protocol-swap-dedust-ton` | TON | In progress | [Documentation](./wdk-protocol-swap-stonfi-ton/overview.md) | [Repository](https://github.com/tetherto/wdk-protocol-swap-dedust-ton) |
+| `@tetherto/wdk-protocol-swap-paraswap-evm` | EVM | In progress | [Documentation](./wdk-protocol-swap-paraswap-evm/overview.md) | [Repository](https://github.com/tetherto/wdk-protocol-swap-paraswap-evm) |
+| `@tetherto/wdk-protocol-swap-dedust-ton` | TON | In progress | [Documentation](./wdk-protocol-swap-stonfi-ton/overview.md) | [Repository](https://github.com/tetherto/wdk-protocol-swap-dedust-ton) |
 
 ## Next steps
 
