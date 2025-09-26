@@ -1,6 +1,6 @@
 ---
 title: Wallet TON Guides
-description: Installation, quick start, and usage examples for @wdk/wallet-ton
+description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-ton
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
 icon: book-open
@@ -10,13 +10,13 @@ icon: book-open
 
 ## Installation
 
-To install the `@wdk/wallet-ton` package, follow these instructions:
+To install the `@tetherto/wdk-wallet-ton` package, follow these instructions:
 
 ### Public Release
 Once the package is publicly available, you can install it using npm:
 
 ```bash
-npm install @wdk/wallet-ton
+npm install @tetherto/wdk-wallet-ton
 ```
 
 ### Private Access
@@ -31,14 +31,14 @@ After installation, ensure your package.json includes the dependency correctly:
 ```json
 "dependencies": {
   // ... other dependencies ...
-  "@wdk/wallet-ton": "git+ssh://git@github.com:tetherto/wdk-wallet-ton.git#develop"
+  "@tetherto/wdk-wallet-ton": "git+ssh://git@github.com:tetherto/wdk-wallet-ton.git#develop"
   // ... other dependencies ...
 }
 ```
 
 ## Quick Start
 
-### Importing from `@wdk/wallet-ton`
+### Importing from `@tetherto/wdk-wallet-ton`
 
 1. WalletManagerTon: Main class for managing wallets
 2. WalletAccountTon: Use this for full access accounts
@@ -47,7 +47,7 @@ After installation, ensure your package.json includes the dependency correctly:
 ### Creating a New Wallet
 
 ```javascript
-import WalletManagerTon, { WalletAccountTon, WalletAccountReadOnlyTon } from '@wdk/wallet-ton'
+import WalletManagerTon, { WalletAccountTon, WalletAccountReadOnlyTon } from '@tetherto/wdk-wallet-ton'
 
 // Use a BIP-39 seed phrase (replace with your own secure phrase)
 const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about' // Replace with actual seed generation
@@ -76,7 +76,7 @@ const readOnlyAccount = await account.toReadOnlyAccount()
 ### Managing Multiple Accounts
 
 ```javascript
-import WalletManagerTon from '@wdk/wallet-ton'
+import WalletManagerTon from '@tetherto/wdk-wallet-ton'
 
 // Assume wallet is already created
 // Get the first account (index 0)
@@ -101,7 +101,7 @@ console.log('Custom account address:', customAddress)
 For accounts where you have the seed phrase and full access:
 
 ```javascript
-import WalletManagerTon from '@wdk/wallet-ton'
+import WalletManagerTon from '@tetherto/wdk-wallet-ton'
 
 // Assume wallet and account are already created
 // Get native TON balance
@@ -118,7 +118,7 @@ console.log('Jetton token balance:', jettonBalance);
 For addresses where you don't have the seed phrase:
 
 ```javascript
-import { WalletAccountReadOnlyTon } from '@wdk/wallet-ton'
+import { WalletAccountReadOnlyTon } from '@tetherto/wdk-wallet-ton'
 
 // Use the public key directly
 const publicKey = '...'; // Replace with the actual public key
@@ -228,7 +228,7 @@ wallet.dispose()
 ### Complete Wallet Setup
 
 ```javascript
-import WalletManagerTon from '@wdk/wallet-ton'
+import WalletManagerTon from '@tetherto/wdk-wallet-ton'
 
 async function setupWallet() {
   try {

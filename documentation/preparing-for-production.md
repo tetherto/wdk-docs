@@ -119,8 +119,8 @@ For more details and usage examples, see the [official README](https://github.co
 ## Example Code
 
 ```js
-import WdkSecretManager, { wdkSaltGenerator } from '@wdk/wdk-secret-manager-internal';
-import WalletManagerEvm from '@wdk/wallet-evm';
+import WdkSecretManager, { wdkSaltGenerator } from '@tetherto/wdk-wdk-secret-manager-internal';
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm';
 
 // 1. Retrieve user passkey, salt, and encrypted mnemonic (implement these securely in your app)
 const passkey = getUserPasskey(); // e.g., from device biometrics

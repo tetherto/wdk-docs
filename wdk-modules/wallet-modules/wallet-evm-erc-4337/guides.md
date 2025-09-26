@@ -1,6 +1,6 @@
 ---
 title: Wallet EVM ERC-4337 Guides
-description: Installation, quick start, and usage examples for @wdk/wallet-evm-erc-4337
+description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-evm-erc-4337
 author: Matteo Giardino
 lastReviewed: 2025-06-26
 icon: book-open
@@ -10,14 +10,14 @@ icon: book-open
 
 ## Installation
 
-To install the `@wdk/wallet-evm-erc-4337` package, follow these instructions:
+To install the `@tetherto/wdk-wallet-evm-erc-4337` package, follow these instructions:
 
 ### Public Release
 
 Once the package is publicly available, you can install it using npm:
 
 ```bash
-npm install @wdk/wallet-evm-erc-4337
+npm install @tetherto/wdk-wallet-evm-erc-4337
 ```
 
 ### Private Access
@@ -33,14 +33,14 @@ After installation, ensure your package.json includes the dependency correctly:
 ```json
 "dependencies": {
   // ... other dependencies ...
-  "@wdk/wallet-evm-erc-4337": "git+ssh://git@github.com:tetherto/wdk-wallet-evm-erc-4337.git#develop"
+  "@tetherto/wdk-wallet-evm-erc-4337": "git+ssh://git@github.com:tetherto/wdk-wallet-evm-erc-4337.git#develop"
   // ... other dependencies ...
 }
 ```
 
 ## Quick Start
 
-### Importing from `@wdk/wallet-evm-erc-4337`
+### Importing from `@tetherto/wdk-wallet-evm-erc-4337`
 
 1. WalletManagerEvmErc4337: Main class for managing ERC-4337 wallets
 2. WalletAccountEvmErc4337: Use this for full access accounts
@@ -52,7 +52,7 @@ After installation, ensure your package.json includes the dependency correctly:
 import WalletManagerEvmErc4337, { 
   WalletAccountEvmErc4337, 
   WalletAccountReadOnlyEvmErc4337 
-} from '@wdk/wallet-evm-erc-4337'
+} from '@tetherto/wdk-wallet-evm-erc-4337'
 
 // Use a BIP-39 seed phrase (replace with your own secure phrase)
 const seedPhrase = 'your twelve word seed phrase here' // Replace with actual seed generation
@@ -94,7 +94,7 @@ const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337('0x...', { // Smart 
 ### Managing Multiple Accounts
 
 ```javascript
-import WalletManagerEvmErc4337 from '@wdk/wallet-evm-erc-4337'
+import WalletManagerEvmErc4337 from '@tetherto/wdk-wallet-evm-erc-4337'
 
 // Get the first account (index 0)
 const account = await wallet.getAccount(0)
@@ -119,7 +119,7 @@ console.log('Custom account address:', customAddress)
 For accounts where you have the seed phrase and full access:
 
 ```javascript
-import WalletManagerEvmErc4337 from '@wdk/wallet-evm-erc-4337'
+import WalletManagerEvmErc4337 from '@tetherto/wdk-wallet-evm-erc-4337'
 
 // Assume wallet and account are already created
 // Get native token balance (in wei)
@@ -144,7 +144,7 @@ console.log('Paymaster token balance:', paymasterBalance, 'units')
 For addresses where you don't have the seed phrase:
 
 ```javascript
-import { WalletAccountReadOnlyEvmErc4337 } from '@wdk/wallet-evm-erc-4337'
+import { WalletAccountReadOnlyEvmErc4337 } from '@tetherto/wdk-wallet-evm-erc-4337'
 
 // Create a read-only account with complete ERC-4337 configuration
 const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337('0x...', { // Smart contract wallet address
@@ -270,7 +270,7 @@ wallet.dispose()
 ### Complete Wallet Setup
 
 ```javascript
-import WalletManagerEvmErc4337 from '@wdk/wallet-evm-erc-4337'
+import WalletManagerEvmErc4337 from '@tetherto/wdk-wallet-evm-erc-4337'
 
 async function setupErc4337Wallet() {
   // Use a BIP-39 seed phrase (replace with your own secure phrase)

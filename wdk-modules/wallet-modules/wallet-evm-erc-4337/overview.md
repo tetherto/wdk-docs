@@ -1,11 +1,11 @@
 ---
 title: Wallet EVM ERC-4337 Overview
-description: Overview of the @wdk/wallet-evm-erc-4337 module
+description: Overview of the @tetherto/wdk-wallet-evm-erc-4337 module
 author: Matteo Giardino
 lastReviewed: 2025-06-26
 ---
 
-# @wdk/wallet-evm-erc-4337 Overview
+# @tetherto/wdk-wallet-evm-erc-4337 Overview
 
 A simple and secure package to manage ERC-4337 compliant wallets for EVM-compatible blockchains. This package provides a clean API for creating, managing, and interacting with account abstraction wallets using BIP-39 seed phrases and EVM-specific derivation paths.
 

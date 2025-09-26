@@ -1,11 +1,11 @@
 ---
 title: Wallet TON Gasless Overview
-description: Overview of the @wdk/wallet-ton-gasless module
+description: Overview of the @tetherto/wdk-wallet-ton-gasless module
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
 ---
 
-# @wdk/wallet-ton-gasless Overview
+# @tetherto/wdk-wallet-ton-gasless Overview
 
 A simple and secure package to manage gasless transactions on the TON blockchain. This package provides a clean API for creating, managing, and interacting with TON wallets using BIP-39 seed phrases and TON-specific derivation paths, with support for gasless transactions through a paymaster system.
 

@@ -1,11 +1,11 @@
 ---
 title: Wallet Solana Overview
-description: Overview of the @wdk/wallet-solana module
+description: Overview of the @tetherto/wdk-wallet-solana module
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-09-01
 ---
 
-# @wdk/wallet-solana Overview
+# @tetherto/wdk-wallet-solana Overview
 
 A simple and secure package to manage BIP-44 wallets for the Solana blockchain. This package provides a clean API for creating, managing, and interacting with Solana wallets using BIP-39 seed phrases and Solana-specific derivation paths.
 

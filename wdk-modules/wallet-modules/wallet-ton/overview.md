@@ -1,11 +1,11 @@
 ---
 title: Wallet TON Overview
-description: Overview of the @wdk/wallet-ton module
+description: Overview of the @tetherto/wdk-wallet-ton module
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
 ---
 
-# @wdk/wallet-ton Overview
+# @tetherto/wdk-wallet-ton Overview
 
 A simple and secure package to manage BIP-44 wallets for the TON blockchain. This package provides a clean API for creating, managing, and interacting with TON wallets using BIP-39 seed phrases and TON-specific derivation paths.
 

@@ -1,6 +1,6 @@
 ---
 title: Wallet Solana Configuration
-description: Configuration options and settings for @wdk/wallet-solana
+description: Configuration options and settings for @tetherto/wdk-wallet-solana
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-09-01
 icon: gear
@@ -13,7 +13,7 @@ icon: gear
 The `WalletManagerSolana` accepts an optional configuration object that defines how the wallet interacts with the Solana blockchain:
 
 ```javascript
-import WalletManagerSolana from '@wdk/wallet-solana'
+import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 
 const config = {
   rpcUrl: 'https://api.mainnet-beta.solana.com', // Solana RPC endpoint
@@ -27,7 +27,7 @@ const wallet = new WalletManagerSolana(seedPhrase, config)
 ## Account Configuration
 
 ```javascript
-import { WalletAccountSolana } from '@wdk/wallet-solana'
+import { WalletAccountSolana } from '@tetherto/wdk-wallet-solana'
 
 const accountConfig = {
   rpcUrl: 'https://api.mainnet-beta.solana.com',
@@ -100,7 +100,7 @@ const config = {
 ## Complete Configuration Example
 
 ```javascript
-import WalletManagerSolana from '@wdk/wallet-solana'
+import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 
 const config = {
   // Required for most operations

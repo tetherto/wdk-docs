@@ -1,6 +1,6 @@
 ---
 title: Wallet Tron Gas-Free Configuration
-description: Configuration options and settings for @wdk/wallet-tron-gasfree
+description: Configuration options and settings for @tetherto/wdk-wallet-tron-gasfree
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-08-31
 icon: gear
@@ -11,7 +11,7 @@ icon: gear
 ## Wallet Configuration
 
 ```javascript
-import WalletManagerTronGasfree from '@wdk/wallet-tron-gasfree'
+import WalletManagerTronGasfree from '@tetherto/wdk-wallet-tron-gasfree'
 import TronWeb from 'tronweb'
 
 // Option 1: Using RPC URL
@@ -49,7 +49,7 @@ const config2 = {
 Both `WalletAccountTronGasfree` and `WalletAccountReadOnlyTronGasfree` share similar configuration requirements:
 
 ```javascript
-import { WalletAccountTronGasfree, WalletAccountReadOnlyTronGasfree } from '@wdk/wallet-tron-gasfree'
+import { WalletAccountTronGasfree, WalletAccountReadOnlyTronGasfree } from '@tetherto/wdk-wallet-tron-gasfree'
 
 // Full access account
 const account = new WalletAccountTronGasfree(

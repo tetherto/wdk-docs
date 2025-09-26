@@ -1,6 +1,6 @@
 ---
 title: Wallet EVM ERC-4337 API Reference
-description: Complete API documentation for @wdk/wallet-evm-erc-4337
+description: Complete API documentation for @tetherto/wdk-wallet-evm-erc-4337
 author: Matteo Giardino
 lastReviewed: 2025-08-31
 icon: code
@@ -12,14 +12,14 @@ icon: code
 
 | Class | Description | Methods |
 |-------|-------------|---------|
-| [WalletManagerEvmErc4337](#walletmanagerevmerc4337) | Main class for managing ERC-4337 EVM wallets. Extends `WalletManager` from `@wdk/wallet`. | [Constructor](#constructor), [Methods](#methods) |
+| [WalletManagerEvmErc4337](#walletmanagerevmerc4337) | Main class for managing ERC-4337 EVM wallets. Extends `WalletManager` from `@tetherto/wdk-wallet`. | [Constructor](#constructor), [Methods](#methods) |
 | [WalletAccountEvmErc4337](#walletaccountevmerc4337) | Individual ERC-4337 wallet account implementation. Extends `WalletAccountReadOnlyEvmErc4337` and implements `IWalletAccount`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties) |
-| [WalletAccountReadOnlyEvmErc4337](#walletaccountreadonlyevmerc4337) | Read-only ERC-4337 wallet account. Extends `WalletAccountReadOnly` from `@wdk/wallet`. | [Constructor](#constructor-2), [Methods](#methods-2) |
+| [WalletAccountReadOnlyEvmErc4337](#walletaccountreadonlyevmerc4337) | Read-only ERC-4337 wallet account. Extends `WalletAccountReadOnly` from `@tetherto/wdk-wallet`. | [Constructor](#constructor-2), [Methods](#methods-2) |
 
 
 ## WalletManagerEvmErc4337
 
-The main class for managing ERC-4337 EVM wallets. Extends `WalletManager` from `@wdk/wallet`.
+The main class for managing ERC-4337 EVM wallets. Extends `WalletManager` from `@tetherto/wdk-wallet`.
 
 ### Fee Rate Constants
 

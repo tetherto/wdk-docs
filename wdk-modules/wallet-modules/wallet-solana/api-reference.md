@@ -1,6 +1,6 @@
 ---
 title: Wallet Solana API Reference
-description: Complete API documentation for @wdk/wallet-solana
+description: Complete API documentation for @tetherto/wdk-wallet-solana
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
 icon: code
@@ -12,14 +12,14 @@ icon: code
 
 | Class | Description | Methods |
 |-------|-------------|---------|
-| [WalletManagerSolana](#walletmanagersolana) | Main class for managing Solana wallets. Extends `WalletManager` from `@wdk/wallet`. | [Constructor](#constructor), [Methods](#methods) |
+| [WalletManagerSolana](#walletmanagersolana) | Main class for managing Solana wallets. Extends `WalletManager` from `@tetherto/wdk-wallet`. | [Constructor](#constructor), [Methods](#methods) |
 | [WalletAccountSolana](#walletaccountsolana) | Individual Solana wallet account implementation. Extends `WalletAccountReadOnlySolana` and implements `IWalletAccount`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties) |
 | [WalletAccountReadOnlySolana](#walletaccountreadonlysolana) | Read-only Solana wallet account. | [Constructor](#constructor-2), [Methods](#methods-2) |
 
 ### WalletManagerSolana
 
 The main class for managing Solana wallets.  
-Extends `WalletManager` from `@wdk/wallet`.
+Extends `WalletManager` from `@tetherto/wdk-wallet`.
 
 #### Constructor
 

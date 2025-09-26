@@ -1,6 +1,6 @@
 ---
 title: Wallet Tron Gas-Free Guides
-description: Installation, quick start, and usage examples for @wdk/wallet-tron-gasfree
+description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-tron-gasfree
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
 icon: book-open
@@ -17,7 +17,7 @@ To install the `wdk-wallet-tron-gasfree` package, follow these instructions:
 Once the package is publicly available, you can install it using npm:
 
 ```bash
-npm install @wdk/wallet-tron-gasfree
+npm install @tetherto/wdk-wallet-tron-gasfree
 ```
 
 ### Private Access
@@ -33,7 +33,7 @@ After installation, ensure your package.json includes the dependency correctly:
 ```json
 "dependencies": {
   // ... other dependencies ...
-  "@wdk/wallet-tron-gasfree": "git+ssh://git@github.com:tetherto/wdk-wallet-tron-gasfree.git#develop"
+  "@tetherto/wdk-wallet-tron-gasfree": "git+ssh://git@github.com:tetherto/wdk-wallet-tron-gasfree.git#develop"
   // ... other dependencies ...
 }
 ```
@@ -52,7 +52,7 @@ After installation, ensure your package.json includes the dependency correctly:
 import WalletManagerTronGasfree, { 
   WalletAccountTronGasfree, 
   WalletAccountReadOnlyTronGasfree 
-} from '@wdk/wallet-tron-gasfree'
+} from '@tetherto/wdk-wallet-tron-gasfree'
 
 // Use a BIP-39 seed phrase (replace with your own secure phrase)
 const seedPhrase = 'your twelve word seed phrase here' // Replace with actual seed generation
@@ -84,7 +84,7 @@ const readOnlyAccount = await account.toReadOnlyAccount()
 ### Managing Multiple Accounts
 
 ```javascript
-import WalletManagerTronGasfree from '@wdk/wallet-tron-gasfree'
+import WalletManagerTronGasfree from '@tetherto/wdk-wallet-tron-gasfree'
 
 // Assume wallet is already created
 // Get the first gas-free account (index 0)
@@ -108,7 +108,7 @@ console.log('Custom account gas-free address:', customAddress)
 For accounts where you have the seed phrase and full access:
 
 ```javascript
-import WalletManagerTronGasfree from '@wdk/wallet-tron-gasfree'
+import WalletManagerTronGasfree from '@tetherto/wdk-wallet-tron-gasfree'
 
 // Assume wallet and account are already created
 // Get native TRX balance (in sun)
@@ -125,7 +125,7 @@ console.log('TRC20 token balance:', trc20Balance);
 For addresses where you don't have the seed phrase:
 
 ```javascript
-import { WalletAccountReadOnlyTronGasfree } from '@wdk/wallet-tron-gasfree'
+import { WalletAccountReadOnlyTronGasfree } from '@tetherto/wdk-wallet-tron-gasfree'
 
 // Use the address directly
 const address = 'T...'; // Replace with the actual Tron address
@@ -211,7 +211,7 @@ wallet.dispose()
 ### Complete Gas-Free Wallet Setup
 
 ```javascript
-import WalletManagerTronGasfree from '@wdk/wallet-tron-gasfree'
+import WalletManagerTronGasfree from '@tetherto/wdk-wallet-tron-gasfree'
 
 async function setupWallet() {
   // Use a BIP-39 seed phrase

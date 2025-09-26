@@ -1,6 +1,6 @@
 ---
 title: Wallet BTC Guides
-description: Installation, quick start, and usage examples for @wdk/wallet-btc
+description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-btc
 author: Matteo Giardino
 lastReviewed: 2025-06-26
 icon: book-open
@@ -10,14 +10,14 @@ icon: book-open
 
 ## Installation
 
-To install the `@wdk/wallet-btc` package, follow these instructions:
+To install the `@tetherto/wdk-wallet-btc` package, follow these instructions:
 
 ### Public Release
 
 Once the package is publicly available, you can install it using npm:
 
 ```bash
-npm install @wdk/wallet-btc
+npm install @tetherto/wdk-wallet-btc
 ```
 
 ### Private Access
@@ -33,14 +33,14 @@ After installation, ensure your package.json includes the dependency correctly:
 ```json
 "dependencies": {
   // ... other dependencies ...
-  "@wdk/wallet-btc": "git+ssh://git@github.com:tetherto/wdk-wallet-btc.git#develop"
+  "@tetherto/wdk-wallet-btc": "git+ssh://git@github.com:tetherto/wdk-wallet-btc.git#develop"
   // ... other dependencies ...
 }
 ```
 
 ## Quick Start
 
-### Importing from `@wdk/wallet-btc`
+### Importing from `@tetherto/wdk-wallet-btc`
 
 1. **WalletManagerBtc**: Main class for managing Bitcoin wallets and multiple accounts
 2. **WalletAccountBtc**: Class for individual Bitcoin wallet accounts with full transaction capabilities
@@ -50,7 +50,7 @@ After installation, ensure your package.json includes the dependency correctly:
 ### Creating a New Wallet
 
 ```javascript
-import WalletManagerBtc, { WalletAccountBtc } from '@wdk/wallet-btc'
+import WalletManagerBtc, { WalletAccountBtc } from '@tetherto/wdk-wallet-btc'
 
 // Use a BIP-39 seed phrase (replace with your own secure phrase)
 const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
@@ -77,7 +77,7 @@ While the package defaults to `electrum.blockstream.info` if no host is specifie
 ### Managing Multiple Accounts
 
 ```javascript
-import WalletManagerBtc from '@wdk/wallet-btc'
+import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
 // Assume wallet is already created
 // Get the first account (index 0)
@@ -107,7 +107,7 @@ console.log('Address format: Native SegWit (bech32)')
 #### Account Balance
 
 ```javascript
-import WalletManagerBtc from '@wdk/wallet-btc'
+import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
 // Assume wallet and account are already created
 // Get confirmed balance (returns confirmed balance only)
@@ -288,7 +288,7 @@ console.log('All wallet accounts disposed')
 ### Complete Bitcoin Wallet Setup
 
 ```javascript
-import WalletManagerBtc from '@wdk/wallet-btc'
+import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
 async function setupBitcoinWallet() {
   // Use a BIP-39 seed phrase (replace with your own secure phrase)

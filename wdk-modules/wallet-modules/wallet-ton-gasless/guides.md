@@ -1,6 +1,6 @@
 ---
 title: Wallet TON Gasless Guides
-description: Installation, quick start, and usage examples for @wdk/wallet-ton-gasless
+description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-ton-gasless
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-09-01
 icon: book-open
@@ -10,14 +10,14 @@ icon: book-open
 
 ## Installation
 
-To install the `@wdk/wallet-ton-gasless` package, follow these instructions:
+To install the `@tetherto/wdk-wallet-ton-gasless` package, follow these instructions:
 
 ### Public Release
 
 Once the package is publicly available, you can install it using npm:
 
 ```bash
-npm install @wdk/wallet-to-gasless
+npm install @tetherto/wdk-wallet-to-gasless
 ```
 
 ### Private Access
@@ -32,14 +32,14 @@ After installation, ensure your package.json includes the dependency correctly:
 ```json
 "dependencies": {
   // ... other dependencies ...
-  "@wdk/wallet-ton-gasless": "git+ssh://git@github.com:tetherto/wdk-wallet-ton-gasless.git#develop"
+  "@tetherto/wdk-wallet-ton-gasless": "git+ssh://git@github.com:tetherto/wdk-wallet-ton-gasless.git#develop"
   // ... other dependencies ...
 }
 ```
 
 ## Quick Start
 
-### Importing from `@wdk/wallet-ton-gasless`
+### Importing from `@tetherto/wdk-wallet-ton-gasless`
 
 1. WalletManagerTonGasless: Main class for managing wallets with gasless features
 2. WalletAccountTonGasless: Use this for full access accounts with gasless transactions
@@ -52,7 +52,7 @@ After installation, ensure your package.json includes the dependency correctly:
 import WalletManagerTonGasless, { 
   WalletAccountTonGasless, 
   WalletAccountReadOnlyTonGasless 
-} from '@wdk/wallet-ton-gasless'
+} from '@tetherto/wdk-wallet-ton-gasless'
 
 
 // Use a BIP-39 seed phrase (replace with your own secure phrase)
@@ -85,7 +85,7 @@ const readOnlyAccount = await account.toReadOnlyAccount()
 ### Managing Multiple Accounts
 
 ```javascript
-import WalletManagerTonGasless from '@wdk/wallet-ton-gasless'
+import WalletManagerTonGasless from '@tetherto/wdk-wallet-ton-gasless'
 
 // Assume wallet is already created
 // Get the first account (index 0)
@@ -111,7 +111,7 @@ console.log('Custom account address:', customAddress)
 For accounts where you have the seed phrase and full access:
 
 ```javascript
-import WalletManagerTonGasless from '@wdk/wallet-ton-gasless'
+import WalletManagerTonGasless from '@tetherto/wdk-wallet-ton-gasless'
 
 // Assume wallet and account are already created
 // Get native TON balance (in nanotons)
@@ -133,7 +133,7 @@ console.log('Paymaster Jetton balance:', paymasterBalance)
 For addresses where you don't have the seed phrase:
 
 ```javascript
-import { WalletAccountReadOnlyTonGasless } from '@wdk/wallet-ton-gasless'
+import { WalletAccountReadOnlyTonGasless } from '@tetherto/wdk-wallet-ton-gasless'
 
 // Use the public key directly
 const publicKey = '...'; // Replace with the actual public key
@@ -242,7 +242,7 @@ wallet.dispose()
 ### Complete Wallet Setup
 
 ```javascript
-import WalletManagerTonGasless from '@wdk/wallet-ton-gasless'
+import WalletManagerTonGasless from '@tetherto/wdk-wallet-ton-gasless'
 
 async function setupWallet() {
   try {

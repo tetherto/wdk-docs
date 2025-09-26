@@ -1,6 +1,6 @@
 ---
 title: WDK Core API Reference
-description: Complete API documentation for @wdk/core
+description: Complete API documentation for @tetherto/wdk
 author: Raquel Carrasco
 lastReviewed: 2025-09-11
 icon: code
@@ -12,17 +12,17 @@ icon: code
 
 | Class | Description | Methods |
 |-------|-------------|---------|
-| [WdkManager](#wdkmanager) | Main class for managing wallets across multiple blockchains. Orchestrates wallet managers and protocols. | [Constructor](#constructor), [Methods](#methods) |
+| [WDK](#wdk) | Main class for managing wallets across multiple blockchains. Orchestrates wallet managers and protocols. | [Constructor](#constructor), [Methods](#methods) |
 | [IWalletAccountWithProtocols](#iwalletaccountwithprotocols) | Extended wallet account interface that supports protocol registration and access. Extends `IWalletAccount`. | [Methods](#methods-1) |
 
-## WdkManager
+## WDK
 
 The main class for managing wallets across multiple blockchains. This class serves as an orchestrator that allows you to register different wallet managers and protocols, providing a unified interface for multi-chain operations.
 
 ### Constructor
 
 ```javascript
-new WdkManager(seed)
+new WDK(seed)
 ```
 
 **Parameters:**
@@ -30,23 +30,23 @@ new WdkManager(seed)
 
 **Example:**
 ```javascript
-import WdkManager from '@wdk/core'
+import WDK from '@tetherto/wdk'
 
 // With seed phrase
-const wdk = new WdkManager('abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about')
+const wdk = new WDK('abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about')
 
 // With seed bytes
 const seedBytes = new Uint8Array([...])
-const wdk2 = new WdkManager(seedBytes)
+const wdk2 = new WDK(seedBytes)
 ```
 
 ### Methods
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
-| `registerWallet(blockchain, wallet, config)` | Registers a new wallet manager for a blockchain | `WdkManager` | - |
-| `registerProtocol(blockchain, label, protocol, config)` | Registers a protocol globally for a blockchain | `WdkManager` | - |
-| `registerMiddleware(blockchain, middleware)` | Registers middleware for account decoration | `WdkManager` | - |
+| `registerWallet(blockchain, wallet, config)` | Registers a new wallet manager for a blockchain | `WDK` | - |
+| `registerProtocol(blockchain, label, protocol, config)` | Registers a protocol globally for a blockchain | `WDK` | - |
+| `registerMiddleware(blockchain, middleware)` | Registers middleware for account decoration | `WDK` | - |
 | `getAccount(blockchain, index?)` | Returns a wallet account for a blockchain and index | `Promise<IWalletAccountWithProtocols>` | If wallet not registered |
 | `getAccountByPath(blockchain, path)` | Returns a wallet account for a blockchain and derivation path | `Promise<IWalletAccountWithProtocols>` | If wallet not registered |
 | `getFeeRates()` | Returns current fee rates | `Promise<FeeRates>` | - |
@@ -56,22 +56,22 @@ const wdk2 = new WdkManager(seedBytes)
 Registers a new wallet manager for a specific blockchain.
 
 **Type Parameters:**
-- `W`: `typeof WalletManager` - A class that extends the `@wdk/wallet`'s `WalletManager` class
+- `W`: `typeof WalletManager` - A class that extends the `@tetherto/wdk-wallet`'s `WalletManager` class
 
 **Parameters:**
 - `blockchain` (string): The name of the blockchain (e.g., "ethereum", "ton", "bitcoin")
 - `wallet` (W): The wallet manager class
 - `config` (ConstructorParameters<W>[1]): The configuration object for the wallet
 
-**Returns:** `WdkManager` - The wdk manager instance (supports method chaining)
+**Returns:** `WDK` - The wdk manager instance (supports method chaining)
 
 **Example:**
 ```javascript
-import WdkManager from '@wdk/core'
-import WalletManagerEvm from '@wdk/wallet-evm'
-import WalletManagerTon from '@wdk/wallet-ton'
+import WDK from '@tetherto/wdk'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import WalletManagerTon from '@tetherto/wdk-wallet-ton'
 
-const wdk = new WdkManager(seedPhrase)
+const wdk = new WDK(seedPhrase)
 
 // Register EVM wallet
 wdk.registerWallet('ethereum', WalletManagerEvm, {
@@ -85,16 +85,16 @@ wdk.registerWallet('ton', WalletManagerTon, {
 })
 
 // Method chaining
-const wdk2 = new WdkManager(seedPhrase)
-  .registerWallet('ethereum', WalletManagerEvm, ethereumConfig)
-  .registerWallet('ton', WalletManagerTon, tonConfig)
+const wdk2 = new WDK(seedPhrase)
+  .registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
+  .registerWallet('ton', WalletManagerTon, tonWalletConfig)
 ```
 
 ##### `registerProtocol(blockchain, label, protocol, config)`
 Registers a protocol globally for all accounts of a specific blockchain.
 
 **Type Parameters:**
-- `P`: `typeof SwapProtocol | typeof BridgeProtocol | typeof LendingProtocol` - A class that extends one of the `@wdk/wallet/protocol`'s classes
+- `P`: `typeof SwapProtocol | typeof BridgeProtocol | typeof LendingProtocol` - A class that extends one of the `@tetherto/wdk-wallet/protocol`'s classes
 
 **Parameters:**
 - `blockchain` (string): The name of the blockchain
@@ -102,12 +102,12 @@ Registers a protocol globally for all accounts of a specific blockchain.
 - `protocol` (P): The protocol class
 - `config` (ConstructorParameters<P>[1]): The protocol configuration
 
-**Returns:** `WdkManager` - The wdk manager instance (supports method chaining)
+**Returns:** `WDK` - The wdk manager instance (supports method chaining)
 
 **Example:**
 ```javascript
-import ParaswapProtocolEvm from '@wdk/protocol-swap-paraswap-evm'
-import Usdt0ProtocolTon from '@wdk/protocol-bridge-usdt0-ton'
+import ParaswapProtocolEvm from '@tetherto/wdk-protocol-swap-paraswap-evm'
+import Usdt0ProtocolTon from '@tetherto/wdk-protocol-bridge-usdt0-ton'
 
 // Register swap protocol for Ethereum
 wdk.registerProtocol('ethereum', 'paraswap', ParaswapProtocolEvm, {
@@ -120,9 +120,9 @@ wdk.registerProtocol('ton', 'usdt0', Usdt0ProtocolTon, {
 })
 
 // Method chaining
-const wdk2 = new WdkManager(seedPhrase)
-  .registerWallet('ethereum', WalletManagerEvm, ethereumConfig)
-  .registerProtocol('ethereum', 'paraswap', ParaswapProtocolEvm, paraswapConfig)
+const wdk2 = new WDK(seedPhrase)
+  .registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
+  .registerProtocol('ethereum', 'paraswap', ParaswapProtocolEvm, paraswapProtocolConfig)
 ```
 
 ##### `registerMiddleware(blockchain, middleware)`
@@ -132,7 +132,7 @@ Registers middleware for account decoration and enhanced functionality.
 - `blockchain` (string): The name of the blockchain
 - `middleware` (`<A extends IWalletAccount>(account: A) => Promise<A | void>`): Middleware function called when deriving accounts
 
-**Returns:** `WdkManager` - The wdk manager instance (supports method chaining)
+**Returns:** `WDK` - The wdk manager instance (supports method chaining)
 
 **Example:**
 ```javascript
@@ -142,7 +142,7 @@ wdk.registerMiddleware('ethereum', async (account) => {
 })
 
 // Failover cascade middleware
-import { getFailoverCascadeMiddleware } from '@wdk/wrapper-failover-cascade'
+import { getFailoverCascadeMiddleware } from '@tetherto/wdk-wrapper-failover-cascade'
 
 wdk.registerMiddleware('ethereum', getFailoverCascadeMiddleware({
   fallbackOptions: {
@@ -152,9 +152,11 @@ wdk.registerMiddleware('ethereum', getFailoverCascadeMiddleware({
 }))
 
 // Method chaining
-const wdk2 = new WdkManager(seedPhrase)
-  .registerWallet('ethereum', WalletManagerEvm, ethereumConfig)
-  .registerMiddleware('ethereum', loggingMiddleware)
+const wdk2 = new WDK(seedPhrase)
+  .registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
+  .registerMiddleware('ethereum', async (account) => {
+    console.log('New account:', await account.getAddress())
+  })
 ```
 
 ##### `getAccount(blockchain, index?)`
@@ -241,7 +243,7 @@ Returns a random BIP-39 seed phrase.
 
 **Example:**
 ```javascript
-const seedPhrase = WdkManager.getRandomSeedPhrase()
+const seedPhrase = WDK.getRandomSeedPhrase()
 console.log('Generated seed:', seedPhrase)
 // Output: "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
 ```
@@ -256,16 +258,16 @@ Checks if a seed phrase is valid according to BIP-39 standards.
 
 **Example:**
 ```javascript
-const isValid = WdkManager.isValidSeedPhrase('abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about')
+const isValid = WDK.isValidSeedPhrase('abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about')
 console.log('Seed phrase valid:', isValid) // true
 
-const isInvalid = WdkManager.isValidSeedPhrase('invalid seed phrase')
+const isInvalid = WDK.isValidSeedPhrase('invalid seed phrase')
 console.log('Seed phrase valid:', isInvalid) // false
 ```
 
 ## IWalletAccountWithProtocols
 
-Extended wallet account interface that supports protocol registration and access. Extends `IWalletAccount` from `@wdk/wallet`.
+Extended wallet account interface that supports protocol registration and access. Extends `IWalletAccount` from `@tetherto/wdk-wallet`.
 
 ### Methods
 
@@ -280,7 +282,7 @@ Extended wallet account interface that supports protocol registration and access
 Registers a new protocol for this specific account.
 
 **Type Parameters:**
-- `P`: `typeof SwapProtocol | typeof BridgeProtocol | typeof LendingProtocol` - A class that extends one of the `@wdk/wallet/protocol`'s classes
+- `P`: `typeof SwapProtocol | typeof BridgeProtocol | typeof LendingProtocol` - A class that extends one of the `@tetherto/wdk-wallet/protocol`'s classes
 
 **Parameters:**
 - `label` (string): Unique label for the protocol (must be unique per account and protocol type)
@@ -291,7 +293,7 @@ Registers a new protocol for this specific account.
 
 **Example:**
 ```javascript
-import Usdt0ProtocolEvm from '@wdk/protocol-bridge-usdt0-evm'
+import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
 
 const account = await wdk.getAccount('ethereum', 0)
 
@@ -302,7 +304,7 @@ account.registerProtocol('usdt0', Usdt0ProtocolEvm, {
 
 // Method chaining
 const account2 = await wdk.getAccount('ethereum', 1)
-  .registerProtocol('usdt0', Usdt0ProtocolEvm, usdt0Config)
+  .registerProtocol('usdt0', Usdt0ProtocolEvm, usdt0ProtocolConfig)
 ```
 
 ##### `getSwapProtocol(label)`
@@ -317,10 +319,10 @@ Returns the swap protocol with the given label.
 
 **Example:**
 ```javascript
-import ParaswapProtocolEvm from '@wdk/protocol-swap-paraswap-evm'
+import ParaswapProtocolEvm from '@tetherto/wdk-protocol-swap-paraswap-evm'
 
 // Register swap protocol
-account.registerProtocol('paraswap', ParaswapProtocolEvm, paraswapConfig)
+account.registerProtocol('paraswap', ParaswapProtocolEvm, paraswapProtocolConfig)
 
 // Get swap protocol
 const paraswap = account.getSwapProtocol('paraswap')
@@ -334,11 +336,11 @@ const swapResult = await paraswap.swap({
 })
 
 // This will throw an error
-try {
-  const uniswap = account.getSwapProtocol('uniswap')
-} catch (error) {
-  console.error('No swap protocol with label "uniswap" found')
-}
+// try {
+//   const uniswap = account.getSwapProtocol('uniswap')
+// } catch (error) {
+//   console.error('No swap protocol with label "uniswap" found')
+// }
 ```
 
 ##### `getBridgeProtocol(label)`
@@ -353,10 +355,10 @@ Returns the bridge protocol with the given label.
 
 **Example:**
 ```javascript
-import Usdt0ProtocolTon from '@wdk/protocol-bridge-usdt0-ton'
+import Usdt0ProtocolTon from '@tetherto/wdk-protocol-bridge-usdt0-ton'
 
 // Register bridge protocol
-account.registerProtocol('usdt0', Usdt0ProtocolTon, usdt0Config)
+account.registerProtocol('usdt0', Usdt0ProtocolTon, usdt0ProtocolConfig)
 
 // Get bridge protocol
 const usdt0 = account.getBridgeProtocol('usdt0')
@@ -381,10 +383,10 @@ Returns the lending protocol with the given label.
 
 **Example:**
 ```javascript
-import AaveProtocolEvm from '@wdk/protocol-lending-aave-evm'
+import AaveProtocolEvm from '@tetherto/wdk-protocol-lending-aave-evm'
 
 // Register lending protocol
-account.registerProtocol('aave', AaveProtocolEvm, aaveConfig)
+account.registerProtocol('aave', AaveProtocolEvm, aaveProtocolConfig)
 
 // Get lending protocol
 const aave = account.getLendingProtocol('aave')
@@ -400,14 +402,14 @@ const lendResult = await aave.lend({
 ## Complete Example
 
 ```javascript
-import WdkManager from '@wdk/core'
-import WalletManagerEvm from '@wdk/wallet-evm'
-import WalletManagerTon from '@wdk/wallet-ton'
-import ParaswapProtocolEvm from '@wdk/protocol-swap-paraswap-evm'
-import Usdt0ProtocolTon from '@wdk/protocol-bridge-usdt0-ton'
+import WDK from '@tetherto/wdk'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import WalletManagerTon from '@tetherto/wdk-wallet-ton'
+import ParaswapProtocolEvm from '@tetherto/wdk-protocol-swap-paraswap-evm'
+import Usdt0ProtocolTon from '@tetherto/wdk-protocol-bridge-usdt0-ton'
 
 // Initialize WDK Manager
-const wdk = new WdkManager(seedPhrase)
+const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, {
     provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
   })

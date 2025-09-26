@@ -1,11 +1,11 @@
 ---
 title: Wallet Tron Overview
-description: Overview of the @wdk/wallet-tron module
+description: Overview of the @tetherto/wdk-wallet-tron module
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
 ---
 
-# @wdk/wallet-tron Overview
+# @tetherto/wdk-wallet-tron Overview
 
 A simple and secure package to manage BIP-44 wallets for the Tron blockchain. This package provides a clean API for creating, managing, and interacting with Tron wallets using BIP-39 seed phrases and Tron-specific derivation paths.
 

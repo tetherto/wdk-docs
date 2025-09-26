@@ -1,6 +1,6 @@
 ---
 title: Wallet Spark Configuration
-description: Configuration options and settings for @wdk/wallet-spark
+description: Configuration options and settings for @tetherto/wdk-wallet-spark
 author: Matteo Giardino
 lastReviewed: 2025-06-26
 icon: gear
@@ -81,7 +81,7 @@ This ensures compatibility with standard [BIP-44](../../../resources/concepts.md
 ## Complete Configuration Example
 
 ```javascript
-import WalletManagerSpark from '@wdk/wallet-spark'
+import WalletManagerSpark from '@tetherto/wdk-wallet-spark'
 
 // Create wallet manager with configuration
 const wallet = new WalletManagerSpark(seedPhrase, {

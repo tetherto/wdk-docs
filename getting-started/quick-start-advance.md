@@ -49,7 +49,7 @@ cd my-multi-chain-wdk-app
 npm init -y
 
 # Install WDK Core and wallet modules
-npm install @wdk/core @wdk/wallet-evm @wdk/wallet-tron @wdk/wallet-btc
+npm install @tetherto/wdk @tetherto/wdk-wallet-evm @tetherto/wdk-wallet-tron @tetherto/wdk-wallet-btc
 
 # OR - with private access granted
 npm install git+https://github.com/tetherto/wdk-core.git#develop
@@ -64,10 +64,10 @@ Create a file called `package.json` and add this line to enable modern JavaScrip
 {
   "type": "module",
   "dependencies": {
-    "@wdk/core": "git+ssh://git@github.com:tetherto/wdk-core.git#develop",
-    "@wdk/wallet-evm": "git+ssh://git@github.com/tetherto/wdk-wallet-evm.git#develop",
-    "@wdk/wallet-tron": "git+ssh://git@github.com/tetherto/wdk-wallet-tron.git#develop",
-    "@wdk/wallet-btc": "git+ssh://git@github.com/tetherto/wdk-wallet-btc.git#develop"
+    "@tetherto/wdk": "git+ssh://git@github.com:tetherto/wdk-core.git#develop",
+    "@tetherto/wdk-wallet-evm": "git+ssh://git@github.com/tetherto/wdk-wallet-evm.git#develop",
+    "@tetherto/wdk-wallet-tron": "git+ssh://git@github.com/tetherto/wdk-wallet-tron.git#develop",
+    "@tetherto/wdk-wallet-btc": "git+ssh://git@github.com/tetherto/wdk-wallet-btc.git#develop"
   }
 }
 ```
@@ -101,17 +101,17 @@ Before we write code, let's understand the key concepts:
 Create a file called `step1-multi-chain-wallet.js`:
 
 ```javascript
-import WdkManager from '@wdk/core'
-import WalletManagerEvm from '@wdk/wallet-evm'
-import WalletManagerTron from '@wdk/wallet-tron'
-import WalletManagerBtc from '@wdk/wallet-btc'
+import WDK from '@tetherto/wdk'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import WalletManagerTron from '@tetherto/wdk-wallet-tron'
+import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
 // Step 1: Generate a seed phrase (in production, generate this securely!)
-const seedPhrase = WdkManager.getRandomSeedPhrase()
+const seedPhrase = WDK.getRandomSeedPhrase()
 console.log('Generated seed phrase:', seedPhrase)
 
 // Step 2: Create WDK Manager
-const wdk = new WdkManager(seedPhrase)
+const wdk = new WDK(seedPhrase)
 
 // Step 3: Register wallets for different blockchains
 const wdkWithWallets = wdk
@@ -159,14 +159,14 @@ node step1-multi-chain-wallet.js
 Create `step2-multi-chain-balances.js`:
 
 ```javascript
-import WdkManager from '@wdk/core'
-import WalletManagerEvm from '@wdk/wallet-evm'
-import WalletManagerTron from '@wdk/wallet-tron'
-import WalletManagerBtc from '@wdk/wallet-btc'
+import WDK from '@tetherto/wdk'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import WalletManagerTron from '@tetherto/wdk-wallet-tron'
+import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
 const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
 
-const wdk = new WdkManager(seedPhrase)
+const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, {
     provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
   })
@@ -249,14 +249,14 @@ node step2-multi-chain-balances.js
 Create `step3-multi-chain-estimates.js`:
 
 ```javascript
-import WdkManager from '@wdk/core'
-import WalletManagerEvm from '@wdk/wallet-evm'
-import WalletManagerTron from '@wdk/wallet-tron'
-import WalletManagerBtc from '@wdk/wallet-btc'
+import WDK from '@tetherto/wdk'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import WalletManagerTron from '@tetherto/wdk-wallet-tron'
+import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
 const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
 
-const wdk = new WdkManager(seedPhrase)
+const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, {
     provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
   })
@@ -355,14 +355,14 @@ node step3-multi-chain-estimates.js
 Create `step4-multi-chain-transactions.js`:
 
 ```javascript
-import WdkManager from '@wdk/core'
-import WalletManagerEvm from '@wdk/wallet-evm'
-import WalletManagerTron from '@wdk/wallet-tron'
-import WalletManagerBtc from '@wdk/wallet-btc'
+import WDK from '@tetherto/wdk'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import WalletManagerTron from '@tetherto/wdk-wallet-tron'
+import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
 const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
 
-const wdk = new WdkManager(seedPhrase)
+const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, {
     provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
   })
@@ -473,14 +473,14 @@ node step4-multi-chain-transactions.js
 Create `step5-protocols.js`:
 
 ```javascript
-import WdkManager from '@wdk/core'
-import WalletManagerEvm from '@wdk/wallet-evm'
-import WalletManagerTron from '@wdk/wallet-tron'
-import WalletManagerBtc from '@wdk/wallet-btc'
+import WDK from '@tetherto/wdk'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import WalletManagerTron from '@tetherto/wdk-wallet-tron'
+import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
 const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
 
-const wdk = new WdkManager(seedPhrase)
+const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, {
     provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
   })
@@ -518,22 +518,22 @@ node step5-protocols.js
 Now let's create a complete application that combines everything we learned. Create `complete-multi-chain-app.js`:
 
 ```javascript
-import WdkManager from '@wdk/core'
-import WalletManagerEvm from '@wdk/wallet-evm'
-import WalletManagerTron from '@wdk/wallet-tron'
-import WalletManagerBtc from '@wdk/wallet-btc'
+import WDK from '@tetherto/wdk'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import WalletManagerTron from '@tetherto/wdk-wallet-tron'
+import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
 async function main() {
   console.log('🚀 Starting Multi-Chain WDK Application...\n')
   
   // Configuration
-  const seedPhrase = WdkManager.getRandomSeedPhrase()
+  const seedPhrase = WDK.getRandomSeedPhrase()
   console.log('🔑 Generated seed phrase:', seedPhrase)
   
   try {
     // Step 1: Initialize WDK Manager
     console.log('📦 Initializing WDK Manager...')
-    const wdk = new WdkManager(seedPhrase)
+    const wdk = new WDK(seedPhrase)
     
     // Step 2: Register wallets for different blockchains
     console.log('🔗 Registering wallets...')
@@ -671,9 +671,9 @@ The magic is that you can manage multiple blockchains through a single interface
 Congratulations! You've successfully built your first multi-chain WDK application. Here's what you can explore next:
 
 ### Try Different Blockchains
-- **Solana**: `@wdk/wallet-solana`
-- **TON**: `@wdk/wallet-ton`
-- **Spark**: `@wdk/wallet-spark`
+- **Solana**: `@tetherto/wdk-wallet-solana`
+- **TON**: `@tetherto/wdk-wallet-ton`
+- **Spark**: `@tetherto/wdk-wallet-spark`
 
 ### Advanced Features
 - [Protocol Integration](../wdk-modules/wdk-core/guides.md)

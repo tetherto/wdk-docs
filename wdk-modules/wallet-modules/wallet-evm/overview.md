@@ -1,11 +1,11 @@
 ---
 title: Wallet EVM Overview
-description: Overview of the @wdk/wallet-evm module
+description: Overview of the @tetherto/wdk-wallet-evm module
 author: Matteo Giardino
 lastReviewed: 2025-06-26
 ---
 
-# @wdk/wallet-evm Overview
+# @tetherto/wdk-wallet-evm Overview
 
 A simple and secure package to manage BIP-44 wallets for EVM (Ethereum Virtual Machine) blockchains. This package provides a clean API for creating, managing, and interacting with Ethereum-compatible wallets using BIP-39 seed phrases and BIP-44 derivation paths.
 

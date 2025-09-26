@@ -1,6 +1,6 @@
 ---
 title: Wallet TON Configuration
-description: Configuration options and settings for @wdk/wallet-ton
+description: Configuration options and settings for @tetherto/wdk-wallet-ton
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
 icon: gear
@@ -13,7 +13,7 @@ icon: gear
 The `WalletManagerTon` accepts a configuration object that defines how the wallet interacts with the TON blockchain:
 
 ```javascript
-import WalletManagerTon from '@wdk/wallet-ton'
+import WalletManagerTon from '@tetherto/wdk-wallet-ton'
 
 const config = {
   tonClient: {
@@ -29,7 +29,7 @@ const wallet = new WalletManagerTon(seedPhrase, config)
 ## Account Configuration
 
 ```javascript
-import { WalletAccountTon } from '@wdk/wallet-ton'
+import { WalletAccountTon } from '@tetherto/wdk-wallet-ton'
 
 const accountConfig = {
   tonClient: {
@@ -111,7 +111,7 @@ const config = {
 For read-only accounts, you only need the TON client configuration:
 
 ```javascript
-import { WalletAccountReadOnlyTon } from '@wdk/wallet-ton'
+import { WalletAccountReadOnlyTon } from '@tetherto/wdk-wallet-ton'
 
 const readOnlyConfig = {
   tonClient: {

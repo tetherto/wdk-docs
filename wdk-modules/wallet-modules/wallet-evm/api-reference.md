@@ -1,6 +1,6 @@
 ---
 title: Wallet EVM API Reference
-description: Complete API documentation for @wdk/wallet-evm
+description: Complete API documentation for @tetherto/wdk-wallet-evm
 author: Matteo Giardino
 lastReviewed: 2025-06-26
 icon: code
@@ -12,14 +12,14 @@ icon: code
 
 | Class | Description | Methods |
 |-------|-------------|---------|
-| [WalletManagerEvm](#walletmanagerevm) | Main class for managing EVM wallets. Extends `WalletManager` from `@wdk/wallet`. | [Constructor](#constructor), [Methods](#methods) |
-| [WalletAccountEvm](#walletaccountevm) | Individual EVM wallet account implementation. Extends `WalletAccountReadOnlyEvm` and implements `IWalletAccount` from `@wdk/wallet`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties) |
-| [WalletAccountReadOnlyEvm](#walletaccountreadonlyevm) | Read-only EVM wallet account. Extends `WalletAccountReadOnly` from `@wdk/wallet`. | [Constructor](#constructor-2), [Methods](#methods-2) |
+| [WalletManagerEvm](#walletmanagerevm) | Main class for managing EVM wallets. Extends `WalletManager` from `@tetherto/wdk-wallet`. | [Constructor](#constructor), [Methods](#methods) |
+| [WalletAccountEvm](#walletaccountevm) | Individual EVM wallet account implementation. Extends `WalletAccountReadOnlyEvm` and implements `IWalletAccount` from `@tetherto/wdk-wallet`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties) |
+| [WalletAccountReadOnlyEvm](#walletaccountreadonlyevm) | Read-only EVM wallet account. Extends `WalletAccountReadOnly` from `@tetherto/wdk-wallet`. | [Constructor](#constructor-2), [Methods](#methods-2) |
 
 ## WalletManagerEvm
 
 The main class for managing EVM wallets.  
-Extends `WalletManager` from `@wdk/wallet`.
+Extends `WalletManager` from `@tetherto/wdk-wallet`.
 
 ### Fee Rate Constants
 
@@ -128,7 +128,7 @@ wallet.dispose()
 
 ## WalletAccountEvm
 
-Represents an individual wallet account. Implements `IWalletAccount` from `@wdk/wallet`.
+Represents an individual wallet account. Implements `IWalletAccount` from `@tetherto/wdk-wallet`.
 
 ### Constants
 

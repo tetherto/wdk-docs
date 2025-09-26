@@ -1,6 +1,6 @@
 ---
 title: Wallet Tron Configuration
-description: Configuration options and settings for @wdk/wallet-tron
+description: Configuration options and settings for @tetherto/wdk-wallet-tron
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
 icon: gear
@@ -11,7 +11,7 @@ icon: gear
 ## Wallet Configuration
 
 ```javascript
-import WalletManagerTron from '@wdk/wallet-tron'
+import WalletManagerTron from '@tetherto/wdk-wallet-tron'
 
 const config = {
   provider: 'https://api.trongrid.io', // Tron RPC endpoint
@@ -24,7 +24,7 @@ const wallet = new WalletManagerTron(seedPhrase, config)
 ## Account Configuration
 
 ```javascript
-import { WalletAccountTron } from '@wdk/wallet-tron'
+import { WalletAccountTron } from '@tetherto/wdk-wallet-tron'
 
 const accountConfig = {
   provider: 'https://api.trongrid.io',

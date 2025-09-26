@@ -1,6 +1,6 @@
 ---
 title: Wallet TON Gasless API Reference
-description: Complete API documentation for @wdk/wallet-ton-gasless
+description: Complete API documentation for @tetherto/wdk-wallet-ton-gasless
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
 icon: code
@@ -18,7 +18,7 @@ icon: code
 
 ### WalletManagerTonGasless
 
-The main class for managing gasless TON wallets. Extends `WalletManager` from `@wdk/wallet`.
+The main class for managing gasless TON wallets. Extends `WalletManager` from `@tetherto/wdk-wallet`.
 
 #### Constructor
 

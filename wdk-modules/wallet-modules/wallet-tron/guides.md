@@ -1,6 +1,6 @@
 ---
 title: Wallet Tron Guides
-description: Installation, quick start, and usage examples for @wdk/wallet-tron
+description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-tron
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
 icon: book-open
@@ -10,14 +10,14 @@ icon: book-open
 
 ## Installation
 
-To install the `@wdk/wallet-tron` package, follow these instructions:
+To install the `@tetherto/wdk-wallet-tron` package, follow these instructions:
 
 ### Public Release
 
 Once the package is publicly available, you can install it using npm:
 
 ```bash
-npm install @wdk/wallet-tron
+npm install @tetherto/wdk-wallet-tron
 ```
 ### Private Access
 
@@ -32,14 +32,14 @@ After installation, ensure your package.json includes the dependency correctly:
 ```json
 "dependencies": {
   // ... other dependencies ...
-  "@wdk/wallet-tron": "git+ssh://git@github.com:tetherto/wdk-wallet-tron.git#develop"
+  "@tetherto/wdk-wallet-tron": "git+ssh://git@github.com:tetherto/wdk-wallet-tron.git#develop"
   // ... other dependencies ...
 }
 ```
 
 ## Quick Start
 
-### Importing from `@wdk/wallet-tron`
+### Importing from `@tetherto/wdk-wallet-tron`
 
 1. WalletManagerTron: This is the main class for managing wallets.
 2. WalletAccountTron: Use this for full access accounts.
@@ -48,7 +48,7 @@ After installation, ensure your package.json includes the dependency correctly:
 ### Creating a New Wallet
 
 ```javascript
-import WalletManagerTron, { WalletAccountTron, WalletAccountReadOnlyTron } from '@wdk/wallet-tron'
+import WalletManagerTron, { WalletAccountTron, WalletAccountReadOnlyTron } from '@tetherto/wdk-wallet-tron'
 
 // Use a BIP-39 seed phrase (replace with your own secure phrase)
 const seedPhrase = 'your twelve word seed phrase here' // Replace with actual seed generation
@@ -91,7 +91,7 @@ console.log('Custom account address:', customAddress)
 For accounts where you have the seed phrase and full access:
 
 ```javascript
-import WalletManagerTron from '@wdk/wallet-tron'
+import WalletManagerTron from '@tetherto/wdk-wallet-tron'
 
 // Get native TRX balance (in sun)
 const balance = await account.getBalance()
@@ -108,7 +108,7 @@ console.log('TRC20 token balance:', trc20Balance);
 For addresses where you don't have the seed phrase:
 
 ```javascript
-import { WalletAccountReadOnlyTron } from '@wdk/wallet-tron'
+import { WalletAccountReadOnlyTron } from '@tetherto/wdk-wallet-tron'
 
 // Use the address directly
 const address = 'T...'; // Replace with the actual Tron address
@@ -210,7 +210,7 @@ wallet.dispose()
 ### Complete Wallet Setup
 
 ```javascript
-import WalletManagerTron from '@wdk/wallet-tron'
+import WalletManagerTron from '@tetherto/wdk-wallet-tron'
 
 async function setupWallet() {
   // Use a BIP-39 seed phrase (replace with your own secure phrase)

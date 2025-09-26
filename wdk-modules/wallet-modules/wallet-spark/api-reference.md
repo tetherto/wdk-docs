@@ -1,6 +1,6 @@
 ---
 title: Wallet Spark API Reference
-description: Complete API documentation for @wdk/wallet-spark
+description: Complete API documentation for @tetherto/wdk-wallet-spark
 author: Matteo Giardino
 lastReviewed: 2025-06-26
 icon: code
@@ -13,13 +13,13 @@ icon: code
 
 | Class | Description | Methods |
 |-------|-------------|---------|
-| [WalletManagerSpark](#walletmanagerspark) | Main class for managing Spark wallets. Extends `WalletManager` from `@wdk/wallet`. | [Constructor](#constructor), [Methods](#methods) |
+| [WalletManagerSpark](#walletmanagerspark) | Main class for managing Spark wallets. Extends `WalletManager` from `@tetherto/wdk-wallet`. | [Constructor](#constructor), [Methods](#methods) |
 | [WalletAccountSpark](#walletaccountspark) | Individual Spark wallet account implementation. Implements `IWalletAccount`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties) |
 
 ## WalletManagerSpark
 
 The main class for managing Spark wallets.  
-Extends `WalletManager` from `@wdk/wallet`.
+Extends `WalletManager` from `@tetherto/wdk-wallet`.
 
 #### Constructor
 
@@ -86,7 +86,7 @@ wallet.dispose()
 
 ## WalletAccountSpark
 
-Represents an individual Spark wallet account. Implements `IWalletAccount` from `@wdk/wallet`.
+Represents an individual Spark wallet account. Implements `IWalletAccount` from `@tetherto/wdk-wallet`.
 
 **Note**: WalletAccountSpark instances are created internally by `WalletManagerSpark.getAccount()` and are not intended to be constructed directly.
 

@@ -1,6 +1,6 @@
 ---
 title: Wallet EVM ERC-4337 Configuration
-description: Configuration options and settings for @wdk/wallet-evm-erc-4337
+description: Configuration options and settings for @tetherto/wdk-wallet-evm-erc-4337
 author: Matteo Giardino
 lastReviewed: 2025-08-31
 icon: gear
@@ -13,7 +13,7 @@ icon: gear
 The `WalletManagerEvmErc4337` requires a complete ERC-4337 configuration object with all required parameters:
 
 ```javascript
-import WalletManagerEvmErc4337 from '@wdk/wallet-evm-erc-4337'
+import WalletManagerEvmErc4337 from '@tetherto/wdk-wallet-evm-erc-4337'
 
 const config = {
   // Required parameters
@@ -39,7 +39,7 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, config)
 Both `WalletAccountEvmErc4337` and `WalletAccountReadOnlyEvmErc4337` use the same configuration structure:
 
 ```javascript
-import { WalletAccountEvmErc4337, WalletAccountReadOnlyEvmErc4337 } from '@wdk/wallet-evm-erc-4337'
+import { WalletAccountEvmErc4337, WalletAccountReadOnlyEvmErc4337 } from '@tetherto/wdk-wallet-evm-erc-4337'
 
 // Full access account
 const account = new WalletAccountEvmErc4337(

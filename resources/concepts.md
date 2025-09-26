@@ -17,9 +17,9 @@ Account Abstraction is a blockchain technology that separates the concept of a u
 
 WDK provides Account Abstraction support through specialized wallet modules:
 
-- `@wdk/wallet-evm-erc4337` - EVM chains with ERC-4337 standard
-- `@wdk/wallet-ton-gasless` - TON blockchain with gasless transactions
-- `@wdk/wallet-tron-gasfree` - TRON blockchain with gas-free transactions
+- `@tetherto/wdk-wallet-evm-erc4337` - EVM chains with ERC-4337 standard
+- `@tetherto/wdk-wallet-ton-gasless` - TON blockchain with gasless transactions
+- `@tetherto/wdk-wallet-tron-gasfree` - TRON blockchain with gas-free transactions
 
 These modules allow developers to implement gasless transaction flows where users can pay fees in tokens like USDT or XAUT instead of native blockchain tokens.
 
@@ -100,7 +100,7 @@ Many blockchains are EVM-compatible, meaning they can run the same smart contrac
 
 ### WDK EVM Support
 
-The `@wdk/wallet-evm` module works with any EVM-compatible blockchain, providing unified access to multiple networks through a single API.
+The `@tetherto/wdk-wallet-evm` module works with any EVM-compatible blockchain, providing unified access to multiple networks through a single API.
 
 ## UTXO (Unspent Transaction Output)
 

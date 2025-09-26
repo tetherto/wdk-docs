@@ -36,9 +36,9 @@ A **seed phrase** (also known as a mnemonic phrase or recovery phrase) is a sequ
 
 ---
 
-## About `@wdk/wdk-secret-manager-internal`
+## About `@tetherto/wdk-secret-manager-internal`
 
-The Secret Manager relies on [`@wdk/wdk-secret-manager-internal`](https://github.com/noxtton/wdk-secret-manager-internal.git) for all cryptographic operations. This package is a robust JavaScript library for securely managing BIP39 mnemonic phrases and related secrets. It provides:
+The Secret Manager relies on [`@tetherto/wdk-secret-manager-internal`](https://github.com/noxtton/wdk-secret-manager-internal.git) for all cryptographic operations. This package is a robust JavaScript library for securely managing BIP39 mnemonic phrases and related secrets. It provides:
 
 - **Key Derivation:** Uses a user-provided passkey and a unique salt to derive a strong cryptographic key (PBKDF2, 256-bit, 100,000 iterations, SHA-256).
 - **Mnemonic Encryption/Decryption:** Encrypts and decrypts BIP39 mnemonic phrases and entropy using libsodium’s secretbox (XSalsa20-Poly1305).
@@ -48,7 +48,7 @@ The Secret Manager relies on [`@wdk/wdk-secret-manager-internal`](https://github
 
 ## API Reference
 
-### `@wdk/wdk-secret-manager-internal`
+### `@tetherto/wdk-secret-manager-internal`
 
 #### `WdkSecretManager`
 - **Constructor:**  
@@ -83,7 +83,7 @@ The Secret Manager relies on [`@wdk/wdk-secret-manager-internal`](https://github
 ### Example Usage
 
 ```js
-import WdkSecretManager, { wdkSaltGenerator } from '@wdk/wdk-secret-manager-internal';
+import WdkSecretManager, { wdkSaltGenerator } from '@tetherto/wdk-secret-manager-internal';
 
 const salt = wdkSaltGenerator.generate();
 const passkey = 'user-strong-password';
@@ -102,7 +102,7 @@ wdkManager.destructor(null, decryptedEntropy);
 
 ---
 
-## Usage Guide: `@wdk/wdk-secret-manager-internal` Implementation
+## Usage Guide: `@tetherto/wdk-secret-manager-internal` Implementation
 
 ### 1. Install the Library
 
@@ -115,7 +115,7 @@ wdkManager.destructor(null, decryptedEntropy);
   // ...
   "dependencies": {
     // ...
-    "@wdk/wdk-secret-manager-internal": "git+ssh://git@github.com:noxtton/wdk-secret-manager-internal.git"
+    "@tetherto/wdk-secret-manager-internal": "git+ssh://git@github.com:noxtton/wdk-secret-manager-internal.git"
     // ...
   }
   // ...
@@ -138,7 +138,7 @@ If you encounter permission errors:
 ### 2. Import the Library
 
 ```js
-import WdkSecretManager, { wdkSaltGenerator } from '@wdk/wdk-secret-manager-internal';
+import WdkSecretManager, { wdkSaltGenerator } from '@tetherto/wdk-secret-manager-internal';
 ```
 
 ---
@@ -214,7 +214,7 @@ secretManager.destructor(null, decryptedEntropy);
 
 ## Security Considerations
 
-- All cryptographic operations are handled by `@wdk/wdk-secret-manager-internal`.
+- All cryptographic operations are handled by `@tetherto/wdk-secret-manager-internal`.
 - Always purge sensitive buffers after use.
 - Never persist the plaintext mnemonic or passkey.
 - Only expose session info for debugging; never in production.
@@ -230,7 +230,7 @@ secretManager.destructor(null, decryptedEntropy);
 ```mermaid
 graph TD;
   A["User Passkey / Device Secret"] --> B["wdkSaltGenerator.generate()"]
-  B --> C["WdkSecretManager (@wdk/wdk-secret-manager-internal)"]
+  B --> C["WdkSecretManager (@tetherto/wdk-secret-manager-internal)"]
   C --> D["Key Derivation (PBKDF2)"]
   C --> E["Random Entropy Generation"]
   C --> F["Mnemonic <-> Entropy Conversion"]
@@ -246,11 +246,11 @@ graph TD;
 ```
 
 - **Core Modules:**
-  - All cryptographic operations (key derivation, encryption, decryption, random generation) are handled by `@wdk/wdk-secret-manager-internal`.
+  - All cryptographic operations (key derivation, encryption, decryption, random generation) are handled by `@tetherto/wdk-secret-manager-internal`.
   - Session and wallet management logic orchestrates the use of this package for secure workflows.
 
 - **Security Principles:**
-  - All sensitive operations are delegated to `@wdk/wdk-secret-manager-internal`.
+  - All sensitive operations are delegated to `@tetherto/wdk-secret-manager-internal`.
   - Buffers containing secrets are securely wiped after use.
   - No sensitive data is persisted unless explicitly encrypted.
 
@@ -268,7 +268,7 @@ graph TD;
 ## Extending the Secret Manager
 
 - To support new wallet types, add cases to your wallet management logic and implement the required wallet manager logic.
-- Ensure all new code follows the same security and memory management practices as enforced by `@wdk/wdk-secret-manager-internal`.
+- Ensure all new code follows the same security and memory management practices as enforced by `@tetherto/wdk-secret-manager-internal`.
 - Contribute improvements and bug fixes via pull requests.
 
 ---
@@ -293,6 +293,6 @@ A: Implement the wallet logic and add a case in your wallet management code.
 ---
 
 ## References
-- [@wdk/wdk-secret-manager-internal](https://github.com/noxtton/wdk-secret-manager-internal.git)
+- [@tetherto/wdk-secret-manager-internal](https://github.com/noxtton/wdk-secret-manager-internal.git)
 - [BIP39: Mnemonic code for generating deterministic keys](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki)
 - [sodium-universal](https://github.com/sodium-friends/sodium-universal)

@@ -1,6 +1,6 @@
 ---
 title: Wallet TON API Reference
-description: Complete API documentation for @wdk/wallet-ton
+description: Complete API documentation for @tetherto/wdk-wallet-ton
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
 icon: code
@@ -21,7 +21,7 @@ icon: code
 ### WalletManagerTon
 
 The main class for managing TON wallets.  
-Extends `WalletManager` from `@wdk/wallet`.
+Extends `WalletManager` from `@tetherto/wdk-wallet`.
 
 #### Constructor
 

@@ -1,11 +1,11 @@
 ---
 title: WDK Core Overview
-description: Overview of the @wdk/core module
+description: Overview of the @tetherto/wdk module
 author: Raquel Carrasco
 lastReviewed: 2025-09-11
 ---
 
-# @wdk/core Overview
+# @tetherto/wdk Overview
 
 A comprehensive Wallet Development Kit (WDK) that provides unified interfaces for managing wallets, performing account abstraction, and executing cross-chain operations across multiple blockchains. This package serves as the main entry point and orchestrator for all WDK wallet modules, allowing you to register and manage different blockchain wallets and protocols through a single interface.
 
@@ -28,12 +28,12 @@ A comprehensive Wallet Development Kit (WDK) that provides unified interfaces fo
 
 This package works with multiple blockchain networks through wallet registration:
 
-- **EVM Chains**: Ethereum, Arbitrum, Polygon (via @wdk/wallet-evm)
-- **TON**: TON Mainnet (via @wdk/wallet-ton)
-- **Bitcoin**: Bitcoin Mainnet (via @wdk/wallet-btc)
-- **Spark**: Spark Mainnet (via @wdk/wallet-spark)
-- **TRON**: Tron Mainnet (via @wdk/wallet-tron)
-- **Solana**: Solana Mainnet (via @wdk/wallet-solana)
+- **EVM Chains**: Ethereum, Arbitrum, Polygon (via @tetherto/wdk-wallet-evm)
+- **TON**: TON Mainnet (via @tetherto/wdk-wallet-ton)
+- **Bitcoin**: Bitcoin Mainnet (via @tetherto/wdk-wallet-btc)
+- **Spark**: Spark Mainnet (via @tetherto/wdk-wallet-spark)
+- **TRON**: Tron Mainnet (via @tetherto/wdk-/wallet-tron)
+- **Solana**: Solana Mainnet (via @tetherto/wdk-wallet-solana)
 
 ## Next Steps
 

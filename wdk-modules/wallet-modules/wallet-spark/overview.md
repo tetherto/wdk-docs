@@ -1,11 +1,11 @@
 ---
 title: Wallet Spark Overview
-description: Overview of the @wdk/wallet-spark module
+description: Overview of the @tetherto/wdk-wallet-spark module
 author: Matteo Giardino
 lastReviewed: 2025-06-26
 ---
 
-# @wdk/wallet-spark Overview
+# @tetherto/wdk-wallet-spark Overview
 
 A simple and secure package to manage BIP-32 wallets for the Spark blockchain. This package provides a clean API for creating, managing, and interacting with Spark wallets using [BIP-39 seed phrases](../../resources/concepts.md#bip-39-mnemonic-seed-phrases), [BIP-44 derivation paths](../../resources/concepts.md#bip-44-multi-account-hierarchy), and the Spark SDK for Bitcoin [layer 2](../../resources/concepts.md#layer-2-solutions) functionality including [Lightning Network](../../resources/concepts.md#lightning-network) integration.
 

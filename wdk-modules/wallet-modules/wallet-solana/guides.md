@@ -1,6 +1,6 @@
 ---
 title: Wallet Solana Guides
-description: Installation, quick start, and usage examples for @wdk/wallet-solana
+description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-solana
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
 icon: book-open
@@ -10,14 +10,14 @@ icon: book-open
 
 ## Installation
 
-To install the `@wdk/wallet-solana` package, follow these instructions:
+To install the `@tetherto/wdk-wallet-solana` package, follow these instructions:
 
 ### Public Release
 
 Once the package is publicly available, you can install it using npm:
 
 ```bash
-npm install @wdk/wallet-solana
+npm install @tetherto/wdk-wallet-solana
 ```
 
 ### Private Access
@@ -33,14 +33,14 @@ After installation, ensure your package.json includes the dependency correctly:
 ```json
 "dependencies": {
   // ... other dependencies ...
-  "@wdk/wallet-solana": "git+ssh://git@github.com:tetherto/wdk-wallet-solana.git#develop"
+  "@tetherto/wdk-wallet-solana": "git+ssh://git@github.com:tetherto/wdk-wallet-solana.git#develop"
   // ... other dependencies ...
 }
 ```
 
 ## Quick Start
 
-### Importing from `@wdk/wallet-solana`
+### Importing from `@tetherto/wdk-wallet-solana`
 
 1. WalletManagerSolana: Main class for managing wallets
 2. WalletAccountSolana: Use this for full access accounts
@@ -52,7 +52,7 @@ After installation, ensure your package.json includes the dependency correctly:
 import WalletManagerSolana, { 
   WalletAccountSolana, 
   WalletAccountReadOnlySolana 
-} from '@wdk/wallet-solana'
+} from '@tetherto/wdk-wallet-solana'
 
 // Use a BIP-39 seed phrase (replace with your own secure phrase)
 const seedPhrase = 'your twelve word seed phrase here' // Replace with actual seed generation
@@ -73,7 +73,7 @@ const readOnlyAccount = await account.toReadOnlyAccount()
 ### Managing Multiple Accounts
 
 ```javascript
-import WalletManagerSolana from '@wdk/wallet-solana'
+import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 
 // Assume wallet is already created
 // Get the first account (index 0)
@@ -102,7 +102,7 @@ console.log('Custom account address:', customAddress)
 For accounts where you have the seed phrase and full access:
 
 ```javascript
-import WalletManagerSolana from '@wdk/wallet-solana'
+import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 
 // Assume wallet and account are already created
 // Get native SOL balance (in lamports)
@@ -123,7 +123,7 @@ console.log('SPL token balance:', splTokenBalance);
 For addresses where you don't have the seed phrase:
 
 ```javascript
-import { WalletAccountReadOnlySolana } from '@wdk/wallet-solana'
+import { WalletAccountReadOnlySolana } from '@tetherto/wdk-wallet-solana'
 
 // Create a read-only account
 const readOnlyAccount = new WalletAccountReadOnlySolana('publicKey', { // Base58-encoded public key
@@ -238,7 +238,7 @@ wallet.dispose()
 ### Complete Wallet Setup
 
 ```javascript
-import WalletManagerSolana from '@wdk/wallet-solana'
+import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 
 async function setupWallet() {
   try {

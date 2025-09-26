@@ -1,6 +1,6 @@
 ---
 title: Wallet Tron API Reference
-description: Complete API documentation for @wdk/wallet-tron
+description: Complete API documentation for @tetherto/wdk-wallet-tron
 author: Matteo Giardino
 lastReviewed: 2025-08-31
 icon: code
@@ -12,13 +12,13 @@ icon: code
 
 | Class | Description | Methods |
 |-------|-------------|---------|
-| [WalletManagerTron](#walletmanagertron) | Main class for managing Tron wallets. Extends `WalletManager` from `@wdk/wallet`. | [Constructor](#constructor), [Methods](#methods) |
+| [WalletManagerTron](#walletmanagertron) | Main class for managing Tron wallets. Extends `WalletManager` from `@tetherto/wdk-wallet`. | [Constructor](#constructor), [Methods](#methods) |
 | [WalletAccountTron](#walletaccounttron) | Individual Tron wallet account implementation. Extends `WalletAccountReadOnlyTron` and implements `IWalletAccount`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties) |
-| [WalletAccountReadOnlyTron](#walletaccountreadonlytron) | Read-only Tron wallet account. Extends `WalletAccountReadOnly` from `@wdk/wallet`. | [Constructor](#constructor-2), [Methods](#methods-2) |
+| [WalletAccountReadOnlyTron](#walletaccountreadonlytron) | Read-only Tron wallet account. Extends `WalletAccountReadOnly` from `@tetherto/wdk-wallet`. | [Constructor](#constructor-2), [Methods](#methods-2) |
 
 ## WalletManagerTron
 
-The main class for managing Tron wallets. Extends `WalletManager` from `@wdk/wallet`.
+The main class for managing Tron wallets. Extends `WalletManager` from `@tetherto/wdk-wallet`.
 
 ### Fee Rate Constants
 

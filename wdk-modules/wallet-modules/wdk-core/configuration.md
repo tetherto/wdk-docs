@@ -1,6 +1,6 @@
 ---
 title: WDK Core Configuration
-description: Configuration options and settings for @wdk/core
+description: Configuration options and settings for @tetherto/wdk
 author: Raquel Carrasco
 lastReviewed: 2025-09-11
 icon: gear
@@ -11,9 +11,9 @@ icon: gear
 ## WDK Manager Configuration
 
 ```javascript
-import WdkManager from '@wdk/core'
+import WDK from '@tetherto/wdk'
 
-const wdk = new WdkManager(seedPhrase)
+const wdk = new WDK(seedPhrase)
 ```
 
 The WDK Manager itself only requires a seed phrase for initialization. Configuration is done through the registration of wallets and protocols.
@@ -21,11 +21,11 @@ The WDK Manager itself only requires a seed phrase for initialization. Configura
 ## Wallet Registration Configuration
 
 ```javascript
-import WdkManager from '@wdk/core'
-import WalletManagerEvm from '@wdk/wallet-evm'
-import WalletManagerTon from '@wdk/wallet-ton'
+import WDK from '@tetherto/wdk'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import WalletManagerTon from '@@tetherto/wdk-wallet-ton'
 
-const wdk = new WdkManager(seedPhrase)
+const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, {
     provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
   })
@@ -38,10 +38,10 @@ const wdk = new WdkManager(seedPhrase)
 ## Protocol Registration Configuration
 
 ```javascript
-import ParaswapProtocolEvm from '@wdk/protocol-swap-paraswap-evm'
-import Usdt0ProtocolTon from '@wdk/protocol-bridge-usdt0-ton'
+import ParaswapProtocolEvm from '@tetherto/wdk-protocol-swap-paraswap-evm'
+import Usdt0ProtocolTon from '@tetherto/wdk-protocol-bridge-usdt0-ton'
 
-const wdk = new WdkManager(seedPhrase)
+const wdk = new WDK(seedPhrase)
   .registerProtocol('ethereum', 'paraswap', ParaswapProtocolEvm, {
     apiKey: 'YOUR_PARASWAP_API_KEY'
   })
@@ -59,12 +59,12 @@ Each wallet manager requires its own configuration object when registered. The c
 #### EVM Wallet Configuration
 
 ```javascript
-const evmConfig = {
+const ethereumWalletConfig = {
   provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY', // RPC endpoint
   // Additional EVM-specific configuration options
 }
 
-wdk.registerWallet('ethereum', WalletManagerEvm, evmConfig)
+wdk.registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
 ```
 
 #### TON Wallet Configuration
@@ -77,19 +77,9 @@ const tonConfig = {
   tonCenterEndpoint: 'https://toncenter.com'
 }
 
-wdk.registerWallet('ton', WalletManagerTon, tonConfig)
+wdk.registerWallet('ton', WalletManagerTon, tonWalletConfig)
 ```
 
-#### Bitcoin Wallet Configuration
-
-```javascript
-const btcConfig = {
-  provider: 'https://blockstream.info/api', // Bitcoin RPC endpoint
-  // Additional Bitcoin-specific configuration options
-}
-
-wdk.registerWallet('bitcoin', WalletManagerBtc, btcConfig)
-```
 
 ### Protocol Configuration
 
@@ -98,23 +88,23 @@ Protocols also require their own configuration objects when registered.
 #### Swap Protocol Configuration
 
 ```javascript
-const paraswapConfig = {
+const paraswapProtocolConfig = {
   apiKey: 'YOUR_PARASWAP_API_KEY',
   baseUrl: 'https://apiv5.paraswap.io'
 }
 
-wdk.registerProtocol('ethereum', 'paraswap', ParaswapProtocolEvm, paraswapConfig)
+wdk.registerProtocol('ethereum', 'paraswap', ParaswapProtocolEvm, paraswapProtocolConfig)
 ```
 
 #### Bridge Protocol Configuration
 
 ```javascript
-const usdt0Config = {
+const usdt0ProtocolConfig = {
   tonApiKey: 'YOUR_TON_API_KEY',
   ethereumRpcUrl: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
 }
 
-wdk.registerProtocol('ton', 'usdt0', Usdt0ProtocolTon, usdt0Config)
+wdk.registerProtocol('ton', 'usdt0', Usdt0ProtocolTon, usdt0ProtocolConfig)
 ```
 
 ### Middleware Configuration
@@ -128,29 +118,9 @@ wdk.registerMiddleware('ethereum', async (account) => {
 })
 
 // Failover cascade middleware
-import { getFailoverCascadeMiddleware } from '@wdk/wrapper-failover-cascade'
+import { getFailoverCascadeMiddleware } from '@tetherto/wdk-wrapper-failover-cascade'
 
-const failoverConfig = {
-  retries: 3,
-  delay: 1000,
-  fallbackProviders: ['https://backup-rpc.com']
-}
-
-wdk.registerMiddleware('ethereum', getFailoverCascadeMiddleware(failoverConfig))
-```
-
-## Account-Specific Protocol Configuration
-
-Protocols can also be registered for specific accounts rather than globally.
-
-```javascript
-const account = await wdk.getAccount('ethereum', 0)
-
-// Register protocol for this specific account
-account.registerProtocol('uniswap', UniswapProtocolEvm, {
-  routerAddress: '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
-  factoryAddress: '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f'
-})
+wdk.registerMiddleware('ethereum', getFailoverCascadeMiddleware(fallbackOptions))
 ```
 
 ## Environment Variables
@@ -158,7 +128,7 @@ account.registerProtocol('uniswap', UniswapProtocolEvm, {
 For production applications, consider using environment variables for sensitive configuration:
 
 ```javascript
-const wdk = new WdkManager(process.env.SEED_PHRASE)
+const wdk = new WDK(process.env.SEED_PHRASE)
   .registerWallet('ethereum', WalletManagerEvm, {
     provider: process.env.ETHEREUM_RPC_URL
   })

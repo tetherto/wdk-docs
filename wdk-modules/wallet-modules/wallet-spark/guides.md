@@ -1,6 +1,6 @@
 ---
 title: Wallet Spark Guides
-description: Installation, quick start, and usage examples for @wdk/wallet-spark
+description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-spark
 author: Matteo Giardino
 lastReviewed: 2025-06-26
 icon: book-open
@@ -10,14 +10,14 @@ icon: book-open
 
 ## Installation
 
-To install the `@wdk/wallet-spark` package, follow these instructions:
+To install the `@tetherto/wdk-wallet-spark` package, follow these instructions:
 
 ### Public Release
 
 Once the package is publicly available, you can install it using npm:
 
 ```bash
-npm install @wdk/wallet-spark
+npm install @tetherto/wdk-wallet-spark
 ```
 
 ### Private Access
@@ -33,14 +33,14 @@ After installation, ensure your package.json includes the dependency correctly:
 ```json
 "dependencies": {
   // ... other dependencies ...
-  "@wdk/wallet-spark": "git+ssh://git@github.com:tetherto/wdk-wallet-spark.git#develop"
+  "@tetherto/wdk-wallet-spark": "git+ssh://git@github.com:tetherto/wdk-wallet-spark.git#develop"
   // ... other dependencies ...
 }
 ```
 
 ## Quick Start
 
-### Importing from `@wdk/wallet-spark`
+### Importing from `@tetherto/wdk-wallet-spark`
 
 1. WalletManagerSpark: Main class for managing wallets
 2. WalletAccountSpark: Use this for full access accounts
@@ -48,7 +48,7 @@ After installation, ensure your package.json includes the dependency correctly:
 ### Creating a New Spark Wallet
 
 ```javascript
-import WalletManagerSpark from '@wdk/wallet-spark'
+import WalletManagerSpark from '@tetherto/wdk-wallet-spark'
 
 // Use a BIP-39 seed phrase (replace with your own secure phrase)
 const seedPhrase = 'your twelve word seed phrase here'
@@ -75,7 +75,7 @@ console.log('Account address:', address)
 ### Managing Multiple Accounts
 
 ```javascript
-import WalletManagerSpark from '@wdk/wallet-spark'
+import WalletManagerSpark from '@tetherto/wdk-wallet-spark'
 
 // Assume wallet is already created
 // Get the first account (index 0)
@@ -102,7 +102,7 @@ console.log('Account 2 address:', address2)
 ### Checking Balance
 
 ```javascript
-import WalletManagerSpark from '@wdk/wallet-spark'
+import WalletManagerSpark from '@tetherto/wdk-wallet-spark'
 
 // Assume wallet and account are already created
 // Get Spark balance in satoshis
@@ -114,7 +114,7 @@ console.log('Balance:', balance / 100000000, 'BTC')
 ### Transfer History
 
 ```javascript
-import WalletManagerSpark from '@wdk/wallet-spark'
+import WalletManagerSpark from '@tetherto/wdk-wallet-spark'
 
 // Assume wallet is already created
 // Get transfer history (default: 10 most recent transfers)
@@ -246,7 +246,7 @@ console.log('Withdrawal request:', withdrawal)
 ### Complete Spark Wallet Setup
 
 ```javascript
-import WalletManagerSpark from '@wdk/wallet-spark'
+import WalletManagerSpark from '@tetherto/wdk-wallet-spark'
 
 async function setupSparkWallet() {
   // Use a BIP-39 seed phrase (replace with your own secure phrase)

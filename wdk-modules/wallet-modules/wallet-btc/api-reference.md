@@ -1,6 +1,6 @@
 ---
 title: Wallet BTC API Reference
-description: Complete API documentation for @wdk/wallet-btc
+description: Complete API documentation for @tetherto/wdk-wallet-btc
 author: Matteo Giardino
 lastReviewed: 2025-06-26
 icon: code
@@ -12,13 +12,13 @@ icon: code
 
 | Class | Description | Methods |
 |-------|-------------|---------|
-| [WalletManagerBtc](#walletmanagerbtc) | Main class for managing Bitcoin wallets. Extends `WalletManager` from `@wdk/wallet`. | [Constructor](#constructor), [Methods](#methods) |
+| [WalletManagerBtc](#walletmanagerbtc) | Main class for managing Bitcoin wallets. Extends `WalletManager` from `@tetherto/wdk-wallet`. | [Constructor](#constructor), [Methods](#methods) |
 | [WalletAccountBtc](#walletaccountbtc) | Individual Bitcoin wallet account implementation. Implements `IWalletAccount`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties) |
 
 ## WalletManagerBtc
 
 The main class for managing Bitcoin wallets.  
-Extends `WalletManager` from `@wdk/wallet`.
+Extends `WalletManager` from `@tetherto/wdk-wallet`.
 
 
 #### Constructor
@@ -94,7 +94,7 @@ wallet.dispose()
 
 ## WalletAccountBtc
 
-Represents an individual Bitcoin wallet account. Implements `IWalletAccount` from `@wdk/wallet`.
+Represents an individual Bitcoin wallet account. Implements `IWalletAccount` from `@tetherto/wdk-wallet`.
 
 
 #### Constructor

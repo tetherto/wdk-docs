@@ -1,6 +1,6 @@
 ---
 title: Bridge USDT0 EVM API Reference
-description: Complete API documentation for @wdk/protocol-bridge-usdt0-evm
+description: Complete API documentation for @tetherto/wdk-protocol-bridge-usdt0-evm
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-09-04
 icon: code
@@ -32,8 +32,8 @@ new Usdt0ProtocolEvm(account, config?)
 
 **Example:**
 ```javascript
-import Usdt0ProtocolEvm from '@wdk/protocol-bridge-usdt0-evm'
-import { WalletAccountEvm } from '@wdk/wallet-evm'
+import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
+import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
 const account = new WalletAccountEvm(seedPhrase, {
   provider: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key'
@@ -238,8 +238,8 @@ try {
 ### Basic Bridge Operation
 
 ```javascript
-import Usdt0ProtocolEvm from '@wdk/protocol-bridge-usdt0-evm'
-import { WalletAccountEvm } from '@wdk/wallet-evm'
+import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
+import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
 async function bridgeTokens() {
   // Create wallet account
@@ -322,7 +322,7 @@ async function bridgeToMultipleChains(bridgeProtocol) {
 ### ERC-4337 Gasless Bridge
 
 ```javascript
-import { WalletAccountEvmErc4337 } from '@wdk/wallet-evm-erc-4337'
+import { WalletAccountEvmErc4337 } from '@tetherto/wdk-wallet-evm-erc-4337'
 
 async function gaslessBridge() {
   // Create ERC-4337 account

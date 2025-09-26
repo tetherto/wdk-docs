@@ -1,11 +1,11 @@
 ---
 title: Wallet BTC Overview
-description: Overview of the @wdk/wallet-btc module
+description: Overview of the @tetherto/wdk-wallet-btc module
 author: Matteo Giardino
 lastReviewed: 2025-06-26
 ---
 
-# @wdk/wallet-btc Overview
+# @tetherto/wdk-wallet-btc Overview
 
 A simple and secure package to manage BIP-84 (SegWit) wallets for the Bitcoin blockchain. This package provides a clean API for creating, managing, and interacting with Bitcoin wallets using BIP-39 seed phrases and BIP-84 derivation paths for Native SegWit addresses.
 

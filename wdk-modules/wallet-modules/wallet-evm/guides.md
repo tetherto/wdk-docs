@@ -1,6 +1,6 @@
 ---
 title: Wallet EVM Guides
-description: Installation, quick start, and usage examples for @wdk/wallet-evm
+description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-evm
 author: Matteo Giardino
 lastReviewed: 2025-06-26
 icon: book-open
@@ -10,14 +10,14 @@ icon: book-open
 
 ## Installation
 
-To install the `@wdk/wallet-evm` package, follow these instructions:
+To install the `@tetherto/wdk-wallet-evm` package, follow these instructions:
 
 ### Public Release
 
 Once the package is publicly available, you can install it using npm:
 
 ```bash
-npm install @wdk/wallet-evm
+npm install @tetherto/wdk-wallet-evm
 ```
 
 ### Private Access
@@ -33,7 +33,7 @@ After installation, ensure your package.json includes the dependency correctly:
 ```json
 "dependencies": {
   // ... other dependencies ...
-  "@wdk/wallet-evm": "git+ssh://git@github.com:tetherto/wdk-wallet-evm.git#develop"
+  "@tetherto/wdk-wallet-evm": "git+ssh://git@github.com:tetherto/wdk-wallet-evm.git#develop"
   // ... other dependencies ...
 }
 ```
@@ -43,7 +43,7 @@ After installation, ensure your package.json includes the dependency correctly:
 ### Creating a New Wallet
 
 ```javascript
-import WalletManagerEvm, { WalletAccountEvm, WalletAccountReadOnlyEvm } from '@wdk/wallet-evm'
+import WalletManagerEvm, { WalletAccountEvm, WalletAccountReadOnlyEvm } from '@tetherto/wdk-wallet-evm'
 
 
 // Generate a new random seed phrase (you'll need to implement this or use a library)
@@ -216,7 +216,7 @@ wallet.dispose()
 ### Complete Wallet Setup
 
 ```javascript
-import WalletManagerEvm, { WalletAccountEvm, WalletAccountReadOnlyEvm } from '@wdk/wallet-evm'
+import WalletManagerEvm, { WalletAccountEvm, WalletAccountReadOnlyEvm } from '@tetherto/wdk-wallet-evm'
 
 async function setupWallet() {
   // Use existing seed phrase or generate one

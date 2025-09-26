@@ -1,6 +1,6 @@
 ---
 title: Wallet EVM Configuration
-description: Configuration options and settings for @wdk/wallet-evm
+description: Configuration options and settings for @tetherto/wdk-wallet-evm
 author: Matteo Giardino
 lastReviewed: 2025-06-26
 icon: gear
@@ -13,7 +13,7 @@ icon: gear
 The `WalletManagerEvm` accepts a configuration object that defines how the wallet interacts with the blockchain:
 
 ```javascript
-import WalletManagerEvm from '@wdk/wallet-evm'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
 
 const config = {
   // Required: RPC endpoint URL or EIP-1193 provider
@@ -31,7 +31,7 @@ const wallet = new WalletManagerEvm(seedPhrase, config)
 Both `WalletAccountEvm` and `WalletAccountReadOnlyEvm` share similar configuration options:
 
 ```javascript
-import { WalletAccountEvm, WalletAccountReadOnlyEvm } from '@wdk/wallet-evm'
+import { WalletAccountEvm, WalletAccountReadOnlyEvm } from '@tetherto/wdk-wallet-evm'
 
 // Full access account
 const account = new WalletAccountEvm(

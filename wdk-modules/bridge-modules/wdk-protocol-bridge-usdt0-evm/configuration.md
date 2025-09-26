@@ -1,6 +1,6 @@
 ---
 title: Bridge USDT0 EVM Configuration
-description: Configuration options and settings for @wdk/protocol-bridge-usdt0-evm
+description: Configuration options and settings for @tetherto/wdk-protocol-bridge-usdt0-evm
 author: Raquel Carrasco
 lastReviewed: 2025-09-04
 icon: gear
@@ -13,8 +13,8 @@ icon: gear
 The `Usdt0ProtocolEvm` accepts a configuration object that defines how the bridge protocol works:
 
 ```javascript
-import Usdt0ProtocolEvm from '@wdk/protocol-bridge-usdt0-evm'
-import { WalletAccountEvm } from '@wdk/wallet-evm'
+import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
+import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
 // Create wallet account first
 const account = new WalletAccountEvm(seedPhrase, {
@@ -32,7 +32,7 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 The bridge protocol uses the wallet account's configuration for blockchain access:
 
 ```javascript
-import { WalletAccountEvm, WalletAccountReadOnlyEvm } from '@wdk/wallet-evm'
+import { WalletAccountEvm, WalletAccountReadOnlyEvm } from '@tetherto/wdk-wallet-evm'
 
 // Full access account
 const account = new WalletAccountEvm(

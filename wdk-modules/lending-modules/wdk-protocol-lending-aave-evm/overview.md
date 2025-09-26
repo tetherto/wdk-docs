@@ -5,4 +5,4 @@ author: Raquel Carrasco
 lastReviewed: 2025-09-04
 ---
 
-# @wdk/protocol-lending-aave-evm Overview
+# @tetherto/wdk-protocol-lending-aave-evm Overview

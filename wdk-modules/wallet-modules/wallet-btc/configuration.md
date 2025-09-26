@@ -1,6 +1,6 @@
 ---
 title: Wallet BTC Configuration
-description: Configuration options and settings for @wdk/wallet-btc
+description: Configuration options and settings for @tetherto/wdk-wallet-btc
 author: Matteo Giardino
 lastReviewed: 2025-06-26
 icon: gear
@@ -165,7 +165,7 @@ Bitcoin uses [BIP-84](../../../resources/concepts.md#bip-84-native-segwit) stand
 ## Complete Configuration Example
 
 ```javascript
-import WalletManagerBtc from '@wdk/wallet-btc'
+import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
 // Create wallet manager with configuration
 const wallet = new WalletManagerBtc(seedPhrase, {

@@ -1,11 +1,11 @@
 ---
 title: Wallet Tron Gras-Free Overview
-description: Overview of the @wdk/wallet-tron-gasfree module
+description: Overview of the @tetherto/wdk-wallet-tron-gasfree module
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
 ---
 
-# @wdk/wallet-tron-gasfree Overview
+# @tetherto/wdk-wallet-tron-gasfree Overview
 
 A simple and secure package to manage BIP-44 wallets for the Tron blockchain with **gas-free TRC20 token transfers**. This package provides a clean API for creating, managing, and interacting with Tron wallets using BIP-39 seed phrases and Tron-specific derivation paths, with support for gas-free operations via a service provider.
 

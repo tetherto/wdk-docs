@@ -1,6 +1,6 @@
 ---
 title: Wallet TON Gasless Configuration
-description: Configuration options and settings for @wdk/wallet-ton-gasless
+description: Configuration options and settings for @tetherto/wdk-wallet-ton-gasless
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
 icon: gear
@@ -11,7 +11,7 @@ icon: gear
 ## Wallet Configuration
 
 ```javascript
-import WalletManagerTonGasless from '@wdk/wallet-ton-gasless'
+import WalletManagerTonGasless from '@tetherto/wdk-wallet-ton-gasless'
 
 const config = {
   // Required parameters
@@ -36,7 +36,7 @@ const wallet = new WalletManagerTonGasless(seedPhrase, config)
 ## Account Configuration
 
 ```javascript
-import { WalletAccountTonGasless } from '@wdk/wallet-ton-gasless'
+import { WalletAccountTonGasless } from '@tetherto/wdk-wallet-ton-gasless'
 
 const accountConfig = {
   // Required parameters

@@ -1,6 +1,6 @@
 ---
 title: WDK Core Guides
-description: Installation, quick start, and usage examples for @wdk/core
+description: Installation, quick start, and usage examples for @tetherto/wdk
 author: Raquel Carrasco
 lastReviewed: 2025-09-11
 icon: book-open
@@ -10,62 +10,44 @@ icon: book-open
 
 ## Installation
 
-To install the `@wdk/core` package, follow these instructions:
+To install the `@tetherto/wdk` package, follow these instructions:
 
 ### Public Release
 
 Once the package is publicly available, you can install it using npm:
 
 ```bash
-npm install @wdk/core
-```
-
-### Private Access
-
-If you have access to the private repository, install the package from the develop branch on GitHub:
-
-```bash
-npm install git+https://github.com/tetherto/wdk-core.git#develop
-```
-
-After installation, ensure your package.json includes the dependency correctly:
-
-```json
-"dependencies": {
-  // ... other dependencies ...
-  "@wdk/core": "git+ssh://git@github.com:tetherto/wdk-core.git#develop"
-  // ... other dependencies ...
-}
+npm install @tetherto/wdk
 ```
 
 ## Quick Start
 
-### Importing from `@wdk/core`
+### Importing from `@tetherto/wdk`
 
-1. WdkManager: This is the main class for managing wallets across multiple blockchains.
+1. WDK: This is the main class for managing wallets across multiple blockchains.
 2. IWalletAccountWithProtocols: Extended account interface with protocol support.
 
 ### Creating a New WDK Manager
 
 ```javascript
-import WdkManager from '@wdk/core'
+import WDK from '@tetherto/wdk'
 
 // Generate a random seed phrase
-const seedPhrase = WdkManager.getRandomSeedPhrase()
+const seedPhrase = WDK.getRandomSeedPhrase()
 console.log('Generated seed:', seedPhrase)
 
 // Or use your own seed phrase
-const wdk = new WdkManager(seedPhrase)
+const wdk = new WDK(seedPhrase)
 ```
 
 ### Registering Wallets
 
 ```javascript
-import WalletManagerEvm from '@wdk/wallet-evm'
-import WalletManagerTon from '@wdk/wallet-ton'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import WalletManagerTon from '@tetherto/wdk-wallet-ton'
 
 // Register wallets for different blockchains
-const wdk = new WdkManager(seedPhrase)
+const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, {
     provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
   })
@@ -96,13 +78,13 @@ console.log('TON address:', tonAddress)
 ### Registering Protocols
 
 ```javascript
-import ParaswapProtocolEvm from '@wdk/protocol-swap-paraswap-evm'
-import Usdt0ProtocolTon from '@wdk/protocol-bridge-usdt0-ton'
+import ParaswapProtocolEvm from '@tetherto/wdk-protocol-swap-paraswap-evm'
+import Usdt0ProtocolTon from '@tetherto/wdk-protocol-bridge-usdt0-ton'
 
 // Register protocols globally
-const wdk = new WdkManager(seedPhrase)
-  .registerWallet('ethereum', WalletManagerEvm, ethereumConfig)
-  .registerWallet('ton', WalletManagerTon, tonConfig)
+const wdk = new WDK(seedPhrase)
+  .registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
+  .registerWallet('ton', WalletManagerTon, tonWalletConfig)
   .registerProtocol('ethereum', 'paraswap', ParaswapProtocolEvm, {
     apiKey: 'YOUR_PARASWAP_API_KEY'
   })
@@ -141,11 +123,11 @@ const bridgeResult = await usdt0.bridge({
 ### Managing Multiple Blockchains
 
 ```javascript
-import WalletManagerEvm from '@wdk/wallet-evm'
-import WalletManagerTon from '@wdk/wallet-ton'
-import WalletManagerBtc from '@wdk/wallet-btc'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import WalletManagerTon from '@tetherto/wdk-wallet-ton'
+import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
-const wdk = new WdkManager(seedPhrase)
+const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, {
     provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
   })
@@ -223,15 +205,18 @@ async function sendMultiChainTransactions(wdk) {
 ### Registering Account-Specific Protocols
 
 ```javascript
+import ParaswapProtocolEvm from '@tetherto/wdk-protocol-swap-paraswap-evm'
+
 // Register protocol for specific account
 const ethAccount = await wdk.getAccount('ethereum', 0)
-ethAccount.registerProtocol('uniswap', UniswapProtocolEvm, {
-  routerAddress: '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'
-})
 
-// Use the protocol
-const uniswap = ethAccount.getSwapProtocol('uniswap')
-const swapResult = await uniswap.swap(swapOptions)
+wdk.registerProtocol('ethereum', 'paraswap' ParaswapProtocolEvm, paraswapProtocolConfig)
+
+// or, more concisely:
+
+const wdk = new WDK('...')
+    .registerProtocol('ethereum', 'paraswap' ParaswapProtocolEvm, paraswapProtocolConfig)
+
 ```
 
 ### Multiple Protocol Types
@@ -276,7 +261,7 @@ const account = await wdk.getAccount('ethereum', 0)
 ### Failover Middleware
 
 ```javascript
-import { getFailoverCascadeMiddleware } from '@wdk/wrapper-failover-cascade'
+import { getFailoverCascadeMiddleware } from '@tetherto/wdk-wrapper-failover-cascade'
 
 // Register failover middleware
 wdk.registerMiddleware('ethereum', getFailoverCascadeMiddleware({
@@ -298,17 +283,17 @@ const result = await account.sendTransaction(tx) // Will retry on failure
 ### Complete Multi-Chain Setup
 
 ```javascript
-import WdkManager from '@wdk/core'
-import WalletManagerEvm from '@wdk/wallet-evm'
-import WalletManagerTon from '@wdk/wallet-ton'
-import ParaswapProtocolEvm from '@wdk/protocol-swap-paraswap-evm'
+import WDK from '@tetherto/wdk'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import WalletManagerTon from '@tetherto/wdk-wallet-ton'
+import ParaswapProtocolEvm from '@tetherto/wdk-protocol-swap-paraswap-evm'
 
 async function setupMultiChainWallet() {
   // Generate or use existing seed phrase
-  const seedPhrase = WdkManager.getRandomSeedPhrase()
+  const seedPhrase = WDK.getRandomSeedPhrase()
   
   // Initialize WDK Manager
-  const wdk = new WdkManager(seedPhrase)
+  const wdk = new WDK(seedPhrase)
     .registerWallet('ethereum', WalletManagerEvm, {
       provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
     })
@@ -410,13 +395,13 @@ async function cleanupExample(wdk) {
 ### Production Example
 
 ```javascript
-import WdkManager from '@wdk/core'
-import WalletManagerEvm from '@wdk/wallet-evm'
-import WalletManagerTon from '@wdk/wallet-ton'
+import WDK from '@tetherto/wdk'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import WalletManagerTon from '@tetherto/wdk-wallet-ton'
 
 class MultiChainWalletService {
   constructor(seedPhrase) {
-    this.wdk = new WdkManager(seedPhrase)
+    this.wdk = new WDK(seedPhrase)
       .registerWallet('ethereum', WalletManagerEvm, {
         provider: process.env.ETHEREUM_RPC_URL
       })

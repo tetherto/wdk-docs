@@ -1,6 +1,6 @@
 ---
 title: Bridge USDT0 EVM Guides
-description: Installation, quick start, and usage examples for @wdk/protocol-bridge-usdt0-evm
+description: Installation, quick start, and usage examples for @tetherto/wdk-protocol-bridge-usdt0-evm
 author: Raquel Carrasco
 lastReviewed: 2025-09-04
 icon: book-open
@@ -10,14 +10,14 @@ icon: book-open
 
 ## Installation
 
-To install the `@wdk/protocol-bridge-usdt0-evm` package, follow these instructions:
+To install the `@tetherto/wdk-protocol-bridge-usdt0-evm` package, follow these instructions:
 
 ### Public Release
 
 Once the package is publicly available, you can install it using npm:
 
 ```bash
-npm install @wdk/protocol-bridge-usdt0-evm
+npm install @tetherto/wdk-protocol-bridge-usdt0-evm
 ```
 
 ### Private Access
@@ -33,7 +33,7 @@ After installation, ensure your package.json includes the dependency correctly:
 ```json
 "dependencies": {
   // ... other dependencies ...
-  "@wdk/protocol-bridge-usdt0-evm": "git+ssh://git@github.com:tetherto/wdk-protocol-bridge-usdt0-evm.git#develop"
+  "@tetherto/wdk-protocol-bridge-usdt0-evm": "git+ssh://git@github.com:tetherto/wdk-protocol-bridge-usdt0-evm.git#develop"
   // ... other dependencies ...
 }
 ```
@@ -43,8 +43,8 @@ After installation, ensure your package.json includes the dependency correctly:
 ### Setting Up a Bridge Protocol
 
 ```javascript
-import Usdt0ProtocolEvm from '@wdk/protocol-bridge-usdt0-evm'
-import { WalletAccountEvm } from '@wdk/wallet-evm'
+import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
+import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
 // Create a wallet account first
 const account = new WalletAccountEvm(seedPhrase, {
@@ -179,8 +179,8 @@ try {
 ### Complete Bridge Setup
 
 ```javascript
-import Usdt0ProtocolEvm from '@wdk/protocol-bridge-usdt0-evm'
-import { WalletAccountEvm } from '@wdk/wallet-evm'
+import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
+import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
 async function setupBridge() {
   // Create wallet account
