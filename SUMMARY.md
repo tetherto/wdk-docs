@@ -100,6 +100,7 @@
 * [Secret Manager](documentation/secret-manager.md)
 * [Paymaster Service](documentation/paymaster.md)
 * [Indexer](documentation/indexer-overview.md)
+* [Derivation Path and Compatibility](documentation/export-guide.md)
 
 <!-- ## Indexer
 * [Overview](documentation/indexer.md)
