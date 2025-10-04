@@ -26,6 +26,7 @@ layout:
 			<th></th>
 			<th></th>
 			<th></th>
+			<th></th>
 			<th data-hidden data-card-target data-type="content-ref"></th>
 		</tr>
 	</thead>
