@@ -1,7 +1,7 @@
 ---
 title: Get Support
 description: Need help with WDK? We've got you covered
-icon: question-circle
+icon: circle-question
 layout:
   width: default
   title:
@@ -38,9 +38,9 @@ layout:
 			<td>
 				<strong>Discord Community</strong>
 			</td>
-			<td>Join our Discord server to connect with other developers, ask questions, and share your WDK projects</td>
+			<td>Connect with other developers, ask questions, share your projects</td>
       <td>
-        <a href="https://discord.gg/wdk" class="button primary">Join Discord</a>
+        <a href="https://discord.gg/wdk" class="button primary">Join Community</a>
       </td>
 			<td>
 				<a href="https://discord.gg/wdk">https://discord.gg/wdk</a>
@@ -53,7 +53,7 @@ layout:
 			<td>
 				<strong>GitHub Issues</strong>
 			</td>
-			<td>Report bugs, request features, and get technical help from our development team</td>
+			<td>Report bugs, request features, and get technical help</td>
       <td>
         <a href="https://github.com/tetherto/wdk-core" class="button secondary">Open an Issue</a>
       </td>
