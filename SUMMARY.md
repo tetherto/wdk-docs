@@ -3,7 +3,7 @@
 ## Overview
 
 * [Welcome](README.md)
-* [About WDK](overview/about-wdk.md)
+* [About WDK](overview/about.md)
 * [Our Vision](overview/our-vision.md)
 * [Beta Program](overview/beta-program.md)
 * [Get Support](overview/get-support.md)

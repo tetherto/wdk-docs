@@ -196,5 +196,3 @@ Whether you're building a wallet from scratch or want to add wallet capabilities
  		</tr>
 	</tbody>
 </table>
-
-***
