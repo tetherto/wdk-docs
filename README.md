@@ -88,6 +88,7 @@ Whether you're building wallets for users or experimenting with custody solution
 		<tr>
 			<th></th>
 			<th></th>
+			<th></th>
 			<th data-hidden data-card-target data-type="content-ref"></th>
 		</tr>
 	</thead>
@@ -150,6 +151,7 @@ Whether you're building wallets for users or experimenting with custody solution
 <table data-view="cards">
 	<thead>
 		<tr>
+			<th></th>
 			<th></th>
 			<th></th>
 			<th data-hidden data-card-target data-type="content-ref"></th>
