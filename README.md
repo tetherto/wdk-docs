@@ -132,7 +132,7 @@ Whether you're building a wallet from scratch or want to add wallet capabilities
 			</td>
 			<td>View source code, report issues, and contribute on GitHub</td>
 			<td>
-				<a href="https://github.com/tetherto/wdk">https://github.com/tetherto/wdk</a>
+				<a href="https://github.com/tetherto/wdk-core">https://github.com/tetherto/wdk-core</a>
 			</td>
 		</tr>
 		<tr>
