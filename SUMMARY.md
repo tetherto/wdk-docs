@@ -4,9 +4,9 @@
 
 * [Welcome](README.md)
 * [About WDK](overview/about.md)
-* [Our Vision](overview/our-vision.md)
+* [Our Vision](overview/vision.md)
 * [Beta Program](overview/beta-program.md)
-* [Get Support](overview/get-support.md)
+* [Get Support](overview/support.md)
 
 ## Start Building
 

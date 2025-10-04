@@ -1,6 +1,6 @@
 ---
 title: About WDK
-description: Learn about the Wallet Development Kit - the problems it solves, and how it enables secure multi-chain wallet development
+description: Learn about the Wallet Development Kit and it's capabilities
 icon: lightbulb
 layout:
   width: default
@@ -32,7 +32,7 @@ Unlike closed solutions or SaaS-based wallet infrastructure providers, WDK offer
 
 The current blockchain ecosystem is highly fragmented, with each chain requiring different SDKs, APIs, and integration approaches. This fragmentation creates significant barriers for developers who want to build truly multi-chain applications.
 
-Traditional wallet development requires months of integration work. Developers must learn different standards, implement various security practices, or rely on closed-source solutions.
+Traditional wallet development requires months of integration work. Developers must learn different standards, implement various security practices, or rely on closed-source paid solutions.
 
 ### **The Missing AI Foundation**
 
