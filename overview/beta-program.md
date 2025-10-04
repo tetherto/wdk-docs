@@ -20,9 +20,8 @@ layout:
 
 # Beta Program
 
-Join our exclusive beta program to get early access to WDK features and help shape the future of wallet development.
+<a href="https://docs.google.com/forms/d/e/1FAIpQLSfh3UKsQ-PwJCQOQyJ3EVMKVyHTuqK1XndyiKe4uLslEEtWSw/viewform" class="button primary">Apply for Beta Access</a>
 
-***
 
 ## What is the Beta Program?
 
@@ -64,8 +63,3 @@ We're excited to showcase how our beta partners are using WDK to build innovativ
 
 <a href="https://docs.google.com/forms/d/e/1FAIpQLSfh3UKsQ-PwJCQOQyJ3EVMKVyHTuqK1XndyiKe4uLslEEtWSw/viewform" class="button primary">Apply for Beta Access</a>
 
-Questions? Contact us at [raquel.carrasco@tether.io](mailto:raquel.carrasco@tether.io)
-
-***
-
-*Thank you for helping us build the future of wallet development. Your feedback is invaluable to making WDK the best possible solution for the developer community.*
