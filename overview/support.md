@@ -39,7 +39,9 @@ layout:
 				<strong>Discord Community</strong>
 			</td>
 			<td>Join our Discord server to connect with other developers, ask questions, and share your WDK projects</td>
-      <a href="https://discord.gg/wdk" class="button primary">Join Discord</a>
+      <td>
+        <a href="https://discord.gg/wdk" class="button primary">Join Discord</a>
+      </td>
 			<td>
 				<a href="https://discord.gg/wdk">https://discord.gg/wdk</a>
 			</td>
@@ -52,7 +54,9 @@ layout:
 				<strong>GitHub Issues</strong>
 			</td>
 			<td>Report bugs, request features, and get technical help from our development team</td>
-      <a href="https://github.com/tetherto/wdk-core" class="button secondary">Open an Issue</a>
+      <td>
+        <a href="https://github.com/tetherto/wdk-core" class="button secondary">Open an Issue</a>
+      </td>
 			<td>
 				<a href="https://github.com/tetherto/wdk-core">https://github.com/tetherto/wdk/issues</a>
 			</td>
@@ -65,7 +69,9 @@ layout:
 				<strong>Email Support</strong>
 			</td>
 			<td>For sensitive or private matters, contact our team directly</td>
-      <a href="mailto:support@tether.io" class="button secondary">Send an email</a>
+      <td>
+        <a href="mailto:support@tether.io" class="button secondary">Send an email</a>
+      </td>
 			<td>
 				<a href="mailto:support@tether.io">support@tether.io</a>
 			</td>
