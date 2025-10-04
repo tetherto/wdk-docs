@@ -36,10 +36,116 @@ Whether you're building a wallet from scratch or want to add wallet capabilities
 
 ### Start Building
 
-<table data-card-size="large" data-view="cards"><thead><tr><th></th><th></th><th></th><th data-hidden data-card-target data-type="content-ref"></th></tr></thead><tbody><tr><td><i class="fa-code">:code:</i></td><td><strong>Node.js Quickstart</strong></td><td>Get started with WDK in a Node.js environment</td><td><a href="getting-started/nodejs-quickstart.md">nodejs-quickstart.md</a></td></tr><tr><td><i class="fa-mobile-alt">:mobile-alt:</i></td><td><strong>React Native Quickstart</strong></td><td>Build mobile wallets with React Native Expo</td><td><a href="getting-started/react-native-quickstart.md">react-native-quickstart.md</a></td></tr><tr><td><i class="fa-microchip">:microchip:</i></td><td><strong>Bare Runtime Quickstart</strong></td><td>Deploy WDK in lightweight environments</td><td><a href="getting-started/bare-quickstart.md">bare-quickstart.md</a></td></tr><tr><td><i class="fa-puzzle-piece">:puzzle-piece:</i></td><td><strong>UI Kit</strong></td><td>Explore our React Native UI Kit with pre-built components</td><td><a href="ui-kit/react-native/">react-native</a></td></tr></tbody></table>
+<table data-card-size="large" data-view="cards">
+	<thead>
+		<tr>
+			<th></th>
+			<th></th>
+			<th></th>
+			<th data-hidden data-card-target data-type="content-ref"></th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>Node.js Quickstart</strong>
+			</td>
+			<td>Get started with WDK in a Node.js environment</td>
+			<td>
+				<a href="getting-started/nodejs-quickstart.md">nodejs-quickstart.md</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<i class="fa-mobile-alt">:mobile-alt:</i>
+			</td>
+			<td>
+				<strong>React Native Quickstart</strong>
+			</td>
+			<td>Build mobile wallets with React Native Expo</td>
+			<td>
+				<a href="getting-started/react-native-quickstart.md">react-native-quickstart.md</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<i class="fa-microchip">:microchip:</i>
+			</td>
+			<td>
+				<strong>Bare Runtime Quickstart</strong>
+			</td>
+			<td>Deploy WDK in lightweight environments</td>
+			<td>
+				<a href="getting-started/bare-quickstart.md">bare-quickstart.md</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<i class="fa-puzzle-piece">:puzzle-piece:</i>
+			</td>
+			<td>
+				<strong>UI Kit</strong>
+			</td>
+			<td>Explore our React Native UI Kit with pre-built components</td>
+			<td>
+				<a href="ui-kit/react-native/">react-native</a>
+			</td>
+		</tr>
+	</tbody>
+</table>
 
 ***
 
 ### Get Involved
 
-<table data-view="cards"><thead><tr><th></th><th></th><th></th><th data-hidden data-card-target data-type="content-ref"></th></tr></thead><tbody><tr><td><i class="fa-flask">:flask:</i></td><td><strong>Beta Program</strong></td><td>Join our beta program to get early access to new features</td><td><a href="overview/beta-program.md">beta-program.md</a></td></tr><tr><td><i class="fa-github">:github:</i></td><td><strong>GitHub Repository</strong></td><td>View source code, report issues, and contribute on GitHub</td><td><a href="https://github.com/tetherto/wdk">https://github.com/tetherto/wdk</a></td></tr><tr><td><i class="fa-question-circle">:question-circle:</i></td><td><strong>Get Support</strong></td><td>Need help? Our community can help troupleshoot</td><td><a href="overview/support.md">support.md</a></td></tr></tbody></table>
+<table data-view="cards">
+	<thead>
+		<tr>
+			<th></th>
+			<th></th>
+			<th></th>
+			<th data-hidden data-card-target data-type="content-ref"></th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<i class="fa-flask">:flask:</i>
+			</td>
+			<td>
+				<strong>Beta Program</strong>
+			</td>
+			<td>Join our beta program to get early access to new features</td>
+			<td>
+				<a href="overview/beta-program.md">beta-program.md</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<i class="fa-github">:github:</i>
+			</td>
+			<td>
+				<strong>GitHub Repository</strong>
+			</td>
+			<td>View source code, report issues, and contribute on GitHub</td>
+			<td>
+				<a href="https://github.com/tetherto/wdk">https://github.com/tetherto/wdk</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<i class="fa-question-circle">:question-circle:</i>
+			</td>
+			<td>
+				<strong>Get Support</strong>
+			</td>
+			<td>Need help? Our community can help troupleshoot</td>
+			<td>
+				<a href="overview/support.md">support.md</a>
+			</td>
+		</tr>
+	</tbody>
+</table>
