@@ -24,7 +24,7 @@ The **Wallet Development Kit (WDK)** is Tether's open-source initiative to enabl
 
 Whether you're building wallets for users or experimenting with custody solutions, WDK provides the tools you need.
 
-<div align="center" data-full-width="true"><img src="assets/logo.png" alt="" width="150"></div>
+<div align="center" data-full-width="true"><img src="assets/wdk-logo.png" alt="" width="250"></div>
 
 ***
 
@@ -44,7 +44,7 @@ Whether you're building wallets for users or experimenting with custody solution
 			<td>
 				<strong>About WDK</strong>
 			</td>
-			<td>Learn what WDK is, its core features, and how it simplifies multi-chain wallet development.</td>
+			<td>Understand WDK core features and design principles</td>
 			<td>
 				<a href="overview/about.md">about.md</a>
 			</td>
@@ -56,7 +56,7 @@ Whether you're building wallets for users or experimenting with custody solution
 			<td>
 				<strong>Our Vision</strong>
 			</td>
-			<td>Discover our philosophy and vision for the future of wallet development and blockchain accessibility.</td>
+			<td>Discover our philosophy and idea for the future wallets</td>
 			<td>
 				<a href="overview/vision.md">vision.md</a>
 			</td>
@@ -68,7 +68,7 @@ Whether you're building wallets for users or experimenting with custody solution
 			<td>
 				<strong>Key Concepts</strong>
 			</td>
-			<td>Understand foundational concepts like account abstraction, multi-chain support, and non-custodial design.</td>
+			<td>Learn foundational concepts and terminology</td>
 			<td>
 				<a href="resources/concepts.md">concepts.md</a>
 			</td>
@@ -93,54 +93,54 @@ Whether you're building wallets for users or experimenting with custody solution
 		</tr>
 	</thead>
 	<tbody>
-		<tr>
-      <td>
-				<i class="fa-github">:github:</i>
-			</td>
-			<td>
-				<strong>Node.js Quickstart</strong>
-			</td>
-			<td>Get started with WDK in a Node.js environment. Perfect for backend integrations and server-side wallet operations.</td>
-			<td>
-				<a href="getting-started/nodejs-quickstart.md">nodejs-quickstart.md</a>
-			</td>
-		</tr>
-		<tr>
-      <td>
-				<i class="fa-github">:github:</i>
-			</td>
-			<td>
-				<strong>React Native Quickstart</strong>
-			</td>
-			<td>Build mobile wallets with React Native Expo. Includes iOS and Android support out of the box.</td>
-			<td>
-				<a href="getting-started/react-native-quickstart.md">react-native-quickstart.md</a>
-			</td>
-		</tr>
-		<tr>
-      <td>
-				<i class="fa-github">:github:</i>
-			</td>
-			<td>
-				<strong>Bare Runtime Quickstart</strong>
-			</td>
-			<td>Deploy WDK in lightweight environments. Ideal for IoT devices and embedded systems.</td>
-			<td>
-				<a href="getting-started/bare-quickstart.md">bare-quickstart.md</a>
-			</td>
-		</tr>
-		<tr>
-      <td>
-				<i class="fa-github">:github:</i>
-			</td>
-			<td>
-				<strong>UI Kit</strong>
-			</td>
-			<td>Explore our React Native UI Kit with pre-built components.</td>
-			<td>
-				<a href="ui-kit/react-native/">react-native</a>
-			</td>
-		</tr>
+ 		<tr>
+       <td>
+ 				<i class="fa-code"></i>
+ 			</td>
+ 			<td>
+ 				<strong>Node.js Quickstart</strong>
+ 			</td>
+ 			<td>Get started with WDK in a Node.js environment</td>
+ 			<td>
+ 				<a href="getting-started/nodejs-quickstart.md">nodejs-quickstart.md</a>
+ 			</td>
+ 		</tr>
+ 		<tr>
+       <td>
+ 				<i class="fa-mobile-alt"></i>
+ 			</td>
+ 			<td>
+ 				<strong>React Native Quickstart</strong>
+ 			</td>
+ 			<td>Build mobile wallets with React Native Expo</td>
+ 			<td>
+ 				<a href="getting-started/react-native-quickstart.md">react-native-quickstart.md</a>
+ 			</td>
+ 		</tr>
+ 		<tr>
+       <td>
+ 				<i class="fa-microchip"></i>
+ 			</td>
+ 			<td>
+ 				<strong>Bare Runtime Quickstart</strong>
+ 			</td>
+ 			<td>Deploy WDK in lightweight environments</td>
+ 			<td>
+ 				<a href="getting-started/bare-quickstart.md">bare-quickstart.md</a>
+ 			</td>
+ 		</tr>
+ 		<tr>
+       <td>
+ 				<i class="fa-puzzle-piece"></i>
+ 			</td>
+ 			<td>
+ 				<strong>UI Kit</strong>
+ 			</td>
+ 			<td>Explore our React Native UI Kit with pre-built components</td>
+ 			<td>
+ 				<a href="ui-kit/react-native/">react-native</a>
+ 			</td>
+ 		</tr>
 	</tbody>
 </table>
 
@@ -158,42 +158,42 @@ Whether you're building wallets for users or experimenting with custody solution
 		</tr>
 	</thead>
 	<tbody>
-		<tr>
-      <td>
-				<i class="fa-rectangle-beta">:rectangle-beta:</i>
-			</td>
-			<td>
-				<strong>Beta Program</strong>
-			</td>
-			<td>Join our beta program to get early access to new features and help shape the future of WDK.</td>
-			<td>
-				<a href="overview/beta-program.md">beta-program.md</a>
-			</td>
-		</tr>
-		<tr>
-      <td>
-				<i class="fa-github">:github:</i>
-			</td>
-			<td>
-				<strong>GitHub Repository</strong>
-			</td>
-			<td>View source code, report issues, and contribute to the WDK ecosystem on GitHub.</td>
-			<td>
-				<a href="https://github.com/tetherto/wdk">https://github.com/tetherto/wdk</a>
-			</td>
-		</tr>
-		<tr>
-      <td>
-				<i class="fa-headset">:headset:</i>
-			</td>
-			<td>
-				<strong>Get Support</strong>
-			</td>
-			<td>Need help? Find documentation, community channels, and support resources.</td>
-			<td>
-				<a href="overview/support.md">support.md</a>
-			</td>
-		</tr>
+ 		<tr>
+       <td>
+ 				<i class="fa-flask"></i>
+ 			</td>
+ 			<td>
+ 				<strong>Beta Program</strong>
+ 			</td>
+ 			<td>Join our beta program to get early access to new features</td>
+ 			<td>
+ 				<a href="overview/beta-program.md">beta-program.md</a>
+ 			</td>
+ 		</tr>
+ 		<tr>
+       <td>
+ 				<i class="fa-github"></i>
+ 			</td>
+ 			<td>
+ 				<strong>GitHub Repository</strong>
+ 			</td>
+ 			<td>View source code, report issues, and contribute on GitHub</td>
+ 			<td>
+ 				<a href="https://github.com/tetherto/wdk">https://github.com/tetherto/wdk</a>
+ 			</td>
+ 		</tr>
+ 		<tr>
+       <td>
+ 				<i class="fa-question-circle"></i>
+ 			</td>
+ 			<td>
+ 				<strong>Get Support</strong>
+ 			</td>
+ 			<td>Need help? Our community can help troupleshoot</td>
+ 			<td>
+ 				<a href="overview/support.md">support.md</a>
+ 			</td>
+ 		</tr>
 	</tbody>
 </table>
 
