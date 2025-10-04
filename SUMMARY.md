@@ -1,27 +1,28 @@
-# Table of Contents
+# Table of contents
 
 ## Overview
+
 * [Welcome](README.md)
-* [About WDK](overview/about.md)
-* [Our Vision](overview/vision.md)
+* [About WDK](overview/about-wdk.md)
+* [Our Vision](overview/our-vision.md)
 * [Beta Program](overview/beta-program.md)
-* [Get Support](overview/support.md)
+* [Get Support](overview/get-support.md)
 
 ## Start Building
 
-* [Prerequisites](getting-started/prerequisites.md)
-* [Node.js Quickstart](getting-started/nodejs-quickstart.md)
-* [Bare Runtime Quickstart](getting-started/bare-quickstart.md)
-* [React Native Quickstart](getting-started/react-native-quickstart.md)
+* [Prerequisites](start-building/prerequisites.md)
+* [Node.js Quickstart](start-building/node.js-quickstart.md)
+* [Bare Runtime Quickstart](start-building/bare-runtime-quickstart.md)
+* [React Native Quickstart](start-building/react-native-quickstart.md)
 
 ## SDK
 
-* [Start Here](sdk/getting-started.md)
-* [About Modules](sdk/modules-overview.md)
-* [Core Module](sdk/wdk-core/README.md)
-  * [Usage](sdk/wdk-core/usage.md)
-  * [Configuration](sdk/wdk-core/configuration.md)
-  * [API Reference](sdk/wdk-core/api-reference.md)
+* [Start Here](sdk/start-here.md)
+* [About Modules](sdk/about-modules.md)
+* [Core Module](sdk/core-module/README.md)
+  * [Usage](sdk/core-module/usage.md)
+  * [Configuration](sdk/core-module/configuration.md)
+  * [API Reference](sdk/core-module/api-reference.md)
 * [Wallet Modules](sdk/wallet-modules/README.md)
   * [wallet-btc](sdk/wallet-modules/wallet-btc/README.md)
     * [Usage](sdk/wallet-modules/wallet-btc/usage.md)
@@ -85,23 +86,23 @@
 
 ## UI Kits
 
-* [React Native UI Kit](ui-kit/react-native/README.md)
-  * [Get Started](ui-kit/react-native/getting-started.md)
-  * [Components List](ui-kit/react-native/components.md)
-  * [Theming](ui-kit/react-native/theming.md)
+* [React Native UI Kit](ui-kits/react-native-ui-kit/README.md)
+  * [Get Started](ui-kits/react-native-ui-kit/get-started.md)
+  * [Components List](ui-kits/react-native-ui-kit/components-list.md)
+  * [Theming](ui-kits/react-native-ui-kit/theming.md)
 
 ## Examples & Starters
 
-* [React Native Starter](starters/react-native/README.md)
-  * [Getting Started](starters/react-native/getting-started.md)
-  * [Features](starters/react-native/features.md)
-  * [Customization](starters/react-native/customization.md)
+* [React Native Starter](examples-and-starters/react-native-starter/README.md)
+  * [Getting Started](examples-and-starters/react-native-starter/getting-started.md)
+  * [Features](examples-and-starters/react-native-starter/features.md)
+  * [Customization](examples-and-starters/react-native-starter/customization.md)
 
 ## Tools
 
-* [Indexer API](tools/indexer/README.md)
-  * [Overview](tools/indexer/overview.md)
-  * [API Reference](tools/indexer/api-reference.md)
+* [Indexer API](tools/indexer-api/README.md)
+  * [Overview](tools/indexer-api/overview.md)
+  * [API Reference](tools/indexer-api/api-reference.md)
 * [Secret Manager](tools/secret-manager/README.md)
   * [Overview](tools/secret-manager/overview.md)
   * [API Reference](tools/secret-manager/api-reference.md)
@@ -113,4 +114,4 @@
 
 * [Concepts](resources/concepts.md)
 * [Go-live Checklist](resources/go-live-checklist.md)
-* [Build with an LLM](resources/llm-guide.md)
+* [Build with an LLM](resources/build-with-an-llm.md)
