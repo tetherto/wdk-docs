@@ -1,4 +1,5 @@
 ---
+title: Welcome to WDK
 description: Build secure, multi-chain, non-custodial wallets with minimal effort
 icon: rocket
 layout:
@@ -14,7 +15,7 @@ layout:
   pagination:
     visible: true
   metadata:
-    visible: true
+    visible: false
 ---
 
 # Welcome
@@ -29,7 +30,54 @@ Whether you're building wallets for users or experimenting with custody solution
 
 ### Discover WDK
 
-<table data-view="cards"><thead><tr><th></th><th></th><th data-hidden data-card-target data-type="content-ref"></th><th data-hidden data-card-cover data-type="image">Cover image</th></tr></thead><tbody><tr><td><strong>About WDK</strong></td><td>Learn what WDK is, its core features, and how it simplifies multi-chain wallet development.</td><td><a href="overview/about.md">about.md</a></td><td><a href="assets/logo.png">logo.png</a></td></tr><tr><td><strong>Our Vision</strong></td><td>Discover our philosophy and vision for the future of wallet development and blockchain accessibility.</td><td><a href="overview/vision.md">vision.md</a></td><td><a href=".gitbook/assets/Screenshot 2025-10-01 at 10.00.30.png">Screenshot 2025-10-01 at 10.00.30.png</a></td></tr><tr><td><strong>Key Concepts</strong></td><td>Understand foundational concepts like account abstraction, multi-chain support, and non-custodial design.</td><td><a href="resources/concepts.md">concepts.md</a></td><td></td></tr></tbody></table>
+<table data-view="cards">
+	<thead>
+		<tr>
+			<th></th>
+			<th></th>
+			<th data-hidden data-card-target data-type="content-ref"></th>
+			<th data-hidden data-card-cover data-type="image">Cover image</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<strong>About WDK</strong>
+			</td>
+			<td>Learn what WDK is, its core features, and how it simplifies multi-chain wallet development.</td>
+			<td>
+				<a href="overview/about.md">about.md</a>
+			</td>
+			<td>
+				<a href="assets/logo.png">logo.png</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<strong>Our Vision</strong>
+			</td>
+			<td>Discover our philosophy and vision for the future of wallet development and blockchain accessibility.</td>
+			<td>
+				<a href="overview/vision.md">vision.md</a>
+			</td>
+			<td>
+				<a href="assets/basic.svg">logo</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<strong>Key Concepts</strong>
+			</td>
+			<td>Understand foundational concepts like account abstraction, multi-chain support, and non-custodial design.</td>
+			<td>
+				<a href="resources/concepts.md">concepts.md</a>
+			</td>
+			<td>
+				<a href="assets/basic.svg">logo</a>
+			</td>
+		</tr>
+	</tbody>
+</table>
 
 ***
 
@@ -42,45 +90,5 @@ Whether you're building wallets for users or experimenting with custody solution
 ### Get Involved
 
 <table data-view="cards"><thead><tr><th></th><th></th><th data-hidden data-card-target data-type="content-ref"></th></tr></thead><tbody><tr><td><strong>Beta Program</strong></td><td>Join our beta program to get early access to new features and help shape the future of WDK.</td><td><a href="overview/beta-program.md">beta-program.md</a></td></tr><tr><td><strong>GitHub Repository</strong></td><td>View source code, report issues, and contribute to the WDK ecosystem on GitHub.</td><td><a href="https://github.com/tetherto/wdk">https://github.com/tetherto/wdk</a></td></tr><tr><td><strong>Get Support</strong></td><td>Need help? Find documentation, community channels, and support resources.</td><td><a href="overview/support.md">support.md</a></td></tr></tbody></table>
-
-***
-
-### Why Choose WDK?
-
-#### **Fast Development**
-
-Go from zero to production wallet in days, not months. Pre-built modules and templates accelerate your development process.
-
-#### **Security by Design**
-
-Non-custodial and stateless architecture ensures your users' keys and data remain secure. Built with best practices for key management.
-
-#### **Multi-Chain Ready**
-
-Support Bitcoin, Ethereum, TON, TRON, Solana, and more from day one. Unified APIs across all supported blockchains.
-
-#### **Modular & Extensible**
-
-Use only what you need. Modular architecture allows you to add custom modules and extend functionality as required.
-
-#### **Cross-Platform**
-
-Runs anywhere - Node.js, Bare runtime, mobile environments. Your choice of platform without vendor lock-in.
-
-#### **Open Source**
-
-Fully open-source and free to adopt. No hidden costs, no vendor lock-in, complete transparency and community-driven development.
-
-***
-
-### Quick Stats
-
-**Supported Blockchains** 9+
-
-**Pre-built Modules** 15+
-
-**UI Components** 50+
-
-**Production Ready** ✅
 
 ***
