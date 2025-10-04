@@ -22,7 +22,7 @@ layout:
 
 The **Wallet Development Kit (WDK)** is Tether's open-source initiative to enable developers to build secure, multi-chain, non-custodial wallets with minimal effort. 
 
-A developer-first framework designed for maximum flexibility, supporting everything from consumer wallets to wallet-enabled apps, DeFi integrations, IoT use cases, and AI agents. It enables the future where programmable money becomes the standard for value exchange, replacing traditional financial infrastructure with transparent, efficient, and accessible digital rails.
+A developer-first framework designed for maximum flexibility, supporting everything from consumer wallets to wallet-enabled apps, DeFi integrations, IoT use cases, and AI agents.
 
 Unlike closed solutions or SaaS-based wallet infrastructure providers, WDK offers zero-lock in and designed for maximum flexibility and extensibility. It is modular, runs on Bare, thus can be embedded in a wide variety of environments - from mobile apps to autonomous systems.
 
@@ -34,9 +34,9 @@ The current blockchain ecosystem is highly fragmented, with each chain requiring
 
 Traditional wallet development requires months of integration work. Developers must learn different standards, implement various security practices, or rely on closed-source solutions.
 
-### **The Missing Foundation**
+### **The Missing AI Foundation**
 
-As we move toward a world where both humans and machines need to manage digital assets safely, existing solutions fall short. AI agents will require wallets to interact in the finacial infrastructure, and WDK wants to lay secure secure foundation that works for both human and AI use cases.
+As we move toward a world where both humans and machines need to manage digital assets safely, existing solutions fall short. AI agents will require wallets to interact in the finacial infrastructure, and WDK wants to lay secure foundation that works for both human and AI use cases.
 ***
 
 ## Why WDK is Different
@@ -68,7 +68,7 @@ As we move toward a world where both humans and machines need to manage digital 
     <tr>
 			<td><strong>Secure by Design</strong></td>
 			<td>Stateless and non-custodial architecture ensures keys never leave user control</td>
-			<td><a href="assets/card-placeholder2.svg">placeholder.svg</a></td>
+			<td><a href="../assets/card-placeholder2.svg">placeholder.svg</a></td>
 		</tr> 
 		<tr>
 			<td><strong>Zero Lock-In</strong></td>
@@ -135,30 +135,30 @@ WDK natively supports a broad set of blockchains and standards out of the box:
 {% tabs %}
 {% tab title="Wallet Modules" %}
 
-| Chain/Module                                                      | Type             | Supported |
-|-------------------------------------------------------------------|------------------|-----------|
-| [EVM](../wdk-modules/wallet-modules/wallet-evm/overview.md)   | EVM  /  L2       | ✅        |
-| [EVM ERC-4337](../wdk-modules/wallet-modules/wallet-evm-erc-4337/overview.md)       | EVM Gasless      | ✅        |
-| [Bitcoin](../wdk-modules/wallet-modules/wallet-btc/overview.md)                     | Native           | ✅        |
-| [TON](../wdk-modules/wallet-modules/wallet-ton/overview.md)                         | Non-EVM          | ✅        |
-| [TON Gasless](../wdk-modules/wallet-modules/wallet-ton-gasless/overview.md)         | TON Gasless      | ✅        |
-| [Spark](../wdk-modules/wallet-modules/wallet-spark/overview.md)                     | *                | ✅        |
-| [Solana](../wdk-modules/wallet-modules/wallet-solana/overview.md)                   | Non-EVM          | ✅        |
-| [TRON](../wdk-modules/wallet-modules/wallet-tron/overview.md)                       | Non-EVM          | ✅        |
-| [TRON Gasfree](../wdk-modules/wallet-modules/wallet-tron-gasfree/overview.md)       | TRON Gasfree     | ✅        |
-| [Ark](https://github.com/tetherto/wdk-wallet-ark)    | *    | ⏳        |
+| Blockchain/Module | Support |
+|-------------------|---------|
+| [Bitcoin](../sdk/wallet-modules/wallet-btc/README.md) | ✅ |
+| [Ethereum & EVM](../sdk/wallet-modules/wallet-evm/README.md) | ✅ |
+| [Ethereum ERC-4337](../sdk/wallet-modules/wallet-evm-erc-4337/README.md) | ✅ |
+| [TON](../sdk/wallet-modules/wallet-ton/README.md) | ✅ |
+| [TON Gasless](../sdk/wallet-modules/wallet-ton-gasless/README.md) | ✅ |
+| [TRON](../sdk/wallet-modules/wallet-tron/README.md) | ✅ |
+| [TRON Gasfree](../sdk/wallet-modules/wallet-tron-gasfree/README.md) | ✅ |
+| [Solana](../sdk/wallet-modules/wallet-solana/README.md) | ✅ |
+| [Spark/Lightning](../sdk/wallet-modules/wallet-spark/README.md) | ✅ |
 
 {% endtab %}
 
 {% tab title="DeFi Modules" %}
-- **Swap Protocols**
-  - ParaSwap on EVM (`swap-paraswap-evm`)
-  - StonFi on TON (`swap-stonfi-ton`)
-- **Bridge Protocols**
-  - USDT0 on EVM (`bridge-usdt0-evm`)
-  - USDT0 on TON (`bridge-usdt0-ton`)
-- **Lending Protocols**
-  - Aave on EVM (`lending-aave-evm`)
+
+| Protocol/Module | Support |
+|-----------------|---------|
+| [ParaSwap (EVM)](../sdk/swap-modules/swap-paraswap-evm/README.md) | ✅ |
+| [StonFi (TON)](../sdk/swap-modules/swap-stonfi-ton/README.md) | ✅ |
+| [USDT0 Bridge (EVM)](../sdk/bridge-modules/bridge-usdt0-evm/README.md) | ✅ |
+| [USDT0 Bridge (TON)](../sdk/bridge-modules/bridge-usdt0-ton/README.md) | ✅ |
+| [Aave Lending (EVM)](../sdk/lending-modules/lending-aave-evm/README.md) | ✅ |
+
 {% endtab %}
 {% endtabs %}
 
