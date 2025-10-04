@@ -11,9 +11,9 @@ layout:
   tableOfContents:
     visible: true
   outline:
-    visible: true
+    visible: false
   pagination:
-    visible: true
+    visible: false
   metadata:
     visible: false
 ---
@@ -49,7 +49,7 @@ Whether you're building wallets for users or experimenting with custody solution
 				<a href="overview/about.md">about.md</a>
 			</td>
 			<td>
-				<a href="assets/logo.png">logo.png</a>
+				<a href="assets/card-placeholder1.svg">logo.png</a>
 			</td>
 		</tr>
 		<tr>
@@ -61,7 +61,7 @@ Whether you're building wallets for users or experimenting with custody solution
 				<a href="overview/vision.md">vision.md</a>
 			</td>
 			<td>
-				<a href="assets/basic.svg">logo</a>
+				<a href="assets/card-placeholder2.svg">logo</a>
 			</td>
 		</tr>
 		<tr>
@@ -73,7 +73,7 @@ Whether you're building wallets for users or experimenting with custody solution
 				<a href="resources/concepts.md">concepts.md</a>
 			</td>
 			<td>
-				<a href="assets/basic.svg">logo</a>
+				<a href="assets/card-placeholder3.svg">logo</a>
 			</td>
 		</tr>
 	</tbody>
@@ -83,12 +83,116 @@ Whether you're building wallets for users or experimenting with custody solution
 
 ### Start Building
 
-<table data-view="cards"><thead><tr><th></th><th></th><th data-hidden data-card-target data-type="content-ref"></th></tr></thead><tbody><tr><td><strong>Node.js Quickstart</strong></td><td>Get started with WDK in a Node.js environment. Perfect for backend integrations and server-side wallet operations.</td><td><a href="getting-started/nodejs-quickstart.md">nodejs-quickstart.md</a></td></tr><tr><td><strong>React Native Quickstart</strong></td><td>Build mobile wallets with React Native Expo. Includes iOS and Android support out of the box.</td><td><a href="getting-started/react-native-quickstart.md">react-native-quickstart.md</a></td></tr><tr><td><strong>Bare Runtime Quickstart</strong></td><td>Deploy WDK in lightweight environments. Ideal for IoT devices and embedded systems.</td><td><a href="getting-started/bare-quickstart.md">bare-quickstart.md</a></td></tr><tr><td><strong>UI Kit</strong></td><td>Explore our React Native UI Kit with pre-built components.</td><td><a href="ui-kit/react-native/">react-native</a></td></tr></tbody></table>
+<table data-view="cards">
+	<thead>
+		<tr>
+			<th></th>
+			<th></th>
+			<th data-hidden data-card-target data-type="content-ref"></th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+      <td>
+				<i class="fa-github">:github:</i>
+			</td>
+			<td>
+				<strong>Node.js Quickstart</strong>
+			</td>
+			<td>Get started with WDK in a Node.js environment. Perfect for backend integrations and server-side wallet operations.</td>
+			<td>
+				<a href="getting-started/nodejs-quickstart.md">nodejs-quickstart.md</a>
+			</td>
+		</tr>
+		<tr>
+      <td>
+				<i class="fa-github">:github:</i>
+			</td>
+			<td>
+				<strong>React Native Quickstart</strong>
+			</td>
+			<td>Build mobile wallets with React Native Expo. Includes iOS and Android support out of the box.</td>
+			<td>
+				<a href="getting-started/react-native-quickstart.md">react-native-quickstart.md</a>
+			</td>
+		</tr>
+		<tr>
+      <td>
+				<i class="fa-github">:github:</i>
+			</td>
+			<td>
+				<strong>Bare Runtime Quickstart</strong>
+			</td>
+			<td>Deploy WDK in lightweight environments. Ideal for IoT devices and embedded systems.</td>
+			<td>
+				<a href="getting-started/bare-quickstart.md">bare-quickstart.md</a>
+			</td>
+		</tr>
+		<tr>
+      <td>
+				<i class="fa-github">:github:</i>
+			</td>
+			<td>
+				<strong>UI Kit</strong>
+			</td>
+			<td>Explore our React Native UI Kit with pre-built components.</td>
+			<td>
+				<a href="ui-kit/react-native/">react-native</a>
+			</td>
+		</tr>
+	</tbody>
+</table>
 
 ***
 
 ### Get Involved
 
-<table data-view="cards"><thead><tr><th></th><th></th><th data-hidden data-card-target data-type="content-ref"></th></tr></thead><tbody><tr><td><strong>Beta Program</strong></td><td>Join our beta program to get early access to new features and help shape the future of WDK.</td><td><a href="overview/beta-program.md">beta-program.md</a></td></tr><tr><td><strong>GitHub Repository</strong></td><td>View source code, report issues, and contribute to the WDK ecosystem on GitHub.</td><td><a href="https://github.com/tetherto/wdk">https://github.com/tetherto/wdk</a></td></tr><tr><td><strong>Get Support</strong></td><td>Need help? Find documentation, community channels, and support resources.</td><td><a href="overview/support.md">support.md</a></td></tr></tbody></table>
+<table data-view="cards">
+	<thead>
+		<tr>
+			<th></th>
+			<th></th>
+			<th data-hidden data-card-target data-type="content-ref"></th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+      <td>
+				<i class="fa-rectangle-beta">:rectangle-beta:</i>
+			</td>
+			<td>
+				<strong>Beta Program</strong>
+			</td>
+			<td>Join our beta program to get early access to new features and help shape the future of WDK.</td>
+			<td>
+				<a href="overview/beta-program.md">beta-program.md</a>
+			</td>
+		</tr>
+		<tr>
+      <td>
+				<i class="fa-github">:github:</i>
+			</td>
+			<td>
+				<strong>GitHub Repository</strong>
+			</td>
+			<td>View source code, report issues, and contribute to the WDK ecosystem on GitHub.</td>
+			<td>
+				<a href="https://github.com/tetherto/wdk">https://github.com/tetherto/wdk</a>
+			</td>
+		</tr>
+		<tr>
+      <td>
+				<i class="fa-headset">:headset:</i>
+			</td>
+			<td>
+				<strong>Get Support</strong>
+			</td>
+			<td>Need help? Find documentation, community channels, and support resources.</td>
+			<td>
+				<a href="overview/support.md">support.md</a>
+			</td>
+		</tr>
+	</tbody>
+</table>
 
 ***
