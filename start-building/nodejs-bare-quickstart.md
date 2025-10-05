@@ -60,7 +60,7 @@ To install Bare runtime use command `npm i -g bare`
 
 ***
 
-## Step 1: Project Setup
+## Step 1: Set Up Your Project
 
 First we need to create a folder and initialize a the project
 
@@ -77,10 +77,10 @@ npm install @tetherto/wdk @tetherto/wdk-wallet-evm @tetherto/wdk-wallet-tron @te
 {% hint style="info" %}
 Learn more about WDK modules:
 
-* [**@tetherto/wdk**](../sdk/wdk-core/) - The main SDK module
-* [**@tetherto/wdk-wallet-evm**](../sdk/wallet-modules/wallet-evm/) - Ethereum and EVM-compatible chains support
-* [**@tetherto/wdk-wallet-tron**](../sdk/wallet-modules/wallet-tron/) - TRON blockchain support
-* [**@tetherto/wdk-wallet-btc**](../sdk/wallet-modules/wallet-btc/) - Bitcoin blockchain support
+* [**@tetherto/wdk**](../sdk/wdk-core/usage.md) - The main SDK module
+* [**@tetherto/wdk-wallet-evm**](../sdk/wallet-modules/wallet-evm/usage.md) - Ethereum and EVM-compatible chains support
+* [**@tetherto/wdk-wallet-tron**](../sdk/wallet-modules/wallet-tron/usage.md) - TRON blockchain support
+* [**@tetherto/wdk-wallet-btc**](../sdk/wallet-modules/wallet-btc/usage.md) - Bitcoin blockchain support
 {% endhint %}
 
 ***
@@ -89,7 +89,7 @@ Learn more about WDK modules:
 
 Create a file called `app.js`:
 
-{% code title="app.js" lineNumbers="true" fullWidth="false" %}
+{% code title="app.js" lineNumbers="true" %}
 ```javascript
 import WDK from '@tetherto/wdk'
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
@@ -100,16 +100,117 @@ async function main() {
   console.log('Starting WDK App...')
   
   try {
-    // Step 1: Generate a seed phrase
+    // Your code will go here
+  } catch (error) {
+    console.error('Application error:', error.message)
+  }
+}
+
+// Run the application
+main()
+```
+{% endcode %}
+
+Now, add the following code to generate a seed phrase:
+
+{% code title="app.js" lineNumbers="true" %}
+```typescript
+  try {
     const seedPhrase = WDK.getRandomSeedPhrase()
     console.log('Generated seed phrase:', seedPhrase)
-    
-    // Step 2: Create WDK instance
-    const wdk = new WDK(seedPhrase)
-    
-    // Step 3: Register wallets for different blockchains
-    console.log('Registering wallets...')
-    const wdkWithWallets = wdk
+  } catch (error) {
+    console.error('Application error:', error.message)
+  }
+```
+{% endcode %}
+
+
+Now, let's register wallets for different blockchains:
+
+{% code title="app.js" lineNumbers="true" %}
+```typescript
+// Add below the code to generate a seed phrase
+console.log('Registering wallets...')
+
+const wdkWithWallets = new WDK(seedPhrase)
+  .registerWallet('ethereum', WalletManagerEvm, {
+    provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
+  })
+  .registerWallet('tron', WalletManagerTron, {
+    provider: 'https://api.trongrid.io'
+  })
+  .registerWallet('bitcoin', WalletManagerBtc, {
+    provider: 'https://blockstream.info/api'
+  })
+
+console.log('Wallets registered for Ethereum, TRON, and Bitcoin')
+```
+{% endcode %}
+
+{% hint style="info" %}
+To learn more about configuring the wallet modules:
+* [**@tetherto/wdk-wallet-evm**](../sdk/wallet-modules/wallet-evm/configuration.md)
+* [**@tetherto/wdk-wallet-tron**](../sdk/wallet-modules/wallet-tron/configuration.md)
+* [**@tetherto/wdk-wallet-btc**](../sdk/wallet-modules/wallet-btc/configuration.md)
+{% endhint %}
+
+## Step 3: Check Balances
+
+To check balances, we first need to get accounts and addresses.
+Let's get accounts and addresses for all blockchains:
+
+{% code title="app.js" lineNumbers="true" %}
+```typescript
+// Add below the code to get accounts and addresses
+console.log('Retrieving accounts...')
+
+const accounts = {
+  ethereum: await wdkWithWallets.getAccount('ethereum', 0),
+  tron: await wdkWithWallets.getAccount('tron', 0),
+  bitcoin: await wdkWithWallets.getAccount('bitcoin', 0)
+}
+
+console.log('Resolving addresses:')
+
+for (const [chain, account] of Object.entries(accounts)) {
+  const address = await account.getAddress()
+  console.log(`   ${chain.toUpperCase()}: ${address}`)
+}
+```
+{% endcode %}
+
+Now, let's check balances across all chains:
+
+```typescript
+// Check balances across all chains
+console.log('Checking balances...')
+for (const [chain, account] of Object.entries(accounts)) {
+  try {
+    const balance = await account.getBalance()
+    console.log(`   ${chain.toUpperCase()}: ${balance.toString()} units`)
+  } catch (error) {
+    console.log(`   ${chain.toUpperCase()}: Unable to check balance`)
+  }
+}
+```
+
+Here is the complete app.js file:
+
+{% code title="app.js" lineNumbers="true" %}
+```javascript
+import WDK from '@tetherto/wdk'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import WalletManagerTron from '@tetherto/wdk-wallet-tron'
+import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
+
+async function main() {
+  console.log('Starting WDK App...')
+  
+  try {
+    const seedPhrase = WDK.getRandomSeedPhrase()
+    console.log('Generated seed phrase:', seedPhrase)
+
+    const wdkWithWallets = new WDK(seedPhrase)
       .registerWallet('ethereum', WalletManagerEvm, {
         provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
       })
@@ -119,26 +220,22 @@ async function main() {
       .registerWallet('bitcoin', WalletManagerBtc, {
         provider: 'https://blockstream.info/api'
       })
-    
-    console.log('Wallets registered for Ethereum, TRON, and Bitcoin')
-    
-    // Step 4: Get accounts for all blockchains
-    console.log('Creating accounts...')
+
     const accounts = {
       ethereum: await wdkWithWallets.getAccount('ethereum', 0),
       tron: await wdkWithWallets.getAccount('tron', 0),
       bitcoin: await wdkWithWallets.getAccount('bitcoin', 0)
     }
-    
-    // Step 5: Get addresses
-    console.log('Account addresses:')
+
+    console.log('Resolving addresses:')
+
     for (const [chain, account] of Object.entries(accounts)) {
       const address = await account.getAddress()
       console.log(`   ${chain.toUpperCase()}: ${address}`)
     }
-    
-    // Step 6: Check balances across all chains
+
     console.log('Checking balances...')
+
     for (const [chain, account] of Object.entries(accounts)) {
       try {
         const balance = await account.getBalance()
@@ -147,23 +244,9 @@ async function main() {
         console.log(`   ${chain.toUpperCase()}: Unable to check balance`)
       }
     }
-    
-    // Step 7: Estimate transaction costs
-    console.log('Estimating transaction costs...')
-    for (const [chain, account] of Object.entries(accounts)) {
-      try {
-        const quote = await account.quoteSendTransaction({
-          to: await account.getAddress(),
-          value: chain === 'bitcoin' ? 100000000 : chain === 'tron' ? 1000000 : '1000000000000000000'
-        })
-        console.log(`   ${chain.toUpperCase()}: ${quote.fee.toString()} units`)
-      } catch (error) {
-        console.log(`   ${chain.toUpperCase()}: Unable to estimate`)
-      }
-    }
-    
+
     console.log('Application completed successfully!')
-    
+
   } catch (error) {
     console.error('Application error:', error.message)
   }
@@ -176,7 +259,7 @@ main()
 
 ***
 
-## Step 3: Run Your Application
+## Step 4: Run Your App
 
 Execute your app:
 
@@ -223,19 +306,13 @@ Application completed successfully!
 
 **Congratulations!** You've successfully created your first multi-chain WDK application that works in both Node.js and Bare runtime environments. Here's what happened:
 
-### **Multi-Chain Wallet Creation**
+* [x] You generated a single seed phrase that works across all blockchains
+* [x] You registered wallets for Ethereum, TRON, and Bitcoin
+* [x] You created accounts derived from the same seed phrase using BIP-44
+* [x] You used the same API to interact with different blockchains
+* [x] You checked balances across multiple chains with consistent methods
 
-* Generated a single seed phrase that works across all blockchains
-* Registered wallet managers for Ethereum, TRON, and Bitcoin
-* Created accounts derived from the same seed phrase using BIP-44
-
-### **Unified Interface**
-
-* Used the same API to interact with different blockchains
-* Checked balances across multiple chains with consistent methods
-* Estimated transaction costs using unified interfaces
-
-### **Self-Custodial Architecture**
+### Self-Custodial Architecture
 
 * All private keys are derived from your seed phrase
 * Keys never leave your application (stateless design)
@@ -247,19 +324,46 @@ Application completed successfully!
 
 Now that you have a basic multi-chain wallet running, here's what you can explore:
 
-### **Add More Blockchains**
+### Add More Blockchains
 
-```typescript
-// Add Solana support
+For example, to add Solana support:
+
+```bash
 npm install @tetherto/wdk-wallet-solana
+```
 
-// Register in your app
+{% code title="app.js" lineNumbers="true" %}
+```typescript
 import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
+
+// Your existing WDK instance
+const wdk = new WDK(seedPhrase)
 
 wdk.registerWallet('solana', WalletManagerSolana, {
   provider: 'https://api.mainnet-beta.solana.com'
 })
+
+``` 
+{% endcode %}
+
+### Estimate transaction costs
+
+{% code title="app.js" lineNumbers="true" %}
+```typescript
+console.log('Estimating transaction costs...')
+for (const [chain, account] of Object.entries(accounts)) {
+  try {
+    const quote = await account.quoteSendTransaction({
+      to: await account.getAddress(),
+      value: chain === 'bitcoin' ? 100000000 : chain === 'tron' ? 1000000 : '1000000000000000000'
+    })
+    console.log(`   ${chain.toUpperCase()}: ${quote.fee.toString()} units`)
+  } catch (error) {
+    console.log(`   ${chain.toUpperCase()}: Unable to estimate`)
+  }
+}
 ```
+{% endcode %}
 
 ### **Send Transactions**
 
@@ -329,7 +433,7 @@ provider: 'https://blockstream.info/api'
 
 ### **Need More help?**
 
-* **Documentation**: Check our [SDK documentation](../sdk/getting-started.md)
+* **Documentation**: Check our [SDK documentation](../sdk/wdk-core/usage.md)
 * **Issues**: [Open an issue on GitHub](https://github.com/tetherto/wdk/issues)
 * **Community**: [Join our Discord](https://discord.gg/wdk)
 
@@ -345,7 +449,7 @@ When you're ready to deploy to production:
 4. **Testing**: Write unit and integration tests
 5. **Monitoring**: Set up monitoring and alerting
 
-Check out our [Go-live Checklist](../resources/go-live-checklist.md) for a complete production readiness guide.
+Check out our [Go-live Checklist](../resources/go-live-checklist/go-live-checklist.md) for a complete production readiness guide.
 
 ***
 
