@@ -1,6 +1,6 @@
 ---
-title: Node.js Quickstart
-description: Get started with WDK in a Node.js environment in 15 minutes
+title: Node.js & Bare Runtime Quickstart
+description: Get started with WDK in Node.js or Bare runtime environments in 5 minutes
 icon: code
 layout:
   width: default
@@ -18,9 +18,9 @@ layout:
     visible: false
 ---
 
-# Node.js Quickstart
+# Node.js & Bare Runtime Quickstart
 
-Get started with WDK in a Node.js environment. Perfect for backend integrations and server-side wallet operations.
+Get started with WDK in Node.js or Bare runtime environments. Perfect for backend integrations, server-side wallet operations, and embedded applications.
 
 ***
 
@@ -39,11 +39,22 @@ In this quickstart, you'll create a simple Node.js application that:
 
 Before we start, make sure you have:
 
+{% tabs %}
+{% tab title="Node.js Environment" %}
 | Tool | Version | Why You Need It |
 |------|---------|-----------------|
 | **Node.js** | 20+ | To run JavaScript code |
 | **npm** | Latest | To install packages |
 | **Code Editor** | Any | To write code (VS Code recommended) |
+{% endtab %}
+{% tab title="Bare Runtime Environment" %}
+| Tool | Version | Why You Need It |
+|------|---------|-----------------|
+| **Bare Runtime** | Latest | To run JavaScript in embedded environments |
+| **npm** | Latest | To install packages |
+| **Code Editor** | Any | To write code (VS Code recommended) |
+{% endtab %}
+{% endtabs %}
 
 **Note**: We'll use testnets for this tutorial, so you don't need real funds to get started!
 
@@ -97,7 +108,7 @@ import WalletManagerTron from '@tetherto/wdk-wallet-tron'
 import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
 async function main() {
-  console.log('Starting WDK Node.js App...\n')
+  console.log('Starting WDK App...\n')
   
   try {
     // Step 1: Generate a seed phrase (in production, generate this securely!)
@@ -179,14 +190,23 @@ main()
 
 Execute your app:
 
+{% tabs %}
+{% tab title="Node.js" %}
 ```bash:1
 node app.js
 ```
+{% endtab %}
+{% tab title="Bare Runtime" %}
+```bash:1
+bare app.js
+```
+{% endtab %}
+{% endtabs %}
 
 You should see output like this:
 
 ```text:1-21
-Starting WDK Node.js App...
+Starting WDK App...
 
 Generated seed phrase: abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about
 Registering wallets...
@@ -215,7 +235,7 @@ Application completed successfully!
 
 ## What Just Happened?
 
-**Congratulations!** You've successfully created your first multi-chain WDK application. Here's what happened:
+**Congratulations!** You've successfully created your first multi-chain WDK application that works in both Node.js and Bare runtime environments. Here's what happened:
 
 ### **Multi-Chain Wallet Creation**
 - Generated a single seed phrase that works across all blockchains
