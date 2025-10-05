@@ -124,7 +124,6 @@ Now, add the following code to generate a seed phrase:
 ```
 {% endcode %}
 
-
 Now, let's register wallets for different blockchains:
 
 {% code title="app.js" lineNumbers="true" %}
@@ -149,15 +148,17 @@ console.log('Wallets registered for Ethereum, TRON, and Bitcoin')
 
 {% hint style="info" %}
 To learn more about configuring the wallet modules:
+
 * [**@tetherto/wdk-wallet-evm**](../sdk/wallet-modules/wallet-evm/configuration.md)
 * [**@tetherto/wdk-wallet-tron**](../sdk/wallet-modules/wallet-tron/configuration.md)
 * [**@tetherto/wdk-wallet-btc**](../sdk/wallet-modules/wallet-btc/configuration.md)
 {% endhint %}
 
+***
+
 ## Step 3: Check Balances
 
-To check balances, we first need to get accounts and addresses.
-Let's get accounts and addresses for all blockchains:
+To check balances, we first need to get accounts and addresses. Let's get accounts and addresses for all blockchains:
 
 {% code title="app.js" lineNumbers="true" %}
 ```typescript
@@ -277,7 +278,7 @@ bare app.js
 {% endtab %}
 {% endtabs %}
 
-You should see output like this:
+You should see an output similar to this:
 
 ```
 Starting WDK App...
@@ -312,12 +313,6 @@ Application completed successfully!
 * [x] You used the same API to interact with different blockchains
 * [x] You checked balances across multiple chains with consistent methods
 
-### Self-Custodial Architecture
-
-* All private keys are derived from your seed phrase
-* Keys never leave your application (stateless design)
-* Complete control over your digital assets
-
 ***
 
 ## Next Steps
@@ -332,25 +327,24 @@ For example, to add Solana support:
 npm install @tetherto/wdk-wallet-solana
 ```
 
-{% code title="app.js" lineNumbers="true" %}
+{% code lineNumbers="true" %}
 ```typescript
 import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 
-// Your existing WDK instance
+// New or existing WDK instance
 const wdk = new WDK(seedPhrase)
 
 wdk.registerWallet('solana', WalletManagerSolana, {
   provider: 'https://api.mainnet-beta.solana.com'
 })
 
-``` 
+```
 {% endcode %}
 
-### Estimate transaction costs
+### Estimate Transaction Costs
 
-{% code title="app.js" lineNumbers="true" %}
+{% code lineNumbers="true" %}
 ```typescript
-console.log('Estimating transaction costs...')
 for (const [chain, account] of Object.entries(accounts)) {
   try {
     const quote = await account.quoteSendTransaction({
@@ -367,47 +361,27 @@ for (const [chain, account] of Object.entries(accounts)) {
 
 ### **Send Transactions**
 
+{% code lineNumbers="true" %}
 ```typescript
-// Send a transaction
 const result = await ethAccount.sendTransaction({
-  to: '0x742d35Cc6634C0532925a3b8D9C5c8b7b6e5f6e5',
+  to: '0x742d35Cc6634C05...a3b8D9C5c8b7b6e5f6e5',
   value: '1000000000000000000' // 1 ETH
 })
 
 console.log('Transaction hash:', result.hash)
 ```
+{% endcode %}
 
 ### **Use DeFi Protocols**
 
-```typescript
-// Register swap protocol
+```bash
 npm install @tetherto/wdk-protocol-swap-paraswap-evm
-
-// Use in your app
-import SwapParaswapEvm from '@tetherto/wdk-protocol-swap-paraswap-evm'
-wdk.registerProtocol('swap-paraswap-evm', SwapParaswapEvm)
 ```
 
-***
+```typescript
+import SwapParaswapEvm from '@tetherto/wdk-protocol-swap-paraswap-evm'
 
-## Configuration
-
-### **Provider Configuration**
-
-Update the providers in your app for different networks:
-
-```javascript:1-10
-// Ethereum Mainnet
-provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
-
-// Ethereum Sepolia Testnet
-provider: 'https://sepolia.infura.io/v3/YOUR_API_KEY'
-
-// TRON Mainnet
-provider: 'https://api.trongrid.io'
-
-// Bitcoin Mainnet
-provider: 'https://blockstream.info/api'
+wdk.registerProtocol('swap-paraswap-evm', SwapParaswapEvm)
 ```
 
 ***
@@ -433,23 +407,7 @@ provider: 'https://blockstream.info/api'
 
 ### **Need More help?**
 
-* **Documentation**: Check our [SDK documentation](../sdk/wdk-core/usage.md)
-* **Issues**: [Open an issue on GitHub](https://github.com/tetherto/wdk/issues)
-* **Community**: [Join our Discord](https://discord.gg/wdk)
-
-***
-
-## Ready for Production?
-
-When you're ready to deploy to production:
-
-1. **Secure Key Management**: Use a secure key storage
-2. **Environment Configuration**: Use environment variables for sensitive data
-3. **Error Handling**: Implement comprehensive error handling and logging
-4. **Testing**: Write unit and integration tests
-5. **Monitoring**: Set up monitoring and alerting
-
-Check out our [Go-live Checklist](../resources/go-live-checklist/go-live-checklist.md) for a complete production readiness guide.
+{% include "../.gitbook/includes/support-cards.md" %}
 
 ***
 
