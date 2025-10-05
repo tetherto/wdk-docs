@@ -10,7 +10,7 @@ icon: book-open
 
 # Wallet Development Kit (WDK)
 
-The Wallet Development Kit (WDK) is a **developer-first SDK** for deploying **non-custodial wallets** across multiple blockchains.  
+The Wallet Development Kit (WDK) is a **developer-first SDK** for deploying **self-custodial wallets** across multiple blockchains.  
 
 It’s designed to be **flexible, modular, and consistent**, whether you are building wallets for your users or experimenting with your own custody solutions. WDK includes **protocol modules**—Swap, Bridge, Lending—and an **Indexer API**, simplifying cross-chain interactions and multi-chain wallet management.
 

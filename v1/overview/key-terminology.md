@@ -17,7 +17,7 @@ Refer back here whenever you need quick definitions.
 WDK does not persist secrets, sessions, or configs.  
 All operations run in-memory, and developers must handle secure storage externally.
 
-### Non-Custodial
+### Self Custodial
 Users always control their private keys.  
 WDK never stores, transmits, or has access to secrets.
 
@@ -46,4 +46,4 @@ Always optional, plug-and-play.
 
 ### Secret Key Manager
 A module for generating, encrypting, and securely handling private keys.  
-Supports recovery and multi-device sync while remaining non-custodial.
+Supports recovery and multi-device sync while remaining self-custodial.

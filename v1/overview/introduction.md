@@ -52,7 +52,7 @@ WDK solves this by providing **all the pieces** in one modular system that works
 WDK is guided by three core principles:
 
 - **Consistency** – Unified interface and API patterns across all supported blockchains.
-- **Non-Custodial by Design** – users always control their keys; WDK never stores or manages them.  
+- **Self Custodial by Design** – users always control their keys; WDK never stores or manages them.  
 - **User Experience First** – support for Account Abstraction, gasless/gasfree transactions, and Paymaster integration to remove the friction of handling gas tokens.  
 
 ---
@@ -74,7 +74,7 @@ WDK helps developers build faster, maintain less, and deliver better experiences
 - **Multi-Blockchain Support**: Ethereum, Polygon, Arbitrum, Bitcoin, TON, Spark, Solana
 - **Unified API Layer**: A single interface across chains
 - **Account Abstraction**: Enable gasless transactions & custom fee logic on EVM, TON & TRON
-- **Stateless & Non-Custodial**: No data storage by WDK; developers control all keys and sensitive data
+- **Stateless & Self Custodial**: No data storage by WDK; developers control all keys and sensitive data
 - **DeFi Ready**: Built-in support for swaps, token transfers, and cross-chain actions
 - **Modular & Extensible**: Add your own chains, tokens, or business logic
 

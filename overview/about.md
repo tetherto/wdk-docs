@@ -20,29 +20,29 @@ layout:
 
 # About WDK
 
-The **Wallet Development Kit (WDK)** is Tether's open-source initiative to enable developers to build secure, multi-chain, non-custodial wallets with minimal effort.
+The **Wallet Development Kit (WDK)** is Tether's open-source initiative to empowers humans and AI agents alike to build, deploy and use secure, multi-chain, self-custodial wallets that can be integrated anywhere from the smallest embedded device to any mobile, desktop and server operating system.
 
-A developer-first framework designed for maximum flexibility, supporting everything from consumer wallets to wallet-enabled apps, DeFi integrations, IoT use cases, and AI agents.
+A developer-first framework designed for maximum flexibility and scalability, powering anything from consumer wallets to wallet-enabled apps, DeFi integrations, IoT use cases, and AI agents.
 
-Unlike closed solutions or SaaS-based wallet infrastructure providers, WDK offers zero-lock in and designed for maximum flexibility and extensibility. It is modular, runs on Bare, thus can be embedded in a wide variety of environments - from mobile apps to autonomous systems.
+Unlike closed solutions or SaaS-based wallet infrastructure providers, WDK offers zero-lock in and designed for maximum flexibility and extensibility. It is modular, runs on Bare, Node.js and React-Native, thus can be embedded in a wide variety of environments - from mobile apps to autonomous systems.
 
 ***
 
 ## What Problems Does WDK Solve?
 
-The current blockchain ecosystem is highly fragmented, with each chain requiring different SDKs, APIs, and integration approaches. This fragmentation creates significant barriers for developers who want to build truly multi-chain applications.
+The current blockchain ecosystem is highly fragmented, with each blockchain requiring different SDKs, APIs, and integration approaches. This fragmentation creates significant barriers for developers who want to build truly seamless user-experiences that space across any blockchain, environment and use-case.
 
-Traditional wallet development requires months of integration work. Developers must learn different standards, implement various security practices, or rely on closed-source paid solutions.
+Traditional wallet development requires months of integration work. Developers must learn different standards, implement contrasting security practices, or rely on closed-source paid solutions which act as gatekeepers.
 
 ### **The Missing AI Foundation**
 
-As we move toward a world where both humans and machines need to manage digital assets safely, existing solutions fall short. AI agents will require wallets to interact in the finacial infrastructure, and WDK wants to lay secure foundation that works for both human and AI use cases.
+As we move toward a world where both humans and machines need to manage digital assets safely, existing solutions fall short. AI agents will require wallets to interact in the financial infrastructure, and WDK wants to lay secure foundation that works for both human, AI and IoT use cases. WDK enables trillions of self-custodial wallets.
 
 ***
 
 ## Why WDK is Different
 
-<table data-view="cards"><thead><tr><th></th><th></th><th data-hidden data-card-cover data-type="image">Cover image</th></tr></thead><tbody><tr><td><strong>Runs Anywhere</strong></td><td>Works with Node.js, Bare runtime, mobile (React Native), and future embedded environments</td><td><a href="../assets/card-placeholder1.svg">card-placeholder1.svg</a></td></tr><tr><td><strong>Modular &#x26; Extensible</strong></td><td>Pick only the modules you need; extend functionality with custom modules</td><td><a href="../assets/card-placeholder2.svg">card-placeholder2.svg</a></td></tr><tr><td><strong>Developer-Centric</strong></td><td>Clear SDK design, strong TypeScript typing, extensive docs, and ready-to-use starters</td><td><a href="../assets/card-placeholder3.svg">card-placeholder3.svg</a></td></tr><tr><td><strong>Secure by Design</strong></td><td>Stateless and non-custodial architecture ensures keys never leave user control</td><td><a href="../assets/card-placeholder2.svg">card-placeholder2.svg</a></td></tr><tr><td><strong>Zero Lock-In</strong></td><td>Transparent, community-driven, and free to adopt with no vendor lock-in</td><td><a href="../assets/card-placeholder1.svg">card-placeholder1.svg</a></td></tr><tr><td><strong>Ecosystem-Backed</strong></td><td>Maintained and supported by Tether with strong community involvement</td><td><a href="../assets/card-placeholder2.svg">card-placeholder2.svg</a></td></tr></tbody></table>
+<table data-view="cards"><thead><tr><th></th><th></th><th data-hidden data-card-cover data-type="image">Cover image</th></tr></thead><tbody><tr><td><strong>Runs Anywhere</strong></td><td>Works with Node.js, Bare runtime, mobile (React Native), and future embedded environments</td><td><a href="../assets/card-placeholder1.svg">card-placeholder1.svg</a></td></tr><tr><td><strong>Modular &#x26; Extensible</strong></td><td>Pick only the modules you need; extend functionality with custom modules</td><td><a href="../assets/card-placeholder2.svg">card-placeholder2.svg</a></td></tr><tr><td><strong>Developer-Centric</strong></td><td>Clear SDK design, strong TypeScript typing, extensive docs, and ready-to-use starters</td><td><a href="../assets/card-placeholder3.svg">card-placeholder3.svg</a></td></tr><tr><td><strong>Secure by Design</strong></td><td>Stateless and self-custodial architecture ensures keys never leave user control</td><td><a href="../assets/card-placeholder2.svg">card-placeholder2.svg</a></td></tr><tr><td><strong>Zero Lock-In</strong></td><td>Transparent, community-driven, and free to adopt with no vendor lock-in</td><td><a href="../assets/card-placeholder1.svg">card-placeholder1.svg</a></td></tr><tr><td><strong>Ecosystem-Backed</strong></td><td>Maintained and supported by Tether with strong community involvement</td><td><a href="../assets/card-placeholder2.svg">card-placeholder2.svg</a></td></tr></tbody></table>
 
 ***
 

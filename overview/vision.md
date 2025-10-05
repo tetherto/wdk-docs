@@ -22,21 +22,21 @@ layout:
 
 # Our Vision
 
-Imagine a world where both humans and machines have the freedom to control their own finances. WDK is a fully open-source, self-custodial toolkit designed to be modular, independent, and resilient.
+Imagine a world where both humans and machines have the freedom to control their own finances. WDK is a fully open-source, self-custodial toolkit designed to be modular, independent, resilient and infinitely scalable, enabling trillions of wallets. 
 
 ***
 
-### **Universal Access**
+### **Universal Unstoppable Access**
 
-Anyone should be able to build a wallet and manage assets without friction. Whether you're an independent developer, a startup, a corporation, or even a nation-state, WDK provides the open technology to create hyper-secure self-custodial wallets without barriers.
+Anyone should be able to build, deploy or use a wallet and manage assets without friction or gatekeepers. Whether you're an independent developer, a startup, a corporation, an AI, or even a nation-state, WDK provides the open technology to create hyper-secure self-custodial wallets without barriers.
 
 ### **Ubiquitous Deployment**
 
-Wallets need to run everywhere. Through Bare runtime compatibility, WDK can be embedded in mobile apps, desktop applications, IoT devices, and even autonomous systems. From smartphones to smart fridges, from trading bots to spaceships — WDK enables financial sovereignty across all environments.
+Wallets need to run everywhere. Through Bare runtime compatibility, WDK can live and evolve on any embedded device, mobile apps, desktop applications, IoT devices, servers, and even autonomous systems. From smartphones to smart fridges, from trading bots to spaceships — WDK enables financial sovereignty across all environments.
 
 ### **AI-Native Architecture**
 
-In a world where AI agents and robots are becoming autonomous, they too will need to manage their own resources. WDK is the preferred choice for the digital entities of tomorrow, ensuring they can custody their own funds, make transactions, and operate independently—no human required.
+In a world where AI agents and robots are becoming autonomous and will permeate every single part of our lives, the machines need to have access and self-manage their own resources. WDK is the preferred choice for the digital entities of tomorrow, ensuring direct custody of funds, highly scalable transactions, and empowering the infinite AI economy of the future.
 
 ***
 
