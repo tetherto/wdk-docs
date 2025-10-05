@@ -1,2 +1,0 @@
-# Bare Runtime Quickstart
-

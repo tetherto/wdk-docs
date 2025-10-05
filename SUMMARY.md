@@ -11,8 +11,7 @@
 ## Start Building
 
 * [Prerequisites](start-building/prerequisites.md)
-* [Node.js Quickstart](start-building/node.js-quickstart.md)
-* [Bare Runtime Quickstart](start-building/bare-runtime-quickstart.md)
+* [Node.js & Bare Quickstart](start-building/nodejs-bare-quickstart.md)
 * [React Native Quickstart](start-building/react-native-quickstart.md)
 
 ## SDK
