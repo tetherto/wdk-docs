@@ -56,7 +56,7 @@ The Solana indexer extends the base WDK indexer architecture with Solana-specifi
 
 | Token | Symbol | Mint Address | Decimals |
 |-------|--------|--------------|----------|
-| USD Coin | USDC | `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` | 6 |
+| USD Coin | USDT | `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` | 6 |
 | Tether | USDT | `Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB` | 6 |
 | Wrapped SOL | wSOL | `So11111111111111111111111111111111111111112` | 9 |
 | Raydium | RAY | `4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R` | 6 |
@@ -85,7 +85,7 @@ Solana indexers support both native SOL and SPL token indexing with unique slot-
 }
 ```
 
-**config/solana-usdc.json** (SPL USDC indexing)
+**config/solana-usdc.json** (SPL USDT indexing)
 ```json
 {
   "chain": "solana",
@@ -328,7 +328,7 @@ services:
       - solana-processor
     restart: unless-stopped
 
-  # USDC SPL Token Indexer
+  # USDT SPL Token Indexer
   usdc-processor:
     build: .
     environment:
@@ -356,7 +356,7 @@ services:
       --rack=r0 
       --chain=solana
       --token=usdc
-      --procRpc=${USDC_PROC_RPC_KEY}
+      --procRpc=${USDT_PROC_RPC_KEY}
     ports:
       - "8084:8080"
     depends_on:
@@ -406,7 +406,7 @@ Comprehensive Solana address validation:
 "11111111111111111111111111111112" ✓ // System Program
 
 // Token mint addresses
-"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" ✓ // USDC
+"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" ✓ // USDT
 
 // Associated token accounts
 "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" ✓

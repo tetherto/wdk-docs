@@ -117,7 +117,7 @@ console.log('Tokens bought:', result.tokenOutAmount)
 // Swap between two jetton tokens
 const result = await swapProtocol.swap({
   tokenIn: 'USDT_TOKEN_ADDRESS',
-  tokenOut: 'USDC_TOKEN_ADDRESS',
+  tokenOut: 'USDT_TOKEN_ADDRESS',
   tokenInAmount: 1000000n, // 1 USDT in base units
   slippageTolerance: 0.02, // 2% slippage
   to: 'RECIPIENT_ADDRESS' // Optional: where to send tokens
@@ -125,7 +125,7 @@ const result = await swapProtocol.swap({
 
 console.log('Swap hash:', result.hash)
 console.log('USDT sold:', result.tokenInAmount)
-console.log('USDC bought:', result.tokenOutAmount)
+console.log('USDT bought:', result.tokenOutAmount)
 ```
 
 ### Exact Output Swap
@@ -209,8 +209,8 @@ async function setupSwap() {
 async function swapMultipleTokens(swapProtocol) {
   const swaps = [
     { tokenIn: 'ton', tokenOut: 'USDT_ADDRESS', amount: 1000000000n },
-    { tokenIn: 'USDT_ADDRESS', tokenOut: 'USDC_ADDRESS', amount: 1000000n },
-    { tokenIn: 'USDC_ADDRESS', tokenOut: 'ton', amount: 1000000n }
+    { tokenIn: 'USDT_ADDRESS', tokenOut: 'USDT_ADDRESS', amount: 1000000n },
+    { tokenIn: 'USDT_ADDRESS', tokenOut: 'ton', amount: 1000000n }
   ]
   
   for (const swap of swaps) {

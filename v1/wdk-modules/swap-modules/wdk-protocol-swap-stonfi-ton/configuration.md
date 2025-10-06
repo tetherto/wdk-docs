@@ -147,7 +147,7 @@ The `paymasterToken` option says which token to use for paying fees in gasless a
 ```javascript
 const result = await swapProtocol.swap({
   tokenIn: 'USDT_TOKEN_ADDRESS',
-  tokenOut: 'USDC_TOKEN_ADDRESS',
+  tokenOut: 'USDT_TOKEN_ADDRESS',
   tokenInAmount: 1000000n
 }, {
   paymasterToken: 'USDT' // Use USDT to pay fees

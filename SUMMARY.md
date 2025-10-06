@@ -15,8 +15,7 @@
 
 ## SDK
 
-* [Start Here](sdk/start-here.md)
-* [About Modules](sdk/about-modules.md)
+* [Get Started](sdk/get-started.md)
 * [Core Module](sdk/core-module/README.md)
   * [Usage](sdk/core-module/usage.md)
   * [Configuration](sdk/core-module/configuration.md)

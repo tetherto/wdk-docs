@@ -309,7 +309,7 @@ async function sendAdvancedSPLTransfer(account) {
     const quote = await account.quoteTransfer({
       token:'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT mint address
       recipient: '11111111111111111111111111111112', // Recipient's Solana address
-      amount: 1000000 // Amount in SPL token's base units (6 decimals for USDC)
+      amount: 1000000 // Amount in SPL token's base units (6 decimals for USDT)
     })
     
     console.log('Estimated fee:', quote.fee, 'lamports')

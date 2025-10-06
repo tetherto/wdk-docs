@@ -56,7 +56,7 @@ The TON indexer extends the base WDK indexer architecture with TON-specific comp
 | Token | Symbol | Contract Address | Decimals |
 |-------|--------|------------------|----------|
 | Tether USD | USDT | `EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs` | 6 |
-| USD Coin | USDC | `EQB-MPwrd1G6WKNkLz_VnV6WqBDd142KMQv-g1O-8QUA3728` | 6 |
+| USD Coin | USDT | `EQB-MPwrd1G6WKNkLz_VnV6WqBDd142KMQv-g1O-8QUA3728` | 6 |
 | TON Coin | TON | `EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c` | 9 |
 
 ## Configuration
@@ -541,7 +541,7 @@ For complete API documentation, method signatures, and examples, see the [WDK In
 
 ### Popular Jetton Configurations
 
-**USD Coin (USDC)**:
+**USD Coin (USDT)**:
 ```json
 {
   "chain": "ton",

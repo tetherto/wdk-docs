@@ -579,7 +579,7 @@ NODE_CONFIG_DIR=./config node worker.js --chain=polygon
 
 ### Popular Token Configurations
 
-**USDC (Ethereum)**:
+**USDT (Ethereum)**:
 ```json
 {
   "chain": "ethereum",

@@ -94,7 +94,7 @@ console.log('Tokens bought:', result.tokenOutAmount)
 // Gasless TON account - jetton to jetton only
 const result2 = await swapProtocol.swap({
   tokenIn: 'USDT_TOKEN_ADDRESS',
-  tokenOut: 'USDC_TOKEN_ADDRESS',
+  tokenOut: 'USDT_TOKEN_ADDRESS',
   tokenInAmount: 1000000n // 1 USDT
 }, {
   paymasterToken: 'USDT', // Token used to pay fees
@@ -290,8 +290,8 @@ async function swapTokens() {
 async function swapMultipleTokens(swapProtocol) {
   const swaps = [
     { tokenIn: 'ton', tokenOut: 'USDT_ADDRESS', amount: 1000000000n },
-    { tokenIn: 'USDT_ADDRESS', tokenOut: 'USDC_ADDRESS', amount: 1000000n },
-    { tokenIn: 'USDC_ADDRESS', tokenOut: 'ton', amount: 1000000n }
+    { tokenIn: 'USDT_ADDRESS', tokenOut: 'USDT_ADDRESS', amount: 1000000n },
+    { tokenIn: 'USDT_ADDRESS', tokenOut: 'ton', amount: 1000000n }
   ]
   
   const results = []
@@ -348,7 +348,7 @@ async function gaslessSwap() {
   // Swap jetton to jetton with no TON fees
   const result = await swapProtocol.swap({
     tokenIn: 'USDT_TOKEN_ADDRESS',
-    tokenOut: 'USDC_TOKEN_ADDRESS',
+    tokenOut: 'USDT_TOKEN_ADDRESS',
     tokenInAmount: 1000000n
   }, {
     paymasterToken: 'USDT' // Use USDT to pay fees

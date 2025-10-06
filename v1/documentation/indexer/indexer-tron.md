@@ -57,7 +57,7 @@ The TRON indexer extends the base WDK indexer architecture with TRON-specific co
 | Token | Symbol | Contract Address | Decimals |
 |-------|--------|------------------|----------|
 | Tether USD | USDT | `TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t` | 6 |
-| USD Coin | USDC | `TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8` | 6 |
+| USD Coin | USDT | `TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8` | 6 |
 | JUST | JST | `TCFLL5dx5ZJdKnWuesXxi1VPwjLVmWZZy9` | 18 |
 | SUN | SUN | `TSSMHYeV2uE9qYH95DqyoCuNCzEL1NvU3S` | 18 |
 | BitTorrent | BTT | `TAFjULxiVgT4qWk6UZwjqwZXTSaGaqnVp4` | 18 |
@@ -549,7 +549,7 @@ For complete API documentation, method signatures, and examples, see the [WDK In
 
 ### Popular TRC-20 Configurations
 
-**USD Coin (USDC)**:
+**USD Coin (USDT)**:
 ```json
 {
   "chain": "tron",
