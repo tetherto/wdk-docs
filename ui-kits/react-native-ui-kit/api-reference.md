@@ -18,25 +18,19 @@ layout:
     visible: false
 ---
 
-# Components List
+## Component List
 
-Complete API reference for all components in the WDK React Native UI Kit. Each component is designed to work seamlessly with WDK data models.
-
-***
-
-## Component Overview
-
-| Component | Description | Primary Use Case |
-| --- | --- | --- |
-| `AmountInput` | Numeric input with token/fiat toggle, balance helper and Max action | Send transactions, amount entry |
-| `AssetSelector` | Token search & pick list with recent items and empty states | Token selection, asset picking |
-| `NetworkSelector` | Network picker with gas level indicators and colors | Network switching, gas management |
-| `Balance` | Displays a balance value with optional masking and custom loader | Balance display, portfolio overview |
-| `CryptoAddressInput` | Address input with QR scan and paste helpers, validation state | Recipient address entry |
-| `QRCode` | QR renderer for addresses/payment requests with labeling and styling | Address sharing, payment requests |
-| `TransactionItem` | Single transaction row (sent/received) with token, amounts, network | Transaction history, transaction details |
-| `TransactionList` | Virtualized list of transactions using `TransactionItem` | Transaction history screens |
-| `SeedPhrase` | Grid of seed words with optional editing and loading states | Wallet creation, backup/restore |
+| Component | Description |
+| --- | --- |
+| `AmountInput` | Numeric input with token/fiat toggle, balance helper and Max action |
+| `AssetSelector` | Token search & pick list with recent items and empty states |
+| `NetworkSelector` | Network picker with gas level indicators and colors |
+| `Balance` | Displays a balance value with optional masking and custom loader |
+| `CryptoAddressInput` | Address input with QR scan and paste helpers, validation state |
+| `QRCode` | QR renderer for addresses/payment requests with labeling and styling |
+| `TransactionItem` | Single transaction row (sent/received) with token, amounts, network |
+| `TransactionList` | Virtualized list of transactions using `TransactionItem` |
+| `SeedPhrase` | Grid of seed words with optional editing and loading states |
 
 ***
 
@@ -44,7 +38,7 @@ Complete API reference for all components in the WDK React Native UI Kit. Each c
 
 Numeric input component with token/fiat toggle, balance display, and Max functionality.
 
-### Props
+**Props**
 
 | Prop | Type | Required | Default | Description |
 | --- | --- | --- | --- | --- |
@@ -60,7 +54,7 @@ Numeric input component with token/fiat toggle, balance display, and Max functio
 | `error` | `string` | No | — | Error message to display |
 | `editable` | `boolean` | No | `true` | Whether input is editable |
 
-### Example
+**Example**
 
 {% code title="AmountInput Usage" lineNumbers="true" %}
 ```tsx
@@ -90,7 +84,7 @@ function SendAmount({ amount, balance, onAmountChange }) {
 
 Token selection component with search functionality and recent tokens.
 
-### Props
+**Props**
 
 | Prop | Type | Required | Default | Description |
 | --- | --- | --- | --- | --- |
@@ -98,7 +92,7 @@ Token selection component with search functionality and recent tokens.
 | `recentTokens` | `string[]` | Yes | — | Array of recent token names for Recent row |
 | `onSelectToken` | `(token: Token) => void` | Yes | — | Called when user selects a token |
 
-### Token Type
+**Token Type**
 
 {% code title="Token Interface" lineNumbers="true" %}
 ```typescript
@@ -140,7 +134,7 @@ function TokenPicker({ tokens, recentTokens, onTokenSelect }) {
 
 Display component for showing balance values with optional masking and loading states.
 
-### Props
+**Props**
 
 | Prop | Type | Required | Default | Description |
 | --- | --- | --- | --- | --- |
@@ -152,7 +146,7 @@ Display component for showing balance values with optional masking and loading s
 | `EyeOpenIcon` | `React.ComponentType` | No | default | Icon shown when balance is hidden |
 | `EyeClosedIcon` | `React.ComponentType` | No | default | Icon shown when balance is visible |
 
-### Example
+**Example**
 
 {% code title="Balance Usage" lineNumbers="true" %}
 ```tsx
@@ -177,7 +171,7 @@ function WalletBalance({ balance, currency, isLoading }) {
 
 Address input component with QR scanning and paste functionality.
 
-### Props
+**Props**
 
 | Prop | Type | Required | Default | Description |
 | --- | --- | --- | --- | --- |
@@ -190,7 +184,7 @@ Address input component with QR scanning and paste functionality.
 | `editable` | `boolean` | No | `true` | Whether input is editable |
 | `error` | `string` | No | — | Error message to display |
 
-### Example
+**Example**
 
 {% code title="CryptoAddressInput Usage" lineNumbers="true" %}
 ```tsx
@@ -217,7 +211,7 @@ function AddressInput({ address, onAddressChange, onQRScan }) {
 
 QR code renderer for addresses and payment requests.
 
-### Props
+**Props**
 
 | Prop | Type | Required | Default | Description |
 | --- | --- | --- | --- | --- |
@@ -229,7 +223,7 @@ QR code renderer for addresses and payment requests.
 | `containerStyle` | `ViewStyle` | No | — | Wrapper style |
 | `labelStyle` | `any` | No | — | Style for label text |
 
-### Example
+**Example**
 
 {% code title="QRCode Usage" lineNumbers="true" %}
 ```tsx
@@ -255,14 +249,14 @@ function AddressQR({ address }) {
 
 Single transaction row component for displaying transaction details.
 
-### Props
+**Props**
 
 | Prop | Type | Required | Default | Description |
 | --- | --- | --- | --- | --- |
 | `transaction` | `Transaction` | Yes | — | Transaction data object |
 | `onPress` | `() => void` | No | — | Row press handler |
 
-### Transaction Type
+**Transaction Type**
 
 {% code title="Transaction Interface" lineNumbers="true" %}
 ```typescript
@@ -278,7 +272,7 @@ type Transaction = {
 ```
 {% endcode %}
 
-### Example
+**Example**
 
 {% code title="TransactionItem Usage" lineNumbers="true" %}
 ```tsx
@@ -301,13 +295,13 @@ function TransactionRow({ transaction, onPress }) {
 
 Virtualized list component for displaying multiple transactions.
 
-### Props
+**Props**
 
 | Prop | Type | Required | Default | Description |
 | --- | --- | --- | --- | --- |
 | `transactions` | `Transaction[]` | Yes | — | Array of transaction objects |
 
-### Example
+**Example**
 
 {% code title="TransactionList Usage" lineNumbers="true" %}
 ```tsx
@@ -329,14 +323,14 @@ function TransactionHistory({ transactions }) {
 
 Network selection component with gas level indicators.
 
-### Props
+**Props**
 
 | Prop | Type | Required | Default | Description |
 | --- | --- | --- | --- | --- |
 | `networks` | `Network[]` | Yes | — | Array of available networks |
 | `onSelectNetwork` | `(network: Network) => void` | Yes | — | Called when network is selected |
 
-### Network Type
+**Network Type**
 
 {% code title="Network Interface" lineNumbers="true" %}
 ```typescript
@@ -351,7 +345,7 @@ type Network = {
 ```
 {% endcode %}
 
-### Example
+**Example**
 
 {% code title="NetworkSelector Usage" lineNumbers="true" %}
 ```tsx
@@ -374,7 +368,7 @@ function NetworkPicker({ networks, onNetworkSelect }) {
 
 Grid component for displaying and editing seed phrase words.
 
-### Props
+**Props**
 
 | Prop | Type | Required | Default | Description |
 | --- | --- | --- | --- | --- |
@@ -384,7 +378,7 @@ Grid component for displaying and editing seed phrase words.
 | `onKeyPress` | `(index: number, key: string) => void` | No | — | Handle key press events |
 | `isLoading` | `boolean` | No | `false` | Show loading/generating state |
 
-### Example
+**Example**
 
 {% code title="SeedPhrase Usage" lineNumbers="true" %}
 ```tsx

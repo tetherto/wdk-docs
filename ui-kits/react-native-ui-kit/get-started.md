@@ -60,6 +60,22 @@ export default function App() {
 
 ***
 
+## Component List
+
+| Component | Description |
+| --- | --- |
+| [`AmountInput`](api-reference.md#amountinput) | Numeric input with token/fiat toggle, balance helper and Max action |
+| [`AssetSelector`](api-reference.md#assetselector) | Token search & pick list with recent items and empty states |
+| [`NetworkSelector`](api-reference.md#networkselector) | Network picker with gas level indicators and colors |
+| [`Balance`](api-reference.md#balance) | Displays a balance value with optional masking and custom loader |
+| [`CryptoAddressInput`](api-reference.md#cryptoaddressinput) | Address input with QR scan and paste helpers, validation state |
+| [`QRCode`](api-reference.md#qrcode) | QR renderer for addresses/payment requests with labeling and styling |
+| [`TransactionItem`](api-reference.md#transactionitem) | Single transaction row (sent/received) with token, amounts, network |
+| [`TransactionList`](api-reference.md#transactionlist) | Virtualized list of transactions using `TransactionItem` |
+| [`SeedPhrase`](api-reference.md#seedphrase) | Grid of seed words with optional editing and loading states |
+
+***
+
 ## Integration with WDK
 
 Components are designed to work seamlessly with WDK data models. Here's an example of how to wire WDK data into the UI components:
@@ -128,87 +144,9 @@ export function WalletScreen() {
 
 ## Theming
 
-### Using Built-in Themes
+The UI Kit provides a comprehensive theming system that allows you to use built-in light and dark themes, create custom brand themes from your colors and fonts, customize individual components with fine-grained control, and access theme values anywhere in your application. You can also switch themes dynamically based on user preferences.
 
-The UI Kit comes with built-in light and dark themes:
-
-{% code title="Built-in Themes" lineNumbers="true" %}
-```tsx
-import { ThemeProvider, lightTheme, darkTheme } from '@tetherto/wdk-uikit-react-native'
-
-export function App() {
-  return (
-    <ThemeProvider initialTheme={lightTheme}>
-      {/* Your app content */}
-    </ThemeProvider>
-  )
-}
-
-// Or use dark theme
-export function AppDark() {
-  return (
-    <ThemeProvider initialTheme={darkTheme}>
-      {/* Your app content */}
-    </ThemeProvider>
-  )
-}
-```
-{% endcode %}
-
-### Creating Brand Themes
-
-Create custom themes from your brand colors:
-
-{% code title="Brand Theme Creation" lineNumbers="true" %}
-```tsx
-import { 
-  ThemeProvider, 
-  createThemeFromBrand 
-} from '@tetherto/wdk-uikit-react-native'
-
-const brandTheme = createThemeFromBrand({
-  primaryColor: '#0F62FE',
-  secondaryColor: '#6F6F6F',
-  fontFamily: { 
-    regular: 'System', 
-    bold: 'System' 
-  },
-}, 'light')
-
-export function App() {
-  return (
-    <ThemeProvider initialTheme={brandTheme}>
-      {/* Your branded app */}
-    </ThemeProvider>
-  )
-}
-```
-{% endcode %}
-
-### Using Theme in Components
-
-Access theme values anywhere in your components:
-
-{% code title="Using Theme Hook" lineNumbers="true" %}
-```tsx
-import { useTheme } from '@tetherto/wdk-uikit-react-native'
-
-export function CustomComponent() {
-  const theme = useTheme()
-  
-  return (
-    <View style={{ 
-      backgroundColor: theme.colors.background,
-      padding: theme.spacing.md 
-    }}>
-      <Text style={{ color: theme.colors.text }}>
-        Themed content
-      </Text>
-    </View>
-  )
-}
-```
-{% endcode %}
+For detailed theming documentation, including brand integration, custom themes, component customization, and advanced usage patterns, see the [Theming Guide](theming.md).
 
 ***
 

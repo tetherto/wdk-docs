@@ -68,7 +68,7 @@ import { ThemeProvider, lightTheme, darkTheme } from '@tetherto/wdk-uikit-react-
 
 ***
 
-### Manual Theme Control
+**Manual Theme Control**
 
 {% code title="Manual Theme Toggle" lineNumbers="true" %}
 ```tsx
@@ -366,7 +366,7 @@ The theming system uses semantic naming for colors:
 
 ## Advanced Usage
 
-### Dynamic Theme Updates
+**Dynamic Theme Updates**
 
 Update themes dynamically at runtime:
 
