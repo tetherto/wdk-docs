@@ -1,7 +1,6 @@
 ---
 title: React Native Starter (Alpha)
-description:  Multi-chain wallet starter built with WDK, Expo, and React Native
-icon: mobile
+description: Multi-chain wallet starter built with WDK, Expo, and React Native
 layout:
   width: default
   title:
@@ -18,31 +17,33 @@ layout:
     visible: false
 ---
 
+# React Native Starter
+
 The React Native Starter Alpha is a Expo + React Native app showing how to build a multi-chain wallet using WDK via BareKit worklets and secure secret management. This starter includes wallet creation/import flows, balances, transactions, and a modular service layer.
 
-[!Demo Video](../assets/starter-react-native-demo.mp4)
+{% embed url="https://files.gitbook.com/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FytSNr1FkZhOoYwcLqOLe%2Fuploads%2FJVvhHxX5wFJ9bwZgwNWC%2Fstarter-react-native-demo.mp4?alt=media&token=440309fc-8d85-4dc6-b29d-357504d85185" %}
 
 ***
 
-## Features
+### Features
 
 **Multi-Chain Support**
 
-| Blockchain | Features | Operations |
-| --- | --- | --- |
-| **Bitcoin** | SegWit native transfers | Address resolution, balance fetching, transaction history, sending, receiving |
-| **Ethereum** | Transactions with gas fees sponsorship | Account abstraction, ERC-20 support, transaction history |
-| **Polygon** | Transactions with gas fees sponsorship | Account abstraction, ERC-20 support, transaction history |
-| **Arbitrum** | Transactions with gas fees sponsorship | Account abstraction, ERC-20 support, transaction history |
-| **TON** | Native transfers | Native transfers, transaction history |
+| Blockchain   | Features                               | Operations                                                                    |
+| ------------ | -------------------------------------- | ----------------------------------------------------------------------------- |
+| **Bitcoin**  | SegWit native transfers                | Address resolution, balance fetching, transaction history, sending, receiving |
+| **Ethereum** | Transactions with gas fees sponsorship | Account abstraction, ERC-20 support, transaction history                      |
+| **Polygon**  | Transactions with gas fees sponsorship | Account abstraction, ERC-20 support, transaction history                      |
+| **Arbitrum** | Transactions with gas fees sponsorship | Account abstraction, ERC-20 support, transaction history                      |
+| **TON**      | Native transfers                       | Native transfers, transaction history                                         |
 
 **Multi-Token Support**
 
-| Token | Networks | Features |
-| --- | --- | --- |
-| **BTC** | Bitcoin | Native SegWit transfers, UTXO management |
+| Token    | Networks                         | Features                                          |
+| -------- | -------------------------------- | ------------------------------------------------- |
+| **BTC**  | Bitcoin                          | Native SegWit transfers, UTXO management          |
 | **USD₮** | Ethereum, Polygon, Arbitrum, TON | Account Abstraction (EVM), Native transfers (TON) |
-| **XAU₮** | Ethereum | ERC-20 transfers, transaction history |
+| **XAU₮** | Ethereum                         | ERC-20 transfers, transaction history             |
 
 **Wallet Management**
 
@@ -54,8 +55,8 @@ The React Native Starter Alpha is a Expo + React Native app showing how to build
 **Asset Management**
 
 * **Real-Time Balances**: Live balance updates via [WDK Indexer](https://indexer.wallet.tether.io/)
-* **Transaction History**: Complete transaction tracking and history
-* **Price Conversion**: Real-time fiat pricing via Bitfinex provider
+* **Transaction History**: Complete transaction tracking and history via [WDK Indexer](https://indexer.wallet.tether.io/)
+* **Price Conversion**: Real-time fiat pricing via Pricing Provider
 
 **User Experience**
 
@@ -67,28 +68,28 @@ The React Native Starter Alpha is a Expo + React Native app showing how to build
 
 ***
 
-## Prerequisites
+### Prerequisites
 
 Before we start, make sure you have:
 
-| Tool | Version | Why You Need It |
-| --- | --- | --- |
-| **Node.js** | 18+ | To run JavaScript code |
-| **npm** | Latest | To install packages |
-| **Code Editor** | Any | To write code |
-| **Xcode** | Latest | iOS simulator and build tools |
-| **Android SDK** | Latest | Android emulator and build tools |
-| **npx** | Latest | For bundling worklets via `bare-pack` |
+| Tool            | Version | Why You Need It                       |
+| --------------- | ------- | ------------------------------------- |
+| **Node.js**     | 18+     | To run JavaScript code                |
+| **npm**         | Latest  | To install packages                   |
+| **Code Editor** | Any     | To write code                         |
+| **Xcode**       | Latest  | iOS simulator and build tools         |
+| **Android SDK** | Latest  | Android emulator and build tools      |
+| **npx**         | Latest  | For bundling worklets via `bare-pack` |
 
 ***
 
-## Quick Start
+### Quick Start
 
 Get your React Native wallet running in minutes with these simple steps:
 
 {% stepper %}
 {% step %}
-### Clone Repository
+#### Clone Repository
 
 ```bash
 git clone https://github.com/tetherto/wdk-starter-react-native.git
@@ -98,7 +99,7 @@ npm install
 {% endstep %}
 
 {% step %}
-### Configure Environment
+#### Configure Environment
 
 ```bash
 cp .env.example .env
@@ -107,7 +108,7 @@ cp .env.example .env
 {% endstep %}
 
 {% step %}
-### Generate Bundle
+#### Generate Bundle
 
 ```bash
 npm run gen:bundle
@@ -115,7 +116,7 @@ npm run gen:bundle
 {% endstep %}
 
 {% step %}
-### Run Your App
+#### Run Your App
 
 ```bash
 npm run ios    # iOS Simulator
@@ -130,7 +131,7 @@ npm run android # Android Emulator
 
 ***
 
-## What Just Happened?
+### What Just Happened?
 
 **Congratulations!** You've successfully launched a production-ready multi-chain wallet app. Here's what you now have:
 
@@ -143,7 +144,7 @@ npm run android # Android Emulator
 
 ***
 
-## Project Structure
+### Project Structure
 
 The starter includes a modular architecture designed for scalability and maintainability:
 
@@ -162,7 +163,7 @@ src/
 ```
 {% endcode %}
 
-### Key Components
+#### Key Components
 
 * **`app/`**: Expo Router-based screen navigation
 * **`components/`**: Reusable UI components from WDK React Native UI Kit
@@ -173,101 +174,109 @@ src/
 
 ***
 
-## Supported Networks & Operations
+### Supported Networks & Operations
 
-### Bitcoin (BTC)
-- **Address Resolution**: SegWit addresses (native)
-- **Balance Fetching**: ✅ Supported
-- **Transaction History**: ✅ Supported  
-- **Sending**: ✅ Native SegWit transfers
-- **Receiving**: ✅ Native SegWit addresses
+#### Bitcoin (BTC)
 
-### Tether USD (USD₮)
-- **Networks**: Ethereum, Polygon, Arbitrum, TON
-- **Address Resolution**: ✅ All supported networks
-- **Balance Fetching**: ✅ All supported networks
-- **Transaction History**: ✅ All supported networks
-- **Sending**: ✅ Account Abstraction (EVM networks), Native (TON)
-- **Receiving**: ✅ All supported networks
+* **Address Resolution**: SegWit addresses (native)
+* **Balance Fetching**: ✅ Supported
+* **Transaction History**: ✅ Supported
+* **Sending**: ✅ Native SegWit transfers
+* **Receiving**: ✅ Native SegWit addresses
 
-### Tether Gold (XAU₮)
-- **Networks**: Ethereum
-- **Address Resolution**: ✅ Ethereum
-- **Balance Fetching**: ✅ Ethereum
-- **Transaction History**: ✅ Ethereum
-- **Sending**: ✅ Ethereum
-- **Receiving**: ✅ Ethereum
+#### Tether USD (USD₮)
 
-### Additional Networks (Coming Soon)
-- **Spark**: Support Planned
-- **TRON**: Support Planned
-- **Solana**: Support Planned
+* **Networks**: Ethereum, Polygon, Arbitrum, TON
+* **Address Resolution**: ✅ All supported networks
+* **Balance Fetching**: ✅ All supported networks
+* **Transaction History**: ✅ All supported networks
+* **Sending**: ✅ Account Abstraction (EVM networks), Native (TON)
+* **Receiving**: ✅ All supported networks
 
-***
+#### Tether Gold (XAU₮)
 
-## Available Scripts
+* **Networks**: Ethereum
+* **Address Resolution**: ✅ Ethereum
+* **Balance Fetching**: ✅ Ethereum
+* **Transaction History**: ✅ Ethereum
+* **Sending**: ✅ Ethereum
+* **Receiving**: ✅ Ethereum
 
-| Script | Description |
-| --- | --- |
-| `npm start` | Start Expo development server with dev client |
-| `npm run android` | Run on Android emulator/device |
-| `npm run ios` | Run on iOS simulator |
-| `npm run web` | Start web development server |
-| `npm run gen:bundle` | Build secret manager worklet bundle |
-| `npm run prebuild` | Generate native project files |
-| `npm run prebuild:clean` | Clean and regenerate native project files |
-| `npm run lint` | Run ESLint |
-| `npm run lint:fix` | Fix ESLint errors |
-| `npm run format` | Format code with Prettier |
-| `npm run format:check` | Check code formatting |
+#### Additional Networks (Coming Soon)
+
+* **Spark**: Support Planned
+* **TRON**: Support Planned
+* **Solana**: Support Planned
 
 ***
 
-## Technology Stack
+### Available Scripts
 
-### Core Technologies
-- **Expo**: ~54 with development client
-- **React Native**: 0.81.4
-- **React**: 19
-- **Reanimated**: ~4.1
-- **New Architecture**: Enabled
+| Script                   | Description                                   |
+| ------------------------ | --------------------------------------------- |
+| `npm start`              | Start Expo development server with dev client |
+| `npm run android`        | Run on Android emulator/device                |
+| `npm run ios`            | Run on iOS simulator                          |
+| `npm run web`            | Start web development server                  |
+| `npm run gen:bundle`     | Build secret manager worklet bundle           |
+| `npm run prebuild`       | Generate native project files                 |
+| `npm run prebuild:clean` | Clean and regenerate native project files     |
+| `npm run lint`           | Run ESLint                                    |
+| `npm run lint:fix`       | Fix ESLint errors                             |
+| `npm run format`         | Format code with Prettier                     |
+| `npm run format:check`   | Check code formatting                         |
 
-### Build Configuration
-- **Android**: minSdkVersion 29
-- **iOS**: Latest Xcode toolchain
-- **Build Properties**: Configured via `expo-build-properties`
+***
 
-### Polyfills
+### Technology Stack
+
+#### Core Technologies
+
+* **Expo**: \~54 with development client
+* **React Native**: 0.81.4
+* **React**: 19
+* **Reanimated**: \~4.1
+* **New Architecture**: Enabled
+
+#### Build Configuration
+
+* **Android**: minSdkVersion 29
+* **iOS**: Latest Xcode toolchain
+* **Build Properties**: Configured via `expo-build-properties`
+
+#### Polyfills
+
 See `metro.config.js` for comprehensive polyfills:
-- **Stream, Buffer, Crypto**: Node.js compatibility
-- **Net/TLS, URL, HTTP/HTTPS/HTTP2**: Network compatibility
-- **Zlib, Path**: File system compatibility
-- **Nice-gRPC → Web**: gRPC web compatibility
-- **Sodium-universal → JavaScript**: Cryptographic compatibility
-- **Querystring, Events**: Node.js event system
+
+* **Stream, Buffer, Crypto**: Node.js compatibility
+* **Net/TLS, URL, HTTP/HTTPS/HTTP2**: Network compatibility
+* **Zlib, Path**: File system compatibility
+* **Nice-gRPC → Web**: gRPC web compatibility
+* **Sodium-universal → JavaScript**: Cryptographic compatibility
+* **Querystring, Events**: Node.js event system
 
 ***
 
-## Customization
+### Customization
 
-### UI Theming
+#### UI Theming
 
-This starter uses components from the [WDK React Native UI Kit](../ui-kits/react-native-ui-kit/README.md). To customize the look and feel:
+This starter uses components from the [WDK React Native UI Kit](../ui-kits/react-native-ui-kit/). To customize the look and feel:
 
 * [**Theming Guide**](../ui-kits/react-native-ui-kit/theming.md) - Deep dive into theming capabilities
 * [**Component Reference**](../ui-kits/react-native-ui-kit/api-reference.md) - Complete component documentation
 
-### Adding Networks
+#### Adding Networks
 
 The starter supports these networks out of the box:
 
 * **Bitcoin**: SegWit native transfers
 * **Ethereum**: Transactions with gas fees sponsorship
-* **Polygon**: Transactions with gas fees sponsorship  
+* **Polygon**: Transactions with gas fees sponsorship
 * **Arbitrum**: Transactions with gas fees sponsorship
 * **TON**: Native transfers
 
-### Extending Functionality
+#### Extending Functionality
 
 * **Add New Tokens**: Configure additional ERC-20 or native tokens
 * **Custom Networks**: Add support for additional blockchain networks
@@ -276,7 +285,7 @@ The starter supports these networks out of the box:
 
 ***
 
-## Next Steps
+### Next Steps
 
 Now that you have a working wallet app, here's what you can explore:
 
@@ -287,6 +296,6 @@ Now that you have a working wallet app, here's what you can explore:
 
 ***
 
-## Need Help?
+### Need Help?
 
 {% include "../.gitbook/includes/support-cards.md" %}
