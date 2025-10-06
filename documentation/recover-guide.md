@@ -4,7 +4,7 @@ author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-10-01
 ---
 
-In the event that the WDK (Wallet Development Kit) SDK is unavailable or inaccessible, you can still access your funds using the following recovery process. This guide outlines the steps to retrieve your wallet using popular wallets, including MetaMask, Phantom, and Trust Wallet.
+In the event that the WDK (Wallet Development Kit) SDK is unavailable or inaccessible (or whenever you desire) you can still access your funds using the following recovery process. This guide outlines the steps to retrieve your wallet using popular wallets, including MetaMask, Phantom, and Trust Wallet.
 
 ## Before Starting to Recover Your Funds
 
@@ -16,11 +16,13 @@ Something like `reopen surface spot total tank custom arctic eagle input exact s
 
 **1) Download the wallet app/extension from official sources**
 
-- MetaMask: browser extension (Chrome/Firefox/Brave) and iOS/Android apps
-- Phantom: browser extension and iOS/Android apps
-- Trust Wallet: iOS/Android apps
+- [MetaMask](https://metamask.io/): browser extension (Chrome/Firefox/Brave) and iOS/Android apps
+- [Phantom](https://phantom.com/): browser extension and iOS/Android apps
+- [Trust Wallet](https://trustwallet.com/): browser extension and iOS/Android apps
 
 Ensure you download only from the official store/listing. Avoid third-party APKs or unofficial sites.
+
+Note: You can use any reputable wallet provider you prefer. MetaMask, Phantom, and Trust Wallet are shown here only as examples. For derivation paths and cross-wallet compatibility details, see the Export Guide: [WDK’s Derivation Path and Compatibility](./export-guide.md).
 
 **2) Import your wallet (seed phrase)**
 
@@ -28,47 +30,130 @@ Follow the steps for your chosen provider. Do not share or screenshot your seed 
 
 ### MetaMask (EVM chains)
 
-1. Open MetaMask → Get Started → Import using Secret Recovery Phrase
-2. Paste your 12-word seed phrase (exact order, single spaces)
-3. Create a strong password (local device lock)
-4. Confirm and finish setup
+Typical flow: Get Started → Import using Secret Recovery Phrase → paste 12 words → set password → finish → select intended network(s).
 
-Screenshots:
-![metamask-import-step-1](./images/metamask-import-1.png)
-![metamask-import-step-2](./images/metamask-import-2.png)
+
+![MetaMask Step 1](../assets/export-guide/metamask1.png)
+Step 1: Metamask home page. Click on "Get Metamask" to be redirected to the installation page. 
+
+![MetaMask Step 2](../assets/export-guide/metamask2.png)
+Step 2: Select to add extension "Add to Chrome" (or compatible browser used)
+
+![MetaMask Step 3](../assets/export-guide/metamask3.png)
+Step 3: Install browser extension clicking on "Add extension".
+
+![MetaMask Step 5](../assets/export-guide/metamask5.png)
+Step 4: Once the extension is created, you can start setting up your wallet, you will get redirected, but if not you can open clicking on the browser extension. 
+
+![MetaMask Step 6](../assets/export-guide/metamask6.png)
+Step 5: Select "Import using Secret Recovery Phrase"
+
+![MetaMask Step 7](../assets/export-guide/metamask7.png)
+Step 6: Enter your 12-word Secret Recovery Phrase (exact order, single spaces).
+
+![MetaMask Step 9](../assets/export-guide/metamask9.png)
+Step 7: Create a password.
+
+![MetaMask Step 10](../assets/export-guide/metamask10.png)
+Step 8: Accept terms. 
+
+![MetaMask Step 11](../assets/export-guide/metamask11.png)
+Step 9: Your wallet is set up!
+
+![MetaMask Step 13](../assets/export-guide/metamask13.png)
+Step 10: Confirmation; wallet ready on selected network (EVM).
 
 Verification:
-- Add/select the intended network (Ethereum, Polygon, Arbitrum)
+- Add/select the intended EVM network (Ethereum, Polygon, Arbitrum)
 - Verify your address matches your expected EVM address
 
-### Phantom (Solana)
+### Phantom
 
-1. Open Phantom → Use Secret Recovery Phrase → Import
-2. Paste your 12-word seed phrase
-3. Set a password
-4. Finish
+Typical flow: Open → Use Secret Recovery Phrase → Import → paste 12 words → set password → finish.
 
-Screenshots:
-![phantom-import-step-1](./images/phantom-import-1.png)
-![phantom-import-step-2](./images/phantom-import-2.png)
+![Phantom Step 1](../assets/export-guide/phantom1.png)
+Step 1: Phantom home page. Click on "Download" to be redirected to the installation page. 
+
+![Phantom Step 2](../assets/export-guide/phantom2.png)
+Step 2: Choose Import the extension for your type browser.
+
+![Phantom Step 3](../assets/export-guide/phantom3.png)
+Step 3: Install the extension by selecting "Add to Chrome" (or your chosen browser).
+
+![Phantom Step 4](../assets/export-guide/phantom4.png)
+Step 4: Install the browser extension by selecting "Add extension".
+
+![Phantom Step 5](../assets/export-guide/phantom5.png)
+Step 5: Installation confirmation.
+
+![Phantom Step 6](../assets/export-guide/phantom6.png)
+Step 6: Import your wallet by selecting "I already have a wallet".
+
+![Phantom Step 7](../assets/export-guide/phantom7.png)
+Step 7: Select "Import Recovery Phrase".
+
+![Phantom Step 8](../assets/export-guide/phantom8.png)
+Step 8: Enter your 12-word Secret Recovery Phrase (exact order, single spaces).
+![Phantom Step 9](../assets/export-guide/phantom10.png)
+Step 9: Your wallet is imported.
+
+![Phantom Step 10](../assets/export-guide/phantom11.png)
+Step 10: Create a password.
+
+![Phantom Step 11](../assets/export-guide/phantom13.png)
+Step 11: Create a username.
+
+![Phantom Step 12](../assets/export-guide/phantom14.png)
+Step 12: Setup complete.
+
+![Phantom Step 13](../assets/export-guide/phantom15.png)
+Step 13: Wallet ready.
 
 Verification:
 - Ensure the Solana address matches your expected one
 
 ### Trust Wallet (multi-chain incl. TON/TRON/EVM)
 
-1. Open Trust Wallet → Add Wallet → Import Wallet
-2. Choose the correct chain/wallet type if prompted
-3. Paste your 12-word seed phrase
-4. Complete setup
+Typical flow: Add Wallet → Import Wallet → choose chain/wallet type if prompted → paste 12 words → complete setup.
 
-Screenshots:
-![trust-import-step-1](./images/trust-import-1.png)
-![trust-import-step-2](./images/trust-import-2.png)
+![Trust Step 1](../assets/export-guide/trust1.png)
+Step 1: Launch Trust Wallet; Select "Extension Wallet".
+
+![Trust Step 2](../assets/export-guide/trust2.png)
+Step 2: Choose used Browser.
+
+![Trust Step 3](../assets/export-guide/trust3.png)
+Step 3: Select "Add to Chrome" to add the browser extension.
+
+![Trust Step 4](../assets/export-guide/trust4.png)
+Step 4: Confirm installation of the browser extension.
+
+![Trust Step 5](../assets/export-guide/trust5.png)
+Step 5: Select "I already have a wallet" to import your passphrase.
+
+![Trust Step 6](../assets/export-guide/trust6.png)
+Step 6: Enable device security/biometrics or create new password as prompted.
+
+![Trust Step 7](../assets/export-guide/trust7.png)
+Step 7: If prompted, create a new password.
+
+![Trust Step 8](../assets/export-guide/trust8.png)
+Step 8: Select "Other mobile wallet or extension" to import your WDK passphrase.
+
+![Trust Step 9](../assets/export-guide/trust9.png)
+Step 9: Enter your 12-word Secret Recovery Phrase (exact order, single spaces).
+
+![Trust Step 10](../assets/export-guide/trust11.png)
+Step 10: Final confirmation; your wallet is recovered. Click on "Open my wallet" to proceed.
+
+![Trust Step 11](../assets/export-guide/trust12.png)
+Step 11: Wallet home page.
 
 Verification:
-- For TON/TRON/EVM, ensure the derived account matches your expectations
-- Some chains (TON) depend on wallet version/subwallet settings; if addresses differ, check wallet version and address format (bounceable/non-bounceable)
+- For the different networks, ensure the derived account matches your expectations
+- Some chains (TON, Solana, Bitcoin) depend on wallet version/subwallet settings, path derivations, or derivation algoritms; if addresses differ, check wallet version and address format (bounceable/non-bounceable)
+
+Note: For derivation paths and cross-wallet compatibility details, see the Export Guide: [WDK’s Derivation Path and Compatibility](./export-guide.md).
 
 
 **3. Access Your Funds:** Once your wallet is successfully imported into your chosen application, you should be able to see your funds and manage transactions as usual.
