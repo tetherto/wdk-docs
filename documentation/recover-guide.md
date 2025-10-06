@@ -163,9 +163,11 @@ Note: For derivation paths and cross-wallet compatibility details, see the Expor
 Backup Your Wallet: Always keep a secure offline backup of your passphrase. Consider multiple copies in separate secure locations.
 
 
-Verify Address: Double-check that the wallet address displayed in your chosen application matches the one associated with your original WDK wallet. For TON, ensure the same wallet contract/version, subwallet, and address format are selected.
+Verify Address: Double-check that the wallet address displayed in your chosen application matches the one associated with your original WDK wallet. If you see a different, don't worry your found are not lost! That could be for the wallet confirguration, check [WDK’s Derivation Path and Compatibility](./export-guide.md) to know more.
+
 
 ## Conclusion
+
 By following these steps, you can recover your funds and regain access to your wallet in case of any downtime or issues with the WDK application. Remember to maintain good security practices and keep your passphrase confidential to protect your assets effectively.
 
 
