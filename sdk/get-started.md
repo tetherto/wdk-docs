@@ -1,7 +1,6 @@
 ---
 title: Get Started
 description: Learn about the SDK and modules architecture
-icon: rocket
 layout:
   width: default
   title:

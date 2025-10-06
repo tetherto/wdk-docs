@@ -1,7 +1,7 @@
 ---
 title: Usage
 description: Learn how to use the WDK Core module
-icon: code
+icon: book-open
 layout:
   width: default
   title:
@@ -367,51 +367,6 @@ async function setupMultiChainWallet() {
   
   return { wdk, ethAccount, tonAccount }
 }
-```
-{% endcode %}
-
-### Production Service Class
-
-{% code title="Production Service Class" lineNumbers="true" %}
-```typescript
-import WDK from '@tetherto/wdk'
-import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
-import WalletManagerTon from '@tetherto/wdk-wallet-ton'
-
-class MultiChainWalletService {
-  constructor(seedPhrase) {
-    this.wdk = new WDK(seedPhrase)
-      .registerWallet('ethereum', WalletManagerEvm, {
-        provider: process.env.ETHEREUM_RPC_URL
-      })
-      .registerWallet('ton', WalletManagerTon, {
-        tonApiKey: process.env.TON_API_KEY
-      })
-  }
-  
-  async getAccount(blockchain, index = 0) {
-    return await this.wdk.getAccount(blockchain, index)
-  }
-  
-  async getBalance(blockchain, index = 0) {
-    const account = await this.getAccount(blockchain, index)
-    return await account.getBalance()
-  }
-  
-  async sendTransaction(blockchain, index, transaction) {
-    const account = await this.getAccount(blockchain, index)
-    return await account.sendTransaction(transaction)
-  }
-  
-  dispose() {
-    this.wdk.dispose()
-  }
-}
-
-// Usage
-const walletService = new MultiChainWalletService(process.env.SEED_PHRASE)
-const ethBalance = await walletService.getBalance('ethereum', 0)
-const tonBalance = await walletService.getBalance('ton', 0)
 ```
 {% endcode %}
 

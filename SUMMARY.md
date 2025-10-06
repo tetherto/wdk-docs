@@ -16,7 +16,7 @@
 ## SDK
 
 * [Get Started](sdk/get-started.md)
-* Core Module
+* [Core Module](sdk/core-module/README.md)
   * [Usage](sdk/core-module/usage.md)
   * [Configuration](sdk/core-module/configuration.md)
   * [API Reference](sdk/core-module/api-reference.md)
