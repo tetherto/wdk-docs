@@ -10,7 +10,6 @@
 
 ## Start Building
 
-* [Prerequisites](start-building/prerequisites.md)
 * [Node.js & Bare Quickstart](start-building/nodejs-bare-quickstart.md)
 * [React Native Quickstart](start-building/react-native-quickstart.md)
 
@@ -64,10 +63,10 @@
     * [Usage](sdk/swap-modules/swap-paraswap-evm/usage.md)
     * [Configuration](sdk/swap-modules/swap-paraswap-evm/configuration.md)
     * [API Reference](sdk/swap-modules/swap-paraswap-evm/api-reference.md)
-  * [swap-stonfi-ton](sdk/swap-modules/swap-stonfi-ton/README.md)
+  <!-- * [swap-stonfi-ton](sdk/swap-modules/swap-stonfi-ton/README.md)
     * [Usage](sdk/swap-modules/swap-stonfi-ton/usage.md)
     * [Configuration](sdk/swap-modules/swap-stonfi-ton/configuration.md)
-    * [API Reference](sdk/swap-modules/swap-stonfi-ton/api-reference.md)
+    * [API Reference](sdk/swap-modules/swap-stonfi-ton/api-reference.md) -->
 * [Bridge Modules](sdk/bridge-modules/README.md)
   * [bridge-usdt0-evm](sdk/bridge-modules/bridge-usdt0-evm/README.md)
     * [Usage](sdk/bridge-modules/bridge-usdt0-evm/usage.md)
@@ -87,7 +86,7 @@
 
 * [React Native UI Kit](ui-kits/react-native-ui-kit/README.md)
   * [Get Started](ui-kits/react-native-ui-kit/get-started.md)
-  * [Components List](ui-kits/react-native-ui-kit/components-list.md)
+  * [API Reference](ui-kits/react-native-ui-kit/api-reference.md)
   * [Theming](ui-kits/react-native-ui-kit/theming.md)
 
 ## Examples & Starters

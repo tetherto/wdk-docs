@@ -1,6 +1,6 @@
 ---
 title: Node.js & Bare Runtime Quickstart
-description: Get started with WDK in Node.js or Bare runtime environments in 5 minutes
+description: Get started with WDK in Node.js or Bare runtime environments in 3 minutes
 icon: code
 layout:
   width: default
@@ -128,7 +128,7 @@ Now, let's register wallets for different blockchains:
 
 {% code title="app.js" lineNumbers="true" %}
 ```typescript
-// Add below the code to generate a seed phrase
+// Add this code after the seed phrase generation
 console.log('Registering wallets...')
 
 const wdkWithWallets = new WDK(seedPhrase)
@@ -148,10 +148,9 @@ console.log('Wallets registered for Ethereum, TRON, and Bitcoin')
 
 {% hint style="info" %}
 To learn more about configuring the wallet modules:
-
-* [**@tetherto/wdk-wallet-evm**](../sdk/wallet-modules/wallet-evm/configuration.md)
-* [**@tetherto/wdk-wallet-tron**](../sdk/wallet-modules/wallet-tron/configuration.md)
-* [**@tetherto/wdk-wallet-btc**](../sdk/wallet-modules/wallet-btc/configuration.md)
+* [Configuring @tetherto/wdk-wallet-evm](../sdk/wallet-modules/wallet-evm/configuration.md)
+* [Configuring @tetherto/wdk-wallet-tron](../sdk/wallet-modules/wallet-tron/configuration.md)
+* [Configuring @tetherto/wdk-wallet-btc](../sdk/wallet-modules/wallet-btc/configuration.md)
 {% endhint %}
 
 ***
@@ -162,7 +161,7 @@ To check balances, we first need to get accounts and addresses. Let's get accoun
 
 {% code title="app.js" lineNumbers="true" %}
 ```typescript
-// Add below the code to get accounts and addresses
+// Add this code after the wallet registration
 console.log('Retrieving accounts...')
 
 const accounts = {
@@ -183,19 +182,16 @@ for (const [chain, account] of Object.entries(accounts)) {
 Now, let's check balances across all chains:
 
 ```typescript
-// Check balances across all chains
+// Add this code after the address resolution
 console.log('Checking balances...')
+
 for (const [chain, account] of Object.entries(accounts)) {
-  try {
     const balance = await account.getBalance()
     console.log(`   ${chain.toUpperCase()}: ${balance.toString()} units`)
-  } catch (error) {
-    console.log(`   ${chain.toUpperCase()}: Unable to check balance`)
-  }
 }
 ```
 
-Here is the complete app.js file:
+Here is the complete `app.js` file:
 
 {% code title="app.js" lineNumbers="true" %}
 ```javascript
@@ -211,6 +207,8 @@ async function main() {
     const seedPhrase = WDK.getRandomSeedPhrase()
     console.log('Generated seed phrase:', seedPhrase)
 
+    console.log('Registering wallets...')   
+
     const wdkWithWallets = new WDK(seedPhrase)
       .registerWallet('ethereum', WalletManagerEvm, {
         provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
@@ -222,13 +220,15 @@ async function main() {
         provider: 'https://blockstream.info/api'
       })
 
+    console.log('Wallets registered for Ethereum, TRON, and Bitcoin')
+
     const accounts = {
       ethereum: await wdkWithWallets.getAccount('ethereum', 0),
       tron: await wdkWithWallets.getAccount('tron', 0),
       bitcoin: await wdkWithWallets.getAccount('bitcoin', 0)
     }
 
-    console.log('Resolving addresses:')
+    console.log('Resolving addresses:...')
 
     for (const [chain, account] of Object.entries(accounts)) {
       const address = await account.getAddress()
@@ -238,12 +238,8 @@ async function main() {
     console.log('Checking balances...')
 
     for (const [chain, account] of Object.entries(accounts)) {
-      try {
         const balance = await account.getBalance()
         console.log(`   ${chain.toUpperCase()}: ${balance.toString()} units`)
-      } catch (error) {
-        console.log(`   ${chain.toUpperCase()}: Unable to check balance`)
-      }
     }
 
     console.log('Application completed successfully!')
@@ -285,8 +281,7 @@ Starting WDK App...
 Generated seed phrase: abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about
 Registering wallets...
 Wallets registered for Ethereum, TRON, and Bitcoin
-Creating accounts...
-Account addresses:
+Resolving addresses:...
    ETHEREUM: 0x742d35Cc6634C0532925a3b8D9C5c8b7b6e5f6e5
    TRON: TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH
    BITCOIN: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
@@ -294,10 +289,6 @@ Checking balances...
    ETHEREUM: 0 units
    TRON: 0 units
    BITCOIN: 0 units
-Estimating transaction costs...
-   ETHEREUM: 21000000000000000 units
-   TRON: 1000000 units
-   BITCOIN: 10000 units
 Application completed successfully!
 ```
 
@@ -409,6 +400,3 @@ wdk.registerProtocol('swap-paraswap-evm', SwapParaswapEvm)
 
 {% include "../.gitbook/includes/support-cards.md" %}
 
-***
-
-Happy building!
