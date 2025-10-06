@@ -33,35 +33,46 @@ Follow the steps for your chosen provider. Do not share or screenshot your seed 
 Typical flow: Get Started → Import using Secret Recovery Phrase → paste 12 words → set password → finish → select intended network(s).
 
 
-![MetaMask Step 1](../assets/export-guide/metamask1.png)
-Step 1: Metamask home page. Click on "Get Metamask" to be redirected to the installation page. 
-
-![MetaMask Step 2](../assets/export-guide/metamask2.png)
-Step 2: Select to add extension "Add to Chrome" (or compatible browser used)
-
-![MetaMask Step 3](../assets/export-guide/metamask3.png)
-Step 3: Install browser extension clicking on "Add extension".
-
-![MetaMask Step 5](../assets/export-guide/metamask5.png)
-Step 4: Once the extension is created, you can start setting up your wallet, you will get redirected, but if not you can open clicking on the browser extension. 
-
-![MetaMask Step 6](../assets/export-guide/metamask6.png)
-Step 5: Select "Import using Secret Recovery Phrase"
-
-![MetaMask Step 7](../assets/export-guide/metamask7.png)
-Step 6: Enter your 12-word Secret Recovery Phrase (exact order, single spaces).
-
-![MetaMask Step 9](../assets/export-guide/metamask9.png)
-Step 7: Create a password.
-
-![MetaMask Step 10](../assets/export-guide/metamask10.png)
-Step 8: Accept terms. 
-
-![MetaMask Step 11](../assets/export-guide/metamask11.png)
-Step 9: Your wallet is set up!
-
-![MetaMask Step 13](../assets/export-guide/metamask13.png)
-Step 10: Confirmation; wallet ready on selected network (EVM).
+<figure>
+  <img src="../assets/export-guide/metamask1.png" alt="MetaMask Step 1" />
+  <figcaption>Step 1: MetaMask home page. Click “Get MetaMask” to go to the installation page.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/metamask2.png" alt="MetaMask Step 2" />
+  <figcaption>Step 2: Click “Add to Chrome” (or your browser’s equivalent) to add the extension.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/metamask3.png" alt="MetaMask Step 3" />
+  <figcaption>Step 3: Confirm by selecting “Add extension”.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/metamask5.png" alt="MetaMask Step 4" />
+  <figcaption>Step 4: After installation, you’ll be redirected to MetaMask. If not, open it from the browser’s extensions menu.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/metamask6.png" alt="MetaMask Step 5" />
+  <figcaption>Step 5: Select “Import using Secret Recovery Phrase”.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/metamask7.png" alt="MetaMask Step 6" />
+  <figcaption>Step 6: Enter your 12-word Secret Recovery Phrase (exact order, single spaces).</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/metamask9.png" alt="MetaMask Step 7" />
+  <figcaption>Step 7: Create a password.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/metamask10.png" alt="MetaMask Step 8" />
+  <figcaption>Step 8: Accept terms.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/metamask11.png" alt="MetaMask Step 9" />
+  <figcaption>Step 9: Your wallet is set up.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/metamask13.png" alt="MetaMask Step 10" />
+  <figcaption>Step 10: Confirmation — wallet ready on selected network (EVM).</figcaption>
+</figure>
 
 Verification:
 - Add/select the intended EVM network (Ethereum, Polygon, Arbitrum)
@@ -71,43 +82,58 @@ Verification:
 
 Typical flow: Open → Use Secret Recovery Phrase → Import → paste 12 words → set password → finish.
 
-![Phantom Step 1](../assets/export-guide/phantom1.png)
-Step 1: Phantom home page. Click on "Download" to be redirected to the installation page. 
-
-![Phantom Step 2](../assets/export-guide/phantom2.png)
-Step 2: Choose Import the extension for your type browser.
-
-![Phantom Step 3](../assets/export-guide/phantom3.png)
-Step 3: Install the extension by selecting "Add to Chrome" (or your chosen browser).
-
-![Phantom Step 4](../assets/export-guide/phantom4.png)
-Step 4: Install the browser extension by selecting "Add extension".
-
-![Phantom Step 5](../assets/export-guide/phantom5.png)
-Step 5: Installation confirmation.
-
-![Phantom Step 6](../assets/export-guide/phantom6.png)
-Step 6: Import your wallet by selecting "I already have a wallet".
-
-![Phantom Step 7](../assets/export-guide/phantom7.png)
-Step 7: Select "Import Recovery Phrase".
-
-![Phantom Step 8](../assets/export-guide/phantom8.png)
-Step 8: Enter your 12-word Secret Recovery Phrase (exact order, single spaces).
-![Phantom Step 9](../assets/export-guide/phantom10.png)
-Step 9: Your wallet is imported.
-
-![Phantom Step 10](../assets/export-guide/phantom11.png)
-Step 10: Create a password.
-
-![Phantom Step 11](../assets/export-guide/phantom13.png)
-Step 11: Create a username.
-
-![Phantom Step 12](../assets/export-guide/phantom14.png)
-Step 12: Setup complete.
-
-![Phantom Step 13](../assets/export-guide/phantom15.png)
-Step 13: Wallet ready.
+<figure>
+  <img src="../assets/export-guide/phantom1.png" alt="Phantom Step 1" />
+  <figcaption>Step 1: Phantom home page. Click “Download” to be redirected to the installation page.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/phantom2.png" alt="Phantom Step 2" />
+  <figcaption>Step 2: Choose the extension for your browser.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/phantom3.png" alt="Phantom Step 3" />
+  <figcaption>Step 3: Click “Add to Chrome” (or your browser) to install.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/phantom4.png" alt="Phantom Step 4" />
+  <figcaption>Step 4: Confirm by selecting “Add extension”.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/phantom5.png" alt="Phantom Step 5" />
+  <figcaption>Step 5: Installation confirmation.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/phantom6.png" alt="Phantom Step 6" />
+  <figcaption>Step 6: Select “I already have a wallet”.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/phantom7.png" alt="Phantom Step 7" />
+  <figcaption>Step 7: Choose “Import Recovery Phrase”.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/phantom8.png" alt="Phantom Step 8" />
+  <figcaption>Step 8: Enter your 12-word Secret Recovery Phrase (exact order, single spaces).</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/phantom10.png" alt="Phantom Step 9" />
+  <figcaption>Step 9: Your wallet is imported.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/phantom11.png" alt="Phantom Step 10" />
+  <figcaption>Step 10: Create a password.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/phantom13.png" alt="Phantom Step 11" />
+  <figcaption>Step 11: Create a username.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/phantom14.png" alt="Phantom Step 12" />
+  <figcaption>Step 12: Setup complete.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/phantom15.png" alt="Phantom Step 13" />
+  <figcaption>Step 13: Wallet ready.</figcaption>
+</figure>
 
 Verification:
 - Ensure the Solana address matches your expected one
@@ -116,38 +142,50 @@ Verification:
 
 Typical flow: Add Wallet → Import Wallet → choose chain/wallet type if prompted → paste 12 words → complete setup.
 
-![Trust Step 1](../assets/export-guide/trust1.png)
-Step 1: Launch Trust Wallet; Select "Extension Wallet".
-
-![Trust Step 2](../assets/export-guide/trust2.png)
-Step 2: Choose used Browser.
-
-![Trust Step 3](../assets/export-guide/trust3.png)
-Step 3: Select "Add to Chrome" to add the browser extension.
-
-![Trust Step 4](../assets/export-guide/trust4.png)
-Step 4: Confirm installation of the browser extension.
-
-![Trust Step 5](../assets/export-guide/trust5.png)
-Step 5: Select "I already have a wallet" to import your passphrase.
-
-![Trust Step 6](../assets/export-guide/trust6.png)
-Step 6: Enable device security/biometrics or create new password as prompted.
-
-![Trust Step 7](../assets/export-guide/trust7.png)
-Step 7: If prompted, create a new password.
-
-![Trust Step 8](../assets/export-guide/trust8.png)
-Step 8: Select "Other mobile wallet or extension" to import your WDK passphrase.
-
-![Trust Step 9](../assets/export-guide/trust9.png)
-Step 9: Enter your 12-word Secret Recovery Phrase (exact order, single spaces).
-
-![Trust Step 10](../assets/export-guide/trust11.png)
-Step 10: Final confirmation; your wallet is recovered. Click on "Open my wallet" to proceed.
-
-![Trust Step 11](../assets/export-guide/trust12.png)
-Step 11: Wallet home page.
+<figure>
+  <img src="../assets/export-guide/trust1.png" alt="Trust Step 1" />
+  <figcaption>Step 1: Launch Trust Wallet; Select “Extension Wallet”.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/trust2.png" alt="Trust Step 2" />
+  <figcaption>Step 2: Choose your browser.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/trust3.png" alt="Trust Step 3" />
+  <figcaption>Step 3: Select “Add to Chrome” to add the browser extension.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/trust4.png" alt="Trust Step 4" />
+  <figcaption>Step 4: Confirm installation of the browser extension.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/trust5.png" alt="Trust Step 5" />
+  <figcaption>Step 5: Select “I already have a wallet” to import your passphrase.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/trust6.png" alt="Trust Step 6" />
+  <figcaption>Step 6: Enable device security/biometrics or create a new password as prompted.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/trust7.png" alt="Trust Step 7" />
+  <figcaption>Step 7: If prompted, create a new password.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/trust8.png" alt="Trust Step 8" />
+  <figcaption>Step 8: Select “Other mobile wallet or extension” to import your WDK passphrase.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/trust9.png" alt="Trust Step 9" />
+  <figcaption>Step 9: Enter your 12-word Secret Recovery Phrase (exact order, single spaces).</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/trust11.png" alt="Trust Step 10" />
+  <figcaption>Step 10: Final confirmation; your wallet is recovered. Click “Open my wallet” to proceed.</figcaption>
+</figure>
+<figure>
+  <img src="../assets/export-guide/trust12.png" alt="Trust Step 11" />
+  <figcaption>Step 11: Wallet home page.</figcaption>
+</figure>
 
 Verification:
 - For the different networks, ensure the derived account matches your expectations
@@ -161,7 +199,6 @@ Note: For derivation paths and cross-wallet compatibility details, see the Expor
 
 ## Additional Tips
 Backup Your Wallet: Always keep a secure offline backup of your passphrase. Consider multiple copies in separate secure locations.
-
 
 Verify Address: Double-check that the wallet address displayed in your chosen application matches the one associated with your original WDK wallet. If you see a different, don't worry your found are not lost! That could be for the wallet confirguration, check [WDK’s Derivation Path and Compatibility](./export-guide.md) to know more.
 
