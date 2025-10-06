@@ -27,23 +27,11 @@ The React Native Starter Alpha is a Expo + React Native app showing how to build
 
 ### Features
 
-**Multi-Chain Support**
+**Multi-Token & Chain Support**
 
-| Blockchain   | Features                               | Operations                                                                    |
-| ------------ | -------------------------------------- | ----------------------------------------------------------------------------- |
-| **Bitcoin**  | SegWit native transfers                | Address resolution, balance fetching, transaction history, sending, receiving |
-| **Ethereum** | Transactions with gas fees sponsorship | Account abstraction, ERC-20 support, transaction history                      |
-| **Polygon**  | Transactions with gas fees sponsorship | Account abstraction, ERC-20 support, transaction history                      |
-| **Arbitrum** | Transactions with gas fees sponsorship | Account abstraction, ERC-20 support, transaction history                      |
-| **TON**      | Native transfers                       | Native transfers, transaction history                                         |
-
-**Multi-Token Support**
-
-| Token    | Networks                         | Features                                          |
-| -------- | -------------------------------- | ------------------------------------------------- |
-| **BTC**  | Bitcoin                          | Native SegWit transfers, UTXO management          |
-| **USD₮** | Ethereum, Polygon, Arbitrum, TON | Account Abstraction (EVM), Native transfers (TON) |
-| **XAU₮** | Ethereum                         | ERC-20 transfers, transaction history             |
+* **BTC**: Native SegWit transfers on Bitcoin network
+* **USD₮**: Gasless transactions on EVM networks (Ethereum, Polygon, Arbitrum) and native transfers on TON
+* **XAU₮**: Gasless transactions on Ethereum network
 
 **Wallet Management**
 
@@ -65,21 +53,6 @@ The React Native Starter Alpha is a Expo + React Native app showing how to build
 * **Network Selection**: Choose optimal network for each transaction
 * **Token Selection**: Multi-token transfer support
 * **Activity Feed**: Real-time transaction monitoring
-
-***
-
-### Prerequisites
-
-Before we start, make sure you have:
-
-| Tool            | Version | Why You Need It                       |
-| --------------- | ------- | ------------------------------------- |
-| **Node.js**     | 18+     | To run JavaScript code                |
-| **npm**         | Latest  | To install packages                   |
-| **Code Editor** | Any     | To write code                         |
-| **Xcode**       | Latest  | iOS simulator and build tools         |
-| **Android SDK** | Latest  | Android emulator and build tools      |
-| **npx**         | Latest  | For bundling worklets via `bare-pack` |
 
 ***
 
@@ -131,19 +104,6 @@ npm run android # Android Emulator
 
 ***
 
-### What Just Happened?
-
-**Congratulations!** You've successfully launched a production-ready multi-chain wallet app. Here's what you now have:
-
-* [x] A complete multi-chain wallet supporting Bitcoin, Ethereum, Polygon, Arbitrum, and TON
-* [x] Secure seed phrase generation and import functionality
-* [x] Real-time balance updates via WDK Indexer API
-* [x] Transaction history and activity feed
-* [x] QR code scanning for addresses and payments
-* [x] Send/receive flows for BTC, USD₮, and XAU₮ tokens
-
-***
-
 ### Project Structure
 
 The starter includes a modular architecture designed for scalability and maintainability:
@@ -162,51 +122,6 @@ src/
 └── wdk-secret-manager-worklet.bundle.js  # Generated bundle
 ```
 {% endcode %}
-
-#### Key Components
-
-* **`app/`**: Expo Router-based screen navigation
-* **`components/`**: Reusable UI components from WDK React Native UI Kit
-* **`config/`**: Blockchain network configurations
-* **`contexts/`**: React contexts for state management
-* **`services/wdk-service/`**: Core wallet orchestration and HRPC integration
-* **`worklet/`**: Secure secret management worklet
-
-***
-
-### Supported Networks & Operations
-
-#### Bitcoin (BTC)
-
-* **Address Resolution**: SegWit addresses (native)
-* **Balance Fetching**: ✅ Supported
-* **Transaction History**: ✅ Supported
-* **Sending**: ✅ Native SegWit transfers
-* **Receiving**: ✅ Native SegWit addresses
-
-#### Tether USD (USD₮)
-
-* **Networks**: Ethereum, Polygon, Arbitrum, TON
-* **Address Resolution**: ✅ All supported networks
-* **Balance Fetching**: ✅ All supported networks
-* **Transaction History**: ✅ All supported networks
-* **Sending**: ✅ Account Abstraction (EVM networks), Native (TON)
-* **Receiving**: ✅ All supported networks
-
-#### Tether Gold (XAU₮)
-
-* **Networks**: Ethereum
-* **Address Resolution**: ✅ Ethereum
-* **Balance Fetching**: ✅ Ethereum
-* **Transaction History**: ✅ Ethereum
-* **Sending**: ✅ Ethereum
-* **Receiving**: ✅ Ethereum
-
-#### Additional Networks (Coming Soon)
-
-* **Spark**: Support Planned
-* **TRON**: Support Planned
-* **Solana**: Support Planned
 
 ***
 
@@ -257,37 +172,25 @@ See `metro.config.js` for comprehensive polyfills:
 
 ***
 
-### Customization
+### Next Steps
 
-#### UI Theming
+**Customizing the UI**
 
 This starter uses components from the [WDK React Native UI Kit](../ui-kits/react-native-ui-kit/). To customize the look and feel:
 
 * [**Theming Guide**](../ui-kits/react-native-ui-kit/theming.md) - Deep dive into theming capabilities
 * [**Component Reference**](../ui-kits/react-native-ui-kit/api-reference.md) - Complete component documentation
 
-#### Adding Networks
 
-The starter supports these networks out of the box:
+**Add new functionality**
 
-* **Bitcoin**: SegWit native transfers
-* **Ethereum**: Transactions with gas fees sponsorship
-* **Polygon**: Transactions with gas fees sponsorship
-* **Arbitrum**: Transactions with gas fees sponsorship
-* **TON**: Native transfers
+This starter provides a solid foundation that you can extend with additional functionality:
 
-#### Extending Functionality
+* **Add support for other tokens** using wallet modules in the [WDK SDK](../sdk/get-started.md)
+* **Add DeFi protocols** like swaps, bridges, and lending using [protocol modules](../sdk/get-started.md)
 
-* **Add New Tokens**: Configure additional ERC-20 or native tokens
-* **Custom Networks**: Add support for additional blockchain networks
-* **DeFi Integration**: Integrate swap, bridge, or lending protocols
-* **Advanced Features**: Add staking, governance, or other DeFi features
 
-***
-
-### Next Steps
-
-Now that you have a working wallet app, here's what you can explore:
+**Or explore documentation**
 
 * [**WDK SDK Documentation**](../sdk/get-started.md) - Learn about the underlying SDK
 * [**UI Kit Documentation**](../ui-kits/react-native-ui-kit/get-started.md) - Customize the interface
