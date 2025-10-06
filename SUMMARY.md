@@ -90,10 +90,7 @@
 
 ## Examples & Starters
 
-* [React Native Starter](examples-and-starters/react-native-starter/README.md)
-  * [Getting Started](examples-and-starters/react-native-starter/getting-started.md)
-  * [Features](examples-and-starters/react-native-starter/features.md)
-  * [Customization](examples-and-starters/react-native-starter/customization.md)
+* [React Native Starter](examples-and-starters/react-native-starter.md)
 
 ## Tools
 

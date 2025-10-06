@@ -22,19 +22,20 @@ layout:
 
 | Component | Description |
 | --- | --- |
-| `AmountInput` | Numeric input with token/fiat toggle, balance helper and Max action |
-| `AssetSelector` | Token search & pick list with recent items and empty states |
-| `NetworkSelector` | Network picker with gas level indicators and colors |
-| `Balance` | Displays a balance value with optional masking and custom loader |
-| `CryptoAddressInput` | Address input with QR scan and paste helpers, validation state |
-| `QRCode` | QR renderer for addresses/payment requests with labeling and styling |
-| `TransactionItem` | Single transaction row (sent/received) with token, amounts, network |
-| `TransactionList` | Virtualized list of transactions using `TransactionItem` |
-| `SeedPhrase` | Grid of seed words with optional editing and loading states |
+| [`AmountInput`](api-reference.md#amountinput) | Numeric input with token/fiat toggle, balance helper and Max action |
+| [`AssetSelector`](api-reference.md#assetselector) | Token search & pick list with recent items and empty states |
+| [`NetworkSelector`](api-reference.md#networkselector) | Network picker with gas level indicators and colors |
+| [`Balance`](api-reference.md#balance) | Displays a balance value with optional masking and custom loader |
+| [`CryptoAddressInput`](api-reference.md#cryptoaddressinput) | Address input with QR scan and paste helpers, validation state |
+| [`QRCode`](api-reference.md#qrcode) | QR renderer for addresses/payment requests with labeling and styling |
+| [`TransactionItem`](api-reference.md#transactionitem) | Single transaction row (sent/received) with token, amounts, network |
+| [`TransactionList`](api-reference.md#transactionlist) | Virtualized list of transactions using `TransactionItem` |
+| [`SeedPhrase`](api-reference.md#seedphrase) | Grid of seed words with optional editing and loading states |
+
 
 ***
 
-## AmountInput
+### AmountInput
 
 Numeric input component with token/fiat toggle, balance display, and Max functionality.
 
@@ -80,7 +81,7 @@ function SendAmount({ amount, balance, onAmountChange }) {
 
 ***
 
-## AssetSelector
+### AssetSelector
 
 Token selection component with search functionality and recent tokens.
 
@@ -110,7 +111,7 @@ type Token = {
 ```
 {% endcode %}
 
-### Example
+**Example**
 
 {% code title="AssetSelector Usage" lineNumbers="true" %}
 ```tsx
@@ -130,7 +131,7 @@ function TokenPicker({ tokens, recentTokens, onTokenSelect }) {
 
 ***
 
-## Balance
+### Balance
 
 Display component for showing balance values with optional masking and loading states.
 
@@ -167,7 +168,7 @@ function WalletBalance({ balance, currency, isLoading }) {
 
 ***
 
-## CryptoAddressInput
+### CryptoAddressInput
 
 Address input component with QR scanning and paste functionality.
 
@@ -207,7 +208,7 @@ function AddressInput({ address, onAddressChange, onQRScan }) {
 
 ***
 
-## QRCode
+### QRCode
 
 QR code renderer for addresses and payment requests.
 
@@ -245,7 +246,7 @@ function AddressQR({ address }) {
 
 ***
 
-## TransactionItem
+### TransactionItem
 
 Single transaction row component for displaying transaction details.
 
@@ -291,7 +292,7 @@ function TransactionRow({ transaction, onPress }) {
 
 ***
 
-## TransactionList
+### TransactionList
 
 Virtualized list component for displaying multiple transactions.
 
@@ -319,7 +320,7 @@ function TransactionHistory({ transactions }) {
 
 ***
 
-## NetworkSelector
+### NetworkSelector
 
 Network selection component with gas level indicators.
 
@@ -364,7 +365,7 @@ function NetworkPicker({ networks, onNetworkSelect }) {
 
 ***
 
-## SeedPhrase
+### SeedPhrase
 
 Grid component for displaying and editing seed phrase words.
 
