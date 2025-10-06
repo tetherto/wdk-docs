@@ -20,19 +20,13 @@ layout:
 
 # Theming
 
-Complete guide to customizing the appearance of your WDK React Native UI Kit components. Create beautiful, branded wallet interfaces that match your design system.
-
-***
-
-## About Theming
-
 The WDK React Native UI Kit provides a comprehensive theming system that allows you to:
 
-- **Use built-in themes** for quick setup with light and dark modes
-- **Create brand themes** from your brand colors and fonts
-- **Customize individual components** with fine-grained control
-- **Access theme values** anywhere in your application
-- **Switch themes dynamically** based on user preferences
+* **Use built-in themes** for quick setup with light and dark modes
+* **Create brand themes** from your brand colors and fonts
+* **Customize individual components** with fine-grained control
+* **Access theme values** anywhere in your application
+* **Switch themes dynamically** based on user preferences
 
 ***
 
@@ -83,6 +77,10 @@ import { ThemeProvider, lightTheme, darkTheme } from '@tetherto/wdk-uikit-react-
 The theme automatically switches based on system preferences:
 
 {% code title="Auto Theme Mode" lineNumbers="true" %}
+```
+```
+{% endcode %}
+
 ```tsx
 <ThemeProvider defaultMode="auto" initialTheme={lightTheme}>
   {/* Will use system theme */}
@@ -358,74 +356,74 @@ function CustomComponent() {
 
 The theming system uses semantic naming for colors:
 
-| Token | Purpose |
-| --- | --- |
-| `colors.primary` | Primary brand color |
-| `colors.primaryLight` | Light variant of primary |
-| `colors.primaryDark` | Dark variant of primary |
-| `colors.onPrimary` | Text color on primary background |
-| `colors.secondary` | Secondary brand color |
-| `colors.secondaryLight` | Light variant of secondary |
-| `colors.secondaryDark` | Dark variant of secondary |
-| `colors.background` | Main background color |
-| `colors.surface` | Card/container background |
-| `colors.surfaceVariant` | Alternative surface color |
-| `colors.surfaceElevated` | Elevated surface color |
-| `colors.text` | Primary text color |
-| `colors.textSecondary` | Secondary text color |
-| `colors.textDisabled` | Disabled text color |
-| `colors.border` | Border color |
-| `colors.borderLight` | Light border color |
-| `colors.error` | Error state color |
-| `colors.warning` | Warning state color |
-| `colors.success` | Success state color |
-| `colors.info` | Info state color |
+| Token                    | Purpose                          |
+| ------------------------ | -------------------------------- |
+| `colors.primary`         | Primary brand color              |
+| `colors.primaryLight`    | Light variant of primary         |
+| `colors.primaryDark`     | Dark variant of primary          |
+| `colors.onPrimary`       | Text color on primary background |
+| `colors.secondary`       | Secondary brand color            |
+| `colors.secondaryLight`  | Light variant of secondary       |
+| `colors.secondaryDark`   | Dark variant of secondary        |
+| `colors.background`      | Main background color            |
+| `colors.surface`         | Card/container background        |
+| `colors.surfaceVariant`  | Alternative surface color        |
+| `colors.surfaceElevated` | Elevated surface color           |
+| `colors.text`            | Primary text color               |
+| `colors.textSecondary`   | Secondary text color             |
+| `colors.textDisabled`    | Disabled text color              |
+| `colors.border`          | Border color                     |
+| `colors.borderLight`     | Light border color               |
+| `colors.error`           | Error state color                |
+| `colors.warning`         | Warning state color              |
+| `colors.success`         | Success state color              |
+| `colors.info`            | Info state color                 |
 
 ### Typography
 
-| Token | Purpose |
-| --- | --- |
-| `typography.fontFamily.regular` | Regular font family |
-| `typography.fontFamily.medium` | Medium font family |
-| `typography.fontFamily.semiBold` | Semi-bold font family |
-| `typography.fontFamily.bold` | Bold font family |
-| `typography.fontSize.xs` | Extra small font size (10px) |
-| `typography.fontSize.sm` | Small font size (12px) |
-| `typography.fontSize.base` | Base font size (14px) |
-| `typography.fontSize.md` | Medium font size (16px) |
-| `typography.fontSize.lg` | Large font size (18px) |
-| `typography.fontSize.xl` | Extra large font size (20px) |
-| `typography.fontSize.xxl` | 2X large font size (24px) |
-| `typography.fontSize.xxxl` | 3X large font size (30px) |
-| `typography.fontWeight.regular` | Regular font weight ('400') |
-| `typography.fontWeight.medium` | Medium font weight ('500') |
+| Token                            | Purpose                       |
+| -------------------------------- | ----------------------------- |
+| `typography.fontFamily.regular`  | Regular font family           |
+| `typography.fontFamily.medium`   | Medium font family            |
+| `typography.fontFamily.semiBold` | Semi-bold font family         |
+| `typography.fontFamily.bold`     | Bold font family              |
+| `typography.fontSize.xs`         | Extra small font size (10px)  |
+| `typography.fontSize.sm`         | Small font size (12px)        |
+| `typography.fontSize.base`       | Base font size (14px)         |
+| `typography.fontSize.md`         | Medium font size (16px)       |
+| `typography.fontSize.lg`         | Large font size (18px)        |
+| `typography.fontSize.xl`         | Extra large font size (20px)  |
+| `typography.fontSize.xxl`        | 2X large font size (24px)     |
+| `typography.fontSize.xxxl`       | 3X large font size (30px)     |
+| `typography.fontWeight.regular`  | Regular font weight ('400')   |
+| `typography.fontWeight.medium`   | Medium font weight ('500')    |
 | `typography.fontWeight.semiBold` | Semi-bold font weight ('600') |
-| `typography.fontWeight.bold` | Bold font weight ('700') |
+| `typography.fontWeight.bold`     | Bold font weight ('700')      |
 
 ### Spacing
 
-| Token | Purpose |
-| --- | --- |
-| `spacing.xs` | Extra small spacing (4px) |
-| `spacing.sm` | Small spacing (8px) |
-| `spacing.base` | Base spacing (12px) |
-| `spacing.md` | Medium spacing (16px) |
-| `spacing.lg` | Large spacing (24px) |
-| `spacing.xl` | Extra large spacing (32px) |
-| `spacing.xxl` | 2X large spacing (48px) |
-| `spacing.xxxl` | 3X large spacing (64px) |
+| Token          | Purpose                    |
+| -------------- | -------------------------- |
+| `spacing.xs`   | Extra small spacing (4px)  |
+| `spacing.sm`   | Small spacing (8px)        |
+| `spacing.base` | Base spacing (12px)        |
+| `spacing.md`   | Medium spacing (16px)      |
+| `spacing.lg`   | Large spacing (24px)       |
+| `spacing.xl`   | Extra large spacing (32px) |
+| `spacing.xxl`  | 2X large spacing (48px)    |
+| `spacing.xxxl` | 3X large spacing (64px)    |
 
 ### Border Radius
 
-| Token | Purpose |
-| --- | --- |
-| `borderRadius.none` | No border radius (0px) |
-| `borderRadius.sm` | Small border radius (4px) |
-| `borderRadius.md` | Medium border radius (8px) |
-| `borderRadius.lg` | Large border radius (16px) |
-| `borderRadius.xl` | Extra large border radius (24px) |
-| `borderRadius.xxl` | 2X large border radius (32px) |
-| `borderRadius.full` | Full border radius (9999px) |
+| Token               | Purpose                          |
+| ------------------- | -------------------------------- |
+| `borderRadius.none` | No border radius (0px)           |
+| `borderRadius.sm`   | Small border radius (4px)        |
+| `borderRadius.md`   | Medium border radius (8px)       |
+| `borderRadius.lg`   | Large border radius (16px)       |
+| `borderRadius.xl`   | Extra large border radius (24px) |
+| `borderRadius.xxl`  | 2X large border radius (32px)    |
+| `borderRadius.full` | Full border radius (9999px)      |
 
 ***
 
@@ -521,93 +519,14 @@ function useThemePersistence() {
 
 ***
 
-## Best Practices
-
-### 1. Use Semantic Color Names
-
-Prefer semantic names over specific colors:
-
-{% code title="Good: Semantic Colors" lineNumbers="true" %}
-```tsx
-// Good
-style={{ backgroundColor: theme.colors.background }}
-style={{ color: theme.colors.text }}
-```
-{% endcode %}
-
-{% code title="Avoid: Hard-coded Colors" lineNumbers="true" %}
-```tsx
-// Avoid
-style={{ backgroundColor: '#FFFFFF' }}
-style={{ color: '#000000' }}
-```
-{% endcode %}
-
-### 2. Leverage Spacing Scale
-
-Use the spacing scale for consistent layouts:
-
-{% code title="Good: Spacing Scale" lineNumbers="true" %}
-```tsx
-// Good
-style={{ 
-  padding: theme.spacing.md,
-  marginBottom: theme.spacing.lg 
-}}
-```
-{% endcode %}
-
-### 3. Use Component Overrides Sparingly
-
-Prefer theme-level changes over component overrides when possible:
-
-{% code title="Prefer Theme Changes" lineNumbers="true" %}
-```tsx
-// Prefer: Update theme
-const customTheme = {
-  ...lightTheme,
-  colors: {
-    ...lightTheme.colors,
-    primary: '#FF6501'
-  }
-}
-```
-{% endcode %}
-
-### 4. Test Both Light and Dark Modes
-
-Always test your customizations in both light and dark modes:
-
-{% code title="Theme Testing" lineNumbers="true" %}
-```tsx
-function ThemeTester() {
-  const { theme, setTheme } = useTheme()
-  
-  return (
-    <View>
-      <Button onPress={() => setTheme(lightTheme)}>
-        Test Light Mode
-      </Button>
-      <Button onPress={() => setTheme(darkTheme)}>
-        Test Dark Mode
-      </Button>
-    </View>
-  )
-}
-```
-{% endcode %}
-
-***
-
 ## Next Steps
 
-- [Get Started](get-started.md) - Quick start guide for the UI Kit
-- [Components List](api-reference.md) - Complete API reference for all components
-- [React Native Starter](https://github.com/tetherto/wdk-starter-react-native) - See theming in action
+* [Get Started](get-started.md) - Quick start guide for the UI Kit
+* [Components List](api-reference.md) - Complete API reference for all components
+* [React Native Starter](https://github.com/tetherto/wdk-starter-react-native) - See theming in action
 
 ***
 
 ## Need Help?
 
 {% include "../../.gitbook/includes/support-cards.md" %}
-

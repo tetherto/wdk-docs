@@ -17,33 +17,26 @@ layout:
     visible: false
 ---
 
+# Get Started
 
-## About the SDK
+The SDK is a comprehensive, modular plug-in framework designed to simplify multi-chain wallet development.
 
-The SDK is a comprehensive, modular plug-in framework designed to simplify multi-chain wallet development. 
+It is built on some core principles: **self-custodial and stateless** (private keys never leave your app and no data is stored by WDK), **unified interface** (consistent API across all blockchains), and **cross-platform compatibility** (works seamlessly from Node.js to React Native to embedded systems).
 
-### Principles
-
-WDK is built on four core principles: **self-custodial and stateless** (private keys never leave your app and no data is stored by WDK), **unified interface** (consistent API across all blockchains), and **cross-platform compatibility** (works seamlessly from Node.js to React Native to embedded systems).
-
-### Capabilities
+#### Capabilities
 
 * **Multi-Chain Support**: Bitcoin, Ethereum, TON, TRON, Solana, Spark, and more
-* **Account Abstraction**: Gasless transactions on supported chains 
+* **Account Abstraction**: Gasless transactions on supported chains
 * **DeFi Integration**: Plug-in support for swaps, bridges, and lending protocols
 * **Extensible Design**: Add custom modules for new blockchains or protocols
 
 ***
 
-## SDK Modular Architecture
+### Modular Architecture
 
 WDK's architecture is built around the concept of composable modules. Each module is a specialized component that handles specific functionality, allowing you to build exactly what you need without unnecessary complexity.
 
-<figure>
-  <img src="../../assets/sdk-architecture.png" alt="WDK SDK Architecture">
-  <figcaption>WDK SDK modular architecture with core orchestrator and specialized modules</figcaption>
-</figure>
-
+<figure><img src="../assets/sdk-architecture.png" alt="WDK SDK Architecture"><figcaption><p>WDK SDK modular architecture with core orchestrator and specialized modules</p></figcaption></figure>
 
 Each module has a single responsibility. Wallet modules handle blockchain operations, protocol modules manage DeFi interactions, and the core module orchestrates everything.
 
@@ -51,56 +44,21 @@ New functionality is added through modules rather than modifying core code. Also
 
 ***
 
-### Module Types
+#### Module Types
 
 WDK modules are organized into five main categories, each serving a specific purpose in the blockchain application stack:
 
-<table data-view="cards">
-<thead>
-<tr>
-<th>Type</th>
-<th>Purpose</th>
-<th>Examples</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Core</strong></td>
-<td>Main orchestrator and shared utilities</td>
-<td><a href="../wdk-core/README.md">@tetherto/wdk</a></td>
-</tr>
-<tr>
-<td><strong>Wallet</strong></td>
-<td>Blockchain-specific wallet operations</td>
-<td><a href="../wallet-modules/wallet-evm/README.md">wallet-evm</a>, <a href="../wallet-modules/wallet-btc/README.md">wallet-btc</a></td>
-</tr>
-<tr>
-<td><strong>Swap</strong></td>
-<td>Token swapping across DEXs</td>
-<td><a href="../swap-modules/swap-paraswap-evm/README.md">swap-paraswap-evm</a></td>
-</tr>
-<tr>
-<td><strong>Bridge</strong></td>
-<td>Cross-chain asset transfers</td>
-<td><a href="../bridge-modules/bridge-usdt0-evm/README.md">bridge-usdt0-evm</a></td>
-</tr>
-<tr>
-<td><strong>Lending</strong></td>
-<td>DeFi lending and borrowing</td>
-<td><a href="../lending-modules/lending-aave-evm/README.md">lending-aave-evm</a></td>
-</tr>
-</tbody>
-</table>
+<table data-view="cards"><thead><tr><th>Type</th><th>Purpose</th><th>Examples</th></tr></thead><tbody><tr><td><strong>Core</strong></td><td>Main orchestrator and shared utilities</td><td><a href="../wdk-core/">@tetherto/wdk</a></td></tr><tr><td><strong>Wallet</strong></td><td>Blockchain-specific wallet operations</td><td><a href="../wallet-modules/wallet-evm/">wallet-evm</a>, <a href="../wallet-modules/wallet-btc/">wallet-btc</a></td></tr><tr><td><strong>Swap</strong></td><td>Token swapping across DEXs</td><td><a href="../swap-modules/swap-paraswap-evm/">swap-paraswap-evm</a></td></tr><tr><td><strong>Bridge</strong></td><td>Cross-chain asset transfers</td><td><a href="../bridge-modules/bridge-usdt0-evm/">bridge-usdt0-evm</a></td></tr><tr><td><strong>Lending</strong></td><td>DeFi lending and borrowing</td><td><a href="../lending-modules/lending-aave-evm/">lending-aave-evm</a></td></tr></tbody></table>
 
 ***
 
-## How Modules Work Together
+### How Modules Work Together
 
 The WDK SDK uses a registration-based system where modules are added to a central orchestrator. This creates a unified interface while maintaining module independence.
 
-### Registration Flow
+#### Registration Flow
 
-#### 1. **Core Module Initialization**
+**1. Core Module Initialization**
 
 {% code title="Initialize WDK" lineNumbers="true" %}
 ```typescript
@@ -112,7 +70,7 @@ const wdk = new WDK(seedPhrase)
 ```
 {% endcode %}
 
-#### 2. **Wallet Module Registration**
+**2. Wallet Module Registration**
 
 {% code title="Register Wallets" lineNumbers="true" %}
 ```typescript
@@ -129,7 +87,7 @@ const wdkWithWallets = wdk
 ```
 {% endcode %}
 
-#### 3. **Protocol Module Registration**
+**3. Protocol Module Registration**
 
 {% code title="Register Protocols" lineNumbers="true" %}
 ```typescript
@@ -140,7 +98,7 @@ const wdkWithProtocols = wdkWithWallets
 ```
 {% endcode %}
 
-### Unified Operations
+#### Unified Operations
 
 Once registered, all modules work through the same interface:
 
@@ -176,11 +134,11 @@ const swapResult = await wdkWithProtocols.executeProtocol('swap-paraswap-evm', {
 
 ***
 
-## Creating Custom Modules
+### Creating Custom Modules
 
 WDK's modular architecture makes it straightforward to add support for new blockchains or protocols. Each module type has a specific interface that must be implemented.
 
-### Wallet Module Interface
+#### Wallet Module Interface
 
 ```typescript
 interface WalletModule {
@@ -203,7 +161,7 @@ interface WalletModule {
 }
 ```
 
-### Protocol Module Interface
+#### Protocol Module Interface
 
 ```typescript
 interface ProtocolModule {
@@ -223,7 +181,7 @@ interface ProtocolModule {
 }
 ```
 
-### Module Implementation Example
+#### Module Implementation Example
 
 ```typescript
 class CustomWalletModule implements WalletModule {
@@ -264,7 +222,7 @@ class CustomWalletModule implements WalletModule {
 }
 ```
 
-### Module Registration
+#### Module Registration
 
 ```typescript
 // Register your custom module
@@ -284,34 +242,14 @@ const balance = await customAccount.getBalance()
 
 ***
 
-## Quick Start Paths
+### Quick Start Paths
 
 Ready to start building? Choose your development environment:
 
-<table data-view="cards">
-<thead>
-<tr>
-<th>Environment</th>
-<th>Best For</th>
-<th>Get Started</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Node.js & Bare Runtime</strong></td>
-<td>Backend services, embedded systems, server-side wallet operations</td>
-<td><a href="../start-building/nodejs-bare-quickstart.md"><button>Node.js & Bare Quickstart</button></a></td>
-</tr>
-<tr>
-<td><strong>React Native</strong></td>
-<td>Mobile wallet applications, cross-platform development</td>
-<td><a href="../start-building/react-native-quickstart.md"><button>React Native Quickstart</button></a></td>
-</tr>
-</tbody>
-</table>
+<table data-view="cards"><thead><tr><th>Environment</th><th>Best For</th><th>Get Started</th></tr></thead><tbody><tr><td><strong>Node.js &#x26; Bare Runtime</strong></td><td>Backend services, embedded systems, server-side wallet operations</td><td><a href="../start-building/nodejs-bare-quickstart.md">Node.js &#x26; Bare Quickstart</a></td></tr><tr><td><strong>React Native</strong></td><td>Mobile wallet applications, cross-platform development</td><td><a href="../start-building/react-native-quickstart.md">React Native Quickstart</a></td></tr></tbody></table>
 
 ***
 
-## Need Help?
+### Need Help?
 
 {% include "../.gitbook/includes/support-cards.md" %}

@@ -20,19 +20,13 @@ layout:
 
 # Get Started
 
-Build production-quality wallet interfaces with the WDK React Native UI Kit. This guide will get you up and running in minutes.
+The WDK React Native UI Kit provides ready-made, themeable components for building wallet applications. It's designed to work seamlessly with the SDK and offers:
 
-***
-
-## About the UI Kit
-
-The WDK React Native UI Kit provides ready-made, themeable components for building wallet applications. It's designed to work seamlessly with the WDK SDK and offers:
-
-- **Ready-made wallet building blocks**: amount input, asset selector, address input, QR code, balance, transaction lists, seed phrase components
-- **Themeable out of the box**: light/dark modes, brand colors, `ThemeProvider` and `useTheme` API
-- **Type-safe and documented**: Excellent developer experience with TypeScript support
-- **Composable and unopinionated**: No business logic; wire in your own data/state from WDK
-- **Mobile-first**: React Native primitives with sensible defaults and accessible touch targets
+* **Ready-made wallet building blocks**: amount input, asset selector, address input, QR code, balance, transaction lists, seed phrase components
+* **Themeable out of the box**: light/dark modes, brand colors, `ThemeProvider` and `useTheme` API
+* **Type-safe and documented**: Excellent developer experience with TypeScript support
+* **Composable and unopinionated**: No business logic; wire in your own data/state from WDK
+* **Mobile-first**: React Native primitives with sensible defaults and accessible touch targets
 
 ***
 
@@ -81,8 +75,6 @@ export default function App() {
 ***
 
 ## Integration with WDK
-
-### Connecting WDK Data to UI Components
 
 Here's how to wire WDK data into the UI components:
 
@@ -236,23 +228,6 @@ export function CustomComponent() {
 
 ## Common Patterns
 
-### Transaction List with Real Data
-
-{% code title="Transaction List Pattern" lineNumbers="true" %}
-```tsx
-import { TransactionList, TransactionItem } from '@tetherto/wdk-uikit-react-native'
-
-export function TransactionHistory({ transactions, onTransactionPress }) {
-  return (
-    <TransactionList 
-      transactions={transactions}
-      onTransactionPress={onTransactionPress}
-    />
-  )
-}
-```
-{% endcode %}
-
 ### Address Input with Validation
 
 {% code title="Address Input Pattern" lineNumbers="true" %}
@@ -287,35 +262,16 @@ export function SendScreen() {
 ```
 {% endcode %}
 
-### Asset Selection
-
-{% code title="Asset Selection Pattern" lineNumbers="true" %}
-```tsx
-import { AssetSelector } from '@tetherto/wdk-uikit-react-native'
-
-export function AssetPicker({ tokens, recentTokens, onSelectToken }) {
-  return (
-    <AssetSelector
-      tokens={tokens}
-      recentTokens={recentTokens}
-      onSelectToken={onSelectToken}
-    />
-  )
-}
-```
-{% endcode %}
-
 ***
 
 ## Next Steps
 
-- [Components List](components.md) - Explore all available components
-- [Theming Guide](theming.md) - Deep dive into theming capabilities
-- [React Native Starter](https://github.com/tetherto/wdk-starter-react-native) - See a complete implementation
+* [Components List](components.md) - Explore all available components
+* [Theming Guide](theming.md) - Deep dive into theming capabilities
+* [React Native Starter](https://github.com/tetherto/wdk-starter-react-native) - See a complete implementation
 
 ***
 
 ## Need Help?
 
 {% include "../../.gitbook/includes/support-cards.md" %}
-
