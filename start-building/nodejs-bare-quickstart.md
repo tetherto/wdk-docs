@@ -369,11 +369,14 @@ console.log('Transaction hash:', result.hash)
 npm install @tetherto/wdk-protocol-swap-paraswap-evm
 ```
 
+{% code lineNumbers="true" %}
 ```typescript
 import SwapParaswapEvm from '@tetherto/wdk-protocol-swap-paraswap-evm'
 
 wdk.registerProtocol('swap-paraswap-evm', SwapParaswapEvm)
 ```
+{% endcode %}
+
 
 ***
 
