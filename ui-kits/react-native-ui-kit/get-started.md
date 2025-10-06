@@ -18,8 +18,6 @@ layout:
     visible: false
 ---
 
-# Get Started
-
 The WDK React Native UI Kit provides ready-made, themeable components for building wallet applications. It's designed to work seamlessly with the SDK and offers:
 
 * **Ready-made wallet building blocks**: amount input, asset selector, address input, QR code, balance, transaction lists, seed phrase components
@@ -42,8 +40,6 @@ npm install @tetherto/wdk-uikit-react-native
 
 ## Quick Start
 
-### Basic Setup
-
 Wrap your app with the theme provider and render a simple component:
 
 {% code title="Basic Setup" lineNumbers="true" %}
@@ -51,17 +47,7 @@ Wrap your app with the theme provider and render a simple component:
 import { ThemeProvider, lightTheme, TransactionList } from '@tetherto/wdk-uikit-react-native'
 
 export default function App() {
-  const transactions = [
-    { 
-      id: '1', 
-      token: 'USDT', 
-      amount: '10.00', 
-      fiatAmount: '10.00', 
-      fiatCurrency: 'USD', 
-      network: 'Ethereum', 
-      type: 'received' 
-    }
-  ]
+  const transactions = [ /* your transactions */ ]
 
   return (
     <ThemeProvider initialTheme={lightTheme}>
@@ -76,7 +62,7 @@ export default function App() {
 
 ## Integration with WDK
 
-Here's how to wire WDK data into the UI components:
+Components are designed to work seamlessly with WDK data models. Here's an example of how to wire WDK data into the UI components:
 
 {% code title="WDK Integration Example" lineNumbers="true" %}
 ```tsx

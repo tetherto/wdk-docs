@@ -52,7 +52,7 @@ WDK modules are organized into five main categories, each serving a specific pur
 
 ***
 
-### How Modules Work Together
+### How to use the SDK
 
 The WDK SDK uses a registration-based system where modules are added to a central orchestrator. This creates a unified interface while maintaining module independence.
 

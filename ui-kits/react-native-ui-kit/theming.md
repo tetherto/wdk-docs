@@ -1,6 +1,6 @@
 ---
 title: Theming
-description: Complete guide to theming the WDK React Native UI Kit
+description: Learn how to add your own branding to the UI Kit
 icon: palette
 layout:
   width: default
@@ -20,7 +20,7 @@ layout:
 
 # Theming
 
-The WDK React Native UI Kit provides a comprehensive theming system that allows you to:
+The WDK React Native UI Kit provides a theming system that allows you to:
 
 * **Use built-in themes** for quick setup with light and dark modes
 * **Create brand themes** from your brand colors and fonts
@@ -31,8 +31,6 @@ The WDK React Native UI Kit provides a comprehensive theming system that allows 
 ***
 
 ## Basic Setup
-
-### ThemeProvider
 
 Wrap your app with the `ThemeProvider` to enable theming:
 
@@ -50,11 +48,9 @@ function App() {
 ```
 {% endcode %}
 
-### Built-in Themes
-
 The UI Kit comes with two built-in themes:
 
-{% code title="Built-in Themes" lineNumbers="true" %}
+{% code  lineNumbers="true" %}
 ```tsx
 import { ThemeProvider, lightTheme, darkTheme } from '@tetherto/wdk-uikit-react-native'
 
@@ -71,21 +67,6 @@ import { ThemeProvider, lightTheme, darkTheme } from '@tetherto/wdk-uikit-react-
 {% endcode %}
 
 ***
-
-## Automatic Dark/Light Mode
-
-The theme automatically switches based on system preferences:
-
-{% code title="Auto Theme Mode" lineNumbers="true" %}
-```
-```
-{% endcode %}
-
-```tsx
-<ThemeProvider defaultMode="auto" initialTheme={lightTheme}>
-  {/* Will use system theme */}
-</ThemeProvider>
-```
 
 ### Manual Theme Control
 
@@ -107,9 +88,9 @@ function ThemeToggle() {
 
 ***
 
-## Brand Integration
+## Custom Themes
 
-### Creating Brand Themes
+### Brand Themes
 
 Apply your brand colors and fonts using `createThemeFromBrand`:
 
@@ -132,7 +113,7 @@ const brandTheme = createThemeFromBrand({
 ```
 {% endcode %}
 
-### BrandConfig Interface
+**BrandConfig Interface**
 
 {% code title="BrandConfig Type" lineNumbers="true" %}
 ```typescript
@@ -149,11 +130,8 @@ type BrandConfig = {
 ```
 {% endcode %}
 
-***
 
-## Custom Themes
-
-### Complete Custom Theme
+### Custom Theme
 
 Create a completely custom theme with full control over all design tokens:
 
@@ -213,7 +191,7 @@ const myLightTheme = {
 ```
 {% endcode %}
 
-### Theme Interface
+**Theme Interface**
 
 {% code title="Theme Type" lineNumbers="true" %}
 ```typescript
@@ -233,9 +211,9 @@ type Theme = {
 
 ## Component Customization
 
-### Component Overrides
+You can customize the components with fine-grained control.
 
-Customize individual components with fine-grained control:
+Fine-grained style overrides for specific component parts:
 
 {% code title="Component Overrides" lineNumbers="true" %}
 ```tsx
@@ -264,8 +242,6 @@ Customize individual components with fine-grained control:
 ```
 {% endcode %}
 
-### Component Variants
-
 Set default visual variants per component:
 
 {% code title="Component Variants" lineNumbers="true" %}
@@ -280,29 +256,13 @@ const customTheme = {
 ```
 {% endcode %}
 
-### ComponentOverrides Usage
-
-Fine-grained style overrides for specific component parts:
-
-{% code title="ComponentOverrides Usage" lineNumbers="true" %}
-```tsx
-const customTheme = {
-  ...lightTheme,
-  componentOverrides: {
-    'AmountInput.container': { padding: 20 },
-    'TransactionItem.amount': { fontSize: 18 }
-  }
-}
-```
-{% endcode %}
-
 ***
 
-## Using Theme in Components
-
-### useTheme Hook
+## Using Theme Anywhere
 
 Access theme values anywhere in your components:
+
+**useTheme Hook**
 
 {% code title="useTheme Hook" lineNumbers="true" %}
 ```tsx
@@ -319,29 +279,6 @@ function MyComponent() {
       }}
     >
       <Text style={{ color: theme.colors.text }}>Hello World</Text>
-    </View>
-  )
-}
-```
-{% endcode %}
-
-### Alternative Theme Access
-
-{% code title="Direct Theme Access" lineNumbers="true" %}
-```tsx
-import { useTheme } from '@tetherto/wdk-uikit-react-native'
-
-function CustomComponent() {
-  const theme = useTheme()
-  
-  return (
-    <View style={{ 
-      backgroundColor: theme.colors.background,
-      padding: theme.spacing.md 
-    }}>
-      <Text style={{ color: theme.colors.text }}>
-        Themed content
-      </Text>
     </View>
   )
 }
@@ -464,60 +401,6 @@ function Settings() {
 ```
 {% endcode %}
 
-### Creating Theme from Brand (Advanced)
-
-{% code title="Advanced Brand Theme Creation" lineNumbers="true" %}
-```tsx
-import { createThemeFromBrand } from '@tetherto/wdk-uikit-react-native'
-
-const myTheme = createThemeFromBrand(
-  {
-    primaryColor: '#FF6501',
-    secondaryColor: '#6B7280',
-  },
-  'dark' // 'light' or 'dark'
-)
-```
-{% endcode %}
-
-### Theme Persistence
-
-Save and restore user theme preferences:
-
-{% code title="Theme Persistence" lineNumbers="true" %}
-```tsx
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useTheme } from '@tetherto/wdk-uikit-react-native'
-
-function useThemePersistence() {
-  const { theme, setTheme } = useTheme()
-
-  const saveTheme = async (newTheme) => {
-    try {
-      await AsyncStorage.setItem('userTheme', JSON.stringify(newTheme))
-      setTheme(newTheme)
-    } catch (error) {
-      console.error('Failed to save theme:', error)
-    }
-  }
-
-  const loadTheme = async () => {
-    try {
-      const savedTheme = await AsyncStorage.getItem('userTheme')
-      if (savedTheme) {
-        setTheme(JSON.parse(savedTheme))
-      }
-    } catch (error) {
-      console.error('Failed to load theme:', error)
-    }
-  }
-
-  return { saveTheme, loadTheme }
-}
-```
-{% endcode %}
-
-***
 
 ## Next Steps
 
