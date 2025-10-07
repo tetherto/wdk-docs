@@ -21,10 +21,14 @@ layout:
 
 ## Table of Contents
 
+{% tabs %}
+{% tab title="WDK Core" %}
 | Class | Description | Methods |
 |-------|-------------|---------|
 | [WDK](#wdk) | Main class for managing wallets across multiple blockchains. Orchestrates wallet managers and protocols. | [Constructor](#constructor), [Methods](#methods) |
 | [IWalletAccountWithProtocols](#iwalletaccountwithprotocols) | Extended wallet account interface that supports protocol registration and access. Extends `IWalletAccount`. | [Methods](#methods-1) |
+{% endtab %}
+{% endtabs %}
 
 ## WDK
 
