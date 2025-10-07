@@ -18,30 +18,96 @@ layout:
     visible: false
 ---
 
-### Authentication
-All requests require a valid API key in the `X-API-KEY` header:
+## Base URL
+
+{% code title="API Base URL" %}
+```
+http://wdk-api-01.tether.to
+```
+{% endcode %}
+
+***
+
+## Authentication
+
+All requests require a valid API key in the `x-api-key` header:
+
+{% code title="Authentication Header" %}
 ```http
-X-API-KEY: your-api-key-here
+x-api-key: your-api-key-here
+```
+{% endcode %}
+
+{% hint style="info" %}
+**Don't have an API key yet?** Request one by following the steps in our [Get Started](get-started.md) guide.
+{% endhint %}
+
+***
+
+## Rate Limiting
+
+* **Limit**: 100 requests per minute per API key
+* **Headers**: Rate limit info included in response headers
+
+```http
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1642694400
 ```
 
-### Rate Limiting
-- **Limit:** 100 requests per minute per API key
-- **Headers:** Rate limit info included in response headers
+***
 
 ## API Endpoints
 
-{% openapi src="https://wdk-api-staging.tether.su/documentation/json" path="/api/v1/{blockchain}/{token}/{address}/token-transfers" method="get" %}
-Get token transfer history
+{% openapi src="https://wdk-api-staging.tether.su/documentation/json" path="/api/v1/health" method="get" %}
+Check API server status
 {% endopenapi %}
 
+***
+
 {% openapi src="https://wdk-api-staging.tether.su/documentation/json" path="/api/v1/{blockchain}/{token}/{address}/token-transfers" method="get" %}
-Get token transfer history
+Get token transfer history for an address
 {% endopenapi %}
+
+***
 
 {% openapi src="https://wdk-api-staging.tether.su/documentation/json" path="/api/v1/{blockchain}/{token}/{address}/token-balances" method="get" %}
-Get token balance
+Get current token balance for an address
 {% endopenapi %}
 
+***
+
+## Error Handling
+
+The API returns standard HTTP error codes:
+
+| Status Code | Description |
+| --- | --- |
+| 400 | Bad Request - Invalid parameters |
+| 401 | Unauthorized - Invalid API key |
+| 404 | Not Found - Resource not found |
+| 429 | Too Many Requests - Rate limit exceeded |
+| 500 | Internal Server Error |
+
+### Error Response Format
+
+{% code title="Error Response" lineNumbers="true" %}
+```json
+{
+  "error": "error_type",
+  "message": "Detailed error message"
+}
+```
+{% endcode %}
+
+***
+
+## Next Steps
+
+* [**Get Started**](get-started.md) - Quick start guide with setup instructions
+* [**React Native Starter**](../../examples-and-starters/react-native-starter.md) - See it in action
+
+***
 
 ## Need Help?
 
