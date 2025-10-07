@@ -106,12 +106,6 @@ This package works with multiple blockchain networks through wallet registration
 
 ## Next Steps
 
-- Check the **[API Reference](api-reference.md)**
-- Review **[Configuration](configuration.md)** options
-- Want to contribute? **[Open a PR on Github](https://github.com/tetherto/wdk-core)**
-- Found a bug? **[Open an issue on Github](https://github.com/tetherto/wdk-core/issues)**
-
-
 <table data-card-size="large" data-view="cards">
 	<thead>
 		<tr>
@@ -132,18 +126,6 @@ This package works with multiple blockchain networks through wallet registration
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
 				<a href="../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
-			</td>
-		</tr>
-		<tr>
-			<td>
-				<i class="fa-mobile-alt">:mobile-alt:</i>
-			</td>
-			<td>
-				<strong>React Native Quickstart</strong>
-			</td>
-			<td>Build mobile wallets with React Native Expo</td>
-			<td>
-				<a href="../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
 			</td>
 		</tr>
         <tr>
