@@ -51,7 +51,7 @@ This package works with multiple blockchain networks through wallet registration
   </thead>
   <tbody>
     <tr>
-      <td><img src="../assets/logos/ethereum-logo.png" alt="Ethereum logo" /></td>
+      <td><img src="../../assets/logos/ethereum-logo.png" alt="Ethereum logo" /></td>
       <td><strong>EVM Chains</strong></td>
       <td>Ethereum, Arbitrum, Polygon, etc.</td>
       <td>
@@ -60,7 +60,7 @@ This package works with multiple blockchain networks through wallet registration
       </td>
     </tr>
     <tr>
-      <td><img src="../assets/logos/ton-logo.png" alt="Ton Logo" /></td>
+      <td><img src="../../assets/logos/ton-logo.png" alt="Ton Logo" /></td>
       <td><strong>TON</strong></td>
       <td>TON Mainnet</td>
       <td>
@@ -69,7 +69,7 @@ This package works with multiple blockchain networks through wallet registration
       </td>
     </tr>
     <tr>
-      <td><img src="../assets/logos/bitcoin-logo.png" alt="Bitcoin Logo" /></td>
+      <td><img src="../../assets/logos/bitcoin-logo.png" alt="Bitcoin Logo" /></td>
       <td><strong>Bitcoin</strong></td>
       <td>Bitcoin Mainnet</td>
       <td>
@@ -77,7 +77,7 @@ This package works with multiple blockchain networks through wallet registration
       </td>
     </tr>
      <tr>
-      <td><img src="../assets/logos/tron-logo.png" alt="Tron Logo"/></td>
+      <td><img src="../../assets/logos/tron-logo.png" alt="Tron Logo"/></td>
       <td><strong>TRON</strong></td>
       <td>Tron Mainnet</td>
       <td>
@@ -86,7 +86,7 @@ This package works with multiple blockchain networks through wallet registration
       </td>
     </tr>
      <tr>
-      <td><img src="../assets/logos/solana-logo.png" alt="Solana Logo" /></td>
+      <td><img src="../../assets/logos/solana-logo.png" alt="Solana Logo" /></td>
       <td><strong>Solana</strong></td>
       <td>Solana Mainnet</td>
       <td>
@@ -94,7 +94,7 @@ This package works with multiple blockchain networks through wallet registration
     </tr>
     </tr>
      <tr>
-      <td><img src="../assets/logos/spark-logo.png" alt="Spark Logo" /></td>
+      <td><img src="../../assets/logos/spark-logo.png" alt="Spark Logo" /></td>
       <td><strong>Spark</strong></td>
       <td>Spark Mainnet</td>
       <td>
