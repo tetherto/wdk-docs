@@ -57,7 +57,7 @@ In a world where AI agents and robots are becoming autonomous and will permeate 
 			</td>
 			<td>WDK enables a future with millions of wallets built on top of it, each tailored to specific needs and use cases</td>
 			<td>
-				<a href="../.gitbook/assets/image (3).png">image (3).png</a>
+				<a href="../assets/millions-of-wallets.png">millions-of-wallets.png</a>
 			</td>
 		</tr>
 		<tr>
@@ -66,7 +66,7 @@ In a world where AI agents and robots are becoming autonomous and will permeate 
 			</td>
 			<td>WDK enables trillions of AI agents to have their own wallet, managing resources autonomously in the digital economy</td>
 			<td>
-				<a href="../.gitbook/assets/image (4).png">image (4).png</a>
+				<a href="../assets/trillions-of-agents.png">trillions-of-agents.png</a>
 			</td>
 		</tr>
 		<tr>
@@ -75,7 +75,7 @@ In a world where AI agents and robots are becoming autonomous and will permeate 
 			</td>
 			<td>Any developer, company, organization, or country can build their own white-label wallet and manage their assets independently</td>
 			<td>
-				<a href="../.gitbook/assets/image (5).png">image (5).png</a>
+				<a href="../assets/financial-sovereignty.png">financial-sovereignty.png</a>
 			</td>
 		</tr>
 		<tr>
@@ -84,7 +84,7 @@ In a world where AI agents and robots are becoming autonomous and will permeate 
 			</td>
 			<td>From IoT devices to autonomous vehicles, every connected device can have its own wallet and financial identity</td>
 			<td>
-				<a href="../.gitbook/assets/image (6).png">image (6).png</a>
+				<a href="../assets/ubiquitous-computing.png">ubiquitous-computing.png</a>
 			</td>
 		</tr>
 	</tbody>
