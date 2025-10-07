@@ -1,6 +1,6 @@
 ---
 title: Get Started
-description: Quick start guide for the WDK React Native UI Kit
+description: Learn about the WDK React Native UI Kit and how to get started
 icon: rocket
 layout:
   width: default
