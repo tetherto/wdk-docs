@@ -51,12 +51,29 @@ This package works with multiple blockchain networks through wallet registration
   </thead>
   <tbody>
     <tr>
+      <td><img src="../../assets/logos/bitcoin-logo.png" alt="Bitcoin Logo" width="20" height="20"  style="object-fit:contain;"  /></td>
+      <td><strong>Bitcoin</strong></td>
+      <td>Bitcoin Mainnet</td>
+      <td>
+        <a href="../wallet-modules/wallet-btc/">wallet-btc</a>      
+      </td>
+    </tr>
+    <tr>
       <td><img src="../../assets/logos/ethereum-logo.png" alt="Ethereum logo" width="20" height="20" style="object-fit:contain;" /></td>
       <td><strong>EVM Chains</strong></td>
       <td>Ethereum, L2s, etc.</td>
       <td>
         <a href="../wallet-modules/wallet-evm/">wallet-evm</a>, 
         <a href="../wallet-modules/wallet-evm-erc-4337/">wallet-evm-erc-4337</a>
+      </td>
+    </tr>
+    <tr>
+      <td><img src="../../assets/logos/tron-logo.png" alt="Tron Logo"  width="20" height="20" style="object-fit:contain;" /></td>
+      <td><strong>TRON</strong></td>
+      <td>Tron Mainnet</td>
+      <td>
+        <a href="../wallet-modules/wallet-tron/">wallet-tron</a>, 
+        <a href="../wallet-modules/wallet-tron-gasfree/">wallet-tron-gasfree</a>
       </td>
     </tr>
     <tr>
@@ -69,23 +86,6 @@ This package works with multiple blockchain networks through wallet registration
       </td>
     </tr>
     <tr>
-      <td><img src="../../assets/logos/bitcoin-logo.png" alt="Bitcoin Logo" width="20" height="20"  style="object-fit:contain;"  /></td>
-      <td><strong>Bitcoin</strong></td>
-      <td>Bitcoin Mainnet</td>
-      <td>
-        <a href="../wallet-modules/wallet-btc/">wallet-btc</a>      
-      </td>
-    </tr>
-     <tr>
-      <td><img src="../../assets/logos/tron-logo.png" alt="Tron Logo"  width="20" height="20" style="object-fit:contain;" /></td>
-      <td><strong>TRON</strong></td>
-      <td>Tron Mainnet</td>
-      <td>
-        <a href="../wallet-modules/wallet-tron/">wallet-tron</a>, 
-        <a href="../wallet-modules/wallet-tron-gasfree/">wallet-tron-gasfree</a>
-      </td>
-    </tr>
-     <tr>
       <td><img src="../../assets/logos/solana-logo.png" alt="Solana Logo" width="20" height="20"  style="object-fit:contain;" /></td>
       <td><strong>Solana</strong></td>
       <td>Solana Mainnet</td>
