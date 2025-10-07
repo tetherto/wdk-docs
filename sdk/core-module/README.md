@@ -51,7 +51,7 @@ This package works with multiple blockchain networks through wallet registration
   </thead>
   <tbody>
     <tr>
-      <td><img src="../../assets/logos/ethereum-logo.png" alt="Ethereum logo" /></td>
+      <td><img src="../../assets/logos/ethereum-logo.png" alt="Ethereum logo" width="36" height="36" style="object-fit:contain;" /></td>
       <td><strong>EVM Chains</strong></td>
       <td>Ethereum, Arbitrum, Polygon, etc.</td>
       <td>
