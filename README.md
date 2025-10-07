@@ -30,7 +30,54 @@ WDK provides a set of core libraries that give you the highest level of control 
 
 ### Discover WDK
 
-<table data-view="cards"><thead><tr><th></th><th></th><th data-hidden data-card-target data-type="content-ref"></th><th data-hidden data-card-cover data-type="image">Cover image</th></tr></thead><tbody><tr><td><strong>About WDK</strong></td><td>Understand WDK core features and design principles</td><td><a href="overview/about.md">about.md</a></td><td><a href="assets/card-placeholder1.svg">card-placeholder1.svg</a></td></tr><tr><td><strong>Our Vision</strong></td><td>Discover our philosophy and idea for the future wallets</td><td><a href="overview/vision.md">vision.md</a></td><td><a href="assets/card-placeholder2.svg">card-placeholder2.svg</a></td></tr><tr><td><strong>Key Concepts</strong></td><td>Learn foundational concepts and terminology</td><td><a href="resources/concepts.md">concepts.md</a></td><td><a href="assets/card-placeholder3.svg">card-placeholder3.svg</a></td></tr></tbody></table>
+<table data-view="cards">
+	<thead>
+		<tr>
+			<th></th>
+			<th></th>
+			<th data-hidden data-card-target data-type="content-ref"></th>
+			<th data-hidden data-card-cover data-type="image">Cover image</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<strong>About WDK</strong>
+			</td>
+			<td>Understand WDK core features and design principles</td>
+			<td>
+				<a href="overview/about.md">about.md</a>
+			</td>
+			<td>
+				<a href="assets/about.png">about.png</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<strong>Our Vision</strong>
+			</td>
+			<td>Discover our philosophy and idea for the future wallets</td>
+			<td>
+				<a href="overview/vision.md">vision.md</a>
+			</td>
+			<td>
+				<a href="assets/vision.png">vision.png</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<strong>Key Concepts</strong>
+			</td>
+			<td>Learn foundational concepts and terminology</td>
+			<td>
+				<a href="resources/concepts.md">concepts.md</a>
+			</td>
+			<td>
+				<a href="assets/concepts.png">concepts.png</a>
+			</td>
+		</tr>
+	</tbody>
+</table>
 
 ***
 

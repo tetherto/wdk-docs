@@ -1,8 +1,6 @@
 ---
 title: WDK Core Configuration
 description: Configuration options and settings for @tetherto/wdk
-author: Raquel Carrasco
-lastReviewed: 2025-09-11
 icon: gear
 ---
 

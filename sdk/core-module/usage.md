@@ -18,6 +18,7 @@ layout:
     visible: false
 ---
 
+This package serves as the main entry point and orchestrator for all WDK wallet modules, allowing you to register and manage different blockchain wallets and protocols through a single interface.
 
 ## Installation
 

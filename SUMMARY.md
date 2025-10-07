@@ -2,22 +2,22 @@
 
 ## Overview
 
-* [Welcome](README.md)
-* [About WDK](overview/about.md)
-* [Our Vision](overview/vision.md)
-* [Beta Program](overview/beta-program.md)
-* [Get Support](overview/support.md)
+* [Welcome](README.md) <!-- Missing assets -->
+* [About WDK](overview/about.md) <!-- Missing assets -->
+* [Our Vision](overview/vision.md) <!-- Missing assets -->
+* [Beta Program](overview/beta-program.md) <!-- OK -->
+* [Get Support](overview/support.md) <!-- OK -->
 
 ## Start Building
 
-* [Node.js & Bare Quickstart](start-building/nodejs-bare-quickstart.md)
-* [React Native Quickstart](start-building/react-native-quickstart.md)
+* [Node.js & Bare Quickstart](start-building/nodejs-bare-quickstart.md) <!-- OK -->
+* [React Native Quickstart](start-building/react-native-quickstart.md) <!-- OK -->
 
 ## SDK
 
-* [Get Started](sdk/get-started.md)
-* [Core Module](sdk/core-module/README.md)
-  * [Usage](sdk/core-module/usage.md)
+* [Get Started](sdk/get-started.md) <!-- Missing assets -->
+* [Core Module](sdk/core-module/README.md) <!-- OK -->
+  * [Usage](sdk/core-module/usage.md) <!-- OK -->
   * [Configuration](sdk/core-module/configuration.md)
   * [API Reference](sdk/core-module/api-reference.md)
 * [Wallet Modules](sdk/wallet-modules/README.md)
@@ -90,7 +90,7 @@
 
 ## Examples & Starters
 
-* [React Native Starter](examples-and-starters/react-native-starter.md)
+* [React Native Starter (Alpha)](examples-and-starters/react-native-starter.md)
 
 ## Tools
 
