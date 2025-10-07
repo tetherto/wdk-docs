@@ -1,139 +1,111 @@
-# Summary
-* [Welcome to WDK](README.md)
+# Table of contents
 
 ## Overview
-* [Introduction](overview/introduction.md)
-<!-- * [Recommended Reading Order](overview/reading-order.md) -->
-<!-- * [Conceptual Flow](overview/conceptual-flow.md) -->
-* [Architecture](overview/architecture.md)
-<!-- * [Key Terminology](overview/key-terminology.md) -->
+
+* [Welcome](README.md)
+* [About WDK](overview/about.md)
+* [Our Vision](overview/vision.md)
 * [Beta Program](overview/beta-program.md)
+* [Get Support](overview/support.md)
 
-## Getting Started
-* [Prerequisites](getting-started/prerequisites.md)
-<!-- * [Quick Start](getting-started/quick-start.md) -->
-* [Quick Start](getting-started/quick-start-advance.md)
+## Start Building
 
-## Building Blocks
-* [Modules Overview](wdk-modules/overview.md)
-  * [wdk-manager](wdk-modules/wallet-modules/wdk-core/overview.md)
-    * [Guides](wdk-modules/wallet-modules/wdk-core/guides.md)
-    * [Configuration](wdk-modules/wallet-modules/wdk-core/configuration.md)
-    * [API Reference](wdk-modules/wallet-modules/wdk-core/api-reference.md)
-* [Wallet Modules Overview](wdk-modules/wallet-modules/overview.md)
-  * [wallet-evm](wdk-modules/wallet-modules/wallet-evm/overview.md)
-    * [Guides](wdk-modules/wallet-modules/wallet-evm/guides.md)
-    * [Configuration](wdk-modules/wallet-modules/wallet-evm/configuration.md)
-    * [API Reference](wdk-modules/wallet-modules/wallet-evm/api-reference.md)
+* [Node.js & Bare Quickstart](start-building/nodejs-bare-quickstart.md)
+* [React Native Quickstart](start-building/react-native-quickstart.md)
 
-  * [wallet-evm-erc-4337](wdk-modules/wallet-modules/wallet-evm-erc-4337/overview.md)
-    * [Guides](wdk-modules/wallet-modules/wallet-evm-erc-4337/guides.md)
-    * [Configuration](wdk-modules/wallet-modules/wallet-evm-erc-4337/configuration.md)
-    * [API Reference](wdk-modules/wallet-modules/wallet-evm-erc-4337/api-reference.md)
+## SDK
 
-  * [wallet-btc](wdk-modules/wallet-modules/wallet-btc/overview.md)
-    * [Guides](wdk-modules/wallet-modules/wallet-btc/guides.md)
-    * [Configuration](wdk-modules/wallet-modules/wallet-btc/configuration.md)
-    * [API Reference](wdk-modules/wallet-modules/wallet-btc/api-reference.md)
+* [Get Started](sdk/get-started.md)
+* [Core Module](sdk/core-module/README.md)
+  * [Usage](sdk/core-module/usage.md)
+  * [Configuration](sdk/core-module/configuration.md)
+  * [API Reference](sdk/core-module/api-reference.md)
+* [Wallet Modules](sdk/wallet-modules/README.md)
+  * [wallet-btc](sdk/wallet-modules/wallet-btc/README.md)
+    * [Usage](sdk/wallet-modules/wallet-btc/usage.md)
+    * [Configuration](sdk/wallet-modules/wallet-btc/configuration.md)
+    * [API Reference](sdk/wallet-modules/wallet-btc/api-reference.md)
+  * [wallet-evm](sdk/wallet-modules/wallet-evm/README.md)
+    * [Usage](sdk/wallet-modules/wallet-evm/usage.md)
+    * [Configuration](sdk/wallet-modules/wallet-evm/configuration.md)
+    * [API Reference](sdk/wallet-modules/wallet-evm/api-reference.md)
+  * [wallet-evm-erc-4337](sdk/wallet-modules/wallet-evm-erc-4337/README.md)
+    * [Usage](sdk/wallet-modules/wallet-evm-erc-4337/usage.md)
+    * [Configuration](sdk/wallet-modules/wallet-evm-erc-4337/configuration.md)
+    * [API Reference](sdk/wallet-modules/wallet-evm-erc-4337/api-reference.md)
+  * [wallet-solana](sdk/wallet-modules/wallet-solana/README.md)
+    * [Usage](sdk/wallet-modules/wallet-solana/usage.md)
+    * [Configuration](sdk/wallet-modules/wallet-solana/configuration.md)
+    * [API Reference](sdk/wallet-modules/wallet-solana/api-reference.md)
+  * [wallet-spark](sdk/wallet-modules/wallet-spark/README.md)
+    * [Usage](sdk/wallet-modules/wallet-spark/usage.md)
+    * [Configuration](sdk/wallet-modules/wallet-spark/configuration.md)
+    * [API Reference](sdk/wallet-modules/wallet-spark/api-reference.md)
+  * [wallet-ton](sdk/wallet-modules/wallet-ton/README.md)
+    * [Usage](sdk/wallet-modules/wallet-ton/usage.md)
+    * [Configuration](sdk/wallet-modules/wallet-ton/configuration.md)
+    * [API Reference](sdk/wallet-modules/wallet-ton/api-reference.md)
+  * [wallet-ton-gasless](sdk/wallet-modules/wallet-ton-gasless/README.md)
+    * [Usage](sdk/wallet-modules/wallet-ton-gasless/usage.md)
+    * [Configuration](sdk/wallet-modules/wallet-ton-gasless/configuration.md)
+    * [API Reference](sdk/wallet-modules/wallet-ton-gasless/api-reference.md)
+  * [wallet-tron](sdk/wallet-modules/wallet-tron/README.md)
+    * [Usage](sdk/wallet-modules/wallet-tron/usage.md)
+    * [Configuration](sdk/wallet-modules/wallet-tron/configuration.md)
+    * [API Reference](sdk/wallet-modules/wallet-tron/api-reference.md)
+  * [wallet-tron-gasfree](sdk/wallet-modules/wallet-tron-gasfree/README.md)
+    * [Usage](sdk/wallet-modules/wallet-tron-gasfree/usage.md)
+    * [Configuration](sdk/wallet-modules/wallet-tron-gasfree/configuration.md)
+    * [API Reference](sdk/wallet-modules/wallet-tron-gasfree/api-reference.md)
+* [Swap Modules](sdk/swap-modules/README.md)
+  * [swap-paraswap-evm](sdk/swap-modules/swap-paraswap-evm/README.md)
+    * [Usage](sdk/swap-modules/swap-paraswap-evm/usage.md)
+    * [Configuration](sdk/swap-modules/swap-paraswap-evm/configuration.md)
+    * [API Reference](sdk/swap-modules/swap-paraswap-evm/api-reference.md)
+  <!-- * [swap-stonfi-ton](sdk/swap-modules/swap-stonfi-ton/README.md)
+    * [Usage](sdk/swap-modules/swap-stonfi-ton/usage.md)
+    * [Configuration](sdk/swap-modules/swap-stonfi-ton/configuration.md)
+    * [API Reference](sdk/swap-modules/swap-stonfi-ton/api-reference.md) -->
+* [Bridge Modules](sdk/bridge-modules/README.md)
+  * [bridge-usdt0-evm](sdk/bridge-modules/bridge-usdt0-evm/README.md)
+    * [Usage](sdk/bridge-modules/bridge-usdt0-evm/usage.md)
+    * [Configuration](sdk/bridge-modules/bridge-usdt0-evm/configuration.md)
+    * [API Reference](sdk/bridge-modules/bridge-usdt0-evm/api-reference.md)
+  * [bridge-usdt0-ton](sdk/bridge-modules/bridge-usdt0-ton/README.md)
+    * [Usage](sdk/bridge-modules/bridge-usdt0-ton/usage.md)
+    * [Configuration](sdk/bridge-modules/bridge-usdt0-ton/configuration.md)
+    * [API Reference](sdk/bridge-modules/bridge-usdt0-ton/api-reference.md)
+* [Lending Modules](sdk/lending-modules/README.md)
+  * [lending-aave-evm](sdk/lending-modules/lending-aave-evm/README.md)
+    * [Usage](sdk/lending-modules/lending-aave-evm/usage.md)
+    * [Configuration](sdk/lending-modules/lending-aave-evm/configuration.md)
+    * [API Reference](sdk/lending-modules/lending-aave-evm/api-reference.md)
 
-  * [wallet-ton](wdk-modules/wallet-modules/wallet-ton/overview.md)
-    * [Guides](wdk-modules/wallet-modules/wallet-ton/guides.md)
-    * [Configuration](wdk-modules/wallet-modules/wallet-ton/configuration.md)
-    * [API Reference](wdk-modules/wallet-modules/wallet-ton/api-reference.md)
+## UI Kits
 
-  * [wallet-ton-gasless](wdk-modules/wallet-modules/wallet-ton-gasless/overview.md)
-    * [Guides](wdk-modules/wallet-modules/wallet-ton-gasless/guides.md)
-    * [Configuration](wdk-modules/wallet-modules/wallet-ton-gasless/configuration.md)
-    * [API Reference](wdk-modules/wallet-modules/wallet-ton-gasless/api-reference.md)
+* [React Native UI Kit](ui-kits/react-native-ui-kit/README.md)
+  * [Get Started](ui-kits/react-native-ui-kit/get-started.md)
+  * [API Reference](ui-kits/react-native-ui-kit/api-reference.md)
+  * [Theming](ui-kits/react-native-ui-kit/theming.md)
 
-  * [wallet-spark](wdk-modules/wallet-modules/wallet-spark/overview.md)
-    * [Guides](wdk-modules/wallet-modules/wallet-spark/guides.md)
-    * [Configuration](wdk-modules/wallet-modules/wallet-spark/configuration.md)
-    * [API Reference](wdk-modules/wallet-modules/wallet-spark/api-reference.md)
+## Examples & Starters
 
-  * [wallet-tron](wdk-modules/wallet-modules/wallet-tron/overview.md)
-    * [Guides](wdk-modules/wallet-modules/wallet-tron/guides.md)
-    * [Configuration](wdk-modules/wallet-modules/wallet-tron/configuration.md)
-    * [API Reference](wdk-modules/wallet-modules/wallet-tron/api-reference.md)
+* [React Native Starter](examples-and-starters/react-native-starter.md)
 
-  * [wallet-tron-gasfree](wdk-modules/wallet-modules/wallet-tron-gasfree/overview.md)
-    * [Guides](wdk-modules/wallet-modules/wallet-tron-gasfree/guides.md)
-    * [Configuration](wdk-modules/wallet-modules/wallet-tron-gasfree/configuration.md)
-    * [API Reference](wdk-modules/wallet-modules/wallet-tron-gasfree/api-reference.md)
+## Tools
 
-  * [wallet-solana](wdk-modules/wallet-modules/wallet-solana/overview.md)
-    * [Guides](wdk-modules/wallet-modules/wallet-solana/guides.md)
-    * [Configuration](wdk-modules/wallet-modules/wallet-solana/configuration.md)
-    * [API Reference](wdk-modules/wallet-modules/wallet-solana/api-reference.md)
-
-* [Swap Modules Overview](wdk-modules/swap-modules/overview.md)
-  * [swap-paraswap-evm](wdk-modules/swap-modules/wdk-protocol-swap-paraswap-evm/overview.md)
-    * [Guides](wdk-modules/swap-modules/wdk-protocol-swap-paraswap-evm/guides.md)
-    * [Configuration](wdk-modules/swap-modules/wdk-protocol-swap-paraswap-evm/configuration.md)
-    * [API Reference](wdk-modules/swap-modules/wdk-protocol-swap-paraswap-evm/api-reference.md)
-  
-  * [swap-stonfi-ton](wdk-modules/swap-modules/wdk-protocol-swap-stonfi-ton/overview.md)
-    * [Guides](wdk-modules/swap-modules/wdk-protocol-swap-stonfi-ton/guides.md)
-    * [Configuration](wdk-modules/swap-modules/wdk-protocol-swap-stonfi-ton/configuration.md)
-    * [API Reference](wdk-modules/swap-modules/wdk-protocol-swap-stonfi-ton/api-reference.md)
-
-* [Bridge Modules Overview](wdk-modules/bridge-modules/overview.md)
-  * [bridge-usdt0-evm](wdk-modules/bridge-modules/wdk-protocol-bridge-usdt0-evm/overview.md)
-    * [Guides](wdk-modules/bridge-modules/wdk-protocol-bridge-usdt0-evm/guides.md)
-    * [Configuration](wdk-modules/bridge-modules/wdk-protocol-bridge-usdt0-evm/configuration.md)
-    * [API Reference](wdk-modules/bridge-modules/wdk-protocol-bridge-usdt0-evm/api-reference.md)
-
-  * [bridge-usdt0-ton](wdk-modules/bridge-modules/wdk-protocol-bridge-usdt0-ton/overview.md)
-    * [Guides](wdk-modules/bridge-modules/wdk-protocol-bridge-usdt0-ton/guides.md)
-    * [Configuration](wdk-modules/bridge-modules/wdk-protocol-bridge-usdt0-ton/configuration.md)
-    * [API Reference](wdk-modules/bridge-modules/wdk-protocol-bridge-usdt0-ton/api-reference.md)
-
-* [Lending & Borrowing Modules Overview](wdk-modules/lending-modules/overview.md)
-  * [lending-aave-evm](wdk-modules/lending-modules/wdk-protocol-lending-aave-evm/overview.md)
-    * [Guides](wdk-modules/lending-modules/wdk-protocol-lending-aave-evm/guides.md)
-    * [Configuration](wdk-modules/lending-modules/wdk-protocol-lending-aave-evm/configuration.md)
-    * [API Reference](wdk-modules/bridge-modules/wdk-protocol-lending-aave-evm/api-reference.md)
-
-
-
-## Core Services
-* [Secret Manager](documentation/secret-manager.md)
-* [Paymaster Service](documentation/paymaster.md)
-* [Indexer](documentation/indexer-overview.md)
-* [Export your WDK Wallet Guide](documentation/recover-guide.md)
-  * [Derivation Path and Compatibility](documentation/export-guide.md)
-
-<!-- ## Indexer
-* [Overview](documentation/indexer.md)
-* [Quick Start](documentation/indexer/indexer-quick-start.md)
-* [API Reference](documentation/indexer/indexer-api-reference.md)
-* [Configuration](documentation/indexer/indexer-configuration.md) -->
-<!-- * [Deployment](documentation/indexer/indexer-deployment.md)
-* [Performance](documentation/indexer/indexer-performance.md)
-* [Monitoring](documentation/indexer/indexer-monitoring.md)
-* [Troubleshooting](documentation/indexer/indexer-troubleshooting.md) 
-* [Testing Strategies](documentation/indexer/indexer-testing.md)-->
-<!-- * [Chain-Specific Indexers](documentation/indexer/)
-  * [Bitcoin](documentation/indexer/indexer-btc.md)
-  * [EVM Chains](documentation/indexer/indexer-evm.md)
-  * [Solana](documentation/indexer/indexer-solana.md)
-  * [Spark](documentation/indexer/indexer-spark.md)
-  * [TON](documentation/indexer/indexer-ton.md)
-  * [TRON](documentation/indexer/indexer-tron.md)
-  * [Extending to New Chains](documentation/indexer/indexer-extending.md) -->
-
-## Integration Guides
-* [Transaction History](documentation/transaction-history.md)
-  <!-- * [UI Patterns](documentation/transaction-history-ui-patterns.md)
-  * [Code Examples](documentation/transaction-history-examples.md) -->
-* [Preparing for Production](documentation/preparing-for-production.md)
-* [Runtime Compatibility](documentation/using-bare-runtime.md)
-
-
-<!-- ## Integration Examples
-
-* React
-* React Native -->
+* [Indexer API](tools/indexer-api/README.md)
+  * [Overview](tools/indexer-api/overview.md)
+  * [API Reference](tools/indexer-api/api-reference.md)
+* [Secret Manager](tools/secret-manager/README.md)
+  * [Overview](tools/secret-manager/overview.md)
+  * [API Reference](tools/secret-manager/api-reference.md)
+* [Price Rates](tools/price-rates/README.md)
+  * [Overview](tools/price-rates/overview.md)
+  * [API Reference](tools/price-rates/api-reference.md)
 
 ## Resources
+
 * [Concepts](resources/concepts.md)
+* [Go-live Checklist](resources/go-live-checklist.md)
+* [Build with an LLM](resources/build-with-an-llm.md)
