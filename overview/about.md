@@ -20,11 +20,11 @@ layout:
 
 # About WDK
 
-The **Wallet Development Kit _by Tether_ (WDK)** is Tether's open-source initiative to empowers humans and AI agents alike to build, deploy and use secure, multi-chain, self-custodial wallets that can be integrated anywhere from the smallest embedded device to any mobile, desktop and server operating system.
+The **Wallet Development Kit _by Tether_ (WDK)** is Tether's open-source toolkit to empowers humans and AI agents alike to build, deploy and use secure, multi-chain, self-custodial wallets that can be integrated anywhere from the smallest embedded device to any mobile, desktop and server operating system.
 
 A developer-first framework designed for maximum flexibility and scalability, powering anything from consumer wallets to wallet-enabled apps, DeFi integrations, IoT use cases, and AI agents.
 
-Unlike closed solutions or SaaS-based wallet infrastructure providers, WDK offers zero-lock in and designed for maximum flexibility and extensibility. It is modular, runs on Bare, Node.js and React-Native, thus can be embedded in a wide variety of environments - from mobile apps to autonomous systems.
+Unlike closed solutions or SaaS-based wallet infrastructure providers, WDK offers zero-lock in and designed for maximum flexibility and extensibility. It is modular, runs on Bare, Node.js and React-Native, thus can be embedded in a wide variety of environments.
 
 ***
 
@@ -36,7 +36,7 @@ Traditional wallet development requires months of integration work. Developers m
 
 ### **The Missing AI Foundation**
 
-As we move toward a world where both humans and machines need to manage digital assets safely, existing solutions fall short. AI agents will require wallets to interact in the financial infrastructure, and WDK wants to lay secure foundation that works for both human, AI and IoT use cases. WDK enables trillions of self-custodial wallets.
+As we move toward a world where both humans, machines and AI Agents need to manage digital assets safely, existing solutions fall short. AI agents will require wallets to interact in the financial infrastructure, and WDK wants to lay secure foundation that works for both human, AI and IoT use cases. WDK enables trillions of self-custodial wallets.
 
 ***
 

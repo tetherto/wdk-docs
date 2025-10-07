@@ -34,7 +34,11 @@ X-API-KEY: your-api-key-here
 Get token transfer history
 {% endopenapi %}
 
-{% openapi src="../openapi.yaml" path="/api/v1/{blockchain}/{token}/{address}/token-balances" method="get" %}
+{% openapi src="https://wdk-api-staging.tether.su/documentation/json" path="/api/v1/{blockchain}/{token}/{address}/token-transfers" method="get" %}
+Get token transfer history
+{% endopenapi %}
+
+{% openapi src="https://wdk-api-staging.tether.su/documentation/json" path="/api/v1/{blockchain}/{token}/{address}/token-balances" method="get" %}
 Get token balance
 {% endopenapi %}
 
