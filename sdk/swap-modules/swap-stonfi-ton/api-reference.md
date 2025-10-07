@@ -3,7 +3,20 @@ title: Swap Stonfi TON API Reference
 description: Complete API documentation for @tetherto/wdk-protocol-swap-stonfi-ton
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-09-04
-icon: code
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # API Reference

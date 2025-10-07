@@ -3,7 +3,20 @@ title: Wallet Spark Configuration
 description: Configuration options and settings for @tetherto/wdk-wallet-spark
 author: Matteo Giardino
 lastReviewed: 2025-06-26
-icon: gear
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # Configuration

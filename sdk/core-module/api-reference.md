@@ -1,7 +1,20 @@
 ---
 title: WDK Core API Reference
 description: Complete API documentation for @tetherto/wdk
-icon: code
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # API Reference

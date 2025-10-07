@@ -3,7 +3,20 @@ title: Wallet TON Gasless Guides
 description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-ton-gasless
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-09-01
-icon: book-open
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # Guides

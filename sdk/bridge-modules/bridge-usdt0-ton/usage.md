@@ -3,7 +3,20 @@ title: Bridge USDT0 TON Guides
 description: How to install and use @tetherto/wdk-protocol-bridge-usdt0-ton for bridging tokens from TON
 author: Raquel Carrasco
 lastReviewed: 2025-09-04
-icon: book-open
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # Guides

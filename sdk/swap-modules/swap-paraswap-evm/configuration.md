@@ -3,7 +3,20 @@ title: Swap ParaSwap EVM Configuration
 description: Configuration options and settings for @tetherto/wdk-protocol-swap-paraswap-evm
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-10-06
-icon: gear
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # Configuration

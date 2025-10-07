@@ -3,6 +3,20 @@ title: Lending Aave EVM API Reference
 description: API reference for @tetherto/wdk-protocol-lending-aave-evm
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-10-06
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # API Reference

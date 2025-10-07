@@ -3,6 +3,20 @@ title: Wallet TON Gasless Overview
 description: Overview of the @tetherto/wdk-wallet-ton-gasless module
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # @tetherto/wdk-wallet-ton-gasless Overview

@@ -3,6 +3,20 @@ title: Wallet Solana Overview
 description: Overview of the @tetherto/wdk-wallet-solana module
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-09-01
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # @tetherto/wdk-wallet-solana Overview

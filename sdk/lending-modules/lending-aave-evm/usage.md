@@ -3,7 +3,20 @@ title: Lending Aave EVM Guides
 description: How to install and use @tetherto/wdk-protocol-lending-aave-evm on EVM
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-10-06
-icon: book-open
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # Guides

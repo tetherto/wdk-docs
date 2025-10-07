@@ -3,7 +3,20 @@ title: Wallet Tron Guides
 description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-tron
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
-icon: book-open
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # Guides

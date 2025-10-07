@@ -3,6 +3,20 @@ title: Swap ParaSwap EVM API Reference
 description: API reference for @tetherto/wdk-protocol-swap-paraswap-evm
 author: Raquel Carrasco
 lastReviewed: 2025-10-06
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # API Reference

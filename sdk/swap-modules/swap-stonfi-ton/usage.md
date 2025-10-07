@@ -3,7 +3,20 @@ title: Swap Stonfi TON Guides
 description: How to install and use @tetherto/wdk-protocol-swap-stonfi-ton for swapping tokens on TON
 author: Raquel Carrasco
 lastReviewed: 2025-09-04
-icon: book-open
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # Guides

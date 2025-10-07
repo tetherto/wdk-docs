@@ -3,7 +3,20 @@ title: Swap ParaSwap EVM Guides
 description: How to install and use @tetherto/wdk-protocol-swap-paraswap-evm for swapping tokens on EVM
 author: Raquel Carrasco
 lastReviewed: 2025-10-06
-icon: book-open
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # Guides

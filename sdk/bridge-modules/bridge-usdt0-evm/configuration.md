@@ -3,7 +3,20 @@ title: Bridge USDT0 EVM Configuration
 description: Configuration options and settings for @tetherto/wdk-protocol-bridge-usdt0-evm
 author: Raquel Carrasco
 lastReviewed: 2025-09-04
-icon: gear
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # Configuration

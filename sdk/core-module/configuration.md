@@ -1,7 +1,20 @@
 ---
 title: WDK Core Configuration
 description: Configuration options and settings for @tetherto/wdk
-icon: gear
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # Configuration

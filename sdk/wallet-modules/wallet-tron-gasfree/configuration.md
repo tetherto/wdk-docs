@@ -3,7 +3,20 @@ title: Wallet Tron Gas-Free Configuration
 description: Configuration options and settings for @tetherto/wdk-wallet-tron-gasfree
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-08-31
-icon: gear
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # Configuration

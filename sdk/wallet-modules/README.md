@@ -2,6 +2,20 @@
 title: Wallet Modules Overview
 author: Matteo Giardino
 lastReviewed: 2025-06-28
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # Wallet Modules Overview

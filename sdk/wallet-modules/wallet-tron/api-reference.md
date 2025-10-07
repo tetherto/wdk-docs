@@ -3,7 +3,20 @@ title: Wallet Tron API Reference
 description: Complete API documentation for @tetherto/wdk-wallet-tron
 author: Matteo Giardino
 lastReviewed: 2025-08-31
-icon: code
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # API Reference
