@@ -171,4 +171,4 @@ This package works with multiple blockchain networks through wallet registration
 
 ### Need Help?
 
-{% include "../.gitbook/includes/support-cards.md" %}
+{% include "../../.gitbook/includes/support-cards.md" %}
