@@ -32,14 +32,17 @@ The main class for managing wallets across multiple blockchains. This class serv
 
 ### Constructor
 
+{% code title="Constructor" lineNumbers="true" %}
 ```javascript
 new WDK(seed)
 ```
+{% endcode %}
 
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 
 **Example:**
+{% code title="Initialize WDK" lineNumbers="true" %}
 ```javascript
 import WDK from '@tetherto/wdk'
 
@@ -50,6 +53,7 @@ const wdk = new WDK('abandon abandon abandon abandon abandon abandon abandon aba
 const seedBytes = new Uint8Array([...])
 const wdk2 = new WDK(seedBytes)
 ```
+{% endcode %}
 
 ### Methods
 
@@ -77,6 +81,7 @@ Registers a new wallet manager for a specific blockchain.
 **Returns:** `WDK` - The wdk manager instance (supports method chaining)
 
 **Example:**
+{% code title="Register Wallets" lineNumbers="true" %}
 ```javascript
 import WDK from '@tetherto/wdk'
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
@@ -100,6 +105,7 @@ const wdk2 = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
   .registerWallet('ton', WalletManagerTon, tonWalletConfig)
 ```
+{% endcode %}
 
 ##### `registerProtocol(blockchain, label, protocol, config)`
 Registers a protocol globally for all accounts of a specific blockchain.
@@ -116,6 +122,7 @@ Registers a protocol globally for all accounts of a specific blockchain.
 **Returns:** `WDK` - The wdk manager instance (supports method chaining)
 
 **Example:**
+{% code title="Register Protocols" lineNumbers="true" %}
 ```javascript
 import ParaswapProtocolEvm from '@tetherto/wdk-protocol-swap-paraswap-evm'
 import Usdt0ProtocolTon from '@tetherto/wdk-protocol-bridge-usdt0-ton'
@@ -135,6 +142,7 @@ const wdk2 = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
   .registerProtocol('ethereum', 'paraswap', ParaswapProtocolEvm, paraswapProtocolConfig)
 ```
+{% endcode %}
 
 ##### `registerMiddleware(blockchain, middleware)`
 Registers middleware for account decoration and enhanced functionality.
@@ -146,6 +154,7 @@ Registers middleware for account decoration and enhanced functionality.
 **Returns:** `WDK` - The wdk manager instance (supports method chaining)
 
 **Example:**
+{% code title="Register Middleware" lineNumbers="true" %}
 ```javascript
 // Simple logging middleware
 wdk.registerMiddleware('ethereum', async (account) => {
@@ -169,6 +178,7 @@ const wdk2 = new WDK(seedPhrase)
     console.log('New account:', await account.getAddress())
   })
 ```
+{% endcode %}
 
 ##### `getAccount(blockchain, index?)`
 Returns a wallet account for a specific blockchain and index using BIP-44 derivation.
@@ -182,6 +192,7 @@ Returns a wallet account for a specific blockchain and index using BIP-44 deriva
 **Throws:** Error if no wallet has been registered for the given blockchain
 
 **Example:**
+{% code title="Get Account" lineNumbers="true" %}
 ```javascript
 // Get first account (index 0)
 const account = await wdk.getAccount('ethereum', 0)
@@ -199,6 +210,7 @@ try {
   console.error('No wallet registered for tron blockchain')
 }
 ```
+{% endcode %}
 
 ##### `getAccountByPath(blockchain, path)`
 Returns a wallet account for a specific blockchain and BIP-44 derivation path.
@@ -212,6 +224,7 @@ Returns a wallet account for a specific blockchain and BIP-44 derivation path.
 **Throws:** Error if no wallet has been registered for the given blockchain
 
 **Example:**
+{% code title="Get Account by Path" lineNumbers="true" %}
 ```javascript
 // Full path: m/44'/60'/0'/0/1
 const account = await wdk.getAccountByPath('ethereum', "0'/0/1")
@@ -219,6 +232,7 @@ const account = await wdk.getAccountByPath('ethereum', "0'/0/1")
 // Different derivation path
 const customAccount = await wdk.getAccountByPath('ton', "1'/2/3")
 ```
+{% endcode %}
 
 ##### `getFeeRates()`
 Returns current fee rates for all registered blockchains.
@@ -226,19 +240,23 @@ Returns current fee rates for all registered blockchains.
 **Returns:** `Promise<FeeRates>` - The fee rates in base units
 
 **Example:**
+{% code title="Get Fee Rates" lineNumbers="true" %}
 ```javascript
 const feeRates = await wdk.getFeeRates()
 console.log('Fee rates:', feeRates)
 ```
+{% endcode %}
 
 ##### `dispose()`
 Disposes all wallets and accounts, erasing any sensitive data from memory.
 
 **Example:**
+{% code title="Dispose WDK" lineNumbers="true" %}
 ```javascript
 // Clean up all sensitive data
 wdk.dispose()
 ```
+{% endcode %}
 
 ### Static Methods
 
@@ -253,11 +271,13 @@ Returns a random BIP-39 seed phrase.
 **Returns:** `string` - The seed phrase
 
 **Example:**
+{% code title="Generate Random Seed" lineNumbers="true" %}
 ```javascript
 const seedPhrase = WDK.getRandomSeedPhrase()
 console.log('Generated seed:', seedPhrase)
 // Output: "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
 ```
+{% endcode %}
 
 ##### `isValidSeedPhrase(seedPhrase)`
 Checks if a seed phrase is valid according to BIP-39 standards.
@@ -268,6 +288,7 @@ Checks if a seed phrase is valid according to BIP-39 standards.
 **Returns:** `boolean` - True if the seed phrase is valid
 
 **Example:**
+{% code title="Validate Seed Phrase" lineNumbers="true" %}
 ```javascript
 const isValid = WDK.isValidSeedPhrase('abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about')
 console.log('Seed phrase valid:', isValid) // true
@@ -275,6 +296,7 @@ console.log('Seed phrase valid:', isValid) // true
 const isInvalid = WDK.isValidSeedPhrase('invalid seed phrase')
 console.log('Seed phrase valid:', isInvalid) // false
 ```
+{% endcode %}
 
 ## IWalletAccountWithProtocols
 
@@ -303,6 +325,7 @@ Registers a new protocol for this specific account.
 **Returns:** `IWalletAccountWithProtocols` - The account instance (supports method chaining)
 
 **Example:**
+{% code title="Register Protocol for Account" lineNumbers="true" %}
 ```javascript
 import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
 
@@ -317,6 +340,7 @@ account.registerProtocol('usdt0', Usdt0ProtocolEvm, {
 const account2 = await wdk.getAccount('ethereum', 1)
   .registerProtocol('usdt0', Usdt0ProtocolEvm, usdt0ProtocolConfig)
 ```
+{% endcode %}
 
 ##### `getSwapProtocol(label)`
 Returns the swap protocol with the given label.
@@ -329,6 +353,7 @@ Returns the swap protocol with the given label.
 **Throws:** Error if no swap protocol with the given label has been registered
 
 **Example:**
+{% code title="Get Swap Protocol" lineNumbers="true" %}
 ```javascript
 import ParaswapProtocolEvm from '@tetherto/wdk-protocol-swap-paraswap-evm'
 
@@ -353,6 +378,7 @@ const swapResult = await paraswap.swap({
 //   console.error('No swap protocol with label "uniswap" found')
 // }
 ```
+{% endcode %}
 
 ##### `getBridgeProtocol(label)`
 Returns the bridge protocol with the given label.
@@ -365,6 +391,7 @@ Returns the bridge protocol with the given label.
 **Throws:** Error if no bridge protocol with the given label has been registered
 
 **Example:**
+{% code title="Get Bridge Protocol" lineNumbers="true" %}
 ```javascript
 import Usdt0ProtocolTon from '@tetherto/wdk-protocol-bridge-usdt0-ton'
 
@@ -381,6 +408,7 @@ const bridgeResult = await usdt0.bridge({
   amount: 1000000
 })
 ```
+{% endcode %}
 
 ##### `getLendingProtocol(label)`
 Returns the lending protocol with the given label.
@@ -393,6 +421,7 @@ Returns the lending protocol with the given label.
 **Throws:** Error if no lending protocol with the given label has been registered
 
 **Example:**
+{% code title="Get Lending Protocol" lineNumbers="true" %}
 ```javascript
 import AaveProtocolEvm from '@tetherto/wdk-protocol-lending-aave-evm'
 
@@ -409,9 +438,11 @@ const lendResult = await aave.lend({
   interestRateMode: 'stable'
 })
 ```
+{% endcode %}
 
 ## Complete Example
 
+{% code title="Complete WDK Flow" lineNumbers="true" %}
 ```javascript
 import WDK from '@tetherto/wdk'
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
@@ -455,11 +486,13 @@ const bridgeResult = await usdt0.bridge(bridgeOptions)
 // Clean up
 wdk.dispose()
 ```
+{% endcode %}
 
 ## Types
 
 ### FeeRates
 
+{% code title="Type: FeeRates" lineNumbers="true" %}
 ```typescript
 interface FeeRates {
   [blockchain: string]: {
@@ -468,17 +501,21 @@ interface FeeRates {
   };
 }
 ```
+{% endcode %}
 
 ### Middleware Function
 
+{% code title="Type: MiddlewareFunction" lineNumbers="true" %}
 ```typescript
 type MiddlewareFunction = <A extends IWalletAccount>(
   account: A
 ) => Promise<A | void>;
 ```
+{% endcode %}
 
 ### Protocol Types
 
+{% code title="Types: Protocol Interfaces" lineNumbers="true" %}
 ```typescript
 // Swap Protocol
 interface ISwapProtocol {
@@ -495,3 +532,77 @@ interface ILendingProtocol {
   lend(options: LendingOptions): Promise<LendingResult>;
 }
 ```
+{% endcode %}
+
+***
+
+## Next Steps
+
+<table data-card-size="large" data-view="cards">
+	<thead>
+		<tr>
+			<th></th>
+			<th></th>
+			<th></th>
+			<th data-hidden data-card-target data-type="content-ref"></th>
+		</tr>
+	</thead>
+	<tbody>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK Core Configuration</strong>
+			</td>
+			<td>Get started with WDK's configuration</td>
+			<td>
+				<a href="./configuration.md">WDK Core Configuration</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK Core Usage</strong>
+			</td>
+			<td>Get started with WDK's Usage</td>
+			<td>
+				<a href="./usage.md">WDK Core Usage</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>Wallet Modules</strong>
+			</td>
+			<td>Explore blockchain-specific wallet modules</td>
+			<td>
+				<a href="../wallet-modules/README.md">WDK Wallet Modules</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>Protocol Modules</strong>
+			</td>
+			<td>Discover DeFi protocol integrations</td>
+			<td>
+				<a href="../bridge-modules/README.md">Bridge Modules</a>,
+        <a href="../lending-modules/README.md">Lending Modules</a>,
+        <a href="../swap-modules/README.md">Swap Modules</a>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+***
+
+### Need Help?
+
+{% include "../../.gitbook/includes/support-cards.md" %}
