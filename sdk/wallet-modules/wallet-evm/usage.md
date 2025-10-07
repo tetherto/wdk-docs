@@ -1,5 +1,5 @@
 ---
-title: Wallet EVM Guides
+title: Wallet EVM Usage
 description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-evm
 author: Matteo Giardino
 lastReviewed: 2025-06-26
@@ -19,7 +19,7 @@ layout:
     visible: false
 ---
 
-# Guides
+# Usage
 
 ## Installation
 

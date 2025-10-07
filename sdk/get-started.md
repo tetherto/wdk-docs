@@ -48,7 +48,7 @@ New functionality is added through modules rather than modifying core code. Also
 
 WDK modules are organized into five main categories, each serving a specific purpose in the blockchain application stack:
 
-<table data-view="cards"><thead><tr><th>Type</th><th>Purpose</th><th>Examples</th></tr></thead><tbody><tr><td><strong>Core</strong></td><td>Main orchestrator and shared utilities</td><td><a href="../wdk-core/">@tetherto/wdk</a></td></tr><tr><td><strong>Wallet</strong></td><td>Blockchain-specific wallet operations</td><td><a href="../wallet-modules/wallet-evm/">wallet-evm</a>, <a href="../wallet-modules/wallet-btc/">wallet-btc</a></td></tr><tr><td><strong>Swap</strong></td><td>Token swapping across DEXs</td><td><a href="../swap-modules/swap-paraswap-evm/">swap-paraswap-evm</a></td></tr><tr><td><strong>Bridge</strong></td><td>Cross-chain asset transfers</td><td><a href="../bridge-modules/bridge-usdt0-evm/">bridge-usdt0-evm</a></td></tr><tr><td><strong>Lending</strong></td><td>DeFi lending and borrowing</td><td><a href="../lending-modules/lending-aave-evm/">lending-aave-evm</a></td></tr></tbody></table>
+<table data-view="cards"><thead><tr><th>Type</th><th>Purpose</th><th>Examples</th></tr></thead><tbody><tr><td><strong>Core</strong></td><td>Main orchestrator and shared utilities</td><td><a href="./core-module/">@tetherto/wdk</a></td></tr><tr><td><strong>Wallet</strong></td><td>Blockchain-specific wallet operations</td><td><a href="./wallet-modules/wallet-evm/">wallet-evm</a>, <a href="./wallet-modules/wallet-btc/">wallet-btc</a></td></tr><tr><td><strong>Swap</strong></td><td>Token swapping across DEXs</td><td><a href="./swap-modules/swap-paraswap-evm/">swap-paraswap-evm</a></td></tr><tr><td><strong>Bridge</strong></td><td>Cross-chain asset transfers</td><td><a href="./bridge-modules/bridge-usdt0-evm/">bridge-usdt0-evm</a></td></tr><tr><td><strong>Lending</strong></td><td>DeFi lending and borrowing</td><td><a href="./lending-modules/lending-aave-evm/">lending-aave-evm</a></td></tr></tbody></table>
 
 ***
 
@@ -140,6 +140,7 @@ WDK's modular architecture makes it straightforward to add support for new block
 
 #### Wallet Module Interface
 
+{% code title="Custome Wallet Module Setup" lineNumbers="true" %}
 ```typescript
 interface WalletModule {
   // Account management
@@ -160,9 +161,12 @@ interface WalletModule {
   getTokenBalance(index: number, tokenAddress: string): Promise<BigNumber>
 }
 ```
+{% endcode %}
+
 
 #### Protocol Module Interface
 
+{% code title="Custome Protocol Module Setup" lineNumbers="true" %}
 ```typescript
 interface ProtocolModule {
   // Protocol execution
@@ -180,9 +184,12 @@ interface ProtocolModule {
   getBridgeRoutes?(): Promise<Route[]>
 }
 ```
+{% endcode %}
+
 
 #### Module Implementation Example
 
+{% code title="Custome Wallet Module Implementation" lineNumbers="true" %}
 ```typescript
 class CustomWalletModule implements WalletModule {
   private provider: string
@@ -221,9 +228,12 @@ class CustomWalletModule implements WalletModule {
   // Additional methods...
 }
 ```
+{% endcode %}
+
 
 #### Module Registration
 
+{% code title="Custome Wallet Module Registration" lineNumbers="true" %}
 ```typescript
 // Register your custom module
 const wdkWithCustom = wdk.registerWallet('custom-chain', CustomWalletModule, {
@@ -235,6 +245,8 @@ const wdkWithCustom = wdk.registerWallet('custom-chain', CustomWalletModule, {
 const customAccount = await wdkWithCustom.getAccount('custom-chain', 0)
 const balance = await customAccount.getBalance()
 ```
+{% endcode %}
+
 
 {% hint style="info" %}
 **Learn More**: For detailed information on creating custom modules, check out our [Extender Guide](../extender-guide.md).
@@ -268,7 +280,7 @@ Ready to start building? Choose your development environment:
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="getting-started/nodejs-quickstart.md">nodejs-quickstart.md</a>
+				<a href="../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
 			</td>
 		</tr>
 		<tr>
@@ -280,7 +292,7 @@ Ready to start building? Choose your development environment:
 			</td>
 			<td>Build mobile wallets with React Native Expo</td>
 			<td>
-				<a href="getting-started/react-native-quickstart.md">react-native-quickstart.md</a>
+				<a href="../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
 			</td>
 		</tr>
 	</tbody>

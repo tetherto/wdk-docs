@@ -1,5 +1,5 @@
 ---
-title: Wallet Tron Guides
+title: Wallet Tron Usage
 description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-tron
 author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
@@ -19,7 +19,7 @@ layout:
     visible: false
 ---
 
-# Guides
+# Usage
 
 ## Installation
 
