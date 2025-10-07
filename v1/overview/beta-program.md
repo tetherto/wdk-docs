@@ -57,7 +57,7 @@ As a valued beta partner, we ask for your collaboration in making WDK the best p
 - **Regular usage** helps us identify and resolve issues faster
 
 ### Communication Channels
-- **Technical Support**: [raquel.carrasco@tether.io](mailto:raquel.carrasco@tether.io)
+- **Technical Support**: [wallet-info.tether.io](mailto:wallet-info.tether.io)
 - **Bug Reports**: GitHub Issues
 
 ### Feedback Schedule
@@ -127,7 +127,7 @@ We're excited to showcase how our beta partners are using WDK to build innovativ
 
 If you haven't already, begin your WDK journey with our [Quick Start Guide](../getting-started/quick-start.md). We're excited to see what you'll build with WDK!
 
-**Questions?** Don't hesitate to reach out to our team at [support@tether.io](mailto:support@tether.io).
+**Questions?** Don't hesitate to reach out to our team at [wallet-info.tether.io](mailto:wallet-info.tether.io).
 
 ---
 

@@ -42,7 +42,72 @@ As we move toward a world where both humans and machines need to manage digital 
 
 ## Why WDK is Different
 
-<table data-view="cards"><thead><tr><th></th><th></th><th data-hidden data-card-cover data-type="image">Cover image</th></tr></thead><tbody><tr><td><strong>Runs Anywhere</strong></td><td>Works with Node.js, Bare runtime, mobile (React Native), and future embedded environments</td><td><a href="../assets/card-placeholder1.svg">card-placeholder1.svg</a></td></tr><tr><td><strong>Modular &#x26; Extensible</strong></td><td>Pick only the modules you need; extend functionality with custom modules</td><td><a href="../assets/card-placeholder2.svg">card-placeholder2.svg</a></td></tr><tr><td><strong>Developer-Centric</strong></td><td>Clear SDK design, strong TypeScript typing, extensive docs, and ready-to-use starters</td><td><a href="../assets/card-placeholder3.svg">card-placeholder3.svg</a></td></tr><tr><td><strong>Secure by Design</strong></td><td>Stateless and self-custodial architecture ensures keys never leave user control</td><td><a href="../assets/card-placeholder2.svg">card-placeholder2.svg</a></td></tr><tr><td><strong>Zero Lock-In</strong></td><td>Transparent, community-driven, and free to adopt with no vendor lock-in</td><td><a href="../assets/card-placeholder1.svg">card-placeholder1.svg</a></td></tr><tr><td><strong>Ecosystem-Backed</strong></td><td>Maintained and supported by Tether with strong community involvement</td><td><a href="../assets/card-placeholder2.svg">card-placeholder2.svg</a></td></tr></tbody></table>
+<table data-view="cards">
+	<thead>
+		<tr>
+			<th></th>
+			<th></th>
+			<th data-hidden data-card-cover data-type="image">Cover image</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<strong>Runs Anywhere</strong>
+			</td>
+			<td>Works with Node.js, Bare runtime, mobile (React Native), and future embedded environments</td>
+			<td>
+				<a href="../assets/runs-anywhere.png">runs-anywhere.png</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<strong>Modular &#x26; Extensible</strong>
+			</td>
+			<td>Pick only the modules you need; extend functionality with custom modules</td>
+			<td>
+				<a href="../assets/modular.png">modular.png</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<strong>Developer-Centric</strong>
+			</td>
+			<td>Clear SDK design, strong TypeScript typing, extensive docs, and ready-to-use starters</td>
+			<td>
+				<a href="../assets/developer-centric.png">developer-centric.png</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<strong>Secure by Design</strong>
+			</td>
+			<td>Stateless and self-custodial architecture ensures keys never leave user control</td>
+			<td>
+				<a href="../assets/secure.png">secure.png</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<strong>Zero Lock-In</strong>
+			</td>
+			<td>Transparent, community-driven, and free to adopt with no vendor lock-in</td>
+			<td>
+				<a href="../assets/zero-lock-in.png">zero-lock-in.png</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<strong>Ecosystem-Backed</strong>
+			</td>
+			<td>Maintained and supported by Tether with strong community involvement</td>
+			<td>
+				<a href="../assets/ecosystem.png">ecosystem.png</a>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
 
 ***
 
@@ -50,7 +115,66 @@ As we move toward a world where both humans and machines need to manage digital 
 
 WDK combines four core components to deliver a complete wallet development solution:
 
-<table data-card-size="large" data-view="cards"><thead><tr><th></th><th></th><th data-hidden data-card-target data-type="content-ref"></th><th data-hidden data-card-cover data-type="image">Cover image</th></tr></thead><tbody><tr><td><strong>Modular SDK</strong></td><td>Unified APIs for wallet and protocol operations across multiple blockchains</td><td><a href="../sdk/getting-started.md">getting-started.md</a></td><td><a href="../assets/card-placeholder1.svg">card-placeholder1.svg</a></td></tr><tr><td><strong>Indexer API</strong></td><td>Reliable blockchain data access for balances, transactions, and historical data</td><td><a href="../tools/indexer/">indexer</a></td><td><a href="../assets/card-placeholder2.svg">card-placeholder2.svg</a></td></tr><tr><td><strong>UI Kits</strong></td><td>Reusable React Native components for building wallet interfaces</td><td><a href="../ui-kit/react-native/">react-native</a></td><td><a href="../assets/card-placeholder3.svg">card-placeholder3.svg</a></td></tr><tr><td><strong>Examples &#x26; Starters</strong></td><td>Production-ready wallet templates and reference implementations</td><td><a href="../starters/react-native/">react-native</a></td><td><a href="../assets/card-placeholder1.svg">card-placeholder1.svg</a></td></tr></tbody></table>
+<table data-card-size="large" data-view="cards">
+	<thead>
+		<tr>
+			<th></th>
+			<th></th>
+			<th data-hidden data-card-target data-type="content-ref"></th>
+			<th data-hidden data-card-cover data-type="image">Cover image</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<strong>Modular SDK</strong>
+			</td>
+			<td>Unified APIs for wallet and protocol operations across multiple blockchains</td>
+			<td>
+				<a href="../sdk/getting-started.md">getting-started.md</a>
+			</td>
+			<td>
+				<a href="../assets/product-sdk.png">product-sdk.png</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<strong>Indexer API</strong>
+			</td>
+			<td>Reliable blockchain data access for balances, transactions, and historical data</td>
+			<td>
+				<a href="../tools/indexer/">indexer</a>
+			</td>
+			<td>
+				<a href="../assets/product-indexer.png">product-indexer.png</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<strong>UI Kits</strong>
+			</td>
+			<td>Reusable React Native components for building wallet interfaces</td>
+			<td>
+				<a href="../ui-kit/react-native/">react-native</a>
+			</td>
+			<td>
+				<a href="../assets/product-ui-kit.png">product-ui-kit.png</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<strong>Examples &#x26; Starters</strong>
+			</td>
+			<td>Production-ready wallet templates and reference implementations</td>
+			<td>
+				<a href="../starters/react-native/">react-native</a>
+			</td>
+			<td>
+				<a href="../assets/product-starters.png">product-starters.png</a>
+			</td>
+		</tr>
+	</tbody>
+</table>
 
 ***
 

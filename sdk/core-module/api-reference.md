@@ -1,8 +1,6 @@
 ---
 title: WDK Core API Reference
 description: Complete API documentation for @tetherto/wdk
-author: Raquel Carrasco
-lastReviewed: 2025-09-11
 icon: code
 ---
 
