@@ -95,6 +95,7 @@
 ## Tools
 
 * [Indexer API](tools/indexer-api/README.md)
+  * [Overview](tools/indexer-api/overview.md)
   * [Get Started](tools/indexer-api/get-started.md)
   * [API Reference](tools/indexer-api/api-reference.md)
 * [Secret Manager](tools/secret-manager/README.md)

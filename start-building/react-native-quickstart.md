@@ -64,9 +64,9 @@ npm install
 {% hint style="info" %}
 Learn more about the React Native starter:
 
-* [**@tetherto/wdk-starter-react-native**](https://github.com/tetherto/wdk-starter-react-native) - Production-ready multi-chain wallet starter
-* [**Features Overview**](https://github.com/tetherto/wdk-starter-react-native#-features) - Multi-chain support, secure storage, and more
-* [**Supported Networks**](https://github.com/tetherto/wdk-starter-react-native#-supported-networks--operations) - Bitcoin, Ethereum, Polygon, Arbitrum, TON
+* [**@tetherto/wdk-starter-react-native**](../examples-and-starters/react-native-starter.md) - Production-ready multi-chain wallet starter
+* [**Features Overview**](../examples-and-starters/react-native-starter.md#features) - Multi-chain support, secure storage, and more
+* [**Supported Networks**](#add-more-networks) - Bitcoin, Ethereum, Polygon, Arbitrum, TON
 {% endhint %}
 
 ***
@@ -89,8 +89,8 @@ EXPO_PUBLIC_WDK_INDEXER_API_KEY=your_actual_api_key_here
 {% hint style="info" %}
 To learn more about getting your WDK Indexer API key:
 
-* [**WDK Indexer API**](../tools/indexer/overview.md) - Overview and setup
-* [**API Key Configuration**](../tools/indexer/configuration.md) - How to obtain and configure your API key
+* [**WDK Indexer API**](../tools/indexer-api/overview.md) - Overview and setup
+* [**API Key Configuration**](../tools/indexer-api/api-reference.md) - How to obtain and configure your API key
 {% endhint %}
 
 ***
