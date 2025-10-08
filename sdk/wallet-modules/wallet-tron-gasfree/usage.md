@@ -25,30 +25,9 @@ layout:
 
 To install the `wdk-wallet-tron-gasfree` package, follow these instructions:
 
-### Public Release
-
-Once the package is publicly available, you can install it using npm:
 
 ```bash
 npm install @tetherto/wdk-wallet-tron-gasfree
-```
-
-### Private Access
-
-If you have access to the private repository, install the package from the develop branch on GitHub:
-
-```bash
-npm install git+https://github.com/tetherto/wdk-wallet-tron-gasfree.git#develop
-```
-
-After installation, ensure your package.json includes the dependency correctly:
-
-```json
-"dependencies": {
-  // ... other dependencies ...
-  "@tetherto/wdk-wallet-tron-gasfree": "git+ssh://git@github.com:tetherto/wdk-wallet-tron-gasfree.git#develop"
-  // ... other dependencies ...
-}
 ```
 
 ## Quick Start

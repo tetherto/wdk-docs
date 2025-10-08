@@ -25,30 +25,10 @@ layout:
 
 To install the `@tetherto/wdk-wallet-ton-gasless` package, follow these instructions:
 
-### Public Release
-
-Once the package is publicly available, you can install it using npm:
-
 ```bash
 npm install @tetherto/wdk-wallet-to-gasless
 ```
 
-### Private Access
-
-If you have access to the private repository, install the package from the develop branch on GitHub:
-
-```bash
-npm install git+https://github.com/tetherto/wdk-wallet-ton-gasless.git#develop
-```
-After installation, ensure your package.json includes the dependency correctly:
-
-```json
-"dependencies": {
-  // ... other dependencies ...
-  "@tetherto/wdk-wallet-ton-gasless": "git+ssh://git@github.com:tetherto/wdk-wallet-ton-gasless.git#develop"
-  // ... other dependencies ...
-}
-```
 
 ## Quick Start
 
