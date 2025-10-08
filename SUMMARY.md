@@ -98,7 +98,6 @@
   * [Get Started](tools/indexer-api/get-started.md)
   * [API Reference](tools/indexer-api/api-reference.md)
 * [Secret Manager](tools/secret-manager/README.md)
-  * [Overview](tools/secret-manager/overview.md)
   * [Configuration](tools/secret-manager/configuration.md)
   * [API Reference](tools/secret-manager/api-reference.md)
 * [Price Rates](tools/price-rates/README.md)
