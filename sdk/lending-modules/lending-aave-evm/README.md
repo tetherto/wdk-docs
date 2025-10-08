@@ -50,8 +50,51 @@ Works on Aave V3 supported EVM networks (e.g., Ethereum, Arbitrum, Base, Optimis
 
 ## Next Steps
 
-- Read the **[Guides](guides.md)** for quick start and usage examples
-- Check the **[API Reference](api-reference.md)**
-- Review **[Configuration](configuration.md)** options
-- Want to contribute? **Open a PR on Github**
-- Found a bug? **Open an issue on Github**
+<table data-card-size="large" data-view="cards">
+  <thead>
+    <tr>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th data-hidden data-card-target data-type="content-ref"></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <i class="fa-book-open">:book-open:</i>
+      </td>
+      <td>
+        <strong>Usage</strong>
+      </td>
+      <td>How to supply, withdraw, borrow and repay with Aave</td>
+      <td>
+        <a href="./usage.md">Lending Aave EVM Usage</a>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <i class="fa-cog">:cog:</i>
+      </td>
+      <td>
+        <strong>Configuration</strong>
+      </td>
+      <td>Service setup, account config, ERC‑4337 options</td>
+      <td>
+        <a href="./configuration.md">Lending Aave EVM Configuration</a>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <i class="fa-code">:code:</i>
+      </td>
+      <td>
+        <strong>API Reference</strong>
+      </td>
+      <td>Full API for AaveProtocolEvm methods and types</td>
+      <td>
+        <a href="./api-reference.md">Lending Aave EVM API</a>
+      </td>
+    </tr>
+  </tbody>
+</table>
