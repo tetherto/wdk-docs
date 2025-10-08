@@ -1,5 +1,5 @@
 ---
-title: Wallet BTC Guides
+title: Wallet BTC Usage
 description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-btc
 author: Matteo Giardino
 lastReviewed: 2025-06-26
@@ -19,7 +19,7 @@ layout:
     visible: false
 ---
 
-# Guides
+# Usage
 
 ## Installation
 

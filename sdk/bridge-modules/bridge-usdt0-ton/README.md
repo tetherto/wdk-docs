@@ -70,3 +70,6 @@ The bridge supports multiple TON wallet types:
 - Review **[Configuration](configuration.md)** options
 - Want to contribute? **[Open a PR on Github](https://github.com/tetherto/wdk-protocol-bridge-usdt0-ton)**
 - Found a bug? **[Open an issue on Github](https://github.com/tetherto/wdk-protocol-bridge-usdt0-ton/issues)**
+
+{% include "../.gitbook/includes/support-cards.md" %}
+

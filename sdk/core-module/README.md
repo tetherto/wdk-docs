@@ -1,6 +1,6 @@
 ---
-title: WDK Core Overview
-description: Overview of the @tetherto/wdk module
+title: WDK Core
+description: Overview of the @tetherto/wdk-core module
 author: Raquel Carrasco
 lastReviewed: 2025-09-11
 layout:
@@ -19,20 +19,18 @@ layout:
     visible: false
 ---
 
-# @tetherto/wdk Overview
+# @tetherto/wdk-core
 
-A comprehensive Wallet Development Kit (WDK) that provides unified interfaces for managing wallets, performing account abstraction, and executing cross-chain operations across multiple blockchains. This package serves as the main entry point and orchestrator for all WDK wallet modules, allowing you to register and manage different blockchain wallets and protocols through a single interface.
+A comprehensive Wallet Development Kit (WDK) that provides unified interfaces for managing wallets, performing account abstraction, and executing cross-chain operations across multiple blockchains. This package serves as the main entry point and **orchestrator for all WDK wallet and protocol modules**, allowing you to register and manage different blockchain wallets through a single interface.
 
 ## Features
 
 - **Multi-Chain Wallet Management**: Register and manage wallets for different blockchains (EVM, TON, Bitcoin, Spark, TRON, Solana)
 - **Protocol Registration**: Register swap, bridge, and lending protocols for cross-chain operations
 - **Middleware Support**: Register custom middleware for account decoration and enhanced functionality
-- **BIP-39 Seed Phrase Support**: Generate and validate BIP-39 mnemonic seed phrases
 - **BIP-44 Derivation Paths**: Support for standard derivation paths across all blockchains
 - **Multi-Account Management**: Create and manage multiple accounts from a single seed phrase
 - **Account Abstraction**: Support for gasless transactions and smart account management
-- **Cross-Chain Operations**: Bridge tokens between different chains seamlessly
 - **Protocol Access**: Access registered protocols (swap, bridge, lending) through account instances
 - **TypeScript Support**: Full TypeScript definitions included
 - **Memory Safety**: Secure private key management with automatic memory cleanup
@@ -40,19 +38,137 @@ A comprehensive Wallet Development Kit (WDK) that provides unified interfaces fo
 
 ## Supported Networks
 
-This package works with multiple blockchain networks through wallet registration:
+This package works with multiple blockchain networks through wallet registration.
 
-- **EVM Chains**: Ethereum, Arbitrum, Polygon (via @tetherto/wdk-wallet-evm)
-- **TON**: TON Mainnet (via @tetherto/wdk-wallet-ton)
-- **Bitcoin**: Bitcoin Mainnet (via @tetherto/wdk-wallet-btc)
-- **Spark**: Spark Mainnet (via @tetherto/wdk-wallet-spark)
-- **TRON**: Tron Mainnet (via @tetherto/wdk-/wallet-tron)
-- **Solana**: Solana Mainnet (via @tetherto/wdk-wallet-solana)
+<table data-card-size="small" data-view="cards">
+  <thead>
+    <tr>
+      <th></th>
+      <th>Type</th>
+      <th>Purpose</th>
+      <th data-hidden data-card-target data-type="content-ref"></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><img src="../../assets/logos/bitcoin-logo.png" alt="Bitcoin Logo" width="20" height="20"  style="object-fit:contain;"  /></td>
+      <td><strong>Bitcoin</strong></td>
+      <td>Bitcoin Mainnet</td>
+      <td>
+        <a href="../wallet-modules/wallet-btc/">wallet-btc</a>      
+      </td>
+    </tr>
+    <tr>
+      <td><img src="../../assets/logos/ethereum-logo.png" alt="Ethereum logo" width="20" height="20" style="object-fit:contain;" /></td>
+      <td><strong>EVM Chains</strong></td>
+      <td>Ethereum, L2s, etc.</td>
+      <td>
+        <a href="../wallet-modules/wallet-evm/">wallet-evm</a>, 
+        <a href="../wallet-modules/wallet-evm-erc-4337/">wallet-evm-erc-4337</a>
+      </td>
+    </tr>
+    <tr>
+      <td><img src="../../assets/logos/tron-logo.png" alt="Tron Logo"  width="20" height="20" style="object-fit:contain;" /></td>
+      <td><strong>TRON</strong></td>
+      <td>Tron Mainnet</td>
+      <td>
+        <a href="../wallet-modules/wallet-tron/">wallet-tron</a>, 
+        <a href="../wallet-modules/wallet-tron-gasfree/">wallet-tron-gasfree</a>
+      </td>
+    </tr>
+    <tr>
+      <td><img src="../../assets/logos/ton-logo.png" alt="Ton Logo" width="20" height="20" style="object-fit:contain;"  /></td>
+      <td><strong>TON</strong></td>
+      <td>TON Mainnet</td>
+      <td>
+        <a href="../wallet-modules/wallet-ton/">wallet-ton</a>, 
+        <a href="../wallet-modules/wallet-ton-gasless/">wallet-ton-gasless</a>
+      </td>
+    </tr>
+    <tr>
+      <td><img src="../../assets/logos/solana-logo.png" alt="Solana Logo" width="20" height="20"  style="object-fit:contain;" /></td>
+      <td><strong>Solana</strong></td>
+      <td>Solana Mainnet</td>
+      <td>
+        <a href="../wallet-modules/wallet-solana/">wallet-solana</a>      </td>
+    </tr>
+    </tr>
+     <tr>
+      <td><img src="../../assets/logos/spark-logo.png" alt="Spark Logo" width="20" height="20"  style="object-fit:contain;" /></td>
+      <td><strong>Spark</strong></td>
+      <td>Spark Mainnet</td>
+      <td>
+        <a href="../wallet-modules/wallet-spark/">wallet-spark</a>      
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 ## Next Steps
 
-- Read the **[Guides](guides.md)** for quick start, and usage examples
-- Check the **[API Reference](api-reference.md)**
-- Review **[Configuration](configuration.md)** options
-- Want to contribute? **[Open a PR on Github](https://github.com/tetherto/wdk-core)**
-- Found a bug? **[Open an issue on Github](https://github.com/tetherto/wdk-core/issues)**
+<table data-card-size="large" data-view="cards">
+	<thead>
+		<tr>
+			<th></th>
+			<th></th>
+			<th></th>
+			<th data-hidden data-card-target data-type="content-ref"></th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>Node.js Quickstart</strong>
+			</td>
+			<td>Get started with WDK in a Node.js environment</td>
+			<td>
+				<a href="../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK Core Configuration</strong>
+			</td>
+			<td>Get started with WDK's configuration</td>
+			<td>
+				<a href="./configuration.md">WDK Core Configuration</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK Core API</strong>
+			</td>
+			<td>Get started with WDK's API</td>
+			<td>
+				<a href="./api-reference.md">WDK Core API</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK Core Usage</strong>
+			</td>
+			<td>Get started with WDK's usage</td>
+			<td>
+				<a href="./usage.md">WDK Core Usage</a>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+***
+
+### Need Help?
+
+{% include "../../.gitbook/includes/support-cards.md" %}

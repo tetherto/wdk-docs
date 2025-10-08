@@ -1,5 +1,5 @@
 ---
-title: Wallet EVM ERC-4337 Guides
+title: Wallet EVM ERC-4337 Usage
 description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-evm-erc-4337
 author: Matteo Giardino
 lastReviewed: 2025-06-26
@@ -19,7 +19,7 @@ layout:
     visible: false
 ---
 
-# Guides
+# Usage
 
 ## Installation
 

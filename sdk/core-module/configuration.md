@@ -21,16 +21,20 @@ layout:
 
 ## WDK Manager Configuration
 
+{% code title="Create WDK Instance" lineNumbers="true" %}
 ```javascript
 import WDK from '@tetherto/wdk'
 
 const wdk = new WDK(seedPhrase)
 ```
+{% endcode %}
+
 
 The WDK Manager itself only requires a seed phrase for initialization. Configuration is done through the registration of wallets and protocols.
 
 ## Wallet Registration Configuration
 
+{% code title="Register WDK Wallet" lineNumbers="true" %}
 ```javascript
 import WDK from '@tetherto/wdk'
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
@@ -45,9 +49,12 @@ const wdk = new WDK(seedPhrase)
     tonApiEndpoint: 'https://tonapi.io'
   })
 ```
+{% endcode %}
+
 
 ## Protocol Registration Configuration
 
+{% code title="Register WDK Protocol" lineNumbers="true" %}
 ```javascript
 import ParaswapProtocolEvm from '@tetherto/wdk-protocol-swap-paraswap-evm'
 import Usdt0ProtocolTon from '@tetherto/wdk-protocol-bridge-usdt0-ton'
@@ -60,6 +67,8 @@ const wdk = new WDK(seedPhrase)
     tonApiKey: 'YOUR_TON_API_KEY'
   })
 ```
+{% endcode %}
+
 
 ## Configuration Options
 
@@ -69,6 +78,7 @@ Each wallet manager requires its own configuration object when registered. The c
 
 #### EVM Wallet Configuration
 
+{% code title="Ethereum WDK Wallet Configuration" lineNumbers="true" %}
 ```javascript
 const ethereumWalletConfig = {
   provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY', // RPC endpoint
@@ -77,9 +87,12 @@ const ethereumWalletConfig = {
 
 wdk.registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
 ```
+{% endcode %}
+
 
 #### TON Wallet Configuration
 
+{% code title="TON WDK Wallet Configuration" lineNumbers="true" %}
 ```javascript
 const tonConfig = {
   tonApiKey: 'YOUR_TON_API_KEY',
@@ -90,6 +103,7 @@ const tonConfig = {
 
 wdk.registerWallet('ton', WalletManagerTon, tonWalletConfig)
 ```
+{% endcode %}
 
 
 ### Protocol Configuration
@@ -98,6 +112,7 @@ Protocols also require their own configuration objects when registered.
 
 #### Swap Protocol Configuration
 
+{% code title="Swap WDK Protocol Configuration" lineNumbers="true" %}
 ```javascript
 const paraswapProtocolConfig = {
   apiKey: 'YOUR_PARASWAP_API_KEY',
@@ -106,9 +121,12 @@ const paraswapProtocolConfig = {
 
 wdk.registerProtocol('ethereum', 'paraswap', ParaswapProtocolEvm, paraswapProtocolConfig)
 ```
+{% endcode %}
+
 
 #### Bridge Protocol Configuration
 
+{% code title="Bridge WDK Protocol Configuration" lineNumbers="true" %}
 ```javascript
 const usdt0ProtocolConfig = {
   tonApiKey: 'YOUR_TON_API_KEY',
@@ -117,11 +135,14 @@ const usdt0ProtocolConfig = {
 
 wdk.registerProtocol('ton', 'usdt0', Usdt0ProtocolTon, usdt0ProtocolConfig)
 ```
+{% endcode %}
+
 
 ### Middleware Configuration
 
 Middleware functions can be registered to enhance account functionality.
 
+{% code title="Middleware WDK Protocol Configuration" lineNumbers="true" %}
 ```javascript
 // Simple logging middleware
 wdk.registerMiddleware('ethereum', async (account) => {
@@ -133,11 +154,14 @@ import { getFailoverCascadeMiddleware } from '@tetherto/wdk-wrapper-failover-cas
 
 wdk.registerMiddleware('ethereum', getFailoverCascadeMiddleware(fallbackOptions))
 ```
+{% endcode %}
+
 
 ## Environment Variables
 
 For production applications, consider using environment variables for sensitive configuration:
 
+{% code title="WDK enviroment variables Configuration" lineNumbers="true" %}
 ```javascript
 const wdk = new WDK(process.env.SEED_PHRASE)
   .registerWallet('ethereum', WalletManagerEvm, {
@@ -147,6 +171,8 @@ const wdk = new WDK(process.env.SEED_PHRASE)
     apiKey: process.env.PARASWAP_API_KEY
   })
 ```
+{% endcode %}
+
 
 ## Configuration Validation
 
@@ -160,6 +186,7 @@ The WDK Manager will validate configurations when wallets and protocols are regi
 
 Configuration errors will be thrown during registration:
 
+{% code title="Configuration errors" lineNumbers="true" %}
 ```javascript
 try {
   wdk.registerWallet('ethereum', InvalidWalletClass, config)
@@ -173,3 +200,79 @@ try {
   console.error('Protocol registration failed:', error.message)
 }
 ```
+{% endcode %}
+
+***
+
+## Next Steps
+
+
+<table data-card-size="large" data-view="cards">
+	<thead>
+		<tr>
+			<th></th>
+			<th></th>
+			<th></th>
+			<th data-hidden data-card-target data-type="content-ref"></th>
+		</tr>
+	</thead>
+	<tbody>
+    <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK Core Usage</strong>
+			</td>
+			<td>Get started with WDK's usage</td>
+			<td>
+				<a href="./usage.md">WDK Core Usage</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK Core API</strong>
+			</td>
+			<td>Get started with WDK's API</td>
+			<td>
+				<a href="./api-reference.md">WDK Core API</a>
+			</td>
+		</tr>
+    <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>Wallet Modules</strong>
+			</td>
+			<td>Explore blockchain-specific wallet modules</td>
+			<td>
+				<a href="../wallet-modules/README.md">WDK Wallet Modules</a>
+			</td>
+		</tr>
+    <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>Protocol Modules</strong>
+			</td>
+			<td>Discover DeFi protocol integrations</td>
+			<td>
+				<a href="../bridge-modules/README.md">Bridge Modules</a>,
+        <a href="../lending-modules/README.md">Lending Modules</a>,
+        <a href="../swap-modules/README.md">Swap Modules</a>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+***
+
+### Need Help?
+
+{% include "../../.gitbook/includes/support-cards.md" %}
+

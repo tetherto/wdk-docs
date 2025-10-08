@@ -28,18 +28,64 @@ DeFi lending functionality different lending & borrowing protocols
 
 | Module | Route | Status | Documentation | GitHub |
 |--------|-------|--------|---------------|---------|
-| `@tetherto/wdk-protocol-lending-aave-evm` | EVM | In progress | [Documentation](./wdk-protocol-lending-aave-evm/overview.md)  | [Repository](https://github.com/tetherto/wdk-protocol-lending-aave-evm) |
+| `@tetherto/wdk-protocol-lending-aave-evm` | EVM | In progress | [Documentation](./lending-aave-evm/README.md)  | [Repository](https://github.com/tetherto/wdk-protocol-lending-aave-evm) |
 
 
-## Next steps
+## Other resources
 
 To get started with WDK modules, follow these steps:
 
-1. Get up and running quickly with our [Quick Start Guide](../../getting-started/quick-start.md)
-2. Choose the modules that best fits your needs from the tables above 
-3. Check specific documentation for modules you wish to use
+<table data-card-size="large" data-view="cards">
+	<thead>
+		<tr>
+			<th></th>
+			<th></th>
+			<th></th>
+			<th data-hidden data-card-target data-type="content-ref"></th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>Node.js Quickstart</strong>
+			</td>
+			<td>Get started with WDK in a Node.js environment</td>
+			<td>
+				<a href="../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<i class="fa-mobile-alt">:mobile-alt:</i>
+			</td>
+			<td>
+				<strong>React Native Quickstart</strong>
+			</td>
+			<td>Build mobile wallets with React Native Expo</td>
+			<td>
+				<a href="../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-mobile-alt">:mobile-alt:</i>
+			</td>
+			<td>
+				<strong>WDK Core Module</strong>
+			</td>
+			<td>Manage wallet and protocol modules</td>
+			<td>
+				<a href="../core-module/README.md">WDK Core</a>
+			</td>
+		</tr>
+	</tbody>
+</table>
 
-You can also:
+***
 
-- Learn about key concepts like [Account Abstraction](../../resources/concepts.md) and other important definitions
-- Use one our ready-to-use examples to be production ready
+### Need Help?
+
+{% include "../../.gitbook/includes/support-cards.md" %}

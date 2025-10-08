@@ -22,7 +22,7 @@ This package serves as the main entry point and orchestrator for all WDK wallet 
 
 ## Installation
 
-Install the `@tetherto/wdk` package:
+Install the `@tetherto/wdk-core` package:
 
 ```bash
 npm install @tetherto/wdk
@@ -430,10 +430,69 @@ async function cleanupExample(wdk) {
 
 ## Next Steps
 
-- [Configuration Guide](configuration.md) - Learn how to configure WDK Core for different environments
-- [API Reference](api-reference.md) - Complete API documentation
-- [Wallet Modules](../wallet-modules/README.md) - Explore blockchain-specific wallet modules
-- [Protocol Modules](../swap-modules/README.md) - Discover DeFi protocol integrations
+
+<table data-card-size="large" data-view="cards">
+	<thead>
+		<tr>
+			<th></th>
+			<th></th>
+			<th></th>
+			<th data-hidden data-card-target data-type="content-ref"></th>
+		</tr>
+	</thead>
+	<tbody>
+    <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK Core Configuration</strong>
+			</td>
+			<td>Get started with WDK's configuration</td>
+			<td>
+				<a href="./configuration.md">WDK Core Configuration</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK Core API</strong>
+			</td>
+			<td>Get started with WDK's API</td>
+			<td>
+				<a href="./api-reference.md">WDK Core API</a>
+			</td>
+		</tr>
+    <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>Wallet Modules</strong>
+			</td>
+			<td>Explore blockchain-specific wallet modules</td>
+			<td>
+				<a href="../wallet-modules/README.md">WDK Wallet Modules</a>
+			</td>
+		</tr>
+    <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>Protocol Modules</strong>
+			</td>
+			<td>Discover DeFi protocol integrations</td>
+			<td>
+				<a href="../bridge-modules/README.md">Bridge Modules</a>,
+        <a href="../lending-modules/README.md">Lending Modules</a>,
+        <a href="../swap-modules/README.md">Swap Modules</a>
+			</td>
+		</tr>
+	</tbody>
+</table>
 
 ***
 
