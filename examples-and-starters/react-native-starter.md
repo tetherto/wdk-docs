@@ -42,9 +42,9 @@ The React Native Starter Alpha is a Expo + React Native app showing how to build
 
 **Asset Management**
 
-* **Real-Time Balances**: Live balance updates via [WDK Indexer](https://indexer.wallet.tether.io/)
-* **Transaction History**: Complete transaction tracking and history via [WDK Indexer](https://indexer.wallet.tether.io/)
-* **Price Conversion**: Real-time fiat pricing via Pricing Provider
+* **Real-Time Balances**: Live balance updates via [WDK Indexer](../tools/indexer-api/README.md)
+* **Transaction History**: Complete transaction tracking and history via [WDK Indexer](../tools/indexer-api/README.md)
+* **Price Conversion**: Real-time fiat pricing via [Pricing Provider](../tools/price-rates/README.md)
 
 **User Experience**
 
@@ -194,8 +194,8 @@ This starter provides a solid foundation that you can extend with additional fun
 
 * [**WDK SDK Documentation**](../sdk/get-started.md) - Learn about the underlying SDK
 * [**UI Kit Documentation**](../ui-kits/react-native-ui-kit/get-started.md) - Customize the interface
-* [**WDK Indexer API**](../tools/indexer-api/) - Understand data fetching
-* [**Secret Manager**](../tools/secret-manager/) - Learn about secure key management
+* [**WDK Indexer**](../tools/indexer-api/README.md) - Understand data fetching
+* [**Secret Manager**](../tools/secret-manager/README.md) - Learn about secure key management
 
 ***
 
