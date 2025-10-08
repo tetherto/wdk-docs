@@ -28,18 +28,18 @@ DeFi swap functionality for token exchanges across different DEXs:
 
 | Module | Blockchain | Status | Documentation | GitHub |
 |--------|------------|--------|---------------|---------|
-| `@tetherto/wdk-protocol-swap-paraswap-evm` | EVM | In progress | [Documentation](./wdk-protocol-swap-paraswap-evm/overview.md) | [Repository](https://github.com/tetherto/wdk-protocol-swap-paraswap-evm) |
-| `@tetherto/wdk-protocol-swap-dedust-ton` | TON | In progress | [Documentation](./wdk-protocol-swap-stonfi-ton/overview.md) | [Repository](https://github.com/tetherto/wdk-protocol-swap-dedust-ton) |
+| `@tetherto/wdk-protocol-swap-paraswap-evm` | EVM | In progress | [Documentation](./swap-paraswap-evm/) | [Repository](https://github.com/tetherto/wdk-protocol-swap-paraswap-evm) |
+| `@tetherto/wdk-protocol-swap-dedust-ton` | TON | In progress | [Documentation](./swap-stonfi-ton/) | [Repository](https://github.com/tetherto/wdk-protocol-swap-dedust-ton) |
 
 ## Next steps
 
 To get started with WDK modules, follow these steps:
 
-1. Get up and running quickly with our [Quick Start Guide](../../getting-started/quick-start.md)
+1. Get up and running quickly with our [Quick Start Guide](../../start-building/nodejs-bare-quickstart.md)
 2. Choose the modules that best fits your needs from the tables above 
 3. Check specific documentation for modules you wish to use
 
 You can also:
 
-- Learn about key concepts like [Account Abstraction](../../resources/concepts.md) and other important definitions
+- Learn about key concepts like [Account Abstraction](../../resources/concepts.md#account-abstraction) and other important definitions
 - Use one our ready-to-use examples to be production ready

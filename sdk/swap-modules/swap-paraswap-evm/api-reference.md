@@ -124,3 +124,61 @@ Common errors include:
 - `swapMaxFee: bigint` — Upper bound for gas fees (wei)
 - `tokenInAmount/tokenOutAmount: bigint` — ERC‑20 base units
 - `paymasterToken: string` — token symbol or address (AA only)
+
+
+<table data-card-size="large" data-view="cards">
+	<thead>
+		<tr>
+			<th></th>
+			<th></th>
+			<th></th>
+			<th data-hidden data-card-target data-type="content-ref"></th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>Node.js Quickstart</strong>
+			</td>
+			<td>Get started with WDK in a Node.js environment</td>
+			<td>
+				<a href="../../../start-building/nodejs-bare-quickstart.md">Node.js & Bare Quickstart</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK Stonfi Swap Protocol Configuration</strong>
+			</td>
+			<td>Get started with WDK's Stonfi Swap Protocol configuration</td>
+			<td>
+				<a href="./configuration.md">WDK Stonfi Swap Protocol Configuration</a>
+			</td>
+		</tr>
+    <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK Stonfi Swap Protocol Usage</strong>
+			</td>
+			<td>Get started with WDK's Stonfi Swap Protocol usage</td>
+			<td>
+				<a href="./usage.md">WDK Stonfi Swap Protocol  Usage</a>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+***
+
+### Need Help?
+
+{% include "../../../.gitbook/includes/support-cards.md" %}
+
+
