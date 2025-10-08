@@ -211,7 +211,6 @@ wallet.dispose()
 - Consider using multiple backup servers
 
 
-## Next Steps 
 
 <table data-card-size="large" data-view="cards">
 	<thead>

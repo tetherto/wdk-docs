@@ -89,23 +89,11 @@ This package works with Bitcoin networks:
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK BTC Wallet Configuration</strong>
+				<strong>WDK Bitcoin Wallet Configuration</strong>
 			</td>
-			<td>Get started with WDK's BTC Wallet configuration</td>
+			<td>Get started with WDK's Bitcoin Wallet configuration</td>
 			<td>
-				<a href="./configuration.md">WDK BTC Wallet Configuration</a>
-			</td>
-		</tr>
-        <tr>
-			<td>
-				<i class="fa-code">:code:</i>
-			</td>
-			<td>
-				<strong>WDK BTC Wallet API</strong>
-			</td>
-			<td>Get started with WDK's BTC Wallet API</td>
-			<td>
-				<a href="./api-reference.md">WDK BTC Wallet API</a>
+				<a href="./configuration.md">WDK Bitcoin Wallet Configuration</a>
 			</td>
 		</tr>
         <tr>
@@ -113,11 +101,23 @@ This package works with Bitcoin networks:
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK BTC Wallet Usage</strong>
+				<strong>WDK Bitcoin Wallet API</strong>
 			</td>
-			<td>Get started with WDK's BTC Wallet usage</td>
+			<td>Get started with WDK's Bitcoin Wallet API</td>
 			<td>
-				<a href="./usage.md">WDK BTC Wallet Usage</a>
+				<a href="./api-reference.md">WDK Bitcoin Wallet API</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK Bitcoin Wallet Usage</strong>
+			</td>
+			<td>Get started with WDK's Bitcoin Wallet usage</td>
+			<td>
+				<a href="./usage.md">WDK Bitcoin Wallet Usage</a>
 			</td>
 		</tr>
 	</tbody>

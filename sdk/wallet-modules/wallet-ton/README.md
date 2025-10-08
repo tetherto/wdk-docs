@@ -45,9 +45,69 @@ This package works with the TON blockchain (The Open Network), including:
 
 ## Next Steps
 
-- Read the **[Guides](guides.md)** for quick start, and usage examples
-- Check the **[API Reference](api-reference.md)**
-- Review **[Configuration](configuration.md)** options
-- Want to contribute? **[Open a PR on Github](https://github.com/tetherto/wdk-wallet-ton)**
-- Found a bug? **[Open an issue on Github](https://github.com/tetherto/wdk-wallet-ton/issues)** 
+<table data-card-size="large" data-view="cards">
+	<thead>
+		<tr>
+			<th></th>
+			<th></th>
+			<th></th>
+			<th data-hidden data-card-target data-type="content-ref"></th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>Node.js Quickstart</strong>
+			</td>
+			<td>Get started with WDK in a Node.js environment</td>
+			<td>
+				<a href="../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK TON Wallet Configuration</strong>
+			</td>
+			<td>Get started with WDK's TON Wallet configuration</td>
+			<td>
+				<a href="./configuration.md">WDK TON Wallet Configuration</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK TON Wallet API</strong>
+			</td>
+			<td>Get started with WDK's TON Wallet API</td>
+			<td>
+				<a href="./api-reference.md">WDK TON Wallet API</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK TON Wallet Usage</strong>
+			</td>
+			<td>Get started with WDK's with TON Wallet usage</td>
+			<td>
+				<a href="./usage.md">WDK with TON Wallet Usage</a>
+			</td>
+		</tr>
+	</tbody>
+</table>
 
+***
+
+### Need Help?
+
+{% include "../../.gitbook/includes/support-cards.md" %}

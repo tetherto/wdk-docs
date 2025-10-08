@@ -388,9 +388,6 @@ interface BtcWalletConfig {
 }
 ```
 
-
-## Next Steps 
-
 <table data-card-size="large" data-view="cards">
 	<thead>
 		<tr>
@@ -430,11 +427,11 @@ interface BtcWalletConfig {
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK BTC Wallet Usage</strong>
+				<strong>WDK Bitcoin Wallet Usage</strong>
 			</td>
-			<td>Get started with WDK's BTC Wallet Usage</td>
+			<td>Get started with WDK's Bitcoin Wallet Usage</td>
 			<td>
-				<a href="./configuration.md">WDK BTC Wallet Usage</a>
+				<a href="./configuration.md">WDK Bitcoin Wallet Usage</a>
 			</td>
 		</tr>
         <tr>
@@ -442,11 +439,11 @@ interface BtcWalletConfig {
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK BTC Wallet Configuration</strong>
+				<strong>WDK Bitcoin Wallet Configuration</strong>
 			</td>
-			<td>Get started with WDK's BTC Wallet Configuration</td>
+			<td>Get started with WDK's Bitcoin Wallet Configuration</td>
 			<td>
-				<a href="./configuration.md">WDK BTC Wallet Configuration</a>
+				<a href="./configuration.md">WDK Bitcoin Wallet Configuration</a>
 			</td>
 		</tr>
 	</tbody>

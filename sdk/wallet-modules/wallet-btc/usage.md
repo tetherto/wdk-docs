@@ -595,7 +595,6 @@ async function completeWalletWorkflow() {
 ```
 
 
-## Next Steps 
 
 <table data-card-size="large" data-view="cards">
 	<thead>
@@ -636,11 +635,11 @@ async function completeWalletWorkflow() {
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK BTC Wallet Configuration</strong>
+				<strong>WDK Bitcoin Wallet Configuration</strong>
 			</td>
-			<td>Get started with WDK's BTC Wallet Configuration</td>
+			<td>Get started with WDK's Bitcoin Wallet Configuration</td>
 			<td>
-				<a href="./configuration.md">WDK BTC Wallet Configuration</a>
+				<a href="./configuration.md">WDK Bitcoin Wallet Configuration</a>
 			</td>
 		</tr>
         <tr>
@@ -648,11 +647,11 @@ async function completeWalletWorkflow() {
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK BTC Wallet API</strong>
+				<strong>WDK Bitcoin Wallet API</strong>
 			</td>
-			<td>Get started with WDK's BTC Wallet API</td>
+			<td>Get started with WDK's Bitcoin Wallet API</td>
 			<td>
-				<a href="./api-reference.md">WDK BTC Wallet API</a>
+				<a href="./api-reference.md">WDK Bitcoin Wallet API</a>
 			</td>
 		</tr>
 	</tbody>

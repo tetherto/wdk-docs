@@ -433,3 +433,72 @@ async function safeTransactionExample(account, wallet) {
   }
 }
 ```
+
+
+
+<table data-card-size="large" data-view="cards">
+	<thead>
+		<tr>
+			<th></th>
+			<th></th>
+			<th></th>
+			<th data-hidden data-card-target data-type="content-ref"></th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>Node.js Quickstart</strong>
+			</td>
+			<td>Get started with WDK in a Node.js environment</td>
+			<td>
+				<a href="../../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+			</td>
+		</tr>
+    <tr>
+			<td>
+				<i class="fa-mobile-alt">:mobile-alt:</i>
+			</td>
+			<td>
+				<strong>React Native Quickstart</strong>
+			</td>
+			<td>Build mobile wallets with React Native Expo</td>
+			<td>
+				<a href="../../../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
+			</td>
+		</tr>
+    <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK TON Wallet Configuration</strong>
+			</td>
+			<td>Get started with WDK's TON Wallet Configuration</td>
+			<td>
+				<a href="./configuration.md">WDK TON Wallet Configuration</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK TON Wallet API</strong>
+			</td>
+			<td>Get started with WDK's TON Wallet API</td>
+			<td>
+				<a href="./api-reference.md">WDK TON Wallet API</a>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+***
+
+### Need Help?
+
+{% include "../../.gitbook/includes/support-cards.md" %}
