@@ -64,8 +64,8 @@ npm install
 {% hint style="info" %}
 Learn more about the React Native starter:
 
-* [**@tetherto/wdk-starter-react-native**](../examples-and-starters/react-native-starter/) - Production-ready multi-chain wallet starter
-* [**Features Overview**](../examples-and-starters/react-native-starter/#features) - Multi-chain support, secure storage, and more
+* [**@tetherto/wdk-starter-react-native**](../start-building/react-native-quickstart) - Production-ready multi-chain wallet starter
+* [**Features Overview**](../ui-kits/react-native-ui-kit/) - Multi-chain support, secure storage, and more
 * [**Supported Networks**](#add-more-networks) - Bitcoin, Ethereum, Polygon, Arbitrum, TON
 {% endhint %}
 
@@ -90,7 +90,7 @@ EXPO_PUBLIC_WDK_INDEXER_API_KEY=your_actual_api_key_here
 To learn more about getting your WDK Indexer API key:
 
 * [**WDK Indexer API**](../tools/indexer-api/) - Overview and setup
-* [**API Key Configuration**](../tools/indexer-api/api-reference.md) - How to obtain and configure your API key
+* [**API Key Configuration**](../tools/indexer-api/api-reference) - How to obtain and configure your API key
 {% endhint %}
 
 ***
