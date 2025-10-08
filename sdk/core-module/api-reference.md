@@ -590,13 +590,11 @@ interface ILendingProtocol {
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>Protocol Modules</strong>
+				<strong>Bridge Modules</strong>
 			</td>
-			<td>Discover DeFi protocol integrations</td>
+			<td>Cross-chain USDT0 bridges</td>
 			<td>
-				<a href="../bridge-modules/README.md">Bridge Modules</a>,
-        <a href="../lending-modules/README.md">Lending Modules</a>,
-        <a href="../swap-modules/README.md">Swap Modules</a>
+				<a href="../bridge-modules/README.md">Bridge Modules</a>
 			</td>
 		</tr>
 	</tbody>

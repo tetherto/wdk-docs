@@ -265,30 +265,6 @@ try {
                 <a href="../bridge-modules/README.md">Bridge Modules</a>
             </td>
         </tr>
-    	<tr>
-            <td>
-                <i class="fa-code">:code:</i>
-            </td>
-            <td>
-                <strong>Lending Modules</strong>
-            </td>
-            <td>Supply, borrow, repay (e.g., Aave)</td>
-            <td>
-                <a href="../lending-modules/README.md">Lending Modules</a>
-            </td>
-        </tr>
-    	<tr>
-            <td>
-                <i class="fa-code">:code:</i>
-            </td>
-            <td>
-                <strong>Swap Modules</strong>
-            </td>
-            <td>Token swaps on supported chains</td>
-            <td>
-                <a href="../swap-modules/README.md">Swap Modules</a>
-            </td>
-        </tr>
 	</tbody>
 </table>
 
