@@ -102,7 +102,7 @@ WDK provides a set of core libraries that give you the highest level of control 
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="getting-started/nodejs-quickstart.md">nodejs-quickstart.md</a>
+				<a href="./start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
 			</td>
 		</tr>
 		<tr>
@@ -114,7 +114,7 @@ WDK provides a set of core libraries that give you the highest level of control 
 			</td>
 			<td>Build mobile wallets with React Native Expo</td>
 			<td>
-				<a href="getting-started/react-native-quickstart.md">react-native-quickstart.md</a>
+				<a href="./start-building/react-native-quickstart.md">react-native-quickstart.md</a>
 			</td>
 		</tr>
 		<tr>
@@ -126,7 +126,7 @@ WDK provides a set of core libraries that give you the highest level of control 
 			</td>
 			<td>Deploy WDK in lightweight environments</td>
 			<td>
-				<a href="getting-started/bare-quickstart.md">bare-quickstart.md</a>
+				<a href="./start-building/nodejs-bare-quickstart.md">bare-quickstart.md</a>
 			</td>
 		</tr>
 		<tr>
@@ -138,7 +138,7 @@ WDK provides a set of core libraries that give you the highest level of control 
 			</td>
 			<td>Explore our React Native UI Kit with pre-built components</td>
 			<td>
-				<a href="ui-kit/react-native/">react-native</a>
+				<a href="./ui-kits/react-native-ui-kit/">react-native</a>
 			</td>
 		</tr>
 	</tbody>
