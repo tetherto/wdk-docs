@@ -59,19 +59,19 @@ X-RateLimit-Reset: 1642694400
 
 ## API Endpoints
 
-{% openapi src="https://wdk-api-staging.tether.su/documentation/json" path="/api/v1/health" method="get" %}
+{% openapi src="./openapi.json" path="/api/v1/health" method="get" %}
 Check API server status
 {% endopenapi %}
 
 ***
 
-{% openapi src="https://wdk-api-staging.tether.su/documentation/json" path="/api/v1/{blockchain}/{token}/{address}/token-transfers" method="get" %}
+{% openapi src="./openapi.json" path="/api/v1/{blockchain}/{token}/{address}/token-transfers" method="get" %}
 Get token transfer history for an address
 {% endopenapi %}
 
 ***
 
-{% openapi src="https://wdk-api-staging.tether.su/documentation/json" path="/api/v1/{blockchain}/{token}/{address}/token-balances" method="get" %}
+{% openapi src="./openapi.json" path="/api/v1/{blockchain}/{token}/{address}/token-balances" method="get" %}
 Get current token balance for an address
 {% endopenapi %}
 

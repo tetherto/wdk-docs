@@ -111,3 +111,9 @@ Implement this interface to plug your data source into `PricingProvider`.
 - Uses Bitfinex Public HTTP API (`/v2/ticker` and `/v2/candles`) under the hood for the Bitfinex client
 - Provider caches last price per pair using in-memory store and TTL
 
+***
+
+## Need Help?
+
+{% include "../../.gitbook/includes/support-cards.md" %}
+

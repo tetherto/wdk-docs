@@ -59,3 +59,9 @@ const hist = await provider.getHistoricalPrice({ from: 'BTC', to: 'USD' })
 ```
 {% endcode %}
 
+***
+
+## Need Help?
+
+{% include "../../.gitbook/includes/support-cards.md" %}
+

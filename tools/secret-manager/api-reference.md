@@ -120,7 +120,7 @@ const plain  = sm.decrypt(cipher, masterKey)
 
 ***
 
-### Need Help?
+## Need Help?
 
-{% include "../.gitbook/includes/support-cards.md" %}
+{% include "../../.gitbook/includes/support-cards.md" %}
 

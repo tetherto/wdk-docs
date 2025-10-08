@@ -194,8 +194,8 @@ This starter provides a solid foundation that you can extend with additional fun
 
 * [**WDK SDK Documentation**](../sdk/get-started.md) - Learn about the underlying SDK
 * [**UI Kit Documentation**](../ui-kits/react-native-ui-kit/get-started.md) - Customize the interface
-* [**WDK Indexer API**](../tools/indexer-api/overview.md) - Understand data fetching
-* [**Secret Manager**](../tools/secret-manager/overview.md) - Learn about secure key management
+* [**WDK Indexer API**](../tools/indexer-api/) - Understand data fetching
+* [**Secret Manager**](../tools/secret-manager/) - Learn about secure key management
 
 ***
 

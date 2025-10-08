@@ -35,7 +35,7 @@ WDK Indexer provides fast, reliable access to blockchain transaction data across
 * **Multi-Blockchain Support**: Bitcoin, Ethereum, Solana, TON, TRON, Spark, and other major networks
 * **Real-Time Data**: Continuously syncs with blockchain networks for up-to-date information
 * **Fast Queries**: Get transaction history and balances instantly without scanning the blockchain
-* **Unified API**: Consistent JSON-RPC 2.0 API across all supported blockchains
+* **Unified REST API**: Consistent REST endpoints across supported blockchains
 * **Flexible Deployment**: Run locally, self-host, or use managed infrastructure
 * **P2P Replication**: Built on Hyperbee for decentralized data replication
 
@@ -53,12 +53,12 @@ Before using the WDK Indexer API, you'll need:
 
 ### API Base URL
 
-The indexer exposes a single JSON-RPC 2.0 endpoint:
+REST base URL for deployments:
 
 {% code title="API Endpoint" %}
 ```
-http://localhost:8080/rpc  # Default local deployment
-https://your-indexer.com/rpc  # Production deployment
+http://wdk-api-01.tether.to              # Example production deployment
+http://localhost:8080                    # Example local deployment
 ```
 {% endcode %}
 
@@ -158,33 +158,23 @@ Validate addresses before processing:
 
 ## Quick Example
 
-Here's a simple example of querying transaction history:
+Here's a simple example of querying token transfers (REST):
 
-{% code title="Query Transactions" lineNumbers="true" %}
+{% code title="Query Token Transfers" lineNumbers="true" %}
 ```javascript
 const axios = require('axios');
 
-async function getTransactionHistory(address) {
-  const response = await axios.post('http://localhost:8080/rpc', {
-    jsonrpc: '2.0',
-    method: 'queryTransactions',
-    params: {
-      addresses: [address],
-      limit: 50
-    },
-    id: 1
+async function getTokenTransfers(blockchain, token, address) {
+  const url = `http://wdk-api-01.tether.to/api/v1/${blockchain}/${token}/${address}/token-transfers`;
+  const response = await axios.get(url, {
+    headers: { 'x-api-key': 'your-api-key-here' }
   });
-  
-  if (response.data.error) {
-    throw new Error(response.data.error.message);
-  }
-  
-  return response.data.result;
+  return response.data;
 }
 
 // Usage
-const txns = await getTransactionHistory('1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa');
-console.log(`Found ${txns.length} transactions`);
+const transfers = await getTokenTransfers('ethereum', 'usdt', '0x742d35cc...');
+console.log(`Found ${transfers.transfers.length} transfers`);
 ```
 {% endcode %}
 
@@ -208,24 +198,11 @@ X-RateLimit-Reset: 1642694400
 
 ## Authentication
 
-For production deployments, the API can be secured with:
+All requests require a valid API key in the `x-api-key` header:
 
-* **API Keys**: Include in `Authorization` header
-* **IP Whitelisting**: Restrict access to specific IP ranges
-* **JWT Tokens**: For user-specific access control
-
-{% code title="Authenticated Request" lineNumbers="true" %}
-```javascript
-const response = await axios.post('https://your-indexer.com/rpc', {
-  jsonrpc: '2.0',
-  method: 'getBalance',
-  params: { address: '0x742d35cc6634c0c7e4c4b5c7f2b8e6f5f8c3e1a2' },
-  id: 1
-}, {
-  headers: {
-    'Authorization': 'Bearer your-api-key-here'
-  }
-});
+{% code title="Authentication Header" lineNumbers="true" %}
+```http
+x-api-key: your-api-key-here
 ```
 {% endcode %}
 
@@ -236,9 +213,9 @@ const response = await axios.post('https://your-indexer.com/rpc', {
 Ready to dive deeper? Explore the detailed API documentation:
 
 * [**API Reference**](api-reference.md) - Complete method documentation with examples
-* [**Indexer Deployment**](../../documentation/indexer/indexer-deployment.md) - Deploy your own indexer instance
-* [**Configuration Guide**](../../documentation/indexer/indexer-configuration.md) - Configure indexer settings
-* [**Integration Patterns**](../../documentation/transaction-history.md) - Best practices for integrating with your app
+<!-- * [**Indexer Deployment**](../../documentation/indexer/indexer-deployment.md) - Deploy your own indexer instance -->
+* [**Get Started**](./get-started.md) - Configure indexer settings
+<!-- * [**Integration Patterns**](../../resources/) - Best practices for integrating with your app -->
 
 ***
 

@@ -59,11 +59,11 @@ Powered by [`@tetherto/wdk-secret-manager`](https://github.com/tetherto/wdk-secr
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>Secret Manager Overview</strong>
+				<strong>Secret Manager Configuration</strong>
 			</td>
 			<td>Get started with WDK Secret Manager</td>
 			<td>
-				<a href="./overview.md">overview.md</a>
+				<a href="./configuration.md">configuration.md</a>
 			</td>
 		</tr>
 		<tr>
@@ -84,7 +84,7 @@ Powered by [`@tetherto/wdk-secret-manager`](https://github.com/tetherto/wdk-secr
 
 ***
 
-### Need Help?
+## Need Help?
 
-{% include "../.gitbook/includes/support-cards.md" %}
+{% include "../../.gitbook/includes/support-cards.md" %}
 
