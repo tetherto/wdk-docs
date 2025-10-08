@@ -81,7 +81,7 @@ This package works with Bitcoin networks:
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart">nodejs-quickstart.md</a>
+				<a href="../../../start-building/nodejs-bare-quickstart.md">Node.js & Bare Quickstart</a>
 			</td>
 		</tr>
         <tr>
