@@ -30,7 +30,7 @@ The unified core module that provides a single interface for managing all suppor
 
 | Module | Description | Status | Documentation | GitHub |
 |--------|-------------|--------|---------------|---------|
-| `@tetherto/wdk` | Unified WDK Core | ✅ Ready | [Documentation](../core-module/README.md) | [Repository](https://github.com/tetherto/wdk-core) |
+| `@tetherto/wdk` | Unified WDK Core | ✅ Ready | [Documentation](../core-module) | [Repository](https://github.com/tetherto/wdk-core) |
 
 
 ### Classic Wallet Modules
