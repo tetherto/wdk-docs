@@ -66,7 +66,7 @@ This package works with the TON blockchain (The Open Network), including:
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="../../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
 			</td>
 		</tr>
         <tr>

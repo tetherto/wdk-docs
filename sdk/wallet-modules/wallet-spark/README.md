@@ -68,7 +68,7 @@ This package supports the following Spark networks:
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="../../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
 			</td>
 		</tr>
         <tr>
