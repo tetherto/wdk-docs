@@ -77,10 +77,10 @@ npm install @tetherto/wdk @tetherto/wdk-wallet-evm @tetherto/wdk-wallet-tron @te
 {% hint style="info" %}
 Learn more about WDK modules:
 
-* [**@tetherto/wdk**](../sdk/wdk-core/usage.md) - The main SDK module
-* [**@tetherto/wdk-wallet-evm**](../sdk/wallet-modules/wallet-evm/usage.md) - Ethereum and EVM-compatible chains support
-* [**@tetherto/wdk-wallet-tron**](../sdk/wallet-modules/wallet-tron/usage.md) - TRON blockchain support
-* [**@tetherto/wdk-wallet-btc**](../sdk/wallet-modules/wallet-btc/usage.md) - Bitcoin blockchain support
+* [**@tetherto/wdk**](../sdk/core-module/) - The main SDK module
+* [**@tetherto/wdk-wallet-evm**](../sdk/wallet-modules/wallet-evm/) - Ethereum and EVM-compatible chains support
+* [**@tetherto/wdk-wallet-tron**](../sdk/wallet-modules/wallet-tron/) - TRON blockchain support
+* [**@tetherto/wdk-wallet-btc**](../sdk/wallet-modules/wallet-btc/) - Bitcoin blockchain support
 {% endhint %}
 
 ***
