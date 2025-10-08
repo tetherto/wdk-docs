@@ -82,4 +82,4 @@ The WDK Indexer is a high‑performance REST API for balances, token transfers, 
 
 ## Need Help?
 
-{% include "../../.gitbook/includes/support-cards.md" %}
+{% include "../.gitbook/includes/support-cards.md" %}

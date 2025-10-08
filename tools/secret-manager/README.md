@@ -86,5 +86,5 @@ Powered by [`@tetherto/wdk-secret-manager`](https://github.com/tetherto/wdk-secr
 
 ## Need Help?
 
-{% include "../../.gitbook/includes/support-cards.md" %}
+{% include "../.gitbook/includes/support-cards.md" %}
 
