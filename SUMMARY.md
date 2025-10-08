@@ -101,7 +101,7 @@
   * [Configuration](tools/secret-manager/configuration.md)
   * [API Reference](tools/secret-manager/api-reference.md)
 * [Price Rates](tools/price-rates/README.md)
-  * [Overview](tools/price-rates/overview.md)
+  * [Configuration](tools/price-rates/configuration.md)
   * [API Reference](tools/price-rates/api-reference.md)
 
 ## Resources
