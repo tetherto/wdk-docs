@@ -134,3 +134,62 @@ async function run() {
 }
 ```
 
+
+<table data-card-size="large" data-view="cards">
+	<thead>
+		<tr>
+			<th></th>
+			<th></th>
+			<th></th>
+			<th data-hidden data-card-target data-type="content-ref"></th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>Node.js Quickstart</strong>
+			</td>
+			<td>Get started with WDK in a Node.js environment</td>
+			<td>
+				<a href="../../../start-building/nodejs-bare-quickstart.md">Node.js & Bare Quickstart</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK Lending AAVE EVM Protocol Configuration</strong>
+			</td>
+			<td>Get started with WDK's Lending AAVE EVM Protocol configuration</td>
+			<td>
+				<a href="./configuration.md">WDK Lending AAVE EVM Protocol Configuration</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK Lending AAVE EVM Protocol API</strong>
+			</td>
+			<td>Get started with WDK's Lending AAVE EVM Protocol API</td>
+			<td>
+				<a href="./api-reference.md">WDK Lending AAVE EVM Protocol API</a>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+***
+
+### Need Help?
+
+{% include "../../../.gitbook/includes/support-cards.md" %}
+
+
+
+

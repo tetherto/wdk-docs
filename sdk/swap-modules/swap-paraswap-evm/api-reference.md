@@ -153,11 +153,11 @@ Common errors include:
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Stonfi Swap Protocol Configuration</strong>
+				<strong>WDK Swap Paraswap EVM Protocol Configuration</strong>
 			</td>
-			<td>Get started with WDK's Stonfi Swap Protocol configuration</td>
+			<td>Get started with WDK's Swap Paraswap EVM Protocol configuration</td>
 			<td>
-				<a href="./configuration.md">WDK Stonfi Swap Protocol Configuration</a>
+				<a href="./configuration.md">WDK Swap Paraswap EVM Protocol Configuration</a>
 			</td>
 		</tr>
     <tr>
@@ -165,11 +165,11 @@ Common errors include:
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Stonfi Swap Protocol Usage</strong>
+				<strong>WDK Swap Paraswap EVM Protocol Usage</strong>
 			</td>
-			<td>Get started with WDK's Stonfi Swap Protocol usage</td>
+			<td>Get started with WDK's Swap Paraswap EVM Protocol usage</td>
 			<td>
-				<a href="./usage.md">WDK Stonfi Swap Protocol  Usage</a>
+				<a href="./usage.md">WDK Swap Paraswap EVM Protocol Usage</a>
 			</td>
 		</tr>
 	</tbody>

@@ -209,3 +209,61 @@ Returns the following structure:
 - `onBehalfOf`/`to` (if set) must be valid, non‑zero addresses
 - A provider is required to read/send transactions
 - For USDT on mainnet, allowance may be reset to 0 then set again before actions
+
+
+<table data-card-size="large" data-view="cards">
+	<thead>
+		<tr>
+			<th></th>
+			<th></th>
+			<th></th>
+			<th data-hidden data-card-target data-type="content-ref"></th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>Node.js Quickstart</strong>
+			</td>
+			<td>Get started with WDK in a Node.js environment</td>
+			<td>
+				<a href="../../../start-building/nodejs-bare-quickstart.md">Node.js & Bare Quickstart</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK Lending AAVE EVM Protocol Configuration</strong>
+			</td>
+			<td>Get started with WDK's Lending AAVE EVM Protocol configuration</td>
+			<td>
+				<a href="./configuration.md">WDK Lending AAVE EVM Protocol Configuration</a>
+			</td>
+		</tr>
+    <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK Lending AAVE EVM Protocol Usage</strong>
+			</td>
+			<td>Get started with WDK's Lending AAVE EVM Protocol usage</td>
+			<td>
+				<a href="./usage.md">WDK Lending AAVE EVM Protocol  Usage</a>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+***
+
+### Need Help?
+
+{% include "../../../.gitbook/includes/support-cards.md" %}
+
+

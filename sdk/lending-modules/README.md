@@ -31,7 +31,7 @@ DeFi lending functionality different lending & borrowing protocols
 | `@tetherto/wdk-protocol-lending-aave-evm` | EVM | In progress | [Documentation](./lending-aave-evm/README.md)  | [Repository](https://github.com/tetherto/wdk-protocol-lending-aave-evm) |
 
 
-## Other resources
+## Next Steps
 
 To get started with WDK modules, follow these steps:
 

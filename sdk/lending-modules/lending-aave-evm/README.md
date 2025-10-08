@@ -91,7 +91,7 @@ Works on Aave V3 supported EVM networks (e.g., Ethereum, Arbitrum, Base, Optimis
       <td>
         <strong>API Reference</strong>
       </td>
-      <td>Full API for AaveProtocolEvm methods and types</td>
+      <td>Full API for Aave Protocol Evm methods and types</td>
       <td>
         <a href="./api-reference.md">Lending Aave EVM API</a>
       </td>

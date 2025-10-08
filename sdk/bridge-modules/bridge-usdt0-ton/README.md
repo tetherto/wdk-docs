@@ -63,13 +63,75 @@ The bridge supports multiple TON wallet types:
 - **Quote System**: Pre-transaction cost estimation and fee calculation
 - **Multi-Protocol Support**: Handles both standard and gasless wallet protocols
 
-## Next Steps
 
-- Read the **[Guides](guides.md)** for quick start and usage examples
-- Check the **[API Reference](api-reference.md)**
-- Review **[Configuration](configuration.md)** options
-- Want to contribute? **[Open a PR on Github](https://github.com/tetherto/wdk-protocol-bridge-usdt0-ton)**
-- Found a bug? **[Open an issue on Github](https://github.com/tetherto/wdk-protocol-bridge-usdt0-ton/issues)**
+<table data-card-size="large" data-view="cards">
+	<thead>
+		<tr>
+			<th></th>
+			<th></th>
+			<th></th>
+			<th data-hidden data-card-target data-type="content-ref"></th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>Node.js Quickstart</strong>
+			</td>
+			<td>Get started with WDK in a Node.js environment</td>
+			<td>
+				<a href="../../../start-building/nodejs-bare-quickstart.md">Node.js & Bare Quickstart</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK Bridge USDT0 TON Protocol Configuration</strong>
+			</td>
+			<td>Get started with WDK's Bridge USDT0 TON Protocol configuration</td>
+			<td>
+				<a href="./configuration.md">WDK Bridge USDT0 TON Protocol Configuration</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK Bridge USDT0 TON Protocol API</strong>
+			</td>
+			<td>Get started with WDK's Bridge USDT0 TON Protocol API</td>
+			<td>
+				<a href="./api-reference.md">WDK Bridge USDT0 TON Protocol API</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK Bridge USDT0 TON Protocol Usage</strong>
+			</td>
+			<td>Get started with WDK's Bridge USDT0 TON Protocol usage</td>
+			<td>
+				<a href="./usage.md">WDK Bridge USDT0 TON Protocol Usage</a>
+			</td>
+		</tr>
+	</tbody>
+</table>
 
-{% include "../.gitbook/includes/support-cards.md" %}
+***
+
+### Need Help?
+
+{% include "../../../.gitbook/includes/support-cards.md" %}
+
+
+
+
 
