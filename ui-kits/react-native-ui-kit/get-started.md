@@ -192,7 +192,7 @@ export function SendScreen() {
 
 * [Components List](./api-reference.md) - Complete API reference for all components
 * [Theming Guide](theming.md) - Deep dive into theming capabilities
-* [React Native Starter](https://github.com/tetherto/wdk-starter-react-native) - See a complete implementation
+* [React Native Starter](../../start-building/react-native-quickstart.md) - See a complete implementation
 
 ***
 

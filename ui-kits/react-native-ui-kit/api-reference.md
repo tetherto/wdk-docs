@@ -404,7 +404,7 @@ function WalletBackup({ seedWords, editable, onWordChange }) {
 
 - [Get Started](get-started.md) - Quick start guide and basic usage
 - [Theming Guide](theming.md) - Deep dive into theming capabilities
-- [React Native Starter](https://github.com/tetherto/wdk-starter-react-native) - Complete implementation example
+- [React Native Starter](../../start-building/react-native-quickstart.md) - Complete implementation example
 
 ***
 

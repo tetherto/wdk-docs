@@ -54,7 +54,7 @@ To get started with WDK modules, follow these steps:
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
 			</td>
 		</tr>
 		<tr>
@@ -66,7 +66,7 @@ To get started with WDK modules, follow these steps:
 			</td>
 			<td>Build mobile wallets with React Native Expo</td>
 			<td>
-				<a href="../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
+				<a href="../../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
 			</td>
 		</tr>
         <tr>

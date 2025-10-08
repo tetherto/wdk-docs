@@ -406,7 +406,7 @@ function Settings() {
 
 * [Get Started](get-started.md) - Quick start guide for the UI Kit
 * [Components List](api-reference.md) - Complete API reference for all components
-* [React Native Starter](https://github.com/tetherto/wdk-starter-react-native) - See theming in action
+* [React Native Starter](../../start-building/react-native-quickstart.md) - See theming in action
 
 ***
 
