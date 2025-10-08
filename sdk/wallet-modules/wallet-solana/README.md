@@ -114,4 +114,4 @@ This package works with the Solana blockchain, including:
 
 ### Need Help?
 
-{% include "../../.gitbook/includes/support-cards.md" %}
+{% include "../../../.gitbook/includes/support-cards.md" %}

@@ -404,5 +404,5 @@ async function transferWithFeeLimit(account, tokenAddress, recipient, amount, ma
 
 ### Need Help?
 
-{% include "../../.gitbook/includes/support-cards.md" %}
+{% include "../../../.gitbook/includes/support-cards.md" %}
 

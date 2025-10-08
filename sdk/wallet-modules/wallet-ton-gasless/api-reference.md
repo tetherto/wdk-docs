@@ -597,5 +597,5 @@ interface KeyPair {
 
 ### Need Help?
 
-{% include "../../.gitbook/includes/support-cards.md" %}
+{% include "../../../.gitbook/includes/support-cards.md" %}
 

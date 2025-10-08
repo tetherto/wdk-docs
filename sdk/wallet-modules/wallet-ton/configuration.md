@@ -217,7 +217,7 @@ The TON network (mainnet or testnet) is determined by the TON Center API endpoin
 
 ### Need Help?
 
-{% include "../../.gitbook/includes/support-cards.md" %}
+{% include "../../../.gitbook/includes/support-cards.md" %}
 
 
 

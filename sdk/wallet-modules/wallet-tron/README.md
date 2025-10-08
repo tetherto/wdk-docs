@@ -110,4 +110,4 @@ This package works with the Tron blockchain, including:
 
 ### Need Help?
 
-{% include "../../.gitbook/includes/support-cards.md" %}
+{% include "../../../.gitbook/includes/support-cards.md" %}

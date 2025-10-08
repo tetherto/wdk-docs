@@ -120,4 +120,4 @@ This package works with any EVM-compatible blockchain, including:
 
 ### Need Help?
 
-{% include "../../.gitbook/includes/support-cards.md" %}
+{% include "../../../.gitbook/includes/support-cards.md" %}

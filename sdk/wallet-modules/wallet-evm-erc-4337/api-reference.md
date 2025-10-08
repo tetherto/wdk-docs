@@ -725,4 +725,4 @@ const FEE_RATE_FAST_MULTIPLIER: number = 2.0;
 
 ### Need Help?
 
-{% include "../../.gitbook/includes/support-cards.md" %}
+{% include "../../../.gitbook/includes/support-cards.md" %}
