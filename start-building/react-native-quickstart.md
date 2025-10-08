@@ -62,7 +62,7 @@ npm install
 ```
 
 {% hint style="info" %}
-Learn more about the React Native starter:
+Learn more about the React Native starter: 
 
 * [**@tetherto/wdk-starter-react-native**](../start-building/react-native-quickstart) - Production-ready multi-chain wallet starter
 * [**Features Overview**](../ui-kits/react-native-ui-kit/) - Multi-chain support, secure storage, and more
