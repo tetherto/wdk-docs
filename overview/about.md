@@ -143,7 +143,7 @@ WDK combines four core components to deliver a complete wallet development solut
 			</td>
 			<td>Reliable blockchain data access for balances, transactions, and historical data</td>
 			<td>
-				<a href="../tools/indexer-api/">indexer</a>
+				<a href="../tools/indexer-api/README.md">indexer</a>
 			</td>
 			<td>
 				<a href="../assets/product-indexer.png">product-indexer.png</a>
@@ -201,7 +201,7 @@ WDK natively supports a broad set of blockchains and standards out of the box:
 | Protocol/Module                                                | Support |
 | -------------------------------------------------------------- | ------- |
 | [ParaSwap (EVM)](../sdk/swap-modules/swap-paraswap-evm/)       | ✅       |
-| [StonFi (TON)](../sdk/swap-modules/swap-stonfi-ton/)           | ✅       |
+| [StonFi (TON)](../sdk/swap-modules/swap-stonfi-ton/README.md)           | ✅       |
 | [USDT0 Bridge (EVM)](../sdk/bridge-modules/bridge-usdt0-evm/)  | ✅       |
 | [USDT0 Bridge (TON)](../sdk/bridge-modules/bridge-usdt0-ton/)  | ✅       |
 | [Aave Lending (EVM)](../sdk/lending-modules/lending-aave-evm/) | ✅       |
