@@ -210,4 +210,4 @@ WDK natively supports a broad set of blockchains and standards out of the box:
 
 The modular architecture allows new chains, tokens, or protocols to be added by implementing dedicated modules.
 
-Ready to start building with WDK? Check out our [getting started guide](../start-building/nodejs-bare-quickstart.md) or explore our [SDK documentation](../sdk/get-started.md).
+Ready to start building? Explore our [getting started guide](../start-building/nodejs-bare-quickstart.md) or dive into our [SDK documentation](../sdk/get-started.md). 
