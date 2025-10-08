@@ -106,4 +106,4 @@ Join us in building this future. The tools are open-source, the vision is clear,
 
 ***
 
-Ready to start building? Explore our [getting started guide](../getting-started/prerequisites.md) or dive into our [SDK documentation](../sdk/getting-started.md).
+Ready to start building? Explore our [getting started guide](../start-building/nodejs-bare-quickstart.md) or dive into our [SDK documentation](../sdk/get-started.md).
