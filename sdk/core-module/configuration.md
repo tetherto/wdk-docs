@@ -217,7 +217,7 @@ try {
 		</tr>
 	</thead>
 	<tbody>
-    <tr>
+    	<tr>
 			<td>
 				<i class="fa-code">:code:</i>
 			</td>
@@ -229,7 +229,7 @@ try {
 				<a href="./usage.md">WDK Core Usage</a>
 			</td>
 		</tr>
-        <tr>
+    	<tr>
 			<td>
 				<i class="fa-code">:code:</i>
 			</td>
@@ -241,7 +241,7 @@ try {
 				<a href="./api-reference.md">WDK Core API</a>
 			</td>
 		</tr>
-    <tr>
+    	<tr>
 			<td>
 				<i class="fa-code">:code:</i>
 			</td>
@@ -253,7 +253,7 @@ try {
 				<a href="../wallet-modules/README.md">WDK Wallet Modules</a>
 			</td>
 		</tr>
-    <tr>
+    	<tr>
             <td>
                 <i class="fa-code">:code:</i>
             </td>
@@ -265,7 +265,7 @@ try {
                 <a href="../bridge-modules/README.md">Bridge Modules</a>
             </td>
         </tr>
-    <tr>
+    	<tr>
             <td>
                 <i class="fa-code">:code:</i>
             </td>
@@ -277,7 +277,7 @@ try {
                 <a href="../lending-modules/README.md">Lending Modules</a>
             </td>
         </tr>
-    <tr>
+    	<tr>
             <td>
                 <i class="fa-code">:code:</i>
             </td>
