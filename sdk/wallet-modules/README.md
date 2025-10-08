@@ -39,12 +39,12 @@ Standard wallet implementations that use native blockchain tokens for transactio
 
 | Module | Blockchain | Status | Documentation | GitHub |
 |--------|------------|--------|---------------|---------|
-| `@tetherto/wdk-wallet-evm` | EVM | ✅ Ready | [Documentation](./wallet-evm/README.md) | [Repository](https://github.com/tetherto/wdk-wallet-evm) |
-| `@tetherto/wdk-wallet-ton` | TON | ✅ Ready | [Documentation](./wallet-ton/README.md) | [Repository](https://github.com/tetherto/wdk-wallet-ton) |
-| `@tetherto/wdk-wallet-btc` | Bitcoin | ✅ Ready | [Documentation](./wallet-btc/README.md) | [Repository](https://github.com/tetherto/wdk-wallet-btc) |
-| `@tetherto/wdk-wallet-spark` | Spark | ✅ Ready | [Documentation](./wallet-spark/README.md) | [Repository](https://github.com/tetherto/wdk-wallet-spark) |
-| `@tetherto/wdk-wallet-tron` | TRON | ✅ Ready | [Documentation](./wallet-tron/README.md) | [Repository](https://github.com/tetherto/wdk-wallet-tron) |
-| `@tetherto/wdk-wallet-solana` | Solana | ✅ Ready | [Documentation](./wallet-solana/README.md) | [Repository](https://github.com/tetherto/wdk-wallet-solana) |
+| `@tetherto/wdk-wallet-evm` | EVM | ✅ Ready | [Documentation](./wallet-evm) | [Repository](https://github.com/tetherto/wdk-wallet-evm) |
+| `@tetherto/wdk-wallet-ton` | TON | ✅ Ready | [Documentation](./wallet-ton) | [Repository](https://github.com/tetherto/wdk-wallet-ton) |
+| `@tetherto/wdk-wallet-btc` | Bitcoin | ✅ Ready | [Documentation](./wallet-btc) | [Repository](https://github.com/tetherto/wdk-wallet-btc) |
+| `@tetherto/wdk-wallet-spark` | Spark | ✅ Ready | [Documentation](./wallet-spark) | [Repository](https://github.com/tetherto/wdk-wallet-spark) |
+| `@tetherto/wdk-wallet-tron` | TRON | ✅ Ready | [Documentation](./wallet-tron) | [Repository](https://github.com/tetherto/wdk-wallet-tron) |
+| `@tetherto/wdk-wallet-solana` | Solana | ✅ Ready | [Documentation](./wallet-solana) | [Repository](https://github.com/tetherto/wdk-wallet-solana) |
 | `@tetherto/wdk-wallet-ark` | Ark | In progress | - | - |
 
 ### Account Abstraction Wallet Modules
@@ -53,9 +53,9 @@ Wallet implementations that support [Account Abstraction](../../resources/concep
 
 | Module | Blockchain | Status | Documentation | GitHub |
 |--------|------------|--------|---------------|---------|
-| `@tetherto/wdk-wallet-evm-erc4337` | EVM | ✅ Ready | [Documentation](./wallet-evm-erc-4337/README.md) | [Repository](https://github.com/tetherto/wdk-wallet-evm-erc-4337) |
-| `@tetherto/wdk-wallet-ton-gasless` | TON | ✅ Ready | [Documentation](./wallet-ton-gasless/README.md) | [Repository](https://github.com/tetherto/wdk-wallet-ton-gasless) |
-| `@tetherto/wdk-wallet-tron-gasfree` | TRON | ✅ Ready | [Documentation](./wallet-tron-gasfree/README.md) | [Repository](https://github.com/tetherto/wdk-wallet-tron-gasfree) |
+| `@tetherto/wdk-wallet-evm-erc4337` | EVM | ✅ Ready | [Documentation](./wallet-evm-erc-4337) | [Repository](https://github.com/tetherto/wdk-wallet-evm-erc-4337) |
+| `@tetherto/wdk-wallet-ton-gasless` | TON | ✅ Ready | [Documentation](./wallet-ton-gasless) | [Repository](https://github.com/tetherto/wdk-wallet-ton-gasless) |
+| `@tetherto/wdk-wallet-tron-gasfree` | TRON | ✅ Ready | [Documentation](./wallet-tron-gasfree) | [Repository](https://github.com/tetherto/wdk-wallet-tron-gasfree) |
 | `@tetherto/wdk-wallet-solana-jupiterz` | Solana | In progress | - | - |
 
 ## Next steps
