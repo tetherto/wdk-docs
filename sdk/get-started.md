@@ -36,7 +36,7 @@ It is built on some core principles: **self-custodial and stateless** (private k
 
 WDK's architecture is built around the concept of composable modules. Each module is a specialized component that handles specific functionality, allowing you to build exactly what you need without unnecessary complexity.
 
-<figure><img src="../assets/sdk-architecture.png" alt="WDK SDK Architecture"><figcaption><p>WDK SDK modular architecture with core orchestrator and specialized modules</p></figcaption></figure>
+<!-- <figure><img src="../assets/sdk-architecture.png" alt="WDK SDK Architecture"><figcaption><p>WDK SDK modular architecture with core orchestrator and specialized modules</p></figcaption></figure> -->
 
 Each module has a single responsibility. Wallet modules handle blockchain operations, protocol modules manage DeFi interactions, and the core module orchestrates everything.
 
@@ -249,8 +249,8 @@ const balance = await customAccount.getBalance()
 
 
 {% hint style="info" %}
-**Learn More**: For detailed information on creating custom modules, check out our [Extender Guide](../extender-guide.md).
-{% endhint %}
+<!-- **Learn More**: For detailed information on creating custom modules, check out our [Extender Guide](../extender-guide.md).
+{% endhint %} -->
 
 ***
 
