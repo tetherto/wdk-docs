@@ -1,7 +1,6 @@
 ---
 title: Wallet EVM ERC-4337 Configuration
 description: Configuration options and settings for @tetherto/wdk-wallet-evm-erc-4337
-author: Matteo Giardino
 lastReviewed: 2025-08-31
 layout:
   width: default

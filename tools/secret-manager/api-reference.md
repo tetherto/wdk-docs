@@ -1,7 +1,6 @@
 ---
 title: Secret Manager API Reference
 description: API for @tetherto/wdk-secret-manager
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-10-06
 ---
 

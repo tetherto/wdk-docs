@@ -1,7 +1,5 @@
 ---
 title: Quick Start Guide
-author: Matteo Giardino
-lastReviewed: 2025-06-28
 icon: rocket
 ---
 

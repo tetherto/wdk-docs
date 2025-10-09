@@ -1,6 +1,5 @@
 ---
 title: Lending Modules Overview
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-09-04
 icon:
 ---

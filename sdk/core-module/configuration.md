@@ -42,7 +42,7 @@ import WalletManagerTon from '@@tetherto/wdk-wallet-ton'
 
 const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, {
-    provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
+    provider: 'https://eth.drpc.org'
   })
   .registerWallet('ton', WalletManagerTon, {
     tonApiKey: 'YOUR_TON_API_KEY',
@@ -56,12 +56,12 @@ const wdk = new WDK(seedPhrase)
 
 {% code title="Register WDK Protocol" lineNumbers="true" %}
 ```javascript
-import ParaswapProtocolEvm from '@tetherto/wdk-protocol-swap-paraswap-evm'
+import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
 import Usdt0ProtocolTon from '@tetherto/wdk-protocol-bridge-usdt0-ton'
 
 const wdk = new WDK(seedPhrase)
-  .registerProtocol('ethereum', 'paraswap', ParaswapProtocolEvm, {
-    apiKey: 'YOUR_PARASWAP_API_KEY'
+  .registerProtocol('ethereum', 'velora', veloraProtocolEvm, {
+    apiKey: 'YOUR_velora_API_KEY'
   })
   .registerProtocol('ton', 'usdt0', Usdt0ProtocolTon, {
     tonApiKey: 'YOUR_TON_API_KEY'
@@ -81,7 +81,7 @@ Each wallet manager requires its own configuration object when registered. The c
 {% code title="Ethereum WDK Wallet Configuration" lineNumbers="true" %}
 ```javascript
 const ethereumWalletConfig = {
-  provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY', // RPC endpoint
+  provider: 'https://eth.drpc.org', // RPC endpoint
   // Additional EVM-specific configuration options
 }
 
@@ -114,12 +114,12 @@ Protocols also require their own configuration objects when registered.
 
 {% code title="Swap WDK Protocol Configuration" lineNumbers="true" %}
 ```javascript
-const paraswapProtocolConfig = {
-  apiKey: 'YOUR_PARASWAP_API_KEY',
-  baseUrl: 'https://apiv5.paraswap.io'
+const veloraProtocolConfig = {
+  apiKey: 'YOUR_velora_API_KEY',
+  baseUrl: 'https://apiv5.velora.io'
 }
 
-wdk.registerProtocol('ethereum', 'paraswap', ParaswapProtocolEvm, paraswapProtocolConfig)
+wdk.registerProtocol('ethereum', 'velora', veloraProtocolEvm, veloraProtocolConfig)
 ```
 {% endcode %}
 
@@ -130,7 +130,7 @@ wdk.registerProtocol('ethereum', 'paraswap', ParaswapProtocolEvm, paraswapProtoc
 ```javascript
 const usdt0ProtocolConfig = {
   tonApiKey: 'YOUR_TON_API_KEY',
-  ethereumRpcUrl: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
+  ethereumRpcUrl: 'https://eth.drpc.org'
 }
 
 wdk.registerProtocol('ton', 'usdt0', Usdt0ProtocolTon, usdt0ProtocolConfig)
@@ -167,8 +167,8 @@ const wdk = new WDK(process.env.SEED_PHRASE)
   .registerWallet('ethereum', WalletManagerEvm, {
     provider: process.env.ETHEREUM_RPC_URL
   })
-  .registerProtocol('ethereum', 'paraswap', ParaswapProtocolEvm, {
-    apiKey: process.env.PARASWAP_API_KEY
+  .registerProtocol('ethereum', 'velora', veloraProtocolEvm, {
+    apiKey: process.env.velora_API_KEY
   })
 ```
 {% endcode %}
@@ -195,7 +195,7 @@ try {
 }
 
 try {
-  wdk.registerProtocol('ethereum', 'paraswap', ParaswapProtocolEvm, invalidConfig)
+  wdk.registerProtocol('ethereum', 'velora', veloraProtocolEvm, invalidConfig)
 } catch (error) {
   console.error('Protocol registration failed:', error.message)
 }

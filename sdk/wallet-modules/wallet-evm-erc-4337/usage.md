@@ -1,7 +1,6 @@
 ---
 title: Wallet EVM ERC-4337 Usage
 description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-evm-erc-4337
-author: Matteo Giardino
 lastReviewed: 2025-06-26
 layout:
   width: default
@@ -20,7 +19,6 @@ layout:
 ---
 
 # Usage
-
 ## Installation
 
 To install the `@tetherto/wdk-wallet-evm-erc-4337` package, follow these instructions:

@@ -1,7 +1,6 @@
 ---
 title: Wallet TON Gasless Configuration
 description: Configuration options and settings for @tetherto/wdk-wallet-ton-gasless
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
 icon: gear
 ---

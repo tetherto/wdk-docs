@@ -1,7 +1,6 @@
 ---
 title: Wallet Tron Overview
 description: Overview of the @tetherto/wdk-wallet-tron module
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
 ---
 

@@ -1,6 +1,5 @@
 ---
 title: Lending Modules Overview
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-09-04
 layout:
   width: default
@@ -26,9 +25,9 @@ The Wallet Development Kit (WDK) provides a set of modules that support connecti
 
 DeFi lending functionality different lending & borrowing protocols
 
-| Module | Route | Status | Documentation | GitHub |
-|--------|-------|--------|---------------|---------|
-| `@tetherto/wdk-protocol-lending-aave-evm` | EVM | In progress | [Documentation](./lending-aave-evm/README.md)  | [Repository](https://github.com/tetherto/wdk-protocol-lending-aave-evm) |
+| Module | Route | Status | Documentation |
+|--------|-------|--------|---------------|
+| [`@tetherto/wdk-protocol-lending-aave-evm`](https://github.com/tetherto/wdk-protocol-lending-aave-evm) | EVM | In progress | [Documentation](./lending-aave-evm/README.md) |
 
 
 ## Next Steps

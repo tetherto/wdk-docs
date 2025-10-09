@@ -37,7 +37,7 @@ In this quickstart, you'll create a simple application that:
 Before we start, make sure you have:
 
 {% tabs %}
-{% tab title="Node.js Environment" %}
+{% tab title="Node.js" %}
 | Tool            | Version | Why You Need It        |
 | --------------- | ------- | ---------------------- |
 | **Node.js**     | 20+     | To run JavaScript code |
@@ -45,7 +45,7 @@ Before we start, make sure you have:
 | **Code Editor** | Any     | To write code          |
 {% endtab %}
 
-{% tab title="Bare Runtime Environment" %}
+{% tab title="Bare Runtime" %}
 | Tool             | Version | Why You Need It     |
 | ---------------- | ------- | ------------------- |
 | **Bare Runtime** | Latest  | To run JavaScript   |
@@ -56,7 +56,7 @@ To install Bare runtime use command `npm i -g bare`
 {% endtab %}
 {% endtabs %}
 
-**Note**: We'll use testnets for this tutorial, so you don't need real funds to get started!
+<!-- **Note**: We'll use testnets for this tutorial, so you don't need real funds to get started! -->
 
 ***
 
@@ -133,7 +133,7 @@ console.log('Registering wallets...')
 
 const wdkWithWallets = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, {
-    provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
+    provider: 'https://eth.drpc.org'
   })
   .registerWallet('tron', WalletManagerTron, {
     provider: 'https://api.trongrid.io'
@@ -211,7 +211,7 @@ async function main() {
 
     const wdkWithWallets = new WDK(seedPhrase)
       .registerWallet('ethereum', WalletManagerEvm, {
-        provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
+        provider: 'https://eth.drpc.org'
       })
       .registerWallet('tron', WalletManagerTron, {
         provider: 'https://api.trongrid.io'
@@ -366,14 +366,14 @@ console.log('Transaction hash:', result.hash)
 ### **Use DeFi Protocols**
 
 ```bash
-npm install @tetherto/wdk-protocol-swap-paraswap-evm
+npm install @tetherto/wdk-protocol-swap-velora-evm
 ```
 
 {% code lineNumbers="true" %}
 ```typescript
-import SwapParaswapEvm from '@tetherto/wdk-protocol-swap-paraswap-evm'
+import SwapveloraEvm from '@tetherto/wdk-protocol-swap-velora-evm'
 
-wdk.registerProtocol('swap-paraswap-evm', SwapParaswapEvm)
+wdk.registerProtocol('swap-velora-evm', SwapveloraEvm)
 ```
 {% endcode %}
 

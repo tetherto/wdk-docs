@@ -1,7 +1,6 @@
 ---
 title: Price Rates Configuration
 description: Configure HTTP pricing clients and providers
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-10-06
 ---
 

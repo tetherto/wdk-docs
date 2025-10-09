@@ -67,10 +67,10 @@
     * [API Reference](wdk-modules/wallet-modules/wallet-solana/api-reference.md)
 
 * [Swap Modules Overview](wdk-modules/swap-modules/overview.md)
-  * [swap-paraswap-evm](wdk-modules/swap-modules/wdk-protocol-swap-paraswap-evm/overview.md)
-    * [Guides](wdk-modules/swap-modules/wdk-protocol-swap-paraswap-evm/guides.md)
-    * [Configuration](wdk-modules/swap-modules/wdk-protocol-swap-paraswap-evm/configuration.md)
-    * [API Reference](wdk-modules/swap-modules/wdk-protocol-swap-paraswap-evm/api-reference.md)
+  * [swap-velora-evm](wdk-modules/swap-modules/wdk-protocol-swap-velora-evm/overview.md)
+    * [Guides](wdk-modules/swap-modules/wdk-protocol-swap-velora-evm/guides.md)
+    * [Configuration](wdk-modules/swap-modules/wdk-protocol-swap-velora-evm/configuration.md)
+    * [API Reference](wdk-modules/swap-modules/wdk-protocol-swap-velora-evm/api-reference.md)
   
   * [swap-stonfi-ton](wdk-modules/swap-modules/wdk-protocol-swap-stonfi-ton/overview.md)
     * [Guides](wdk-modules/swap-modules/wdk-protocol-swap-stonfi-ton/guides.md)

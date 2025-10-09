@@ -1,7 +1,6 @@
 ---
 title: Secret Manager
 description: Toolkit for secure handling of seed phrases and encrypted payloads
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-10-06
 layout:
   width: default

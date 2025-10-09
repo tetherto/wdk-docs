@@ -22,6 +22,5 @@ layout:
 
 {% include "../.gitbook/includes/support-cards.md" %}
 
-***
 
-_We're here to help you succeed with WDK. Don't hesitate to reach out!_
+We're here to help you succeed with WDK. Don't hesitate to reach out

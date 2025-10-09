@@ -1,7 +1,6 @@
 ---
 title: WDK Core Overview
 description: Overview of the @tetherto/wdk module
-author: Raquel Carrasco
 lastReviewed: 2025-09-11
 ---
 

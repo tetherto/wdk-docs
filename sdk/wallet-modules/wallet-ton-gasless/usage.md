@@ -1,7 +1,6 @@
 ---
 title: Wallet TON Gasless Usage
 description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-ton-gasless
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-09-01
 layout:
   width: default
@@ -20,7 +19,6 @@ layout:
 ---
 
 # Usage
-
 ## Installation
 
 To install the `@tetherto/wdk-wallet-ton-gasless` package, follow these instructions:

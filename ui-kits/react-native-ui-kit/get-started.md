@@ -27,7 +27,6 @@ The WDK React Native UI Kit provides ready-made, themeable components for buildi
 * **Mobile-first**: React Native primitives with sensible defaults and accessible touch targets
 
 ***
-
 ## Installation
 
 Install the UI Kit package:

@@ -1,7 +1,6 @@
 ---
 title: Wallet Solana Configuration
 description: Configuration options and settings for @tetherto/wdk-wallet-solana
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-09-01
 icon: gear
 ---

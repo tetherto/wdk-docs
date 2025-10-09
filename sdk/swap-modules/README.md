@@ -1,6 +1,5 @@
 ---
 title: Swap Modules Overview
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-09-04
 layout:
   width: default
@@ -26,10 +25,10 @@ The Swap Development Kit (WDK) provides a set of modules that supportswap on top
 
 DeFi swap functionality for token exchanges across different DEXs:
 
-| Module | Blockchain | Status | Documentation | GitHub |
-|--------|------------|--------|---------------|---------|
-| `@tetherto/wdk-protocol-swap-paraswap-evm` | EVM | In progress | [Documentation](./swap-paraswap-evm/) | [Repository](https://github.com/tetherto/wdk-protocol-swap-paraswap-evm) |
-| `@tetherto/wdk-protocol-swap-dedust-ton` | TON | In progress | [Documentation](./swap-stonfi-ton/) | [Repository](https://github.com/tetherto/wdk-protocol-swap-dedust-ton) |
+| Module | Blockchain | Status | Documentation |
+|--------|------------|--------|---------------|
+| [`@tetherto/wdk-protocol-swap-velora-evm`](https://github.com/tetherto/wdk-protocol-swap-velora-evm) | EVM | In progress | [Documentation](./swap-velora-evm/) |
+| [`@tetherto/wdk-protocol-swap-dedust-ton`](https://github.com/tetherto/wdk-protocol-swap-dedust-ton) | TON | In progress | [Documentation](./swap-stonfi-ton/) |
 
 ## Next steps
 

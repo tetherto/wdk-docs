@@ -7,7 +7,6 @@ This guide walks you through installing and running a WDK Indexer for any suppor
 - Node.js ≥ 16
 - Network access to blockchain RPC endpoints
 - Storage space for blockchain data
-
 ## Installation
 
 ```bash

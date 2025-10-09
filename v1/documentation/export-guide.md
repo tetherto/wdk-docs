@@ -1,7 +1,6 @@
 ---
 title: WDK’s Derivation Path and Compatibility with Other Wallet Providers
 description: How derivation paths impact wallet compatibility and recovery on different blockchains.
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-10-01
 ---
 

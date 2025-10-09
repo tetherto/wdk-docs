@@ -58,10 +58,10 @@
     * [Configuration](sdk/wallet-modules/wallet-tron-gasfree/configuration.md)
     * [API Reference](sdk/wallet-modules/wallet-tron-gasfree/api-reference.md)
 * [Swap Modules](sdk/swap-modules/README.md)
-  * [swap-paraswap-evm](sdk/swap-modules/swap-paraswap-evm/README.md)
-    * [Usage](sdk/swap-modules/swap-paraswap-evm/usage.md)
-    * [Configuration](sdk/swap-modules/swap-paraswap-evm/configuration.md)
-    * [API Reference](sdk/swap-modules/swap-paraswap-evm/api-reference.md)
+  * [swap-velora-evm](sdk/swap-modules/swap-velora-evm/README.md)
+    * [Usage](sdk/swap-modules/swap-velora-evm/usage.md)
+    * [Configuration](sdk/swap-modules/swap-velora-evm/configuration.md)
+    * [API Reference](sdk/swap-modules/swap-velora-evm/api-reference.md)
   * [swap-stonfi-ton](sdk/swap-modules/swap-stonfi-ton/README.md)
     * [Usage](sdk/swap-modules/swap-stonfi-ton/usage.md)
     * [Configuration](sdk/swap-modules/swap-stonfi-ton/configuration.md)
@@ -95,7 +95,6 @@
 ## Tools
 
 * [Indexer API](tools/indexer-api/README.md)
-  * [Overview](tools/indexer-api/overview.md)
   * [Get Started](tools/indexer-api/get-started.md)
   * [API Reference](tools/indexer-api/api-reference.md)
 * [Secret Manager](tools/secret-manager/README.md)
@@ -108,5 +107,4 @@
 ## Resources
 
 * [Concepts](resources/concepts.md)
-* [Go-live Checklist](resources/go-live-checklist.md)
-* [Build with an LLM](resources/build-with-an-llm.md)
+<!-- * [Go-live Checklist](resources/go-live-checklist.md) -->

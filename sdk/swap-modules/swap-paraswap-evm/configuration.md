@@ -1,7 +1,6 @@
 ---
-title: Swap ParaSwap EVM Configuration
-description: Configuration options and settings for @tetherto/wdk-protocol-swap-paraswap-evm
-author: Raquel Carrasco Gonzalez
+title: Swap velora EVM Configuration
+description: Configuration options and settings for @tetherto/wdk-protocol-swap-velora-evm
 lastReviewed: 2025-10-06
 layout:
   width: default
@@ -23,10 +22,10 @@ layout:
 
 ## Swap Service Configuration
 
-The `ParaSwapProtocolEvm` accepts a configuration object that defines fee controls and behavior:
+The `veloraProtocolEvm` accepts a configuration object that defines fee controls and behavior:
 
 ```javascript
-import ParaSwapProtocolEvm from '@tetherto/wdk-protocol-swap-paraswap-evm'
+import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
 import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
 // Create wallet account first
@@ -35,7 +34,7 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 })
 
 // Create swap service with configuration
-const swapProtocol = new ParaSwapProtocolEvm(account, {
+const swapProtocol = new veloraProtocolEvm(account, {
   swapMaxFee: 200000000000000n // Optional: Max swap fee in wei
 })
 ```
@@ -65,7 +64,7 @@ const readOnly = new WalletAccountReadOnlyEvm(
 )
 
 // Create swap service
-const swapProtocol = new ParaSwapProtocolEvm(account, {
+const swapProtocol = new veloraProtocolEvm(account, {
   swapMaxFee: 200000000000000n
 })
 ```
@@ -115,7 +114,7 @@ const aa = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
   paymasterUrl: 'YOUR_PAYMASTER_URL'
 })
 
-const swapAA = new ParaSwapProtocolEvm(aa, { swapMaxFee: 200000000000000n })
+const swapAA = new veloraProtocolEvm(aa, { swapMaxFee: 200000000000000n })
 
 const result = await swapAA.swap({
   tokenIn: '0xTokenIn',
@@ -148,7 +147,7 @@ const result = await swapAA.swap({
 
 ## Network Support
 
-ParaSwap supports multiple EVM networks (e.g., Ethereum, Polygon, Arbitrum). Ensure your account is configured with a valid provider for the target network.
+velora supports multiple EVM networks (e.g., Ethereum, Polygon, Arbitrum). Ensure your account is configured with a valid provider for the target network.
 
 ```javascript
 // Ethereum Mainnet

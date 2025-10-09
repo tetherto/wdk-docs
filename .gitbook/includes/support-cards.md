@@ -2,7 +2,6 @@
 title: Support cards
 ---
 
-
 <table data-view="cards">
 	<thead>
 		<tr>
@@ -21,7 +20,7 @@ title: Support cards
 			<td>
 				<strong>Discord Community</strong>
 			</td>
-			<td>Connect with other developers, ask questions, share your projects</td>
+			<td>Connect with developers, ask questions, share your projects</td>
 			<td>
 				<a href="https://discord.gg/JwAP7Dbz" class="button primary">Join Community</a>
 			</td>
@@ -49,7 +48,7 @@ title: Support cards
 				<i class="fa-envelope">:envelope:</i>
 			</td>
 			<td>
-				<strong>Email Support</strong>
+				<strong>Email Contact</strong>
 			</td>
 			<td>For sensitive or private matters, contact our team directly</td>
 			<td>

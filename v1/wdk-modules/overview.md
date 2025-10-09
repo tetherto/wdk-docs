@@ -1,7 +1,5 @@
 ---
 title: Wallet Modules Overview
-author: Matteo Giardino
-lastReviewed: 2025-06-28
 icon: puzzle
 ---
 
@@ -51,7 +49,7 @@ DeFi swap functionality for token exchanges across different DEXs:
 
 | Module | Blockchain | Status | Documentation | GitHub |
 |--------|------------|--------|---------------|---------|
-| `@tetherto/wdk-protocol-swap-paraswap-evm` | EVM | In progress | [Documentation](./swap-modules/wdk-protocol-swap-paraswap-evm/overview.md) | [Repository](https://github.com/tetherto/wdk-protocol-swap-paraswap-evm) |
+| `@tetherto/wdk-protocol-swap-velora-evm` | EVM | In progress | [Documentation](./swap-modules/wdk-protocol-swap-velora-evm/overview.md) | [Repository](https://github.com/tetherto/wdk-protocol-swap-velora-evm) |
 | `@tetherto/wdk-protocol-swap-dedust-ton` | TON | In progress | [Documentation](./swap-modules/wdk-protocol-swap-stonfi-ton/overview.md)  | [Repository](https://github.com/tetherto/wdk-protocol-swap-dedust-ton) |
 
 ## Bridge Protocol Modules

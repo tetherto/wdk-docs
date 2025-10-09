@@ -1,6 +1,5 @@
 ---
 title: Recovering Your Funds if the WDK SDK is Down
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-10-01
 ---
 

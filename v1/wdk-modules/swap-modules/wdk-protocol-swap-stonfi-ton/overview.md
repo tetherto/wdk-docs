@@ -1,7 +1,6 @@
 ---
 title: Swap Stonfi TON Overview
 description: Overview of the @tetherto/wdk-protocol-swap-stonfi-ton module
-author: Raquel Carrasco
 lastReviewed: 2025-09-04
 ---
 

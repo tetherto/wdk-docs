@@ -1,7 +1,6 @@
 ---
 title: Wallet TON Overview
 description: Overview of the @tetherto/wdk-wallet-ton module
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
 ---
 

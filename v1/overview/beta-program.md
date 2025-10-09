@@ -1,8 +1,6 @@
 ---
 title: WDK Private Beta Program
 description: Join the WDK Private Beta Program to get early access to powerful wallet development tools and help shape the future of cross-chain wallet infrastructure.
-author: Matteo Giardino
-lastReviewed: 2025-06-28
 icon: users
 ---
 

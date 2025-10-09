@@ -1,7 +1,6 @@
 ---
-title: Swap ParaSwap EVM API Reference
-description: API reference for @tetherto/wdk-protocol-swap-paraswap-evm
-author: Raquel Carrasco
+title: Swap velora EVM API Reference
+description: API reference for @tetherto/wdk-protocol-swap-velora-evm
 lastReviewed: 2025-10-06
 layout:
   width: default
@@ -21,14 +20,14 @@ layout:
 
 # API Reference
 
-## Class: ParaSwapProtocolEvm
+## Class: veloraProtocolEvm
 
-Main class for ParaSwap token swaps on EVM.
+Main class for velora token swaps on EVM.
 
 ### Constructor
 
 ```javascript
-new ParaSwapProtocolEvm(account, config?)
+new veloraProtocolEvm(account, config?)
 ```
 
 Parameters:
@@ -39,7 +38,7 @@ Parameters:
 Example:
 
 ```javascript
-const swap = new ParaSwapProtocolEvm(account, { swapMaxFee: 200000000000000n })
+const swap = new veloraProtocolEvm(account, { swapMaxFee: 200000000000000n })
 ```
 
 ### Methods
@@ -52,7 +51,7 @@ const swap = new ParaSwapProtocolEvm(account, { swapMaxFee: 200000000000000n })
 ---
 
 ### `swap(options, config?)`
-Execute a swap via ParaSwap.
+Execute a swap via velora.
 
 Options:
 - `tokenIn` (`string`): Address of the ERC‑20 token to sell
@@ -153,11 +152,11 @@ Common errors include:
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Swap Paraswap EVM Protocol Configuration</strong>
+				<strong>WDK Swap velora EVM Protocol Configuration</strong>
 			</td>
-			<td>Get started with WDK's Swap Paraswap EVM Protocol configuration</td>
+			<td>Get started with WDK's Swap velora EVM Protocol configuration</td>
 			<td>
-				<a href="./configuration.md">WDK Swap Paraswap EVM Protocol Configuration</a>
+				<a href="./configuration.md">WDK Swap velora EVM Protocol Configuration</a>
 			</td>
 		</tr>
     <tr>
@@ -165,11 +164,11 @@ Common errors include:
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Swap Paraswap EVM Protocol Usage</strong>
+				<strong>WDK Swap velora EVM Protocol Usage</strong>
 			</td>
-			<td>Get started with WDK's Swap Paraswap EVM Protocol usage</td>
+			<td>Get started with WDK's Swap velora EVM Protocol usage</td>
 			<td>
-				<a href="./usage.md">WDK Swap Paraswap EVM Protocol Usage</a>
+				<a href="./usage.md">WDK Swap velora EVM Protocol Usage</a>
 			</td>
 		</tr>
 	</tbody>

@@ -1,6 +1,6 @@
 ---
 title: Get Started
-description: Get started with the WDK Indexer REST API in minutes
+description: Learn about the WDK Indexer REST API and how to use it
 icon: rocket
 layout:
   width: default

@@ -1,7 +1,6 @@
 ---
 title: Wallet EVM ERC-4337 Overview
 description: Overview of the @tetherto/wdk-wallet-evm-erc-4337 module
-author: Matteo Giardino
 lastReviewed: 2025-06-26
 layout:
   width: default

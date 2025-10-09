@@ -1,7 +1,6 @@
 ---
 title: Bridge USDT0 EVM API Reference
 description: Complete API documentation for @tetherto/wdk-protocol-bridge-usdt0-evm
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-09-04
 icon: code
 ---

@@ -200,7 +200,7 @@ WDK natively supports a broad set of blockchains and standards out of the box:
 {% tab title="DeFi Modules" %}
 | Protocol/Module                                                | Support |
 | -------------------------------------------------------------- | ------- |
-| [ParaSwap (EVM)](../sdk/swap-modules/swap-paraswap-evm/)       | ✅       |
+| [velora (EVM)](../sdk/swap-modules/swap-velora-evm/)       | ✅       |
 | [StonFi (TON)](../sdk/swap-modules/swap-stonfi-ton/)           | ✅       |
 | [USDT0 Bridge (EVM)](../sdk/bridge-modules/bridge-usdt0-evm/)  | ✅       |
 | [USDT0 Bridge (TON)](../sdk/bridge-modules/bridge-usdt0-ton/)  | ✅       |

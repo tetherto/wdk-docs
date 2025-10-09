@@ -1,7 +1,5 @@
 ---
 title: Wallet Modules Overview
-author: Matteo Giardino
-lastReviewed: 2025-06-28
 ---
 
 # Wallet Modules Overview

@@ -1,12 +1,9 @@
 ---
 title: Wallet TON Gasless Guides
 description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-ton-gasless
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-09-01
 icon: book-open
 ---
-
-# Guides
 
 ## Installation
 

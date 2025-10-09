@@ -1,7 +1,6 @@
 ---
 title: Lending Aave EVM Configuration
 description: Configuration options and settings for @tetherto/wdk-protocol-lending-aave-evm
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-10-06
 layout:
   width: default

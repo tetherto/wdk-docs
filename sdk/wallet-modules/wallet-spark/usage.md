@@ -1,7 +1,6 @@
 ---
 title: Wallet Spark Usage
 description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-spark
-author: Matteo Giardino
 lastReviewed: 2025-06-26
 layout:
   width: default
@@ -20,7 +19,6 @@ layout:
 ---
 
 # Usage
-
 ## Installation
 
 To install the `@tetherto/wdk-wallet-spark` package, follow these instructions:

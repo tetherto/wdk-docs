@@ -1,7 +1,5 @@
 ---
 title: Prerequisites
-author: Raquel Carrasco Gonzalez
-lastReviewed: 2025-06-28
 icon: clipboard
 ---
 

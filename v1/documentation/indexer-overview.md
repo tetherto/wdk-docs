@@ -1,6 +1,5 @@
 ---
 title: WDK Indexer - User Guide
-author: Raquel Carrasco
 lastReviewed: 2025-09-05
 ---
 

@@ -1,7 +1,6 @@
 ---
 title: Wallet Solana Usage
 description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-solana
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
 layout:
   width: default
@@ -20,7 +19,6 @@ layout:
 ---
 
 # Usage
-
 ## Installation
 
 To install the `@tetherto/wdk-wallet-solana` package, follow these instructions:

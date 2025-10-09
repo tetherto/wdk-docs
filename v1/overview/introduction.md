@@ -1,7 +1,6 @@
 ---
 title: Introduction to Wallet Development Kit (WDK)
 description: Build complete wallet solutions with WDK's modular ecosystem - wallet modules, protocols, indexer, and secret manager working together seamlessly. Much more than just an SDK. 
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-09-18
 icon: lightbulb  
 

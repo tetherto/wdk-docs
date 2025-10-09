@@ -1,7 +1,6 @@
 ---
 title: Price Rates API Reference
 description: API for @tetherto/wdk-pricing-bitfinex-http
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-10-06
 ---
 

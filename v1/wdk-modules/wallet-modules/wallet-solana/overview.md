@@ -1,7 +1,6 @@
 ---
 title: Wallet Solana Overview
 description: Overview of the @tetherto/wdk-wallet-solana module
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-09-01
 ---
 

@@ -19,7 +19,6 @@ layout:
 ---
 
 This package serves as the main entry point and orchestrator for all WDK wallet modules, allowing you to register and manage different blockchain wallets and protocols through a single interface.
-
 ## Installation
 
 Install the `@tetherto/wdk-core` package:
@@ -71,7 +70,7 @@ import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 // Register wallets for different blockchains
 const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, {
-    provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
+    provider: 'https://eth.drpc.org'
   })
   .registerWallet('ton', WalletManagerTon, {
     tonApiKey: 'YOUR_TON_API_KEY',
@@ -216,15 +215,15 @@ async function sendMultiChainTransactions(wdk) {
 
 {% code title="Registering Protocols" lineNumbers="true" %}
 ```typescript
-import ParaswapProtocolEvm from '@tetherto/wdk-protocol-swap-paraswap-evm'
+import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
 import Usdt0ProtocolTon from '@tetherto/wdk-protocol-bridge-usdt0-ton'
 
 // Register protocols globally
 const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
   .registerWallet('ton', WalletManagerTon, tonWalletConfig)
-  .registerProtocol('ethereum', 'paraswap', ParaswapProtocolEvm, {
-    apiKey: 'YOUR_PARASWAP_API_KEY'
+  .registerProtocol('ethereum', 'velora', veloraProtocolEvm, {
+    apiKey: 'YOUR_velora_API_KEY'
   })
   .registerProtocol('ton', 'usdt0', Usdt0ProtocolTon, {
     tonApiKey: 'YOUR_TON_API_KEY'
@@ -241,8 +240,8 @@ const ethAccount = await wdk.getAccount('ethereum', 0)
 const tonAccount = await wdk.getAccount('ton', 0)
 
 // Use swap protocol
-const paraswap = ethAccount.getSwapProtocol('paraswap')
-const swapResult = await paraswap.swap({
+const velora = ethAccount.getSwapProtocol('velora')
+const swapResult = await velora.swap({
   tokenIn: '0x...',
   tokenOut: '0x...',
   amountIn: '1000000',
@@ -267,8 +266,8 @@ const bridgeResult = await usdt0.bridge({
 const account = await wdk.getAccount('ethereum', 0)
 
 // Swap protocol
-account.registerProtocol('paraswap', ParaswapProtocolEvm, paraswapConfig)
-const paraswap = account.getSwapProtocol('paraswap')
+account.registerProtocol('velora', veloraProtocolEvm, veloraConfig)
+const velora = account.getSwapProtocol('velora')
 
 // Bridge protocol
 account.registerProtocol('usdt0', Usdt0ProtocolEvm, usdt0Config)
@@ -337,7 +336,7 @@ const result = await account.sendTransaction(tx) // Will retry on failure
 import WDK from '@tetherto/wdk'
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
 import WalletManagerTon from '@tetherto/wdk-wallet-ton'
-import ParaswapProtocolEvm from '@tetherto/wdk-protocol-swap-paraswap-evm'
+import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
 
 async function setupMultiChainWallet() {
   // Generate or use existing seed phrase
@@ -346,13 +345,13 @@ async function setupMultiChainWallet() {
   // Initialize WDK Manager
   const wdk = new WDK(seedPhrase)
     .registerWallet('ethereum', WalletManagerEvm, {
-      provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
+      provider: 'https://eth.drpc.org'
     })
     .registerWallet('ton', WalletManagerTon, {
       tonApiKey: 'YOUR_TON_API_KEY'
     })
-    .registerProtocol('ethereum', 'paraswap', ParaswapProtocolEvm, {
-      apiKey: 'YOUR_PARASWAP_API_KEY'
+    .registerProtocol('ethereum', 'velora', veloraProtocolEvm, {
+      apiKey: 'YOUR_velora_API_KEY'
     })
   
   // Get accounts

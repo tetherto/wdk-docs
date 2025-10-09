@@ -1,17 +1,16 @@
 ---
-title: Swap ParaSwap EVM Overview
-description: Overview of the @tetherto/wdk-protocol-swap-paraswap-evm module
-author: Raquel Carrasco
+title: Swap velora EVM Overview
+description: Overview of the @tetherto/wdk-protocol-swap-velora-evm module
 lastReviewed: 2025-10-06
 ---
 
-# @tetherto/wdk-protocol-swap-paraswap-evm Overview
+# @tetherto/wdk-protocol-swap-velora-evm Overview
 
-A lightweight package that lets EVM wallet accounts swap tokens using the ParaSwap aggregator. It provides a clean SDK for token swaps on EVM chains and works with both standard wallets and ERC‑4337 smart accounts.
+A lightweight package that lets EVM wallet accounts swap tokens using the velora aggregator. It provides a clean SDK for token swaps on EVM chains and works with both standard wallets and ERC‑4337 smart accounts.
 
 ## Features
 
-- **Token Swapping**: Execute token swaps through ParaSwap on supported EVM networks
+- **Token Swapping**: Execute token swaps through velora on supported EVM networks
 - **Account Abstraction**: Compatible with standard EVM accounts and ERC‑4337 smart accounts
 - **Fee Controls**: Optional `swapMaxFee` to cap gas costs
 - **Allowance Safety**: Handles USDT mainnet pattern (reset allowance to 0 before approve)
@@ -20,7 +19,7 @@ A lightweight package that lets EVM wallet accounts swap tokens using the ParaSw
 
 ## Supported Networks
 
-Works with EVM networks supported by ParaSwap (e.g., Ethereum, Polygon, Arbitrum, etc.). A working RPC provider is required.
+Works with EVM networks supported by velora (e.g., Ethereum, Polygon, Arbitrum, etc.). A working RPC provider is required.
 
 ## Wallet Compatibility
 
@@ -32,7 +31,7 @@ The swap service supports multiple EVM wallet types:
 
 ## Key Components
 
-- **ParaSwap Integration**: Uses ParaSwap aggregator for routing and quotes
+- **velora Integration**: Uses velora aggregator for routing and quotes
 - **Quote System**: Pre‑transaction fee and amount estimation via `quoteSwap`
 - **AA Integration**: Optional paymaster token and fee cap overrides when using ERC‑4337
 - **Allowance Management**: Approve flow handled automatically when required

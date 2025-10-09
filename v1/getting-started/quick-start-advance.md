@@ -1,6 +1,5 @@
 ---
 title: Multi-Chain Quick Start Guide
-author: Raquel Carrasco
 lastReviewed: 2025-09-11
 icon: rocket
 ---
@@ -116,7 +115,7 @@ const wdk = new WDK(seedPhrase)
 // Step 3: Register wallets for different blockchains
 const wdkWithWallets = wdk
   .registerWallet('ethereum', WalletManagerEvm, {
-    provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
+    provider: 'https://eth.drpc.org'
   })
   .registerWallet('tron', WalletManagerTron, {
     provider: 'https://api.trongrid.io'
@@ -168,7 +167,7 @@ const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon aban
 
 const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, {
-    provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
+    provider: 'https://eth.drpc.org'
   })
   .registerWallet('tron', WalletManagerTron, {
     provider: 'https://api.trongrid.io'
@@ -258,7 +257,7 @@ const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon aban
 
 const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, {
-    provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
+    provider: 'https://eth.drpc.org'
   })
   .registerWallet('tron', WalletManagerTron, {
     provider: 'https://api.trongrid.io'
@@ -364,7 +363,7 @@ const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon aban
 
 const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, {
-    provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
+    provider: 'https://eth.drpc.org'
   })
   .registerWallet('tron', WalletManagerTron, {
     provider: 'https://api.trongrid.io'
@@ -482,7 +481,7 @@ const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon aban
 
 const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, {
-    provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
+    provider: 'https://eth.drpc.org'
   })
   .registerWallet('tron', WalletManagerTron, {
     provider: 'https://api.trongrid.io'
@@ -539,7 +538,7 @@ async function main() {
     console.log('🔗 Registering wallets...')
     const wdkWithWallets = wdk
       .registerWallet('ethereum', WalletManagerEvm, {
-        provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
+        provider: 'https://eth.drpc.org'
       })
       .registerWallet('tron', WalletManagerTron, {
         provider: 'https://api.trongrid.io'

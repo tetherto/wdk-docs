@@ -1,6 +1,5 @@
 ---
 title: Swap Modules Overview
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-09-04
 icon:
 ---
@@ -15,7 +14,7 @@ DeFi swap functionality for token exchanges across different DEXs:
 
 | Module | Blockchain | Status | Documentation | GitHub |
 |--------|------------|--------|---------------|---------|
-| `@tetherto/wdk-protocol-swap-paraswap-evm` | EVM | In progress | [Documentation](./wdk-protocol-swap-paraswap-evm/overview.md) | [Repository](https://github.com/tetherto/wdk-protocol-swap-paraswap-evm) |
+| `@tetherto/wdk-protocol-swap-velora-evm` | EVM | In progress | [Documentation](./wdk-protocol-swap-velora-evm/overview.md) | [Repository](https://github.com/tetherto/wdk-protocol-swap-velora-evm) |
 | `@tetherto/wdk-protocol-swap-dedust-ton` | TON | In progress | [Documentation](./wdk-protocol-swap-stonfi-ton/overview.md) | [Repository](https://github.com/tetherto/wdk-protocol-swap-dedust-ton) |
 
 ## Next steps

@@ -48,7 +48,62 @@ New functionality is added through modules rather than modifying core code. Also
 
 WDK modules are organized into five main categories, each serving a specific purpose in the blockchain application stack:
 
-<table data-view="cards"><thead><tr><th>Type</th><th>Purpose</th><th>Examples</th></tr></thead><tbody><tr><td><strong>Core</strong></td><td>Main orchestrator and shared utilities</td><td><a href="./core-module/">@tetherto/wdk</a></td></tr><tr><td><strong>Wallet</strong></td><td>Blockchain-specific wallet operations</td><td><a href="./wallet-modules/wallet-evm/">wallet-evm</a>, <a href="./wallet-modules/wallet-btc/">wallet-btc</a></td></tr><tr><td><strong>Swap</strong></td><td>Token swapping across DEXs</td><td><a href="./swap-modules/swap-paraswap-evm/">swap-paraswap-evm</a></td></tr><tr><td><strong>Bridge</strong></td><td>Cross-chain asset transfers</td><td><a href="./bridge-modules/bridge-usdt0-evm/">bridge-usdt0-evm</a></td></tr><tr><td><strong>Lending</strong></td><td>DeFi lending and borrowing</td><td><a href="./lending-modules/lending-aave-evm/">lending-aave-evm</a></td></tr></tbody></table>
+<table data-view="cards">
+	<thead>
+		<tr>
+			<th></th>
+			<th></th>
+			<th data-hidden data-card-target data-type="content-ref"></th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>
+				<strong>Core</strong>
+			</td>
+			<td>Main orchestrator and shared utilities</td>
+			<td>
+				<a href="./core-module/README.md">@tetherto/wdk</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<strong>Wallet</strong>
+			</td>
+			<td>Blockchain-specific wallet operations</td>
+			<td>
+				<a href="./wallet-modules/README.md">Wallet Modules</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<strong>Swap</strong>
+			</td>
+			<td>Token swapping across DEXs</td>
+			<td>
+				<a href="./swap-modules/README.md">Swap Modules</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<strong>Bridge</strong>
+			</td>
+			<td>Cross-chain asset transfers</td>
+			<td>
+				<a href="./bridge-modules/README.md">Bridge Modules</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<strong>Lending</strong>
+			</td>
+			<td>DeFi lending and borrowing</td>
+			<td>
+				<a href="./lending-modules/README.md">Lending Modules</a>
+			</td>
+		</tr>
+	</tbody>
+</table>
 
 ***
 
@@ -79,7 +134,7 @@ import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
 const wdkWithWallets = wdk
   .registerWallet('ethereum', WalletManagerEvm, {
-    provider: 'https://mainnet.infura.io/v3/YOUR_API_KEY'
+    provider: 'https://eth.drpc.org'
   })
   .registerWallet('bitcoin', WalletManagerBtc, {
     provider: 'https://blockstream.info/api'
@@ -91,10 +146,10 @@ const wdkWithWallets = wdk
 
 {% code title="Register Protocols" lineNumbers="true" %}
 ```typescript
-import SwapParaswapEvm from '@tetherto/wdk-protocol-swap-paraswap-evm'
+import SwapveloraEvm from '@tetherto/wdk-protocol-swap-velora-evm'
 
 const wdkWithProtocols = wdkWithWallets
-  .registerProtocol('swap-paraswap-evm', SwapParaswapEvm)
+  .registerProtocol('swap-velora-evm', SwapveloraEvm)
 ```
 {% endcode %}
 
@@ -124,7 +179,7 @@ const btcTx = await btcAccount.sendTransaction({
 })
 
 // Use DeFi protocols through the same interface
-const swapResult = await wdkWithProtocols.executeProtocol('swap-paraswap-evm', {
+const swapResult = await wdkWithProtocols.executeProtocol('swap-velora-evm', {
   fromToken: 'ETH',
   toToken: 'USDT',
   amount: '1000000000000000000'
@@ -248,7 +303,7 @@ const balance = await customAccount.getBalance()
 {% endcode %}
 
 
-{% hint style="info" %}
+<!-- {% hint style="info" %} -->
 <!-- **Learn More**: For detailed information on creating custom modules, check out our [Extender Guide](../extender-guide.md).
 {% endhint %} -->
 
@@ -257,9 +312,6 @@ const balance = await customAccount.getBalance()
 ### Quick Start Paths
 
 Ready to start building? Choose your development environment:
-
-<table data-view="cards"><thead><tr><th>Environment</th><th>Best For</th><th>Get Started</th></tr></thead><tbody><tr><td><strong>Node.js &#x26; Bare Runtime</strong></td><td>Backend services, embedded systems, server-side wallet operations</td><td><a href="../start-building/nodejs-bare-quickstart.md">Node.js &#x26; Bare Quickstart</a></td></tr><tr><td><strong>React Native</strong></td><td>Mobile wallet applications, cross-platform development</td><td><a href="../start-building/react-native-quickstart.md">React Native Quickstart</a></td></tr></tbody></table>
-
 
 <table data-card-size="large" data-view="cards">
 	<thead>

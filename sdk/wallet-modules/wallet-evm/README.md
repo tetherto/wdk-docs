@@ -1,7 +1,6 @@
 ---
 title: Wallet EVM Overview
 description: Overview of the @tetherto/wdk-wallet-evm module
-author: Matteo Giardino
 lastReviewed: 2025-06-26
 layout:
   width: default

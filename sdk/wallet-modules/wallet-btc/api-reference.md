@@ -1,7 +1,6 @@
 ---
 title: Wallet BTC API Reference
 description: Complete API documentation for @tetherto/wdk-wallet-btc
-author: Matteo Giardino
 lastReviewed: 2025-06-26
 layout:
   width: default

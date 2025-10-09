@@ -1,7 +1,6 @@
 ---
-title: Swap ParaSwap EVM Guides
-description: How to install and use @tetherto/wdk-protocol-swap-paraswap-evm for swapping tokens on EVM
-author: Raquel Carrasco
+title: Swap velora EVM Guides
+description: How to install and use @tetherto/wdk-protocol-swap-velora-evm for swapping tokens on EVM
 lastReviewed: 2025-10-06
 layout:
   width: default
@@ -19,14 +18,12 @@ layout:
     visible: false
 ---
 
-# Guides
-
 ## Installation
 
-To install the `@tetherto/wdk-protocol-swap-paraswap-evm` package, run:
+To install the `@tetherto/wdk-protocol-swap-velora-evm` package, run:
 
 ```bash
-npm install @tetherto/wdk-protocol-swap-paraswap-evm
+npm install @tetherto/wdk-protocol-swap-velora-evm
 ```
 
 ## Quick Start
@@ -34,7 +31,7 @@ npm install @tetherto/wdk-protocol-swap-paraswap-evm
 ### Setting Up a Swap Service
 
 ```javascript
-import ParaSwapProtocolEvm from '@tetherto/wdk-protocol-swap-paraswap-evm'
+import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
 import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
 // Create a wallet account first
@@ -43,7 +40,7 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 })
 
 // Create swap service
-const swapProtocol = new ParaSwapProtocolEvm(account, {
+const swapProtocol = new veloraProtocolEvm(account, {
   swapMaxFee: 200000000000000n // Optional: Max swap fee (wei)
 })
 ```
@@ -51,7 +48,7 @@ const swapProtocol = new ParaSwapProtocolEvm(account, {
 ### Basic Swap Operation
 
 ```javascript
-// Swap tokens via ParaSwap (USDT -> WETH)
+// Swap tokens via velora (USDT -> WETH)
 const result = await swapProtocol.swap({
   tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
   tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH
@@ -82,7 +79,7 @@ console.log('Tokens out (base units):', quote.tokenOutAmount)
 ## Supported Networks
 
 ### EVM Networks
-- **Ethereum**, **Polygon**, **Arbitrum**, and others supported by ParaSwap
+- **Ethereum**, **Polygon**, **Arbitrum**, and others supported by velora
 
 ## Swap Operations
 
@@ -114,7 +111,7 @@ const aa = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
   paymasterUrl: 'YOUR_PAYMASTER_URL'
 })
 
-const swapAA = new ParaSwapProtocolEvm(aa, { swapMaxFee: 200000000000000n })
+const swapAA = new veloraProtocolEvm(aa, { swapMaxFee: 200000000000000n })
 
 const result = await swapAA.swap({
   tokenIn: '0xdAC17F...ec7', // USDT
@@ -176,7 +173,7 @@ try {
 ### Complete Swap Setup
 
 ```javascript
-import ParaSwapProtocolEvm from '@tetherto/wdk-protocol-swap-paraswap-evm'
+import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
 import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
 async function setupSwap() {
@@ -186,7 +183,7 @@ async function setupSwap() {
   })
 
   // Create swap service
-  const swapProtocol = new ParaSwapProtocolEvm(account, {
+  const swapProtocol = new veloraProtocolEvm(account, {
     swapMaxFee: 200000000000000n
   })
 

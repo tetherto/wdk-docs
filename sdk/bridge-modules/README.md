@@ -1,6 +1,5 @@
 ---
 title: Bridge Modules Overview
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-09-04
 layout:
   width: default
@@ -26,10 +25,10 @@ The Wallet Development Kit (WDK) provides a set of modules that support bridging
 
 Cross-chain bridge functionality for token transfers between blockchains:
 
-| Module | Route | Status | Documentation | GitHub |
-|--------|-------|--------|---------------|---------|
-| `@tetherto/wdk-protocol-bridge-usdt0-evm` | EVM ↔ EVM | In progress | [Documentation](./bridge-usdt0-evm/) | [Repository](https://github.com/tetherto/wdk-protocol-bridge-usdt0-evm) |
-| `@tetherto/wdk-protocol-bridge-usdt0-ton` | TON ↔ EVM | In progress | [Documentation](./bridge-usdt0-ton/)  | [Repository](https://github.com/tetherto/wdk-protocol-bridge-usdt0-ton) |
+| Module | Route | Status | Documentation |
+|--------|-------|--------|---------------|
+| [`@tetherto/wdk-protocol-bridge-usdt0-evm`](https://github.com/tetherto/wdk-protocol-bridge-usdt0-evm) | EVM ↔ EVM | In progress | [Documentation](./bridge-usdt0-evm/) |
+| [`@tetherto/wdk-protocol-bridge-usdt0-ton`](https://github.com/tetherto/wdk-protocol-bridge-usdt0-ton) | TON ↔ EVM | In progress | [Documentation](./bridge-usdt0-ton/) |
 
 ## Next steps
 

@@ -1,7 +1,6 @@
 ---
 title: Bridge USDT0 EVM Guides
 description: Installation, quick start, and usage examples for @tetherto/wdk-protocol-bridge-usdt0-evm
-author: Raquel Carrasco
 lastReviewed: 2025-09-04
 layout:
   width: default
@@ -19,36 +18,12 @@ layout:
     visible: false
 ---
 
-# Guides
-
 ## Installation
 
 To install the `@tetherto/wdk-protocol-bridge-usdt0-evm` package, follow these instructions:
 
-### Public Release
-
-Once the package is publicly available, you can install it using npm:
-
 ```bash
 npm install @tetherto/wdk-protocol-bridge-usdt0-evm
-```
-
-### Private Access
-
-If you have access to the private repository, install the package from the develop branch on GitHub:
-
-```bash
-npm install git+https://github.com/tetherto/wdk-protocol-bridge-usdt0-evm.git#develop
-```
-
-After installation, ensure your package.json includes the dependency correctly:
-
-```json
-"dependencies": {
-  // ... other dependencies ...
-  "@tetherto/wdk-protocol-bridge-usdt0-evm": "git+ssh://git@github.com:tetherto/wdk-protocol-bridge-usdt0-evm.git#develop"
-  // ... other dependencies ...
-}
 ```
 
 ## Quick Start

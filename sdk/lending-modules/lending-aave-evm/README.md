@@ -1,7 +1,6 @@
 ---
 title: Lending Aave EVM Overview
 description: Overview of the @tetherto/wdk-protocol-lending-aave-evm module
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-10-06
 layout:
   width: default

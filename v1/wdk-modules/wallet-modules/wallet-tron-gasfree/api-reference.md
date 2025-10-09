@@ -1,7 +1,6 @@
 ---
 title: Wallet Tron Gas-Free API Reference
 description: Complete API documentation for @tetherto/wdk-wallet-tron-gasfree
-author: Raquel Carrasco Gonzalez
 lastReviewed: 2025-06-26
 icon: code
 ---

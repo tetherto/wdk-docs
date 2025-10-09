@@ -1,7 +1,6 @@
 ---
 title: Wallet BTC Configuration
 description: Configuration options and settings for @tetherto/wdk-wallet-btc
-author: Matteo Giardino
 lastReviewed: 2025-06-26
 icon: gear
 ---
