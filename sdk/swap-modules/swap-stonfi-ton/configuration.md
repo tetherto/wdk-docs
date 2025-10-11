@@ -1,7 +1,7 @@
 ---
 title: Swap Stonfi TON Configuration
 description: Configuration options and settings for @tetherto/wdk-protocol-swap-stonfi-ton
-lastReviewed: 2025-09-04
+icon: gear
 layout:
   width: default
   title:

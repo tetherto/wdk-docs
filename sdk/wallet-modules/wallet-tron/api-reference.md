@@ -1,7 +1,7 @@
 ---
 title: Wallet Tron API Reference
 description: Complete API documentation for @tetherto/wdk-wallet-tron
-lastReviewed: 2025-08-31
+icon: code
 layout:
   width: default
   title:

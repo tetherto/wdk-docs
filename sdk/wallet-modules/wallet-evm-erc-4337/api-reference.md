@@ -1,7 +1,7 @@
 ---
 title: Wallet EVM ERC-4337 API Reference
 description: Complete API documentation for @tetherto/wdk-wallet-evm-erc-4337
-lastReviewed: 2025-08-31
+icon: code
 layout:
   width: default
   title:

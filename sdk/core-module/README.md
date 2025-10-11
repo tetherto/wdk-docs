@@ -1,7 +1,6 @@
 ---
 title: WDK Core
 description: Overview of the @tetherto/wdk-core module
-lastReviewed: 2025-09-11
 layout:
   width: default
   title:

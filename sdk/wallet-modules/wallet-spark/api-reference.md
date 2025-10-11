@@ -1,7 +1,7 @@
 ---
 title: Wallet Spark API Reference
 description: Complete API documentation for @tetherto/wdk-wallet-spark
-lastReviewed: 2025-06-26
+icon: code
 layout:
   width: default
   title:

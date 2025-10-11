@@ -1,7 +1,7 @@
 ---
 title: Secret Manager Configuration
 description: Configure passkey, salt, KDF iterations and runtime options for @tetherto/wdk-secret-manager
-lastReviewed: 2025-10-06
+icon: gear
 ---
 
 

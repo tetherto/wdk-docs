@@ -1,7 +1,7 @@
 ---
 title: Wallet TON Gasless Usage
 description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-ton-gasless
-lastReviewed: 2025-09-01
+icon: book-open
 layout:
   width: default
   title:

@@ -1,7 +1,7 @@
 ---
 title: Wallet EVM Usage
-description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-evm
-lastReviewed: 2025-06-26
+description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-evm 
+icon: book-open
 layout:
   width: default
   title:

@@ -1,7 +1,6 @@
 ---
 title: Wallet Spark Overview
 description: Overview of the @tetherto/wdk-wallet-spark module
-lastReviewed: 2025-06-26
 layout:
   width: default
   title:

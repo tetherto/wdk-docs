@@ -1,7 +1,7 @@
 ---
 title: Wallet TON Gasless API Reference
 description: Complete API documentation for @tetherto/wdk-wallet-ton-gasless
-lastReviewed: 2025-06-26
+icon: code
 layout:
   width: default
   title:

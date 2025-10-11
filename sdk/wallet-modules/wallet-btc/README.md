@@ -1,7 +1,6 @@
 ---
 title: Wallet BTC Overview
 description: Overview of the @tetherto/wdk-wallet-btc module
-lastReviewed: 2025-06-26
 layout:
   width: default
   title:

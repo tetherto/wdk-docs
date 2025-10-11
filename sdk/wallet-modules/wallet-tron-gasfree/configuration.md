@@ -1,7 +1,7 @@
 ---
 title: Wallet Tron Gas-Free Configuration
 description: Configuration options and settings for @tetherto/wdk-wallet-tron-gasfree
-lastReviewed: 2025-08-31
+icon: gear
 layout:
   width: default
   title:

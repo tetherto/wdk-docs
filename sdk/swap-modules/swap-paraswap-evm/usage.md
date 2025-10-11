@@ -1,7 +1,7 @@
 ---
 title: Swap velora EVM Guides
 description: How to install and use @tetherto/wdk-protocol-swap-velora-evm for swapping tokens on EVM
-lastReviewed: 2025-10-06
+icon: book-open
 layout:
   width: default
   title:

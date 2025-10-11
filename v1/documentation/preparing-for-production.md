@@ -1,7 +1,6 @@
 ---
 title: Prepare for Production - Secure Seedphrase Persistence
 description: Guidelines for securely handling and persisting seedphrases in production wallet applications using WDK modules.
-lastReviewed: 2025-06-27
 ---
 
 # Prepare for Production: Secure Seedphrase Persistence

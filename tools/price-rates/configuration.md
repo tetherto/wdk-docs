@@ -1,7 +1,7 @@
 ---
 title: Price Rates Configuration
 description: Configure HTTP pricing clients and providers
-lastReviewed: 2025-10-06
+icon: gear
 ---
 
 # Price Rates Configuration

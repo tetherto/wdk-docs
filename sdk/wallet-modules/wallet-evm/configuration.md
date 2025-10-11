@@ -1,7 +1,7 @@
 ---
 title: Wallet EVM Configuration
 description: Configuration options and settings for @tetherto/wdk-wallet-evm
-lastReviewed: 2025-06-26
+icon: gear
 layout:
   width: default
   title:

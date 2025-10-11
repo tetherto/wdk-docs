@@ -1,7 +1,6 @@
 ---
 title: Price Rates
 description: Unified pricing tools for fetching current and historical asset prices
-lastReviewed: 2025-10-06
 layout:
   width: default
   title:

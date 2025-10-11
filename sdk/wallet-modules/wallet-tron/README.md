@@ -1,7 +1,6 @@
 ---
 title: Wallet Tron Overview
 description: Overview of the @tetherto/wdk-wallet-tron module
-lastReviewed: 2025-06-26
 layout:
   width: default
   title:

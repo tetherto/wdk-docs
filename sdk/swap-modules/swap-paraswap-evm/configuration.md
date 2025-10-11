@@ -1,7 +1,7 @@
 ---
 title: Swap velora EVM Configuration
 description: Configuration options and settings for @tetherto/wdk-protocol-swap-velora-evm
-lastReviewed: 2025-10-06
+icon: gear
 layout:
   width: default
   title:

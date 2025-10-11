@@ -1,7 +1,7 @@
 ---
 title: Bridge USDT0 TON Configuration
 description: Configuration options and settings for @tetherto/wdk-protocol-bridge-usdt0-ton
-lastReviewed: 2025-09-04
+icon: gear
 layout:
   width: default
   title:

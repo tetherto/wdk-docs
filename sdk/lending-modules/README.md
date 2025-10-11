@@ -1,6 +1,5 @@
 ---
 title: Lending Modules Overview
-lastReviewed: 2025-09-04
 layout:
   width: default
   title:

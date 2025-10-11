@@ -1,6 +1,7 @@
 ---
 title: WDK Core API Reference
 description: Complete API documentation for @tetherto/wdk
+icon: code
 layout:
   width: default
   title:

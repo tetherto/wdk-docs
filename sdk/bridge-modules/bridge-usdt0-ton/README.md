@@ -1,7 +1,6 @@
 ---
 title: Bridge USDT0 TON Overview
 description: Overview of the @tetherto/wdk-protocol-bridge-usdt0-ton module
-lastReviewed: 2025-09-04
 layout:
   width: default
   title:

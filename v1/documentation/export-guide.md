@@ -1,7 +1,6 @@
 ---
 title: WDK’s Derivation Path and Compatibility with Other Wallet Providers
 description: How derivation paths impact wallet compatibility and recovery on different blockchains.
-lastReviewed: 2025-10-01
 ---
 
 This guide explains the derivation path used for WDK, the official derivation paths for the networks supported by WDK, and the compatibility modes with other wallet providers to help you manage, migrate, and access your assets seamlessly.

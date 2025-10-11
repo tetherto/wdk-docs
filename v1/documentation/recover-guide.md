@@ -1,6 +1,5 @@
 ---
 title: Recovering Your Funds if the WDK SDK is Down
-lastReviewed: 2025-10-01
 ---
 
 In the event that the WDK (Wallet Development Kit) SDK is unavailable or inaccessible (or whenever you desire) you can still access your funds using the following recovery process. This guide outlines the steps to retrieve your wallet using popular wallets, including MetaMask, Phantom, and Trust Wallet.

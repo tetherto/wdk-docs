@@ -1,7 +1,6 @@
 ---
 title: Swap velora EVM Overview
 description: Overview of the @tetherto/wdk-protocol-swap-velora-evm module
-lastReviewed: 2025-10-06
 layout:
   width: default
   title:

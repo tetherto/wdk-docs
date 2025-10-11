@@ -1,7 +1,7 @@
 ---
 title: Wallet Tron Gas-Free Usage
 description: Installation, quick start, and usage examples for @tetherto/wdk-wallet-tron-gasfree
-lastReviewed: 2025-06-26
+icon: book-open
 layout:
   width: default
   title:

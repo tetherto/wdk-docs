@@ -1,7 +1,6 @@
 ---
 title: Wallet TON Gasless Overview
 description: Overview of the @tetherto/wdk-wallet-ton-gasless module
-lastReviewed: 2025-06-26
 layout:
   width: default
   title:

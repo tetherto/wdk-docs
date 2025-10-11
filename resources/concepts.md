@@ -1,7 +1,6 @@
 ---
 title: Concepts & Definitions
 description: Key concepts and definitions used throughout the Wallet Development Kit
-lastReviewed: 2025-06-26
 ---
 
 ## Account Abstraction

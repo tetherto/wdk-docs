@@ -1,7 +1,7 @@
 ---
 title: Bridge USDT0 EVM Guides
 description: Installation, quick start, and usage examples for @tetherto/wdk-protocol-bridge-usdt0-evm
-lastReviewed: 2025-09-04
+icon: book-open
 layout:
   width: default
   title:
