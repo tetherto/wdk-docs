@@ -18,14 +18,14 @@ title: Get Involved cards
 				<i class="fa-flask">:fa-flask:</i>
 			</td>
 			<td>
-				<strong>Beta Program</strong>
+				<strong>Partner with us</strong>
 			</td>
-			<td>Join our beta program to get early access to new features</td>
+			<td>Driving impact? Register your project for direct team access</td>
 			<td>
-				<a href="overview/beta-program.md" class="button primary">Join Beta</a>
+				<a href="https://wkf.ms/4hd40JK" class="button primary">Get in touch</a>
 			</td>
 			<td>
-				<a href="overview/beta-program.md">beta-program.md</a>
+				<a href="https://wkf.ms/4hd40JK">https://wkf.ms/4hd40JK</a>
 			</td>
 		</tr>
 		<tr>

@@ -33,7 +33,7 @@ A blockchain indexer continuously monitors and organizes blockchain transactions
 
 Request your API key to access the WDK Indexer API.
 
-<a href="https://docs.google.com/forms/d/e/1FAIpQLSfh3UKsQ-PwJCQOQyJ3EVMKVyHTuqK1XndyiKe4uLslEEtWSw/viewform" class="button primary">Request API Key</a>
+<a href="https://wkf.ms/4hd40JK">Request API Key</a>
 
 {% endstep %}
 
