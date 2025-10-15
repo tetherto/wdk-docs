@@ -40,7 +40,7 @@ layout:
 Numeric input component with token/fiat toggle, balance display, and Max functionality.
 
 <figure>
-  <img src="../../assets/ui-components/amount-input-dark.png" alt="AmountInput - dark theme">
+  <img src="../../assets/ui-components/amount-input-dark.png" alt="AmountInput - dark theme" style="max-width: 640px; width: 100%; height: auto;">
   <figcaption>AmountInput (dark theme)</figcaption>
 </figure>
 
@@ -91,7 +91,7 @@ function SendAmount({ amount, balance, onAmountChange }) {
 Token selection component with search functionality and recent tokens.
 
 <figure>
-  <img src="../../assets/ui-components/asset-selector.png" alt="Asset Selector - dark theme">
+  <img src="../../assets/ui-components/asset-selector.png" alt="Asset Selector - dark theme" style="max-width: 640px; width: 100%; height: auto;">
   <figcaption>AssetSelector (dark theme)</figcaption>
 </figure>
 
@@ -151,7 +151,7 @@ Display component for showing balance values with optional masking and loading s
 </figure>
 
 <figure>
-  <img src="../../assets/ui-components/balance-hide.png" alt="Balance amount hide- dark theme">
+  <img src="../../assets/ui-components/balance-hide.png" alt="Balance amount hide- dark theme" style="max-width: 640px; width: 100%; height: auto;">
   <figcaption>Balance amout hide (dark theme)</figcaption>
 </figure>
 
@@ -193,7 +193,7 @@ function WalletBalance({ balance, currency, isLoading }) {
 Address input component with QR scanning and paste functionality.
 
 <figure>
-  <img src="../../assets/ui-components/crypto-address-input.png" alt="Crypto Address Input - dark theme">
+  <img src="../../assets/ui-components/crypto-address-input.png" alt="Crypto Address Input - dark theme" style="max-width: 640px; width: 100%; height: auto;">
   <figcaption>CryptoAddressInput (dark theme)</figcaption>
 </figure>
 
@@ -238,7 +238,7 @@ function AddressInput({ address, onAddressChange, onQRScan }) {
 QR code renderer for addresses and payment requests.
 
 <figure>
-  <img src="../../assets/ui-components/qr-code.png" alt="QR Code - dark theme">
+  <img src="../../assets/ui-components/qr-code.png" alt="QR Code - dark theme" style="max-width: 640px; width: 100%; height: auto;">
   <figcaption>QRCode (dark theme)</figcaption>
 </figure>
 
@@ -281,7 +281,7 @@ function AddressQR({ address }) {
 Single transaction row component for displaying transaction details.
 
 <figure>
-  <img src="../../assets/ui-components/transaction-item.png" alt="Transaction Item - dark theme">
+  <img src="../../assets/ui-components/transaction-item.png" alt="Transaction Item - dark theme" style="max-width: 640px; width: 100%; height: auto;">
   <figcaption>TransactionItem (dark theme)</figcaption>
 </figure>
 
@@ -332,7 +332,7 @@ function TransactionRow({ transaction, onPress }) {
 Virtualized list component for displaying multiple transactions.
 
 <figure>
-  <img src="../../assets/ui-components/transaction-list.png" alt="Transaction List - dark theme">
+  <img src="../../assets/ui-components/transaction-list.png" alt="Transaction List - dark theme" style="max-width: 640px; width: 100%; height: auto;">
   <figcaption>TransactionList (dark theme)</figcaption>
 </figure>
 
