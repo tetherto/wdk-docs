@@ -23,7 +23,7 @@ The WDK Indexer REST API provides fast, reliable access to blockchain transactio
 
 {% hint style="info" %}
 - API base URL: `https://wdk-api.tether.io`
-- Request API key: `https://wdk-api.tether.io/request`
+- Request API key: `https://wdk-api.tether.io/register`
 {% endhint %}
 
 A blockchain indexer continuously monitors and organizes blockchain transactions, making them instantly searchable through a simple REST API.
@@ -38,7 +38,7 @@ A blockchain indexer continuously monitors and organizes blockchain transactions
 
 Request your API key to access the WDK Indexer API.
 
-<a href="https://wdk-api.tether.io/request">Request API Key</a>
+<a href="https://wdk-api.tether.io/register">Request API Key</a>
 
 {% endstep %}
 

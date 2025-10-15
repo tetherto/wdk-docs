@@ -27,7 +27,7 @@ https://wdk-api.tether.io
 {% endcode %}
 
 {% hint style="info" %}
-- Request API key: `https://wdk-api.tether.io/request`
+- Request API key: `https://wdk-api.tether.io/register`
 {% endhint %}
 
 ***
