@@ -55,33 +55,23 @@ x-api-key: your-api-key-here
 | `GET /api/v1/:blockchain/:token/:address/token-balances` | 4 req / 10s |
 | `GET /api/v1/:blockchain/:token/:address/token-transfers` | 8 req / 10s |
 
-{% hint style="info" %}
-Response headers include window info:
-
-```http
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 95
-X-RateLimit-Reset: 1642694400
-```
-{% endhint %}
-
 ***
 
 ## API Endpoints
 
-{% openapi src="./openapi.json" path="/api/v1/health" method="get" %}
+{% openapi src="https://wdk-api.tether.io/doc/json" path="/api/v1/health" method="get" %}
 Check API server status
 {% endopenapi %}
 
 ***
 
-{% openapi src="./openapi.json" path="/api/v1/{blockchain}/{token}/{address}/token-transfers" method="get" %}
+{% openapi src="https://wdk-api.tether.io/doc/json" path="/api/v1/{blockchain}/{token}/{address}/token-transfers" method="get" %}
 Get token transfer history for an address
 {% endopenapi %}
 
 ***
 
-{% openapi src="./openapi.json" path="/api/v1/{blockchain}/{token}/{address}/token-balances" method="get" %}
+{% openapi src="https://wdk-api.tether.io/doc/json" path="/api/v1/{blockchain}/{token}/{address}/token-balances" method="get" %}
 Get current token balance for an address
 {% endopenapi %}
 

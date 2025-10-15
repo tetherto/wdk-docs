@@ -64,17 +64,6 @@ The WDK Indexer API implements rate limiting to ensure fair usage and system sta
 | `GET /api/v1/:blockchain/:token/:address/token-transfers` | 8 req / 10s |
 
 {% endtab %}
-{% tab title="Headers" %}
-
-Response headers include current window info:
-
-```http
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 95
-X-RateLimit-Reset: 1642694400
-```
-
-{% endtab %}
 {% endtabs %}
 
 ***
@@ -97,7 +86,7 @@ Here's a quick example of how to query a token balance with curl.
 
 {% code title="Using curl" lineNumbers="true" %}
 ```bash
-curl -X GET "http://wdk-api-01.tether.to/api/v1/ethereum/usdt/0x742d35cc.../token-balances" \
+curl -X GET "http://wdk-api.tether.to/api/v1/ethereum/usdt/0x742d35cc.../token-balances" \
      -H "x-api-key: your-api-key-here"
 ```
 {% endcode %}
@@ -108,7 +97,7 @@ const axios = require('axios');
 
 async function getTokenBalance(blockchain, token, address) {
   const response = await axios.get(
-    `http://wdk-api-01.tether.to/api/v1/${blockchain}/${token}/${address}/token-balances`,
+    `http://wdk-api.tether.to/api/v1/${blockchain}/${token}/${address}/token-balances`,
     {
       headers: {
         'x-api-key': 'your-api-key-here'
