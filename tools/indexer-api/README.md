@@ -20,6 +20,11 @@ layout:
 
 The WDK Indexer is a high‑performance REST API for balances, token transfers, and transaction history across multiple chains.
 
+{% hint style="info" %}
+- API base URL: `https://wdk-api.tether.io`
+- Request API key: `https://wdk-api.tether.io/request`
+{% endhint %}
+
 <table data-card-size="large" data-view="cards">
 	<thead>
 		<tr>

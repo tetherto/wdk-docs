@@ -22,9 +22,13 @@ layout:
 
 {% code title="API Base URL" %}
 ```
-http://wdk-api-01.tether.to
+https://wdk-api.tether.io
 ```
 {% endcode %}
+
+{% hint style="info" %}
+- Request API key: `https://wdk-api.tether.io/request`
+{% endhint %}
 
 ***
 
@@ -46,14 +50,20 @@ x-api-key: your-api-key-here
 
 ## Rate Limiting
 
-* **Limit**: 100 requests per minute per API key
-* **Headers**: Rate limit info included in response headers
+| Endpoint | Limit |
+| --- | --- |
+| `GET /api/v1/:blockchain/:token/:address/token-balances` | 4 req / 10s |
+| `GET /api/v1/:blockchain/:token/:address/token-transfers` | 8 req / 10s |
+
+{% hint style="info" %}
+Response headers include window info:
 
 ```http
 X-RateLimit-Limit: 100
 X-RateLimit-Remaining: 95
 X-RateLimit-Reset: 1642694400
 ```
+{% endhint %}
 
 ***
 

@@ -21,6 +21,11 @@ layout:
 
 The WDK Indexer REST API provides fast, reliable access to blockchain transaction data across multiple networks including Bitcoin, Ethereum, Solana, TON, TRON, Spark, Polygon, and Arbitrum.
 
+{% hint style="info" %}
+- API base URL: `https://wdk-api.tether.io`
+- Request API key: `https://wdk-api.tether.io/request`
+{% endhint %}
+
 A blockchain indexer continuously monitors and organizes blockchain transactions, making them instantly searchable through a simple REST API.
 
 ***
@@ -33,7 +38,7 @@ A blockchain indexer continuously monitors and organizes blockchain transactions
 
 Request your API key to access the WDK Indexer API.
 
-<a href="https://wkf.ms/4hd40JK">Request API Key</a>
+<a href="https://wdk-api.tether.io/request">Request API Key</a>
 
 {% endstep %}
 
@@ -50,14 +55,27 @@ Use your API key to query blockchain data via the REST API.
 
 The WDK Indexer API implements rate limiting to ensure fair usage and system stability:
 
-* **Default Limit**: 100 requests per minute per API key
-* **Response Headers**: Rate limit information included in all responses
+{% tabs %}
+{% tab title="Per-endpoint" %}
+
+| Endpoint | Limit |
+| --- | --- |
+| `GET /api/v1/:blockchain/:token/:address/token-balances` | 4 req / 10s |
+| `GET /api/v1/:blockchain/:token/:address/token-transfers` | 8 req / 10s |
+
+{% endtab %}
+{% tab title="Headers" %}
+
+Response headers include current window info:
 
 ```http
 X-RateLimit-Limit: 100
 X-RateLimit-Remaining: 95
 X-RateLimit-Reset: 1642694400
 ```
+
+{% endtab %}
+{% endtabs %}
 
 ***
 
