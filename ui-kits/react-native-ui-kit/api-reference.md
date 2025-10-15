@@ -91,7 +91,7 @@ function SendAmount({ amount, balance, onAmountChange }) {
 Token selection component with search functionality and recent tokens.
 
 <figure>
-  <img src="../../assets/ui-components/asset-selector.png" alt="Asset Selector - dark theme" style="max-width: 640px; width: 100%; height: auto;">
+  <img src="../../assets/ui-components/asset-selector.png" alt="Asset Selector - dark theme" style="max-width: 640px; width: 75%; height: auto;">
   <figcaption>AssetSelector (dark theme)</figcaption>
 </figure>
 
