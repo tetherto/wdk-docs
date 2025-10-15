@@ -71,10 +71,10 @@
     * [Usage](sdk/bridge-modules/bridge-usdt0-evm/usage.md)
     * [Configuration](sdk/bridge-modules/bridge-usdt0-evm/configuration.md)
     * [API Reference](sdk/bridge-modules/bridge-usdt0-evm/api-reference.md)
-  * [bridge-usdt0-ton](sdk/bridge-modules/bridge-usdt0-ton/README.md)
+  <!-- * [bridge-usdt0-ton](sdk/bridge-modules/bridge-usdt0-ton/README.md)
     * [Usage](sdk/bridge-modules/bridge-usdt0-ton/usage.md)
     * [Configuration](sdk/bridge-modules/bridge-usdt0-ton/configuration.md)
-    * [API Reference](sdk/bridge-modules/bridge-usdt0-ton/api-reference.md)
+    * [API Reference](sdk/bridge-modules/bridge-usdt0-ton/api-reference.md) -->
 * [Lending Modules](sdk/lending-modules/README.md)
   * [lending-aave-evm](sdk/lending-modules/lending-aave-evm/README.md)
     * [Usage](sdk/lending-modules/lending-aave-evm/usage.md)
