@@ -216,7 +216,7 @@ async function sendMultiChainTransactions(wdk) {
 {% code title="Registering Protocols" lineNumbers="true" %}
 ```typescript
 import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
-import Usdt0ProtocolTon from '@tetherto/wdk-protocol-bridge-usdt0-ton'
+import Usdt0ProtocolTon from '@tetherto/wdk-protocol-bridge-usdt0-ton' 
 
 // Register protocols globally
 const wdk = new WDK(seedPhrase)

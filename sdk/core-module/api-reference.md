@@ -127,7 +127,7 @@ Registers a protocol globally for all accounts of a specific blockchain.
 {% code title="Register Protocols" lineNumbers="true" %}
 ```javascript
 import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
-import Usdt0ProtocolTon from '@tetherto/wdk-protocol-bridge-usdt0-ton'
+import Usdt0ProtocolTon from '@tetherto/wdk-protocol-bridge-usdt0-ton' 
 
 // Register swap protocol for Ethereum
 wdk.registerProtocol('ethereum', 'velora', veloraProtocolEvm, {
