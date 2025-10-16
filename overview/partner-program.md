@@ -20,7 +20,7 @@ layout:
 
 # Partner Program
 
-<a href="https://wkf.ms/4hd40JK">Get in touch</a>
+<a class="button primary" href="https://wkf.ms/4hd40JK">Get in touch</a>
 
 
 ## What is the Partner Program?
@@ -61,5 +61,5 @@ We're excited to showcase how our partners are using WDK to build innovative wal
 
 ## Ready to Join?
 
-<a href="https://wkf.ms/4hd40JK">Get in touch</a>
+<a class="button primary" href="https://wkf.ms/4hd40JK">Get in touch</a>
 

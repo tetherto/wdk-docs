@@ -38,7 +38,7 @@ A blockchain indexer continuously monitors and organizes blockchain transactions
 
 Request your API key to access the WDK Indexer API.
 
-<a href="https://wdk-api.tether.io/register">Request API Key</a>
+<a class="button primary" href="https://wdk-api.tether.io/register">Request API Key</a>
 
 {% endstep %}
 
@@ -55,16 +55,10 @@ Use your API key to query blockchain data via the REST API.
 
 The WDK Indexer API implements rate limiting to ensure fair usage and system stability:
 
-{% tabs %}
-{% tab title="Per-endpoint" %}
-
 | Endpoint | Limit |
 | --- | --- |
 | `GET /api/v1/:blockchain/:token/:address/token-balances` | 4 req / 10s |
 | `GET /api/v1/:blockchain/:token/:address/token-transfers` | 8 req / 10s |
-
-{% endtab %}
-{% endtabs %}
 
 ***
 
@@ -72,7 +66,7 @@ The WDK Indexer API implements rate limiting to ensure fair usage and system sta
 
 All API requests require your API key in the `x-api-key` header:
 
-{% code title="Authentication Header" lineNumbers="true" %}
+{% code title="Authentication Header" lineNumbers="false" %}
 ```http
 x-api-key: your-api-key-here
 ```
