@@ -20,7 +20,7 @@ layout:
 
 # About WDK
 
-The **Wallet Development Kit _by Tether_ (WDK)** is Tether's open-source toolkit to empowers humans, machines and AI agents alike to build, deploy and use secure, multi-chain, self-custodial wallets that can be integrated anywhere from the smallest embedded device to any mobile, desktop and server operating system.
+The **Wallet Development Kit _by Tether_ (WDK)** is Tether's open-source toolkit that empowers humans, machines and AI agents alike to build, deploy and use secure, multi-chain, self-custodial wallets that can be integrated anywhere from the smallest embedded device to any mobile, desktop and server operating system.
 
 A developer-first framework designed for maximum flexibility and scalability, powering anything from consumer wallets to wallet-enabled apps, DeFi integrations, IoT use cases, and AI agents.
 
