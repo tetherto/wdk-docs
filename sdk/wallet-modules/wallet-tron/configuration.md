@@ -136,7 +136,6 @@ const config = {
 				<a href="./api-reference.md">WDK Tron Wallet API</a>
 			</td>
 		</tr>
-  
 	</tbody>
 </table>
 

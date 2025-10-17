@@ -208,7 +208,6 @@ const wallet = new WalletManagerSolana(seedPhrase, config)
 				<a href="./api-reference.md">WDK Solana Wallet API</a>
 			</td>
 		</tr>
-  
 	</tbody>
 </table>
 

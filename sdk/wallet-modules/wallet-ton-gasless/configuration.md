@@ -281,7 +281,6 @@ const config = {
 				<a href="./api-reference.md">WDK TON Gasless Wallet API</a>
 			</td>
 		</tr>
-  
 	</tbody>
 </table>
 

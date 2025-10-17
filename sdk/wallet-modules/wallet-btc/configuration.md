@@ -210,7 +210,6 @@ wallet.dispose()
 - Consider using multiple backup servers
 
 
-
 <table data-card-size="large" data-view="cards">
 	<thead>
 		<tr>
@@ -233,7 +232,7 @@ wallet.dispose()
 				<a href="../../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
 			</td>
 		</tr>
-    <tr>
+    	<tr>
 			<td>
 				<i class="fa-mobile-alt">:mobile-alt:</i>
 			</td>
@@ -245,7 +244,7 @@ wallet.dispose()
 				<a href="../../../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
 			</td>
 		</tr>
-    <tr>
+    	<tr>
 			<td>
 				<i class="fa-code">:code:</i>
 			</td>
@@ -269,8 +268,7 @@ wallet.dispose()
 				<a href="./api-reference.md">WDK BTC Wallet API</a>
 			</td>
 		</tr>
-  
-	</tbody>
+	 </tbody>
 </table>
 
 ***

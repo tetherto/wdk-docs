@@ -222,7 +222,6 @@ const bscConfig = {
 				<a href="./api-reference.md">WDK EVM Wallet API</a>
 			</td>
 		</tr>
-  
 	</tbody>
 </table>
 

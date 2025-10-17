@@ -361,7 +361,6 @@ const arbitrumConfig = {
 				<a href="./api-reference.md">WDK EVM with ERC-4337 Wallet API</a>
 			</td>
 		</tr>
-  
 	</tbody>
 </table>
 
