@@ -533,7 +533,7 @@ interface KeyPair {
 			</td>
 			<td>Get started with WDK's Tron Gasfree Wallet Usage</td>
 			<td>
-				<a href="./configuration.md">WDK Tron Gasfree Wallet Usage</a>
+				<a href="./usage.md">WDK Tron Gasfree Wallet Usage</a>
 			</td>
 		</tr>
         <tr>

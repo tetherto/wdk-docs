@@ -151,8 +151,8 @@ Display component for showing balance values with optional masking and loading s
 </figure>
 
 <figure>
-  <img src="../../assets/ui-components/balance-hide.png" alt="Balance amount hide- dark theme" style="max-width: 640px; width: 100%; height: auto;">
-  <figcaption>Balance amout hide (dark theme)</figcaption>
+  <img src="../../assets/ui-components/balance-hide.png" alt="Balance amount hide - dark theme" style="max-width: 640px; width: 100%; height: auto;">
+  <figcaption>Balance amount hide (dark theme)</figcaption>
 </figure>
 
 **Props**

@@ -346,7 +346,7 @@ const arbitrumConfig = {
 			</td>
 			<td>Get started with WDK's EVM with ERC-4337 Wallet Usage</td>
 			<td>
-				<a href="./configuration.md">WDK EVM with ERC-4337 Wallet Usage</a>
+				<a href="./usage.md">WDK EVM with ERC-4337 Wallet Usage</a>
 			</td>
 		</tr>
         <tr>

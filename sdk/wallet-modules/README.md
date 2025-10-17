@@ -74,7 +74,6 @@ This package works with multiple blockchain networks through wallet registration
       <td>
         <a href="../wallet-modules/wallet-solana/">wallet-solana</a>      </td>
     </tr>
-    </tr>
      <tr>
       <td><img src="../../assets/logos/spark-logo.png" alt="Spark Logo" width="20" height="20"  style="object-fit:contain;" /></td>
       <td><strong>Spark</strong></td>

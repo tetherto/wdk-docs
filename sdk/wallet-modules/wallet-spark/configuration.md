@@ -153,7 +153,7 @@ wallet.dispose()
 			</td>
 			<td>Get started with WDK's Spark Wallet Usage</td>
 			<td>
-				<a href="./configuration.md">WDK Spark Wallet Usage</a>
+				<a href="./usage.md">WDK Spark Wallet Usage</a>
 			</td>
 		</tr>
         <tr>

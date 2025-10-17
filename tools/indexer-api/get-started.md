@@ -54,7 +54,7 @@ Here's a quick example of how to query a token balance with curl.
 
 {% code title="Using curl" lineNumbers="true" %}
 ```bash
-curl -X GET "http://wdk-api.tether.to/api/v1/ethereum/usdt/0x742d35cc.../token-balances" \
+curl -X GET "https://wdk-api.tether.io/api/v1/ethereum/usdt/0x742d35cc.../token-balances" \
      -H "x-api-key: your-api-key-here"
 ```
 {% endcode %}
@@ -65,7 +65,7 @@ const axios = require('axios');
 
 async function getTokenBalance(blockchain, token, address) {
   const response = await axios.get(
-    `http://wdk-api.tether.to/api/v1/${blockchain}/${token}/${address}/token-balances`,
+    `https://wdk-api.tether.io/api/v1/${blockchain}/${token}/${address}/token-balances`,
     {
       headers: {
         'x-api-key': 'your-api-key-here'

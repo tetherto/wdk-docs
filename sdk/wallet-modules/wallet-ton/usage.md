@@ -52,12 +52,6 @@ const wallet = new WalletManagerTon(seedPhrase, {
     url: 'https://toncenter.com/api/v3',
     secretKey: 'your-api-key' // Optional
   }
-})// Create wallet manager with TON client config
-const wallet = new WalletManagerTon(seedPhrase, {
-  tonClient: {
-    url: 'https://toncenter.com/api/v3',
-    secretKey: 'your-api-key' // Optional
-  }
 })
 
 // Get a full access account

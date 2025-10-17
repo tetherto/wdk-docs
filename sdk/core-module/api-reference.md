@@ -369,8 +369,7 @@ const velora = account.getSwapProtocol('velora')
 const swapResult = await velora.swap({
   tokenIn: '0x...',
   tokenOut: '0x...',
-  amountIn: 1000000,
-  slippage: 0.01
+  tokenInAmount: 1000000n
 })
 
 // This will throw an error
@@ -407,7 +406,8 @@ const usdt0 = account.getBridgeProtocol('usdt0')
 const bridgeResult = await usdt0.bridge({
   targetChain: 'ethereum',
   recipient: '0x...',
-  amount: 1000000
+  token: 'TON_TOKEN_ADDRESS',
+  amount: 1000000n
 })
 ```
 {% endcode %}
@@ -434,10 +434,9 @@ account.registerProtocol('aave', AaveProtocolEvm, aaveProtocolConfig)
 const aave = account.getLendingProtocol('aave')
 
 // Use the protocol
-const lendResult = await aave.lend({
+const supplyResult = await aave.supply({
   token: '0x...',
-  amount: 1000000,
-  interestRateMode: 'stable'
+  amount: 1000000n
 })
 ```
 {% endcode %}
@@ -475,7 +474,7 @@ const accountTon = await wdk.getAccountByPath('ton', "1'/2/3")
 // Use wallet account methods
 const { hash, fee } = await accountEth.sendTransaction({
   to: '0x...',
-  value: 1000000000000000000 // 1 ETH
+  value: 1000000000000000000n // 1 ETH
 })
 
 // Use protocols
@@ -531,7 +530,10 @@ interface IBridgeProtocol {
 
 // Lending Protocol
 interface ILendingProtocol {
-  lend(options: LendingOptions): Promise<LendingResult>;
+  supply(options: LendingOptions): Promise<LendingResult>;
+  withdraw(options: LendingOptions): Promise<LendingResult>;
+  borrow(options: LendingOptions): Promise<LendingResult>;
+  repay(options: LendingOptions): Promise<LendingResult>;
 }
 ```
 {% endcode %}

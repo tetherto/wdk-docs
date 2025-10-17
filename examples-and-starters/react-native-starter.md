@@ -19,7 +19,7 @@ layout:
 
 # React Native Starter
 
-The React Native Starter Alpha is a Expo + React Native app showing how to build a multi-chain wallet using WDK via BareKit worklets and secure secret management. This starter includes wallet creation/import flows, balances, transactions, and a modular service layer.
+The React Native Starter Alpha is an Expo + React Native app showing how to build a multi-chain wallet using WDK via BareKit worklets and secure secret management. This starter includes wallet creation/import flows, balances, transactions, and a modular service layer.
 
 {% embed url="https://files.gitbook.com/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FytSNr1FkZhOoYwcLqOLe%2Fuploads%2FJVvhHxX5wFJ9bwZgwNWC%2Fstarter-react-native-demo.mp4?alt=media&token=440309fc-8d85-4dc6-b29d-357504d85185" %}
 

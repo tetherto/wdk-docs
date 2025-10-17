@@ -574,7 +574,7 @@ interface KeyPair {
 			</td>
 			<td>Get started with WDK's TON Gasless Wallet Usage</td>
 			<td>
-				<a href="./configuration.md">WDK TON Gasless Wallet Usage</a>
+				<a href="./usage.md">WDK TON Gasless Wallet Usage</a>
 			</td>
 		</tr>
         <tr>

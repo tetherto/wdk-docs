@@ -18,7 +18,7 @@ layout:
 
 # Swap Modules Overview
 
-The Swap Development Kit (WDK) provides a set of modules that supportswap on top of multiple blockchain networks. All modules share a common interface, ensuring consistent behavior across different blockchain implementations.
+The Swap Development Kit (WDK) provides a set of modules that support swap on top of multiple blockchain networks. All modules share a common interface, ensuring consistent behavior across different blockchain implementations.
 
 ## Swap Protocol Modules
 

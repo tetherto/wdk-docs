@@ -532,7 +532,6 @@ if (receipt) {
   console.log('Transaction not yet mined')
 }
 ```
-```
 
 This comprehensive API Reference now includes all methods from the source code with detailed descriptions, parameters, return types, error conditions, and practical examples.
 
@@ -673,7 +672,7 @@ interface EvmTransactionReceipt {
 			</td>
 			<td>Get started with WDK's EVM Wallet Usage</td>
 			<td>
-				<a href="./configuration.md">WDK EVM Wallet Usage</a>
+				<a href="./usage.md">WDK EVM Wallet Usage</a>
 			</td>
 		</tr>
         <tr>

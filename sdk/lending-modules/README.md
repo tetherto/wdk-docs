@@ -22,7 +22,7 @@ The Wallet Development Kit (WDK) provides a set of modules that support connecti
 
 ## Lending & Borrowing Protocol Modules
 
-DeFi lending functionality different lending & borrowing protocols
+DeFi lending functionality for different lending & borrowing protocols
 
 | Module | Route | Status | Documentation |
 |--------|-------|--------|---------------|

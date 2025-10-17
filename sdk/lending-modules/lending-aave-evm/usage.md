@@ -159,11 +159,11 @@ async function run() {
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Lending AAVE EVM Protocol Configuration</strong>
+				<strong>WDK Lending Aave EVM Protocol Configuration</strong>
 			</td>
-			<td>Get started with WDK's Lending AAVE EVM Protocol configuration</td>
+			<td>Get started with WDK's Lending Aave EVM Protocol configuration</td>
 			<td>
-				<a href="./configuration.md">WDK Lending AAVE EVM Protocol Configuration</a>
+				<a href="./configuration.md">WDK Lending Aave EVM Protocol Configuration</a>
 			</td>
 		</tr>
         <tr>
@@ -171,11 +171,11 @@ async function run() {
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Lending AAVE EVM Protocol API</strong>
+				<strong>WDK Lending Aave EVM Protocol API</strong>
 			</td>
-			<td>Get started with WDK's Lending AAVE EVM Protocol API</td>
+			<td>Get started with WDK's Lending Aave EVM Protocol API</td>
 			<td>
-				<a href="./api-reference.md">WDK Lending AAVE EVM Protocol API</a>
+				<a href="./api-reference.md">WDK Lending Aave EVM Protocol API</a>
 			</td>
 		</tr>
 	</tbody>

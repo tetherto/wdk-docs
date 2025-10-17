@@ -1,6 +1,6 @@
 ---
 title: About WDK
-description: Learn about the Wallet Development Kit and it's capabilities
+description: Learn about the Wallet Development Kit and its capabilities
 icon: book-open
 layout:
   width: default
@@ -30,7 +30,7 @@ Unlike closed solutions or SaaS-based wallet infrastructure providers, WDK offer
 
 ## What Problems Does WDK Solve?
 
-The current blockchain ecosystem is highly fragmented, with each blockchain requiring different SDKs, APIs, and integration approaches. This fragmentation creates significant barriers for developers who want to build truly seamless user-experiences that space across any blockchain, environment and use-case.
+The current blockchain ecosystem is highly fragmented, with each blockchain requiring different SDKs, APIs, and integration approaches. This fragmentation creates significant barriers for developers who want to build truly seamless user-experiences that span across any blockchain, environment and use-case.
 
 Traditional wallet development requires months of integration work. Developers must learn different standards, implement contrasting security practices, or rely on closed-source paid solutions which act as gatekeepers.
 

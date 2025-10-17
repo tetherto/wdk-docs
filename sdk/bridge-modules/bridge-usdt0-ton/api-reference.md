@@ -70,7 +70,7 @@ Bridges tokens from TON to a different blockchain using the USDT0 protocol.
 **Parameters:**
 - `options` (Usdt0BridgeOptions): Bridge operation options
   - `targetChain` (string): Where to send tokens
-  - `recipient` (string): Address that will get the bridged tokens
+  - `recipient` (string): Address that will receive the bridged tokens
   - `token` (string): Token address on TON
   - `amount` (bigint): Amount to bridge in token base units
   - `oft` (OftBridgeConfig, optional): Custom token config for jettons not built in
@@ -177,7 +177,7 @@ if (quote.fee + quote.bridgeFee > 1000000000n) {
 ```typescript
 interface Usdt0BridgeOptions {
   targetChain: string;              // Where to send tokens
-  recipient: string;                // Address that will get bridged tokens
+  recipient: string;                // Address that will receive bridged tokens
   token: string;                    // Token address on TON
   amount: bigint;                   // Amount to bridge in token base units
   oft?: OftBridgeConfig;            // Custom token config for jettons

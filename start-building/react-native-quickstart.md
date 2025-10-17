@@ -86,7 +86,7 @@ EXPO_PUBLIC_WDK_INDEXER_API_KEY=your_actual_api_key_here
 ```
 
 {% hint style="info" %}
-Get your freeWDK Indexer API key [here](../tools/indexer-api/get-started.md)
+Get your free WDK Indexer API key [here](../tools/indexer-api/get-started.md)
 {% endhint %}
 
 ***
@@ -167,15 +167,15 @@ src/
 The starter supports these networks out of the box:
 
 * **Bitcoin**: SegWit native transfers
-* **Ethereum**: Transactions with gas fees sponsorship
-* **Polygon**: Transactions with gas fees sponsorship  
-* **Arbitrum**: Transactions with gas fees sponsorship
+* **Ethereum**: Gasless transactions with sponsored gas fees
+* **Polygon**: Gasless transactions with sponsored gas fees  
+* **Arbitrum**: Gasless transactions with sponsored gas fees
 * **TON**: Native transfers
 
 ### Customize the UI
 
-This starter uses components from the [WDK React Native UI Kit](../ui-kits/react-native-ui-kit/README.md), to customize the look and feel of the app, you can check the [Theming](../ui-kits/react-native-ui-kit/theming.md) documentation.
+This starter uses components from the [WDK React Native UI Kit](../ui-kits/react-native-ui-kit/README.md). To customize the look and feel of the app, check the [Theming](../ui-kits/react-native-ui-kit/theming.md) documentation.
 
-### **Need More help?**
+### **Need more help?**
 
 {% include "../.gitbook/includes/support-cards.md" %}

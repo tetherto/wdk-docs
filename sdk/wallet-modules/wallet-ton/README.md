@@ -96,9 +96,9 @@ This package works with the TON blockchain (The Open Network), including:
 			<td>
 				<strong>WDK TON Wallet Usage</strong>
 			</td>
-			<td>Get started with WDK's with TON Wallet usage</td>
+			<td>Get started with WDK's TON Wallet usage</td>
 			<td>
-				<a href="./usage.md">WDK with TON Wallet Usage</a>
+				<a href="./usage.md">WDK TON Wallet Usage</a>
 			</td>
 		</tr>
 	</tbody>
