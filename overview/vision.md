@@ -22,7 +22,7 @@ layout:
 
 # Our Vision
 
-Imagine a world where humans, machines and AI Agents have the freedom to control their own finances. WDK is a fully open-source, self-custodial toolkit designed to be modular, independent, resilient and infinitely scalable, enabling trillions of wallets. 
+Imagine a world where humans, machines, and AI agents have the freedom to control their own finances. WDK is a fully open-source, self-custodial toolkit designed to be modular, independent, resilient and infinitely scalable, enabling trillions of wallets. 
 
 ***
 

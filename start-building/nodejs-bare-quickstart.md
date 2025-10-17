@@ -62,7 +62,7 @@ To install Bare runtime use command `npm i -g bare`
 
 ## Step 1: Set Up Your Project
 
-First we need to create a folder and initialize the project
+First, we need to create a folder and initialize the project
 
 ```bash
 mkdir wdk-quickstart && cd wdk-quickstart && npm init -y

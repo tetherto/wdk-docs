@@ -24,7 +24,7 @@ The **Wallet Development Kit _by Tether_ (WDK)** is Tether's open-source toolkit
 
 A developer-first framework designed for maximum flexibility and scalability, powering anything from consumer wallets to wallet-enabled apps, DeFi integrations, IoT use cases, and AI agents.
 
-Unlike closed solutions or SaaS-based wallet infrastructure providers, WDK offers zero-lock in and designed for maximum flexibility and extensibility. It is modular, runs on Bare, Node.js and React-Native, thus can be embedded in a wide variety of environments.
+Unlike closed solutions or SaaS-based wallet infrastructure providers, WDK offers zero lock-in and is designed for maximum flexibility and extensibility. It is modular, runs on Bare, Node.js and React-Native, thus can be embedded in a wide variety of environments.
 
 ***
 
