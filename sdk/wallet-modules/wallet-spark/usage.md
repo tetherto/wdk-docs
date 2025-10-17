@@ -19,6 +19,17 @@ layout:
 ---
 
 # Usage
+
+{% hint style="danger" %}
+**Known Issue: Thread Hanging in Node.js Bare Environments**
+
+There is a known issue with this module causing thread hanging when used in bare Node.js environments. The module is not production-ready in Node.js at this time.
+
+For the latest updates and workarounds, please check the [GitHub Issues](https://github.com/tetherto/wdk-wallet-spark/issues).
+
+The module works correctly in React Native environments.
+{% endhint %}
+
 ## Installation
 
 To install the `@tetherto/wdk-wallet-spark` package, follow these instructions:

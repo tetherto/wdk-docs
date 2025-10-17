@@ -19,6 +19,16 @@ layout:
 
 # @tetherto/wdk-wallet-spark Overview
 
+{% hint style="danger" %}
+**Known Issue: Thread Hanging in Node.js Bare Environments**
+
+There is a known issue with this module causing thread hanging when used in bare Node.js environments. The module is not production-ready in Node.js at this time.
+
+For the latest updates and workarounds, please check the [GitHub Issues](https://github.com/tetherto/wdk-wallet-spark/issues).
+
+The module works correctly in React Native environments.
+{% endhint %}
+
 A simple and secure package to manage BIP-32 wallets for the Spark blockchain. This package provides a clean API for creating, managing, and interacting with Spark wallets using [BIP-39 seed phrases](../../resources/concepts.md#bip-39-mnemonic-seed-phrases), [BIP-44 derivation paths](../../resources/concepts.md#bip-44-multi-account-hierarchy), and the Spark SDK for Bitcoin [layer 2](../../resources/concepts.md#layer-2-solutions) functionality including [Lightning Network](../../resources/concepts.md#lightning-network) integration.
 
 ## Features
