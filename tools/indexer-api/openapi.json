@@ -1,0 +1,286 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "WDK Indexer API",
+    "description": "API for blockchain token transfers and balances",
+    "version": "1.0.0"
+  },
+  "servers": [{ "url": "https://wdk-api.tether.io" }],
+  "components": {
+    "schemas": {}
+  },
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "summary": "Health check endpoint",
+        "tags": ["Health"],
+        "description": "Check if the API server is running",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "ok" },
+                    "timestamp": { "type": "string", "format": "date-time" }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/{blockchain}/{token}/{address}/token-transfers": {
+      "x-rateLimit": { "limit": 8, "window": "10s" },
+      "get": {
+        "summary": "Get token transfers for an address",
+        "tags": ["Token Transfers"],
+        "description": "Retrieve the token transfer history for a specific address on a given blockchain",
+        "parameters": [
+          {
+            "schema": { "type": "integer", "minimum": 1, "maximum": 1000, "default": 10 },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": { "type": "integer", "minimum": 0, "default": 0 },
+            "in": "query",
+            "name": "fromTs",
+            "required": false
+          },
+          { "schema": { "type": "integer", "minimum": 0 }, "in": "query", "name": "toTs", "required": false },
+          {
+            "schema": { "type": "string", "enum": ["asc", "desc"], "default": "desc" },
+            "in": "query",
+            "name": "sort",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["ethereum", "arbitrum", "polygon", "tron", "ton", "bitcoin", "spark"]
+            },
+            "in": "path",
+            "name": "blockchain",
+            "required": true
+          },
+          {
+            "schema": { "type": "string", "enum": ["usdt", "xaut", "btc"] },
+            "in": "path",
+            "name": "token",
+            "required": true
+          },
+          { "schema": { "type": "string", "minLength": 1 }, "in": "path", "name": "address", "required": true },
+          {
+            "schema": { "type": "string" },
+            "in": "header",
+            "name": "x-api-key",
+            "required": true,
+            "description": "API Key for authentication"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "transfers": {
+                      "type": "array",
+                      "description": "The token transfer history",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "blockchain": { "type": "string", "description": "The blockchain" },
+                          "blockNumber": {
+                            "type": "number",
+                            "description": "The block number in which the transaction was included"
+                          },
+                          "transactionHash": { "type": "string", "description": "The transaction's hash" },
+                          "transferIndex": {
+                            "type": "number",
+                            "description": "The index of the transfer within the transaction"
+                          },
+                          "token": { "type": "string", "description": "The token" },
+                          "amount": { "type": "string", "description": "The amount of tokens transferred" },
+                          "timestamp": { "type": "number", "description": "The timestamp when the transfer occurred" },
+                          "transactionIndex": {
+                            "type": "number",
+                            "description": "The index of the transaction within the block"
+                          },
+                          "logIndex": {
+                            "type": "number",
+                            "description": "The index of the token transfer's event log in the transaction"
+                          },
+                          "from": { "type": "string", "description": "The sender's address" },
+                          "to": { "type": "string", "description": "The recipient's address" }
+                        },
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "description": "Error type or code" },
+                    "message": { "type": "string", "description": "Detailed error message" }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "description": "Authentication error type" },
+                    "message": { "type": "string", "description": "Authentication error details" }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "description": "Internal server error type" },
+                    "message": { "type": "string", "description": "Internal server error details" }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/{blockchain}/{token}/{address}/token-balances": {
+      "x-rateLimit": { "limit": 4, "window": "10s" },
+      "get": {
+        "summary": "Get token balance for an address",
+        "tags": ["Token Balances"],
+        "description": "Retrieve the current token balance for a specific address on a given blockchain",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": ["ethereum", "arbitrum", "polygon", "tron", "ton", "bitcoin", "spark"]
+            },
+            "in": "path",
+            "name": "blockchain",
+            "required": true
+          },
+          {
+            "schema": { "type": "string", "enum": ["usdt", "xaut", "btc"] },
+            "in": "path",
+            "name": "token",
+            "required": true
+          },
+          { "schema": { "type": "string", "minLength": 1 }, "in": "path", "name": "address", "required": true },
+          {
+            "schema": { "type": "string" },
+            "in": "header",
+            "name": "x-api-key",
+            "required": true,
+            "description": "API Key for authentication"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tokenBalance": {
+                      "type": "object",
+                      "description": "The token balance",
+                      "properties": {
+                        "blockchain": { "type": "string", "description": "The blockchain" },
+                        "token": { "type": "string", "description": "The token" },
+                        "amount": { "type": "string", "description": "The amount of tokens" }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "description": "Error type or code" },
+                    "message": { "type": "string", "description": "Detailed error message" }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "description": "Authentication error type" },
+                    "message": { "type": "string", "description": "Authentication error details" }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "description": "Internal server error type" },
+                    "message": { "type": "string", "description": "Internal server error details" }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

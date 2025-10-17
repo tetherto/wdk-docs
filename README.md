@@ -1,110 +1,47 @@
-<!-- LOGO PLACEHOLDER -->
-<p align="center">
-  <img src="./logo.png" alt="WDK Logo" width="120" />
-</p>
-
-# Wallet Development Kit (WDK)
-
-**Tether’s open-source Wallet Development Kit (WDK)** empowers developers to build secure, non-custodial wallets with unified blockchain access, stateless architecture, and complete user control. WDK simplifies the complexity of blockchain infrastructure without compromising on flexibility or security.
-
+---
+title: Welcome to WDK
+description: >-
+  Build secure, multi-chain, self-custodial wallets for any device with minimal
+  effort and infinite scalability
+icon: rocket
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
-## What is WDK?
+# Welcome
 
-WDK is a **developer-first framework** to create cross-chain wallets that are secure, extensible, and production-ready. It provides a single, stateless API to interact with Ethereum, Bitcoin, TON, and Spark (Lightning Network)—abstracting blockchain-specific complexity while keeping developers in full control of keys and data.
+The **Wallet Development Kit _by Tether_ (WDK)** is Tether's open-source toolkit that empowers humans, machines and AI agents alike to build, deploy and use secure, multi-chain, self-custodial wallets that can be integrated anywhere from the smallest embedded device to any mobile, desktop and server operating system. WDK enables trillions of self-custodial wallets.
 
----
+WDK provides a set of core libraries that give you the highest level of control and a wide range of user-interface templates and widgets to maximize your development and deployment speed.
 
-## 🔑 Key Features
+{% embed url="https://www.youtube.com/embed/15IRw2mAFR0?si=6lEdGgHlHgRcwnN6" %}
 
-- **Multi-Blockchain Support**: Ethereum, Polygon, Arbitrum, Bitcoin, TON, Spark
-- **Unified API Layer**: A single interface across chains
-- **Account Abstraction**: Enable gasless transactions & custom fee logic on EVM & TON
-- **Stateless & Secure**: No secrets or data are stored by WDK
-- **Non-Custodial by Design**: You manage keys; WDK never sees them
-- **DeFi Ready**: Built-in support for swaps, token transfers, and cross-chain actions
-- **Modular & Extensible**: Add your own chains, tokens, or business logic
+***
 
----
+### Discover WDK
 
-## 👤 Who is WDK for?
+<table data-view="cards"><thead><tr><th></th><th></th><th data-hidden data-card-target data-type="content-ref"></th><th data-hidden data-card-cover data-type="image">Cover image</th></tr></thead><tbody><tr><td><strong>About WDK</strong></td><td>Understand WDK core features and design principles</td><td><a href="overview/about.md">about.md</a></td><td><a href="assets/about.png">about.png</a></td></tr><tr><td><strong>Our Vision</strong></td><td>Discover our philosophy and idea for the future wallets</td><td><a href="overview/vision.md">vision.md</a></td><td><a href="assets/vision.png">vision.png</a></td></tr><tr><td><strong>Key Concepts</strong></td><td>Learn foundational concepts and terminology</td><td><a href="resources/concepts.md">concepts.md</a></td><td><a href="assets/concepts.png">concepts.png</a></td></tr></tbody></table>
 
-### Developers & Builders
-- Create mobile/web wallets in minutes using a familiar JS/TS interface
-- Integrate advanced features like account abstraction without reinventing the wheel
+***
 
-### Startups & Enterprises
-- Launch wallet products with full ownership of UX, logic, and keys
-- Customize flows like tipping, swapping, buying/selling, and more
+### Start Building
 
-### Educators & Innovators
-- Use WDK to prototype, test, and teach wallet development across major blockchains
+<table data-card-size="large" data-view="cards"><thead><tr><th></th><th></th><th></th><th data-hidden data-card-target data-type="content-ref"></th></tr></thead><tbody><tr><td><i class="fa-code">:code:</i></td><td><strong>Node.js Quickstart</strong></td><td>Get started with WDK in a Node.js environment</td><td><a href="start-building/nodejs-bare-quickstart.md">nodejs-bare-quickstart.md</a></td></tr><tr><td><i class="fa-mobile-alt">:mobile-alt:</i></td><td><strong>React Native Quickstart</strong></td><td>Build mobile wallets with React Native Expo</td><td><a href="start-building/react-native-quickstart.md">react-native-quickstart.md</a></td></tr><tr><td><i class="fa-microchip">:microchip:</i></td><td><strong>Bare Runtime Quickstart</strong></td><td>Deploy WDK in lightweight environments</td><td><a href="start-building/nodejs-bare-quickstart.md">nodejs-bare-quickstart.md</a></td></tr><tr><td><i class="fa-puzzle-piece">:puzzle-piece:</i></td><td><strong>UI Kit</strong></td><td>Explore our React Native UI Kit with pre-built components</td><td><a href="ui-kits/react-native-ui-kit/">react-native-ui-kit</a></td></tr></tbody></table>
 
----
+***
 
-## 🔍 How It Works
+### Get Involved
 
-WDK is **stateless**: it processes requests but stores nothing. All sensitive data (keys, sessions, configs) stays in your hands.
-
-```
-
-[Your App] → [WDK API] → [Ethereum | Bitcoin | TON | Spark]
-
-```
-
-This guarantees:
-- No custodial risk
-- Full user control
-- Flexibility to scale or pivot
-
----
-
-## 🛠️ Use Cases
-
-- Build wallets for creators, communities, or DAOs
-- Integrate wallet functions into DeFi, payments, gaming, or tipping apps
-- Develop cross-platform wallet experiences (React Native, Electron, Web)
-
----
-
-## 🌍 Supported Blockchains
-
-WDK supports a growing set of blockchains. This list is continuously expanding, with **more integrations coming soon**. Chains marked with ⏳ are in active development.
-
-| Chain      | Type        | Supported | Description                                                                   |
-|------------|-------------|-----------|-------------------------------------------------------------------------------|
-| Ethereum   | EVM         | ✅        | Leading smart contract platform, supports ERC-20 tokens and DeFi.             |
-| Arbitrum   | L2 / EVM    | ✅        | Layer 2 scaling solution for Ethereum, fast and cost-effective.               |
-| Polygon    | L2 / EVM    | ✅        | Scalable, low-fee EVM chain, ideal for dApps and DeFi.                        |
-| Bitcoin    | Native      | ✅        | The original cryptocurrency, secure and widely adopted.                       |
-| TON        | Non-EVM     | ✅        | High-performance blockchain for decentralized apps and payments.              |
-| Spark      | *           | ✅        | Fast, low-fee Bitcoin payments via Lightning Network.                         |
-| Solana     | Non-EVM     | ⏳        | Ultra-fast, low-fee chain for DeFi and NFTs with a unique parallel runtime.   |
-| TRON       | Non-EVM     | ⏳        | High-throughput blockchain optimized for stablecoin transfers and payments.   |
-
-
----
-
-## 🔐 Completely non custodial
-
-WDK never stores or transmits secrets. Developers are responsible for key storage using secure techniques like OS keychain, HSMs, or hardware wallets. All operations are performed in-memory.
-
----
-
-## 📬 Contact us to get started!
-
-WDK is currently in **private beta**. If you're building wallet products, protocols, or integrations and want early access:
-
-👉 **Please [fill out this form](https://docs.google.com/forms/d/e/1FAIpQLSfh3UKsQ-PwJCQOQyJ3EVMKVyHTuqK1XndyiKe4uLslEEtWSw/viewform)** 👈
-
-We’re especially excited to collaborate with:
-- Layer 1/2 chains looking for wallet integrations
-- Fintech and crypto startups building novel user experiences
-
----
-
-## 🌐 Open Source Vision
-
-We are committed to making WDK fully open-source in 2025. Join us now to shape its roadmap and be part of a growing ecosystem of developers creating the next generation of crypto wallets.
-
----
+{% include ".gitbook/includes/get-involved-cards.md" %}
