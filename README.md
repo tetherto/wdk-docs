@@ -78,7 +78,7 @@ WDK supports a growing set of blockchains. This list is continuously expanding, 
 | Polygon    | L2 / EVM    | ✅        | Scalable, low-fee EVM chain, ideal for dApps and DeFi.                        |
 | Bitcoin    | Native      | ✅        | The original cryptocurrency, secure and widely adopted.                       |
 | TON        | Non-EVM     | ✅        | High-performance blockchain for decentralized apps and payments.              |
-| Spark      | *           | ✅        | Fast, low-fee Bitcoin payments via Lightning Network.                         |
+| Spark      | L2 / BTC    | ✅        | Fast, low-fee Bitcoin payments via Lightning Network.                         |
 | Solana     | Non-EVM     | ⏳        | Ultra-fast, low-fee chain for DeFi and NFTs with a unique parallel runtime.   |
 | TRON       | Non-EVM     | ⏳        | High-throughput blockchain optimized for stablecoin transfers and payments.   |
 
