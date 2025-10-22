@@ -38,14 +38,11 @@ A simple and secure package to manage ERC-4337 compliant wallets for EVM-compati
 
 ## Supported Networks
 
-This package works with any EVM-compatible blockchain that supports ERC-4337, including:
-
 This package works with any EVM-compatible blockchain, including:
 
 - **Ethereum Mainnet**
 - **Ethereum Testnets** (Sepolia, etc.)
-- **Layer 2 Networks** (Arbitrum, Optimism, etc.)
-- **Other EVM Chains** (Polygon, Avalanche C-Chain, etc.)
+- **Other EVM Chains** (Polygon, Arbitrum, Plasma etc.)
 
 ## Next Steps
 

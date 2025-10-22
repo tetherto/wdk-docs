@@ -121,7 +121,7 @@ const config = {
 			</td>
 			<td>Get started with WDK's Tron Wallet Usage</td>
 			<td>
-				<a href="./configuration.md">WDK Tron Wallet Usage</a>
+				<a href="./usage.md">WDK Tron Wallet Usage</a>
 			</td>
 		</tr>
         <tr>

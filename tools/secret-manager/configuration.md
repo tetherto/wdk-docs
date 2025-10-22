@@ -123,7 +123,7 @@ sm.dispose()
 - Use strong, unique passkeys per user; never persist them in plaintext
 - Generate a fresh 16‑byte salt per user/session
 - Tune PBKDF2 iterations appropriate to your platform
-- Quote before storing/sending secrets; keep operations in memory and call `dispose()` when done
+- Encrypt before storing/sending secrets; keep operations in memory and call `dispose()` when done
 
 ***
 

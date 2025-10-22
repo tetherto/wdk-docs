@@ -430,7 +430,7 @@ interface BtcWalletConfig {
 			</td>
 			<td>Get started with WDK's Bitcoin Wallet Usage</td>
 			<td>
-				<a href="./configuration.md">WDK Bitcoin Wallet Usage</a>
+				<a href="./usage.md">WDK Bitcoin Wallet Usage</a>
 			</td>
 		</tr>
         <tr>

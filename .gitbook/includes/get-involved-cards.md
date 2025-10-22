@@ -52,10 +52,10 @@ title: Get Involved cards
 			</td>
 			<td>Need help? Our community can help troupleshoot</td>
 			<td>
-				<a href="https://discord.gg/JwAP7Dbz" class="button secondary">Join Community</a>
+				<a href="https://discord.gg/arYXDhHB2w" class="button secondary">Join Community</a>
 			</td>
 			<td>
-				<a href="https://discord.gg/JwAP7Dbz">https://discord.gg/JwAP7Dbz</a>
+				<a href="https://discord.gg/arYXDhHB2w">https://discord.gg/arYXDhHB2w</a>
 			</td>
 		</tr>
 	</tbody>

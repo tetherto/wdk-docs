@@ -69,7 +69,7 @@ and run the command `npm i -g bare`
 
 ## Step 1: Set Up Your Project
 
-First we need to create a folder and initialize a the project
+First, we need to create a folder and initialize the project
 
 ```bash
 mkdir wdk-quickstart && cd wdk-quickstart && npm init -y
@@ -235,7 +235,7 @@ async function main() {
       bitcoin: await wdkWithWallets.getAccount('bitcoin', 0)
     }
 
-    console.log('Resolving addresses:...')
+    console.log('Resolving addresses:')
 
     for (const [chain, account] of Object.entries(accounts)) {
       const address = await account.getAddress()
@@ -288,7 +288,7 @@ Starting WDK App...
 Generated seed phrase: abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about
 Registering wallets...
 Wallets registered for Ethereum, TRON, and Bitcoin
-Resolving addresses:...
+Resolving addresses:
    ETHEREUM: 0x742d35Cc6634C0532925a3b8D9C5c8b7b6e5f6e5
    TRON: TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH
    BITCOIN: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
@@ -347,7 +347,7 @@ for (const [chain, account] of Object.entries(accounts)) {
   try {
     const quote = await account.quoteSendTransaction({
       to: await account.getAddress(),
-      value: chain === 'bitcoin' ? 100000000 : chain === 'tron' ? 1000000 : '1000000000000000000'
+      value: chain === 'bitcoin' ? 100000000n : chain === 'tron' ? 1000000n : 1000000000000000000n
     })
     console.log(`   ${chain.toUpperCase()}: ${quote.fee.toString()} units`)
   } catch (error) {
@@ -363,7 +363,7 @@ for (const [chain, account] of Object.entries(accounts)) {
 ```typescript
 const result = await ethAccount.sendTransaction({
   to: '0x742d35Cc6634C05...a3b8D9C5c8b7b6e5f6e5',
-  value: '1000000000000000000' // 1 ETH
+  value: 1000000000000000000n // 1 ETH
 })
 
 console.log('Transaction hash:', result.hash)
@@ -406,7 +406,7 @@ wdk.registerProtocol('swap-velora-evm', SwapveloraEvm)
 * Make sure you've installed all required packages
 * Check your import statements
 
-### **Need More help?**
+### **Need more help?**
 
 {% include "../.gitbook/includes/support-cards.md" %}
 

@@ -114,7 +114,7 @@ The swap service supports multiple TON wallet types:
 			</td>
 			<td>Get started with WDK's Stonfi Swap Protocol usage</td>
 			<td>
-				<a href="./usage.md">WDK Stonfi Swap Protocol  Usage</a>
+				<a href="./usage.md">WDK Stonfi Swap Protocol Usage</a>
 			</td>
 		</tr>
 	</tbody>

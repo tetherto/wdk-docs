@@ -107,7 +107,7 @@ try {
 
 ### TON API Configuration
 
-The TON API options come from the wallet account configuration and tell how to connect to TON:
+The TON API options come from the wallet account configuration and specify how to connect to TON:
 
 **TON API Key:** `string` - Your TON API access key  
 **TON API Endpoint:** `string` - TON API server URL  
@@ -151,7 +151,7 @@ const result = await bridgeProtocol.bridge({
 
 ### Paymaster Token
 
-The `paymasterToken` option says which token to use for paying fees in gasless accounts.
+The `paymasterToken` option specifies which token to use for paying fees in gasless accounts.
 
 **Type:** `string` (optional)  
 **Format:** Token name or address
@@ -189,12 +189,12 @@ const tonTestAccount = new WalletAccountTon(seedPhrase, {
 
 ## Bridge Options
 
-When calling the bridge method, you need to give bridge options:
+When calling the bridge method, you need to provide bridge options:
 
 ```javascript
 const bridgeOptions = {
-  targetChain: 'ethereum', // Where to send tokens
-  recipient: 'RECIPIENT_ADDRESS', // Who gets the tokens
+  targetChain: 'ethereum', // Destination chain
+  recipient: 'RECIPIENT_ADDRESS', // Recipient address
   token: 'TON_TOKEN_ADDRESS', // TON token address
   amount: 1000000n // Amount to bridge in base units
 }
@@ -204,28 +204,28 @@ const result = await bridgeProtocol.bridge(bridgeOptions)
 
 ### Target Chain
 
-The `targetChain` option says which blockchain to bridge tokens to.
+The `targetChain` option specifies which blockchain to bridge tokens to.
 
 **Type:** `string`  
 **Supported values:** `'ethereum'`, `'arbitrum'`, `'tron'`
 
 ### Recipient
 
-The `recipient` option says the address that will get the bridged tokens.
+The `recipient` option specifies the address that will receive the bridged tokens.
 
 **Type:** `string`  
 **Format:** Valid address for the target chain
 
 ### Token
 
-The `token` option says which token to bridge.
+The `token` option specifies which token to bridge.
 
 **Type:** `string`  
 **Format:** Token address on TON
 
 ### Amount
 
-The `amount` option says how many tokens to bridge.
+The `amount` option specifies how many tokens to bridge.
 
 **Type:** `bigint`  
 **Unit:** Base units of the token (e.g., for USDT: 1 USDT = 1000000n)

@@ -198,7 +198,7 @@ Note: For derivation paths and cross-wallet compatibility details, see the Expor
 ## Additional Tips
 Backup Your Wallet: Always keep a secure offline backup of your passphrase. Consider multiple copies in separate secure locations.
 
-Verify Address: Double-check that the wallet address displayed in your chosen application matches the one associated with your original WDK wallet. If you see a different, don't worry your found are not lost! That could be for the wallet confirguration, check [WDK’s Derivation Path and Compatibility](./export-guide.md) to know more.
+Verify Address: Double-check that the wallet address displayed in your chosen application matches the one associated with your original WDK wallet. If you see a different, don't worry your funds are not lost! That could be for the wallet configuration, check [WDK's Derivation Path and Compatibility](./export-guide.md) to know more.
 
 
 ## Conclusion

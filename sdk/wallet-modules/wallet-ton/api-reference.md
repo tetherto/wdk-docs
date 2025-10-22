@@ -157,7 +157,7 @@ const account = new WalletAccountTon(seedPhrase, "0'/0/0", {
   tonClient: {
     url: 'https://toncenter.com/api/v3',
     secretKey: 'your-api-key'
-  },,
+  },
   transferMaxFee: 10000000 // Maximum fee in nanotons (e.g., 0.01 TON)
 })
 ```
@@ -536,7 +536,7 @@ interface TonWalletConfig {
 			</td>
 			<td>Get started with WDK's TON Wallet Usage</td>
 			<td>
-				<a href="./configuration.md">WDK TON Wallet Usage</a>
+				<a href="./usage.md">WDK TON Wallet Usage</a>
 			</td>
 		</tr>
         <tr>

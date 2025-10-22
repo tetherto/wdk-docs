@@ -39,7 +39,7 @@ The WDK Manager itself only requires a seed phrase for initialization. Configura
 ```javascript
 import WDK from '@tetherto/wdk'
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
-import WalletManagerTon from '@@tetherto/wdk-wallet-ton'
+import WalletManagerTon from '@tetherto/wdk-wallet-ton'
 
 const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, {
@@ -95,7 +95,7 @@ wdk.registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
 
 {% code title="TON WDK Wallet Configuration" lineNumbers="true" %}
 ```javascript
-const tonConfig = {
+const tonWalletConfig = {
   tonApiKey: 'YOUR_TON_API_KEY',
   tonApiEndpoint: 'https://tonapi.io',
   tonCenterApiKey: 'YOUR_TON_CENTER_API_KEY',
@@ -162,7 +162,7 @@ wdk.registerMiddleware('ethereum', getFailoverCascadeMiddleware(fallbackOptions)
 
 For production applications, consider using environment variables for sensitive configuration:
 
-{% code title="WDK enviroment variables Configuration" lineNumbers="true" %}
+{% code title="WDK environment variables Configuration" lineNumbers="true" %}
 ```javascript
 const wdk = new WDK(process.env.SEED_PHRASE)
   .registerWallet('ethereum', WalletManagerEvm, {

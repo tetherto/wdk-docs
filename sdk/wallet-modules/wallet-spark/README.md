@@ -19,7 +19,20 @@ layout:
 
 # @tetherto/wdk-wallet-spark Overview
 
+<<<<<<< HEAD
 A simple and secure package to manage BIP-32 wallets for the Spark blockchain. This package provides a clean API for creating, managing, and interacting with Spark wallets using [BIP-39 seed phrases](../../../resources/concepts.md#bip-39-mnemonic-seed-phrases), [BIP-44 derivation paths](../../../resources/concepts.md#bip-44-multi-account-hierarchy), and the Spark SDK for Bitcoin [layer 2](../../../resources/concepts.md#layer-2-solutions) functionality including [Lightning Network](../../../resources/concepts.md#lightning-network) integration.
+=======
+{% hint style="danger" %}
+**Known Issue: Thread Hanging in Bare runtime Environments**
+
+There is a known issue with this module causing thread hanging when used in bare runtime environments. The module is not production-ready in bare runtime at this time.
+
+For the latest updates and workarounds, please check the [GitHub Issues](https://github.com/tetherto/wdk-wallet-spark/issues).
+
+{% endhint %}
+
+A simple and secure package to manage BIP-32 wallets for the Spark blockchain. This package provides a clean API for creating, managing, and interacting with Spark wallets using [BIP-39 seed phrases](../../resources/concepts.md#bip-39-mnemonic-seed-phrases), [BIP-44 derivation paths](../../resources/concepts.md#bip-44-multi-account-hierarchy), and the Spark SDK for Bitcoin [layer 2](../../resources/concepts.md#layer-2-solutions) functionality including [Lightning Network](../../resources/concepts.md#lightning-network) integration.
+>>>>>>> 7a3c64bb9d21c3269eafed122b36b3fd669cabf1
 
 ## Features
 

@@ -51,8 +51,8 @@ const bridgeProtocol = new Usdt0ProtocolTon(account, {
 ```javascript
 // Bridge tokens to another chain
 const result = await bridgeProtocol.bridge({
-  targetChain: 'ethereum', // Where to send tokens
-  recipient: 'RECIPIENT_ADDRESS', // Who gets the tokens
+  targetChain: 'ethereum', // Destination chain
+  recipient: 'RECIPIENT_ADDRESS', // Recipient address
   token: 'TON_TOKEN_ADDRESS', // TON token address
   amount: 1000000n // Amount to bridge (1 USDT in base units)
 })

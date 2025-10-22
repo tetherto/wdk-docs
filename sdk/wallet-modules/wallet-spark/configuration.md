@@ -20,6 +20,15 @@ layout:
 
 # Configuration
 
+{% hint style="danger" %}
+**Known Issue: Thread Hanging in Bare runtime Environments**
+
+There is a known issue with this module causing thread hanging when used in bare runtime environments. The module is not production-ready in bare runtime at this time.
+
+For the latest updates and workarounds, please check the [GitHub Issues](https://github.com/tetherto/wdk-wallet-spark/issues).
+
+{% endhint %}
+
 ## Wallet Configuration
 
 ```javascript
@@ -153,7 +162,7 @@ wallet.dispose()
 			</td>
 			<td>Get started with WDK's Spark Wallet Usage</td>
 			<td>
-				<a href="./configuration.md">WDK Spark Wallet Usage</a>
+				<a href="./usage.md">WDK Spark Wallet Usage</a>
 			</td>
 		</tr>
         <tr>

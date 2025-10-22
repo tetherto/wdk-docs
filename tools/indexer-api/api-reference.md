@@ -26,10 +26,6 @@ https://wdk-api.tether.io
 ```
 {% endcode %}
 
-{% hint style="info" %}
-- Request API key: `https://wdk-api.tether.io/register`
-{% endhint %}
-
 ***
 
 ## Authentication
@@ -59,19 +55,19 @@ x-api-key: your-api-key-here
 
 ## API Endpoints
 
-{% openapi src="https://wdk-api.tether.io/doc/json" path="/api/v1/health" method="get" %}
+{% openapi src="./openapi.json" path="/api/v1/health" method="get" %}
 Check API server status
 {% endopenapi %}
 
 ***
 
-{% openapi src="https://wdk-api.tether.io/doc/json" path="/api/v1/{blockchain}/{token}/{address}/token-transfers" method="get" %}
+{% openapi src="./openapi.json" path="/api/v1/{blockchain}/{token}/{address}/token-transfers" method="get" %}
 Get token transfer history for an address
 {% endopenapi %}
 
 ***
 
-{% openapi src="https://wdk-api.tether.io/doc/json" path="/api/v1/{blockchain}/{token}/{address}/token-balances" method="get" %}
+{% openapi src="./openapi.json" path="/api/v1/{blockchain}/{token}/{address}/token-balances" method="get" %}
 Get current token balance for an address
 {% endopenapi %}
 

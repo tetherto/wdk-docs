@@ -207,7 +207,7 @@ const bscConfig = {
 			</td>
 			<td>Get started with WDK's EVM Wallet Usage</td>
 			<td>
-				<a href="./configuration.md">WDK EVM Wallet Usage</a>
+				<a href="./usage.md">WDK EVM Wallet Usage</a>
 			</td>
 		</tr>
         <tr>

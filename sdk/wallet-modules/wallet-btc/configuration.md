@@ -253,7 +253,7 @@ wallet.dispose()
 			</td>
 			<td>Get started with WDK's BTC Wallet Usage</td>
 			<td>
-				<a href="./configuration.md">WDK BTC Wallet Usage</a>
+				<a href="./usage.md">WDK BTC Wallet Usage</a>
 			</td>
 		</tr>
         <tr>

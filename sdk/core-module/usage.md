@@ -19,6 +19,7 @@ layout:
 ---
 
 This package serves as the main entry point and orchestrator for all WDK wallet modules, allowing you to register and manage different blockchain wallets and protocols through a single interface.
+
 ## Installation
 
 Install the `@tetherto/wdk-core` package:
@@ -169,15 +170,15 @@ const balances = await checkAllBalances(wdk)
 const ethAccount = await wdk.getAccount('ethereum', 0)
 const ethResult = await ethAccount.sendTransaction({
   to: '0x...',
-  value: '1000000000000000000' // 1 ETH
+  value: 1000000000000000000n // 1 ETH
 })
 console.log('Ethereum transaction:', ethResult.hash)
 
 // Send TON transaction
 const tonAccount = await wdk.getAccount('ton', 0)
 const tonResult = await tonAccount.sendTransaction({
-  to: 'T...',
-  value: '1000000000' // 1 TON
+  to: 'EQ...',
+  value: 1000000000n // 1 TON
 })
 console.log('TON transaction:', tonResult.hash)
 ```
@@ -192,15 +193,15 @@ async function sendMultiChainTransactions(wdk) {
   const ethAccount = await wdk.getAccount('ethereum', 0)
   const ethResult = await ethAccount.sendTransaction({
     to: '0x...',
-    value: '1000000000000000000' // 1 ETH
+    value: 1000000000000000000n // 1 ETH
   })
   console.log('Ethereum transaction:', ethResult.hash)
   
   // TON transaction
   const tonAccount = await wdk.getAccount('ton', 0)
   const tonResult = await tonAccount.sendTransaction({
-    to: 'T...',
-    value: '1000000000' // 1 TON
+    to: 'EQ...',
+    value: 1000000000n // 1 TON
   })
   console.log('TON transaction:', tonResult.hash)
 }
@@ -244,8 +245,7 @@ const velora = ethAccount.getSwapProtocol('velora')
 const swapResult = await velora.swap({
   tokenIn: '0x...',
   tokenOut: '0x...',
-  amountIn: '1000000',
-  slippage: 0.01
+  tokenInAmount: 1000000n
 })
 
 // Use bridge protocol
@@ -253,7 +253,8 @@ const usdt0 = tonAccount.getBridgeProtocol('usdt0')
 const bridgeResult = await usdt0.bridge({
   targetChain: 'ethereum',
   recipient: '0x...',
-  amount: '1000000'
+  token: 'TON_TOKEN_ADDRESS',
+  amount: 1000000n
 })
 ```
 {% endcode %}

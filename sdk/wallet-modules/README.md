@@ -74,7 +74,6 @@ This package works with multiple blockchain networks through wallet registration
       <td>
         <a href="../wallet-modules/wallet-solana/">wallet-solana</a>      </td>
     </tr>
-    </tr>
      <tr>
       <td><img src="../../assets/logos/spark-logo.png" alt="Spark Logo" width="20" height="20"  style="object-fit:contain;" /></td>
       <td><strong>Spark</strong></td>
@@ -95,7 +94,7 @@ Standard wallet implementations that use native blockchain tokens for transactio
 | [`@tetherto/wdk-wallet-evm`](https://github.com/tetherto/wdk-wallet-evm) | EVM | ✅ Ready | [Documentation](./wallet-evm) |
 | [`@tetherto/wdk-wallet-ton`](https://github.com/tetherto/wdk-wallet-ton) | TON | ✅ Ready | [Documentation](./wallet-ton) |
 | [`@tetherto/wdk-wallet-btc`](https://github.com/tetherto/wdk-wallet-btc) | Bitcoin | ✅ Ready | [Documentation](./wallet-btc) |
-| [`@tetherto/wdk-wallet-spark`](https://github.com/tetherto/wdk-wallet-spark) | Spark | ✅ Ready | [Documentation](./wallet-spark) |
+| [`@tetherto/wdk-wallet-spark`](https://github.com/tetherto/wdk-wallet-spark) | Spark | ⚠️ Known Issues | [Documentation](./wallet-spark) |
 | [`@tetherto/wdk-wallet-tron`](https://github.com/tetherto/wdk-wallet-tron) | TRON | ✅ Ready | [Documentation](./wallet-tron) |
 | [`@tetherto/wdk-wallet-solana`](https://github.com/tetherto/wdk-wallet-solana) | Solana | ✅ Ready | [Documentation](./wallet-solana) |
 | `@tetherto/wdk-wallet-ark` | Ark | In progress | - |
@@ -116,10 +115,10 @@ Wallet implementations that support [Account Abstraction](../../resources/concep
 To get started with WDK modules, follow these steps:
 
 1. Get up and running quickly with our [Quick Start Guide](../../start-building/nodejs-bare-quickstart.md)
-2. Choose the modules that best fits your needs from the tables above 
+2. Choose the modules that best fit your needs from the tables above 
 3. Check specific documentation for modules you wish to use
 
 You can also:
 
 - Learn about key concepts like [Account Abstraction](../../resources/concepts.md#account-abstraction) and other important definitions
-- Use one our ready-to-use examples to be production ready
+- Use one of our ready-to-use examples to be production ready

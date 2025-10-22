@@ -195,7 +195,7 @@ WDK's modular architecture makes it straightforward to add support for new block
 
 #### Wallet Module Interface
 
-{% code title="Custome Wallet Module Setup" lineNumbers="true" %}
+{% code title="Custom Wallet Module Setup" lineNumbers="true" %}
 ```typescript
 interface WalletModule {
   // Account management
@@ -221,7 +221,7 @@ interface WalletModule {
 
 #### Protocol Module Interface
 
-{% code title="Custome Protocol Module Setup" lineNumbers="true" %}
+{% code title="Custom Protocol Module Setup" lineNumbers="true" %}
 ```typescript
 interface ProtocolModule {
   // Protocol execution
@@ -244,7 +244,7 @@ interface ProtocolModule {
 
 #### Module Implementation Example
 
-{% code title="Custome Wallet Module Implementation" lineNumbers="true" %}
+{% code title="Custom Wallet Module Implementation" lineNumbers="true" %}
 ```typescript
 class CustomWalletModule implements WalletModule {
   private provider: string
@@ -288,7 +288,7 @@ class CustomWalletModule implements WalletModule {
 
 #### Module Registration
 
-{% code title="Custome Wallet Module Registration" lineNumbers="true" %}
+{% code title="Custom Wallet Module Registration" lineNumbers="true" %}
 ```typescript
 // Register your custom module
 const wdkWithCustom = wdk.registerWallet('custom-chain', CustomWalletModule, {

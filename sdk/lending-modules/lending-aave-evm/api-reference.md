@@ -237,11 +237,11 @@ Returns the following structure:
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Lending AAVE EVM Protocol Configuration</strong>
+				<strong>WDK Lending Aave EVM Protocol Configuration</strong>
 			</td>
-			<td>Get started with WDK's Lending AAVE EVM Protocol configuration</td>
+			<td>Get started with WDK's Lending Aave EVM Protocol configuration</td>
 			<td>
-				<a href="./configuration.md">WDK Lending AAVE EVM Protocol Configuration</a>
+				<a href="./configuration.md">WDK Lending Aave EVM Protocol Configuration</a>
 			</td>
 		</tr>
     <tr>
@@ -249,11 +249,11 @@ Returns the following structure:
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Lending AAVE EVM Protocol Usage</strong>
+				<strong>WDK Lending Aave EVM Protocol Usage</strong>
 			</td>
-			<td>Get started with WDK's Lending AAVE EVM Protocol usage</td>
+			<td>Get started with WDK's Lending Aave EVM Protocol usage</td>
 			<td>
-				<a href="./usage.md">WDK Lending AAVE EVM Protocol  Usage</a>
+				<a href="./usage.md">WDK Lending Aave EVM Protocol Usage</a>
 			</td>
 		</tr>
 	</tbody>

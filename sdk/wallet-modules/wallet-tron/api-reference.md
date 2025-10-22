@@ -576,7 +576,7 @@ const FEE_RATE_FAST_MULTIPLIER: number = 2.0;
 			</td>
 			<td>Get started with WDK's Tron Wallet Usage</td>
 			<td>
-				<a href="./configuration.md">WDK Tron Wallet Usage</a>
+				<a href="./usage.md">WDK Tron Wallet Usage</a>
 			</td>
 		</tr>
         <tr>

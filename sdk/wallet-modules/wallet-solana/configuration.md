@@ -193,7 +193,7 @@ const wallet = new WalletManagerSolana(seedPhrase, config)
 			</td>
 			<td>Get started with WDK's Solana Wallet Usage</td>
 			<td>
-				<a href="./configuration.md">WDK Solana Wallet Usage</a>
+				<a href="./usage.md">WDK Solana Wallet Usage</a>
 			</td>
 		</tr>
         <tr>
