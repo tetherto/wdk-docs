@@ -107,4 +107,5 @@
 ## Resources
 
 * [Concepts](resources/concepts.md)
+* [Community Projects](resources/community-projects.md)
 <!-- * [Go-live Checklist](resources/go-live-checklist.md) -->
