@@ -39,7 +39,7 @@ This package works with EVM-compatible blockchains and can bridge to:
 
 - **Ethereum** (Chain ID: 1)
 - **Plasma** (Chain ID: 9745)
-- **Arbitrum** (Chain ID: 42,161)
+- **Arbitrum** (Chain ID: 42161)
 - **Polygon** (Chain ID: 137)
 
 

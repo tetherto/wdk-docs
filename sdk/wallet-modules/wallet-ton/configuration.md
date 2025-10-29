@@ -208,7 +208,6 @@ The TON network (mainnet or testnet) is determined by the TON Center API endpoin
 				<a href="./api-reference.md">WDK TON Wallet API</a>
 			</td>
 		</tr>
-  
 	</tbody>
 </table>
 

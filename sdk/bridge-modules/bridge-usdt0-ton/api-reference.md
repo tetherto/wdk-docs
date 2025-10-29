@@ -231,12 +231,12 @@ interface OftBridgeConfig {
 The bridge service supports these chains:
 
 **Source Chain:**
-- `'ton'` (EID: 30,343) - TON blockchain
+- `'ton'` (EID: 30343) - TON blockchain
 
 **Target Chains:**
-- `'ethereum'` (Chain ID: 1, EID: 30,101)
-- `'arbitrum'` (Chain ID: 42,161, EID: 30,110)
-- `'tron'` (EID: 30,420)
+- `'ethereum'` (Chain ID: 1, EID: 30101)
+- `'arbitrum'` (Chain ID: 42161, EID: 30110)
+- `'tron'` (EID: 30420)
 
 ## Error Handling
 

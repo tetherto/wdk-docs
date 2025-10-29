@@ -48,11 +48,18 @@ Before we start, make sure you have:
 {% tab title="Bare Runtime" %}
 | Tool             | Version | Why You Need It     |
 | ---------------- | ------- | ------------------- |
-| **Bare Runtime** | Latest  | To run JavaScript   |
+| **Bare Runtime** | >= 1.23.5  | To run JavaScript   |
 | **npm**          | Latest  | To install packages |
 | **Code Editor**  | Any     | To write code       |
 
-To install Bare runtime use command `npm i -g bare`
+To install Bare runtime first include to the `package.json`:
+
+```
+"type": "module"
+```
+
+and run the command `npm i -g bare`
+
 {% endtab %}
 {% endtabs %}
 
