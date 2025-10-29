@@ -10,7 +10,9 @@ Each project demonstrates unique ways to leverage WDK modules, SDKs, and wallet 
 
 {% hint style="warning" %}
 Showcase projects listed here are third-party works developed independently.
+
 Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. 
+
 Use your own judgment and proceed at your own risk.
 {% endhint %}
 
