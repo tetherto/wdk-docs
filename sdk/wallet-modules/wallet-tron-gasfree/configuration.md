@@ -322,7 +322,6 @@ const nileConfig = {
 				<a href="./api-reference.md">WDK Tron Gasfree Wallet API</a>
 			</td>
 		</tr>
-  
 	</tbody>
 </table>
 
