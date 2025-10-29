@@ -91,13 +91,16 @@ The `chainId` option specifies the blockchain network ID. **Required** for fee e
 **Examples:**
 ```javascript
 // Ethereum Mainnet
-const config = { chainId: 1 }
+const config = { chainId: `1` }
 
 // Polygon Mainnet  
-const config = { chainId: 137 }
+const config = { chainId: `137` }
 
 // Arbitrum One
-const config = { chainId: 42161 }
+const config = { chainId: `42161` }
+
+// Avalanche C-Chain
+const config = { chainId: `43114` }
 
 ```
 
@@ -300,6 +303,25 @@ const arbitrumConfig = {
     address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9' // USDT on Arbitrum
   },
   transferMaxFee: 100000
+}
+```
+
+### Avalancher C-Chain
+
+``` javascript
+const avalancheConfig = {
+  chainId: 43114,
+  blockchain: 'ethereum',
+  provider: 'https://avalanche-c-chain-rpc.publicnode.com',
+  bundlerUrl: "https://public.pimlico.io/v2/43114/rpc",
+  paymasterUrl: "https://public.pimlico.io/v2/43114/rpc",
+  paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
+  entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
+  safeModulesVersion: '0.3.0',
+  paymasterToken: {
+    address: '0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7' // USDT
+  },
+  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDT if 6 decimals)
 }
 ```
 

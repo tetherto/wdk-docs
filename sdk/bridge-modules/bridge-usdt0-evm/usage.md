@@ -80,19 +80,19 @@ console.log('Bridge fee:', quote.bridgeFee, 'wei')
 
 ### Source Chains (EVM)
 - **Ethereum** (Chain ID: 1)
-- **Arbitrum** (Chain ID: 42,161) - ERC-4337 support
+- **Arbitrum** (Chain ID: 42161) - ERC-4337 support
 - **Polygon** (Chain ID: 137)
-- **Berachain** (Chain ID: 80,094)
-- **Ink** (Chain ID: 57,073)
+- **Berachain** (Chain ID: 80094)
+- **Ink** (Chain ID: 57073)
 
 ### Destination Chains
 - **Ethereum** (Chain ID: 1)
-- **Arbitrum** (Chain ID: 42,161)
+- **Arbitrum** (Chain ID: 42161)
 - **Polygon** (Chain ID: 137)
-- **Berachain** (Chain ID: 80,094)
-- **Ink** (Chain ID: 57,073)
-- **TON** (Chain ID: 30,343)
-- **TRON** (Chain ID: 728,126,428)
+- **Berachain** (Chain ID: 80094)
+- **Ink** (Chain ID: 57073)
+- **TON** (Chain ID: 30343)
+- **TRON** (Chain ID: 728126428)
 
 ## Bridge Operations
 
