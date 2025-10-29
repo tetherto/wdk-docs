@@ -1,12 +1,18 @@
 ---
-title: Community Projects
+title: WDK Showcase
 description: Explore the projects built by the WDK community showcasing real-world use cases, integrations, and creative implementations using the Wallet Development Kit.
 ---
 
-# 🛠️ WDK Community Projects
+# 🛠️ WDK Showcase
 
 This page highlights projects developed by the community using the **Wallet Development Kit (WDK)**.  
 Each project demonstrates unique ways to leverage WDK modules, SDKs, and wallet functionalities.
+
+{% hint style="warning" %}
+Showcase projects listed here are third-party works developed independently.
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. 
+Use your own judgment and proceed at your own risk.
+{% endhint %}
 
 ---
 
