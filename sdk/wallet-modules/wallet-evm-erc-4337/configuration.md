@@ -214,7 +214,7 @@ The `paymasterToken` option specifies the ERC-20 token used for paying transacti
 ```javascript
 const config = {
   paymasterToken: {
-    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USDT
+    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USDt
   }
 }
 ```
@@ -230,7 +230,7 @@ The `transferMaxFee` option sets the maximum fee amount **in paymaster token uni
 **Example:**
 ```javascript
 const config = {
-  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDT if 6 decimals)
+  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDt if 6 decimals)
 }
 
 // Usage with error handling
@@ -262,9 +262,9 @@ const ethereumConfig = {
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USDT
+    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USDt
   },
-  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDT if 6 decimals)
+  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDt if 6 decimals)
 }
 ```
 
@@ -281,7 +281,7 @@ const polygonConfig = {
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F' // USDT on Polygon
+    address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F' // USDt on Polygon
   },
   transferMaxFee: 100000
 }
@@ -300,13 +300,13 @@ const arbitrumConfig = {
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9' // USDT on Arbitrum
+    address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9' // USDt on Arbitrum
   },
   transferMaxFee: 100000
 }
 ```
 
-### Avalancher C-Chain
+### Avalanche C-Chain
 
 ``` javascript
 const avalancheConfig = {
@@ -319,9 +319,9 @@ const avalancheConfig = {
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7' // USDT
+    address: '0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7' // USDt
   },
-  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDT if 6 decimals)
+  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDt if 6 decimals)
 }
 ```
 
