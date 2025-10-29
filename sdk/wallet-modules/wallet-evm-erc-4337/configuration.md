@@ -91,16 +91,16 @@ The `chainId` option specifies the blockchain network ID. **Required** for fee e
 **Examples:**
 ```javascript
 // Ethereum Mainnet
-const config = { chainId: `1` }
+const config = { chainId: 1 }
 
 // Polygon Mainnet  
-const config = { chainId: `137` }
+const config = { chainId: 137 }
 
 // Arbitrum One
-const config = { chainId: `42161` }
+const config = { chainId: 42161 }
 
 // Avalanche C-Chain
-const config = { chainId: `43114` }
+const config = { chainId: 43114 }
 
 ```
 
