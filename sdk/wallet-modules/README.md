@@ -94,7 +94,7 @@ Standard wallet implementations that use native blockchain tokens for transactio
 | [`@tetherto/wdk-wallet-evm`](https://github.com/tetherto/wdk-wallet-evm) | EVM | ✅ Ready | [Documentation](./wallet-evm) |
 | [`@tetherto/wdk-wallet-ton`](https://github.com/tetherto/wdk-wallet-ton) | TON | ✅ Ready | [Documentation](./wallet-ton) |
 | [`@tetherto/wdk-wallet-btc`](https://github.com/tetherto/wdk-wallet-btc) | Bitcoin | ✅ Ready | [Documentation](./wallet-btc) |
-| [`@tetherto/wdk-wallet-spark`](https://github.com/tetherto/wdk-wallet-spark) | Spark | ✅ Ready | [Documentation](./wallet-spark) |
+| [`@tetherto/wdk-wallet-spark`](https://github.com/tetherto/wdk-wallet-spark) | Spark | ⚠️ Known Issues | [Documentation](./wallet-spark) |
 | [`@tetherto/wdk-wallet-tron`](https://github.com/tetherto/wdk-wallet-tron) | TRON | ✅ Ready | [Documentation](./wallet-tron) |
 | [`@tetherto/wdk-wallet-solana`](https://github.com/tetherto/wdk-wallet-solana) | Solana | ✅ Ready | [Documentation](./wallet-solana) |
 | `@tetherto/wdk-wallet-ark` | Ark | In progress | - |

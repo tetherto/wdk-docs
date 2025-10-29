@@ -38,7 +38,8 @@ A simple package that lets EVM wallet accounts bridge USDT0 tokens across differ
 This package works with EVM-compatible blockchains and can bridge to:
 
 - **Ethereum** (Chain ID: 1)
-- **Arbitrum** (Chain ID: 42,161) - ERC-4337 support
+- **Plasma** (Chain ID: 9745)
+- **Arbitrum** (Chain ID: 42,161)
 - **Polygon** (Chain ID: 137)
 
 
