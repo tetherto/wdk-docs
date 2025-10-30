@@ -110,6 +110,7 @@ async function main() {
     // Your code will go here
   } catch (error) {
     console.error('Application error:', error.message)
+    process.exit(1)
   }
 }
 
@@ -250,9 +251,11 @@ async function main() {
     }
 
     console.log('Application completed successfully!')
+    process.exit(0)
 
   } catch (error) {
     console.error('Application error:', error.message)
+    process.exit(1)
   }
 }
 
