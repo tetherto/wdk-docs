@@ -72,7 +72,7 @@ and run the command `npm i -g bare`
 First, we need to create a folder and initialize the project
 
 ```bash
-mkdir wdk-quickstart && cd wdk-quickstart && npm init -y
+mkdir wdk-quickstart && cd wdk-quickstart && npm init -y && npm pkg set type=module
 ```
 
 Then install necessary WDK modules
