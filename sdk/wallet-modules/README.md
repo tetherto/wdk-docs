@@ -102,6 +102,12 @@ This package works with multiple blockchain networks through wallet registration
   </tbody>
 </table>
 
+{% hint style="info" %}
+WDK is multi‑chain, self‑custodial, and stateless with a unified interface. See [Get Started](../../get-started.md).
+
+Permissionless by design: anyone can build and use WDK‑compatible wallet implementations for their own projects. If you don't see in the previous list a SDK module suitable for your chain and you would like to contribute to the WDK ecosystem check the [New Wallet Module](./wallet-new/README.md)
+{% endhint %}
+
 ### Classic Wallet Modules
 
 Standard wallet implementations that use native blockchain tokens for transaction fees:
