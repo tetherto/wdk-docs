@@ -57,6 +57,10 @@
     * [Usage](sdk/wallet-modules/wallet-tron-gasfree/usage.md)
     * [Configuration](sdk/wallet-modules/wallet-tron-gasfree/configuration.md)
     * [API Reference](sdk/wallet-modules/wallet-tron-gasfree/api-reference.md)
+  *[wallet-new-modules](sdk/wallet-modules/wallet-new-module/README.md)
+    * [Guide](sdk/wallet-modules/wallet-new-module/guide.md)
+    * [API Reference](sdk/wallet-modules/wallet-new-module/api-reference.md)
+    * [Configuration](sdk/wallet-modules/wallet-new-module/configuration.md)
 * [Swap Modules](sdk/swap-modules/README.md)
   * [swap-velora-evm](sdk/swap-modules/swap-velora-evm/README.md)
     * [Usage](sdk/swap-modules/swap-velora-evm/usage.md)
@@ -80,6 +84,11 @@
     * [Usage](sdk/lending-modules/lending-aave-evm/usage.md)
     * [Configuration](sdk/lending-modules/lending-aave-evm/configuration.md)
     * [API Reference](sdk/lending-modules/lending-aave-evm/api-reference.md)
+
+* [New Protocol Modules](sdk/protocol-new-modules/README.md)
+  * [Guide](sdk/protocol-new-modules/guide.md)
+  * [API Reference](sdk/protocol-new-modules/api-reference.md)
+  * [Configuration](sdk/protocol-new-modules/configuration.md)
 
 ## UI Kits
 
