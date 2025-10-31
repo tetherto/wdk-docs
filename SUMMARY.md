@@ -58,7 +58,7 @@
     * [Usage](sdk/wallet-modules/wallet-tron-gasfree/usage.md)
     * [Configuration](sdk/wallet-modules/wallet-tron-gasfree/configuration.md)
     * [API Reference](sdk/wallet-modules/wallet-tron-gasfree/api-reference.md)
-  *[wallet-new-modules](sdk/wallet-modules/wallet-new-module/README.md)
+  * [wallet-new-module](sdk/wallet-modules/wallet-new-module/README.md)
     * [Guide](sdk/wallet-modules/wallet-new-module/guide.md)
     * [API Reference](sdk/wallet-modules/wallet-new-module/api-reference.md)
     * [Configuration](sdk/wallet-modules/wallet-new-module/configuration.md)
