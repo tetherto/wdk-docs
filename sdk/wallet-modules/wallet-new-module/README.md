@@ -1,6 +1,6 @@
 ---
-title: New Wallet Module: Proposal + Guide
-description: Overview of how to propose a new wallet module for WDK and how it will be reviewed
+title: "New Wallet Module: Proposal + Guide"
+description: "Overview of how to propose a new wallet module for WDK and how it will be reviewed"
 layout:
   width: default
   title:
