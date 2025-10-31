@@ -1,6 +1,21 @@
 ---
-title: API Reference: Base Methods
+title: "API Reference: Base Methods"
 description: "Core methods are provided by @tetherto/wdk-wallet."
+icon: code
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # API Reference: Base Methods
