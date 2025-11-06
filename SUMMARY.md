@@ -111,7 +111,7 @@
   * [API Reference](tools/price-rates/api-reference.md)
 * [WDK Modules Template](tools/wdk-modules-template/README.md)
   * [WDK Wallets Template](tools/wdk-modules-template/wdk-wallet-template.md)
-  * [WDK Protocol Template](tools/wdk-modules-template/wdk-wallet-template.md)
+  * [WDK Protocol Template](tools/wdk-modules-template/wdk-protocol-template.md)
 
 ## Community Modules
 

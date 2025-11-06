@@ -41,7 +41,7 @@ You can use these steps to copy, adjust, and build your own module compatible wi
 - This folder has the wdk minimum structure code for a wallet module
 
 ```text
-wallet-<chain>/
+wallet-<example>/
 ├─ bare.js
 ├─ index.js
 ├─ package.json
@@ -111,6 +111,16 @@ wallet-<chain>/
 
 - Look at comments in the sample code for ideas
 - Visit the oficcial modules repositories for examples
+  - [wdk-wallet](https://github.com/tetherto/wdk-wallet)
+  - [wdk-wallet-btc](https://github.com/tetherto/wdk-wallet-btc)
+  - [wdk-wallet-spark](https://github.com/tetherto/wdk-wallet-spark)
+  - [wdk-wallet-evm](https://github.com/tetherto/wdk-wallet-evm)
+  - [wdk-wallet-evm-erc-4337](https://github.com/tetherto/wdk-wallet-evm-erc-4337)
+  - [wdk-wallet-tron](https://github.com/tetherto/wdk-wallet-tron)
+  - [wdk-wallet-tron-gasfree](https://github.com/tetherto/wdk-wallet-tron-gasfree)
+  - [wdk-wallet-ton](https://github.com/tetherto/wdk-wallet-ton)
+  - [wdk-wallet-ton-gasless](https://github.com/tetherto/wdk-wallet-ton-gasless)
+  - [wdk-wallet-solana](https://github.com/tetherto/wdk-wallet-solana)
 
 ---
 
