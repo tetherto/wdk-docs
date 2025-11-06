@@ -58,10 +58,6 @@
     * [Usage](sdk/wallet-modules/wallet-tron-gasfree/usage.md)
     * [Configuration](sdk/wallet-modules/wallet-tron-gasfree/configuration.md)
     * [API Reference](sdk/wallet-modules/wallet-tron-gasfree/api-reference.md)
-  * [wallet-new-module](sdk/wallet-modules/wallet-new-module/README.md)
-    * [Guide](sdk/wallet-modules/wallet-new-module/guide.md)
-    * [API Reference](sdk/wallet-modules/wallet-new-module/api-reference.md)
-    * [Configuration](sdk/wallet-modules/wallet-new-module/configuration.md)
 * [Swap Modules](sdk/swap-modules/README.md)
   * [swap-velora-evm](sdk/swap-modules/swap-velora-evm/README.md)
     * [Usage](sdk/swap-modules/swap-velora-evm/usage.md)
@@ -113,6 +109,13 @@
 * [Price Rates](tools/price-rates/README.md)
   * [Configuration](tools/price-rates/configuration.md)
   * [API Reference](tools/price-rates/api-reference.md)
+* [WDK Modules Template](tools/wdk-modules-template/README.md)
+  * [WDK Wallets Template](tools/wdk-modules-template/wdk-wallet-template.md)
+  * [WDK Protocol Template](tools/wdk-modules-template/wdk-wallet-template.md)
+
+## Community Modules
+
+* [Community Modules](community-modules/README.md)
 
 ## Resources
 
