@@ -78,7 +78,7 @@ See the [configuration.md](../sdk/wallet-modules/wallet-evm-erc-4337/configurati
 First, we need to create a folder and initialize the project
 
 ```bash
-mkdir wdk-quickstart && cd wdk-quickstart && npm init -y
+mkdir wdk-quickstart && cd wdk-quickstart && npm init -y && npm pkg set type=module
 ```
 
 Then install necessary WDK modules
@@ -116,6 +116,7 @@ async function main() {
     // Your code will go here
   } catch (error) {
     console.error('Application error:', error.message)
+    process.exit(1)
   }
 }
 
@@ -256,9 +257,11 @@ async function main() {
     }
 
     console.log('Application completed successfully!')
+    process.exit(0)
 
   } catch (error) {
     console.error('Application error:', error.message)
+    process.exit(1)
   }
 }
 
