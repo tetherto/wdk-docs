@@ -398,7 +398,7 @@ const sepoliaConfigCandide = {
 **USDt on Sepolia contract:** [0xd077a400968890eacc75cdc901f0356c943e4fdb](https://sepolia.etherscan.io/address/0xd077a400968890eacc75cdc901f0356c943e4fdb)
 
 **Get test USDt:**
-- [Pimlico USDt (Sepolia) Faucet](https://faucet.pimlico.io/)
+- [Pimlico USDt (Sepolia) Faucet](https://dashboard.pimlico.io/test-erc20-faucet )
 - Candide faucet: _link coming soon_
 
 <table data-card-size="large" data-view="cards">
