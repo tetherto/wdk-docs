@@ -38,6 +38,12 @@ npm install @tetherto/wdk-wallet-evm-erc-4337
 
 ### Creating a New Wallet
 
+{% hint style="info" %}
+> To use Sepolia, Plasma, or any test/mock tokens, see the [Testnet & Mock Token configuration section in configuration.md](./configuration.md#sepolia-testnet-usdt-erc-20).
+
+{% endhint %}
+
+
 ```javascript
 import WalletManagerEvmErc4337, { 
   WalletAccountEvmErc4337, 
@@ -399,23 +405,6 @@ async function transferTokensGasless(account) {
   }
 }
 ```
-
-## Testnet & Mock Token Quickstart
-
-You can develop and test account abstraction (ERC-4337) on Sepolia using a mock USDt token. Both Pimlico and Candide paymaster integrations are supported:
-
-```javascript
-const usdtSepolia = {
-  address: '0xd077a400968890eacc75cdc901f0356c943e4fdb',
-  name: 'USDt (Testnet Sepolia)',
-  decimals: 6
-};
-
-const sepoliaConfigPimlico = {/* ...see configuration.md for full config */ paymasterToken: usdtSepolia };
-const sepoliaConfigCandide = {/* ...see configuration.md for full config */ paymasterToken: usdtSepolia };
-```
-
-> **Legal Notice:** Sepolia USDt is a mock testnet token with zero value, not issued/endorsed by Tether, and is for dev/test only. Faucets are third party. See [configuration.md](./configuration.md) for full legal details and warnings.
 
 
 <table data-card-size="large" data-view="cards">
