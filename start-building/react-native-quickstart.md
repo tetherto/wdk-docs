@@ -20,14 +20,12 @@ layout:
 
 # React Native Quickstart
 
-Get started with WDK in React Native by using the `@tetherto/wdk-react-native-provider` library - a solution that provides wallet context, secure key management, and multi-chain support out of the box.
-
 ## What You'll Build
 
 In this quickstart, you'll integrate WDK into a React Native app to create a multi-chain wallet that:
 
 - [ ] Supports multiple blockchains (Bitcoin, Ethereum, Polygon, Arbitrum, TON, Tron, Solana)
-- [ ] Manages multiple tokens (BTC, USDT, XAUT, and more)
+- [ ] Manages multiple tokens (BTC, USD₮, XAU₮, and more)
 - [ ] Provides secure seed generation and encrypted storage
 - [ ] Shows real-time balances and transaction history
 - [ ] Includes wallet creation, import, and unlock flows
@@ -51,7 +49,7 @@ Before we start, make sure you have:
 
 ## Quick Start Paths
 
-Choose your preferred starting point:
+You have 2 options for using WDK in a React Native. Choose your preferred starting point:
 
 {% tabs %}
 {% tab title="Use Starter Template (Fastest)" %}
@@ -69,9 +67,9 @@ Integrate WDK into your existing React Native or Expo app.
 
 ---
 
-## Option 1: Starter Template (Recommended)
+## Option 1: Starter Template (Alpha)
 
-The fastest way to get started is with our production-ready starter template.
+The fastest way to get started is with our starter template (Alpha).
 
 ### Step 1: Clone the Starter
 
@@ -126,7 +124,7 @@ npm run android
 {% endtab %}
 {% endtabs %}
 
-**Congratulations!** You now have a production-ready multi-chain wallet running.
+**Congratulations!** You now have a multi-chain wallet running.
 
 [**→ Skip to What's Next**](#whats-next)
 
