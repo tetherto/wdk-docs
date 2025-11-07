@@ -63,7 +63,13 @@ and run the command `npm i -g bare`
 {% endtab %}
 {% endtabs %}
 
-<!-- **Note**: We'll use testnets for this tutorial, so you don't need real funds to get started! -->
+{% hint style="info" %}
+You can try all features using the Sepolia testnet for development—no real funds required. You can use the Pimlico Faucet to get some Sepolia USDt. 
+
+<a class="button primary" href="https://dashboard.pimlico.io/test-erc20-faucet"> Sepolia testnet USDt</a>
+
+See the [configuration.md](../sdk/wallet-modules/wallet-evm-erc-4337/configuration.md) for quick setup and Sepolia testnet configuration.
+{% endhint %}
 
 ***
 

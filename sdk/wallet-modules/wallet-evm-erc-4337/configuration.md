@@ -360,11 +360,6 @@ const plasmaConfig = {
 #### USDt ERC-20 on Sepolia (mock/testnet only)
 
 ````javascript
-const usdtSepolia = {
-  address: '0xd077a400968890eacc75cdc901f0356c943e4fdb',
-  name: 'USDt (Testnet Sepolia)',
-  decimals: 6 // As on production
-}
 
 // Pimlico
 const sepoliaConfigPimlico = {
@@ -376,7 +371,7 @@ const sepoliaConfigPimlico = {
   paymasterAddress: '0x777777777777AeC03fd955926DbF81597e66834C',
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
-  paymasterToken: usdtSepolia,
+  paymasterToken: '0xd077a400968890eacc75cdc901f0356c943e4fdb', // USDT Sepolia
   transferMaxFee: 100000 // 0.1 USDt (6 decimals)
 }
 
@@ -390,7 +385,7 @@ const sepoliaConfigCandide = {
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
-  paymasterToken: usdtSepolia,
+  paymasterToken: '0xd077a400968890eacc75cdc901f0356c943e4fdb', // USDT Sepolia
   transferMaxFee: 100000
 }
 ````
