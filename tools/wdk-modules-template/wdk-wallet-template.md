@@ -58,6 +58,7 @@ wallet-<example>/
 ```
 {% endstep %}
 {% step %}
+
 ### Step 3  
 **Implement Account Logic**
 
@@ -75,13 +76,14 @@ wallet-<example>/
 
 {% endstep %}
 {% step %}
+
 ### Step 5  
 **Testing and Bare Compatibility [OPTIONAL]**
 
 - Test your package with `bare.js`
 - Try account creation, address viewing, balance, and send functions
 - Avoid Node-only modules (like `fs`); use pure JavaScript and web‑safe crypto
-- If you require dependencies that do not work in bare, note them and contact the WDK team
+- If you require dependencies that do not work in bare, note them and [you can contact the WDK team on the Tether Developer's Hub on Discord](https://discord.gg/arYXDhHB2w) for support.
 
 {% endstep %}
 {% step %}
@@ -104,24 +106,6 @@ wallet-<example>/
 
 {% endstep %}
 {% endstepper %}
-
----
-
-## Need Help?
-
-- Look at comments in the sample code for ideas
-- Visit the oficcial modules repositories for examples
-  - [wdk-wallet](https://github.com/tetherto/wdk-wallet)
-  - [wdk-wallet-btc](https://github.com/tetherto/wdk-wallet-btc)
-  - [wdk-wallet-spark](https://github.com/tetherto/wdk-wallet-spark)
-  - [wdk-wallet-evm](https://github.com/tetherto/wdk-wallet-evm)
-  - [wdk-wallet-evm-erc-4337](https://github.com/tetherto/wdk-wallet-evm-erc-4337)
-  - [wdk-wallet-tron](https://github.com/tetherto/wdk-wallet-tron)
-  - [wdk-wallet-tron-gasfree](https://github.com/tetherto/wdk-wallet-tron-gasfree)
-  - [wdk-wallet-ton](https://github.com/tetherto/wdk-wallet-ton)
-  - [wdk-wallet-ton-gasless](https://github.com/tetherto/wdk-wallet-ton-gasless)
-  - [wdk-wallet-solana](https://github.com/tetherto/wdk-wallet-solana)
-
 ---
 
 ## Official Inclusion
@@ -166,7 +150,23 @@ Bare compatibility is required for official modules. If something does not run i
 - [ ] Docs and tests present
 - [ ] Clear maintainer contact
 
-To propose for official status:  
+**To propose for official status:**
 Contact the WDK team and provide a short overview, your documentation, tests, dependencies, security notes, and maintainer info. A team member will review your submission. Please note that even if all requirements are met, the team reserves the right to reject proposals at its discretion.
 
 ---
+
+## Need Help?
+
+- Look at comments in the sample code for ideas
+- Visit the oficcial modules repositories for examples
+  - [wdk-wallet](https://github.com/tetherto/wdk-wallet)
+  - [wdk-wallet-btc](https://github.com/tetherto/wdk-wallet-btc)
+  - [wdk-wallet-spark](https://github.com/tetherto/wdk-wallet-spark)
+  - [wdk-wallet-evm](https://github.com/tetherto/wdk-wallet-evm)
+  - [wdk-wallet-evm-erc-4337](https://github.com/tetherto/wdk-wallet-evm-erc-4337)
+  - [wdk-wallet-tron](https://github.com/tetherto/wdk-wallet-tron)
+  - [wdk-wallet-tron-gasfree](https://github.com/tetherto/wdk-wallet-tron-gasfree)
+  - [wdk-wallet-ton](https://github.com/tetherto/wdk-wallet-ton)
+  - [wdk-wallet-ton-gasless](https://github.com/tetherto/wdk-wallet-ton-gasless)
+  - [wdk-wallet-solana](https://github.com/tetherto/wdk-wallet-solana)
+
