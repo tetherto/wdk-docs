@@ -38,12 +38,6 @@ npm install @tetherto/wdk-wallet-evm-erc-4337
 
 ### Creating a New Wallet
 
-{% hint style="info" %}
-> To use Sepolia, Plasma, or any test/mock tokens, see the [Testnet & Mock Token configuration section in configuration.md](./configuration.md#sepolia-testnet-usdt-erc-20).
-
-{% endhint %}
-
-
 ```javascript
 import WalletManagerEvmErc4337, { 
   WalletAccountEvmErc4337, 
@@ -86,6 +80,11 @@ const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337('0x...', { // Smart 
   }
 })
 ```
+
+{% hint style="info" %}
+> To use test/mock tokens instead of real funds, see the Testnet [configuration section](./configuration.md#sepolia-testnet-usdt-erc-20).
+
+{% endhint %}
 
 ### Managing Multiple Accounts
 
