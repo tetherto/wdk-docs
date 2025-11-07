@@ -325,6 +325,82 @@ const avalancheConfig = {
 }
 ```
 
+### Plasma
+
+```javascript
+// Plasma (example Layer 2)
+const plasmaConfig = {
+  chainId: 9745,
+  blockchain: 'plasma',
+  provider: 'https://plasma.drpc.org',
+  // For ERC-4337 support, optional fields:
+  bundlerUrl: 'https://api.candide.dev/public/v3/9745',
+  paymasterUrl: 'https://api.candide.dev/public/v3/9745',
+  paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
+  entrypointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
+  safeModulesVersion: '0.3.0',
+  paymasterToken: {
+    address: '0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb' // USDT
+  },
+  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDT if 6 decimals)
+}
+```
+
+### Sepolia Testnet (USDt ERC-20)
+
+> **Legal Notice:**
+> 
+> The Sepolia deployment of USDt (0xd077a400968890eacc75cdc901f0356c943e4fdb) is only a testnet mock token:
+> - It has zero value and is only for testing purposes. 
+> - This token is not listed on Tether's transparency page and does not represent official recognition.
+> - All faucets for test USDt are third-party and not run or endorsed by Tether.
+> - Tether makes no warranties about any tokens or faucets. Support for tokens by the indexer is not an endorsement—future versions may index unrelated tokens or tokens on mainnets.
+> - The goal is to let developers test account abstraction with WDK on Sepolia with no value at stake.
+
+#### USDt ERC-20 on Sepolia (mock/testnet only)
+
+````javascript
+const usdtSepolia = {
+  address: '0xd077a400968890eacc75cdc901f0356c943e4fdb',
+  name: 'USDt (Testnet Sepolia)',
+  decimals: 6 // As on production
+}
+
+// Pimlico
+const sepoliaConfigPimlico = {
+  chainId: 11155111,
+  blockchain: 'ethereum',
+  provider: 'https://sepolia.drpc.org',
+  bundlerUrl: 'https://public.pimlico.io/v2/11155111/rpc',
+  paymasterUrl: 'https://public.pimlico.io/v2/11155111/rpc',
+  paymasterAddress: '0x777777777777AeC03fd955926DbF81597e66834C',
+  entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
+  safeModulesVersion: '0.3.0',
+  paymasterToken: usdtSepolia,
+  transferMaxFee: 100000 // 0.1 USDt (6 decimals)
+}
+
+// Candide
+const sepoliaConfigCandide = {
+  chainId: 11155111,
+  blockchain: 'ethereum',
+  provider: 'https://sepolia.drpc.org',
+  bundlerUrl: 'https://api.candide.dev/public/v3/11155111',
+  paymasterUrl: 'https://api.candide.dev/public/v3/11155111',
+  paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
+  entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
+  safeModulesVersion: '0.3.0',
+  paymasterToken: usdtSepolia,
+  transferMaxFee: 100000
+}
+````
+
+**USDt on Sepolia contract:** [0xd077a400968890eacc75cdc901f0356c943e4fdb](https://sepolia.etherscan.io/address/0xd077a400968890eacc75cdc901f0356c943e4fdb)
+
+**Get test USDt:**
+- [Pimlico USDt (Sepolia) Faucet](https://faucet.pimlico.io/)
+- Candide faucet: _link coming soon_
+
 <table data-card-size="large" data-view="cards">
 	<thead>
 		<tr>
