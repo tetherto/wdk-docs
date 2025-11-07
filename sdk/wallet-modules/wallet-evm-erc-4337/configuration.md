@@ -346,18 +346,7 @@ const plasmaConfig = {
 }
 ```
 
-### Sepolia Testnet (USDt ERC-20)
-
-> **Legal Notice:**
-> 
-> The Sepolia deployment of USDt (0xd077a400968890eacc75cdc901f0356c943e4fdb) is only a testnet mock token:
-> - It has zero value and is only for testing purposes. 
-> - This token is not listed on Tether's transparency page and does not represent official recognition.
-> - All faucets for test USDt are third-party and not run or endorsed by Tether.
-> - Tether makes no warranties about any tokens or faucets. Support for tokens by the indexer is not an endorsement—future versions may index unrelated tokens or tokens on mainnets.
-> - The goal is to let developers test account abstraction with WDK on Sepolia with no value at stake.
-
-#### USDt ERC-20 on Sepolia (mock/testnet only)
+### Sepolia Testnet (USDt ERC-20 mock/testnet only)
 
 ````javascript
 
@@ -389,6 +378,9 @@ const sepoliaConfigCandide = {
   transferMaxFee: 100000
 }
 ````
+
+**Important**
+Ethereum Sepolia is a testnet. The USDt tokens available at the links below are not real and do not entitle the holder to anything. In particular, they cannot be redeemed with Tether International, S.A. de C.V. ("Tether International") and are not Tether Tokens as described in [Tether International's Terms of Service](https://tether.to/en/legal). The USDt tokens available at the links below on this testnet are intended for testing WDK on Ethereum Sepolia. The links below are links to third-party websites and are Third-Party Information as described in Tether Operations, S.A. de [C.V.'s Website Terms](https://tether.io/terms/)
 
 **USDt on Sepolia contract:** [0xd077a400968890eacc75cdc901f0356c943e4fdb](https://sepolia.etherscan.io/address/0xd077a400968890eacc75cdc901f0356c943e4fdb)
 
