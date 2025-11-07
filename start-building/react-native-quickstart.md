@@ -1,6 +1,6 @@
 ---
 title: React Native Quickstart
-description: Get started with WDK in React Native using the production-ready provider library
+description: Get started with WDK in React Native in under 3 minutes
 icon: mobile
 layout:
   width: default
