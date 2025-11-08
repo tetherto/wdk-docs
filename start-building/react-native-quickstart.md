@@ -67,9 +67,9 @@ Integrate WDK into your existing React Native or Expo app.
 
 ---
 
-## Option 1: Starter Template (Alpha)
+## Option 1: Starter Template
 
-The fastest way to get started is with our starter template (Alpha).
+The fastest way to get started is with our starter template. Note: this is still in alpha, and may be subject to breaking changes.
 
 ### Step 1: Clone the Starter
 
