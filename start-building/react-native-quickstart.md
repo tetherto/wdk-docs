@@ -31,9 +31,10 @@ In this quickstart, you'll run a production-ready multi-chain wallet app that:
 * [ ] Includes QR code scanning and send/receive flows
 
 {% hint style="info" %}
-You can try all features using the Sepolia testnet for development—no real funds required. You can use the Pimlico Faucet to get some Sepolia USDt. 
+You can try all features without real funds required. You can use the Pimlico or Candide faucets to get some Sepolia USDt. 
 
-<a class="button primary" href="https://dashboard.pimlico.io/test-erc20-faucet"> Sepolia testnet USDt</a>
+<a class="button primary" href="https://dashboard.pimlico.io/test-erc20-faucet"> Get mock/test USDt on Pimlico </a>
+<a class="button primary" href="https://dashboard.candide.dev/faucet"> Get mock/test USDt on Candide </a>
 
 See the [configuration.md](../sdk/wallet-modules/wallet-evm-erc-4337/configuration.md) for quick setup and Sepolia testnet configuration.
 {% endhint %}
