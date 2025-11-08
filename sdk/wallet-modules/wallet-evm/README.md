@@ -41,7 +41,7 @@ A simple and secure package to manage BIP-44 wallets for EVM (Ethereum Virtual M
 
 This package works with any EVM-compatible blockchain, including:
 
-- **Ethereum**: Mainnet, Goerli, Sepolia
+- **Ethereum**: Mainnet, Sepolia
 - **Polygon**: Mainnet, Mumbai
 - **Binance Smart Chain (BSC)**: Mainnet, Testnet
 - **Arbitrum**: One, Nova

@@ -325,6 +325,73 @@ const avalancheConfig = {
 }
 ```
 
+### Plasma
+
+```javascript
+// Plasma (example Layer 2)
+const plasmaConfig = {
+  chainId: 9745,
+  blockchain: 'plasma',
+  provider: 'https://plasma.drpc.org',
+  // For ERC-4337 support, optional fields:
+  bundlerUrl: 'https://api.candide.dev/public/v3/9745',
+  paymasterUrl: 'https://api.candide.dev/public/v3/9745',
+  paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
+  entrypointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
+  safeModulesVersion: '0.3.0',
+  paymasterToken: {
+    address: '0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb' // USDt
+  },
+  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDt if 6 decimals)
+}
+```
+
+### Sepolia Testnet (USDt ERC-20 mock/testnet only)
+
+````javascript
+
+// Pimlico
+const sepoliaConfigPimlico = {
+  chainId: 11155111,
+  blockchain: 'ethereum',
+  provider: 'https://sepolia.drpc.org',
+  bundlerUrl: 'https://public.pimlico.io/v2/11155111/rpc',
+  paymasterUrl: 'https://public.pimlico.io/v2/11155111/rpc',
+  paymasterAddress: '0x777777777777AeC03fd955926DbF81597e66834C',
+  entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
+  safeModulesVersion: '0.3.0',
+  paymasterToken: {
+    address: '0xd077a400968890eacc75cdc901f0356c943e4fdb' // USDt Sepolia
+  }, 
+  transferMaxFee: 100000 // 0.1 USDt (6 decimals)
+}
+
+// Candide
+const sepoliaConfigCandide = {
+  chainId: 11155111,
+  blockchain: 'ethereum',
+  provider: 'https://sepolia.drpc.org',
+  bundlerUrl: 'https://api.candide.dev/public/v3/11155111',
+  paymasterUrl: 'https://api.candide.dev/public/v3/11155111',
+  paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
+  entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
+  safeModulesVersion: '0.3.0',
+  paymasterToken: {
+    address: '0xd077a400968890eacc75cdc901f0356c943e4fdb' // USDt Sepolia
+  },   
+  transferMaxFee: 100000
+}
+````
+
+**Important**
+Ethereum Sepolia is a testnet. The USDt tokens available at the links below are not real and do not entitle the holder to anything. In particular, they cannot be redeemed with Tether International, S.A. de C.V. ("Tether International") and are not Tether Tokens as described in [Tether International's Terms of Service](https://tether.to/en/legal). The USDt tokens available at the links below on this testnet are intended for testing WDK on Ethereum Sepolia. The links below are links to third-party websites and are Third-Party Information as described in Tether Operations, S.A. de [C.V.'s Website Terms](https://tether.io/terms/)
+
+**USDt on Sepolia contract:** [0xd077a400968890eacc75cdc901f0356c943e4fdb](https://sepolia.etherscan.io/address/0xd077a400968890eacc75cdc901f0356c943e4fdb)
+
+**Get test USDt:**
+- [Pimlico faucet](https://dashboard.pimlico.io/test-erc20-faucet)
+- [Candide faucet](https://dashboard.candide.dev/faucet)
+
 <table data-card-size="large" data-view="cards">
 	<thead>
 		<tr>

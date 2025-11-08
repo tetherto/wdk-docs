@@ -159,6 +159,22 @@ const arbitrumConfig = {
 const bscConfig = {
   provider: 'https://bsc-dataseed.binance.org'
 }
+
+// Avalanche C-Chain
+const avalancheConfig = {
+  provider: 'https://avalanche-c-chain-rpc.publicnode.com',
+}
+
+// Plasma 
+const plasmaConfig = {
+  provider: 'https://plasma.drpc.org',
+}
+
+// Sepolia Testnet
+const sepoliaConfig = {
+  provider: 'https://sepolia.drpc.org',
+}
+
 ```
 
 

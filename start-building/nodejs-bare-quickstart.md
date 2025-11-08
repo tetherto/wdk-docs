@@ -63,7 +63,14 @@ and run the command `npm i -g bare`
 {% endtab %}
 {% endtabs %}
 
-<!-- **Note**: We'll use testnets for this tutorial, so you don't need real funds to get started! -->
+{% hint style="info" %}
+You can try all features without real funds required. You can use the Pimlico or Candide faucets to get some Sepolia USDt. 
+
+<a class="button primary" href="https://dashboard.pimlico.io/test-erc20-faucet"> Get mock/test USDt on Pimlico </a>
+<a class="button primary" href="https://dashboard.candide.dev/faucet"> Get mock/test USDt on Candide </a>
+
+See the [configuration](../sdk/wallet-modules/wallet-evm-erc-4337/configuration.md) for quick setup and Sepolia testnet configuration.
+{% endhint %}
 
 ***
 
@@ -72,7 +79,7 @@ and run the command `npm i -g bare`
 First, we need to create a folder and initialize the project
 
 ```bash
-mkdir wdk-quickstart && cd wdk-quickstart && npm init -y
+mkdir wdk-quickstart && cd wdk-quickstart && npm init -y && npm pkg set type=module
 ```
 
 Then install necessary WDK modules
@@ -110,6 +117,7 @@ async function main() {
     // Your code will go here
   } catch (error) {
     console.error('Application error:', error.message)
+    process.exit(1)
   }
 }
 
@@ -250,9 +258,11 @@ async function main() {
     }
 
     console.log('Application completed successfully!')
+    process.exit(0)
 
   } catch (error) {
     console.error('Application error:', error.message)
+    process.exit(1)
   }
 }
 
