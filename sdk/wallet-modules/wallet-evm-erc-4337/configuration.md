@@ -340,9 +340,9 @@ const plasmaConfig = {
   entrypointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb' // USDT
+    address: '0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb' // USDt
   },
-  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDT if 6 decimals)
+  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDt if 6 decimals)
 }
 ```
 
@@ -361,7 +361,7 @@ const sepoliaConfigPimlico = {
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0xd077a400968890eacc75cdc901f0356c943e4fdb' // USDT Sepolia
+    address: '0xd077a400968890eacc75cdc901f0356c943e4fdb' // USDt Sepolia
   }, 
   transferMaxFee: 100000 // 0.1 USDt (6 decimals)
 }
@@ -377,7 +377,7 @@ const sepoliaConfigCandide = {
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0xd077a400968890eacc75cdc901f0356c943e4fdb' // USDT Sepolia
+    address: '0xd077a400968890eacc75cdc901f0356c943e4fdb' // USDt Sepolia
   },   
   transferMaxFee: 100000
 }
@@ -389,8 +389,8 @@ Ethereum Sepolia is a testnet. The USDt tokens available at the links below are 
 **USDt on Sepolia contract:** [0xd077a400968890eacc75cdc901f0356c943e4fdb](https://sepolia.etherscan.io/address/0xd077a400968890eacc75cdc901f0356c943e4fdb)
 
 **Get test USDt:**
-- [Pimlico USDt (Sepolia) Faucet](https://dashboard.pimlico.io/test-erc20-faucet )
-- Candide faucet: _link coming soon_
+- [Pimlico Faucet](https://dashboard.pimlico.io/test-erc20-faucet )
+- [Candide faucet]: (https://dashboard.candide.dev/faucet)
 
 <table data-card-size="large" data-view="cards">
 	<thead>
