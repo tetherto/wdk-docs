@@ -389,8 +389,8 @@ Ethereum Sepolia is a testnet. The USDt tokens available at the links below are 
 **USDt on Sepolia contract:** [0xd077a400968890eacc75cdc901f0356c943e4fdb](https://sepolia.etherscan.io/address/0xd077a400968890eacc75cdc901f0356c943e4fdb)
 
 **Get test USDt:**
-- [Pimlico Faucet](https://dashboard.pimlico.io/test-erc20-faucet )
-- [Candide faucet]: (https://dashboard.candide.dev/faucet)
+- [Pimlico faucet](https://dashboard.pimlico.io/test-erc20-faucet)
+- [Candide faucet](https://dashboard.candide.dev/faucet)
 
 <table data-card-size="large" data-view="cards">
 	<thead>
