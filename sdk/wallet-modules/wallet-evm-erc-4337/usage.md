@@ -81,6 +81,11 @@ const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337('0x...', { // Smart 
 })
 ```
 
+{% hint style="info" %}
+> To use test/mock tokens instead of real funds, see the Testnet [configuration section](./configuration.md#sepolia-testnet-usdt-erc-20).
+
+{% endhint %}
+
 ### Managing Multiple Accounts
 
 ```javascript

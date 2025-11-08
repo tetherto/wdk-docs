@@ -43,7 +43,7 @@ This package works with multiple blockchain networks through wallet registration
     <tr>
       <td><img src="../../assets/logos/ethereum-logo.png" alt="Ethereum logo" width="20" height="20" style="object-fit:contain;" /></td>
       <td><strong>EVM Chains</strong></td>
-      <td>Ethereum, L2s, etc.</td>
+      <td>Ethereum, Sepolia Testnet, L2s, etc.</td>
       <td>
         <a href="../wallet-modules/wallet-evm/">wallet-evm</a>, 
         <a href="../wallet-modules/wallet-evm-erc-4337/">wallet-evm-erc-4337</a>
