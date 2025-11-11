@@ -1,6 +1,6 @@
 ---
-title: "How to Make Your Own Wallet Module Compatible with WDK"
-description: "How to propose a new wallet module for WDK and how it will be reviewed"
+title: "How to create a custom wallet module"
+description: "Learn how to create a custom wallet module compatible with WDK"
 layout:
   width: default
   title:
@@ -17,28 +17,26 @@ layout:
     visible: false
 ---
 
-# How to Make Your Own Wallet Module Compatible with WDK
+# How to create a custom wallet module
 
-This guide shows you how to make a wallet module for a new ecosystem, network or chain, you can find a `wdk-wallet-template` project in [wdk-module-templates](https://github.com/raigal-r/wdk-module-templates).  
-You can use these steps to copy, adjust, and build your own module compatible with WDK.
+This guide shows you how you can create a custom WDK wallet module to support any network or chain you like.
 
 ---
 
 {% stepper %}
-{% step %}
-### Step 1  
-**Get the Template**
 
-- Go to [wdk-module-templates on GitHub](https://github.com/raigal-r/wdk-module-templates)
-- Download or clone the code
+{% step %}
+### Clone the Template
+
+- Visit [wdk-module-templates on GitHub](https://github.com/raigal-r/wdk-module-templates)
+- Download or clone the repository
 
 {% endstep %}
-{% step %}
-### Step 2  
-**Pick the Right Folder**
 
-- Open the folder called `wdk-wallet-template`
-- This folder has the wdk minimum structure code for a wallet module
+{% step %}
+### Choose the Right Folder
+
+Open the folder called `wdk-wallet-template`, which contains the scaffolding for a wallet module
 
 ```text
 wallet-<example>/
@@ -57,28 +55,25 @@ wallet-<example>/
    └─ unit & integration tests
 ```
 {% endstep %}
+
 {% step %}
+### Implement Account Logic
 
-### Step 3  
-**Implement Account Logic**
-
-- Extend and develop `account-read-only.js` (read-only) and `account.js` (full account)
-- Implement all required wallet/account methods for your network
+- Implement the required methods you find in  `account-read-only.js` (read-only) and `account.js` (full account).
 - Remove `NotImplementedError` from each function after proper implementation
 
 {% endstep %}
+
 {% step %}
-### Step 4  
-**Implement Wallet Manager**
+### Implement Wallet Manager
 
 - Extend `manager.js` to serve accounts by index or path
 - Provide fee quotes and management functions
 
 {% endstep %}
-{% step %}
 
-### Step 5  
-**Testing and Bare Compatibility [OPTIONAL]**
+{% step %}
+### Testing Bare Compatibility (optional)
 
 - Test your package with `bare.js`
 - Try account creation, address viewing, balance, and send functions
@@ -86,23 +81,19 @@ wallet-<example>/
 - If you require dependencies that do not work in bare, note them and [you can contact the WDK team on the Tether Developer's Hub on Discord](https://discord.gg/arYXDhHB2w) for support.
 
 {% endstep %}
-{% step %}
-### Step 6  
-**Documentation & CI**
 
+{% step %}
+
+### Add docs
 - Write a `README.md` (what it is, install, config, usage, API, feature table)
 - Add a `CHANGELOG.md` (track changes per release)
-- Add unit and integration tests—cover each public method and orchestrator registration
-- Add scripts for linting, testing, and type-check
-- Use semantic versioning
 
 {% endstep %}
-{% step %}
-### Step 7  
-**Publish, Share, and Official Inclusion**
 
-- Publish or share your module with your app or community
-- If you want your module to be official, see [Official Inclusion](#official-inclusion)
+{% step %}
+### Official Inclusion
+
+If you want your module to be included in the official module list, see [Official Inclusion](#official-inclusion)
 
 {% endstep %}
 {% endstepper %}
