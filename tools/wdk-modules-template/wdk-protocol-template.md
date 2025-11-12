@@ -20,9 +20,9 @@ layout:
 # How to Make Your Own Protocol Module Compatible with WDK
 
 This page guides you through creating WDK-compatible protocol modules—**bridge**, **swap**, or **lending**—using our template projects:
-- [Bridge Protocol Template](https://github.com/tetherto/wdk-protocol-bridge-template)
-- [Swap Protocol Template](https://github.com/tetherto/wdk-protocol-swap-template)
-- [Lending Protocol Template](https://github.com/tetherto/wdk-protocol-lending-template)
+- [Bridge Protocol Template](https://github.com/tetherto/wdk-module-templates/wdk-protocol-templates/wdk-protocol-bridge-template)
+- [Swap Protocol Template](https://github.com/tetherto/wdk-protocol-templates/wdk-protocol-swap-template)
+- [Lending Protocol Template](https://github.com/tetherto/wdk-protocol-templates/wdk-protocol-lending-template)
 
 These templates give you everything you need to implement protocols that work out-of-the-box with the [WDK](https://github.com/tetherto/wdk) ecosystem.
 
@@ -67,6 +67,18 @@ Each folder has:
 {% endstep %}
 
 {% step %}
+### Testing Bare Compatibility (optional)
+
+Running your module on [Bare runtime](../resources/concepts.md#bare-runtime) ensures greater portability and robust security across environments.
+
+- Test your package with `bare.js`
+- Try calling/wrapping protocol operations (bridge, swap, lend...)
+- Avoid Node-only modules (like `fs`); use pure JavaScript and web‑safe crypto
+- If you require dependencies that do not work in bare, note them and [contact the WDK team on the Tether Developer's Hub on Discord](https://discord.gg/arYXDhHB2w) for support.
+
+{% endstep %}
+
+{% step %}
 ### Step 4  
 **Configure and Test**
 - Update `package.json`, types, and README for your network and settings
@@ -96,19 +108,12 @@ Each folder has:
 
 All must respect the WDK class interface for easy wallet orchestrator integration.
 
----
+{% step %}
+### Official Inclusion
 
-## Official Inclusion
+If you want your module to be included in the official module list, see the [Official Inclusion requirements in the main README](../README.md#official-inclusion).
 
-Follow this checklist to have your module reviewed for inclusion as an official WDK protocol module:
-
-- Follows naming convention: `@wdk/protocol-<feature>`
-- Implements all standard WDK methods for its protocol type
-- Documentation is present and shows use/config/test
-- CI and basic tests are present
-- Maintainer contact is included
-
-To propose inclusion: open a GitHub issue or PR with your module, usage, tests, and contact. The WDK team will review. Even if all requirements are met, inclusion is at the team's discretion.
+{% endstep %}
 
 ---
 

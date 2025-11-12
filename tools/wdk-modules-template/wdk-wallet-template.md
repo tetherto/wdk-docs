@@ -28,7 +28,7 @@ This guide shows you how you can create a custom WDK wallet module to support an
 {% step %}
 ### Clone the Template
 
-- Visit [wdk-module-templates on GitHub](https://github.com/raigal-r/wdk-module-templates)
+- Visit [wdk-module-templates on GitHub](https://github.com/tetherto/wdk-module-templates/wdk-wallet-template)
 - Download or clone the repository
 
 {% endstep %}
@@ -75,6 +75,8 @@ wallet-<example>/
 {% step %}
 ### Testing Bare Compatibility (optional)
 
+Running your module on [Bare runtime](../resources/concepts.md#bare-runtime) ensures greater portability and robust security across environments.
+
 - Test your package with `bare.js`
 - Try account creation, address viewing, balance, and send functions
 - Avoid Node-only modules (like `fs`); use pure JavaScript and web‑safe crypto
@@ -93,7 +95,7 @@ wallet-<example>/
 {% step %}
 ### Official Inclusion
 
-If you want your module to be included in the official module list, see [Official Inclusion](#official-inclusion)
+If you want your module to be included in the official module list, see the [Official Inclusion requirements in the main README](../README.md#official-inclusion).
 
 {% endstep %}
 {% endstepper %}

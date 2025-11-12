@@ -1,5 +1,5 @@
 ---
-title: WDK Modules Template
+title: Create custom SDK modules
 layout:
   width: default
   title:
@@ -18,12 +18,57 @@ layout:
 
 # WDK Modules Template
 
-This section helps you use, copy, and extend code templates for creating WDK-compatible modules. The provided templates help you start fast, keep structure consistent, and meet all requirements.
+Build your own plug-in wallet and protocol modules (bridge, swap, lending, and more) that work seamlessly with the WDK ecosystem. Start with these ready-made templates for fast, robust, and standards-compliant integration.
 
 ## Available Templates
 
 - [Wallet Module Template Guide](./wdk-wallet-template.md)
 - [Protocol Module Template Guide](./wdk-protocol-template.md)
+
+## Official Inclusion
+
+If you want your module (wallet or protocol) to be considered for official listing in the WDK ecosystem, please follow these requirements:
+
+### Package and Code
+- Use correct naming: `@wdk/wallet-<feature>` or `@wdk/protocol-<feature>`
+- Follow monorepo structure and naming conventions (kebab-case files, PascalCase types)
+- Export only from `index.js`; keep helpers internal to `src/`
+- Implement all WDK-required public methods and API for the module type (wallet or protocol)—conform to official interfaces
+- Avoid deep/unsafe dependencies; keep dependencies minimal and audited
+- All code must run in bare/portable environments by default
+
+### Documentation, Testing, and Versioning
+- Include clear install, config, usage, and API docs in `README.md`
+- Publish an up-to-date `CHANGELOG.md` with semver releases
+- Include basic tests for every public method, integration tests if relevant, and a CI pipeline for linting and type checks
+- Use semantic versioning for releases (major.minor.patch)
+
+### Security & Maintenance
+- No unsafe/unreviewed dependencies
+- Document all known edge cases, limitations, and security notes
+- List maintainer(s) and provide contact info for ongoing support
+
+### Important Notes
+{% hint style="warning" %}
+Bare compatibility is required for official modules. If something does not run in bare, document it and coordinate with the WDK team for an agreed plan before requesting official inclusion.
+{% endhint %}
+
+### Inclusion Checklist
+- [ ] Correct naming and file structure
+- [ ] Minimal, bare-compatible dependencies
+- [ ] All required methods implemented & tested
+- [ ] Docs and tests present
+- [ ] Clear maintainer contact
+
+**To propose for official status:**
+Open a GitHub issue or PR and provide:
+- The module repository
+- Short overview, documentation, and config
+- Tests and usage example
+- Maintainer contact info
+- Security and dependency notes if relevant
+
+A WDK team member will review your submission. Meeting all requirements does not guarantee inclusion; acceptance is at the team's discretion.
 
 ## How to Use
 

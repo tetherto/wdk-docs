@@ -82,11 +82,6 @@
     * [Configuration](sdk/lending-modules/lending-aave-evm/configuration.md)
     * [API Reference](sdk/lending-modules/lending-aave-evm/api-reference.md)
 
-* [New Protocol Modules](sdk/protocol-new-modules/README.md)
-  * [Guide](sdk/protocol-new-modules/guide.md)
-  * [API Reference](sdk/protocol-new-modules/api-reference.md)
-  * [Configuration](sdk/protocol-new-modules/configuration.md)
-
 ## UI Kits
 
 * [React Native UI Kit](ui-kits/react-native-ui-kit/README.md)
@@ -109,16 +104,13 @@
 * [Price Rates](tools/price-rates/README.md)
   * [Configuration](tools/price-rates/configuration.md)
   * [API Reference](tools/price-rates/api-reference.md)
-* [WDK Modules Template](tools/wdk-modules-template/README.md)
-  * [WDK Wallets Template](tools/wdk-modules-template/wdk-wallet-template.md)
-  * [WDK Protocol Template](tools/wdk-modules-template/wdk-protocol-template.md)
-
-## Community Modules
-
-* [Community Modules](community-modules/README.md)
 
 ## Resources
 
 * [Concepts](resources/concepts.md)
 * [Showcase](resources/showcase.md)
+* [Community Modules](community-modules/README.md)
+* [Create custom SDK modules](tools/wdk-modules-template/README.md)
+  * [WDK Wallets Template](tools/wdk-modules-template/wdk-wallet-template.md)
+  * [WDK Protocol Template](tools/wdk-modules-template/wdk-protocol-template.md)
 <!-- * [Go-live Checklist](resources/go-live-checklist.md) -->
