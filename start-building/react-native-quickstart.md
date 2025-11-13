@@ -580,7 +580,6 @@ If you see errors about missing Node.js modules like `stream`, `buffer`, or `cry
 
 This means your minSdkVersion is too low. Make sure you've set it to 29:
 
-**For Expo:**
 
 ```json
 {
