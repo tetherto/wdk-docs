@@ -43,7 +43,6 @@ Before we start, make sure you have:
 | **React Native** | 0.81.0+ | Framework version           |
 | **Android SDK**  | API 29+ | Android minimum SDK version |
 | **iOS**          | 15.1+   | iOS deployment target       |
-| **Code Editor**  | Any     | To write code               |
 
 ---
 
