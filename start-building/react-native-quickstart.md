@@ -551,6 +551,8 @@ console.log("Estimated fee:", feeEstimate);
 
 ### Clear Wallet Data
 
+Call `clearWallet()` to securely wipe all sensitive data and secret keys from memory when you're done with wallet operations.
+
 ```tsx
 const { clearWallet } = useWallet();
 
