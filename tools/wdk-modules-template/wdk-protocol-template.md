@@ -34,7 +34,7 @@ These templates give you everything you need to implement protocols that work ou
 ### Step 1  
 **Get the Templates**
 
-- Go to [wdk-protocol-templates on GitHub](https://github.com/tetherto/wdk-protocol-templates)
+- Go to [wdk-protocol-templates on GitHub](https://github.com/tetherto/wdk-module-templates/wdk-protocol-templates)
 - Download or clone the repository
 - Pick the protocol type you want (bridge, swap, lending)
 

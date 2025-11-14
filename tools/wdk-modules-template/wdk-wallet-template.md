@@ -1,6 +1,7 @@
 ---
-title: "How to create a custom wallet module"
-description: "Learn how to create a custom wallet module compatible with WDK"
+title: "WDK Wallet Module Template: How to Create a Custom Wallet Module"
+description: "Learn how to create a custom wallet module compatible with 
+WDK"
 layout:
   width: default
   title:
@@ -15,140 +16,147 @@ layout:
     visible: false
   metadata:
     visible: false
----
 
+---
 # How to create a custom wallet module
 
-This guide shows you how you can create a custom WDK wallet module to support any network or chain you like.
-
----
+This guide shows you how you can create a custom WDK wallet module to 
+support any network or chain you like.
 
 {% stepper %}
-
 {% step %}
+
 ### Clone the Template
 
-- Visit [wdk-module-templates on GitHub](https://github.com/tetherto/wdk-module-templates/wdk-wallet-template)
+- Visit [wdk-module-templates on GitHub](https://github.com/tetherto/
+wdk-module-templates/)
 - Download or clone the repository
+- Open the folder called `wdk-wallet-template`, which contains the 
+scaffolding for a wallet module
 
 {% endstep %}
 
 {% step %}
-### Choose the Right Folder
 
-Open the folder called `wdk-wallet-template`, which contains the scaffolding for a wallet module
+### The Wallet Template Folder Structure 
 
 ```text
-wallet-<example>/
-├─ bare.js
-├─ index.js
+/
+├─ src/
+│  ├─ wallet-account-[example].js
+│  ├─ wallet-account-read-only-[example].js
+│  └─ wallet-manager-[example].js
+├─ types/
+│  ├─ index.d.ts
+│  └─ src/
+│      ├─ wallet-account-[example].d.ts
+│      ├─ wallet-account-read-only-[example].d.ts
+│      └─ wallet-manager-[example].d.ts
+├─ tests/
+│  └─ (add unit and integration tests)
 ├─ package.json
 ├─ README.md
-├─ LICENSE
-├─ types/
-│  └─ index.d.ts
-├─ src/
-│  ├─ manager.js
-│  ├─ account-read-only.js
-│  └─ account.js
-└─ tests/
-   └─ unit & integration tests
+├─ CHANGELOG.md
+└─ LICENSE
 ```
 {% endstep %}
 
-{% step %}
-### Implement Account Logic
+## How To Use
 
-- Implement the required methods you find in  `account-read-only.js` (read-only) and `account.js` (full account).
-- Remove `NotImplementedError` from each function after proper implementation
+{% step %}
+
+### 1. Copy & Rename
+
+Make a new module folder by copying this template.  
+Rename files and classes by replacing `[example]` with your chain or network name, e.g. `wallet-account-solana.js`.
 
 {% endstep %}
 
 {% step %}
-### Implement Wallet Manager
+### 2. Implement Network Logic
 
-- Extend `manager.js` to serve accounts by index or path
-- Provide fee quotes and management functions
+Edit:
+- `wallet-account-[example].js`: Implement account logic (key management, signing, addresses, send, transfer, etc.)
+- `wallet-account-read-only-[example].js`: Implement fetchers for balance and token balance, quoting fees, etc.
+- `wallet-manager-[example].js`: Implement account creation, path derivation, and fee quoting.
+
+In each class, you must:
+- Replace all `NotImplementedError` throws with real code using your network’s SDK.
+- Follow instructions and TODO comments in the file—these walk you through methods, expected inputs/outputs, and contracts.
+- Implement tests in `/tests`. Test all implemented features: create, load, and fetch accounts; sign and verify messages; transfer.
+- Make sure to clean up keys from memory using `dispose()` after use.
+{% endstep %}
+
+{% step %}
+### 3. Update Configuration
+
+Update the `README.md` following the template and the `package.json` (name, version, dependencies), and fill in the correct main/module entries.
+{% endstep %}
+
+{% step %}
+
+### 4. Run and Test the Template Locally
+
+- Open a terminal in the root of your cloned `wdk-wallet-template` folder.
+- Install dependencies:
+  ```bash
+  npm install
+  ```
+- Run the test suite:
+  ```bash
+  npm test
+  ```
+- (Optional) To check bare runtime compatibility, run:
+  ```bash
+  node bare.js
+  ```
+  >  Running your module on [Bare runtime](../resources/concepts.md#bare-runtime) ensures greater portability and robust security across environments.
+
+- You may also use `npm run build` or `npm run lint` if those scripts are present in `package.json`.
 
 {% endstep %}
 
 {% step %}
-### Testing Bare Compatibility (optional)
 
-Running your module on [Bare runtime](../resources/concepts.md#bare-runtime) ensures greater portability and robust security across environments.
-
-- Test your package with `bare.js`
-- Try account creation, address viewing, balance, and send functions
-- Avoid Node-only modules (like `fs`); use pure JavaScript and web‑safe crypto
-- If you require dependencies that do not work in bare, note them and [you can contact the WDK team on the Tether Developer's Hub on Discord](https://discord.gg/arYXDhHB2w) for support.
+### 5. Testing Bare Compatibility (optional)
 
 {% endstep %}
 
 {% step %}
 
-### Add docs
-- Write a `README.md` (what it is, install, config, usage, API, feature table)
-- Add a `CHANGELOG.md` (track changes per release)
+### 6. Official Inclusion
 
-{% endstep %}
-
-{% step %}
-### Official Inclusion
-
-If you want your module to be included in the official module list, see the [Official Inclusion requirements in the main README](../README.md#official-inclusion).
+If you want your module to be included in the official module list, see the [Official Inclusion requirements](./README.md#official-inclusion).
 
 {% endstep %}
 {% endstepper %}
----
-
-## Official Inclusion
-
-Follow these if you’d like your module to be listed as official and reviewed by the WDK team:
-
-### Package and Code
-
-- Name your package `@wdk/wallet-<example>`
-- Follow monorepo structure and naming conventions (kebab-case files, PascalCase types)
-- Export only from `index.js`; keep helpers internal to `src/`
-- Implement the WDK Wallet Module interface
-- Avoid deep/unsafe dependencies; keep dependencies minimal and audited
-- All code must run in bare/portable environments by default
-
-### Docs, Testing, and Versioning
-
-- `README.md` must explain install, config, examples, API, and feature table
-- `CHANGELOG.md` up-to-date with semver releases
-- Include unit tests for every public method, integration tests for orchestrator registration
-- Test your module with the bare runtime using `bare.js`
-- Lint and type-check scripts are present; CI pipeline covers build/test
-- Use semantic versioning for releases (major.minor.patch)
-
-### Security & Maintenance
-
-- No unsafe/unreviewed dependencies
-- Document all known edge cases, limitations, and security notes
-- List maintainer(s) and provide contact info for long-term support
-
-### Important Notes
-
-{% hint style="warning" %}
-Bare compatibility is required for official modules. If something does not run in bare, document it and coordinate with the WDK team for an agreed compatibility plan before requesting official inclusion.
-{% endhint %}
-
-### Inclusion Checklist
-
-- [ ] Correct naming and file structure
-- [ ] Minimal, bare-compatible dependencies
-- [ ] All required wallet methods implemented & tested
-- [ ] Docs and tests present
-- [ ] Clear maintainer contact
-
-**To propose for official status:**
-Contact the WDK team and provide a short overview, your documentation, tests, dependencies, security notes, and maintainer info. A team member will review your submission. Please note that even if all requirements are met, the team reserves the right to reject proposals at its discretion.
 
 ---
 
-## Need Help?
+## Example: Implementing a Method
+
+Example from `wallet-account-[example].js`:
+
+{% code title="wallet-account-[example].js" overflow="wrap" lineNumbers="true" %}
+```javascript
+// Before:
+getAddress() {
+  throw new NotImplementedError('getAddress not implemented for this example.');
+}
+
+// After:
+async getAddress() {
+  // Use your SDK to derive and return the account's public address
+  return mySdk.deriveAddress(this._keyPair.publicKey)
+}
+```
+{% endcode %}
+
+> Be sure to replace all stubs, fill out type definitions, and document any chain-specific details.
+
+---
+
+## Need an example?
 
 - Look at comments in the sample code for ideas
 - Visit the oficcial modules repositories for examples
@@ -162,4 +170,14 @@ Contact the WDK team and provide a short overview, your documentation, tests, de
   - [wdk-wallet-ton](https://github.com/tetherto/wdk-wallet-ton)
   - [wdk-wallet-ton-gasless](https://github.com/tetherto/wdk-wallet-ton-gasless)
   - [wdk-wallet-solana](https://github.com/tetherto/wdk-wallet-solana)
+
+---
+
+## Next Steps
+
+- See the main [WDK Protocol Module Template Guide](./wdk-protocol-template.md) for step-by-step instructions and requirements for developing protocol modules compatible with WDK.
+- Check the code comments in each class file for details of what you need to implement.
+- When finished, you can propose your implementation for community use or official listing (if it follows all WDK rules).
+
+---
 
