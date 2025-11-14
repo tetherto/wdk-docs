@@ -33,11 +33,7 @@ support any network or chain you like.
 - Open the folder called `wdk-wallet-template`, which contains the 
 scaffolding for a wallet module
 
-{% endstep %}
-
-{% step %}
-
-### The Wallet Template Folder Structure 
+#### The Wallet Template Folder Structure 
 
 ```text
 /
@@ -45,26 +41,28 @@ scaffolding for a wallet module
 │  ├─ wallet-account-[example].js
 │  ├─ wallet-account-read-only-[example].js
 │  └─ wallet-manager-[example].js
+├─ tests/
+│  └─ (add unit and integration tests)
 ├─ types/
 │  ├─ index.d.ts
 │  └─ src/
 │      ├─ wallet-account-[example].d.ts
 │      ├─ wallet-account-read-only-[example].d.ts
 │      └─ wallet-manager-[example].d.ts
-├─ tests/
-│  └─ (add unit and integration tests)
 ├─ package.json
+├─ bare.js
+├─ tconfig.json
 ├─ README.md
 ├─ CHANGELOG.md
 └─ LICENSE
 ```
+
 {% endstep %}
 
-## How To Use
 
 {% step %}
 
-### 1. Copy & Rename
+### Copy & Rename
 
 Make a new module folder by copying this template.  
 Rename files and classes by replacing `[example]` with your chain or network name, e.g. `wallet-account-solana.js`.
@@ -72,7 +70,7 @@ Rename files and classes by replacing `[example]` with your chain or network nam
 {% endstep %}
 
 {% step %}
-### 2. Implement Network Logic
+### Implement Network Logic
 
 Edit:
 - `wallet-account-[example].js`: Implement account logic (key management, signing, addresses, send, transfer, etc.)
@@ -87,14 +85,14 @@ In each class, you must:
 {% endstep %}
 
 {% step %}
-### 3. Update Configuration
+### Update Configuration
 
 Update the `README.md` following the template and the `package.json` (name, version, dependencies), and fill in the correct main/module entries.
 {% endstep %}
 
 {% step %}
 
-### 4. Run and Test the Template Locally
+### Run and Test the Template Locally
 
 - Open a terminal in the root of your cloned `wdk-wallet-template` folder.
 - Install dependencies:
@@ -117,13 +115,13 @@ Update the `README.md` following the template and the `package.json` (name, vers
 
 {% step %}
 
-### 5. Testing Bare Compatibility (optional)
+### Testing Bare Compatibility (optional)
 
 {% endstep %}
 
 {% step %}
 
-### 6. Official Inclusion
+### Official Inclusion
 
 If you want your module to be included in the official module list, see the [Official Inclusion requirements](./README.md#official-inclusion).
 
