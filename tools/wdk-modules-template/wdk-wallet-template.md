@@ -28,8 +28,8 @@ support any network or chain you like.
 
 ### Clone the Template
 
-- Visit [wdk-module-templates on GitHub](https://github.com/tetherto/
-wdk-module-templates/)
+- Visit [wdk-module-templates](https://github.com/tetherto/
+wdk-module-templates/) on GitHub
 - Download or clone the repository
 - Open the folder called `wdk-wallet-template`, which contains the 
 scaffolding for a wallet module
