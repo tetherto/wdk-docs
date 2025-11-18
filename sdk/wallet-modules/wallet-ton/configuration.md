@@ -154,7 +154,7 @@ TON wallets use BIP-44 standard derivation paths. The default derivation path fo
 
 The default derivation path was updated in v1.0.0-beta.6 to match ecosystem conventions:
 
-- **Previous path** (v1.0.0-beta.5): `m/44'/607'/0'/0/1`
+- **Previous path** (v1.0.0-beta.5): `m/44'/607'/0'/0/{index}`
 - **Current path** (v1.0.0-beta.6+): `m/44'/607'/{index}'`
 
 If you're upgrading from an earlier version, existing wallets created with the old path will generate different addresses. Make sure to migrate any existing wallets or use the old path explicitly if needed for compatibility.
