@@ -154,7 +154,7 @@ Solana wallets use BIP-44 standard derivation paths. The default derivation path
 
 The default derivation path was updated in v1.0.0-beta.4 to match ecosystem conventions:
 
-- **Before** (v1.0.0-beta.3): `m/44'/501'/0'/0/{index}`
+- **Before** (<= v1.0.0-beta.3): `m/44'/501'/0'/0/{index}`
 - **After** (v1.0.0-beta.4+): `m/44'/501'/{index}'/0'`
 
 If you're upgrading from an earlier version, existing wallets created with the old path will generate different addresses. Make sure to migrate any existing wallets or use the old path explicitly if needed for compatibility.

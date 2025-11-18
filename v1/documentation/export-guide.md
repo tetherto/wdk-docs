@@ -56,9 +56,9 @@ Here, `x` is the account index (0, 1, 2…).
 
 WDK has updated default derivation paths for several wallet modules to match ecosystem conventions:
 
-- **Bitcoin**: Changed from `m/44'/0'/0'/0/{index}` (v1.0.0-beta.3) to `m/84'/0'/0'/0/{index}` (v1.0.0-beta.4+) - now uses BIP-84 Native SegWit
-- **Solana**: Changed from `m/44'/501'/0'/0/{index}` (v1.0.0-beta.3) to `m/44'/501'/{index}'/0'` (v1.0.0-beta.4+)
-- **TON**: Changed from `m/44'/607'/0'/0/1` (v1.0.0-beta.5) to `m/44'/607'/{index}'` (v1.0.0-beta.6+)
+- **Bitcoin**: Changed from `m/44'/0'/0'/0/{index}` (<= v1.0.0-beta.3) to `m/84'/0'/0'/0/{index}` (v1.0.0-beta.4+) - now uses BIP-84 Native SegWit
+- **Solana**: Changed from `m/44'/501'/0'/0/{index}` (<= v1.0.0-beta.3) to `m/44'/501'/{index}'/0'` (v1.0.0-beta.4+)
+- **TON**: Changed from `m/44'/607'/0'/0/1` (<= v1.0.0-beta.5) to `m/44'/607'/{index}'` (v1.0.0-beta.6+)
 
 If you're upgrading from an earlier version, existing wallets will generate different addresses. Make sure to migrate any existing wallets or use explicit paths for backward compatibility.
 
@@ -139,7 +139,7 @@ Solana wallets use derivation paths to generate addresses from a single seed phr
 
 - Coin Type: `501` (SLIP-0010)  
 - Derivation Path: `m/44'/501'/{x}'/0'` (updated in v1.0.0-beta.4)  
-- Previous Path: `m/44'/501'/0'/0/x` (v1.0.0-beta.3 and earlier)
+- Previous Path: `m/44'/501'/0'/0/x` (<= v1.0.0-beta.3 and earlier)
 - Derivation Algorithm: SLIP10
 
 {% hint style="info" %}
