@@ -43,7 +43,7 @@ This package works with multiple blockchain networks through wallet registration
     <tr>
       <td><img src="../../assets/logos/ethereum-logo.png" alt="Ethereum logo" width="20" height="20" style="object-fit:contain;" /></td>
       <td><strong>EVM Chains</strong></td>
-      <td>Ethereum, L2s, etc.</td>
+      <td>Ethereum, Sepolia Testnet, L2s, etc.</td>
       <td>
         <a href="../wallet-modules/wallet-evm/">wallet-evm</a>, 
         <a href="../wallet-modules/wallet-evm-erc-4337/">wallet-evm-erc-4337</a>
@@ -75,7 +75,24 @@ This package works with multiple blockchain networks through wallet registration
         <a href="../wallet-modules/wallet-solana/">wallet-solana</a>      </td>
     </tr>
      <tr>
-      <td><img src="../../assets/logos/spark-logo.png" alt="Spark Logo" width="20" height="20"  style="object-fit:contain;" /></td>
+      <td>
+        <picture>
+          <source 
+            srcset="/assets/logos/spark-logo-dark.png" 
+            media="(prefers-color-scheme: dark)" 
+            type="image/png" />
+          <source 
+            srcset="/assets/logos/spark-logo-light.png" 
+            media="(prefers-color-scheme: light)" 
+            type="image/png" />
+          <img 
+            src="/assets/logos/spark-logo-light.png" 
+            alt="Spark Logo" 
+            width="20" 
+            height="20" 
+            style="object-fit:contain;" />
+        </picture>
+      </td>
       <td><strong>Spark</strong></td>
       <td>Spark Mainnet</td>
       <td>

@@ -107,4 +107,5 @@
 ## Resources
 
 * [Concepts](resources/concepts.md)
+* [Showcase](resources/showcase.md)
 <!-- * [Go-live Checklist](resources/go-live-checklist.md) -->

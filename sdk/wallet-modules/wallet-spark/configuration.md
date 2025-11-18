@@ -177,7 +177,6 @@ wallet.dispose()
 				<a href="./api-reference.md">WDK Spark Wallet API</a>
 			</td>
 		</tr>
-  
 	</tbody>
 </table>
 

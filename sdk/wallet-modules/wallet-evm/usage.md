@@ -58,6 +58,10 @@ const account = await wallet.getAccount(0)
 // Convert to a read-only account
 const readOnlyAccount = await account.toReadOnlyAccount()
 ```
+{% hint style="info" %}
+> To use test/mock tokens instead of real funds, see the Testnet [configuration section](./configuration.md#sepolia-testnet-usdt-erc-20).
+
+{% endhint %}
 
 ### Managing Multiple Accounts
 

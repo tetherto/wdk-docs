@@ -200,19 +200,19 @@ The bridge protocol supports the following chains:
 
 **Source Chains (EVM):**
 - `'ethereum'` (Chain ID: 1)
-- `'arbitrum'` (Chain ID: 42,161) - ERC-4337 support
+- `'arbitrum'` (Chain ID: 42161) - ERC-4337 support
 - `'polygon'` (Chain ID: 137)
-- `'berachain'` (Chain ID: 80,094)
-- `'ink'` (Chain ID: 57,073)
+- `'berachain'` (Chain ID: 80094)
+- `'ink'` (Chain ID: 57073)
 
 **Destination Chains:**
 - `'ethereum'` (Chain ID: 1)
-- `'arbitrum'` (Chain ID: 42,161)
+- `'arbitrum'` (Chain ID: 42161)
 - `'polygon'` (Chain ID: 137)
-- `'berachain'` (Chain ID: 80,094)
-- `'ink'` (Chain ID: 57,073)
-- `'ton'` (Chain ID: 30,343)
-- `'tron'` (Chain ID: 728,126,428)
+- `'berachain'` (Chain ID: 80094)
+- `'ink'` (Chain ID: 57073)
+- `'ton'` (Chain ID: 30343)
+- `'tron'` (Chain ID: 728126428)
 
 ## Error Handling
 
