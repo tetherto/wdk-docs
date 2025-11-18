@@ -174,6 +174,20 @@ Bitcoin uses [BIP-84](../../../resources/concepts.md#bip-84-native-segwit) stand
 
 **Note:** Only Native SegWit (P2WPKH) addresses are supported, starting with 'bc1' (mainnet) or 'tb1' (testnet).
 
+{% hint style="warning" %}
+**Default Derivation Path Change in v1.0.0-beta.4+**
+
+The default derivation path was updated in v1.0.0-beta.4 to use BIP-84 (Native SegWit) instead of BIP-44 (Legacy):
+
+- **Previous path** (v1.0.0-beta.3): `m/44'/0'/0'/0/{index}` (Legacy addresses)
+- **Current path** (v1.0.0-beta.4+): `m/84'/0'/0'/0/{index}` (Native SegWit addresses)
+
+If you're upgrading from an earlier version, existing wallets created with the old path will generate different addresses. Make sure to migrate any existing wallets or use the old path explicitly if needed for compatibility.
+
+Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) to supply an explicit derivation path when importing or recreating legacy wallets.
+
+{% endhint %}
+
 ## Complete Configuration Example
 
 ```javascript
