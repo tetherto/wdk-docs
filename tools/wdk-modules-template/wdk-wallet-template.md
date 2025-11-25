@@ -117,6 +117,13 @@ Update the `README.md` following the template and the `package.json` (name, vers
 
 ### Testing Bare Compatibility (optional)
 
+Running your module on [Bare runtime](../resources/concepts.md#bare-runtime) ensures greater portability and robust security across environments.
+
+- Test your package with `bare.js`
+- Try calling/wrapping protocol operations (bridge, swap, lend...)
+- Avoid Node-only modules (like `fs`); use pure JavaScript and web‑safe crypto
+- If you require dependencies that do not work in bare, note them and [contact the WDK team on the Tether Developer's Hub on Discord](https://discord.gg/arYXDhHB2w) for support.
+
 {% endstep %}
 
 {% step %}
