@@ -45,11 +45,11 @@ wdk-protocol-templates/
 ├─ wdk-protocol-bridge-template/
 │  ├─ src/
 │  │  ├─ abi.js
-│  │  └─ bridge-protocol-example.js
+│  │  └─ bridge-protocol-[example].js
 │  ├─ tests/
-│  │  └─ bridge-protocol-example.test.js
+│  │  └─ bridge-protocol-[example].test.js
 │  ├─ types/
-│  │  └─ bridge-protocol-example.d.ts
+│  │  └─ bridge-protocol-[example].d.ts
 │  ├─ bare.js
 │  ├─ index.js
 │  ├─ package.json
@@ -57,11 +57,11 @@ wdk-protocol-templates/
 │  └─ README.md
 ├─ wdk-protocol-lending-template/
 │  ├─ src/
-│  │  └─ lending-protocol-example.js
+│  │  └─ lending-protocol-[example].js
 │  ├─ tests/
-│  │  └─ lending-protocol-example.test.js
+│  │  └─ lending-protocol-[example].test.js
 │  ├─ types/
-│  │  └─ lending-protocol-example.d.ts
+│  │  └─ lending-protocol-[example].d.ts
 │  ├─ bare.js
 │  ├─ index.js
 │  ├─ package.json
@@ -69,11 +69,11 @@ wdk-protocol-templates/
 │  └─ README.md
 └─ wdk-protocol-swap-template/
    ├─ src/
-   │  └─ swap-protocol-example.js
+   │  └─ swap-protocol-[example].js
    ├─ tests/
-   │  └─ swap-protocol-example.test.js
+   │  └─ swap-protocol-[example].test.js
    ├─ types/
-   │  └─ swap-protocol-example.d.ts
+   │  └─ swap-protocol-[example].d.ts
    ├─ bare.js
    ├─ index.js
    ├─ package.json
@@ -101,9 +101,9 @@ Rename files and classes by replacing `[example]` with your protocol type and pr
 ### Implement Protocol Logic
 
 Edit the key files for your protocol type:
-- **Bridge:** `bridge-protocol-example.js` — implement logic for bridging between chains/networks, transaction creation, fee calculation, and recipient validation.
-- **Swap:** `swap-protocol-example.js` — implement DEX/swapping logic, quoting swaps, pool/route selection, input validation.
-- **Lending:** `lending-protocol-example.js` — implement supply, withdraw, borrow, repay, and all quoting logic; validate inputs, check collateral and protocol-specific rules.
+- **Bridge:** `bridge-protocol-[example].js` — implement logic for bridging between chains/networks, transaction creation, fee calculation, and recipient validation.
+- **Swap:** `swap-protocol-[example].js` — implement DEX/swapping logic, quoting swaps, pool/route selection, input validation.
+- **Lending:** `lending-protocol-[example].js` — implement supply, withdraw, borrow, repay, and all quoting logic; validate inputs, check collateral and protocol-specific rules.
 
 Depending on your protocol, you may also need to:
 - Add or update supporting files such as ABI definitions (`abi.js`), address maps (`address-map.js`), or protocol-specific constants (`constants.js`) in the `src/` directory.
@@ -173,9 +173,9 @@ If you want your module to be included in the official module list, see the [Off
 
 Below are real-world patterns for converting protocol template stubs into functioning implementations.
 
-### Example from `bridge-protocol-example.js`
+### Example from `bridge-protocol-[example].js`
 
-{% code title="bridge-protocol-example.js" overflow="wrap" lineNumbers="true" %}
+{% code title="bridge-protocol-[example].js" overflow="wrap" lineNumbers="true" %}
 ```javascript
 // Before:
 async bridge(options, config) {
@@ -196,9 +196,9 @@ async bridge(options, config) {
 ```
 {% endcode %}
 
-### Example from `lending-protocol-example.js`
+### Example from `lending-protocol-[example].js`
 
-{% code title="lending-protocol-example.js" overflow="wrap" lineNumbers="true" %}
+{% code title="lending-protocol-[example].js" overflow="wrap" lineNumbers="true" %}
 ```javascript
 // Before:
 async supply(options, config) {
@@ -220,9 +220,9 @@ async supply(options, config) {
 ```
 {% endcode %}
 
-### Example from `swap-protocol-example.js`
+### Example from `swap-protocol-[example].js`
 
-{% code title="swap-protocol-example.js" overflow="wrap" lineNumbers="true" %}
+{% code title="swap-protocol-[example].js" overflow="wrap" lineNumbers="true" %}
 ```javascript
 // Before:
 async swap(options, config) {
