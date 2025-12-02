@@ -64,10 +64,10 @@ and run the command `npm i -g bare`
 {% endtabs %}
 
 {% hint style="info" %}
-You can try all features without real funds required. You can use the Pimlico or Candide faucets to get some Sepolia USDt. 
+You can try all features without real funds required. You can use the Pimlico or Candide faucets to get some Sepolia USD₮. 
 
-<a class="button primary" href="https://dashboard.pimlico.io/test-erc20-faucet"> Get mock/test USDt on Pimlico </a>
-<a class="button primary" href="https://dashboard.candide.dev/faucet"> Get mock/test USDt on Candide </a>
+<a class="button primary" href="https://dashboard.pimlico.io/test-erc20-faucet"> Get mock/test USD₮ on Pimlico </a>
+<a class="button primary" href="https://dashboard.candide.dev/faucet"> Get mock/test USD₮ on Candide </a>
 
 See the [configuration](../sdk/wallet-modules/wallet-evm-erc-4337/configuration.md) for quick setup and Sepolia testnet configuration.
 {% endhint %}

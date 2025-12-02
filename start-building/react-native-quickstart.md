@@ -31,10 +31,10 @@ In this quickstart, you'll integrate WDK into a React Native app to create a mul
 - [ ] Includes wallet creation, import, and unlock flows
 
 {% hint style="info" %}
-You can try all features without real funds required. You can use the Pimlico or Candide faucets to get some Sepolia USDt. 
+You can try all features without real funds required. You can use the Pimlico or Candide faucets to get some Sepolia USD₮. 
 
-<a class="button primary" href="https://dashboard.pimlico.io/test-erc20-faucet"> Get mock/test USDt on Pimlico </a>
-<a class="button primary" href="https://dashboard.candide.dev/faucet"> Get mock/test USDt on Candide </a>
+<a class="button primary" href="https://dashboard.pimlico.io/test-erc20-faucet"> Get mock/test USD₮ on Pimlico </a>
+<a class="button primary" href="https://dashboard.candide.dev/faucet"> Get mock/test USD₮ on Candide </a>
 
 See the [configuration.md](../sdk/wallet-modules/wallet-evm-erc-4337/configuration.md) for quick setup and Sepolia testnet configuration.
 {% endhint %}

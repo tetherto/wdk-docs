@@ -69,14 +69,14 @@ Returns:
 - ERC‑4337 account: `{ hash, fee, tokenInAmount, tokenOutAmount }` (approve may be bundled)
 
 Notes:
-- On Ethereum mainnet, selling USDT may first set allowance to 0, then approve.
+- On Ethereum mainnet, selling USD₮ may first set allowance to 0, then approve.
 - Requires a provider; requires a non read‑only account to send transactions.
 
 Example:
 
 ```javascript
 const tx = await swap.swap({
-  tokenIn: '0xdAC17F...ec7',      // USDT
+  tokenIn: '0xdAC17F...ec7',      // USD₮
   tokenOut: '0xC02a...6Cc2',      // WETH
   tokenInAmount: 1000000n
 })
@@ -100,7 +100,7 @@ Example:
 
 ```javascript
 const quote = await swap.quoteSwap({
-  tokenIn: '0xdAC17F...ec7',      // USDT
+  tokenIn: '0xdAC17F...ec7',      // USD₮
   tokenOut: '0xC02a...6Cc2',      // WETH
   tokenOutAmount: 500000000000000000n // 0.5 WETH
 })

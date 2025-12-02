@@ -214,7 +214,7 @@ The `paymasterToken` option specifies the ERC-20 token used for paying transacti
 ```javascript
 const config = {
   paymasterToken: {
-    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USDt
+    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USD₮
   }
 }
 ```
@@ -230,7 +230,7 @@ The `transferMaxFee` option sets the maximum fee amount **in paymaster token uni
 **Example:**
 ```javascript
 const config = {
-  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDt if 6 decimals)
+  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USD₮ if 6 decimals)
 }
 
 // Usage with error handling
@@ -262,9 +262,9 @@ const ethereumConfig = {
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USDt
+    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USDT
   },
-  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDt if 6 decimals)
+  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDT if 6 decimals)
 }
 ```
 
@@ -281,7 +281,7 @@ const polygonConfig = {
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F' // USDt on Polygon
+    address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F' // USDT on Polygon
   },
   transferMaxFee: 100000
 }
@@ -300,7 +300,7 @@ const arbitrumConfig = {
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9' // USDt on Arbitrum
+    address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9' // USDT on Arbitrum
   },
   transferMaxFee: 100000
 }
@@ -319,9 +319,9 @@ const avalancheConfig = {
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7' // USDt
+    address: '0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7' // USDT
   },
-  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDt if 6 decimals)
+  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDT if 6 decimals)
 }
 ```
 
@@ -340,13 +340,13 @@ const plasmaConfig = {
   entrypointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb' // USDt
+    address: '0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb' // USDT
   },
-  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDt if 6 decimals)
+  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDT if 6 decimals)
 }
 ```
 
-### Sepolia Testnet (USDt ERC-20 mock/testnet only)
+### Sepolia Testnet (USD₮ ERC-20 mock/testnet only)
 
 ````javascript
 
@@ -361,9 +361,9 @@ const sepoliaConfigPimlico = {
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0xd077a400968890eacc75cdc901f0356c943e4fdb' // USDt Sepolia
+    address: '0xd077a400968890eacc75cdc901f0356c943e4fdb' // USDT Sepolia
   }, 
-  transferMaxFee: 100000 // 0.1 USDt (6 decimals)
+  transferMaxFee: 100000 // 0.1 USDT (6 decimals)
 }
 
 // Candide
@@ -377,18 +377,18 @@ const sepoliaConfigCandide = {
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0xd077a400968890eacc75cdc901f0356c943e4fdb' // USDt Sepolia
+    address: '0xd077a400968890eacc75cdc901f0356c943e4fdb' // USDT Sepolia
   },   
   transferMaxFee: 100000
 }
 ````
 
 **Important**
-Ethereum Sepolia is a testnet. The USDt tokens available at the links below are not real and do not entitle the holder to anything. In particular, they cannot be redeemed with Tether International, S.A. de C.V. ("Tether International") and are not Tether Tokens as described in [Tether International's Terms of Service](https://tether.to/en/legal). The USDt tokens available at the links below on this testnet are intended for testing WDK on Ethereum Sepolia. The links below are links to third-party websites and are Third-Party Information as described in Tether Operations, S.A. de [C.V.'s Website Terms](https://tether.io/terms/)
+Ethereum Sepolia is a testnet. The USD₮ tokens available at the links below are not real and do not entitle the holder to anything. In particular, they cannot be redeemed with Tether International, S.A. de C.V. ("Tether International") and are not Tether Tokens as described in [Tether International's Terms of Service](https://tether.to/en/legal). The USD₮ tokens available at the links below on this testnet are intended for testing WDK on Ethereum Sepolia. The links below are links to third-party websites and are Third-Party Information as described in Tether Operations, S.A. de [C.V.'s Website Terms](https://tether.io/terms/)
 
-**USDt on Sepolia contract:** [0xd077a400968890eacc75cdc901f0356c943e4fdb](https://sepolia.etherscan.io/address/0xd077a400968890eacc75cdc901f0356c943e4fdb)
+**USD₮ on Sepolia contract:** [0xd077a400968890eacc75cdc901f0356c943e4fdb](https://sepolia.etherscan.io/address/0xd077a400968890eacc75cdc901f0356c943e4fdb)
 
-**Get test USDt:**
+**Get test USD₮:**
 - [Pimlico faucet](https://dashboard.pimlico.io/test-erc20-faucet)
 - [Candide faucet](https://dashboard.candide.dev/faucet)
 

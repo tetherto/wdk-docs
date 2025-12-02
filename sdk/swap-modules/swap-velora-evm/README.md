@@ -26,7 +26,7 @@ A lightweight package that lets EVM wallet accounts swap tokens using the velora
 - **Token Swapping**: Execute token swaps through velora on supported EVM networks
 - **Account Abstraction**: Compatible with standard EVM accounts and ERC‑4337 smart accounts
 - **Fee Controls**: Optional `swapMaxFee` to cap gas costs
-- **Allowance Safety**: Handles USDT mainnet pattern (reset allowance to 0 before approve)
+- **Allowance Safety**: Handles USD₮ mainnet pattern (reset allowance to 0 before approve)
 - **Provider Flexibility**: Works with JSON‑RPC URLs and EIP‑1193 providers
 - **TypeScript Support**: Full TypeScript definitions included
 

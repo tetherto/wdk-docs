@@ -48,11 +48,11 @@ const swapProtocol = new veloraProtocolEvm(account, {
 ### Basic Swap Operation
 
 ```javascript
-// Swap tokens via velora (USDT -> WETH)
+// Swap tokens via velora (USD₮ -> WETH)
 const result = await swapProtocol.swap({
-  tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
+  tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USD₮
   tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH
-  tokenInAmount: 1000000n // 1 USDT in base units (6 decimals)
+  tokenInAmount: 1000000n // 1 USD₮ in base units (6 decimals)
 })
 
 console.log('Swap transaction hash:', result.hash)
@@ -64,9 +64,9 @@ console.log('Tokens bought (base units):', result.tokenOutAmount)
 ### Getting Swap Quotes
 
 ```javascript
-// Get cost before swapping (USDT -> WETH)
+// Get cost before swapping (USD₮ -> WETH)
 const quote = await swapProtocol.quoteSwap({
-  tokenIn: '0xdAC17F...ec7', // USDT
+  tokenIn: '0xdAC17F...ec7', // USD₮
   tokenOut: '0xC02a...6Cc2', // WETH
   tokenInAmount: 1000000n
 })
@@ -89,7 +89,7 @@ console.log('Tokens out (base units):', quote.tokenOutAmount)
 // Swap with standard EVM account
 const result = await swapProtocol.swap({
   tokenIn: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH
-  tokenOut: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
+  tokenOut: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USD₮
   tokenInAmount: 1000000000000000000n // 1 WETH (18 decimals)
 })
 
@@ -114,7 +114,7 @@ const aa = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 const swapAA = new veloraProtocolEvm(aa, { swapMaxFee: 200000000000000n })
 
 const result = await swapAA.swap({
-  tokenIn: '0xdAC17F...ec7', // USDT
+  tokenIn: '0xdAC17F...ec7', // USD₮
   tokenOut: '0xC02a...6Cc2', // WETH
   tokenInAmount: 1000000n
 }, {
@@ -202,8 +202,8 @@ async function setupSwap() {
 ```javascript
 async function swapMultipleTokens(swapProtocol) {
   const swaps = [
-    { tokenIn: '0xdAC17F...ec7', tokenOut: '0xC02a...6Cc2', amount: 1000000n }, // USDT -> WETH
-    { tokenIn: '0xC02a...6Cc2', tokenOut: '0xdAC17F...ec7', amount: 200000000000000000n }, // WETH -> USDT
+    { tokenIn: '0xdAC17F...ec7', tokenOut: '0xC02a...6Cc2', amount: 1000000n }, // USD₮ -> WETH
+    { tokenIn: '0xC02a...6Cc2', tokenOut: '0xdAC17F...ec7', amount: 200000000000000000n }, // WETH -> USD₮
   ]
 
   for (const s of swaps) {

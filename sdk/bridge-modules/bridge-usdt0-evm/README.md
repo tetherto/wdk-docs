@@ -1,5 +1,5 @@
 ---
-title: Bridge USDT0 EVM Overview
+title: Bridge USD₮0 EVM Overview
 description: Overview of the @tetherto/wdk-protocol-bridge-usdt0-evm module
 layout:
   width: default
@@ -19,16 +19,16 @@ layout:
 
 # @tetherto/wdk-protocol-bridge-usdt0-evm Overview
 
-A simple package that lets EVM wallet accounts bridge USDT0 tokens across different blockchains. This package provides a clean API for moving tokens between chains using the LayerZero protocol and USDT0 bridge system.
+A simple package that lets EVM wallet accounts bridge USD₮0 tokens across different blockchains. This package provides a clean API for moving tokens between chains using the LayerZero protocol and USD₮0 bridge system.
 
 ## Features
 
-- **Cross-Chain Bridge**: Move USDT0 tokens between supported blockchains
+- **Cross-Chain Bridge**: Move USD₮0 tokens between supported blockchains
 - **LayerZero Integration**: Uses LayerZero protocol for secure cross-chain transfers
 - **Multi-Chain Support**: Bridge to Ethereum, Arbitrum, Polygon, and other supported chains
 - **Account Abstraction**: Works with both standard EVM wallets and ERC-4337 smart accounts
 - **Fee Management**: Built-in fee calculation and bridge cost estimation
-- **Token Support**: Supports USDT and other USDT0 ecosystem tokens
+- **Token Support**: Supports USD₮ and other USD₮0 ecosystem tokens
 - **TypeScript Support**: Full TypeScript definitions included
 - **Memory Safety**: Secure transaction handling with proper error management
 - **Provider Flexibility**: Works with JSON-RPC URLs and EIP-1193 browser providers
@@ -73,23 +73,11 @@ This package works with EVM-compatible blockchains and can bridge to:
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Bridge USDT0 EVM Protocol Configuration</strong>
+				<strong>WDK Bridge USD₮0 EVM Protocol Configuration</strong>
 			</td>
-			<td>Get started with WDK's Bridge USDT0 EVM Protocol configuration</td>
+			<td>Get started with WDK's Bridge USD₮0 EVM Protocol configuration</td>
 			<td>
-				<a href="./configuration.md">WDK Bridge USDT0 EVM Protocol Configuration</a>
-			</td>
-		</tr>
-        <tr>
-			<td>
-				<i class="fa-code">:code:</i>
-			</td>
-			<td>
-				<strong>WDK Bridge USDT0 EVM Protocol API</strong>
-			</td>
-			<td>Get started with WDK's Bridge USDT0 EVM Protocol API</td>
-			<td>
-				<a href="./api-reference.md">WDK Bridge USDT0 EVM Protocol API</a>
+				<a href="./configuration.md">WDK Bridge USD₮0 EVM Protocol Configuration</a>
 			</td>
 		</tr>
         <tr>
@@ -97,11 +85,23 @@ This package works with EVM-compatible blockchains and can bridge to:
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Bridge USDT0 EVM Protocol Usage</strong>
+				<strong>WDK Bridge USD₮0 EVM Protocol API</strong>
 			</td>
-			<td>Get started with WDK's Bridge USDT0 EVM Protocol usage</td>
+			<td>Get started with WDK's Bridge USD₮0 EVM Protocol API</td>
 			<td>
-				<a href="./usage.md">WDK Bridge USDT0 EVM Protocol Usage</a>
+				<a href="./api-reference.md">WDK Bridge USD₮0 EVM Protocol API</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK Bridge USD₮0 EVM Protocol Usage</strong>
+			</td>
+			<td>Get started with WDK's Bridge USD₮0 EVM Protocol usage</td>
+			<td>
+				<a href="./usage.md">WDK Bridge USD₮0 EVM Protocol Usage</a>
 			</td>
 		</tr>
 	</tbody>

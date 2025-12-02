@@ -1,5 +1,5 @@
 ---
-title: Bridge USDT0 EVM API Reference
+title: Bridge USD₮0 EVM API Reference
 description: Complete API documentation for @tetherto/wdk-protocol-bridge-usdt0-evm
 icon: code
 layout:
@@ -24,11 +24,11 @@ layout:
 
 | Class | Description | Methods |
 |-------|-------------|---------|
-| [Usdt0ProtocolEvm](#usdt0protocolevm) | Main class for bridging USDT0 tokens across blockchains. Extends `BridgeProtocol` from `@tetherto/wdk-wallet/protocols`. | [Constructor](#constructor), [Methods](#methods) |
+| [Usdt0ProtocolEvm](#usdt0protocolevm) | Main class for bridging USD₮0 tokens across blockchains. Extends `BridgeProtocol` from `@tetherto/wdk-wallet/protocols`. | [Constructor](#constructor), [Methods](#methods) |
 
 ## Usdt0ProtocolEvm
 
-The main class for bridging USDT0 tokens across different blockchains using the LayerZero protocol.  
+The main class for bridging USD₮0 tokens across different blockchains using the LayerZero protocol.  
 Extends `BridgeProtocol` from `@tetherto/wdk-wallet/protocols`.
 
 ### Constructor
@@ -64,7 +64,7 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 | `quoteBridge(options, config?)` | Estimates the cost of a bridge operation | `Promise<Omit<BridgeResult, 'hash' \| 'approveHash'>>` | If no provider |
 
 #### `bridge(options, config?)`
-Bridges tokens to a different blockchain using the USDT0 protocol.
+Bridges tokens to a different blockchain using the USD₮0 protocol.
 
 **Parameters:**
 - `options` (BridgeOptions): Bridge operation options
@@ -89,13 +89,13 @@ Bridges tokens to a different blockchain using the USDT0 protocol.
 const result = await bridgeProtocol.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...', // Recipient address
-  token: '0x...', // USDT contract address
+  token: '0x...', // ₮ contract address
   amount: 1000000000000000000n
 })
 
 console.log('Bridge hash:', result.hash)
 console.log('Approve hash:', result.approveHash)
-console.log('Reset allowance hash:', result.resetAllowanceHash) // Only for USDT on Ethereum
+console.log('Reset allowance hash:', result.resetAllowanceHash) // Only for USD₮ on Ethereum
 console.log('Total fee:', result.fee)
 console.log('Bridge fee:', result.bridgeFee)
 
@@ -103,7 +103,7 @@ console.log('Bridge fee:', result.bridgeFee)
 const result2 = await bridgeProtocol.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...', // Recipient address
-  token: '0x...', // USDT contract address
+  token: '0x...', // USD₮ contract address
   amount: 1000000000000000000n
 }, {
   paymasterToken: '0x...', // Paymaster token address
@@ -132,7 +132,7 @@ Estimates the cost of a bridge operation without executing it.
 const quote = await bridgeProtocol.quoteBridge({
   targetChain: 'polygon',
   recipient: '0x...', // Recipient address
-  token: '0x...', // USDT contract address
+  token: '0x...', // USD₮ contract address
   amount: 1000000000000000000n
 })
 
@@ -147,7 +147,7 @@ if (quote.fee + quote.bridgeFee > 1000000000000000n) {
   const result = await bridgeProtocol.bridge({
     targetChain: 'polygon',
     recipient: '0x...', // Recipient address
-    token: '0x...', // USDT contract address
+    token: '0x...', // USD₮ contract address
     amount: 1000000000000000000n
   })
 }
@@ -174,7 +174,7 @@ interface BridgeResult {
   fee: bigint;                      // Total gas cost in wei
   bridgeFee: bigint;                // Bridge protocol fee in wei
   approveHash?: string;             // Approve transaction hash (standard accounts only)
-  resetAllowanceHash?: string;      // Reset allowance hash (USDT on Ethereum only)
+  resetAllowanceHash?: string;      // Reset allowance hash (USD₮ on Ethereum only)
 }
 ```
 
@@ -223,7 +223,7 @@ try {
   const result = await bridgeProtocol.bridge({
     targetChain: 'arbitrum',
     recipient: '0x...', // Recipient address
-    token: '0x...', // USDT contract address
+    token: '0x...', // USD₮ contract address
     amount: 1000000000000000000n
   })
 } catch (error) {
@@ -268,7 +268,7 @@ async function bridgeTokens() {
   const quote = await bridgeProtocol.quoteBridge({
     targetChain: 'arbitrum',
     recipient: '0x...', // Recipient address
-    token: '0x...', // USDT contract address
+    token: '0x...', // USD₮ contract address
     amount: 1000000000000000000n
   })
   
@@ -278,7 +278,7 @@ async function bridgeTokens() {
   const result = await bridgeProtocol.bridge({
     targetChain: 'arbitrum',
     recipient: '0x...', // Recipient address
-    token: '0x...', // USDT contract address
+    token: '0x...', // USD₮ contract address
     amount: 1000000000000000000n
   })
   
@@ -293,7 +293,7 @@ async function bridgeTokens() {
 ```javascript
 async function bridgeToMultipleChains(bridgeProtocol) {
   const chains = ['arbitrum', 'polygon', 'ethereum']
-  const token = '0x...' // USDT contract address
+  const token = '0x...' // USD₮ contract address
   const amount = 1000000000000000000n
   const recipient = '0x...' // Recipient address
   
@@ -352,7 +352,7 @@ async function gaslessBridge() {
   const result = await bridgeProtocol.bridge({
     targetChain: 'polygon',
     recipient: '0x...', // Recipient address
-    token: '0x...', // USDT contract address
+    token: '0x...', // USD₮ contract address
     amount: 1000000000000000000n
   }, {
     paymasterToken: '0x...' // Paymaster token address
@@ -391,11 +391,11 @@ async function gaslessBridge() {
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Bridge USDT0 EVM Protocol Configuration</strong>
+				<strong>WDK Bridge USD₮0 EVM Protocol Configuration</strong>
 			</td>
-			<td>Get started with WDK's Bridge USDT0 EVM Protocol configuration</td>
+			<td>Get started with WDK's Bridge USD₮0 EVM Protocol configuration</td>
 			<td>
-				<a href="./configuration.md">WDK Bridge USDT0 EVM Protocol Configuration</a>
+				<a href="./configuration.md">WDK Bridge USD₮0 EVM Protocol Configuration</a>
 			</td>
 		</tr>
     <tr>
@@ -403,11 +403,11 @@ async function gaslessBridge() {
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Bridge USDT0 EVM Protocol Usage</strong>
+				<strong>WDK Bridge USD₮0 EVM Protocol Usage</strong>
 			</td>
-			<td>Get started with WDK's Bridge USDT0 EVM Protocol usage</td>
+			<td>Get started with WDK's Bridge USD₮0 EVM Protocol usage</td>
 			<td>
-				<a href="./usage.md">WDK Bridge USDT0 EVM Protocol Usage</a>
+				<a href="./usage.md">WDK Bridge USD₮0 EVM Protocol Usage</a>
 			</td>
 		</tr>
 	</tbody>

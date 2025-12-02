@@ -1,5 +1,5 @@
 ---
-title: Bridge USDT0 EVM Configuration
+title: Bridge USD₮0 EVM Configuration
 description: Configuration options and settings for @tetherto/wdk-protocol-bridge-usdt0-evm
 icon: gear
 layout:
@@ -92,7 +92,7 @@ try {
   const result = await bridgeProtocol.bridge({
     targetChain: 'arbitrum',
     recipient: '0x...', // Recipient address
-    token: '0x...', // USDT contract address
+    token: '0x...', // USD₮ contract address
     amount: 1000000000000000000n
   })
 } catch (error) {
@@ -137,7 +137,7 @@ When using ERC-4337 accounts, you can override configuration options during brid
 const result = await bridgeProtocol.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...', // Recipient address
-  token: '0x...', // USDT contract address
+  token: '0x...', // USD₮ contract address
   amount: 1000000000000000000n
 }, {
   paymasterToken: '0x...', // Paymaster token for gasless transactions
@@ -158,7 +158,7 @@ The `paymasterToken` option specifies which token to use for paying gas fees in 
 const result = await bridgeProtocol.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...', // Recipient address
-  token: '0x...', // USDT contract address
+  token: '0x...', // USD₮ contract address
   amount: 1000000000000000000n
 }, {
   paymasterToken: '0x...' // Paymaster token address
@@ -194,7 +194,7 @@ When calling the bridge method, you need to provide bridge options:
 const bridgeOptions = {
   targetChain: 'arbitrum', // Destination chain name
   recipient: '0x...', // Recipient address
-  token: '0x...', // USDT contract address
+  token: '0x...', // USD₮ contract address
   amount: 1000000000000000000n // Amount to bridge in base units
 }
 
@@ -227,7 +227,7 @@ The `token` option specifies which token contract to bridge.
 The `amount` option specifies how many tokens to bridge.
 
 **Type:** `bigint`  
-**Unit:** Base units of the token (e.g., for USDT: 1 USDT = 1000000n)
+**Unit:** Base units of the token (e.g., for USD₮: 1 USD₮ = 1000000n)
 
 ## Error Handling
 
@@ -238,7 +238,7 @@ try {
   const result = await bridgeProtocol.bridge({
     targetChain: 'invalid-chain',
     recipient: '0x...', // Recipient address
-    token: '0x...', // USDT contract address
+    token: '0x...', // USD₮ contract address
     amount: 1000000000000000000n
   })
 } catch (error) {
@@ -282,11 +282,11 @@ try {
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Bridge USDT0 EVM Protocol API</strong>
+				<strong>WDK Bridge USD₮0 EVM Protocol API</strong>
 			</td>
-			<td>Get started with WDK's Bridge USDT0 EVM Protocol API</td>
+			<td>Get started with WDK's Bridge USD₮0 EVM Protocol API</td>
 			<td>
-				<a href="./api-reference.md">WDK Bridge USDT0 EVM Protocol API</a>
+				<a href="./api-reference.md">WDK Bridge USD₮0 EVM Protocol API</a>
 			</td>
 		</tr>
         <tr>
@@ -294,11 +294,11 @@ try {
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Bridge USDT0 EVM Protocol Usage</strong>
+				<strong>WDK Bridge USD₮0 EVM Protocol Usage</strong>
 			</td>
-			<td>Get started with WDK's Bridge USDT0 EVM Protocol usage</td>
+			<td>Get started with WDK's Bridge USD₮0 EVM Protocol usage</td>
 			<td>
-				<a href="./usage.md">WDK Bridge USDT0 EVM Protocol Usage</a>
+				<a href="./usage.md">WDK Bridge USD₮0 EVM Protocol Usage</a>
 			</td>
 		</tr>
 	</tbody>
