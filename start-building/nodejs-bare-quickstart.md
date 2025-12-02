@@ -153,9 +153,7 @@ const wdkWithWallets = new WDK(seedPhrase)
   .registerWallet('tron', WalletManagerTron, {
     provider: 'https://api.trongrid.io'
   })
-  .registerWallet('bitcoin', WalletManagerBtc, {
-    provider: 'https://blockstream.info/api'
-  })
+  .registerWallet('bitcoin', WalletManagerBtc)
 
 console.log('Wallets registered for Ethereum, TRON, and Bitcoin')
 ```
