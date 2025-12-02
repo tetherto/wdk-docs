@@ -659,20 +659,20 @@ Ready to dive deeper? Check out these resources:
 
 ### Core Concepts
 
-- [**Chain Configuration**](../core-concepts/chain-configuration.md) - Configure blockchain networks
-- [**Wallet Management**](../core-concepts/wallet-management.md) - Create, import, and manage wallets
-- [**Transaction Handling**](../core-concepts/transactions.md) - Send and track transactions
+- [**Chain Configuration**](../sdk/core-module/configuration.md#wallet-configuration) - Configure blockchain networks
+- [**Wallet Management**](../sdk/core-module/usage.md#account-management) - Create, import, and manage wallets
+- [**Transaction Handling**](../sdk/core-module/usage#transaction-operations) - Send and track transactions
 
 ### Examples & Starters
 
 - [**React Native Starter**](../examples-and-starters/react-native-starter.md) - Full-featured starter app
 - [**React Native UI Kit**](../ui-kits/react-native-ui-kit/) - Pre-built wallet components
 
-### API Reference
+<!-- ### API Reference
 
 - [**WalletProvider API**](../api-reference/wallet-provider.md) - Provider configuration and props
 - [**useWallet Hook**](../api-reference/use-wallet-hook.md) - Hook API reference
-- [**WDKService API**](../api-reference/wdk-service.md) - Low-level service methods
+- [**WDKService API**](../api-reference/wdk-service.md) - Low-level service methods -->
 
 ### **Need Help?**
 
