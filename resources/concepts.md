@@ -15,7 +15,7 @@ WDK provides Account Abstraction support through specialized wallet modules:
 - `@tetherto/wdk-wallet-ton-gasless` - TON blockchain with gasless transactions
 - `@tetherto/wdk-wallet-tron-gasfree` - TRON blockchain with gas-free transactions
 
-These modules allow developers to implement gasless transaction flows where users can pay fees in tokens like USDT or XAUT instead of native blockchain tokens.
+These modules allow developers to implement gasless transaction flows where users can pay fees in tokens like USD₮ or XAU₮ instead of native blockchain tokens.
 
 ## ERC-4337
 

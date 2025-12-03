@@ -89,7 +89,7 @@ const config = {
 // Usage example
 try {
   const result = await swapProtocol.swap({
-    tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT (6 decimals)
+    tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USD₮ (6 decimals)
     tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH (18 decimals)
     tokenInAmount: 1000000n
   })

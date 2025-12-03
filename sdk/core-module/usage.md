@@ -484,7 +484,7 @@ async function cleanupExample(wdk) {
 			<td>
 				<strong>Bridge Modules</strong>
 			</td>
-			<td>Cross-chain USDT0 bridges</td>
+			<td>Cross-chain USD₮0 bridges</td>
 			<td>
 				<a href="../bridge-modules/README.md">Bridge Modules</a>
 			</td>

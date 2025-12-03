@@ -66,7 +66,7 @@ Options:
 - `onBehalfOf` (`string`, optional)
 
 Returns:
-- May include `approveHash` and `resetAllowanceHash` for standard accounts (e.g., USDT allowance reset on Ethereum mainnet)
+- May include `approveHash` and `resetAllowanceHash` for standard accounts (e.g., USD₮ allowance reset on Ethereum mainnet)
 
 Example:
 
@@ -207,7 +207,7 @@ Returns the following structure:
 - `amount` > 0 and in token base units (use BigInt)
 - `onBehalfOf`/`to` (if set) must be valid, non‑zero addresses
 - A provider is required to read/send transactions
-- For USDT on mainnet, allowance may be reset to 0 then set again before actions
+- For USD₮ on mainnet, allowance may be reset to 0 then set again before actions
 
 
 <table data-card-size="large" data-view="cards">

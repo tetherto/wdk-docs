@@ -307,9 +307,9 @@ Transfers ERC20 tokens to another address using the standard transfer function.
 **Example:**
 ```javascript
 const result = await account.transfer({
-  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USD₮
   recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-  amount: 1000000 // 1 USDT (6 decimals)
+  amount: 1000000 // 1 USD₮ (6 decimals)
 })
 console.log('Transfer hash:', result.hash)
 console.log('Transfer fee:', result.fee, 'wei')
@@ -361,7 +361,7 @@ Returns the balance of a specific ERC20 token using the balanceOf function.
 
 **Example:**
 ```javascript
-// Get USDT balance
+// Get USD₮ balance
 const usdtBalance = await account.getTokenBalance('0xdAC17F958D2ee523a2206206994597C13D831ec7')
 console.log('USDT balance:', usdtBalance) // In 6 decimal places
 console.log('USDT balance formatted:', usdtBalance / 1000000, 'USDT')

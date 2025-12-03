@@ -107,7 +107,7 @@ console.log('Tokens bought:', result.tokenOutAmount)
 const result2 = await swapProtocol.swap({
   tokenIn: 'USDT_TOKEN_ADDRESS',
   tokenOut: 'USDT_TOKEN_ADDRESS',
-  tokenInAmount: 1000000n // 1 USDT
+  tokenInAmount: 1000000n // 1 USD₮
 }, {
   paymasterToken: 'USDT', // Token used to pay fees
   swapMaxFee: 1000000000n

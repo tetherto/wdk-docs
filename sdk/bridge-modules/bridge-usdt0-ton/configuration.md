@@ -1,5 +1,5 @@
 ---
-title: Bridge USDT0 TON Configuration
+title: Bridge USD₮0 TON Configuration
 description: Configuration options and settings for @tetherto/wdk-protocol-bridge-usdt0-ton
 icon: gear
 layout:
@@ -165,7 +165,7 @@ const result = await bridgeProtocol.bridge({
   token: 'TON_TOKEN_ADDRESS',
   amount: 1000000n
 }, {
-  paymasterToken: 'USDT' // Use USDT to pay fees
+  paymasterToken: 'USDT' // Use USD₮ to pay fees
 })
 ```
 
@@ -228,7 +228,7 @@ The `token` option specifies which token to bridge.
 The `amount` option specifies how many tokens to bridge.
 
 **Type:** `bigint`  
-**Unit:** Base units of the token (e.g., for USDT: 1 USDT = 1000000n)
+**Unit:** Base units of the token (e.g., for USD₮: 1 USD₮ = 1000000n)
 
 ### Custom Token Config
 
@@ -317,11 +317,11 @@ try {
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Bridge USDT0 TON Protocol API</strong>
+				<strong>WDK Bridge USD₮0 TON Protocol API</strong>
 			</td>
-			<td>Get started with WDK's Bridge USDT0 TON Protocol API</td>
+			<td>Get started with WDK's Bridge USD₮0 TON Protocol API</td>
 			<td>
-				<a href="./api-reference.md">WDK Bridge USDT0 TON Protocol API</a>
+				<a href="./api-reference.md">WDK Bridge USD₮0 TON Protocol API</a>
 			</td>
 		</tr>
         <tr>
@@ -329,11 +329,11 @@ try {
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Bridge USDT0 TON Protocol Usage</strong>
+				<strong>WDK Bridge USD₮0 TON Protocol Usage</strong>
 			</td>
-			<td>Get started with WDK's Bridge USDT0 TON Protocol usage</td>
+			<td>Get started with WDK's Bridge USD₮0 TON Protocol usage</td>
 			<td>
-				<a href="./usage.md">WDK Bridge USDT0 TON Protocol Usage</a>
+				<a href="./usage.md">WDK Bridge USD₮0 TON Protocol Usage</a>
 			</td>
 		</tr>
 	</tbody>

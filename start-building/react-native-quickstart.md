@@ -31,10 +31,10 @@ In this quickstart, you'll integrate WDK into a React Native app to create a mul
 - [ ] Includes wallet creation, import, and unlock flows
 
 {% hint style="info" %}
-You can try all features without real funds required. You can use the Pimlico or Candide faucets to get some Sepolia USDt. 
+You can try all features without real funds required. You can use the Pimlico or Candide faucets to get some Sepolia USD₮. 
 
-<a class="button primary" href="https://dashboard.pimlico.io/test-erc20-faucet"> Get mock/test USDt on Pimlico </a>
-<a class="button primary" href="https://dashboard.candide.dev/faucet"> Get mock/test USDt on Candide </a>
+<a class="button primary" href="https://dashboard.pimlico.io/test-erc20-faucet"> Get mock/test USD₮ on Pimlico </a>
+<a class="button primary" href="https://dashboard.candide.dev/faucet"> Get mock/test USD₮ on Candide </a>
 
 See the [configuration.md](../sdk/wallet-modules/wallet-evm-erc-4337/configuration.md) for quick setup and Sepolia testnet configuration.
 {% endhint %}
@@ -659,20 +659,20 @@ Ready to dive deeper? Check out these resources:
 
 ### Core Concepts
 
-- [**Chain Configuration**](../core-concepts/chain-configuration.md) - Configure blockchain networks
-- [**Wallet Management**](../core-concepts/wallet-management.md) - Create, import, and manage wallets
-- [**Transaction Handling**](../core-concepts/transactions.md) - Send and track transactions
+- [**Chain Configuration**](../sdk/core-module/configuration.md#wallet-configuration) - Configure blockchain networks
+- [**Wallet Management**](../sdk/core-module/usage.md#account-management) - Create, import, and manage wallets
+- [**Transaction Handling**](../sdk/core-module/usage#transaction-operations) - Send and track transactions
 
 ### Examples & Starters
 
 - [**React Native Starter**](../examples-and-starters/react-native-starter.md) - Full-featured starter app
 - [**React Native UI Kit**](../ui-kits/react-native-ui-kit/) - Pre-built wallet components
 
-### API Reference
+<!-- ### API Reference
 
 - [**WalletProvider API**](../api-reference/wallet-provider.md) - Provider configuration and props
 - [**useWallet Hook**](../api-reference/use-wallet-hook.md) - Hook API reference
-- [**WDKService API**](../api-reference/wdk-service.md) - Low-level service methods
+- [**WDKService API**](../api-reference/wdk-service.md) - Low-level service methods -->
 
 ### **Need Help?**
 
