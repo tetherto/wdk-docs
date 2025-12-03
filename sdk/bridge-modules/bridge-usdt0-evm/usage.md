@@ -1,5 +1,5 @@
 ---
-title: Bridge USDT0 EVM Guides
+title: Bridge USD₮0 EVM Guides
 description: Installation, quick start, and usage examples for @tetherto/wdk-protocol-bridge-usdt0-evm
 icon: book-open
 layout:
@@ -110,7 +110,7 @@ const result = await bridgeProtocol.bridge({
 // Result includes separate transaction hashes
 console.log('Bridge hash:', result.hash)
 console.log('Approve hash:', result.approveHash)
-console.log('Reset allowance hash:', result.resetAllowanceHash) // Only for USDT on Ethereum
+console.log('Reset allowance hash:', result.resetAllowanceHash) // Only for USD₮ on Ethereum
 console.log('Total fee:', result.fee)
 console.log('Bridge fee:', result.bridgeFee)
 ```
@@ -314,11 +314,11 @@ async function bridgeWithValidation(bridgeProtocol, targetChain, recipient, toke
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Bridge USDT0 EVM Protocol Configuration</strong>
+				<strong>WDK Bridge USD₮0 EVM Protocol Configuration</strong>
 			</td>
-			<td>Get started with WDK's Bridge USDT0 EVM Protocol configuration</td>
+			<td>Get started with WDK's Bridge USD₮0 EVM Protocol configuration</td>
 			<td>
-				<a href="./configuration.md">WDK Bridge USDT0 EVM Protocol Configuration</a>
+				<a href="./configuration.md">WDK Bridge USD₮0 EVM Protocol Configuration</a>
 			</td>
 		</tr>
         <tr>
@@ -326,11 +326,11 @@ async function bridgeWithValidation(bridgeProtocol, targetChain, recipient, toke
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Bridge USDT0 EVM Protocol API</strong>
+				<strong>WDK Bridge USD₮0 EVM Protocol API</strong>
 			</td>
-			<td>Get started with WDK's Bridge USDT0 EVM Protocol API</td>
+			<td>Get started with WDK's Bridge USD₮0 EVM Protocol API</td>
 			<td>
-				<a href="./api-reference.md">WDK Bridge USDT0 EVM Protocol API</a>
+				<a href="./api-reference.md">WDK Bridge USD₮0 EVM Protocol API</a>
 			</td>
 		</tr>
 	</tbody>

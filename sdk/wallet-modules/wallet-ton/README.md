@@ -21,6 +21,21 @@ layout:
 
 A simple and secure package to manage BIP-44 wallets for the TON blockchain. This package provides a clean API for creating, managing, and interacting with TON wallets using BIP-39 seed phrases and TON-specific derivation paths.
 
+{% hint style="warning" %}
+
+**Default Derivation Path Change in v1.0.0-beta.6+**
+
+The default derivation path was updated in v1.0.0-beta.6 to match ecosystem conventions:
+
+- **Previous path** (<= v1.0.0-beta.5): `m/44'/607'/0'/0/{index}`
+- **Current path** (v1.0.0-beta.6+): `m/44'/607'/{index}'`
+
+If you're upgrading from an earlier version, existing wallets created with the old path will generate different addresses. Make sure to migrate any existing wallets or use the old path explicitly if needed for compatibility.
+
+Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) to supply an explicit derivation path when importing or recreating legacy wallets.
+
+{% endhint %}
+
 ## Features
 
 - **BIP-39 Seed Phrase Support**: Generate and validate BIP-39 mnemonic seed phrases

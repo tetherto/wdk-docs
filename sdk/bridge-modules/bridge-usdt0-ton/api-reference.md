@@ -1,5 +1,5 @@
 ---
-title: Bridge USDT0 TON API Reference
+title: Bridge USD₮0 TON API Reference
 description: Complete API documentation for @tetherto/wdk-protocol-bridge-usdt0-ton
 icon: code
 layout:
@@ -24,11 +24,11 @@ layout:
 
 | Class | Description | Methods |
 |-------|-------------|---------|
-| [Usdt0ProtocolTon](#usdt0protocolton) | Main class for bridging USDT0 tokens from TON to other blockchains. Extends `BridgeProtocol` from `@tetherto/wdk-wallet/protocols`. | [Constructor](#constructor) - Creates bridge service<br/>[bridge(options, config?)](#bridgeoptions-config) - Bridges tokens from TON to another blockchain<br/>[quoteBridge(options, config?)](#quotebridgeoptions-config) - Gets the cost of a bridge operation without doing it |
+| [Usdt0ProtocolTon](#usdt0protocolton) | Main class for bridging USD₮0 tokens from TON to other blockchains. Extends `BridgeProtocol` from `@tetherto/wdk-wallet/protocols`. | [Constructor](#constructor) - Creates bridge service<br/>[bridge(options, config?)](#bridgeoptions-config) - Bridges tokens from TON to another blockchain<br/>[quoteBridge(options, config?)](#quotebridgeoptions-config) - Gets the cost of a bridge operation without doing it |
 
 ## Usdt0ProtocolTon
 
-The main class for bridging USDT0 tokens from TON blockchain to other chains using the LayerZero protocol.  
+The main class for bridging USD₮0 tokens from TON blockchain to other chains using the LayerZero protocol.  
 Extends `BridgeProtocol` from `@tetherto/wdk-wallet/protocols`.
 
 ### Constructor
@@ -65,7 +65,7 @@ const bridgeProtocol = new Usdt0ProtocolTon(account, {
 | `quoteBridge(options, config?)` | Gets the cost of a bridge operation | `Promise<Omit<BridgeResult, 'hash'>>` | If no TON connection |
 
 #### `bridge(options, config?)`
-Bridges tokens from TON to a different blockchain using the USDT0 protocol.
+Bridges tokens from TON to a different blockchain using the USD₮0 protocol.
 
 **Parameters:**
 - `options` (Usdt0BridgeOptions): Bridge operation options
@@ -421,11 +421,11 @@ async function gaslessBridge() {
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Bridge USDT0 TON Protocol Configuration</strong>
+				<strong>WDK Bridge USD₮0 TON Protocol Configuration</strong>
 			</td>
-			<td>Get started with WDK's Bridge USDT0 TON Protocol configuration</td>
+			<td>Get started with WDK's Bridge USD₮0 TON Protocol configuration</td>
 			<td>
-				<a href="./configuration.md">WDK Bridge USDT0 TON Protocol Configuration</a>
+				<a href="./configuration.md">WDK Bridge USD₮0 TON Protocol Configuration</a>
 			</td>
 		</tr>
     <tr>
@@ -433,11 +433,11 @@ async function gaslessBridge() {
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Bridge USDT0 TON Protocol Usage</strong>
+				<strong>WDK Bridge USD₮0 TON Protocol Usage</strong>
 			</td>
-			<td>Get started with WDK's Bridge USDT0 TON Protocol usage</td>
+			<td>Get started with WDK's Bridge USD₮0 TON Protocol usage</td>
 			<td>
-				<a href="./usage.md">WDK Bridge USDT0 TON Protocol Usage</a>
+				<a href="./usage.md">WDK Bridge USD₮0 TON Protocol Usage</a>
 			</td>
 		</tr>
 	</tbody>

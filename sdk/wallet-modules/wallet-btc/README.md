@@ -21,6 +21,20 @@ layout:
 
 A simple and secure package to manage BIP-84 (SegWit) wallets for the Bitcoin blockchain. This package provides a clean API for creating, managing, and interacting with Bitcoin wallets using BIP-39 seed phrases and BIP-84 derivation paths for Native SegWit addresses.
 
+{% hint style="warning" %}
+**Default Derivation Path Change in v1.0.0-beta.4+**
+
+The default derivation path was updated in v1.0.0-beta.4 to use BIP-84 (Native SegWit) instead of BIP-44 (Legacy):
+
+- **Previous path** (<= v1.0.0-beta.3): `m/44'/0'/0'/0/{index}` (Legacy addresses)
+- **Current path** (v1.0.0-beta.4+): `m/84'/0'/0'/0/{index}` (Native SegWit addresses)
+
+If you're upgrading from an earlier version, existing wallets created with the old path will generate different addresses. Make sure to migrate any existing wallets or use the old path explicitly if needed for compatibility.
+
+Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) to supply an explicit derivation path when importing or recreating legacy wallets.
+
+{% endhint %}
+
 ## Features
 
 - **BIP-39 Seed Phrase Support**: Generate and validate BIP-39 mnemonic seed phrases

@@ -142,6 +142,27 @@ const wallet = new WalletManagerSolana(seedPhrase, config)
 - RPC: `https://api.testnet.solana.com`
 - WebSocket: `wss://api.testnet.solana.com/`
 
+## Derivation Paths
+
+Solana wallets use BIP-44 standard derivation paths. The default derivation path follows ecosystem conventions:
+
+- Default path: `m/44'/501'/{index}'/0'` (where `{index}` is the account index)
+
+{% hint style="warning" %}
+
+**Default Derivation Path Change in v1.0.0-beta.4+**
+
+The default derivation path was updated in v1.0.0-beta.4 to match ecosystem conventions:
+
+- **Before** (<= v1.0.0-beta.3): `m/44'/501'/0'/0/{index}`
+- **After** (v1.0.0-beta.4+): `m/44'/501'/{index}'/0'`
+
+If you're upgrading from an earlier version, existing wallets created with the old path will generate different addresses. Make sure to migrate any existing wallets or use the old path explicitly if needed for compatibility.
+
+Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) to supply an explicit derivation path when importing or recreating legacy wallets.
+
+{% endhint %}
+
 ## Security Considerations
 
 - Always use HTTPS URLs for RPC endpoints

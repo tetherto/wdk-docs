@@ -1,5 +1,5 @@
 ---
-title: Bridge USDT0 TON Overview
+title: Bridge USD₮0 TON Overview
 description: Overview of the @tetherto/wdk-protocol-bridge-usdt0-ton module
 layout:
   width: default
@@ -19,16 +19,16 @@ layout:
 
 # @tetherto/wdk-protocol-bridge-usdt0-ton Overview
 
-A simple package that lets TON wallet accounts bridge USDT0 tokens across different blockchains. This package provides a clean API for moving tokens between TON and other supported chains using the LayerZero protocol and USDT0 bridge system.
+A simple package that lets TON wallet accounts bridge USD₮0 tokens across different blockchains. This package provides a clean API for moving tokens between TON and other supported chains using the LayerZero protocol and USD₮0 bridge system.
 
 ## Features
 
-- **Cross-Chain Bridge**: Move USDT0 tokens between TON and other supported blockchains
+- **Cross-Chain Bridge**: Move USD₮0 tokens between TON and other supported blockchains
 - **LayerZero Integration**: Uses LayerZero protocol for secure cross-chain transfers
 - **Multi-Chain Support**: Bridge from TON to Ethereum, Arbitrum, Polygon, and TRON
 - **Gasless Support**: Works with both standard TON wallets and gasless TON accounts
 - **Fee Management**: Built-in fee calculation and bridge cost estimation
-- **Token Support**: Supports USDT and other USDT0 ecosystem tokens on TON
+- **Token Support**: Supports USD₮ and other USD₮0 ecosystem tokens on TON
 - **TypeScript Support**: Full TypeScript definitions included
 - **Memory Safety**: Secure transaction handling with proper error management
 - **Flexible Configuration**: Works with custom OFT configurations for unsupported jettons
@@ -89,23 +89,11 @@ The bridge supports multiple TON wallet types:
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Bridge USDT0 TON Protocol Configuration</strong>
+				<strong>WDK Bridge USD₮0 TON Protocol Configuration</strong>
 			</td>
-			<td>Get started with WDK's Bridge USDT0 TON Protocol configuration</td>
+			<td>Get started with WDK's Bridge USD₮0 TON Protocol configuration</td>
 			<td>
-				<a href="./configuration.md">WDK Bridge USDT0 TON Protocol Configuration</a>
-			</td>
-		</tr>
-        <tr>
-			<td>
-				<i class="fa-code">:code:</i>
-			</td>
-			<td>
-				<strong>WDK Bridge USDT0 TON Protocol API</strong>
-			</td>
-			<td>Get started with WDK's Bridge USDT0 TON Protocol API</td>
-			<td>
-				<a href="./api-reference.md">WDK Bridge USDT0 TON Protocol API</a>
+				<a href="./configuration.md">WDK Bridge USD₮0 TON Protocol Configuration</a>
 			</td>
 		</tr>
         <tr>
@@ -113,11 +101,23 @@ The bridge supports multiple TON wallet types:
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Bridge USDT0 TON Protocol Usage</strong>
+				<strong>WDK Bridge USD₮0 TON Protocol API</strong>
 			</td>
-			<td>Get started with WDK's Bridge USDT0 TON Protocol usage</td>
+			<td>Get started with WDK's Bridge USD₮0 TON Protocol API</td>
 			<td>
-				<a href="./usage.md">WDK Bridge USDT0 TON Protocol Usage</a>
+				<a href="./api-reference.md">WDK Bridge USD₮0 TON Protocol API</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK Bridge USD₮0 TON Protocol Usage</strong>
+			</td>
+			<td>Get started with WDK's Bridge USD₮0 TON Protocol usage</td>
+			<td>
+				<a href="./usage.md">WDK Bridge USD₮0 TON Protocol Usage</a>
 			</td>
 		</tr>
 	</tbody>

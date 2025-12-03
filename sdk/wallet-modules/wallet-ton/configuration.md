@@ -142,6 +142,27 @@ The TON network (mainnet or testnet) is determined by the TON Center API endpoin
 - Mainnet: `https://toncenter.com/api/v3`
 - Testnet: `https://testnet.toncenter.com/api/v3`
 
+## Derivation Paths
+
+TON wallets use BIP-44 standard derivation paths. The default derivation path follows ecosystem conventions:
+
+- Default path: `m/44'/607'/{index}'` (where `{index}` is the account index)
+
+{% hint style="warning" %}
+
+**Default Derivation Path Change in v1.0.0-beta.6+**
+
+The default derivation path was updated in v1.0.0-beta.6 to match ecosystem conventions:
+
+- **Previous path** (<= v1.0.0-beta.5): `m/44'/607'/0'/0/{index}`
+- **Current path** (v1.0.0-beta.6+): `m/44'/607'/{index}'`
+
+If you're upgrading from an earlier version, existing wallets created with the old path will generate different addresses. Make sure to migrate any existing wallets or use the old path explicitly if needed for compatibility.
+
+Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) to supply an explicit derivation path when importing or recreating legacy wallets.
+
+{% endhint %}
+
 ## Security Considerations
 
 - Always use HTTPS URLs for TON Center API endpoints

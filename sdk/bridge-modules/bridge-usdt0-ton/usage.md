@@ -1,5 +1,5 @@
 ---
-title: Bridge USDT0 TON Guides
+title: Bridge USD₮0 TON Guides
 description: How to install and use @tetherto/wdk-protocol-bridge-usdt0-ton for bridging tokens from TON
 icon: book-open
 layout:
@@ -54,7 +54,7 @@ const result = await bridgeProtocol.bridge({
   targetChain: 'ethereum', // Destination chain
   recipient: 'RECIPIENT_ADDRESS', // Recipient address
   token: 'TON_TOKEN_ADDRESS', // TON token address
-  amount: 1000000n // Amount to bridge (1 USDT in base units)
+  amount: 1000000n // Amount to bridge (1 USD₮ in base units)
 })
 
 console.log('Bridge transaction hash:', result.hash)
@@ -322,11 +322,11 @@ async function bridgeWithChecks(bridgeProtocol, targetChain, recipient, token, a
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Bridge USDT0 TON Protocol Configuration</strong>
+				<strong>WDK Bridge USD₮0 TON Protocol Configuration</strong>
 			</td>
-			<td>Get started with WDK's Bridge USDT0 TON Protocol configuration</td>
+			<td>Get started with WDK's Bridge USD₮0 TON Protocol configuration</td>
 			<td>
-				<a href="./configuration.md">WDK Bridge USDT0 TON Protocol Configuration</a>
+				<a href="./configuration.md">WDK Bridge USD₮0 TON Protocol Configuration</a>
 			</td>
 		</tr>
         <tr>
@@ -334,11 +334,11 @@ async function bridgeWithChecks(bridgeProtocol, targetChain, recipient, token, a
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Bridge USDT0 TON Protocol API</strong>
+				<strong>WDK Bridge USD₮0 TON Protocol API</strong>
 			</td>
-			<td>Get started with WDK's Bridge USDT0 TON Protocol API</td>
+			<td>Get started with WDK's Bridge USD₮0 TON Protocol API</td>
 			<td>
-				<a href="./api-reference.md">WDK Bridge USDT0 TON Protocol API</a>
+				<a href="./api-reference.md">WDK Bridge USD₮0 TON Protocol API</a>
 			</td>
 		</tr>
 	</tbody>

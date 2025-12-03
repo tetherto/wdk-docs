@@ -232,7 +232,7 @@ async function setupWallet() {
   const balance = await account.getBalance()
   console.log('Balance:', balance, 'wei')
 
-    // Check ERC20 balance (e.g., USDT)
+    // Check ERC20 balance (e.g., USD₮)
   const tokenBalance = await account.getTokenBalance('0xdAC17F958D2ee523a2206206994597C13D831ec7')
   console.log('USDT balance:', tokenBalance)
   

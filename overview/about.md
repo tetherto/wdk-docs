@@ -202,9 +202,9 @@ WDK natively supports a broad set of blockchains and standards out of the box:
 | -------------------------------------------------------------- | ------- |
 | [velora (EVM)](../sdk/swap-modules/swap-velora-evm/)       | ✅       |
 | [StonFi (TON)](../sdk/swap-modules/swap-stonfi-ton/)           | ✅       |
-| [USDT0 Bridge (EVM)](../sdk/bridge-modules/bridge-usdt0-evm/)  | ✅       |
+| [USD₮0 Bridge (EVM)](../sdk/bridge-modules/bridge-usdt0-evm/)  | ✅       |
 | [Aave Lending (EVM)](../sdk/lending-modules/lending-aave-evm/) | ✅       |
-<!-- | [USDT0 Bridge (TON)](../sdk/bridge-modules/bridge-usdt0-ton/)  | ✅       | -->
+<!-- | [USD₮0 Bridge (TON)](../sdk/bridge-modules/bridge-usdt0-ton/)  | ✅       | -->
 
 
 {% endtab %}

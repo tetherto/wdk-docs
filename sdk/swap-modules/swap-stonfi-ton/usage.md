@@ -128,7 +128,7 @@ console.log('Tokens bought:', result.tokenOutAmount)
 const result = await swapProtocol.swap({
   tokenIn: 'USDT_TOKEN_ADDRESS',
   tokenOut: 'USDT_TOKEN_ADDRESS',
-  tokenInAmount: 1000000n, // 1 USDT in base units
+  tokenInAmount: 1000000n, // 1 USD₮ in base units
   slippageTolerance: 0.02, // 2% slippage
   to: 'RECIPIENT_ADDRESS' // Optional: where to send tokens
 })

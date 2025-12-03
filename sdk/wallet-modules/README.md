@@ -118,7 +118,7 @@ Standard wallet implementations that use native blockchain tokens for transactio
 
 ### Account Abstraction Wallet Modules
 
-Wallet implementations that support [Account Abstraction](../../resources/concepts.md#account-abstraction) for gasless transactions using paymaster tokens like USDT:
+Wallet implementations that support [Account Abstraction](../../resources/concepts.md#account-abstraction) for gasless transactions using paymaster tokens like USD₮:
 
 | Module | Blockchain | Status | Documentation |
 |--------|------------|--------|---------------|
