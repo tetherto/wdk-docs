@@ -153,7 +153,11 @@ const wdkWithWallets = new WDK(seedPhrase)
   .registerWallet('tron', WalletManagerTron, {
     provider: 'https://api.trongrid.io'
   })
-  .registerWallet('bitcoin', WalletManagerBtc)
+  .registerWallet('bitcoin', WalletManagerBtc, {
+    network: 'mainnet',
+    host: 'electrum.blockstream.info',
+    port: 50001
+  })
 
 console.log('Wallets registered for Ethereum, TRON, and Bitcoin')
 ```
@@ -230,7 +234,9 @@ async function main() {
         provider: 'https://api.trongrid.io'
       })
       .registerWallet('bitcoin', WalletManagerBtc, {
-        provider: 'https://blockstream.info/api'
+        network: 'mainnet',
+        host: 'electrum.blockstream.info',
+        port: 50001
       })
 
     console.log('Wallets registered for Ethereum, TRON, and Bitcoin')
@@ -341,7 +347,8 @@ import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 const wdk = new WDK(seedPhrase)
 
 wdk.registerWallet('solana', WalletManagerSolana, {
-  provider: 'https://api.mainnet-beta.solana.com'
+  rpcUrl: 'https://api.mainnet-beta.solana.com',
+  wsUrl: 'wss://api.mainnet-beta.solana.com'
 })
 
 ```
@@ -388,7 +395,9 @@ npm install @tetherto/wdk-protocol-swap-velora-evm
 ```typescript
 import SwapveloraEvm from '@tetherto/wdk-protocol-swap-velora-evm'
 
-wdk.registerProtocol('swap-velora-evm', SwapveloraEvm)
+wdk.registerProtocol('ethereum', 'swap-velora-evm', SwapveloraEvm, {
+  provider: 'https://eth.drpc.org'
+})
 ```
 {% endcode %}
 

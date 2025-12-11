@@ -50,7 +50,7 @@ const seedPhrase = 'your twelve word seed phrase here' // Replace with actual se
 
 // Create wallet manager with Solana RPC provider
 const wallet = new WalletManagerSolana(seedPhrase, {
-  provider: 'https://api.mainnet-beta.solana.com', // or any Solana RPC endpoint
+  rpcUrl: 'https://api.mainnet-beta.solana.com', // or any Solana RPC endpoint
   commitment: 'confirmed' // Optional: commitment level
 })
 // Get a full access account
@@ -117,7 +117,7 @@ import { WalletAccountReadOnlySolana } from '@tetherto/wdk-wallet-solana'
 
 // Create a read-only account
 const readOnlyAccount = new WalletAccountReadOnlySolana('publicKey', { // Base58-encoded public key
-  provider: 'https://api.mainnet-beta.solana.com',
+  rpcUrl: 'https://api.mainnet-beta.solana.com',
   commitment: 'confirmed'
 })
 
@@ -238,7 +238,6 @@ async function setupWallet() {
     // Create wallet manager with Solana RPC configuration
     const wallet = new WalletManagerSolana(seedPhrase, {
       rpcUrl: 'https://api.mainnet-beta.solana.com',
-      wsUrl: 'wss://api.mainnet-beta.solana.com/', // Optional: WebSocket URL
       transferMaxFee: 10000000 // Optional: Maximum fee in lamports
     })
     

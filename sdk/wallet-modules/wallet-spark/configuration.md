@@ -20,15 +20,6 @@ layout:
 
 # Configuration
 
-{% hint style="danger" %}
-**Known Issue: Thread Hanging in Bare runtime Environments**
-
-There is a known issue with this module causing thread hanging when used in bare runtime environments. The module is not production-ready in bare runtime at this time.
-
-For the latest updates and workarounds, please check the [GitHub Issues](https://github.com/tetherto/wdk-wallet-spark/issues).
-
-{% endhint %}
-
 ## Wallet Configuration
 
 ```javascript
@@ -58,14 +49,14 @@ The `network` option specifies which Spark network to use.
 **Values:**
 - `"MAINNET"` - Spark [mainnet](../../../resources/concepts.md#mainnet) (production)
 - `"TESTNET"` - Spark [testnet](../../../resources/concepts.md#testnet) (development)
-- `"REGTEST"` - Spark [regtest](../../../resources/concepts.md#regtest) (local testing)
+- `"REGTEST"` - Spark [regtest](../../../resources/concepts.md#regtest) (Spark regtest)
 
 **Default:** `"MAINNET"`
 
 **Example:**
 ```javascript
 const config = {
-  network: 'TESTNET' // Use testnet for development
+  network: 'REGTEST' // Use REGTEST for development
 }
 ```
 
