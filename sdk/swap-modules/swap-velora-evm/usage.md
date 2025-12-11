@@ -31,7 +31,7 @@ npm install @tetherto/wdk-protocol-swap-velora-evm
 ### Setting Up a Swap Service
 
 ```javascript
-import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
+import ProtocolVeloraEvm from '@tetherto/wdk-protocol-swap-velora-evm'
 import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
 // Create a wallet account first
@@ -40,7 +40,7 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 })
 
 // Create swap service
-const swapProtocol = new veloraProtocolEvm(account, {
+const swapProtocol = new ProtocolVeloraEvm(account, {
   swapMaxFee: 200000000000000n // Optional: Max swap fee (wei)
 })
 ```
@@ -111,7 +111,7 @@ const aa = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
   paymasterUrl: 'YOUR_PAYMASTER_URL'
 })
 
-const swapAA = new veloraProtocolEvm(aa, { swapMaxFee: 200000000000000n })
+const swapAA = new ProtocolVeloraEvm(aa, { swapMaxFee: 200000000000000n })
 
 const result = await swapAA.swap({
   tokenIn: '0xdAC17F...ec7', // USD₮
@@ -173,7 +173,7 @@ try {
 ### Complete Swap Setup
 
 ```javascript
-import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
+import ProtocolVeloraEvm from '@tetherto/wdk-protocol-swap-velora-evm'
 import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
 async function setupSwap() {
@@ -183,7 +183,7 @@ async function setupSwap() {
   })
 
   // Create swap service
-  const swapProtocol = new veloraProtocolEvm(account, {
+  const swapProtocol = new ProtocolVeloraEvm(account, {
     swapMaxFee: 200000000000000n
   })
 
