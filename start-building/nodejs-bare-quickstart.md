@@ -393,9 +393,9 @@ npm install @tetherto/wdk-protocol-swap-velora-evm
 
 {% code lineNumbers="true" %}
 ```typescript
-import ProtocolVeloraEvm  from '@tetherto/wdk-protocol-swap-velora-evm'
+import VeloraProtocolEvm  from '@tetherto/wdk-protocol-swap-velora-evm'
 
-wdk.registerProtocol('ethereum', 'swap-velora-evm', ProtocolVeloraEvm, {
+wdk.registerProtocol('ethereum', 'swap-velora-evm', VeloraProtocolEvm, {
   provider: 'https://eth.drpc.org'
 })
 ```
