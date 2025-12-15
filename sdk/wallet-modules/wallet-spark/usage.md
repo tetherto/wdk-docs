@@ -20,15 +20,6 @@ layout:
 
 # Usage
 
-{% hint style="danger" %}
-**Known Issue: Thread Hanging in Bare runtime Environments**
-
-There is a known issue with this module causing thread hanging when used in bare runtime environments. The module is not production-ready in bare runtime at this time.
-
-For the latest updates and workarounds, please check the [GitHub Issues](https://github.com/tetherto/wdk-wallet-spark/issues).
-
-{% endhint %}
-
 ## Installation
 
 To install the `@tetherto/wdk-wallet-spark` package, follow these instructions:
@@ -218,17 +209,18 @@ console.log('Fee estimate:', feeEstimate, 'satoshis')
 ### Bitcoin Layer 1 Bridge
 
 ```javascript
-// Generate a single-use deposit address for Bitcoin layer 1 deposits
-const depositAddress = await account.getSingleUseDepositAddress()
+// Generate a static deposit address for Bitcoin layer 1 deposits
+// getSingleUseDepositAddress() can also be used but static deposit address is recommended
+const depositAddress = await account.getStaticDepositAddress()
 console.log('Deposit address:', depositAddress)
 
 // Check if a deposit has been confirmed
-const txId = await account.getLatestDepositTxId(depositAddress)
-if (txId) {
-  console.log('Deposit confirmed:', txId)
+const utxos = await account.getUtxosForDepositAddress(depositAddress)
+if (utxos) {
+  console.log('Deposit confirmed:', utxos)
   
   // Claim the deposit to your Spark wallet
-  const walletLeaves = await account.claimDeposit(txId)
+  const walletLeaves = await account.claimStaticDeposit(utxos[utxos.length - 1])
   console.log('Deposit claimed:', walletLeaves)
 }
 
@@ -293,14 +285,14 @@ async function lightningPaymentFlow(account) {
 ```javascript
 async function bitcoinBridgeFlow(account) {
   // Generate deposit address
-  const depositAddress = await account.getSingleUseDepositAddress()
+  const depositAddress = await account.getStaticDepositAddress()
   console.log('Send Bitcoin to:', depositAddress)
   
   // Check for deposits
-  const txId = await account.getLatestDepositTxId(depositAddress)
+  const txId = await account.getUtxosForDepositAddress(depositAddress)
   if (txId) {
     // Claim the deposit
-    const walletLeaves = await account.claimDeposit(txId)
+    const walletLeaves = await account.claimStaticDeposit(txId)
     console.log('Deposit claimed:', walletLeaves)
   }
   

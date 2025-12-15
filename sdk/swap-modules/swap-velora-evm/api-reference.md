@@ -20,14 +20,14 @@ layout:
 
 # API Reference
 
-## Class: veloraProtocolEvm
+## Class: VeloraProtocolEvm
 
 Main class for velora token swaps on EVM.
 
 ### Constructor
 
 ```javascript
-new veloraProtocolEvm(account, config?)
+new VeloraProtocolEvm(account, config?)
 ```
 
 Parameters:
@@ -38,7 +38,7 @@ Parameters:
 Example:
 
 ```javascript
-const swap = new veloraProtocolEvm(account, { swapMaxFee: 200000000000000n })
+const swap = new VeloraProtocolEvm(account, { swapMaxFee: 200000000000000n })
 ```
 
 ### Methods
