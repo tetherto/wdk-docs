@@ -1,6 +1,6 @@
 ---
 name: wdk
-description: Tether Wallet Development Kit (WDK) for building non-custodial multi-chain wallets. Use when working with @tetherto/wdk-core, wallet modules (wdk-wallet-btc, wdk-wallet-evm, wdk-wallet-evm-erc-4337, wdk-wallet-solana, wdk-wallet-spark, wdk-wallet-ton, wdk-wallet-tron, ton-gasless, tron-gasfree), and protocol modules including swap (wdk-protocol-swap-velora-evm, wdk-protocol-swap-stonfi-ton), bridge (wdk-protocol-bridge-usdt0-evm), and lending (wdk-protocol-lending-aave-evm). Covers wallet creation, transactions, token transfers, DEX swaps, cross-chain bridges, and DeFi lending/borrowing.
+description: Tether Wallet Development Kit (WDK) for building non-custodial multi-chain wallets. Use when working with @tetherto/wdk-core, wallet modules (wdk-wallet-btc, wdk-wallet-evm, wdk-wallet-evm-erc-4337, wdk-wallet-solana, wdk-wallet-spark, wdk-wallet-ton, wdk-wallet-tron, ton-gasless, tron-gasfree), and protocol modules including swap (wdk-protocol-swap-velora-evm), bridge (wdk-protocol-bridge-usdt0-evm), and lending (wdk-protocol-lending-aave-evm). Covers wallet creation, transactions, token transfers, DEX swaps, cross-chain bridges, and DeFi lending/borrowing.
 ---
 
 # Tether WDK
@@ -63,7 +63,6 @@ For each module, documentation is organized into subpages:
     │   └── wdk-wallet-tron-gasfree  # TRON gas-free
     └── Protocol Modules
         ├── wdk-protocol-swap-velora-evm   # DEX swaps on EVM
-        ├── wdk-protocol-swap-stonfi-ton   # DEX swaps on TON
         ├── wdk-protocol-bridge-usdt0-evm  # Cross-chain USDT0 bridge
         └── wdk-protocol-lending-aave-evm  # Aave V3 lending
 ```
@@ -148,7 +147,6 @@ Each wallet module has `/usage`, `/configuration`, and `/api-reference` subpages
 | Module | Docs |
 |--------|------|
 | **Swap (Velora EVM)** | https://docs.wallet.tether.io/sdk/swap-modules/swap-velora-evm |
-| **Swap (StonFi TON)** | https://docs.wallet.tether.io/sdk/swap-modules/swap-stonfi-ton |
 | **Bridge (USDT0 EVM)** | https://docs.wallet.tether.io/sdk/bridge-modules/bridge-usdt0-evm |
 | **Lending (Aave EVM)** | https://docs.wallet.tether.io/sdk/lending-modules/lending-aave-evm |
 
@@ -217,10 +215,6 @@ Each protocol module has `/usage`, `/configuration`, and `/api-reference` subpag
 // EVM (Velora)
 const velora = new VeloraProtocolEvm(evmAccount, { swapMaxFee: 200000000000000n })
 await velora.swap({ tokenIn: '0x...', tokenOut: '0x...', tokenInAmount: 1000000n })
-
-// TON (StonFi)
-const stonfi = new StonFiProtocolTon(tonAccount, { swapMaxFee: 1000000000n })
-await stonfi.swap({ tokenIn: 'ton', tokenOut: 'EQ...', tokenInAmount: 1000000000n })
 ```
 
 ### Bridge
