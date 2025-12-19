@@ -18,13 +18,6 @@ layout:
     visible: false
 ---
 
-
-The WDK Indexer REST API provides fast, reliable access to blockchain transaction data across multiple networks including Bitcoin, Ethereum, Solana, TON, TRON, Spark, Polygon, and Arbitrum.
-
-A blockchain indexer continuously monitors and organizes blockchain transactions, making them instantly searchable through a simple REST API.
-
-***
-
 ## Getting Started
 
 {% stepper %}
@@ -50,16 +43,20 @@ Use your API key to query blockchain data via the REST API.
 
 ## Quick Example
 
-Here's a quick example of how to query a token balance with curl.
+Here's a quick example of how to query a token balance.
 
-{% code title="Using curl" lineNumbers="true" %}
+{% tabs %}
+{% tab title="curl" %}
+{% code lineNumbers="true" %}
 ```bash
 curl -X GET "https://wdk-api.tether.io/api/v1/ethereum/usdt/0x742d35cc.../token-balances" \
      -H "x-api-key: your-api-key-here"
 ```
 {% endcode %}
+{% endtab %}
 
-{% code title="Using JavaScript" lineNumbers="true" %}
+{% tab title="JavaScript" %}
+{% code lineNumbers="true" %}
 ```javascript
 const axios = require('axios');
 
@@ -80,6 +77,8 @@ const balance = await getTokenBalance('ethereum', 'usdt', '0x742d35cc...');
 console.log(`Balance: ${balance.amount} ${balance.token.toUpperCase()}`);
 ```
 {% endcode %}
+{% endtab %}
+{% endtabs %}
 
 {% hint style="info" %}
 **Want more info?** Check out the complete [API Reference](api-reference.md) for detailed method documentation, parameters, and response formats.
