@@ -42,14 +42,14 @@ new WalletManagerSolana(seed, config)
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (object): Configuration object
-  - `provider` (string | Connection): RPC endpoint URL or Solana Connection instance
+  - `rpcUrl` (string | Connection): RPC endpoint URL or Solana Connection instance
   - `commitment` (string, optional): Commitment level ('processed', 'confirmed', or 'finalized')
   - `transferMaxFee` (number, optional): Maximum fee amount for transfer operations (in lamports)
 
 **Example:**
 ```javascript
 const wallet = new WalletManagerSolana(seedPhrase, {
-  provider: 'https://api.mainnet-beta.solana.com',
+  rpcUrl: 'https://api.mainnet-beta.solana.com',
   commitment: 'confirmed',
   transferMaxFee: 5000 // Maximum fee in lamports
 })

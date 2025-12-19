@@ -29,7 +29,6 @@ import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 
 const config = {
   rpcUrl: 'https://api.mainnet-beta.solana.com', // Solana RPC endpoint
-  wsUrl: 'wss://api.mainnet-beta.solana.com/', // Optional: WebSocket endpoint
   transferMaxFee: 10000000 // Optional: Maximum fee in lamports
 }
 
@@ -43,7 +42,6 @@ import { WalletAccountSolana } from '@tetherto/wdk-wallet-solana'
 
 const accountConfig = {
   rpcUrl: 'https://api.mainnet-beta.solana.com',
-  wsUrl: 'wss://api.mainnet-beta.solana.com/', // Optional
   transferMaxFee: 10000000 // Optional: Maximum fee in lamports
 }
 
@@ -78,22 +76,6 @@ const config = {
 }
 ```
 
-### wsUrl
-
-The `wsUrl` option specifies a custom WebSocket endpoint for real-time subscriptions and confirmations.
-
-**Type:** `string` (optional)
-
-**Default:** If not provided, the WebSocket URL will be automatically derived from the `rpcUrl`
-
-**Example:**
-```javascript
-const config = {
-  rpcUrl: 'https://api.mainnet-beta.solana.com',
-  wsUrl: 'wss://api.mainnet-beta.solana.com/' // Custom WebSocket endpoint
-}
-```
-
 ### transferMaxFee
 
 The `transferMaxFee` option sets the maximum allowed fee (in lamports) for transfer operations. This helps prevent unexpectedly high transaction fees.
@@ -117,9 +99,6 @@ import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 const config = {
   // Required for most operations
   rpcUrl: 'https://api.mainnet-beta.solana.com',
-  
-  // Optional: Custom WebSocket endpoint
-  wsUrl: 'wss://api.mainnet-beta.solana.com/',
   
   // Optional: Fee protection
   transferMaxFee: 10000000 // 0.01 SOL maximum fee

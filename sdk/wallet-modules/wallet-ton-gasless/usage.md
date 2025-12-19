@@ -24,7 +24,7 @@ layout:
 To install the `@tetherto/wdk-wallet-ton-gasless` package, follow these instructions:
 
 ```bash
-npm install @tetherto/wdk-wallet-to-gasless
+npm install @tetherto/wdk-wallet-ton-gasless
 ```
 
 
