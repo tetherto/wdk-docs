@@ -20,7 +20,9 @@ layout:
 
 The WDK Indexer REST API provides fast, reliable access to balances, token transfers, and transaction history across multiple chains.
 
+{% hint style="info" %}
 A blockchain indexer continuously monitors and organizes blockchain transactions, making them instantly searchable through a simple REST API.
+{% endhint %}
 
 <a class="button primary" href="./get-started.md" target="_blank">Get Started</a>
 
