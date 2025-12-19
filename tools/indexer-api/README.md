@@ -36,7 +36,7 @@ The WDK Indexer currently supports the following blockchain networks and tokens:
 | Ethereum Mainnet | USDt, XAUt |
 | TRON | USDt, XAUt |
 | TON | USDt, XAUt |
-| Arbitrum | USDt, XAUt |
+| Arbitrum | USDt |
 | Sepolia | USDt |
 | Plasma | USDt |
 | Polygon | USDt |
