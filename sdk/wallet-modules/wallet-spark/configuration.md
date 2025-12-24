@@ -47,9 +47,10 @@ The `network` option specifies which Spark network to use.
 **Type:** `string`
 
 **Values:**
-- `"MAINNET"` - Spark [mainnet](../../../resources/concepts.md#mainnet) (production)
-- `"TESTNET"` - Spark [testnet](../../../resources/concepts.md#testnet) (development)
-- `"REGTEST"` - Spark [regtest](../../../resources/concepts.md#regtest) (Spark regtest)
+- `"MAINNET"` - Spark mainnet (production)
+- `"TESTNET"` - Spark testnet (development)
+- `"SIGNET"` - Spark signet (testing)
+- `"REGTEST"` - Spark regtest (local development)
 
 **Default:** `"MAINNET"`
 
@@ -101,11 +102,12 @@ Spark uses the [BIP-44](../../../resources/concepts.md#bip-44-multi-account-hier
 - `m/44'/998'/0'/0/0` for MAINNET account index 0
 - `m/44'/998'/0'/0/1` for MAINNET account index 1
 - `m/44'/998'/1'/0/0` for TESTNET account index 0
-- `m/44'/998'/2'/0/0` for REGTEST account index 0
+- `m/44'/998'/2'/0/0` for SIGNET account index 0
+- `m/44'/998'/3'/0/0` for REGTEST account index 0
 
 The path follows the pattern `m/44'/998'/{networkNumber}'/0/{index}` where:
 - `998` is the coin type for Spark
-- `networkNumber` is 0 for MAINNET, 1 for TESTNET, or 2 for REGTEST
+- `networkNumber` is 0 for MAINNET, 1 for TESTNET, 2 for SIGNET, or 3 for REGTEST
 - `index` is the account index
 
 This ensures compatibility with standard [BIP-44](../../../resources/concepts.md#bip-44-multi-account-hierarchy) wallets while using Spark's unique coin type identifier.

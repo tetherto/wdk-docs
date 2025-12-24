@@ -85,7 +85,7 @@ console.log('Account 2 address:', address2)
 
 // Note: All accounts use BIP-44 derivation paths with pattern:
 // m/44'/998'/{networkNumber}'/0/{index} where 998 is the coin type for Spark
-// and networkNumber is 0 for MAINNET, 1 for TESTNET, or 2 for REGTEST
+// and networkNumber is 0 for MAINNET, 1 for TESTNET, 2 for SIGNET, or 3 for REGTEST
 ```
 
 **Important Note**: Custom derivation paths via `getAccountByPath()` are not supported on the Spark blockchain. Only indexed accounts using the standard BIP-44 pattern are available.
@@ -222,15 +222,10 @@ if (sendRequest) {
 const depositAddress = await account.getStaticDepositAddress()
 console.log('Deposit address:', depositAddress)
 
-// Check if a deposit has been confirmed
-const utxos = await account.getUtxosForDepositAddress(depositAddress)
-if (utxos) {
-  console.log('Deposit confirmed:', utxos)
-  
-  // Claim the deposit to your Spark wallet
-  const walletLeaves = await account.claimStaticDeposit(utxos[utxos.length - 1])
-  console.log('Deposit claimed:', walletLeaves)
-}
+// After sending Bitcoin to the deposit address, claim the deposit using the transaction ID
+const txId = 'your_bitcoin_transaction_id'
+const walletLeaves = await account.claimStaticDeposit(txId)
+console.log('Deposit claimed:', walletLeaves)
 
 // Get withdrawal fee quote first (recommended)
 const feeQuote = await account.quoteWithdraw({
@@ -376,26 +371,22 @@ async function lightningPaymentFlow(account) {
 ### Bitcoin Layer 1 Bridge
 
 ```javascript
-async function bitcoinBridgeFlow(account) {
+async function bitcoinBridgeFlow(account, txId) {
   // Generate deposit address
   const depositAddress = await account.getStaticDepositAddress()
   console.log('Send Bitcoin to:', depositAddress)
-  
-  // Check for deposits
-  const txId = await account.getUtxosForDepositAddress(depositAddress)
-  if (txId) {
-    // Claim the deposit
-    const walletLeaves = await account.claimStaticDeposit(txId)
-    console.log('Deposit claimed:', walletLeaves)
-  }
-  
+
+  // Claim the deposit using the Bitcoin transaction ID
+  const walletLeaves = await account.claimStaticDeposit(txId)
+  console.log('Deposit claimed:', walletLeaves)
+
   // Get withdrawal fee quote
   const feeQuote = await account.quoteWithdraw({
     withdrawalAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
     amountSats: 50000 // 0.0005 BTC
   })
   console.log('Withdrawal fee quote:', feeQuote)
-  
+
   // Withdraw to Bitcoin layer 1
   // Note: withdraw() now uses onchainAddress and amountSats parameters
   const withdrawal = await account.withdraw({

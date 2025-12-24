@@ -64,7 +64,7 @@ const account = await wallet.getAccount(0)
 const account1 = await wallet.getAccount(1)
 ```
 
-**Note:** Uses derivation path pattern `m/44'/998'/{networkNumber}'/0/{index}` where 998 is the coin type for Spark and networkNumber is 0 for MAINNET, 1 for TESTNET, or 2 for REGTEST.
+**Note:** Uses derivation path pattern `m/44'/998'/{networkNumber}'/0/{index}` where 998 is the coin type for Spark and networkNumber is 0 for MAINNET, 1 for TESTNET, 2 for SIGNET, or 3 for REGTEST.
 
 ##### `getFeeRates()`
 Returns current fee rates for transactions. On Spark network, transactions have zero fees.
@@ -115,11 +115,10 @@ Represents an individual Spark wallet account. Implements `IWalletAccount` from 
 | `getBalance()` | Returns the native token balance in satoshis | `Promise<bigint>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance for a specific token | `Promise<bigint>` |
 | `getTransactionReceipt(hash)` | Gets the transaction receipt for a given transaction hash | `Promise<SparkTransactionReceipt \| null>` |
-| `getTransfers(options?)` | Returns the account's transfer history | `Promise<Transfer[]>` |
+| `getTransfers(options?)` | Returns the account's transfer history | `Promise<SparkTransfer[]>` |
 | `getSingleUseDepositAddress()` | Generates a single-use Bitcoin deposit address | `Promise<string>` |
 | `getUnusedDepositAddresses()` | Gets all unused single-use deposit addresses | `Promise<string[]>` |
 | `getStaticDepositAddress()` | Gets static deposit address for Bitcoin deposits | `Promise<string>` |
-| `getUtxosForDepositAddress(depositAddress, limit?, offset?)` | Returns confirmed utxos for a deposit address | `Promise<string[]>` |
 | `claimDeposit(txId)` | Claims a Bitcoin deposit to the wallet | `Promise<WalletLeaf[] \| undefined>` |
 | `claimStaticDeposit(txId)` | Claims a static Bitcoin deposit to the wallet | `Promise<WalletLeaf[] \| undefined>` |
 | `refundStaticDeposit(options)` | Refunds a static deposit back to a Bitcoin address | `Promise<string>` |
@@ -302,7 +301,7 @@ Returns the account's transfer history with filtering options.
   - `limit` (number): Maximum transfers to return (default: 10)
   - `skip` (number): Number of transfers to skip (default: 0)
 
-**Returns:** `Promise<Transfer[]>` - Array of transfer objects
+**Returns:** `Promise<SparkTransfer[]>` - Array of transfer objects (type alias for `WalletTransfer` from `@buildonspark/spark-sdk`)
 
 **Example:**
 ```javascript
@@ -344,22 +343,6 @@ Gets static deposit address for Bitcoin deposits from layer 1. This address can 
 ```javascript
 const depositAddress = await account.getStaticDepositAddress()
 console.log('Static deposit address:', depositAddress)
-```
-
-##### `getUtxosForDepositAddress(depositAddress, limit?, offset?)`
-Returns confirmed utxos for a given Spark deposit address.
-
-**Parameters:**
-- `depositAddress` (string): The deposit address to query
-- `limit` (number, optional): Maximum number of utxos to return (default: 100)
-- `offset` (number, optional): Pagination offset (default: 0)
-
-**Returns:** `Promise<string[]>` - List of confirmed utxos
-
-**Example:**
-```javascript
-const utxos = await account.getUtxosForDepositAddress(depositAddress, 50, 0)
-console.log('Confirmed UTXOs:', utxos)
 ```
 
 ##### `claimDeposit(txId)`
@@ -757,13 +740,17 @@ interface CoopExitRequest {
 
 ### SparkTransactionReceipt
 
+Type alias for `TxV1Response` from `@sparkscan/api-node-sdk-client`. Key properties include:
+
 ```typescript
 interface SparkTransactionReceipt {
-  transferDirection: string  // 'INCOMING' or 'OUTGOING'
+  id: string                // Transaction ID
+  type: string              // Transaction type
+  status: 'confirmed' | 'pending' | 'sent' | 'failed' | 'expired'
   amountSats: number        // Transfer amount in satoshis
-  txId: string             // Transaction ID
-  timestamp: number        // Transaction timestamp
-  // Additional properties depend on Spark SDK implementation
+  txid?: string | null      // Bitcoin transaction ID (if applicable)
+  createdAt?: string | null // When the transaction was initiated
+  updatedAt?: string | null // Last update timestamp
 }
 ```
 
@@ -774,6 +761,22 @@ interface TransferOptions {
   direction?: 'incoming' | 'outgoing' | 'all'  // Filter by direction (default: 'all')
   limit?: number                               // Number of transfers to return (default: 10)
   skip?: number                                // Number of transfers to skip (default: 0)
+}
+```
+
+### SparkTransfer
+
+Type alias for `WalletTransfer` from `@buildonspark/spark-sdk`. Key properties include:
+
+```typescript
+interface SparkTransfer {
+  id: string                    // Transfer ID
+  status: string                // Transfer status
+  totalValue: number            // Total value in satoshis
+  transferDirection: string     // 'INCOMING' or 'OUTGOING'
+  type: string                  // Transfer type
+  createdTime?: Date            // When the transfer was created
+  updatedTime?: Date            // Last update timestamp
 }
 ```
 
