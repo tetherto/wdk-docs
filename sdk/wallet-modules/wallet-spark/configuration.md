@@ -60,6 +60,20 @@ const config = {
 }
 ```
 
+### SparkScan API Key
+
+The `sparkScanApiKey` option allows you to provide an API key for SparkScan API requests. This is used for read-only operations like fetching balances and transaction receipts.
+
+**Type:** `string` (optional)
+
+**Example:**
+```javascript
+const config = {
+  network: 'MAINNET',
+  sparkScanApiKey: 'your-api-key-here'
+}
+```
+
 ## Network Configuration
 
 The wallet can be configured for different Spark networks:
@@ -84,9 +98,15 @@ const regtestConfig = {
 ## BIP-44 Derivation Path
 
 Spark uses the [BIP-44](../../../resources/concepts.md#bip-44-multi-account-hierarchy) coin type 998, resulting in derivation paths like:
-- `m/44'/998'/0'/0/0` for account 0
-- `m/44'/998'/1'/0/0` for account 1
-- etc.
+- `m/44'/998'/0'/0/0` for MAINNET account index 0
+- `m/44'/998'/0'/0/1` for MAINNET account index 1
+- `m/44'/998'/1'/0/0` for TESTNET account index 0
+- `m/44'/998'/2'/0/0` for REGTEST account index 0
+
+The path follows the pattern `m/44'/998'/{networkNumber}'/0/{index}` where:
+- `998` is the coin type for Spark
+- `networkNumber` is 0 for MAINNET, 1 for TESTNET, or 2 for REGTEST
+- `index` is the account index
 
 This ensures compatibility with standard [BIP-44](../../../resources/concepts.md#bip-44-multi-account-hierarchy) wallets while using Spark's unique coin type identifier.
 
