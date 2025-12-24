@@ -20,6 +20,7 @@
   * [Usage](sdk/core-module/usage.md)
   * [Configuration](sdk/core-module/configuration.md)
   * [API Reference](sdk/core-module/api-reference.md)
+
 * [Wallet Modules](sdk/wallet-modules/README.md)
   * [wallet-btc](sdk/wallet-modules/wallet-btc/README.md)
     * [Usage](sdk/wallet-modules/wallet-btc/usage.md)
@@ -108,4 +109,8 @@
 
 * [Concepts](resources/concepts.md)
 * [Showcase](resources/showcase.md)
+* [Community Modules](community-modules/README.md)
+* [Create custom SDK modules](tools/wdk-modules-template/README.md)
+  * [WDK Wallets Template](tools/wdk-modules-template/wdk-wallet-template.md)
+  * [WDK Protocol Template](tools/wdk-modules-template/wdk-protocol-template.md)
 <!-- * [Go-live Checklist](resources/go-live-checklist.md) -->
