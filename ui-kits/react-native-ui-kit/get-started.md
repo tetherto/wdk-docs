@@ -77,62 +77,54 @@ export default function App() {
 
 ## Integration with WDK
 
-Components are designed to work seamlessly with WDK data models. Here's an example of how to wire WDK data into the UI components:
+Components are designed to work seamlessly with the WDK React Native Provider. Here's an example of how to wire WDK data into the UI components:
 
 {% code title="WDK Integration Example" lineNumbers="true" %}
 ```tsx
 import * as React from 'react'
-import WDK from '@tetherto/wdk'
-import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
-import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
-import { 
-  ThemeProvider, 
-  lightTheme, 
-  Balance, 
-  CryptoAddressInput, 
-  AmountInput 
+import { useWallet } from '@tetherto/wdk-react-native-provider'
+import {
+  ThemeProvider,
+  lightTheme,
+  Balance,
+  CryptoAddressInput,
+  AmountInput
 } from '@tetherto/wdk-uikit-react-native'
 
-export function WalletScreen() {
-  const [balance, setBalance] = React.useState<number | null>(null)
+export function SendScreen() {
+  const { balances, isInitialized } = useWallet()
   const [amount, setAmount] = React.useState('')
-  const [error, setError] = React.useState<string | null>(null)
+  const [address, setAddress] = React.useState('')
 
-  React.useEffect(() => {
-    async function bootstrap() {
-      try {
-        const wdkWithWallets = new WDK('your seed phrase')
-          .registerWallet('bitcoin', WalletManagerBtc, { 
-            provider: 'https://blockstream.info/api' 
-          })
+  // Get USD₮ balance from the balances list
+  const usdtBalance = balances.list.find(b => b.denomination === 'USDT')
 
-        const account = await wdkWithWallets.getAccount('bitcoin', 0)
-        const balance = await account.getBalance()
-
-        setBalance(balance)
-      } catch (e: any) {
-        setError(e?.message ?? 'Unknown error')
-      }
-    }
-
-    bootstrap()
-  }, [])
+  if (!isInitialized) {
+    return <Text>Loading...</Text>
+  }
 
   return (
     <ThemeProvider initialTheme={lightTheme}>
-      <CryptoAddressInput 
-        onQRScan={() => {/* Handle QR scan */}} 
+      <CryptoAddressInput
+        value={address}
+        onChangeText={setAddress}
+        onQRScan={() => {/* Handle QR scan */}}
       />
       <AmountInput
         label="Enter Amount"
-        tokenSymbol="BTC"
+        tokenSymbol="USDT"
         value={amount}
         onChangeText={setAmount}
-        tokenBalance={balance?.toString() ?? '0'}
+        tokenBalance={usdtBalance?.value ?? '0'}
+        tokenBalanceUSD={usdtBalance?.valueUSD ?? '$0.00'}
         inputMode={'token'}
-        onUseMax={() => setAmount(balance?.toString() ?? '0')}
+        onToggleInputMode={() => {/* Toggle fiat/token */}}
+        onUseMax={() => setAmount(usdtBalance?.value ?? '0')}
       />
-      <Balance value={balance ?? 0} currency="BTC" />
+      <Balance
+        value={parseFloat(usdtBalance?.valueUSD ?? '0')}
+        currency="USD"
+      />
     </ThemeProvider>
   )
 }
@@ -190,7 +182,7 @@ export function SendScreen() {
 ## Next Steps
 
 * [Components List](./api-reference.md) - Complete API reference for all components
-* [Theming Guide](theming.md) - Deep dive into theming capabilities
+* [Theming Guide](./theming.md) - Deep dive into theming capabilities
 * [React Native Starter](../../start-building/react-native-quickstart.md) - See a complete implementation
 
 ***

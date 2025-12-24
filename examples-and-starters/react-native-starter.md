@@ -25,12 +25,71 @@ The React Native Starter Alpha is an Expo + React Native app showing how to buil
 
 ***
 
+{% hint style="warning" %}
+**Prerequisites:** Node.js 22+, and either Xcode (iOS) or Android SDK API 29+ (Android). See the [React Native Quickstart](../start-building/react-native-quickstart.md#prerequisites) for details.
+{% endhint %}
+
+### Quick Start
+
+Get your React Native wallet running in minutes with these simple steps:
+
+{% stepper %}
+{% step %}
+#### Clone and Install
+
+```bash
+git clone https://github.com/tetherto/wdk-starter-react-native.git && cd wdk-starter-react-native && npm install
+```
+{% endstep %}
+
+{% step %}
+#### Configure Environment
+
+```bash
+cp .env.example .env
+```
+
+Get your free WDK Indexer API key [here](../tools/indexer-api/get-started.md) and add it to your `.env` file:
+
+```bash
+EXPO_PUBLIC_WDK_INDEXER_BASE_URL=https://wdk-api.tether.io
+EXPO_PUBLIC_WDK_INDEXER_API_KEY=your_actual_api_key_here
+# Optional: For Tron network support
+EXPO_PUBLIC_TRON_API_KEY=your_tron_api_key
+EXPO_PUBLIC_TRON_API_SECRET=your_tron_api_secret
+```
+
+{% endstep %}
+
+{% step %}
+#### Run Your App
+
+For first-time setup, generate native project files:
+
+```bash
+npx expo prebuild
+```
+
+Then run the app:
+
+```bash
+npm run ios     # iOS Simulator
+npm run android # Android Emulator
+```
+{% endstep %}
+{% endstepper %}
+
+***
+
+{% hint style="info" %}
+**Need detailed instructions?** Check out the complete [React Native Quickstart](../start-building/react-native-quickstart.md) guide for step-by-step setup, configuration, and troubleshooting.
+{% endhint %}
+
 ### Features
 
 **Multi-Token & Chain Support**
-
 * **BTC**: Native SegWit transfers on Bitcoin network
-* **USD₮**: Gasless transactions on EVM networks (Ethereum, Polygon, Arbitrum) and native transfers on TON
+* **USD₮**: Gasless transactions on EVM (Ethereum, Polygon, Arbitrum), native transfers on TON and Tron
 * **XAU₮**: Gasless transactions on Ethereum network
 
 **Wallet Management**
@@ -56,54 +115,6 @@ The React Native Starter Alpha is an Expo + React Native app showing how to buil
 
 ***
 
-### Quick Start
-
-Get your React Native wallet running in minutes with these simple steps:
-
-{% stepper %}
-{% step %}
-#### Clone Repository
-
-```bash
-git clone https://github.com/tetherto/wdk-starter-react-native.git
-cd wdk-starter-react-native
-npm install
-```
-{% endstep %}
-
-{% step %}
-#### Configure Environment
-
-```bash
-cp .env.example .env
-# Edit .env and add your WDK Indexer API key
-```
-{% endstep %}
-
-{% step %}
-#### Generate Bundle
-
-```bash
-npm run gen:bundle
-```
-{% endstep %}
-
-{% step %}
-#### Run Your App
-
-```bash
-npm run ios    # iOS Simulator
-npm run android # Android Emulator
-```
-{% endstep %}
-{% endstepper %}
-
-{% hint style="info" %}
-**Need detailed instructions?** Check out the complete [React Native Quickstart](../start-building/react-native-quickstart.md) guide for step-by-step setup, configuration, and troubleshooting.
-{% endhint %}
-
-***
-
 ### Project Structure
 
 The starter includes a modular architecture designed for scalability and maintainability:
@@ -111,17 +122,21 @@ The starter includes a modular architecture designed for scalability and maintai
 {% code title="Project Structure" lineNumbers="true" %}
 ```
 src/
-├── app/                         # Screens (Expo Router)
-├── components/                  # UI components
-├── config/                      # Chains/networks config
-├── contexts/                    # React contexts
-├── services/
-│   └── wdk-service/             # Worklet + HRPC + wallet orchestration
-├── spec/                        # HRPC/schema (copied for reference)
-├── worklet/                     # Secret manager worklet entry
-└── wdk-secret-manager-worklet.bundle.js  # Generated bundle
+├── app/                    # Expo Router screens (file-based routing)
+│   ├── onboarding/         # First-time user flows
+│   ├── wallet-setup/       # Create/import wallet screens
+│   ├── send/ & receive/    # Transaction flows
+│   ├── settings.tsx        # Configuration & preferences
+│   └── token-details.tsx   # Individual asset views
+├── components/             # Reusable UI components
+├── config/                 # Network, asset, and chain settings
+├── services/               # Business logic (pricing integration)
+├── hooks/                  # Custom React hooks
+└── utils/                  # Formatting & helper functions
 ```
 {% endcode %}
+
+Detailed project structure can be found in the [Github Repository](https://github.com/tetherto/wdk-starter-react-native/tree/main?tab=readme-ov-file#-project-structure).
 
 ***
 
@@ -133,13 +148,13 @@ src/
 | `npm run android`        | Run on Android emulator/device                |
 | `npm run ios`            | Run on iOS simulator                          |
 | `npm run web`            | Start web development server                  |
-| `npm run gen:bundle`     | Build secret manager worklet bundle           |
 | `npm run prebuild`       | Generate native project files                 |
 | `npm run prebuild:clean` | Clean and regenerate native project files     |
 | `npm run lint`           | Run ESLint                                    |
 | `npm run lint:fix`       | Fix ESLint errors                             |
 | `npm run format`         | Format code with Prettier                     |
 | `npm run format:check`   | Check code formatting                         |
+| `npm run typecheck`      | Run TypeScript type checking                  |
 
 ***
 
@@ -147,10 +162,11 @@ src/
 
 #### Core Technologies
 
-* **Expo**: \~54 with development client
+* **Expo**: \~54.0.8 with development client
 * **React Native**: 0.81.4
-* **React**: 19
-* **Reanimated**: \~4.1
+* **React**: 19.1.0
+* **TypeScript**: \~5.9.2
+* **Reanimated**: \~4.1.0
 * **New Architecture**: Enabled
 
 #### Build Configuration
@@ -159,16 +175,6 @@ src/
 * **iOS**: Latest Xcode toolchain
 * **Build Properties**: Configured via `expo-build-properties`
 
-#### Polyfills
-
-See `metro.config.js` for comprehensive polyfills:
-
-* **Stream, Buffer, Crypto**: Node.js compatibility
-* **Net/TLS, URL, HTTP/HTTPS/HTTP2**: Network compatibility
-* **Zlib, Path**: File system compatibility
-* **Nice-gRPC → Web**: gRPC web compatibility
-* **Sodium-universal → JavaScript**: Cryptographic compatibility
-* **Querystring, Events**: Node.js event system
 
 ***
 
