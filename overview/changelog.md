@@ -108,5 +108,5 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 ## How to Stay Updated
 
 - Check this page for the latest updates
-- Join our [Discord community](https://discord.gg/tether-wdk) for real-time announcements
+- Join our [Discord community](https://discord.gg/arYXDhHB2w) for real-time announcements
 - Star and follow the [GitHub repositories](https://github.com/orgs/tetherto/repositories?q=wdk) for detailed release notes

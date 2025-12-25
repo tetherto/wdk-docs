@@ -42,13 +42,13 @@ Want to extend WDK with your own custom module? We encourage community contribut
 {% hint style="info" %}
 **Coming Soon: Custom Module Guide**
 
-We're preparing a comprehensive guide on how to create custom WDK modules. Join our [Discord](https://discord.gg/tether-wdk) for updates!
+We're preparing a comprehensive guide on how to create custom WDK modules. Join our [Discord](https://discord.gg/arYXDhHB2w) for updates!
 {% endhint %}
 
 In the meantime, you can:
 
 1. **Study existing modules** - Review the source code of official WDK modules on [GitHub](https://github.com/tetherto) to understand the patterns and interfaces
-2. **Join the community** - Connect with other developers on our [Discord](https://discord.gg/tether-wdk) to discuss your ideas
+2. **Join the community** - Connect with other developers on our [Discord](https://discord.gg/arYXDhHB2w) to discuss your ideas
 3. **Open an issue** - Have questions? Open an issue on the relevant repository
 
 ---
