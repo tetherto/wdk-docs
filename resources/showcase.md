@@ -1,9 +1,9 @@
 ---
-title: WDK Showcase
+title: WDK Project Showcase
 description: Explore the projects built by the WDK community showcasing real-world use cases, integrations, and creative implementations using the Wallet Development Kit.
 ---
 
-# WDK Showcase
+# WDK Project Showcase
 
 This page highlights projects developed by the community using the **Wallet Development Kit (WDK)**.  
 Each project demonstrates unique ways to leverage WDK modules, SDKs, and wallet functionalities.
