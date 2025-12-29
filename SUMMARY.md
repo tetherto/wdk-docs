@@ -80,7 +80,11 @@
     * [Usage](sdk/lending-modules/lending-aave-evm/usage.md)
     * [Configuration](sdk/lending-modules/lending-aave-evm/configuration.md)
     * [API Reference](sdk/lending-modules/lending-aave-evm/api-reference.md)
-
+ * [Multisig Modules](sdk/multisig-modules/README.md)
+    * [protocol-multisig-safe](sdk/multisig-modules/protocol-multisig-safe/README.md)
+      * [Usage](sdk/multisig-modules/protocol-multisig-safe/usage.md)
+      * [Configuration](sdk/multisig-modules/protocol-multisig-safe/configuration.md)
+      * [API Reference](sdk/multisig-modules/protocol-multisig-safe/api-reference.md)
 ## UI Kits
 
 * [React Native UI Kit](ui-kits/react-native-ui-kit/README.md)
