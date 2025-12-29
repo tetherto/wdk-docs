@@ -102,7 +102,7 @@ This package works with multiple blockchain networks through wallet registration
   </tbody>
 </table>
 
-### Classic Wallet Modules
+## Classic Wallet Modules
 
 Standard wallet implementations that use native blockchain tokens for transaction fees:
 
@@ -111,12 +111,12 @@ Standard wallet implementations that use native blockchain tokens for transactio
 | [`@tetherto/wdk-wallet-evm`](https://github.com/tetherto/wdk-wallet-evm) | EVM | ✅ Ready | [Documentation](./wallet-evm) |
 | [`@tetherto/wdk-wallet-ton`](https://github.com/tetherto/wdk-wallet-ton) | TON | ✅ Ready | [Documentation](./wallet-ton) |
 | [`@tetherto/wdk-wallet-btc`](https://github.com/tetherto/wdk-wallet-btc) | Bitcoin | ✅ Ready | [Documentation](./wallet-btc) |
-| [`@tetherto/wdk-wallet-spark`](https://github.com/tetherto/wdk-wallet-spark) | Spark | ⚠️ Known Issues | [Documentation](./wallet-spark) |
+| [`@tetherto/wdk-wallet-spark`](https://github.com/tetherto/wdk-wallet-spark) | Spark | ✅ Ready | [Documentation](./wallet-spark) |
 | [`@tetherto/wdk-wallet-tron`](https://github.com/tetherto/wdk-wallet-tron) | TRON | ✅ Ready | [Documentation](./wallet-tron) |
 | [`@tetherto/wdk-wallet-solana`](https://github.com/tetherto/wdk-wallet-solana) | Solana | ✅ Ready | [Documentation](./wallet-solana) |
 | `@tetherto/wdk-wallet-ark` | Ark | In progress | - |
 
-### Account Abstraction Wallet Modules
+## Account Abstraction Wallet Modules
 
 Wallet implementations that support [Account Abstraction](../../resources/concepts.md#account-abstraction) for gasless transactions using paymaster tokens like USD₮:
 
@@ -127,7 +127,19 @@ Wallet implementations that support [Account Abstraction](../../resources/concep
 | [`@tetherto/wdk-wallet-tron-gasfree`](https://github.com/tetherto/wdk-wallet-tron-gasfree) | TRON | ✅ Ready | [Documentation](./wallet-tron-gasfree) |
 | `@tetherto/wdk-wallet-solana-jupiterz` | Solana | In progress | - |
 
-## Next steps
+## Community Wallet Modules
+
+Wallet modules developed by the community. See the [Community Modules](../community-modules/) page for more details.
+
+{% hint style="warning" %}
+Community modules are developed and maintained independently. Use your own judgment and proceed at your own risk.
+{% endhint %}
+
+| Module | Blockchain | Description | Repository |
+|--------|------------|-------------|------------|
+| `@utexo/wdk-wallet-rgb` | Bitcoin (RGB) | RGB protocol wallet integration for Bitcoin-based smart contracts | [GitHub](https://github.com/UTEXO-Protocol/wdk-wallet-rgb) |
+
+## Next Steps
 
 To get started with WDK modules, follow these steps:
 
