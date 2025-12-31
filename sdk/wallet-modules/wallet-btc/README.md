@@ -19,7 +19,7 @@ layout:
 
 # @tetherto/wdk-wallet-btc Overview
 
-A simple and secure package to manage BIP-84 (SegWit) wallets for the Bitcoin blockchain. This package provides a clean API for creating, managing, and interacting with Bitcoin wallets using BIP-39 seed phrases and BIP-84 derivation paths for Native SegWit addresses.
+A simple and secure package to manage BIP-84 (SegWit) and BIP-44 (Legacy) wallets for the Bitcoin blockchain. This package provides a clean API for creating, managing, and interacting with Bitcoin wallets using BIP-39 seed phrases and Bitcoin-specific derivation paths.
 
 {% hint style="warning" %}
 **Default Derivation Path Change in v1.0.0-beta.4+**
@@ -38,17 +38,16 @@ Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) to supply an e
 ## Features
 
 - **BIP-39 Seed Phrase Support**: Generate and validate BIP-39 mnemonic seed phrases
-- **Bitcoin Derivation Paths**: Support for BIP-84 standard derivation paths for Bitcoin (m/84'/0')
+- **Bitcoin Derivation Paths**: Support for BIP-84 (Native SegWit, default) and BIP-44 (Legacy) derivation paths
 - **Multi-Account Management**: Create and manage multiple accounts from a single seed phrase
-- **Address Types Support**: Generate and manage Legacy, SegWit, and Native SegWit addresses
+- **Address Types Support**: Generate Native SegWit (P2WPKH) addresses by default, with Legacy (P2PKH) support via configuration
 - **UTXO Management**: Track and manage unspent transaction outputs
-- **Transaction Management**: Create, sign, and broadcast Bitcoin transactions
-- **Fee Estimation**: Dynamic fee calculation with different priority levels
+- **Transaction Management**: Create, sign, and broadcast Bitcoin transactions (single recipient per transaction)
+- **Fee Estimation**: Dynamic fee calculation via mempool.space API
 - **Electrum Support**: Connect to Electrum servers for network interaction
 - **TypeScript Support**: Full TypeScript definitions included
 - **Memory Safety**: Secure private key management with memory-safe implementation
-- **Network Flexibility**: Support for both mainnet and testnet
-- **Transaction Building**: Support for complex transaction construction with multiple inputs/outputs
+- **Network Flexibility**: Support for mainnet, testnet, and regtest
 
 ## Supported Networks
 

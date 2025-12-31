@@ -26,6 +26,7 @@ layout:
 |-------|-------------|---------|
 | [WalletManagerBtc](#walletmanagerbtc) | Main class for managing Bitcoin wallets. Extends `WalletManager` from `@tetherto/wdk-wallet`. | [Constructor](#constructor), [Methods](#methods) |
 | [WalletAccountBtc](#walletaccountbtc) | Individual Bitcoin wallet account implementation. Implements `IWalletAccount`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties) |
+| [WalletAccountReadOnlyBtc](#walletaccountreadonlybtc) | Read-only Bitcoin wallet account. Extends `WalletAccountReadOnly` from `@tetherto/wdk-wallet`. | [Constructor](#constructor-2), [Methods](#methods-2) |
 
 ## WalletManagerBtc
 
@@ -40,23 +41,26 @@ new WalletManagerBtc(seed, config)
 ```
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
-- `config` (object, optional): Configuration object
-  - `host` (string, optional): Electrum server hostname (default: "electrum.blockstream.info")
-  - `port` (number, optional): Electrum server port (default: 50001)
+- `config` (BtcWalletConfig, optional): Configuration object
+  - `client` (IElectrumClient, optional): Electrum client instance. If provided, host/port/protocol are ignored.
+  - `host` (string, optional): Electrum server hostname (default: "electrum.blockstream.info"). Ignored if client is provided.
+  - `port` (number, optional): Electrum server port (default: 50001). Ignored if client is provided.
+  - `protocol` (string, optional): Transport protocol - "tcp", "tls", or "ssl" (default: "tcp"). Ignored if client is provided.
   - `network` (string, optional): "bitcoin", "testnet", or "regtest" (default: "bitcoin")
+  - `bip` (number, optional): BIP address type - 44 (legacy) or 84 (native SegWit) (default: 84)
 
 ### Methods
 
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getAccount(index)` | Returns a wallet account at the specified index | `Promise<WalletAccountBtc>` |
-| `getAccountByPath(path)` | Returns a wallet account at the specified BIP-84 derivation path | `Promise<WalletAccountBtc>` |
-| `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: number, fast: number}>` |
+| `getAccountByPath(path)` | Returns a wallet account at the specified derivation path | `Promise<WalletAccountBtc>` |
+| `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
 
 
 ##### `getAccount(index)`
-Returns a wallet account at the specified index using BIP-84 derivation.
+Returns a wallet account at the specified index using BIP-84 (default) or BIP-44 derivation.
 
 **Parameters:**
 - `index` (number, optional): The index of the account to get (default: 0)
@@ -65,11 +69,14 @@ Returns a wallet account at the specified index using BIP-84 derivation.
 
 **Example:**
 ```javascript
-const account = await wallet.getAccount(0)
+// Returns the account with derivation path:
+// For mainnet (bitcoin): m/84'/0'/0'/0/1
+// For testnet or regtest: m/84'/1'/0'/0/1
+const account = await wallet.getAccount(1)
 ```
 
 ##### `getAccountByPath(path)`
-Returns a wallet account at the specified BIP-84 derivation path.
+Returns a wallet account at the specified derivation path.
 
 **Parameters:**
 - `path` (string): The derivation path (e.g., "0'/0/0")
@@ -78,12 +85,15 @@ Returns a wallet account at the specified BIP-84 derivation path.
 
 **Example:**
 ```javascript
+// Returns the account with derivation path:
+// For mainnet (bitcoin): m/84'/0'/0'/0/1
+// For testnet or regtest: m/84'/1'/0'/0/1
 const account = await wallet.getAccountByPath("0'/0/1")
 ```
 ##### `getFeeRates()`
 Returns current fee rates from mempool.space API.
 
-**Returns:** `Promise<{normal: number, fast: number}>` - Object containing fee rates in sat/vB
+**Returns:** `Promise<{normal: bigint, fast: bigint}>` - Object containing fee rates in sat/vB
 - `normal`: Standard fee rate for confirmation within ~1 hour
 - `fast`: Higher fee rate for faster confirmation
 
@@ -106,7 +116,7 @@ wallet.dispose()
 
 ## WalletAccountBtc
 
-Represents an individual Bitcoin wallet account. Implements `IWalletAccount` from `@tetherto/wdk-wallet`.
+Represents an individual Bitcoin wallet account. Extends `WalletAccountReadOnlyBtc` and implements `IWalletAccount` from `@tetherto/wdk-wallet`.
 
 
 #### Constructor
@@ -117,40 +127,45 @@ new WalletAccountBtc(seed, path, config)
 
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
-- `path` (string): BIP-84 derivation path (e.g., "0'/0/0")
-- `config` (object, optional): Configuration object
-  - `host` (string, optional): Electrum server hostname (default: "electrum.blockstream.info")
-  - `port` (number, optional): Electrum server port (default: 50001)
+- `path` (string): Derivation path suffix (e.g., "0'/0/0")
+- `config` (BtcWalletConfig, optional): Configuration object
+  - `client` (IElectrumClient, optional): Electrum client instance. If provided, host/port/protocol are ignored.
+  - `host` (string, optional): Electrum server hostname (default: "electrum.blockstream.info"). Ignored if client is provided.
+  - `port` (number, optional): Electrum server port (default: 50001). Ignored if client is provided.
+  - `protocol` (string, optional): Transport protocol - "tcp", "tls", or "ssl" (default: "tcp"). Ignored if client is provided.
   - `network` (string, optional): "bitcoin", "testnet", or "regtest" (default: "bitcoin")
+  - `bip` (number, optional): BIP address type - 44 (legacy) or 84 (native SegWit) (default: 84)
 
 ### Methods
 
 | Method | Description | Returns |
 |--------|-------------|---------|
-| `getAddress()` | Returns the account's Native SegWit address | `Promise<string>` |
-| `getBalance()` | Returns the confirmed account balance in satoshis | `Promise<number>` |
-| `sendTransaction(options)` | Sends a Bitcoin transaction | `Promise<{hash: string, fee: number}>` |
-| `quoteSendTransaction(options)` | Estimates the fee for a transaction | `Promise<{fee: number}>` |
+| `getAddress()` | Returns the account's Bitcoin address | `Promise<string>` |
+| `getBalance()` | Returns the confirmed account balance in satoshis | `Promise<bigint>` |
+| `sendTransaction(options)` | Sends a Bitcoin transaction | `Promise<{hash: string, fee: bigint}>` |
+| `quoteSendTransaction(options)` | Estimates the fee for a transaction | `Promise<{fee: bigint}>` |
 | `getTransfers(options?)` | Returns the account's transfer history | `Promise<BtcTransfer[]>` |
+| `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<BtcTransactionReceipt \| null>` |
+| `getMaxSpendable()` | Returns the maximum spendable amount | `Promise<BtcMaxSpendableResult>` |
 | `sign(message)` | Signs a message with the account's private key | `Promise<string>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `toReadOnlyAccount()` | Creates a read-only version of this account | `Promise<WalletAccountReadOnlyBtc>` |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
 
 ##### `getAddress()`
-Returns the account's Native SegWit (bech32) address.
+Returns the account's Bitcoin address (Native SegWit bech32 by default, or legacy if using BIP-44).
 
 **Returns:** `Promise<string>` - The Bitcoin address
 
 **Example:**
 ```javascript
 const address = await account.getAddress()
-console.log('Address:', address) // bc1q...
+console.log('Address:', address) // bc1q... (BIP-84) or 1... (BIP-44)
 ```
 ##### `getBalance()`
 Returns the account's confirmed balance in satoshis.
 
-**Returns:** `Promise<number>` - Balance in satoshis
+**Returns:** `Promise<bigint>` - Balance in satoshis
 
 **Example:**
 ```javascript
@@ -162,11 +177,13 @@ console.log('Balance:', balance, 'satoshis')
 Sends a Bitcoin transaction to a single recipient.
 
 **Parameters:**
-- `options` (object): Transaction options
+- `options` (BtcTransaction): Transaction options
   - `to` (string): Recipient's Bitcoin address
-  - `value` (number): Amount in satoshis
+  - `value` (number | bigint): Amount in satoshis
+  - `feeRate` (number | bigint, optional): Fee rate in sat/vB. If provided, overrides the fee rate estimated from the blockchain.
+  - `confirmationTarget` (number, optional): Target blocks for confirmation (default: 1)
 
-**Returns:** `Promise<{hash: string, fee: number}>`
+**Returns:** `Promise<{hash: string, fee: bigint}>`
 - `hash`: Transaction hash
 - `fee`: Transaction fee in satoshis
 
@@ -174,7 +191,7 @@ Sends a Bitcoin transaction to a single recipient.
 ```javascript
 const result = await account.sendTransaction({
   to: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-  value: 50000
+  value: 50000n
 })
 console.log('Transaction hash:', result.hash)
 console.log('Fee:', result.fee, 'satoshis')
@@ -184,18 +201,20 @@ console.log('Fee:', result.fee, 'satoshis')
 Estimates the fee for a transaction without broadcasting it.
 
 **Parameters:**
-- `options` (object): Same as sendTransaction options
+- `options` (BtcTransaction): Same as sendTransaction options
   - `to` (string): Recipient's Bitcoin address
-  - `value` (number): Amount in satoshis
+  - `value` (number | bigint): Amount in satoshis
+  - `feeRate` (number | bigint, optional): Fee rate in sat/vB. If provided, overrides the fee rate estimated from the blockchain.
+  - `confirmationTarget` (number, optional): Target blocks for confirmation (default: 1)
 
-**Returns:** `Promise<{fee: number}>`
+**Returns:** `Promise<{fee: bigint}>`
 - `fee`: Estimated transaction fee in satoshis
 
 **Example:**
 ```javascript
 const quote = await account.quoteSendTransaction({
   to: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-  value: 50000
+  value: 50000n
 })
 console.log('Estimated fee:', quote.fee, 'satoshis')
 ```
@@ -214,9 +233,9 @@ Returns the account's transfer history with detailed transaction information.
 - `address`: Account's own address
 - `vout`: Output index in the transaction
 - `height`: Block height (0 if unconfirmed)
-- `value`: Transfer value in satoshis
+- `value`: Transfer value in satoshis (bigint)
 - `direction`: 'incoming' or 'outgoing'
-- `fee`: Transaction fee in satoshis (for outgoing transfers)
+- `fee`: Transaction fee in satoshis (bigint, for outgoing transfers)
 - `recipient`: Receiving address (for outgoing transfers)
 
 **Example:**
@@ -228,13 +247,48 @@ const transfers = await account.getTransfers({
 console.log('Recent incoming transfers:', transfers)
 ```
 
+##### `getTransactionReceipt(hash)`
+Returns a transaction's receipt if it has been included in a block.
+
+**Parameters:**
+- `hash` (string): The transaction hash (64 hex characters)
+
+**Returns:** `Promise<BtcTransactionReceipt | null>` - The receipt, or null if the transaction has not been included in a block yet.
+
+**Example:**
+```javascript
+const receipt = await account.getTransactionReceipt('abc123...')
+if (receipt) {
+  console.log('Transaction confirmed')
+}
+```
+
+##### `getMaxSpendable()`
+Returns the maximum spendable amount that can be sent in a single transaction. The maximum spendable amount can differ from the wallet's total balance for several reasons:
+- **Transaction fees**: Fees are subtracted from the total balance
+- **Uneconomic UTXOs**: Small UTXOs where the fee to spend them exceeds their value are excluded
+- **UTXO limit**: A transaction can include at most 200 inputs. Wallets with more UTXOs cannot spend their full balance in a single transaction.
+- **Dust limit**: Outputs below the dust threshold (294 sats for SegWit, 546 sats for legacy) cannot be created
+
+**Returns:** `Promise<BtcMaxSpendableResult>` - Maximum spendable result
+- `amount`: Maximum spendable amount in satoshis (bigint)
+- `fee`: Estimated network fee in satoshis (bigint)
+- `changeValue`: Estimated change value in satoshis (bigint)
+
+**Example:**
+```javascript
+const { amount, fee } = await account.getMaxSpendable()
+console.log('Max spendable:', amount, 'satoshis')
+console.log('Estimated fee:', fee, 'satoshis')
+```
+
 ##### `sign(message)`
 Signs a message using the account's private key.
 
 **Parameters:**
 - `message` (string): Message to sign
 
-**Returns:** `Promise<string>` - Signature as hex string
+**Returns:** `Promise<string>` - Signature as base64 string
 
 **Example:**
 ```javascript
@@ -247,7 +301,7 @@ Verifies a message signature using the account's public key.
 
 **Parameters:**
 - `message` (string): Original message
-- `signature` (string): Signature as hex string
+- `signature` (string): Signature as base64 string
 
 **Returns:** `Promise<boolean>` - True if signature is valid
 
@@ -319,9 +373,38 @@ account.dispose()
 | Property | Type | Description |
 |----------|------|-------------|
 | `index` | `number` | The derivation path's index of this account |
-| `path` | `string` | The full BIP-84 derivation path of this account |
+| `path` | `string` | The full derivation path of this account |
 | `keyPair` | `KeyPair` | The account's public and private key pair |
 
+
+## WalletAccountReadOnlyBtc
+
+Represents a read-only Bitcoin wallet account. Extends `WalletAccountReadOnly` from `@tetherto/wdk-wallet`.
+
+#### Constructor
+
+```javascript
+new WalletAccountReadOnlyBtc(address, config)
+```
+
+**Parameters:**
+- `address` (string): The account's Bitcoin address
+- `config` (object, optional): Configuration object (same as BtcWalletConfig but without `bip`)
+  - `client` (IElectrumClient, optional): Electrum client instance. If provided, host/port/protocol are ignored.
+  - `host` (string, optional): Electrum server hostname (default: "electrum.blockstream.info"). Ignored if client is provided.
+  - `port` (number, optional): Electrum server port (default: 50001). Ignored if client is provided.
+  - `protocol` (string, optional): Transport protocol - "tcp", "tls", or "ssl" (default: "tcp"). Ignored if client is provided.
+  - `network` (string, optional): "bitcoin", "testnet", or "regtest" (default: "bitcoin")
+
+### Methods
+
+| Method | Description | Returns |
+|--------|-------------|---------|
+| `getAddress()` | Returns the account's Bitcoin address | `Promise<string>` |
+| `getBalance()` | Returns the confirmed account balance in satoshis | `Promise<bigint>` |
+| `quoteSendTransaction(options)` | Estimates the fee for a transaction | `Promise<{fee: bigint}>` |
+| `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<BtcTransactionReceipt \| null>` |
+| `getMaxSpendable()` | Returns the maximum spendable amount | `Promise<BtcMaxSpendableResult>` |
 
 
 ## Types
@@ -330,8 +413,10 @@ account.dispose()
 
 ```typescript
 interface BtcTransaction {
-  to: string     // The transaction's recipient
-  value: number  // The amount of bitcoins to send to the recipient (in satoshis)
+  to: string                    // The transaction's recipient
+  value: number | bigint        // The amount of bitcoins to send to the recipient (in satoshis)
+  confirmationTarget?: number   // Optional confirmation target in blocks (default: 1)
+  feeRate?: number | bigint     // Optional fee rate in satoshis per virtual byte
 }
 ```
 
@@ -340,7 +425,7 @@ interface BtcTransaction {
 ```typescript
 interface TransactionResult {
   hash: string  // Transaction hash/ID
-  fee: number   // Transaction fee in satoshis
+  fee: bigint   // Transaction fee in satoshis
 }
 ```
 
@@ -348,8 +433,8 @@ interface TransactionResult {
 
 ```typescript
 interface FeeRates {
-  normal: number  // Standard fee rate (sat/vB) for ~1 hour confirmation
-  fast: number    // Higher fee rate (sat/vB) for faster confirmation
+  normal: bigint  // Standard fee rate (sat/vB) for ~1 hour confirmation
+  fast: bigint    // Higher fee rate (sat/vB) for faster confirmation
 }
 ```
 
@@ -361,10 +446,20 @@ interface BtcTransfer {
   address: string                     // The user's own address
   vout: number                        // The index of the output in the transaction
   height: number                      // The block height (if unconfirmed, 0)
-  value: number                       // The value of the transfer (in satoshis)
+  value: bigint                       // The value of the transfer (in satoshis)
   direction: 'incoming' | 'outgoing'  // The direction of the transfer
-  fee?: number                        // The fee paid for the full transaction (in satoshis)
+  fee?: bigint                        // The fee paid for the full transaction (in satoshis)
   recipient?: string                  // The receiving address for outgoing transfers
+}
+```
+
+### BtcMaxSpendableResult
+
+```typescript
+interface BtcMaxSpendableResult {
+  amount: bigint      // The maximum spendable amount in satoshis
+  fee: bigint         // The estimated network fee in satoshis
+  changeValue: bigint // The estimated change value in satoshis
 }
 ```
 
@@ -381,9 +476,55 @@ interface KeyPair {
 
 ```typescript
 interface BtcWalletConfig {
-  host?: string                              // Electrum server hostname (default: "electrum.blockstream.info")
-  port?: number                              // Electrum server port (default: 50001)
+  client?: IElectrumClient                    // Electrum client instance. If provided, host/port/protocol are ignored.
+  host?: string                               // Electrum server hostname (default: "electrum.blockstream.info")
+  port?: number                               // Electrum server port (default: 50001)
+  protocol?: 'tcp' | 'tls' | 'ssl'            // Transport protocol (default: "tcp")
   network?: 'bitcoin' | 'testnet' | 'regtest' // Network to use (default: "bitcoin")
+  bip?: 44 | 84                               // BIP address type - 44 (legacy) or 84 (native SegWit) (default: 84)
+}
+```
+
+### IElectrumClient
+
+Interface for implementing custom Electrum clients.
+```typescript
+interface IElectrumClient {
+  connect(): Promise<void>
+  close(): Promise<void>
+  reconnect(): Promise<void>
+  getBalance(scripthash: string): Promise<ElectrumBalance>
+  listUnspent(scripthash: string): Promise<ElectrumUtxo[]>
+  getHistory(scripthash: string): Promise<ElectrumHistoryItem[]>
+  getTransaction(txHash: string): Promise<string>
+  broadcast(rawTx: string): Promise<string>
+  estimateFee(blocks: number): Promise<number>
+}
+```
+
+### ElectrumBalance
+```typescript
+interface ElectrumBalance {
+  confirmed: number    // Confirmed balance in satoshis
+  unconfirmed?: number // Unconfirmed balance in satoshis
+}
+```
+
+### ElectrumUtxo
+```typescript
+interface ElectrumUtxo {
+  tx_hash: string  // The transaction hash containing this UTXO
+  tx_pos: number   // The output index within the transaction
+  value: number    // The UTXO value in satoshis
+  height?: number  // The block height (0 if unconfirmed)
+}
+```
+
+### ElectrumHistoryItem
+```typescript
+interface ElectrumHistoryItem {
+  tx_hash: string // The transaction hash
+  height: number  // The block height (0 or negative if unconfirmed)
 }
 ```
 

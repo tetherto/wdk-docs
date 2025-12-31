@@ -33,32 +33,37 @@ npm install @tetherto/wdk-wallet-btc
 
 1. **WalletManagerBtc**: Main class for managing Bitcoin wallets and multiple accounts
 2. **WalletAccountBtc**: Class for individual Bitcoin wallet accounts with full transaction capabilities
-
-**Note**: `ElectrumClient` is an internal class and not intended for direct use.
+3. **Transport Clients**: `ElectrumTcp`, `ElectrumTls`, `ElectrumSsl`, `ElectrumWs` for connecting to Electrum servers
+4. **IElectrumClient**: Interface for implementing custom Electrum clients
 
 ### Creating a New Wallet
 
 ```javascript
-import WalletManagerBtc, { WalletAccountBtc } from '@tetherto/wdk-wallet-btc'
+import WalletManagerBtc, { ElectrumTcp } from '@tetherto/wdk-wallet-btc'
 
 // Use a BIP-39 seed phrase (replace with your own secure phrase)
 const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
 
-// Create wallet manager with Electrum server config
+// Create Electrum client
+const client = new ElectrumTcp({
+  host: 'electrum.blockstream.info',
+  port: 50001
+})
+
+// Create wallet manager with client
 const wallet = new WalletManagerBtc(seedPhrase, {
-  host: 'electrum.blockstream.info', // Electrum server hostname
-  port: 50001, // Electrum server port (50001 for TCP, 50002 for SSL)
+  client,
   network: 'bitcoin' // 'bitcoin', 'testnet', or 'regtest'
 })
 
-// Get a full access account (uses BIP-84 derivation path)
+// Get a full access account (uses BIP-84 derivation path by default)
 const account = await wallet.getAccount(0)
 
 // Get the account's address (Native SegWit by default)
 const address = await account.getAddress()
 console.log('Account address:', address)
 ```
-**Note**: This implementation uses BIP-84 derivation paths and generates Native SegWit (bech32) addresses by default. The address type is determined by the BIP-84 standard, not by configuration.
+**Note**: This implementation uses BIP-84 derivation paths and generates Native SegWit (bech32) addresses by default. Set `bip: 44` in config for legacy (P2PKH) addresses.
 
 **Important Note about Electrum Servers**: 
 While the package defaults to `electrum.blockstream.info` if no host is specified, **we strongly recommend configuring your own Electrum server** for production use. Public servers like Blockstream's can be significantly slower (10-300x) and may fail when fetching transaction history for popular addresses with many transactions. For better performance, consider using alternative public servers like `fulcrum.frznode.com` for development, or set up your own Fulcrum server for production environments.
@@ -66,7 +71,7 @@ While the package defaults to `electrum.blockstream.info` if no host is specifie
 ### Managing Multiple Accounts
 
 ```javascript
-import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
+import WalletManagerBtc, { ElectrumTcp } from '@tetherto/wdk-wallet-btc'
 
 // Assume wallet is already created
 // Get the first account (index 0)
@@ -84,19 +89,17 @@ const customAccount = await wallet.getAccountByPath("0'/0/5")
 const customAddress = await customAccount.getAddress()
 console.log('Custom account address:', customAddress)
 
-// All addresses are Native SegWit (bech32) format
-// The wallet uses BIP-84 derivation paths and generates bech32 addresses only
-console.log('Address format: Native SegWit (bech32)')
+// All accounts inherit the client configuration from the wallet manager
 ```
 
-**Note**: This implementation generates Native SegWit (bech32) addresses only. Legacy and P2SH-wrapped SegWit address types are not supported. All accounts use BIP-84 derivation paths (m/84'/0'/account'/0/index).
+**Note**: This implementation generates Native SegWit (bech32) addresses by default using BIP-84 derivation paths (`m/84'/0'/account'/0/index`). Set `bip: 44` in config for legacy (P2PKH) addresses using BIP-44 derivation paths.
 
 ### Checking Balances
 
 #### Account Balance
 
 ```javascript
-import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
+import WalletManagerBtc, { ElectrumTcp } from '@tetherto/wdk-wallet-btc'
 
 // Assume wallet and account are already created
 // Get confirmed balance (returns confirmed balance only)
@@ -137,7 +140,7 @@ console.log('Outgoing transfers:', outgoingTransfers)
 // Send Bitcoin (amount in satoshis)
 const result = await account.sendTransaction({
   to: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-  value: 100000 // 0.001 BTC
+  value: 100000n // 0.001 BTC
 })
 console.log('Transaction hash:', result.hash)
 console.log('Transaction fee:', result.fee, 'satoshis')
@@ -145,23 +148,30 @@ console.log('Transaction fee:', result.fee, 'satoshis')
 // Get transaction fee estimate before sending
 const quote = await account.quoteSendTransaction({
   to: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-  value: 100000
+  value: 100000n
 })
 console.log('Estimated fee:', quote.fee, 'satoshis')
 
-// Example with different amounts
-const smallTxQuote = await account.quoteSendTransaction({
+// Send with custom fee rate (overrides automatic fee estimation)
+const resultWithFeeRate = await account.sendTransaction({
   to: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-  value: 10000 // 0.0001 BTC
+  value: 100000n,
+  feeRate: 10n // sat/vB - when provided, confirmationTarget is ignored
 })
-console.log('Small transaction fee:', smallTxQuote.fee, 'satoshis')
+
+// Send with confirmation target (uses automatic fee estimation)
+const resultWithTarget = await account.sendTransaction({
+  to: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+  value: 100000n,
+  confirmationTarget: 6 // target 6 blocks (~1 hour) for fee estimation
+})
 ```
 
 **Important Notes:**
 - Bitcoin transactions support **single recipient only**
 - Amounts and fees are always in **satoshis** (1 BTC = 100,000,000 satoshis)
-- Minimum amount must be above dust limit (546 satoshis)
-- Fee rates are calculated automatically based on network conditions
+- Minimum amount must be above dust limit (294 satoshis for SegWit, 546 for legacy)
+- Fee rates are calculated automatically based on network conditions if not provided
 
 ### Message Signing and Verification
 
@@ -169,7 +179,7 @@ console.log('Small transaction fee:', smallTxQuote.fee, 'satoshis')
 // Sign a message
 const message = 'Hello, Bitcoin!'
 const signature = await account.sign(message)
-console.log('Signature:', signature) // Returns hex string
+console.log('Signature:', signature) // Returns base64 string
 
 // Verify a signature
 const isValid = await account.verify(message, signature)
@@ -181,11 +191,6 @@ const signature2 = await account.sign(message2)
 const isValid2 = await account.verify(message2, signature2)
 console.log('Second signature valid:', isValid2)
 ```
-
-**Important Notes:**
-- Messages are hashed with SHA256 before signing
-- Signatures are returned as hex strings
-- Both `sign()` and `verify()` methods are synchronous but marked as async
 
 ### Getting Transaction History
 
@@ -247,9 +252,9 @@ console.log('Fee rates are used automatically in sendTransaction() and quoteSend
 ```
 
 **Important Notes:**
-- Fee rates are fetched from mempool.space API
-- Returns only `normal` and `fast` fee rates
-- Fee selection is automatic based on current network conditions
+- `getFeeRates()` fetches from mempool.space API (returns `normal` and `fast` rates)
+- `sendTransaction()`/`quoteSendTransaction()` without `feeRate` uses the Electrum server's `estimateFee()` method
+- These are different fee sources - use `getFeeRates()` for display, but transactions estimate fees directly from the connected Electrum server
 - Actual fees depend on transaction size (inputs/outputs) and UTXO selection
 
 ### Memory Management
@@ -277,16 +282,21 @@ console.log('All wallet accounts disposed')
 ### Complete Bitcoin Wallet Setup
 
 ```javascript
-import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
+import WalletManagerBtc, { ElectrumTcp } from '@tetherto/wdk-wallet-btc'
 
 async function setupBitcoinWallet() {
   // Use a BIP-39 seed phrase (replace with your own secure phrase)
   const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
 
+  // Create Electrum client (better performance than default)
+  const client = new ElectrumTcp({
+    host: 'fulcrum.frznode.com',
+    port: 50001
+  })
+
   // Create Bitcoin wallet manager with recommended configuration
   const wallet = new WalletManagerBtc(seedPhrase, {
-    host: 'fulcrum.frznode.com', // Better performance than default
-    port: 50001,
+    client,
     network: 'bitcoin' // 'bitcoin', 'testnet', or 'regtest'
   })
   
@@ -298,11 +308,11 @@ async function setupBitcoinWallet() {
   // Check confirmed balance
   const balance = await account.getBalance()
   console.log('Balance:', balance, 'satoshis')
-  console.log('Balance:', balance / 100000000, 'BTC')
+  console.log('Balance:', Number(balance) / 100000000, 'BTC')
   
   // Get current fee rates
   const feeRates = await wallet.getFeeRates()
-  console.log('Current fee rates:', feeRates) // { normal: X, fast: Y } sat/vB
+  console.log('Current fee rates:', feeRates) // { normal: bigint, fast: bigint } sat/vB
   
   return { wallet, account, address, balance, feeRates }
 }
@@ -323,6 +333,8 @@ async function safeWalletSetup() {
 ### Multi-Account Management
 
 ```javascript
+import WalletManagerBtc, { ElectrumTcp } from '@tetherto/wdk-wallet-btc'
+
 async function manageMultipleAccounts(wallet) {
   const accounts = []
   
@@ -336,8 +348,8 @@ async function manageMultipleAccounts(wallet) {
       accounts.push({
         index: i,
         address,
-        balance: balance, // Keep in satoshis
-        balanceBTC: balance / 100000000, // Convert to BTC for display
+        balance: balance, // Keep in satoshis (bigint)
+        balanceBTC: Number(balance) / 100000000, // Convert to BTC for display
         derivationPath: `m/84'/0'/0'/0/${i}` // BIP-84 path
       })
     } catch (error) {
@@ -355,7 +367,7 @@ async function manageMultipleAccounts(wallet) {
       index: 'custom',
       address: customAddress,
       balance: customBalance,
-      balanceBTC: customBalance / 100000000,
+      balanceBTC: Number(customBalance) / 100000000,
       derivationPath: `m/84'/0'/0'/0/10`
     })
   } catch (error) {
@@ -380,17 +392,17 @@ async function analyzeTransactionHistory(account) {
     // Calculate total received
     const totalReceived = allTransfers
       .filter(t => t.direction === 'incoming')
-      .reduce((sum, t) => sum + t.value, 0)
+      .reduce((sum, t) => sum + t.value, 0n)
     
     // Calculate total sent
     const totalSent = allTransfers
       .filter(t => t.direction === 'outgoing')
-      .reduce((sum, t) => sum + t.value, 0)
+      .reduce((sum, t) => sum + t.value, 0n)
     
     // Calculate total fees (only for outgoing transactions)
     const totalFees = allTransfers
       .filter(t => t.direction === 'outgoing' && t.fee)
-      .reduce((sum, t) => sum + (t.fee || 0), 0)
+      .reduce((sum, t) => sum + (t.fee || 0n), 0n)
     
     // Count confirmed vs unconfirmed transactions
     const confirmedTxs = allTransfers.filter(t => t.height > 0).length
@@ -401,16 +413,16 @@ async function analyzeTransactionHistory(account) {
       txid: t.txid,
       direction: t.direction,
       value: t.value,
-      valueBTC: t.value / 100000000,
+      valueBTC: Number(t.value) / 100000000,
       confirmed: t.height > 0,
       blockHeight: t.height
     }))
     
     return {
-      totalReceived: totalReceived / 100000000, // BTC
-      totalSent: totalSent / 100000000,         // BTC
-      totalFees: totalFees / 100000000,         // BTC
-      netBalance: (totalReceived - totalSent) / 100000000, // BTC
+      totalReceived: Number(totalReceived) / 100000000, // BTC
+      totalSent: Number(totalSent) / 100000000,         // BTC
+      totalFees: Number(totalFees) / 100000000,         // BTC
+      netBalance: Number(totalReceived - totalSent) / 100000000, // BTC
       transactionCount: allTransfers.length,
       confirmedTransactions: confirmedTxs,
       unconfirmedTransactions: unconfirmedTxs,
@@ -429,8 +441,9 @@ async function analyzeTransactionHistory(account) {
 async function sendWithOptimalFee(wallet, account, recipient, amount) {
   try {
     // Validate amount (must be above dust limit)
-    if (amount <= 546) {
-      throw new Error(`Amount must be above dust limit (546 satoshis). Provided: ${amount}`)
+    const dustLimit = 294n // SegWit dust limit
+    if (amount <= dustLimit) {
+      throw new Error(`Amount must be above dust limit (${dustLimit} satoshis). Provided: ${amount}`)
     }
     
     // Get current fee rates from mempool.space
@@ -446,7 +459,6 @@ async function sendWithOptimalFee(wallet, account, recipient, amount) {
     })
     
     console.log(`Estimated fee: ${quote.fee} satoshis`)
-    console.log(`Fee rate: ~${(quote.fee / 250).toFixed(1)} sat/vB`) // Rough estimate
     
     // Check if we have sufficient balance
     const balance = await account.getBalance()
@@ -484,6 +496,8 @@ async function sendWithOptimalFee(wallet, account, recipient, amount) {
 ### Comprehensive Error Handling
 
 ```javascript
+import WalletManagerBtc, { ElectrumTcp } from '@tetherto/wdk-wallet-btc'
+
 async function robustBitcoinOperations(wallet, account) {
   try {
     // Test balance retrieval
@@ -492,7 +506,7 @@ async function robustBitcoinOperations(wallet, account) {
     
     // Test transaction with proper error handling
     const recipient = 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'
-    const amount = 100000 // 0.001 BTC
+    const amount = 100000n // 0.001 BTC
     
     try {
       const result = await account.sendTransaction({
@@ -507,7 +521,7 @@ async function robustBitcoinOperations(wallet, account) {
         console.log('Error: Not enough funds in wallet')
         console.log(`Required: ${amount} satoshis, Available: ${balance} satoshis`)
       } else if (txError.message.includes('dust limit')) {
-        console.log('Error: Amount is below minimum dust limit (546 satoshis)')
+        console.log('Error: Amount is below minimum dust limit')
       } else if (txError.message.includes('Invalid address')) {
         console.log('Error: Recipient address is invalid')
       } else {
@@ -543,9 +557,14 @@ async function completeWalletWorkflow() {
   try {
     // Setup
     const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
-    wallet = new WalletManagerBtc(seedPhrase, {
+    
+    const client = new ElectrumTcp({
       host: 'fulcrum.frznode.com',
-      port: 50001,
+      port: 50001
+    })
+    
+    wallet = new WalletManagerBtc(seedPhrase, {
+      client,
       network: 'bitcoin'
     })
     
@@ -638,5 +657,3 @@ async function completeWalletWorkflow() {
 ### Need Help?
 
 {% include "../../../.gitbook/includes/support-cards.md" %}
-
-
