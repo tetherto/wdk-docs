@@ -23,13 +23,17 @@ layout:
 ## Wallet Configuration
 
 ```javascript
-const config = {
-  host: 'electrum.blockstream.info', // Electrum server hostname
-  port: 50001,                       // Electrum server port
-  network: 'bitcoin'                 // Network: 'bitcoin', 'testnet', or 'regtest'
-}
+import WalletManagerBtc, { ElectrumTcp } from '@tetherto/wdk-wallet-btc'
 
-const wallet = new WalletManagerBtc(seedPhrase, config)
+const client = new ElectrumTcp({
+  host: 'electrum.blockstream.info',
+  port: 50001
+})
+
+const wallet = new WalletManagerBtc(seedPhrase, {
+  client,
+  network: 'bitcoin'
+})
 ```
 
 ## Account Creation
@@ -43,9 +47,68 @@ const customAccount = await wallet.getAccountByPath("0'/0/5") // Custom path
 
 ## Configuration Options
 
+### Client
+
+The `client` option specifies an Electrum client instance to use for blockchain data. When provided, the `host`, `port`, and `protocol` options are ignored.
+
+**Type:** `IElectrumClient`
+
+**Default:** None (falls back to host/port/protocol configuration)
+
+**Example:**
+```javascript
+import { ElectrumTcp } from '@tetherto/wdk-wallet-btc'
+
+const config = {
+  client: new ElectrumTcp({ host: 'fulcrum.frznode.com', port: 50001 })
+}
+```
+
+#### Built-in Transport Clients
+
+The package provides four built-in transport clients:
+
+```javascript
+import { 
+  ElectrumTcp,   // TCP transport (default, port 50001)
+  ElectrumTls,   // TLS transport (port 50002)
+  ElectrumSsl,   // SSL transport (port 50002)
+  ElectrumWs     // WebSocket transport (port 50003)
+} from '@tetherto/wdk-wallet-btc'
+
+// TCP (default)
+const tcpClient = new ElectrumTcp({ host: 'electrum.blockstream.info', port: 50001 })
+
+// TLS
+const tlsClient = new ElectrumTls({ host: 'electrum.blockstream.info', port: 50002 })
+
+// SSL
+const sslClient = new ElectrumSsl({ host: 'electrum.blockstream.info', port: 50002 })
+
+// WebSocket
+const wsClient = new ElectrumWs({ host: 'electrum.blockstream.info', port: 50003 })
+```
+
+#### Custom Electrum Client
+
+You can implement your own client by extending `IElectrumClient`:
+
+```javascript
+import { IElectrumClient } from '@tetherto/wdk-wallet-btc'
+
+class MyCustomElectrumClient implements IElectrumClient {
+  // Implement the required interface methods
+}
+
+const wallet = new WalletManagerBtc(seedPhrase, {
+  client: new MyCustomElectrumClient(params),
+  network: 'bitcoin'
+})
+```
+
 ### Host
 
-The `host` option specifies the Electrum server hostname to connect to for blockchain data.
+The `host` option specifies the Electrum server hostname to connect to for blockchain data. Ignored if `client` is provided.
 
 **Type:** `string`
 
@@ -62,7 +125,7 @@ const config = {
 
 ### Port
 
-The `port` option specifies the Electrum server port to connect to.
+The `port` option specifies the Electrum server port to connect to. Ignored if `client` is provided.
 
 **Type:** `number`
 
@@ -70,12 +133,35 @@ The `port` option specifies the Electrum server port to connect to.
 
 **Common Ports:**
 - `50001` - TCP (default)
-- `50002` - SSL (configure separately if needed)
+- `50002` - TLS/SSL
+- `50003` - WebSocket
 
 **Example:**
 ```javascript
 const config = {
   port: 50001
+}
+```
+
+### Protocol
+
+The `protocol` option specifies the transport protocol to use. Ignored if `client` is provided.
+
+**Type:** `string`
+
+**Values:**
+- `"tcp"` - TCP transport (default)
+- `"tls"` - TLS transport
+- `"ssl"` - SSL transport
+
+**Default:** `"tcp"`
+
+**Example:**
+```javascript
+const config = {
+  host: 'electrum.blockstream.info',
+  port: 50002,
+  protocol: 'tls'
 }
 ```
 
@@ -99,6 +185,26 @@ const config = {
 }
 ```
 
+### BIP
+
+The `bip` option specifies the address type derivation standard to use.
+
+**Type:** `number`
+
+**Values:**
+- `84` - [BIP-84](../../../resources/concepts.md#bip-84-native-segwit) (P2WPKH / Native SegWit) - addresses start with `bc1` (mainnet) or `tb1` (testnet)
+- `44` - [BIP-44](../../../resources/concepts.md#bip-44-legacy) (P2PKH / Legacy) - addresses start with `1` (mainnet) or `m`/`n` (testnet)
+
+**Default:** `84`
+
+**Example:**
+```javascript
+// Use legacy addresses
+const config = {
+  bip: 44
+}
+```
+
 ## Electrum Server Configuration
 
 **Important**: While the package defaults to `electrum.blockstream.info:50001` for convenience, **we strongly recommend configuring your own Electrum server** for production use.
@@ -116,19 +222,29 @@ const config = {
 ### Configuration Examples
 
 ```javascript
+import { ElectrumTcp, ElectrumTls } from '@tetherto/wdk-wallet-btc'
+
 // Production with custom Fulcrum server
-const productionConfig = {
+const productionClient = new ElectrumTls({
   host: 'your-fulcrum-server.com',
-  port: 50001,
+  port: 50002
+})
+
+const productionWallet = new WalletManagerBtc(seedPhrase, {
+  client: productionClient,
   network: 'bitcoin'
-}
+})
 
 // Development with alternative public server
-const developmentConfig = {
+const developmentClient = new ElectrumTcp({
   host: 'fulcrum.frznode.com',
-  port: 50001,
+  port: 50001
+})
+
+const developmentWallet = new WalletManagerBtc(seedPhrase, {
+  client: developmentClient,
   network: 'bitcoin'
-}
+})
 ```
 
 ### Network-Specific Configuration
@@ -136,43 +252,68 @@ const developmentConfig = {
 #### Bitcoin Mainnet
 
 ```javascript
-const mainnetConfig = {
+import { ElectrumTcp } from '@tetherto/wdk-wallet-btc'
+
+const client = new ElectrumTcp({
   host: 'electrum.blockstream.info', // Or your own server
-  port: 50001,
+  port: 50001
+})
+
+const wallet = new WalletManagerBtc(seedPhrase, {
+  client,
   network: 'bitcoin'
-}
+})
 ```
 
 #### Bitcoin Testnet
 
 ```javascript
-const testnetConfig = {
+import { ElectrumTcp } from '@tetherto/wdk-wallet-btc'
+
+const client = new ElectrumTcp({
   host: 'testnet.hsmiths.com', // Example testnet server
-  port: 53011,
+  port: 53011
+})
+
+const wallet = new WalletManagerBtc(seedPhrase, {
+  client,
   network: 'testnet'
-}
+})
 ```
 
 #### Bitcoin Regtest
 
 ```javascript
-const regtestConfig = {
+import { ElectrumTcp } from '@tetherto/wdk-wallet-btc'
+
+const client = new ElectrumTcp({
   host: 'localhost', // Local regtest node
-  port: 50001,
+  port: 50001
+})
+
+const wallet = new WalletManagerBtc(seedPhrase, {
+  client,
   network: 'regtest'
-}
+})
 ```
 
-## BIP-84 Derivation Paths
+## Derivation Paths
 
-Bitcoin uses [BIP-84](../../../resources/concepts.md#bip-84-native-segwit) standard derivation paths for Native SegWit addresses:
+Bitcoin wallet addresses are derived using BIP-32 hierarchical deterministic paths:
 
-- `m/84'/0'/0'/0/0` for account 0, address 0
-- `m/84'/0'/0'/0/1` for account 0, address 1
-- `m/84'/0'/1'/0/0` for account 1, address 0
-- etc.
+### BIP-84 (Native SegWit) - Default
 
-**Note:** Only Native SegWit (P2WPKH) addresses are supported, starting with 'bc1' (mainnet) or 'tb1' (testnet).
+- `m/84'/0'/0'/0/0` for mainnet account 0, address 0
+- `m/84'/1'/0'/0/0` for testnet/regtest account 0, address 0
+
+Addresses start with `bc1` (mainnet) or `tb1` (testnet).
+
+### BIP-44 (Legacy)
+
+- `m/44'/0'/0'/0/0` for mainnet account 0, address 0
+- `m/44'/1'/0'/0/0` for testnet/regtest account 0, address 0
+
+Addresses start with `1` (mainnet) or `m`/`n` (testnet).
 
 {% hint style="warning" %}
 **Default Derivation Path Change in v1.0.0-beta.4+**
@@ -191,13 +332,19 @@ Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) to supply an e
 ## Complete Configuration Example
 
 ```javascript
-import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
+import WalletManagerBtc, { ElectrumTls } from '@tetherto/wdk-wallet-btc'
+
+// Create Electrum client
+const client = new ElectrumTls({
+  host: 'your-electrum-server.com', // Replace with your server
+  port: 50002
+})
 
 // Create wallet manager with configuration
 const wallet = new WalletManagerBtc(seedPhrase, {
-  host: 'your-electrum-server.com', // Replace with your server
-  port: 50001,
-  network: 'bitcoin'
+  client,
+  network: 'bitcoin',
+  bip: 84 // Native SegWit (default)
 })
 
 // Get accounts (inherit configuration from manager)
