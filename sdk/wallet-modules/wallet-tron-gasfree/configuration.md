@@ -20,6 +20,14 @@ layout:
 
 # Configuration
 
+## Network & Service Providers
+
+| Service | Provider | URL (Mainnet) | URL (Testnet) |
+| :--- | :--- | :--- | :--- |
+| **RPC Provider** | TronGrid | `https://api.trongrid.io` | `https://nile.trongrid.io` |
+| **Gas-Free Service** | GasFree.io | `https://api.gasfree.io` | `https://open-test.gasfree.io/nile/` |
+
+
 ## Wallet Configuration
 
 ```javascript
@@ -31,7 +39,7 @@ const config = {
   // Required parameters
   chainId: '728126428', // Blockchain ID
   provider: 'https://api.trongrid.io', // Tron RPC endpoint
-  gasFreeProvider: 'https://api.gasfree.com', // Gas-free service URL
+  gasFreeProvider: 'https://api.gasfree.io', // Gas-free service URL
   gasFreeApiKey: 'your-api-key', // Gas-free API key
   gasFreeApiSecret: 'your-api-secret', // Gas-free API secret
   serviceProvider: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH', // Service provider address
@@ -48,7 +56,7 @@ const tronWeb = new TronWeb({ fullHost: 'https://api.trongrid.io' })
 const config2 = {
   chainId: '728126428',
   provider: tronWeb,
-  gasFreeProvider: 'https://api.gasfree.com',
+  gasFreeProvider: 'https://api.gasfree.io',
   gasFreeApiKey: 'your-api-key',
   gasFreeApiSecret: 'your-api-secret',
   serviceProvider: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
@@ -70,7 +78,7 @@ const account = new WalletAccountTronGasfree(
   {
     chainId: '728126428',
     provider: 'https://api.trongrid.io',
-    gasFreeProvider: 'https://api.gasfree.com',
+    gasFreeProvider: 'https://api.gasfree.io',
     gasFreeApiKey: 'your-api-key',
     gasFreeApiSecret: 'your-api-secret',
     serviceProvider: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
@@ -85,7 +93,7 @@ const readOnlyAccount = new WalletAccountReadOnlyTronGasfree(
   {
     chainId: '728126428',
     provider: 'https://api.trongrid.io',
-    gasFreeProvider: 'https://api.gasfree.com',
+    gasFreeProvider: 'https://api.gasfree.io',
     gasFreeApiKey: 'your-api-key',
     gasFreeApiSecret: 'your-api-secret',
     serviceProvider: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
@@ -141,7 +149,7 @@ The `gasFreeProvider` option specifies the URL of the gas-free service.
 **Example:**
 ```javascript
 const config = {
-  gasFreeProvider: 'https://api.gasfree.com'
+  gasFreeProvider: 'https://api.gasfree.io'
 }
 ```
 
@@ -239,7 +247,7 @@ try {
 const mainnetConfig = {
   chainId: '728126428',
   provider: 'https://api.trongrid.io',
-  gasFreeProvider: 'https://api.gasfree.com',
+  gasFreeProvider: 'https://api.gasfree.io',
   gasFreeApiKey: 'your-api-key',
   gasFreeApiSecret: 'your-api-secret',
   serviceProvider: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
@@ -253,11 +261,11 @@ const mainnetConfig = {
 const nileConfig = {
   chainId: '3448148', // Nile Testnet
   provider: 'https://nile.trongrid.io',
-  gasFreeProvider: 'https://testnet.gasfree.com',
+  gasFreeProvider: 'https://open-test.gasfree.io/nile/', // Updated
   gasFreeApiKey: 'your-testnet-api-key',
   gasFreeApiSecret: 'your-testnet-api-secret',
   serviceProvider: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
-  verifyingContract: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH'
+  verifyingContract: 'THQGuFzL87ZqhxkgqYEryRAd7gqFqL5rdc' // Official Testnet Contract
 }
 ```
 
