@@ -84,7 +84,8 @@ const address2 = await account2.getAddress()
 console.log('Account 2 address:', address2)
 
 // Note: All accounts use BIP-44 derivation paths with pattern:
-// m/44'/998'/0'/0/{index} where 998 is the coin type for Liquid Bitcoin
+// m/44'/998'/{networkNumber}'/0/{index} where 998 is the coin type for Spark
+// and networkNumber is 0 for MAINNET, 1 for TESTNET, 2 for SIGNET, or 3 for REGTEST
 ```
 
 **Important Note**: Custom derivation paths via `getAccountByPath()` are not supported on the Spark blockchain. Only indexed accounts using the standard BIP-44 pattern are available.
@@ -186,7 +187,7 @@ wallet.dispose()
 ```javascript
 // Create a Lightning Network invoice for receiving payments
 const invoice = await account.createLightningInvoice({
-  value: 50000, // 0.0005 BTC
+  amountSats: 50000, // 0.0005 BTC
   memo: 'Payment for services'
 })
 console.log('Lightning invoice:', invoice.invoice) // BOLT11 encoded invoice
@@ -194,16 +195,23 @@ console.log('Lightning invoice:', invoice.invoice) // BOLT11 encoded invoice
 
 // Pay a Lightning invoice
 const payment = await account.payLightningInvoice({
-  invoice: 'lnbc500u1p...', // BOLT11 encoded invoice
+  encodedInvoice: 'lnbc500u1p...', // BOLT11 encoded invoice
   maxFeeSats: 1000 // Maximum fee willing to pay
 })
 console.log('Payment result:', payment)
 
 // Get Lightning payment fee estimate
-const feeEstimate = await account.getLightningSendFeeEstimate({
-  invoice: 'lnbc500u1p...'
+// Note: getLightningSendFeeEstimate() has been renamed to quotePayLightningInvoice()
+const feeEstimate = await account.quotePayLightningInvoice({
+  encodedInvoice: 'lnbc500u1p...'
 })
-console.log('Fee estimate:', feeEstimate, 'satoshis')
+console.log('Fee estimate:', Number(feeEstimate), 'satoshis')
+
+// Get Lightning send request by ID (new in v1.0.0-beta.6)
+const sendRequest = await account.getLightningSendRequest(payment.id)
+if (sendRequest) {
+  console.log('Payment status:', sendRequest.status)
+}
 ```
 
 ### Bitcoin Layer 1 Bridge
@@ -214,22 +222,102 @@ console.log('Fee estimate:', feeEstimate, 'satoshis')
 const depositAddress = await account.getStaticDepositAddress()
 console.log('Deposit address:', depositAddress)
 
-// Check if a deposit has been confirmed
-const utxos = await account.getUtxosForDepositAddress(depositAddress)
-if (utxos) {
-  console.log('Deposit confirmed:', utxos)
-  
-  // Claim the deposit to your Spark wallet
-  const walletLeaves = await account.claimStaticDeposit(utxos[utxos.length - 1])
-  console.log('Deposit claimed:', walletLeaves)
-}
+// After sending Bitcoin to the deposit address, claim the deposit using the transaction ID
+const txId = 'your_bitcoin_transaction_id'
+const walletLeaves = await account.claimStaticDeposit(txId)
+console.log('Deposit claimed:', walletLeaves)
+
+// Get withdrawal fee quote first (recommended)
+const feeQuote = await account.quoteWithdraw({
+  withdrawalAddress: 'bc1...',
+  amountSats: 100000 // 0.001 BTC
+})
+console.log('Withdrawal fee quote:', feeQuote)
 
 // Withdraw Bitcoin from Spark to layer 1
+// Note: withdraw() now uses onchainAddress and amountSats parameters
 const withdrawal = await account.withdraw({
-  to: 'bc1...',
-  value: 100000 // 0.001 BTC
+  onchainAddress: 'bc1...',
+  amountSats: 100000 // 0.001 BTC
 })
 console.log('Withdrawal request:', withdrawal)
+```
+
+### Spark Invoices
+
+Spark invoices allow you to create invoices for receiving payments directly on the Spark network (not Lightning).
+
+```javascript
+// Create a Spark invoice for receiving sats
+const satsInvoice = await account.createSparkSatsInvoice({
+  amount: 100000, // 0.001 BTC
+  memo: 'Payment for services',
+  expiryTime: new Date(Date.now() + 3600000) // 1 hour from now
+})
+console.log('Spark sats invoice:', satsInvoice)
+
+// Create a Spark invoice for receiving tokens
+const tokenInvoice = await account.createSparkTokensInvoice({
+  tokenIdentifier: 'btkn1...',
+  amount: BigInt(1000),
+  memo: 'Token payment'
+})
+console.log('Spark token invoice:', tokenInvoice)
+
+// Pay a Spark invoice
+const paymentResult = await account.paySparkInvoice([
+  {
+    invoice: satsInvoice,
+    amount: BigInt(100000)
+  }
+])
+console.log('Payment result:', paymentResult)
+
+// Query Spark invoice status
+const invoiceStatus = await account.getSparkInvoices([
+  satsInvoice,
+  tokenInvoice
+])
+console.log('Invoice statuses:', invoiceStatus)
+```
+
+### Token Transfers
+
+```javascript
+// Transfer tokens to another address
+const transferResult = await account.transfer({
+  token: 'btkn1...', // Token identifier (Bech32m format)
+  amount: BigInt(1000000), // Amount of tokens
+  recipient: 'spark1...' // Recipient Spark address
+})
+console.log('Token transfer hash:', transferResult.hash)
+console.log('Transfer fee:', Number(transferResult.fee)) // Always 0
+```
+
+### Additional Deposit Methods
+
+```javascript
+// Get unused deposit addresses
+const unusedAddresses = await account.getUnusedDepositAddresses()
+console.log('Unused deposit addresses:', unusedAddresses)
+
+// Get static deposit address (reusable)
+const staticAddress = await account.getStaticDepositAddress()
+console.log('Static deposit address:', staticAddress)
+
+// Claim a static deposit
+const staticLeaves = await account.claimStaticDeposit('bitcoin_tx_id...')
+console.log('Claimed static deposit:', staticLeaves)
+
+// Refund a static deposit
+const refundTx = await account.refundStaticDeposit({
+  depositTransactionId: 'txid...',
+  outputIndex: 0,
+  destinationAddress: 'bc1q...',
+  satsPerVbyteFee: 10
+})
+console.log('Refund transaction (hex):', refundTx)
+// Note: This transaction needs to be broadcast to the Bitcoin network
 ```
 
 ## Complete Examples
@@ -267,14 +355,14 @@ async function setupSparkWallet() {
 async function lightningPaymentFlow(account) {
   // Create an invoice to receive payment
   const invoice = await account.createLightningInvoice({
-    value: 100000, // 0.001 BTC
+    amountSats: 100000, // 0.001 BTC
     memo: 'Payment for coffee'
   })
-  console.log('Invoice created:', invoice.invoice) // Corrected property name
-  
+  console.log('Invoice created:', invoice.invoice)
+
   // Later, pay an invoice
   const payment = await account.payLightningInvoice({
-    invoice: 'lnbc1000u1p...',
+    encodedInvoice: 'lnbc1000u1p...',
     maxFeeSats: 500
   })
   console.log('Payment sent:', payment)
@@ -283,23 +371,27 @@ async function lightningPaymentFlow(account) {
 ### Bitcoin Layer 1 Bridge
 
 ```javascript
-async function bitcoinBridgeFlow(account) {
+async function bitcoinBridgeFlow(account, txId) {
   // Generate deposit address
   const depositAddress = await account.getStaticDepositAddress()
   console.log('Send Bitcoin to:', depositAddress)
-  
-  // Check for deposits
-  const txId = await account.getUtxosForDepositAddress(depositAddress)
-  if (txId) {
-    // Claim the deposit
-    const walletLeaves = await account.claimStaticDeposit(txId)
-    console.log('Deposit claimed:', walletLeaves)
-  }
-  
+
+  // Claim the deposit using the Bitcoin transaction ID
+  const walletLeaves = await account.claimStaticDeposit(txId)
+  console.log('Deposit claimed:', walletLeaves)
+
+  // Get withdrawal fee quote
+  const feeQuote = await account.quoteWithdraw({
+    withdrawalAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+    amountSats: 50000 // 0.0005 BTC
+  })
+  console.log('Withdrawal fee quote:', feeQuote)
+
   // Withdraw to Bitcoin layer 1
+  // Note: withdraw() now uses onchainAddress and amountSats parameters
   const withdrawal = await account.withdraw({
-    to: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-    value: 50000 // 0.0005 BTC
+    onchainAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+    amountSats: 50000 // 0.0005 BTC
   })
   console.log('Withdrawal initiated:', withdrawal)
 }
@@ -373,7 +465,7 @@ async function robustSparkWalletOperations(wallet) {
     // Safe Lightning invoice creation
     try {
       const invoice = await account.createLightningInvoice({
-        value: 1000,
+        amountSats: 1000,
         memo: 'Test payment'
       })
       console.log('Invoice created successfully')

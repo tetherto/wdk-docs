@@ -40,7 +40,6 @@ The WDK Indexer currently supports the following blockchain networks and tokens:
 | Sepolia | USDt |
 | Plasma | USDt |
 | Polygon | USDt |
-| Solana | USDt |
 | Bitcoin | BTC |
 | Spark | BTC |
 

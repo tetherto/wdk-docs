@@ -49,7 +49,7 @@ Here's a quick example of how to query a token balance.
 {% tab title="curl" %}
 {% code lineNumbers="true" %}
 ```bash
-curl -X GET "https://wdk-api.tether.io/api/v1/ethereum/usdt/0x742d35cc.../token-balances" \
+curl -X GET "https://wdk-api.tether.io/api/v1/ethereum/usdt/0xdac17f958d2ee523a2206206994597c13d831ec7/token-balances" \
      -H "x-api-key: your-api-key-here"
 ```
 {% endcode %}
@@ -73,7 +73,7 @@ async function getTokenBalance(blockchain, token, address) {
   return response.data.tokenBalance;
 }
 
-const balance = await getTokenBalance('ethereum', 'usdt', '0x742d35cc...');
+const balance = await getTokenBalance('ethereum', 'usdt', '0xdac17f958d2ee523a2206206994597c13d831ec7');
 console.log(`Balance: ${balance.amount} ${balance.token.toUpperCase()}`);
 ```
 {% endcode %}
