@@ -25,8 +25,9 @@ layout:
 | Service | Provider | URL (Mainnet) | URL (Testnet) |
 | :--- | :--- | :--- | :--- |
 | **RPC Provider** | TronGrid | `https://api.trongrid.io` | `https://nile.trongrid.io` |
-| **Gas-Free Service** | GasFree.io | `https://api.gasfree.io` | `https://open-test.gasfree.io/nile/` |
+| **Gas-Free Service** | GasFree.io | `https://open.gasfree.io/tron/` | `https://open-test.gasfree.io/nile/` |
 
+> **Note:** For the latest connection parameters and contract addresses, please refer to the official [GasFree Specification](https://gasfree.io/specification?lang=en-US).
 
 ## Wallet Configuration
 
@@ -39,7 +40,7 @@ const config = {
   // Required parameters
   chainId: '728126428', // Blockchain ID
   provider: 'https://api.trongrid.io', // Tron RPC endpoint
-  gasFreeProvider: 'https://api.gasfree.io', // Gas-free service URL
+  gasFreeProvider: 'https://open.gasfree.io/tron/', // Gas-free service URL
   gasFreeApiKey: 'your-api-key', // Gas-free API key
   gasFreeApiSecret: 'your-api-secret', // Gas-free API secret
   serviceProvider: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH', // Service provider address
@@ -56,7 +57,7 @@ const tronWeb = new TronWeb({ fullHost: 'https://api.trongrid.io' })
 const config2 = {
   chainId: '728126428',
   provider: tronWeb,
-  gasFreeProvider: 'https://api.gasfree.io',
+  gasFreeProvider: 'https://open.gasfree.io/tron/',
   gasFreeApiKey: 'your-api-key',
   gasFreeApiSecret: 'your-api-secret',
   serviceProvider: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
@@ -78,7 +79,7 @@ const account = new WalletAccountTronGasfree(
   {
     chainId: '728126428',
     provider: 'https://api.trongrid.io',
-    gasFreeProvider: 'https://api.gasfree.io',
+    gasFreeProvider: 'https://open.gasfree.io/tron/',
     gasFreeApiKey: 'your-api-key',
     gasFreeApiSecret: 'your-api-secret',
     serviceProvider: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
@@ -93,13 +94,14 @@ const readOnlyAccount = new WalletAccountReadOnlyTronGasfree(
   {
     chainId: '728126428',
     provider: 'https://api.trongrid.io',
-    gasFreeProvider: 'https://api.gasfree.io',
+    gasFreeProvider: 'https://open.gasfree.io/tron/',
     gasFreeApiKey: 'your-api-key',
     gasFreeApiSecret: 'your-api-secret',
     serviceProvider: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
     verifyingContract: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH'
   }
 )
+
 ```
 
 ## Configuration Options
@@ -108,10 +110,12 @@ const readOnlyAccount = new WalletAccountReadOnlyTronGasfree(
 
 The `provider` option specifies how to connect to the Tron network.
 
-**Type:** `string | TronWeb`  
+**Type:** `string | TronWeb`
+
 **Required:** Yes
 
 **Examples:**
+
 ```javascript
 // Option 1: Using RPC URL
 const config = {
@@ -123,101 +127,123 @@ const tronWeb = new TronWeb({ fullHost: 'https://api.trongrid.io' })
 const config = {
   provider: tronWeb
 }
+
 ```
 
 ### Chain ID
 
 The `chainId` option specifies the blockchain's ID.
 
-**Type:** `string`  
+**Type:** `string`
+
 **Required:** Yes
 
 **Example:**
+
 ```javascript
 const config = {
   chainId: '728126428' // Tron Mainnet
 }
+
 ```
 
 ### Gas-Free Provider
 
 The `gasFreeProvider` option specifies the URL of the gas-free service.
 
-**Type:** `string`  
+**Type:** `string`
+
 **Required:** Yes
 
 **Example:**
+
 ```javascript
 const config = {
-  gasFreeProvider: 'https://api.gasfree.io'
+  gasFreeProvider: 'https://open.gasfree.io/tron/'
 }
+
 ```
 
 ### Gas-Free API Key
 
 The `gasFreeApiKey` option is your API key for the gas-free service.
 
-**Type:** `string`  
+**Type:** `string`
+
 **Required:** Yes
 
 **Example:**
+
 ```javascript
 const config = {
   gasFreeApiKey: 'your-api-key'
 }
+
 ```
 
 ### Gas-Free API Secret
 
 The `gasFreeApiSecret` option is your API secret for the gas-free service.
 
-**Type:** `string`  
+**Type:** `string`
+
 **Required:** Yes
 
 **Example:**
+
 ```javascript
 const config = {
   gasFreeApiSecret: 'your-api-secret'
 }
+
 ```
 
 ### Service Provider
 
 The `serviceProvider` option is the Tron address of the gas-free service provider.
 
-**Type:** `string`  
+**Type:** `string`
+
 **Required:** Yes
 
 **Example:**
+
 ```javascript
 const config = {
   serviceProvider: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH'
 }
+
 ```
 
 ### Verifying Contract
 
 The `verifyingContract` option is the Tron address of the contract that verifies gas-free transactions.
 
-**Type:** `string`  
+**Type:** `string`
+
 **Required:** Yes
 
 **Example:**
+
 ```javascript
 const config = {
   verifyingContract: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH'
 }
+
 ```
 
 ### Transfer Max Fee
 
 The `transferMaxFee` option sets a maximum limit for transaction fees to prevent unexpectedly high costs.
 
-**Type:** `number`  
-**Required:** No (optional)  
+**Type:** `number`
+
+**Required:** No (optional)
+
 **Unit:** Token base units
 
 **Example:**
+
 ```javascript
 const config = {
   transferMaxFee: 10000000 // Maximum fee in token base units
@@ -237,6 +263,7 @@ try {
     console.error('Transfer cancelled: Fee too high')
   }
 }
+
 ```
 
 ## Network-Specific Configurations
@@ -247,21 +274,22 @@ try {
 const mainnetConfig = {
   chainId: '728126428',
   provider: 'https://api.trongrid.io',
-  gasFreeProvider: 'https://api.gasfree.io',
+  gasFreeProvider: 'https://open.gasfree.io/tron/',
   gasFreeApiKey: 'your-api-key',
   gasFreeApiSecret: 'your-api-secret',
   serviceProvider: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
-  verifyingContract: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH'
+  verifyingContract: 'TFFAMLQZybALab4uxHA9RBE7pxhUAjfF3U' // Official Mainnet Contract
 }
+
 ```
 
 ### Tron Nile Testnet
 
 ```javascript
 const nileConfig = {
-  chainId: '3448148', // Nile Testnet
+  chainId: '3448148188', // Nile Testnet (Specific ID required for GasFree)
   provider: 'https://nile.trongrid.io',
-  gasFreeProvider: 'https://open-test.gasfree.io/nile/', // Updated
+  gasFreeProvider: 'https://open-test.gasfree.io/nile/',
   gasFreeApiKey: 'your-testnet-api-key',
   gasFreeApiSecret: 'your-testnet-api-secret',
   serviceProvider: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',

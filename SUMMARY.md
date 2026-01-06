@@ -59,7 +59,6 @@
     * [Usage](sdk/wallet-modules/wallet-tron-gasfree/usage.md)
     * [Configuration](sdk/wallet-modules/wallet-tron-gasfree/configuration.md)
     * [API Reference](sdk/wallet-modules/wallet-tron-gasfree/api-reference.md)
-  
 * [Swap Modules](sdk/swap-modules/README.md)
   * [swap-velora-evm](sdk/swap-modules/swap-velora-evm/README.md)
     * [Usage](sdk/swap-modules/swap-velora-evm/usage.md)
