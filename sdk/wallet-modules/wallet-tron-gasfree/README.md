@@ -41,7 +41,7 @@ A simple and secure package to manage BIP-44 wallets for the Tron blockchain wit
 This package works with the Tron blockchain, including:
 
 - **Tron Mainnet**
-- **Tron Shasta Testnet**
+- **Tron Nile Testnet**
 
 ## Next Steps
 
