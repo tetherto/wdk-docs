@@ -5,7 +5,8 @@
 * [Welcome](README.md)
 * [About WDK](overview/about.md)
 * [Our Vision](overview/vision.md)
-* [Partner Program](overview/partner-program.md) 
+* [Changelog](overview/changelog.md)
+* [Partner Program](overview/partner-program.md)
 * [Get Support](overview/support.md)
 
 ## Start Building
@@ -16,6 +17,7 @@
 ## SDK
 
 * [Get Started](sdk/get-started.md)
+* [All Modules](sdk/all-modules.md)
 * [Core Module](sdk/core-module/README.md) 
   * [Usage](sdk/core-module/usage.md)
   * [Configuration](sdk/core-module/configuration.md)
@@ -77,10 +79,16 @@
     * [Configuration](sdk/lending-modules/lending-aave-evm/configuration.md)
     * [API Reference](sdk/lending-modules/lending-aave-evm/api-reference.md)
 * [Multisig Modules](sdk/multisig-modules/README.md)
-  * [protocol-multisig-safe](sdk/multisig-modules/protocol-multisig-safe/README.md)
+  * [multisig-safe](sdk/multisig-modules/protocol-multisig-safe/README.md)
     * [Usage](sdk/multisig-modules/protocol-multisig-safe/usage.md)
     * [Configuration](sdk/multisig-modules/protocol-multisig-safe/configuration.md)
     * [API Reference](sdk/multisig-modules/protocol-multisig-safe/api-reference.md)
+* [Fiat Modules](sdk/fiat-modules/README.md)
+  * [fiat-moonpay](sdk/fiat-modules/fiat-moonpay/README.md)
+    * [Usage](sdk/fiat-modules/fiat-moonpay/usage.md)
+    * [Configuration](sdk/fiat-modules/fiat-moonpay/configuration.md)
+    * [API Reference](sdk/fiat-modules/fiat-moonpay/api-reference.md)
+* [Community Modules](sdk/community-modules/README.md)
 
 ## UI Kits
 
@@ -105,7 +113,8 @@
   * [Configuration](tools/price-rates/configuration.md)
   * [API Reference](tools/price-rates/api-reference.md)
 
-## Resources
+## Resources and Guides
 
 * [Concepts](resources/concepts.md)
-* [Showcase](resources/showcase.md)
+* [Project Showcase](resources/showcase.md)
+<!-- * [Go-live Checklist](resources/go-live-checklist.md) -->

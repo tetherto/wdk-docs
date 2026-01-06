@@ -24,7 +24,7 @@ layout:
 
 In this quickstart, you'll integrate WDK into a React Native app to create a multi-chain wallet that:
 
-- [ ] Supports multiple blockchains (Bitcoin, Ethereum, Polygon, Arbitrum, TON, Tron, Solana)
+- [ ] Supports multiple blockchains (Bitcoin, Ethereum, Polygon, Arbitrum, TON, Tron)
 - [ ] Manages multiple tokens (BTC, USD₮, XAU₮, and more)
 - [ ] Provides secure seed generation and encrypted storage
 - [ ] Shows real-time balances and transaction history
@@ -62,7 +62,7 @@ You have 2 options for using WDK in a React Native. Choose your preferred starti
 {% tab title="Use Starter Template (Fastest)" %}
 Get up and running in 3 minutes with our pre-configured starter template.
 
-[**→ Jump to Starter Template Setup**](#option-1-starter-template-recommended)
+[**→ Jump to Starter Template Setup**](#option-1-starter-template)
 {% endtab %}
 
 {% tab title="Add to Existing App" %}
@@ -102,9 +102,11 @@ cp .env.example .env
 Edit `.env` and add your WDK Indexer API key:
 
 ```bash
-# Replace with your actual API key
+EXPO_PUBLIC_WDK_INDEXER_BASE_URL=https://wdk-api.tether.io
 EXPO_PUBLIC_WDK_INDEXER_API_KEY=your_actual_api_key_here
-EXPO_PUBLIC_WDK_INDEXER_URL=https://your-indexer-url.com
+# Optional: For Tron network support
+EXPO_PUBLIC_TRON_API_KEY=your_tron_api_key
+EXPO_PUBLIC_TRON_API_SECRET=your_tron_api_secret
 ```
 
 {% hint style="info" %}
@@ -317,7 +319,7 @@ export const CHAINS_CONFIG = {
 ```
 
 {% hint style="info" %}
-See the [Chain Configuration Guide](../core-concepts/chain-configuration.md) for complete configuration options for all supported chains.
+See the [Chain Configuration Guide](../sdk/core-module/configuration.md) for complete configuration options for all supported chains.
 {% endhint %}
 
 ### Step 6: Add WalletProvider
@@ -340,7 +342,7 @@ export default function RootLayout() {
       config={{
         indexer: {
           apiKey: process.env.EXPO_PUBLIC_WDK_INDEXER_API_KEY!,
-          url: process.env.EXPO_PUBLIC_WDK_INDEXER_URL!,
+          url: process.env.EXPO_PUBLIC_WDK_INDEXER_BASE_URL!,
         },
         chains: CHAINS_CONFIG,
         enableCaching: true,
@@ -371,7 +373,7 @@ export default function App() {
       config={{
         indexer: {
           apiKey: process.env.EXPO_PUBLIC_WDK_INDEXER_API_KEY!,
-          url: process.env.EXPO_PUBLIC_WDK_INDEXER_URL!,
+          url: process.env.EXPO_PUBLIC_WDK_INDEXER_BASE_URL!,
         },
         chains: CHAINS_CONFIG,
         enableCaching: true,
@@ -442,7 +444,6 @@ export function WalletScreen() {
       <View>
         <Text>Create or Import a Wallet</Text>
         <Button title="Create New Wallet" onPress={handleCreateWallet} />
-        <Button title="Import Wallet" onPress={handleImportWallet} />
       </View>
     );
   }
@@ -661,7 +662,7 @@ Ready to dive deeper? Check out these resources:
 
 - [**Chain Configuration**](../sdk/core-module/configuration.md#wallet-configuration) - Configure blockchain networks
 - [**Wallet Management**](../sdk/core-module/usage.md#account-management) - Create, import, and manage wallets
-- [**Transaction Handling**](../sdk/core-module/usage#transaction-operations) - Send and track transactions
+- [**Transaction Handling**](../sdk/core-module/usage.md#transaction-operations) - Send and track transactions
 
 ### Examples & Starters
 
