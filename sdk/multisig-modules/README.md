@@ -29,13 +29,13 @@ All multisig modules share these core features:
 * **Threshold Configuration**: Set required approval count
 * **Propose/Approve/Execute**: Standard multisig workflow
 * **Transaction Tracking**: View pending and historical transactions
-* **Message Signing**: Sign messages with multisig approval
+* **Message Signing**: Sign and verify messages with multisig approval (EIP-1271)
 
 ### Account Abstraction Features
 
 Modules with ERC-4337 support include:
 
-* **Gasless Transactions**: Pay fees in ERC-20 tokens
+* **Gasless Transactions**: Pay fees in ERC-20 tokens (e.g., USDT)
 * **Sponsored Mode**: Completely gas-free transactions
 * **Bundled Operations**: Multiple approvals in single transaction
 

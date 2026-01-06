@@ -10,6 +10,11 @@ To install the `@tetherto/wdk-protocol-multisig-safe` package, follow these inst
 npm install @tetherto/wdk-protocol-multisig-safe
 ```
 
+## Supported Paymaster Tokens
+
+For a complete list of supported ERC-20 tokens that can be used to pay gas fees on each network, see:
+[Pimlico ERC-20 Paymaster Supported Tokens](https://docs.pimlico.io/references/paymaster/erc20-paymaster/supported-tokens)
+
 ## Quick Start
 
 ### Importing from `@tetherto/wdk-protocol-multisig-safe`
@@ -36,9 +41,9 @@ const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
   bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
   paymasterOptions: {
     paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-    paymasterTokenAddress: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238' // USDC on Sepolia
+    paymasterTokenAddress: '0x...' // USDT or other supported token
   },
-  safeAccountConfig: {
+  options: {
     owners: ['0xAliceEOA...', '0xBobEOA...'],
     threshold: 2
   },
@@ -54,23 +59,27 @@ console.log('Safe address:', safeAddress)
 ### Discovering Existing Safes
 
 ```javascript
-import WalletManagerEvmMultisigSafe from '@tetherto/wdk-protocol-multisig-safe'
-
-// Create wallet manager without safeAccountConfig to discover existing Safes
-const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
-  chainId: 11155111n,
-  provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
-  bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-  paymasterOptions: {
-    paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-    paymasterTokenAddress: '0x...'
-  }
-})
+import { WalletAccountReadOnlyEvmMultisigSafe } from '@tetherto/wdk-protocol-multisig-safe'
 
 // Discover Safes where your EOA is an owner
-const existingSafes = await wallet.discoverExistingSafes()
+const ownerAddress = '0xYourEOA...'
+const existingSafes = await WalletAccountReadOnlyEvmMultisigSafe.getSafesByOwner(
+  ownerAddress,
+  { chainId: 11155111n }
+)
+
 console.log('Found Safes:', existingSafes)
 // Returns: ['0xSafe1...', '0xSafe2...', ...]
+
+// Get info about a specific Safe
+const safeInfo = await WalletAccountReadOnlyEvmMultisigSafe.getSafeInfo(
+  existingSafes[0],
+  { chainId: 11155111n }
+)
+
+console.log('Owners:', safeInfo.owners)
+console.log('Threshold:', safeInfo.threshold)
+console.log('Version:', safeInfo.version)
 ```
 
 ### Importing an Existing Safe
@@ -78,7 +87,7 @@ console.log('Found Safes:', existingSafes)
 ```javascript
 import WalletManagerEvmMultisigSafe from '@tetherto/wdk-protocol-multisig-safe'
 
-// Import an existing Safe by address
+// Import an existing Safe by address using ExistingSafeOptions
 const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
   chainId: 11155111n,
   provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
@@ -87,7 +96,7 @@ const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
     paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
     paymasterTokenAddress: '0x...'
   },
-  safeAccountConfig: {
+  options: {
     safeAddress: '0xExistingSafeAddress...' // Import by address
   }
 })
@@ -103,6 +112,10 @@ console.log('Imported Safe:', address)
 // Note: Deployment requires ETH in the signer's EOA for gas
 const account = await wallet.getAccount(0)
 
+// Check signer's EOA address
+const signerEoa = await account.getSignerAddress()
+console.log('Fund this address with ETH for deployment:', signerEoa)
+
 // Check if Safe is deployed
 const isDeployed = await account.isDeployed()
 console.log('Is deployed:', isDeployed)
@@ -110,8 +123,12 @@ console.log('Is deployed:', isDeployed)
 // Deploy the Safe (if not already deployed)
 if (!isDeployed) {
   const deployResult = await account.deploy()
-  console.log('Deploy transaction hash:', deployResult.hash)
+  console.log('Deployed:', deployResult.deployed)
+  console.log('Transaction hash:', deployResult.txHash)
 }
+
+// After deployment, all transactions can use paymaster or sponsor
+// No more ETH needed in the Safe or signer's EOA!
 ```
 
 ### Managing Multiple Accounts
@@ -150,9 +167,9 @@ const balance = await account.getBalance()
 console.log('Native balance:', balance, 'wei') // 1 ETH = 1000000000000000000 wei
 
 // Get ERC20 token balance
-const tokenContract = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238' // USDC contract address
+const tokenContract = '0x...' // Token contract address
 const tokenBalance = await account.getTokenBalance(tokenContract)
-console.log('USDC balance:', tokenBalance)
+console.log('Token balance:', tokenBalance)
 
 // Get paymaster token balance (for paying fees)
 const paymasterBalance = await account.getPaymasterTokenBalance()
@@ -167,13 +184,16 @@ For addresses where you don't have the seed phrase:
 import { WalletAccountReadOnlyEvmMultisigSafe } from '@tetherto/wdk-protocol-multisig-safe'
 
 // Create a read-only account
-const readOnlyAccount = new WalletAccountReadOnlyEvmMultisigSafe('0xSafeAddress...', {
+const readOnlyAccount = new WalletAccountReadOnlyEvmMultisigSafe(null, {
   chainId: 11155111n,
   provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
   bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
   paymasterOptions: {
     paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
     paymasterTokenAddress: '0x...'
+  },
+  options: {
+    safeAddress: '0xSafeAddress...'
   }
 })
 
@@ -192,10 +212,20 @@ console.log('Token balance:', tokenBalance)
 
 ```javascript
 // Propose a transaction (first signer)
-const proposal = await account.propose({
+const quote = await account.quoteSendTransaction({
   to: '0xRecipientAddress...',
   value: '1000000000000000000', // 1 ETH in wei
-  data: '0x' // Optional transaction data
+  data: '0x'
+})
+
+console.log('Estimated fee:', quote.fee)
+
+const proposal = await account.propose({
+  to: '0xRecipientAddress...',
+  value: '1000000000000000000',
+  data: '0x'
+}, {
+  amountToApprove: quote.fee * 150n / 100n // 50% buffer
 })
 
 console.log('Safe operation hash:', proposal.safeOperationHash)
@@ -209,30 +239,39 @@ console.log('Threshold:', proposal.threshold)
 // Second signer approves the transaction
 const bobAccount = new WalletAccountEvmMultisigSafe(bobSeedPhrase, "0'/0/0", config)
 
-await bobAccount.approve(proposal.safeOperationHash)
+const approval = await bobAccount.approve(proposal.safeOperationHash)
 console.log('Transaction approved by Bob')
+console.log('Confirmations:', approval.confirmations, '/', approval.threshold)
 ```
 
 ### Execute a Transaction
 
 ```javascript
-// Execute when threshold is met
-const result = await account.execute(proposal.safeOperationHash)
+// Check if ready to execute
+const isReady = await account.isReadyToExecute(proposal.safeOperationHash)
+console.log('Ready to execute:', isReady)
 
-console.log('Transaction hash:', result.hash)
-console.log('Fee paid:', result.fee, 'paymaster token units')
+// Execute when threshold is met
+if (isReady) {
+  const result = await account.execute(proposal.safeOperationHash)
+  console.log('UserOp hash:', result.hash)
+
+  // Get on-chain transaction hash
+  const txHash = await account.getTransactionHashByUserOpHash(result.hash)
+  console.log('Transaction hash:', txHash)
+}
 ```
 
 ### Get Pending Transactions
 
 ```javascript
 // Get all pending transactions for the Safe
-const pendingTxs = await account.getPendingTransactions()
+const pending = await account.getPendingTransactions()
+const threshold = await account.getThreshold()
 
-for (const tx of pendingTxs) {
-  console.log('Hash:', tx.safeOperationHash)
-  console.log('Confirmations:', tx.confirmations.length)
-  console.log('Threshold:', tx.threshold)
+for (const op of pending.results) {
+  console.log('Hash:', op.safeOperationHash)
+  console.log('Confirmations:', op.confirmations?.length || 0, '/', threshold)
 }
 ```
 
@@ -240,7 +279,7 @@ for (const tx of pendingTxs) {
 
 ### ERC-20 Paymaster Mode (Default)
 
-Pay transaction fees using ERC-20 tokens (e.g., USDC):
+Pay transaction fees using ERC-20 tokens (e.g., USDT):
 
 ```javascript
 const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
@@ -249,12 +288,18 @@ const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
   bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
   paymasterOptions: {
     paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-    paymasterTokenAddress: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238' // USDC
+    paymasterTokenAddress: '0x...' // USDT or other supported token
   },
-  safeAccountConfig: {
+  options: {
     owners: ['0xAlice...', '0xBob...'],
     threshold: 2
   }
+})
+
+// Propose with token approval for gas
+const quote = await account.quoteSendTransaction(tx)
+const proposal = await account.propose(tx, {
+  amountToApprove: quote.fee * 150n / 100n
 })
 ```
 
@@ -269,13 +314,18 @@ const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
   bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
   paymasterOptions: {
     paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-    sponsoredPaymaster: true // Enable sponsored mode
+    paymasterAddress: '0x...', // Needed for ERC-20 override
+    isSponsored: true,
+    sponsorshipPolicyId: 'sp_my_policy' // Optional
   },
-  safeAccountConfig: {
+  options: {
     owners: ['0xAlice...', '0xBob...'],
     threshold: 2
   }
 })
+
+// No amountToApprove needed - sponsor pays gas!
+const proposal = await account.propose(tx)
 ```
 
 ### Per-Transaction Override
@@ -292,7 +342,7 @@ const result = await account.sendTransaction({
   value: '1000000000000000000',
   data: '0x'
 }, {
-  sponsoredPaymaster: true // Override to sponsored mode
+  isSponsored: true // Override to sponsored mode
 })
 
 // Override to different ERC-20 token
@@ -301,6 +351,7 @@ const result2 = await account.sendTransaction({
   value: '1000000000000000000',
   data: '0x'
 }, {
+  isSponsored: false,
   paymasterTokenAddress: '0xDifferentToken...' // Use different token
 })
 ```
@@ -311,9 +362,8 @@ const result2 = await account.sendTransaction({
 
 ```javascript
 // Propose adding a new owner
-const proposal = await account.proposeAddOwner({
-  owner: '0xNewOwnerAddress...',
-  threshold: 2 // Optional: update threshold
+const proposal = await account.addOwner('0xNewOwnerAddress...', null, {
+  amountToApprove: fee * 200n / 100n
 })
 
 // Other owners approve
@@ -327,9 +377,8 @@ await account.execute(proposal.safeOperationHash)
 
 ```javascript
 // Propose removing an owner
-const proposal = await account.proposeRemoveOwner({
-  owner: '0xOwnerToRemove...',
-  threshold: 1 // Required: new threshold after removal
+const proposal = await account.removeOwner('0xOwnerToRemove...', newThreshold, {
+  amountToApprove: fee * 200n / 100n
 })
 
 // Other owners approve and execute
@@ -341,9 +390,8 @@ await account.execute(proposal.safeOperationHash)
 
 ```javascript
 // Propose swapping an owner
-const proposal = await account.proposeSwapOwner({
-  oldOwner: '0xOldOwnerAddress...',
-  newOwner: '0xNewOwnerAddress...'
+const proposal = await account.swapOwner('0xOldOwner...', '0xNewOwner...', {
+  amountToApprove: fee * 200n / 100n
 })
 
 // Other owners approve and execute
@@ -355,9 +403,24 @@ await account.execute(proposal.safeOperationHash)
 
 ```javascript
 // Propose changing the threshold
-const proposal = await account.proposeChangeThreshold({
-  threshold: 3 // New threshold value
+const proposal = await account.changeThreshold(newThreshold, {
+  amountToApprove: fee * 200n / 100n
 })
+
+// Other owners approve and execute
+await bobAccount.approve(proposal.safeOperationHash)
+await account.execute(proposal.safeOperationHash)
+```
+
+### Batch Update Owners
+
+```javascript
+// Propose batch updating owners and threshold
+const proposal = await account.updateOwners(
+  ['0xOwner1...', '0xOwner2...', '0xOwner3...'],
+  2, // new threshold
+  { amountToApprove: fee * 300n / 100n }
+)
 
 // Other owners approve and execute
 await bobAccount.approve(proposal.safeOperationHash)
@@ -366,22 +429,68 @@ await account.execute(proposal.safeOperationHash)
 
 ## Message Signing
 
-### Sign a Message
+### Sign a Message (Propose)
 
 ```javascript
-// Sign a message with the multisig Safe
-const message = 'Hello, Safe!'
-const signature = await account.signMessage(message)
+// Alice signs (proposes) a message
+const result = await alice.sign('Hello from Safe!')
 
-console.log('Message signature:', signature)
+console.log('Alice signature:', result.signature)
+console.log('Message hash:', result.safeMessage.messageHash)
+console.log('Confirmations:', result.safeMessage.confirmations.length)
 ```
 
-### Verify a Message
+### Sign a Message (Approve)
 
 ```javascript
-// Verify a message signature
-const isValid = await account.verifyMessage(message, signature)
-console.log('Signature valid:', isValid)
+// Bob signs (approves) the same message
+const approval = await bob.sign('Hello from Safe!', { isApproval: true })
+
+console.log('Bob signature:', approval.signature)
+console.log('Confirmations:', approval.safeMessage.confirmations.length)
+
+// Check if fully signed
+if (approval.safeMessage.preparedSignature) {
+  console.log('Combined signature:', approval.safeMessage.preparedSignature)
+}
+```
+
+### Verify a Signature (EIP-1271)
+
+```javascript
+// Verify the combined signature on-chain
+if (approval.safeMessage.preparedSignature) {
+  const isValid = await alice.verify(
+    'Hello from Safe!',
+    approval.safeMessage.preparedSignature
+  )
+  console.log('Signature valid:', isValid)
+}
+```
+
+### Get Message Status
+
+```javascript
+// Get message by hash
+const message = await account.getMessage(messageHash)
+
+console.log('Message:', message.message)
+console.log('Proposed by:', message.proposedBy)
+console.log('Confirmations:', message.confirmations.length)
+console.log('Combined signature:', message.preparedSignature)
+```
+
+### Get Pending Messages
+
+```javascript
+// Get all pending messages
+const pending = await account.getPendingMessages()
+
+for (const msg of pending.results) {
+  console.log('Hash:', msg.messageHash)
+  console.log('Message:', msg.message)
+  console.log('Confirmations:', msg.confirmations.length)
+}
 ```
 
 ## Transaction Tracking
@@ -392,11 +501,22 @@ console.log('Signature valid:', isValid)
 // Get transaction history for the Safe
 const history = await account.getTransactionHistory()
 
-for (const tx of history) {
-  console.log('Hash:', tx.hash)
-  console.log('Status:', tx.status)
-  console.log('Timestamp:', tx.timestamp)
+for (const tx of history.results) {
+  console.log('Hash:', tx.transactionHash)
+  console.log('Status:', tx.isExecuted ? 'Executed' : 'Pending')
 }
+```
+
+### Get On-Chain Transaction Hash
+
+```javascript
+// After executing, get the on-chain transaction hash
+const result = await account.execute(safeOperationHash)
+console.log('UserOp hash:', result.hash)
+
+// Wait for confirmation and get tx hash
+const txHash = await account.getTransactionHashByUserOpHash(result.hash)
+console.log('Transaction hash:', txHash)
 ```
 
 ## Memory Management
@@ -426,9 +546,9 @@ async function setupMultisigWallet() {
     bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
     paymasterOptions: {
       paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-      paymasterTokenAddress: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238' // USDC
+      paymasterTokenAddress: '0x...' // USDT or other supported token
     },
-    safeAccountConfig: {
+    options: {
       owners: ['0xAliceEOA...', '0xBobEOA...'],
       threshold: 2
     },
@@ -445,7 +565,7 @@ async function setupMultisigWallet() {
   console.log('Native balance:', nativeBalance, 'wei')
   
   const paymasterBalance = await account.getPaymasterTokenBalance()
-  console.log('Paymaster token balance:', paymasterBalance, 'USDC units')
+  console.log('Paymaster token balance:', paymasterBalance, 'units')
   
   return { wallet, account, address, paymasterBalance }
 }
@@ -455,30 +575,67 @@ async function setupMultisigWallet() {
 
 ```javascript
 async function multisigTransactionFlow() {
-  // Alice proposes a transaction
-  const proposal = await aliceAccount.propose({
+  // Get fee quote
+  const quote = await aliceAccount.quoteSendTransaction({
     to: '0xRecipient...',
     value: '1000000000000000000', // 1 ETH
     data: '0x'
   })
   
+  // Alice proposes a transaction
+  const proposal = await aliceAccount.propose({
+    to: '0xRecipient...',
+    value: '1000000000000000000',
+    data: '0x'
+  }, {
+    amountToApprove: quote.fee * 150n / 100n
+  })
+  
   console.log('Proposal created:', proposal.safeOperationHash)
-  console.log('Current confirmations:', proposal.confirmations.length)
-  console.log('Required threshold:', proposal.threshold)
+  console.log('Confirmations:', proposal.confirmations, '/', proposal.threshold)
   
   // Bob approves
-  await bobAccount.approve(proposal.safeOperationHash)
+  const approval = await bobAccount.approve(proposal.safeOperationHash)
   console.log('Bob approved')
+  console.log('Confirmations:', approval.confirmations, '/', approval.threshold)
   
   // Check if ready to execute
-  const pendingTxs = await aliceAccount.getPendingTransactions()
-  const tx = pendingTxs.find(t => t.safeOperationHash === proposal.safeOperationHash)
+  const isReady = await aliceAccount.isReadyToExecute(proposal.safeOperationHash)
   
-  if (tx.confirmations.length >= tx.threshold) {
+  if (isReady) {
     // Execute the transaction
     const result = await aliceAccount.execute(proposal.safeOperationHash)
     console.log('Transaction executed:', result.hash)
-    console.log('Fee paid:', result.fee)
+    
+    // Get on-chain transaction hash
+    const txHash = await aliceAccount.getTransactionHashByUserOpHash(result.hash)
+    console.log('TX Hash:', txHash)
+  }
+}
+```
+
+### Complete Message Signing Flow
+
+```javascript
+async function messageSigningFlow() {
+  const message = 'Hello from Safe!'
+  
+  // Alice signs (proposes)
+  const result = await aliceAccount.sign(message)
+  console.log('Alice signed:', result.signature.slice(0, 20) + '...')
+  console.log('Message hash:', result.safeMessage.messageHash)
+  
+  // Bob signs (approves)
+  const approval = await bobAccount.sign(message, { isApproval: true })
+  console.log('Bob signed:', approval.signature.slice(0, 20) + '...')
+  
+  // Verify combined signature
+  if (approval.safeMessage.preparedSignature) {
+    const isValid = await aliceAccount.verify(
+      message,
+      approval.safeMessage.preparedSignature
+    )
+    console.log('Signature valid:', isValid)
   }
 }
 ```

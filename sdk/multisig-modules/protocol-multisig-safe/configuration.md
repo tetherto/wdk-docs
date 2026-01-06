@@ -18,11 +18,11 @@ const config = {
   // Paymaster configuration
   paymasterOptions: {
     paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-    paymasterTokenAddress: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238' // USDC
+    paymasterTokenAddress: '0x...' // USDT or other supported token
   },
   
-  // Safe configuration
-  safeAccountConfig: {
+  // Safe configuration - for creating new Safe
+  options: {
     owners: ['0xAliceEOA...', '0xBobEOA...'],
     threshold: 2
   },
@@ -33,6 +33,11 @@ const config = {
 
 const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, config)
 ```
+
+## Supported Paymaster Tokens
+
+For a complete list of supported ERC-20 tokens that can be used to pay gas fees on each network, see:
+[Pimlico ERC-20 Paymaster Supported Tokens](https://docs.pimlico.io/references/paymaster/erc20-paymaster/supported-tokens)
 
 ## Account Configuration
 
@@ -51,20 +56,19 @@ const account = new WalletAccountEvmMultisigSafe(
   config // Same config as wallet manager
 )
 
-// Read-only account (transferMaxFee not needed)
-const readOnlyAccount = new WalletAccountReadOnlyEvmMultisigSafe(
-  '0xSafeAddress...', // Safe contract address
-  {
-    chainId: 11155111n,
-    provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
-    bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-    paymasterOptions: {
-      paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-      paymasterTokenAddress: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
-    }
-    // Note: safeAccountConfig not needed for read-only, address is provided directly
+// Read-only account
+const readOnlyAccount = new WalletAccountReadOnlyEvmMultisigSafe(null, {
+  chainId: 11155111n,
+  provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
+  bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
+  paymasterOptions: {
+    paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
+    paymasterTokenAddress: '0x...'
+  },
+  options: {
+    safeAddress: '0xSafeAddress...'
   }
-)
+})
 ```
 
 ## Configuration Options
@@ -130,12 +134,13 @@ The `paymasterOptions` object configures how transaction fees are paid.
 
 #### ERC-20 Paymaster Mode
 
-Pay fees using ERC-20 tokens:
+Pay fees using ERC-20 tokens (e.g., USDT):
 
 ```javascript
 paymasterOptions: {
   paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-  paymasterTokenAddress: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238' // USDC
+  paymasterAddress: '0x...', // Optional: paymaster contract address
+  paymasterTokenAddress: '0x...' // USDT or other supported token
 }
 ```
 
@@ -146,45 +151,52 @@ Use a sponsored paymaster for gasless transactions:
 ```javascript
 paymasterOptions: {
   paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-  sponsoredPaymaster: true
+  paymasterAddress: '0x...', // Optional: needed for ERC-20 override
+  isSponsored: true,
+  sponsorshipPolicyId: 'sp_my_policy' // Optional: sponsorship policy ID
 }
 ```
 
-### Safe Account Configuration
+### Safe Options
 
-The `safeAccountConfig` object specifies how to create or import a Safe.
+The `options` object specifies how to create or import a Safe.
 
-#### Creating a New Safe
+#### Creating a New Safe (PredictedSafeOptions)
 
 ```javascript
-safeAccountConfig: {
+options: {
   owners: ['0xAliceEOA...', '0xBobEOA...', '0xCharlieEOA...'],
-  threshold: 2 // 2-of-3 multisig
+  threshold: 2, // 2-of-3 multisig
+  saltNonce: '0x...', // Optional: for deterministic address
+  safeVersion: '1.4.1', // Optional: Safe contract version
+  deploymentType: 'canonical' // Optional: deployment type
 }
 ```
 
-#### Importing an Existing Safe
+#### Importing an Existing Safe (ExistingSafeOptions)
 
 ```javascript
-safeAccountConfig: {
+options: {
   safeAddress: '0xExistingSafeAddress...'
 }
 ```
 
 #### Discovering Existing Safes
 
-Omit `safeAccountConfig` to discover Safes:
+Use the static method to discover Safes before creating an account:
 
 ```javascript
+const safes = await WalletAccountReadOnlyEvmMultisigSafe.getSafesByOwner(
+  '0xOwnerEOA...',
+  { chainId: 11155111n }
+)
+
+// Then import the Safe you want
 const config = {
-  chainId: 11155111n,
-  provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
-  bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-  paymasterOptions: {
-    paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-    paymasterTokenAddress: '0x...'
+  // ... other config
+  options: {
+    safeAddress: safes[0]
   }
-  // No safeAccountConfig - use wallet.discoverExistingSafes()
 }
 ```
 
@@ -193,10 +205,10 @@ const config = {
 The `transferMaxFee` option specifies the maximum fee amount for transfer operations in paymaster token units.
 
 ```javascript
-// Maximum fee of 1 USDC (6 decimals)
+// Maximum fee of 1 USDT (6 decimals)
 transferMaxFee: 1000000
 
-// Maximum fee of 0.1 USDC
+// Maximum fee of 0.1 USDT
 transferMaxFee: 100000
 ```
 
@@ -211,9 +223,9 @@ const ethereumMainnetConfig = {
   bundlerUrl: 'https://api.pimlico.io/v2/ethereum/rpc?apikey=YOUR_KEY',
   paymasterOptions: {
     paymasterUrl: 'https://api.pimlico.io/v2/ethereum/rpc?apikey=YOUR_KEY',
-    paymasterTokenAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' // USDC
+    paymasterTokenAddress: '0x...' // See Pimlico docs for supported tokens
   },
-  safeAccountConfig: {
+  options: {
     owners: ['0xOwner1...', '0xOwner2...'],
     threshold: 2
   }
@@ -229,9 +241,9 @@ const polygonMainnetConfig = {
   bundlerUrl: 'https://api.pimlico.io/v2/polygon/rpc?apikey=YOUR_KEY',
   paymasterOptions: {
     paymasterUrl: 'https://api.pimlico.io/v2/polygon/rpc?apikey=YOUR_KEY',
-    paymasterTokenAddress: '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359' // USDC
+    paymasterTokenAddress: '0x...' // See Pimlico docs for supported tokens
   },
-  safeAccountConfig: {
+  options: {
     owners: ['0xOwner1...', '0xOwner2...'],
     threshold: 2
   }
@@ -247,9 +259,9 @@ const arbitrumOneConfig = {
   bundlerUrl: 'https://api.pimlico.io/v2/arbitrum/rpc?apikey=YOUR_KEY',
   paymasterOptions: {
     paymasterUrl: 'https://api.pimlico.io/v2/arbitrum/rpc?apikey=YOUR_KEY',
-    paymasterTokenAddress: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831' // USDC
+    paymasterTokenAddress: '0x...' // See Pimlico docs for supported tokens
   },
-  safeAccountConfig: {
+  options: {
     owners: ['0xOwner1...', '0xOwner2...'],
     threshold: 2
   }
@@ -265,15 +277,17 @@ const sepoliaTestnetConfig = {
   bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
   paymasterOptions: {
     paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-    paymasterTokenAddress: '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238' // USDC testnet
+    paymasterTokenAddress: '0x...' // See Pimlico docs for supported tokens
   },
-  safeAccountConfig: {
+  options: {
     owners: ['0xOwner1...', '0xOwner2...'],
     threshold: 2
   },
-  transferMaxFee: 1000000 // 1 USDC max fee
+  transferMaxFee: 1000000 // 1 USDT max fee (6 decimals)
 }
 ```
+
+For supported tokens on each network, see: [Pimlico ERC-20 Paymaster Supported Tokens](https://docs.pimlico.io/references/paymaster/erc20-paymaster/supported-tokens)
 
 ---
 
