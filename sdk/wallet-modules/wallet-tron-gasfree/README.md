@@ -1,5 +1,5 @@
 ---
-title: Wallet Tron Gras-Free Overview
+title: Wallet Tron Gas-Free Overview
 description: Overview of the @tetherto/wdk-wallet-tron-gasfree module
 layout:
   width: default
@@ -72,23 +72,11 @@ This package works with the Tron blockchain, including:
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Tron Grasfree Wallet Configuration</strong>
+				<strong>WDK Tron Gasfree Wallet Configuration</strong>
 			</td>
-			<td>Get started with WDK's Tron Grasfree Wallet configuration</td>
+			<td>Get started with WDK's Tron Gasfree Wallet configuration</td>
 			<td>
-				<a href="./configuration.md">WDK Tron Grasfree Wallet Configuration</a>
-			</td>
-		</tr>
-        <tr>
-			<td>
-				<i class="fa-code">:code:</i>
-			</td>
-			<td>
-				<strong>WDK Tron Grasfree Wallet API</strong>
-			</td>
-			<td>Get started with WDK's Tron Grasfree Wallet API</td>
-			<td>
-				<a href="./api-reference.md">WDK Tron Grasfree Wallet API</a>
+				<a href="./configuration.md">WDK Tron Gasfree Wallet Configuration</a>
 			</td>
 		</tr>
         <tr>
@@ -96,11 +84,23 @@ This package works with the Tron blockchain, including:
 				<i class="fa-code">:code:</i>
 			</td>
 			<td>
-				<strong>WDK Tron Grasfree Wallet Usage</strong>
+				<strong>WDK Tron Gasfree Wallet API</strong>
 			</td>
-			<td>Get started with WDK's with Tron Grasfree Wallet usage</td>
+			<td>Get started with WDK's Tron Gasfree Wallet API</td>
 			<td>
-				<a href="./usage.md">WDK with Tron Grasfree Wallet Usage</a>
+				<a href="./api-reference.md">WDK Tron Gasfree Wallet API</a>
+			</td>
+		</tr>
+        <tr>
+			<td>
+				<i class="fa-code">:code:</i>
+			</td>
+			<td>
+				<strong>WDK Tron Gasfree Wallet Usage</strong>
+			</td>
+			<td>Get started with WDK's with Tron Gasfree Wallet usage</td>
+			<td>
+				<a href="./usage.md">WDK with Tron Gasfree Wallet Usage</a>
 			</td>
 		</tr>
 	</tbody>
