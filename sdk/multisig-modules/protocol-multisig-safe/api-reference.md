@@ -760,20 +760,4 @@ try {
 
 ### Need Help?
 
-**Discord Community**
-
-Connect with developers, ask questions, share your projects
-
-[Join Community](https://discord.gg/arYXDhHB2w)
-
-**GitHub Issues**
-
-Report bugs, request features, and get technical help
-
-[Open an Issue](https://github.com/tetherto/wdk-core)
-
-**Email Contact**
-
-For sensitive or private matters, contact our team directly
-
-[Send an email](mailto:support@tether.to)
+{% include "../../../.gitbook/includes/support-cards.md" %}
