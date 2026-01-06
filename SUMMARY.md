@@ -71,20 +71,17 @@
     * [Usage](sdk/bridge-modules/bridge-usdt0-evm/usage.md)
     * [Configuration](sdk/bridge-modules/bridge-usdt0-evm/configuration.md)
     * [API Reference](sdk/bridge-modules/bridge-usdt0-evm/api-reference.md)
-  <!-- * [bridge-usdt0-ton](sdk/bridge-modules/bridge-usdt0-ton/README.md)
-    * [Usage](sdk/bridge-modules/bridge-usdt0-ton/usage.md)
-    * [Configuration](sdk/bridge-modules/bridge-usdt0-ton/configuration.md)
-    * [API Reference](sdk/bridge-modules/bridge-usdt0-ton/api-reference.md) -->
 * [Lending Modules](sdk/lending-modules/README.md)
   * [lending-aave-evm](sdk/lending-modules/lending-aave-evm/README.md)
     * [Usage](sdk/lending-modules/lending-aave-evm/usage.md)
     * [Configuration](sdk/lending-modules/lending-aave-evm/configuration.md)
     * [API Reference](sdk/lending-modules/lending-aave-evm/api-reference.md)
- * [Multisig Modules](sdk/multisig-modules/README.md)
-    * [protocol-multisig-safe](sdk/multisig-modules/protocol-multisig-safe/README.md)
-      * [Usage](sdk/multisig-modules/protocol-multisig-safe/usage.md)
-      * [Configuration](sdk/multisig-modules/protocol-multisig-safe/configuration.md)
-      * [API Reference](sdk/multisig-modules/protocol-multisig-safe/api-reference.md)
+* [Multisig Modules](sdk/multisig-modules/README.md)
+  * [protocol-multisig-safe](sdk/multisig-modules/protocol-multisig-safe/README.md)
+    * [Usage](sdk/multisig-modules/protocol-multisig-safe/usage.md)
+    * [Configuration](sdk/multisig-modules/protocol-multisig-safe/configuration.md)
+    * [API Reference](sdk/multisig-modules/protocol-multisig-safe/api-reference.md)
+
 ## UI Kits
 
 * [React Native UI Kit](ui-kits/react-native-ui-kit/README.md)
@@ -112,4 +109,3 @@
 
 * [Concepts](resources/concepts.md)
 * [Showcase](resources/showcase.md)
-<!-- * [Go-live Checklist](resources/go-live-checklist.md) -->
