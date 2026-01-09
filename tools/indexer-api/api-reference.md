@@ -48,6 +48,8 @@ x-api-key: your-api-key-here
 
 | Endpoint | Limit |
 | --- | --- |
+| `GET /api/v1/health` | 10 req / 1 hour |
+| `GET /api/v1/chains` | 60 req / 1 min |
 | `GET /api/v1/:blockchain/:token/:address/token-balances` | 4 req / 10s |
 | `GET /api/v1/:blockchain/:token/:address/token-transfers` | 8 req / 10s |
 
@@ -57,6 +59,12 @@ x-api-key: your-api-key-here
 
 {% openapi src="./openapi.json" path="/api/v1/health" method="get" %}
 Check API server status
+{% endopenapi %}
+
+***
+
+{% openapi src="./openapi.json" path="/api/v1/chains" method="get" %}
+Get list of supported chains and tokens
 {% endopenapi %}
 
 ***
