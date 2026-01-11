@@ -1,6 +1,7 @@
 ---
 title: Changelog
 description: Updates and improvements to the Wallet Development Kit (WDK) modules and tools.
+icon: clock-rotate-left
 layout:
   width: default
   title:

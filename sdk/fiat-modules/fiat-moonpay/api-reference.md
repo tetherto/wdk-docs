@@ -1,6 +1,7 @@
 ---
 title: Fiat MoonPay API Reference
 description: API Reference for the @tetherto/wdk-protocol-fiat-moonpay module
+icon: code
 layout:
   width: default
   title:
