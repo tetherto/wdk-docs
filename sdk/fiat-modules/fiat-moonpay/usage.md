@@ -1,6 +1,7 @@
 ---
 title: Fiat MoonPay Usage
 description: How to use the @tetherto/wdk-protocol-fiat-moonpay module
+icon: book-open
 layout:
   width: default
   title:
