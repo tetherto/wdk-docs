@@ -5,9 +5,9 @@
 * [Welcome](README.md)
 * [About WDK](overview/about.md)
 * [Our Vision](overview/vision.md)
-* [Changelog](overview/changelog.md)
 * [Partner Program](overview/partner-program.md)
 * [Get Support](overview/support.md)
+* [Changelog](overview/changelog.md)
 
 ## Start Building
 

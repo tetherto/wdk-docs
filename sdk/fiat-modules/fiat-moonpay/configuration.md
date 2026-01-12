@@ -1,6 +1,7 @@
 ---
 title: Fiat MoonPay Configuration
 description: Configuration options for the @tetherto/wdk-protocol-fiat-moonpay module
+icon: gear
 layout:
   width: default
   title:
