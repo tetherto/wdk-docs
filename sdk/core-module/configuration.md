@@ -96,10 +96,10 @@ wdk.registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
 {% code title="TON WDK Wallet Configuration" lineNumbers="true" %}
 ```javascript
 const tonWalletConfig = {
-  tonApiKey: 'YOUR_TON_API_KEY',
-  tonApiEndpoint: 'https://tonapi.io',
-  tonCenterApiKey: 'YOUR_TON_CENTER_API_KEY',
-  tonCenterEndpoint: 'https://toncenter.com'
+  tonClient: {
+    secretKey: 'YOUR_TON_API_KEY',
+    url: 'https://toncenter.com/api/v2/jsonRPC'
+  }
 }
 
 wdk.registerWallet('ton', WalletManagerTon, tonWalletConfig)
