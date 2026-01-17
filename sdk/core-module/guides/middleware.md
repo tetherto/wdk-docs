@@ -1,6 +1,20 @@
 ---
 title: Configure Middleware
 description: Learn how to intercept and enhance wallet operations with middleware.
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # Configure Middleware

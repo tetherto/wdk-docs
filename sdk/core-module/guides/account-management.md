@@ -1,6 +1,20 @@
 ---
 title: Manage Accounts
-description: Learn how to retrieve accounts, view addresses, and check balances.
+description: Learn how to work with accounts and addresses.
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # Manage Accounts

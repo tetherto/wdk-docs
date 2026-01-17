@@ -1,6 +1,20 @@
 ---
 title: Instantiate WDK
-description: Learn how to import and initialize the WDK Core module.
+description: Learn how to create a new WDK instance.
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # Instantiate WDK

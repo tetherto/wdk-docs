@@ -1,6 +1,20 @@
 ---
 title: Install WDK Core
 description: Learn how to install and set up the WDK Core module.
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # Install WDK Core

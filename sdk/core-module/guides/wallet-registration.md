@@ -1,6 +1,20 @@
 ---
 title: Register Wallets
 description: Learn how to register wallet modules for different blockchains.
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # Register Wallets

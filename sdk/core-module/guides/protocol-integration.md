@@ -1,6 +1,20 @@
 ---
 title: Integrate Protocols
-description: Learn how to register and use protocols for Swapping, Bridging, and Lending.
+description: Learn how to use Swaps, Bridges, and Lending protocols.
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # Integrate Protocols

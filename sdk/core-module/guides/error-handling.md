@@ -1,6 +1,20 @@
 ---
-title: Error Handling & Best Practices
-description: Learn how to handle common errors and manage clean-up.
+title: Error Handling
+description: Learn about common errors and best practices.
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # Error Handling & Best Practices

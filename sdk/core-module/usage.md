@@ -1,6 +1,20 @@
 ---
-title: Usage
-description: Learn how to use the WDK Core module.
+title: WDK Core Usage
+description: Guide to using the WDK Core module.
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
 ---
 
 # Usage
