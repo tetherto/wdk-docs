@@ -1,6 +1,7 @@
 ---
 title: WDK Core Usage
 description: Guide to using the WDK Core module.
+icon: book-open
 layout:
   width: default
   title:
