@@ -42,35 +42,43 @@ wdk.registerMiddleware('ethereum', async (account) => {
 
 ## Failover Protection
 
-> [!WARNING]
-> **TODO:** The `@tetherto/wdk-wrapper-failover-cascade` package is currently unavailable in the registry. The section below is pending confirmation from the development team.
 
-*(This feature is currently pending package release)*
+### Using Provider Failover
 
-<!-- TODO: Uncomment when package is available
-One of the most powerful uses of middleware is adding redundancy to your RPC connections. If your primary provider goes down, the middleware can automatically switch to a backup.
+The `@tetherto/wdk-provider-failover` package provides a resilient wrapper for wallet instances. Unlike standard middleware, you wrap your wallet class instantiation directly.
 
-### Using Cascade Failover
+```bash
+npm install @tetherto/wdk-provider-failover
+```
 
-The `@tetherto/wdk-wrapper-failover-cascade` package provides a ready-to-use middleware for this.
-
-{% code title="Failover Middleware" lineNumbers="true" %}
+{% code title="Failover Wrapper Usage" lineNumbers="true" %}
 ```typescript
-import { getFailoverCascadeMiddleware } from '@tetherto/wdk-wrapper-failover-cascade'
+import { createFallbackWallet } from '@tetherto/wdk-provider-failover'
+import { WalletAccountReadOnlyEvm } from '@tetherto/wdk-wallet-evm'
 
-wdk.registerMiddleware('ethereum', getFailoverCascadeMiddleware({
-  retries: 3,
-  delay: 1000, // Wait 1 second between retries
-  fallbackProviders: [
-    'https://backup-rpc-1.com',
-    'https://backup-rpc-2.com'
-  ]
+const wallet = createFallbackWallet(
+  WalletAccountReadOnlyEvm,
+  ['0x...'], // constructor args
+  {
+    primary: { provider: 'https://mainnet.infura.io/v3/YOUR_KEY' },
+    fallbacks: [
+      { provider: 'https://eth.llamarpc.com' },
+      { provider: 'https://ethereum.publicnode.com' }
+    ]
+  }
+)
+
+// Use the wallet instance directly
+const balance = await wallet.getBalance()
+```
+{% endcode %}
+
+This wrapper ensures that if your primary RPC fails, the wallet automatically retries with the fallback providers.
 }))
 ```
 {% endcode %}
 
 With this configuration, if `sendTransaction` fails due to a network error, the WDK will automatically retry using the fallback providers without throwing an error to your application.
--->
 
 ## Next steps
 
