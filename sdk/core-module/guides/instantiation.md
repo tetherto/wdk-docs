@@ -51,8 +51,9 @@ const wdk = new WDK(seedPhrase)
 ```
 {% endcode %}
 
-> [!IMPORTANT]
-> **Secure the Seed Phrase:** You must securely store this seed phrase immediately. If it is lost, the user will permanently lose access to their funds.
+{% hint style="danger" %}
+**Secure the Seed Phrase:** You must securely store this seed phrase immediately. If it is lost, the user will permanently lose access to their funds.
+{% endhint %}
 
 ### Option 2: Restore an existing wallet
 

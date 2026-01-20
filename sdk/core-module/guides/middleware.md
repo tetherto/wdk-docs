@@ -74,9 +74,6 @@ const balance = await wallet.getBalance()
 {% endcode %}
 
 This wrapper ensures that if your primary RPC fails, the wallet automatically retries with the fallback providers.
-}))
-```
-{% endcode %}
 
 With this configuration, if `sendTransaction` fails due to a network error, the WDK will automatically retry using the fallback providers without throwing an error to your application.
 

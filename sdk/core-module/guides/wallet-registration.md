@@ -77,15 +77,17 @@ const wdk = new WDK(seedPhrase)
 ```
 {% endcode %}
 
-> [!NOTE]
-> **Ethereum Networks:** Choose the RPC endpoint that matches your environment (Mainnet or Testnet).
-> *   **Mainnet:** `https://eth.drpc.org`
-> *   **Sepolia (Testnet):** `https://sepolia.drpc.org`
+{% hint style="info" %}
+**Ethereum Networks:** Choose the RPC endpoint that matches your environment (Mainnet or Testnet).
+*   **Mainnet:** `https://eth.drpc.org`
+*   **Sepolia (Testnet):** `https://sepolia.drpc.org`
+{% endhint %}
 
-> [!NOTE]
-> **TON Networks:** The endpoint (`url`) you use must match your API key environment.
-> *   **Mainnet:** `https://toncenter.com/api/v2/jsonRPC`
-> *   **Testnet:** `https://testnet.toncenter.com/api/v2/jsonRPC`
+{% hint style="info" %}
+**TON Networks:** The endpoint (`url`) you use must match your API key environment.
+*   **Mainnet:** `https://toncenter.com/api/v2/jsonRPC`
+*   **Testnet:** `https://testnet.toncenter.com/api/v2/jsonRPC`
+{% endhint %}
 
 ## Next steps
 

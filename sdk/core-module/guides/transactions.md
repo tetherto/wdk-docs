@@ -58,13 +58,15 @@ console.log('TON transaction:', tonResult.hash)
 ```
 {% endcode %}
 
-> [!NOTE]
-> **Get Testnet Funds:** To test these transactions without spending real money, verify you are on a testnet and use a faucet:
-> *   **Ethereum (Sepolia):** [Google Cloud Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)
-> *   **TON Testnet:** [Testgiver Bot](https://t.me/testgiver_ton_bot)
+{% hint style="info" %}
+**Get Testnet Funds:** To test these transactions without spending real money, verify you are on a testnet and use a faucet:
+*   **Ethereum (Sepolia):** [Google Cloud Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)
+*   **TON Testnet:** [Testgiver Bot](https://t.me/testgiver_ton_bot)
+{% endhint %}
 
-> [!IMPORTANT]
-> **BigInt Usage:** Always use `BigInt` (the `n` suffix) for monetary values to avoid precision loss with large numbers.
+{% hint style="warning" %}
+**BigInt Usage:** Always use `BigInt` (the `n` suffix) for monetary values to avoid precision loss with large numbers.
+{% endhint %}
 
 ## Handling Responses
 

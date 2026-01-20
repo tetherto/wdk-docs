@@ -99,7 +99,6 @@ Use `getBridgeProtocol` to access cross-chain bridges.
 
 {% code title="Bridge Assets" lineNumbers="true" %}
 ```typescript
-```typescript
 const ethAccount = await wdk.getAccount('ethereum', 0)
 const usdt0 = ethAccount.getBridgeProtocol('usdt0')
 
@@ -110,11 +109,11 @@ const result = await usdt0.bridge({
   amount: 1000000n
 })
 ```
-```
 {% endcode %}
 
-> [!NOTE]
-> **Protocol Availability:** If you try to access a protocol that hasn't been registered (e.g., `getSwapProtocol('uniswap')`), the SDK will throw an error. always ensure registration matches the ID you request.
+{% hint style="info" %}
+**Protocol Availability:** If you try to access a protocol that hasn't been registered (e.g., `getSwapProtocol('uniswap')`), the SDK will throw an error. always ensure registration matches the ID you request.
+{% endhint %}
 
 ## Next steps
 

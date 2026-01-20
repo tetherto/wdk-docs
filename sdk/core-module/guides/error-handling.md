@@ -64,8 +64,9 @@ function endSession(wdk) {
 ```
 {% endcode %}
 
-> [!WARNING]
-> **After Disposal:** Once disposed, any attempt to use the `wdk` instance or its derived accounts will result in an error. You must inspect a new instance to resume operations.
+{% hint style="warning" %}
+**After Disposal:** Once disposed, any attempt to use the `wdk` instance or its derived accounts will result in an error. You must inspect a new instance to resume operations.
+{% endhint %}
 
 ## Security Best Practices
 

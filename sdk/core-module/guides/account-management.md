@@ -48,8 +48,17 @@ const customEthAccount = await wdk.getAccountByPath('ethereum', "0'/0/1")
 ```
 {% endcode %}
 
-> [!NOTE]
-> The WDK instance caches accounts. calling `getAccount` twice for the same index returns the same object instance.
+{% hint style="info" %}
+The WDK instance caches accounts. calling `getAccount` twice for the same index returns the same object instance.
+{% endhint %}
+
+{% hint style="warning" %}
+**Network Mismatch Warning**
+Ensure your WDK instance configuration matches your account environment.
+*   If using **Testnet** keys, ensure you registered the wallet with a **Testnet RPC**.
+*   If using **Mainnet** keys, ensure you registered the wallet with a **Mainnet RPC**.
+Using a Mainnet key on a Testnet RPC (or vice versa) will result in "Network not allowed" or 0 balance errors.
+{% endhint %}
 
 ## View Addresses
 
