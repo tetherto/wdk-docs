@@ -31,12 +31,9 @@ Global registration ensures that every account you retrieve already has the prot
 
 **1. Install Protocol Modules**
 
-> [!WARNING]
-> **TODO:** The `@tetherto/wdk-protocol-bridge-usdt0-ton` package is currently unavailable in the registry. This section is pending confirmation from the development team.
-
 ```bash
 npm install @tetherto/wdk-protocol-swap-velora-evm
-# npm install @tetherto/wdk-protocol-bridge-usdt0-ton (Pending release)
+npm install @tetherto/wdk-protocol-bridge-usdt0-evm
 ```
 
 **2. Register in Code**
@@ -44,24 +41,21 @@ npm install @tetherto/wdk-protocol-swap-velora-evm
 {% code title="Global Registration" lineNumbers="true" %}
 ```typescript
 import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
-// import Usdt0ProtocolTon from '@tetherto/wdk-protocol-bridge-usdt0-ton' // TODO: Package unavailable
+import usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
 
 // Register protocols for specific chains
 const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, ethConfig)
-  .registerWallet('ton', WalletManagerTon, tonConfig)
   
   // Register Velora Swap for Ethereum
   .registerProtocol('ethereum', 'velora', veloraProtocolEvm, {
     apiKey: 'YOUR_API_KEY'
   })
   
-  /* TODO: Pending package release
-  // Register USDT0 Bridge for TON
-  .registerProtocol('ton', 'usdt0', Usdt0ProtocolTon, {
-    tonApiKey: 'YOUR_API_KEY'
+  // Register USDT0 Bridge for Ethereum
+  .registerProtocol('ethereum', 'usdt0', usdt0ProtocolEvm, {
+     ethereumRpcUrl: 'https://eth.drpc.org' // Configuration depends on the module
   })
-  */
 ```
 {% endcode %}
 
@@ -105,17 +99,17 @@ Use `getBridgeProtocol` to access cross-chain bridges.
 
 {% code title="Bridge Assets" lineNumbers="true" %}
 ```typescript
-/* TODO: Pending package release
-const tonAccount = await wdk.getAccount('ton', 0)
-const usdt0 = tonAccount.getBridgeProtocol('usdt0')
+```typescript
+const ethAccount = await wdk.getAccount('ethereum', 0)
+const usdt0 = ethAccount.getBridgeProtocol('usdt0')
 
 const result = await usdt0.bridge({
-  targetChain: 'ethereum',
-  recipient: '0x...', // Ethereum address
-  token: 'TON_TOKEN_ADDRESS',
+  targetChain: 'ton',
+  recipient: 'UQBla...', // TON address
+  token: '0x...', // ERC20 Token Address
   amount: 1000000n
 })
-*/
+```
 ```
 {% endcode %}
 
