@@ -52,12 +52,6 @@ const wallet = new WalletManagerSpark(seedPhrase, {
   network: 'MAINNET' // 'MAINNET' or 'REGTEST'
 })
 
-{% hint style="info" %}
-**Need Test Funds?**
-
-For development on **REGTEST**, you can get test funds from the [Lightspark Regtest Faucet](https://app.lightspark.com/regtest-faucet).
-{% endhint %}
-
 // Get a full access account
 const account = await wallet.getAccount(0)
 
@@ -65,6 +59,12 @@ const account = await wallet.getAccount(0)
 const address = await account.getAddress()
 console.log('Account address:', address)
 ```
+
+{% hint style="info" %}
+**Need Test Funds?**
+
+For development on **REGTEST**, you can get test funds from the [Lightspark Regtest Faucet](https://app.lightspark.com/regtest-faucet).
+{% endhint %}
 
 **Note**: The Spark wallet integrates with the Spark network using the `@buildonspark/spark-sdk`. Network configuration is limited to predefined networks, and there's no custom RPC provider option.
 
