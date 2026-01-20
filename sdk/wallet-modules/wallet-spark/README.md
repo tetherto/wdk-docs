@@ -40,15 +40,20 @@ A simple and secure package to manage BIP-32 wallets for the Spark blockchain. T
 - **Message Signing**: Sign and verify messages using Spark identity keys
 - **Memory Safety**: Secure private key management with automatic memory cleanup
 - **TypeScript Support**: Full TypeScript definitions included
-- **Network Support**: Support for Spark [mainnet](../../../resources/concepts.md#mainnet), [testnet](../../../resources/concepts.md#testnet), and [regtest](../../../resources/concepts.md#regtest) networks
+- **Network Support**: Support for Spark [mainnet](../../../resources/concepts.md#mainnet) and [regtest](../../../resources/concepts.md#regtest) networks
 
 ## Supported Networks
 
 This package supports the following Spark networks:
 
 - **Spark Mainnet**: Production Spark network
-- **Spark Testnet**: Spark test network for development
 - **Spark Regtest**: Local Spark network for testing
+
+{% hint style="info" %}
+**Regtest Faucet**
+
+You can obtain test funds for your Regtest environment from the [Lightspark Regtest Faucet](https://app.lightspark.com/regtest-faucet).
+{% endhint %}
 
 ## Next Steps
 
