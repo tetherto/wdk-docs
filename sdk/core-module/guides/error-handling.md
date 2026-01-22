@@ -40,11 +40,13 @@ try {
 ```
 {% endcode %}
 
+{% hint style="tip" %}
 Always use `try/catch` blocks when initializing sessions or accessing dynamic features.
+{% endhint %}
 
 ## Memory Management
 
-For security, you should clear sensitive data from memory when a session is complete. The WDK provided a `.dispose()` method for this purpose.
+For security, you should clear sensitive data from memory when a session is complete. The WDK provides a `.dispose()` method for this purpose.
 
 ### Disposing the Instance
 
@@ -65,10 +67,15 @@ function endSession(wdk) {
 {% endcode %}
 
 {% hint style="warning" %}
-**After Disposal:** Once disposed, any attempt to use the `wdk` instance or its derived accounts will result in an error. You must inspect a new instance to resume operations.
+**After Disposal:** Once disposed, any attempt to use the `wdk` instance or its derived accounts will result in an error. You must instantiate a new instance to resume operations.
 {% endhint %}
 
 ## Security Best Practices
 
-*   **Environment Variables:** Never hardcode API keys or seed phrases in your source code. Use environment variables (e.g., `process.env.TON_API_KEY`).
-*   **Secure Storage:** If persisting a session, never store the raw seed phrase in local storage. Use secure operating system storage (like Keychain on macOS or Keystore on Android).
+### Environment Variables
+
+Never hardcode API keys or seed phrases in your source code. Use environment variables (e.g., `process.env.TON_API_KEY`).
+
+### Secure Storage
+
+If you persist a session, never store the raw seed phrase in local storage. Use secure operating system storage (like Keychain on macOS or Keystore on Android).
