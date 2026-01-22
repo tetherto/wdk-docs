@@ -23,7 +23,7 @@ This guide explains how to import the WDK Core module and create a new instance 
 
 ## Import the module
 
-First, import the `WDK` class from the package you installed:
+First, import the `WDK` class from the package you installed (see [Installation](./installation.md)):
 
 {% code title="Import WDK Core"lineNumbers="true" %}
 ```typescript
@@ -33,11 +33,11 @@ import WDK from '@tetherto/wdk'
 
 ## Create an Instance
 
-To use the SDK, you must create an instance of the `WDK` class. This instance acts as the central manager for all your wallets and protocols.
+To use WDK, you must create an instance of the `WDK` class. This instance acts as the central manager for all your wallets and protocols.
 
-You can initialize `WDK` in two ways: with a new seed phrase or an existing one.
+You can initialize `WDK` in two ways: with a [new seed phrase](#generate-a-new-wallet) or an [existing one](#restore-an-existing-wallet).
 
-### Option 1: Generate a new wallet
+### Generate a New Wallet
 
 If you are creating a fresh wallet for a user, use the static `getRandomSeedPhrase()` method to generate a secure mnemonic.
 
@@ -55,7 +55,7 @@ const wdk = new WDK(seedPhrase)
 **Secure the Seed Phrase:** You must securely store this seed phrase immediately. If it is lost, the user will permanently lose access to their funds.
 {% endhint %}
 
-### Option 2: Restore an existing wallet
+### Restore an Existing Wallet
 
 If a user already has a seed phrase (e.g., from a previous session or another wallet), you can pass it directly to the constructor.
 
@@ -70,4 +70,4 @@ const wdk = new WDK(existingSeed)
 
 ## Next steps
 
-With your WDK instance ready, you can now [register wallet modules](./wallet-registration.md) to interact with specific blockchains like Ethereum, TON, or Bitcoin.
+With your WDK instance ready, you can now [register wallet modules](./wallet-registration.md) to interact with specific blockchains like [Ethereum](../../wallet-modules/wallet-evm/README.md), [TON](../../wallet-modules/wallet-ton/README.md), or [Bitcoin](../../wallet-modules/wallet-btc/README.md).
