@@ -89,6 +89,6 @@ const wdk = new WDK(seedPhrase)
 *   **Testnet:** `https://testnet.toncenter.com/api/v2/jsonRPC`
 {% endhint %}
 
-## Next steps
+## Next Steps
 
 Once your wallets are registered, you can [manage accounts and specific addresses](./account-management.md).

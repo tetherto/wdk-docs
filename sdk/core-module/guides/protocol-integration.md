@@ -115,6 +115,6 @@ const result = await usdt0.bridge({
 **Protocol Availability:** If you try to access a protocol that hasn't been registered (e.g., `getSwapProtocol('uniswap')`), the SDK will throw an error. always ensure registration matches the ID you request.
 {% endhint %}
 
-## Next steps
+## Next Steps
 
 Learn how to [configure middleware](./middleware.md) to add logging or failover protection to your wallet interactions.

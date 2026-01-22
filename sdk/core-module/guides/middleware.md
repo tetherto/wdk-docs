@@ -19,13 +19,13 @@ layout:
 
 # Configure Middleware
 
-Middleware allows you to intercept wallet operations. You can use this to add logging, implement retry logic, or handle failovers for RPC providers.
+Middleware allows you to intercept wallet operations. You can use this to add [logging](#logging), implement retry logic, or handle [failovers for RPC providers](#failover-protection-with-provider-failover).
 
 ## Register Middleware
 
-Reference a specific chain when registering middleware. The middleware function runs every time an account is instantiated or an operation is performed, depending on the implementation.
+When registering middleware, you should reference a specific chain. The middleware function runs every time an account is instantiated or an operation is performed, depending on the implementation.
 
-### Example: Logging
+### Logging
 
 This simple middleware logs a message whenever a new account is accessed.
 
@@ -40,16 +40,23 @@ wdk.registerMiddleware('ethereum', async (account) => {
 ```
 {% endcode %}
 
-## Failover Protection
+## Failover Protection with Provider Failover
 
+The [`@tetherto/wdk-provider-failover`](https://www.npmjs.com/package/@tetherto/wdk-provider-failover) package provides a resilient wrapper for wallet instances. Unlike standard middleware, you wrap your wallet class instantiation directly.
 
-### Using Provider Failover
+### Install `@tetherto/wdk-provider-failover`
 
-The `@tetherto/wdk-provider-failover` package provides a resilient wrapper for wallet instances. Unlike standard middleware, you wrap your wallet class instantiation directly.
+You can install the `@tetherto/wdk-provider-failover` using npm with the following command:
 
 ```bash
 npm install @tetherto/wdk-provider-failover
 ```
+
+### Use `createFallbackWallet`
+
+You can import the `createFallbackWallet` function to ensure that if your primary RPC fails, the wallet automatically retries with the fallback providers.
+
+With this configuration, if `sendTransaction` fails due to a network error, the WDK will automatically retry using the fallback providers without throwing an error to your application.
 
 {% code title="Failover Wrapper Usage" lineNumbers="true" %}
 ```typescript
@@ -73,10 +80,6 @@ const balance = await wallet.getBalance()
 ```
 {% endcode %}
 
-This wrapper ensures that if your primary RPC fails, the wallet automatically retries with the fallback providers.
-
-With this configuration, if `sendTransaction` fails due to a network error, the WDK will automatically retry using the fallback providers without throwing an error to your application.
-
-## Next steps
+## Next Steps
 
 Learn about [error handling and best practices](./error-handling.md) to ensure your application is robust and secure.

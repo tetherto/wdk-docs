@@ -38,6 +38,6 @@ npm install @tetherto/wdk
 
 This package allows you to manage different blockchain wallets and protocols through a single interface.
 
-## Next steps
+## Next Steps
 
 Now that you have installed the core package, you can [instantiate the WDK](./instantiation.md) to start creating wallets.

@@ -112,6 +112,6 @@ for (const chain of chains) {
 ```
 {% endcode %}
 
-## Next steps
+## Next Steps
 
 Now that you can access your accounts, learn how to [send transactions](./transactions.md).

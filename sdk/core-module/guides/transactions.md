@@ -97,6 +97,6 @@ async function sendCrossChainPayments(wdk) {
 ```
 {% endcode %}
 
-## Next steps
+## Next Steps
 
 For more complex interactions like swapping tokens or bridging assets, learn how to [integrate protocols](./protocol-integration.md).
