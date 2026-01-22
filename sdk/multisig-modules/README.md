@@ -1,6 +1,6 @@
 # Multisig Modules
 
-Overview of WDK Multisig Modules
+This document provides an overview of the WDK Multisig Modules. 
 
 The Wallet Development Kit (WDK) provides multisig modules that enable secure multi-party wallet management. These modules allow multiple signers to control shared wallets with customizable approval thresholds.
 
