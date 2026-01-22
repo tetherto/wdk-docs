@@ -264,20 +264,28 @@ wdk.dispose()
 
 | Method | Description | Returns |
 |--------|-------------|---------|
-| `getRandomSeedPhrase()` | Returns a random BIP-39 seed phrase | `string` |
+| `getRandomSeedPhrase(wordCount?)` | Returns a random BIP-39 seed phrase (12 or 24 words) | `string` |
 | `isValidSeedPhrase(seedPhrase)` | Checks if a seed phrase is valid | `boolean` |
 
-##### `getRandomSeedPhrase()`
-Returns a random BIP-39 seed phrase.
+##### `getRandomSeedPhrase(wordCount?)`
+Returns a random BIP-39 seed phrase. Supports both 12-word (128-bit entropy) and 24-word (256-bit entropy) seed phrases.
+**Parameters:**
+- `wordCount` (12 | 24, optional): The number of words in the seed phrase. Defaults to 12.
 
 **Returns:** `string` - The seed phrase
 
 **Example:**
 {% code title="Generate Random Seed" lineNumbers="true" %}
 ```javascript
-const seedPhrase = WDK.getRandomSeedPhrase()
-console.log('Generated seed:', seedPhrase)
+// Generate 12-word seed phrase (default)
+const seedPhrase12 = WDK.getRandomSeedPhrase()
+console.log('Generated 12-word seed:', seedPhrase12)
 // Output: "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+
+// Generate 24-word seed phrase (higher security)
+const seedPhrase24 = WDK.getRandomSeedPhrase(24)
+console.log('Generated 24-word seed:', seedPhrase24)
+// Output: "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon art"
 ```
 {% endcode %}
 

@@ -121,6 +121,9 @@ import WDK from '@tetherto/wdk'
 
 const seedPhrase = WDK.getRandomSeedPhrase() // or use your own seed phrase
 
+// Or generate a 24-word seed phrase for higher security
+// const seedPhrase = WDK.getRandomSeedPhrase(24)
+
 const wdk = new WDK(seedPhrase)
 ```
 {% endcode %}
