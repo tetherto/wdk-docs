@@ -23,9 +23,7 @@ layout:
 You can send native tokens (like ETH, TON, or BTC) from any of your wallet accounts to another address.
 
 {% hint style="info" %}
-**Get Testnet Funds:** To test these transactions without spending real money, verify you are on a testnet and use a faucet:
-*   **Ethereum (Sepolia):** [Google Cloud Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)
-*   **TON Testnet:** [Testgiver Bot](https://t.me/testgiver_ton_bot)
+**Get Testnet Funds:** To test these transactions without spending real money, ensure you are on a testnet and have obtained funds. See [Testnet Funds & Faucets](../../../resources/concepts.md#testnet-funds--faucets) for a list of available faucets.
 {% endhint %}
 
 {% hint style="warning" %}
@@ -85,7 +83,7 @@ console.log('TON transaction:', tonResult.hash)
 
 ## Handling Responses
 
-The `sendTransaction` method returns a transaction result object. The most important field is typically `hash`, which represents the transaction ID on the blockchain. You can use this hash to track the status of your payment on a block explorer.
+The `sendTransaction` method returns a [transaction result object](../api-reference.md). The most important field is typically `hash`, which represents the transaction ID on the blockchain. You can use this hash to track the status of your payment on a block explorer.
 
 ## Multi-Chain Transactions
 

@@ -27,7 +27,7 @@ The WDK uses a builder pattern, allowing you to chain `.registerWallet()` calls.
 
 ### Parameters
 
-The `registerWallet` method requires three arguments:
+The `registerWallet` method (see [API Reference](../api-reference.md#registerwalletblockchain-wallet-config)) requires three arguments:
 
 1.  **Symbol**: A unique string identifier for the chain (e.g., `'ethereum'`, `'ton'`). You will use this ID later to retrieve accounts.
 2.  **Manager Class**: The wallet manager class imported from the specific module (e.g., `WalletManagerEvm`).

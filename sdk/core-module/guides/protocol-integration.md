@@ -23,7 +23,7 @@ The WDK Core module supports registering external protocols. This allows you to 
 
 ## Register Protocols
 
-You can register protocols in two ways: [globally](#global-registration-recommended) (for all new accounts) or [locally](#account-level-registration) (for a specific existing account).
+You can register protocols globally (for all new accounts).
 
 ### Global Registration (Recommended)
 
@@ -71,18 +71,6 @@ const wdk = new WDK(seedPhrase)
 ```
 {% endcode %}
 
-### Account-Level Registration
-
-If you only need a protocol for a single session, you can register it directly on an account object.
-
-{% code title="Account Registration" lineNumbers="true" %}
-```typescript
-const account = await wdk.getAccount('ethereum', 0)
-
-// Register only for this account instance
-account.registerProtocol('velora', veloraProtocolEvm, config)
-```
-{% endcode %}
 
 ## Use Protocols
 
