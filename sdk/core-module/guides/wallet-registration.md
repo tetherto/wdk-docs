@@ -35,13 +35,15 @@ The `registerWallet` method requires three arguments:
 
 ## Installation
 
-Install the wallet managers for the blockchains you want to support:
+Install the [wallet managers](../../wallet-modules/README.md) for the blockchains you want to support:
 
 ```bash
 npm install @tetherto/wdk-wallet-evm @tetherto/wdk-wallet-ton @tetherto/wdk-wallet-btc
 ```
 
 ## Example: Registering Multiple Wallets
+
+### Import the Wallet Manager Packages
 
 First, import the necessary wallet manager packages:
 
@@ -53,7 +55,9 @@ import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 ```
 {% endcode %}
 
-Then, instantiate WDK and chain the registration calls:
+### Register the Wallets
+
+Then, [instantiate WDK](./instantiation.md) and chain the registration calls:
 
 {% code title="Register Wallets" lineNumbers="true" %}
 ```typescript
