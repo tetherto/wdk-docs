@@ -273,11 +273,7 @@ const ethereumConfig = {
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    // Supported Paymaster Tokens:
-    // USD₮: 0xdAC17F958D2ee523a2206206994597C13D831ec7
-    // USA₮: 0x07041776f5007aca2a54844f50503a18a72a8b68
-    // XAU₮: 0x68749665ff8d2d112fa859aa293f07a622782f38
-    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USD₮
+    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USDT
   },
   transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDT if 6 decimals)
 }
