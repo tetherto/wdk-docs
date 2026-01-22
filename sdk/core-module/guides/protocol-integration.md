@@ -39,11 +39,22 @@ npm install @tetherto/wdk-protocol-swap-velora-evm && npm install @tetherto/wdk-
 
 ### 2. Register in Code
 
-{% code title="Global Registration" lineNumbers="true" %}
+
+Now, import the protocol modules and register them with your WDK instance. This makes the protocol methods available to any account derived from that instance.
+
+First, import the necessary modules:
+
+{% code title="Import Protocols" lineNumbers="true" %}
 ```typescript
 import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
 import usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
+```
+{% endcode %}
 
+Then, register the protocols for the specific chains they support:
+
+{% code title="Register Protocols" lineNumbers="true" %}
+```typescript
 // Register protocols for specific chains
 const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, ethConfig)
