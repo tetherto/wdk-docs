@@ -57,7 +57,7 @@ import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
 ### Register the Wallets
 
-Then, [instantiate WDK](./instantiation.md) and chain the registration calls:
+Then, [instantiate WDK](./getting-started.md#initialize-wdk) and chain the registration calls:
 
 {% code title="Register Wallets" lineNumbers="true" %}
 ```typescript

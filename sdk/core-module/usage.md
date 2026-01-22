@@ -34,16 +34,10 @@ The WDK Core module is the central orchestrator for your wallet interactions.
   </thead>
   <tbody>
     <tr>
-      <td><i class="fa-download">:download:</i></td>
-      <td><strong>Installation</strong></td>
-      <td>Add the package to your project.</td>
-      <td><a href="./guides/installation.md">Installation</a></td>
-    </tr>
-    <tr>
-      <td><i class="fa-code">:code:</i></td>
-      <td><strong>Instantiation</strong></td>
-      <td>Initialize the WDK with a seed phrase.</td>
-      <td><a href="./guides/instantiation.md">Instantiation</a></td>
+      <td><i class="fa-rocket">:rocket:</i></td>
+      <td><strong>Getting Started</strong></td>
+      <td>Install and instantiate the WDK.</td>
+      <td><a href="./guides/getting-started.md">Getting Started</a></td>
     </tr>
     <tr>
       <td><i class="fa-wallet">:wallet:</i></td>
