@@ -34,8 +34,7 @@ Global registration ensures that every account you retrieve already has the prot
 Install the [`@tetherto/wdk-protocol-swap-velora-evm`](https://www.npmjs.com/package/@tetherto/wdk-protocol-swap-velora-evm) and [`@tetherto/wdk-protocol-bridge-usdt0-evm`](https://www.npmjs.com/package/@tetherto/wdk-protocol-bridge-usdt0-evm) packages:
 
 ```bash
-npm install @tetherto/wdk-protocol-swap-velora-evm
-npm install @tetherto/wdk-protocol-bridge-usdt0-evm
+npm install @tetherto/wdk-protocol-swap-velora-evm && npm install @tetherto/wdk-protocol-bridge-usdt0-evm
 ```
 
 ### 2. Register in Code
