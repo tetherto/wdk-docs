@@ -49,20 +49,20 @@ const customEthAccount = await wdk.getAccountByPath('ethereum', "0'/0/1")
 {% endcode %}
 
 {% hint style="info" %}
-The WDK instance caches accounts. calling `getAccount` twice for the same index returns the same object instance.
+The WDK instance caches accounts. If you call `getAccount` twice using the same index, the function will return the same `Account` object instance.
 {% endhint %}
 
 {% hint style="warning" %}
 **Network Mismatch Warning**
 Ensure your WDK instance configuration matches your account environment.
-*   If using **Testnet** keys, ensure you registered the wallet with a **Testnet RPC**.
-*   If using **Mainnet** keys, ensure you registered the wallet with a **Mainnet RPC**.
-Using a Mainnet key on a Testnet RPC (or vice versa) will result in "Network not allowed" or 0 balance errors.
+*   If using **Testnet** keys, ensure you registered the wallet with a **Testnet RPC** (e.g., `https://sepolia.drpc.org` for ETH, `https://testnet.toncenter.com/api/v2/jsonRPC` for TON).
+*   If using **Mainnet** keys, ensure you registered the wallet with a **Mainnet RPC** (e.g., `https://eth.drpc.org` for ETH, `https://toncenter.com/api/v2/jsonRPC` for TON).
+Using a Mainnet key on a Testnet RPC (or vice versa) will result in "Network not allowed" or zero balance errors.
 {% endhint %}
 
 ## View Addresses
 
-Once you have an account object, you can retrieve its public blockchain address.
+Once you have an account object, you can retrieve its public blockchain address using the `getAddress` function.
 
 {% code title="Get Addresses" lineNumbers="true" %}
 ```typescript
@@ -73,7 +73,7 @@ console.log('Ethereum address:', ethAddress)
 
 ## Check Balances
 
-You can check the native token balance of any account (e.g., ETH on Ethereum, TON on TON).
+You can check the native token balance of any account (e.g., ETH on Ethereum, TON on TON) by using the `getBalance()` function.
 
 {% code title="Get Balance" lineNumbers="true" %}
 ```typescript
@@ -89,6 +89,12 @@ try {
 ### Multi-Chain Balance Check
 
 Because WDK offers a unified interface, you can easily iterate through multiple chains to fetch balances.
+
+The following example:
+1. Iterates over an array of user defined chains.
+2. Retrieves the first account using the respective chain's `getAccount(index)` function.
+3. Retrieves the first account's balance using the `getBalance()` function.
+4. Logs the balance to the console.
 
 {% code title="Check All Balances" lineNumbers="true" %}
 ```typescript
