@@ -43,9 +43,9 @@ Modules with ERC-4337 support include:
 
 To get started with WDK multisig modules, follow these steps:
 
-1. Get up and running quickly with our [Quick Start Guide](/start-building/nodejs-bare-quickstart)
-2. Choose the module that best fits your needs from the table above
-3. Check specific documentation for the module you wish to use
+1. Get up and running quickly with our [Quick Start Guide](/start-building/nodejs-bare-quickstart).
+2. Choose the module that best fits your needs from the table above.
+3. Check specific documentation for the module you wish to use.
 
 ## Next Steps
 
