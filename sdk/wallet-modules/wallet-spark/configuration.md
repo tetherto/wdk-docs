@@ -24,7 +24,7 @@ layout:
 
 ```javascript
 const config = {
-  network: 'MAINNET' // 'MAINNET', 'TESTNET', or 'REGTEST'
+  network: 'MAINNET' // 'MAINNET' or 'REGTEST'
 }
 
 const wallet = new WalletManagerSpark(seedPhrase, config)
@@ -48,9 +48,8 @@ The `network` option specifies which Spark network to use.
 
 **Values:**
 - `"MAINNET"` - Spark mainnet (production)
-- `"TESTNET"` - Spark testnet (development)
 - `"SIGNET"` - Spark signet (testing)
-- `"REGTEST"` - Spark regtest (local development)
+- `"REGTEST"` - Spark regtest (local development) - [Get test funds](https://app.lightspark.com/regtest-faucet)
 
 **Default:** `"MAINNET"`
 
@@ -85,10 +84,7 @@ const mainnetConfig = {
   network: 'MAINNET'
 }
 
-// Testnet configuration  
-const testnetConfig = {
-  network: 'TESTNET'
-}
+
 
 // Regtest configuration
 const regtestConfig = {
@@ -101,13 +97,12 @@ const regtestConfig = {
 Spark uses the [BIP-44](../../../resources/concepts.md#bip-44-multi-account-hierarchy) coin type 998, resulting in derivation paths like:
 - `m/44'/998'/0'/0/0` for MAINNET account index 0
 - `m/44'/998'/0'/0/1` for MAINNET account index 1
-- `m/44'/998'/1'/0/0` for TESTNET account index 0
 - `m/44'/998'/2'/0/0` for SIGNET account index 0
 - `m/44'/998'/3'/0/0` for REGTEST account index 0
 
 The path follows the pattern `m/44'/998'/{networkNumber}'/0/{index}` where:
 - `998` is the coin type for Spark
-- `networkNumber` is 0 for MAINNET, 1 for TESTNET, 2 for SIGNET, or 3 for REGTEST
+- `networkNumber` is 0 for MAINNET, 2 for SIGNET, or 3 for REGTEST
 - `index` is the account index
 
 This ensures compatibility with standard [BIP-44](../../../resources/concepts.md#bip-44-multi-account-hierarchy) wallets while using Spark's unique coin type identifier.
