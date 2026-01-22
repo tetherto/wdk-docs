@@ -119,7 +119,11 @@ The WDK SDK uses a registration-based system where modules are added to a centra
 ```typescript
 import WDK from '@tetherto/wdk'
 
-const seedPhrase = WDK.getRandomSeedPhrase() // or use your own seed phrase
+// Generate 24-word seed phrase for higher security
+const seedPhrase = WDK.getRandomSeedPhrase(24)
+
+// Or use 12-word seed phrase (default)
+// const seedPhrase = WDK.getRandomSeedPhrase()
 
 const wdk = new WDK(seedPhrase)
 ```

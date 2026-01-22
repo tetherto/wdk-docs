@@ -65,7 +65,11 @@ If you are creating a fresh wallet for a user, use the static `getRandomSeedPhra
 {% code title="Create new WDK Instance" lineNumbers="true" %}
 ```typescript
 // 1. Generate a secure random seed phrase
-const seedPhrase = WDK.getRandomSeedPhrase()
+// Generate 24-word seed phrase for higher security
+const seedPhrase = WDK.getRandomSeedPhrase(24)
+
+// Or use 12-word seed phrase (default)
+// const seedPhrase = WDK.getRandomSeedPhrase()
 
 // 2. Initialize the WDK instance with the new seed
 const wdk = new WDK(seedPhrase)
