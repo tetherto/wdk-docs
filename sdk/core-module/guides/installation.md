@@ -19,18 +19,18 @@ layout:
 
 # Install WDK Core
 
-This guide shows you how to install the `@tetherto/wdk` package, which serves as the main entry point for the Wallet Development Kit (WDK).
+This guide shows you how to install the [`@tetherto/wdk`](https://www.npmjs.com/package/@tetherto/wdk) package, which serves as the main entry point for the Wallet Development Kit (WDK).
 
 ## Prerequisites
 
 Before you begin, ensure you have the following installed:
 
-*   **Node.js**: version 18 or higher.
-*   **npm**: usually comes with Node.js.
+*   **[Node.js](https://nodejs.org/)**: version 18 or higher.
+*   **[npm](https://www.npmjs.com/)**: usually comes with Node.js.
 
 ## Installation
 
-To install the WDK Core package, run the following command in your terminal:
+To install the [`@tetherto/wdk`](https://www.npmjs.com/package/@tetherto/wdk) Core package, run the following command in your terminal:
 
 ```bash
 npm install @tetherto/wdk
