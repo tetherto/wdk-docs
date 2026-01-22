@@ -19,24 +19,26 @@ layout:
 
 # Integrate Protocols
 
-The WDK Core module supports registering external protocols. This allows you to extend the basic wallet functionality with advanced features like token swapping, cross-chain bridging, and lending, all through a unified interface.
+The WDK Core module supports registering external protocols. This allows you to extend the basic wallet functionality with advanced features like [token swapping](#swapping-tokens), [cross-chain bridging](#bridging-assets), and lending, all through a unified interface.
 
 ## Register Protocols
 
-You can register protocols in two ways: globally (for all new accounts) or locally (for a specific existing account).
+You can register protocols in two ways: [globally](#global-registration-recommended) (for all new accounts) or [locally](#account-level-registration) (for a specific existing account).
 
 ### Global Registration (Recommended)
 
-Global registration ensures that every account you retrieve already has the protocol ready to use. This is done by chaining `.registerProtocol()` on the WDK instance.
+Global registration ensures that every account you retrieve already has the protocol ready to use. You can do this by chaining a call to `.registerProtocol()` on the WDK instance.
 
-**1. Install Protocol Modules**
+### 1. Install Protocol Modules
+
+Install the [`@tetherto/wdk-protocol-swap-velora-evm`](https://www.npmjs.com/package/@tetherto/wdk-protocol-swap-velora-evm) and [`@tetherto/wdk-protocol-bridge-usdt0-evm`](https://www.npmjs.com/package/@tetherto/wdk-protocol-bridge-usdt0-evm) packages:
 
 ```bash
 npm install @tetherto/wdk-protocol-swap-velora-evm
 npm install @tetherto/wdk-protocol-bridge-usdt0-evm
 ```
 
-**2. Register in Code**
+### 2. Register in Code
 
 {% code title="Global Registration" lineNumbers="true" %}
 ```typescript
@@ -74,11 +76,11 @@ account.registerProtocol('velora', veloraProtocolEvm, config)
 
 ## Use Protocols
 
-Once registered, you can access the protocol instance using the specific getter methods: `getSwapProtocol`, `getBridgeProtocol`, or `getLendingProtocol`.
+Once [registered](#register-protocols), you can access the protocol instance using the specific getter methods: `getSwapProtocol`, `getBridgeProtocol`, or `getLendingProtocol`.
 
 ### Swapping Tokens
 
-Use `getSwapProtocol` to access registered swap services.
+Use `getSwapProtocol` to access registered swap services on any wallet account.
 
 {% code title="Swap Tokens" lineNumbers="true" %}
 ```typescript
@@ -95,7 +97,8 @@ const result = await velora.swap({
 
 ### Bridging Assets
 
-Use `getBridgeProtocol` to access cross-chain bridges.
+1. Use `getBridgeProtocol` to access cross-chain bridges.
+2. Call `bridge` from the bridge protocol to send tokens from one protocol to another.
 
 {% code title="Bridge Assets" lineNumbers="true" %}
 ```typescript
