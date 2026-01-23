@@ -45,11 +45,8 @@ import WDK from '@tetherto/wdk'
 
 {% code title="Create WDK Instance" lineNumbers="true" %}
 ```typescript
-// Generate 24-word seed phrase for higher security
-  const seedPhrase = WDK.getRandomSeedPhrase(24)
-  
-// Or use 12-word seed phrase (default)
-// const seedPhrase = WDK.getRandomSeedPhrase()
+// Generate a random seed phrase
+const seedPhrase = WDK.getRandomSeedPhrase()
 
 // Create WDK instance
 const wdk = new WDK(seedPhrase)
