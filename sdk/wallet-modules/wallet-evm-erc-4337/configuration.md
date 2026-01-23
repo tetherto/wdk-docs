@@ -251,6 +251,17 @@ try {
 
 ### Ethereum Mainnet
 
+
+{% hint style="info" %}
+**Supported Paymaster Tokens**
+
+The following tokens are supported for gas payments on Ethereum Mainnet:
+
+*   **USD₮**: `0xdAC17F958D2ee523a2206206994597C13D831ec7`
+*   **USA₮**: `0x07041776f5007aca2a54844f50503a18a72a8b68`
+*   **XAU₮**: `0x68749665ff8d2d112fa859aa293f07a622782f38`
+{% endhint %}
+
 ```javascript
 const ethereumConfig = {
   chainId: 1,
