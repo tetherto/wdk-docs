@@ -79,9 +79,9 @@ const wdk = new WDK(seedPhrase)
 {% endcode %}
 
 {% hint style="info" %}
-**Ethereum Networks:** Choose the RPC endpoint that matches your environment (Mainnet or Testnet).
-*   **Mainnet:** `https://eth.drpc.org`
-*   **Sepolia (Testnet):** `https://sepolia.drpc.org`
+**RPC Providers:** The examples use public RPC endpoints for demonstration. We do not endorse any specific provider.
+*   **Testnets:** You can find public RPCs for Ethereum and other EVM chains on [Chainlist](https://chainlist.org).
+*   **Mainnet:** For production environments, we recommend using reliable, paid RPC providers to ensure stability.
 {% endhint %}
 
 {% hint style="info" %}
