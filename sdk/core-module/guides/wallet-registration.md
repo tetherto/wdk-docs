@@ -37,8 +37,9 @@ The `registerWallet` method (see [API Reference](../api-reference.md#registerwal
 
 Install the [wallet managers](../../wallet-modules/README.md) for the blockchains you want to support:
 
+
 ```bash
-npm install @tetherto/wdk-wallet-evm @tetherto/wdk-wallet-ton @tetherto/wdk-wallet-btc
+npm install @tetherto/wdk-wallet-evm @tetherto/wdk-wallet-tron @tetherto/wdk-wallet-btc
 ```
 
 ## Example: Registering Multiple Wallets
@@ -50,7 +51,7 @@ First, import the necessary wallet manager packages:
 {% code title="Import Modules" lineNumbers="true" %}
 ```typescript
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
-import WalletManagerTon from '@tetherto/wdk-wallet-ton'
+import WalletManagerTron from '@tetherto/wdk-wallet-tron'
 import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 ```
 {% endcode %}
@@ -66,13 +67,9 @@ const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, {
     provider: 'https://eth.drpc.org'
   })
-  // 2. Register TON
-  .registerWallet('ton', WalletManagerTon, {
-    // Get your API key: https://docs.ton.org/ecosystem/api/toncenter/get-api-key
-    tonClient: {
-      secretKey: 'YOUR_TON_API_KEY',
-      url: 'https://toncenter.com/api/v2/jsonRPC'
-    }
+  // 2. Register TRON
+  .registerWallet('tron', WalletManagerTron, {
+    provider: 'https://api.trongrid.io'
   })
   // 3. Register Bitcoin
   .registerWallet('bitcoin', WalletManagerBtc, {
@@ -88,9 +85,9 @@ const wdk = new WDK(seedPhrase)
 {% endhint %}
 
 {% hint style="info" %}
-**TON Networks:** The endpoint (`url`) you use must match your API key environment.
-*   **Mainnet:** `https://toncenter.com/api/v2/jsonRPC`
-*   **Testnet:** `https://testnet.toncenter.com/api/v2/jsonRPC`
+**TRON Networks:** Choose the correct provider for your environment.
+*   **Mainnet:** `https://api.trongrid.io`
+*   **Shasta (Testnet):** `https://api.shasta.trongrid.io`
 {% endhint %}
 
 ## Next Steps
