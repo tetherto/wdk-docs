@@ -40,7 +40,7 @@ new WalletManagerSpark(seed, config)
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (object, optional): Configuration object
-  - `network` (string, optional): 'MAINNET', 'TESTNET', or 'REGTEST' (default: 'MAINNET')
+  - `network` (string, optional): 'MAINNET' or 'REGTEST' (default: 'MAINNET')
 
 ### Methods
 
@@ -64,7 +64,7 @@ const account = await wallet.getAccount(0)
 const account1 = await wallet.getAccount(1)
 ```
 
-**Note:** Uses derivation path pattern `m/44'/998'/{networkNumber}'/0/{index}` where 998 is the coin type for Spark and networkNumber is 0 for MAINNET, 1 for TESTNET, 2 for SIGNET, or 3 for REGTEST.
+**Note:** Uses derivation path pattern `m/44'/998'/{networkNumber}'/0/{index}` where 998 is the coin type for Spark and networkNumber is 0 for MAINNET, 2 for SIGNET, or 3 for REGTEST.
 
 ##### `getFeeRates()`
 Returns current fee rates for transactions. On Spark network, transactions have zero fees.
@@ -663,7 +663,7 @@ account.dispose()
 
 ```typescript
 interface SparkWalletConfig {
-  network?: 'MAINNET' | 'TESTNET' | 'REGTEST'  // The network (default: "MAINNET")
+  network?: 'MAINNET' | 'REGTEST'  // The network (default: "MAINNET")
   sparkScanApiKey?: string                      // Optional API key for SparkScan requests
 }
 ```

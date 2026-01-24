@@ -49,7 +49,7 @@ const wallet = new WalletManagerSpark(seedPhrase)
 
 // Or with custom network configuration
 const wallet = new WalletManagerSpark(seedPhrase, {
-  network: 'MAINNET' // 'MAINNET', 'TESTNET', or 'REGTEST'
+  network: 'MAINNET' // 'MAINNET' or 'REGTEST'
 })
 
 // Get a full access account
@@ -59,6 +59,12 @@ const account = await wallet.getAccount(0)
 const address = await account.getAddress()
 console.log('Account address:', address)
 ```
+
+{% hint style="info" %}
+**Need Test Funds?**
+
+For development on **REGTEST**, you can get test funds from the [Lightspark Regtest Faucet](https://app.lightspark.com/regtest-faucet).
+{% endhint %}
 
 **Note**: The Spark wallet integrates with the Spark network using the `@buildonspark/spark-sdk`. Network configuration is limited to predefined networks, and there's no custom RPC provider option.
 
@@ -85,7 +91,7 @@ console.log('Account 2 address:', address2)
 
 // Note: All accounts use BIP-44 derivation paths with pattern:
 // m/44'/998'/{networkNumber}'/0/{index} where 998 is the coin type for Spark
-// and networkNumber is 0 for MAINNET, 1 for TESTNET, 2 for SIGNET, or 3 for REGTEST
+// and networkNumber is 0 for MAINNET, 2 for SIGNET, or 3 for REGTEST
 ```
 
 **Important Note**: Custom derivation paths via `getAccountByPath()` are not supported on the Spark blockchain. Only indexed accounts using the standard BIP-44 pattern are available.
@@ -333,7 +339,7 @@ async function setupSparkWallet() {
 
   // Create Spark wallet manager
   const wallet = new WalletManagerSpark(seedPhrase, {
-    network: 'MAINNET' // 'MAINNET', 'TESTNET', or 'REGTEST'
+    network: 'MAINNET' // 'MAINNET' or 'REGTEST'
   })
   
   // Get first account

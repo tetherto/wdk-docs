@@ -265,6 +265,7 @@ wdk.dispose()
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getRandomSeedPhrase(wordCount?)` | Returns a random BIP-39 seed phrase (12 or 24 words) | `string` |
+| `getRandomSeedPhrase(wordCount?)` | Returns a random BIP-39 seed phrase (12 or 24 words) | `string` |
 | `isValidSeedPhrase(seedPhrase)` | Checks if a seed phrase is valid | `boolean` |
 
 ##### `getRandomSeedPhrase(wordCount?)`
@@ -281,7 +282,15 @@ Returns a random BIP-39 seed phrase. Supports both 12-word (128-bit entropy) and
 // Generate 12-word seed phrase (default)
 const seedPhrase12 = WDK.getRandomSeedPhrase()
 console.log('Generated 12-word seed:', seedPhrase12)
+// Generate 12-word seed phrase (default)
+const seedPhrase12 = WDK.getRandomSeedPhrase()
+console.log('Generated 12-word seed:', seedPhrase12)
 // Output: "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+
+// Generate 24-word seed phrase (higher security)
+const seedPhrase24 = WDK.getRandomSeedPhrase(24)
+console.log('Generated 24-word seed:', seedPhrase24)
+// Output: "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon art"
 
 // Generate 24-word seed phrase (higher security)
 const seedPhrase24 = WDK.getRandomSeedPhrase(24)

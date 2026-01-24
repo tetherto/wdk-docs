@@ -125,6 +125,9 @@ const seedPhrase = WDK.getRandomSeedPhrase(24)
 // Or use 12-word seed phrase (default)
 // const seedPhrase = WDK.getRandomSeedPhrase()
 
+// Or generate a 24-word seed phrase for higher security
+// const seedPhrase = WDK.getRandomSeedPhrase(24)
+
 const wdk = new WDK(seedPhrase)
 ```
 {% endcode %}
