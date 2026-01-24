@@ -58,14 +58,10 @@ const wdk = new WDK(seedPhrase)
 {% code title="Register WDK Protocol" lineNumbers="true" %}
 ```javascript
 import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
-import Usdt0ProtocolTon from '@tetherto/wdk-protocol-bridge-usdt0-ton'
 
 const wdk = new WDK(seedPhrase)
   .registerProtocol('ethereum', 'velora', veloraProtocolEvm, {
     apiKey: 'YOUR_velora_API_KEY'
-  })
-  .registerProtocol('ton', 'usdt0', Usdt0ProtocolTon, {
-    tonApiKey: 'YOUR_TON_API_KEY'
   })
 ```
 {% endcode %}
@@ -96,10 +92,10 @@ wdk.registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
 {% code title="TON WDK Wallet Configuration" lineNumbers="true" %}
 ```javascript
 const tonWalletConfig = {
-  tonApiKey: 'YOUR_TON_API_KEY',
-  tonApiEndpoint: 'https://tonapi.io',
-  tonCenterApiKey: 'YOUR_TON_CENTER_API_KEY',
-  tonCenterEndpoint: 'https://toncenter.com'
+  tonClient: {
+    secretKey: 'YOUR_TON_API_KEY',
+    url: 'https://toncenter.com/api/v2/jsonRPC'
+  }
 }
 
 wdk.registerWallet('ton', WalletManagerTon, tonWalletConfig)
@@ -125,18 +121,6 @@ wdk.registerProtocol('ethereum', 'velora', veloraProtocolEvm, veloraProtocolConf
 {% endcode %}
 
 
-#### Bridge Protocol Configuration
-
-{% code title="Bridge WDK Protocol Configuration" lineNumbers="true" %}
-```javascript
-const usdt0ProtocolConfig = {
-  tonApiKey: 'YOUR_TON_API_KEY',
-  ethereumRpcUrl: 'https://eth.drpc.org'
-}
-
-wdk.registerProtocol('ton', 'usdt0', Usdt0ProtocolTon, usdt0ProtocolConfig)
-```
-{% endcode %}
 
 
 ### Middleware Configuration
@@ -150,12 +134,6 @@ wdk.registerMiddleware('ethereum', async (account) => {
   console.log('New account created:', await account.getAddress())
 })
 
-// Failover cascade middleware
-import { getFailoverCascadeMiddleware } from '@tetherto/wdk-wrapper-failover-cascade'
-
-wdk.registerMiddleware('ethereum', getFailoverCascadeMiddleware(fallbackOptions))
-```
-{% endcode %}
 
 
 ## Environment Variables
