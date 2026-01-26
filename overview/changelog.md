@@ -1,6 +1,7 @@
 ---
 title: Changelog
 description: Updates and improvements to the Wallet Development Kit (WDK) modules and tools.
+icon: clock-rotate-left
 layout:
   width: default
   title:
@@ -23,8 +24,44 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### January 23, 2026
 
-### December 23, 2024
+**What's New**
+- **wdk-core docs**: Added comprehensive [Core Module Guides](../sdk/core-module/guides/getting-started.md) covering:
+  - [Getting Started](../sdk/core-module/guides/getting-started.md) - Installation and instantiation
+  - [Wallet Registration](../sdk/core-module/guides/wallet-registration.md) - Registering wallet modules for different blockchains
+  - [Account Management](../sdk/core-module/guides/account-management.md) - Working with accounts and addresses
+  - [Transactions](../sdk/core-module/guides/transactions.md) - Sending native tokens
+  - [Protocol Integration](../sdk/core-module/guides/protocol-integration.md) - Using swaps, bridges, and lending protocols
+  - [Middleware](../sdk/core-module/guides/middleware.md) - Configuring logging and failover protection
+  - [Error Handling](../sdk/core-module/guides/error-handling.md) - Best practices and memory management
+- **wdk-core**: Added support for 24-word seed phrases via `WDK.getRandomSeedPhrase(24)`
+- **indexer-api**: 
+  - Added new [`/api/v1/chains`](../tools/indexer-api/api-reference.md) endpoint to list supported blockchains and tokens
+  - Added XAU₮ support for Plasma network
+
+**Changes**
+- **wallet-btc docs**: 
+  - Updated documentation with BIP-84 (Native SegWit) and BIP-44 (Legacy) support
+  - Improved API reference and configuration documentation
+- **wallet-spark docs**: 
+  - Removed testnet support (now only mainnet and regtest)
+  - Added [Lightspark Regtest Faucet](https://app.lightspark.com/regtest-faucet) link for test funds
+- **wallet-tron-gasfree docs**: 
+  - Updated testnet from Shasta to Nile
+  - Updated GasFree service URLs and configuration examples
+- **wallet-evm-erc-4337 docs**: Added paymaster token configuration documentation
+- **docs**: 
+  - Updated token symbols to USD₮ and XAU₮ throughout documentation
+  - Various documentation improvements with better cross-linking and examples
+
+**Fixes**
+- **wallet-tron-gasfree docs**: Fixed typo "Gras-Free" to "Gas-Free"
+- Fixed GitBook callout syntax and formatting issues across documentation
+
+---
+
+### December 23, 2025
 
 **What's New**
 - Added [MoonPay Fiat Module](../sdk/fiat-modules/fiat-moonpay/) for on-ramp and off-ramp functionality
@@ -36,13 +73,13 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 - Introduced [All Modules](../sdk/all-modules.md) page in docs for comprehensive module listings
 - Reorganized documentation structure for better navigation
 
-### December 17, 2024
+### December 17, 2025
 
 **What's New**
 - **wdk-core**: Added fiat protocol support for on-ramp integrations ([v1.0.0-beta.5](https://github.com/tetherto/wdk-core/releases/tag/v1.0.0-beta.5))
 - **wdk-wallet**: Added fiat protocol integration ([v1.0.0-beta.6](https://github.com/tetherto/wdk-wallet/releases/tag/v1.0.0-beta.6))
 
-### December 3, 2024
+### December 3, 2025
 
 **What's New**
 - **wallet-ton**: Added integration tests ([v1.0.0-beta.6](https://github.com/tetherto/wdk-wallet-ton/releases/tag/v1.0.0-beta.6))
@@ -60,12 +97,12 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
-### November 14, 2024
+### November 14, 2025
 
 **Changes**
 - **wdk-wallet**: Runtime updates and dependency synchronization ([v1.0.0-beta.5](https://github.com/tetherto/wdk-wallet/releases/tag/v1.0.0-beta.5))
 
-### November 12, 2024
+### November 12, 2025
 
 **What's New**
 - **wallet-solana**: Added `sendTransaction` support with unit tests ([v1.0.0-beta.3](https://github.com/tetherto/wdk-wallet-solana/releases/tag/v1.0.0-beta.3))
@@ -74,12 +111,12 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 - **wallet-solana**: Fixed `punycode` module resolution issue
 - **lending-aave-evm**: Runtime compatibility updates ([v1.0.0-beta.3](https://github.com/tetherto/wdk-protocol-lending-aave-evm/releases/tag/v1.0.0-beta.3))
 
-### November 11, 2024
+### November 11, 2025
 
 **Changes**
 - **swap-velora-evm**: Runtime compatibility updates ([v1.0.0-beta.4](https://github.com/tetherto/wdk-protocol-swap-velora-evm/releases/tag/v1.0.0-beta.4))
 
-### November 9-10, 2024
+### November 9-10, 2025
 
 **What's New**
 - **wallet-ton-gasless**: Added unit tests ([v1.0.0-beta.3](https://github.com/tetherto/wdk-wallet-ton-gasless/releases/tag/v1.0.0-beta.3))
@@ -91,13 +128,13 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 - **wallet-evm**: Runtime updates ([v1.0.0-beta.4](https://github.com/tetherto/wdk-wallet-evm/releases/tag/v1.0.0-beta.4))
 - **wallet-tron**: Dependency and runtime updates ([v1.0.0-beta.3](https://github.com/tetherto/wdk-wallet-tron/releases/tag/v1.0.0-beta.3))
 
-### November 8, 2024
+### November 8, 2025
 
 **Changes**
 - **wdk-core**: Updated `bare-node-runtime` for improved compatibility ([v1.0.0-beta.4](https://github.com/tetherto/wdk-core/releases/tag/v1.0.0-beta.4))
 - **wallet-spark**: Updated Spark dependencies and improved `dispose` method ([v1.0.0-beta.5](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.5))
 
-### November 7, 2024
+### November 7, 2025
 
 **Changes**
 - **wallet-evm-erc-4337**: Fixed destructuring of user operation in `getTransactionReceipt()` ([v1.0.0-beta.3](https://github.com/tetherto/wdk-wallet-evm-erc-4337/releases/tag/v1.0.0-beta.3))
