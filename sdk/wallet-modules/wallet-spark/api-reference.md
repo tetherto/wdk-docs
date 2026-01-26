@@ -148,6 +148,7 @@ Returns the account's Spark network address.
 const address = await account.getAddress()
 console.log('Spark address:', address)
 ```
+
 ##### `sign(message)`
 Signs a message using the account's identity key.
 
@@ -161,6 +162,7 @@ Signs a message using the account's identity key.
 const signature = await account.sign('Hello, Spark!')
 console.log('Signature:', signature)
 ```
+
 ##### `verify(message, signature)`
 Verifies a message signature against the account's identity key.
 

@@ -323,6 +323,7 @@ new WalletAccountReadOnlyTonGasless(publicKey, config)
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's TON address | `Promise<string>` |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `getBalance()` | Returns the native TON balance | `Promise<number>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific token | `Promise<number>` |
 | `getPaymasterTokenBalance()` | Returns the balance of the paymaster token | `Promise<number>` |
@@ -415,6 +416,21 @@ if (receipt) {
 } else {
   console.log('Transaction not yet included in a block')
 }
+```
+
+##### `verify(message, signature)`
+Verifies a message signature.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify
+
+**Returns:** `Promise<boolean>` - True if the signature is valid
+
+**Example:**
+```javascript
+const isValid = await readOnlyAccount.verify('Hello, World!', signature)
+console.log('Signature valid:', isValid)
 ```
 
 ## Types

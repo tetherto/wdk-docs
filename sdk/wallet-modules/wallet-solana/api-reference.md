@@ -336,6 +336,7 @@ new WalletAccountReadOnlySolana(publicKey, config)
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's Solana address | `Promise<string>` |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `getBalance()` | Returns the native SOL balance (in lamports) | `Promise<number>` |
 | `getTokenBalance(tokenMint)` | Returns the balance of a specific SPL token | `Promise<number>` |
 | `quoteSendTransaction(tx)` | Estimates the fee for a transaction | `Promise<{fee: number}>` |
@@ -350,6 +351,21 @@ Returns the account's Solana address.
 ```javascript
 const address = await readOnlyAccount.getAddress()
 console.log('Account address:', address)
+```
+
+##### `verify(message, signature)`
+Verifies a message signature.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify (hex-encoded)
+
+**Returns:** `Promise<boolean>` - True if the signature is valid
+
+**Example:**
+```javascript
+const isValid = await readOnlyAccount.verify('Hello, Solana!', signature)
+console.log('Signature valid:', isValid)
 ```
 
 ##### `getBalance()`

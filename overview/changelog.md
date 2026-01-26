@@ -24,6 +24,13 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### January 26, 2026
+
+**Changes**
+- **wallet-evm**, **wallet-evm-erc-4337**, **wallet-btc**, **wallet-solana**, **wallet-ton**, **wallet-ton-gasless**, **wallet-tron**, **wallet-tron-gasfree**, **wallet-spark**: Added `verify(message, signature)` method to read-only wallet account classes
+
+---
+
 ### January 23, 2026
 
 **What's New**

@@ -290,6 +290,7 @@ new WalletAccountReadOnlyTronGasfree(address, config)
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's address | `Promise<string>` |
+| `verify(message, signature)` | Verifies a message signature (supports V2 signatures) | `Promise<boolean>` |
 | `getBalance()` | Returns the native TRX balance (in sun) | `Promise<number>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise<number>` |
 | `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise<{fee: number}>` |
@@ -350,6 +351,22 @@ const quote = await readOnlyAccount.quoteTransfer({
 })
 console.log('Estimated fee:', quote.fee, 'token base units')
 ```
+
+##### `verify(message, signature)`
+Verifies a message signature using secp256k1. Supports V2 signature formats.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify (hex string, supports V2 format)
+
+**Returns:** `Promise<boolean>` - True if signature is valid
+
+**Example:**
+```javascript
+const isValid = await readOnlyAccount.verify(message, signature)
+console.log('Signature valid:', isValid)
+```
+
 
 ## Types
 

@@ -468,6 +468,7 @@ const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337('0x...', {
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
 | `getAddress()` | Returns the Safe account's address | `Promise<string>` | - |
+| `verify(message, signature)` | Verifies a message signature against the underlying EOA address | `Promise<boolean>` | - |
 | `getBalance()` | Returns the native token balance (in wei) | `Promise<number>` | - |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<number>` | - |
 | `getPaymasterTokenBalance()` | Returns the paymaster token balance | `Promise<number>` | - |
@@ -583,6 +584,21 @@ if (receipt) {
 } else {
   console.log('UserOperation not yet mined')
 }
+```
+
+##### `verify(message, signature)`
+Verifies a message signature against the underlying EOA address.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify
+
+**Returns:** `Promise<boolean>` - True if signature is valid
+
+**Example:**
+```javascript
+const isValid = await readOnlyAccount.verify(message, signature)
+console.log('Signature valid:', isValid)
 ```
 
 ## Types

@@ -205,7 +205,7 @@ console.log('Signature:', signature)
 ```
 
 ##### `verify(message, signature)`
-Verifies a message signature using secp256k1.
+Verifies a message signature using secp256k1. Supports V2 signature formats.
 
 **Parameters:**
 - `message` (string): The original message
@@ -406,6 +406,7 @@ const readOnlyAccount = new WalletAccountReadOnlyTron('TLyqzVGLV1srkB7dToTAEqgDS
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
+| `verify(message, signature)` | Verifies a message signature (supports V2 signatures) | `Promise<boolean>` | - |
 | `getBalance()` | Returns the native TRX balance (in sun) | `Promise<number>` | If no provider |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise<number>` | If no provider |
 | `quoteSendTransaction(tx)` | Estimates the fee for a TRX transaction | `Promise<{fee: number}>` | If no provider |
@@ -470,6 +471,21 @@ Returns a transaction's receipt if it has been processed.
 **Returns:** `Promise<TronTransactionReceipt | null>` - Transaction receipt or null
 
 **Throws:** Error if no TronWeb provider is configured
+
+##### `verify(message, signature)`
+Verifies a message signature using secp256k1. Supports V2 signature formats.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify (hex string, supports V2 format)
+
+**Returns:** `Promise<boolean>` - True if signature is valid
+
+**Example:**
+```javascript
+const isValid = await readOnlyAccount.verify(message, signature)
+console.log('Signature valid:', isValid)
+```
 
 ## Types
 
