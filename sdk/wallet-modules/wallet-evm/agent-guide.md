@@ -1,3 +1,23 @@
+---
+title: Agent Guide
+description: Context and conventions for AI agents working with this module
+icon: robot
+layout:
+  width: default
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: true
+  pagination:
+    visible: false
+  metadata:
+    visible: false
+---
+
 # Agent Guide
 
 {% hint style="info" %}
