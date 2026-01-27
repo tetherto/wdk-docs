@@ -28,10 +28,17 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 **Changes**
 - **Documentation Updates**
-    - Moved `verify` method documentation to `WalletAccountReadOnly` classes for EVM, Solana, TON, and Tron modules.
-    - Added "Agent Guide" to EVM, Solana, TON, and Tron wallet modules to support AI agent context.
+    - **wallet-evm**: Moved [`verify`](../sdk/wallet-modules/wallet-evm/api-reference.md) method documentation to `WalletAccountReadOnlyEvm`.
+    - **wallet-solana**: Moved [`verify`](../sdk/wallet-modules/wallet-solana/api-reference.md) method documentation to `WalletAccountReadOnlySolana`.
+    - **wallet-ton**: Moved [`verify`](../sdk/wallet-modules/wallet-ton/api-reference.md) method documentation to `WalletAccountReadOnlyTon`.
+    - **wallet-tron**: Moved [`verify`](../sdk/wallet-modules/wallet-tron/api-reference.md) method documentation to `WalletAccountReadOnlyTron`.
+    - Added Agent Guides to support AI agent context:
+        - [EVM Agent Guide](../sdk/wallet-modules/wallet-evm/agent-guide.md)
+        - [Solana Agent Guide](../sdk/wallet-modules/wallet-solana/agent-guide.md)
+        - [TON Agent Guide](../sdk/wallet-modules/wallet-ton/agent-guide.md)
+        - [Tron Agent Guide](../sdk/wallet-modules/wallet-tron/agent-guide.md)
 
-### v0.0.1 (2024-01-20)
+### January 23, 2026
 
 **What's New**
 - **wdk-core docs**: Added comprehensive [Core Module Guides](../sdk/core-module/guides/getting-started.md) covering:
