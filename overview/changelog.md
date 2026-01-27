@@ -27,16 +27,15 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 ### January 27, 2026
 
 **Changes**
-- **Documentation Updates**
-    - **wallet-evm**: Moved [`verify`](../sdk/wallet-modules/wallet-evm/api-reference.md#verify-message-signature) method documentation to `WalletAccountReadOnlyEvm`.
-    - **wallet-solana**: Moved [`verify`](../sdk/wallet-modules/wallet-solana/api-reference.md#verify-message-signature) method documentation to `WalletAccountReadOnlySolana`.
-    - **wallet-ton**: Moved [`verify`](../sdk/wallet-modules/wallet-ton/api-reference.md#verify-message-signature) method documentation to `WalletAccountReadOnlyTon`.
-    - **wallet-tron**: Moved [`verify`](../sdk/wallet-modules/wallet-tron/api-reference.md#verify-message-signature) method documentation to `WalletAccountReadOnlyTron`.
-    - Added Agent Guides to support AI agent context:
-        - [EVM Agent Guide](../sdk/wallet-modules/wallet-evm/agent-guide.md)
-        - [Solana Agent Guide](../sdk/wallet-modules/wallet-solana/agent-guide.md)
-        - [TON Agent Guide](../sdk/wallet-modules/wallet-ton/agent-guide.md)
-        - [Tron Agent Guide](../sdk/wallet-modules/wallet-tron/agent-guide.md)
+- **wallet-evm**: Moved [`verify`](../sdk/wallet-modules/wallet-evm/api-reference.md#verify-message-signature) method to `WalletAccountReadOnlyEvm` ([v1.0.0-beta.5](https://github.com/tetherto/wdk-wallet-evm/releases/tag/v1.0.0-beta.5))
+- **wallet-solana**: Moved [`verify`](../sdk/wallet-modules/wallet-solana/api-reference.md#verify-message-signature) method to `WalletAccountReadOnlySolana` ([v1.0.0-beta.5](https://github.com/tetherto/wdk-wallet-solana/releases/tag/v1.0.0-beta.5))
+- **wallet-ton**: Moved [`verify`](../sdk/wallet-modules/wallet-ton/api-reference.md#verify-message-signature) method to `WalletAccountReadOnlyTon` ([v1.0.0-beta.7](https://github.com/tetherto/wdk-wallet-ton/releases/tag/v1.0.0-beta.7))
+- **wallet-tron**: Moved [`verify`](../sdk/wallet-modules/wallet-tron/api-reference.md#verify-message-signature) method to `WalletAccountReadOnlyTron` ([v1.0.0-beta.4](https://github.com/tetherto/wdk-wallet-tron/releases/tag/v1.0.0-beta.4))
+- **Documentation**: Added Agent Guides to support AI agent context:
+    - [EVM Agent Guide](../sdk/wallet-modules/wallet-evm/agent-guide.md)
+    - [Solana Agent Guide](../sdk/wallet-modules/wallet-solana/agent-guide.md)
+    - [TON Agent Guide](../sdk/wallet-modules/wallet-ton/agent-guide.md)
+    - [Tron Agent Guide](../sdk/wallet-modules/wallet-tron/agent-guide.md)
 
 ### January 23, 2026
 
