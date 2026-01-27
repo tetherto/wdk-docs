@@ -24,8 +24,9 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
-### v1.0.0-beta (In Progress)
+### January 27, 2026
 
+**Changes**
 - **Documentation Updates**
     - Moved `verify` method documentation to `WalletAccountReadOnly` classes for EVM, Solana, TON, and Tron modules.
     - Added "Agent Guide" to EVM, Solana, TON, and Tron wallet modules to support AI agent context.
