@@ -214,22 +214,6 @@ const signature = await account.sign(message)
 console.log('Signature:', signature)
 ```
 
-#### `verify(message, signature)`
-Verifies a message signature against the account's address.
-
-**Parameters:**
-- `message` (string): The original message
-- `signature` (string): The signature to verify
-
-**Returns:** `Promise<boolean>` - True if signature is valid
-
-**Example:**
-```javascript
-const message = 'Hello, Ethereum!'
-const signature = await account.sign(message)
-const isValid = await account.verify(message, signature)
-console.log('Signature valid:', isValid) // true
-```
 
 #### `sendTransaction(tx)`
 Sends an EVM transaction and returns the result with hash and fee.
@@ -441,7 +425,27 @@ const readOnlyAccount = new WalletAccountReadOnlyEvm('0x742d35Cc6634C0532925a3b8
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<number>` | If no provider |
 | `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction | `Promise<{fee: number}>` | If no provider |
 | `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: number}>` | If no provider |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<EvmTransactionReceipt \| null>` | If no provider |
+
+#### `verify(message, signature)`
+Verifies a message signature against the account's address.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify
+
+**Returns:** `Promise<boolean>` - True if signature is valid
+
+**Example:**
+```javascript
+const message = 'Hello, Ethereum!'
+const signature = await account.sign(message)
+
+const readOnlyAccount = new WalletAccountReadOnlyEvm('0x...', { provider: '...' })
+const isValid = await readOnlyAccount.verify(message, signature)
+console.log('Signature valid:', isValid) // true
+```
 
 #### `getBalance()`
 Returns the account's native token balance.

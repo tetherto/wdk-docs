@@ -204,20 +204,6 @@ const signature = await account.sign(message)
 console.log('Signature:', signature)
 ```
 
-##### `verify(message, signature)`
-Verifies a message signature using secp256k1.
-
-**Parameters:**
-- `message` (string): The original message
-- `signature` (string): The signature to verify (hex string)
-
-**Returns:** `Promise<boolean>` - True if signature is valid
-
-**Example:**
-```javascript
-const isValid = await account.verify(message, signature)
-console.log('Signature valid:', isValid)
-```
 
 ##### `sendTransaction(tx)`
 Sends a TRX transaction and returns the result with hash and fee.
@@ -410,6 +396,7 @@ const readOnlyAccount = new WalletAccountReadOnlyTron('TLyqzVGLV1srkB7dToTAEqgDS
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise<number>` | If no provider |
 | `quoteSendTransaction(tx)` | Estimates the fee for a TRX transaction | `Promise<{fee: number}>` | If no provider |
 | `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise<{fee: number}>` | If no provider |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<TronTransactionReceipt \| null>` | If no provider |
 
 ##### `getBalance()`
@@ -460,6 +447,23 @@ Estimates the energy and bandwidth cost for a TRC20 transfer.
 **Returns:** `Promise<{fee: number}>` - Fee estimate in sun
 
 **Throws:** Error if no TronWeb provider is configured
+
+
+##### `verify(message, signature)`
+Verifies a message signature using secp256k1.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify (hex string)
+
+**Returns:** `Promise<boolean>` - True if signature is valid
+
+**Example:**
+```javascript
+const readOnlyAccount = new WalletAccountReadOnlyTron('T...', { provider: '...' })
+const isValid = await readOnlyAccount.verify(message, signature)
+console.log('Signature valid:', isValid)
+```
 
 ##### `getTransactionReceipt(hash)`
 Returns a transaction's receipt if it has been processed.

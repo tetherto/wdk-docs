@@ -175,7 +175,24 @@ const account = new WalletAccountTon(seedPhrase, "0'/0/0", {
 | `quoteTransfer(options)` | Estimates the fee for a Jetton transfer | `Promise<{fee: number}>` |
 | `getBalance()` | Returns the native TON balance (in nanotons) | `Promise<number>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific Jetton token | `Promise<number>` |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
+
+##### `verify(message, signature)`
+Verifies a message signature.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify
+
+**Returns:** `Promise<boolean>` - True if the signature is valid
+
+**Example:**
+```javascript
+const readOnlyAccount = new WalletAccountReadOnlyTon(publicKey, { tonClient: { url: '...' } })
+const isValid = await readOnlyAccount.verify('Hello, World!', signature)
+console.log('Signature valid:', isValid)
+```
 
 ##### `getAddress()`
 Returns the account's address.
@@ -202,20 +219,6 @@ const signature = await account.sign('Hello, World!')
 console.log('Signature:', signature)
 ```
 
-##### `verify(message, signature)`
-Verifies a message signature.
-
-**Parameters:**
-- `message` (string): The original message
-- `signature` (string): The signature to verify
-
-**Returns:** `Promise<boolean>` - True if the signature is valid
-
-**Example:**
-```javascript
-const isValid = await account.verify('Hello, World!', signature)
-console.log('Signature valid:', isValid)
-```
 
 ##### `sendTransaction(tx)`
 Sends a TON transaction and returns the result with hash and fee.
@@ -348,6 +351,62 @@ account.dispose()
 const { publicKey, privateKey } = account.keyPair
 console.log('Public key length:', publicKey.length)
 console.log('Private key length:', privateKey.length)
+```
+
+### WalletAccountReadOnlyTon
+
+Read-only TON wallet account.
+
+#### Constructor
+
+```javascript
+new WalletAccountReadOnlyTon(publicKey, config)
+```
+
+**Parameters:**
+- `publicKey` (string): The account's public key (hex or base64)
+- `config` (object): Configuration object (same as WalletManagerTon)
+
+#### Methods
+
+| Method | Description | Returns |
+|--------|-------------|---------|
+| `getAddress()` | Returns the account's TON address | `Promise<string>` |
+| `getBalance()` | Returns the native TON balance | `Promise<number>` |
+| `getTokenBalance(tokenAddress)` | Returns the balance of a specific Jetton | `Promise<number>` |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
+
+##### `getAddress()`
+Returns the account's address.
+
+**Returns:** `Promise<string>` - The account's TON address
+
+##### `getBalance()`
+Returns the native TON balance.
+
+**Returns:** `Promise<number>` - Balance in nanotons
+
+##### `getTokenBalance(tokenAddress)`
+Returns the balance of a specific Jetton.
+
+**Parameters:**
+- `tokenAddress` (string): The Jetton master contract address
+
+**Returns:** `Promise<number>` - Token balance
+
+##### `verify(message, signature)`
+Verifies a message signature.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify
+
+**Returns:** `Promise<boolean>` - True if the signature is valid
+
+**Example:**
+```javascript
+const isValid = await readOnlyAccount.verify('Hello, World!', signature)
+console.log('Signature valid:', isValid)
 ```
 
 ## Types

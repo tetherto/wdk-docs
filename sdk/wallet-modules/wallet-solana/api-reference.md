@@ -168,20 +168,6 @@ const signature = await account.sign('Hello, Solana!')
 console.log('Signature:', signature)
 ```
 
-##### `verify(message, signature)`
-Verifies a message signature.
-
-**Parameters:**
-- `message` (string): The original message
-- `signature` (string): The signature to verify (hex-encoded)
-
-**Returns:** `Promise<boolean>` - True if the signature is valid
-
-**Example:**
-```javascript
-const isValid = await account.verify('Hello, Solana!', signature)
-console.log('Signature valid:', isValid)
-```
 
 ##### `sendTransaction(tx)`
 Sends a Solana transaction.
