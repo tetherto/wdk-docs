@@ -24,6 +24,42 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### January 23, 2026
+
+**What's New**
+- **wdk-core docs**: Added comprehensive [Core Module Guides](../sdk/core-module/guides/getting-started.md) covering:
+  - [Getting Started](../sdk/core-module/guides/getting-started.md) - Installation and instantiation
+  - [Wallet Registration](../sdk/core-module/guides/wallet-registration.md) - Registering wallet modules for different blockchains
+  - [Account Management](../sdk/core-module/guides/account-management.md) - Working with accounts and addresses
+  - [Transactions](../sdk/core-module/guides/transactions.md) - Sending native tokens
+  - [Protocol Integration](../sdk/core-module/guides/protocol-integration.md) - Using swaps, bridges, and lending protocols
+  - [Middleware](../sdk/core-module/guides/middleware.md) - Configuring logging and failover protection
+  - [Error Handling](../sdk/core-module/guides/error-handling.md) - Best practices and memory management
+- **wdk-core**: Added support for 24-word seed phrases via `WDK.getRandomSeedPhrase(24)`
+- **indexer-api**: 
+  - Added new [`/api/v1/chains`](../tools/indexer-api/api-reference.md) endpoint to list supported blockchains and tokens
+  - Added XAU₮ support for Plasma network
+
+**Changes**
+- **wallet-btc docs**: 
+  - Updated documentation with BIP-84 (Native SegWit) and BIP-44 (Legacy) support
+  - Improved API reference and configuration documentation
+- **wallet-spark docs**: 
+  - Removed testnet support (now only mainnet and regtest)
+  - Added [Lightspark Regtest Faucet](https://app.lightspark.com/regtest-faucet) link for test funds
+- **wallet-tron-gasfree docs**: 
+  - Updated testnet from Shasta to Nile
+  - Updated GasFree service URLs and configuration examples
+- **wallet-evm-erc-4337 docs**: Added paymaster token configuration documentation
+- **docs**: 
+  - Updated token symbols to USD₮ and XAU₮ throughout documentation
+  - Various documentation improvements with better cross-linking and examples
+
+**Fixes**
+- **wallet-tron-gasfree docs**: Fixed typo "Gras-Free" to "Gas-Free"
+- Fixed GitBook callout syntax and formatting issues across documentation
+
+---
 
 ### December 23, 2025
 

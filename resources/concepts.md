@@ -152,3 +152,12 @@ Local networks for development and testing:
 - **Local Ethereum**: Private Ethereum network
 - **Bitcoin Regtest**: Local Bitcoin network
 - **Spark Regtest**: Local Spark network
+
+### Testnet Funds & Faucets
+
+To test transactions without spending real assets, developers use "Testnets"—networks that mimic the main blockchain but use tokens with no monetary value. You can obtain these tokens for free from "Faucets".
+
+#### Common Faucets
+*   **Ethereum (Sepolia)**: [Google Cloud Web3 Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)
+*   **TON Testnet**: [Testgiver Bot](https://t.me/testgiver_ton_bot)
+*   **Bitcoin Testnet**: [CoinFaucet](https://coinfaucet.eu/en/btc-testnet/)

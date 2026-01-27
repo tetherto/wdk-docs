@@ -34,6 +34,112 @@
         }
       }
     },
+    "/api/v1/chains": {
+      "x-rateLimit": { "limit": 60, "window": "60s" },
+      "get": {
+        "summary": "Get supported chains",
+        "tags": ["Chains"],
+        "description": "Retrieve the list of supported blockchains and their tokens. This endpoint automatically reflects the current configuration and updates when the WDK Backend is released.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "chains": {
+                      "type": "array",
+                      "description": "List of supported blockchains",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "description": "The blockchain name"
+                          },
+                          "tokens": {
+                            "type": "array",
+                            "description": "List of supported tokens on this blockchain",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "caseSensitive": {
+                            "type": "object",
+                            "description": "Case sensitivity rules for addresses, transactions, or blocks (if applicable)",
+                            "properties": {
+                              "address": {
+                                "oneOf": [
+                                  { "type": "boolean" },
+                                  { "type": "string" }
+                                ],
+                                "description": "Address case sensitivity (boolean or regex pattern)"
+                              },
+                              "tx": {
+                                "type": "boolean",
+                                "description": "Transaction hash case sensitivity"
+                              },
+                              "block": {
+                                "type": "boolean",
+                                "description": "Block hash case sensitivity"
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": ["name", "tokens"],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "example": {
+                  "chains": [
+                    {
+                      "name": "ethereum",
+                      "tokens": ["usdt", "xaut"]
+                    },
+                    {
+                      "name": "tron",
+                      "tokens": ["usdt"],
+                      "caseSensitive": {
+                        "address": true
+                      }
+                    },
+                    {
+                      "name": "solana",
+                      "tokens": ["usdt"],
+                      "caseSensitive": {
+                        "address": true,
+                        "tx": true,
+                        "block": true
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "description": "Internal server error type" },
+                    "message": { "type": "string", "description": "Internal server error details" }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/{blockchain}/{token}/{address}/token-transfers": {
       "x-rateLimit": { "limit": 8, "window": "10s" },
       "get": {
