@@ -28,10 +28,10 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 **Changes**
 - **Documentation Updates**
-    - **wallet-evm**: Moved [`verify`](../sdk/wallet-modules/wallet-evm/api-reference.md) method documentation to `WalletAccountReadOnlyEvm`.
-    - **wallet-solana**: Moved [`verify`](../sdk/wallet-modules/wallet-solana/api-reference.md) method documentation to `WalletAccountReadOnlySolana`.
-    - **wallet-ton**: Moved [`verify`](../sdk/wallet-modules/wallet-ton/api-reference.md) method documentation to `WalletAccountReadOnlyTon`.
-    - **wallet-tron**: Moved [`verify`](../sdk/wallet-modules/wallet-tron/api-reference.md) method documentation to `WalletAccountReadOnlyTron`.
+    - **wallet-evm**: Moved [`verify`](../sdk/wallet-modules/wallet-evm/api-reference.md#verify-message-signature) method documentation to `WalletAccountReadOnlyEvm`.
+    - **wallet-solana**: Moved [`verify`](../sdk/wallet-modules/wallet-solana/api-reference.md#verify-message-signature) method documentation to `WalletAccountReadOnlySolana`.
+    - **wallet-ton**: Moved [`verify`](../sdk/wallet-modules/wallet-ton/api-reference.md#verify-message-signature) method documentation to `WalletAccountReadOnlyTon`.
+    - **wallet-tron**: Moved [`verify`](../sdk/wallet-modules/wallet-tron/api-reference.md#verify-message-signature) method documentation to `WalletAccountReadOnlyTron`.
     - Added Agent Guides to support AI agent context:
         - [EVM Agent Guide](../sdk/wallet-modules/wallet-evm/agent-guide.md)
         - [Solana Agent Guide](../sdk/wallet-modules/wallet-solana/agent-guide.md)
