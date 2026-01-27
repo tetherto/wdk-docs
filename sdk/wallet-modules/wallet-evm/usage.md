@@ -39,11 +39,21 @@ import WalletManagerEvm, { WalletAccountEvm, WalletAccountReadOnlyEvm } from '@t
 const seedPhrase = 'your twelve word seed phrase here' // Replace with actual seed generation
 console.log('Seed phrase:', seedPhrase)
 
+{% hint style="danger" %}
+**Secure the Seed Phrase:** You must securely store this seed phrase immediately. If it is lost, the user will permanently lose access to their funds.
+{% endhint %}
+
 // Create wallet manager with RPC provider
 const wallet = new WalletManagerEvm(seedPhrase, {
   provider: 'https://rpc.mevblocker.io/fast', // or any other RPC provider
   transferMaxFee: 100000000000000 // Optional: Maximum fee in wei
 })
+
+{% hint style="info" %}
+**RPC Providers:** The examples use public RPC endpoints for demonstration. We do not endorse any specific provider.
+*   **Testnets:** You can find public RPCs for Ethereum and other EVM chains on [Chainlist](https://chainlist.org).
+*   **Mainnet:** For production environments, we recommend using reliable, paid RPC providers to ensure stability.
+{% endhint %}
 // OR
 
 // Option 2: Using EIP-1193 provider (e.g., from browser wallet)
@@ -141,6 +151,10 @@ const quote = await account.quoteSendTransaction({
 console.log('Estimated fee:', quote.fee, 'wei')
 ```
 
+{% hint style="info" %}
+**Gas Estimation:** The `maxFeePerGas` and `maxPriorityFeePerGas` fields enable EIP-1559 transactions, ensuring more predictable gas fees and faster inclusion times.
+{% endhint %}
+
 ### Token Transfers
 
 ```javascript
@@ -232,7 +246,7 @@ async function setupWallet() {
   const balance = await account.getBalance()
   console.log('Balance:', balance, 'wei')
 
-    // Check ERC20 balance (e.g., USD₮)
+  // Check ERC20 balance (e.g., USD₮)
   const tokenBalance = await account.getTokenBalance('0xdAC17F958D2ee523a2206206994597C13D831ec7')
   console.log('USDT balance:', tokenBalance)
   
@@ -262,7 +276,7 @@ async function manageMultipleAccounts(wallet) {
       balance
     })
 
-     console.log(`Account ${i}:`, {
+    console.log(`Account ${i}:`, {
       address,
       balance: balance.toString(),
       path: `m/44'/60'/0'/0/${i}`
@@ -353,15 +367,15 @@ try {
     transferMaxFee: 1000000000000n // Optional: Maximum allowed fee in wei
   })
   
- console.log('Transfer completed:', result.hash)
- console.log('Fee paid:', result.fee, 'wei')
- return result
+  console.log('Transfer completed:', result.hash)
+  console.log('Fee paid:', result.fee, 'wei')
+  return result
 } catch (error) {
-    console.error('Transfer failed:', error.message)
-    if (error.message.includes('Exceeded maximum fee')) {
-      throw new Error('Transfer fee too high')
-    }
-    throw error
+  console.error('Transfer failed:', error.message)
+  if (error.message.includes('Exceeded maximum fee')) {
+    throw new Error('Transfer fee too high')
+  }
+  throw error
 }
 }
 
@@ -453,5 +467,3 @@ try {
 ### Need Help?
 
 {% include "../../../.gitbook/includes/support-cards.md" %}
-
-

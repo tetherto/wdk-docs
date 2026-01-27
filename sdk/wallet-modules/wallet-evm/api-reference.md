@@ -33,12 +33,7 @@ layout:
 The main class for managing EVM wallets.  
 Extends `WalletManager` from `@tetherto/wdk-wallet`.
 
-### Fee Rate Constants
 
-```javascript
-export const FEE_RATE_NORMAL_MULTIPLIER = 1.1
-export const FEE_RATE_FAST_MULTIPLIER = 2.0
-```
 
 ### Constructor
 

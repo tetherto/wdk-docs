@@ -85,10 +85,17 @@ const config = {
   provider: window.ethereum
 }
 
-// Option 3: Using custom JsonRpcProvider
-import { JsonRpcProvider } from 'ethers'
+// Option 3: Using Viem Public Client
+import { createPublicClient, http } from 'viem'
+import { mainnet } from 'viem/chains'
+
+const client = createPublicClient({
+  chain: mainnet,
+  transport: http()
+})
+
 const config = {
-  provider: new JsonRpcProvider('https://eth-mainnet.g.alchemy.com/v2/your-api-key')
+  provider: client
 }
 ```
 
