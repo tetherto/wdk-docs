@@ -22,6 +22,8 @@ layout:
 
 {% hint style="info" %}
 This guide outlines the conventions, architecture, and workflow for the `@tetherto/wdk-wallet-tron` repository. It is intended for developers contributing to the source code or AI agents working within the repository context.
+
+Source: [`AGENTS.md`](https://github.com/tetherto/wdk-wallet-tron/blob/main/AGENTS.md)
 {% endhint %}
 
 This repository is part of the Tether WDK (Wallet Development Kit) ecosystem. It follows strict coding conventions and tooling standards to ensure consistency, reliability, and cross-platform compatibility (Node.js and Bare runtime).
