@@ -17,7 +17,7 @@
         "description": "Check if the API server is running",
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Default Response",
             "content": {
               "application/json": {
                 "schema": {
@@ -34,114 +34,7 @@
         }
       }
     },
-    "/api/v1/chains": {
-      "x-rateLimit": { "limit": 60, "window": "60s" },
-      "get": {
-        "summary": "Get supported chains",
-        "tags": ["Chains"],
-        "description": "Retrieve the list of supported blockchains and their tokens. This endpoint automatically reflects the current configuration and updates when the WDK Backend is released.",
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "chains": {
-                      "type": "array",
-                      "description": "List of supported blockchains",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "name": {
-                            "type": "string",
-                            "description": "The blockchain name"
-                          },
-                          "tokens": {
-                            "type": "array",
-                            "description": "List of supported tokens on this blockchain",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "caseSensitive": {
-                            "type": "object",
-                            "description": "Case sensitivity rules for addresses, transactions, or blocks (if applicable)",
-                            "properties": {
-                              "address": {
-                                "oneOf": [
-                                  { "type": "boolean" },
-                                  { "type": "string" }
-                                ],
-                                "description": "Address case sensitivity (boolean or regex pattern)"
-                              },
-                              "tx": {
-                                "type": "boolean",
-                                "description": "Transaction hash case sensitivity"
-                              },
-                              "block": {
-                                "type": "boolean",
-                                "description": "Block hash case sensitivity"
-                              }
-                            },
-                            "additionalProperties": false
-                          }
-                        },
-                        "required": ["name", "tokens"],
-                        "additionalProperties": false
-                      }
-                    }
-                  },
-                  "additionalProperties": false
-                },
-                "example": {
-                  "chains": [
-                    {
-                      "name": "ethereum",
-                      "tokens": ["usdt", "xaut"]
-                    },
-                    {
-                      "name": "tron",
-                      "tokens": ["usdt"],
-                      "caseSensitive": {
-                        "address": true
-                      }
-                    },
-                    {
-                      "name": "solana",
-                      "tokens": ["usdt"],
-                      "caseSensitive": {
-                        "address": true,
-                        "tx": true,
-                        "block": true
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": { "type": "string", "description": "Internal server error type" },
-                    "message": { "type": "string", "description": "Internal server error details" }
-                  },
-                  "additionalProperties": false
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/{blockchain}/{token}/{address}/token-transfers": {
-      "x-rateLimit": { "limit": 8, "window": "10s" },
       "get": {
         "summary": "Get token transfers for an address",
         "tags": ["Token Transfers"],
@@ -159,29 +52,33 @@
             "name": "fromTs",
             "required": false
           },
-          { "schema": { "type": "integer", "minimum": 0 }, "in": "query", "name": "toTs", "required": false },
           {
-            "schema": { "type": "string", "enum": ["asc", "desc"], "default": "desc" },
+            "schema": { "type": "integer", "minimum": 0 },
             "in": "query",
-            "name": "sort",
+            "name": "toTs",
             "required": false
           },
           {
             "schema": {
               "type": "string",
-              "enum": ["ethereum", "arbitrum", "polygon", "tron", "ton", "bitcoin", "spark"]
+              "enum": ["ethereum", "sepolia", "plasma", "arbitrum", "polygon", "tron", "ton", "bitcoin", "spark"]
             },
             "in": "path",
             "name": "blockchain",
             "required": true
           },
           {
-            "schema": { "type": "string", "enum": ["usdt", "xaut", "btc"] },
+            "schema": { "type": "string", "enum": ["usat", "usdt", "xaut", "btc"] },
             "in": "path",
             "name": "token",
             "required": true
           },
-          { "schema": { "type": "string", "minLength": 1 }, "in": "path", "name": "address", "required": true },
+          {
+            "schema": { "type": "string", "minLength": 1 },
+            "in": "path",
+            "name": "address",
+            "required": true
+          },
           {
             "schema": { "type": "string" },
             "in": "header",
@@ -192,7 +89,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Default Response",
             "content": {
               "application/json": {
                 "schema": {
@@ -206,29 +103,42 @@
                         "properties": {
                           "blockchain": { "type": "string", "description": "The blockchain" },
                           "blockNumber": {
-                            "type": "number",
+                            "type": "integer",
                             "description": "The block number in which the transaction was included"
                           },
                           "transactionHash": { "type": "string", "description": "The transaction's hash" },
                           "transferIndex": {
-                            "type": "number",
+                            "type": "integer",
                             "description": "The index of the transfer within the transaction"
                           },
                           "token": { "type": "string", "description": "The token" },
                           "amount": { "type": "string", "description": "The amount of tokens transferred" },
-                          "timestamp": { "type": "number", "description": "The timestamp when the transfer occurred" },
+                          "timestamp": {
+                            "type": "integer",
+                            "description": "The timestamp when the transfer occurred"
+                          },
                           "transactionIndex": {
-                            "type": "number",
+                            "oneOf": [{ "type": "integer" }, { "type": "null" }],
                             "description": "The index of the transaction within the block"
                           },
                           "logIndex": {
-                            "type": "number",
+                            "oneOf": [{ "type": "integer" }, { "type": "null" }],
                             "description": "The index of the token transfer's event log in the transaction"
                           },
-                          "from": { "type": "string", "description": "The sender's address" },
-                          "to": { "type": "string", "description": "The recipient's address" }
+                          "from": {
+                            "oneOf": [{ "type": "string" }, { "type": "null" }],
+                            "description": "The sender's address"
+                          },
+                          "to": {
+                            "oneOf": [{ "type": "string" }, { "type": "null" }],
+                            "description": "The recipient's address"
+                          },
+                          "label": {
+                            "type": "string",
+                            "description": "A label associated with the transfer, if any"
+                          }
                         },
-                        "additionalProperties": false
+                        "additionalProperties": true
                       }
                     }
                   },
@@ -238,14 +148,15 @@
             }
           },
           "400": {
-            "description": "Bad request",
+            "description": "Default Response",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "error": { "type": "string", "description": "Error type or code" },
-                    "message": { "type": "string", "description": "Detailed error message" }
+                    "message": { "type": "string", "description": "Detailed error message" },
+                    "status": { "type": "number", "description": "HTTP status code" }
                   },
                   "additionalProperties": false
                 }
@@ -253,14 +164,15 @@
             }
           },
           "401": {
-            "description": "Authentication error",
+            "description": "Default Response",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "error": { "type": "string", "description": "Authentication error type" },
-                    "message": { "type": "string", "description": "Authentication error details" }
+                    "message": { "type": "string", "description": "Authentication error details" },
+                    "status": { "type": "number", "description": "HTTP status code" }
                   },
                   "additionalProperties": false
                 }
@@ -268,14 +180,15 @@
             }
           },
           "500": {
-            "description": "Internal server error",
+            "description": "Default Response",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "error": { "type": "string", "description": "Internal server error type" },
-                    "message": { "type": "string", "description": "Internal server error details" }
+                    "message": { "type": "string", "description": "Internal server error details" },
+                    "status": { "type": "number", "description": "HTTP status code" }
                   },
                   "additionalProperties": false
                 }
@@ -286,7 +199,6 @@
       }
     },
     "/api/v1/{blockchain}/{token}/{address}/token-balances": {
-      "x-rateLimit": { "limit": 4, "window": "10s" },
       "get": {
         "summary": "Get token balance for an address",
         "tags": ["Token Balances"],
@@ -295,19 +207,24 @@
           {
             "schema": {
               "type": "string",
-              "enum": ["ethereum", "arbitrum", "polygon", "tron", "ton", "bitcoin", "spark"]
+              "enum": ["ethereum", "sepolia", "plasma", "arbitrum", "polygon", "tron", "ton", "bitcoin", "spark"]
             },
             "in": "path",
             "name": "blockchain",
             "required": true
           },
           {
-            "schema": { "type": "string", "enum": ["usdt", "xaut", "btc"] },
+            "schema": { "type": "string", "enum": ["usat", "usdt", "xaut", "btc"] },
             "in": "path",
             "name": "token",
             "required": true
           },
-          { "schema": { "type": "string", "minLength": 1 }, "in": "path", "name": "address", "required": true },
+          {
+            "schema": { "type": "string", "minLength": 1 },
+            "in": "path",
+            "name": "address",
+            "required": true
+          },
           {
             "schema": { "type": "string" },
             "in": "header",
@@ -318,7 +235,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Success",
+            "description": "Default Response",
             "content": {
               "application/json": {
                 "schema": {
@@ -341,14 +258,15 @@
             }
           },
           "400": {
-            "description": "Bad request",
+            "description": "Default Response",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "error": { "type": "string", "description": "Error type or code" },
-                    "message": { "type": "string", "description": "Detailed error message" }
+                    "message": { "type": "string", "description": "Detailed error message" },
+                    "status": { "type": "number", "description": "HTTP status code" }
                   },
                   "additionalProperties": false
                 }
@@ -356,14 +274,15 @@
             }
           },
           "401": {
-            "description": "Authentication error",
+            "description": "Default Response",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "error": { "type": "string", "description": "Authentication error type" },
-                    "message": { "type": "string", "description": "Authentication error details" }
+                    "message": { "type": "string", "description": "Authentication error details" },
+                    "status": { "type": "number", "description": "HTTP status code" }
                   },
                   "additionalProperties": false
                 }
@@ -371,14 +290,316 @@
             }
           },
           "500": {
-            "description": "Internal server error",
+            "description": "Default Response",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "error": { "type": "string", "description": "Internal server error type" },
-                    "message": { "type": "string", "description": "Internal server error details" }
+                    "message": { "type": "string", "description": "Internal server error details" },
+                    "status": { "type": "number", "description": "HTTP status code" }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/batch/token-transfers": {
+      "post": {
+        "summary": "Get batch token transfers for multiple addresses",
+        "tags": ["Token Transfers"],
+        "description": "Retrieve the token transfer history for multiple addresses on blockchains",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "blockchain": {
+                      "type": "string",
+                      "enum": ["ethereum", "sepolia", "plasma", "arbitrum", "polygon", "tron", "ton", "bitcoin", "spark"]
+                    },
+                    "token": {
+                      "type": "string",
+                      "enum": ["usat", "usdt", "xaut", "btc"]
+                    },
+                    "address": { "type": "string", "minLength": 1 },
+                    "limit": { "type": "integer", "minimum": 1, "maximum": 1000, "default": 10 },
+                    "fromTs": { "type": "integer", "minimum": 0, "default": 0 },
+                    "toTs": { "type": "integer", "minimum": 0 }
+                  },
+                  "required": ["blockchain", "token", "address"],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": { "type": "string" },
+            "in": "header",
+            "name": "x-api-key",
+            "required": true,
+            "description": "API Key for authentication"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "transfers": {
+                            "type": "array",
+                            "description": "The token transfer history",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "blockchain": { "type": "string", "description": "The blockchain" },
+                                "blockNumber": {
+                                  "type": "integer",
+                                  "description": "The block number in which the transaction was included"
+                                },
+                                "transactionHash": { "type": "string", "description": "The transaction's hash" },
+                                "transferIndex": {
+                                  "type": "integer",
+                                  "description": "The index of the transfer within the transaction"
+                                },
+                                "token": { "type": "string", "description": "The token" },
+                                "amount": { "type": "string", "description": "The amount of tokens transferred" },
+                                "timestamp": {
+                                  "type": "integer",
+                                  "description": "The timestamp when the transfer occurred"
+                                },
+                                "transactionIndex": {
+                                  "oneOf": [{ "type": "integer" }, { "type": "null" }],
+                                  "description": "The index of the transaction within the block"
+                                },
+                                "logIndex": {
+                                  "oneOf": [{ "type": "integer" }, { "type": "null" }],
+                                  "description": "The index of the token transfer's event log in the transaction"
+                                },
+                                "from": {
+                                  "oneOf": [{ "type": "string" }, { "type": "null" }],
+                                  "description": "The sender's address"
+                                },
+                                "to": {
+                                  "oneOf": [{ "type": "string" }, { "type": "null" }],
+                                  "description": "The recipient's address"
+                                },
+                                "label": {
+                                  "type": "string",
+                                  "description": "A label associated with the transfer, if any"
+                                }
+                              },
+                              "additionalProperties": true
+                            }
+                          }
+                        },
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "error": { "type": "string", "description": "Error type or code" },
+                          "message": { "type": "string", "description": "Detailed error message" },
+                          "status": { "type": "number", "description": "HTTP status code" }
+                        },
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "minItems": 1
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "description": "Error type or code" },
+                    "message": { "type": "string", "description": "Detailed error message" },
+                    "status": { "type": "number", "description": "HTTP status code" }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "description": "Authentication error type" },
+                    "message": { "type": "string", "description": "Authentication error details" },
+                    "status": { "type": "number", "description": "HTTP status code" }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "description": "Internal server error type" },
+                    "message": { "type": "string", "description": "Internal server error details" },
+                    "status": { "type": "number", "description": "HTTP status code" }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/batch/token-balances": {
+      "post": {
+        "summary": "Get batch token balance for multiple address",
+        "tags": ["Token Balances"],
+        "description": "Retrieve the current token balance for multiple address on blockchains",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "blockchain": {
+                      "type": "string",
+                      "enum": ["ethereum", "sepolia", "plasma", "arbitrum", "polygon", "tron", "ton", "bitcoin", "spark"]
+                    },
+                    "token": {
+                      "type": "string",
+                      "enum": ["usat", "usdt", "xaut", "btc"]
+                    },
+                    "address": { "type": "string", "minLength": 1 }
+                  },
+                  "required": ["blockchain", "token", "address"],
+                  "additionalProperties": false
+                },
+                "minItems": 1
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": { "type": "string" },
+            "in": "header",
+            "name": "x-api-key",
+            "required": true,
+            "description": "API Key for authentication"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "tokenBalance": {
+                            "type": "object",
+                            "description": "The token balance",
+                            "properties": {
+                              "blockchain": { "type": "string", "description": "The blockchain" },
+                              "token": { "type": "string", "description": "The token" },
+                              "amount": { "type": "string", "description": "The amount of tokens" }
+                            },
+                            "additionalProperties": false
+                          }
+                        },
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "error": { "type": "string", "description": "Error type or code" },
+                          "message": { "type": "string", "description": "Detailed error message" },
+                          "status": { "type": "number", "description": "HTTP status code" }
+                        },
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "description": "Error type or code" },
+                    "message": { "type": "string", "description": "Detailed error message" },
+                    "status": { "type": "number", "description": "HTTP status code" }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "description": "Authentication error type" },
+                    "message": { "type": "string", "description": "Authentication error details" },
+                    "status": { "type": "number", "description": "HTTP status code" }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "description": "Internal server error type" },
+                    "message": { "type": "string", "description": "Internal server error details" },
+                    "status": { "type": "number", "description": "HTTP status code" }
                   },
                   "additionalProperties": false
                 }
