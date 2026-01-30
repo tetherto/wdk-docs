@@ -45,7 +45,7 @@ import WalletManagerSolana, {
 } from '@tetherto/wdk-wallet-solana'
 
 // Use a BIP-39 seed phrase (replace with your own secure phrase)
-const seedPhrase = 'your twelve word seed phrase here' // Replace with actual seed generation
+const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
 
 
 // Create wallet manager with Solana RPC provider
@@ -144,7 +144,7 @@ const result = await account.sendTransaction({
   value: 1000000000n, // 1 SOL in lamports
   commitment: 'confirmed' // Optional: commitment level
 })
-console.log('Transaction signature:', result.signature)
+console.log('Transaction hash:', result.hash)
 console.log('Transaction fee:', result.fee, 'lamports')
 
 // Get transaction fee estimate
@@ -170,7 +170,7 @@ const transferResult = await account.transfer({
 }, {
   commitment: 'confirmed' // Optional: commitment level
 });
-console.log('Transaction signature:', transferResult.signature);
+console.log('Transfer hash:', transferResult.hash);
 console.log('Transfer fee:', transferResult.fee, 'lamports');
 
 

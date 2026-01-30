@@ -37,15 +37,23 @@ const wallet = new WalletManagerSolana(seedPhrase, config)
 
 ## Account Configuration
 
+Accounts are obtained through the `WalletManagerSolana` instance using `getAccount()` or `getAccountByPath()`:
+
 ```javascript
-import { WalletAccountSolana } from '@tetherto/wdk-wallet-solana'
+import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 
 const accountConfig = {
   rpcUrl: 'https://api.mainnet-beta.solana.com',
   transferMaxFee: 10000000 // Optional: Maximum fee in lamports
 }
 
-const account = new WalletAccountSolana(seedPhrase, "0'/0/0", accountConfig)
+const wallet = new WalletManagerSolana(seedPhrase, accountConfig)
+
+// Get account by index
+const account = await wallet.getAccount(0)
+
+// Or get account by custom derivation path
+const customAccount = await wallet.getAccountByPath("0'/0/5")
 ```
 
 ## Configuration Options
