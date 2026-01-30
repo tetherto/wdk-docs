@@ -129,6 +129,7 @@ Represents an individual Spark wallet account. Implements `IWalletAccount` from 
 | `getLightningSendRequest(requestId)` | Gets Lightning send request by id | `Promise<LightningSendRequest \| null>` |
 | `payLightningInvoice(options)` | Pays a Lightning invoice | `Promise<LightningSendRequest>` |
 | `quotePayLightningInvoice(options)` | Gets fee estimate for Lightning payments | `Promise<bigint>` |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `createSparkSatsInvoice(options)` | Creates a Spark invoice for receiving sats | `Promise<SparkAddressFormat>` |
 | `createSparkTokensInvoice(options)` | Creates a Spark invoice for receiving tokens | `Promise<SparkAddressFormat>` |
 | `paySparkInvoice(invoices)` | Pays one or more Spark invoices | `Promise<FulfillSparkInvoiceResponse>` |
@@ -161,20 +162,7 @@ Signs a message using the account's identity key.
 const signature = await account.sign('Hello, Spark!')
 console.log('Signature:', signature)
 ```
-##### `verify(message, signature)`
-Verifies a message signature against the account's identity key.
 
-**Parameters:**
-- `message` (string): The original message
-- `signature` (string): The signature to verify
-
-**Returns:** `Promise<boolean>` - True if the signature is valid
-
-**Example:**
-```javascript
-const isValid = await account.verify('Hello, Spark!', signature)
-console.log('Signature valid:', isValid)
-```
 
 ##### `sendTransaction({to, value})`
 Sends a Spark transaction.
@@ -439,7 +427,8 @@ const feeQuote = await account.quoteWithdraw({
 const withdrawal = await account.withdraw({
   onchainAddress: 'bc1q...',
   amountSats: 1000000,
-  feeQuote: feeQuote
+  feeQuote: feeQuote,
+  exitSpeed: 'FAST'
 })
 console.log('Withdrawal request:', withdrawal)
 ```
@@ -532,6 +521,22 @@ const feeEstimate = await account.quotePayLightningInvoice({
   encodedInvoice: 'lnbc...'
 })
 console.log('Estimated Lightning fee:', Number(feeEstimate), 'satoshis')
+```
+
+
+##### `verify(message, signature)`
+Verifies a message signature against the account's identity key.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify
+
+**Returns:** `Promise<boolean>` - True if the signature is valid
+
+**Example:**
+```javascript
+const isValid = await account.verify('Hello, Spark!', signature)
+console.log('Signature valid:', isValid)
 ```
 
 ##### `createSparkSatsInvoice(options)`
@@ -733,7 +738,7 @@ interface CoopExitRequest {
   id: string              // Withdrawal request ID
   onchainAddress: string  // Bitcoin address for withdrawal
   amountSats: number      // Amount in satoshis
-  exitSpeed: string       // Withdrawal speed ('FAST', 'MEDIUM', 'SLOW')
+  exitSpeed: string       // Withdrawal speed ('FAST', 'MEDIUM', 'SLOW') - default: 'FAST'
   status: string          // Withdrawal status
 }
 ```

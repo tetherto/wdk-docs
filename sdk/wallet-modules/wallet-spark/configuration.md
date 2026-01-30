@@ -113,6 +113,7 @@ This ensures compatibility with standard [BIP-44](../../../resources/concepts.md
 import WalletManagerSpark from '@tetherto/wdk-wallet-spark'
 
 // Create wallet manager with configuration
+const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
 const wallet = new WalletManagerSpark(seedPhrase, {
   network: 'MAINNET'
 })

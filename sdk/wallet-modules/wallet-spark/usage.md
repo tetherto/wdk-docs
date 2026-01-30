@@ -41,14 +41,14 @@ npm install @tetherto/wdk-wallet-spark
 import WalletManagerSpark from '@tetherto/wdk-wallet-spark'
 
 // Use a BIP-39 seed phrase (replace with your own secure phrase)
-const seedPhrase = 'your twelve word seed phrase here'
+const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
 
 
 // Create wallet manager with default configuration
 const wallet = new WalletManagerSpark(seedPhrase)
 
 // Or with custom network configuration
-const wallet = new WalletManagerSpark(seedPhrase, {
+const walletWithConfig = new WalletManagerSpark(seedPhrase, {
   network: 'MAINNET' // 'MAINNET' or 'REGTEST'
 })
 
@@ -105,7 +105,7 @@ import WalletManagerSpark from '@tetherto/wdk-wallet-spark'
 // Get Spark balance in satoshis
 const balance = await account.getBalance()
 console.log('Balance:', balance, 'satoshis')
-console.log('Balance:', balance / 100000000, 'BTC')
+console.log('Balance:', Number(balance) / 100000000, 'BTC')
 ```
 
 ### Transfer History
@@ -173,7 +173,7 @@ const message = 'Hello, Spark!'
 const signature = await account.sign(message)
 console.log('Signature:', signature)
 
-// Verify a signature
+// Verify a signature (works on both full and read-only accounts)
 const isValid = await account.verify(message, signature)
 console.log('Signature valid:', isValid)
 ```
@@ -244,7 +244,8 @@ console.log('Withdrawal fee quote:', feeQuote)
 // Note: withdraw() now uses onchainAddress and amountSats parameters
 const withdrawal = await account.withdraw({
   onchainAddress: 'bc1...',
-  amountSats: 100000 // 0.001 BTC
+  amountSats: 100000, // 0.001 BTC
+  exitSpeed: 'FAST'  // Optional: 'FAST' (default), 'MEDIUM', or 'SLOW'
 })
 console.log('Withdrawal request:', withdrawal)
 ```
@@ -335,7 +336,7 @@ import WalletManagerSpark from '@tetherto/wdk-wallet-spark'
 
 async function setupSparkWallet() {
   // Use a BIP-39 seed phrase (replace with your own secure phrase)
-  const seedPhrase = 'your twelve word seed phrase here' // Replace with actual seed generation
+  const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
 
   // Create Spark wallet manager
   const wallet = new WalletManagerSpark(seedPhrase, {
@@ -349,7 +350,7 @@ async function setupSparkWallet() {
   
   // Check balance
   const balance = await account.getBalance()
-  console.log('Balance:', balance / 100000000, 'BTC')
+  console.log('Balance:', Number(balance) / 100000000, 'BTC')
   
   return { wallet, account, address, balance }
 }
@@ -397,7 +398,8 @@ async function bitcoinBridgeFlow(account, txId) {
   // Note: withdraw() now uses onchainAddress and amountSats parameters
   const withdrawal = await account.withdraw({
     onchainAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-    amountSats: 50000 // 0.0005 BTC
+    amountSats: 50000, // 0.0005 BTC
+    exitSpeed: 'FAST'
   })
   console.log('Withdrawal initiated:', withdrawal)
 }
@@ -417,7 +419,7 @@ async function manageMultipleAccounts(wallet) {
     accounts.push({
       index: i,
       address,
-      balance: balance / 100000000 // Convert to BTC
+      balance: Number(balance) / 100000000 // Convert to BTC
     })
   }
   
@@ -447,8 +449,8 @@ async function analyzeTransactionHistory(account) {
   })
   
   return {
-    totalReceived: totalReceived / 100000000, // BTC
-    totalSent: totalSent / 100000000,         // BTC
+    totalReceived: Number(totalReceived) / 100000000, // BTC
+    totalSent: Number(totalSent) / 100000000,         // BTC
     transactionCount: allTransfers.length
   }
 }
