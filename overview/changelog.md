@@ -24,13 +24,10 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
-### January 30, 2026
+### January 26, 2026
 
 **Changes**
-- **wallet-spark**:
-  - Moved `verify` method from `WalletAccountSpark` to [`WalletAccountReadOnlySpark`](../sdk/wallet-modules/wallet-spark/api-reference.md#walletaccountreadonlyspark) ([v1.0.0-beta.7](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.7))
-  - Added default `exitSpeed` parameter for `withdraw` method
-  - Added Agent Guide to support AI agent context: [`Spark Agent Guide`](../sdk/wallet-modules/wallet-spark/agent-guide.md)
+- **wallet-spark**: Moved `verify` method from `WalletAccountSpark` to [`WalletAccountReadOnlySpark`](../sdk/wallet-modules/wallet-spark/api-reference.md#walletaccountreadonlyspark) ([v1.0.0-beta.7](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.7))
 
 ### January 23, 2026
 

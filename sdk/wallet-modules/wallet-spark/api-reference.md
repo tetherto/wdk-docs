@@ -129,7 +129,6 @@ Represents an individual Spark wallet account. Implements `IWalletAccount` from 
 | `getLightningSendRequest(requestId)` | Gets Lightning send request by id | `Promise<LightningSendRequest \| null>` |
 | `payLightningInvoice(options)` | Pays a Lightning invoice | `Promise<LightningSendRequest>` |
 | `quotePayLightningInvoice(options)` | Gets fee estimate for Lightning payments | `Promise<bigint>` |
-| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `createSparkSatsInvoice(options)` | Creates a Spark invoice for receiving sats | `Promise<SparkAddressFormat>` |
 | `createSparkTokensInvoice(options)` | Creates a Spark invoice for receiving tokens | `Promise<SparkAddressFormat>` |
 | `paySparkInvoice(invoices)` | Pays one or more Spark invoices | `Promise<FulfillSparkInvoiceResponse>` |
@@ -427,8 +426,7 @@ const feeQuote = await account.quoteWithdraw({
 const withdrawal = await account.withdraw({
   onchainAddress: 'bc1q...',
   amountSats: 1000000,
-  feeQuote: feeQuote,
-  exitSpeed: 'FAST'
+  feeQuote: feeQuote
 })
 console.log('Withdrawal request:', withdrawal)
 ```
@@ -738,7 +736,7 @@ interface CoopExitRequest {
   id: string              // Withdrawal request ID
   onchainAddress: string  // Bitcoin address for withdrawal
   amountSats: number      // Amount in satoshis
-  exitSpeed: string       // Withdrawal speed ('FAST', 'MEDIUM', 'SLOW') - default: 'FAST'
+  exitSpeed: string       // Withdrawal speed ('FAST', 'MEDIUM', 'SLOW') - default: 'MEDIUM'
   status: string          // Withdrawal status
 }
 ```

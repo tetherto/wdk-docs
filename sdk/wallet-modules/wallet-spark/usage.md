@@ -244,8 +244,7 @@ console.log('Withdrawal fee quote:', feeQuote)
 // Note: withdraw() now uses onchainAddress and amountSats parameters
 const withdrawal = await account.withdraw({
   onchainAddress: 'bc1...',
-  amountSats: 100000, // 0.001 BTC
-  exitSpeed: 'FAST'  // Optional: 'FAST' (default), 'MEDIUM', or 'SLOW'
+  amountSats: 100000 // 0.001 BTC
 })
 console.log('Withdrawal request:', withdrawal)
 ```
@@ -398,8 +397,7 @@ async function bitcoinBridgeFlow(account, txId) {
   // Note: withdraw() now uses onchainAddress and amountSats parameters
   const withdrawal = await account.withdraw({
     onchainAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-    amountSats: 50000, // 0.0005 BTC
-    exitSpeed: 'FAST'
+    amountSats: 50000 // 0.0005 BTC
   })
   console.log('Withdrawal initiated:', withdrawal)
 }
