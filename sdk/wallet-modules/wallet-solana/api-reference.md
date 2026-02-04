@@ -133,7 +133,6 @@ new WalletAccountSolana(seed, path, config)
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's Solana address | `Promise<string>` |
 | `sign(message)` | Signs a message using the account's private key | `Promise<string>` |
-| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `sendTransaction(tx)` | Sends a Solana transaction | `Promise<{hash: string, fee: number}>` |
 | `quoteSendTransaction(tx)` | Estimates the fee for a transaction | `Promise<{fee: number}>` |
 | `transfer(options)` | Transfers SPL tokens to another address | `Promise<{hash: string, fee: number}>` |
@@ -324,6 +323,7 @@ new WalletAccountReadOnlySolana(publicKey, config)
 | `getAddress()` | Returns the account's Solana address | `Promise<string>` |
 | `getBalance()` | Returns the native SOL balance (in lamports) | `Promise<number>` |
 | `getTokenBalance(tokenMint)` | Returns the balance of a specific SPL token | `Promise<number>` |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `quoteSendTransaction(tx)` | Estimates the fee for a transaction | `Promise<{fee: number}>` |
 | `quoteTransfer(options)` | Estimates the fee for an SPL token transfer | `Promise<{fee: number}>` |
 
@@ -361,6 +361,21 @@ Returns the balance of a specific SPL token.
 ```javascript
 const tokenBalance = await readOnlyAccount.getTokenBalance('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB')
 console.log('USDT balance:', tokenBalance)
+```
+
+##### `verify(message, signature)`
+Verifies a message signature.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify (hex-encoded)
+
+**Returns:** `Promise<boolean>` - True if the signature is valid
+
+**Example:**
+```javascript
+const isValid = await readOnlyAccount.verify('Hello, Solana!', signature)
+console.log('Signature valid:', isValid)
 ```
 
 ##### `quoteSendTransaction(tx)`

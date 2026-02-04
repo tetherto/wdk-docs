@@ -38,7 +38,7 @@
     * [Usage](sdk/wallet-modules/wallet-evm/usage.md)
     * [Configuration](sdk/wallet-modules/wallet-evm/configuration.md)
     * [API Reference](sdk/wallet-modules/wallet-evm/api-reference.md)
-    * [Agent Guide](sdk/wallet-modules/wallet-evm/agent-guide.md)
+
   * [wallet-evm-erc-4337](sdk/wallet-modules/wallet-evm-erc-4337/README.md)
     * [Usage](sdk/wallet-modules/wallet-evm-erc-4337/usage.md)
     * [Configuration](sdk/wallet-modules/wallet-evm-erc-4337/configuration.md)
@@ -47,7 +47,7 @@
     * [Usage](sdk/wallet-modules/wallet-solana/usage.md)
     * [Configuration](sdk/wallet-modules/wallet-solana/configuration.md)
     * [API Reference](sdk/wallet-modules/wallet-solana/api-reference.md)
-    * [Agent Guide](sdk/wallet-modules/wallet-solana/agent-guide.md)
+
   * [wallet-spark](sdk/wallet-modules/wallet-spark/README.md)
     * [Usage](sdk/wallet-modules/wallet-spark/usage.md)
     * [Configuration](sdk/wallet-modules/wallet-spark/configuration.md)
@@ -56,7 +56,7 @@
     * [Usage](sdk/wallet-modules/wallet-ton/usage.md)
     * [Configuration](sdk/wallet-modules/wallet-ton/configuration.md)
     * [API Reference](sdk/wallet-modules/wallet-ton/api-reference.md)
-    * [Agent Guide](sdk/wallet-modules/wallet-ton/agent-guide.md)
+
   * [wallet-ton-gasless](sdk/wallet-modules/wallet-ton-gasless/README.md)
     * [Usage](sdk/wallet-modules/wallet-ton-gasless/usage.md)
     * [Configuration](sdk/wallet-modules/wallet-ton-gasless/configuration.md)
@@ -65,7 +65,7 @@
     * [Usage](sdk/wallet-modules/wallet-tron/usage.md)
     * [Configuration](sdk/wallet-modules/wallet-tron/configuration.md)
     * [API Reference](sdk/wallet-modules/wallet-tron/api-reference.md)
-    * [Agent Guide](sdk/wallet-modules/wallet-tron/agent-guide.md)
+
   * [wallet-tron-gasfree](sdk/wallet-modules/wallet-tron-gasfree/README.md)
     * [Usage](sdk/wallet-modules/wallet-tron-gasfree/usage.md)
     * [Configuration](sdk/wallet-modules/wallet-tron-gasfree/configuration.md)
