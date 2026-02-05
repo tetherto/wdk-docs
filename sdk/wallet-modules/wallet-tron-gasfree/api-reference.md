@@ -25,7 +25,7 @@ layout:
 | Class | Description | Methods |
 |-------|-------------|---------|
 | [WalletManagerTronGasfree](#walletmanagertrongasfree) | Main class for managing gas-free Tron wallets. Extends `WalletManagerTron`. | [Constructor](#constructor), [Methods](#methods) |
-| [WalletAccountTronGasfree](#walletaccounttrongasfree) | Individual gas-free Tron wallet account implementation. Extends `WalletAccountReadOnlyTronGasfree`. | [Constructor](#constructor-1), [Methods](#methods-1) |
+| [WalletAccountTronGasfree](#walletaccounttrongasfree) | Individual gas-free Tron wallet account implementation. Extends `[WalletAccountReadOnlyTronGasfree](#walletaccountreadonlytrongasfree)`. | [Constructor](#constructor-1), [Methods](#methods-1) |
 | [WalletAccountReadOnlyTronGasfree](#walletaccountreadonlytrongasfree) | Read-only gas-free Tron wallet account. | [Constructor](#constructor-2), [Methods](#methods-2) |
 
 ### WalletManagerTronGasfree
@@ -68,9 +68,9 @@ const wallet = new WalletManagerTronGasfree(seedPhrase, {
 
 | Method | Description | Returns |
 |--------|-------------|---------|
-| `getAccount(index)` | Returns a wallet account at the specified index | `Promise<WalletAccountTronGasfree>` |
-| `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise<WalletAccountTronGasfree>` |
-| `getFeeRates()` | Returns current fee rates for normal and fast transactions | `Promise<{normal: number, fast: number}>` |
+| `getAccount(index)` | Returns a wallet account at the specified index | `Promise<[WalletAccountTronGasfree](#walletaccounttrongasfree)>` |
+| `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise<[WalletAccountTronGasfree](#walletaccounttrongasfree)>` |
+| `getFeeRates()` | Returns current fee rates for normal and fast transactions | `Promise<[FeeRates](#feerates)>` |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
 
 ##### `getAccount(index)`
@@ -79,7 +79,7 @@ Returns a gas-free wallet account at the specified index.
 **Parameters:**
 - `index` (number, optional): The index of the account to get (default: 0)
 
-**Returns:** `Promise<WalletAccountTronGasfree>` - The wallet account
+**Returns:** `Promise<[WalletAccountTronGasfree](#walletaccounttrongasfree)>` - The wallet account
 
 **Example:**
 ```javascript
@@ -92,7 +92,7 @@ Returns a gas-free wallet account at the specified BIP-44 derivation path.
 **Parameters:**
 - `path` (string): The derivation path (e.g., "0'/0/0")
 
-**Returns:** `Promise<WalletAccountTronGasfree>` - The wallet account
+**Returns:** `Promise<[WalletAccountTronGasfree](#walletaccounttrongasfree)>` - The wallet account
 
 **Example:**
 ```javascript
@@ -102,7 +102,7 @@ const account = await wallet.getAccountByPath("0'/0/1")
 ##### `getFeeRates()`
 Returns current fee rates for normal and fast transactions.
 
-**Returns:** `Promise<{normal: number, fast: number}>` - Object containing fee rates in sun
+**Returns:** `Promise<[FeeRates](#feerates)>` - Object containing fee rates in sun
 - `normal`: Fee rate for normal priority transactions
 - `fast`: Fee rate for high priority transactions
 
@@ -135,7 +135,7 @@ new WalletAccountTronGasfree(seed, path, config)
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `path` (string): BIP-44 derivation path (e.g., "0'/0/0")
-- `config` (object): Same configuration object as WalletManagerTronGasfree
+- `config` ([TronGasfreeWalletConfig](#trongasfreewalletconfig)): Same configuration object as WalletManagerTronGasfree
 
 #### Methods
 
@@ -144,7 +144,7 @@ new WalletAccountTronGasfree(seed, path, config)
 | `getAddress()` | Returns the account's address | `Promise<string>` |
 | `getBalance()` | Returns the native TRX balance (in sun) | `Promise<bigint>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise<bigint>` |
-| `transfer(options)` | Transfers TRC20 tokens to another address | `Promise<{hash: string, fee: number}>` |
+| `transfer(options)` | Transfers TRC20 tokens to another address | `Promise<[TransferResult](#transferresult)>` |
 | `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise<{fee: number}>` |
 | `sign(message)` | Signs a message using the account's private key | `Promise<string>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
@@ -191,12 +191,12 @@ console.log('Token balance:', tokenBalance)
 Transfers TRC20 tokens to another address using the gas-free service.
 
 **Parameters:**
-- `options` (TransferOptions): Transfer options
+- `options` ([TransferOptions](#transferoptions)): Transfer options
   - `token` (string): TRC20 contract address
   - `recipient` (string): Recipient's Tron address
   - `amount` (number): Amount in token base units
 
-**Returns:** `Promise<{hash: string, fee: number}>` - Object containing transaction hash and fee paid in token base units
+**Returns:** `Promise<[TransferResult](#transferresult)>` - Object containing transaction hash and fee paid in token base units
 
 **Example:**
 ```javascript
@@ -213,7 +213,7 @@ console.log('Fee paid:', result.fee, 'token base units')
 Estimates the fee for a TRC20 token transfer.
 
 **Parameters:**
-- `options` (TransferOptions): Transfer options (same as transfer method)
+- `options` ([TransferOptions](#transferoptions)): Transfer options (same as transfer method)
 
 **Returns:** `Promise<{fee: number}>` - Estimated fee in token base units
 
@@ -276,7 +276,7 @@ new WalletAccountReadOnlyTronGasfree(address, config)
 
 **Parameters:**
 - `address` (string): The account's Tron address
-- `config` (object): Configuration object
+- `config` ([TronGasfreeWalletConfig](#trongasfreewalletconfig)): Configuration object
   - `chainId` (string): The blockchain's id
   - `provider` (string): Tron RPC endpoint URL
   - `gasFreeProvider` (string): Gas-free service endpoint
@@ -335,7 +335,7 @@ console.log('Token balance:', tokenBalance)
 Estimates the fee for a TRC20 token transfer without requiring private keys.
 
 **Parameters:**
-- `options` (TransferOptions): Transfer options
+- `options` ([TransferOptions](#transferoptions)): Transfer options
   - `token` (string): TRC20 contract address
   - `recipient` (string): Recipient's Tron address
   - `amount` (number): Amount in token base units

@@ -43,7 +43,7 @@ new WalletManagerTon(seed, config)
 
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
-- `config` (object): Configuration object
+- `config` ([TonWalletConfig](#tonwalletconfig)): Configuration object
   - `tonClient` (object | TonClient): TON client configuration or instance
     - `url` (string): TON Center API URL (e.g., 'https://toncenter.com/api/v3')
     - `secretKey` (string, optional): API key for TON Center
@@ -66,8 +66,8 @@ const wallet = new WalletManagerTon(seedPhrase, {
 
 | Method | Description | Returns |
 |--------|-------------|---------|
-| `getAccount(index)` | Returns a wallet account at the specified index | `Promise<WalletAccountTon>` |
-| `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise<WalletAccountTon>` |
+| `getAccount(index)` | Returns a wallet account at the specified index | `Promise<[WalletAccountTon](#walletaccountton)>` |
+| `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise<[WalletAccountTon](#walletaccountton)>` |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: number, fast: number}>` |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
 
@@ -78,7 +78,7 @@ Returns a wallet account at the specified index.
 **Parameters:**
 - `index` (number, optional): The index of the account to get (default: 0)
 
-**Returns:** `Promise<WalletAccountTon>` - The wallet account
+**Returns:** `Promise<[WalletAccountTon](#walletaccountton)>` - The wallet account
 
 **Example:**
 ```javascript
@@ -91,7 +91,7 @@ Returns a wallet account at the specified BIP-44 derivation path.
 **Parameters:**
 - `path` (string): The derivation path (e.g., "0'/0/0")
 
-**Returns:** `Promise<WalletAccountTon>` - The wallet account
+**Returns:** `Promise<[WalletAccountTon](#walletaccountton)>` - The wallet account
 
 **Example:**
 ```javascript
@@ -101,7 +101,7 @@ const account = await wallet.getAccountByPath("0'/0/1")
 ##### `getFeeRates()`
 Returns current fee rates for normal and fast transactions.
 
-**Returns:** `Promise<FeeRates>` - Object containing normal and fast fee rates
+**Returns:** `Promise<[FeeRates](#feerates)>` - Object containing normal and fast fee rates
 
 **Example:**
 ```javascript
@@ -132,7 +132,7 @@ console.log('Seed phrase:', wallet.seed)
 
 ### WalletAccountTon
 
-Individual TON wallet account implementation. Extends `WalletAccountReadOnlyTon` and implements `IWalletAccount`.
+Individual TON wallet account implementation. Extends `[WalletAccountReadOnlyTon](#walletaccountreadonlyton)` and implements `IWalletAccount`.
 
 
 #### Constructor
@@ -144,7 +144,7 @@ new WalletAccountTon(seed, path, config)
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `path` (string): BIP-44 derivation path (e.g., "0'/0/0")
-- `config` (object): Configuration object
+- `config` ([TonWalletConfig](#tonwalletconfig)): Configuration object
   - `tonClient` (object | TonClient): TON client configuration or instance
     - `url` (string): TON Center API URL
     - `secretKey` (string, optional): API key for TON Center
@@ -225,7 +225,7 @@ console.log('Signature:', signature)
 Sends a TON transaction and returns the result with hash and fee.
 
 **Parameters:**
-- `tx` (object): The transaction object
+- `tx` ([TonTransaction](#tontransaction)): The transaction object
   - `to` (string): Recipient TON address (e.g., 'EQ...')
   - `value` (number): Amount in nanotons (1 TON = 1,000,000,000 nanotons)
   - `bounceable` (boolean, optional): Whether the address is bounceable (TON-specific, optional)
@@ -247,7 +247,7 @@ console.log('Transaction fee:', result.fee, 'nanotons');
 Estimates the fee for a transaction.
 
 **Parameters:**
-- `tx` (object): The transaction object (same as sendTransaction)
+- `tx` ([TonTransaction](#tontransaction)): The transaction object (same as sendTransaction)
   - `to` (string): Recipient TON address (e.g., 'EQ...')
   - `value` (number): Amount in nanotons (1 TON = 1,000,000,000 nanotons)
   - `bounceable` (boolean, optional): Whether the address is bounceable (TON-specific, optional)
@@ -267,7 +267,7 @@ console.log('Estimated fee:', quote.fee, 'nanotons');
 Transfers Jettons (TON tokens) to another address.
 
 **Parameters:**
-- `options` (object): Transfer options
+- `options` ([TransferOptions](#transferoptions)): Transfer options
   - `token` (string): Jetton master contract address (TON format, e.g., 'EQ...')
   - `recipient` (string): Recipient TON address (e.g., 'EQ...')
   - `amount` (number): Amount in Jetton's base units
@@ -289,7 +289,7 @@ console.log('Transfer fee:', result.fee, 'nanotons');
 Estimates the fee for a Jetton (TON token) transfer.
 
 **Parameters:**
-- `options` (object): Transfer options (same as transfer)
+- `options` ([TransferOptions](#transferoptions)): Transfer options (same as transfer)
   - `token` (string): Jetton master contract address (TON format, e.g., 'EQ...')
   - `recipient` (string): Recipient TON address (e.g., 'EQ...')
   - `amount` (number): Amount in Jetton's base units
@@ -359,7 +359,7 @@ account.dispose()
 |----------|------|-------------|
 | `index` | `number` | The derivation path's index of this account |
 | `path` | `string` | The full derivation path of this account |
-| `keyPair` | `{publicKey: Buffer, privateKey: Buffer}` | The account's public and private key pair as buffers |
+| `keyPair` | `[KeyPair](#keypair)` | The account's public and private key pair as buffers |
 
 **Example:**
 ```javascript

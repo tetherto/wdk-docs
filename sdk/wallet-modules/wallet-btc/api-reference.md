@@ -27,7 +27,10 @@ layout:
 | [WalletManagerBtc](#walletmanagerbtc) | Main class for managing Bitcoin wallets. Extends `WalletManager` from `@tetherto/wdk-wallet`. | [Constructor](#constructor), [Methods](#methods) |
 | [WalletAccountBtc](#walletaccountbtc) | Individual Bitcoin wallet account implementation. Implements `IWalletAccount`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties) |
 | [WalletAccountReadOnlyBtc](#walletaccountreadonlybtc) | Read-only Bitcoin wallet account. Extends `WalletAccountReadOnly` from `@tetherto/wdk-wallet`. | [Constructor](#constructor-2), [Methods](#methods-2) |
-| [ElectrumWs](#electrumws) | WebSocket Electrum client for browser environments. Implements `IElectrumClient`. | [Constructor](#constructor-3), [Methods](#methods-3) |
+| [ElectrumTcp](#electrumtcp) | Standard TCP Electrum client. Implements `IElectrumClient`. | [Constructor](#constructor-3) |
+| [ElectrumTls](#electrumtls) | TLS Electrum client. Implements `IElectrumClient`. | [Constructor](#constructor-4) |
+| [ElectrumSsl](#electrumssl) | SSL Electrum client. Implements `IElectrumClient`. | [Constructor](#constructor-5) |
+| [ElectrumWs](#electrumws) | WebSocket Electrum client for browser environments. Implements `IElectrumClient`. | [Constructor](#constructor-6), [Methods](#methods-3) |
 
 ## WalletManagerBtc
 
@@ -42,8 +45,8 @@ new WalletManagerBtc(seed, config)
 ```
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
-- `config` (BtcWalletConfig, optional): Configuration object
-  - `client` (IElectrumClient, optional): Electrum client instance. If provided, host/port/protocol are ignored.
+- `config` ([BtcWalletConfig](#btcwalletconfig), optional): Configuration object
+  - `client` ([IElectrumClient](#ielectrumclient), optional): Electrum client instance. If provided, host/port/protocol are ignored.
   - `host` (string, optional): Electrum server hostname (default: "electrum.blockstream.info"). Ignored if client is provided.
   - `port` (number, optional): Electrum server port (default: 50001). Ignored if client is provided.
   - `protocol` (string, optional): Transport protocol - "tcp", "tls", or "ssl" (default: "tcp"). Ignored if client is provided.
@@ -54,9 +57,9 @@ new WalletManagerBtc(seed, config)
 
 | Method | Description | Returns |
 |--------|-------------|---------|
-| `getAccount(index)` | Returns a wallet account at the specified index | `Promise<WalletAccountBtc>` |
-| `getAccountByPath(path)` | Returns a wallet account at the specified derivation path | `Promise<WalletAccountBtc>` |
-| `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` |
+| `getAccount(index)` | Returns a wallet account at the specified index | `Promise<[WalletAccountBtc](#walletaccountbtc)>` |
+| `getAccountByPath(path)` | Returns a wallet account at the specified derivation path | `Promise<[WalletAccountBtc](#walletaccountbtc)>` |
+| `getFeeRates()` | Returns current fee rates for transactions | `Promise<[FeeRates](#feerates)>` |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
 
 
@@ -66,7 +69,7 @@ Returns a wallet account at the specified index using BIP-84 (default) or BIP-44
 **Parameters:**
 - `index` (number, optional): The index of the account to get (default: 0)
 
-**Returns:** `Promise<WalletAccountBtc>` - The wallet account
+**Returns:** `Promise<[WalletAccountBtc](#walletaccountbtc)>` - The wallet account
 
 **Example:**
 ```javascript
@@ -82,7 +85,7 @@ Returns a wallet account at the specified derivation path.
 **Parameters:**
 - `path` (string): The derivation path (e.g., "0'/0/0")
 
-**Returns:** `Promise<WalletAccountBtc>` - The wallet account
+**Returns:** `Promise<[WalletAccountBtc](#walletaccountbtc)>` - The wallet account
 
 **Example:**
 ```javascript
@@ -94,7 +97,7 @@ const account = await wallet.getAccountByPath("0'/0/1")
 ##### `getFeeRates()`
 Returns current fee rates from mempool.space API.
 
-**Returns:** `Promise<{normal: bigint, fast: bigint}>` - Object containing fee rates in sat/vB
+**Returns:** `Promise<[FeeRates](#feerates)>` - Object containing fee rates in sat/vB
 - `normal`: Standard fee rate for confirmation within ~1 hour
 - `fast`: Higher fee rate for faster confirmation
 
@@ -117,7 +120,7 @@ wallet.dispose()
 
 ## WalletAccountBtc
 
-Represents an individual Bitcoin wallet account. Extends `WalletAccountReadOnlyBtc` and implements `IWalletAccount` from `@tetherto/wdk-wallet`.
+Represents an individual Bitcoin wallet account. Extends `[WalletAccountReadOnlyBtc](#walletaccountreadonlybtc)` and implements `IWalletAccount` from `@tetherto/wdk-wallet`.
 
 
 #### Constructor
@@ -129,8 +132,8 @@ new WalletAccountBtc(seed, path, config)
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `path` (string): Derivation path suffix (e.g., "0'/0/0")
-- `config` (BtcWalletConfig, optional): Configuration object
-  - `client` (IElectrumClient, optional): Electrum client instance. If provided, host/port/protocol are ignored.
+- `config` ([BtcWalletConfig](#btcwalletconfig), optional): Configuration object
+  - `client` ([IElectrumClient](#ielectrumclient), optional): Electrum client instance. If provided, host/port/protocol are ignored.
   - `host` (string, optional): Electrum server hostname (default: "electrum.blockstream.info"). Ignored if client is provided.
   - `port` (number, optional): Electrum server port (default: 50001). Ignored if client is provided.
   - `protocol` (string, optional): Transport protocol - "tcp", "tls", or "ssl" (default: "tcp"). Ignored if client is provided.
@@ -145,12 +148,12 @@ new WalletAccountBtc(seed, path, config)
 | `getBalance()` | Returns the confirmed account balance in satoshis | `Promise<bigint>` |
 | `sendTransaction(options)` | Sends a Bitcoin transaction | `Promise<{hash: string, fee: bigint}>` |
 | `quoteSendTransaction(options)` | Estimates the fee for a transaction | `Promise<{fee: bigint}>` |
-| `getTransfers(options?)` | Returns the account's transfer history | `Promise<BtcTransfer[]>` |
+| `getTransfers(options?)` | Returns the account's transfer history | `Promise<[BtcTransfer](#btctransfer)[]>` |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<BtcTransactionReceipt \| null>` |
-| `getMaxSpendable()` | Returns the maximum spendable amount | `Promise<BtcMaxSpendableResult>` |
+| `getMaxSpendable()` | Returns the maximum spendable amount | `Promise<[BtcMaxSpendableResult](#btcmaxspendableresult)>` |
 | `sign(message)` | Signs a message with the account's private key | `Promise<string>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
-| `toReadOnlyAccount()` | Creates a read-only version of this account | `Promise<WalletAccountReadOnlyBtc>` |
+| `toReadOnlyAccount()` | Creates a read-only version of this account | `Promise<[WalletAccountReadOnlyBtc](#walletaccountreadonlybtc)>` |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
 
 ##### `getAddress()`
@@ -178,7 +181,7 @@ console.log('Balance:', balance, 'satoshis')
 Sends a Bitcoin transaction to a single recipient.
 
 **Parameters:**
-- `options` (BtcTransaction): Transaction options
+- `options` ([BtcTransaction](#btctransaction)): Transaction options
   - `to` (string): Recipient's Bitcoin address
   - `value` (number | bigint): Amount in satoshis
   - `feeRate` (number | bigint, optional): Fee rate in sat/vB. If provided, overrides the fee rate estimated from the blockchain.
@@ -202,7 +205,7 @@ console.log('Fee:', result.fee, 'satoshis')
 Estimates the fee for a transaction without broadcasting it.
 
 **Parameters:**
-- `options` (BtcTransaction): Same as sendTransaction options
+- `options` ([BtcTransaction](#btctransaction)): Same as sendTransaction options
   - `to` (string): Recipient's Bitcoin address
   - `value` (number | bigint): Amount in satoshis
   - `feeRate` (number | bigint, optional): Fee rate in sat/vB. If provided, overrides the fee rate estimated from the blockchain.
@@ -229,7 +232,7 @@ Returns the account's transfer history with detailed transaction information.
   - `limit` (number, optional): Maximum number of transfers (default: 10)
   - `skip` (number, optional): Number of transfers to skip (default: 0)
 
-**Returns:** `Promise<BtcTransfer[]>` - Array of transfer objects
+**Returns:** `Promise<[BtcTransfer](#btctransfer)[]>` - Array of transfer objects
 - `txid`: Transaction ID
 - `address`: Account's own address
 - `vout`: Output index in the transaction
@@ -271,7 +274,7 @@ Returns the maximum spendable amount that can be sent in a single transaction. T
 - **UTXO limit**: A transaction can include at most 200 inputs. Wallets with more UTXOs cannot spend their full balance in a single transaction.
 - **Dust limit**: Outputs below the dust threshold (294 sats for SegWit, 546 sats for legacy) cannot be created
 
-**Returns:** `Promise<BtcMaxSpendableResult>` - Maximum spendable result
+**Returns:** `Promise<[BtcMaxSpendableResult](#btcmaxspendableresult)>` - Maximum spendable result
 - `amount`: Maximum spendable amount in satoshis (bigint)
 - `fee`: Estimated network fee in satoshis (bigint)
 - `changeValue`: Estimated change value in satoshis (bigint)
@@ -349,7 +352,7 @@ Not supported on the Bitcoin blockchain. Always throws an error.
 ##### `toReadOnlyAccount()`
 Creates a read-only version of this account that can query balances and transactions but cannot sign or send transactions.
 
-**Returns:** `Promise<WalletAccountReadOnlyBtc>` - Read-only account instance
+**Returns:** `Promise<[WalletAccountReadOnlyBtc](#walletaccountreadonlybtc)>` - Read-only account instance
 
 **Example:**
 ```javascript
@@ -375,7 +378,7 @@ account.dispose()
 |----------|------|-------------|
 | `index` | `number` | The derivation path's index of this account |
 | `path` | `string` | The full derivation path of this account |
-| `keyPair` | `KeyPair` | The account's public and private key pair |
+| `keyPair` | `[KeyPair](#keypair)` | The account's public and private key pair |
 
 
 ## WalletAccountReadOnlyBtc
@@ -390,8 +393,8 @@ new WalletAccountReadOnlyBtc(address, config)
 
 **Parameters:**
 - `address` (string): The account's Bitcoin address
-- `config` (object, optional): Configuration object (same as BtcWalletConfig but without `bip`)
-  - `client` (IElectrumClient, optional): Electrum client instance. If provided, host/port/protocol are ignored.
+- `config` (object, optional): Configuration object (same as [BtcWalletConfig](#btcwalletconfig) but without `bip`)
+  - `client` ([IElectrumClient](#ielectrumclient), optional): Electrum client instance. If provided, host/port/protocol are ignored.
   - `host` (string, optional): Electrum server hostname (default: "electrum.blockstream.info"). Ignored if client is provided.
   - `port` (number, optional): Electrum server port (default: 50001). Ignored if client is provided.
   - `protocol` (string, optional): Transport protocol - "tcp", "tls", or "ssl" (default: "tcp"). Ignored if client is provided.
@@ -405,7 +408,7 @@ new WalletAccountReadOnlyBtc(address, config)
 | `getBalance()` | Returns the confirmed account balance in satoshis | `Promise<bigint>` |
 | `quoteSendTransaction(options)` | Estimates the fee for a transaction | `Promise<{fee: bigint}>` |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<BtcTransactionReceipt \| null>` |
-| `getMaxSpendable()` | Returns the maximum spendable amount | `Promise<BtcMaxSpendableResult>` |
+| `getMaxSpendable()` | Returns the maximum spendable amount | `Promise<[BtcMaxSpendableResult](#btcmaxspendableresult)>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 
 
@@ -425,10 +428,58 @@ console.log('Signature valid:', isValid)
 ```
 
 
+## ElectrumTcp
+
+Electrum client using TCP transport. Standard for command-line and server-side environments.
+Implements `[IElectrumClient](#ielectrumclient)`.
+
+#### Constructor
+
+```javascript
+new ElectrumTcp(config)
+```
+
+**Parameters:**
+- `config` (Omit<[MempoolElectrumConfig](#mempoolelectrumconfig), 'protocol'>): Configuration options
+  - `host` (string): Electrum server hostname
+  - `port` (number): Electrum server port
+
+## ElectrumTls
+
+Electrum client using TLS transport.
+Implements `[IElectrumClient](#ielectrumclient)`.
+
+#### Constructor
+
+```javascript
+new ElectrumTls(config)
+```
+
+**Parameters:**
+- `config` (Omit<[MempoolElectrumConfig](#mempoolelectrumconfig), 'protocol'>): Configuration options
+  - `host` (string): Electrum server hostname
+  - `port` (number): Electrum server port
+
+## ElectrumSsl
+
+Electrum client using SSL transport.
+Implements `[IElectrumClient](#ielectrumclient)`.
+
+#### Constructor
+
+```javascript
+new ElectrumSsl(config)
+```
+
+**Parameters:**
+- `config` (Omit<[MempoolElectrumConfig](#mempoolelectrumconfig), 'protocol'>): Configuration options
+  - `host` (string): Electrum server hostname
+  - `port` (number): Electrum server port
+
 ## ElectrumWs
 
 Electrum client using WebSocket transport. Compatible with browser environments where TCP sockets are not available.
-Implements `IElectrumClient`.
+Implements `[IElectrumClient](#ielectrumclient)`.
 
 #### Constructor
 
@@ -437,7 +488,7 @@ new ElectrumWs(config)
 ```
 
 **Parameters:**
-- `config` (ElectrumWsConfig): Configuration options
+- `config` ([ElectrumWsConfig](#electrumwsconfig)): Configuration options
   - `url` (string): The WebSocket URL (e.g., 'wss://electrum.example.com:50004')
 
 ### Methods
@@ -447,9 +498,9 @@ new ElectrumWs(config)
 | `connect()` | Establishes connection to Electrum server | `Promise<void>` |
 | `close()` | Closes the connection | `Promise<void>` |
 | `reconnect()` | Recreates the underlying socket and reinitializes the session | `Promise<void>` |
-| `getBalance(scripthash)` | Returns balance for a script hash | `Promise<ElectrumBalance>` |
-| `listUnspent(scripthash)` | Returns UTXOs for a script hash | `Promise<ElectrumUtxo[]>` |
-| `getHistory(scripthash)` | Returns transaction history | `Promise<ElectrumHistoryItem[]>` |
+| `getBalance(scripthash)` | Returns balance for a script hash | `Promise<[ElectrumBalance](#electrumbalance)>` |
+| `listUnspent(scripthash)` | Returns UTXOs for a script hash | `Promise<[ElectrumUtxo](#electrumutxo)[]>` |
+| `getHistory(scripthash)` | Returns transaction history | `Promise<[ElectrumHistoryItem](#electrumhistoryitem)[]>` |
 | `getTransaction(txHash)` | Returns raw transaction hex | `Promise<string>` |
 | `broadcast(rawTx)` | Broadcasts raw transaction | `Promise<string>` |
 | `estimateFee(blocks)` | Returns estimated fee rate | `Promise<number>` |
@@ -532,6 +583,13 @@ interface BtcWalletConfig {
 }
 ```
 
+### ElectrumWsConfig
+```typescript
+interface ElectrumWsConfig {
+  url: string // The WebSocket URL (e.g., 'wss://electrum.example.com:50004')
+}
+```
+
 ### IElectrumClient
 
 Interface for implementing custom Electrum clients.
@@ -572,6 +630,20 @@ interface ElectrumUtxo {
 interface ElectrumHistoryItem {
   tx_hash: string // The transaction hash
   height: number  // The block height (0 or negative if unconfirmed)
+}
+```
+
+### MempoolElectrumConfig
+
+```typescript
+interface MempoolElectrumConfig {
+  host: string              // Electrum server hostname
+  port: number              // Electrum server port
+  protocol?: 'tcp' | 'ssl' | 'tls' // Transport protocol (default: 'tcp')
+  maxRetry?: number         // Maximum reconnection attempts (default: 2)
+  retryPeriod?: number      // Delay between reconnection attempts in ms (default: 1000)
+  pingPeriod?: number       // Delay between keep-alive pings in ms (default: 120000)
+  callback?: (err: Error | null) => void // Called when all retries are exhausted
 }
 ```
 
