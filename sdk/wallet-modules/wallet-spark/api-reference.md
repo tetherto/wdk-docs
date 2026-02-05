@@ -26,6 +26,7 @@ layout:
 |-------|-------------|---------|
 | [WalletManagerSpark](#walletmanagerspark) | Main class for managing Spark wallets. Extends `WalletManager` from `@tetherto/wdk-wallet`. | [Constructor](#constructor), [Methods](#methods) |
 | [WalletAccountSpark](#walletaccountspark) | Individual Spark wallet account implementation. Implements `IWalletAccount`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties) |
+| [WalletAccountReadOnlySpark](#walletaccountreadonlyspark) | Read-only Spark wallet account. | [Constructor](#constructor-2), [Methods](#methods-2) |
 
 ## WalletManagerSpark
 
@@ -659,6 +660,137 @@ account.dispose()
 | `index` | `number` | The derivation path index of this account |
 | `path` | `string` | The full BIP-44 derivation path |
 | `keyPair` | `KeyPair` | The account's public and private key pair |
+
+## WalletAccountReadOnlySpark
+
+Represents a read-only wallet account. Implements `WalletAccountReadOnly` from `@tetherto/wdk-wallet`.
+
+### Constructor
+
+```javascript
+new WalletAccountReadOnlySpark(address, config)
+```
+
+**Parameters:**
+- `address` (string): The account's Spark address
+- `config` (SparkWalletConfig, optional): Configuration object
+
+### Methods
+
+| Method | Description | Returns |
+|--------|-------------|---------|
+| `getAddress()` | Returns the account's Spark address | `Promise<SparkAddressFormat>` |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
+| `getBalance()` | Returns the native token balance in satoshis | `Promise<bigint>` |
+| `getTokenBalance(tokenAddress)` | Returns the balance for a specific token | `Promise<bigint>` |
+| `getTransactionReceipt(hash)` | Gets the transaction receipt for a given transaction hash | `Promise<SparkTransactionReceipt \| null>` |
+| `quoteSendTransaction(tx)` | Estimates transaction fee (always 0) | `Promise<{fee: bigint}>` |
+| `quoteTransfer(options)` | Quotes the costs of a transfer operation | `Promise<{fee: bigint}>` |
+
+##### `getAddress()`
+Returns the account's Spark network address.
+
+**Returns:** `Promise<SparkAddressFormat>` - The Spark address
+
+**Example:**
+```javascript
+const address = await account.getAddress()
+console.log('Spark address:', address)
+```
+
+##### `verify(message, signature)`
+Verifies a message signature against the account's identity key.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify
+
+**Returns:** `Promise<boolean>` - True if the signature is valid
+
+**Example:**
+```javascript
+const isValid = await account.verify('Hello, Spark!', signature)
+console.log('Signature valid:', isValid)
+```
+
+##### `getBalance()`
+Returns the account's native token balance in satoshis.
+
+**Returns:** `Promise<bigint>` - Balance in satoshis
+
+**Example:**
+```javascript
+const balance = await account.getBalance()
+console.log('Balance:', balance, 'satoshis')
+```
+
+##### `getTokenBalance(tokenAddress)`
+Returns the balance for a specific token.
+
+**Parameters:**
+- `tokenAddress` (string): Token contract address
+
+**Returns:** `Promise<bigint>` - Token balance in base unit
+
+**Example:**
+```javascript
+const tokenBalance = await account.getTokenBalance('token_address...')
+console.log('Token balance:', tokenBalance)
+```
+
+##### `getTransactionReceipt(hash)`
+Gets the transaction receipt for a given transaction hash.
+
+**Parameters:**
+- `hash` (string): Transaction hash
+
+**Returns:** `Promise<SparkTransactionReceipt | null>` - Transaction receipt details, or null if not found
+
+**Example:**
+```javascript
+const receipt = await account.getTransactionReceipt('0x...')
+console.log('Transaction receipt:', receipt)
+```
+
+##### `quoteSendTransaction({to, value})`
+Estimates the fee for a Spark transaction (always returns 0).
+
+**Parameters:**
+- `to` (string): Recipient's Spark address
+- `value` (number): Amount in satoshis
+
+**Returns:** `Promise<{fee: bigint}>` - Fee estimate (always 0)
+
+**Example:**
+```javascript
+const quote = await account.quoteSendTransaction({
+  to: 'spark1...',
+  value: 1000000
+})
+console.log('Estimated fee:', Number(quote.fee))
+```
+
+##### `quoteTransfer(options)`
+Quotes the costs of a transfer operation.
+
+**Parameters:**
+- `options` (object): Transfer options
+  - `token` (string): Token identifier
+  - `amount` (bigint): Amount of tokens
+  - `recipient` (string): Recipient Spark address
+
+**Returns:** `Promise<{fee: bigint}>` - Transfer fee quote
+
+**Example:**
+```javascript
+const quote = await account.quoteTransfer({
+  token: 'btkn1...',
+  amount: BigInt(1000000),
+  recipient: 'spark1...'
+})
+console.log('Transfer fee:', Number(quote.fee))
+```
+
 
 ## Types
 

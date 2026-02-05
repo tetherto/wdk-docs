@@ -37,6 +37,12 @@ npm install @tetherto/wdk-wallet-spark
 
 ### Creating a New Spark Wallet
 
+{% hint style="info" %}
+**ES Modules Support**
+
+The WDK Spark wallet module uses ES Modules (import/export syntax). Ensure your project's `package.json` includes `"type": "module"` or that you are running in an environment that supports ESM.
+{% endhint %}
+
 ```javascript
 import WalletManagerSpark from '@tetherto/wdk-wallet-spark'
 
