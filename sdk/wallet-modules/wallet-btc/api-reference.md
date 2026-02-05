@@ -27,6 +27,7 @@ layout:
 | [WalletManagerBtc](#walletmanagerbtc) | Main class for managing Bitcoin wallets. Extends `WalletManager` from `@tetherto/wdk-wallet`. | [Constructor](#constructor), [Methods](#methods) |
 | [WalletAccountBtc](#walletaccountbtc) | Individual Bitcoin wallet account implementation. Implements `IWalletAccount`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties) |
 | [WalletAccountReadOnlyBtc](#walletaccountreadonlybtc) | Read-only Bitcoin wallet account. Extends `WalletAccountReadOnly` from `@tetherto/wdk-wallet`. | [Constructor](#constructor-2), [Methods](#methods-2) |
+| [ElectrumWs](#electrumws) | WebSocket Electrum client for browser environments. Implements `IElectrumClient`. | [Constructor](#constructor-3), [Methods](#methods-3) |
 
 ## WalletManagerBtc
 
@@ -405,7 +406,53 @@ new WalletAccountReadOnlyBtc(address, config)
 | `quoteSendTransaction(options)` | Estimates the fee for a transaction | `Promise<{fee: bigint}>` |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<BtcTransactionReceipt \| null>` |
 | `getMaxSpendable()` | Returns the maximum spendable amount | `Promise<BtcMaxSpendableResult>` |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 
+
+##### `verify(message, signature)`
+Verifies a message signature using the account's public key.
+
+**Parameters:**
+- `message` (string): Original message
+- `signature` (string): Signature as base64 string
+
+**Returns:** `Promise<boolean>` - True if signature is valid
+
+**Example:**
+```javascript
+const isValid = await readOnlyAccount.verify('Hello Bitcoin!', signature)
+console.log('Signature valid:', isValid)
+```
+
+
+## ElectrumWs
+
+Electrum client using WebSocket transport. Compatible with browser environments where TCP sockets are not available.
+Implements `IElectrumClient`.
+
+#### Constructor
+
+```javascript
+new ElectrumWs(config)
+```
+
+**Parameters:**
+- `config` (ElectrumWsConfig): Configuration options
+  - `url` (string): The WebSocket URL (e.g., 'wss://electrum.example.com:50004')
+
+### Methods
+
+| Method | Description | Returns |
+|--------|-------------|---------|
+| `connect()` | Establishes connection to Electrum server | `Promise<void>` |
+| `close()` | Closes the connection | `Promise<void>` |
+| `reconnect()` | Recreates the underlying socket and reinitializes the session | `Promise<void>` |
+| `getBalance(scripthash)` | Returns balance for a script hash | `Promise<ElectrumBalance>` |
+| `listUnspent(scripthash)` | Returns UTXOs for a script hash | `Promise<ElectrumUtxo[]>` |
+| `getHistory(scripthash)` | Returns transaction history | `Promise<ElectrumHistoryItem[]>` |
+| `getTransaction(txHash)` | Returns raw transaction hex | `Promise<string>` |
+| `broadcast(rawTx)` | Broadcasts raw transaction | `Promise<string>` |
+| `estimateFee(blocks)` | Returns estimated fee rate | `Promise<number>` |
 
 ## Types
 
