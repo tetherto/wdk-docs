@@ -142,8 +142,8 @@ new WalletAccountTronGasfree(seed, path, config)
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's address | `Promise<string>` |
-| `getBalance()` | Returns the native TRX balance (in sun) | `Promise<number>` |
-| `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise<number>` |
+| `getBalance()` | Returns the native TRX balance (in sun) | `Promise<bigint>` |
+| `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise<bigint>` |
 | `transfer(options)` | Transfers TRC20 tokens to another address | `Promise<{hash: string, fee: number}>` |
 | `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise<{fee: number}>` |
 | `sign(message)` | Signs a message using the account's private key | `Promise<string>` |
@@ -165,7 +165,7 @@ console.log('Account address:', address)
 ##### `getBalance()`
 Returns the native TRX balance in sun units.
 
-**Returns:** `Promise<number>` - Balance in sun
+**Returns:** `Promise<bigint>` - Balance in sun
 
 **Example:**
 ```javascript
@@ -179,7 +179,7 @@ Returns the balance of a specific TRC20 token.
 **Parameters:**
 - `tokenAddress` (string): The TRC20 contract address (e.g., 'T...')
 
-**Returns:** `Promise<number>` - Token balance in base units
+**Returns:** `Promise<bigint>` - Token balance in base units
 
 **Example:**
 ```javascript
@@ -290,9 +290,10 @@ new WalletAccountReadOnlyTronGasfree(address, config)
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's address | `Promise<string>` |
-| `getBalance()` | Returns the native TRX balance (in sun) | `Promise<number>` |
-| `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise<number>` |
+| `getBalance()` | Returns the native TRX balance (in sun) | `Promise<bigint>` |
+| `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise<bigint>` |
 | `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise<{fee: number}>` |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 
 ##### `getAddress()`
 Returns the account's gas-free Tron address.
@@ -308,7 +309,7 @@ console.log('Account address:', address)
 ##### `getBalance()`
 Returns the native TRX balance in sun units.
 
-**Returns:** `Promise<number>` - Balance in sun
+**Returns:** `Promise<bigint>` - Balance in sun
 
 **Example:**
 ```javascript
@@ -322,7 +323,7 @@ Returns the balance of a specific TRC20 token.
 **Parameters:**
 - `tokenAddress` (string): The TRC20 contract address (e.g., 'T...')
 
-**Returns:** `Promise<number>` - Token balance in base units
+**Returns:** `Promise<bigint>` - Token balance in base units
 
 **Example:**
 ```javascript
@@ -349,6 +350,21 @@ const quote = await readOnlyAccount.quoteTransfer({
   amount: 1000000
 })
 console.log('Estimated fee:', quote.fee, 'token base units')
+```
+
+##### `verify(message, signature)`
+Verifies a message signature.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify
+
+**Returns:** `Promise<boolean>` - True if the signature is valid
+
+**Example:**
+```javascript
+const isValid = await readOnlyAccount.verify('Hello, World!', signature)
+console.log('Signature valid:', isValid)
 ```
 
 ## Types

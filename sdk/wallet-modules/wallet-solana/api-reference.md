@@ -137,8 +137,10 @@ new WalletAccountSolana(seed, path, config)
 | `quoteSendTransaction(tx)` | Estimates the fee for a transaction | `Promise<{fee: number}>` |
 | `transfer(options)` | Transfers SPL tokens to another address | `Promise<{hash: string, fee: number}>` |
 | `quoteTransfer(options)` | Estimates the fee for an SPL token transfer | `Promise<{fee: number}>` |
-| `getBalance()` | Returns the native SOL balance (in lamports) | `Promise<number>` |
-| `getTokenBalance(tokenMint)` | Returns the balance of a specific SPL token | `Promise<number>` |
+| `getBalance()` | Returns the native SOL balance (in lamports) | `Promise<bigint>` |
+| `getTokenBalance(tokenMint)` | Returns the balance of a specific SPL token | `Promise<bigint>` |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
+| `getTransactionReceipt(hash)` | Gets the transaction receipt for a given transaction hash | `Promise<SolanaTransactionReceipt \| null>` |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlySolana>` |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
 
@@ -165,6 +167,21 @@ Signs a message using the account's private key.
 ```javascript
 const signature = await account.sign('Hello, Solana!')
 console.log('Signature:', signature)
+```
+
+##### `verify(message, signature)`
+Verifies a message signature against the account's address.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify (hex-encoded)
+
+**Returns:** `Promise<boolean>` - True if the signature is valid
+
+**Example:**
+```javascript
+const isValid = await account.verify('Hello, Solana!', signature)
+console.log('Signature valid:', isValid)
 ```
 
 
@@ -250,7 +267,7 @@ console.log('Transfer fee estimate:', quote.fee, 'lamports')
 ##### `getBalance()`
 Returns the native SOL balance (in lamports).
 
-**Returns:** `Promise<number>` - Balance in lamports
+**Returns:** `Promise<bigint>` - Balance in lamports
 
 **Example:**
 ```javascript
@@ -264,12 +281,26 @@ Returns the balance of a specific SPL token.
 **Parameters:**
 - `tokenMint` (string): Token mint address (base58-encoded)
 
-**Returns:** `Promise<number>` - Token balance in base units
+**Returns:** `Promise<bigint>` - Token balance in base units
 
 **Example:**
 ```javascript
 const tokenBalance = await account.getTokenBalance('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB')
 console.log('USDT balance:', tokenBalance)
+```
+
+##### `getTransactionReceipt(hash)`
+Gets the transaction receipt for a given transaction hash.
+
+**Parameters:**
+- `hash` (string): Transaction hash
+
+**Returns:** `Promise<SolanaTransactionReceipt | null>` - Transaction receipt details, or null if not found
+
+**Example:**
+```javascript
+const receipt = await account.getTransactionReceipt('5....')
+console.log('Transaction receipt:', receipt)
 ```
 
 ##### `toReadOnlyAccount()`
@@ -321,8 +352,8 @@ new WalletAccountReadOnlySolana(publicKey, config)
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's Solana address | `Promise<string>` |
-| `getBalance()` | Returns the native SOL balance (in lamports) | `Promise<number>` |
-| `getTokenBalance(tokenMint)` | Returns the balance of a specific SPL token | `Promise<number>` |
+| `getBalance()` | Returns the native SOL balance (in lamports) | `Promise<bigint>` |
+| `getTokenBalance(tokenMint)` | Returns the balance of a specific SPL token | `Promise<bigint>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `quoteSendTransaction(tx)` | Estimates the fee for a transaction | `Promise<{fee: number}>` |
 | `quoteTransfer(options)` | Estimates the fee for an SPL token transfer | `Promise<{fee: number}>` |
@@ -341,7 +372,7 @@ console.log('Account address:', address)
 ##### `getBalance()`
 Returns the native SOL balance (in lamports).
 
-**Returns:** `Promise<number>` - Balance in lamports
+**Returns:** `Promise<bigint>` - Balance in lamports
 
 **Example:**
 ```javascript
@@ -355,7 +386,7 @@ Returns the balance of a specific SPL token.
 **Parameters:**
 - `tokenMint` (string): Token mint address (base58-encoded)
 
-**Returns:** `Promise<number>` - Token balance in base units
+**Returns:** `Promise<bigint>` - Token balance in base units
 
 **Example:**
 ```javascript

@@ -148,9 +148,9 @@ new WalletAccountTonGasless(seed, path, config)
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `transfer(options, config?)` | Transfers tokens using gasless transactions | `Promise<{hash: string, fee: number}>` |
 | `quoteTransfer(options, config?)` | Estimates the fee for a token transfer | `Promise<{fee: number}>` |
-| `getBalance()` | Returns the native TON balance (in nanotons) | `Promise<number>` |
-| `getTokenBalance(tokenAddress)` | Returns the balance of a specific token | `Promise<number>` |
-| `getPaymasterTokenBalance()` | Returns the balance of the paymaster token | `Promise<number>` |
+| `getBalance()` | Returns the native TON balance (in nanotons) | `Promise<bigint>` |
+| `getTokenBalance(tokenAddress)` | Returns the balance of a specific token | `Promise<bigint>` |
+| `getPaymasterTokenBalance()` | Returns the balance of the paymaster token | `Promise<bigint>` |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlyTonGasless>` |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
 
@@ -247,7 +247,7 @@ console.log('Transfer fee estimate:', quote.fee, 'paymaster token units');
 ##### `getPaymasterTokenBalance()`
 Returns the balance of the paymaster Jetton (used for gasless fees).
 
-**Returns:** `Promise<number>` - Paymaster Jetton balance in base units
+**Returns:** `Promise<bigint>` - Paymaster Jetton balance in base units
 
 **Example:**
 ```javascript
@@ -258,7 +258,7 @@ console.log('Paymaster Jetton balance:', paymasterBalance);
 ##### `getBalance()`
 Returns the native TON balance (in nanotons).
 
-**Returns:** `Promise<number>` - Balance in nanotons
+**Returns:** `Promise<bigint>` - Balance in nanotons
 
 **Example:**
 ```javascript
@@ -273,7 +273,7 @@ Returns the balance of a specific Jetton (TON token).
 - `tokenAddress` (string): The token contract address
 
 
-**Returns:** `Promise<number>` - Token balance in base units
+**Returns:** `Promise<bigint>` - Token balance in base units
 
 **Example:**
 ```javascript
@@ -323,10 +323,11 @@ new WalletAccountReadOnlyTonGasless(publicKey, config)
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's TON address | `Promise<string>` |
-| `getBalance()` | Returns the native TON balance | `Promise<number>` |
-| `getTokenBalance(tokenAddress)` | Returns the balance of a specific token | `Promise<number>` |
-| `getPaymasterTokenBalance()` | Returns the balance of the paymaster token | `Promise<number>` |
+| `getBalance()` | Returns the native TON balance | `Promise<bigint>` |
+| `getTokenBalance(tokenAddress)` | Returns the balance of a specific token | `Promise<bigint>` |
+| `getPaymasterTokenBalance()` | Returns the balance of the paymaster token | `Promise<bigint>` |
 | `quoteTransfer(options, config?)` | Estimates the fee for a token transfer | `Promise<{fee: number}>` |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<TonTransactionReceipt \| null>` |
 
 ##### `getAddress()`
@@ -343,7 +344,7 @@ console.log('Account address:', address)
 ##### `getBalance()`
 Returns the native TON balance (in nanotons).
 
-**Returns:** `Promise<number>` - Balance in nanotons
+**Returns:** `Promise<bigint>` - Balance in nanotons
 
 **Example:**
 ```javascript
@@ -357,7 +358,7 @@ Returns the balance of a specific token.
 **Parameters:**
 - `tokenAddress` (string): The token contract address
 
-**Returns:** `Promise<number>` - Token balance in base units
+**Returns:** `Promise<bigint>` - Token balance in base units
 
 **Example:**
 ```javascript
@@ -368,7 +369,7 @@ console.log('Token balance:', tokenBalance, 'token base units')
 ##### `getPaymasterTokenBalance()`
 Returns the balance of the paymaster token (used for gasless fees).
 
-**Returns:** `Promise<number>` - Paymaster token balance in base units
+**Returns:** `Promise<bigint>` - Paymaster token balance in base units
 
 **Example:**
 ```javascript
@@ -397,6 +398,21 @@ const quote = await readOnlyAccount.quoteTransfer({
   amount: 1000000000
 })
 console.log('Transfer fee estimate:', quote.fee, 'paymaster token units')
+```
+
+##### `verify(message, signature)`
+Verifies a message signature.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify
+
+**Returns:** `Promise<boolean>` - True if the signature is valid
+
+**Example:**
+```javascript
+const isValid = await readOnlyAccount.verify('Hello, World!', signature)
+console.log('Signature valid:', isValid)
 ```
 
 ##### `getTransactionReceipt(hash)`

@@ -173,8 +173,9 @@ const account = new WalletAccountTron(seedPhrase, "0'/0/0", {
 | `quoteSendTransaction(tx)` | Estimates the fee for a Tron transaction | `Promise<{fee: number}>` | If no provider |
 | `transfer(options)` | Transfers TRC20 tokens to another address | `Promise<{hash: string, fee: number}>` | If no provider or fee exceeds max |
 | `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise<{fee: number}>` | If no provider |
-| `getBalance()` | Returns the native TRX balance (in sun) | `Promise<number>` | If no provider |
-| `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise<number>` | If no provider |
+| `getBalance()` | Returns the native TRX balance (in sun) | `Promise<bigint>` | If no provider |
+| `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise<bigint>` | If no provider |
+| `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<TronTransactionReceipt \| null>` | If no provider |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlyTron>` | - |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` | - |
 
@@ -202,6 +203,21 @@ Signs a message using Keccak-256 hash and secp256k1 signature.
 const message = 'Hello, Tron!'
 const signature = await account.sign(message)
 console.log('Signature:', signature)
+```
+
+##### `verify(message, signature)`
+Verifies a message signature using secp256k1.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify (hex string)
+
+**Returns:** `Promise<boolean>` - True if signature is valid
+
+**Example:**
+```javascript
+const isValid = await account.verify('Hello, Tron!', signature)
+console.log('Signature valid:', isValid)
 ```
 
 
@@ -297,7 +313,7 @@ console.log('Transfer fee estimate:', quote.fee, 'sun')
 ##### `getBalance()`
 Returns the native TRX balance.
 
-**Returns:** `Promise<number>` - Balance in sun
+**Returns:** `Promise<bigint>` - Balance in sun
 
 **Throws:** Error if no TronWeb provider is configured
 
@@ -305,7 +321,6 @@ Returns the native TRX balance.
 ```javascript
 const balance = await account.getBalance()
 console.log('TRX balance:', balance, 'sun')
-console.log('TRX balance:', balance / 1000000, 'TRX')
 ```
 
 ##### `getTokenBalance(tokenAddress)`
@@ -314,7 +329,7 @@ Returns the balance of a specific TRC20 token.
 **Parameters:**
 - `tokenAddress` (string): The TRC20 contract address (e.g., 'T...')
 
-**Returns:** `Promise<number>` - Token balance in base units
+**Returns:** `Promise<bigint>` - Token balance in base units
 
 **Throws:** Error if no TronWeb provider is configured
 
@@ -322,7 +337,22 @@ Returns the balance of a specific TRC20 token.
 ```javascript
 const tokenBalance = await account.getTokenBalance('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')
 console.log('USDT balance:', tokenBalance) // In 6 decimal units
-console.log('USDT balance:', tokenBalance / 1000000, 'USDT')
+```
+
+##### `getTransactionReceipt(hash)`
+Returns a transaction's receipt if it has been processed.
+
+**Parameters:**
+- `hash` (string): The transaction hash
+
+**Returns:** `Promise<TronTransactionReceipt | null>` - Transaction receipt or null
+
+**Throws:** Error if no TronWeb provider is configured
+
+**Example:**
+```javascript
+const receipt = await account.getTransactionReceipt('0x...')
+console.log('Transaction confirmed:', receipt.success)
 ```
 
 ##### `toReadOnlyAccount()`
@@ -392,8 +422,8 @@ const readOnlyAccount = new WalletAccountReadOnlyTron('TLyqzVGLV1srkB7dToTAEqgDS
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
-| `getBalance()` | Returns the native TRX balance (in sun) | `Promise<number>` | If no provider |
-| `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise<number>` | If no provider |
+| `getBalance()` | Returns the native TRX balance (in sun) | `Promise<bigint>` | If no provider |
+| `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise<bigint>` | If no provider |
 | `quoteSendTransaction(tx)` | Estimates the fee for a TRX transaction | `Promise<{fee: number}>` | If no provider |
 | `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise<{fee: number}>` | If no provider |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
@@ -402,7 +432,7 @@ const readOnlyAccount = new WalletAccountReadOnlyTron('TLyqzVGLV1srkB7dToTAEqgDS
 ##### `getBalance()`
 Returns the native TRX balance.
 
-**Returns:** `Promise<number>` - Balance in sun
+**Returns:** `Promise<bigint>` - Balance in sun
 
 **Throws:** Error if no TronWeb provider is configured
 
@@ -418,7 +448,7 @@ Returns the balance of a specific TRC20 token.
 **Parameters:**
 - `tokenAddress` (string): The TRC20 contract address
 
-**Returns:** `Promise<number>` - Token balance in base units
+**Returns:** `Promise<bigint>` - Token balance in base units
 
 **Throws:** Error if no TronWeb provider is configured
 

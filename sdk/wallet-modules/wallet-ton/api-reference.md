@@ -173,9 +173,10 @@ const account = new WalletAccountTon(seedPhrase, "0'/0/0", {
 | `quoteSendTransaction(tx)` | Estimates the fee for a TON transaction | `Promise<{fee: number}>` |
 | `transfer(options)` | Transfers Jetton tokens to another address | `Promise<{hash: string, fee: number}>` |
 | `quoteTransfer(options)` | Estimates the fee for a Jetton transfer | `Promise<{fee: number}>` |
-| `getBalance()` | Returns the native TON balance (in nanotons) | `Promise<number>` |
-| `getTokenBalance(tokenAddress)` | Returns the balance of a specific Jetton token | `Promise<number>` |
+| `getBalance()` | Returns the native TON balance (in nanotons) | `Promise<bigint>` |
+| `getTokenBalance(tokenAddress)` | Returns the balance of a specific Jetton token | `Promise<bigint>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
+| `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<TonTransactionReceipt \| null>` |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
 
 ##### `verify(message, signature)`
@@ -308,7 +309,7 @@ console.log('Transfer fee estimate:', quote.fee, 'nanotons');
 ##### `getBalance()`
 Returns the native TON balance (in nanotons).
 
-**Returns:** `Promise<number>` - Balance in nanotons
+**Returns:** `Promise<bigint>` - Balance in nanotons
 
 **Example:**
 ```javascript
@@ -322,12 +323,26 @@ Returns the balance of a specific Jetton (TON token).
 **Parameters:**
 - `tokenAddress` (string): The Jetton master contract address (TON format, e.g., 'EQ...')
 
-**Returns:** `Promise<number>` - Token balance in base units 
+**Returns:** `Promise<bigint>` - Token balance in base units 
 
 **Example:**
 ```javascript
 const tokenBalance = await account.getTokenBalance('EQ...');
 console.log('Token balance:', tokenBalance, 'nanotons');
+```
+
+##### `getTransactionReceipt(hash)`
+Returns a transaction's receipt if it has been mined.
+
+**Parameters:**
+- `hash` (string): The transaction hash
+
+**Returns:** `Promise<TonTransactionReceipt | null>` - Transaction receipt or null if not yet mined
+
+**Example:**
+```javascript
+const receipt = await account.getTransactionReceipt('EQ...')
+console.log('Transaction confirmed:', receipt.success)
 ```
 
 ##### `dispose()`
@@ -372,9 +387,10 @@ new WalletAccountReadOnlyTon(publicKey, config)
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's TON address | `Promise<string>` |
-| `getBalance()` | Returns the native TON balance | `Promise<number>` |
-| `getTokenBalance(tokenAddress)` | Returns the balance of a specific Jetton | `Promise<number>` |
+| `getBalance()` | Returns the native TON balance | `Promise<bigint>` |
+| `getTokenBalance(tokenAddress)` | Returns the balance of a specific Jetton | `Promise<bigint>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
+| `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<TonTransactionReceipt \| null>` |
 
 ##### `getAddress()`
 Returns the account's address.
@@ -384,7 +400,7 @@ Returns the account's address.
 ##### `getBalance()`
 Returns the native TON balance.
 
-**Returns:** `Promise<number>` - Balance in nanotons
+**Returns:** `Promise<bigint>` - Balance in nanotons
 
 ##### `getTokenBalance(tokenAddress)`
 Returns the balance of a specific Jetton.
@@ -392,7 +408,7 @@ Returns the balance of a specific Jetton.
 **Parameters:**
 - `tokenAddress` (string): The Jetton master contract address
 
-**Returns:** `Promise<number>` - Token balance
+**Returns:** `Promise<bigint>` - Token balance
 
 ##### `verify(message, signature)`
 Verifies a message signature.
@@ -407,6 +423,20 @@ Verifies a message signature.
 ```javascript
 const isValid = await readOnlyAccount.verify('Hello, World!', signature)
 console.log('Signature valid:', isValid)
+```
+
+##### `getTransactionReceipt(hash)`
+Returns a transaction's receipt if it has been mined.
+
+**Parameters:**
+- `hash` (string): The transaction hash
+
+**Returns:** `Promise<TonTransactionReceipt | null>` - Transaction receipt or null if not yet mined
+
+**Example:**
+```javascript
+const receipt = await readOnlyAccount.getTransactionReceipt('EQ...')
+console.log('Transaction confirmed:', receipt.success)
 ```
 
 ## Types
