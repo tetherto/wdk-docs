@@ -21,6 +21,14 @@ layout:
 
 A simple and secure package to manage BIP-32 wallets for the Spark blockchain. This package provides a clean API for creating, managing, and interacting with Spark wallets using [BIP-39 seed phrases](../../resources/concepts.md#bip-39-mnemonic-seed-phrases), [BIP-44 derivation paths](../../resources/concepts.md#bip-44-multi-account-hierarchy), and the Spark SDK for Bitcoin [layer 2](../../resources/concepts.md#layer-2-solutions) functionality including [Lightning Network](../../resources/concepts.md#lightning-network) integration.
 
+## Installation
+
+To install the `@tetherto/wdk-wallet-spark` package, run:
+
+```bash
+npm install @tetherto/wdk-wallet-spark
+```
+
 ## Features
 
 - **Spark Blockchain Support**: Full integration with the Spark Bitcoin [layer 2](../../../resources/concepts.md#layer-2-solutions) network

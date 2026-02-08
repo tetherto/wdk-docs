@@ -31,6 +31,7 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 - **wallet-solana**: Moved `verify` method from `WalletAccountSolana` to [`WalletAccountReadOnlySolana`](../sdk/wallet-modules/wallet-solana/api-reference.md#walletaccountreadonlysolana) ([v1.0.0-beta.5](https://github.com/tetherto/wdk-wallet-solana/releases/tag/v1.0.0-beta.5))
 - **wallet-ton**: Moved `verify` method from `WalletAccountTon` to [`WalletAccountReadOnlyTon`](../sdk/wallet-modules/wallet-ton/api-reference.md#walletaccountreadonlyton) ([v1.0.0-beta.7](https://github.com/tetherto/wdk-wallet-ton/releases/tag/v1.0.0-beta.7))
 - **wallet-tron**: Moved `verify` method from `WalletAccountTron` to [`WalletAccountReadOnlyTron`](../sdk/wallet-modules/wallet-tron/api-reference.md#walletaccountreadonlytron) ([v1.0.0-beta.4](https://github.com/tetherto/wdk-wallet-tron/releases/tag/v1.0.0-beta.4))
+- **wallet-spark**: Moved `verify` method from `WalletAccountSpark` to [`WalletAccountReadOnlySpark`](../sdk/wallet-modules/wallet-spark/api-reference.md#walletaccountreadonlyspark) ([v1.0.0-beta.7](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.7))
 
 ### January 23, 2026
 
