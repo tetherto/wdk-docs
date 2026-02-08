@@ -215,6 +215,22 @@ const signature = await account.sign(message)
 console.log('Signature:', signature)
 ```
 
+#### `verify(message, signature)`
+Verifies a message signature against the account's address.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify
+
+**Returns:** `Promise<boolean>` - True if signature is valid
+
+**Example:**
+```javascript
+const message = 'Hello, Ethereum!'
+const signature = await account.sign(message)
+const isValid = await account.verify(message, signature)
+console.log('Signature valid:', isValid) // true
+```
 
 #### `sendTransaction(tx)`
 Sends an EVM transaction and returns the result with hash and fee.
