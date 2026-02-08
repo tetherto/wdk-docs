@@ -27,12 +27,12 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 ### February 08, 2026
 
 **Changes**
-- **wallet-spark**: Spark wallet module version upgrade ([v1.0.0-beta.8](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.8))
+- **wallet-spark**: Spark wallet module version upgrade from [v1.0.0-beta.7](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.7) to [v1.0.0-beta.8](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.8)
 
 ### February 02, 2026
 
 **Changes**
-- **wallet-ton-gasfree docs**: Added `verify` method to [`WalletAccountReadOnlyTonGasfree`](../sdk/wallet-modules/wallet-ton-gasfree/api-reference.md#walletaccountreadonlytongasfree) ([v1.0.0-beta.4](https://github.com/tetherto/wdk-wallet-ton-gasfree/releases/tag/v1.0.0-beta.4))
+- **wallet-ton-gasless docs**: Added `verify` method to [`WalletAccountReadOnlyTonGasless`](../sdk/wallet-modules/wallet-ton-gasless/api-reference.md#walletaccountreadonlytongasless) ([v1.0.0-beta.4](https://github.com/tetherto/wdk-wallet-ton-gasfree/releases/tag/v1.0.0-beta.4))
 - **wallet-tron-gasfree docs**: Added `verify` method to [`WalletAccountReadOnlyTronGasfree`](../sdk/wallet-modules/wallet-tron-gasfree/api-reference.md#walletaccountreadonlytrongasfree) ([v1.0.0-beta.4](https://github.com/tetherto/wdk-wallet-tron-gasfree/releases/tag/v1.0.0-beta.4))
 
 ### January 29, 2026
