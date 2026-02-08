@@ -27,7 +27,7 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 ### February 08, 2026
 
 **Changes**
-- **wallet-spark**: Spark wallet module version upgrade from [v1.0.0-beta.7](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.7) to [v1.0.0-beta.8](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.8)
+- **wallet-spark**: Fixed import causing wallet init failure. Upgrade spark-sdk from 0.5.7 to 0.6.1 ([v1.0.0-beta.8](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.8))
 
 ### February 02, 2026
 
