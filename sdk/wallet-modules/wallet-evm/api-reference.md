@@ -183,8 +183,9 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 | `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction | `Promise<{fee: number}>` | If no provider |
 | `transfer(options)` | Transfers ERC20 tokens to another address | `Promise<{hash: string, fee: number}>` | If no provider or fee exceeds max |
 | `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: number}>` | If no provider |
-| `getBalance()` | Returns the native token balance (in wei) | `Promise<number>` | If no provider |
-| `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<number>` | If no provider |
+| `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | If no provider |
+| `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<bigint>` | If no provider |
+| `approve(options)` | Approves a spender to spend tokens | `Promise<{hash: string, fee: number}>` | If no provider |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlyEvm>` | - |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` | - |
 
@@ -315,6 +316,31 @@ console.log('Transfer hash:', result.hash)
 console.log('Transfer fee:', result.fee, 'wei')
 ```
 
+#### `approve(options)`
+Approves a specific amount of tokens to a spender.
+
+**Parameters:**
+- `options` (ApproveOptions): Approve options
+  - `token` (string): Token contract address
+  - `spender` (string): Spender address
+  - `amount` (number | bigint): Amount to approve
+
+**Returns:** `Promise<{hash: string, fee: number}>` - Transaction result
+
+**Throws:** 
+- Error if no provider is configured
+- Error if trying to re-approve USDT on Ethereum without resetting to 0 first
+
+**Example:**
+```javascript
+const result = await account.approve({
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
+  spender: '0xSpenderAddress...',
+  amount: 1000000n
+})
+console.log('Approve hash:', result.hash)
+```
+
 #### `quoteTransfer(options)`
 Estimates the fee for an ERC20 token transfer.
 
@@ -338,7 +364,7 @@ console.log('Transfer fee estimate:', quote.fee, 'wei')
 #### `getBalance()`
 Returns the native token balance (ETH, MATIC, BNB, etc.).
 
-**Returns:** `Promise<number>` - Balance in wei
+**Returns:** `Promise<bigint>` - Balance in wei
 
 **Throws:** Error if no provider is configured
 
@@ -355,7 +381,7 @@ Returns the balance of a specific ERC20 token using the balanceOf function.
 **Parameters:**
 - `tokenAddress` (string): The ERC20 token contract address
 
-**Returns:** `Promise<number>` - Token balance in base units
+**Returns:** `Promise<bigint>` - Token balance in base units
 
 **Throws:** Error if no provider is configured
 
@@ -437,16 +463,37 @@ const readOnlyAccount = new WalletAccountReadOnlyEvm('0x742d35Cc6634C0532925a3b8
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
-| `getBalance()` | Returns the native token balance (in wei) | `Promise<number>` | If no provider |
-| `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<number>` | If no provider |
+| `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | If no provider |
+| `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<bigint>` | If no provider |
 | `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction | `Promise<{fee: number}>` | If no provider |
 | `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: number}>` | If no provider |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<EvmTransactionReceipt \| null>` | If no provider |
+| `getAllowance(token, spender)` | Returns current allowance for a spender | `Promise<bigint>` | If no provider |
+
+#### `verify(message, signature)`
+Verifies a message signature against the account's address.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify
+
+**Returns:** `Promise<boolean>` - True if signature is valid
+
+**Example:**
+```javascript
+const message = 'Hello, Ethereum!'
+const signature = await account.sign(message)
+
+const readOnlyAccount = new WalletAccountReadOnlyEvm('0x...', { provider: '...' })
+const isValid = await readOnlyAccount.verify(message, signature)
+console.log('Signature valid:', isValid) // true
+```
 
 #### `getBalance()`
 Returns the account's native token balance.
 
-**Returns:** `Promise<number>` - Balance in wei
+**Returns:** `Promise<bigint>` - Balance in wei
 
 **Throws:** Error if no provider is configured
 
@@ -462,7 +509,7 @@ Returns the balance of a specific ERC20 token.
 **Parameters:**
 - `tokenAddress` (string): The ERC20 token contract address
 
-**Returns:** `Promise<number>` - Token balance in base units
+**Returns:** `Promise<bigint>` - Token balance in base units
 
 **Throws:** Error if no provider is configured
 
@@ -531,6 +578,24 @@ if (receipt) {
 } else {
   console.log('Transaction not yet mined')
 }
+```
+
+#### `getAllowance(token, spender)`
+Returns the current allowance for the given token and spender.
+
+**Parameters:**
+- `token` (string): The token's address
+- `spender` (string): The spender's address
+
+**Returns:** `Promise<bigint>` - The allowance
+
+**Example:**
+```javascript
+const allowance = await readOnlyAccount.getAllowance(
+  '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  '0xSpenderAddress...'
+)
+console.log('Allowance:', allowance)
 ```
 
 This comprehensive API Reference now includes all methods from the source code with detailed descriptions, parameters, return types, error conditions, and practical examples.
