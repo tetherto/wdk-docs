@@ -47,7 +47,7 @@ new WalletManagerTron(seed, config?)
 
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
-- `config` ([TronWalletConfig](#tronwalletconfig), optional): Configuration object
+- `config` (TronWalletConfig, optional): Configuration object
   - `provider` (string | TronWeb, optional): Tron RPC endpoint URL or TronWeb instance
   - `transferMaxFee` (number, optional): Maximum fee amount for transfer operations (in sun)
 
@@ -81,7 +81,7 @@ Returns a wallet account at the specified index using Tron's BIP-44 derivation (
 **Parameters:**
 - `index` (number, optional): The index of the account to get (default: 0)
 
-**Returns:** `Promise<[WalletAccountTron](#walletaccounttron)>` - The wallet account
+**Returns:** `Promise<WalletAccountTron>` - The wallet account
 
 **Example:**
 ```javascript
@@ -98,7 +98,7 @@ Returns a wallet account at the specified BIP-44 derivation path.
 **Parameters:**
 - `path` (string): The derivation path (e.g., "0'/0/0")
 
-**Returns:** `Promise<[WalletAccountTron](#walletaccounttron)>` - The wallet account
+**Returns:** `Promise<WalletAccountTron>` - The wallet account
 
 **Example:**
 ```javascript
@@ -132,7 +132,7 @@ wallet.dispose()
 
 ## WalletAccountTron
 
-Represents an individual Tron wallet account. Extends `[WalletAccountReadOnlyTron](#walletaccountreadonlytron)` and implements `IWalletAccount`.
+Represents an individual Tron wallet account. Extends `WalletAccountReadOnlyTron` and implements `IWalletAccount`.
 
 ### Constants
 
@@ -150,7 +150,7 @@ new WalletAccountTron(seed, path, config?)
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `path` (string): BIP-44 derivation path (e.g., "0'/0/0")
-- `config` ([TronWalletConfig](#tronwalletconfig), optional): Configuration object
+- `config` (TronWalletConfig, optional): Configuration object
 
 **Throws:** Error if seed phrase is invalid (BIP-39 validation fails)
 
@@ -176,7 +176,7 @@ const account = new WalletAccountTron(seedPhrase, "0'/0/0", {
 | `getBalance()` | Returns the native TRX balance (in sun) | `Promise<bigint>` | If no provider |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise<bigint>` | If no provider |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<TronTransactionReceipt \| null>` | If no provider |
-| `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<[WalletAccountReadOnlyTron](#walletaccountreadonlytron)>` | - |
+| `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlyTron>` | - |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` | - |
 
 ##### `getAddress()`
@@ -225,7 +225,7 @@ console.log('Signature valid:', isValid)
 Sends a TRX transaction and returns the result with hash and fee.
 
 **Parameters:**
-- `tx` ([TronTransaction](#trontransaction)): The transaction object
+- `tx` (TronTransaction): The transaction object
   - `to` (string): Recipient Tron address (e.g., 'T...')
   - `value` (number): Amount in sun (1 TRX = 1,000,000 sun)
 
@@ -249,7 +249,7 @@ console.log('Transaction fee:', result.fee, 'sun')
 Estimates the bandwidth cost for a TRX transaction.
 
 **Parameters:**
-- `tx` ([TronTransaction](#trontransaction)): The transaction object (same as sendTransaction)
+- `tx` (TronTransaction): The transaction object (same as sendTransaction)
 
 **Returns:** `Promise<{fee: number}>` - Fee estimate in sun
 
@@ -268,7 +268,7 @@ console.log('Estimated fee:', quote.fee, 'sun')
 Transfers TRC20 tokens using smart contract call.
 
 **Parameters:**
-- `options` ([TransferOptions](#transferoptions)): Transfer options
+- `options` (TransferOptions): Transfer options
   - `token` (string): TRC20 contract address (e.g., 'T...')
   - `recipient` (string): Recipient Tron address (e.g., 'T...')
   - `amount` (number | bigint): Amount in token's base units
@@ -294,7 +294,7 @@ console.log('Transfer fee:', result.fee, 'sun')
 Estimates the energy and bandwidth cost for a TRC20 token transfer.
 
 **Parameters:**
-- `options` ([TransferOptions](#transferoptions)): Transfer options (same as transfer)
+- `options` (TransferOptions): Transfer options (same as transfer)
 
 **Returns:** `Promise<{fee: number}>` - Fee estimate in sun (energy + bandwidth costs)
 
@@ -358,7 +358,7 @@ console.log('Transaction confirmed:', receipt.success)
 ##### `toReadOnlyAccount()`
 Creates a read-only copy of the account.
 
-**Returns:** `Promise<[WalletAccountReadOnlyTron](#walletaccountreadonlytron)>` - Read-only account instance
+**Returns:** `Promise<WalletAccountReadOnlyTron>` - Read-only account instance
 
 **Example:**
 ```javascript
@@ -462,7 +462,7 @@ console.log('USDT balance:', tokenBalance)
 Estimates the bandwidth cost for a TRX transaction.
 
 **Parameters:**
-- `tx` ([TronTransaction](#trontransaction)): The transaction object
+- `tx` (TronTransaction): The transaction object
 
 **Returns:** `Promise<{fee: number}>` - Fee estimate in sun
 
@@ -472,7 +472,7 @@ Estimates the bandwidth cost for a TRX transaction.
 Estimates the energy and bandwidth cost for a TRC20 transfer.
 
 **Parameters:**
-- `options` ([TransferOptions](#transferoptions)): Transfer options
+- `options` (TransferOptions): Transfer options
 
 **Returns:** `Promise<{fee: number}>` - Fee estimate in sun
 

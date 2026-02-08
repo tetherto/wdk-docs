@@ -59,8 +59,8 @@ const wallet = new WalletManagerSolana(seedPhrase, {
 
 | Method | Description | Returns |
 |--------|-------------|---------|
-| `getAccount(index)` | Returns a wallet account at the specified index | `Promise<[WalletAccountSolana](#walletaccountsolana)>` |
-| `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise<[WalletAccountSolana](#walletaccountsolana)>` |
+| `getAccount(index)` | Returns a wallet account at the specified index | `Promise<WalletAccountSolana>` |
+| `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise<WalletAccountSolana>` |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: number, fast: number}>` |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
 
@@ -70,7 +70,7 @@ Returns a wallet account at the specified index.
 **Parameters:**
 - `index` (number, optional): The index of the account to get (default: 0)
 
-**Returns:** `Promise<[WalletAccountSolana](#walletaccountsolana)>` - The wallet account
+**Returns:** `Promise<WalletAccountSolana>` - The wallet account
 
 **Example:**
 ```javascript
@@ -83,7 +83,7 @@ Returns a wallet account at the specified BIP-44 derivation path.
 **Parameters:**
 - `path` (string): The derivation path (e.g., "0'/0/0")
 
-**Returns:** `Promise<[WalletAccountSolana](#walletaccountsolana)>` - The wallet account
+**Returns:** `Promise<WalletAccountSolana>` - The wallet account
 
 **Example:**
 ```javascript
@@ -114,7 +114,7 @@ wallet.dispose()
 
 ### WalletAccountSolana
 
-Represents an individual Solana wallet account. Extends `[WalletAccountReadOnlySolana](#walletaccountreadonlysolana)` and implements `IWalletAccount`.
+Represents an individual Solana wallet account. Extends `WalletAccountReadOnlySolana` and implements `IWalletAccount`.
 
 #### Constructor
 
@@ -227,7 +227,7 @@ console.log('Estimated fee:', quote.fee, 'lamports')
 Transfers SPL tokens to another address.
 
 **Parameters:**
-- `options` ([TransferOptions](#transferoptions)): Transfer options
+- `options` (TransferOptions): Transfer options
   - `token` (string): Token mint address (base58-encoded)
   - `recipient` (string): Recipient's Solana address (base58-encoded)
   - `amount` (number): Amount in token's base units
@@ -251,7 +251,7 @@ console.log('Transfer fee:', result.fee, 'lamports')
 Estimates the fee for an SPL token transfer.
 
 **Parameters:**
-- `options` ([TransferOptions](#transferoptions)): Transfer options (same as transfer)
+- `options` (TransferOptions): Transfer options (same as transfer)
 
 **Returns:** `Promise<{fee: number}>` - Object containing fee estimate (in lamports)
 
@@ -306,7 +306,7 @@ console.log('Transaction receipt:', receipt)
 ##### `toReadOnlyAccount()`
 Returns a read-only copy of the account.
 
-**Returns:** `Promise<[WalletAccountReadOnlySolana](#walletaccountreadonlysolana)>` - The read-only account
+**Returns:** `Promise<WalletAccountReadOnlySolana>` - The read-only account
 
 **Example:**
 ```javascript
@@ -328,7 +328,7 @@ account.dispose()
 |----------|------|-------------|
 | `index` | `number` | The derivation path's index of this account |
 | `path` | `string` | The full derivation path of this account |
-| `keyPair` | `[KeyPair](#keypair)` | The account's Ed25519 key pair |
+| `keyPair` | `{publicKey: Buffer, privateKey: Buffer}` | The account's Ed25519 key pair |
 
 ⚠️ **Security Note**: The `keyPair` property contains sensitive cryptographic material. Never log, display, or expose the private key.
 
@@ -431,7 +431,7 @@ console.log('Estimated fee:', quote.fee, 'lamports')
 Estimates the fee for an SPL token transfer.
 
 **Parameters:**
-- `options` ([TransferOptions](#transferoptions)): Transfer options
+- `options` (TransferOptions): Transfer options
   - `token` (string): Token mint address (base58-encoded)
   - `recipient` (string): Recipient's Solana address (base58-encoded)
   - `amount` (number): Amount in token's base units

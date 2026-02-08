@@ -48,7 +48,7 @@ new WalletManagerEvm(seed, config?)
 
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
-- `config` ([EvmWalletConfig](#evmwalletconfig), optional): Configuration object
+- `config` (object, optional): Configuration object
   - `provider` (string | Eip1193Provider, optional): RPC endpoint URL or EIP-1193 provider instance
   - `transferMaxFee` (number, optional): Maximum fee amount for transfer operations (in wei)
 
@@ -64,8 +64,8 @@ const wallet = new WalletManagerEvm(seedPhrase, {
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
-| `getAccount(index?)` | Returns a wallet account at the specified index | `Promise<[WalletAccountEvm](#walletaccountevm)>` | - |
-| `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise<[WalletAccountEvm](#walletaccountevm)>` | - |
+| `getAccount(index?)` | Returns a wallet account at the specified index | `Promise<WalletAccountEvm>` | - |
+| `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise<WalletAccountEvm>` | - |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: number, fast: number}>` | If no provider is set |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` | - |
 
@@ -75,7 +75,7 @@ Returns a wallet account at the specified index following BIP-44 standard.
 **Parameters:**
 - `index` (number, optional): The index of the account to get (default: 0)
 
-**Returns:** `Promise<[WalletAccountEvm](#walletaccountevm)>` - The wallet account
+**Returns:** `Promise<WalletAccountEvm>` - The wallet account
 
 **Example:**
 ```javascript
@@ -95,7 +95,7 @@ Returns a wallet account at the specified BIP-44 derivation path.
 **Parameters:**
 - `path` (string): The derivation path (e.g., "0'/0/0")
 
-**Returns:** `Promise<[WalletAccountEvm](#walletaccountevm)>` - The wallet account
+**Returns:** `Promise<WalletAccountEvm>` - The wallet account
 
 **Example:**
 ```javascript
@@ -186,7 +186,7 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 | `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | If no provider |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<bigint>` | If no provider |
 | `approve(options)` | Approves a spender to spend tokens | `Promise<{hash: string, fee: number}>` | If no provider |
-| `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<[WalletAccountReadOnlyEvm](#walletaccountreadonlyevm)>` | - |
+| `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlyEvm>` | - |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` | - |
 
 #### `getAddress()`
@@ -220,7 +220,7 @@ console.log('Signature:', signature)
 Sends an EVM transaction and returns the result with hash and fee.
 
 **Parameters:**
-- `tx` ([EvmTransaction](#evmtransaction)): The transaction object
+- `tx` (EvmTransaction): The transaction object
   - `to` (string): Recipient address
   - `value` (number): Amount in wei
   - `data` (string, optional): Transaction data in hex format
@@ -259,7 +259,7 @@ console.log('Transaction fee:', result.fee, 'wei')
 Estimates the fee for an EVM transaction without sending it.
 
 **Parameters:**
-- `tx` ([EvmTransaction](#evmtransaction)): The transaction object (same format as sendTransaction)
+- `tx` (EvmTransaction): The transaction object (same format as sendTransaction)
 
 **Returns:** `Promise<{fee: number}>` - Fee estimate in wei
 
@@ -278,7 +278,7 @@ console.log('Estimated fee:', quote.fee, 'wei')
 Transfers ERC20 tokens to another address using the standard transfer function.
 
 **Parameters:**
-- `options` ([TransferOptions](#transferoptions)): Transfer options
+- `options` (TransferOptions): Transfer options
   - `token` (string): Token contract address
   - `recipient` (string): Recipient address
   - `amount` (number | bigint): Amount in token base units
@@ -329,7 +329,7 @@ console.log('Approve hash:', result.hash)
 Estimates the fee for an ERC20 token transfer.
 
 **Parameters:**
-- `options` ([TransferOptions](#transferoptions)): Transfer options (same as transfer)
+- `options` (TransferOptions): Transfer options (same as transfer)
 
 **Returns:** `Promise<{fee: number}>` - Fee estimate in wei
 
@@ -380,7 +380,7 @@ console.log('USDT balance formatted:', usdtBalance / 1000000, 'USDT')
 #### `toReadOnlyAccount()`
 Creates a read-only copy of the account with the same configuration.
 
-**Returns:** `Promise<[WalletAccountReadOnlyEvm](#walletaccountreadonlyevm)>` - Read-only account instance
+**Returns:** `Promise<WalletAccountReadOnlyEvm>` - Read-only account instance
 
 **Example:**
 ```javascript
@@ -406,7 +406,7 @@ account.dispose()
 |----------|------|-------------|
 | `index` | `number` | The derivation path's index of this account |
 | `path` | `string` | The full BIP-44 derivation path of this account |
-| `keyPair` | `[KeyPair](#keypair)` | The account's key pair (⚠️ Contains sensitive data) |
+| `keyPair` | `{privateKey: Buffer, publicKey: Buffer}` | The account's key pair (⚠️ Contains sensitive data) |
 
 **Example:**
 ```javascript
@@ -452,7 +452,7 @@ const readOnlyAccount = new WalletAccountReadOnlyEvm('0x742d35Cc6634C0532925a3b8
 | `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction | `Promise<{fee: number}>` | If no provider |
 | `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: number}>` | If no provider |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
-| `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<[EvmTransactionReceipt](#evmtransactionreceipt) \| null>` | If no provider |
+| `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<EvmTransactionReceipt \| null>` | If no provider |
 | `getAllowance(token, spender)` | Returns current allowance for a spender | `Promise<bigint>` | If no provider |
 
 #### `verify(message, signature)`
@@ -507,7 +507,7 @@ console.log('USDT balance:', tokenBalance)
 Estimates the fee for an EVM transaction.
 
 **Parameters:**
-- `tx` ([EvmTransaction](#evmtransaction)): The transaction object
+- `tx` (EvmTransaction): The transaction object
 
 **Returns:** `Promise<{fee: number}>` - Fee estimate in wei
 
@@ -526,7 +526,7 @@ console.log('Estimated fee:', quote.fee, 'wei')
 Estimates the fee for an ERC20 token transfer.
 
 **Parameters:**
-- `options` ([TransferOptions](#transferoptions)): Transfer options
+- `options` (TransferOptions): Transfer options
 
 **Returns:** `Promise<{fee: number}>` - Fee estimate in wei
 
@@ -548,7 +548,7 @@ Returns a transaction's receipt if it has been mined.
 **Parameters:**
 - `hash` (string): The transaction hash
 
-**Returns:** `Promise<[EvmTransactionReceipt](#evmtransactionreceipt) | null>` - Transaction receipt or null if not yet mined
+**Returns:** `Promise<EvmTransactionReceipt | null>` - Transaction receipt or null if not yet mined
 
 **Throws:** Error if no provider is configured
 

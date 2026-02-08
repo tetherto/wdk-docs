@@ -40,7 +40,7 @@ new WalletManagerTonGasless(seed, config)
 
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
-- `config` ([TonGaslessWalletConfig](#tongaslesswalletconfig)): Configuration object
+- `config` (TonGaslessWalletConfig): Configuration object
   - `tonClient` (object | TonClient): TON client configuration or instance
     - `url` (string): TON Center API URL (e.g., 'https://toncenter.com/api/v3')
     - `secretKey` (string, optional): API key for TON Center
@@ -73,8 +73,8 @@ const wallet = new WalletManagerTonGasless(seedPhrase, {
 
 | Method | Description | Returns |
 |--------|-------------|---------|
-| `getAccount(index)` | Returns a gasless wallet account at the specified index | `Promise<[WalletAccountTonGasless](#walletaccounttongasless)>` |
-| `getAccountByPath(path)` | Returns a gasless wallet account at the specified BIP-44 derivation path | `Promise<[WalletAccountTonGasless](#walletaccounttongasless)>` |
+| `getAccount(index)` | Returns a gasless wallet account at the specified index | `Promise<WalletAccountTonGasless>` |
+| `getAccountByPath(path)` | Returns a gasless wallet account at the specified BIP-44 derivation path | `Promise<WalletAccountTonGasless>` |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: number, fast: number}>` |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
 
@@ -84,7 +84,7 @@ Returns a gasless wallet account at the specified index.
 **Parameters:**
 - `index` (number, optional): The index of the account to get (default: 0)
 
-**Returns:** `Promise<[WalletAccountTonGasless](#walletaccounttongasless)>` - The wallet account
+**Returns:** `Promise<WalletAccountTonGasless>` - The wallet account
 
 **Example:**
 ```javascript
@@ -97,7 +97,7 @@ Returns a gasless wallet account at the specified BIP-44 derivation path.
 **Parameters:**
 - `path` (string): The derivation path (e.g., "0'/0/0")
 
-**Returns:** `Promise<[WalletAccountTonGasless](#walletaccounttongasless)>` - The wallet account
+**Returns:** `Promise<WalletAccountTonGasless>` - The wallet account
 
 **Example:**
 ```javascript
@@ -126,7 +126,7 @@ wallet.dispose()
 
 ### WalletAccountTonGasless
 
-Individual gasless TON wallet account implementation. Extends `[WalletAccountReadOnlyTonGasless](#walletaccountreadonlytongasless)` and implements `IWalletAccount`.
+Individual gasless TON wallet account implementation. Extends `WalletAccountReadOnlyTonGasless` and implements `IWalletAccount`.
 
 #### Constructor
 
@@ -137,7 +137,7 @@ new WalletAccountTonGasless(seed, path, config)
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `path` (string): BIP-44 derivation path (e.g., "0'/0/0")
-- `config` ([TonGaslessWalletConfig](#tongaslesswalletconfig)): Configuration object (same as WalletManagerTonGasless)
+- `config` (TonGaslessWalletConfig): Configuration object (same as WalletManagerTonGasless)
 
 #### Methods
 
@@ -151,7 +151,7 @@ new WalletAccountTonGasless(seed, path, config)
 | `getBalance()` | Returns the native TON balance (in nanotons) | `Promise<bigint>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific token | `Promise<bigint>` |
 | `getPaymasterTokenBalance()` | Returns the balance of the paymaster token | `Promise<bigint>` |
-| `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<[WalletAccountReadOnlyTonGasless](#walletaccountreadonlytongasless)>` |
+| `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlyTonGasless>` |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
 
 ##### `getAddress()`
@@ -198,7 +198,7 @@ console.log('Signature valid:', isValid)
 Transfers tokens using gasless transactions. **Note:** `sendTransaction()` is not supported and will throw an error.
 
 **Parameters:**
-- `options` ([TransferOptions](#transferoptions)): Transfer options
+- `options` (TransferOptions): Transfer options
   - `token` (string): Token contract address
   - `recipient` (string): Recipient TON address
   - `amount` (number): Amount in token's base units
@@ -225,7 +225,7 @@ const result = await account.transfer({
 Estimates the fee for a Jetton (TON token) transfer.
 
 **Parameters:**
-- `options` ([TransferOptions](#transferoptions)): Transfer options
+- `options` (TransferOptions): Transfer options
   - `token` (string): Token contract address
   - `recipient` (string): Recipient TON address
   - `amount` (number): Amount in token's base units
@@ -316,7 +316,7 @@ new WalletAccountReadOnlyTonGasless(publicKey, config)
 
 **Parameters:**
 - `publicKey` (string | Uint8Array): The account's public key
-- `config` ([TonGaslessWalletConfig](#tongaslesswalletconfig)): Configuration object
+- `config` (TonGaslessWalletConfig): Configuration object
 
 #### Methods
 
@@ -381,7 +381,7 @@ console.log('Paymaster token balance:', paymasterBalance)
 Estimates the fee for a token transfer.
 
 **Parameters:**
-- `options` ([TransferOptions](#transferoptions)): Transfer options
+- `options` (TransferOptions): Transfer options
   - `token` (string): Token contract address
   - `recipient` (string): Recipient TON address
   - `amount` (number): Amount in token's base units
@@ -542,23 +542,6 @@ interface KeyPair {
    * Private key as buffer (sensitive data)
    */
   privateKey: Buffer;
-}
-```
-
-### TonTransactionReceipt
-
-```typescript
-interface TonTransactionReceipt {
-    transaction: {
-        hash: string;
-        lt: string;
-        now: number;
-        out_msgs: any[];
-        in_msg?: any;
-        total_fees: number;
-        [key: string]: any;
-    };
-    [key: string]: any;
 }
 ```
 
