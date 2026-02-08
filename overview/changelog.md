@@ -24,6 +24,16 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### January 29, 2026
+
+**What's New**
+- **wdk-indexer docs**
+  - Updated Ethereum indexer supported tokens list to add USA₮. 
+
+**Changes**
+- **wdk-indexer docs**
+  - Fixed the USD₮, XAU₮ token names. 
+
 ### January 26, 2026
 
 **Changes**
