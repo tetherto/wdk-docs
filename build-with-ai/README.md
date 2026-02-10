@@ -27,6 +27,10 @@ There are two ways to provide WDK context to your AI:
 1. **[Connect via MCP Server](#connect-wdk-docs-via-mcp-server)** — Best experience. Your AI tool can search and query WDK docs in real time.
 2. **[Connect via Markdown](#connect-wdk-docs-via-markdown)** — Works with any AI tool. Feed documentation directly into the context window.
 
+{% hint style="info" %}
+**Want to give AI agents wallet access?** The [MCP Toolkit](../tools/mcp-toolkit/README.md) creates an MCP server that exposes WDK wallets as tools — letting AI agents check balances, send transactions, swap tokens, and more.
+{% endhint %}
+
 ---
 
 ## Connect WDK Docs via MCP Server

@@ -122,6 +122,10 @@
 * [Price Rates](tools/price-rates/README.md)
   * [Configuration](tools/price-rates/configuration.md)
   * [API Reference](tools/price-rates/api-reference.md)
+* [MCP Toolkit](tools/mcp-toolkit/README.md)
+  * [Get Started](tools/mcp-toolkit/get-started.md)
+  * [Configuration](tools/mcp-toolkit/configuration.md)
+  * [API Reference](tools/mcp-toolkit/api-reference.md)
 
 ## Resources and Guides
 
