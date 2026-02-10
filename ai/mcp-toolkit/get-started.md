@@ -39,7 +39,7 @@ The wizard will:
 3. Generate `.vscode/mcp.json` with your credentials
 4. Install required dependencies automatically
 
-Once complete, open the project in VS Code, start the MCP server from `.vscode/mcp.json`, and you're ready to go.
+Once complete, open the project in VS Code, start the MCP server from `.vscode/mcp.json`, and open the chatbot with **Cmd + Shift + I** (or run **Chat: Open Agent** from the Command Palette on non-Mac).
 
 {% hint style="warning" %}
 **Security** - Your seed phrase is stored locally in `.vscode/mcp.json`, which is gitignored. Always use a **dedicated development wallet** with limited funds.

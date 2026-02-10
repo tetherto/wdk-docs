@@ -215,7 +215,7 @@ server.registerTools([getAddress, getBalance, getCurrentPrice])
 
 ### Custom Tools
 
-Add your own MCP tools alongside the built-in ones using the standard `registerTool()` method (inherited from `McpServer`):
+Add your own MCP tools alongside the built-in ones using the standard `registerTool()` method (inherited from `McpServer`). See the [MCP SDK tools documentation](https://github.com/modelcontextprotocol/typescript-sdk/blob/main/docs/server.md#tools) for full details.
 
 ```javascript
 server.registerTool(

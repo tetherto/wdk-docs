@@ -41,21 +41,21 @@ Powered by [`@tetherto/wdk-mcp-toolkit`](https://github.com/tetherto/wdk-mcp-too
 
 ## Supported Chains
 
-| Chain | Identifier | USDT Auto-Registered |
-| --- | --- | --- |
-| Ethereum | `ethereum` | ✅ |
-| Polygon | `polygon` | ✅ |
-| Arbitrum | `arbitrum` | ✅ |
-| Optimism | `optimism` | ✅ |
-| Base | `base` | ✅ |
-| Avalanche | `avalanche` | ✅ |
-| BNB Chain | `bnb` | ✅ |
-| Plasma | `plasma` | ✅ |
-| Bitcoin | `bitcoin` | - |
-| Solana | `solana` | ✅ |
-| Spark | `spark` | - |
-| TON | `ton` | ✅ |
-| Tron | `tron` | ✅ |
+| Chain | Identifier |
+| --- | --- |
+| Ethereum | `ethereum` |
+| Polygon | `polygon` |
+| Arbitrum | `arbitrum` |
+| Optimism | `optimism` |
+| Base | `base` |
+| Avalanche | `avalanche` |
+| BNB Chain | `bnb` |
+| Plasma | `plasma` |
+| Bitcoin | `bitcoin` |
+| Solana | `solana` |
+| Spark | `spark` |
+| TON | `ton` |
+| Tron | `tron` |
 
 {% hint style="info" %}
 You can register **any** blockchain name - the `CHAINS` constants are for convenience only. For custom chains, register tokens manually with `registerToken()`.
