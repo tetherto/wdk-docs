@@ -14,6 +14,10 @@
 * [Node.js & Bare Quickstart](start-building/nodejs-bare-quickstart.md) 
 * [React Native Quickstart](start-building/react-native-quickstart.md)
 
+## Build with AI
+
+* [Overview](build-with-ai/README.md)
+
 ## SDK
 
 * [Get Started](sdk/get-started.md)

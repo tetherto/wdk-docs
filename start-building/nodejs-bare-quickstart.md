@@ -30,6 +30,10 @@ In this quickstart, you'll create a simple application that:
 * [ ] Checks balances and estimates transaction costs
 * [ ] Sends transactions on multiple blockchains
 
+{% hint style="info" %}
+**Want to build faster?** Connect your AI coding assistant to WDK docs for context-aware help. [Learn how →](../build-with-ai/README.md)
+{% endhint %}
+
 ***
 
 ## Prerequisites
