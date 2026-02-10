@@ -203,6 +203,43 @@ export WDK_SEED="your twelve word seed phrase here"
 → [Windsurf MCP documentation](https://docs.windsurf.com/windsurf/cascade/mcp)
 
 {% endtab %}
+{% tab title="Cline" %}
+
+Add via Cline's MCP settings panel in VS Code, or create the config file directly:
+
+```json
+{
+  "mcpServers": {
+    "wdk": {
+      "command": "node",
+      "args": ["index.js"],
+      "env": {
+        "WDK_SEED": "your twelve word seed phrase here"
+      }
+    }
+  }
+}
+```
+
+→ [Cline MCP documentation](https://github.com/cline/cline#add-context)
+
+{% endtab %}
+{% tab title="Continue" %}
+
+**Config path:** `~/.continue/config.yaml`
+
+Add to the `mcpServers` section with the command and arguments for your server:
+
+```
+command: node
+args: ["index.js"]
+env:
+  WDK_SEED: "your twelve word seed phrase here"
+```
+
+→ [Continue MCP documentation](https://docs.continue.dev/customize/mcp-tools)
+
+{% endtab %}
 {% endtabs %}
 
 {% endstep %}
