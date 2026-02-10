@@ -28,6 +28,8 @@ Powered by [`@tetherto/wdk-mcp-toolkit`](https://github.com/tetherto/wdk-mcp-too
 **Beta** - This package is in active development (`v1.0.0-beta.1`). APIs may change between releases.
 {% endhint %}
 
+{% embed url="https://files.gitbook.com/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FRwT8I8B1DP5OZiLSjSCW%2Fuploads%2F4bLqUGsw5krkbnRiAEmx%2F543206805-9fc1aa65-b76b-4569-bac0-42f75ccdc1ce.mp4?alt=media&token=25181754-0e5d-4497-b59c-ebc8c955675e" %}
+
 ## Features
 
 - **MCP Server Extension** - Extends the official `@modelcontextprotocol/sdk` McpServer with WDK-specific capabilities
