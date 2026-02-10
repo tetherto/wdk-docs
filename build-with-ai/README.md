@@ -20,13 +20,18 @@ layout:
 
 # Build with AI
 
-WDK documentation is optimized for AI coding assistants. Connect your AI tool directly to WDK docs for context-aware code generation, architecture guidance, and debugging help. This works with any tool that supports the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/).
+WDK documentation is optimized for AI coding assistants. Give your AI tool context about WDK to get accurate code generation, architecture guidance, and debugging help.
+
+There are two ways to provide WDK context to your AI:
+
+1. **[Connect via MCP Server](#connect-wdk-docs-via-mcp-server)** — Best experience. Your AI tool can search and query WDK docs in real time.
+2. **[Connect via Markdown](#connect-wdk-docs-via-markdown)** — Works with any AI tool. Feed documentation directly into the context window.
 
 ---
 
 ## Connect WDK Docs via MCP Server
 
-The WDK documentation is available as an MCP server, giving your AI tool searchable access to all modules, API references, quickstarts, and guides.
+The WDK documentation is available as an MCP server, giving your AI tool searchable access to all modules, API references, quickstarts, and guides. This works with any tool that supports the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/).
 
 **MCP Server URL:**
 
@@ -125,13 +130,17 @@ Add to the `mcpServers` section:
 The MCP server provides access to published documentation only. If your tool is not listed above, add the MCP server URL (`https://docs.wallet.tether.io/~gitbook/mcp`) to your tool's MCP configuration — most MCP-compatible tools follow a similar JSON format.
 {% endhint %}
 
----
+{% hint style="warning" %}
+**No MCP support?** You can feed WDK documentation directly into any AI tool as Markdown. See [Connect WDK Docs via Markdown](#connect-wdk-docs-via-markdown) below.
+{% endhint %}
 
-## Add WDK Project Rules
+### Add WDK Project Rules (Optional)
 
-Project rules give your AI assistant persistent context about WDK conventions, package naming, and common patterns every time it works on your project. Copy the rules content below and save it at the file path for your tool.
+Project rules give your AI assistant persistent context about WDK conventions, package naming, and common patterns. This is optional but recommended for teams working extensively with WDK.
 
-### Rules Content
+Copy the rules content below and save it at the file path for your tool.
+
+#### Rules Content
 
 ````markdown
 # WDK Development Rules
@@ -148,8 +157,6 @@ Project rules give your AI assistant persistent context about WDK conventions, p
 ## Platform Rules
 - For Node.js or Bare runtime: Use `@tetherto/wdk` as the orchestrator, then register individual wallet modules
 - For React Native: Use `@tetherto/wdk-react-native-provider` with `WalletProvider` and `useWallet()` hook
-- `@tetherto/wdk` (wdk-core) requires a Node.js or Bare runtime — it does NOT work in browser/Vite/webpack web contexts
-- For web/browser apps, use individual wallet modules directly (e.g., `@tetherto/wdk-wallet-evm`)
 
 ## Architecture
 - WDK is modular — each blockchain and protocol is a separate npm package
@@ -163,7 +170,7 @@ Project rules give your AI assistant persistent context about WDK conventions, p
 - API references, configuration guides, and usage examples are available for every module
 ````
 
-### Where to Save
+#### Where to Save
 
 | AI Coding Assistant | File Path | Notes |
 |---|---|---|
@@ -174,30 +181,42 @@ Project rules give your AI assistant persistent context about WDK conventions, p
 | Cline | `.clinerules` | Place in project root |
 | Continue | `.continuerules` | Place in project root |
 
-{% hint style="info" %}
-Copy the rules content above and save it at the file path for your tool. Your AI assistant will automatically read these rules when working in your project.
-{% endhint %}
-
 ---
 
-## Feed WDK Docs as Context
+## Connect WDK Docs via Markdown
 
-For tools that don't support MCP, you can feed WDK documentation directly into your AI's context window using these auto-generated endpoints:
+If your AI tool doesn't support MCP, you can feed WDK documentation directly into the context window using these endpoints:
 
-| Endpoint | URL | Purpose |
+| Endpoint | URL | Description |
 |---|---|---|
-| `llms.txt` | `https://docs.wallet.tether.io/llms.txt` | Index of all page URLs and titles |
-| `llms-full.txt` | `https://docs.wallet.tether.io/llms-full.txt` | Full documentation content in one file |
+| Page index | [docs.wallet.tether.io/llms.txt](https://docs.wallet.tether.io/llms.txt) | Index of all page URLs and titles |
+| Full docs | [docs.wallet.tether.io/llms-full.txt](https://docs.wallet.tether.io/llms-full.txt) | Complete documentation in one file |
 
-You can also append `.md` to any documentation page URL to get the page in markdown format, suitable for pasting into a chat context window.
+You can also append `.md` to any documentation page URL to get the raw Markdown, ready to paste into a chat context window.
 
 ---
 
-## Tips for Effective AI-Assisted WDK Development
+## Example Prompt
+
+Here's an example prompt you can use to generate a multichain wallet with WDK. Try it with MCP connected or paste the relevant quickstart docs for best results:
+
+```
+Create a Node.js app using WDK (@tetherto/wdk) that:
+1. Creates a multichain wallet supporting Bitcoin and Polygon
+2. Use @tetherto/wdk-wallet-btc for Bitcoin and @tetherto/wdk-wallet-evm for Polygon
+3. Generates wallet addresses for both chains
+4. Retrieves the balance for each address
+5. Use a mnemonic from environment variables
+
+Check the WDK documentation for the correct configuration and initialization pattern.
+```
+
+---
+
+## Tips for Effective AI-Assisted Development
 
 - **Be specific about the chain.** Tell the AI which blockchain you're targeting (e.g., "I'm building on Ethereum using `@tetherto/wdk-wallet-evm`") so it picks the right module.
 - **Reference the exact package name.** Mention the full `@tetherto/wdk-*` package name in your prompt for more accurate code generation.
 - **Ask the AI to check docs first.** Prompt with "Check the WDK documentation before answering" to ensure it uses the MCP-connected docs rather than outdated training data.
 - **Start with a quickstart.** Point the AI at the [Node.js Quickstart](../start-building/nodejs-bare-quickstart.md) or [React Native Quickstart](../start-building/react-native-quickstart.md) as a working reference before building custom features.
 - **Iterate in steps.** Use the AI to scaffold your WDK integration first, then refine module configuration and error handling in follow-up prompts.
-
