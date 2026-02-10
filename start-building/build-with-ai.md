@@ -24,11 +24,11 @@ WDK documentation is optimized for AI coding assistants. Give your AI tool conte
 
 There are two ways to provide WDK context to your AI:
 
-1. **[Connect via MCP Server](#connect-wdk-docs-via-mcp-server)** — Best experience. Your AI tool can search and query WDK docs in real time.
-2. **[Connect via Markdown](#connect-wdk-docs-via-markdown)** — Works with any AI tool. Feed documentation directly into the context window.
+1. **[Connect via MCP Server](#connect-wdk-docs-via-mcp-server)** - Best experience. Your AI tool can search and query WDK docs in real time.
+2. **[Connect via Markdown](#connect-wdk-docs-via-markdown)** - Works with any AI tool. Feed documentation directly into the context window.
 
 {% hint style="info" %}
-**Want to give AI agents wallet access?** The [MCP Toolkit](../tools/mcp-toolkit/README.md) creates an MCP server that exposes WDK wallets as tools — letting AI agents check balances, send transactions, swap tokens, and more.
+**Want to give AI agents wallet access?** The [MCP Toolkit](../ai/mcp-toolkit/README.md) creates an MCP server that exposes WDK wallets as tools - letting AI agents check balances, send transactions, swap tokens, and more.
 {% endhint %}
 
 ---
@@ -131,7 +131,7 @@ Add to the `mcpServers` section:
 {% endtabs %}
 
 {% hint style="info" %}
-The MCP server provides access to published documentation only. If your tool is not listed above, add the MCP server URL (`https://docs.wallet.tether.io/~gitbook/mcp`) to your tool's MCP configuration — most MCP-compatible tools follow a similar JSON format.
+The MCP server provides access to published documentation only. If your tool is not listed above, add the MCP server URL (`https://docs.wallet.tether.io/~gitbook/mcp`) to your tool's MCP configuration - most MCP-compatible tools follow a similar JSON format.
 {% endhint %}
 
 {% hint style="warning" %}
@@ -162,12 +162,12 @@ Copy the rules content below and save it at the file path for your tool.
 - For Node.js or Bare runtime: Use `@tetherto/wdk` as the orchestrator, then register individual wallet modules
 - For React Native: You have two options:
   - Use the React Native provider package for convenience (provides hooks and managed lifecycle)
-  - Or use WDK packages directly in the Hermes runtime — this works the same as Node.js integration
+  - Or use WDK packages directly in the Hermes runtime - this works the same as Node.js integration
 
 ## Architecture
-- WDK is modular — each blockchain and protocol is a separate npm package
+- WDK is modular - each blockchain and protocol is a separate npm package
 - Wallet modules expose `WalletManager`, `WalletAccount`, and `WalletAccountReadOnly` classes
-- `WalletAccount` extends `WalletAccountReadOnly` — it has all read-only methods plus write methods (sign, send)
+- `WalletAccount` extends `WalletAccountReadOnly` - it has all read-only methods plus write methods (sign, send)
 - All modules follow a consistent pattern: configuration → initialization → usage
 
 ## Documentation
@@ -232,5 +232,5 @@ Check the WDK documentation for the correct configuration and initialization pat
 - **Be specific about the chain.** Tell the AI which blockchain you're targeting (e.g., "I'm building on Ethereum using `@tetherto/wdk-wallet-evm`") so it picks the right module.
 - **Reference the exact package name.** Mention the full `@tetherto/wdk-*` package name in your prompt for more accurate code generation.
 - **Ask the AI to check docs first.** Prompt with "Check the WDK documentation before answering" to ensure it uses the MCP-connected docs rather than outdated training data.
-- **Start with a quickstart.** Point the AI at the [Node.js Quickstart](../start-building/nodejs-bare-quickstart.md) or [React Native Quickstart](../start-building/react-native-quickstart.md) as a working reference before building custom features.
+- **Start with a quickstart.** Point the AI at the [Node.js Quickstart](nodejs-bare-quickstart.md) or [React Native Quickstart](react-native-quickstart.md) as a working reference before building custom features.
 - **Iterate in steps.** Use the AI to scaffold your WDK integration first, then refine module configuration and error handling in follow-up prompts.

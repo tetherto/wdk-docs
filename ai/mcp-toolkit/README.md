@@ -20,22 +20,22 @@ layout:
 
 # MCP Toolkit
 
-The MCP Toolkit turns your WDK wallets into tools that AI agents can use. It creates an [MCP server](https://modelcontextprotocol.io/) that exposes wallet operations — checking balances, sending transactions, swapping tokens, bridging assets, and more — as structured tools that any MCP-compatible AI client can call.
+The MCP Toolkit lets AI agents interact with self-custodial WDK wallets. It creates an [MCP server](https://modelcontextprotocol.io/) that exposes wallet operations (checking balances, sending transactions, swapping tokens, bridging assets, and more) as structured tools that any MCP-compatible AI client can call.
 
 Powered by [`@tetherto/wdk-mcp-toolkit`](https://github.com/tetherto/wdk-mcp-toolkit).
 
 {% hint style="warning" %}
-**Beta** — This package is in active development (`v1.0.0-beta`). APIs may change between releases.
+**Beta** - This package is in active development (`v1.0.0-beta.1`). APIs may change between releases.
 {% endhint %}
 
 ## Features
 
-- **MCP Server Extension** — Extends the official `@modelcontextprotocol/sdk` McpServer with WDK-specific capabilities
-- **Multi-Chain** — Support for 13 blockchains out of the box, including EVM chains, Bitcoin, Solana, Spark, TON, and Tron
-- **35 Built-in Tools** — Ready-to-use tools for wallets, pricing, indexer queries, swaps, bridges, lending, and fiat on/off-ramps
-- **Human Confirmation** — All write operations use MCP elicitations to require explicit user approval before broadcasting transactions
-- **Extensible** — Register custom tools alongside built-in ones using standard MCP SDK patterns
-- **Secure by Design** — Seed phrases stay local, `close()` wipes keys from memory, and read/write tool separation lets you control access
+- **MCP Server Extension** - Extends the official `@modelcontextprotocol/sdk` McpServer with WDK-specific capabilities
+- **Multi-Chain** - Support for 13 blockchains out of the box, including EVM chains, Bitcoin, Solana, Spark, TON, and Tron
+- **35 Built-in Tools** - Ready-to-use tools for wallets, pricing, indexer queries, swaps, bridges, lending, and fiat on/off-ramps
+- **Human Confirmation** - All write operations use MCP elicitations to require explicit user approval before broadcasting transactions
+- **Extensible** - Register custom tools alongside built-in ones using standard MCP SDK patterns
+- **Secure by Design** - Seed phrases stay local, `close()` wipes keys from memory, and read/write tool separation lets you control access
 
 ## Supported Chains
 
@@ -49,14 +49,14 @@ Powered by [`@tetherto/wdk-mcp-toolkit`](https://github.com/tetherto/wdk-mcp-too
 | Avalanche | `avalanche` | ✅ |
 | BNB Chain | `bnb` | ✅ |
 | Plasma | `plasma` | ✅ |
-| Bitcoin | `bitcoin` | — |
+| Bitcoin | `bitcoin` | - |
 | Solana | `solana` | ✅ |
-| Spark | `spark` | — |
+| Spark | `spark` | - |
 | TON | `ton` | ✅ |
 | Tron | `tron` | ✅ |
 
 {% hint style="info" %}
-You can register **any** blockchain name — the `CHAINS` constants are for convenience only. For custom chains, register tokens manually with `registerToken()`.
+You can register **any** blockchain name - the `CHAINS` constants are for convenience only. For custom chains, register tokens manually with `registerToken()`.
 {% endhint %}
 
 <table data-card-size="large" data-view="cards">
@@ -109,7 +109,7 @@ You can register **any** blockchain name — the `CHAINS` constants are for conv
 </table>
 
 {% hint style="info" %}
-**Already using an AI coding assistant?** See [Build with AI](../build-with-ai/README.md) for how to connect WDK docs as context via MCP or Markdown.
+**Already using an AI coding assistant?** See [Build with AI](../../start-building/build-with-ai.md) for how to connect WDK docs as context via MCP or Markdown.
 {% endhint %}
 
 ***

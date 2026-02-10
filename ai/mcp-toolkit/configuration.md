@@ -57,7 +57,7 @@ import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
 import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 
-// EVM chains — one module handles all EVM networks
+// EVM chains - one module handles all EVM networks
 server.registerWallet('ethereum', WalletManagerEvm, {
   provider: 'https://eth-mainnet.g.alchemy.com/v2/KEY'
 })
@@ -147,11 +147,6 @@ server.getRegisteredTokens('ethereum')  // ['USDT']
 Register additional tokens with `registerToken()`:
 
 ```javascript
-server.registerToken('ethereum', 'USDC', {
-  address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-  decimals: 6
-})
-
 server.registerToken('ethereum', 'DAI', {
   address: '0x6B175474E89094C44Da98b954EedeAC495271d0F',
   decimals: 18
@@ -269,13 +264,13 @@ server.registerTool(
 **Self-custodial wallets require careful key management.** Follow these guidelines to protect user funds.
 {% endhint %}
 
-- [ ] **Use a dedicated development wallet** — Never use production wallets with real funds for testing
-- [ ] **Never hardcode seed phrases** — Always use environment variables or `.vscode/mcp.json` (gitignored)
-- [ ] **Use `WALLET_READ_TOOLS` for untrusted agents** — Only register write tools when user confirmation is available
-- [ ] **Call `server.close()` on shutdown** — This disposes the WDK instance and wipes keys from memory
-- [ ] **Use `stdio` transport** — The default transport communicates only with the local AI client process
-- [ ] **Review MCP annotations** — Tools declare `readOnlyHint` and `destructiveHint` so clients can warn users appropriately
-- [ ] **Keep `.vscode/mcp.json` gitignored** — The setup wizard handles this automatically
+- [ ] **Use a dedicated development wallet** - Never use production wallets with real funds for testing
+- [ ] **Never hardcode seed phrases** - Always use environment variables or `.vscode/mcp.json` (gitignored)
+- [ ] **Use `WALLET_READ_TOOLS` for untrusted agents** - Only register write tools when user confirmation is available
+- [ ] **Call `server.close()` on shutdown** - This disposes the WDK instance and wipes keys from memory
+- [ ] **Use `stdio` transport** - The default transport communicates only with the local AI client process
+- [ ] **Review MCP annotations** - Tools declare `readOnlyHint` and `destructiveHint` so clients can warn users appropriately
+- [ ] **Keep `.vscode/mcp.json` gitignored** - The setup wizard handles this automatically
 
 ***
 

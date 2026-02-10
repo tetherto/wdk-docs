@@ -31,7 +31,7 @@ In this quickstart, you'll create a simple application that:
 * [ ] Sends transactions on multiple blockchains
 
 {% hint style="info" %}
-**Want to build faster?** Connect your AI coding assistant to WDK docs for context-aware help. [Learn how →](../build-with-ai/README.md)
+**Want to build faster?** Connect your AI coding assistant to WDK docs for context-aware help. [Learn how →](build-with-ai.md)
 {% endhint %}
 
 ***

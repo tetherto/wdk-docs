@@ -40,7 +40,7 @@ See the [configuration.md](../sdk/wallet-modules/wallet-evm-erc-4337/configurati
 {% endhint %}
 
 {% hint style="info" %}
-**Want to build faster?** Connect your AI coding assistant to WDK docs for context-aware help. [Learn how →](../build-with-ai/README.md)
+**Want to build faster?** Connect your AI coding assistant to WDK docs for context-aware help. [Learn how →](build-with-ai.md)
 {% endhint %}
 
 

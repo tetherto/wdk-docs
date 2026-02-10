@@ -13,14 +13,14 @@
 
 * [Node.js & Bare Quickstart](start-building/nodejs-bare-quickstart.md) 
 * [React Native Quickstart](start-building/react-native-quickstart.md)
-* [Build with AI](build-with-ai/README.md)
+* [Build with AI](start-building/build-with-ai.md)
 
 ## AI
 
-* [MCP Toolkit](tools/mcp-toolkit/README.md)
-  * [Get Started](tools/mcp-toolkit/get-started.md)
-  * [Configuration](tools/mcp-toolkit/configuration.md)
-  * [API Reference](tools/mcp-toolkit/api-reference.md)
+* [MCP Toolkit](ai/mcp-toolkit/README.md)
+  * [Get Started](ai/mcp-toolkit/get-started.md)
+  * [Configuration](ai/mcp-toolkit/configuration.md)
+  * [API Reference](ai/mcp-toolkit/api-reference.md)
 
 ## SDK
 

@@ -42,7 +42,7 @@ The wizard will:
 Once complete, open the project in VS Code, start the MCP server from `.vscode/mcp.json`, and you're ready to go.
 
 {% hint style="warning" %}
-**Security** — Your seed phrase is stored locally in `.vscode/mcp.json`, which is gitignored. Always use a **dedicated development wallet** with limited funds.
+**Security** - Your seed phrase is stored locally in `.vscode/mcp.json`, which is gitignored. Always use a **dedicated development wallet** with limited funds.
 {% endhint %}
 
 ***
@@ -112,7 +112,12 @@ server.registerTools([...WALLET_TOOLS, ...PRICING_TOOLS])
 
 #### Connect your AI client
 
-Create `.vscode/mcp.json` in your project root to use the server with VS Code GitHub Copilot:
+Add the MCP server to your AI tool's configuration:
+
+{% tabs %}
+{% tab title="GitHub Copilot" %}
+
+**Config path:** `.vscode/mcp.json` (project-level)
 
 {% code title=".vscode/mcp.json" %}
 ```json
@@ -135,6 +140,70 @@ Then in VS Code:
 1. Open `.vscode/mcp.json` and click **Start** above the server config
 2. Open GitHub Copilot Chat and select **Agent mode**
 3. Click **Tools** to verify the MCP tools are available
+
+→ [VS Code MCP documentation](https://code.visualstudio.com/docs/copilot/chat/mcp-servers)
+
+{% endtab %}
+{% tab title="Cursor" %}
+
+**Config path:** `.cursor/mcp.json` (project-level)
+
+```json
+{
+  "mcpServers": {
+    "wdk": {
+      "command": "node",
+      "args": ["index.js"],
+      "env": {
+        "WDK_SEED": "your twelve word seed phrase here"
+      }
+    }
+  }
+}
+```
+
+→ [Cursor MCP documentation](https://cursor.com/docs/context/mcp)
+
+{% endtab %}
+{% tab title="Claude Code" %}
+
+Run this command from your project directory:
+
+```bash
+claude mcp add wdk -- node index.js
+```
+
+Set the environment variable separately:
+
+```bash
+export WDK_SEED="your twelve word seed phrase here"
+```
+
+→ [Claude Code MCP documentation](https://docs.anthropic.com/en/docs/claude-code/tutorials#set-up-model-context-protocol-mcp)
+
+{% endtab %}
+{% tab title="Windsurf" %}
+
+**Config path:** `~/.codeium/windsurf/mcp_config.json`
+
+```json
+{
+  "mcpServers": {
+    "wdk": {
+      "command": "node",
+      "args": ["index.js"],
+      "env": {
+        "WDK_SEED": "your twelve word seed phrase here"
+      }
+    }
+  }
+}
+```
+
+→ [Windsurf MCP documentation](https://docs.windsurf.com/windsurf/cascade/mcp)
+
+{% endtab %}
+{% endtabs %}
 
 {% endstep %}
 
@@ -181,7 +250,7 @@ import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
 import AaveProtocolEvm from '@tetherto/wdk-protocol-lending-aave-evm'
 import MoonPayProtocol from '@tetherto/wdk-protocol-fiat-moonpay'
 
-// Indexer — transaction history
+// Indexer - transaction history
 server.useIndexer({ apiKey: process.env.WDK_INDEXER_API_KEY })
 
 // DeFi protocols
@@ -211,16 +280,16 @@ server.registerTools([
 | Variable | Required | Description |
 | --- | --- | --- |
 | `WDK_SEED` | Yes | BIP-39 seed phrase for wallet derivation |
-| `WDK_INDEXER_API_KEY` | No | Enables `INDEXER_TOOLS` — [get a key](https://wdk-api.tether.io/register) |
-| `MOONPAY_API_KEY` | No | Enables `FIAT_TOOLS` — [MoonPay Dashboard](https://dashboard.moonpay.com/) |
+| `WDK_INDEXER_API_KEY` | No | Enables `INDEXER_TOOLS` - [get a key](https://wdk-api.tether.io/register) |
+| `MOONPAY_API_KEY` | No | Enables `FIAT_TOOLS` - [MoonPay Dashboard](https://dashboard.moonpay.com/) |
 | `MOONPAY_SECRET_KEY` | No | Required with `MOONPAY_API_KEY` |
 
 ***
 
 ## Next Steps
 
-* [**Configuration**](configuration.md) — Wallets, tokens, protocols, custom tools, and security
-* [**API Reference**](api-reference.md) — All 35 built-in MCP tools with parameters and schemas
+* [**Configuration**](configuration.md) - Wallets, tokens, protocols, custom tools, and security
+* [**API Reference**](api-reference.md) - All 35 built-in MCP tools with parameters and schemas
 
 ***
 

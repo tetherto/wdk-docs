@@ -217,7 +217,7 @@ Every tool declares these annotations:
 | `openWorldHint` | `boolean` | Tool interacts with external systems |
 
 {% hint style="info" %}
-**Human Confirmation** — All tools where `destructiveHint: true` use MCP [elicitations](https://modelcontextprotocol.io/docs/concepts/elicitation) to show a confirmation dialog before broadcasting. The user must explicitly approve each transaction.
+**Human Confirmation** - All tools where `destructiveHint: true` use MCP [elicitations](https://modelcontextprotocol.io/docs/concepts/elicitation) to show a confirmation dialog before broadcasting. The user must explicitly approve each transaction.
 {% endhint %}
 
 ***
@@ -362,7 +362,7 @@ Estimate the fee for transferring a token. **Read-only.** Does not broadcast.
 
 ### `sendTransaction`
 
-Send native currency (ETH, BTC, etc.). **Destructive** — requires user confirmation.
+Send native currency (ETH, BTC, etc.). **Destructive** - requires user confirmation.
 
 **Input:**
 
@@ -387,7 +387,7 @@ This tool shows a confirmation dialog with transaction details before broadcasti
 
 ### `transfer`
 
-Transfer a registered token. **Destructive** — requires user confirmation.
+Transfer a registered token. **Destructive** - requires user confirmation.
 
 **Input:**
 
@@ -599,7 +599,7 @@ Get a swap quote without executing. **Read-only.**
 
 ### `swap`
 
-Execute a token swap. **Destructive** — requires user confirmation.
+Execute a token swap. **Destructive** - requires user confirmation.
 
 **Input:**
 
@@ -665,7 +665,7 @@ Get a bridge quote without executing. **Read-only.**
 
 ### `bridge`
 
-Execute a cross-chain bridge. **Destructive** — requires user confirmation.
+Execute a cross-chain bridge. **Destructive** - requires user confirmation.
 
 **Input:**
 
@@ -692,7 +692,7 @@ Execute a cross-chain bridge. **Destructive** — requires user confirmation.
 | `bridgeFee` | `string` | Bridge protocol fee paid |
 
 {% hint style="warning" %}
-Bridge finality varies by target chain — tokens may take minutes to hours to arrive.
+Bridge finality varies by target chain - tokens may take minutes to hours to arrive.
 {% endhint %}
 
 ***
@@ -728,7 +728,7 @@ Get a fee estimate for supplying tokens to a lending pool. **Read-only.**
 
 ### `supply`
 
-Supply tokens to a lending pool. **Destructive** — requires user confirmation.
+Supply tokens to a lending pool. **Destructive** - requires user confirmation.
 
 Same input as `quoteSupply`. Output includes `success`, `protocol`, `hash`, `token`, `amount`, and `fee`.
 
@@ -752,7 +752,7 @@ Estimate fee for withdrawing from a lending pool. **Read-only.**
 
 ### `withdraw`
 
-Withdraw tokens from a lending pool. **Destructive** — requires user confirmation.
+Withdraw tokens from a lending pool. **Destructive** - requires user confirmation.
 
 Same input as `quoteWithdraw`. Output includes `success`, `protocol`, `hash`, `token`, `amount`, and `fee`.
 
@@ -776,7 +776,7 @@ Estimate fee for borrowing from a lending pool. **Read-only.**
 
 ### `borrow`
 
-Borrow tokens from a lending pool. **Destructive** — requires user confirmation.
+Borrow tokens from a lending pool. **Destructive** - requires user confirmation.
 
 Same input as `quoteBorrow`. Output includes `success`, `protocol`, `hash`, `token`, `amount`, and `fee`.
 
@@ -800,7 +800,7 @@ Estimate fee for repaying a loan. **Read-only.**
 
 ### `repay`
 
-Repay borrowed tokens. **Destructive** — requires user confirmation.
+Repay borrowed tokens. **Destructive** - requires user confirmation.
 
 Same input as `quoteRepay`. Output includes `success`, `protocol`, `hash`, `token`, `amount`, and `fee`.
 
@@ -840,7 +840,7 @@ Get a quote for purchasing crypto with fiat. **Read-only.**
 
 ### `buy`
 
-Execute a fiat-to-crypto purchase. **Destructive** — requires user confirmation.
+Execute a fiat-to-crypto purchase. **Destructive** - requires user confirmation.
 
 Same input as `quoteBuy`. Output includes `success`, `protocol`, redirect URL or transaction details.
 
@@ -856,7 +856,7 @@ Same input structure as `quoteBuy`. Same output structure.
 
 ### `sell`
 
-Execute a crypto-to-fiat sale. **Destructive** — requires user confirmation.
+Execute a crypto-to-fiat sale. **Destructive** - requires user confirmation.
 
 Same input as `quoteSell`. Output includes `success`, `protocol`, and transaction details.
 
