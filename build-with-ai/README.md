@@ -158,9 +158,11 @@ Copy the rules content below and save it at the file path for your tool.
 - Protocol modules follow the pattern: `@tetherto/wdk-protocol-<type>-<name>-<chain>`
   - Examples: `@tetherto/wdk-protocol-swap-velora-evm`, `@tetherto/wdk-protocol-bridge-usdt0-evm`, `@tetherto/wdk-protocol-lending-aave-evm`
 
-## Platform Rules
+## Platform Notes
 - For Node.js or Bare runtime: Use `@tetherto/wdk` as the orchestrator, then register individual wallet modules
-- For React Native: Use `@tetherto/wdk-react-native-provider` with `WalletProvider` and `useWallet()` hook
+- For React Native: You have two options:
+  - Use the React Native provider package for convenience (provides hooks and managed lifecycle)
+  - Or use WDK packages directly in the Hermes runtime — this works the same as Node.js integration
 
 ## Architecture
 - WDK is modular — each blockchain and protocol is a separate npm package
@@ -197,6 +199,14 @@ If your AI tool doesn't support MCP, you can feed WDK documentation directly int
 | Full docs | [docs.wallet.tether.io/llms-full.txt](https://docs.wallet.tether.io/llms-full.txt) | Complete documentation in one file |
 
 You can also append `.md` to any documentation page URL to get the raw Markdown, ready to paste into a chat context window.
+
+---
+
+## Agent Guidelines in WDK Repos
+
+Each WDK package repository includes an `AGENTS.md` file in its root. This file provides AI agents with context about the project structure, coding conventions, testing patterns, and linting rules.
+
+If your AI tool has access to the WDK source repositories (e.g., via a local clone), it will automatically ingest `AGENTS.md` for additional context beyond the documentation.
 
 ---
 

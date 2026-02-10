@@ -20,7 +20,36 @@ layout:
 
 # Get Started
 
-## Quick Start
+## Setup Wizard
+
+The fastest way to get running. Clone the repository and let the wizard configure everything:
+
+{% code title="Terminal" %}
+```bash
+git clone https://github.com/tetherto/wdk-mcp-toolkit.git
+cd wdk-mcp-toolkit
+npm install
+npm run setup
+```
+{% endcode %}
+
+The wizard will:
+1. Prompt for your seed phrase (required)
+2. Ask for optional API keys (WDK Indexer, MoonPay)
+3. Generate `.vscode/mcp.json` with your credentials
+4. Install required dependencies automatically
+
+Once complete, open the project in VS Code, start the MCP server from `.vscode/mcp.json`, and you're ready to go.
+
+{% hint style="warning" %}
+**Security** — Your seed phrase is stored locally in `.vscode/mcp.json`, which is gitignored. Always use a **dedicated development wallet** with limited funds.
+{% endhint %}
+
+***
+
+## Manual Setup
+
+If you prefer to set things up yourself or want to integrate the toolkit into an existing project:
 
 {% stepper %}
 {% step %}
@@ -137,31 +166,6 @@ Write operations (sending, swapping, bridging) will show a **confirmation dialog
 
 {% endstep %}
 {% endstepper %}
-
-***
-
-## Setup Wizard
-
-If you cloned the [wdk-mcp-toolkit repository](https://github.com/tetherto/wdk-mcp-toolkit), the setup wizard automates everything:
-
-{% code title="Terminal" %}
-```bash
-git clone https://github.com/tetherto/wdk-mcp-toolkit.git
-cd wdk-mcp-toolkit
-npm install
-npm run setup
-```
-{% endcode %}
-
-The wizard will:
-1. Prompt for your seed phrase (required)
-2. Ask for optional API keys (WDK Indexer, MoonPay)
-3. Generate `.vscode/mcp.json` with your credentials
-4. Install required dependencies automatically
-
-{% hint style="warning" %}
-**Security** — Your seed phrase is stored locally in `.vscode/mcp.json`, which is gitignored. Always use a **dedicated development wallet** with limited funds.
-{% endhint %}
 
 ***
 

@@ -13,10 +13,7 @@
 
 * [Node.js & Bare Quickstart](start-building/nodejs-bare-quickstart.md) 
 * [React Native Quickstart](start-building/react-native-quickstart.md)
-
-## Build with AI
-
-* [Overview](build-with-ai/README.md)
+* [Build with AI](build-with-ai/README.md)
 
 ## SDK
 
@@ -111,6 +108,13 @@
 
 * [React Native Starter (Alpha)](examples-and-starters/react-native-starter.md)
 
+## AI
+
+* [MCP Toolkit](tools/mcp-toolkit/README.md)
+  * [Get Started](tools/mcp-toolkit/get-started.md)
+  * [Configuration](tools/mcp-toolkit/configuration.md)
+  * [API Reference](tools/mcp-toolkit/api-reference.md)
+
 ## Tools
 
 * [Indexer API](tools/indexer-api/README.md)
@@ -122,10 +126,6 @@
 * [Price Rates](tools/price-rates/README.md)
   * [Configuration](tools/price-rates/configuration.md)
   * [API Reference](tools/price-rates/api-reference.md)
-* [MCP Toolkit](tools/mcp-toolkit/README.md)
-  * [Get Started](tools/mcp-toolkit/get-started.md)
-  * [Configuration](tools/mcp-toolkit/configuration.md)
-  * [API Reference](tools/mcp-toolkit/api-reference.md)
 
 ## Resources and Guides
 
