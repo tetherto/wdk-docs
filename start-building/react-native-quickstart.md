@@ -39,6 +39,10 @@ You can try all features without real funds required. You can use the Pimlico or
 See the [configuration.md](../sdk/wallet-modules/wallet-evm-erc-4337/configuration.md) for quick setup and Sepolia testnet configuration.
 {% endhint %}
 
+{% hint style="info" %}
+**Want to build faster?** Connect your AI coding assistant to WDK docs for context-aware help. [Learn how →](../build-with-ai/README.md)
+{% endhint %}
+
 
 ## Prerequisites
 
