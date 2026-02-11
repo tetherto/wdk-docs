@@ -61,7 +61,7 @@ const wallet = new WalletManagerSolana(seedPhrase, {
 |--------|-------------|---------|
 | `getAccount(index)` | Returns a wallet account at the specified index | `Promise<WalletAccountSolana>` |
 | `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise<WalletAccountSolana>` |
-| `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: number, fast: number}>` |
+| `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
 
 ##### `getAccount(index)`
@@ -93,7 +93,7 @@ const account = await wallet.getAccountByPath("0'/0/1")
 ##### `getFeeRates()`
 Returns current fee rates for transactions based on recent prioritization fees.
 
-**Returns:** `Promise<{normal: number, fast: number}>` - Object containing fee rates in lamports
+**Returns:** `Promise<{normal: bigint, fast: bigint}>` - Object containing fee rates in lamports
 
 **Throws:** Error if wallet is not connected to a provider
 
@@ -133,13 +133,13 @@ new WalletAccountSolana(seed, path, config)
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's Solana address | `Promise<string>` |
 | `sign(message)` | Signs a message using the account's private key | `Promise<string>` |
-| `sendTransaction(tx)` | Sends a Solana transaction | `Promise<{hash: string, fee: number}>` |
-| `quoteSendTransaction(tx)` | Estimates the fee for a transaction | `Promise<{fee: number}>` |
-| `transfer(options)` | Transfers SPL tokens to another address | `Promise<{hash: string, fee: number}>` |
-| `quoteTransfer(options)` | Estimates the fee for an SPL token transfer | `Promise<{fee: number}>` |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
+| `sendTransaction(tx)` | Sends a Solana transaction | `Promise<{hash: string, fee: bigint}>` |
+| `quoteSendTransaction(tx)` | Estimates the fee for a transaction | `Promise<{fee: bigint}>` |
+| `transfer(options)` | Transfers SPL tokens to another address | `Promise<{hash: string, fee: bigint}>` |
+| `quoteTransfer(options)` | Estimates the fee for an SPL token transfer | `Promise<{fee: bigint}>` |
 | `getBalance()` | Returns the native SOL balance (in lamports) | `Promise<bigint>` |
 | `getTokenBalance(tokenMint)` | Returns the balance of a specific SPL token | `Promise<bigint>` |
-| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `getTransactionReceipt(hash)` | Gets the transaction receipt for a given transaction hash | `Promise<SolanaTransactionReceipt \| null>` |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlySolana>` |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
@@ -193,7 +193,7 @@ Sends a Solana transaction.
   - `to` (string): Recipient's Solana address (base58-encoded)
   - `value` (number): Amount in lamports
 
-**Returns:** `Promise<{hash: string, fee: number}>` - Object containing transaction hash and fee (in lamports)
+**Returns:** `Promise<{hash: string, fee: bigint}>` - Object containing transaction hash and fee (in lamports)
 
 **Throws:** Error if wallet is not connected to a provider
 
@@ -212,7 +212,7 @@ Estimates the fee for a Solana transaction.
 **Parameters:**
 - `tx` (SolanaTransaction): The transaction object (same as sendTransaction)
 
-**Returns:** `Promise<{fee: number}>` - Object containing fee estimate (in lamports)
+**Returns:** `Promise<{fee: bigint}>` - Object containing fee estimate (in lamports)
 
 **Example:**
 ```javascript
@@ -232,7 +232,7 @@ Transfers SPL tokens to another address.
   - `recipient` (string): Recipient's Solana address (base58-encoded)
   - `amount` (number): Amount in token's base units
 
-**Returns:** `Promise<{hash: string, fee: number}>` - Object containing transaction hash and fee (in lamports)
+**Returns:** `Promise<{hash: string, fee: bigint}>` - Object containing transaction hash and fee (in lamports)
 
 **Throws:** Error if wallet is not connected to a provider or if fee exceeds maximum
 
@@ -253,7 +253,7 @@ Estimates the fee for an SPL token transfer.
 **Parameters:**
 - `options` (TransferOptions): Transfer options (same as transfer)
 
-**Returns:** `Promise<{fee: number}>` - Object containing fee estimate (in lamports)
+**Returns:** `Promise<{fee: bigint}>` - Object containing fee estimate (in lamports)
 
 **Example:**
 ```javascript
@@ -355,8 +355,8 @@ new WalletAccountReadOnlySolana(publicKey, config)
 | `getBalance()` | Returns the native SOL balance (in lamports) | `Promise<bigint>` |
 | `getTokenBalance(tokenMint)` | Returns the balance of a specific SPL token | `Promise<bigint>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
-| `quoteSendTransaction(tx)` | Estimates the fee for a transaction | `Promise<{fee: number}>` |
-| `quoteTransfer(options)` | Estimates the fee for an SPL token transfer | `Promise<{fee: number}>` |
+| `quoteSendTransaction(tx)` | Estimates the fee for a transaction | `Promise<{fee: bigint}>` |
+| `quoteTransfer(options)` | Estimates the fee for an SPL token transfer | `Promise<{fee: bigint}>` |
 
 ##### `getAddress()`
 Returns the account's Solana address.
@@ -417,7 +417,7 @@ Estimates the fee for a transaction.
   - `to` (string): Recipient's Solana address (base58-encoded)
   - `value` (number): Amount in lamports
 
-**Returns:** `Promise<{fee: number}>` - Object containing fee estimate (in lamports)
+**Returns:** `Promise<{fee: bigint}>` - Object containing fee estimate (in lamports)
 
 **Example:**
 ```javascript
@@ -436,7 +436,7 @@ Estimates the fee for an SPL token transfer.
   - `recipient` (string): Recipient's Solana address (base58-encoded)
   - `amount` (number): Amount in token's base units
 
-**Returns:** `Promise<{fee: number}>` - Object containing fee estimate (in lamports)
+**Returns:** `Promise<{fee: bigint}>` - Object containing fee estimate (in lamports)
 
 **Example:**
 ```javascript
