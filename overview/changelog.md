@@ -24,6 +24,12 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### February 10, 2026
+
+**What's New**
+- **[Build with AI](../start-building/build-with-ai.md)**: New guide for using AI coding assistants with WDK. Includes MCP server setup, Markdown context endpoints, project rules, and example prompts. Supports Cursor, Claude Code, GitHub Copilot, Windsurf, Cline, and Continue.
+- **[MCP Toolkit](../ai/mcp-toolkit/README.md)**: New documentation for `@tetherto/wdk-mcp-toolkit` (`v1.0.0-beta.1`). Covers the `WdkMcpServer` class, 35 built-in MCP tools across 7 categories (wallet, pricing, indexer, swap, bridge, lending, fiat), setup wizard, multi-tool configuration, and full API reference.
+
 ### February 08, 2026
 
 **Changes**
