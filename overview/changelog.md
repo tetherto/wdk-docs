@@ -24,6 +24,45 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### February 10, 2026
+
+**What's New**
+- **[Build with AI](../start-building/build-with-ai.md)**: New guide for using AI coding assistants with WDK. Includes MCP server setup, Markdown context endpoints, project rules, and example prompts. Supports Cursor, Claude Code, GitHub Copilot, Windsurf, Cline, and Continue.
+- **[MCP Toolkit](../ai/mcp-toolkit/README.md)**: New documentation for `@tetherto/wdk-mcp-toolkit` (`v1.0.0-beta.1`). Covers the `WdkMcpServer` class, 35 built-in MCP tools across 7 categories (wallet, pricing, indexer, swap, bridge, lending, fiat), setup wizard, multi-tool configuration, and full API reference.
+
+### February 08, 2026
+
+**Changes**
+- **wallet-spark**: Fixed import causing wallet init failure. Upgrade spark-sdk from `0.5.7` to `0.6.1` ([v1.0.0-beta.8](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.8))
+
+### February 02, 2026
+
+**Changes**
+- **wallet-ton-gasless docs**: Added `verify` method to [`WalletAccountReadOnlyTonGasless`](../sdk/wallet-modules/wallet-ton-gasless/api-reference.md#walletaccountreadonlytongasless) ([v1.0.0-beta.4](https://github.com/tetherto/wdk-wallet-ton-gasfree/releases/tag/v1.0.0-beta.4))
+- **wallet-tron-gasfree docs**: Added `verify` method to [`WalletAccountReadOnlyTronGasfree`](../sdk/wallet-modules/wallet-tron-gasfree/api-reference.md#walletaccountreadonlytrongasfree) ([v1.0.0-beta.4](https://github.com/tetherto/wdk-wallet-tron-gasfree/releases/tag/v1.0.0-beta.4))
+
+### January 29, 2026
+
+**What's New**
+- **wdk-indexer docs**
+  - Updated Ethereum indexer supported tokens list to add USA₮. 
+
+**Changes**
+- **wdk-indexer docs**
+  - Fixed the USD₮, XAU₮ token names. 
+
+### January 26, 2026
+
+**Changes**
+- **wallet-btc docs** ([v1.0.0-beta.5](https://github.com/tetherto/wdk-wallet-btc/releases/tag/v1.0.0-beta.5)):
+  - Added `verify` method to [`WalletAccountReadOnlyBtc`](../sdk/wallet-modules/wallet-btc/api-reference.md#walletaccountreadonlybtc)
+  - Added Pluggable Transport classes: [`ElectrumTcp`](../sdk/wallet-modules/wallet-btc/api-reference.md#electrumtcp), [`ElectrumTls`](../sdk/wallet-modules/wallet-btc/api-reference.md#electrumtls), [`ElectrumSsl`](../sdk/wallet-modules/wallet-btc/api-reference.md#electrumssl), [`ElectrumWs`](../sdk/wallet-modules/wallet-btc/api-reference.md#electrumws)
+- **wallet-evm docs**: Added `verify` method to [`WalletAccountReadOnlyEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountreadonlyevm) ([v1.0.0-beta.5](https://github.com/tetherto/wdk-wallet-evm/releases/tag/v1.0.0-beta.5))
+- **wallet-solana docs**: Added `verify` method to [`WalletAccountReadOnlySolana`](../sdk/wallet-modules/wallet-solana/api-reference.md#walletaccountreadonlysolana) ([v1.0.0-beta.5](https://github.com/tetherto/wdk-wallet-solana/releases/tag/v1.0.0-beta.5))
+- **wallet-ton docs**: Added `verify` method to [`WalletAccountReadOnlyTon`](../sdk/wallet-modules/wallet-ton/api-reference.md#walletaccountreadonlyton) ([v1.0.0-beta.7](https://github.com/tetherto/wdk-wallet-ton/releases/tag/v1.0.0-beta.7))
+- **wallet-tron docs**: Added `verify` method to [`WalletAccountReadOnlyTron`](../sdk/wallet-modules/wallet-tron/api-reference.md#walletaccountreadonlytron) ([v1.0.0-beta.4](https://github.com/tetherto/wdk-wallet-tron/releases/tag/v1.0.0-beta.4))
+- **wallet-spark docs**: Added `verify` method to [`WalletAccountReadOnlySpark`](../sdk/wallet-modules/wallet-spark/api-reference.md#walletaccountreadonlyspark) ([v1.0.0-beta.7](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.7))
+
 ### January 23, 2026
 
 **What's New**

@@ -27,6 +27,11 @@ layout:
 | [WalletManagerBtc](#walletmanagerbtc) | Main class for managing Bitcoin wallets. Extends `WalletManager` from `@tetherto/wdk-wallet`. | [Constructor](#constructor), [Methods](#methods) |
 | [WalletAccountBtc](#walletaccountbtc) | Individual Bitcoin wallet account implementation. Implements `IWalletAccount`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties) |
 | [WalletAccountReadOnlyBtc](#walletaccountreadonlybtc) | Read-only Bitcoin wallet account. Extends `WalletAccountReadOnly` from `@tetherto/wdk-wallet`. | [Constructor](#constructor-2), [Methods](#methods-2) |
+| [WalletAccountReadOnlyBtc](#walletaccountreadonlybtc) | Read-only Bitcoin wallet account. Extends `WalletAccountReadOnly` from `@tetherto/wdk-wallet`. | [Constructor](#constructor-2), [Methods](#methods-2) |
+| [ElectrumTcp](#electrumtcp) | Standard TCP Electrum client. Implements `IElectrumClient`. | [Constructor](#constructor-3) |
+| [ElectrumTls](#electrumtls) | TLS Electrum client. Implements `IElectrumClient`. | [Constructor](#constructor-4) |
+| [ElectrumSsl](#electrumssl) | SSL Electrum client. Implements `IElectrumClient`. | [Constructor](#constructor-5) |
+| [ElectrumWs](#electrumws) | WebSocket Electrum client for browser environments. Implements `IElectrumClient`. | [Constructor](#constructor-6), [Methods](#methods-3) |
 
 ## WalletManagerBtc
 
@@ -405,7 +410,101 @@ new WalletAccountReadOnlyBtc(address, config)
 | `quoteSendTransaction(options)` | Estimates the fee for a transaction | `Promise<{fee: bigint}>` |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<BtcTransactionReceipt \| null>` |
 | `getMaxSpendable()` | Returns the maximum spendable amount | `Promise<BtcMaxSpendableResult>` |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 
+
+##### `verify(message, signature)`
+Verifies a message signature using the account's public key.
+
+**Parameters:**
+- `message` (string): Original message
+- `signature` (string): Signature as base64 string
+
+**Returns:** `Promise<boolean>` - True if signature is valid
+
+**Example:**
+```javascript
+const isValid = await readOnlyAccount.verify('Hello Bitcoin!', signature)
+console.log('Signature valid:', isValid)
+```
+
+
+## ElectrumTcp
+
+Electrum client using TCP transport. Standard for command-line and server-side environments.
+Implements `IElectrumClient`.
+
+#### Constructor
+
+```javascript
+new ElectrumTcp(config)
+```
+
+**Parameters:**
+- `config` (Omit<MempoolElectrumConfig, 'protocol'>): Configuration options
+  - `host` (string): Electrum server hostname
+  - `port` (number): Electrum server port
+
+## ElectrumTls
+
+Electrum client using TLS transport.
+Implements `IElectrumClient`.
+
+#### Constructor
+
+```javascript
+new ElectrumTls(config)
+```
+
+**Parameters:**
+- `config` (Omit<MempoolElectrumConfig, 'protocol'>): Configuration options
+  - `host` (string): Electrum server hostname
+  - `port` (number): Electrum server port
+
+## ElectrumSsl
+
+Electrum client using SSL transport.
+Implements `IElectrumClient`.
+
+#### Constructor
+
+```javascript
+new ElectrumSsl(config)
+```
+
+**Parameters:**
+- `config` (Omit<MempoolElectrumConfig, 'protocol'>): Configuration options
+  - `host` (string): Electrum server hostname
+  - `port` (number): Electrum server port
+
+## ElectrumWs
+
+Electrum client using WebSocket transport. Compatible with browser environments where TCP sockets are not available.
+Implements `IElectrumClient`.
+
+#### Constructor
+
+```javascript
+new ElectrumWs(config)
+```
+
+**Parameters:**
+- `config` (ElectrumWsConfig): Configuration options
+  - `url` (string): The WebSocket URL (e.g., 'wss://electrum.example.com:50004')
+
+### Methods
+
+| Method | Description | Returns |
+|--------|-------------|---------|
+| `connect()` | Establishes connection to Electrum server | `Promise<void>` |
+| `close()` | Closes the connection | `Promise<void>` |
+| `reconnect()` | Recreates the underlying socket and reinitializes the session | `Promise<void>` |
+| `getBalance(scripthash)` | Returns balance for a script hash | `Promise<ElectrumBalance>` |
+| `listUnspent(scripthash)` | Returns UTXOs for a script hash | `Promise<ElectrumUtxo[]>` |
+| `getHistory(scripthash)` | Returns transaction history | `Promise<ElectrumHistoryItem[]>` |
+| `getTransaction(txHash)` | Returns raw transaction hex | `Promise<string>` |
+| `broadcast(rawTx)` | Broadcasts raw transaction | `Promise<string>` |
+| `estimateFee(blocks)` | Returns estimated fee rate | `Promise<number>` |
 
 ## Types
 
@@ -525,6 +624,20 @@ interface ElectrumUtxo {
 interface ElectrumHistoryItem {
   tx_hash: string // The transaction hash
   height: number  // The block height (0 or negative if unconfirmed)
+}
+```
+
+### MempoolElectrumConfig
+
+```typescript
+interface MempoolElectrumConfig {
+  host: string              // Electrum server hostname
+  port: number              // Electrum server port
+  protocol?: 'tcp' | 'ssl' | 'tls' // Transport protocol (default: 'tcp')
+  maxRetry?: number         // Maximum reconnection attempts (default: 2)
+  retryPeriod?: number      // Delay between reconnection attempts in ms (default: 1000)
+  pingPeriod?: number       // Delay between keep-alive pings in ms (default: 120000)
+  callback?: (err: Error | null) => void // Called when all retries are exhausted
 }
 ```
 

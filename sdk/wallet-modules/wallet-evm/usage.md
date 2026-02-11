@@ -186,8 +186,9 @@ const message = 'Hello, Ethereum!'
 const signature = await account.sign(message)
 console.log('Signature:', signature)
 
-// Verify a signature
-const isValid = await account.verify(message, signature)
+// Verify a signature (using read-only account)
+const readOnlyAccount = await account.toReadOnlyAccount()
+const isValid = await readOnlyAccount.verify(message, signature)
 console.log('Signature valid:', isValid)
 ```
 
