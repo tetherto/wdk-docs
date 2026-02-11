@@ -31,6 +31,10 @@ npm install @tetherto/wdk-wallet-evm
 
 ### Creating a New Wallet
 
+{% hint style="danger" %}
+**Secure the Seed Phrase:** You must securely store this seed phrase immediately. If it is lost, the user will permanently lose access to their funds.
+{% endhint %}
+
 ```javascript
 import WalletManagerEvm, { WalletAccountEvm, WalletAccountReadOnlyEvm } from '@tetherto/wdk-wallet-evm'
 
@@ -39,22 +43,11 @@ import WalletManagerEvm, { WalletAccountEvm, WalletAccountReadOnlyEvm } from '@t
 const seedPhrase = 'your twelve word seed phrase here' // Replace with actual seed generation
 console.log('Seed phrase:', seedPhrase)
 
-{% hint style="danger" %}
-**Secure the Seed Phrase:** You must securely store this seed phrase immediately. If it is lost, the user will permanently lose access to their funds.
-{% endhint %}
-
 // Create wallet manager with RPC provider
 const wallet = new WalletManagerEvm(seedPhrase, {
   provider: 'https://rpc.mevblocker.io/fast', // or any other RPC provider
   transferMaxFee: 100000000000000 // Optional: Maximum fee in wei
 })
-
-{% hint style="info" %}
-**RPC Providers:** The examples use public RPC endpoints for demonstration. We do not endorse any specific provider.
-*   **Testnets:** You can find public RPCs for Ethereum and other EVM chains on [Chainlist](https://chainlist.org).
-*   **Mainnet:** For production environments, we recommend using reliable, paid RPC providers to ensure stability.
-{% endhint %}
-// OR
 
 // Option 2: Using EIP-1193 provider (e.g., from browser wallet)
 const wallet2 = new WalletManagerEvm(seedPhrase, {
@@ -68,6 +61,12 @@ const account = await wallet.getAccount(0)
 // Convert to a read-only account
 const readOnlyAccount = await account.toReadOnlyAccount()
 ```
+{% hint style="info" %}
+**RPC Providers:** The examples use public RPC endpoints for demonstration. We do not endorse any specific provider.
+*   **Testnets:** You can find public RPCs for Ethereum and other EVM chains on [Chainlist](https://chainlist.org).
+*   **Mainnet:** For production environments, we recommend using reliable, paid RPC providers to ensure stability.
+{% endhint %}
+
 {% hint style="info" %}
 > To use test/mock tokens instead of real funds, see the Testnet [configuration section](./configuration.md#sepolia-testnet-usdt-erc-20).
 
