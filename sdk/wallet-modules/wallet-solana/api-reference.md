@@ -140,6 +140,7 @@ new WalletAccountSolana(seed, path, config)
 | `quoteTransfer(options)` | Estimates the fee for an SPL token transfer | `Promise<{fee: bigint}>` |
 | `getBalance()` | Returns the native SOL balance (in lamports) | `Promise<bigint>` |
 | `getTokenBalance(tokenMint)` | Returns the balance of a specific SPL token | `Promise<bigint>` |
+| `getTransactionReceipt(hash)` | Gets the transaction receipt for a given transaction hash | `Promise<SolanaTransactionReceipt \| null>` |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlySolana>` |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
 
@@ -169,7 +170,7 @@ console.log('Signature:', signature)
 ```
 
 ##### `verify(message, signature)`
-Verifies a message signature.
+Verifies a message signature against the account's address.
 
 **Parameters:**
 - `message` (string): The original message
@@ -182,6 +183,7 @@ Verifies a message signature.
 const isValid = await account.verify('Hello, Solana!', signature)
 console.log('Signature valid:', isValid)
 ```
+
 
 ##### `sendTransaction(tx)`
 Sends a Solana transaction.
@@ -287,6 +289,20 @@ const tokenBalance = await account.getTokenBalance('Es9vMFrzaCERmJfrF4H2FYD4KCoN
 console.log('USDT balance:', tokenBalance)
 ```
 
+##### `getTransactionReceipt(hash)`
+Gets the transaction receipt for a given transaction hash.
+
+**Parameters:**
+- `hash` (string): Transaction hash
+
+**Returns:** `Promise<SolanaTransactionReceipt | null>` - Transaction receipt details, or null if not found
+
+**Example:**
+```javascript
+const receipt = await account.getTransactionReceipt('5....')
+console.log('Transaction receipt:', receipt)
+```
+
 ##### `toReadOnlyAccount()`
 Returns a read-only copy of the account.
 
@@ -338,6 +354,7 @@ new WalletAccountReadOnlySolana(publicKey, config)
 | `getAddress()` | Returns the account's Solana address | `Promise<string>` |
 | `getBalance()` | Returns the native SOL balance (in lamports) | `Promise<bigint>` |
 | `getTokenBalance(tokenMint)` | Returns the balance of a specific SPL token | `Promise<bigint>` |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `quoteSendTransaction(tx)` | Estimates the fee for a transaction | `Promise<{fee: bigint}>` |
 | `quoteTransfer(options)` | Estimates the fee for an SPL token transfer | `Promise<{fee: bigint}>` |
 
@@ -375,6 +392,21 @@ Returns the balance of a specific SPL token.
 ```javascript
 const tokenBalance = await readOnlyAccount.getTokenBalance('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB')
 console.log('USDT balance:', tokenBalance)
+```
+
+##### `verify(message, signature)`
+Verifies a message signature.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify (hex-encoded)
+
+**Returns:** `Promise<boolean>` - True if the signature is valid
+
+**Example:**
+```javascript
+const isValid = await readOnlyAccount.verify('Hello, Solana!', signature)
+console.log('Signature valid:', isValid)
 ```
 
 ##### `quoteSendTransaction(tx)`
