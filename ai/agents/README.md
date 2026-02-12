@@ -22,8 +22,6 @@ layout:
 
 The WDK Agents Skill is a structured set of instructions and reference docs that teach AI agents how to use the Wallet Development Kit. It gives any LLM — whether accessed via chat, IDE, or API — the knowledge to create wallets, send transactions, swap tokens, bridge assets, manage lending positions, and more across 20+ blockchains.
 
-Powered by [`tetherto/wdk-ai-skill`](https://github.com/tetherto/wdk-ai-skill).
-
 {% hint style="info" %}
 **Skill vs MCP Toolkit** — Use the **Agents Skill** when your agent works with CLI (e.g., OpenClaw). Use the [MCP Toolkit](../mcp-toolkit/) when your agent supports the Model Context Protocol natively (e.g. Claude). Use both for maximum coverage.
 {% endhint %}
