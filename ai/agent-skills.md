@@ -20,15 +20,15 @@ layout:
 
 # Agent Skills
 
-WDK provides agent skills — structured instruction sets that teach AI agents how to create wallets, send transactions, swap tokens, bridge assets, and interact with DeFi protocols across 20+ blockchains. All operations are self-custodial: keys stay on your machine, with no third-party custody dependency.
+WDK provides agent skills: structured instruction sets that teach AI agents how to create wallets, send transactions, swap tokens, bridge assets, and interact with DeFi protocols across 20+ blockchains. All operations are self-custodial. Keys stay on your machine, with no third-party custody dependency.
 
 {% hint style="info" %}
-**Skill vs MCP Toolkit** — Use an **agent skill** when your agent platform works with file-based instructions (e.g., OpenClaw, Cursor). Use the [MCP Toolkit](mcp-toolkit/README.md) when your agent supports the Model Context Protocol natively (e.g., Claude, Cursor). Use both for maximum coverage.
+**Skill vs MCP Toolkit**: Use an **agent skill** when your agent platform works with file-based instructions (e.g., OpenClaw, Cursor). Use the [MCP Toolkit](mcp-toolkit/README.md) when your agent supports the Model Context Protocol natively (e.g., Claude, Cursor). Use both for maximum coverage.
 {% endhint %}
 
 ## What Are Agent Skills?
 
-An agent skill is a structured set of instructions and reference documentation that teaches an AI agent to use a specific tool or SDK. Skills follow the [AgentSkills specification](https://agentskills.io/specification) — a `SKILL.md` file with frontmatter metadata and detailed instructions that any compatible agent can load and execute.
+An agent skill is a structured set of instructions and reference documentation that teaches an AI agent to use a specific tool or SDK. Skills follow the [AgentSkills specification](https://agentskills.io/specification). Each skill is a `SKILL.md` file with frontmatter metadata and detailed instructions that any compatible agent can load and execute.
 
 WDK publishes a skill that covers the full SDK surface: wallet modules, swap, bridge, lending, fiat on/off-ramps, and the indexer. When an agent loads the skill, it learns how to use WDK's APIs without the developer needing blockchain expertise.
 
@@ -53,16 +53,16 @@ All write operations require explicit human confirmation. The skill instructs ag
 
 ## How It Works
 
-1. **Install the skill** — clone the skill repository or install from a skill registry (e.g., [ClawHub](https://clawhub.ai/HumanRupert/tether-wallet-development-kit))
-2. **Agent loads the skill** — the agent reads `SKILL.md` and per-module reference files to learn WDK's API surface
-3. **Agent executes operations** — when you ask the agent to create a wallet or send a transaction, it generates the correct WDK code
-4. **You confirm** — write operations (transactions, swaps, bridges) require your approval before executing
+1. **Install the skill** by cloning the skill repository or installing from a skill registry like [ClawHub](https://clawhub.ai/HumanRupert/tether-wallet-development-kit)
+2. **Agent loads the skill** and reads `SKILL.md` along with per-module reference files to learn WDK's API surface
+3. **Agent executes operations** when you ask it to create a wallet or send a transaction, generating the correct WDK code
+4. **You confirm** before any write operation (transactions, swaps, bridges) goes through
 
 The skill includes security guidance: pre-transaction validation checklists, prompt injection detection rules, and mandatory key cleanup patterns.
 
 ## Self-Custodial vs Hosted
 
-WDK's agent skills use a self-custodial model — your agent controls its own keys locally. This differs from hosted solutions where keys are managed by a third party.
+WDK's agent skills use a self-custodial model where your agent controls its own keys locally. This differs from hosted solutions where keys are managed by a third party.
 
 | Feature | WDK | Coinbase Agentic Wallet | Privy Server Wallets |
 | --- | --- | --- | --- |
@@ -78,7 +78,7 @@ WDK's agent skills use a self-custodial model — your agent controls its own ke
 
 | Platform | How to Use |
 | --- | --- |
-| **OpenClaw** | Install from [ClawHub](openclaw.md) or clone to workspace — see [OpenClaw Integration](openclaw.md) |
+| **OpenClaw** | Install from [ClawHub](openclaw.md) or clone to workspace. See [OpenClaw Integration](openclaw.md) |
 | **Claude** | Upload `SKILL.md` as project knowledge, or paste into conversation |
 | **Cursor / Windsurf** | Clone to `.cursor/skills/wdk` or `.windsurf/skills/wdk` |
 | **Any MCP-compatible agent** | Use the [MCP Toolkit](mcp-toolkit/README.md) for structured tool calling |
@@ -96,10 +96,10 @@ Projects built by the community using WDK's agentic capabilities:
 
 ## Resources
 
-- [WDK Skill on ClawHub](https://clawhub.ai/HumanRupert/tether-wallet-development-kit) — Install the skill
-- [AgentSkills Specification](https://agentskills.io/specification) — The skill format standard
-- [WDK MCP Toolkit](https://github.com/tetherto/wdk-mcp-toolkit) — MCP server for structured tool calling
-- [WDK Core](https://github.com/tetherto/wdk-core) — The core SDK
+- [WDK Skill on ClawHub](https://clawhub.ai/HumanRupert/tether-wallet-development-kit) - Install the skill
+- [AgentSkills Specification](https://agentskills.io/specification) - The skill format standard
+- [WDK MCP Toolkit](https://github.com/tetherto/wdk-mcp-toolkit) - MCP server for structured tool calling
+- [WDK Core](https://github.com/tetherto/wdk-core) - The core SDK
 
 ***
 
