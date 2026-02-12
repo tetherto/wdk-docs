@@ -105,7 +105,7 @@ All write operations (transactions, swaps, bridges, lending) require explicit hu
 | Any other agent | Copy `SKILL.md` into system prompt or conversation context |
 
 {% hint style="info" %}
-[OpenClaw](https://openclaw.org) is an open-source platform for building, sharing, and running AI agent skills — think npm for agent capabilities. Skills are structured instruction sets that any compatible agent can load and execute. The WDK skill is published on [ClawHub](https://clawhub.ai/HumanRupert/wdk) for one-click installation.
+[OpenClaw](https://openclaw.ai) is an open-source platform for building, sharing, and running AI agent skills — think npm for agent capabilities. Skills are structured instruction sets that any compatible agent can load and execute. The WDK skill is published on [ClawHub](https://clawhub.ai/HumanRupert/wdk) for one-click installation.
 {% endhint %}
 
 {% hint style="info" %}
