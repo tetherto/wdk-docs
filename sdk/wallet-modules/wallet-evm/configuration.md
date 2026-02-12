@@ -85,10 +85,31 @@ const config = {
   provider: window.ethereum
 }
 
-// Option 3: Using custom JsonRpcProvider
-import { JsonRpcProvider } from 'ethers'
+// Option 3: Using a custom EIP-1193 provider
+// Works in Node.js, Bare, and browsers - zero external dependencies
+function createFetchProvider(rpcUrl) {
+  let requestId = 0
+  return {
+    request: async ({ method, params }) => {
+      const response = await fetch(rpcUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: ++requestId,
+          method,
+          params: params || []
+        })
+      })
+      const data = await response.json()
+      if (data.error) throw new Error(data.error.message)
+      return data.result
+    }
+  }
+}
+
 const config = {
-  provider: new JsonRpcProvider('https://eth-mainnet.g.alchemy.com/v2/your-api-key')
+  provider: createFetchProvider('https://eth-mainnet.g.alchemy.com/v2/your-api-key')
 }
 ```
 
