@@ -30,7 +30,7 @@ WDK provides agent skills: structured instruction sets that teach AI agents how 
 
 An agent skill is a structured set of instructions and reference documentation that teaches an AI agent to use a specific tool or SDK. Skills follow the [AgentSkills specification](https://agentskills.io/specification). Each skill is a `SKILL.md` file with frontmatter metadata and detailed instructions that any compatible agent can load and execute.
 
-WDK publishes a skill that covers the full SDK surface: wallet modules, swap, bridge, lending, fiat on/off-ramps, and the indexer. When an agent loads the skill, it learns WDK's APIs so you don't need blockchain expertise to get started.
+WDK publishes a skill that covers the full SDK surface: wallet modules, swap, bridge, lending, fiat on/off-ramps, and the indexer. When an agent loads the skill, it learns WDK's APIs so you don't need blockchain expertise to get started. You can view the full skill file on [GitHub](https://github.com/tetherto/wdk-docs/blob/main/SKILL.md).
 
 ## Capabilities
 
@@ -96,6 +96,7 @@ Projects built by the community using WDK's agentic capabilities:
 
 ## Resources
 
+- [WDK SKILL.md on GitHub](https://github.com/tetherto/wdk-docs/blob/main/SKILL.md) - The full skill file agents consume
 - [WDK Skill on ClawHub](https://clawhub.ai/HumanRupert/tether-wallet-development-kit) - Install the skill
 - [AgentSkills Specification](https://agentskills.io/specification) - The skill format standard
 - [WDK MCP Toolkit](https://github.com/tetherto/wdk-mcp-toolkit) - MCP server for structured tool calling
