@@ -30,7 +30,7 @@ WDK provides agent skills: structured instruction sets that teach AI agents how 
 
 An agent skill is a structured set of instructions and reference documentation that teaches an AI agent to use a specific tool or SDK. Skills follow the [AgentSkills specification](https://agentskills.io/specification). Each skill is a `SKILL.md` file with frontmatter metadata and detailed instructions that any compatible agent can load and execute.
 
-WDK publishes a skill that covers the full SDK surface: wallet modules, swap, bridge, lending, fiat on/off-ramps, and the indexer. When an agent loads the skill, it learns how to use WDK's APIs without the developer needing blockchain expertise.
+WDK publishes a skill that covers the full SDK surface: wallet modules, swap, bridge, lending, fiat on/off-ramps, and the indexer. When an agent loads the skill, it learns WDK's APIs so you don't need blockchain expertise to get started.
 
 ## Capabilities
 
@@ -62,7 +62,7 @@ The skill includes security guidance: pre-transaction validation checklists, pro
 
 ## Self-Custodial vs Hosted
 
-WDK's agent skills use a self-custodial model where your agent controls its own keys locally. This differs from hosted solutions where keys are managed by a third party.
+WDK's agent skills use a self-custodial model where your agent controls its own keys locally. This differs from hosted solutions where a third party manages your keys.
 
 | Feature | WDK | Coinbase Agentic Wallet | Privy Server Wallets |
 | --- | --- | --- | --- |
