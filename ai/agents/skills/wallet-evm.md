@@ -77,5 +77,3 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
   transferMaxFee: 5000000       // in paymaster token units
 })
 ```
-
-Currently Account Abstraction (ERC-4337) is supported on: **Arbitrum**.
