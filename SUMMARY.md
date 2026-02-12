@@ -21,6 +21,8 @@
   * [Get Started](ai/mcp-toolkit/get-started.md)
   * [Configuration](ai/mcp-toolkit/configuration.md)
   * [API Reference](ai/mcp-toolkit/api-reference.md)
+* [Agent Skills](ai/agent-skills.md)
+* [OpenClaw](ai/openclaw.md)
 
 ## SDK
 
