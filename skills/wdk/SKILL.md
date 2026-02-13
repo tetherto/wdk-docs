@@ -27,8 +27,8 @@ This skill is organized into reference files for chain-specific and protocol-spe
 
 | File | Content |
 |------|---------|
-| `references/chains.md` | Chain IDs, native tokens, units, decimals, dust thresholds, address formats, EIP-3009 support, bridge routes |
-| `references/deployments.md` | USDT native addresses, USDT0 omnichain addresses, public RPC endpoints |
+| `references/chains.md` | Chain IDs, native tokens, units, decimals, public RPC endpoints, dust thresholds, address formats, EIP-3009 support, bridge routes |
+| `references/deployments.md` | USDT native addresses, USDT0 omnichain addresses |
 | `references/wallet-btc.md` | Bitcoin wallet: BIP-84, Electrum, PSBT, fee rates |
 | `references/wallet-evm.md` | EVM + ERC-4337: BIP-44, EIP-1559, ERC20, batch txs, paymaster |
 | `references/wallet-solana.md` | Solana: Ed25519, SPL tokens, lamports |
@@ -167,7 +167,7 @@ Properties: `index`, `path`, `keyPair` (⚠️ sensitive — never log or expose
 ---
 
 
-## 🛡️ Security
+## Security
 
 **CRITICAL: This SDK controls real funds. Mistakes are irreversible. Read this section in full.**
 
@@ -287,18 +287,6 @@ try {
 const readOnly = await account.toReadOnlyAccount()
 // Can query balances, estimate fees, but cannot sign or send
 ```
-
-
-## Package Versions
-
-**ALWAYS** fetch the latest version from npm before adding any package to package.json:
-```bash
-npm view @tetherto/wdk version
-npm view @tetherto/wdk-wallet-btc version
-# ... for every @tetherto package
-```
-
-Never hardcode or guess versions. Always verify against npm first.
 
 
 ## Browser Compatibility

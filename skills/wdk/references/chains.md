@@ -1,5 +1,14 @@
 # Chain & Unit Reference
 
+## Contents
+- [Chains, Native Tokens & Base Units](#chains-native-tokens--base-units)
+- [Public RPC Endpoints](#public-rpc-endpoints)
+- [Common Token Decimals](#common-token-decimals)
+- [EIP-3009 Support (Gasless Transfers)](#eip-3009-support-gasless-transfers)
+- [Address Format Validation](#address-format-validation)
+- [Dust Thresholds](#dust-thresholds)
+- [WDK Bridge Supported Routes](#wdk-bridge-supported-routes)
+
 ## Chains, Native Tokens & Base Units
 
 | Chain | Chain ID | Native Token | Base Unit | Decimals | 1 Token = |

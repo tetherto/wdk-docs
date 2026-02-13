@@ -44,7 +44,7 @@ Requires peer dependency: `@buildonspark/spark-sdk`
 
 ```javascript
 const wallet = new WalletManagerSpark(seedPhrase, {
-  network: 'mainnet'  // or 'testnet'
+  network: 'MAINNET'  // or 'REGTEST' or 'SIGNET'
 })
 ```
 
