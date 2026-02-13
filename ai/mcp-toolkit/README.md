@@ -1,7 +1,7 @@
 ---
 title: MCP Toolkit
 description: Build MCP servers that give AI agents self-custodial WDK wallets
-icon: robot
+icon: wand-magic-sparkles
 layout:
   width: default
   title:

@@ -24,6 +24,14 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### February 12, 2026
+
+**What's New**
+- **[Agent Skills](../ai/agent-skills.md)**: New page covering WDK's agent skill capabilities, self-custodial vs hosted comparison, and platform compatibility with OpenClaw, Claude, Cursor, and other agent platforms.
+- **[OpenClaw Integration](../ai/openclaw.md)**: New page for installing and configuring the WDK skill in OpenClaw via ClawHub, including security precautions for running agents locally.
+
+---
+
 ### February 10, 2026
 
 **What's New**
