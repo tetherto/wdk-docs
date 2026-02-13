@@ -30,6 +30,13 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 - **[Agent Skills](../ai/agent-skills.md)**: New page covering WDK's agent skill capabilities, self-custodial vs hosted comparison, and platform compatibility with OpenClaw, Claude, Cursor, and other agent platforms.
 - **[OpenClaw Integration](../ai/openclaw.md)**: New page for installing and configuring the WDK skill in OpenClaw via ClawHub, including security precautions for running agents locally.
 
+**Changes**
+- **wallet-evm** ([v1.0.0-beta.7](https://github.com/tetherto/wdk-wallet-evm/releases/tag/v1.0.0-beta.7)): Added [EIP-712](https://eips.ethereum.org/EIPS/eip-712) typed data support:
+  - Added `signTypedData(typedData)` method to [`WalletAccountEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountevm) for signing structured data
+  - Added `verifyTypedData(typedData, signature)` method to [`WalletAccountEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountevm) and [`WalletAccountReadOnlyEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountreadonlyevm) for verifying typed data signatures
+  - Added `address` property to [`WalletAccountReadOnlyEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountreadonlyevm)
+  - Added `TypedData`, `TypedDataDomain`, `TypedDataField` type exports
+
 ---
 
 ### February 10, 2026
