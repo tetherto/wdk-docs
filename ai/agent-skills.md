@@ -30,7 +30,7 @@ WDK provides agent skills: structured instruction sets that teach AI agents how 
 
 An agent skill is a structured set of instructions and reference documentation that teaches an AI agent to use a specific tool or SDK. Skills follow the [AgentSkills specification](https://agentskills.io/specification). Each skill is a `SKILL.md` file with frontmatter metadata and detailed instructions that any compatible agent can load and execute.
 
-WDK publishes a skill that covers the full SDK surface: wallet modules, swap, bridge, lending, fiat on/off-ramps, and the indexer. When an agent loads the skill, it learns WDK's APIs so you don't need blockchain expertise to get started. You can view the full skill file on [GitHub](https://github.com/tetherto/wdk-docs/blob/main/SKILL.md).
+WDK publishes a skill that covers the full SDK surface: wallet modules, swap, bridge, lending, fiat on/off-ramps, and the indexer. When an agent loads the skill, it learns WDK's APIs so you don't need blockchain expertise to get started. You can view the full skill file on [GitHub](https://github.com/tetherto/wdk-docs/blob/main/skills/wdk/SKILL.md).
 
 ## Capabilities
 
@@ -44,7 +44,6 @@ Once an agent loads the WDK skill, it can:
 | **Bridges** | Cross-chain bridges with USDT0 via LayerZero |
 | **Lending** | Supply, borrow, repay, and withdraw via Aave V3 |
 | **Fiat** | Buy and sell crypto via MoonPay on/off-ramps |
-| **Payments** | x402 HTTP payment protocol support |
 | **Gasless** | Fee-free transfers on TON (via paymaster) and Tron (via gas-free service), and ERC-4337 account abstraction on EVM |
 
 {% hint style="warning" %}
@@ -67,11 +66,11 @@ WDK's agent skills use a self-custodial model where your agent controls its own 
 | Feature | WDK | Coinbase Agentic Wallet | Privy Server Wallets |
 | --- | --- | --- | --- |
 | Custody model | Self-custodial | Coinbase-hosted | Privy-hosted (server) |
-| Multi-chain | Yes (EVM, Bitcoin, Solana, TON, Tron, Spark) | Base only | EVM + Solana |
+| Multi-chain | Yes (EVM, Bitcoin, Solana, TON, Tron, Spark + more) | EVM + Solana | EVM + Solana + Bitcoin + more |
 | Open source | Yes (SDK + skills) | CLI/skills open, infra closed | Skills open, API closed |
 | MCP support | Yes ([MCP Toolkit](mcp-toolkit/README.md)) | Via skills | Via skills |
 | OpenClaw support | Yes ([ClawHub skill](https://clawhub.ai/HumanRupert/tether-wallet-development-kit)) | Yes (npx skills) | Yes (ClawHub skill) |
-| x402 payments | Yes (native) | Yes (native) | No |
+| x402 payments | Via [community extensions](#community-projects) | Yes (native) | No |
 | Key management | Local / self-managed | Coinbase infrastructure | Privy infrastructure |
 
 ## Use With Agent Platforms
@@ -96,7 +95,7 @@ Projects built by the community using WDK's agentic capabilities:
 
 ## Resources
 
-- [WDK SKILL.md on GitHub](https://github.com/tetherto/wdk-docs/blob/main/SKILL.md) - The full skill file agents consume
+- [WDK SKILL.md on GitHub](https://github.com/tetherto/wdk-docs/blob/main/skills/wdk/SKILL.md) - The full skill file agents consume
 - [WDK Skill on ClawHub](https://clawhub.ai/HumanRupert/tether-wallet-development-kit) - Install the skill
 - [AgentSkills Specification](https://agentskills.io/specification) - The skill format standard
 - [WDK MCP Toolkit](https://github.com/tetherto/wdk-mcp-toolkit) - MCP server for structured tool calling
