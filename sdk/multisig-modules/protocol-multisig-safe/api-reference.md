@@ -1,6 +1,6 @@
 # API Reference
 
-Complete API documentation for @tetherto/wdk-protocol-multisig-safe
+Complete API documentation for @tetherto/wdk-wallet-evm-multisig-safe
 
 ## Classes
 
@@ -27,9 +27,13 @@ new WalletManagerEvmMultisigSafe(seedPhrase, config)
   * `chainId` (bigint): Blockchain network ID
   * `provider` (string | Provider): RPC provider URL or EIP-1193 provider
   * `bundlerUrl` (string): ERC-4337 bundler service URL
-  * `paymasterOptions` (PaymasterOptions): Paymaster configuration
   * `options` (ExistingSafeOptions | PredictedSafeOptions): Safe creation or import config
-  * `transferMaxFee` (number, optional): Maximum fee in paymaster token units
+  * `paymasterOptions` (PaymasterOptions, optional): Paymaster configuration
+  * `safeApiKey` (string, optional): Safe API key
+  * `txServiceUrl` (string, optional): Custom Safe Transaction Service URL
+  * `transferMaxFee` (number | bigint, optional): Maximum fee in paymaster token units
+  * `entryPointAddress` (string, optional): EntryPoint contract address
+  * `safeModulesVersion` (string, optional): Safe modules version (default: '0.2.0')
 
 ### Methods
 
@@ -161,6 +165,41 @@ const threshold = await account.getThreshold()
 
 **Returns:** `Promise<number>` - Threshold value
 
+#### getMultisigInfo
+
+Returns comprehensive multisig wallet info.
+
+```javascript
+const info = await account.getMultisigInfo()
+```
+
+**Returns:** `Promise<MultisigInfo>`
+
+* `address` (string): Safe address
+* `owners` (string[]): Owner addresses
+* `threshold` (number): Required confirmations
+* `isCreated` (boolean): Whether Safe is deployed
+
+#### getNonce
+
+Returns the Safe's current nonce.
+
+```javascript
+const nonce = await account.getNonce()
+```
+
+**Returns:** `Promise<number>` - Current nonce
+
+#### getVersion
+
+Returns the Safe contract version.
+
+```javascript
+const version = await account.getVersion()
+```
+
+**Returns:** `Promise<string>` - Version string (e.g., "1.4.1") or "not deployed"
+
 #### isDeployed
 
 Checks if the Safe contract is deployed on-chain.
@@ -199,7 +238,7 @@ const proposal = await account.propose(transaction, options?)
 
 **Returns:** `Promise<ProposeResult>`
 
-* `safeOperationHash` (string): Unique operation identifier
+* `proposalId` (string): Unique Safe operation hash
 * `confirmations` (number): Number of confirmations
 * `threshold` (number): Required confirmations to execute
 
@@ -208,12 +247,12 @@ const proposal = await account.propose(transaction, options?)
 Approves a pending transaction.
 
 ```javascript
-const result = await account.approve(safeOperationHash)
+const result = await account.approve(proposalId)
 ```
 
 **Parameters:**
 
-* `safeOperationHash` (string): Operation hash from propose()
+* `proposalId` (string): Operation hash from propose()
 
 **Returns:** `Promise<ApprovalResult>`
 
@@ -225,12 +264,12 @@ const result = await account.approve(safeOperationHash)
 Rejects a pending transaction by proposing a rejection transaction.
 
 ```javascript
-const result = await account.reject(safeOperationHash)
+const result = await account.reject(proposalId)
 ```
 
 **Parameters:**
 
-* `safeOperationHash` (string): Operation hash to reject
+* `proposalId` (string): Operation hash to reject
 
 **Returns:** `Promise<ProposeResult>`
 
@@ -239,12 +278,12 @@ const result = await account.reject(safeOperationHash)
 Executes a transaction that has met the threshold.
 
 ```javascript
-const result = await account.execute(safeOperationHash)
+const result = await account.execute(proposalId)
 ```
 
 **Parameters:**
 
-* `safeOperationHash` (string): Operation hash from propose()
+* `proposalId` (string): Operation hash from propose()
 
 **Returns:** `Promise<ExecuteResult>`
 
@@ -255,14 +294,32 @@ const result = await account.execute(safeOperationHash)
 Checks if a transaction has met the threshold and is ready to execute.
 
 ```javascript
-const ready = await account.isReadyToExecute(safeOperationHash)
+const ready = await account.isReadyToExecute(proposalId)
 ```
 
 **Parameters:**
 
-* `safeOperationHash` (string): Operation hash to check
+* `proposalId` (string): Operation hash to check
 
 **Returns:** `Promise<boolean>`
+
+#### getProposal
+
+Gets a specific Safe operation by hash.
+
+```javascript
+const proposal = await account.getProposal(proposalId)
+```
+
+**Parameters:**
+
+* `proposalId` (string): The Safe operation hash
+
+**Returns:** `Promise<MultisigProposal | null>`
+
+* `proposalId` (string): Operation hash
+* `confirmations` (number): Number of confirmations
+* `threshold` (number): Required threshold
 
 #### sendTransaction
 
@@ -328,49 +385,15 @@ const quote = await account.quoteTransfer(transferOptions, proposeOptions?)
 
 **Returns:** `Promise<{ fee: bigint }>`
 
-#### getTransactionHashByUserOpHash
+#### quoteDeploy
 
-Gets the on-chain transaction hash from a UserOperation hash.
-
-```javascript
-const txHash = await account.getTransactionHashByUserOpHash(userOpHash)
-```
-
-**Parameters:**
-
-* `userOpHash` (string): UserOperation hash from execute()
-
-**Returns:** `Promise<string | null>` - Transaction hash or null if pending
-
-#### getPendingTransactions
-
-Gets all pending transactions awaiting approval or execution.
+Estimates the fee for deploying the Safe.
 
 ```javascript
-const pending = await account.getPendingTransactions()
+const quote = await account.quoteDeploy()
 ```
 
-**Returns:** `Promise<{ results: SafeOperationResponse[] }>`
-
-#### getSafeOperation
-
-Gets details of a specific Safe operation.
-
-```javascript
-const operation = await account.getSafeOperation(safeOperationHash)
-```
-
-**Returns:** `Promise<SafeOperationResponse>`
-
-#### getTransactionHistory
-
-Gets the transaction history for the Safe.
-
-```javascript
-const history = await account.getTransactionHistory(options?)
-```
-
-**Returns:** `Promise<SafeMultisigTransactionListResponse>`
+**Returns:** `Promise<{ fee: bigint }>`
 
 #### addOwner
 
@@ -451,31 +474,44 @@ const proposal = await account.updateOwners(newOwners, newThreshold, options?)
 
 **Returns:** `Promise<ProposeResult>`
 
-#### sign
+#### proposeMessage
 
-Signs a message with the multisig Safe. Proposes a new message or approves an existing one.
+Proposes signing a message with the multisig Safe.
 
 ```javascript
-const result = await account.sign(message, options?)
+const result = await account.proposeMessage(message)
 ```
 
 **Parameters:**
 
 * `message` (string): Message to sign
-* `options` (SignOptions, optional): Sign options
-  * `isApproval` (boolean): If true, approve existing message; otherwise propose new
 
-**Returns:** `Promise<SignResult>`
+**Returns:** `Promise<MessageResult>`
 
 * `signature` (string): This owner's signature
-* `safeMessage` (SafeMessage): Full SafeMessage object from Safe Transaction Service
-  * `messageHash` (string): Message hash
-  * `message` (string): Original message
-  * `confirmations` (array): Array of confirmations with owner and signature
-  * `preparedSignature` (string | null): Combined signature when fully signed
-  * `proposedBy` (string): Address that proposed the message
-  * `created` (string): Creation timestamp
-  * `modified` (string): Last modified timestamp
+* `messageHash` (string): Message hash for approval
+* `confirmations` (number): Number of confirmations
+* `threshold` (number): Required confirmations
+* `combinedSignature` (string | null): Combined signature when fully signed
+
+#### approveMessage
+
+Approves a previously proposed message.
+
+```javascript
+const result = await account.approveMessage(messageHash)
+```
+
+**Parameters:**
+
+* `messageHash` (string): Message hash from proposeMessage()
+
+**Returns:** `Promise<MessageResult>`
+
+* `signature` (string): This owner's signature
+* `confirmations` (number): Number of confirmations
+* `threshold` (number): Required confirmations
+* `combinedSignature` (string | null): Combined signature when fully signed
 
 #### verify
 
@@ -488,7 +524,7 @@ const isValid = await account.verify(message, signature)
 **Parameters:**
 
 * `message` (string): Original message
-* `signature` (string): Combined signature (preparedSignature from SafeMessage)
+* `signature` (string): Combined signature (combinedSignature from approveMessage result)
 
 **Returns:** `Promise<boolean>` - True if signature is valid
 
@@ -504,17 +540,27 @@ const message = await account.getMessage(messageHash)
 
 * `messageHash` (string): Message hash
 
-**Returns:** `Promise<SafeMessage | null>`
+**Returns:** `Promise<MessageInfo | null>`
 
-#### getPendingMessages
+* `messageHash` (string): Message hash
+* `message` (string): Original message
+* `confirmations` (number): Number of confirmations
+* `threshold` (number): Required confirmations
+* `combinedSignature` (string | null): Combined signature when fully signed
 
-Gets all pending messages awaiting signatures.
+#### sign
+
+Signs a message with the multisig Safe. Internally calls proposeMessage for new messages or approveMessage for existing ones.
 
 ```javascript
-const messages = await account.getPendingMessages()
+const signature = await account.sign(message)
 ```
 
-**Returns:** `Promise<{ results: SafeMessage[] }>`
+**Parameters:**
+
+* `message` (string): Message to sign
+
+**Returns:** `Promise<string>` - This owner's signature
 
 #### toReadOnlyAccount
 
@@ -539,36 +585,6 @@ account.dispose()
 Read-only account for balance checks and queries without signing capabilities.
 
 ### Static Methods
-
-#### getSafesByOwner
-
-Gets all Safe addresses owned by an EOA.
-
-```javascript
-const safes = await WalletAccountReadOnlyEvmMultisigSafe.getSafesByOwner(ownerAddress, config)
-```
-
-**Parameters:**
-
-* `ownerAddress` (string): EOA address to search
-* `config` (SafesByOwnerConfig): Configuration with chainId
-
-**Returns:** `Promise<string[]>` - Array of Safe addresses
-
-#### getSafeInfo
-
-Gets Safe info without creating an instance.
-
-```javascript
-const info = await WalletAccountReadOnlyEvmMultisigSafe.getSafeInfo(safeAddress, config)
-```
-
-**Parameters:**
-
-* `safeAddress` (string): Safe contract address
-* `config` (SafesByOwnerConfig): Configuration with chainId
-
-**Returns:** `Promise<SafeInfo>` - Safe info including owners, threshold, version
 
 #### generateDeterministicSaltNonce
 
@@ -596,24 +612,26 @@ new WalletAccountReadOnlyEvmMultisigSafe(address, config)
 All query methods from WalletAccountEvmMultisigSafe are available:
 
 * `getAddress()`
+* `getSignerAddress()`
 * `getBalance()`
 * `getTokenBalance(tokenAddress)`
 * `getPaymasterTokenBalance()`
 * `getOwners()`
 * `getThreshold()`
+* `getMultisigInfo()`
 * `getNonce()`
-* `isDeployed()`
 * `getVersion()`
-* `getPendingTransactions()`
-* `getSafeOperation(hash)`
-* `getTransactionHistory(options?)`
-* `getIncomingTransactions(options?)`
-* `isReadyToExecute(hash)`
-* `getTransactionHashByUserOpHash(hash)`
+* `isDeployed()`
+* `getProposal(proposalId)`
 * `getMessage(messageHash)`
-* `getPendingMessages()`
+* `isReadyToExecute(proposalId)`
 * `quoteSendTransaction(tx, options?)`
 * `quoteTransfer(options, proposeOptions?)`
+* `quoteDeploy()`
+
+{% hint style="info" %}
+For transaction history, pending operations, and incoming transfers, use `SafeApiKit` directly. The read-only account exposes `_getApiKit()` for advanced queries.
+{% endhint %}
 
 ## Types
 
@@ -625,19 +643,19 @@ interface EvmMultisigSafeConfig {
   chainId: bigint
   provider: string | Eip1193Provider
   bundlerUrl: string
-  
-  // Required - Safe options (one of the following)
   options: ExistingSafeOptions | PredictedSafeOptions
   
   // Optional - Paymaster
   paymasterOptions?: PaymasterOptions
   
-  // Optional - Safe Transaction Service
+  // Optional - Safe Transaction Service (pick one)
   txServiceUrl?: string
   safeApiKey?: string
   
-  // Optional - Fee limits
+  // Optional - Advanced
   transferMaxFee?: number | bigint
+  entryPointAddress?: string
+  safeModulesVersion?: string  // Default: '0.2.0'
 }
 ```
 
@@ -664,23 +682,21 @@ interface PredictedSafeOptions {
 ### PaymasterOptions
 
 ```typescript
-// ERC-20 Paymaster Mode
-interface ERC20PaymasterOptions {
-  paymasterUrl: string
-  paymasterAddress?: string
-  paymasterTokenAddress: string  // ERC-20 token for gas payment
-  isSponsored?: false
-}
-
-// Sponsored Paymaster Mode
-interface SponsoredPaymasterOptions {
-  paymasterUrl: string
-  paymasterAddress?: string      // Needed for ERC-20 override
+type SponsoredPaymasterOption = {
   isSponsored: true
   sponsorshipPolicyId?: string
 }
 
-type PaymasterOptions = ERC20PaymasterOptions | SponsoredPaymasterOptions
+type ERC20PaymasterOption = {
+  isSponsored?: false
+  paymasterAddress: string
+  paymasterTokenAddress: string
+  amountToApprove?: bigint
+}
+
+type PaymasterOptions = {
+  paymasterUrl: string
+} & (SponsoredPaymasterOption | ERC20PaymasterOption) | undefined
 ```
 
 ### ProposeOptions
@@ -691,68 +707,28 @@ interface ProposeOptions {
   isSponsored?: boolean
   sponsorshipPolicyId?: string
   paymasterTokenAddress?: string
-  amountToApprove?: bigint
 }
 ```
 
-### SignOptions
+### MultisigProposal
 
 ```typescript
-interface SignOptions {
-  isApproval?: boolean  // If true, approve existing; otherwise propose new
+interface MultisigProposal {
+  proposalId: string
+  confirmations: number
+  threshold: number
 }
 ```
 
-### SignResult
+### MessageInfo
 
 ```typescript
-interface SignResult {
-  signature: string      // This owner's signature
-  safeMessage: SafeMessage  // Full SafeMessage from API
-}
-```
-
-### SafeMessage
-
-Imported from `@safe-global/api-kit`:
-
-```typescript
-interface SafeMessage {
+interface MessageInfo {
   messageHash: string
-  message: string | EIP712TypedData
-  proposedBy: string
-  confirmations: Array<{
-    owner: string
-    signature: string
-  }>
-  preparedSignature: string | null
-  created: string
-  modified: string
-  safe: string
-}
-```
-
-## Error Handling
-
-```javascript
-try {
-  const result = await account.execute(safeOperationHash)
-} catch (error) {
-  if (error.message.includes('threshold not met')) {
-    console.error('Not enough confirmations to execute')
-  }
-  if (error.message.includes('not enough funds')) {
-    console.error('Insufficient paymaster token balance')
-  }
-  if (error.message.includes('Exceeded maximum fee')) {
-    console.error('Transaction fee exceeds limit')
-  }
-  if (error.message.includes('not an owner')) {
-    console.error('Signer is not an owner of this Safe')
-  }
-  if (error.message.includes('already confirmed')) {
-    console.error('This signer has already confirmed')
-  }
+  message: string
+  confirmations: number
+  threshold: number
+  combinedSignature: string | null
 }
 ```
 

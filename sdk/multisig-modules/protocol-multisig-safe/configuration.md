@@ -1,16 +1,16 @@
 # Configuration
 
-Configuration options and settings for @tetherto/wdk-protocol-multisig-safe
+Configuration options and settings for @tetherto/wdk-wallet-evm-multisig-safe
 
 ## Wallet Configuration
 
 The WalletManagerEvmMultisigSafe requires a complete configuration object with required parameters:
 
 ```javascript
-import WalletManagerEvmMultisigSafe from '@tetherto/wdk-protocol-multisig-safe'
+import WalletManagerEvmMultisigSafe from '@tetherto/wdk-wallet-evm-multisig-safe'
 
 const config = {
-  // Required parameters
+  // Required
   chainId: 11155111n,
   provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
   bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
@@ -18,17 +18,27 @@ const config = {
   // Paymaster configuration
   paymasterOptions: {
     paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-    paymasterTokenAddress: '0x...' // USDT or other supported token
+    paymasterAddress: '0x...',           // Optional: paymaster contract address
+    paymasterTokenAddress: '0x...',      // ERC-20 token for gas (e.g., USDT)
+    isSponsored: false,                  // Optional: true for gasless mode
+    sponsorshipPolicyId: 'sp_my_policy'  // Optional: sponsorship policy ID
   },
   
-  // Safe configuration - for creating new Safe
+  // Safe Transaction Service (pick one, not both)
+  safeApiKey: 'eyJhb...',                        // API key (backend/testing only)
+  // txServiceUrl: 'https://your-proxy.com/safe', // OR proxy URL (recommended for frontend)
+
+  // Safe options (pick one, not both)
   options: {
-    owners: ['0xAliceEOA...', '0xBobEOA...'],
+    owners: ['0xAliceEOA...', '0xBobEOA...'],    // Create new Safe
     threshold: 2
   },
+  // options: { safeAddress: '0x...' }            // OR import existing Safe
   
-  // Optional parameters
-  transferMaxFee: 100000000000000
+  // Optional
+  transferMaxFee: 1000000,               // Max fee in paymaster token units
+  entryPointAddress: '0x...',            // Custom EntryPoint contract address
+  safeModulesVersion: '0.2.0'           // Safe modules version (default: '0.2.0')
 }
 
 const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, config)
@@ -47,7 +57,7 @@ Both WalletAccountEvmMultisigSafe and WalletAccountReadOnlyEvmMultisigSafe use t
 import { 
   WalletAccountEvmMultisigSafe, 
   WalletAccountReadOnlyEvmMultisigSafe 
-} from '@tetherto/wdk-protocol-multisig-safe'
+} from '@tetherto/wdk-wallet-evm-multisig-safe'
 
 // Full access account
 const account = new WalletAccountEvmMultisigSafe(
@@ -139,8 +149,8 @@ Pay fees using ERC-20 tokens (e.g., USDT):
 ```javascript
 paymasterOptions: {
   paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-  paymasterAddress: '0x...', // Optional: paymaster contract address
-  paymasterTokenAddress: '0x...' // USDT or other supported token
+  paymasterAddress: '0x...',        // Required: paymaster contract address
+  paymasterTokenAddress: '0x...'    // Required: USDT or other supported token
 }
 ```
 
@@ -151,7 +161,6 @@ Use a sponsored paymaster for gasless transactions:
 ```javascript
 paymasterOptions: {
   paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-  paymasterAddress: '0x...', // Optional: needed for ERC-20 override
   isSponsored: true,
   sponsorshipPolicyId: 'sp_my_policy' // Optional: sponsorship policy ID
 }
@@ -181,24 +190,25 @@ options: {
 }
 ```
 
-#### Discovering Existing Safes
+### Safe Transaction Service
 
-Use the static method to discover Safes before creating an account:
+Configure how the package communicates with the Safe Transaction Service for proposal coordination.
 
 ```javascript
-const safes = await WalletAccountReadOnlyEvmMultisigSafe.getSafesByOwner(
-  '0xOwnerEOA...',
-  { chainId: 11155111n }
-)
-
-// Then import the Safe you want
+// Option 1: Use Safe's hosted service with API key (simple, good for testing/backend)
 const config = {
-  // ... other config
-  options: {
-    safeAddress: safes[0]
-  }
+  safeApiKey: 'eyJhb...',
+  // ...
+}
+
+// Option 2: Use a custom/proxy Transaction Service URL (recommended for frontend)
+const config = {
+  txServiceUrl: 'https://your-backend.com/safe-proxy',
+  // ...
 }
 ```
+
+Get your API key from the [Safe Developer Dashboard](https://developer.safe.global).
 
 ### Transfer Max Fee
 
@@ -212,82 +222,19 @@ transferMaxFee: 1000000
 transferMaxFee: 100000
 ```
 
-## Network-Specific Configurations
+## Security Notes
 
-### Ethereum Mainnet
+### Safe API Key
 
-```javascript
-const ethereumMainnetConfig = {
-  chainId: 1n,
-  provider: 'https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY',
-  bundlerUrl: 'https://api.pimlico.io/v2/ethereum/rpc?apikey=YOUR_KEY',
-  paymasterOptions: {
-    paymasterUrl: 'https://api.pimlico.io/v2/ethereum/rpc?apikey=YOUR_KEY',
-    paymasterTokenAddress: '0x...' // See Pimlico docs for supported tokens
-  },
-  options: {
-    owners: ['0xOwner1...', '0xOwner2...'],
-    threshold: 2
-  }
-}
-```
+Do not expose `safeApiKey` in client-side code. Use `txServiceUrl` pointing to a backend proxy that injects the key server-side. Get your API key from the [Safe Developer Dashboard](https://developer.safe.global).
 
-### Polygon Mainnet
+### Sponsorship Policy
 
-```javascript
-const polygonMainnetConfig = {
-  chainId: 137n,
-  provider: 'https://polygon-mainnet.g.alchemy.com/v2/YOUR_KEY',
-  bundlerUrl: 'https://api.pimlico.io/v2/polygon/rpc?apikey=YOUR_KEY',
-  paymasterOptions: {
-    paymasterUrl: 'https://api.pimlico.io/v2/polygon/rpc?apikey=YOUR_KEY',
-    paymasterTokenAddress: '0x...' // See Pimlico docs for supported tokens
-  },
-  options: {
-    owners: ['0xOwner1...', '0xOwner2...'],
-    threshold: 2
-  }
-}
-```
+The `sponsorshipPolicyId` is visible to the client. Without restrictions, anyone could use your policy to sponsor their own transactions. Configure policy rules to restrict by sender address, contract, gas limit, or time window.
 
-### Arbitrum One
-
-```javascript
-const arbitrumOneConfig = {
-  chainId: 42161n,
-  provider: 'https://arb-mainnet.g.alchemy.com/v2/YOUR_KEY',
-  bundlerUrl: 'https://api.pimlico.io/v2/arbitrum/rpc?apikey=YOUR_KEY',
-  paymasterOptions: {
-    paymasterUrl: 'https://api.pimlico.io/v2/arbitrum/rpc?apikey=YOUR_KEY',
-    paymasterTokenAddress: '0x...' // See Pimlico docs for supported tokens
-  },
-  options: {
-    owners: ['0xOwner1...', '0xOwner2...'],
-    threshold: 2
-  }
-}
-```
-
-### Sepolia Testnet
-
-```javascript
-const sepoliaTestnetConfig = {
-  chainId: 11155111n,
-  provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
-  bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-  paymasterOptions: {
-    paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-    paymasterTokenAddress: '0x...' // See Pimlico docs for supported tokens
-  },
-  options: {
-    owners: ['0xOwner1...', '0xOwner2...'],
-    threshold: 2
-  },
-  transferMaxFee: 1000000 // 1 USDT max fee (6 decimals)
-}
-```
-
-For supported tokens on each network, see: [Pimlico ERC-20 Paymaster Supported Tokens](https://docs.pimlico.io/references/paymaster/erc20-paymaster/supported-tokens)
+See Pimlico's guides:
+- [Sponsorship Policies](https://docs.pimlico.io/guides/how-to/sponsorship-policies)
+- [Webhook Verification](https://docs.pimlico.io/guides/how-to/sponsorship-policies/webhook)
 
 ---
 

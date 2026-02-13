@@ -17,7 +17,7 @@ Multisig (multi-signature) wallets require multiple parties to approve transacti
 
 | Module | Blockchain | Status | Documentation |
 | --- | --- | --- | --- |
-| @tetherto/wdk-protocol-multisig-safe | EVM | ✅ Ready | [Documentation](protocol-multisig-safe/README.md) |
+| @tetherto/wdk-wallet-evm-multisig-safe | EVM | ✅ Ready | [Documentation](protocol-multisig-safe/README.md) |
 
 ## Module Features
 
@@ -28,7 +28,6 @@ All multisig modules share these core features:
 * **Multi-Owner Management**: Add, remove, and swap owners
 * **Threshold Configuration**: Set required approval count
 * **Propose/Approve/Execute**: Standard multisig workflow
-* **Transaction Tracking**: View pending and historical transactions
 * **Message Signing**: Sign and verify messages with multisig approval (EIP-1271)
 
 ### Account Abstraction Features
@@ -49,15 +48,15 @@ To get started with WDK multisig modules, follow these steps:
 
 ## Next Steps
 
-**Protocol Multisig Safe**
+**[Protocol Multisig Safe](protocol-multisig-safe/README.md)**
 
 Safe Protocol multisig with ERC-4337 account abstraction
 
-**Node.js Quickstart**
+**[Node.js Quickstart](/start-building/nodejs-bare-quickstart.md)**
 
 Get started with WDK in a Node.js environment
 
-**Concepts**
+**[Concepts](/resources/concepts.md)**
 
 Learn about key concepts like Account Abstraction
 
