@@ -32,17 +32,13 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 **Changes**
 - **wallet-evm** ([v1.0.0-beta.7](https://github.com/tetherto/wdk-wallet-evm/releases/tag/v1.0.0-beta.7)): Added [EIP-712](https://eips.ethereum.org/EIPS/eip-712) typed data support:
-  - Added `signTypedData(typedData)` method to [`WalletAccountEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountevm) for signing structured data
-  - Added `verifyTypedData(typedData, signature)` method to [`WalletAccountEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountevm) and [`WalletAccountReadOnlyEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountreadonlyevm) for verifying typed data signatures
-  - Added `address` property to [`WalletAccountReadOnlyEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountreadonlyevm)
-  - Added `TypedData`, `TypedDataDomain`, `TypedDataField` type exports
-- **wallet-evm-erc-4337** ([v1.0.0-beta.4](https://github.com/tetherto/wdk-wallet-evm-erc-4337/releases/tag/v1.0.0-beta.4)): Redesigned gas payment configuration and added new methods:
-  - Constructor config now supports 3 gas payment modes: Paymaster Token, Sponsorship Policy, and Native Coins
-  - Added per-call config override parameter to `sendTransaction`, `transfer`, `quoteSendTransaction`, and `quoteTransfer`
-  - Added `approve(options)` and `getAllowance(token, spender)` for ERC-20 token allowance management
-  - Added `getUserOperationReceipt(hash)` method to [`WalletAccountReadOnlyEvmErc4337`](../sdk/wallet-modules/wallet-evm-erc-4337/api-reference.md#walletaccountreadonlyevmerc4337)
-  - Added `verify(message, signature)` method to [`WalletAccountReadOnlyEvmErc4337`](../sdk/wallet-modules/wallet-evm-erc-4337/api-reference.md#walletaccountreadonlyevmerc4337)
-  - Added `UserOperationReceipt`, `ApproveOptions`, `ConfigurationError` type exports
+  - Added [`signTypedData(typedData)`](../sdk/wallet-modules/wallet-evm/api-reference.md#signtypeddatatypeddata) method to [`WalletAccountEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountevm) for signing structured data
+  - Added [`verifyTypedData(typedData, signature)`](../sdk/wallet-modules/wallet-evm/api-reference.md#verifytypeddatatypeddata-signature) method to [`WalletAccountEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountevm) and [`WalletAccountReadOnlyEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountreadonlyevm) for verifying typed data signatures
+- **wallet-evm-erc-4337** ([v1.0.0-beta.4](https://github.com/tetherto/wdk-wallet-evm-erc-4337/releases/tag/v1.0.0-beta.4)):
+  - Added 2 new gas payment modes: [Sponsorship Policy](../sdk/wallet-modules/wallet-evm-erc-4337/configuration.md#gas-payment-mode-flags) and [Native Coins](../sdk/wallet-modules/wallet-evm-erc-4337/configuration.md#gas-payment-mode-flags), alongside the existing Paymaster Token mode
+  - Added per-call [config override](../sdk/wallet-modules/wallet-evm-erc-4337/api-reference.md#config-override) parameter to `sendTransaction`, `transfer`, `quoteSendTransaction`, and `quoteTransfer`
+  - Added [`getUserOperationReceipt(hash)`](../sdk/wallet-modules/wallet-evm-erc-4337/api-reference.md#getuseroperationreceipthash) method for retrieving ERC-4337 UserOperation receipts
+  - Added [`ConfigurationError`](../sdk/wallet-modules/wallet-evm-erc-4337/api-reference.md#configurationerror) error type for invalid configuration validation
 
 ---
 
