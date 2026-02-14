@@ -34,12 +34,14 @@ layout:
 
 The main class for managing ERC-4337 EVM wallets. Extends `WalletManager` from `@tetherto/wdk-wallet`.
 
-### Fee Rate Constants
+### Fee Rate Behavior
 
-```javascript
-const FEE_RATE_NORMAL_MULTIPLIER = 1.1
-const FEE_RATE_FAST_MULTIPLIER = 2.0
-```
+Internally, `getFeeRates()` applies these multipliers to the base fee:
+
+- **Normal**: base fee × 110%
+- **Fast**: base fee × 200%
+
+These multipliers are internal (`protected static`) and cannot be imported or overridden.
 
 ### Constructor
 
@@ -238,9 +240,14 @@ Represents an individual ERC-4337 wallet account. Extends `WalletAccountReadOnly
 
 ### Constants
 
+The following constant is used internally for Safe account address derivation:
+
 ```javascript
+// Internal: used by predictSafeAddress() for deterministic address generation
 const SALT_NONCE = '0x69b348339eea4ed93f9d11931c3b894c8f9d8c7663a053024b11cb7eb4e5a1f6'
 ```
+
+> **Note:** This constant is not re-exported from the package entry point. Use `predictSafeAddress()` instead of referencing it directly.
 
 
 
@@ -601,9 +608,14 @@ Represents a read-only ERC-4337 wallet account that can query balances and estim
 
 ### Constants
 
+The following constant is used internally for Safe account address derivation:
+
 ```javascript
+// Internal: used by predictSafeAddress() for deterministic address generation
 const SALT_NONCE = '0x69b348339eea4ed93f9d11931c3b894c8f9d8c7663a053024b11cb7eb4e5a1f6'
 ```
+
+> **Note:** This constant is not re-exported from the package entry point. Use `predictSafeAddress()` instead of referencing it directly.
 
 ### Constructor
 
@@ -1000,15 +1012,19 @@ interface KeyPair {
 }
 ```
 
-### Constants
+### Internal Constants
+
+The following constants are used internally by the SDK and are **not importable** from the package entry point.
 
 ```typescript
-// ERC-4337 specific constant (exported from WalletAccountReadOnlyEvmErc4337)
+// Used by predictSafeAddress() for deterministic address generation
+// Not re-exported from '@tetherto/wdk-wallet-evm-erc-4337'
 const SALT_NONCE: string = '0x69b348339eea4ed93f9d11931c3b894c8f9d8c7663a053024b11cb7eb4e5a1f6';
 
-// Fee rate multipliers (used by WalletManagerEvmErc4337)
-const FEE_RATE_NORMAL_MULTIPLIER: number = 1.1;
-const FEE_RATE_FAST_MULTIPLIER: number = 2.0;
+// Fee rate multipliers (protected static on WalletManagerEvm)
+// Applied internally by getFeeRates()
+const _FEE_RATE_NORMAL_MULTIPLIER: bigint;  // ~110%
+const _FEE_RATE_FAST_MULTIPLIER: bigint;    // ~200%
 ```
 
 

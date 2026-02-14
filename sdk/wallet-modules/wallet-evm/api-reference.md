@@ -249,23 +249,6 @@ const signature = await account.sign(message)
 console.log('Signature:', signature)
 ```
 
-#### `verify(message, signature)`
-Verifies a message signature against the account's address.
-
-**Parameters:**
-- `message` (string): The original message
-- `signature` (string): The signature to verify
-
-**Returns:** `Promise<boolean>` - True if signature is valid
-
-**Example:**
-```javascript
-const message = 'Hello, Ethereum!'
-const signature = await account.sign(message)
-const isValid = await account.verify(message, signature)
-console.log('Signature valid:', isValid) // true
-```
-
 #### `signTypedData(typedData)`
 Signs typed data according to [EIP-712](https://eips.ethereum.org/EIPS/eip-712).
 
@@ -301,6 +284,23 @@ const typedData = {
 }
 const signature = await account.signTypedData(typedData)
 console.log('EIP-712 Signature:', signature)
+```
+
+#### `verify(message, signature)`
+Verifies a message signature against the account's address.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify
+
+**Returns:** `Promise<boolean>` - True if signature is valid
+
+**Example:**
+```javascript
+const message = 'Hello, Ethereum!'
+const signature = await account.sign(message)
+const isValid = await account.verify(message, signature)
+console.log('Signature valid:', isValid) // true
 ```
 
 #### `verifyTypedData(typedData, signature)`
@@ -402,31 +402,6 @@ console.log('Transfer hash:', result.hash)
 console.log('Transfer fee:', result.fee, 'wei')
 ```
 
-#### `approve(options)`
-Approves a specific amount of tokens to a spender.
-
-**Parameters:**
-- `options` (ApproveOptions): Approve options
-  - `token` (string): Token contract address
-  - `spender` (string): Spender address
-  - `amount` (number | bigint): Amount to approve
-
-**Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
-
-**Throws:** 
-- Error if no provider is configured
-- Error if trying to re-approve USDT on Ethereum without resetting to 0 first
-
-**Example:**
-```javascript
-const result = await account.approve({
-  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
-  spender: '0xSpenderAddress...',
-  amount: 1000000n
-})
-console.log('Approve hash:', result.hash)
-```
-
 #### `quoteTransfer(options)`
 Estimates the fee for an ERC20 token transfer.
 
@@ -477,6 +452,31 @@ Returns the balance of a specific ERC20 token using the balanceOf function.
 const usdtBalance = await account.getTokenBalance('0xdAC17F958D2ee523a2206206994597C13D831ec7')
 console.log('USDT balance:', usdtBalance) // In 6 decimal places
 console.log('USDT balance formatted:', usdtBalance / 1000000, 'USDT')
+```
+
+#### `approve(options)`
+Approves a specific amount of tokens to a spender.
+
+**Parameters:**
+- `options` (ApproveOptions): Approve options
+  - `token` (string): Token contract address
+  - `spender` (string): Spender address
+  - `amount` (number | bigint): Amount to approve
+
+**Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
+
+**Throws:** 
+- Error if no provider is configured
+- Error if trying to re-approve USDT on Ethereum without resetting to 0 first
+
+**Example:**
+```javascript
+const result = await account.approve({
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
+  spender: '0xSpenderAddress...',
+  amount: 1000000n
+})
+console.log('Approve hash:', result.hash)
 ```
 
 #### `getAllowance(token, spender)`
@@ -605,23 +605,15 @@ const readOnlyAccount = new WalletAccountReadOnlyEvm('0x742d35Cc6634C0532925a3b8
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<EvmTransactionReceipt \| null>` | If no provider |
 | `getAllowance(token, spender)` | Returns current allowance for a spender | `Promise<bigint>` | If no provider |
 
-#### `verify(message, signature)`
-Verifies a message signature against the account's address.
+#### `getAddress()`
+Returns the account's Ethereum address.
 
-**Parameters:**
-- `message` (string): The original message
-- `signature` (string): The signature to verify
-
-**Returns:** `Promise<boolean>` - True if signature is valid
+**Returns:** `Promise<string>` - Checksummed Ethereum address
 
 **Example:**
 ```javascript
-const message = 'Hello, Ethereum!'
-const signature = await account.sign(message)
-
-const readOnlyAccount = new WalletAccountReadOnlyEvm('0x...', { provider: '...' })
-const isValid = await readOnlyAccount.verify(message, signature)
-console.log('Signature valid:', isValid) // true
+const address = await readOnlyAccount.getAddress()
+console.log('Account address:', address) // 0x...
 ```
 
 #### `getBalance()`
@@ -651,21 +643,6 @@ Returns the balance of a specific ERC20 token.
 ```javascript
 const tokenBalance = await readOnlyAccount.getTokenBalance('0xdAC17F958D2ee523a2206206994597C13D831ec7')
 console.log('USDT balance:', tokenBalance)
-```
-
-#### `verifyTypedData(typedData, signature)`
-Verifies a typed data signature according to [EIP-712](https://eips.ethereum.org/EIPS/eip-712).
-
-**Parameters:**
-- `typedData` (TypedData): The typed data that was signed
-- `signature` (string): The signature to verify
-
-**Returns:** `Promise<boolean>` - True if signature is valid
-
-**Example:**
-```javascript
-const isValid = await readOnlyAccount.verifyTypedData(typedData, signature)
-console.log('Typed data signature valid:', isValid) // true
 ```
 
 #### `quoteSendTransaction(tx)`
@@ -705,6 +682,40 @@ const quote = await readOnlyAccount.quoteTransfer({
   amount: 1000000
 })
 console.log('Transfer fee estimate:', quote.fee, 'wei')
+```
+
+#### `verify(message, signature)`
+Verifies a message signature against the account's address.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify
+
+**Returns:** `Promise<boolean>` - True if signature is valid
+
+**Example:**
+```javascript
+const message = 'Hello, Ethereum!'
+const signature = await account.sign(message)
+
+const readOnlyAccount = new WalletAccountReadOnlyEvm('0x...', { provider: '...' })
+const isValid = await readOnlyAccount.verify(message, signature)
+console.log('Signature valid:', isValid) // true
+```
+
+#### `verifyTypedData(typedData, signature)`
+Verifies a typed data signature according to [EIP-712](https://eips.ethereum.org/EIPS/eip-712).
+
+**Parameters:**
+- `typedData` (TypedData): The typed data that was signed
+- `signature` (string): The signature to verify
+
+**Returns:** `Promise<boolean>` - True if signature is valid
+
+**Example:**
+```javascript
+const isValid = await readOnlyAccount.verifyTypedData(typedData, signature)
+console.log('Typed data signature valid:', isValid) // true
 ```
 
 #### `getTransactionReceipt(hash)`
