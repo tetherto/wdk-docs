@@ -27,7 +27,7 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 ### February 14, 2026
 
 **Changes**
-- **wallet-spark**: Upgrade spark-sdk from `0.6.1` to `0.6.4` and bare runtime to `0.0.43` ([v1.0.0-beta.9](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.9))
+- **wallet-spark**: Upgrade spark-sdk from `0.6.1` to `0.6.4` and spark bare SDK to `0.0.43` ([v1.0.0-beta.9](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.9))
 
 ### February 12, 2026
 
