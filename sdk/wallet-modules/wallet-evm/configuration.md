@@ -28,7 +28,7 @@ The `WalletManagerEvm` accepts a configuration object that defines how the walle
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
 
 const config = {
-  // Required: RPC endpoint URL or EIP-1193 provider
+  // Recommended: RPC endpoint URL or EIP-1193 provider (required for blockchain operations)
   provider: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key',
   
   // Optional: Maximum fee for transfer operations (in wei)
@@ -117,7 +117,7 @@ const config = {
 
 The `transferMaxFee` option sets a maximum limit for transaction fees to prevent unexpectedly high costs.
 
-**Type:** `number` (optional)  
+**Type:** `number | bigint` (optional)  
 **Unit:** Wei (1 ETH = 1000000000000000000 Wei)
 
 **Examples:**
