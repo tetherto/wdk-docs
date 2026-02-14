@@ -68,7 +68,7 @@ const readOnlyAccount = await account.toReadOnlyAccount()
 {% endhint %}
 
 {% hint style="info" %}
-> To use test/mock tokens instead of real funds, see the Testnet [configuration section](./configuration.md#sepolia-testnet-usdt-erc-20).
+> To use test/mock tokens instead of real funds, see the [configuration section](./configuration.md#network-support).
 
 {% endhint %}
 
@@ -100,7 +100,7 @@ const balance = await account.getBalance()
 console.log('Native balance:', balance, 'wei')
 
 // Get ERC-20 token balance
-const tokenAddress = '0xA0b86a33E6441b8c4C8C8C8C8C8C8C8C8C8C8C8C'
+const tokenAddress = '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USD₮
 const tokenBalance = await account.getTokenBalance(tokenAddress)
 console.log('Token balance:', tokenBalance)
 ```
@@ -159,18 +159,16 @@ console.log('Estimated fee:', quote.fee, 'wei')
 ```javascript
 // Transfer ERC-20 tokens
 const transferResult = await account.transfer({
-  token: '0xA0b86a33E6441b8c4C8C8C8C8C8C8C8C8C8C8C8C',
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USD₮
   recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
   amount: 1000000000000000000n // 1 token in base units
-}, {
-  transferMaxFee: 1000000000000n // Optional: Maximum allowed fee in wei
 })
 console.log('Transfer hash:', transferResult.hash)
 console.log('Transfer fee:', transferResult.fee, 'wei')
 
 // Quote token transfer
 const transferQuote = await account.quoteTransfer({
-  token: '0xA0b86a33E6441b8c4C8C8C8C8C8C8C8C8C8C8C8C',
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USD₮
   recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
   amount: 1000000000000000000n
 })
@@ -363,8 +361,6 @@ try {
     token: tokenAddress,
     recipient,
     amount
-  }, {
-    transferMaxFee: 1000000000000n // Optional: Maximum allowed fee in wei
   })
   
   console.log('Transfer completed:', result.hash)

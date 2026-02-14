@@ -59,10 +59,49 @@ const wallet = new WalletManagerEvm(seedPhrase, {
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
+| `getRandomSeedPhrase(wordCount?)` | (static) Returns a random BIP-39 seed phrase | `string` | - |
+| `isValidSeedPhrase(seedPhrase)` | (static) Checks if a seed phrase is valid | `boolean` | - |
 | `getAccount(index?)` | Returns a wallet account at the specified index | `Promise<WalletAccountEvm>` | - |
 | `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise<WalletAccountEvm>` | - |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` | If no provider is set |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` | - |
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `seed` | `Uint8Array` | The wallet's seed bytes |
+
+#### `getRandomSeedPhrase(wordCount?)` (static)
+Returns a random BIP-39 seed phrase.
+
+**Parameters:**
+- `wordCount` (12 | 24, optional): The number of words in the seed phrase (default: 12)
+
+**Returns:** `string` - The seed phrase
+
+**Example:**
+```javascript
+const seedPhrase = WalletManagerEvm.getRandomSeedPhrase()
+console.log('Seed phrase:', seedPhrase) // 12 words
+
+const longSeedPhrase = WalletManagerEvm.getRandomSeedPhrase(24)
+console.log('Long seed phrase:', longSeedPhrase) // 24 words
+```
+
+#### `isValidSeedPhrase(seedPhrase)` (static)
+Checks if a seed phrase is valid.
+
+**Parameters:**
+- `seedPhrase` (string): The seed phrase to validate
+
+**Returns:** `boolean` - True if the seed phrase is valid
+
+**Example:**
+```javascript
+const isValid = WalletManagerEvm.isValidSeedPhrase('abandon abandon abandon ...')
+console.log('Valid:', isValid)
+```
 
 #### `getAccount(index?)`
 Returns a wallet account at the specified index following BIP-44 standard.
@@ -135,13 +174,9 @@ wallet.dispose()
 
 ## WalletAccountEvm
 
-Represents an individual wallet account. Implements `IWalletAccount` from `@tetherto/wdk-wallet`.
+Represents an individual wallet account. Extends `WalletAccountReadOnlyEvm` and implements `IWalletAccount` from `@tetherto/wdk-wallet`.
 
-### Constants
 
-```javascript
-const BIP_44_ETH_DERIVATION_PATH_PREFIX = "m/44'/60'"
-```
 
 ### Constructor
 
@@ -183,6 +218,8 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 | `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | If no provider |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<bigint>` | If no provider |
 | `approve(options)` | Approves a spender to spend tokens | `Promise<{hash: string, fee: bigint}>` | If no provider |
+| `getAllowance(token, spender)` | Returns current allowance for a spender | `Promise<bigint>` | If no provider |
+| `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<EvmTransactionReceipt \| null>` | If no provider |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlyEvm>` | - |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` | - |
 
@@ -442,6 +479,45 @@ console.log('USDT balance:', usdtBalance) // In 6 decimal places
 console.log('USDT balance formatted:', usdtBalance / 1000000, 'USDT')
 ```
 
+#### `getAllowance(token, spender)`
+Returns the current token allowance for the given spender.
+
+**Parameters:**
+- `token` (string): ERC20 token contract address
+- `spender` (string): The spender's address
+
+**Returns:** `Promise<bigint>` - The current allowance
+
+**Throws:** Error if no provider is configured
+
+**Example:**
+```javascript
+const allowance = await account.getAllowance(
+  '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  '0xSpenderContract...'
+)
+console.log('Current allowance:', allowance)
+```
+
+#### `getTransactionReceipt(hash)`
+Returns a transaction receipt by hash.
+
+**Parameters:**
+- `hash` (string): The transaction hash
+
+**Returns:** `Promise<EvmTransactionReceipt | null>` - Transaction receipt or null if not mined
+
+**Throws:** Error if no provider is configured
+
+**Example:**
+```javascript
+const receipt = await account.getTransactionReceipt('0x...')
+if (receipt) {
+  console.log('Confirmed in block:', receipt.blockNumber)
+  console.log('Status:', receipt.status) // 1 = success, 0 = failed
+}
+```
+
 #### `toReadOnlyAccount()`
 Creates a read-only copy of the account with the same configuration.
 
@@ -471,7 +547,7 @@ account.dispose()
 |----------|------|-------------|
 | `index` | `number` | The derivation path's index of this account |
 | `path` | `string` | The full BIP-44 derivation path of this account |
-| `keyPair` | `{privateKey: Buffer, publicKey: Buffer}` | The account's key pair (⚠️ Contains sensitive data) |
+| `keyPair` | `{privateKey: Uint8Array \| null, publicKey: Uint8Array}` | The account's key pair (⚠️ Contains sensitive data) |
 | `address` | `string` | The account's Ethereum address (inherited from `WalletAccountReadOnlyEvm`) |
 
 **Example:**
@@ -499,7 +575,7 @@ new WalletAccountReadOnlyEvm(address, config?)
 
 **Parameters:**
 - `address` (string): The account's Ethereum address
-- `config` (object, optional): Configuration object
+- `config` (Omit\<EvmWalletConfig, 'transferMaxFee'\>, optional): Configuration object (same as `EvmWalletConfig` but without `transferMaxFee`, since read-only accounts cannot send transactions)
   - `provider` (string | Eip1193Provider, optional): RPC endpoint URL or EIP-1193 provider instance
 
 **Example:**
@@ -519,6 +595,7 @@ const readOnlyAccount = new WalletAccountReadOnlyEvm('0x742d35Cc6634C0532925a3b8
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
+| `getAddress()` | Returns the account's address | `Promise<string>` | - |
 | `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | If no provider |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<bigint>` | If no provider |
 | `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction | `Promise<{fee: bigint}>` | If no provider |
@@ -727,8 +804,8 @@ interface FeeRates {
 
 ```typescript
 interface KeyPair {
-  privateKey: Buffer;                // Private key as Buffer (32 bytes)
-  publicKey: Buffer;                 // Public key as Buffer (65 bytes)
+  privateKey: Uint8Array | null;     // Private key as Uint8Array (32 bytes, null after dispose)
+  publicKey: Uint8Array;             // Public key as Uint8Array (65 bytes)
 }
 ```
 
@@ -769,6 +846,16 @@ interface TypedDataField {
 interface EvmWalletConfig {
   provider?: string | Eip1193Provider;  // RPC URL or EIP-1193 provider instance
   transferMaxFee?: number | bigint;     // Maximum fee for transfers in wei
+}
+```
+
+### ApproveOptions
+
+```typescript
+interface ApproveOptions {
+  token: string;                         // ERC20 token contract address
+  spender: string;                       // Address allowed to spend tokens
+  amount: number | bigint;               // Amount to approve in base units
 }
 ```
 

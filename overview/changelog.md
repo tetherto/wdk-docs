@@ -36,6 +36,13 @@ Stay up to date with the latest improvements, new features, and bug fixes across
   - Added `verifyTypedData(typedData, signature)` method to [`WalletAccountEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountevm) and [`WalletAccountReadOnlyEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountreadonlyevm) for verifying typed data signatures
   - Added `address` property to [`WalletAccountReadOnlyEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountreadonlyevm)
   - Added `TypedData`, `TypedDataDomain`, `TypedDataField` type exports
+- **wallet-evm-erc-4337** ([v1.0.0-beta.4](https://github.com/tetherto/wdk-wallet-evm-erc-4337/releases/tag/v1.0.0-beta.4)): Redesigned gas payment configuration and added new methods:
+  - Constructor config now supports 3 gas payment modes: Paymaster Token, Sponsorship Policy, and Native Coins
+  - Added per-call config override parameter to `sendTransaction`, `transfer`, `quoteSendTransaction`, and `quoteTransfer`
+  - Added `approve(options)` and `getAllowance(token, spender)` for ERC-20 token allowance management
+  - Added `getUserOperationReceipt(hash)` method to [`WalletAccountReadOnlyEvmErc4337`](../sdk/wallet-modules/wallet-evm-erc-4337/api-reference.md#walletaccountreadonlyevmerc4337)
+  - Added `verify(message, signature)` method to [`WalletAccountReadOnlyEvmErc4337`](../sdk/wallet-modules/wallet-evm-erc-4337/api-reference.md#walletaccountreadonlyevmerc4337)
+  - Added `UserOperationReceipt`, `ApproveOptions`, `ConfigurationError` type exports
 
 ---
 
