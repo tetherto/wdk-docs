@@ -175,6 +175,7 @@ const plasmaConfig = {
 const stableConfig = {
   provider: 'https://rpc.stable.xyz',
 }
+
 // Sepolia Testnet
 const sepoliaConfig = {
   provider: 'https://sepolia.drpc.org',
