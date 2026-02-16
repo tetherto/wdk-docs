@@ -23,7 +23,7 @@ layout:
 {% hint style="warning" %}
 The WDK skill for OpenClaw is a community skill, developed and maintained independently by a third-party contributor.
 
-Tether and the WDK Team do not endorse or assume responsibility for its code, security, or maintenance. Use your own judgment and proceed at your own risk.
+Tether and the WDK Team do not endorse or assume responsibility for its code, security, or maintenance. Use your own judgment and proceed at your own risk. Artificial intelligence has inherent risks and limitations. You assume full responsibility for any reliance and use of artificial intelligence and agree that any such reliance and use is entirely at your own risk.
 {% endhint %}
 
 [OpenClaw](https://openclaw.ai) is an open-source AI agent platform. With the WDK community skill, your OpenClaw agent can create wallets, send transactions, swap tokens, bridge assets, and interact with DeFi protocols. Everything stays self-custodial.
@@ -111,6 +111,16 @@ To reduce risk, here are some practical safety measures:
 - Test new capabilities on a disposable system or VM
 
 Think of OpenClaw the same way you'd think about running scripts on your system: powerful and useful, but something you need to be careful with.
+
+## Inherent Limitations of Artificial Intelligence
+
+OpenClaw makes use of artificial intelligence and machine learning technologies. While the use of artificial intelligence and machine learning enables capabilities, it also involves inherent limitations and risks. These include:
+
+1. The potential for inaccurate, incomplete, unexpected or misleading outputs or actions (including so-called hallucinations)
+2. The risk that outputs or actions may contain biases
+3. The possibility of errors related to document quality or text recognition of inputs
+4. The possibility that the outputs may suggest specific immediate or near term actions that should not be relied upon
+5. The risk that OpenClaw may take unexpected actions (including the sending of assets)
 
 ## Next Steps
 
