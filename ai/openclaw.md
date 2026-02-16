@@ -29,7 +29,7 @@ Tether and the WDK Team do not endorse or assume responsibility for its code, se
 [OpenClaw](https://openclaw.ai) is an open-source AI agent platform. With the WDK community skill, your OpenClaw agent can create wallets, send transactions, swap tokens, bridge assets, and interact with DeFi protocols. Everything stays self-custodial.
 
 {% hint style="info" %}
-The WDK skill follows the [AgentSkills specification](https://agentskills.io/specification), so it works with any compatible agent platform. This page covers the OpenClaw-specific setup.
+The WDK community skill follows the [AgentSkills specification](https://agentskills.io/specification), so it works with any compatible agent platform. This page covers the OpenClaw-specific setup.
 {% endhint %}
 
 ## Install the WDK Community Skill
@@ -43,16 +43,16 @@ npx clawhub install tether-wallet-development-kit
 This installs the skill into your workspace's `skills/` directory. OpenClaw picks it up automatically on the next session.
 
 {% hint style="warning" %}
-You might see a VirusTotal warning during installation. It flags the skill as suspicious because it handles crypto keys and calls external APIs. This is normal for any wallet SDK skill. Review the skill's source code on [ClawHub](https://clawhub.ai/HumanRupert/tether-wallet-development-kit) before proceeding.
+You might see a VirusTotal warning during installation. It flags the skill as suspicious because it handles crypto keys and calls external APIs. This is normal for any wallet SDK skill, nevertheless review the skill's source code on [ClawHub](https://clawhub.ai/HumanRupert/tether-wallet-development-kit) before proceeding.
 {% endhint %}
 
 {% hint style="info" %}
-We plan to publish the WDK skill to its own GitHub repository. Once that's live, you'll also be able to install via `git clone`. For now, use ClawHub.
+We plan to publish the official WDK skill to its own GitHub repository. Once that's live, you'll also be able to install via `git clone`.
 {% endhint %}
 
 ## Configuration
 
-The WDK skill does not require environment variables. Your agent will ask for a seed phrase in conversation when it needs to create or recover a wallet. The skill passes the seed phrase as a constructor parameter in code rather than reading it from configuration.
+The WDK community skill does not require environment variables. Your agent will ask for a seed phrase in conversation when it needs to create or recover a wallet. The skill passes the seed phrase as a constructor parameter in code rather than reading it from configuration.
 
 {% hint style="warning" %}
 Your seed phrase controls real funds. Never share it, commit it to version control, or expose it in logs. The skill instructs agents to never log or expose seed phrases or private keys.
@@ -66,7 +66,7 @@ Start a new OpenClaw session and try a simple prompt:
 Create a multi-chain wallet with Ethereum and Bitcoin support, then show me the addresses.
 ```
 
-The agent should use the WDK skill to create wallet accounts and return the generated addresses. All write operations (transactions, swaps, bridges) require your explicit confirmation before executing.
+The agent should use the WDK community skill to create wallet accounts and return the generated addresses. All write operations (transactions, swaps, bridges) require your explicit confirmation before executing.
 
 <figure><img src="../.gitbook/assets/openclaw-wallet-output.png" alt="OpenClaw creating a multi-chain wallet using the WDK skill"><figcaption><p>Example output from the WDK skill creating a multi-chain wallet</p></figcaption></figure>
 
@@ -112,7 +112,7 @@ To reduce risk, here are some practical safety measures:
 
 Think of OpenClaw the same way you'd think about running scripts on your system: powerful and useful, but something you need to be careful with.
 
-## Inherent Limitations of Artificial Intelligence
+### Inherent Limitations of Artificial Intelligence
 
 OpenClaw makes use of artificial intelligence and machine learning technologies. While the use of artificial intelligence and machine learning enables capabilities, it also involves inherent limitations and risks. These include:
 
