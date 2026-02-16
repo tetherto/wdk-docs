@@ -1,5 +1,5 @@
 ---
-title: OpenClaw
+title: OpenClaw (Community Skill)
 description: Give your OpenClaw AI agent a self-custodial WDK wallet in minutes
 icon: lobster
 layout:
@@ -18,15 +18,21 @@ layout:
     visible: false
 ---
 
-# OpenClaw
+# OpenClaw (Community Skill)
 
-[OpenClaw](https://openclaw.ai) is an open-source AI agent platform. With the WDK skill, your OpenClaw agent can create wallets, send transactions, swap tokens, bridge assets, and interact with DeFi protocols. Everything stays self-custodial.
+{% hint style="warning" %}
+The WDK skill for OpenClaw is a community skill, developed and maintained independently by a third-party contributor.
+
+Tether and the WDK Team do not endorse or assume responsibility for its code, security, or maintenance. Use your own judgment and proceed at your own risk.
+{% endhint %}
+
+[OpenClaw](https://openclaw.ai) is an open-source AI agent platform. With the WDK community skill, your OpenClaw agent can create wallets, send transactions, swap tokens, bridge assets, and interact with DeFi protocols. Everything stays self-custodial.
 
 {% hint style="info" %}
 The WDK skill follows the [AgentSkills specification](https://agentskills.io/specification), so it works with any compatible agent platform. This page covers the OpenClaw-specific setup.
 {% endhint %}
 
-## Install the WDK Skill
+## Install the WDK Community Skill
 
 Install from [ClawHub](https://clawhub.ai/HumanRupert/tether-wallet-development-kit):
 
