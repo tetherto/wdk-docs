@@ -170,6 +170,11 @@ const plasmaConfig = {
   provider: 'https://plasma.drpc.org',
 }
 
+// Stable (uses USDT as native gas token)
+// No need for ERC-4337 paymaster/bundler setup.
+const stableConfig = {
+  provider: 'https://rpc.stable.xyz',
+}
 // Sepolia Testnet
 const sepoliaConfig = {
   provider: 'https://sepolia.drpc.org',
