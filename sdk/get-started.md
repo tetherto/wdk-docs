@@ -28,6 +28,7 @@ It is built on some core principles: **self-custodial and stateless** (private k
 * **Multi-Chain Support**: Bitcoin, Ethereum, TON, TRON, Solana, Spark, and more
 * **Account Abstraction**: Gasless transactions on supported chains
 * **DeFi Integration**: Plug-in support for swaps, bridges, and lending protocols
+* **Multisig Wallets**: Safe Protocol integration for multi-party wallet control
 * **Extensible Design**: Add custom modules for new blockchains or protocols
 
 ***
@@ -46,7 +47,7 @@ New functionality is added through modules rather than modifying core code. Also
 
 #### Module Types
 
-WDK modules are organized into five main categories, each serving a specific purpose in the blockchain application stack:
+WDK modules are organized into six main categories, each serving a specific purpose in the blockchain application stack:
 
 <table data-view="cards">
 	<thead>
@@ -73,6 +74,15 @@ WDK modules are organized into five main categories, each serving a specific pur
 			<td>Blockchain-specific wallet operations</td>
 			<td>
 				<a href="./wallet-modules/README.md">Wallet Modules</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<strong>Multisig</strong>
+			</td>
+			<td>Multi-party wallet management</td>
+			<td>
+				<a href="./multisig-modules/README.md">Multisig Modules</a>
 			</td>
 		</tr>
 		<tr>
