@@ -422,8 +422,8 @@ if (approval.combinedSignature) {
 ### Get Message Status
 
 ```javascript
-// Get message by hash
-const message = await account.getMessage(messageHash)
+// Get messages by hash
+const [message] = await account.getMessages([messageHash])
 
 console.log('Message:', message.message)
 console.log('Confirmations:', message.confirmations, '/', message.threshold)

@@ -303,23 +303,21 @@ const ready = await account.isReadyToExecute(proposalId)
 
 **Returns:** `Promise<boolean>`
 
-#### getProposal
+#### getProposals
 
-Gets a specific Safe operation by hash.
+Gets multiple Safe operations by their hashes.
 
 ```javascript
-const proposal = await account.getProposal(proposalId)
+const proposals = await account.getProposals(proposalIds)
 ```
 
 **Parameters:**
 
-* `proposalId` (string): The Safe operation hash
+* `proposalIds` (string[]): Array of Safe operation hashes
 
-**Returns:** `Promise<MultisigProposal | null>`
+**Returns:** `Promise<(MultisigProposal | null)[]>`
 
-* `proposalId` (string): Operation hash
-* `confirmations` (number): Number of confirmations
-* `threshold` (number): Required threshold
+* Each element contains `proposalId`, `confirmations`, `threshold`, or `null` if not found
 
 #### sendTransaction
 
@@ -528,25 +526,21 @@ const isValid = await account.verify(message, signature)
 
 **Returns:** `Promise<boolean>` - True if signature is valid
 
-#### getMessage
+#### getMessages
 
-Gets the status of a signed message.
+Gets the status of multiple signed messages.
 
-```javascript
-const message = await account.getMessage(messageHash)
-```
+\```javascript
+const messages = await account.getMessages(messageHashes)
+\```
 
 **Parameters:**
 
-* `messageHash` (string): Message hash
+* `messageHashes` (string[]): Array of message hashes
 
-**Returns:** `Promise<MessageInfo | null>`
+**Returns:** `Promise<(MessageInfo | null)[]>`
 
-* `messageHash` (string): Message hash
-* `message` (string): Original message
-* `confirmations` (number): Number of confirmations
-* `threshold` (number): Required confirmations
-* `combinedSignature` (string | null): Combined signature when fully signed
+* Each element contains `messageHash`, `message`, `confirmations`, `threshold`, `combinedSignature`, or `null` if not found
 
 #### sign
 
@@ -622,8 +616,8 @@ All query methods from WalletAccountEvmMultisigSafe are available:
 * `getNonce()`
 * `getVersion()`
 * `isDeployed()`
-* `getProposal(proposalId)`
-* `getMessage(messageHash)`
+* `getProposals(proposalIds)`
+* `getMessages(messageHashes)`
 * `isReadyToExecute(proposalId)`
 * `quoteSendTransaction(tx, options?)`
 * `quoteTransfer(options, proposeOptions?)`
