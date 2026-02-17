@@ -116,7 +116,7 @@ const result = await moonpay.buy({
 });
 ```
 
-### Available Widget Options
+### Available Buy Widget Options
 
 | Option | Type | Description |
 |--------|------|-------------|
@@ -130,11 +130,42 @@ const result = await moonpay.buy({
 | `redirectURL` | string | URL to redirect after completion |
 | `unsupportedRegionRedirectUrl` | string | URL for unsupported regions |
 | `skipUnsupportedRegionScreen` | boolean | Skip unsupported region screen |
+| `defaultCurrencyCode` | string | Pre-selected cryptocurrency code |
+| `walletAddress` | string | Pre-filled wallet address |
+| `walletAddressTag` | string | Wallet address memo/tag (for EOS, XRP, etc.) |
+| `walletAddresses` | string | JSON string of wallet addresses for multiple currencies |
+| `walletAddressTags` | string | JSON string of address tags for multiple currencies |
+| `contractAddress` | string | Token contract address (DeFi Buy only) |
+| `networkCode` | string | Network for the token contract (DeFi Buy only) |
 | `lockAmount` | boolean | Prevent user from changing amount |
 | `email` | string | Pre-fill customer email |
 | `externalTransactionId` | string | Your transaction identifier |
 | `externalCustomerId` | string | Your customer identifier |
 | `paymentMethod` | string | Pre-select payment method |
+
+### Available Sell Widget Options
+
+For `sell()`, the widget config uses `MoonPaySellParams` with different options:
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `colorCode` | string | Hexadecimal color for widget accent |
+| `theme` | `'dark'` \| `'light'` | Widget appearance theme |
+| `themeId` | string | ID of a custom theme |
+| `language` | string | ISO 639-1 language code |
+| `showAllCurrencies` | boolean | Show all supported cryptocurrencies |
+| `showOnlyCurrencies` | string | Comma-separated currency codes to display |
+| `showWalletAddressForm` | boolean | Show wallet address input form |
+| `redirectURL` | string | URL to redirect after completion |
+| `unsupportedRegionRedirectUrl` | string | URL for unsupported regions |
+| `skipUnsupportedRegionScreen` | boolean | Skip unsupported region screen |
+| `defaultBaseCurrencyCode` | string | Pre-selected cryptocurrency to sell |
+| `refundWalletAddresses` | string | JSON string of wallet addresses for refunds |
+| `lockAmount` | boolean | Prevent user from changing amount |
+| `email` | string | Pre-fill customer email |
+| `externalTransactionId` | string | Your transaction identifier |
+| `externalCustomerId` | string | Your customer identifier |
+| `paymentMethod` | string | Pre-select payout method |
 
 ## Next Steps
 

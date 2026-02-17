@@ -242,12 +242,13 @@ interface MoonPayProtocolConfig {
 }
 ```
 
-### `MoonPayBuyParams` / `MoonPaySellParams`
+### `MoonPayBuyParams`
 
-Widget configuration options:
+Widget configuration options for `buy()` operations:
 
 ```typescript
 interface MoonPayBuyParams {
+  // UI options (shared with MoonPaySellParams)
   colorCode?: string;
   theme?: 'dark' | 'light';
   themeId?: string;
@@ -258,6 +259,44 @@ interface MoonPayBuyParams {
   redirectURL?: string;
   unsupportedRegionRedirectUrl?: string;
   skipUnsupportedRegionScreen?: boolean;
+
+  // Buy-specific options
+  defaultCurrencyCode?: string;
+  walletAddress?: string;
+  walletAddressTag?: string;
+  walletAddresses?: string;
+  walletAddressTags?: string;
+  contractAddress?: string;
+  networkCode?: string;
+  lockAmount?: boolean;
+  email?: string;
+  externalTransactionId?: string;
+  externalCustomerId?: string;
+  paymentMethod?: string;
+}
+```
+
+### `MoonPaySellParams`
+
+Widget configuration options for `sell()` operations:
+
+```typescript
+interface MoonPaySellParams {
+  // UI options (shared with MoonPayBuyParams)
+  colorCode?: string;
+  theme?: 'dark' | 'light';
+  themeId?: string;
+  language?: string;
+  showAllCurrencies?: boolean;
+  showOnlyCurrencies?: string;
+  showWalletAddressForm?: boolean;
+  redirectURL?: string;
+  unsupportedRegionRedirectUrl?: string;
+  skipUnsupportedRegionScreen?: boolean;
+
+  // Sell-specific options
+  defaultBaseCurrencyCode?: string;
+  refundWalletAddresses?: string;
   lockAmount?: boolean;
   email?: string;
   externalTransactionId?: string;
