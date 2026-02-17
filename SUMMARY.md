@@ -81,10 +81,10 @@
     * [Usage](sdk/swap-modules/swap-velora-evm/usage.md)
     * [Configuration](sdk/swap-modules/swap-velora-evm/configuration.md)
     * [API Reference](sdk/swap-modules/swap-velora-evm/api-reference.md)
-  * [swap-stonfi-ton](sdk/swap-modules/swap-stonfi-ton/README.md)
+  <!-- * [swap-stonfi-ton](sdk/swap-modules/swap-stonfi-ton/README.md)
     * [Usage](sdk/swap-modules/swap-stonfi-ton/usage.md)
     * [Configuration](sdk/swap-modules/swap-stonfi-ton/configuration.md)
-    * [API Reference](sdk/swap-modules/swap-stonfi-ton/api-reference.md)
+    * [API Reference](sdk/swap-modules/swap-stonfi-ton/api-reference.md) -->
 * [Bridge Modules](sdk/bridge-modules/README.md)
   * [bridge-usdt0-evm](sdk/bridge-modules/bridge-usdt0-evm/README.md)
     * [Usage](sdk/bridge-modules/bridge-usdt0-evm/usage.md)
