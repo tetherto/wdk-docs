@@ -51,7 +51,7 @@ const seedPhrase = 'your twelve word seed phrase here' // Replace with actual se
 // Create wallet manager with Tron RPC provider and gas-free service provider
 const wallet = new WalletManagerTronGasfree(seedPhrase, {
   // Tron network configuration
-  chainId: '728126428', // Tron chain ID
+  chainId: 728126428, // Tron chain ID
   provider: 'https://api.trongrid.io', // or any other Tron RPC provider
   // Gas-free service configuration
   gasFreeProvider: 'https://gasfree.provider.url', // Gas-free provider's URL
@@ -122,7 +122,13 @@ const address = 'T...'; // Replace with the actual Tron address
 
 // Create a read-only account
 const readOnlyAccount = new WalletAccountReadOnlyTronGasfree(address, {
-  provider: 'https://api.trongrid.io'
+  chainId: 728126428,
+  provider: 'https://api.trongrid.io',
+  gasFreeProvider: 'https://open.gasfree.io/tron/',
+  gasFreeApiKey: 'your-api-key',
+  gasFreeApiSecret: 'your-api-secret',
+  serviceProvider: 'T...',
+  verifyingContract: 'T...'
 })
 // Check the balance
 const balance = await readOnlyAccount.getBalance()
@@ -130,9 +136,18 @@ console.log('Read-only account balance:', balance)
 ```
 
 ### Sending Transactions
-⚠️ Direct transaction sending using `sendTransaction()` is not supported in `WalletAccountTronGasfree`. This is a gasfree implementation that handles transactions through a gasfree provider instead of direct blockchain transactions.
 
-For sending tokens, please use the `transfer()` method instead.
+```javascript
+// Send a TRX transaction
+const result = await account.sendTransaction({
+  to: 'T...',       // Recipient Tron address
+  value: 1000000    // Amount in sun
+})
+console.log('Transaction hash:', result.hash)
+console.log('Fee paid:', result.fee, 'sun')
+```
+
+For sending TRC20 tokens gas-free, use the `transfer()` method instead.
 
 ### Token Transfers
 
@@ -210,7 +225,7 @@ async function setupWallet() {
   // Create gas-free wallet manager with required config
   const wallet = new WalletManagerTronGasfree(seedPhrase, {
     // Required parameters
-    chainId: '728126428', // Blockchain ID
+    chainId: 728126428, // Blockchain ID
     provider: 'https://api.trongrid.io', // Tron RPC endpoint
     gasFreeProvider: 'https://api.gasfree.com', // Gas-free service URL
     gasFreeApiKey: 'your-api-key',

@@ -65,7 +65,7 @@ const config = {
 
 The `transferMaxFee` option sets the maximum fee amount (in sun) for transfer operations. This helps prevent transactions from being sent with unexpectedly high fees.
 
-**Type:** `number` (optional)  
+**Type:** `number | bigint` (optional)  
 **Unit:** Sun (1 TRX = 1,000,000 Sun)
 
 **Example:**
