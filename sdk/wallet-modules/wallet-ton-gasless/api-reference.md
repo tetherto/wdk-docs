@@ -147,7 +147,6 @@ new WalletAccountTonGasless(seed, path, config)
 | `sign(message)` | Signs a message using the account's private key | `Promise<string>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `sendTransaction(tx)` | Sends a TON transaction | `Promise<{hash: string, fee: bigint}>` |
-| `quoteSendTransaction(tx)` | ⚠️ Not supported - throws at runtime | `Promise<{fee: bigint}>` |
 | `transfer(options, config?)` | Transfers tokens using gasless transactions | `Promise<{hash: string, fee: bigint}>` |
 | `quoteTransfer(options, config?)` | Estimates the fee for a token transfer | `Promise<{fee: bigint}>` |
 | `getBalance()` | Returns the native TON balance (in nanotons) | `Promise<bigint>` |
@@ -217,12 +216,6 @@ const result = await account.sendTransaction({
 })
 console.log('Transaction hash:', result.hash)
 ```
-
-##### `quoteSendTransaction(tx)`
-
-{% hint style="warning" %}
-**Not Supported.** This method is inherited from the parent class but throws `"Method 'quoteSendTransaction(tx)' not supported on ton gasless"` at runtime. Use `quoteTransfer()` instead for fee estimation.
-{% endhint %}
 
 ##### `transfer(options, config?)`
 Transfers tokens using gasless transactions.
@@ -383,7 +376,6 @@ new WalletAccountReadOnlyTonGasless(publicKey, config)
 | `getBalance()` | Returns the native TON balance | `Promise<bigint>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific token | `Promise<bigint>` |
 | `getPaymasterTokenBalance()` | Returns the balance of the paymaster token | `Promise<bigint>` |
-| `quoteSendTransaction(tx)` | ⚠️ Not supported - throws at runtime | `Promise<{fee: bigint}>` |
 | `quoteTransfer(options, config?)` | Estimates the fee for a token transfer | `Promise<{fee: bigint}>` |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<TonTransactionReceipt \| null>` |
 
@@ -448,12 +440,6 @@ Returns the balance of the paymaster token (used for gasless fees).
 const paymasterBalance = await readOnlyAccount.getPaymasterTokenBalance()
 console.log('Paymaster token balance:', paymasterBalance)
 ```
-
-##### `quoteSendTransaction(tx)`
-
-{% hint style="warning" %}
-**Not Supported.** This method is inherited from the parent class but throws `"Method 'quoteSendTransaction(tx)' not supported on ton gasless"` at runtime. Use `quoteTransfer()` instead for fee estimation.
-{% endhint %}
 
 ##### `quoteTransfer(options, config?)`
 Estimates the fee for a token transfer.
