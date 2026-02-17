@@ -27,7 +27,6 @@ layout:
 | [WalletManagerBtc](#walletmanagerbtc) | Main class for managing Bitcoin wallets. Extends `WalletManager` from `@tetherto/wdk-wallet`. | [Constructor](#constructor), [Methods](#methods) |
 | [WalletAccountBtc](#walletaccountbtc) | Individual Bitcoin wallet account implementation. Implements `IWalletAccount`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties) |
 | [WalletAccountReadOnlyBtc](#walletaccountreadonlybtc) | Read-only Bitcoin wallet account. Extends `WalletAccountReadOnly` from `@tetherto/wdk-wallet`. | [Constructor](#constructor-2), [Methods](#methods-2) |
-| [WalletAccountReadOnlyBtc](#walletaccountreadonlybtc) | Read-only Bitcoin wallet account. Extends `WalletAccountReadOnly` from `@tetherto/wdk-wallet`. | [Constructor](#constructor-2), [Methods](#methods-2) |
 | [ElectrumTcp](#electrumtcp) | Standard TCP Electrum client. Implements `IElectrumClient`. | [Constructor](#constructor-3) |
 | [ElectrumTls](#electrumtls) | TLS Electrum client. Implements `IElectrumClient`. | [Constructor](#constructor-4) |
 | [ElectrumSsl](#electrumssl) | SSL Electrum client. Implements `IElectrumClient`. | [Constructor](#constructor-5) |
@@ -316,40 +315,6 @@ const isValid = await account.verify('Hello Bitcoin!', signature)
 console.log('Signature valid:', isValid)
 ```
 
-##### `getTokenBalance(tokenAddress)`
-Not supported on the Bitcoin blockchain. Always throws an error.
-
-**Parameters:**
-- `tokenAddress` (string): Token contract address
-
-**Throws:** Error - "The 'getTokenBalance' method is not supported on the bitcoin blockchain."
-
-**Example:**
-```javascript
-// This will throw an error
-try {
-  await account.getTokenBalance('some-address')
-} catch (error) {
-  console.log(error.message) // Not supported on bitcoin blockchain
-}
-```
-
-##### `transfer(options)`
-Not supported on the Bitcoin blockchain. Always throws an error.
-
-**Parameters:**
-- `options` (object): Transfer options
-
-**Throws:** Error - "The 'transfer' method is not supported on the bitcoin blockchain."
-
-##### `quoteTransfer(options)`
-Not supported on the Bitcoin blockchain. Always throws an error.
-
-**Parameters:**
-- `options` (object): Transfer options
-
-**Throws:** Error - "The 'quoteTransfer' method is not supported on the bitcoin blockchain."
-
 ##### `toReadOnlyAccount()`
 Creates a read-only version of this account that can query balances and transactions but cannot sign or send transactions.
 
@@ -412,6 +377,79 @@ new WalletAccountReadOnlyBtc(address, config)
 | `getMaxSpendable()` | Returns the maximum spendable amount | `Promise<BtcMaxSpendableResult>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 
+
+##### `getAddress()`
+Returns the account's Bitcoin address.
+
+**Returns:** `Promise<string>` - The Bitcoin address
+
+**Example:**
+```javascript
+const address = await readOnlyAccount.getAddress()
+console.log('Address:', address)
+```
+
+##### `getBalance()`
+Returns the account's confirmed balance in satoshis.
+
+**Returns:** `Promise<bigint>` - Balance in satoshis
+
+**Example:**
+```javascript
+const balance = await readOnlyAccount.getBalance()
+console.log('Balance:', balance, 'satoshis')
+```
+
+##### `quoteSendTransaction(options)`
+Estimates the fee for a transaction without broadcasting it.
+
+**Parameters:**
+- `options` (BtcTransaction): Transaction options
+  - `to` (string): Recipient's Bitcoin address
+  - `value` (number | bigint): Amount in satoshis
+  - `feeRate` (number | bigint, optional): Fee rate in sat/vB
+  - `confirmationTarget` (number, optional): Target blocks for confirmation (default: 1)
+
+**Returns:** `Promise<{fee: bigint}>` - Estimated fee in satoshis
+
+**Example:**
+```javascript
+const quote = await readOnlyAccount.quoteSendTransaction({
+  to: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+  value: 50000n
+})
+console.log('Estimated fee:', quote.fee, 'satoshis')
+```
+
+##### `getTransactionReceipt(hash)`
+Returns a transaction's receipt if it has been included in a block.
+
+**Parameters:**
+- `hash` (string): The transaction hash
+
+**Returns:** `Promise<BtcTransactionReceipt | null>` - The receipt, or null if not yet included
+
+**Example:**
+```javascript
+const receipt = await readOnlyAccount.getTransactionReceipt('abc123...')
+if (receipt) {
+  console.log('Transaction confirmed')
+}
+```
+
+##### `getMaxSpendable()`
+Returns the maximum spendable amount that can be sent in a single transaction.
+
+**Returns:** `Promise<BtcMaxSpendableResult>` - Maximum spendable result
+- `amount`: Maximum spendable amount in satoshis (bigint)
+- `fee`: Estimated network fee in satoshis (bigint)
+- `changeValue`: Estimated change value in satoshis (bigint)
+
+**Example:**
+```javascript
+const { amount, fee } = await readOnlyAccount.getMaxSpendable()
+console.log('Max spendable:', amount, 'satoshis')
+```
 
 ##### `verify(message, signature)`
 Verifies a message signature using the account's public key.
@@ -566,8 +604,8 @@ interface BtcMaxSpendableResult {
 
 ```typescript
 interface KeyPair {
-  publicKey: Uint8Array   // Public key bytes
-  privateKey: Uint8Array  // Private key bytes
+  publicKey: Uint8Array          // Public key bytes
+  privateKey: Uint8Array | null  // Private key bytes (null after dispose)
 }
 ```
 
