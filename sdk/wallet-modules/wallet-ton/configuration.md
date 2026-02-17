@@ -32,10 +32,10 @@ const config = {
     url: 'https://toncenter.com/api/v3',
     secretKey: 'your-api-key' // Optional
   },
-  transferMaxFee: 1000000000 // Optional: Maximum fee in nanotons (1 TON)
+  transferMaxFee: 10000000 // Optional: maximum fee in nanotons for transfer operations
 }
 
-const wallet = new WalletManagerTon(seedPhrase, config)
+const wallet = new WalletManagerTon(seedPhrase, config) // config is optional
 ```
 
 ## Account Configuration
@@ -48,23 +48,26 @@ const accountConfig = {
     url: 'https://toncenter.com/api/v3',
     secretKey: 'your-api-key' // Optional
   },
-  transferMaxFee: 1000000000 // Optional: Maximum fee in nanotons
+  transferMaxFee: 10000000 // Optional: maximum fee in nanotons for transfer operations
 }
 
-const account = new WalletAccountTon(seedPhrase, "0'/0/0", accountConfig)
+const account = new WalletAccountTon(seedPhrase, "0'/0/0", accountConfig) // config is optional
 ```
 
 ## Configuration Options
 
 ### tonClient
 
-The `tonClient` option configures the TON Center API client for blockchain interactions.
+The `tonClient` option configures the TON Center API client for blockchain interactions. You can pass either a configuration object or an existing `TonClient` instance.
 
 **Type:**
 ```typescript
+type TonClientOption = TonClientConfig | TonClient;
+
 interface TonClientConfig {
   /**
    * TON Center API endpoint URL
+   * @example 'https://toncenter.com/api/v3'
    */
   url: string;
 
@@ -75,6 +78,8 @@ interface TonClientConfig {
   secretKey?: string;
 }
 ```
+
+**Required:** No (optional)
 
 **Examples:**
 ```javascript
@@ -98,8 +103,9 @@ const config = {
 
 The `transferMaxFee` option sets the maximum allowed fee (in nanotons) for transfer operations. This helps prevent unexpectedly high transaction fees.
 
-**Type:** `number` (nanotons)
+**Type:** `number | bigint`
 
+**Required:** No
 **Default:** No maximum (undefined)
 
 **Examples:**
