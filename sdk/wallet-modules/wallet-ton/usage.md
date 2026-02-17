@@ -291,8 +291,7 @@ async function sendAdvancedTransaction(account) {
       to: 'EQ...', // Recipient's TON address
       value: 1000000000, // 1 TON in nanotons
       bounceable: true, // TON-specific: whether the address is bounceable
-      payload: '', // Optional: Additional data for the transaction
-      stateInit: null // Optional: Contract state initialization data
+      body: '' // Optional: message body
     });
 
     console.log('Transaction hash:', result.hash);
@@ -317,13 +316,13 @@ async function sendAdvancedTransaction(account) {
 ```javascript
 async function transferJettonWithValidation(account, jettonAddress, recipient, amount) {
   try {
-    // Validate Jetton address (TON format)
-    if (!jettonAddress.startsWith('EQ')) {
+    // Validate TON addresses (basic check)
+    if (typeof jettonAddress !== 'string' || jettonAddress.length === 0) {
       throw new Error('Invalid Jetton address format');
     }
 
-    // Validate recipient address (TON format)
-    if (!recipient.startsWith('EQ')) {
+    // Validate recipient address
+    if (typeof recipient !== 'string' || recipient.length === 0) {
       throw new Error('Invalid recipient address format');
     }
 
