@@ -127,17 +127,15 @@ Registers a protocol globally for all accounts of a specific blockchain.
 {% code title="Register Protocols" lineNumbers="true" %}
 ```javascript
 import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
-import Usdt0ProtocolTon from '@tetherto/wdk-protocol-bridge-usdt0-ton' 
+import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
 
 // Register swap protocol for Ethereum
 wdk.registerProtocol('ethereum', 'velora', veloraProtocolEvm, {
   apiKey: 'YOUR_velora_API_KEY'
 })
 
-// Register bridge protocol for TON
-wdk.registerProtocol('ton', 'usdt0', Usdt0ProtocolTon, {
-  tonApiKey: 'YOUR_TON_API_KEY'
-})
+// Register bridge protocol for Ethereum
+wdk.registerProtocol('ethereum', 'usdt0', Usdt0ProtocolEvm)
 
 // Method chaining
 const wdk2 = new WDK(seedPhrase)
@@ -403,19 +401,19 @@ Returns the bridge protocol with the given label.
 **Example:**
 {% code title="Get Bridge Protocol" lineNumbers="true" %}
 ```javascript
-import Usdt0ProtocolTon from '@tetherto/wdk-protocol-bridge-usdt0-ton'
+import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
 
 // Register bridge protocol
-account.registerProtocol('usdt0', Usdt0ProtocolTon, usdt0ProtocolConfig)
+account.registerProtocol('usdt0', Usdt0ProtocolEvm)
 
 // Get bridge protocol
 const usdt0 = account.getBridgeProtocol('usdt0')
 
 // Use the protocol
 const bridgeResult = await usdt0.bridge({
-  targetChain: 'ethereum',
+  targetChain: 'arbitrum',
   recipient: '0x...',
-  token: 'TON_TOKEN_ADDRESS',
+  token: '0x...',
   amount: 1000000n
 })
 ```
@@ -458,7 +456,7 @@ import WDK from '@tetherto/wdk'
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
 import WalletManagerTon from '@tetherto/wdk-wallet-ton'
 import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
-import Usdt0ProtocolTon from '@tetherto/wdk-protocol-bridge-usdt0-ton'
+import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
 
 // Initialize WDK Manager
 const wdk = new WDK(seedPhrase)
@@ -472,9 +470,7 @@ const wdk = new WDK(seedPhrase)
   .registerProtocol('ethereum', 'velora', veloraProtocolEvm, {
     apiKey: 'YOUR_velora_API_KEY'
   })
-  .registerProtocol('ton', 'usdt0', Usdt0ProtocolTon, {
-    tonApiKey: 'YOUR_TON_API_KEY'
-  })
+  .registerProtocol('ethereum', 'usdt0', Usdt0ProtocolEvm)
 
 // Get accounts
 const accountEth = await wdk.getAccount('ethereum', 3)
@@ -490,7 +486,7 @@ const { hash, fee } = await accountEth.sendTransaction({
 const velora = accountEth.getSwapProtocol('velora')
 const swapResult = await velora.swap(swapOptions)
 
-const usdt0 = accountTon.getBridgeProtocol('usdt0')
+const usdt0 = accountEth.getBridgeProtocol('usdt0')
 const bridgeResult = await usdt0.bridge(bridgeOptions)
 
 // Clean up
