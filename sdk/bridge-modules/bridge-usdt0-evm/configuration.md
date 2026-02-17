@@ -29,7 +29,7 @@ import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
 import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
 // Create wallet account first
-const account = new WalletAccountEvm(seedPhrase, {
+const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
   provider: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key'
 })
 
@@ -76,7 +76,7 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 
 The `bridgeMaxFee` option sets a maximum limit for total bridge costs to prevent unexpectedly high fees.
 
-**Type:** `bigint` (optional)  
+**Type:** `number | bigint` (optional)  
 **Unit:** Wei (1 ETH = 1000000000000000000 Wei)
 
 **Examples:**
@@ -112,18 +112,18 @@ The `provider` option comes from the wallet account configuration and specifies 
 
 ```javascript
 // Option 1: Using RPC URL
-const account = new WalletAccountEvm(seedPhrase, {
+const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
   provider: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key'
 })
 
 // Option 2: Using browser provider (e.g., MetaMask)
-const account = new WalletAccountEvm(seedPhrase, {
+const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
   provider: window.ethereum
 })
 
 // Option 3: Using custom JsonRpcProvider
 import { JsonRpcProvider } from 'ethers'
-const account = new WalletAccountEvm(seedPhrase, {
+const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
   provider: new JsonRpcProvider('https://eth-mainnet.g.alchemy.com/v2/your-api-key')
 })
 ```
@@ -171,17 +171,17 @@ The bridge protocol works with EVM-compatible networks. Change the provider URL 
 
 ```javascript
 // Ethereum Mainnet
-const ethereumAccount = new WalletAccountEvm(seedPhrase, {
+const ethereumAccount = new WalletAccountEvm(seedPhrase, "0'/0/0", {
   provider: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key'
 })
 
 // Arbitrum
-const arbitrumAccount = new WalletAccountEvm(seedPhrase, {
+const arbitrumAccount = new WalletAccountEvm(seedPhrase, "0'/0/0", {
   provider: 'https://arb1.arbitrum.io/rpc'
 })
 
 // Polygon
-const polygonAccount = new WalletAccountEvm(seedPhrase, {
+const polygonAccount = new WalletAccountEvm(seedPhrase, "0'/0/0", {
   provider: 'https://polygon-rpc.com'
 })
 ```
@@ -226,7 +226,7 @@ The `token` option specifies which token contract to bridge.
 
 The `amount` option specifies how many tokens to bridge.
 
-**Type:** `bigint`  
+**Type:** `number | bigint`  
 **Unit:** Base units of the token (e.g., for USD₮: 1 USD₮ = 1000000n)
 
 ## Error Handling

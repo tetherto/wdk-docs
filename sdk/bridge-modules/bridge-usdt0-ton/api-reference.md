@@ -40,7 +40,7 @@ new Usdt0ProtocolTon(account, config?)
 **Parameters:**
 - `account` (WalletAccountTon | WalletAccountTonGasless | WalletAccountReadOnlyTon | WalletAccountReadOnlyTonGasless): The wallet account to use for bridge operations
 - `config` (BridgeProtocolConfig, optional): Configuration object
-  - `bridgeMaxFee` (bigint, optional): Maximum total bridge cost in nanotons
+  - `bridgeMaxFee` (number | bigint, optional): Maximum total bridge cost in nanotons
 
 **Example:**
 ```javascript
@@ -72,11 +72,11 @@ Bridges tokens from TON to a different blockchain using the USD₮0 protocol.
   - `targetChain` (string): Where to send tokens
   - `recipient` (string): Address that will receive the bridged tokens
   - `token` (string): Token address on TON
-  - `amount` (bigint): Amount to bridge in token base units
+  - `amount` (number | bigint): Amount to bridge in token base units
   - `oft` (OftBridgeConfig, optional): Custom token config for jettons not built in
 - `config` (Pick<TonGaslessWalletConfig, 'paymasterToken'> & Pick<BridgeProtocolConfig, 'bridgeMaxFee'>, optional): Override settings for gasless accounts
   - `paymasterToken` (string, optional): Token to use for paying fees
-  - `bridgeMaxFee` (bigint, optional): Override maximum bridge fee
+  - `bridgeMaxFee` (number | bigint, optional): Override maximum bridge fee
 
 **Returns:** `Promise<BridgeResult>` - Bridge operation result
 
@@ -179,7 +179,7 @@ interface Usdt0BridgeOptions {
   targetChain: string;              // Where to send tokens
   recipient: string;                // Address that will receive bridged tokens
   token: string;                    // Token address on TON
-  amount: bigint;                   // Amount to bridge in token base units
+  amount: number | bigint;           // Amount to bridge in token base units
   oft?: OftBridgeConfig;            // Custom token config for jettons
 }
 ```
@@ -198,7 +198,7 @@ interface BridgeResult {
 
 ```typescript
 interface BridgeProtocolConfig {
-  bridgeMaxFee?: bigint;            // Maximum total bridge cost in nanotons
+  bridgeMaxFee?: number | bigint;    // Maximum total bridge cost in nanotons
 }
 ```
 

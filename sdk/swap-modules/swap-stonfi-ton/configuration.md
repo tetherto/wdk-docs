@@ -79,7 +79,7 @@ const swapProtocol = new StonFiProtocolTon(account, {
 
 The `swapMaxFee` option sets a top limit for total swap costs to prevent very high fees.
 
-**Type:** `bigint` (optional)  
+**Type:** `number | bigint` (optional)  
 **Unit:** Nanotons (1 TON = 1000000000 nanotons)
 
 **Examples:**
@@ -219,14 +219,14 @@ The `tokenOut` option says which token to buy.
 
 The `tokenInAmount` option says how many tokens to sell.
 
-**Type:** `bigint`  
+**Type:** `number | bigint`  
 **Unit:** Base units of the token (for TON: 1 TON = 1000000000n nanotons)
 
 ### Token Out Amount
 
 The `tokenOutAmount` option says how many tokens to buy (exact output).
 
-**Type:** `bigint`  
+**Type:** `number | bigint`  
 **Unit:** Base units of the token
 
 **Note:** Use either `tokenInAmount` OR `tokenOutAmount`, not both.

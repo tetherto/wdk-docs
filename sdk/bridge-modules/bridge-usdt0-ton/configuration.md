@@ -79,7 +79,7 @@ const bridgeProtocol = new Usdt0ProtocolTon(account, {
 
 The `bridgeMaxFee` option sets a top limit for total bridge costs to prevent very high fees.
 
-**Type:** `bigint` (optional)  
+**Type:** `number | bigint` (optional)  
 **Unit:** Nanotons (1 TON = 1000000000 nanotons)
 
 **Examples:**
@@ -227,7 +227,7 @@ The `token` option specifies which token to bridge.
 
 The `amount` option specifies how many tokens to bridge.
 
-**Type:** `bigint`  
+**Type:** `number | bigint`  
 **Unit:** Base units of the token (e.g., for USD₮: 1 USD₮ = 1000000n)
 
 ### Custom Token Config
