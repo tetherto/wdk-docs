@@ -40,7 +40,7 @@ new StonFiProtocolTon(account, config?)
 **Parameters:**
 - `account` (WalletAccountTon | WalletAccountTonGasless | WalletAccountReadOnlyTon | WalletAccountReadOnlyTonGasless): The wallet account to use for swap operations
 - `config` (SwapProtocolConfig, optional): Configuration object
-  - `swapMaxFee` (number | bigint, optional): Maximum total swap cost in nanotons
+  - `swapMaxFee` (bigint, optional): Maximum total swap cost in nanotons
 
 **Example:**
 ```javascript
@@ -77,7 +77,7 @@ Swaps tokens on StonFi DEX using the StonFi protocol.
   - `to` (string, optional): Address to send bought tokens (default: your address)
 - `config` (Pick<TonGaslessWalletConfig, 'paymasterToken'> & Pick<SwapProtocolConfig, 'swapMaxFee'>, optional): Override settings for gasless accounts
   - `paymasterToken` (string, optional): Token to use for paying fees
-  - `swapMaxFee` (number | bigint, optional): Override maximum swap fee
+  - `swapMaxFee` (bigint, optional): Override maximum swap fee
 
 **Returns:** `Promise<SwapResult>` - Swap operation result
 
@@ -197,7 +197,7 @@ interface SwapResult {
 
 ```typescript
 interface SwapProtocolConfig {
-  swapMaxFee?: number | bigint;          // Maximum total swap cost in nanotons
+  swapMaxFee?: bigint;                  // Maximum total swap cost in nanotons
 }
 ```
 
