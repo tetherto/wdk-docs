@@ -33,7 +33,7 @@ new VeloraProtocolEvm(account, config?)
 Parameters:
 - `account`: `WalletAccountEvm | WalletAccountReadOnlyEvm | WalletAccountEvmErc4337 | WalletAccountReadOnlyEvmErc4337`
 - `config` (optional):
-  - `swapMaxFee` (`bigint`): maximum total gas fee allowed (wei)
+  - `swapMaxFee` (`number | bigint`): maximum total gas fee allowed (wei)
 
 Example:
 
@@ -56,13 +56,13 @@ Execute a swap via velora.
 Options:
 - `tokenIn` (`string`): Address of the ERC‑20 token to sell
 - `tokenOut` (`string`): Address of the ERC‑20 token to buy
-- `tokenInAmount` (`bigint`, optional): Exact input amount (base units)
-- `tokenOutAmount` (`bigint`, optional): Exact output amount (base units)
+- `tokenInAmount` (`number | bigint`, optional): Exact input amount (base units)
+- `tokenOutAmount` (`number | bigint`, optional): Exact output amount (base units)
 - `to` (`string`, optional): Recipient address (defaults to account address)
 
 Config (ERC‑4337 only):
 - `paymasterToken` (`string`, optional): Token symbol/address for fee sponsorship
-- `swapMaxFee` (`bigint`, optional): Per‑swap fee cap (wei)
+- `swapMaxFee` (`number | bigint`, optional): Per‑swap fee cap (wei)
 
 Returns:
 - Standard account: `{ hash, fee, tokenInAmount, tokenOutAmount, approveHash?, resetAllowanceHash? }`

@@ -113,7 +113,7 @@ await aave.repay({ token: 'TOKEN_ADDRESS', amount: 1000000n })
 ### Common Parameters
 
 - `token` (`string`): ERC‑20 token address
-- `amount` (`bigint`): token amount in base units
+- `amount` (`number | bigint`): token amount in base units
 - `onBehalfOf` (`string`, optional): another address to act for (supply/borrow/repay)
 - `to` (`string`, optional): destination address (withdraw)
 

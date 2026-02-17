@@ -35,7 +35,7 @@ import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
 import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
 // Create a wallet account first
-const account = new WalletAccountEvm(seedPhrase, {
+const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
   provider: 'https://rpc.mevblocker.io/fast'
 })
 
@@ -172,7 +172,7 @@ import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
 async function setupBridge() {
   // Create wallet account
-  const account = new WalletAccountEvm(seedPhrase, {
+  const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
     provider: 'https://rpc.mevblocker.io/fast'
   })
   
