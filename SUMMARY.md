@@ -23,6 +23,7 @@
   * [API Reference](ai/mcp-toolkit/api-reference.md)
 * [Agent Skills](ai/agent-skills.md)
 * [OpenClaw](ai/openclaw.md)
+* [x402](ai/x402.md)
 
 ## SDK
 
