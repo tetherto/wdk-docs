@@ -30,7 +30,7 @@ import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
 // Create wallet account first
 const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
-  provider: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key'
+  provider: 'https://eth.drpc.org'
 })
 
 // Create bridge protocol with configuration
@@ -51,7 +51,7 @@ const account = new WalletAccountEvm(
   seedPhrase,
   "0'/0/0", // BIP-44 derivation path
   {
-    provider: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key',
+    provider: 'https://eth.drpc.org',
     transferMaxFee: 100000000000000
   }
 )
@@ -60,7 +60,7 @@ const account = new WalletAccountEvm(
 const readOnlyAccount = new WalletAccountReadOnlyEvm(
   '0x...', // Ethereum address
   {
-    provider: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key'
+    provider: 'https://eth.drpc.org'
   }
 )
 
@@ -113,7 +113,7 @@ The `provider` option comes from the wallet account configuration and specifies 
 ```javascript
 // Option 1: Using RPC URL
 const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
-  provider: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key'
+  provider: 'https://eth.drpc.org'
 })
 
 // Option 2: Using browser provider (e.g., MetaMask)
@@ -124,7 +124,7 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 // Option 3: Using custom JsonRpcProvider
 import { JsonRpcProvider } from 'ethers'
 const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
-  provider: new JsonRpcProvider('https://eth-mainnet.g.alchemy.com/v2/your-api-key')
+  provider: new JsonRpcProvider('https://eth.drpc.org')
 })
 ```
 
@@ -172,7 +172,7 @@ The bridge protocol works with EVM-compatible networks. Change the provider URL 
 ```javascript
 // Ethereum Mainnet
 const ethereumAccount = new WalletAccountEvm(seedPhrase, "0'/0/0", {
-  provider: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key'
+  provider: 'https://eth.drpc.org'
 })
 
 // Arbitrum

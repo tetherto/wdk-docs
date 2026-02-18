@@ -89,7 +89,7 @@ server.useWdk({ seed: process.env.WDK_SEED })
 
 // 2. Register wallet modules
 server.registerWallet('ethereum', WalletManagerEvm, {
-  provider: 'https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY'
+  provider: 'https://eth.drpc.org'
 })
 
 server.registerWallet('bitcoin', WalletManagerBtc, {

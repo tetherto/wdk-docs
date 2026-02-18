@@ -32,16 +32,6 @@ layout:
 
 The main class for managing Tron wallets. Extends `WalletManager` from `@tetherto/wdk-wallet`.
 
-### Fee Rate Constants
-
-These values are used internally by the SDK. They are `protected static` members and are not importable from the package.
-
-```javascript
-// Internal — not directly accessible
-static _FEE_RATE_NORMAL_MULTIPLIER = 110n  // bigint, in %
-static _FEE_RATE_FAST_MULTIPLIER = 200n    // bigint, in %
-```
-
 ### Constructor
 
 ```javascript
@@ -136,16 +126,6 @@ wallet.dispose()
 ## WalletAccountTron
 
 Represents an individual Tron wallet account. Extends `WalletAccountReadOnlyTron` and implements `IWalletAccount`.
-
-### Constants
-
-These values are used internally by the SDK and are not re-exported from `index.d.ts`.
-
-```javascript
-// Internal — not importable
-const BIP_44_TRON_DERIVATION_PATH_PREFIX = "m/44'/195'"
-const BANDWIDTH_PRICE = 1_000
-```
 
 ### Constructor
 
@@ -558,21 +538,6 @@ interface TransferResult {
   fee: bigint;                        // Fee paid in sun
 }
 ```
-
-### Constants
-
-These values are used internally by the SDK and are **not re-exported** from the package entry point.
-
-```typescript
-// Internal — not importable
-const BIP_44_TRON_DERIVATION_PATH_PREFIX: string = "m/44'/195'";
-const BANDWIDTH_PRICE: number = 1_000;
-
-// Protected static (bigint, in %)
-static _FEE_RATE_NORMAL_MULTIPLIER: bigint = 110n;
-static _FEE_RATE_FAST_MULTIPLIER: bigint = 200n;
-```
-
 
 
 <table data-card-size="large" data-view="cards">

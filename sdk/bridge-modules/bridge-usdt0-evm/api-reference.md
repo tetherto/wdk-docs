@@ -48,7 +48,7 @@ import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
 import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
 const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
-  provider: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key'
+  provider: 'https://eth.drpc.org'
 })
 
 const bridgeProtocol = new Usdt0ProtocolEvm(account, {
@@ -256,7 +256,7 @@ import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 async function bridgeTokens() {
   // Create wallet account
   const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
-    provider: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key'
+    provider: 'https://eth.drpc.org'
   })
   
   // Create bridge protocol
