@@ -43,7 +43,7 @@ The WDK Indexer currently supports the following blockchain networks and tokens:
 | Bitcoin | BTC |
 | Spark | BTC |
 
-To get the most up-to-date list of supported chains and their tokens, use the [`/api/v1/chains`] endpoint.
+
 
 {% hint style="info" %}
 **Need support for a new chain or token?** Submit a request using the form below and our team will review it.
