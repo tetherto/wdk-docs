@@ -62,7 +62,7 @@ Add tokens to the pool.
 
 Options:
 - `token` (`string`): token address
-- `amount` (`bigint`): amount in base units
+- `amount` (`number | bigint`): amount in base units
 - `onBehalfOf` (`string`, optional)
 
 Returns:
@@ -90,7 +90,7 @@ Remove tokens from the pool.
 
 Options:
 - `token` (`string`)
-- `amount` (`bigint`)
+- `amount` (`number | bigint`)
 - `to` (`string`, optional)
 
 ```javascript
@@ -113,7 +113,7 @@ Borrow tokens.
 
 Options:
 - `token` (`string`)
-- `amount` (`bigint`)
+- `amount` (`number | bigint`)
 - `onBehalfOf` (`string`, optional)
 
 ```javascript
@@ -136,7 +136,7 @@ Repay borrowed tokens.
 
 Options:
 - `token` (`string`)
-- `amount` (`bigint`)
+- `amount` (`number | bigint`)
 - `onBehalfOf` (`string`, optional)
 
 ```javascript

@@ -40,15 +40,15 @@ new Usdt0ProtocolEvm(account, config?)
 **Parameters:**
 - `account` (WalletAccountEvm | WalletAccountEvmErc4337 | WalletAccountReadOnlyEvm | WalletAccountReadOnlyEvmErc4337): The wallet account to use for bridge operations
 - `config` (BridgeProtocolConfig, optional): Configuration object
-  - `bridgeMaxFee` (bigint, optional): Maximum total bridge cost in wei
+  - `bridgeMaxFee` (number | bigint, optional): Maximum total bridge cost in wei
 
 **Example:**
 ```javascript
 import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
 import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
-const account = new WalletAccountEvm(seedPhrase, {
-  provider: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key'
+const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
+  provider: 'https://eth.drpc.org'
 })
 
 const bridgeProtocol = new Usdt0ProtocolEvm(account, {
@@ -61,7 +61,7 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
 | `bridge(options, config?)` | Bridges tokens to another blockchain | `Promise<BridgeResult>` | If no provider or fee exceeds max |
-| `quoteBridge(options, config?)` | Estimates the cost of a bridge operation | `Promise<Omit<BridgeResult, 'hash' \| 'approveHash'>>` | If no provider |
+| `quoteBridge(options, config?)` | Estimates the cost of a bridge operation | `Promise<Omit<BridgeResult, 'hash'>>` | If no provider |
 
 #### `bridge(options, config?)`
 Bridges tokens to a different blockchain using the USD₮0 protocol.
@@ -71,10 +71,10 @@ Bridges tokens to a different blockchain using the USD₮0 protocol.
   - `targetChain` (string): Destination chain name
   - `recipient` (string): Address that will receive the bridged tokens
   - `token` (string): Token contract address on source chain
-  - `amount` (bigint): Amount to bridge in token base units
+  - `amount` (number | bigint): Amount to bridge in token base units
 - `config` (Pick<EvmErc4337WalletConfig, 'paymasterToken'> & Pick<BridgeProtocolConfig, 'bridgeMaxFee'>, optional): Override configuration for ERC-4337 accounts
   - `paymasterToken` (string, optional): Token to use for paying gas fees
-  - `bridgeMaxFee` (bigint, optional): Override maximum bridge fee
+  - `bridgeMaxFee` (number | bigint, optional): Override maximum bridge fee
 
 **Returns:** `Promise<BridgeResult>` - Bridge operation result
 
@@ -123,7 +123,7 @@ Estimates the cost of a bridge operation without executing it.
 - `config` (Pick<EvmErc4337WalletConfig, 'paymasterToken'>, optional): Override configuration for ERC-4337 accounts
   - `paymasterToken` (string, optional): Token to use for paying gas fees
 
-**Returns:** `Promise<Omit<BridgeResult, 'hash' | 'approveHash'>>` - Bridge cost estimate
+**Returns:** `Promise<Omit<BridgeResult, 'hash'>>` - Bridge cost estimate
 
 **Throws:** Error if no provider is configured
 
@@ -162,7 +162,7 @@ interface BridgeOptions {
   targetChain: string;              // Destination chain name
   recipient: string;                // Address that will receive bridged tokens
   token: string;                    // Token contract address on source chain
-  amount: bigint;                   // Amount to bridge in token base units
+  amount: number | bigint;           // Amount to bridge in token base units
 }
 ```
 
@@ -182,7 +182,7 @@ interface BridgeResult {
 
 ```typescript
 interface BridgeProtocolConfig {
-  bridgeMaxFee?: bigint;            // Maximum total bridge cost in wei
+  bridgeMaxFee?: number | bigint;    // Maximum total bridge cost in wei
 }
 ```
 
@@ -255,8 +255,8 @@ import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
 async function bridgeTokens() {
   // Create wallet account
-  const account = new WalletAccountEvm(seedPhrase, {
-    provider: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key'
+  const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
+    provider: 'https://eth.drpc.org'
   })
   
   // Create bridge protocol

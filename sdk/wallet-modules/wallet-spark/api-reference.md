@@ -108,6 +108,7 @@ Represents an individual Spark wallet account. Implements `IWalletAccount` from 
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's Spark address | `Promise<SparkAddressFormat>` |
 | `sign(message)` | Signs a message using the account's identity key | `Promise<string>` |
+| `getIdentityKey()` | Returns the account's identity public key | `Promise<string>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `sendTransaction(tx)` | Sends a Spark transaction | `Promise<{hash: string, fee: bigint}>` |
 | `quoteSendTransaction(tx)` | Estimates transaction fee (always 0) | `Promise<{fee: bigint}>` |
@@ -163,6 +164,16 @@ const signature = await account.sign('Hello, Spark!')
 console.log('Signature:', signature)
 ```
 
+##### `getIdentityKey()`
+Returns the account's identity public key (hex-encoded).
+
+**Returns:** `Promise<string>` - The identity public key
+
+**Example:**
+```javascript
+const identityKey = await account.getIdentityKey()
+console.log('Identity key:', identityKey) // 02eda8...
+```
 
 ##### `sendTransaction({to, value})`
 Sends a Spark transaction.
@@ -680,6 +691,7 @@ new WalletAccountReadOnlySpark(address, config)
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's Spark address | `Promise<SparkAddressFormat>` |
+| `getIdentityKey()` | Returns the account's identity public key | `Promise<string>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `getBalance()` | Returns the native token balance in satoshis | `Promise<bigint>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance for a specific token | `Promise<bigint>` |
@@ -696,6 +708,17 @@ Returns the account's Spark network address.
 ```javascript
 const address = await account.getAddress()
 console.log('Spark address:', address)
+```
+
+##### `getIdentityKey()`
+Returns the account's identity public key (hex-encoded).
+
+**Returns:** `Promise<string>` - The identity public key
+
+**Example:**
+```javascript
+const identityKey = await account.getIdentityKey()
+console.log('Identity key:', identityKey) // 02eda8...
 ```
 
 ##### `verify(message, signature)`

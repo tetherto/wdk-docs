@@ -29,7 +29,7 @@ import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
 
 const config = {
   // Recommended: RPC endpoint URL or EIP-1193 provider (required for blockchain operations)
-  provider: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key',
+  provider: 'https://eth.drpc.org',
   
   // Optional: Maximum fee for transfer operations (in wei)
   transferMaxFee: 100000000000000 // 0.0001 ETH
@@ -50,7 +50,7 @@ const account = new WalletAccountEvm(
   seedPhrase,
   "0'/0/0", // BIP-44 derivation path
   {
-    provider: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key',
+    provider: 'https://eth.drpc.org',
     transferMaxFee: 100000000000000
   }
 )
@@ -59,7 +59,7 @@ const account = new WalletAccountEvm(
 const readOnlyAccount = new WalletAccountReadOnlyEvm(
   '0x...', // Ethereum address
   {
-    provider: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key'
+    provider: 'https://eth.drpc.org'
   }
 )
 ```
@@ -77,7 +77,7 @@ The `provider` option specifies how to connect to the blockchain. It can be eith
 ```javascript
 // Option 1: Using RPC URL
 const config = {
-  provider: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key'
+  provider: 'https://eth.drpc.org'
 }
 
 // Option 2: Using browser provider (e.g., MetaMask)
@@ -109,7 +109,7 @@ function createFetchProvider(rpcUrl) {
 }
 
 const config = {
-  provider: createFetchProvider('https://eth-mainnet.g.alchemy.com/v2/your-api-key')
+  provider: createFetchProvider('https://eth.drpc.org')
 }
 ```
 
@@ -163,7 +163,7 @@ The configuration works with any EVM-compatible network. Just change the provide
 ```javascript
 // Ethereum Mainnet
 const mainnetConfig = {
-  provider: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key'
+  provider: 'https://eth.drpc.org'
 }
 
 // Polygon (Matic)

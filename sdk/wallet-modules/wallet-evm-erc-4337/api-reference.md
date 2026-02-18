@@ -34,15 +34,6 @@ layout:
 
 The main class for managing ERC-4337 EVM wallets. Extends `WalletManager` from `@tetherto/wdk-wallet`.
 
-### Fee Rate Behavior
-
-Internally, `getFeeRates()` applies these multipliers to the base fee:
-
-- **Normal**: base fee × 110%
-- **Fast**: base fee × 200%
-
-These multipliers are internal (`protected static`) and cannot be imported or overridden.
-
 ### Constructor
 
 ```javascript
@@ -237,19 +228,6 @@ wallet.dispose()
 ## WalletAccountEvmErc4337
 
 Represents an individual ERC-4337 wallet account. Extends `WalletAccountReadOnlyEvmErc4337` and implements `IWalletAccount`.
-
-### Constants
-
-The following constant is used internally for Safe account address derivation:
-
-```javascript
-// Internal: used by predictSafeAddress() for deterministic address generation
-const SALT_NONCE = '0x69b348339eea4ed93f9d11931c3b894c8f9d8c7663a053024b11cb7eb4e5a1f6'
-```
-
-> **Note:** This constant is not re-exported from the package entry point. Use `predictSafeAddress()` instead of referencing it directly.
-
-
 
 ### Constructor
 
@@ -605,17 +583,6 @@ console.log('Private key length:', privateKey?.length) // 32 bytes (null after d
 
 ## WalletAccountReadOnlyEvmErc4337
 Represents a read-only ERC-4337 wallet account that can query balances and estimate fees but cannot send transactions.
-
-### Constants
-
-The following constant is used internally for Safe account address derivation:
-
-```javascript
-// Internal: used by predictSafeAddress() for deterministic address generation
-const SALT_NONCE = '0x69b348339eea4ed93f9d11931c3b894c8f9d8c7663a053024b11cb7eb4e5a1f6'
-```
-
-> **Note:** This constant is not re-exported from the package entry point. Use `predictSafeAddress()` instead of referencing it directly.
 
 ### Constructor
 

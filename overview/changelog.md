@@ -24,6 +24,13 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### February 15, 2026
+
+**Changes**
+- **wallet-spark**: Added [`getIdentityKey()`](../sdk/wallet-modules/wallet-spark/api-reference.md#getidentitykey) method to [`WalletAccountReadOnlySpark`](../sdk/wallet-modules/wallet-spark/api-reference.md#walletaccountreadonlyspark) for retrieving the account's identity public key ([v1.0.0-beta.10](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.10))
+
+---
+
 ### February 14, 2026
 
 **Changes**

@@ -68,8 +68,8 @@ Generates a signed widget URL for purchasing cryptocurrency.
 |------|------|----------|-------------|
 | `options.cryptoAsset` | string | Yes | Cryptocurrency code (e.g., 'eth', 'btc') |
 | `options.fiatCurrency` | string | Yes | Fiat currency code (e.g., 'usd', 'eur') |
-| `options.cryptoAmount` | bigint | No* | Amount in smallest crypto units |
-| `options.fiatAmount` | bigint | No* | Amount in smallest fiat units (cents) |
+| `options.cryptoAmount` | number \| bigint | No* | Amount in smallest crypto units |
+| `options.fiatAmount` | number \| bigint | No* | Amount in smallest fiat units (cents) |
 | `options.recipient` | string | No | Wallet address (uses account address if not provided) |
 | `options.config` | MoonPayBuyParams | No | Widget configuration options |
 
@@ -89,8 +89,8 @@ Generates a signed widget URL for selling cryptocurrency.
 |------|------|----------|-------------|
 | `options.cryptoAsset` | string | Yes | Cryptocurrency code |
 | `options.fiatCurrency` | string | Yes | Fiat currency code |
-| `options.cryptoAmount` | bigint | No* | Amount in smallest crypto units |
-| `options.fiatAmount` | bigint | No* | Amount in smallest fiat units |
+| `options.cryptoAmount` | number \| bigint | No* | Amount in smallest crypto units |
+| `options.fiatAmount` | number \| bigint | No* | Amount in smallest fiat units |
 | `options.refundAddress` | string | No | Refund wallet address |
 | `options.config` | MoonPaySellParams | No | Widget configuration options |
 
@@ -108,8 +108,8 @@ Gets a price quote for a cryptocurrency purchase.
 |------|------|----------|-------------|
 | `options.cryptoAsset` | string | Yes | Cryptocurrency code |
 | `options.fiatCurrency` | string | Yes | Fiat currency code |
-| `options.cryptoAmount` | bigint | No* | Amount in smallest crypto units |
-| `options.fiatAmount` | bigint | No* | Amount in smallest fiat units |
+| `options.cryptoAmount` | number \| bigint | No* | Amount in smallest crypto units |
+| `options.fiatAmount` | number \| bigint | No* | Amount in smallest fiat units |
 | `options.config` | MoonPayQuoteBuyParams | No | Quote parameters |
 
 **Returns:** `Promise<MoonPayBuyQuote>`
@@ -136,7 +136,7 @@ Gets a price quote for selling cryptocurrency.
 |------|------|----------|-------------|
 | `options.cryptoAsset` | string | Yes | Cryptocurrency code |
 | `options.fiatCurrency` | string | Yes | Fiat currency code |
-| `options.cryptoAmount` | bigint | Yes | Amount in smallest crypto units |
+| `options.cryptoAmount` | number \| bigint | Yes | Amount in smallest crypto units |
 | `options.config` | MoonPayQuoteSellParams | No | Quote parameters |
 
 **Returns:** `Promise<MoonPaySellQuote>`
@@ -242,12 +242,13 @@ interface MoonPayProtocolConfig {
 }
 ```
 
-### `MoonPayBuyParams` / `MoonPaySellParams`
+### `MoonPayBuyParams`
 
-Widget configuration options:
+Widget configuration options for `buy()` operations:
 
 ```typescript
 interface MoonPayBuyParams {
+  // UI options (shared with MoonPaySellParams)
   colorCode?: string;
   theme?: 'dark' | 'light';
   themeId?: string;
@@ -258,6 +259,44 @@ interface MoonPayBuyParams {
   redirectURL?: string;
   unsupportedRegionRedirectUrl?: string;
   skipUnsupportedRegionScreen?: boolean;
+
+  // Buy-specific options
+  defaultCurrencyCode?: string;
+  walletAddress?: string;
+  walletAddressTag?: string;
+  walletAddresses?: string;
+  walletAddressTags?: string;
+  contractAddress?: string;
+  networkCode?: string;
+  lockAmount?: boolean;
+  email?: string;
+  externalTransactionId?: string;
+  externalCustomerId?: string;
+  paymentMethod?: string;
+}
+```
+
+### `MoonPaySellParams`
+
+Widget configuration options for `sell()` operations:
+
+```typescript
+interface MoonPaySellParams {
+  // UI options (shared with MoonPayBuyParams)
+  colorCode?: string;
+  theme?: 'dark' | 'light';
+  themeId?: string;
+  language?: string;
+  showAllCurrencies?: boolean;
+  showOnlyCurrencies?: string;
+  showWalletAddressForm?: boolean;
+  redirectURL?: string;
+  unsupportedRegionRedirectUrl?: string;
+  skipUnsupportedRegionScreen?: boolean;
+
+  // Sell-specific options
+  defaultBaseCurrencyCode?: string;
+  refundWalletAddresses?: string;
   lockAmount?: boolean;
   email?: string;
   externalTransactionId?: string;
