@@ -32,6 +32,7 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 | Module | Type | Description | Repository |
 |--------|------|-------------|------------|
 | `@utexo/wdk-wallet-rgb` | Bitcoin (RGB) | RGB protocol wallet integration for Bitcoin-based smart contracts | [GitHub](https://github.com/UTEXO-Protocol/wdk-wallet-rgb) |
+| `@semanticpay/wdk-wallet-evm-x402-facilitator` | EVM (x402) | Wraps a WDK EVM wallet as an [x402](../../ai/x402.md) facilitator signer for in-process payment verification and settlement | [GitHub](https://github.com/SemanticPay/wdk-wallet-evm-x402-facilitator) |
 
 ---
 
