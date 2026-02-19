@@ -46,8 +46,3 @@ WDK provides a set of core libraries that give you the highest level of control 
 
 {% include ".gitbook/includes/get-involved-cards.md" %}
 
-***
-
-## 📜 License
-
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
