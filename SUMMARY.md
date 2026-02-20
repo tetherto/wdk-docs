@@ -123,6 +123,8 @@
   * [Configuration](tools/price-rates/configuration.md)
   * [API Reference](tools/price-rates/api-reference.md)
 * [Create WDK Module](tools/create-wdk-module.md)
+* [React Native Core](tools/react-native-core/README.md)
+  * [API Reference](tools/react-native-core/api-reference.md)
 
 ## Resources and Guides
 
