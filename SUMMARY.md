@@ -8,6 +8,7 @@
 * [Partner Program](overview/partner-program.md)
 * [Get Support](overview/support.md)
 * [Changelog](overview/changelog.md)
+* [Showcase](overview/showcase.md)
 
 ## Start Building
 
@@ -132,5 +133,4 @@
 ## Resources and Guides
 
 * [Concepts](resources/concepts.md)
-* [Project Showcase](resources/showcase.md)
 <!-- * [Go-live Checklist](resources/go-live-checklist.md) -->

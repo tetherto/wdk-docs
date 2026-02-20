@@ -29,9 +29,10 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 
 ## Available Community Modules
 
-| Module | Type | Description | Repository |
-|--------|------|-------------|------------|
-| `@utexo/wdk-wallet-rgb` | Bitcoin (RGB) | RGB protocol wallet integration for Bitcoin-based smart contracts | [GitHub](https://github.com/UTEXO-Protocol/wdk-wallet-rgb) |
+| Module | Type | Description | Author | Repository |
+|--------|------|-------------|--------|------------|
+| `@utexo/wdk-wallet-rgb` | Bitcoin (RGB) | RGB protocol wallet integration for Bitcoin-based smart contracts | [UTEXO](https://github.com/UTEXO-Protocol) | [GitHub](https://github.com/UTEXO-Protocol/wdk-wallet-rgb) |
+| `@base58-io/wdk-wallet-cosmos` | Cosmos | WDK wallet module for Cosmos-compatible blockchains | [Base58](https://base58.io/) | [GitHub](https://github.com/base58-io/wdk-wallet-cosmos) |
 
 ---
 
