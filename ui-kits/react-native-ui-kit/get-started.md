@@ -77,12 +77,12 @@ export default function App() {
 
 ## Integration with WDK
 
-Components are designed to work seamlessly with the WDK React Native Provider. Here's an example of how to wire WDK data into the UI components:
+Components are designed to work seamlessly with the WDK React Native Core. Here's an example of how to wire WDK data into the UI components:
 
 {% code title="WDK Integration Example" lineNumbers="true" %}
 ```tsx
 import * as React from 'react'
-import { useWallet } from '@tetherto/wdk-react-native-provider'
+import { useWdkApp, useBalance, BaseAsset } from '@tetherto/wdk-react-native-core'
 import {
   ThemeProvider,
   lightTheme,
@@ -91,15 +91,23 @@ import {
   AmountInput
 } from '@tetherto/wdk-uikit-react-native'
 
+const usdt = new BaseAsset({
+  id: 'usdt-ethereum',
+  network: 'ethereum',
+  symbol: 'USDT',
+  name: 'Tether USD',
+  decimals: 6,
+  isNative: false,
+  address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+})
+
 export function SendScreen() {
-  const { balances, isInitialized } = useWallet()
+  const { isReady } = useWdkApp()
+  const { data: usdtBalance } = useBalance('ethereum', 0, usdt, { enabled: isReady })
   const [amount, setAmount] = React.useState('')
   const [address, setAddress] = React.useState('')
 
-  // Get USD₮ balance from the balances list
-  const usdtBalance = balances.list.find(b => b.denomination === 'USDT')
-
-  if (!isInitialized) {
+  if (!isReady) {
     return <Text>Loading...</Text>
   }
 
@@ -115,14 +123,14 @@ export function SendScreen() {
         tokenSymbol="USDT"
         value={amount}
         onChangeText={setAmount}
-        tokenBalance={usdtBalance?.value ?? '0'}
-        tokenBalanceUSD={usdtBalance?.valueUSD ?? '$0.00'}
+        tokenBalance={usdtBalance?.balance ?? '0'}
+        tokenBalanceUSD={'$0.00'}
         inputMode={'token'}
         onToggleInputMode={() => {/* Toggle fiat/token */}}
-        onUseMax={() => setAmount(usdtBalance?.value ?? '0')}
+        onUseMax={() => setAmount(usdtBalance?.balance ?? '0')}
       />
       <Balance
-        value={parseFloat(usdtBalance?.valueUSD ?? '0')}
+        value={parseFloat(usdtBalance?.balance ?? '0')}
         currency="USD"
       />
     </ThemeProvider>

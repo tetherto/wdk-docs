@@ -108,7 +108,7 @@ All packages are under the `@tetherto` scope. **Always** `npm view <pkg> version
 | Package | npm |
 |---------|-----|
 | `@tetherto/wdk-uikit-react-native` | [npmjs.com/package/@tetherto/wdk-uikit-react-native](https://www.npmjs.com/package/@tetherto/wdk-uikit-react-native) |
-| `@tetherto/wdk-react-native-provider` | [npmjs.com/package/@tetherto/wdk-react-native-provider](https://www.npmjs.com/package/@tetherto/wdk-react-native-provider) |
+| `@tetherto/wdk-react-native-core` | [npmjs.com/package/@tetherto/wdk-react-native-core](https://www.npmjs.com/package/@tetherto/wdk-react-native-core) |
 | `@tetherto/pear-wrk-wdk` | [npmjs.com/package/@tetherto/pear-wrk-wdk](https://www.npmjs.com/package/@tetherto/pear-wrk-wdk) |
 | `@tetherto/wdk-indexer-http` | [npmjs.com/package/@tetherto/wdk-indexer-http](https://www.npmjs.com/package/@tetherto/wdk-indexer-http) |
 
