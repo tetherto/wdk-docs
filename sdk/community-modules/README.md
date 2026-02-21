@@ -1,6 +1,6 @@
 ---
 title: Community Modules
-description: Explore WDK modules built by the community and learn how to create your own custom modules.
+description: Explore WDK compatible modules built by the community and learn how to create your own custom modules.
 layout:
   width: default
   title:
@@ -19,8 +19,6 @@ layout:
 
 # Community Modules
 
-The WDK ecosystem is enriched by modules developed by our community. These modules extend WDK's capabilities to support additional blockchains, protocols, and use cases.
-
 {% hint style="warning" %}
 Community modules are developed and maintained independently by third-party contributors.
 
@@ -29,9 +27,10 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 
 ## Available Community Modules
 
-| Module | Type | Description | Repository |
-|--------|------|-------------|------------|
-| `@utexo/wdk-wallet-rgb` | Bitcoin (RGB) | RGB protocol wallet integration for Bitcoin-based smart contracts | [GitHub](https://github.com/UTEXO-Protocol/wdk-wallet-rgb) |
+| Module | Type | Description | Author |
+|--------|------|-------------|--------|
+| [@utexo/wdk-wallet-rgb](https://github.com/UTEXO-Protocol/wdk-wallet-rgb) | Wallet Module |  Wallet module for RGB, Bitcoin-based smart contracts | [UTEXO](https://github.com/UTEXO-Protocol) |
+| [@base58-io/wdk-wallet-cosmos](https://github.com/base58-io/wdk-wallet-cosmos) | Wallet Module | Wallet module for Cosmos-compatible blockchains | [Base58](https://base58.io/) |
 
 ---
 
@@ -47,7 +46,7 @@ We're preparing a comprehensive guide on how to create custom WDK modules. Join 
 
 In the meantime, you can:
 
-1. **Study existing modules** - Review the source code of official WDK modules on [GitHub](https://github.com/tetherto) to understand the patterns and interfaces
+1. **Study existing modules** - Review the source code of official WDK modules on [GitHub](https://github.com/orgs/tetherto/repositories?q=wdk) to understand the patterns and interfaces
 2. **Join the community** - Connect with other developers on our [Discord](https://discord.gg/arYXDhHB2w) to discuss your ideas
 3. **Open an issue** - Have questions? Open an issue on the relevant repository
 
@@ -65,6 +64,8 @@ If you've built a WDK module, we'd love to feature it here!
 4. Submit through our [Community Form](https://forms.gle/wmNwc5epxaa85u8a9) or share on our **#wdk-showcase** Discord channel
 
 Your module may be featured in our documentation and community showcases.
+
+<a class="button primary" href="https://forms.gle/wmNwc5epxaa85u8a9">Submit your module</a>
 
 ---
 

@@ -24,6 +24,14 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### February 20, 2026
+
+**What's New**
+- **[Showcase](../overview/showcase.md)**: More visibility for our showcase page, we value contributions! Added 4 featured community projects: [wdk-mcp](https://github.com/dieselftw/wdk-mcp), [wdk-starter-browser-extension](https://github.com/base58-io/wdk-starter-browser-extension), [wdk-wallet-evm-x402-facilitator](https://github.com/SemanticPay/wdk-wallet-evm-x402-facilitator), and [x402-usdt0](https://github.com/baghdadgherras/x402-usdt0).
+- **[Community Modules](../sdk/community-modules/README.md)**: Added [`@base58-io/wdk-wallet-cosmos`](https://github.com/base58-io/wdk-wallet-cosmos) — wallet module for Cosmos-compatible blockchains by [Base58](https://base58.io/).
+
+---
+
 ### February 14, 2026
 
 **Changes**
