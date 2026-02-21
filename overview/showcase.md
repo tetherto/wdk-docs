@@ -92,6 +92,6 @@ Projects listed here should:
 
 Your work may be featured in future updates, social posts, or documentation spotlights.
 
-Submit your project through our [Community Form](https://forms.gle/wmNwc5epxaa85u8a9) below or share it on our **#wdk-showcase** Discord channel.
+Submit your project through our [Community Form](https://forms.gle/wmNwc5epxaa85u8a9) below or share it on our [**#wdk-showcase** Discord channel](https://discordapp.com/channels/1425125849346216029/1427975123406688267).
 
 <a class="button primary" href="https://forms.gle/wmNwc5epxaa85u8a9">Submit your project</a>
