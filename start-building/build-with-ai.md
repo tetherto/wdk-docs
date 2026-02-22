@@ -31,6 +31,10 @@ There are two ways to provide WDK context to your AI:
 **Want to give AI agents wallet access?** The [MCP Toolkit](../ai/mcp-toolkit/README.md) creates an MCP server that exposes WDK wallets as tools - letting AI agents check balances, send transactions, swap tokens, and more.
 {% endhint %}
 
+{% hint style="info" %}
+**Want agents to pay for resources?** The [x402 guide](../ai/x402.md) shows how to use WDK wallets with the x402 protocol for instant, programmatic USD₮ payments over HTTP.
+{% endhint %}
+
 ---
 
 ## Connect WDK Docs via MCP Server

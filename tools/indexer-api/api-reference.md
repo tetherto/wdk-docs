@@ -49,9 +49,10 @@ x-api-key: your-api-key-here
 | Endpoint | Limit |
 | --- | --- |
 | `GET /api/v1/health` | 10 req / 1 hour |
-| `GET /api/v1/chains` | 60 req / 1 min |
 | `GET /api/v1/:blockchain/:token/:address/token-balances` | 4 req / 10s |
 | `GET /api/v1/:blockchain/:token/:address/token-transfers` | 8 req / 10s |
+| `POST /api/v1/batch/token-transfers` | 8 req / 10s |
+| `POST /api/v1/batch/token-balances` | 4 req / 10s |
 
 ***
 
@@ -59,12 +60,6 @@ x-api-key: your-api-key-here
 
 {% openapi src="./openapi.json" path="/api/v1/health" method="get" %}
 Check API server status
-{% endopenapi %}
-
-***
-
-{% openapi src="./openapi.json" path="/api/v1/chains" method="get" %}
-Get list of supported chains and tokens
 {% endopenapi %}
 
 ***
@@ -77,6 +72,18 @@ Get token transfer history for an address
 
 {% openapi src="./openapi.json" path="/api/v1/{blockchain}/{token}/{address}/token-balances" method="get" %}
 Get current token balance for an address
+{% endopenapi %}
+
+***
+
+{% openapi src="./openapi.json" path="/api/v1/batch/token-transfers" method="post" %}
+Get batch token transfers for multiple addresses
+{% endopenapi %}
+
+***
+
+{% openapi src="./openapi.json" path="/api/v1/batch/token-balances" method="post" %}
+Get batch token balances for multiple addresses
 {% endopenapi %}
 
 ***

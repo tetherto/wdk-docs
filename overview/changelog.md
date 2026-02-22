@@ -24,6 +24,13 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### February 18, 2026
+
+**What's New**
+- **[x402 Payments](../ai/x402.md)**: New guide for accepting and making instant USD₮ payments over HTTP using WDK self-custodial wallets. Covers the x402 protocol, buyer integration with `@tetherto/wdk-wallet-evm`, seller setup with hosted and self-hosted facilitators, and bridging USD₮ to Plasma and Stable chains.
+
+---
+
 ### February 14, 2026
 
 **Changes**
@@ -99,7 +106,7 @@ Stay up to date with the latest improvements, new features, and bug fixes across
   - [Error Handling](../sdk/core-module/guides/error-handling.md) - Best practices and memory management
 - **wdk-core**: Added support for 24-word seed phrases via `WDK.getRandomSeedPhrase(24)`
 - **indexer-api**: 
-  - Added new [`/api/v1/chains`](../tools/indexer-api/api-reference.md) endpoint to list supported blockchains and tokens
+  - Added new `/api/v1/chains` endpoint to list supported blockchains and tokens
   - Added XAU₮ support for Plasma network
 
 **Changes**
