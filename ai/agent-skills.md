@@ -52,7 +52,7 @@ All write operations require explicit human confirmation. The skill instructs ag
 
 ## How It Works
 
-1. **Install the skill** by cloning the skill repository or installing from a skill registry like [ClawHub](https://clawhub.ai/HumanRupert/tether-wallet-development-kit)
+1. **Install the skill** by running `npx skills add tetherto/wdk-agent-skills` and selecting the agent you prefer
 2. **Agent loads the skill** and reads `SKILL.md` along with per-module reference files to learn WDK's API surface
 3. **Agent executes operations** when you ask it to create a wallet or send a transaction, generating the correct WDK code
 4. **You confirm** before any write operation (transactions, swaps, bridges) goes through
@@ -69,7 +69,7 @@ WDK's agent skills use a self-custodial model where your agent controls its own 
 | Multi-chain | Yes (EVM, Bitcoin, Solana, TON, Tron, Spark + more) | EVM + Solana | EVM + Solana + Bitcoin + more |
 | Open source | Yes (SDK + skills) | CLI/skills open, infra closed | Skills open, API closed |
 | MCP support | Yes ([MCP Toolkit](mcp-toolkit/README.md)) | Via skills | Via skills |
-| OpenClaw support | Yes ([ClawHub skill](https://clawhub.ai/HumanRupert/tether-wallet-development-kit)) | Yes (npx skills) | Yes (ClawHub skill) |
+| OpenClaw support | Yes (`npx skills add tetherto/wdk-agent-skills`) | Yes (npx skills) | Yes (ClawHub skill) |
 | x402 payments | Via [community extensions](#community-projects) | Yes (native) | No |
 | Key management | Local / self-managed | Coinbase infrastructure | Privy infrastructure |
 
@@ -77,7 +77,7 @@ WDK's agent skills use a self-custodial model where your agent controls its own 
 
 | Platform | How to Use |
 | --- | --- |
-| **OpenClaw** | Install from [ClawHub](openclaw.md) or clone to workspace. See [OpenClaw Integration](openclaw.md) |
+| **OpenClaw** | Run `npx skills add tetherto/wdk-agent-skills` and select your agent. See [OpenClaw Integration](openclaw.md) |
 | **Claude** | Upload `SKILL.md` as project knowledge, or paste into conversation |
 | **Cursor / Windsurf** | Clone to `.cursor/skills/wdk` or `.windsurf/skills/wdk` |
 | **Any MCP-compatible agent** | Use the [MCP Toolkit](mcp-toolkit/README.md) for structured tool calling |
@@ -96,7 +96,7 @@ Projects built by the community using WDK's agentic capabilities:
 ## Resources
 
 - [WDK SKILL.md on GitHub](https://github.com/tetherto/wdk-docs/blob/main/skills/wdk/SKILL.md) - The full skill file agents consume
-- [WDK Skill on ClawHub](https://clawhub.ai/HumanRupert/tether-wallet-development-kit) - Install the skill
+- [WDK Agent Skills](https://github.com/tetherto/wdk-agent-skills) - Install via `npx skills add tetherto/wdk-agent-skills`
 - [AgentSkills Specification](https://agentskills.io/specification) - The skill format standard
 - [WDK MCP Toolkit](https://github.com/tetherto/wdk-mcp-toolkit) - MCP server for structured tool calling
 - [WDK Core](https://github.com/tetherto/wdk-core) - The core SDK

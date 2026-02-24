@@ -32,22 +32,16 @@ Tether and the WDK Team do not endorse or assume responsibility for its code, se
 The WDK community skill follows the [AgentSkills specification](https://agentskills.io/specification), so it works with any compatible agent platform. This page covers the OpenClaw-specific setup.
 {% endhint %}
 
-## Install the WDK Community Skill
-
-Install from [ClawHub](https://clawhub.ai/HumanRupert/tether-wallet-development-kit):
+## Install the WDK Skill
 
 ```bash
-npx clawhub install tether-wallet-development-kit
+npx skills add tetherto/wdk-agent-skills
 ```
 
-This installs the skill into your workspace's `skills/` directory. OpenClaw picks it up automatically on the next session.
-
-{% hint style="warning" %}
-You might see a VirusTotal warning during installation. It flags the skill as suspicious because it handles crypto keys and calls external APIs. This is normal for any wallet SDK skill, nevertheless review the skill's source code on [ClawHub](https://clawhub.ai/HumanRupert/tether-wallet-development-kit) before proceeding.
-{% endhint %}
+The installer will prompt you to select which agent skill you want to install. Pick the one that fits your use case. Once installed, OpenClaw picks it up automatically on the next session.
 
 {% hint style="info" %}
-We plan to publish the official WDK skill to its own GitHub repository. Once that's live, you'll also be able to install via `git clone`.
+The skill will also be published on [ClawHub](https://clawhub.ai) shortly.
 {% endhint %}
 
 ## Configuration
