@@ -75,7 +75,7 @@ const swapProtocol = new VeloraProtocolEvm(account, {
 
 The `swapMaxFee` option sets an upper bound for total gas costs to prevent excessive fees.
 
-**Type:** `bigint` (optional)  
+**Type:** `number | bigint` (optional)  
 **Unit:** Wei
 
 **Examples:**
@@ -182,8 +182,8 @@ const result = await swapProtocol.swap(swapOptions)
 
 - `tokenIn` (`string`): ERC‑20 address to sell  
 - `tokenOut` (`string`): ERC‑20 address to buy  
-- `tokenInAmount` (`bigint`, optional): exact input amount in token base units  
-- `tokenOutAmount` (`bigint`, optional): exact output amount in token base units  
+- `tokenInAmount` (`number | bigint`, optional): exact input amount in token base units  
+- `tokenOutAmount` (`number | bigint`, optional): exact output amount in token base units  
 - `to` (`string`, optional): recipient address (defaults to account address)  
 
 > Note: Use either `tokenInAmount` OR `tokenOutAmount`, not both.

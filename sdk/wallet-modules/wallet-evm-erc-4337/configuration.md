@@ -30,9 +30,8 @@ import WalletManagerEvmErc4337 from '@tetherto/wdk-wallet-evm-erc-4337'
 const config = {
   // Required parameters
   chainId: 1,
-  blockchain: 'ethereum',
   provider: 'https://rpc.mevblocker.io/fast',
-  safeModulesVersion: '0.3.0', // optional as it defaults to '0.3.0', only '0.2.0' and '0.3.0' are valid
+  safeModulesVersion: '0.3.0', // '0.2.0' and '0.3.0' are valid
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   bundlerUrl: `https://api.pimlico.io/v1/ethereum/rpc?apikey=${PIMLICO_API_KEY}`,
   paymasterUrl: `https://api.pimlico.io/v2/ethereum/rpc?apikey=${PIMLICO_API_KEY}`,
@@ -146,10 +145,10 @@ const config = {
 
 ### Paymaster URL
 
-The `paymasterUrl` option specifies the URL of the paymaster service that sponsors transaction fees using ERC-20 tokens. **Required** for gasless transactions.
+The `paymasterUrl` option specifies the URL of the paymaster service that sponsors transaction fees using ERC-20 tokens or sponsorship policies.
 
 **Type:** `string`  
-**Required:** Yes
+**Required:** Yes, for Paymaster Token mode and Sponsorship Policy mode. Not used in Native Coins mode.
 
 **Example:**
 ```javascript
@@ -160,10 +159,10 @@ const config = {
 
 ### Paymaster Address
 
-The `paymasterAddress` option specifies the address of the paymaster smart contract. **Required** for paymaster integration.
+The `paymasterAddress` option specifies the address of the paymaster smart contract.
 
 **Type:** `string`  
-**Required:** Yes
+**Required:** Yes, for Paymaster Token mode only. Not used in Sponsorship Policy or Native Coins modes.
 
 **Example:**
 ```javascript
@@ -202,10 +201,10 @@ const config = {
 
 ### Paymaster Token
 
-The `paymasterToken` option specifies the ERC-20 token used for paying transaction fees through the paymaster. **Required** for fee calculations and payments.
+The `paymasterToken` option specifies the ERC-20 token used for paying transaction fees through the paymaster.
 
 **Type:** `object`  
-**Required:** Yes
+**Required:** Yes, for Paymaster Token mode only. Not used in Sponsorship Policy or Native Coins modes.
 
 **Properties:**
 - `address` (string): The ERC-20 token contract address
@@ -219,11 +218,58 @@ const config = {
 }
 ```
 
+### Sponsorship Policy ID
+
+The `sponsorshipPolicyId` option specifies the sponsorship policy identifier for sponsored transactions.
+
+**Type:** `string`  
+**Required:** No (optional), only used in Sponsorship Policy mode.
+
+**Example:**
+```javascript
+const config = {
+  isSponsored: true,
+  sponsorshipPolicyId: 'sp_my_policy_id'
+}
+```
+
+### Gas Payment Mode Flags
+
+These boolean flags control which gas payment mode is used. Only one mode should be active at a time.
+
+#### `isSponsored`
+
+Enables Sponsorship Policy mode, where a sponsor covers transaction fees.
+
+**Type:** `boolean`  
+**Default:** `false`
+
+```javascript
+const config = {
+  isSponsored: true,
+  paymasterUrl: 'https://api.candide.dev/public/v3/ethereum'
+}
+```
+
+#### `useNativeCoins`
+
+Enables Native Coins mode, where the user pays fees in the chain's native currency (ETH, MATIC, etc.).
+
+**Type:** `boolean`  
+**Default:** `false`
+
+```javascript
+const config = {
+  useNativeCoins: true,
+  transferMaxFee: 100000000000000n // Optional: max fee in wei
+}
+```
+
 ### Transfer Max Fee
 
 The `transferMaxFee` option sets the maximum fee amount **in paymaster token units** for transfer operations. This prevents transactions with unexpectedly high fees. **Optional** parameter.
 
-**Type:** `number`  
+**Type:** `number | bigint`  
 **Required:** No (optional)  
 **Unit:** Paymaster token base units
 
@@ -265,7 +311,6 @@ The following tokens are supported for gas payments on Ethereum Mainnet:
 ```javascript
 const ethereumConfig = {
   chainId: 1,
-  blockchain: 'ethereum',
   provider: 'https://rpc.mevblocker.io/fast',
   bundlerUrl: 'https://api.candide.dev/public/v3/ethereum',
   paymasterUrl: 'https://api.candide.dev/public/v3/ethereum',
@@ -284,7 +329,6 @@ const ethereumConfig = {
 ```javascript
 const polygonConfig = {
   chainId: 137,
-  blockchain: 'polygon',
   provider: 'https://polygon-rpc.com',
   bundlerUrl: 'https://api.candide.dev/public/v3/polygon',
   paymasterUrl: 'https://api.candide.dev/public/v3/polygon',
@@ -303,7 +347,6 @@ const polygonConfig = {
 ```javascript
 const arbitrumConfig = {
   chainId: 42161,
-  blockchain: 'arbitrum',
   provider: 'https://arb1.arbitrum.io/rpc',
   bundlerUrl: 'https://public.pimlico.io/v2/42161/rpc',
   paymasterUrl: 'https://public.pimlico.io/v2/42161/rpc',
@@ -322,7 +365,6 @@ const arbitrumConfig = {
 ``` javascript
 const avalancheConfig = {
   chainId: 43114,
-  blockchain: 'ethereum',
   provider: 'https://avalanche-c-chain-rpc.publicnode.com',
   bundlerUrl: "https://public.pimlico.io/v2/43114/rpc",
   paymasterUrl: "https://public.pimlico.io/v2/43114/rpc",
@@ -342,13 +384,12 @@ const avalancheConfig = {
 // Plasma (example Layer 2)
 const plasmaConfig = {
   chainId: 9745,
-  blockchain: 'plasma',
   provider: 'https://plasma.drpc.org',
   // For ERC-4337 support, optional fields:
   bundlerUrl: 'https://api.candide.dev/public/v3/9745',
   paymasterUrl: 'https://api.candide.dev/public/v3/9745',
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
-  entrypointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
+  entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
     address: '0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb' // USDT
@@ -364,7 +405,6 @@ const plasmaConfig = {
 // Pimlico
 const sepoliaConfigPimlico = {
   chainId: 11155111,
-  blockchain: 'ethereum',
   provider: 'https://sepolia.drpc.org',
   bundlerUrl: 'https://public.pimlico.io/v2/11155111/rpc',
   paymasterUrl: 'https://public.pimlico.io/v2/11155111/rpc',
@@ -380,7 +420,6 @@ const sepoliaConfigPimlico = {
 // Candide
 const sepoliaConfigCandide = {
   chainId: 11155111,
-  blockchain: 'ethereum',
   provider: 'https://sepolia.drpc.org',
   bundlerUrl: 'https://api.candide.dev/public/v3/11155111',
   paymasterUrl: 'https://api.candide.dev/public/v3/11155111',

@@ -57,13 +57,13 @@ const wallet = new WalletManagerTonGasless(seedPhrase, {
     secretKey: 'your-api-key' // Optional
   },
   tonApiClient: {
-    url: 'https://tonapi.io/v3',
+    url: 'https://tonapi.io/v2',
     secretKey: 'your-ton-api-key' // Optional
   },
   paymasterToken: {
-    address: 'EQ...' // Paymaster token contract address
-  }, // Paymaster Jetton master contract address
-  transferMaxFee: 10000000 // Maximum fee for transfer operations (in paymaster Jetton base units)
+    address: 'EQ...' // Paymaster Jetton master contract address
+  },
+  transferMaxFee: 10000000 // Optional: maximum fee for transfer operations (in paymaster Jetton base units)
 })
 
 // Get a full access account
@@ -134,7 +134,8 @@ const readOnlyAccount = new WalletAccountReadOnlyTonGasless(publicKey, {
   tonClient: {
     url: 'https://toncenter.com/api/v3',
     secretKey: 'your-api-key' // Optional
-  },tonApiClient: {
+  },
+  tonApiClient: {
     url: 'https://tonapi.io/v2',
     secretKey: 'your-ton-api-key' // Optional
   },
@@ -158,9 +159,19 @@ console.log('Token balance:', tokenBalance)
 
 ### Sending Transactions
 
-⚠️ Direct transaction sending using `sendTransaction()` is not supported in `WalletAccountTonGasless`. This is a gasfree implementation that handles transactions through a gasfree provider instead of direct blockchain transactions.
+Send a native TON transaction using `WalletAccountTonGasless`.
 
-For sending tokens, please use the `transfer()` method instead.
+```javascript
+// Send a native TON transaction
+const result = await account.sendTransaction({
+  to: 'EQ...',         // Recipient's TON address
+  value: 1000000000    // Amount in nanotons (1 TON)
+})
+console.log('Transaction hash:', result.hash)
+console.log('Transaction fee:', result.fee, 'nanotons')
+```
+
+For transferring Jetton tokens gaslessly (fees paid with a paymaster token), use the `transfer()` method below.
 
 
 ### Jetton Token Transfers (Gasless)
@@ -177,10 +188,10 @@ const result = await account.transfer({
   paymasterToken: {    // Optional: override default paymaster token
     address: 'EQ...'
   },
-  transferMaxFee: 1000000   transferMaxFee: 1000000 // Optional: maximum allowed fee
+  transferMaxFee: 1000000 // Optional: override maximum allowed fee
 })
-console.log('Transfer hash:', transferResult.hash);
-console.log('Transfer fee:', transferResult.fee, 'nanotons');
+console.log('Transfer hash:', result.hash)
+console.log('Transfer fee:', result.fee, 'paymaster token units')
 
 // Quote gasless transfer fee
 const quote = await account.quoteTransfer({
@@ -188,7 +199,7 @@ const quote = await account.quoteTransfer({
   recipient: 'EQ...',  // Recipient's TON address
   amount: 1000000      // Amount in Jetton's base units 
 })
-console.log('Transfer fee estimate:', transferQuote.fee, 'nanotons')
+console.log('Transfer fee estimate:', quote.fee, 'paymaster token units')
 ```
 
 ### Message Signing and Verification
@@ -350,13 +361,13 @@ async function sendAdvancedGaslessTransfer(account) {
 ```javascript
 async function transferJettonWithValidation(account, jettonAddress, recipient, amount) {
   try {
-    // Validate Jetton address (TON format)
-    if (!jettonAddress.startsWith('EQ')) {
+    // Validate TON addresses (basic check)
+    if (typeof jettonAddress !== 'string' || jettonAddress.length === 0) {
       throw new Error('Invalid Jetton address format')
     }
 
-    // Validate recipient address (TON format)
-    if (!recipient.startsWith('EQ')) {
+    // Validate recipient address
+    if (typeof recipient !== 'string' || recipient.length === 0) {
       throw new Error('Invalid recipient address format')
     }
 

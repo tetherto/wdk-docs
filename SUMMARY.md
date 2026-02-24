@@ -8,6 +8,7 @@
 * [Partner Program](overview/partner-program.md)
 * [Get Support](overview/support.md)
 * [Changelog](overview/changelog.md)
+* [Showcase](overview/showcase.md)
 
 ## Start Building
 
@@ -23,6 +24,7 @@
   * [API Reference](ai/mcp-toolkit/api-reference.md)
 * [Agent Skills](ai/agent-skills.md)
 * [OpenClaw](ai/openclaw.md)
+* [x402](ai/x402.md)
 
 ## SDK
 
@@ -81,19 +83,11 @@
     * [Usage](sdk/swap-modules/swap-velora-evm/usage.md)
     * [Configuration](sdk/swap-modules/swap-velora-evm/configuration.md)
     * [API Reference](sdk/swap-modules/swap-velora-evm/api-reference.md)
-  * [swap-stonfi-ton](sdk/swap-modules/swap-stonfi-ton/README.md)
-    * [Usage](sdk/swap-modules/swap-stonfi-ton/usage.md)
-    * [Configuration](sdk/swap-modules/swap-stonfi-ton/configuration.md)
-    * [API Reference](sdk/swap-modules/swap-stonfi-ton/api-reference.md)
 * [Bridge Modules](sdk/bridge-modules/README.md)
   * [bridge-usdt0-evm](sdk/bridge-modules/bridge-usdt0-evm/README.md)
     * [Usage](sdk/bridge-modules/bridge-usdt0-evm/usage.md)
     * [Configuration](sdk/bridge-modules/bridge-usdt0-evm/configuration.md)
     * [API Reference](sdk/bridge-modules/bridge-usdt0-evm/api-reference.md)
-  <!-- * [bridge-usdt0-ton](sdk/bridge-modules/bridge-usdt0-ton/README.md)
-    * [Usage](sdk/bridge-modules/bridge-usdt0-ton/usage.md)
-    * [Configuration](sdk/bridge-modules/bridge-usdt0-ton/configuration.md)
-    * [API Reference](sdk/bridge-modules/bridge-usdt0-ton/api-reference.md) -->
 * [Lending Modules](sdk/lending-modules/README.md)
   * [lending-aave-evm](sdk/lending-modules/lending-aave-evm/README.md)
     * [Usage](sdk/lending-modules/lending-aave-evm/usage.md)
@@ -132,5 +126,4 @@
 ## Resources and Guides
 
 * [Concepts](resources/concepts.md)
-* [Project Showcase](resources/showcase.md)
 <!-- * [Go-live Checklist](resources/go-live-checklist.md) -->

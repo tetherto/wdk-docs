@@ -38,7 +38,7 @@ import TronWeb from 'tronweb'
 // Option 1: Using RPC URL
 const config = {
   // Required parameters
-  chainId: '728126428', // Blockchain ID
+  chainId: 728126428, // Blockchain ID
   provider: 'https://api.trongrid.io', // Tron RPC endpoint
   gasFreeProvider: 'https://open.gasfree.io/tron/', // Gas-free service URL
   gasFreeApiKey: 'your-api-key', // Gas-free API key
@@ -55,7 +55,7 @@ const wallet = new WalletManagerTronGasfree(seedPhrase, config)
 // Option 2: Using TronWeb instance
 const tronWeb = new TronWeb({ fullHost: 'https://api.trongrid.io' })
 const config2 = {
-  chainId: '728126428',
+  chainId: 728126428,
   provider: tronWeb,
   gasFreeProvider: 'https://open.gasfree.io/tron/',
   gasFreeApiKey: 'your-api-key',
@@ -77,7 +77,7 @@ const account = new WalletAccountTronGasfree(
   seedPhrase,
   "0'/0/0", // BIP-44 derivation path
   {
-    chainId: '728126428',
+    chainId: 728126428,
     provider: 'https://api.trongrid.io',
     gasFreeProvider: 'https://open.gasfree.io/tron/',
     gasFreeApiKey: 'your-api-key',
@@ -92,7 +92,7 @@ const account = new WalletAccountTronGasfree(
 const readOnlyAccount = new WalletAccountReadOnlyTronGasfree(
   'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH', // Tron address
   {
-    chainId: '728126428',
+    chainId: 728126428,
     provider: 'https://api.trongrid.io',
     gasFreeProvider: 'https://open.gasfree.io/tron/',
     gasFreeApiKey: 'your-api-key',
@@ -134,7 +134,7 @@ const config = {
 
 The `chainId` option specifies the blockchain's ID.
 
-**Type:** `string`
+**Type:** `number`
 
 **Required:** Yes
 
@@ -142,7 +142,7 @@ The `chainId` option specifies the blockchain's ID.
 
 ```javascript
 const config = {
-  chainId: '728126428' // Tron Mainnet
+  chainId: 728126428 // Tron Mainnet
 }
 
 ```
@@ -236,7 +236,7 @@ const config = {
 
 The `transferMaxFee` option sets a maximum limit for transaction fees to prevent unexpectedly high costs.
 
-**Type:** `number`
+**Type:** `number | bigint`
 
 **Required:** No (optional)
 
@@ -272,7 +272,7 @@ try {
 
 ```javascript
 const mainnetConfig = {
-  chainId: '728126428',
+  chainId: 728126428,
   provider: 'https://api.trongrid.io',
   gasFreeProvider: 'https://open.gasfree.io/tron/',
   gasFreeApiKey: 'your-api-key',
@@ -287,7 +287,7 @@ const mainnetConfig = {
 
 ```javascript
 const nileConfig = {
-  chainId: '3448148188', // Nile Testnet (Specific ID required for GasFree)
+  chainId: 3448148188, // Nile Testnet (Specific ID required for GasFree)
   provider: 'https://nile.trongrid.io',
   gasFreeProvider: 'https://open-test.gasfree.io/nile/',
   gasFreeApiKey: 'your-testnet-api-key',

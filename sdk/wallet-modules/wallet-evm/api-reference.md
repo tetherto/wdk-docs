@@ -45,7 +45,7 @@ new WalletManagerEvm(seed, config?)
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (object, optional): Configuration object
   - `provider` (string | Eip1193Provider, optional): RPC endpoint URL or EIP-1193 provider instance
-  - `transferMaxFee` (number, optional): Maximum fee amount for transfer operations (in wei)
+  - `transferMaxFee` (number | bigint, optional): Maximum fee amount for transfer operations (in wei)
 
 **Example:**
 ```javascript
@@ -59,10 +59,49 @@ const wallet = new WalletManagerEvm(seedPhrase, {
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
+| `getRandomSeedPhrase(wordCount?)` | (static) Returns a random BIP-39 seed phrase | `string` | - |
+| `isValidSeedPhrase(seedPhrase)` | (static) Checks if a seed phrase is valid | `boolean` | - |
 | `getAccount(index?)` | Returns a wallet account at the specified index | `Promise<WalletAccountEvm>` | - |
 | `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise<WalletAccountEvm>` | - |
-| `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: number, fast: number}>` | If no provider is set |
+| `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` | If no provider is set |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` | - |
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `seed` | `Uint8Array` | The wallet's seed bytes |
+
+#### `getRandomSeedPhrase(wordCount?)` (static)
+Returns a random BIP-39 seed phrase.
+
+**Parameters:**
+- `wordCount` (12 | 24, optional): The number of words in the seed phrase (default: 12)
+
+**Returns:** `string` - The seed phrase
+
+**Example:**
+```javascript
+const seedPhrase = WalletManagerEvm.getRandomSeedPhrase()
+console.log('Seed phrase:', seedPhrase) // 12 words
+
+const longSeedPhrase = WalletManagerEvm.getRandomSeedPhrase(24)
+console.log('Long seed phrase:', longSeedPhrase) // 24 words
+```
+
+#### `isValidSeedPhrase(seedPhrase)` (static)
+Checks if a seed phrase is valid.
+
+**Parameters:**
+- `seedPhrase` (string): The seed phrase to validate
+
+**Returns:** `boolean` - True if the seed phrase is valid
+
+**Example:**
+```javascript
+const isValid = WalletManagerEvm.isValidSeedPhrase('abandon abandon abandon ...')
+console.log('Valid:', isValid)
+```
 
 #### `getAccount(index?)`
 Returns a wallet account at the specified index following BIP-44 standard.
@@ -104,7 +143,7 @@ const customAccount = await wallet.getAccountByPath("0'/0/5")
 #### `getFeeRates()`
 Returns current fee rates based on network conditions with predefined multipliers.
 
-**Returns:** `Promise<{normal: number, fast: number}>` - Fee rates in wei
+**Returns:** `Promise<{normal: bigint, fast: bigint}>` - Fee rates in wei
 - `normal`: Base fee × 1.1 (10% above base)
 - `fast`: Base fee × 2.0 (100% above base)
 
@@ -135,13 +174,9 @@ wallet.dispose()
 
 ## WalletAccountEvm
 
-Represents an individual wallet account. Implements `IWalletAccount` from `@tetherto/wdk-wallet`.
+Represents an individual wallet account. Extends `WalletAccountReadOnlyEvm` and implements `IWalletAccount` from `@tetherto/wdk-wallet`.
 
-### Constants
 
-```javascript
-const BIP_44_ETH_DERIVATION_PATH_PREFIX = "m/44'/60'"
-```
 
 ### Constructor
 
@@ -154,7 +189,7 @@ new WalletAccountEvm(seed, path, config?)
 - `path` (string): BIP-44 derivation path (e.g., "0'/0/0")
 - `config` (object, optional): Configuration object
   - `provider` (string | Eip1193Provider, optional): RPC endpoint URL or EIP-1193 provider instance
-  - `transferMaxFee` (number, optional): Maximum fee amount for transfer operations (in wei)
+  - `transferMaxFee` (number | bigint, optional): Maximum fee amount for transfer operations (in wei)
 
 **Throws:**
 - Error if seed phrase is invalid (BIP-39 validation fails)
@@ -173,14 +208,18 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 |--------|-------------|---------|--------|
 | `getAddress()` | Returns the account's address | `Promise<string>` | - |
 | `sign(message)` | Signs a message using the account's private key | `Promise<string>` | - |
+| `signTypedData(typedData)` | Signs typed data according to EIP-712 | `Promise<string>` | - |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
-| `sendTransaction(tx)` | Sends an EVM transaction | `Promise<{hash: string, fee: number}>` | If no provider |
-| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction | `Promise<{fee: number}>` | If no provider |
-| `transfer(options)` | Transfers ERC20 tokens to another address | `Promise<{hash: string, fee: number}>` | If no provider or fee exceeds max |
-| `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: number}>` | If no provider |
+| `verifyTypedData(typedData, signature)` | Verifies a typed data signature (EIP-712) | `Promise<boolean>` | - |
+| `sendTransaction(tx)` | Sends an EVM transaction | `Promise<{hash: string, fee: bigint}>` | If no provider |
+| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction | `Promise<{fee: bigint}>` | If no provider |
+| `transfer(options)` | Transfers ERC20 tokens to another address | `Promise<{hash: string, fee: bigint}>` | If no provider or fee exceeds max |
+| `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | If no provider |
 | `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | If no provider |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<bigint>` | If no provider |
-| `approve(options)` | Approves a spender to spend tokens | `Promise<{hash: string, fee: number}>` | If no provider |
+| `approve(options)` | Approves a spender to spend tokens | `Promise<{hash: string, fee: bigint}>` | If no provider |
+| `getAllowance(token, spender)` | Returns current allowance for a spender | `Promise<bigint>` | If no provider |
+| `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<EvmTransactionReceipt \| null>` | If no provider |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlyEvm>` | - |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` | - |
 
@@ -210,6 +249,43 @@ const signature = await account.sign(message)
 console.log('Signature:', signature)
 ```
 
+#### `signTypedData(typedData)`
+Signs typed data according to [EIP-712](https://eips.ethereum.org/EIPS/eip-712).
+
+**Parameters:**
+- `typedData` (TypedData): The typed data to sign
+  - `domain` (TypedDataDomain): The domain separator (name, version, chainId, verifyingContract)
+  - `types` (Record\<string, TypedDataField[]\>): The type definitions
+  - `message` (Record\<string, unknown\>): The message data
+
+**Returns:** `Promise<string>` - The typed data signature
+
+**Example:**
+```javascript
+const typedData = {
+  domain: {
+    name: 'MyDApp',
+    version: '1',
+    chainId: 1,
+    verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
+  },
+  types: {
+    Mail: [
+      { name: 'from', type: 'address' },
+      { name: 'to', type: 'address' },
+      { name: 'contents', type: 'string' }
+    ]
+  },
+  message: {
+    from: '0xAlice...',
+    to: '0xBob...',
+    contents: 'Hello Bob!'
+  }
+}
+const signature = await account.signTypedData(typedData)
+console.log('EIP-712 Signature:', signature)
+```
+
 #### `verify(message, signature)`
 Verifies a message signature against the account's address.
 
@@ -227,20 +303,35 @@ const isValid = await account.verify(message, signature)
 console.log('Signature valid:', isValid) // true
 ```
 
+#### `verifyTypedData(typedData, signature)`
+Verifies a typed data signature according to [EIP-712](https://eips.ethereum.org/EIPS/eip-712).
+
+**Parameters:**
+- `typedData` (TypedData): The typed data that was signed
+- `signature` (string): The signature to verify
+
+**Returns:** `Promise<boolean>` - True if signature is valid
+
+**Example:**
+```javascript
+const isValid = await account.verifyTypedData(typedData, signature)
+console.log('Typed data signature valid:', isValid) // true
+```
+
 #### `sendTransaction(tx)`
 Sends an EVM transaction and returns the result with hash and fee.
 
 **Parameters:**
 - `tx` (EvmTransaction): The transaction object
   - `to` (string): Recipient address
-  - `value` (number): Amount in wei
+  - `value` (number | bigint): Amount in wei
   - `data` (string, optional): Transaction data in hex format
-  - `gasLimit` (number, optional): Maximum gas units
-  - `gasPrice` (number, optional): Legacy gas price in wei
-  - `maxFeePerGas` (number, optional): EIP-1559 max fee per gas in wei
-  - `maxPriorityFeePerGas` (number, optional): EIP-1559 max priority fee per gas in wei
+  - `gasLimit` (number | bigint, optional): Maximum gas units
+  - `gasPrice` (number | bigint, optional): Legacy gas price in wei
+  - `maxFeePerGas` (number | bigint, optional): EIP-1559 max fee per gas in wei
+  - `maxPriorityFeePerGas` (number | bigint, optional): EIP-1559 max priority fee per gas in wei
 
-**Returns:** `Promise<{hash: string, fee: number}>` - Transaction result
+**Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
 
 **Throws:** Error if no provider is configured
 
@@ -272,7 +363,7 @@ Estimates the fee for an EVM transaction without sending it.
 **Parameters:**
 - `tx` (EvmTransaction): The transaction object (same format as sendTransaction)
 
-**Returns:** `Promise<{fee: number}>` - Fee estimate in wei
+**Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
 **Throws:** Error if no provider is configured
 
@@ -294,7 +385,7 @@ Transfers ERC20 tokens to another address using the standard transfer function.
   - `recipient` (string): Recipient address
   - `amount` (number | bigint): Amount in token base units
 
-**Returns:** `Promise<{hash: string, fee: number}>` - Transfer result
+**Returns:** `Promise<{hash: string, fee: bigint}>` - Transfer result
 
 **Throws:** 
 - Error if no provider is configured
@@ -311,38 +402,13 @@ console.log('Transfer hash:', result.hash)
 console.log('Transfer fee:', result.fee, 'wei')
 ```
 
-#### `approve(options)`
-Approves a specific amount of tokens to a spender.
-
-**Parameters:**
-- `options` (ApproveOptions): Approve options
-  - `token` (string): Token contract address
-  - `spender` (string): Spender address
-  - `amount` (number | bigint): Amount to approve
-
-**Returns:** `Promise<{hash: string, fee: number}>` - Transaction result
-
-**Throws:** 
-- Error if no provider is configured
-- Error if trying to re-approve USDT on Ethereum without resetting to 0 first
-
-**Example:**
-```javascript
-const result = await account.approve({
-  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
-  spender: '0xSpenderAddress...',
-  amount: 1000000n
-})
-console.log('Approve hash:', result.hash)
-```
-
 #### `quoteTransfer(options)`
 Estimates the fee for an ERC20 token transfer.
 
 **Parameters:**
 - `options` (TransferOptions): Transfer options (same as transfer)
 
-**Returns:** `Promise<{fee: number}>` - Fee estimate in wei
+**Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
 **Throws:** Error if no provider is configured
 
@@ -388,6 +454,70 @@ console.log('USDT balance:', usdtBalance) // In 6 decimal places
 console.log('USDT balance formatted:', usdtBalance / 1000000, 'USDT')
 ```
 
+#### `approve(options)`
+Approves a specific amount of tokens to a spender.
+
+**Parameters:**
+- `options` (ApproveOptions): Approve options
+  - `token` (string): Token contract address
+  - `spender` (string): Spender address
+  - `amount` (number | bigint): Amount to approve
+
+**Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
+
+**Throws:** 
+- Error if no provider is configured
+- Error if trying to re-approve USDT on Ethereum without resetting to 0 first
+
+**Example:**
+```javascript
+const result = await account.approve({
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
+  spender: '0xSpenderAddress...',
+  amount: 1000000n
+})
+console.log('Approve hash:', result.hash)
+```
+
+#### `getAllowance(token, spender)`
+Returns the current token allowance for the given spender.
+
+**Parameters:**
+- `token` (string): ERC20 token contract address
+- `spender` (string): The spender's address
+
+**Returns:** `Promise<bigint>` - The current allowance
+
+**Throws:** Error if no provider is configured
+
+**Example:**
+```javascript
+const allowance = await account.getAllowance(
+  '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  '0xSpenderContract...'
+)
+console.log('Current allowance:', allowance)
+```
+
+#### `getTransactionReceipt(hash)`
+Returns a transaction receipt by hash.
+
+**Parameters:**
+- `hash` (string): The transaction hash
+
+**Returns:** `Promise<EvmTransactionReceipt | null>` - Transaction receipt or null if not mined
+
+**Throws:** Error if no provider is configured
+
+**Example:**
+```javascript
+const receipt = await account.getTransactionReceipt('0x...')
+if (receipt) {
+  console.log('Confirmed in block:', receipt.blockNumber)
+  console.log('Status:', receipt.status) // 1 = success, 0 = failed
+}
+```
+
 #### `toReadOnlyAccount()`
 Creates a read-only copy of the account with the same configuration.
 
@@ -417,7 +547,8 @@ account.dispose()
 |----------|------|-------------|
 | `index` | `number` | The derivation path's index of this account |
 | `path` | `string` | The full BIP-44 derivation path of this account |
-| `keyPair` | `{privateKey: Buffer, publicKey: Buffer}` | The account's key pair (⚠️ Contains sensitive data) |
+| `keyPair` | `{privateKey: Uint8Array \| null, publicKey: Uint8Array}` | The account's key pair (⚠️ Contains sensitive data) |
+| `address` | `string` | The account's Ethereum address (inherited from `WalletAccountReadOnlyEvm`) |
 
 **Example:**
 ```javascript
@@ -444,7 +575,7 @@ new WalletAccountReadOnlyEvm(address, config?)
 
 **Parameters:**
 - `address` (string): The account's Ethereum address
-- `config` (object, optional): Configuration object
+- `config` (Omit\<EvmWalletConfig, 'transferMaxFee'\>, optional): Configuration object (same as `EvmWalletConfig` but without `transferMaxFee`, since read-only accounts cannot send transactions)
   - `provider` (string | Eip1193Provider, optional): RPC endpoint URL or EIP-1193 provider instance
 
 **Example:**
@@ -454,35 +585,35 @@ const readOnlyAccount = new WalletAccountReadOnlyEvm('0x742d35Cc6634C0532925a3b8
 })
 ```
 
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `address` | `string` | The account's Ethereum address |
+
 ### Methods
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
+| `getAddress()` | Returns the account's address | `Promise<string>` | - |
 | `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | If no provider |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<bigint>` | If no provider |
-| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction | `Promise<{fee: number}>` | If no provider |
-| `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: number}>` | If no provider |
+| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction | `Promise<{fee: bigint}>` | If no provider |
+| `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | If no provider |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
+| `verifyTypedData(typedData, signature)` | Verifies a typed data signature (EIP-712) | `Promise<boolean>` | - |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<EvmTransactionReceipt \| null>` | If no provider |
 | `getAllowance(token, spender)` | Returns current allowance for a spender | `Promise<bigint>` | If no provider |
 
-#### `verify(message, signature)`
-Verifies a message signature against the account's address.
+#### `getAddress()`
+Returns the account's Ethereum address.
 
-**Parameters:**
-- `message` (string): The original message
-- `signature` (string): The signature to verify
-
-**Returns:** `Promise<boolean>` - True if signature is valid
+**Returns:** `Promise<string>` - Checksummed Ethereum address
 
 **Example:**
 ```javascript
-const message = 'Hello, Ethereum!'
-const signature = await account.sign(message)
-
-const readOnlyAccount = new WalletAccountReadOnlyEvm('0x...', { provider: '...' })
-const isValid = await readOnlyAccount.verify(message, signature)
-console.log('Signature valid:', isValid) // true
+const address = await readOnlyAccount.getAddress()
+console.log('Account address:', address) // 0x...
 ```
 
 #### `getBalance()`
@@ -520,7 +651,7 @@ Estimates the fee for an EVM transaction.
 **Parameters:**
 - `tx` (EvmTransaction): The transaction object
 
-**Returns:** `Promise<{fee: number}>` - Fee estimate in wei
+**Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
 **Throws:** Error if no provider is configured
 
@@ -539,7 +670,7 @@ Estimates the fee for an ERC20 token transfer.
 **Parameters:**
 - `options` (TransferOptions): Transfer options
 
-**Returns:** `Promise<{fee: number}>` - Fee estimate in wei
+**Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
 **Throws:** Error if no provider is configured
 
@@ -551,6 +682,40 @@ const quote = await readOnlyAccount.quoteTransfer({
   amount: 1000000
 })
 console.log('Transfer fee estimate:', quote.fee, 'wei')
+```
+
+#### `verify(message, signature)`
+Verifies a message signature against the account's address.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify
+
+**Returns:** `Promise<boolean>` - True if signature is valid
+
+**Example:**
+```javascript
+const message = 'Hello, Ethereum!'
+const signature = await account.sign(message)
+
+const readOnlyAccount = new WalletAccountReadOnlyEvm('0x...', { provider: '...' })
+const isValid = await readOnlyAccount.verify(message, signature)
+console.log('Signature valid:', isValid) // true
+```
+
+#### `verifyTypedData(typedData, signature)`
+Verifies a typed data signature according to [EIP-712](https://eips.ethereum.org/EIPS/eip-712).
+
+**Parameters:**
+- `typedData` (TypedData): The typed data that was signed
+- `signature` (string): The signature to verify
+
+**Returns:** `Promise<boolean>` - True if signature is valid
+
+**Example:**
+```javascript
+const isValid = await readOnlyAccount.verifyTypedData(typedData, signature)
+console.log('Typed data signature valid:', isValid) // true
 ```
 
 #### `getTransactionReceipt(hash)`
@@ -593,21 +758,19 @@ const allowance = await readOnlyAccount.getAllowance(
 console.log('Allowance:', allowance)
 ```
 
-This comprehensive API Reference now includes all methods from the source code with detailed descriptions, parameters, return types, error conditions, and practical examples.
-
 ## Types
 
 ### EvmTransaction
 
 ```typescript
 interface EvmTransaction {
-  to: string;                        // The transaction's recipient address
-  value: number;                     // The amount of ethers to send (in wei)
-  data?: string;                     // The transaction's data in hex format (optional)
-  gasLimit?: number;                 // Maximum amount of gas this transaction can use (optional)
-  gasPrice?: number;                 // Legacy gas price in wei (optional)
-  maxFeePerGas?: number;            // EIP-1559 max fee per gas in wei (optional)
-  maxPriorityFeePerGas?: number;    // EIP-1559 priority fee in wei (optional)
+  to: string;                               // The transaction's recipient address
+  value: number | bigint;                    // The amount of ethers to send (in wei)
+  data?: string;                             // The transaction's data in hex format (optional)
+  gasLimit?: number | bigint;                // Maximum amount of gas this transaction can use (optional)
+  gasPrice?: number | bigint;                // Legacy gas price in wei (optional)
+  maxFeePerGas?: number | bigint;            // EIP-1559 max fee per gas in wei (optional)
+  maxPriorityFeePerGas?: number | bigint;    // EIP-1559 priority fee in wei (optional)
 }
 ```
 
@@ -626,7 +789,7 @@ interface TransferOptions {
 ```typescript
 interface TransactionResult {
   hash: string;                      // Transaction hash
-  fee: number;                       // Transaction fee paid in wei
+  fee: bigint;                       // Transaction fee paid in wei
 }
 ```
 
@@ -635,7 +798,7 @@ interface TransactionResult {
 ```typescript
 interface TransferResult {
   hash: string;                      // Transfer transaction hash
-  fee: number;                       // Transfer fee paid in wei
+  fee: bigint;                       // Transfer fee paid in wei
 }
 ```
 
@@ -643,8 +806,8 @@ interface TransferResult {
 
 ```typescript
 interface FeeRates {
-  normal: number;                    // Normal priority fee rate (base fee × 1.1)
-  fast: number;                      // Fast priority fee rate (base fee × 2.0)
+  normal: bigint;                    // Normal priority fee rate (base fee × 1.1)
+  fast: bigint;                      // Fast priority fee rate (base fee × 2.0)
 }
 ```
 
@@ -652,8 +815,39 @@ interface FeeRates {
 
 ```typescript
 interface KeyPair {
-  privateKey: Buffer;                // Private key as Buffer (32 bytes)
-  publicKey: Buffer;                 // Public key as Buffer (65 bytes)
+  privateKey: Uint8Array | null;     // Private key as Uint8Array (32 bytes, null after dispose)
+  publicKey: Uint8Array;             // Public key as Uint8Array (65 bytes)
+}
+```
+
+### TypedData
+
+```typescript
+interface TypedData {
+  domain: TypedDataDomain;                           // The domain separator
+  types: Record<string, TypedDataField[]>;           // The type definitions
+  message: Record<string, unknown>;                  // The message data
+}
+```
+
+### TypedDataDomain
+
+```typescript
+interface TypedDataDomain {
+  name?: string;                     // The domain name (e.g., the DApp name)
+  version?: string;                  // The domain version
+  chainId?: number | bigint;         // The chain ID
+  verifyingContract?: string;        // The verifying contract address
+  salt?: string;                     // An optional salt
+}
+```
+
+### TypedDataField
+
+```typescript
+interface TypedDataField {
+  name: string;                      // The field name
+  type: string;                      // The field type (e.g., 'address', 'uint256', 'string')
 }
 ```
 
@@ -662,7 +856,17 @@ interface KeyPair {
 ```typescript
 interface EvmWalletConfig {
   provider?: string | Eip1193Provider;  // RPC URL or EIP-1193 provider instance
-  transferMaxFee?: number;              // Maximum fee for transfers in wei
+  transferMaxFee?: number | bigint;     // Maximum fee for transfers in wei
+}
+```
+
+### ApproveOptions
+
+```typescript
+interface ApproveOptions {
+  token: string;                         // ERC20 token contract address
+  spender: string;                       // Address allowed to spend tokens
+  amount: number | bigint;               // Amount to approve in base units
 }
 ```
 

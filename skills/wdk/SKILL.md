@@ -1,6 +1,6 @@
 ---
 name: wdk
-description: Tether Wallet Development Kit (WDK) for building non-custodial multi-chain wallets. Use when working with @tetherto/wdk-core, wallet modules (wdk-wallet-btc, wdk-wallet-evm, wdk-wallet-evm-erc-4337, wdk-wallet-solana, wdk-wallet-spark, wdk-wallet-ton, wdk-wallet-tron, ton-gasless, tron-gasfree), and protocol modules including swap (wdk-protocol-swap-velora-evm, wdk-protocol-swap-stonfi-ton), bridge (wdk-protocol-bridge-usdt0-evm), lending (wdk-protocol-lending-aave-evm), and fiat (wdk-protocol-fiat-moonpay). Covers wallet creation, transactions, token transfers, DEX swaps, cross-chain bridges, DeFi lending/borrowing, and fiat on/off ramps.
+description: Tether Wallet Development Kit (WDK) for building non-custodial multi-chain wallets. Use when working with @tetherto/wdk-core, wallet modules (wdk-wallet-btc, wdk-wallet-evm, wdk-wallet-evm-erc-4337, wdk-wallet-solana, wdk-wallet-spark, wdk-wallet-ton, wdk-wallet-tron, ton-gasless, tron-gasfree), and protocol modules including swap (wdk-protocol-swap-velora-evm), bridge (wdk-protocol-bridge-usdt0-evm), lending (wdk-protocol-lending-aave-evm), and fiat (wdk-protocol-fiat-moonpay). Covers wallet creation, transactions, token transfers, DEX swaps, cross-chain bridges, DeFi lending/borrowing, and fiat on/off ramps.
 ---
 
 # Tether WDK
@@ -35,7 +35,7 @@ This skill is organized into reference files for chain-specific and protocol-spe
 | `references/wallet-spark.md` | Spark: Lightning, key tree, deposits, withdrawals |
 | `references/wallet-ton.md` | TON + TON Gasless: Jettons, nanotons, paymaster |
 | `references/wallet-tron.md` | TRON + TRON Gasfree: TRC20, energy/bandwidth, gasFreeProvider |
-| `references/protocol-swap.md` | Velora EVM + StonFi TON swap protocols |
+| `references/protocol-swap.md` | Velora EVM swap protocol |
 | `references/protocol-bridge.md` | USDT0 cross-chain bridge via LayerZero |
 | `references/protocol-lending.md` | Aave V3 lending: supply/withdraw/borrow/repay |
 | `references/protocol-fiat.md` | MoonPay fiat on/off ramp |
@@ -59,7 +59,6 @@ When a task targets a specific chain or protocol, read the relevant reference fi
     │   └── wdk-wallet-tron-gasfree  # TRON gas-free
     └── Protocol Modules
         ├── wdk-protocol-swap-velora-evm   # DEX swaps on EVM
-        ├── wdk-protocol-swap-stonfi-ton   # DEX swaps on TON
         ├── wdk-protocol-bridge-usdt0-evm  # Cross-chain USDT0 bridge
         ├── wdk-protocol-lending-aave-evm  # Aave V3 lending
         └── wdk-protocol-fiat-moonpay      # Fiat on/off ramp
@@ -98,7 +97,6 @@ All packages are under the `@tetherto` scope. **Always** `npm view <pkg> version
 | Package | npm |
 |---------|-----|
 | `@tetherto/wdk-protocol-swap-velora-evm` | [npmjs.com/package/@tetherto/wdk-protocol-swap-velora-evm](https://www.npmjs.com/package/@tetherto/wdk-protocol-swap-velora-evm) |
-| `@tetherto/wdk-protocol-swap-stonfi-ton` | ⚠️ Not yet published to npm |
 | `@tetherto/wdk-protocol-bridge-usdt0-evm` | [npmjs.com/package/@tetherto/wdk-protocol-bridge-usdt0-evm](https://www.npmjs.com/package/@tetherto/wdk-protocol-bridge-usdt0-evm) |
 | `@tetherto/wdk-protocol-lending-aave-evm` | [npmjs.com/package/@tetherto/wdk-protocol-lending-aave-evm](https://www.npmjs.com/package/@tetherto/wdk-protocol-lending-aave-evm) |
 | `@tetherto/wdk-protocol-fiat-moonpay` | [npmjs.com/package/@tetherto/wdk-protocol-fiat-moonpay](https://www.npmjs.com/package/@tetherto/wdk-protocol-fiat-moonpay) |
@@ -197,7 +195,7 @@ All require human confirmation: `claimDeposit`, `claimStaticDeposit`, `refundSta
 
 #### Protocol write methods
 
-- **Swap**: `swap` (velora-evm, stonfi-ton) — may internally approve + reset allowance
+- **Swap**: `swap` (velora-evm) — may internally approve + reset allowance
 - **Bridge**: `bridge` (usdt0-evm) — may internally approve + reset allowance
 - **Lending (Aave)**: `supply`, `withdraw`, `borrow`, `repay`, `setUseReserveAsCollateral`, `setUserEMode`
 - **Fiat (MoonPay)**: `buy`, `sell` (generate signed widget URLs)

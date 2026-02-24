@@ -40,7 +40,7 @@ new WalletManagerTonGasless(seed, config)
 
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
-- `config` (TonGaslessWalletConfig): Configuration object
+- `config` (TonGaslessWalletConfig): Configuration object (required)
   - `tonClient` (object | TonClient): TON client configuration or instance
     - `url` (string): TON Center API URL (e.g., 'https://toncenter.com/api/v3')
     - `secretKey` (string, optional): API key for TON Center
@@ -49,7 +49,7 @@ new WalletManagerTonGasless(seed, config)
     - `secretKey` (string, optional): API key for TON API
   - `paymasterToken` (object): Paymaster token configuration
     - `address` (string): Paymaster token contract address
-  - `transferMaxFee` (number, optional): Maximum fee for transfer operations
+  - `transferMaxFee` (number | bigint, optional): Maximum fee for transfer operations
 
 **Example:**
 ```javascript
@@ -75,7 +75,7 @@ const wallet = new WalletManagerTonGasless(seedPhrase, {
 |--------|-------------|---------|
 | `getAccount(index)` | Returns a gasless wallet account at the specified index | `Promise<WalletAccountTonGasless>` |
 | `getAccountByPath(path)` | Returns a gasless wallet account at the specified BIP-44 derivation path | `Promise<WalletAccountTonGasless>` |
-| `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: number, fast: number}>` |
+| `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
 
 ##### `getAccount(index)`
@@ -107,7 +107,7 @@ const account = await wallet.getAccountByPath("0'/0/1")
 ##### `getFeeRates()`
 Returns current fee rates for transactions based on blockchain config.
 
-**Returns:** `Promise<{normal: number, fast: number}>` - Object containing fee rates
+**Returns:** `Promise<{normal: bigint, fast: bigint}>` - Object containing fee rates
 
 **Example:**
 ```javascript
@@ -137,7 +137,7 @@ new WalletAccountTonGasless(seed, path, config)
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `path` (string): BIP-44 derivation path (e.g., "0'/0/0")
-- `config` (TonGaslessWalletConfig): Configuration object (same as WalletManagerTonGasless)
+- `config` (TonGaslessWalletConfig): Configuration object (required, same as WalletManagerTonGasless)
 
 #### Methods
 
@@ -146,11 +146,13 @@ new WalletAccountTonGasless(seed, path, config)
 | `getAddress()` | Returns the account's TON address | `Promise<string>` |
 | `sign(message)` | Signs a message using the account's private key | `Promise<string>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
-| `transfer(options, config?)` | Transfers tokens using gasless transactions | `Promise<{hash: string, fee: number}>` |
-| `quoteTransfer(options, config?)` | Estimates the fee for a token transfer | `Promise<{fee: number}>` |
+| `sendTransaction(tx)` | Sends a TON transaction | `Promise<{hash: string, fee: bigint}>` |
+| `transfer(options, config?)` | Transfers tokens using gasless transactions | `Promise<{hash: string, fee: bigint}>` |
+| `quoteTransfer(options, config?)` | Estimates the fee for a token transfer | `Promise<{fee: bigint}>` |
 | `getBalance()` | Returns the native TON balance (in nanotons) | `Promise<bigint>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific token | `Promise<bigint>` |
 | `getPaymasterTokenBalance()` | Returns the balance of the paymaster token | `Promise<bigint>` |
+| `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<TonTransactionReceipt \| null>` |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlyTonGasless>` |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
 
@@ -194,20 +196,41 @@ const isValid = await account.verify('Hello, World!', signature)
 console.log('Signature valid:', isValid)
 ```
 
+##### `sendTransaction(tx)`
+Sends a TON transaction.
+
+**Parameters:**
+- `tx` (TonTransaction): The transaction object
+  - `to` (string): Recipient TON address
+  - `value` (number | bigint): Amount in nanotons
+  - `bounceable` (boolean, optional): Whether the address is bounceable
+  - `body` (string | Cell, optional): Optional message body
+
+**Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
+
+**Example:**
+```javascript
+const result = await account.sendTransaction({
+  to: 'EQ...',
+  value: 1000000000
+})
+console.log('Transaction hash:', result.hash)
+```
+
 ##### `transfer(options, config?)`
-Transfers tokens using gasless transactions. **Note:** `sendTransaction()` is not supported and will throw an error.
+Transfers tokens using gasless transactions.
 
 **Parameters:**
 - `options` (TransferOptions): Transfer options
   - `token` (string): Token contract address
   - `recipient` (string): Recipient TON address
-  - `amount` (number): Amount in token's base units
+  - `amount` (number | bigint): Amount in token's base units
 - `config` (object, optional): Override configuration
   - `paymasterToken` (object, optional): Override default paymaster token
     - `address` (string): Paymaster token address
-  - `transferMaxFee` (number, optional): Override maximum fee
+  - `transferMaxFee` (number | bigint, optional): Override maximum fee
 
-**Returns:** `Promise<{hash: string, fee: number}>` - Transfer result
+**Returns:** `Promise<{hash: string, fee: bigint}>` - Transfer result
 
 **Example:**
 ```javascript
@@ -228,11 +251,11 @@ Estimates the fee for a Jetton (TON token) transfer.
 - `options` (TransferOptions): Transfer options
   - `token` (string): Token contract address
   - `recipient` (string): Recipient TON address
-  - `amount` (number): Amount in token's base units
+  - `amount` (number | bigint): Amount in token's base units
 - `config` (object, optional): Override configuration
   - `paymasterToken` (object, optional): Override default paymaster token
 
-**Returns:** `Promise<{fee: number}>` - Object containing fee estimate (in paymaster token base units)
+**Returns:** `Promise<{fee: bigint}>` - Object containing fee estimate (in paymaster token base units)
 
 **Example:**
 ```javascript
@@ -289,13 +312,39 @@ Disposes the wallet account, clearing private keys from memory.
 account.dispose()
 ```
 
+##### `getTransactionReceipt(hash)`
+Returns a transaction's receipt if it has been mined.
+
+**Parameters:**
+- `hash` (string): The transaction hash
+
+**Returns:** `Promise<TonTransactionReceipt | null>` - Transaction receipt or null if not yet mined
+
+**Example:**
+```javascript
+const receipt = await account.getTransactionReceipt('transaction-hash')
+console.log('Transaction confirmed:', receipt !== null)
+```
+
+##### `toReadOnlyAccount()`
+Returns a read-only copy of the account.
+
+**Returns:** `Promise<WalletAccountReadOnlyTonGasless>` - The read-only account
+
+**Example:**
+```javascript
+const readOnlyAccount = await account.toReadOnlyAccount()
+const address = await readOnlyAccount.getAddress()
+console.log('Read-only account address:', address)
+```
+
 #### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
 | `index` | `number` | The derivation path's index of this account |
 | `path` | `string` | The full derivation path of this account |
-| `keyPair` | `{publicKey: Buffer, privateKey: Buffer}` | The account's public and private key pair as buffers |
+| `keyPair` | `{publicKey: Uint8Array, privateKey: Uint8Array \| null}` | The account's public and private key pair |
 
 **Example:**
 ```javascript
@@ -316,18 +365,18 @@ new WalletAccountReadOnlyTonGasless(publicKey, config)
 
 **Parameters:**
 - `publicKey` (string | Uint8Array): The account's public key
-- `config` (TonGaslessWalletConfig): Configuration object
+- `config` (object): Configuration object (required, `Omit<TonGaslessWalletConfig, 'transferMaxFee'>`)
 
 #### Methods
 
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's TON address | `Promise<string>` |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `getBalance()` | Returns the native TON balance | `Promise<bigint>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific token | `Promise<bigint>` |
 | `getPaymasterTokenBalance()` | Returns the balance of the paymaster token | `Promise<bigint>` |
-| `quoteTransfer(options, config?)` | Estimates the fee for a token transfer | `Promise<{fee: number}>` |
-| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
+| `quoteTransfer(options, config?)` | Estimates the fee for a token transfer | `Promise<{fee: bigint}>` |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<TonTransactionReceipt \| null>` |
 
 ##### `getAddress()`
@@ -339,6 +388,21 @@ Returns the account's TON address.
 ```javascript
 const address = await readOnlyAccount.getAddress()
 console.log('Account address:', address)
+```
+
+##### `verify(message, signature)`
+Verifies a message signature.
+
+**Parameters:**
+- `message` (string): The original message
+- `signature` (string): The signature to verify
+
+**Returns:** `Promise<boolean>` - True if the signature is valid
+
+**Example:**
+```javascript
+const isValid = await readOnlyAccount.verify('Hello, World!', signature)
+console.log('Signature valid:', isValid)
 ```
 
 ##### `getBalance()`
@@ -384,11 +448,11 @@ Estimates the fee for a token transfer.
 - `options` (TransferOptions): Transfer options
   - `token` (string): Token contract address
   - `recipient` (string): Recipient TON address
-  - `amount` (number): Amount in token's base units
+  - `amount` (number | bigint): Amount in token's base units
 - `config` (object, optional): Override configuration
   - `paymasterToken` (object, optional): Override default paymaster token
 
-**Returns:** `Promise<{fee: number}>` - Object containing fee estimate (in paymaster token base units)
+**Returns:** `Promise<{fee: bigint}>` - Object containing fee estimate (in paymaster token base units)
 
 **Example:**
 ```javascript
@@ -398,21 +462,6 @@ const quote = await readOnlyAccount.quoteTransfer({
   amount: 1000000000
 })
 console.log('Transfer fee estimate:', quote.fee, 'paymaster token units')
-```
-
-##### `verify(message, signature)`
-Verifies a message signature.
-
-**Parameters:**
-- `message` (string): The original message
-- `signature` (string): The signature to verify
-
-**Returns:** `Promise<boolean>` - True if the signature is valid
-
-**Example:**
-```javascript
-const isValid = await readOnlyAccount.verify('Hello, World!', signature)
-console.log('Signature valid:', isValid)
 ```
 
 ##### `getTransactionReceipt(hash)`
@@ -440,36 +489,14 @@ if (receipt) {
 ```typescript
 interface TonGaslessWalletConfig {
   /**
-   * TON client configuration
+   * TON Center client configuration or an instance of TonClient
    */
-  tonClient: {
-    /**
-     * TON Center API URL
-     * @example 'https://toncenter.com/api/v3'
-     */
-    url: string;
-
-    /**
-     * Optional API key for TON Center
-     */
-    secretKey?: string;
-  };
+  tonClient: TonClientConfig | TonClient;
 
   /**
-   * TON API client configuration
+   * TON API client configuration or an instance of TonApiClient
    */
-  tonApiClient: {
-    /**
-     * TON API URL
-     * @example 'https://tonapi.io/v2'
-     */
-    url: string;
-
-    /**
-     * Optional API key for TON API
-     */
-    secretKey?: string;
-  };
+  tonApiClient: TonApiClientConfig | TonApiClient;
 
   /**
    * Paymaster token configuration
@@ -486,7 +513,7 @@ interface TonGaslessWalletConfig {
    * Maximum fee for transfer operations
    * @optional
    */
-  transferMaxFee?: number;
+  transferMaxFee?: number | bigint;
 }
 ```
 
@@ -509,7 +536,7 @@ interface TransferOptions {
   /**
    * Amount in token's base units
    */
-  amount: number;
+  amount: number | bigint;
 }
 ```
 
@@ -525,7 +552,7 @@ interface TransferResult {
   /**
    * Fee paid in paymaster token units
    */
-  fee: number;
+  fee: bigint;
 }
 ```
 
@@ -534,14 +561,15 @@ interface TransferResult {
 ```typescript
 interface KeyPair {
   /**
-   * Public key as buffer
+   * Ed25519 public key
    */
-  publicKey: Buffer;
+  publicKey: Uint8Array;
 
   /**
-   * Private key as buffer (sensitive data)
+   * Ed25519 private key (null if the account has been disposed)
+   * @security Never expose or log this value
    */
-  privateKey: Buffer;
+  privateKey: Uint8Array | null;
 }
 ```
 

@@ -32,9 +32,11 @@ npm install @tetherto/wdk-protocol-lending-aave-evm
 import AaveProtocolEvm from '@tetherto/wdk-protocol-lending-aave-evm'
 import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
+const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
+
 // Create account (m/44'/60'/0'/0/0)
 const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
-  provider: 'https://ethereum-rpc.publicnode.com'
+    provider: 'https://ethereum-rpc.publicnode.com'
 })
 
 // Create lending service
@@ -43,27 +45,40 @@ const aave = new AaveProtocolEvm(account)
 
 ### Supply / Withdraw / Borrow / Repay
 
+{% hint style="info" %}
+**Prerequisites:** To use supply, withdraw, borrow, or repay operations, your wallet needs:
+1. **Token balance** — hold the token you want to supply or repay
+2. **Native token for gas fees** — ETH (or the chain's native token) to pay transaction fees
+
+This module only supports mainnet deployments. See [Supported Networks](./configuration.md) for the full list.
+{% endhint %}
+
+Use the contract address of any [Aave-supported token](https://aave.com/markets). For example, USD₮ on Ethereum Mainnet:
+
 ```javascript
+// USD₮ contract address on Ethereum Mainnet
+const USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+
 // Supply 1,000,000 base units (token decimals dependent)
-await aave.supply({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+await aave.supply({ token: USDT, amount: 1000000n })
 
 // Withdraw
-await aave.withdraw({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+await aave.withdraw({ token: USDT, amount: 1000000n })
 
 // Borrow
-await aave.borrow({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+await aave.borrow({ token: USDT, amount: 1000000n })
 
 // Repay
-await aave.repay({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+await aave.repay({ token: USDT, amount: 1000000n })
 ```
 
 ### Quotes Before Sending
 
 ```javascript
-const supplyQuote   = await aave.quoteSupply({ token: 'TOKEN_ADDRESS', amount: 1000000n })
-const withdrawQuote = await aave.quoteWithdraw({ token: 'TOKEN_ADDRESS', amount: 1000000n })
-const borrowQuote   = await aave.quoteBorrow({ token: 'TOKEN_ADDRESS', amount: 1000000n })
-const repayQuote    = await aave.quoteRepay({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+const supplyQuote   = await aave.quoteSupply({ token: USDT, amount: 1000000n })
+const withdrawQuote = await aave.quoteWithdraw({ token: USDT, amount: 1000000n })
+const borrowQuote   = await aave.quoteBorrow({ token: USDT, amount: 1000000n })
+const repayQuote    = await aave.quoteRepay({ token: USDT, amount: 1000000n })
 ```
 
 ## ERC‑4337 Smart Accounts
@@ -80,7 +95,7 @@ const aa = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 const aaveAA = new AaveProtocolEvm(aa)
 
 // Supply with paymaster covering gas
-const result = await aaveAA.supply({ token: 'TOKEN_ADDRESS', amount: 1000000n }, {
+const result = await aaveAA.supply({ token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', amount: 1000000n }, { // USD₮ on Ethereum
   paymasterToken: 'USDT'
 })
 ```
@@ -103,7 +118,7 @@ console.log({
 
 ```javascript
 try {
-  await aave.supply({ token: 'TOKEN_ADDRESS', amount: 0n })
+  await aave.supply({ token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', amount: 0n }) // USD₮
 } catch (e) {
   console.error('Lending failed:', e.message)
   if (e.message.includes('zero')) console.log('Amount must be > 0')
@@ -123,10 +138,13 @@ async function run() {
   const aave = new AaveProtocolEvm(account)
 
   // Quote then supply
-  const q = await aave.quoteSupply({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+  // USD₮ contract address on Ethereum Mainnet
+  const USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+
+  const q = await aave.quoteSupply({ token: USDT, amount: 1000000n })
   console.log('Supply fee estimate:', q.fee)
 
-  const tx = await aave.supply({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+  const tx = await aave.supply({ token: USDT, amount: 1000000n })
   console.log('Supply tx hash:', tx.hash)
 }
 ```

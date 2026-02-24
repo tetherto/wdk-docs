@@ -59,7 +59,7 @@ import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 
 // EVM chains - one module handles all EVM networks
 server.registerWallet('ethereum', WalletManagerEvm, {
-  provider: 'https://eth-mainnet.g.alchemy.com/v2/KEY'
+  provider: 'https://eth.drpc.org'
 })
 server.registerWallet('polygon', WalletManagerEvm, {
   provider: 'https://polygon-rpc.com'

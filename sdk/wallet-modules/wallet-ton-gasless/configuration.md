@@ -26,23 +26,25 @@ layout:
 import WalletManagerTonGasless from '@tetherto/wdk-wallet-ton-gasless'
 
 const config = {
-  // Required parameters
+  // Required: TON Center API client
   tonClient: {
     url: 'https://toncenter.com/api/v3',
-    secretKey: 'your-api-key' // Optional
+    secretKey: 'your-api-key' // Optional, for higher rate limits
   },
-  gasFreeProvider: 'https://your-gasfree-provider.com',
-  gasFreeApiKey: 'your-gasfree-api-key',
-  gasFreeApiSecret: 'your-gasfree-api-secret',
-  serviceProvider: 'EQ...', // Service provider's TON address
-  verifyingContract: 'EQ...', // Verifying contract address
-  chainId: '1', // TON chain ID
-  
-  // Optional parameters
-  transferMaxFee: 10000000 // Maximum fee in token base units
+  // Required: TON API client (used for gasless transaction relay)
+  tonApiClient: {
+    url: 'https://tonapi.io/v2',
+    secretKey: 'your-tonapi-key' // Optional but recommended
+  },
+  // Required: Paymaster token used to pay gas fees
+  paymasterToken: {
+    address: 'EQ...' // Paymaster Jetton master contract address
+  },
+  // Optional: Maximum fee for transfer operations (in paymaster token base units)
+  transferMaxFee: 10000000
 }
 
-const wallet = new WalletManagerTonGasless(seedPhrase, config)
+const wallet = new WalletManagerTonGasless(seedPhrase, config) // config is required
 ```
 
 ## Account Configuration
@@ -51,33 +53,63 @@ const wallet = new WalletManagerTonGasless(seedPhrase, config)
 import { WalletAccountTonGasless } from '@tetherto/wdk-wallet-ton-gasless'
 
 const accountConfig = {
-  // Required parameters
+  // Required: TON Center API client
   tonClient: {
     url: 'https://toncenter.com/api/v3',
     secretKey: 'your-api-key' // Optional
   },
-  gasFreeProvider: 'https://your-gasfree-provider.com',
-  gasFreeApiKey: 'your-gasfree-api-key',
-  gasFreeApiSecret: 'your-gasfree-api-secret',
-  serviceProvider: 'EQ...', // Service provider's TON address
-  verifyingContract: 'EQ...', // Verifying contract address
-  chainId: '1', // TON chain ID
-  
-  // Optional parameters
-  transferMaxFee: 10000000 // Maximum fee in token base units
+  // Required: TON API client
+  tonApiClient: {
+    url: 'https://tonapi.io/v2',
+    secretKey: 'your-tonapi-key' // Optional but recommended
+  },
+  // Required: Paymaster token
+  paymasterToken: {
+    address: 'EQ...' // Paymaster Jetton master contract address
+  },
+  // Optional: Maximum fee for transfer operations
+  transferMaxFee: 10000000
 }
 
-const account = new WalletAccountTonGasless(seedPhrase, "0'/0/0", accountConfig)
+const account = new WalletAccountTonGasless(seedPhrase, "0'/0/0", accountConfig) // config is required
+```
+
+## Read-Only Account Configuration
+
+```javascript
+import { WalletAccountReadOnlyTonGasless } from '@tetherto/wdk-wallet-ton-gasless'
+
+const readOnlyConfig = {
+  // Required: TON Center API client
+  tonClient: {
+    url: 'https://toncenter.com/api/v3',
+    secretKey: 'your-api-key' // Optional
+  },
+  // Required: TON API client
+  tonApiClient: {
+    url: 'https://tonapi.io/v2',
+    secretKey: 'your-tonapi-key' // Optional but recommended
+  },
+  // Required: Paymaster token
+  paymasterToken: {
+    address: 'EQ...' // Paymaster Jetton master contract address
+  }
+  // Note: transferMaxFee is NOT available for read-only accounts
+}
+
+const readOnlyAccount = new WalletAccountReadOnlyTonGasless(publicKey, readOnlyConfig) // config is required
 ```
 
 ## Configuration Options
 
 ### tonClient
 
-The `tonClient` option configures the TON Center API client for blockchain interactions.
+The `tonClient` option configures the TON Center API client for blockchain interactions. You can pass either a configuration object or an existing `TonClient` instance.
 
 **Type:**
 ```typescript
+type TonClientOption = TonClientConfig | TonClient;
+
 interface TonClientConfig {
   /**
    * TON Center API endpoint URL
@@ -93,94 +125,70 @@ interface TonClientConfig {
 }
 ```
 
-### gasFreeProvider
-
-The `gasFreeProvider` option specifies the gas-free service endpoint.
-
-**Type:** `string`
-
 **Required:** Yes
 
-**Example:**
-```javascript
-const config = {
-  gasFreeProvider: 'https://your-gasfree-provider.com'
+### tonApiClient
+
+The `tonApiClient` option configures the TON API client used for gasless transaction relay and fee estimation. You can pass either a configuration object or an existing `TonApiClient` instance.
+
+**Type:**
+```typescript
+type TonApiClientOption = TonApiClientConfig | TonApiClient;
+
+interface TonApiClientConfig {
+  /**
+   * TON API endpoint URL
+   * @example 'https://tonapi.io/v2'
+   */
+  url: string;
+
+  /**
+   * Optional API key for TON API
+   */
+  secretKey?: string;
 }
 ```
 
-### gasFreeApiKey and gasFreeApiSecret
-
-API credentials for the gas-free service.
-
-**Type:** `string`
-
 **Required:** Yes
 
-**Example:**
-```javascript
-const config = {
-  gasFreeApiKey: 'your-gasfree-api-key',
-  gasFreeApiSecret: 'your-gasfree-api-secret'
+### paymasterToken
+
+The `paymasterToken` option specifies the Jetton token used to pay gas fees in gasless transactions.
+
+**Type:**
+```typescript
+interface PaymasterTokenConfig {
+  /**
+   * Paymaster Jetton master contract address
+   * @example 'EQ...'
+   */
+  address: string;
 }
 ```
 
-### serviceProvider
-
-The TON address of the service provider that handles gas-free transactions.
-
-**Type:** `string`
-
 **Required:** Yes
 
 **Example:**
 ```javascript
 const config = {
-  serviceProvider: 'EQ...' // TON address
-}
-```
-
-### verifyingContract
-
-The TON address of the contract that verifies gas-free transactions.
-
-**Type:** `string`
-
-**Required:** Yes
-
-**Example:**
-```javascript
-const config = {
-  verifyingContract: 'EQ...' // TON address
-}
-```
-
-### chainId
-
-The blockchain's identifier.
-
-**Type:** `string`
-
-**Required:** Yes
-
-**Example:**
-```javascript
-const config = {
-  chainId: '1' // TON mainnet
+  paymasterToken: {
+    address: 'EQ...' // Paymaster Jetton master contract address
+  }
 }
 ```
 
 ### transferMaxFee
 
-The `transferMaxFee` option sets the maximum allowed fee in token base units for transfer operations.
+The `transferMaxFee` option sets the maximum allowed fee for transfer operations, denominated in the paymaster token's base units. This helps prevent unexpectedly high transaction fees.
 
-**Type:** `number`
+**Type:** `number | bigint`
 
 **Required:** No
 
 **Example:**
 ```javascript
 const config = {
-  transferMaxFee: 10000000 // Maximum fee in token base units
+  transferMaxFee: 10000000 // Maximum fee in paymaster token base units
 }
 ```
 
@@ -190,26 +198,25 @@ Here's a complete configuration example with all options:
 
 ```javascript
 const config = {
-  // TON Client (Required)
+  // TON Center API client (required)
   tonClient: {
     url: 'https://toncenter.com/api/v3',
     secretKey: 'your-api-key'
   },
   
-  // Gas-free Service (Required)
-  gasFreeProvider: 'https://your-gasfree-provider.com',
-  gasFreeApiKey: 'your-gasfree-api-key',
-  gasFreeApiSecret: 'your-gasfree-api-secret',
+  // TON API client for gasless relay (required)
+  tonApiClient: {
+    url: 'https://tonapi.io/v2',
+    secretKey: 'your-tonapi-key'
+  },
   
-  // Contract Addresses (Required)
-  serviceProvider: 'EQ...', // Service provider's address
-  verifyingContract: 'EQ...', // Verifying contract address
+  // Paymaster token for gas fee payment (required)
+  paymasterToken: {
+    address: 'EQ...' // Paymaster Jetton master contract address
+  },
   
-  // Chain Configuration (Required)
-  chainId: '1', // TON mainnet
-  
-  // Fee Limits (Optional)
-  transferMaxFee: 10000000 // Maximum fee in token base units
+  // Fee limits (optional)
+  transferMaxFee: 10000000 // Maximum fee in paymaster token base units
 }
 ```
 

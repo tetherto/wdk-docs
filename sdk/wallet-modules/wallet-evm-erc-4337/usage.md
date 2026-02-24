@@ -56,13 +56,13 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
   paymasterUrl: 'https://api.candide.dev/public/v3/ethereum',
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
-  safeModulesVersion: '1.0.0',
+  safeModulesVersion: '0.3.0',
   paymasterToken: {
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
   },
   
   // Optional parameter
-  transferMaxFee: 100000000000000 // Optional: Maximum fee amount for transfer operations (in wei)
+  transferMaxFee: 100000 // Optional: Maximum fee in paymaster token units
 
 })
 
@@ -74,7 +74,7 @@ const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337('0x...', { // Smart 
   paymasterUrl: 'https://api.candide.dev/public/v3/ethereum', // Required: Paymaster service
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba', // Required: Paymaster contract
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032', // Required: EntryPoint contract
-  safeModulesVersion: '1.0.0', // Required: Safe modules version
+  safeModulesVersion: '0.3.0', // Required: Safe modules version
   paymasterToken: { // Required: Paymaster token configuration
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USDT token address
   }
@@ -82,7 +82,7 @@ const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337('0x...', { // Smart 
 ```
 
 {% hint style="info" %}
-> To use test/mock tokens instead of real funds, see the Testnet [configuration section](./configuration.md#sepolia-testnet-usdt-erc-20).
+> To use test/mock tokens instead of real funds, see the Testnet [configuration section](./configuration.md#network-specific-configurations).
 
 {% endhint %}
 
@@ -149,7 +149,7 @@ const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337('0x...', { // Smart 
   paymasterUrl: 'https://api.candide.dev/public/v3/ethereum',
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
   entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
-  safeModulesVersion: '1.0.0',
+  safeModulesVersion: '0.3.0',
   paymasterToken: {
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USDT
   }
@@ -175,19 +175,19 @@ console.log('Paymaster token balance:', paymasterBalance, 'units')
 ### Sending Gasless Transactions
 
 ```javascript
-// Send a gasless transaction (fees paid in paymaster token)
+// Send a transaction (fees paid in paymaster token)
 const result = await account.sendTransaction({
   to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-  value: 1000000000000000000, // 1 ETH in wei (use number, not bigint)
+  value: 1000000000000000000n, // 1 ETH in wei
   data: '0x' // Optional transaction data
 })
 console.log('Transaction hash:', result.hash)
-console.log('Transaction fee (in paymaster token units):', result.fee)
+console.log('Transaction fee:', result.fee)
 
 // Send transaction with custom paymaster token
 const customResult = await account.sendTransaction({
   to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-  value: 1000000000000000000
+  value: 1000000000000000000n
 }, {
   paymasterToken: {
     address: '0x...' // Override default paymaster token
@@ -197,9 +197,9 @@ const customResult = await account.sendTransaction({
 // Get transaction fee estimate
 const quote = await account.quoteSendTransaction({
   to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-  value: 1000000000000000000
+  value: 1000000000000000000n
 })
-console.log('Estimated fee (in paymaster token units):', quote.fee)
+console.log('Estimated fee:', quote.fee)
 ```
 
 ### Token Transfers with Gasless Transactions
@@ -279,7 +279,7 @@ async function setupErc4337Wallet() {
     paymasterUrl: 'https://api.candide.dev/public/v3/ethereum',
     paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
     entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
-    safeModulesVersion: '1.0.0',
+    safeModulesVersion: '0.3.0',
     paymasterToken: {
       address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USDT
     },
@@ -310,15 +310,15 @@ async function sendGaslessTransaction(account) {
     // Get fee estimate first
     const quote = await account.quoteSendTransaction({
       to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-      value: 1000000000000000000, // 1 ETH (use number, not bigint)
+      value: 1000000000000000000n, // 1 ETH
       data: '0x'
     })
-    console.log('Estimated fee:', quote.fee, 'paymaster token units')
+    console.log('Estimated fee:', quote.fee)
     
     // Send ETH without holding any ETH for gas fees
     const result = await account.sendTransaction({
       to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-      value: 1000000000000000000, // 1 ETH
+      value: 1000000000000000000n, // 1 ETH
       data: '0x' // Optional transaction data
     })
     
@@ -346,7 +346,7 @@ async function sendTransactionWithDifferentToken(account) {
     // Send transaction paying fees with a different paymaster token
     const result = await account.sendTransaction({
       to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-      value: 1000000000000000000 // 1 ETH
+      value: 1000000000000000000n // 1 ETH
     }, {
       paymasterToken: {
         address: '0xA0b86a33E6441b8c4C8C8C8C8C8C8C8C8C8C8C8C' // Different token

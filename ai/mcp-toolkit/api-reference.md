@@ -144,7 +144,7 @@ server.registerToken(chain: string, symbol: string, token: TokenInfo): WdkMcpSer
 | Parameter | Type | Description |
 | --- | --- | --- |
 | `chain` | `string` | Chain name |
-| `symbol` | `string` | Token symbol (e.g., `'USDC'`) |
+| `symbol` | `string` | Token symbol (e.g., `'USDT'`) |
 | `token.address` | `string` | Token contract address |
 | `token.decimals` | `number` | Token decimal places |
 
@@ -264,7 +264,7 @@ Get the native token balance for a blockchain (ETH, BTC, SOL, etc.). **Read-only
 
 ### `getTokenBalance`
 
-Get the balance of a registered token (USDT, USDC, etc.). **Read-only.**
+Get the balance of a registered token (USDT, XAU₮, etc.). **Read-only.**
 
 **Input:**
 
@@ -580,7 +580,7 @@ Get a swap quote without executing. **Read-only.**
 | --- | --- | --- | --- |
 | `chain` | `enum` | Yes | Blockchain with swap protocol |
 | `tokenIn` | `string` | Yes | Token to sell (e.g., `"USDT"`) |
-| `tokenOut` | `string` | Yes | Token to buy (e.g., `"USDC"`) |
+| `tokenOut` | `string` | Yes | Token to buy (e.g., `"WETH"`) |
 | `amount` | `string` | Yes | Amount in human-readable units |
 | `side` | `enum` | Yes | `"sell"` or `"buy"` |
 

@@ -159,5 +159,6 @@ To test transactions without spending real assets, developers use "Testnets"—n
 
 #### Common Faucets
 *   **Ethereum (Sepolia)**: [Google Cloud Web3 Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)
+*   **Aave Test Tokens (Sepolia)**: [Aave Faucet](https://app.aave.com/faucet/) — get test USD₮, DAI and other tokens for DeFi testing
 *   **TON Testnet**: [Testgiver Bot](https://t.me/testgiver_ton_bot)
 *   **Bitcoin Testnet**: [CoinFaucet](https://coinfaucet.eu/en/btc-testnet/)

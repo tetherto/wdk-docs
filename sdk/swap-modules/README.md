@@ -27,7 +27,6 @@ DeFi swap functionality for token exchanges across different DEXs:
 | Module | Blockchain | Status | Documentation |
 |--------|------------|--------|---------------|
 | [`@tetherto/wdk-protocol-swap-velora-evm`](https://github.com/tetherto/wdk-protocol-swap-velora-evm) | EVM | ✅ Ready | [Documentation](./swap-velora-evm/) |
-| [`@tetherto/wdk-protocol-swap-stonfi-ton`](https://github.com/tetherto/wdk-protocol-swap-stonfi-ton) | TON | In progress | [Documentation](./swap-stonfi-ton/) |
 
 ## Next steps
 

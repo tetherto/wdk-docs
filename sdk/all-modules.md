@@ -52,7 +52,6 @@ DEX swap functionality for token exchanges.
 | Module | Blockchain | Description | Documentation |
 |--------|------------|-------------|---------------|
 | [`@tetherto/wdk-protocol-swap-velora-evm`](https://github.com/tetherto/wdk-protocol-swap-velora-evm) | EVM | DEX aggregator swap on EVM chains | [Docs](./swap-modules/swap-velora-evm/) |
-| [`@tetherto/wdk-protocol-swap-stonfi-ton`](https://github.com/tetherto/wdk-protocol-swap-stonfi-ton) | TON | STON.fi DEX swap on TON | [Docs](./swap-modules/swap-stonfi-ton/) |
 
 ## Bridge Modules
 

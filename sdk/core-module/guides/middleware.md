@@ -67,7 +67,7 @@ const wallet = createFallbackWallet(
   WalletAccountReadOnlyEvm,
   ['0x...'], // constructor args
   {
-    primary: { provider: 'https://mainnet.infura.io/v3/YOUR_KEY' },
+    primary: { provider: 'https://eth.drpc.org' },
     fallbacks: [
       { provider: 'https://eth.llamarpc.com' },
       { provider: 'https://ethereum.publicnode.com' }
