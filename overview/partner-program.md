@@ -48,7 +48,7 @@ Project Partners are companies and teams building end-user products powered by W
 
 As a Project Partner, you get hands-on integration support from the team that builds WDK. We'll help you navigate architecture decisions, troubleshoot implementation challenges, and make sure your product launches on solid foundations.
 
-<a class="button primary" href="https://wkf.ms/4hd40JK">Become a Project Partner</a>
+<a class="button primary" href="https://forms.monday.com/forms/6d484c4b34949e3a238988c47bf0a1b6?r=euc1">Become a Project Partner</a>
 
 ***
 
