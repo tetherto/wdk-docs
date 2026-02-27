@@ -48,7 +48,7 @@ Project Partners are companies and teams building end-user products powered by W
 
 As a Project Partner, you get hands-on integration support from the team that builds WDK. We'll help you navigate architecture decisions, troubleshoot implementation challenges, and make sure your product launches on solid foundations.
 
-[***Become a Project Partner***](https://forms.monday.com/forms/6d484c4b34949e3a238988c47bf0a1b6?r=euc1)
+<a class="button primary" href="https://forms.monday.com/forms/6d484c4b34949e3a238988c47bf0a1b6?r=euc1">Become a Project Partner</a>
 
 ***
 
@@ -75,7 +75,7 @@ Technology Partners are protocol teams, service providers, and developer organiz
 
 As a Technology Partner, you'll work closely with our SDK team to build, test, and publish modules that reach every WDK-powered wallet. You'll get early access to unreleased APIs, architecture guidance, co-marketing exposure through our documentation and community channels, and the opportunity to shape how your protocol integrates across the ecosystem.
 
-[***Become a Technology Partner***](https://forms.monday.com/forms/f6c509ea32fabfa63f719ac8eed9f934?r=euc1)
+<a class="button primary" href="https://forms.monday.com/forms/f6c509ea32fabfa63f719ac8eed9f934?r=euc1">Become a Technology Partner</a>
 
 ***
 
@@ -100,6 +100,8 @@ Consulting & Implementation Partners are agencies, system integrators, and devel
 
 As a Consulting & Implementation Partner, you'll gain access to Tether's referral network, dedicated technical support for your client engagements, and revenue sharing opportunities. We'll equip your team with the training, documentation, and direct engineering access needed to deliver successful WDK implementations at scale.
 
-***Alpha Program** - This partnership track is currently in alpha. We're onboarding a limited number of partners as we shape the program and cannot guarantee acceptance, specific benefits, or program terms at this stage. Apply to express your interest and help shape the program as it evolves.*
+{% hint style="info" %}
+**Alpha Program** - This partnership track is currently in alpha. We're onboarding a limited number of partners as we shape the program and cannot guarantee acceptance, specific benefits, or program terms at this stage. Apply to express your interest and help shape the program as it evolves.
+{% endhint %}
 
-[***Become a Consulting & Implementation Partner***](https://forms.monday.com/forms/d4603bc6e37b0c0a9c591764bcfb9380?r=euc1)
+<a class="button primary" href="https://forms.monday.com/forms/d4603bc6e37b0c0a9c591764bcfb9380?r=euc1">Become a Consulting & Implementation Partner</a>
