@@ -17,23 +17,13 @@ The main class for managing Safe Protocol multisig wallets with ERC-4337 account
 ### Constructor
 
 ```javascript
-new WalletManagerEvmMultisigSafe(seedPhrase, config)
+new WalletManagerEvmMultisigSafe(seed, config)
 ```
 
 **Parameters:**
 
-* `seedPhrase` (string): BIP-39 mnemonic seed phrase
-* `config` (EvmMultisigSafeConfig): Configuration object
-  * `chainId` (bigint): Blockchain network ID
-  * `provider` (string | Provider): RPC provider URL or EIP-1193 provider
-  * `bundlerUrl` (string): ERC-4337 bundler service URL
-  * `options` (ExistingSafeOptions | PredictedSafeOptions): Safe creation or import config
-  * `paymasterOptions` (PaymasterOptions, optional): Paymaster configuration
-  * `safeApiKey` (string, optional): Safe API key
-  * `txServiceUrl` (string, optional): Custom Safe Transaction Service URL
-  * `transferMaxFee` (number | bigint, optional): Maximum fee in paymaster token units
-  * `entryPointAddress` (string, optional): EntryPoint contract address
-  * `safeModulesVersion` (string, optional): Safe modules version (default: '0.2.0')
+* `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase
+* `config` (EvmMultisigSafeConfig): Configuration object (see [Configuration](configuration.md))
 
 ### Methods
 
@@ -47,7 +37,7 @@ const account = await wallet.getAccount(index)
 
 **Parameters:**
 
-* `index` (number): Account index for BIP-44 derivation
+* `index` (number, optional): Account index for BIP-44 derivation (default: 0)
 
 **Returns:** `Promise<WalletAccountEvmMultisigSafe>`
 
@@ -65,6 +55,16 @@ const account = await wallet.getAccountByPath(path)
 
 **Returns:** `Promise<WalletAccountEvmMultisigSafe>`
 
+#### getFeeRates
+
+Returns the current fee rates.
+
+```javascript
+const feeRates = await wallet.getFeeRates()
+```
+
+**Returns:** `Promise<FeeRates>` - Fee rates in wei (`normal` and `fast`)
+
 #### dispose
 
 Disposes the wallet manager and clears sensitive data from memory.
@@ -75,31 +75,51 @@ wallet.dispose()
 
 ## WalletAccountEvmMultisigSafe
 
-Individual multisig Safe account with full signing capabilities.
+Individual multisig Safe account with full signing capabilities. Extends `WalletAccountReadOnlyEvmMultisigSafe`.
 
 ### Constructor
 
 ```javascript
-new WalletAccountEvmMultisigSafe(seedPhrase, path, config)
+new WalletAccountEvmMultisigSafe(seed, path, config)
 ```
 
 **Parameters:**
 
-* `seedPhrase` (string): BIP-39 mnemonic seed phrase
-* `path` (string): BIP-44 derivation path
+* `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase
+* `path` (string): BIP-44 derivation path (e.g., "0'/0/0")
 * `config` (EvmMultisigSafeConfig): Configuration object
+
+### Properties
+
+#### index
+
+The derivation path's index of this account.
+
+**Type:** `number`
+
+#### path
+
+The full BIP-44 derivation path (e.g., "m/44'/60'/0'/0/0").
+
+**Type:** `string`
+
+#### keyPair
+
+The account's key pair.
+
+**Type:** `KeyPair`
 
 ### Methods
 
 #### getAddress
 
-Returns the Safe contract address.
+Returns the Safe contract address (predicted or actual).
 
 ```javascript
 const address = await account.getAddress()
 ```
 
-**Returns:** `Promise<string>` - Safe address (checksummed)
+**Returns:** `Promise<string>` - Safe address
 
 #### getSignerAddress
 
@@ -144,6 +164,8 @@ const balance = await account.getPaymasterTokenBalance()
 ```
 
 **Returns:** `Promise<bigint>` - Paymaster token balance
+
+**Throws:** Error if no paymaster token is configured (e.g., sponsored or native coins mode)
 
 #### getOwners
 
@@ -212,39 +234,83 @@ const deployed = await account.isDeployed()
 
 #### deploy
 
-Deploys the Safe contract on-chain. Requires ETH in signer's EOA.
+Deploys the Safe contract on-chain. Requires native ETH in the signer's EOA to pay for gas.
 
 ```javascript
 const result = await account.deploy()
 ```
 
-**Returns:** `Promise<{ deployed: boolean, txHash: string | null }>` - Deployment result
+**Returns:** `Promise<TransactionResult>` - Deployment result with `txHash` and `fee`
 
-#### propose
+**Throws:** Error if Safe is already deployed
 
-Proposes a new transaction for multisig approval.
+#### sendTransaction
+
+Proposes a transaction for multisig approval. Auto-executes if `autoExecute` is true and threshold is met after proposing.
 
 ```javascript
-const proposal = await account.propose(transaction, options?)
+const result = await account.sendTransaction(tx, options?)
 ```
 
 **Parameters:**
 
-* `transaction` (EvmTransaction): Transaction to propose
+* `tx` (EvmTransaction): Transaction to send
   * `to` (string): Recipient address
   * `value` (string | bigint): Value in wei
   * `data` (string, optional): Transaction data
-* `options` (ProposeOptions, optional): Propose options including paymaster overrides
+* `options` (object, optional): Send options
+  * `autoExecute` (boolean): Auto-execute if threshold is met (default: false)
+  * Plus any paymaster config overrides (see [Per-Transaction Override](usage.md#per-transaction-override))
 
-**Returns:** `Promise<ProposeResult>`
+**Returns:** `Promise<MultisigTransactionResult>`
+
+* `proposalId` (string): Safe operation hash
+* `hash` (string): Safe operation hash or UserOp hash (if executed)
+* `fee` (bigint): Estimated fee
+* `confirmations` (number): Number of confirmations
+* `threshold` (number): Required threshold
+* `executed` (boolean): Whether transaction was executed
+
+#### transfer
+
+Transfers tokens using the multisig workflow. Auto-executes if `autoExecute` is true and threshold is met after proposing.
+
+```javascript
+const result = await account.transfer(transferOptions, options?)
+```
+
+**Parameters:**
+
+* `transferOptions` (TransferOptions): Transfer details
+  * `token` (string): ERC-20 token address
+  * `recipient` (string): Recipient address
+  * `amount` (string | bigint): Amount in smallest units
+* `options` (object, optional): Send options (same as `sendTransaction`)
+
+**Returns:** `Promise<MultisigTransactionResult>`
+
+#### propose
+
+Proposes a new transaction for multisig approval. Creates a SafeOperation, signs it, and uploads to Safe Transaction Service.
+
+```javascript
+const proposal = await account.propose(transaction, config?)
+```
+
+**Parameters:**
+
+* `transaction` (EvmTransaction | EvmTransaction[]): Transaction(s) to propose (supports batching)
+* `config` (object, optional): Paymaster config overrides
+
+**Returns:** `Promise<MultisigResult>`
 
 * `proposalId` (string): Unique Safe operation hash
-* `confirmations` (number): Number of confirmations
+* `confirmations` (number): Number of confirmations (1 after proposing)
 * `threshold` (number): Required confirmations to execute
 
 #### approve
 
-Approves a pending transaction.
+Approves (signs) an existing proposal.
 
 ```javascript
 const result = await account.approve(proposalId)
@@ -252,16 +318,17 @@ const result = await account.approve(proposalId)
 
 **Parameters:**
 
-* `proposalId` (string): Operation hash from propose()
+* `proposalId` (string): Safe operation hash from propose()
 
-**Returns:** `Promise<ApprovalResult>`
+**Returns:** `Promise<MultisigResult>`
 
-* `confirmations` (number): Number of confirmations
+* `proposalId` (string): Safe operation hash
+* `confirmations` (number): Updated number of confirmations
 * `threshold` (number): Required threshold
 
 #### reject
 
-Rejects a pending transaction by proposing a rejection transaction.
+Rejects a proposal by creating a rejection transaction with the same nonce.
 
 ```javascript
 const result = await account.reject(proposalId)
@@ -269,13 +336,13 @@ const result = await account.reject(proposalId)
 
 **Parameters:**
 
-* `proposalId` (string): Operation hash to reject
+* `proposalId` (string): Safe operation hash to reject
 
-**Returns:** `Promise<ProposeResult>`
+**Returns:** `Promise<MultisigResult>` - The rejection proposal result
 
 #### execute
 
-Executes a transaction that has met the threshold.
+Executes a fully signed Safe operation via the bundler.
 
 ```javascript
 const result = await account.execute(proposalId)
@@ -283,11 +350,13 @@ const result = await account.execute(proposalId)
 
 **Parameters:**
 
-* `proposalId` (string): Operation hash from propose()
+* `proposalId` (string): Safe operation hash from propose()
 
-**Returns:** `Promise<ExecuteResult>`
+**Returns:** `Promise<MultisigExecuteResult>`
 
 * `hash` (string): UserOperation hash
+
+**Throws:** Error if not enough confirmations
 
 #### isReadyToExecute
 
@@ -299,7 +368,7 @@ const ready = await account.isReadyToExecute(proposalId)
 
 **Parameters:**
 
-* `proposalId` (string): Operation hash to check
+* `proposalId` (string): Safe operation hash to check
 
 **Returns:** `Promise<boolean>`
 
@@ -319,67 +388,47 @@ const proposals = await account.getProposals(proposalIds)
 
 * Each element contains `proposalId`, `confirmations`, `threshold`, or `null` if not found
 
-#### sendTransaction
+#### getTransactionReceipt
 
-Proposes, collects approvals, and executes in one call. Auto-executes if threshold is met.
+Returns a transaction's receipt. Supports both regular transaction hashes and UserOperation hashes (from ERC-4337 bundler).
 
 ```javascript
-const result = await account.sendTransaction(transaction, options?)
+const receipt = await account.getTransactionReceipt(hash)
 ```
 
 **Parameters:**
 
-* `transaction` (EvmTransaction): Transaction to send
-* `options` (ProposeOptions, optional): Options including paymaster overrides
+* `hash` (string): Transaction hash or UserOperation hash
 
-**Returns:** `Promise<MultisigTransactionResult>`
-
-* `hash` (string): Safe operation hash or UserOp hash
-* `fee` (bigint): Estimated fee
-* `confirmations` (number): Number of confirmations
-* `threshold` (number): Required threshold
-* `executed` (boolean): Whether transaction was executed
+**Returns:** `Promise<EvmTransactionReceipt | UserOperationReceipt | null>` - The receipt, or null if not yet included in a block
 
 #### quoteSendTransaction
 
 Estimates the fee for a transaction without executing.
 
 ```javascript
-const quote = await account.quoteSendTransaction(transaction, options?)
+const quote = await account.quoteSendTransaction(tx, config?)
 ```
 
 **Parameters:**
 
-* `transaction` (EvmTransaction): Transaction to quote
-* `options` (ProposeOptions, optional): Options including paymaster overrides
+* `tx` (EvmTransaction): Transaction to quote
+* `config` (object, optional): Paymaster config overrides
 
 **Returns:** `Promise<{ fee: bigint }>`
-
-#### transfer
-
-Transfers ERC-20 tokens using the multisig workflow. Auto-executes if threshold is met.
-
-```javascript
-const result = await account.transfer(transferOptions, proposeOptions?)
-```
-
-**Parameters:**
-
-* `transferOptions` (TransferOptions): Transfer details
-  * `token` (string): ERC-20 token address
-  * `recipient` (string): Recipient address
-  * `amount` (string | bigint): Amount in smallest units
-* `proposeOptions` (ProposeOptions, optional): Options including paymaster overrides
-
-**Returns:** `Promise<MultisigTransactionResult>`
 
 #### quoteTransfer
 
 Estimates the fee for a token transfer.
 
 ```javascript
-const quote = await account.quoteTransfer(transferOptions, proposeOptions?)
+const quote = await account.quoteTransfer(transferOptions, config?)
 ```
+
+**Parameters:**
+
+* `transferOptions` (TransferOptions): Transfer details
+* `config` (object, optional): Paymaster config overrides
 
 **Returns:** `Promise<{ fee: bigint }>`
 
@@ -393,84 +442,90 @@ const quote = await account.quoteDeploy()
 
 **Returns:** `Promise<{ fee: bigint }>`
 
+**Throws:** Error if Safe is already deployed
+
 #### addOwner
 
 Proposes adding a new owner to the Safe.
 
 ```javascript
-const proposal = await account.addOwner(ownerAddress, newThreshold?, options?)
+const proposal = await account.addOwner(ownerAddress, options?)
 ```
 
 **Parameters:**
 
 * `ownerAddress` (string): New owner address
-* `newThreshold` (number, optional): New threshold after adding
-* `options` (ProposeOptions, optional): Propose options
+* `options` (object, optional):
+  * `threshold` (number, optional): New threshold after adding (defaults to current)
+  * Plus any paymaster config overrides
 
-**Returns:** `Promise<ProposeResult>`
+**Returns:** `Promise<MultisigResult>`
 
 #### removeOwner
 
 Proposes removing an owner from the Safe.
 
 ```javascript
-const proposal = await account.removeOwner(ownerAddress, newThreshold?, options?)
+const proposal = await account.removeOwner(ownerAddress, options?)
 ```
 
 **Parameters:**
 
 * `ownerAddress` (string): Owner address to remove
-* `newThreshold` (number, optional): New threshold after removal
-* `options` (ProposeOptions, optional): Propose options
+* `options` (object, optional):
+  * `threshold` (number, optional): New threshold after removal (defaults to current)
+  * Plus any paymaster config overrides
 
-**Returns:** `Promise<ProposeResult>`
+**Returns:** `Promise<MultisigResult>`
 
 #### swapOwner
 
 Proposes swapping one owner for another.
 
 ```javascript
-const proposal = await account.swapOwner(oldOwner, newOwner, options?)
+const proposal = await account.swapOwner(oldOwnerAddress, newOwnerAddress, config?)
 ```
 
 **Parameters:**
 
-* `oldOwner` (string): Owner address to remove
-* `newOwner` (string): New owner address to add
-* `options` (ProposeOptions, optional): Propose options
+* `oldOwnerAddress` (string): Owner address to remove
+* `newOwnerAddress` (string): New owner address to add
+* `config` (object, optional): Paymaster config overrides
 
-**Returns:** `Promise<ProposeResult>`
+**Returns:** `Promise<MultisigResult>`
 
 #### changeThreshold
 
 Proposes changing the approval threshold.
 
 ```javascript
-const proposal = await account.changeThreshold(newThreshold, options?)
+const proposal = await account.changeThreshold(newThreshold, config?)
 ```
 
 **Parameters:**
 
 * `newThreshold` (number): New threshold value
-* `options` (ProposeOptions, optional): Propose options
+* `config` (object, optional): Paymaster config overrides
 
-**Returns:** `Promise<ProposeResult>`
+**Returns:** `Promise<MultisigResult>`
 
 #### updateOwners
 
-Proposes batch updating owners and threshold.
+Proposes batch updating owners and threshold in a single transaction.
 
 ```javascript
-const proposal = await account.updateOwners(newOwners, newThreshold, options?)
+const proposal = await account.updateOwners(newOwners, newThreshold, config?)
 ```
 
 **Parameters:**
 
 * `newOwners` (string[]): New list of owner addresses
 * `newThreshold` (number): New threshold value
-* `options` (ProposeOptions, optional): Propose options
+* `config` (object, optional): Paymaster config overrides
 
-**Returns:** `Promise<ProposeResult>`
+**Returns:** `Promise<MultisigResult>`
+
+**Throws:** Error if no changes to make
 
 #### proposeMessage
 
@@ -484,10 +539,10 @@ const result = await account.proposeMessage(message)
 
 * `message` (string): Message to sign
 
-**Returns:** `Promise<MessageResult>`
+**Returns:** `Promise<MessageProposal>`
 
-* `signature` (string): This owner's signature
 * `messageHash` (string): Message hash for approval
+* `signature` (string): This owner's signature
 * `confirmations` (number): Number of confirmations
 * `threshold` (number): Required confirmations
 * `combinedSignature` (string | null): Combined signature when fully signed
@@ -504,12 +559,27 @@ const result = await account.approveMessage(messageHash)
 
 * `messageHash` (string): Message hash from proposeMessage()
 
-**Returns:** `Promise<MessageResult>`
+**Returns:** `Promise<MessageProposal>`
 
+* `messageHash` (string): Message hash
 * `signature` (string): This owner's signature
 * `confirmations` (number): Number of confirmations
 * `threshold` (number): Required confirmations
 * `combinedSignature` (string | null): Combined signature when fully signed
+
+#### sign
+
+Signs a message. Internally calls proposeMessage.
+
+```javascript
+const signature = await account.sign(message)
+```
+
+**Parameters:**
+
+* `message` (string): Message to sign
+
+**Returns:** `Promise<string>` - This owner's signature
 
 #### verify
 
@@ -530,9 +600,9 @@ const isValid = await account.verify(message, signature)
 
 Gets the status of multiple signed messages.
 
-\```javascript
+```javascript
 const messages = await account.getMessages(messageHashes)
-\```
+```
 
 **Parameters:**
 
@@ -542,19 +612,15 @@ const messages = await account.getMessages(messageHashes)
 
 * Each element contains `messageHash`, `message`, `confirmations`, `threshold`, `combinedSignature`, or `null` if not found
 
-#### sign
+#### validateSignerIsOwner
 
-Signs a message with the multisig Safe. Internally calls proposeMessage for new messages or approveMessage for existing ones.
+Validates that the signer is an owner of the Safe.
 
 ```javascript
-const signature = await account.sign(message)
+await account.validateSignerIsOwner()
 ```
 
-**Parameters:**
-
-* `message` (string): Message to sign
-
-**Returns:** `Promise<string>` - This owner's signature
+**Throws:** Error if signer is not an owner of the Safe
 
 #### toReadOnlyAccount
 
@@ -582,23 +648,28 @@ Read-only account for balance checks and queries without signing capabilities.
 
 #### generateDeterministicSaltNonce
 
-Generates a deterministic salt nonce from owners and threshold.
+Generates a deterministic salt nonce from owners and threshold. Produces the same nonce regardless of owner order.
 
 ```javascript
 const saltNonce = WalletAccountReadOnlyEvmMultisigSafe.generateDeterministicSaltNonce(owners, threshold)
 ```
 
-**Returns:** `string` - Deterministic salt nonce
+**Parameters:**
+
+* `owners` (string[]): Array of owner addresses
+* `threshold` (number): Number of required signatures
+
+**Returns:** `string` - Deterministic salt nonce (hex string)
 
 ### Constructor
 
 ```javascript
-new WalletAccountReadOnlyEvmMultisigSafe(address, config)
+new WalletAccountReadOnlyEvmMultisigSafe(signerAddress, config)
 ```
 
 **Parameters:**
 
-* `address` (string | null): Safe contract address (null for predicted Safe)
+* `signerAddress` (string | null): The signer's EOA address, or null for pure read-only
 * `config` (EvmMultisigSafeReadOnlyConfig): Configuration object
 
 ### Methods
@@ -619,8 +690,10 @@ All query methods from WalletAccountEvmMultisigSafe are available:
 * `getProposals(proposalIds)`
 * `getMessages(messageHashes)`
 * `isReadyToExecute(proposalId)`
-* `quoteSendTransaction(tx, options?)`
-* `quoteTransfer(options, proposeOptions?)`
+* `getTransactionReceipt(hash)`
+* `verify(message, signature)`
+* `quoteSendTransaction(tx, config?)`
+* `quoteTransfer(transferOptions, config?)`
 * `quoteDeploy()`
 
 {% hint style="info" %}
@@ -632,24 +705,61 @@ For transaction history, pending operations, and incoming transfers, use `SafeAp
 ### EvmMultisigSafeConfig
 
 ```typescript
-interface EvmMultisigSafeConfig {
-  // Required
-  chainId: bigint
-  provider: string | Eip1193Provider
-  bundlerUrl: string
-  options: ExistingSafeOptions | PredictedSafeOptions
-  
-  // Optional - Paymaster
-  paymasterOptions?: PaymasterOptions
-  
-  // Optional - Safe Transaction Service (pick one)
-  txServiceUrl?: string
-  safeApiKey?: string
-  
-  // Optional - Advanced
-  transferMaxFee?: number | bigint
-  entryPointAddress?: string
-  safeModulesVersion?: string  // Default: '0.2.0'
+type EvmMultisigSafeConfig = EvmMultisigSafeCommonConfig & (
+  EvmMultisigSafePaymasterTokenConfig |
+  EvmMultisigSafeSponsoredConfig |
+  EvmMultisigSafeNativeCoinsConfig
+)
+```
+
+### EvmMultisigSafeCommonConfig
+
+```typescript
+interface EvmMultisigSafeCommonConfig {
+  provider: string | Eip1193Provider    // RPC URL or EIP-1193 provider
+  bundlerUrl: string                     // ERC-4337 bundler URL
+  chainId: bigint                        // Chain ID
+  safeOptions: ExistingSafeOptions | PredictedSafeOptions
+
+  // Optional
+  entryPointAddress?: string             // EntryPoint contract address
+  safeModulesVersion?: string            // Default: '0.2.0'
+  paymasterUrl?: string                  // Paymaster service URL
+  txServiceUrl?: string                  // Custom Safe Transaction Service URL
+  safeApiKey?: string                    // Safe API key
+}
+```
+
+### EvmMultisigSafePaymasterTokenConfig
+
+```typescript
+interface EvmMultisigSafePaymasterTokenConfig {
+  isSponsored?: false
+  useNativeCoins?: false
+  paymasterAddress: string               // Paymaster contract address
+  paymasterTokenAddress: string          // ERC-20 token for gas payment
+  transferMaxFee?: number | bigint       // Maximum fee for transfers
+  amountToApprove?: number | bigint      // Amount to approve for paymaster
+}
+```
+
+### EvmMultisigSafeSponsoredConfig
+
+```typescript
+interface EvmMultisigSafeSponsoredConfig {
+  isSponsored: true
+  useNativeCoins?: false
+  sponsorshipPolicyId?: string           // Sponsorship policy ID
+}
+```
+
+### EvmMultisigSafeNativeCoinsConfig
+
+```typescript
+interface EvmMultisigSafeNativeCoinsConfig {
+  isSponsored?: false
+  useNativeCoins: true
+  transferMaxFee?: number | bigint       // Maximum fee for transfers
 }
 ```
 
@@ -657,7 +767,7 @@ interface EvmMultisigSafeConfig {
 
 ```typescript
 interface ExistingSafeOptions {
-  safeAddress: string  // Existing Safe address to import
+  safeAddress: string                    // Existing Safe address to import
 }
 ```
 
@@ -665,42 +775,53 @@ interface ExistingSafeOptions {
 
 ```typescript
 interface PredictedSafeOptions {
-  owners: string[]           // Owner addresses
-  threshold: number          // Required signatures
-  saltNonce?: string         // Optional: for deterministic address
-  safeVersion?: SafeVersion  // Optional: Safe contract version
-  deploymentType?: DeploymentType
+  owners: string[]                       // Owner addresses
+  threshold: number                      // Required signatures
+  saltNonce?: string                     // For deterministic address
+  safeVersion?: string                   // Safe contract version
+  deploymentType?: string               // Deployment type
 }
 ```
 
-### PaymasterOptions
+### MultisigResult
 
 ```typescript
-type SponsoredPaymasterOption = {
-  isSponsored: true
-  sponsorshipPolicyId?: string
+interface MultisigResult {
+  proposalId: string
+  confirmations: number
+  threshold: number
 }
-
-type ERC20PaymasterOption = {
-  isSponsored?: false
-  paymasterAddress: string
-  paymasterTokenAddress: string
-  amountToApprove?: bigint
-}
-
-type PaymasterOptions = {
-  paymasterUrl: string
-} & (SponsoredPaymasterOption | ERC20PaymasterOption) | undefined
 ```
 
-### ProposeOptions
+### MultisigTransactionResult
 
 ```typescript
-interface ProposeOptions {
-  // Paymaster overrides
-  isSponsored?: boolean
-  sponsorshipPolicyId?: string
-  paymasterTokenAddress?: string
+interface MultisigTransactionResult {
+  proposalId: string
+  hash: string
+  fee: bigint
+  confirmations: number
+  threshold: number
+  executed: boolean
+}
+```
+
+### MultisigExecuteResult
+
+```typescript
+interface MultisigExecuteResult {
+  hash: string                           // UserOperation hash
+}
+```
+
+### MultisigInfo
+
+```typescript
+interface MultisigInfo {
+  address: string
+  owners: string[]
+  threshold: number
+  isCreated: boolean
 }
 ```
 
@@ -711,6 +832,18 @@ interface MultisigProposal {
   proposalId: string
   confirmations: number
   threshold: number
+}
+```
+
+### MessageProposal
+
+```typescript
+interface MessageProposal {
+  messageHash: string
+  signature: string
+  confirmations: number
+  threshold: number
+  combinedSignature: string | null
 }
 ```
 

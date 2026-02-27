@@ -14,29 +14,26 @@ const config = {
   chainId: 11155111n,
   provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
   bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-  
-  // Paymaster configuration
-  paymasterOptions: {
-    paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-    paymasterAddress: '0x...',           // Optional: paymaster contract address
-    paymasterTokenAddress: '0x...',      // ERC-20 token for gas (e.g., USDT)
-    isSponsored: false,                  // Optional: true for gasless mode
-    sponsorshipPolicyId: 'sp_my_policy'  // Optional: sponsorship policy ID
-  },
-  
+
+  // Paymaster configuration (flat, not nested)
+  paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
+  paymasterAddress: '0x...',           // Optional: paymaster contract address
+  paymasterTokenAddress: '0x...',      // ERC-20 token for gas (e.g., USDT)
+
   // Safe Transaction Service (pick one, not both)
   safeApiKey: 'eyJhb...',                        // API key (backend/testing only)
   // txServiceUrl: 'https://your-proxy.com/safe', // OR proxy URL (recommended for frontend)
 
   // Safe options (pick one, not both)
-  options: {
+  safeOptions: {
     owners: ['0xAliceEOA...', '0xBobEOA...'],    // Create new Safe
     threshold: 2
   },
-  // options: { safeAddress: '0x...' }            // OR import existing Safe
-  
+  // safeOptions: { safeAddress: '0x...' }        // OR import existing Safe
+
   // Optional
   transferMaxFee: 1000000,               // Max fee in paymaster token units
+  amountToApprove: 1500000,              // Amount to approve for paymaster
   entryPointAddress: '0x...',            // Custom EntryPoint contract address
   safeModulesVersion: '0.2.0'           // Safe modules version (default: '0.2.0')
 }
@@ -54,9 +51,9 @@ For a complete list of supported ERC-20 tokens that can be used to pay gas fees 
 Both WalletAccountEvmMultisigSafe and WalletAccountReadOnlyEvmMultisigSafe use the same configuration structure:
 
 ```javascript
-import { 
-  WalletAccountEvmMultisigSafe, 
-  WalletAccountReadOnlyEvmMultisigSafe 
+import {
+  WalletAccountEvmMultisigSafe,
+  WalletAccountReadOnlyEvmMultisigSafe
 } from '@tetherto/wdk-wallet-evm-multisig-safe'
 
 // Full access account
@@ -66,16 +63,14 @@ const account = new WalletAccountEvmMultisigSafe(
   config // Same config as wallet manager
 )
 
-// Read-only account
+// Read-only account (pass null as signerAddress)
 const readOnlyAccount = new WalletAccountReadOnlyEvmMultisigSafe(null, {
   chainId: 11155111n,
   provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
   bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-  paymasterOptions: {
-    paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-    paymasterTokenAddress: '0x...'
-  },
-  options: {
+  paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
+  paymasterTokenAddress: '0x...',
+  safeOptions: {
     safeAddress: '0xSafeAddress...'
   }
 })
@@ -93,12 +88,6 @@ chainId: 1n
 
 // Sepolia Testnet
 chainId: 11155111n
-
-// Polygon Mainnet
-chainId: 137n
-
-// Arbitrum One
-chainId: 42161n
 ```
 
 ### Provider
@@ -107,20 +96,7 @@ The `provider` option specifies the RPC endpoint for blockchain communication.
 
 ```javascript
 // Using RPC URL
-const config = {
-  provider: 'https://sepolia.infura.io/v3/YOUR_KEY'
-}
-
-// Using browser provider (MetaMask)
-const config = {
-  provider: window.ethereum
-}
-
-// Using custom ethers provider
-import { JsonRpcProvider } from 'ethers'
-const config = {
-  provider: new JsonRpcProvider('https://sepolia.infura.io/v3/YOUR_KEY')
-}
+provider: 'https://sepolia.infura.io/v3/YOUR_KEY'
 ```
 
 ### Bundler URL
@@ -138,19 +114,20 @@ bundlerUrl: 'https://eth-sepolia.g.alchemy.com/v2/YOUR_KEY'
 bundlerUrl: 'https://api.stackup.sh/v1/node/YOUR_KEY'
 ```
 
-### Paymaster Options
+### Gas Payment Modes
 
-The `paymasterOptions` object configures how transaction fees are paid.
+There are three mutually exclusive modes for paying transaction gas fees. These are configured as flat properties on the config object (not nested).
 
 #### ERC-20 Paymaster Mode
 
-Pay fees using ERC-20 tokens (e.g., USDT):
+Pay fees using ERC-20 tokens (e.g., USDT). The Safe must hold sufficient tokens.
 
 ```javascript
-paymasterOptions: {
+const config = {
   paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-  paymasterAddress: '0x...',        // Required: paymaster contract address
-  paymasterTokenAddress: '0x...'    // Required: USDT or other supported token
+  paymasterAddress: '0x...',        // Paymaster contract address
+  paymasterTokenAddress: '0x...',   // USDT or other supported token
+  // isSponsored and useNativeCoins are omitted or false
 }
 ```
 
@@ -159,21 +136,31 @@ paymasterOptions: {
 Use a sponsored paymaster for gasless transactions:
 
 ```javascript
-paymasterOptions: {
+const config = {
   paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
   isSponsored: true,
-  sponsorshipPolicyId: 'sp_my_policy' // Optional: sponsorship policy ID
+  sponsorshipPolicyId: 'sp_my_policy', // Optional: sponsorship policy ID
+}
+```
+
+#### Native Coins Mode
+
+Pay gas fees using native coins (e.g., ETH) directly from the Safe. No paymaster needed.
+
+```javascript
+const config = {
+  useNativeCoins: true,
 }
 ```
 
 ### Safe Options
 
-The `options` object specifies how to create or import a Safe.
+The `safeOptions` object specifies how to create or import a Safe.
 
 #### Creating a New Safe (PredictedSafeOptions)
 
 ```javascript
-options: {
+safeOptions: {
   owners: ['0xAliceEOA...', '0xBobEOA...', '0xCharlieEOA...'],
   threshold: 2, // 2-of-3 multisig
   saltNonce: '0x...', // Optional: for deterministic address
@@ -185,7 +172,7 @@ options: {
 #### Importing an Existing Safe (ExistingSafeOptions)
 
 ```javascript
-options: {
+safeOptions: {
   safeAddress: '0xExistingSafeAddress...'
 }
 ```
@@ -212,7 +199,7 @@ Get your API key from the [Safe Developer Dashboard](https://developer.safe.glob
 
 ### Transfer Max Fee
 
-The `transferMaxFee` option specifies the maximum fee amount for transfer operations in paymaster token units.
+The `transferMaxFee` option specifies the maximum fee amount for transfer operations in paymaster token units. Only applies to ERC-20 paymaster and native coins modes.
 
 ```javascript
 // Maximum fee of 1 USDT (6 decimals)
@@ -220,6 +207,15 @@ transferMaxFee: 1000000
 
 // Maximum fee of 0.1 USDT
 transferMaxFee: 100000
+```
+
+### Amount to Approve
+
+The `amountToApprove` option specifies how many tokens to approve for the paymaster when using ERC-20 paymaster mode.
+
+```javascript
+// Approve 1.5 USDT for paymaster
+amountToApprove: 1500000
 ```
 
 ## Security Notes

@@ -6,15 +6,16 @@ A simple and secure package to manage Safe Protocol multisig wallets with ERC-43
 
 ## Features
 
-* **Safe Protocol Integration**: Full support for Safe (formerly Gnosis Safe) multisig wallets
+* **Safe Protocol Integration**: Full support for Safe multisig wallets
 * **ERC-4337 Account Abstraction**: Gasless transactions via paymasters and bundlers
-* **Paymaster Modes**: Support for both ERC-20 paymaster and sponsored (gasless) modes
-* **Per-Transaction Override**: Switch between ERC-20 and sponsored mode per transaction
+* **Three Gas Payment Modes**: ERC-20 paymaster, sponsored (gasless), and native coins
+* **Per-Transaction Override**: Switch between gas payment modes per transaction
 * **Multi-Owner Management**: Add, remove, swap owners and change threshold
 * **Propose/Approve/Execute**: Standard multisig transaction workflow
 * **Message Signing**: Propose/approve flow for multisig message signing with EIP-1271 verification
 * **Deterministic Addresses**: Predictable Safe addresses from owner configuration
 * **Auto-Execute**: Automatically execute transactions when threshold is met
+* **Batch Transactions**: Propose multiple transactions in a single Safe operation
 * **TypeScript Support**: Full TypeScript definitions included
 * **Memory Safety**: Secure private key management with memory-safe implementation
 
@@ -23,28 +24,25 @@ A simple and secure package to manage Safe Protocol multisig wallets with ERC-43
 This package works with any EVM-compatible network that supports:
 
 * **Ethereum**: Mainnet, Sepolia
-* **Polygon**: Mainnet, Mumbai
-* **Arbitrum**: One, Nova
-* **Optimism**: Mainnet, Goerli
 * **And more**: Any chain with Safe Protocol and ERC-4337 infrastructure
 
 ## Next Steps
 
-**Node.js Quickstart**
+**[Node.js Quickstart](/start-building/nodejs-bare-quickstart.md)**
 
 Get started with WDK in a Node.js environment
 
-**WDK Multisig Safe Configuration**
+**[Configuration](configuration.md)**
 
-Get started with WDK's Multisig Safe configuration
+Configure gas payment modes, Safe options, and transaction service
 
-**WDK Multisig Safe API**
+**[API Reference](api-reference.md)**
 
-Get started with WDK's Multisig Safe API
+Complete API documentation for all classes and methods
 
-**WDK Multisig Safe Usage**
+**[Usage](usage.md)**
 
-Get started with WDK's Multisig Safe usage
+Installation, quick start, and usage examples
 
 ---
 

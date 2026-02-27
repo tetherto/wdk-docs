@@ -26,9 +26,9 @@ For a complete list of supported ERC-20 tokens that can be used to pay gas fees 
 ### Creating a New Multisig Wallet
 
 ```javascript
-import WalletManagerEvmMultisigSafe, { 
-  WalletAccountEvmMultisigSafe, 
-  WalletAccountReadOnlyEvmMultisigSafe 
+import WalletManagerEvmMultisigSafe, {
+  WalletAccountEvmMultisigSafe,
+  WalletAccountReadOnlyEvmMultisigSafe
 } from '@tetherto/wdk-wallet-evm-multisig-safe'
 
 // Use a BIP-39 seed phrase (replace with your own secure phrase)
@@ -40,12 +40,10 @@ const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
   provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
   bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
   safeApiKey: 'YOUR_SAFE_API_KEY', // OR txServiceUrl: 'https://your-proxy.com/safe'
-  paymasterOptions: {
-    paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-    paymasterAddress: '0x...',       // Paymaster contract address
-    paymasterTokenAddress: '0x...'   // USDT or other supported token
-  },
-  options: {
+  paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
+  paymasterAddress: '0x...',       // Paymaster contract address
+  paymasterTokenAddress: '0x...',  // USDT or other supported token
+  safeOptions: {
     owners: ['0xAliceEOA...', '0xBobEOA...'],
     threshold: 2
   },
@@ -69,12 +67,10 @@ const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
   provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
   bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
   safeApiKey: 'YOUR_SAFE_API_KEY',
-  paymasterOptions: {
-    paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-    paymasterAddress: '0x...',
-    paymasterTokenAddress: '0x...'
-  },
-  options: {
+  paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
+  paymasterAddress: '0x...',
+  paymasterTokenAddress: '0x...',
+  safeOptions: {
     safeAddress: '0xExistingSafeAddress...' // Import by address
   }
 })
@@ -86,6 +82,8 @@ console.log('Imported Safe:', address)
 
 ### Deploying a Safe
 
+**Important**: Safe deployment requires native ETH in the deployer's EOA account to pay for the deployment transaction gas. After deployment, all subsequent transactions can use paymaster (ERC-20 tokens), sponsored mode, or native coins for gas payment.
+
 ```javascript
 // Note: Deployment requires ETH in the signer's EOA for gas
 const account = await wallet.getAccount(0)
@@ -94,15 +92,19 @@ const account = await wallet.getAccount(0)
 const signerEoa = await account.getSignerAddress()
 console.log('Fund this address with ETH for deployment:', signerEoa)
 
+// Get deployment fee estimate
+const { fee } = await account.quoteDeploy()
+console.log('Estimated deployment fee:', fee)
+
 // Check if Safe is deployed
 const isDeployed = await account.isDeployed()
 console.log('Is deployed:', isDeployed)
 
 // Deploy the Safe (if not already deployed)
 if (!isDeployed) {
-  const deployResult = await account.deploy()
-  console.log('Deployed:', deployResult.deployed)
-  console.log('Transaction hash:', deployResult.txHash)
+  const result = await account.deploy()
+  console.log('Transaction hash:', result.txHash)
+  console.log('Fee:', result.fee)
 }
 
 // After deployment, all transactions can use paymaster or sponsor
@@ -161,18 +163,15 @@ For addresses where you don't have the seed phrase:
 ```javascript
 import { WalletAccountReadOnlyEvmMultisigSafe } from '@tetherto/wdk-wallet-evm-multisig-safe'
 
-// Create a read-only account
+// Create a read-only account (pass null as signerAddress)
 const readOnlyAccount = new WalletAccountReadOnlyEvmMultisigSafe(null, {
   chainId: 11155111n,
   provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
   bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
   safeApiKey: 'YOUR_SAFE_API_KEY',
-  paymasterOptions: {
-    paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-    paymasterAddress: '0x...',
-    paymasterTokenAddress: '0x...'
-  },
-  options: {
+  paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
+  paymasterTokenAddress: '0x...',
+  safeOptions: {
     safeAddress: '0xSafeAddress...'
   }
 })
@@ -205,6 +204,8 @@ const proposal = await account.propose({
   to: '0xRecipientAddress...',
   value: '1000000000000000000',
   data: '0x'
+}, {
+  amountToApprove: quote.fee * 150n / 100n // 50% buffer
 })
 
 console.log('Proposal ID:', proposal.proposalId)
@@ -236,11 +237,35 @@ if (isReady) {
 }
 ```
 
-## Paymaster Modes
+### Using sendTransaction (Auto-Execute)
 
-### ERC-20 Paymaster Mode (Default)
+`sendTransaction` and `transfer` accept an optional `autoExecute` flag. When `autoExecute: true` and the threshold is met after proposing, the transaction is executed automatically:
 
-Pay transaction fees using ERC-20 tokens (e.g., USDT):
+```javascript
+// With autoExecute: true, executes immediately if threshold is met
+const result = await account.sendTransaction({
+  to: '0x...',
+  value: '1000000000000000000', // 1 ETH
+  data: '0x'
+}, { autoExecute: true })
+
+console.log('Hash:', result.hash)
+console.log('Fee:', result.fee)
+console.log('Confirmations:', result.confirmations, '/', result.threshold)
+console.log('Executed:', result.executed)
+
+if (!result.executed) {
+  // Need more signatures
+  await bob.approve(result.proposalId)
+  const execResult = await alice.execute(result.proposalId)
+}
+```
+
+## Gas Payment Modes
+
+### ERC-20 Paymaster Mode
+
+Pay transaction fees using ERC-20 tokens (e.g., USDT). The Safe must hold sufficient tokens.
 
 ```javascript
 const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
@@ -248,19 +273,20 @@ const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
   provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
   bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
   safeApiKey: 'YOUR_SAFE_API_KEY',
-  paymasterOptions: {
-    paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-    paymasterAddress: '0x...',
-    paymasterTokenAddress: '0x...' // USDT or other supported token
-  },
-  options: {
+  paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
+  paymasterAddress: '0x...',
+  paymasterTokenAddress: '0x...', // USDT or other supported token
+  safeOptions: {
     owners: ['0xAlice...', '0xBob...'],
     threshold: 2
   }
 })
 
-// Propose transaction (paymaster handles token payment automatically)
-const proposal = await account.propose(tx)
+// Propose with token approval for gas
+const quote = await account.quoteSendTransaction(tx)
+const proposal = await account.propose(tx, {
+  amountToApprove: quote.fee * 150n / 100n
+})
 ```
 
 ### Sponsored (Gasless) Mode
@@ -273,24 +299,43 @@ const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
   provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
   bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
   safeApiKey: 'YOUR_SAFE_API_KEY',
-  paymasterOptions: {
-    paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-    isSponsored: true,
-    sponsorshipPolicyId: 'sp_my_policy' // Optional
-  },
-  options: {
+  paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
+  isSponsored: true,
+  sponsorshipPolicyId: 'sp_my_policy', // Optional
+  safeOptions: {
     owners: ['0xAlice...', '0xBob...'],
     threshold: 2
   }
 })
 
-// Sponsor pays gas
+// No amountToApprove needed - sponsor pays gas!
+const proposal = await account.propose(tx)
+```
+
+### Native Coins Mode
+
+Pay gas fees using native coins (e.g., ETH) directly from the Safe. No paymaster required.
+
+```javascript
+const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
+  chainId: 11155111n,
+  provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
+  bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
+  safeApiKey: 'YOUR_SAFE_API_KEY',
+  useNativeCoins: true,
+  safeOptions: {
+    owners: ['0xAlice...', '0xBob...'],
+    threshold: 2
+  }
+})
+
+// Gas is paid with native ETH from the Safe
 const proposal = await account.propose(tx)
 ```
 
 ### Per-Transaction Override
 
-Override paymaster mode for individual transactions:
+Override the gas payment mode for individual transactions, regardless of the account's default configuration:
 
 ```javascript
 // Default config uses ERC-20 paymaster
@@ -314,15 +359,38 @@ const result2 = await account.sendTransaction({
   isSponsored: false,
   paymasterTokenAddress: '0xDifferentToken...' // Use different token
 })
+
+// Override to native coins mode
+const result3 = await account.sendTransaction({
+  to: '0x...',
+  value: '0',
+  data: '0x'
+}, {
+  useNativeCoins: true // Pay gas with native ETH
+})
 ```
+
+**Override Options:**
+
+| Option | Description |
+|--------|-------------|
+| `isSponsored` | Override to sponsored mode (`true`) or ERC-20 mode (`false`) |
+| `useNativeCoins` | Override to native coins mode (`true`) |
+| `sponsorshipPolicyId` | Override sponsorship policy ID (for sponsored mode) |
+| `paymasterTokenAddress` | Override token address for gas payment (for ERC-20 mode) |
+| `amountToApprove` | Token amount to approve for paymaster (for ERC-20 mode) |
+| `autoExecute` | Auto-execute if threshold is met after proposing |
 
 ## Owner Management
 
 ### Add an Owner
 
 ```javascript
-// Propose adding a new owner
-const proposal = await account.addOwner('0xNewOwnerAddress...')
+// Propose adding a new owner (optionally set new threshold)
+const proposal = await account.addOwner('0xNewOwnerAddress...', {
+  threshold: 2, // optional, defaults to current threshold
+  amountToApprove: fee * 200n / 100n
+})
 
 // Other owners approve
 await bobAccount.approve(proposal.proposalId)
@@ -334,8 +402,10 @@ await account.execute(proposal.proposalId)
 ### Remove an Owner
 
 ```javascript
-// Propose removing an owner
-const proposal = await account.removeOwner('0xOwnerToRemove...')
+// Propose removing an owner (optionally set new threshold)
+const proposal = await account.removeOwner('0xOwnerToRemove...', {
+  threshold: 1 // optional, defaults to current (auto-adjusted if needed)
+})
 
 // Other owners approve and execute
 await bobAccount.approve(proposal.proposalId)
@@ -437,17 +507,15 @@ After executing a transaction, you receive a UserOp hash. You can track status o
 - **JiffyScan**: `https://jiffyscan.xyz/userOpHash/{userOpHash}?network=sepolia`
 - **Blockscout**: `https://eth-sepolia.blockscout.com/op/{userOpHash}`
 
-To get the on-chain transaction hash programmatically, use the Safe4337Pack directly:
+To get the on-chain transaction receipt programmatically:
 
 ```javascript
 const result = await account.execute(proposalId)
 console.log('UserOp hash:', result.hash)
 
-// Get on-chain tx hash via safe4337Pack
-const safe4337Pack = await account._getSafe4337Pack()
-const receipt = await safe4337Pack.getUserOperationReceipt(result.hash)
-const txHash = receipt?.receipt?.transactionHash
-console.log('TX Hash:', txHash)
+// Get receipt (supports both regular tx hashes and UserOp hashes)
+const receipt = await account.getTransactionReceipt(result.hash)
+console.log('Receipt:', receipt)
 ```
 
 ## Memory Management
@@ -469,37 +537,35 @@ import WalletManagerEvmMultisigSafe from '@tetherto/wdk-wallet-evm-multisig-safe
 
 async function setupMultisigWallet() {
   const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
-  
+
   // Create multisig wallet manager
   const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
     chainId: 11155111n, // Sepolia testnet
     provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
     bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
     safeApiKey: 'YOUR_SAFE_API_KEY',
-    paymasterOptions: {
-      paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
-      paymasterAddress: '0x...',
-      paymasterTokenAddress: '0x...' // USDT or other supported token
-    },
-    options: {
+    paymasterUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
+    paymasterAddress: '0x...',
+    paymasterTokenAddress: '0x...', // USDT or other supported token
+    safeOptions: {
       owners: ['0xAliceEOA...', '0xBobEOA...'],
       threshold: 2
     },
     transferMaxFee: 100000 // Optional: Maximum fee in paymaster token units
   })
-  
+
   // Get first account
   const account = await wallet.getAccount(0)
   const address = await account.getAddress()
   console.log('Safe address:', address)
-  
+
   // Check balances
   const nativeBalance = await account.getBalance()
   console.log('Native balance:', nativeBalance, 'wei')
-  
+
   const paymasterBalance = await account.getPaymasterTokenBalance()
   console.log('Paymaster token balance:', paymasterBalance, 'units')
-  
+
   return { wallet, account, address, paymasterBalance }
 }
 ```
@@ -515,25 +581,27 @@ async function multisigTransactionFlow() {
     data: '0x'
   })
   console.log('Estimated fee:', quote.fee)
-  
+
   // Alice proposes a transaction
   const proposal = await aliceAccount.propose({
     to: '0xRecipient...',
     value: '1000000000000000000',
     data: '0x'
+  }, {
+    amountToApprove: quote.fee * 150n / 100n // 50% buffer
   })
-  
+
   console.log('Proposal created:', proposal.proposalId)
   console.log('Confirmations:', proposal.confirmations, '/', proposal.threshold)
-  
+
   // Bob approves
   const approval = await bobAccount.approve(proposal.proposalId)
   console.log('Bob approved')
   console.log('Confirmations:', approval.confirmations, '/', approval.threshold)
-  
+
   // Check if ready to execute
   const isReady = await aliceAccount.isReadyToExecute(proposal.proposalId)
-  
+
   if (isReady) {
     // Execute the transaction
     const result = await aliceAccount.execute(proposal.proposalId)
@@ -547,18 +615,18 @@ async function multisigTransactionFlow() {
 ```javascript
 async function messageSigningFlow() {
   const message = 'Hello from Safe!'
-  
+
   // Alice proposes the message
   const result = await aliceAccount.proposeMessage(message)
   console.log('Alice signed:', result.signature.slice(0, 20) + '...')
   console.log('Message hash:', result.messageHash)
   console.log('Confirmations:', result.confirmations, '/', result.threshold)
-  
+
   // Bob approves the message
   const approval = await bobAccount.approveMessage(result.messageHash)
   console.log('Bob signed:', approval.signature.slice(0, 20) + '...')
   console.log('Confirmations:', approval.confirmations, '/', approval.threshold)
-  
+
   // Verify combined signature
   if (approval.combinedSignature) {
     const isValid = await aliceAccount.verify(

@@ -25,18 +25,20 @@ Multisig (multi-signature) wallets require multiple parties to approve transacti
 
 All multisig modules share these core features:
 
+* **WDK Protocol Compatible**: Implements `IWalletAccount`, works seamlessly with WDK protocols (swap, bridge, lending)
 * **Multi-Owner Management**: Add, remove, and swap owners
 * **Threshold Configuration**: Set required approval count
 * **Propose/Approve/Execute**: Standard multisig workflow
-* **Message Signing**: Sign and verify messages with multisig approval (EIP-1271)
+* **Message Signing**: Sign and verify messages with multisig approval
 
-### Account Abstraction Features
+### Advanced Features
 
-Modules with ERC-4337 support include:
+Some modules may support additional capabilities depending on the blockchain:
 
-* **Gasless Transactions**: Pay fees in ERC-20 tokens (e.g., USDT)
-* **Sponsored Mode**: Completely gas-free transactions
-* **Bundled Operations**: Multiple approvals in single transaction
+* **Flexible Gas Payment**: Pay fees in stablecoins, native coins, or via sponsorship
+* **Per-Transaction Override**: Switch between gas payment modes per transaction
+* **Batch Transactions**: Multiple operations in a single proposal
+* **Deterministic Addresses**: Predictable wallet addresses from owner configuration
 
 ## Getting Started
 
