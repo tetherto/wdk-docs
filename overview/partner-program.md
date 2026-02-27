@@ -39,16 +39,16 @@ Integrate WDK with priority support and dedicated engineering.
 
 Project Partners are companies and teams building end-user products powered by WDK. You're a good fit for this track if you are:
 
-- A fintech or neobank building a wallet, payments app, or asset management platform and looking to leverage WDK as your underlying wallet infrastructure.
-- An exchange or trading platform adding self-custodial wallet features for your users.
-- A messaging or social platform integrating peer-to-peer payments or tipping functionality.
-- A remittance or cross-border payments provider looking to use stablecoins and multi-chain support to serve your customers.
-- An enterprise or institutional player that needs WDK integrated into internal treasury, compliance, or operations tooling.
-- Any team that plans to ship a product to end users where WDK handles key management, transaction signing, or blockchain interactions under the hood.
+- A **fintech or neobank** building a wallet, payments app, or asset management platform and looking to leverage WDK as your underlying wallet infrastructure.
+- An **exchange or trading platform** adding self-custodial wallet features for your users.
+- A **messaging or social platform** integrating peer-to-peer payments or tipping functionality.
+- A **remittance or cross-border payments provider** looking to use stablecoins and multi-chain support to serve your customers.
+- An **enterprise or institutional player** that needs WDK integrated into internal treasury, compliance, or operations tooling.
+- Any team that plans to **ship a product to end users** where WDK handles key management, transaction signing, or blockchain interactions under the hood.
 
 As a Project Partner, you get hands-on integration support from the team that builds WDK. We'll help you navigate architecture decisions, troubleshoot implementation challenges, and make sure your product launches on solid foundations.
 
-<a class="button primary" href="https://forms.monday.com/forms/6d484c4b34949e3a238988c47bf0a1b6?r=euc1">Become a Project Partner</a>
+[***Become a Project Partner***](https://forms.monday.com/forms/6d484c4b34949e3a238988c47bf0a1b6?r=euc1)
 
 ***
 
@@ -75,7 +75,7 @@ Technology Partners are protocol teams, service providers, and developer organiz
 
 As a Technology Partner, you'll work closely with our SDK team to build, test, and publish modules that reach every WDK-powered wallet. You'll get early access to unreleased APIs, architecture guidance, co-marketing exposure through our documentation and community channels, and the opportunity to shape how your protocol integrates across the ecosystem.
 
-<a class="button primary" href="https://forms.monday.com/forms/f6c509ea32fabfa63f719ac8eed9f934?r=euc1">Become a Technology Partner</a>
+[***Become a Technology Partner***](https://forms.monday.com/forms/f6c509ea32fabfa63f719ac8eed9f934?r=euc1)
 
 ***
 
@@ -92,16 +92,14 @@ Agencies and teams building wallet solutions with WDK for their clients.
 
 Consulting & Implementation Partners are agencies, system integrators, and development studios that deliver WDK-powered solutions on behalf of their clients. You're a good fit for this track if you are:
 
-- A system integrator helping enterprise clients adopt blockchain and digital asset infrastructure.
-- A software development agency building custom wallet or payment applications for fintech clients.
-- A blockchain consultancy advising companies on self-custodial wallet strategy and architecture.
-- A digital transformation firm integrating stablecoin payments into existing client platforms.
-- A managed services provider offering ongoing support and maintenance for WDK-based deployments.
+- A **system integrator** helping enterprise clients adopt blockchain and digital asset infrastructure.
+- A **software development agency** building custom wallet or payment applications for fintech clients.
+- A **blockchain consultancy** advising companies on self-custodial wallet strategy and architecture.
+- A **digital transformation firm** integrating stablecoin payments into existing client platforms.
+- A **managed services provider** offering ongoing support and maintenance for WDK-based deployments.
 
 As a Consulting & Implementation Partner, you'll gain access to Tether's referral network, dedicated technical support for your client engagements, and revenue sharing opportunities. We'll equip your team with the training, documentation, and direct engineering access needed to deliver successful WDK implementations at scale.
 
-{% hint style="info" %}
-**Alpha Program** - This partnership track is currently in alpha. We're onboarding a limited number of partners as we shape the program and cannot guarantee acceptance, specific benefits, or program terms at this stage. Apply to express your interest and help shape the program as it evolves.
-{% endhint %}
+***Alpha Program** - This partnership track is currently in alpha. We're onboarding a limited number of partners as we shape the program and cannot guarantee acceptance, specific benefits, or program terms at this stage. Apply to express your interest and help shape the program as it evolves.*
 
-<a class="button primary" href="https://forms.monday.com/forms/d4603bc6e37b0c0a9c591764bcfb9380?r=euc1">Become a Consulting & Implementation Partner</a>
+[***Become a Consulting & Implementation Partner***](https://forms.monday.com/forms/d4603bc6e37b0c0a9c591764bcfb9380?r=euc1)
