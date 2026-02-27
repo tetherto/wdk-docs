@@ -1,5 +1,5 @@
 ---
-title: Partner Program
+title: Partner Programs
 description: Build with WDK alongside Tether through our partnership tracks
 icon: star
 layout:
