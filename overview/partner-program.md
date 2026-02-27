@@ -75,7 +75,7 @@ Technology Partners are protocol teams, service providers, and developer organiz
 
 As a Technology Partner, you'll work closely with our SDK team to build, test, and publish modules that reach every WDK-powered wallet. You'll get early access to unreleased APIs, architecture guidance, co-marketing exposure through our documentation and community channels, and the opportunity to shape how your protocol integrates across the ecosystem.
 
-<a class="button primary" href="https://wkf.ms/4hd40JK">Become a Technology Partner</a>
+<a class="button primary" href="https://forms.monday.com/forms/f6c509ea32fabfa63f719ac8eed9f934?r=euc1">Become a Technology Partner</a>
 
 ***
 
@@ -104,4 +104,4 @@ As a Consulting & Implementation Partner, you'll gain access to Tether's referra
 **Alpha Program** - This partnership track is currently in alpha. We're onboarding a limited number of partners as we shape the program and cannot guarantee acceptance, specific benefits, or program terms at this stage. Apply to express your interest and help shape the program as it evolves.
 {% endhint %}
 
-<a class="button primary" href="https://wkf.ms/4hd40JK">Become a Consulting & Implementation Partner</a>
+<a class="button primary" href="https://forms.monday.com/forms/d4603bc6e37b0c0a9c591764bcfb9380?r=euc1">Become a Consulting & Implementation Partner</a>
