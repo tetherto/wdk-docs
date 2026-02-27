@@ -65,13 +65,13 @@ Develop modules and extensions for the WDK ecosystem.
 
 Technology Partners are protocol teams, service providers, and developer organizations building modules, plugins, or integrations that extend what WDK can do. You're a good fit for this track if you are:
 
-- A swap or DEX protocol (like StonFi, Velora) looking to provide liquidity and trading capabilities to WDK-powered wallets.
-- A bridge protocol enabling cross-chain asset transfers that WDK wallets can access natively.
-- An on/off-ramp provider (like MoonPay) connecting fiat currencies to the WDK ecosystem.
-- A lending or DeFi protocol (like Aave) looking to make your services available directly within WDK wallets.
-- A hardware wallet or signing solution provider (like Ledger) building signer integrations for WDK.
-- A blockchain or L2 network that wants first-class WDK wallet support for your chain.
-- An open-source developer or team contributing new wallet modules, protocol integrations, or developer tooling to the WDK ecosystem.
+- A **swap or DEX protocol** (like StonFi, Velora) looking to provide liquidity and trading capabilities to WDK-powered wallets.
+- A **bridge protocol** enabling cross-chain asset transfers that WDK wallets can access natively.
+- An **on/off-ramp provider** (like MoonPay) connecting fiat currencies to the WDK ecosystem.
+- A **lending or DeFi protocol** (like Aave) looking to make your services available directly within WDK wallets.
+- A **hardware wallet or signing solution provider** (like Ledger) building signer integrations for WDK.
+- A **blockchain or L2 network** that wants first-class WDK wallet support for your chain.
+- An **open-source developer or team** contributing new wallet modules, protocol integrations, or developer tooling to the WDK ecosystem.
 
 As a Technology Partner, you'll work closely with our SDK team to build, test, and publish modules that reach every WDK-powered wallet. You'll get early access to unreleased APIs, architecture guidance, co-marketing exposure through our documentation and community channels, and the opportunity to shape how your protocol integrates across the ecosystem.
 
