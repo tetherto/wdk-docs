@@ -5,7 +5,7 @@
 * [Welcome](README.md)
 * [About WDK](overview/about.md)
 * [Our Vision](overview/vision.md)
-* [Partner Programs](overview/partner-program.md)
+* [Partner with WDK](overview/partner-program.md)
 * [Get Support](overview/support.md)
 * [Changelog](overview/changelog.md)
 * [Showcase](overview/showcase.md)
