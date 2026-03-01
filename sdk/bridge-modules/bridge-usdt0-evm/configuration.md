@@ -92,8 +92,8 @@ try {
   const result = await bridgeProtocol.bridge({
     targetChain: 'arbitrum',
     recipient: '0x...', // Recipient address
-    token: '0x...', // USD₮ contract address
-    amount: 1000000000000000000n
+    token: '0x...', // USDT contract address
+    amount: 1000000n
   })
 } catch (error) {
   if (error.message.includes('Exceeded maximum fee')) {
@@ -137,10 +137,10 @@ When using ERC-4337 accounts, you can override configuration options during brid
 const result = await bridgeProtocol.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...', // Recipient address
-  token: '0x...', // USD₮ contract address
-  amount: 1000000000000000000n
+  token: '0x...', // USDT contract address
+  amount: 1000000n
 }, {
-  paymasterToken: '0x...', // Paymaster token for gasless transactions
+  paymasterToken: { address: '0x...' }, // Paymaster token for gasless transactions
   bridgeMaxFee: 1000000000000000n // Override maximum bridge fee
 })
 ```
@@ -149,8 +149,8 @@ const result = await bridgeProtocol.bridge({
 
 The `paymasterToken` option specifies which token to use for paying gas fees in ERC-4337 accounts.
 
-**Type:** `string` (optional)  
-**Format:** Token contract address
+**Type:** `{ address: string }` (optional)  
+**Format:** Object with token contract address
 
 **Example:**
 
@@ -158,16 +158,18 @@ The `paymasterToken` option specifies which token to use for paying gas fees in 
 const result = await bridgeProtocol.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...', // Recipient address
-  token: '0x...', // USD₮ contract address
-  amount: 1000000000000000000n
+  token: '0x...', // USDT contract address
+  amount: 1000000n
 }, {
-  paymasterToken: '0x...' // Paymaster token address
+  paymasterToken: {
+    address: '0x...' // Paymaster token address
+  }
 })
 ```
 
 ## Network Support
 
-The bridge protocol works with EVM-compatible networks. Change the provider URL in the wallet account configuration:
+The bridge protocol uses EVM wallet providers as source chains and supports both EVM and non-EVM destinations. Change the provider URL in the wallet account configuration:
 
 ```javascript
 // Ethereum Mainnet
@@ -194,8 +196,10 @@ When calling the bridge method, you need to provide bridge options:
 const bridgeOptions = {
   targetChain: 'arbitrum', // Destination chain name
   recipient: '0x...', // Recipient address
-  token: '0x...', // USD₮ contract address
-  amount: 1000000000000000000n // Amount to bridge in base units
+  token: '0x...', // USDT contract address
+  amount: 1000000n, // Amount to bridge in base units
+  oftContractAddress: '0x...', // Optional custom OFT contract address
+  dstEid: 30110 // Optional LayerZero destination endpoint ID override
 }
 
 const result = await bridgeProtocol.bridge(bridgeOptions)
@@ -206,7 +210,7 @@ const result = await bridgeProtocol.bridge(bridgeOptions)
 The `targetChain` option specifies which blockchain to bridge tokens to.
 
 **Type:** `string`  
-**Supported values:** `'ethereum'`, `'arbitrum'`, `'polygon'`, `'berachain'`, `'ink'`, `'ton'`, `'tron'`
+**Supported values:** `'ethereum'`, `'arbitrum'`, `'optimism'`, `'polygon'`, `'berachain'`, `'ink'`, `'plasma'`, `'conflux'`, `'corn'`, `'avalanche'`, `'celo'`, `'flare'`, `'hyperevm'`, `'mantle'`, `'megaeth'`, `'monad'`, `'morph'`, `'rootstock'`, `'sei'`, `'stable'`, `'unichain'`, `'xlayer'`, `'solana'`, `'ton'`, `'tron'`
 
 ### Recipient
 
@@ -229,6 +233,19 @@ The `amount` option specifies how many tokens to bridge.
 **Type:** `number | bigint`  
 **Unit:** Base units of the token (e.g., for USD₮: 1 USD₮ = 1000000n)
 
+### OFT Contract Address
+
+The optional `oftContractAddress` option lets you override auto-discovery and force a specific OFT contract.
+
+**Type:** `string` (optional)  
+**Format:** Valid EVM contract address on the source chain
+
+### Destination EID Override
+
+The optional `dstEid` option lets you override the default LayerZero destination endpoint ID for the selected target chain.
+
+**Type:** `number` (optional)
+
 ## Error Handling
 
 The bridge protocol will throw errors for invalid configurations:
@@ -238,8 +255,8 @@ try {
   const result = await bridgeProtocol.bridge({
     targetChain: 'invalid-chain',
     recipient: '0x...', // Recipient address
-    token: '0x...', // USD₮ contract address
-    amount: 1000000000000000000n
+    token: '0x...', // USDT contract address
+    amount: 1000000n
   })
 } catch (error) {
   if (error.message.includes('not supported')) {
@@ -309,9 +326,6 @@ try {
 ### Need Help?
 
 {% include "../../../.gitbook/includes/support-cards.md" %}
-
-
-
 
 
 

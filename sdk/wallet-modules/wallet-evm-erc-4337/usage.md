@@ -126,6 +126,13 @@ const tokenContract = '0xdAC17F958D2ee523a2206206994597C13D831ec7'; // USDT cont
 const tokenBalance = await account.getTokenBalance(tokenContract);
 console.log('USDT balance:', tokenBalance);
 
+// Get balances for multiple ERC20 tokens
+const tokenBalances = await account.getTokenBalances([
+  '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
+  '0x68749665FF8D2d112Fa859AA293F07A622782F38'  // XAUT
+])
+console.log('Multi-token balances:', tokenBalances)
+
 // Get paymaster token balance (for paying fees)
 const paymasterBalance = await account.getPaymasterTokenBalance()
 console.log('Paymaster token balance:', paymasterBalance, 'units')
@@ -163,6 +170,13 @@ console.log('Native balance:', balance, 'wei')
 // Check ERC20 token balance
 const tokenBalance = await readOnlyAccount.getTokenBalance('0xdAC17F958D2ee523a2206206994597C13D831ec7')
 console.log('USDT balance:', tokenBalance)
+
+// Check balances for multiple ERC20 tokens
+const tokenBalances = await readOnlyAccount.getTokenBalances([
+  '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
+  '0x68749665FF8D2d112Fa859AA293F07A622782F38'  // XAUT
+])
+console.log('Multi-token balances:', tokenBalances)
 
 // Check paymaster token balance (uses the configured paymaster token)
 const paymasterBalance = await readOnlyAccount.getPaymasterTokenBalance()
@@ -248,6 +262,40 @@ try {
     console.error('Insufficient paymaster token balance')
   }
 }
+```
+
+### Typed Data Signing (EIP-712)
+
+```javascript
+const typedData = {
+  domain: {
+    name: 'MyDApp',
+    version: '1',
+    chainId: 1,
+    verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
+  },
+  types: {
+    Mail: [
+      { name: 'from', type: 'address' },
+      { name: 'to', type: 'address' },
+      { name: 'contents', type: 'string' }
+    ]
+  },
+  message: {
+    from: '0xAlice...',
+    to: '0xBob...',
+    contents: 'Hello Bob!'
+  }
+}
+
+// Sign typed data with full-access account
+const typedDataSignature = await account.signTypedData(typedData)
+console.log('Typed data signature:', typedDataSignature)
+
+// Verify typed data signature with read-only account
+const readOnlyAccount = await account.toReadOnlyAccount()
+const isTypedDataValid = await readOnlyAccount.verifyTypedData(typedData, typedDataSignature)
+console.log('Typed data signature valid:', isTypedDataValid)
 ```
 
 ### Memory Management
