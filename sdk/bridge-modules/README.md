@@ -26,7 +26,7 @@ Cross-chain bridge functionality for token transfers between blockchains:
 
 | Module | Route | Status | Documentation |
 |--------|-------|--------|---------------|
-| [`@tetherto/wdk-protocol-bridge-usdt0-evm`](https://github.com/tetherto/wdk-protocol-bridge-usdt0-evm) | EVM ↔ EVM | ✅ Ready | [Documentation](./bridge-usdt0-evm/) |
+| [`@tetherto/wdk-protocol-bridge-usdt0-evm`](https://github.com/tetherto/wdk-protocol-bridge-usdt0-evm) | EVM → EVM + Non-EVM | ✅ Ready | [Documentation](./bridge-usdt0-evm/) |
 
 ## Next steps
 

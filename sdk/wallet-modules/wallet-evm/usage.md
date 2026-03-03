@@ -100,9 +100,16 @@ const balance = await account.getBalance()
 console.log('Native balance:', balance, 'wei')
 
 // Get ERC-20 token balance
-const tokenAddress = '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USD₮
+const tokenAddress = '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USDT
 const tokenBalance = await account.getTokenBalance(tokenAddress)
 console.log('Token balance:', tokenBalance)
+
+// Get balances for multiple ERC-20 tokens
+const tokenBalances = await account.getTokenBalances([
+  '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
+  '0x68749665FF8D2d112Fa859AA293F07A622782F38'  // XAUT
+])
+console.log('Multi-token balances:', tokenBalances)
 ```
 #### Read-Only Account
 ```javascript
@@ -118,6 +125,13 @@ console.log('Native balance:', balance, 'wei')
 // Check ERC20 token balance
 const tokenBalance = await readOnlyAccount.getTokenBalance('0x...') // ERC20 contract address
 console.log('Token balance:', tokenBalance)
+
+// Check balances for multiple ERC20 tokens
+const tokenBalances = await readOnlyAccount.getTokenBalances([
+  '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
+  '0x68749665FF8D2d112Fa859AA293F07A622782F38'  // XAUT
+])
+console.log('Multi-token balances:', tokenBalances)
 ```
 
 ### Sending Transactions
@@ -159,7 +173,7 @@ console.log('Estimated fee:', quote.fee, 'wei')
 ```javascript
 // Transfer ERC-20 tokens
 const transferResult = await account.transfer({
-  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USD₮
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
   recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
   amount: 1000000000000000000n // 1 token in base units
 })
@@ -168,7 +182,7 @@ console.log('Transfer fee:', transferResult.fee, 'wei')
 
 // Quote token transfer
 const transferQuote = await account.quoteTransfer({
-  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USD₮
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
   recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
   amount: 1000000000000000000n
 })
@@ -244,9 +258,16 @@ async function setupWallet() {
   const balance = await account.getBalance()
   console.log('Balance:', balance, 'wei')
 
-  // Check ERC20 balance (e.g., USD₮)
+  // Check ERC20 balance (e.g., USDT)
   const tokenBalance = await account.getTokenBalance('0xdAC17F958D2ee523a2206206994597C13D831ec7')
   console.log('USDT balance:', tokenBalance)
+
+  // Check multiple ERC20 balances
+  const tokenBalances = await account.getTokenBalances([
+    '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
+    '0x68749665FF8D2d112Fa859AA293F07A622782F38'  // XAUT
+  ])
+  console.log('Multi-token balances:', tokenBalances)
   
   // Create read-only version
   const readOnlyAccount = await account.toReadOnlyAccount()

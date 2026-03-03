@@ -24,6 +24,28 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### February 26, 2026
+
+**Changes**
+- **wdk-protocol-bridge-usdt0-evm** ([v1.0.0-beta.3](https://github.com/tetherto/wdk-protocol-bridge-usdt0-evm/releases/tag/v1.0.0-beta.3)): Added per-call `BridgeOptions` overrides (`oftContractAddress`, `dstEid`) and expanded routing from EVM source chains to EVM plus non-EVM destinations (Solana, TON, TRON).
+
+---
+
+### February 25, 2026
+
+**Changes**
+- **wallet-evm** ([v1.0.0-beta.8](https://github.com/tetherto/wdk-wallet-evm/releases/tag/v1.0.0-beta.8)): Added [`getTokenBalances(tokenAddresses)`](../sdk/wallet-modules/wallet-evm/api-reference.md#gettokenbalancestokenaddresses) to [`WalletAccountReadOnlyEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountreadonlyevm), also available on [`WalletAccountEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountevm) through inheritance.
+- **wallet-evm-erc-4337** ([v1.0.0-beta.5](https://github.com/tetherto/wdk-wallet-evm-erc-4337/releases/tag/v1.0.0-beta.5)): Added EIP-712 typed data methods [`signTypedData(typedData)`](../sdk/wallet-modules/wallet-evm-erc-4337/api-reference.md#signtypeddatatypeddata) and [`verifyTypedData(typedData, signature)`](../sdk/wallet-modules/wallet-evm-erc-4337/api-reference.md#verifytypeddatatypeddata-signature), plus multicall token balance method [`getTokenBalances(tokenAddresses)`](../sdk/wallet-modules/wallet-evm-erc-4337/api-reference.md#gettokenbalancestokenaddresses).
+
+---
+
+### February 24, 2026
+
+**Changes**
+- **wallet-spark** ([v1.0.0-beta.11](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.11)): Added Pear runtime entrypoint support (`pear.js`), removed static import causing runtime issues, and bumped spark bare SDK (`@buildonspark/bare`) to `0.0.47`.
+
+---
+
 ### February 20, 2026
 
 **What's New**
