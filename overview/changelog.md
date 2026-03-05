@@ -24,6 +24,13 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### March 5, 2026
+
+**What's New**
+- **create-wdk-module**: Added documentation for the [`create-wdk-module`](../tools/create-wdk-module.md) CLI scaffolding tool. Updated [Community Modules](../sdk/community-modules/) and [SDK Get Started](../sdk/get-started.md) pages with references to the new tool.
+
+---
+
 ### February 20, 2026
 
 **What's New**

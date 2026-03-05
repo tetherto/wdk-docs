@@ -122,6 +122,7 @@
 * [Price Rates](tools/price-rates/README.md)
   * [Configuration](tools/price-rates/configuration.md)
   * [API Reference](tools/price-rates/api-reference.md)
+* [Create WDK Module](tools/create-wdk-module.md)
 
 ## Resources and Guides
 
