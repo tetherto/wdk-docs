@@ -40,11 +40,15 @@ A simple and secure package to manage ERC-4337 compliant wallets for EVM-compati
 
 ## Supported Networks
 
-This package works with any EVM-compatible blockchain, including:
+ERC-4337 support depends on the Safe4337Module contract being deployed on the target chain, along with a compatible bundler and paymaster service. The following networks are verified:
 
-- **Ethereum Mainnet**
-- **Ethereum Testnets** (Sepolia)
-- **Other EVM Chains** (Polygon, Arbitrum, Avalanche C-chain, Plasma etc.)
+- **Ethereum Mainnet** (Chain ID: 1)
+- **Polygon** (Chain ID: 137)
+- **Arbitrum One** (Chain ID: 42161)
+- **Plasma** (Chain ID: 9745)
+- **Ethereum Sepolia Testnet** (Chain ID: 11155111)
+
+See [Configuration](./configuration.md#verified-supported-networks) for the full compatibility matrix and ready-to-use config examples.
 
 ## Next Steps
 
