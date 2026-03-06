@@ -1,13 +1,13 @@
 # Usage
 
-Installation, quick start, and usage examples for @tetherto/wdk-wallet-evm-multisig-safe
+Installation, quick start, and usage examples for @tetherto/wdk-protocol-multisig-safe
 
 ## Installation
 
-To install the `@tetherto/wdk-wallet-evm-multisig-safe` package, follow these instructions:
+To install the `@tetherto/wdk-protocol-multisig-safe` package, follow these instructions:
 
 ```bash
-npm install @tetherto/wdk-wallet-evm-multisig-safe
+npm install @tetherto/wdk-protocol-multisig-safe
 ```
 
 ## Supported Paymaster Tokens
@@ -17,25 +17,25 @@ For a complete list of supported ERC-20 tokens that can be used to pay gas fees 
 
 ## Quick Start
 
-### Importing from `@tetherto/wdk-wallet-evm-multisig-safe`
+### Importing from `@tetherto/wdk-protocol-multisig-safe`
 
-1. WalletManagerEvmMultisigSafe: Main class for managing multisig Safe wallets
-2. WalletAccountEvmMultisigSafe: Use this for full access accounts
-3. WalletAccountReadOnlyEvmMultisigSafe: Use this for read-only accounts
+1. `WalletManagerMultisigEvmSafe4337`: Main class for managing multisig Safe wallets (default export)
+2. `WalletAccountMultisigEvmSafe4337`: Use this for full access accounts
+3. `WalletAccountReadOnlyMultisigEvmSafe4337`: Use this for read-only accounts
 
 ### Creating a New Multisig Wallet
 
 ```javascript
-import WalletManagerEvmMultisigSafe, {
-  WalletAccountEvmMultisigSafe,
-  WalletAccountReadOnlyEvmMultisigSafe
-} from '@tetherto/wdk-wallet-evm-multisig-safe'
+import WalletManagerMultisigEvmSafe4337, {
+  WalletAccountMultisigEvmSafe4337,
+  WalletAccountReadOnlyMultisigEvmSafe4337
+} from '@tetherto/wdk-protocol-multisig-safe'
 
 // Use a BIP-39 seed phrase (replace with your own secure phrase)
 const seedPhrase = 'your twelve word seed phrase here' // Replace with actual seed generation
 
 // Create wallet manager with multisig Safe configuration
-const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
+const wallet = new WalletManagerMultisigEvmSafe4337(seedPhrase, {
   chainId: 11155111n, // Sepolia testnet
   provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
   bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
@@ -59,10 +59,10 @@ console.log('Safe address:', safeAddress)
 ### Importing an Existing Safe
 
 ```javascript
-import WalletManagerEvmMultisigSafe from '@tetherto/wdk-wallet-evm-multisig-safe'
+import WalletManagerMultisigEvmSafe4337 from '@tetherto/wdk-protocol-multisig-safe'
 
 // Import an existing Safe by address using ExistingSafeOptions
-const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
+const wallet = new WalletManagerMultisigEvmSafe4337(seedPhrase, {
   chainId: 11155111n,
   provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
   bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
@@ -114,7 +114,7 @@ if (!isDeployed) {
 ### Managing Multiple Accounts
 
 ```javascript
-import WalletManagerEvmMultisigSafe from '@tetherto/wdk-wallet-evm-multisig-safe'
+import WalletManagerMultisigEvmSafe4337 from '@tetherto/wdk-protocol-multisig-safe'
 
 // Get the first account (index 0)
 const account = await wallet.getAccount(0)
@@ -139,7 +139,7 @@ console.log('Custom account address:', customAddress)
 For accounts where you have the seed phrase and full access:
 
 ```javascript
-import WalletManagerEvmMultisigSafe from '@tetherto/wdk-wallet-evm-multisig-safe'
+import WalletManagerMultisigEvmSafe4337 from '@tetherto/wdk-protocol-multisig-safe'
 
 // Assume wallet and account are already created
 // Get native token balance (in wei)
@@ -161,10 +161,10 @@ console.log('Paymaster token balance:', paymasterBalance, 'units')
 For addresses where you don't have the seed phrase:
 
 ```javascript
-import { WalletAccountReadOnlyEvmMultisigSafe } from '@tetherto/wdk-wallet-evm-multisig-safe'
+import { WalletAccountReadOnlyMultisigEvmSafe4337 } from '@tetherto/wdk-protocol-multisig-safe'
 
 // Create a read-only account (pass null as signerAddress)
-const readOnlyAccount = new WalletAccountReadOnlyEvmMultisigSafe(null, {
+const readOnlyAccount = new WalletAccountReadOnlyMultisigEvmSafe4337(null, {
   chainId: 11155111n,
   provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
   bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
@@ -190,7 +190,7 @@ console.log('Token balance:', tokenBalance)
 ### Propose a Transaction
 
 ```javascript
-// Get fee estimate
+// Get fee estimate first (optional, sendTransaction quotes internally)
 const quote = await account.quoteSendTransaction({
   to: '0xRecipientAddress...',
   value: '1000000000000000000', // 1 ETH in wei
@@ -199,8 +199,8 @@ const quote = await account.quoteSendTransaction({
 
 console.log('Estimated fee:', quote.fee)
 
-// Propose the transaction
-const proposal = await account.propose({
+// Propose the transaction using sendTransaction
+const result = await account.sendTransaction({
   to: '0xRecipientAddress...',
   value: '1000000000000000000',
   data: '0x'
@@ -208,17 +208,18 @@ const proposal = await account.propose({
   amountToApprove: quote.fee * 150n / 100n // 50% buffer
 })
 
-console.log('Proposal ID:', proposal.proposalId)
-console.log('Confirmations:', proposal.confirmations, '/', proposal.threshold)
+console.log('Proposal ID:', result.proposalId)
+console.log('Fee:', result.fee)
+console.log('Confirmations:', result.confirmations, '/', result.threshold)
 ```
 
 ### Approve a Transaction
 
 ```javascript
 // Second signer approves the transaction
-const bobAccount = new WalletAccountEvmMultisigSafe(bobSeedPhrase, "0'/0/0", config)
+const bobAccount = new WalletAccountMultisigEvmSafe4337(bobSeedPhrase, "0'/0/0", config)
 
-const approval = await bobAccount.approve(proposal.proposalId)
+const approval = await bobAccount.approveTx(result.proposalId)
 console.log('Transaction approved by Bob')
 console.log('Confirmations:', approval.confirmations, '/', approval.threshold)
 ```
@@ -227,13 +228,13 @@ console.log('Confirmations:', approval.confirmations, '/', approval.threshold)
 
 ```javascript
 // Check if ready to execute
-const isReady = await account.isReadyToExecute(proposal.proposalId)
+const isReady = await account.isReadyToExecute(result.proposalId)
 console.log('Ready to execute:', isReady)
 
 // Execute when threshold is met
 if (isReady) {
-  const result = await account.execute(proposal.proposalId)
-  console.log('UserOp hash:', result.hash)
+  const execResult = await account.executeTx(result.proposalId)
+  console.log('UserOp hash:', execResult.hash)
 }
 ```
 
@@ -256,8 +257,8 @@ console.log('Executed:', result.executed)
 
 if (!result.executed) {
   // Need more signatures
-  await bob.approve(result.proposalId)
-  const execResult = await alice.execute(result.proposalId)
+  await bob.approveTx(result.proposalId)
+  const execResult = await alice.executeTx(result.proposalId)
 }
 ```
 
@@ -268,7 +269,7 @@ if (!result.executed) {
 Pay transaction fees using ERC-20 tokens (e.g., USDT). The Safe must hold sufficient tokens.
 
 ```javascript
-const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
+const wallet = new WalletManagerMultisigEvmSafe4337(seedPhrase, {
   chainId: 11155111n,
   provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
   bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
@@ -284,7 +285,7 @@ const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
 
 // Propose with token approval for gas
 const quote = await account.quoteSendTransaction(tx)
-const proposal = await account.propose(tx, {
+const result = await account.sendTransaction(tx, {
   amountToApprove: quote.fee * 150n / 100n
 })
 ```
@@ -294,7 +295,7 @@ const proposal = await account.propose(tx, {
 Use a sponsored paymaster for completely gasless transactions:
 
 ```javascript
-const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
+const wallet = new WalletManagerMultisigEvmSafe4337(seedPhrase, {
   chainId: 11155111n,
   provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
   bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
@@ -309,7 +310,7 @@ const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
 })
 
 // No amountToApprove needed - sponsor pays gas!
-const proposal = await account.propose(tx)
+const result = await account.sendTransaction(tx)
 ```
 
 ### Native Coins Mode
@@ -317,7 +318,7 @@ const proposal = await account.propose(tx)
 Pay gas fees using native coins (e.g., ETH) directly from the Safe. No paymaster required.
 
 ```javascript
-const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
+const wallet = new WalletManagerMultisigEvmSafe4337(seedPhrase, {
   chainId: 11155111n,
   provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
   bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
@@ -330,7 +331,7 @@ const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
 })
 
 // Gas is paid with native ETH from the Safe
-const proposal = await account.propose(tx)
+const result = await account.sendTransaction(tx)
 ```
 
 ### Per-Transaction Override
@@ -393,10 +394,10 @@ const proposal = await account.addOwner('0xNewOwnerAddress...', {
 })
 
 // Other owners approve
-await bobAccount.approve(proposal.proposalId)
+await bobAccount.approveTx(proposal.proposalId)
 
 // Execute when threshold is met
-await account.execute(proposal.proposalId)
+await account.executeTx(proposal.proposalId)
 ```
 
 ### Remove an Owner
@@ -408,8 +409,8 @@ const proposal = await account.removeOwner('0xOwnerToRemove...', {
 })
 
 // Other owners approve and execute
-await bobAccount.approve(proposal.proposalId)
-await account.execute(proposal.proposalId)
+await bobAccount.approveTx(proposal.proposalId)
+await account.executeTx(proposal.proposalId)
 ```
 
 ### Swap an Owner
@@ -419,8 +420,8 @@ await account.execute(proposal.proposalId)
 const proposal = await account.swapOwner('0xOldOwner...', '0xNewOwner...')
 
 // Other owners approve and execute
-await bobAccount.approve(proposal.proposalId)
-await account.execute(proposal.proposalId)
+await bobAccount.approveTx(proposal.proposalId)
+await account.executeTx(proposal.proposalId)
 ```
 
 ### Change Threshold
@@ -430,8 +431,8 @@ await account.execute(proposal.proposalId)
 const proposal = await account.changeThreshold(newThreshold)
 
 // Other owners approve and execute
-await bobAccount.approve(proposal.proposalId)
-await account.execute(proposal.proposalId)
+await bobAccount.approveTx(proposal.proposalId)
+await account.executeTx(proposal.proposalId)
 ```
 
 ### Batch Update Owners
@@ -444,8 +445,8 @@ const proposal = await account.updateOwners(
 )
 
 // Other owners approve and execute
-await bobAccount.approve(proposal.proposalId)
-await account.execute(proposal.proposalId)
+await bobAccount.approveTx(proposal.proposalId)
+await account.executeTx(proposal.proposalId)
 ```
 
 ## Message Signing
@@ -510,7 +511,7 @@ After executing a transaction, you receive a UserOp hash. You can track status o
 To get the on-chain transaction receipt programmatically:
 
 ```javascript
-const result = await account.execute(proposalId)
+const result = await account.executeTx(proposalId)
 console.log('UserOp hash:', result.hash)
 
 // Get receipt (supports both regular tx hashes and UserOp hashes)
@@ -533,13 +534,13 @@ wallet.dispose()
 ### Complete Wallet Setup
 
 ```javascript
-import WalletManagerEvmMultisigSafe from '@tetherto/wdk-wallet-evm-multisig-safe'
+import WalletManagerMultisigEvmSafe4337 from '@tetherto/wdk-protocol-multisig-safe'
 
 async function setupMultisigWallet() {
   const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
 
   // Create multisig wallet manager
-  const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, {
+  const wallet = new WalletManagerMultisigEvmSafe4337(seedPhrase, {
     chainId: 11155111n, // Sepolia testnet
     provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
     bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',
@@ -574,7 +575,7 @@ async function setupMultisigWallet() {
 
 ```javascript
 async function multisigTransactionFlow() {
-  // Get fee quote
+  // Get fee quote (optional, sendTransaction quotes internally)
   const quote = await aliceAccount.quoteSendTransaction({
     to: '0xRecipient...',
     value: '1000000000000000000', // 1 ETH
@@ -582,8 +583,8 @@ async function multisigTransactionFlow() {
   })
   console.log('Estimated fee:', quote.fee)
 
-  // Alice proposes a transaction
-  const proposal = await aliceAccount.propose({
+  // Alice proposes a transaction using sendTransaction
+  const proposal = await aliceAccount.sendTransaction({
     to: '0xRecipient...',
     value: '1000000000000000000',
     data: '0x'
@@ -592,10 +593,11 @@ async function multisigTransactionFlow() {
   })
 
   console.log('Proposal created:', proposal.proposalId)
+  console.log('Fee:', proposal.fee)
   console.log('Confirmations:', proposal.confirmations, '/', proposal.threshold)
 
   // Bob approves
-  const approval = await bobAccount.approve(proposal.proposalId)
+  const approval = await bobAccount.approveTx(proposal.proposalId)
   console.log('Bob approved')
   console.log('Confirmations:', approval.confirmations, '/', approval.threshold)
 
@@ -604,7 +606,7 @@ async function multisigTransactionFlow() {
 
   if (isReady) {
     // Execute the transaction
-    const result = await aliceAccount.execute(proposal.proposalId)
+    const result = await aliceAccount.executeTx(proposal.proposalId)
     console.log('Transaction executed:', result.hash)
   }
 }

@@ -1,23 +1,23 @@
 # API Reference
 
-Complete API documentation for @tetherto/wdk-wallet-evm-multisig-safe
+Complete API documentation for @tetherto/wdk-protocol-multisig-safe
 
 ## Classes
 
 | Class | Description |
 | --- | --- |
-| WalletManagerEvmMultisigSafe | Main class for managing multisig Safe wallets. Extends WalletManager. |
-| WalletAccountEvmMultisigSafe | Individual multisig Safe account with signing capabilities. |
-| WalletAccountReadOnlyEvmMultisigSafe | Read-only multisig Safe account for balance checks and queries. |
+| WalletManagerMultisigEvmSafe4337 | Main class for managing multisig Safe wallets. Extends WalletManager. |
+| WalletAccountMultisigEvmSafe4337 | Individual multisig Safe account with signing capabilities. |
+| WalletAccountReadOnlyMultisigEvmSafe4337 | Read-only multisig Safe account for balance checks and queries. |
 
-## WalletManagerEvmMultisigSafe
+## WalletManagerMultisigEvmSafe4337
 
 The main class for managing Safe Protocol multisig wallets with ERC-4337 account abstraction.
 
 ### Constructor
 
 ```javascript
-new WalletManagerEvmMultisigSafe(seed, config)
+new WalletManagerMultisigEvmSafe4337(seed, config)
 ```
 
 **Parameters:**
@@ -39,7 +39,7 @@ const account = await wallet.getAccount(index)
 
 * `index` (number, optional): Account index for BIP-44 derivation (default: 0)
 
-**Returns:** `Promise<WalletAccountEvmMultisigSafe>`
+**Returns:** `Promise<WalletAccountMultisigEvmSafe4337>`
 
 #### getAccountByPath
 
@@ -53,7 +53,7 @@ const account = await wallet.getAccountByPath(path)
 
 * `path` (string): BIP-44 derivation path (e.g., "0'/0/5")
 
-**Returns:** `Promise<WalletAccountEvmMultisigSafe>`
+**Returns:** `Promise<WalletAccountMultisigEvmSafe4337>`
 
 #### getFeeRates
 
@@ -73,14 +73,14 @@ Disposes the wallet manager and clears sensitive data from memory.
 wallet.dispose()
 ```
 
-## WalletAccountEvmMultisigSafe
+## WalletAccountMultisigEvmSafe4337
 
-Individual multisig Safe account with full signing capabilities. Extends `WalletAccountReadOnlyEvmMultisigSafe`.
+Individual multisig Safe account with full signing capabilities. Extends `WalletAccountReadOnlyMultisigEvmSafe4337`.
 
 ### Constructor
 
 ```javascript
-new WalletAccountEvmMultisigSafe(seed, path, config)
+new WalletAccountMultisigEvmSafe4337(seed, path, config)
 ```
 
 **Parameters:**
@@ -246,7 +246,7 @@ const result = await account.deploy()
 
 #### sendTransaction
 
-Proposes a transaction for multisig approval. Auto-executes if `autoExecute` is true and threshold is met after proposing.
+Proposes a transaction for multisig approval. This is the primary method for initiating multisig transactions (replaces the previous `propose` method). Auto-executes if `autoExecute` is true and threshold is met after proposing.
 
 ```javascript
 const result = await account.sendTransaction(tx, options?)
@@ -289,36 +289,17 @@ const result = await account.transfer(transferOptions, options?)
 
 **Returns:** `Promise<MultisigTransactionResult>`
 
-#### propose
-
-Proposes a new transaction for multisig approval. Creates a SafeOperation, signs it, and uploads to Safe Transaction Service.
-
-```javascript
-const proposal = await account.propose(transaction, config?)
-```
-
-**Parameters:**
-
-* `transaction` (EvmTransaction | EvmTransaction[]): Transaction(s) to propose (supports batching)
-* `config` (object, optional): Paymaster config overrides
-
-**Returns:** `Promise<MultisigResult>`
-
-* `proposalId` (string): Unique Safe operation hash
-* `confirmations` (number): Number of confirmations (1 after proposing)
-* `threshold` (number): Required confirmations to execute
-
-#### approve
+#### approveTx
 
 Approves (signs) an existing proposal.
 
 ```javascript
-const result = await account.approve(proposalId)
+const result = await account.approveTx(proposalId)
 ```
 
 **Parameters:**
 
-* `proposalId` (string): Safe operation hash from propose()
+* `proposalId` (string): Safe operation hash from sendTransaction()
 
 **Returns:** `Promise<MultisigResult>`
 
@@ -326,12 +307,12 @@ const result = await account.approve(proposalId)
 * `confirmations` (number): Updated number of confirmations
 * `threshold` (number): Required threshold
 
-#### reject
+#### rejectTx
 
 Rejects a proposal by creating a rejection transaction with the same nonce.
 
 ```javascript
-const result = await account.reject(proposalId)
+const result = await account.rejectTx(proposalId)
 ```
 
 **Parameters:**
@@ -340,17 +321,17 @@ const result = await account.reject(proposalId)
 
 **Returns:** `Promise<MultisigResult>` - The rejection proposal result
 
-#### execute
+#### executeTx
 
 Executes a fully signed Safe operation via the bundler.
 
 ```javascript
-const result = await account.execute(proposalId)
+const result = await account.executeTx(proposalId)
 ```
 
 **Parameters:**
 
-* `proposalId` (string): Safe operation hash from propose()
+* `proposalId` (string): Safe operation hash from sendTransaction()
 
 **Returns:** `Promise<MultisigExecuteResult>`
 
@@ -630,7 +611,7 @@ Converts to a read-only account.
 const readOnly = await account.toReadOnlyAccount()
 ```
 
-**Returns:** `Promise<WalletAccountReadOnlyEvmMultisigSafe>`
+**Returns:** `Promise<WalletAccountReadOnlyMultisigEvmSafe4337>`
 
 #### dispose
 
@@ -640,7 +621,7 @@ Disposes the account and clears sensitive data from memory.
 account.dispose()
 ```
 
-## WalletAccountReadOnlyEvmMultisigSafe
+## WalletAccountReadOnlyMultisigEvmSafe4337
 
 Read-only account for balance checks and queries without signing capabilities.
 
@@ -651,7 +632,7 @@ Read-only account for balance checks and queries without signing capabilities.
 Generates a deterministic salt nonce from owners and threshold. Produces the same nonce regardless of owner order.
 
 ```javascript
-const saltNonce = WalletAccountReadOnlyEvmMultisigSafe.generateDeterministicSaltNonce(owners, threshold)
+const saltNonce = WalletAccountReadOnlyMultisigEvmSafe4337.generateDeterministicSaltNonce(owners, threshold)
 ```
 
 **Parameters:**
@@ -664,7 +645,7 @@ const saltNonce = WalletAccountReadOnlyEvmMultisigSafe.generateDeterministicSalt
 ### Constructor
 
 ```javascript
-new WalletAccountReadOnlyEvmMultisigSafe(signerAddress, config)
+new WalletAccountReadOnlyMultisigEvmSafe4337(signerAddress, config)
 ```
 
 **Parameters:**
@@ -674,7 +655,7 @@ new WalletAccountReadOnlyEvmMultisigSafe(signerAddress, config)
 
 ### Methods
 
-All query methods from WalletAccountEvmMultisigSafe are available:
+All query methods from WalletAccountMultisigEvmSafe4337 are available:
 
 * `getAddress()`
 * `getSignerAddress()`
@@ -699,6 +680,24 @@ All query methods from WalletAccountEvmMultisigSafe are available:
 {% hint style="info" %}
 For transaction history, pending operations, and incoming transfers, use `SafeApiKit` directly. The read-only account exposes `_getApiKit()` for advanced queries.
 {% endhint %}
+
+## Constants
+
+### DEFAULT_SAFE_MODULES_VERSION
+
+The default Safe modules version.
+
+```javascript
+const DEFAULT_SAFE_MODULES_VERSION = '0.2.0'
+```
+
+### DEFAULT_SAFE_VERSION
+
+The default Safe contract version.
+
+```javascript
+const DEFAULT_SAFE_VERSION = '1.4.1'
+```
 
 ## Types
 
@@ -761,6 +760,12 @@ interface EvmMultisigSafeNativeCoinsConfig {
   useNativeCoins: true
   transferMaxFee?: number | bigint       // Maximum fee for transfers
 }
+```
+
+### EvmMultisigSafeReadOnlyConfig
+
+```typescript
+type EvmMultisigSafeReadOnlyConfig = Omit<EvmMultisigSafeConfig, 'transferMaxFee' | 'amountToApprove'>
 ```
 
 ### ExistingSafeOptions

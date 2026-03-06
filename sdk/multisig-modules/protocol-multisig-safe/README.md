@@ -1,6 +1,6 @@
-# wallet-evm-multisig-safe
+# protocol-multisig-safe
 
-Overview of the @tetherto/wdk-wallet-evm-multisig-safe module
+Overview of the @tetherto/wdk-protocol-multisig-safe module
 
 A simple and secure package to manage Safe Protocol multisig wallets with ERC-4337 account abstraction for EVM-compatible blockchains. This package provides a clean API for creating, managing, and interacting with multisig wallets using BIP-39 seed phrases and the Safe smart contract infrastructure.
 

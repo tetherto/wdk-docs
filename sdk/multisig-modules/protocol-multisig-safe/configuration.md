@@ -1,13 +1,13 @@
 # Configuration
 
-Configuration options and settings for @tetherto/wdk-wallet-evm-multisig-safe
+Configuration options and settings for @tetherto/wdk-protocol-multisig-safe
 
 ## Wallet Configuration
 
-The WalletManagerEvmMultisigSafe requires a complete configuration object with required parameters:
+The WalletManagerMultisigEvmSafe4337 requires a complete configuration object with required parameters:
 
 ```javascript
-import WalletManagerEvmMultisigSafe from '@tetherto/wdk-wallet-evm-multisig-safe'
+import WalletManagerMultisigEvmSafe4337 from '@tetherto/wdk-protocol-multisig-safe'
 
 const config = {
   // Required
@@ -38,7 +38,7 @@ const config = {
   safeModulesVersion: '0.2.0'           // Safe modules version (default: '0.2.0')
 }
 
-const wallet = new WalletManagerEvmMultisigSafe(seedPhrase, config)
+const wallet = new WalletManagerMultisigEvmSafe4337(seedPhrase, config)
 ```
 
 ## Supported Paymaster Tokens
@@ -48,23 +48,23 @@ For a complete list of supported ERC-20 tokens that can be used to pay gas fees 
 
 ## Account Configuration
 
-Both WalletAccountEvmMultisigSafe and WalletAccountReadOnlyEvmMultisigSafe use the same configuration structure:
+Both WalletAccountMultisigEvmSafe4337 and WalletAccountReadOnlyMultisigEvmSafe4337 use the same configuration structure:
 
 ```javascript
 import {
-  WalletAccountEvmMultisigSafe,
-  WalletAccountReadOnlyEvmMultisigSafe
-} from '@tetherto/wdk-wallet-evm-multisig-safe'
+  WalletAccountMultisigEvmSafe4337,
+  WalletAccountReadOnlyMultisigEvmSafe4337
+} from '@tetherto/wdk-protocol-multisig-safe'
 
 // Full access account
-const account = new WalletAccountEvmMultisigSafe(
+const account = new WalletAccountMultisigEvmSafe4337(
   seedPhrase,
   "0'/0/0", // BIP-44 derivation path
   config // Same config as wallet manager
 )
 
 // Read-only account (pass null as signerAddress)
-const readOnlyAccount = new WalletAccountReadOnlyEvmMultisigSafe(null, {
+const readOnlyAccount = new WalletAccountReadOnlyMultisigEvmSafe4337(null, {
   chainId: 11155111n,
   provider: 'https://sepolia.infura.io/v3/YOUR_KEY',
   bundlerUrl: 'https://api.pimlico.io/v2/sepolia/rpc?apikey=YOUR_KEY',

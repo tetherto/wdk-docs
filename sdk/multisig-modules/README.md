@@ -17,7 +17,7 @@ Multisig (multi-signature) wallets require multiple parties to approve transacti
 
 | Module | Blockchain | Status | Documentation |
 | --- | --- | --- | --- |
-| @tetherto/wdk-wallet-evm-multisig-safe | EVM | ✅ Ready | [Documentation](protocol-multisig-safe/README.md) |
+| @tetherto/wdk-protocol-multisig-safe | EVM | ✅ Ready | [Documentation](protocol-multisig-safe/README.md) |
 
 ## Module Features
 
