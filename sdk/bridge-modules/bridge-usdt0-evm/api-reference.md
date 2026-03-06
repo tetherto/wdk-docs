@@ -69,11 +69,13 @@ Bridges tokens to a different blockchain using the USD₮0 protocol.
 **Parameters:**
 - `options` (BridgeOptions): Bridge operation options
   - `targetChain` (string): Destination chain name
-  - `recipient` (string): Address that will receive the bridged tokens
+  - `recipient` (string): Address that will receive the bridged tokens (EVM hex address, Solana base58 address, TON address, or TRON address)
   - `token` (string): Token contract address on source chain
   - `amount` (number | bigint): Amount to bridge in token base units
+  - `oftContractAddress` (string, optional): Custom OFT contract address to use instead of auto-resolving from the source chain
+  - `dstEid` (number, optional): Custom LayerZero destination endpoint ID override
 - `config` (Pick<EvmErc4337WalletConfig, 'paymasterToken'> & Pick<BridgeProtocolConfig, 'bridgeMaxFee'>, optional): Override configuration for ERC-4337 accounts
-  - `paymasterToken` (string, optional): Token to use for paying gas fees
+  - `paymasterToken` ({ address: string }, optional): Paymaster token configuration for gas fees
   - `bridgeMaxFee` (number | bigint, optional): Override maximum bridge fee
 
 **Returns:** `Promise<BridgeResult>` - Bridge operation result
@@ -90,12 +92,12 @@ const result = await bridgeProtocol.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...', // Recipient address
   token: '0x...', // ₮ contract address
-  amount: 1000000000000000000n
+  amount: 1000000n
 })
 
 console.log('Bridge hash:', result.hash)
 console.log('Approve hash:', result.approveHash)
-console.log('Reset allowance hash:', result.resetAllowanceHash) // Only for USD₮ on Ethereum
+console.log('Reset allowance hash:', result.resetAllowanceHash) // Only for USDT on Ethereum
 console.log('Total fee:', result.fee)
 console.log('Bridge fee:', result.bridgeFee)
 
@@ -103,10 +105,10 @@ console.log('Bridge fee:', result.bridgeFee)
 const result2 = await bridgeProtocol.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...', // Recipient address
-  token: '0x...', // USD₮ contract address
-  amount: 1000000000000000000n
+  token: '0x...', // USDT contract address
+  amount: 1000000n
 }, {
-  paymasterToken: '0x...', // Paymaster token address
+  paymasterToken: { address: '0x...' }, // Paymaster token configuration
   bridgeMaxFee: 1000000000000000n
 })
 
@@ -121,7 +123,7 @@ Estimates the cost of a bridge operation without executing it.
 **Parameters:**
 - `options` (BridgeOptions): Bridge operation options (same as bridge method)
 - `config` (Pick<EvmErc4337WalletConfig, 'paymasterToken'>, optional): Override configuration for ERC-4337 accounts
-  - `paymasterToken` (string, optional): Token to use for paying gas fees
+  - `paymasterToken` ({ address: string }, optional): Paymaster token configuration for gas fees
 
 **Returns:** `Promise<Omit<BridgeResult, 'hash'>>` - Bridge cost estimate
 
@@ -132,8 +134,8 @@ Estimates the cost of a bridge operation without executing it.
 const quote = await bridgeProtocol.quoteBridge({
   targetChain: 'polygon',
   recipient: '0x...', // Recipient address
-  token: '0x...', // USD₮ contract address
-  amount: 1000000000000000000n
+  token: '0x...', // USDT contract address
+  amount: 1000000n
 })
 
 console.log('Estimated fee:', quote.fee, 'wei')
@@ -147,8 +149,8 @@ if (quote.fee + quote.bridgeFee > 1000000000000000n) {
   const result = await bridgeProtocol.bridge({
     targetChain: 'polygon',
     recipient: '0x...', // Recipient address
-    token: '0x...', // USD₮ contract address
-    amount: 1000000000000000000n
+    token: '0x...', // USDT contract address
+    amount: 1000000n
   })
 }
 ```
@@ -162,7 +164,9 @@ interface BridgeOptions {
   targetChain: string;              // Destination chain name
   recipient: string;                // Address that will receive bridged tokens
   token: string;                    // Token contract address on source chain
-  amount: number | bigint;           // Amount to bridge in token base units
+  amount: number | bigint;          // Amount to bridge in token base units
+  oftContractAddress?: string;      // Optional custom OFT contract address
+  dstEid?: number;                  // Optional destination endpoint ID override
 }
 ```
 
@@ -174,7 +178,7 @@ interface BridgeResult {
   fee: bigint;                      // Total gas cost in wei
   bridgeFee: bigint;                // Bridge protocol fee in wei
   approveHash?: string;             // Approve transaction hash (standard accounts only)
-  resetAllowanceHash?: string;      // Reset allowance hash (USD₮ on Ethereum only)
+  resetAllowanceHash?: string;      // Reset allowance hash (USDT on Ethereum only)
 }
 ```
 
@@ -190,7 +194,9 @@ interface BridgeProtocolConfig {
 
 ```typescript
 interface EvmErc4337WalletConfig {
-  paymasterToken?: string;          // Token to use for paying gas fees
+  paymasterToken?: {                // Token to use for paying gas fees
+    address: string;
+  };
 }
 ```
 
@@ -201,18 +207,32 @@ The bridge protocol supports the following chains:
 **Source Chains (EVM):**
 - `'ethereum'` (Chain ID: 1)
 - `'arbitrum'` (Chain ID: 42161) - ERC-4337 support
+- `'optimism'` (Chain ID: 10)
 - `'polygon'` (Chain ID: 137)
 - `'berachain'` (Chain ID: 80094)
 - `'ink'` (Chain ID: 57073)
+- `'plasma'` (Chain ID: 9745)
+- `'conflux'` (Chain ID: 1030)
+- `'corn'` (Chain ID: 21000000)
+- `'avalanche'` (Chain ID: 43114)
+- `'celo'` (Chain ID: 42220)
+- `'flare'` (Chain ID: 14)
+- `'hyperevm'` (Chain ID: 999)
+- `'mantle'` (Chain ID: 5000)
+- `'megaeth'` (Chain ID: 4326)
+- `'monad'` (Chain ID: 143)
+- `'morph'` (Chain ID: 2818)
+- `'rootstock'` (Chain ID: 30)
+- `'sei'` (Chain ID: 1329)
+- `'stable'` (Chain ID: 988)
+- `'unichain'` (Chain ID: 130)
+- `'xlayer'` (Chain ID: 196)
 
 **Destination Chains:**
-- `'ethereum'` (Chain ID: 1)
-- `'arbitrum'` (Chain ID: 42161)
-- `'polygon'` (Chain ID: 137)
-- `'berachain'` (Chain ID: 80094)
-- `'ink'` (Chain ID: 57073)
-- `'ton'` (Chain ID: 30343)
-- `'tron'` (Chain ID: 728126428)
+- **EVM destinations**: same as source-chain set above
+- `'solana'` (EID: 30168)
+- `'ton'` (EID: 30343)
+- `'tron'` (EID: 30420)
 
 ## Error Handling
 
@@ -223,8 +243,8 @@ try {
   const result = await bridgeProtocol.bridge({
     targetChain: 'arbitrum',
     recipient: '0x...', // Recipient address
-    token: '0x...', // USD₮ contract address
-    amount: 1000000000000000000n
+    token: '0x...', // USDT contract address
+    amount: 1000000n
   })
 } catch (error) {
   if (error.message.includes('not supported')) {
@@ -268,8 +288,8 @@ async function bridgeTokens() {
   const quote = await bridgeProtocol.quoteBridge({
     targetChain: 'arbitrum',
     recipient: '0x...', // Recipient address
-    token: '0x...', // USD₮ contract address
-    amount: 1000000000000000000n
+    token: '0x...', // USDT contract address
+    amount: 1000000n
   })
   
   console.log('Bridge quote:', quote)
@@ -278,8 +298,8 @@ async function bridgeTokens() {
   const result = await bridgeProtocol.bridge({
     targetChain: 'arbitrum',
     recipient: '0x...', // Recipient address
-    token: '0x...', // USD₮ contract address
-    amount: 1000000000000000000n
+    token: '0x...', // USDT contract address
+    amount: 1000000n
   })
   
   console.log('Bridge result:', result)
@@ -293,8 +313,8 @@ async function bridgeTokens() {
 ```javascript
 async function bridgeToMultipleChains(bridgeProtocol) {
   const chains = ['arbitrum', 'polygon', 'ethereum']
-  const token = '0x...' // USD₮ contract address
-  const amount = 1000000000000000000n
+  const token = '0x...' // USDT contract address
+  const amount = 1000000n
   const recipient = '0x...' // Recipient address
   
   const results = []
@@ -338,9 +358,15 @@ import { WalletAccountEvmErc4337 } from '@tetherto/wdk-wallet-evm-erc-4337'
 
 async function gaslessBridge() {
   // Create ERC-4337 account
-  const account = new WalletAccountEvmErc4337(seedPhrase, {
+  const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
+    chainId: 42161,
     provider: 'https://arb1.arbitrum.io/rpc',
-    paymasterToken: '0x...' // Paymaster token address
+    bundlerUrl: 'https://api.candide.dev/public/v3/arbitrum',
+    entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
+    safeModulesVersion: '0.3.0',
+    paymasterUrl: 'https://api.candide.dev/public/v3/arbitrum',
+    paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
+    paymasterToken: { address: '0x...' } // Paymaster token configuration
   })
   
   // Create bridge protocol
@@ -352,10 +378,10 @@ async function gaslessBridge() {
   const result = await bridgeProtocol.bridge({
     targetChain: 'polygon',
     recipient: '0x...', // Recipient address
-    token: '0x...', // USD₮ contract address
-    amount: 1000000000000000000n
+    token: '0x...', // USDT contract address
+    amount: 1000000n
   }, {
-    paymasterToken: '0x...' // Paymaster token address
+    paymasterToken: { address: '0x...' } // Paymaster token configuration
   })
   
   console.log('Gasless bridge result:', result)
@@ -418,9 +444,5 @@ async function gaslessBridge() {
 ### Need Help?
 
 {% include "../../../.gitbook/includes/support-cards.md" %}
-
-
-
-
 
 

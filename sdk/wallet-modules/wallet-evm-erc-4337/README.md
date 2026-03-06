@@ -29,7 +29,9 @@ A simple and secure package to manage ERC-4337 compliant wallets for EVM-compati
 - **ERC-4337 Support**: Full implementation of ERC-4337 account abstraction standard
 - **UserOperation Management**: Create and send UserOperations through bundlers
 - **Message Signing**: Sign and verify messages using EVM cryptography
+- **EIP-712 Typed Data Support**: Sign and verify typed data payloads
 - **ERC20 Support**: Query native token and ERC20 token balances using smart contract interactions
+- **Batch Token Balance Queries**: Fetch balances for multiple ERC20 tokens in one call with `getTokenBalances`
 - **TypeScript Support**: Full TypeScript definitions included
 - **Memory Safety**: Secure private key management with memory-safe HDNodeWallet implementation
 - **Bundler Integration**: Support for ERC-4337 bundler services

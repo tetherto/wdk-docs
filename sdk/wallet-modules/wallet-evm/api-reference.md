@@ -217,6 +217,7 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 | `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | If no provider |
 | `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | If no provider |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<bigint>` | If no provider |
+| `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise<Record<string, bigint>>` | If no provider |
 | `approve(options)` | Approves a spender to spend tokens | `Promise<{hash: string, fee: bigint}>` | If no provider |
 | `getAllowance(token, spender)` | Returns current allowance for a spender | `Promise<bigint>` | If no provider |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<EvmTransactionReceipt \| null>` | If no provider |
@@ -394,9 +395,9 @@ Transfers ERC20 tokens to another address using the standard transfer function.
 **Example:**
 ```javascript
 const result = await account.transfer({
-  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USD₮
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
   recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-  amount: 1000000 // 1 USD₮ (6 decimals)
+  amount: 1000000 // 1 USDT (6 decimals)
 })
 console.log('Transfer hash:', result.hash)
 console.log('Transfer fee:', result.fee, 'wei')
@@ -448,10 +449,31 @@ Returns the balance of a specific ERC20 token using the balanceOf function.
 
 **Example:**
 ```javascript
-// Get USD₮ balance
+// Get USDT balance
 const usdtBalance = await account.getTokenBalance('0xdAC17F958D2ee523a2206206994597C13D831ec7')
 console.log('USDT balance:', usdtBalance) // In 6 decimal places
 console.log('USDT balance formatted:', usdtBalance / 1000000, 'USDT')
+```
+
+#### `getTokenBalances(tokenAddresses)`
+Returns balances for multiple ERC20 tokens in one call.
+
+**Parameters:**
+- `tokenAddresses` (string[]): List of ERC20 token contract addresses
+
+**Returns:** `Promise<Record<string, bigint>>` - Object mapping each token address to its balance in base units
+
+**Throws:** Error if no provider is configured
+
+**Example:**
+```javascript
+const balances = await account.getTokenBalances([
+  '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
+  '0x68749665FF8D2d112Fa859AA293F07A622782F38'  // XAUT
+])
+
+console.log('USDT:', balances['0xdAC17F958D2ee523a2206206994597C13D831ec7'])
+console.log('XAUT:', balances['0x68749665FF8D2d112Fa859AA293F07A622782F38'])
 ```
 
 #### `approve(options)`
@@ -598,6 +620,7 @@ const readOnlyAccount = new WalletAccountReadOnlyEvm('0x742d35Cc6634C0532925a3b8
 | `getAddress()` | Returns the account's address | `Promise<string>` | - |
 | `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | If no provider |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<bigint>` | If no provider |
+| `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise<Record<string, bigint>>` | If no provider |
 | `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction | `Promise<{fee: bigint}>` | If no provider |
 | `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | If no provider |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
@@ -643,6 +666,25 @@ Returns the balance of a specific ERC20 token.
 ```javascript
 const tokenBalance = await readOnlyAccount.getTokenBalance('0xdAC17F958D2ee523a2206206994597C13D831ec7')
 console.log('USDT balance:', tokenBalance)
+```
+
+#### `getTokenBalances(tokenAddresses)`
+Returns balances for multiple ERC20 tokens.
+
+**Parameters:**
+- `tokenAddresses` (string[]): List of ERC20 token contract addresses
+
+**Returns:** `Promise<Record<string, bigint>>` - Object mapping each token address to its balance in base units
+
+**Throws:** Error if no provider is configured
+
+**Example:**
+```javascript
+const balances = await readOnlyAccount.getTokenBalances([
+  '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
+  '0x68749665FF8D2d112Fa859AA293F07A622782F38'  // XAUT
+])
+console.log('Balances:', balances)
 ```
 
 #### `quoteSendTransaction(tx)`
