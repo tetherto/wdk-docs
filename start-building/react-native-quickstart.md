@@ -31,7 +31,7 @@ In this quickstart, you'll integrate WDK into a React Native app to create a mul
 - [ ] Includes wallet creation, import, and unlock flows
 
 {% hint style="info" %}
-You can try all features without real funds required. You can use the Pimlico or Candide faucets to get some Sepolia USD₮. 
+You can try all features without real funds required. You can use the Pimlico or Candide faucets to get some Sepolia USD₮.
 
 <a class="button primary" href="https://dashboard.pimlico.io/test-erc20-faucet"> Get mock/test USD₮ on Pimlico </a>
 <a class="button primary" href="https://dashboard.candide.dev/faucet"> Get mock/test USD₮ on Candide </a>
@@ -147,34 +147,13 @@ npm run android
 
 Integrate WDK into your existing React Native or Expo project using `@tetherto/wdk-react-native-core`.
 
-### Step 1: Install the Core Library
+### Step 1: Install
 
 ```bash
 npm install @tetherto/wdk-react-native-core
 ```
 
-{% hint style="info" %}
-`@tetherto/wdk-react-native-core` replaces the deprecated `@tetherto/wdk-react-native-provider`. It uses a hooks-based architecture (Zustand + TanStack Query) with no Node.js polyfills required.
-{% endhint %}
-
-### Step 2: Install Dependencies
-
-The library bundles most of its dependencies, but requires the following native and peer packages:
-
-```bash
-npm install \
-  react-native-bare-kit \
-  react-native-mmkv \
-  expo-crypto \
-  @tanstack/react-query \
-  zustand \
-  immer \
-  zod \
-  @tetherto/wdk-react-native-secure-storage \
-  @tetherto/pear-wrk-wdk
-```
-
-### Step 3: Configure Android minSdkVersion
+### Step 2: Configure Android minSdkVersion
 
 The library requires **Android API 29** or higher to support `react-native-bare-kit`.
 
@@ -222,22 +201,27 @@ buildscript {
 {% endtab %}
 {% endtabs %}
 
-### Step 4: Configure the Bundle
+### Step 3: Configure the Bundle
 
-The WDK engine runs inside a Bare worklet. You need to provide a bundle — choose one of two approaches:
+The WDK engine runs inside a Bare worklet. You need to provide a bundle - choose one of two approaches:
 
 {% tabs %}
 {% tab title="Custom Bundle (Recommended)" %}
-Use the `@tetherto/wdk-worklet-bundler` CLI to generate a custom bundle with only the modules you need:
+Use the `@tetherto/wdk-worklet-bundler` CLI to generate a bundle with only the modules you need:
 
 ```bash
-# Install the bundler
+# 1. Install the bundler CLI
 npm install -g @tetherto/wdk-worklet-bundler
 
-# Initialize and configure
+# 2. Initialize configuration in your React Native project
 wdk-worklet-bundler init
 
-# Generate the bundle
+# 3. Edit wdk.config.js to configure your networks (see example below)
+
+# 4. Install required WDK modules
+npm install @tetherto/wdk @tetherto/wdk-wallet-evm-erc-4337
+
+# 5. Generate the bundle
 wdk-worklet-bundler generate
 ```
 
@@ -247,16 +231,20 @@ This generates a `.wdk/` directory in your project. Import it:
 import { bundle } from './.wdk'
 ```
 
+For full bundler documentation, see [wdk-worklet-bundler](https://github.com/tetherto/wdk-worklet-bundler).
+
 {% endtab %}
 
 {% tab title="Pre-built Bundle" %}
-For quick prototyping, import the ready-made bundle from `@tetherto/pear-wrk-wdk` (already installed in Step 2):
+For quick prototyping, install and import the ready-made bundle from `@tetherto/pear-wrk-wdk`:
+
+```bash
+npm install @tetherto/pear-wrk-wdk
+```
 
 ```typescript
 import { bundle } from '@tetherto/pear-wrk-wdk'
 ```
-
-This includes all supported networks and protocols. No additional setup required.
 
 {% hint style="info" %}
 The pre-built bundle includes all blockchain modules, resulting in a larger bundle size. For production apps, generate a custom bundle with only the modules you need.
@@ -265,7 +253,7 @@ The pre-built bundle includes all blockchain modules, resulting in a larger bund
 {% endtab %}
 {% endtabs %}
 
-### Step 5: Configure WDK Settings
+### Step 4: Configure WDK Settings
 
 Create a configuration file for your WDK setup (e.g., `src/config/wdk.ts`):
 
@@ -310,7 +298,7 @@ export const wdkConfigs: WdkConfigs = {
 See the [Chain Configuration Guide](../sdk/core-module/configuration.md) for complete configuration options for all supported chains.
 {% endhint %}
 
-### Step 6: Add WdkAppProvider
+### Step 5: Add WdkAppProvider
 
 Wrap your app with `WdkAppProvider` to enable wallet functionality throughout your app.
 
@@ -321,17 +309,13 @@ Add to your `app/_layout.tsx`:
 ```tsx
 // app/_layout.tsx
 import { WdkAppProvider } from '@tetherto/wdk-react-native-core'
-import { bundle } from '@tetherto/pear-wrk-wdk'
+import { bundle } from './.wdk'
 import { Stack } from 'expo-router'
 import { wdkConfigs } from '../config/wdk'
 
 export default function RootLayout() {
   return (
-    <WdkAppProvider
-      bundle={{ bundle }}
-      wdkConfigs={wdkConfigs}
-      currentUserId={currentUser?.email}
-    >
+    <WdkAppProvider bundle={{ bundle }} wdkConfigs={wdkConfigs}>
       <Stack />
     </WdkAppProvider>
   )
@@ -347,18 +331,14 @@ Update your `App.tsx`:
 // App.tsx
 import React from 'react'
 import { WdkAppProvider } from '@tetherto/wdk-react-native-core'
-import { bundle } from '@tetherto/pear-wrk-wdk'
+import { bundle } from './.wdk'
 import { NavigationContainer } from '@react-navigation/native'
 import { MainNavigator } from './src/navigation'
 import { wdkConfigs } from './src/config/wdk'
 
 export default function App() {
   return (
-    <WdkAppProvider
-      bundle={{ bundle }}
-      wdkConfigs={wdkConfigs}
-      currentUserId={currentUser?.email}
-    >
+    <WdkAppProvider bundle={{ bundle }} wdkConfigs={wdkConfigs}>
       <NavigationContainer>
         <MainNavigator />
       </NavigationContainer>
@@ -370,88 +350,34 @@ export default function App() {
 {% endtab %}
 {% endtabs %}
 
-### Step 7: Use Hooks
+### Step 6: Use Hooks
 
 Now you can use the WDK hooks in any component inside `WdkAppProvider`:
 
 ```tsx
-// src/screens/WalletScreen.tsx
-import React from 'react'
-import { View, Text, Button } from 'react-native'
-import {
-  useWdkApp,
-  useWalletManager,
-  useAccount,
-  useBalance,
-  BaseAsset,
-} from '@tetherto/wdk-react-native-core'
+import { useWdkApp, useWalletManager, useAccount } from '@tetherto/wdk-react-native-core'
 
-// Define your assets
-const usdt = new BaseAsset({
-  id: 'usdt-ethereum',
-  network: 'ethereum',
-  symbol: 'USDT',
-  name: 'Tether USD',
-  decimals: 6,
-  isNative: false,
-  address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-})
-
-export function WalletScreen() {
-  const { state, retry } = useWdkApp()
-  const { createWallet, unlock, lock } = useWalletManager()
+function WalletScreen() {
+  const { state } = useWdkApp()
+  const { createWallet, unlock } = useWalletManager()
   const { address } = useAccount({ network: 'ethereum', accountIndex: 0 })
-  const { data: balance } = useBalance(0, usdt)
 
   switch (state.status) {
     case 'INITIALIZING':
-      return <Text>Initializing WDK...</Text>
-
+      return <Text>Loading...</Text>
     case 'NO_WALLET':
-      return (
-        <View>
-          <Button
-            title="Create Wallet"
-            onPress={() => createWallet('user@example.com')}
-          />
-        </View>
-      )
-
+      return <Button title="Create Wallet" onPress={() => createWallet('my-wallet')} />
     case 'LOCKED':
-      return (
-        <View>
-          <Button
-            title="Unlock"
-            onPress={() => unlock(state.walletId)}
-          />
-        </View>
-      )
-
-    case 'ERROR':
-      return (
-        <View>
-          <Text>Error: {state.error.message}</Text>
-          <Button title="Retry" onPress={retry} />
-        </View>
-      )
-
+      return <Button title="Unlock" onPress={() => unlock()} />
     case 'READY':
-      return (
-        <View>
-          {address && <Text>Address: {address}</Text>}
-
-          {balance?.success && (
-            <Text>USDT Balance: {balance.balance}</Text>
-          )}
-
-          <Button title="Lock" onPress={lock} />
-        </View>
-      )
+      return <Text>Address: {address}</Text>
+    case 'ERROR':
+      return <Text>Error: {state.error.message}</Text>
   }
 }
 ```
 
-### Step 8: Rebuild and Run
+### Step 7: Rebuild and Run
 
 {% tabs %}
 {% tab title="Expo" %}
@@ -528,7 +454,7 @@ function SendScreen() {
 
 ### Lock the Wallet
 
-Use `lock()` to clear sensitive data from memory — replaces the old `clearWallet()`:
+Use `lock()` to clear sensitive data from memory:
 
 ```tsx
 const { lock } = useWalletManager()
@@ -552,7 +478,7 @@ refreshBalance({ accountIndex: 0, type: 'wallet' })
 
 ## Troubleshooting
 
-### Android build fails with "Execution failed for task ':app:checkDebugAarMetadata'"
+**Android build fails with "Execution failed for task ':app:checkDebugAarMetadata'"**
 
 This means your minSdkVersion is too low. Make sure you've set it to 29:
 
@@ -573,24 +499,24 @@ npx expo prebuild --clean
 npx expo run:android
 ```
 
-### "useWdkApp must be used within WdkAppProvider"
+**"useWdkApp must be used within WdkAppProvider"**
 
 Ensure your component is rendered inside `WdkAppProvider`. The provider must be at the root of your component tree:
 
 ```tsx
-// ✅ Correct
+// Correct
 <WdkAppProvider bundle={{ bundle }} wdkConfigs={configs}>
   <MyComponent />  {/* Can use useWdkApp() here */}
 </WdkAppProvider>
 
-// ❌ Wrong — hook used outside provider
+// Wrong - hook used outside provider
 <MyComponent />  {/* Cannot use useWdkApp() here */}
 <WdkAppProvider bundle={{ bundle }} wdkConfigs={configs}>
   ...
 </WdkAppProvider>
 ```
 
-### Metro cache issues
+**Metro cache issues**
 
 If you see stale module errors after upgrading, clear the Metro cache:
 
@@ -600,7 +526,7 @@ npx expo start --clear
 npx react-native start --reset-cache
 ```
 
-### TypeScript errors about missing types
+**TypeScript errors about missing types**
 
 Some native dependencies may lack type definitions. Add to your `tsconfig.json`:
 
@@ -616,22 +542,22 @@ Some native dependencies may lack type definitions. Add to your `tsconfig.json`:
 
 **For Expo projects:**
 
-- ✅ Install `@tetherto/wdk-react-native-core` and dependencies
-- ✅ Configure Android minSdkVersion to 29 in `app.json`
-- ✅ Set up bundle (pre-built or custom)
-- ✅ Create `WdkConfigs` configuration
-- ✅ Add `WdkAppProvider` to `app/_layout.tsx`
-- ✅ Use hooks (`useWdkApp`, `useWalletManager`, `useAccount`, `useBalance`)
-- ✅ Run `npx expo prebuild --clean` before building
+- Install `@tetherto/wdk-react-native-core`
+- Configure Android minSdkVersion to 29 in `app.json`
+- Set up bundle (custom or pre-built)
+- Create `WdkConfigs` configuration
+- Add `WdkAppProvider` to `app/_layout.tsx`
+- Use hooks (`useWdkApp`, `useWalletManager`, `useAccount`, `useBalance`)
+- Run `npx expo prebuild --clean` before building
 
 **For bare React Native:**
 
-- ✅ Install package and dependencies
-- ✅ Set minSdkVersion to 29 in `android/build.gradle`
-- ✅ Set up bundle (pre-built or custom)
-- ✅ Create `WdkConfigs` configuration
-- ✅ Wrap root component with `WdkAppProvider`
-- ✅ Rebuild native code
+- Install package
+- Set minSdkVersion to 29 in `android/build.gradle`
+- Set up bundle (custom or pre-built)
+- Create `WdkConfigs` configuration
+- Wrap root component with `WdkAppProvider`
+- Rebuild native code
 
 ---
 

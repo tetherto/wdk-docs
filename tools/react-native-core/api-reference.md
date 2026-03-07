@@ -19,7 +19,19 @@ layout:
 
 # API Reference
 
-Complete reference for all public exports from `@tetherto/wdk-react-native-core`.
+| Export | Type | Description |
+|--------|------|-------------|
+| [`WdkAppProvider`](#wdkappprovider) | Component | Root provider for WDK initialization |
+| [`useWdkApp`](#usewdkapp) | Hook | App-level state (discriminated union) |
+| [`useWalletManager`](#usewalletmanager) | Hook | Wallet lifecycle (create, restore, lock, unlock) |
+| [`useAccount`](#useaccount) | Hook | Account operations (send, sign, verify, estimateFee) |
+| [`useAddresses`](#useaddresses) | Hook | Load and query wallet addresses |
+| [`useBalance`](#usebalance) | Hook | Single asset balance with TanStack Query |
+| [`useBalancesForWallet`](#usebalancesforwallet) | Hook | Bulk balance fetch for multiple assets |
+| [`useRefreshBalance`](#userefreshbalance) | Hook | Invalidate and refetch balances |
+| [`BaseAsset`](#baseasset) | Class | Default `IAsset` implementation |
+| [`validateMnemonic`](#validatemnemonic) | Utility | Validate BIP39 mnemonic phrases |
+| [`balanceQueryKeys`](#balancequerykeys) | Utility | TanStack Query key factory |
 
 ---
 
@@ -79,7 +91,7 @@ export default function App() {
 
 ---
 
-## useWdkApp()
+## useWdkApp
 
 Hook to access app-level state. Returns a discriminated union representing the current state of the WDK lifecycle.
 
@@ -98,8 +110,8 @@ The `state` property is a discriminated union on the `status` field:
 
 | Status | Additional Fields | Description |
 |--------|-------------------|-------------|
-| `'INITIALIZING'` | — | Worklet is starting or wallet is loading |
-| `'NO_WALLET'` | — | Worklet is ready, no wallet has been created |
+| `'INITIALIZING'` | - | Worklet is starting or wallet is loading |
+| `'NO_WALLET'` | - | Worklet is ready, no wallet has been created |
 | `'LOCKED'` | `walletId: string` | A wallet exists but is locked (requires biometric unlock) |
 | `'READY'` | `walletId: string` | Wallet is unlocked and ready for operations |
 | `'ERROR'` | `error: Error` | Initialization failed |
@@ -130,7 +142,7 @@ function AppRouter() {
 
 ---
 
-## useWalletManager()
+## useWalletManager
 
 Hook for wallet lifecycle operations: create, restore, lock, unlock, delete, and manage wallets.
 
@@ -144,7 +156,7 @@ Hook for wallet lifecycle operations: create, restore, lock, unlock, delete, and
 | `createWallet` | `(walletId: string) => Promise<void>` | Create a new wallet with biometric-protected storage |
 | `restoreWallet` | `(mnemonic: string, walletId: string) => Promise<string>` | Restore a wallet from a seed phrase. Returns the wallet ID |
 | `deleteWallet` | `(walletId: string) => Promise<void>` | Delete a wallet and all associated data |
-| `lock` | `() => void` | Lock the wallet — clears sensitive data from memory and stops the worklet |
+| `lock` | `() => void` | Lock the wallet - clears sensitive data from memory and stops the worklet |
 | `unlock` | `(walletId?: string) => Promise<void>` | Unlock a wallet (triggers biometric prompt) |
 | `generateMnemonic` | `(wordCount?: 12 \| 24) => Promise<string>` | Generate a new BIP39 mnemonic phrase |
 | `getMnemonic` | `(walletId: string) => Promise<string \| null>` | Get mnemonic from wallet (requires biometric auth) |
@@ -198,9 +210,9 @@ function OnboardingScreen() {
 
 ---
 
-## useAccount(params)
+## useAccount
 
-Hook to interact with a specific blockchain account. Always returns an object — check `address` or `account` for readiness.
+Hook to interact with a specific blockchain account. Always returns an object - check `address` or `account` for readiness.
 
 ### Parameters
 
@@ -315,14 +327,14 @@ const { extension } = useAccount<{ getTransfers: () => Promise<Transfer[]> }>({
   accountIndex: 0,
 })
 
-// Safe to call at any time — waits for wallet initialization internally
+// Safe to call at any time - waits for wallet initialization internally
 const btcApi = extension()
 const transfers = await btcApi.getTransfers()
 ```
 
 ---
 
-## useAddresses()
+## useAddresses
 
 Hook to load and query wallet addresses across all networks.
 
@@ -387,7 +399,7 @@ function AddressesScreen() {
 
 ---
 
-## useBalance(accountIndex, asset, options?)
+## useBalance
 
 Hook to fetch a single asset balance using TanStack Query. The network is derived from the asset's `getNetwork()` method. Automatically reads cached data from Zustand on first render, then fetches fresh data from the network.
 
@@ -443,7 +455,7 @@ function BalanceDisplay() {
 
 ---
 
-## useBalancesForWallet(accountIndex, assetConfigs, options?)
+## useBalancesForWallet
 
 Hook to fetch balances for multiple assets in a single query. Automatically loads addresses for all required networks before fetching balances.
 
@@ -490,7 +502,7 @@ function PortfolioScreen() {
 
 ---
 
-## useRefreshBalance()
+## useRefreshBalance
 
 Hook that returns a TanStack Query mutation for invalidating and refetching balances.
 
@@ -696,7 +708,7 @@ interface AccountInfo {
 
 ## Utilities
 
-### validateMnemonic(mnemonic)
+### validateMnemonic
 
 Validates a BIP39 mnemonic phrase. Checks that it contains exactly 12 or 24 non-empty words.
 
