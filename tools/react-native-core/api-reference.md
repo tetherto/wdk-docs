@@ -36,6 +36,7 @@ Must be placed at the root of your component tree. All hooks in this library req
 | `bundle` | [`BundleConfig`](#bundleconfig) | **required** | Worklet bundle configuration |
 | `wdkConfigs` | [`WdkConfigs`](#wdkconfigs) | **required** | Network and protocol configurations |
 | `enableAutoInitialization` | `boolean` | `true` | Enable automatic wallet initialization on app restart |
+| `requireBiometrics` | `boolean` | `true` | Require biometric authentication for wallet operations |
 | `currentUserId` | `string \| null` | `undefined` | Current user's identifier (typically email). Auto-initialization waits until this is set and matches the active wallet |
 | `clearSensitiveDataOnBackground` | `boolean` | `false` | Clear sensitive data when app goes to background. When enabled, biometric auth is required on every app foreground |
 | `children` | `React.ReactNode` | **required** | Child components |
@@ -44,7 +45,7 @@ Must be placed at the root of your component tree. All hooks in this library req
 
 ```tsx
 import { WdkAppProvider } from '@tetherto/wdk-react-native-core'
-import { bundle } from '@tetherto/pear-wrk-wdk'
+import { bundle } from './.wdk'
 
 const wdkConfigs = {
   indexer: {
@@ -80,7 +81,7 @@ export default function App() {
 
 ## useWdkApp()
 
-Hook to access app-level initialization state. Use this to check if the app is ready before rendering wallet UI.
+Hook to access app-level state. Returns a discriminated union representing the current state of the WDK lifecycle.
 
 Must be used within `WdkAppProvider`.
 
@@ -88,57 +89,42 @@ Must be used within `WdkAppProvider`.
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `status` | [`AppStatus`](#appstatus) | Combined app status (convenience — derived from worklet + wallet state) |
-| `workletStatus` | [`InitializationStatus`](#initializationstatus) | Worklet-specific initialization status |
-| `workletState` | `{ isReady: boolean, isLoading: boolean, error: string \| null }` | Worklet state for granular control |
-| `walletState` | `{ status: 'not_loaded' \| 'checking' \| 'loading' \| 'ready' \| 'error', identifier: string \| null, error: Error \| null }` | Wallet-specific state |
-| `isReady` | `boolean` | `true` when both worklet and wallet are ready |
-| `isInitializing` | `boolean` | `true` when worklet is starting or wallet is loading |
-| `activeWalletId` | `string \| null` | Currently active wallet identifier |
-| `loadingWalletId` | `string \| null` | Wallet identifier being loaded (transient, only during loading) |
-| `walletExists` | `boolean \| null` | Whether the loading wallet exists in secure storage (`null` = not checked yet) |
-| `error` | `Error \| null` | First error from worklet or wallet initialization |
+| `state` | [`WdkAppState`](#wdkappstate) | Current app state (discriminated union) |
 | `retry` | `() => void` | Retry initialization after an error |
+
+### WdkAppState
+
+The `state` property is a discriminated union on the `status` field:
+
+| Status | Additional Fields | Description |
+|--------|-------------------|-------------|
+| `'INITIALIZING'` | — | Worklet is starting or wallet is loading |
+| `'NO_WALLET'` | — | Worklet is ready, no wallet has been created |
+| `'LOCKED'` | `walletId: string` | A wallet exists but is locked (requires biometric unlock) |
+| `'READY'` | `walletId: string` | Wallet is unlocked and ready for operations |
+| `'ERROR'` | `error: Error` | Initialization failed |
 
 ### Example
 
 ```tsx
-import { useWdkApp, AppStatus } from '@tetherto/wdk-react-native-core'
+import { useWdkApp, useWalletManager } from '@tetherto/wdk-react-native-core'
 
 function AppRouter() {
-  const { status, isReady, error, retry } = useWdkApp()
+  const { state, retry } = useWdkApp()
+  const { createWallet, unlock } = useWalletManager()
 
-  if (status === AppStatus.ERROR) {
-    return <ErrorScreen error={error} onRetry={retry} />
+  switch (state.status) {
+    case 'INITIALIZING':
+      return <LoadingScreen />
+    case 'NO_WALLET':
+      return <Button title="Create Wallet" onPress={() => createWallet('user@example.com')} />
+    case 'LOCKED':
+      return <Button title="Unlock" onPress={() => unlock(state.walletId)} />
+    case 'READY':
+      return <MainApp walletId={state.walletId} />
+    case 'ERROR':
+      return <ErrorScreen error={state.error} onRetry={retry} />
   }
-
-  if (!isReady) {
-    return <LoadingScreen />
-  }
-
-  return <MainApp />
-}
-```
-
-### Advanced: Granular State
-
-```tsx
-function AppRouter() {
-  const { workletState, walletState } = useWdkApp()
-
-  if (workletState.error) {
-    return <WorkletErrorScreen error={workletState.error} />
-  }
-
-  if (workletState.isReady && walletState.status === 'not_loaded') {
-    return <OnboardingScreen />
-  }
-
-  if (walletState.status === 'ready') {
-    return <MainApp />
-  }
-
-  return <LoadingScreen />
 }
 ```
 
@@ -162,11 +148,23 @@ Hook for wallet lifecycle operations: create, restore, lock, unlock, delete, and
 | `unlock` | `(walletId?: string) => Promise<void>` | Unlock a wallet (triggers biometric prompt) |
 | `generateMnemonic` | `(wordCount?: 12 \| 24) => Promise<string>` | Generate a new BIP39 mnemonic phrase |
 | `getMnemonic` | `(walletId: string) => Promise<string \| null>` | Get mnemonic from wallet (requires biometric auth) |
-| `createTemporaryWallet` | `(mnemonic?: string) => Promise<void>` | Create an in-memory wallet for previewing addresses (no biometrics, not persisted) |
+| `createTemporaryWallet` | `(walletId: string, mnemonic?: string) => Promise<string>` | Create an in-memory wallet for previewing addresses. Returns the temporary wallet ID |
 | `clearTemporaryWallet` | `() => void` | Clear the temporary wallet session |
 | `setActiveWalletId` | `(walletId: string) => void` | Set the active wallet (triggers loading) |
 | `clearCache` | `() => void` | Clear cached balance data |
-| `refreshWalletList` | `(knownIdentifiers?: string[]) => Promise<void>` | Refresh the wallet list from secure storage |
+
+#### Advanced Crypto Methods
+
+These methods provide lower-level access to wallet cryptographic operations. Most apps won't need these directly.
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `getEncryptionKey` | `(walletId: string) => Promise<string \| null>` | Get encryption key (requires biometric auth) |
+| `getEncryptedSeed` | `(walletId: string) => Promise<string \| null>` | Get encrypted seed from storage |
+| `getEncryptedEntropy` | `(walletId: string) => Promise<string \| null>` | Get encrypted entropy from storage |
+| `generateEntropyAndEncrypt` | `(wordCount?: 12 \| 24) => Promise<{ encryptionKey, encryptedSeedBuffer, encryptedEntropyBuffer }>` | Generate and encrypt entropy for wallet creation |
+| `getMnemonicFromEntropy` | `(encryptedEntropy: string, encryptionKey: string) => Promise<{ mnemonic: string }>` | Derive mnemonic from encrypted entropy |
+| `getSeedAndEntropyFromMnemonic` | `(mnemonic: string) => Promise<{ encryptionKey, encryptedSeedBuffer, encryptedEntropyBuffer }>` | Get encrypted seed and entropy from a mnemonic phrase |
 
 ### Example
 
@@ -202,9 +200,7 @@ function OnboardingScreen() {
 
 ## useAccount(params)
 
-Hook to interact with a specific blockchain account. Returns the address and methods for sending transactions, signing messages, and fetching balances.
-
-Returns `null` if no wallet is active or the address hasn't been loaded yet.
+Hook to interact with a specific blockchain account. Always returns an object — check `address` or `account` for readiness.
 
 ### Parameters
 
@@ -213,17 +209,31 @@ Returns `null` if no wallet is active or the address hasn't been loaded yet.
 | `params.network` | `string` | Network identifier (e.g., `'ethereum'`, `'bitcoin'`, `'tron'`) |
 | `params.accountIndex` | `number` | Account index (0-based, following BIP-44 derivation) |
 
-### Returns `UseAccountReturn<T> | null`
+### Returns `UseAccountReturn<T>`
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `address` | `string` | The derived public address for this account |
-| `account` | `{ accountIndex: number, network: string, walletId: string }` | Account identifier |
+| `address` | `string \| null` | The derived public address (`null` if not loaded yet) |
+| `isLoading` | `boolean` | `true` if the account address is being derived |
+| `error` | `Error \| null` | Error if address derivation failed |
+| `account` | `{ accountIndex, network, walletId } \| null` | Account identifier (`null` if no active wallet or address not loaded) |
 | `getBalance` | `(tokens: IAsset[]) => Promise<BalanceFetchResult[]>` | Fetch balances directly from the network (no cache) |
 | `send` | `(params: TransactionParams) => Promise<TransactionResult>` | Send a transaction (native or token transfer) |
-| `sign` | `(message: string) => Promise<string>` | Sign a UTF-8 message with the account's private key |
-| `verify` | `(message: string, signature: string) => Promise<boolean>` | Verify a signature |
+| `sign` | `(message: string) => Promise<UseAccountResponse & { signature: string }>` | Sign a UTF-8 message with the account's private key |
+| `verify` | `(message: string, signature: string) => Promise<UseAccountResponse & { verified: boolean }>` | Verify a signature |
+| `estimateFee` | `(params: TransactionParams) => Promise<Omit<TransactionResult, 'hash'>>` | Estimate the fee for a transaction |
 | `extension` | `() => T` | Access chain-specific methods not in the core API |
+
+#### UseAccountResponse
+
+Base response type for account operations:
+
+```typescript
+interface UseAccountResponse {
+  success: boolean
+  error?: string
+}
+```
 
 #### TransactionParams
 
@@ -235,10 +245,14 @@ Returns `null` if no wallet is active or the address hasn't been loaded yet.
 
 #### TransactionResult
 
+Extends `UseAccountResponse`:
+
 | Field | Type | Description |
 |-------|------|-------------|
+| `success` | `boolean` | Whether the transaction succeeded |
 | `hash` | `string` | Transaction hash |
 | `fee` | `string` | Fee paid |
+| `error` | `string` | Error message (only if `success` is `false`) |
 
 ### Example
 
@@ -256,22 +270,34 @@ const usdt = new BaseAsset({
 })
 
 function SendScreen() {
-  const account = useAccount({ network: 'ethereum', accountIndex: 0 })
+  const { address, isLoading, send, estimateFee } = useAccount({ network: 'ethereum', accountIndex: 0 })
 
-  if (!account) return <Text>No account available</Text>
+  if (isLoading) return <Text>Deriving address...</Text>
+  if (!address) return <Text>No account available</Text>
 
   const handleSend = async () => {
-    const result = await account.send({
+    const txParams = {
       to: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
       asset: usdt,
       amount: '1000000', // 1 USDT (6 decimals)
-    })
-    console.log('TX hash:', result.hash)
+    }
+
+    // Estimate fee first
+    const estimate = await estimateFee(txParams)
+    console.log('Estimated fee:', estimate.fee)
+
+    // Send the transaction
+    const result = await send(txParams)
+    if (result.success) {
+      console.log('TX hash:', result.hash)
+    } else {
+      console.error('TX failed:', result.error)
+    }
   }
 
   return (
     <View>
-      <Text>Address: {account.address}</Text>
+      <Text>Address: {address}</Text>
       <Button title="Send 1 USDT" onPress={handleSend} />
     </View>
   )
@@ -280,19 +306,18 @@ function SendScreen() {
 
 ### Extension API
 
-Use `extension()` to access chain-specific methods that aren't part of the core interface:
+Use `extension()` to access chain-specific methods that aren't part of the core interface. The returned proxy waits for wallet initialization automatically:
 
 ```tsx
 // Type parameter provides type-safe access to chain-specific methods
-const btcAccount = useAccount<{ getUtxos: () => Promise<Utxo[]> }>({
+const { extension } = useAccount<{ getTransfers: () => Promise<Transfer[]> }>({
   network: 'bitcoin',
   accountIndex: 0,
 })
 
-if (btcAccount) {
-  const btcApi = btcAccount.extension()
-  const utxos = await btcApi.getUtxos()
-}
+// Safe to call at any time — waits for wallet initialization internally
+const btcApi = extension()
+const transfers = await btcApi.getTransfers()
 ```
 
 ---
@@ -307,7 +332,7 @@ Hook to load and query wallet addresses across all networks.
 |----------|------|-------------|
 | `data` | `AddressInfo[] \| undefined` | Flattened array of all loaded addresses for the active wallet |
 | `isLoading` | `boolean` | `true` if any address is currently being loaded |
-| `loadAddresses` | `(accountIndices: number[], networks?: string[]) => Promise<void>` | Fetch addresses for given account indices. If `networks` is omitted, fetches for all configured networks |
+| `loadAddresses` | `(accountIndices: number[], networks?: string[]) => Promise<AddressInfoResult[]>` | Fetch addresses for given account indices. Returns results for each address load attempt |
 | `getAddressesForNetwork` | `(network: string) => Array<{ address: string, accountIndex: number }>` | Filter addresses by network |
 | `getAccountInfoFromAddress` | `(address: string) => AddressInfo \| undefined` | Reverse-lookup: resolve an address string to its account info (case-insensitive) |
 
@@ -319,6 +344,16 @@ Hook to load and query wallet addresses across all networks.
 | `network` | `string` | Network identifier |
 | `accountIndex` | `number` | Account index |
 
+#### AddressInfoResult
+
+Discriminated union indicating success or failure for each address load:
+
+```typescript
+type AddressInfoResult =
+  | { network: string; accountIndex: number; success: true; address: string }
+  | { network: string; accountIndex: number; success: false; reason: Error }
+```
+
 ### Example
 
 ```tsx
@@ -328,7 +363,12 @@ function AddressesScreen() {
   const { data, isLoading, loadAddresses, getAddressesForNetwork } = useAddresses()
 
   useEffect(() => {
-    loadAddresses([0]) // Load addresses for account index 0
+    loadAddresses([0]).then((results) => {
+      const failed = results.filter((r) => !r.success)
+      if (failed.length > 0) {
+        console.warn('Some addresses failed to load:', failed)
+      }
+    })
   }, [])
 
   const ethAddresses = getAddressesForNetwork('ethereum')
@@ -347,30 +387,29 @@ function AddressesScreen() {
 
 ---
 
-## useBalance(network, accountIndex, asset, options?)
+## useBalance(accountIndex, asset, options?)
 
-Hook to fetch a single asset balance using TanStack Query. Automatically reads cached data from Zustand on first render, then fetches fresh data from the network.
+Hook to fetch a single asset balance using TanStack Query. The network is derived from the asset's `getNetwork()` method. Automatically reads cached data from Zustand on first render, then fetches fresh data from the network.
 
 ### Parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `network` | `string` | Network identifier |
 | `accountIndex` | `number` | Account index |
-| `asset` | [`IAsset`](#iasset) | Asset to fetch balance for |
+| `asset` | [`IAsset`](#iasset) | Asset to fetch balance for (network is derived from `asset.getNetwork()`) |
 | `options` | [`BalanceQueryOptions`](#balancequeryoptions) | Optional query configuration |
 
-### Returns
+### Returns `UseBalanceResult`
 
-Standard TanStack Query result (`UseQueryResult`) where `data` is [`BalanceFetchResult`](#balancefetchresult).
+A composite result combining address loading state with TanStack Query state:
 
 | Property | Type | Description |
 |----------|------|-------------|
 | `data` | `BalanceFetchResult \| undefined` | Balance result |
-| `isLoading` | `boolean` | First load in progress |
+| `isLoading` | `boolean` | `true` while address is loading or first balance fetch is in progress |
 | `isFetching` | `boolean` | Any fetch in progress (including refetch) |
 | `isError` | `boolean` | Query encountered an error |
-| `error` | `Error \| null` | Error object if failed |
+| `error` | `Error \| null` | Error from address loading or balance query |
 | `refetch` | `() => Promise<...>` | Manually trigger refetch |
 
 ### Example
@@ -388,7 +427,7 @@ const eth = new BaseAsset({
 })
 
 function BalanceDisplay() {
-  const { data: balance, isLoading } = useBalance('ethereum', 0, eth, {
+  const { data: balance, isLoading } = useBalance(0, eth, {
     refetchInterval: 30000, // Refresh every 30s
   })
 
@@ -406,7 +445,7 @@ function BalanceDisplay() {
 
 ## useBalancesForWallet(accountIndex, assetConfigs, options?)
 
-Hook to fetch balances for multiple assets in a single query. Useful for displaying a portfolio view.
+Hook to fetch balances for multiple assets in a single query. Automatically loads addresses for all required networks before fetching balances.
 
 ### Parameters
 
@@ -416,9 +455,9 @@ Hook to fetch balances for multiple assets in a single query. Useful for display
 | `assetConfigs` | [`IAsset[]`](#iasset) | Array of assets to fetch balances for |
 | `options` | [`BalanceQueryOptions`](#balancequeryoptions) | Optional query configuration |
 
-### Returns
+### Returns `UseBalancesForWalletResult`
 
-Standard TanStack Query result where `data` is `BalanceFetchResult[]`.
+Same shape as `UseBalanceResult` but `data` is `BalanceFetchResult[]`.
 
 ### Example
 
@@ -639,7 +678,6 @@ Information about a wallet stored on the device.
 interface WalletInfo {
   identifier: string  // Wallet identifier (e.g., user email)
   exists: boolean     // Whether wallet exists in secure storage
-  isActive: boolean   // Whether this wallet is currently active
 }
 ```
 
@@ -651,38 +689,6 @@ Information about a wallet account.
 interface AccountInfo {
   accountIndex: number              // Account index (0-based)
   addresses: Record<string, string> // Address for each network
-}
-```
-
----
-
-## Enums
-
-### AppStatus
-
-Combined app-level status derived from worklet and wallet state.
-
-```typescript
-enum AppStatus {
-  IDLE = 'idle',                       // Worklet not started
-  STARTING_WORKLET = 'starting_worklet', // Worklet is starting
-  WORKLET_READY = 'worklet_ready',     // Worklet ready, no wallet loaded
-  LOADING_WALLET = 'loading_wallet',   // Loading a wallet
-  READY = 'ready',                     // Fully ready
-  ERROR = 'error',                     // Worklet or wallet error
-}
-```
-
-### InitializationStatus
-
-Worklet-specific initialization status.
-
-```typescript
-enum InitializationStatus {
-  IDLE = 'idle',                         // Worklet not started
-  STARTING_WORKLET = 'starting_worklet', // Worklet runtime is starting
-  WORKLET_READY = 'worklet_ready',       // Worklet ready, can load wallets
-  ERROR = 'error',                       // Worklet initialization failed
 }
 ```
 

@@ -102,12 +102,12 @@ const usdt = new BaseAsset({
 })
 
 export function SendScreen() {
-  const { isReady } = useWdkApp()
-  const { data: usdtBalance } = useBalance('ethereum', 0, usdt, { enabled: isReady })
+  const { state } = useWdkApp()
+  const { data: usdtBalance } = useBalance(0, usdt)
   const [amount, setAmount] = React.useState('')
   const [address, setAddress] = React.useState('')
 
-  if (!isReady) {
+  if (state.status !== 'READY') {
     return <Text>Loading...</Text>
   }
 

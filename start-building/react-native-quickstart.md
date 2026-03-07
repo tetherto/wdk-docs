@@ -227,8 +227,30 @@ buildscript {
 The WDK engine runs inside a Bare worklet. You need to provide a bundle — choose one of two approaches:
 
 {% tabs %}
-{% tab title="Pre-built Bundle (Recommended)" %}
-Import the ready-made bundle directly from `@tetherto/pear-wrk-wdk` (already installed in Step 2):
+{% tab title="Custom Bundle (Recommended)" %}
+Use the `@tetherto/wdk-worklet-bundler` CLI to generate a custom bundle with only the modules you need:
+
+```bash
+# Install the bundler
+npm install -g @tetherto/wdk-worklet-bundler
+
+# Initialize and configure
+wdk-worklet-bundler init
+
+# Generate the bundle
+wdk-worklet-bundler generate
+```
+
+This generates a `.wdk/` directory in your project. Import it:
+
+```typescript
+import { bundle } from './.wdk'
+```
+
+{% endtab %}
+
+{% tab title="Pre-built Bundle" %}
+For quick prototyping, import the ready-made bundle from `@tetherto/pear-wrk-wdk` (already installed in Step 2):
 
 ```typescript
 import { bundle } from '@tetherto/pear-wrk-wdk'
@@ -236,20 +258,9 @@ import { bundle } from '@tetherto/pear-wrk-wdk'
 
 This includes all supported networks and protocols. No additional setup required.
 
-{% endtab %}
-
-{% tab title="Custom Bundle" %}
-Use the `@tetherto/wdk-worklet-bundler` CLI to generate a custom bundle with only the modules you need:
-
-```bash
-npx @tetherto/wdk-worklet-bundler
-```
-
-This generates a `.wdk-bundle/` directory in your project. Import it:
-
-```typescript
-import { bundle } from './.wdk-bundle'
-```
+{% hint style="info" %}
+The pre-built bundle includes all blockchain modules, resulting in a larger bundle size. For production apps, generate a custom bundle with only the modules you need.
+{% endhint %}
 
 {% endtab %}
 {% endtabs %}
@@ -373,7 +384,6 @@ import {
   useAccount,
   useBalance,
   BaseAsset,
-  AppStatus,
 } from '@tetherto/wdk-react-native-core'
 
 // Define your assets
@@ -388,60 +398,56 @@ const usdt = new BaseAsset({
 })
 
 export function WalletScreen() {
-  const { status, isReady, error, retry } = useWdkApp()
+  const { state, retry } = useWdkApp()
   const { createWallet, unlock, lock } = useWalletManager()
-  const account = useAccount({ network: 'ethereum', accountIndex: 0 })
-  const { data: balance } = useBalance('ethereum', 0, usdt, {
-    enabled: isReady,
-  })
+  const { address } = useAccount({ network: 'ethereum', accountIndex: 0 })
+  const { data: balance } = useBalance(0, usdt)
 
-  // Handle app initialization states
-  if (status === AppStatus.ERROR) {
-    return (
-      <View>
-        <Text>Error: {error?.message}</Text>
-        <Button title="Retry" onPress={retry} />
-      </View>
-    )
+  switch (state.status) {
+    case 'INITIALIZING':
+      return <Text>Initializing WDK...</Text>
+
+    case 'NO_WALLET':
+      return (
+        <View>
+          <Button
+            title="Create Wallet"
+            onPress={() => createWallet('user@example.com')}
+          />
+        </View>
+      )
+
+    case 'LOCKED':
+      return (
+        <View>
+          <Button
+            title="Unlock"
+            onPress={() => unlock(state.walletId)}
+          />
+        </View>
+      )
+
+    case 'ERROR':
+      return (
+        <View>
+          <Text>Error: {state.error.message}</Text>
+          <Button title="Retry" onPress={retry} />
+        </View>
+      )
+
+    case 'READY':
+      return (
+        <View>
+          {address && <Text>Address: {address}</Text>}
+
+          {balance?.success && (
+            <Text>USDT Balance: {balance.balance}</Text>
+          )}
+
+          <Button title="Lock" onPress={lock} />
+        </View>
+      )
   }
-
-  if (!isReady) {
-    return <Text>Initializing WDK...</Text>
-  }
-
-  // Create a new wallet
-  const handleCreateWallet = async () => {
-    try {
-      await createWallet('user@example.com')
-      console.log('Wallet created')
-    } catch (err) {
-      console.error('Failed to create wallet:', err)
-    }
-  }
-
-  // Unlock wallet (triggers biometric prompt)
-  const handleUnlock = async () => {
-    try {
-      await unlock()
-      console.log('Wallet unlocked')
-    } catch (err) {
-      console.error('Failed to unlock:', err)
-    }
-  }
-
-  return (
-    <View>
-      {account && <Text>Address: {account.address}</Text>}
-
-      {balance?.success && (
-        <Text>USDT Balance: {balance.balance}</Text>
-      )}
-
-      <Button title="Create Wallet" onPress={handleCreateWallet} />
-      <Button title="Unlock" onPress={handleUnlock} />
-      <Button title="Lock" onPress={lock} />
-    </View>
-  )
 }
 ```
 
@@ -498,17 +504,22 @@ const usdt = new BaseAsset({
 })
 
 function SendScreen() {
-  const account = useAccount({ network: 'ethereum', accountIndex: 0 })
+  const { address, send } = useAccount({ network: 'ethereum', accountIndex: 0 })
 
   const handleSend = async () => {
-    if (!account) return
+    if (!address) return
 
-    const result = await account.send({
+    const result = await send({
       to: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
       asset: usdt,
       amount: '1000000', // 1 USDT (6 decimals)
     })
-    console.log('TX hash:', result.hash, 'Fee:', result.fee)
+
+    if (result.success) {
+      console.log('TX hash:', result.hash, 'Fee:', result.fee)
+    } else {
+      console.error('TX failed:', result.error)
+    }
   }
 
   return <Button title="Send 1 USDT" onPress={handleSend} />
