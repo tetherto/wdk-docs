@@ -114,7 +114,7 @@ EXPO_PUBLIC_TRON_API_SECRET=your_tron_api_secret
 ```
 
 {% hint style="info" %}
-Get your free WDK Indexer API key [here](../tools/indexer-api/get-started.md)
+**Where do I get an Indexer API key?** The WDK Indexer is required for transaction history and balance indexing. Get your free API key from the [Indexer API setup guide](../tools/indexer-api/get-started.md).
 {% endhint %}
 
 ### Step 4: Run Your App
@@ -218,7 +218,7 @@ wdk-worklet-bundler init
 
 # 3. Edit wdk.config.js to configure your networks (see example below)
 
-# 4. Install required WDK modules
+# 4. Install required WDK modules (pick the ones you need)
 npm install @tetherto/wdk @tetherto/wdk-wallet-evm-erc-4337
 
 # 5. Generate the bundle
@@ -231,7 +231,9 @@ This generates a `.wdk/` directory in your project. Import it:
 import { bundle } from './.wdk'
 ```
 
-For full bundler documentation, see [wdk-worklet-bundler](https://github.com/tetherto/wdk-worklet-bundler).
+{% hint style="info" %}
+**Which WDK modules do I need?** Each blockchain requires its own wallet module (e.g., `wdk-wallet-evm-erc-4337` for Ethereum/Polygon, `wdk-wallet-btc` for Bitcoin). See the full list of available modules in the [wdk-worklet-bundler documentation](https://github.com/tetherto/wdk-worklet-bundler).
+{% endhint %}
 
 {% endtab %}
 
@@ -263,30 +265,23 @@ import type { WdkConfigs } from '@tetherto/wdk-react-native-core'
 
 export const wdkConfigs: WdkConfigs = {
   indexer: {
-    url: process.env.EXPO_PUBLIC_WDK_INDEXER_BASE_URL!,
-    apiKey: process.env.EXPO_PUBLIC_WDK_INDEXER_API_KEY!,
+    url: 'https://wdk-api.tether.io',
+    apiKey: 'YOUR_INDEXER_API_KEY',
   },
   networks: {
     ethereum: {
       blockchain: 'ethereum',
       config: {
-        chainId: 1,
-        provider: 'https://mainnet.gateway.tenderly.co/YOUR_KEY',
-        bundlerUrl: 'https://api.candide.dev/public/v3/ethereum',
-        paymasterUrl: 'https://api.candide.dev/public/v3/ethereum',
+        chainId: 11155111, // Sepolia testnet
+        provider: 'https://rpc.sepolia.org',
+        bundlerUrl: 'https://api.candide.dev/public/v3/sepolia',
+        paymasterUrl: 'https://api.candide.dev/public/v3/sepolia',
         paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
         entrypointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
         transferMaxFee: 5000000,
         paymasterToken: {
-          address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
+          address: '0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0', // USDT on Sepolia
         },
-      },
-    },
-    bitcoin: {
-      blockchain: 'bitcoin',
-      config: {
-        host: 'api.ordimint.com',
-        port: 50001,
       },
     },
     // Add more networks as needed
@@ -295,7 +290,11 @@ export const wdkConfigs: WdkConfigs = {
 ```
 
 {% hint style="info" %}
-See the [Chain Configuration Guide](../sdk/core-module/configuration.md) for complete configuration options for all supported chains.
+**Where do I get an Indexer API key?** The WDK Indexer is required for transaction history and balance indexing. Get your free API key from the [Indexer API setup guide](../tools/indexer-api/get-started.md).
+{% endhint %}
+
+{% hint style="info" %}
+This example uses **Sepolia testnet** with a free public RPC so you can start immediately without API keys. For production or mainnet configuration, see the [Chain Configuration Guide](../sdk/core-module/configuration.md).
 {% endhint %}
 
 ### Step 5: Add WdkAppProvider
@@ -376,6 +375,8 @@ function WalletScreen() {
   }
 }
 ```
+
+For the full list of available hooks and their parameters, see the [React Native Core API Reference](../tools/react-native-core/api-reference.md).
 
 ### Step 7: Rebuild and Run
 
@@ -515,6 +516,10 @@ Ensure your component is rendered inside `WdkAppProvider`. The provider must be 
   ...
 </WdkAppProvider>
 ```
+
+**Biometric prompt not appearing on simulator**
+
+Biometric authentication is required by default. On iOS Simulator, enable Face ID via `Features > Face ID > Enrolled`. On Android Emulator, set up a fingerprint in `Settings > Security`. To disable biometrics during development, pass `requireBiometrics={false}` to `WdkAppProvider`.
 
 **Metro cache issues**
 
