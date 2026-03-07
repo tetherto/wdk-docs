@@ -24,6 +24,22 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### March 6, 2026
+
+**Changes**
+- **wallet-tron**: Fixed case-sensitive address check in `verify`, upgraded TonWeb to v6.2.0 ([v1.0.0-beta.5](https://github.com/tetherto/wdk-wallet-tron/releases/tag/v1.0.0-beta.5))
+- **lending-aave-evm**: Security dependency updates ([v1.0.0-beta.4](https://github.com/tetherto/wdk-protocol-lending-aave-evm/releases/tag/v1.0.0-beta.4))
+- **wdk**: Security dependency updates ([v1.0.0-beta.6](https://github.com/tetherto/wdk/releases/tag/v1.0.0-beta.6))
+
+---
+
+### March 5, 2026
+
+**What's New**
+- **create-wdk-module**: Added documentation for the [`create-wdk-module`](../tools/create-wdk-module.md) CLI scaffolding tool. Updated [Community Modules](../sdk/community-modules/) and [SDK Get Started](../sdk/get-started.md) pages with references to the new tool.
+
+---
+
 ### February 26, 2026
 
 **Changes**

@@ -36,15 +36,17 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 
 ## Create Your Own Module
 
-Want to extend WDK with your own custom module? We encourage community contributions!
+Want to extend WDK with your own custom module? Use the `create-wdk-module` CLI to scaffold a fully configured project in seconds:
 
-{% hint style="info" %}
-**Coming Soon: Custom Module Guide**
+{% code title="Scaffold a new module" %}
+```bash
+npx create-wdk-module@latest
+```
+{% endcode %}
 
-We're preparing a comprehensive guide on how to create custom WDK modules. Join our [Discord](https://discord.gg/arYXDhHB2w) for updates!
-{% endhint %}
+The CLI generates source files, tests, TypeScript type definitions, and CI workflows for all five module types (wallet, swap, bridge, lending, fiat). See the [Create WDK Module documentation](../../tools/create-wdk-module.md) for the full guide, CLI options, and generated project structure.
 
-In the meantime, you can:
+You can also:
 
 1. **Study existing modules** - Review the source code of official WDK modules on [GitHub](https://github.com/orgs/tetherto/repositories?q=wdk) to understand the patterns and interfaces
 2. **Join the community** - Connect with other developers on our [Discord](https://discord.gg/arYXDhHB2w) to discuss your ideas

@@ -137,4 +137,4 @@ Minimum meaningful amounts below which transactions will fail or be rejected by 
 Source chains (EVM only): ethereum, arbitrum, polygon, berachain, ink
 Destination chains: ethereum, arbitrum, polygon, berachain, ink, ton, tron
 
-ERC-4337 (Account Abstraction) currently supported on: Arbitrum
+ERC-4337 (Account Abstraction) verified on: Ethereum (1), Polygon (137), Arbitrum (42161), Plasma (9745), Sepolia (11155111). Avalanche (43114) is NOT supported (Safe4337Module not deployed).

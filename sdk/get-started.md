@@ -196,6 +196,16 @@ const swapResult = await wdkWithProtocols.executeProtocol('swap-velora-evm', {
 
 ### Creating Custom Modules
 
+{% hint style="success" %}
+**Recommended**: Use the `create-wdk-module` CLI to scaffold a new module with all the boilerplate in place:
+
+```bash
+npx create-wdk-module@latest
+```
+
+See the [Create WDK Module](../tools/create-wdk-module.md) page for the full guide, CLI options, and generated project structure.
+{% endhint %}
+
 WDK's modular architecture makes it straightforward to add support for new blockchains or protocols. Each module type has a specific interface that must be implemented.
 
 #### Wallet Module Interface
@@ -308,9 +318,9 @@ const balance = await customAccount.getBalance()
 {% endcode %}
 
 
-<!-- {% hint style="info" %} -->
-<!-- **Learn More**: For detailed information on creating custom modules, check out our [Extender Guide](../extender-guide.md).
-{% endhint %} -->
+{% hint style="info" %}
+**Learn More**: For detailed information on creating custom modules, check out the [Create WDK Module](../tools/create-wdk-module.md) tool and the [Community Modules](../community-modules/) page.
+{% endhint %}
 
 ***
 
