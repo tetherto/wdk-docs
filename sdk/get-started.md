@@ -200,7 +200,7 @@ const swapResult = await wdkWithProtocols.executeProtocol('swap-velora-evm', {
 **Recommended**: Use the `create-wdk-module` CLI to scaffold a new module with all the boilerplate in place:
 
 ```bash
-npx create-wdk-module@latest
+npx @tetherto/create-wdk-module@latest
 ```
 
 See the [Create WDK Module](../tools/create-wdk-module.md) page for the full guide, CLI options, and generated project structure.
