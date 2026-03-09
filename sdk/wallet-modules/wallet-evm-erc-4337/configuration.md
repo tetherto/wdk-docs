@@ -98,9 +98,8 @@ const config = { chainId: 137 }
 // Arbitrum One
 const config = { chainId: 42161 }
 
-// Avalanche C-Chain
-const config = { chainId: 43114 }
-
+// Plasma
+const config = { chainId: 9745 }
 ```
 
 ### Provider
@@ -295,6 +294,28 @@ try {
 
 ## Network-Specific Configurations
 
+ERC-4337 account abstraction requires three independent layers on any given chain:
+
+1. **Safe4337Module contract** deployed and registered in `@safe-global/safe-modules-deployments`
+2. **Bundler service** (Pimlico or Candide) that supports the chain
+3. **Paymaster service** (Pimlico or Candide) that supports the chain
+
+If any layer is missing for a chain, the SDK will fail. The following networks have been verified to support all three layers.
+
+### Verified Supported Networks
+
+| Network | Chain ID | Bundler | Paymaster | Status |
+| ------- | -------- | ------- | --------- | ------ |
+| Ethereum | 1 | Candide | Candide | Supported |
+| Polygon | 137 | Candide | Candide | Supported |
+| Arbitrum One | 42161 | Pimlico (public) | Pimlico (public) | Supported |
+| Plasma | 9745 | Candide | Candide | Supported |
+| Sepolia (testnet) | 11155111 | Pimlico / Candide | Pimlico / Candide | Supported |
+
+{% hint style="danger" %}
+**Avalanche C-Chain (43114) is not supported.** The Safe4337Module v0.3.0 contract is not deployed on Avalanche. Attempting to use ERC-4337 on Avalanche will fail with `Safe4337Module not available for chain 43114`.
+{% endhint %}
+
 ### Ethereum Mainnet
 
 
@@ -329,7 +350,7 @@ const ethereumConfig = {
 ```javascript
 const polygonConfig = {
   chainId: 137,
-  provider: 'https://polygon-rpc.com',
+  provider: 'https://polygon-bor-rpc.publicnode.com',
   bundlerUrl: 'https://api.candide.dev/public/v3/polygon',
   paymasterUrl: 'https://api.candide.dev/public/v3/polygon',
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
@@ -360,32 +381,12 @@ const arbitrumConfig = {
 }
 ```
 
-### Avalanche C-Chain
-
-``` javascript
-const avalancheConfig = {
-  chainId: 43114,
-  provider: 'https://avalanche-c-chain-rpc.publicnode.com',
-  bundlerUrl: "https://public.pimlico.io/v2/43114/rpc",
-  paymasterUrl: "https://public.pimlico.io/v2/43114/rpc",
-  paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
-  entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
-  safeModulesVersion: '0.3.0',
-  paymasterToken: {
-    address: '0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7' // USDT
-  },
-  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDT if 6 decimals)
-}
-```
-
 ### Plasma
 
 ```javascript
-// Plasma (example Layer 2)
 const plasmaConfig = {
   chainId: 9745,
   provider: 'https://plasma.drpc.org',
-  // For ERC-4337 support, optional fields:
   bundlerUrl: 'https://api.candide.dev/public/v3/9745',
   paymasterUrl: 'https://api.candide.dev/public/v3/9745',
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
