@@ -24,6 +24,13 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### March 7, 2026
+
+**What's New**
+- **[React Native Core](../tools/react-native-core/)**: Added documentation for `@tetherto/wdk-react-native-core` (v1.0.0-beta.3), the hooks-based React Native integration layer for WDK. Includes [API Reference](../tools/react-native-core/api-reference.md) covering `WdkAppProvider`, `useWdkApp`, `useWalletManager`, `useAccount`, `useBalance`, and more. Updated [React Native Quickstart](../start-building/react-native-quickstart.md) with step-by-step integration guide.
+
+---
+
 ### March 6, 2026
 
 **Changes**
