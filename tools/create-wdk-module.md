@@ -33,7 +33,7 @@ Powered by [`create-wdk-module`](https://github.com/tetherto/create-wdk-module).
 
 {% code title="Scaffold a new module" %}
 ```bash
-npx create-wdk-module@latest
+npx @tetherto/create-wdk-module@latest
 ```
 {% endcode %}
 
@@ -41,7 +41,7 @@ You can also pass arguments directly to skip the interactive prompts:
 
 {% code title="Scaffold with arguments" %}
 ```bash
-npx create-wdk-module@latest wallet stellar
+npx @tetherto/create-wdk-module@latest wallet stellar
 ```
 {% endcode %}
 {% endstep %}
@@ -94,13 +94,13 @@ The CLI supports all five WDK module categories. The generated package name foll
 {% code title="Common CLI usage patterns" %}
 ```bash
 # Create a wallet module with an npm scope
-npx create-wdk-module@latest wallet stellar --scope @myorg
+npx @tetherto/create-wdk-module@latest wallet stellar --scope @myorg
 
 # Create a swap protocol module
-npx create-wdk-module@latest swap jupiter solana
+npx @tetherto/create-wdk-module@latest swap jupiter solana
 
 # Create with all defaults, no prompts
-npx create-wdk-module@latest wallet stellar --yes
+npx @tetherto/create-wdk-module@latest wallet stellar --yes
 ```
 {% endcode %}
 
@@ -112,7 +112,7 @@ When run without arguments, the CLI guides you through module setup step by step
 
 {% code title="Interactive session" %}
 ```bash
-$ npx create-wdk-module@latest
+$ npx @tetherto/create-wdk-module@latest
 
   Create WDK Module
 
