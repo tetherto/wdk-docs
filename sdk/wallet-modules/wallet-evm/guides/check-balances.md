@@ -37,6 +37,8 @@ console.log('Native balance:', balance, 'wei')
 {% endcode %}
 
 ### Single ERC-20 Token Balance
+You can retrieve a single ERC-20 token balance from an `Account` object using [`account.getTokenBalance(tokenAddress)`](/sdk/wallet-modules/wallet-evm/api-reference#gettokenbalance-tokenaddress): 
+
 
 {% code title="Get ERC-20 Balance" lineNumbers="true" %}
 ```javascript
