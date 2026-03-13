@@ -49,7 +49,7 @@ console.log('Token balance:', tokenBalance)
 {% endcode %}
 
 ### Multiple ERC-20 Token Balances
-
+You can retrieve a multiple ERC-20 token balances from an `Account` object using [`account.getTokenBalances(tokenAddresses)`](/sdk/wallet-modules/wallet-evm/api-reference#gettokenbalances-tokenaddresses), where `tokenAddresses` is an array of ERC-20 tokens: 
 {% code title="Get Multiple Token Balances" lineNumbers="true" %}
 ```javascript
 const tokenBalances = await account.getTokenBalances([
