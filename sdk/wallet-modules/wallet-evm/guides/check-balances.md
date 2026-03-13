@@ -23,7 +23,7 @@ This guide explains how to check native token and ERC-20 token balances for both
 
 ## Owned Account Balances
 
-Use an account retrieved from `WalletManagerEvm` to query balances.
+Use an account retrieved from [`WalletManagerEvm`](/sdk/wallet-modules/wallet-evm/api-reference#walletmanagerevm) to query balances.
 
 ### Native Token Balance
 
