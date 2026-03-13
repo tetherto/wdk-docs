@@ -62,7 +62,7 @@ console.log('Multi-token balances:', tokenBalances)
 
 ## Read-Only Account Balances
 
-Use `WalletAccountReadOnlyEvm` to check balances for any public address without a seed phrase.
+Use [`WalletAccountReadOnlyEvm`](/sdk/wallet-modules/wallet-evm/api-reference#walletaccountreadonlyevm) to check balances for any public address without a seed phrase.
 
 {% code title="Read-Only Account Balances" lineNumbers="true" %}
 ```javascript
