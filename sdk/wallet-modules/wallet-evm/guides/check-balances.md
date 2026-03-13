@@ -27,6 +27,8 @@ Use an account retrieved from [`WalletManagerEvm`](/sdk/wallet-modules/wallet-ev
 
 ### Native Token Balance
 
+You can retrieve the native token balance from an `Account` object using [`account.getBalance()`](/sdk/wallet-modules/wallet-evm/api-reference#getbalance):
+
 {% code title="Get Native Balance" lineNumbers="true" %}
 ```javascript
 const balance = await account.getBalance()
