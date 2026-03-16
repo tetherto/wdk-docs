@@ -40,7 +40,7 @@ npm install @tetherto/wdk-wallet-evm
 
 ## 2. Create a Wallet
 
-Import the module and create a `WalletManagerEvm` instance with a BIP-39 seed phrase and an RPC provider.
+Import the module and create a [`WalletManagerEvm`](/sdk/wallet-modules/wallet-evm/api-reference#walletmanagerevm) instance with a BIP-39 seed phrase and an RPC provider.
 
 {% code title="Create EVM Wallet" lineNumbers="true" %}
 ```javascript
@@ -96,4 +96,4 @@ To use test/mock tokens instead of real funds, see the [configuration section](.
 
 ## Next Steps
 
-With your wallet ready, learn how to [manage multiple accounts](./account-management.md).
+With your wallet ready, learn how to [manage multiple accounts](./manage-accounts.md).

@@ -23,9 +23,11 @@ This guide explains how to check native token and ERC-20 token balances for both
 
 ## Owned Account Balances
 
-Use an account retrieved from `WalletManagerEvm` to query balances.
+Use an account retrieved from [`WalletManagerEvm`](/sdk/wallet-modules/wallet-evm/api-reference#walletmanagerevm) to query balances.
 
 ### Native Token Balance
+
+You can retrieve the native token balance from an `Account` object using [`account.getBalance()`](/sdk/wallet-modules/wallet-evm/api-reference#getbalance):
 
 {% code title="Get Native Balance" lineNumbers="true" %}
 ```javascript
@@ -36,6 +38,8 @@ console.log('Native balance:', balance, 'wei')
 
 ### Single ERC-20 Token Balance
 
+You can retrieve a single ERC-20 token balance from an `Account` object using [`account.getTokenBalance(tokenAddress)`](/sdk/wallet-modules/wallet-evm/api-reference#gettokenbalance-tokenaddress):
+
 {% code title="Get ERC-20 Balance" lineNumbers="true" %}
 ```javascript
 const tokenAddress = '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USDT
@@ -45,6 +49,8 @@ console.log('Token balance:', tokenBalance)
 {% endcode %}
 
 ### Multiple ERC-20 Token Balances
+
+You can retrieve multiple ERC-20 token balances from an `Account` object using [`account.getTokenBalances(tokenAddresses)`](/sdk/wallet-modules/wallet-evm/api-reference#gettokenbalances-tokenaddresses), where `tokenAddresses` is an array of ERC-20 tokens:
 
 {% code title="Get Multiple Token Balances" lineNumbers="true" %}
 ```javascript
@@ -58,9 +64,11 @@ console.log('Multi-token balances:', tokenBalances)
 
 ## Read-Only Account Balances
 
-Use `WalletAccountReadOnlyEvm` to check balances for any public address without a seed phrase.
+Use [`WalletAccountReadOnlyEvm`](/sdk/wallet-modules/wallet-evm/api-reference#walletaccountreadonlyevm) to check balances for any public address without a seed phrase.
 
-{% code title="Read-Only Account Balances" lineNumbers="true" %}
+### Native Balance
+
+{% code title="Read-Only Native Balance" lineNumbers="true" %}
 ```javascript
 import { WalletAccountReadOnlyEvm } from '@tetherto/wdk-wallet-evm'
 
@@ -70,10 +78,22 @@ const readOnlyAccount = new WalletAccountReadOnlyEvm('0x742d35Cc6634C0532925a3b8
 
 const balance = await readOnlyAccount.getBalance()
 console.log('Native balance:', balance, 'wei')
+```
+{% endcode %}
 
+### Single Token Balance
+
+{% code title="Read-Only Token Balance" lineNumbers="true" %}
+```javascript
 const tokenBalance = await readOnlyAccount.getTokenBalance('0xdAC17F958D2ee523a2206206994597C13D831ec7')
 console.log('Token balance:', tokenBalance)
+```
+{% endcode %}
 
+### Multiple Token Balances
+
+{% code title="Read-Only Multiple Token Balances" lineNumbers="true" %}
+```javascript
 const tokenBalances = await readOnlyAccount.getTokenBalances([
   '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
   '0x68749665FF8D2d112Fa859AA293F07A622782F38'  // XAUT
@@ -83,7 +103,7 @@ console.log('Multi-token balances:', tokenBalances)
 {% endcode %}
 
 {% hint style="info" %}
-You can also create a read-only account from an existing owned account using `await account.toReadOnlyAccount()`.
+You can also create a read-only account from an existing owned account using [`await account.toReadOnlyAccount()`](/sdk/wallet-modules/wallet-evm/api-reference#toreadonlyaccount).
 {% endhint %}
 
 ## Next Steps

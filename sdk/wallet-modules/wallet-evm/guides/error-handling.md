@@ -69,7 +69,7 @@ try {
 
 ## Manage Fee Limits
 
-Set `transferMaxFee` when creating the wallet to prevent transactions from exceeding a maximum gas cost. Retrieve current network rates with `getFeeRates()` to make informed decisions.
+Set `transferMaxFee` when creating the wallet to prevent transactions from exceeding a maximum gas cost. Retrieve current network rates with [`getFeeRates()`](/sdk/wallet-modules/wallet-evm/api-reference#getfeerates) to make informed decisions.
 
 {% code title="Fee Management" lineNumbers="true" %}
 ```javascript
@@ -81,7 +81,7 @@ console.log('Fast fee rate:', feeRates.fast, 'wei')
 
 ## Dispose of Sensitive Data
 
-Call `dispose()` on accounts and wallet managers to clear private keys and sensitive data from memory when they are no longer needed.
+Call [`dispose()`](/sdk/wallet-modules/wallet-evm/api-reference#dispose-1) on accounts and wallet managers to clear private keys and sensitive data from memory when they are no longer needed.
 
 {% code title="Memory Cleanup" lineNumbers="true" %}
 ```javascript
@@ -92,5 +92,5 @@ wallet.dispose()
 {% endcode %}
 
 {% hint style="warning" %}
-Always call `dispose()` in a `finally` block or cleanup handler to ensure sensitive data is cleared even if an error occurs.
+Always call [`dispose()`](/sdk/wallet-modules/wallet-evm/api-reference#dispose-1) in a `finally` block or cleanup handler to ensure sensitive data is cleared even if an error occurs.
 {% endhint %}

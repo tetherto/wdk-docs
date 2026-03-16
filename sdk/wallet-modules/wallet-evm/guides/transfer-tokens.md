@@ -23,7 +23,7 @@ This guide explains how to transfer ERC-20 tokens (such as USD₮ or XAU₮), es
 
 ## Transfer Tokens
 
-Use `account.transfer()` to send ERC-20 tokens to a recipient address.
+Use [`account.transfer()`](/sdk/wallet-modules/wallet-evm/api-reference#transfer-options) to send ERC-20 tokens to a recipient address.
 
 {% code title="Transfer ERC-20 Tokens" lineNumbers="true" %}
 ```javascript
@@ -39,7 +39,7 @@ console.log('Transfer fee:', transferResult.fee, 'wei')
 
 ## Estimate Transfer Fees
 
-Use `account.quoteTransfer()` to get a fee estimate before executing the transfer.
+Use [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-evm/api-reference#quotetransfer-options) to get a fee estimate before executing the transfer.
 
 {% code title="Quote Token Transfer" lineNumbers="true" %}
 ```javascript
@@ -54,46 +54,60 @@ console.log('Transfer fee estimate:', transferQuote.fee, 'wei')
 
 ## Transfer with Validation
 
-Validate addresses and check balances before transferring to catch errors early.
+You can use `transferTokenWithValidation()` to validate addresses and check balances before transferring to catch errors early.
 
-{% code title="Validated Token Transfer" lineNumbers="true" %}
+### 1. Validate Addresses
+
+{% code title="Address Validation" lineNumbers="true" %}
 ```javascript
-async function transferTokenWithValidation(account, tokenAddress, recipient, amount) {
-  if (!tokenAddress.startsWith('0x') || tokenAddress.length !== 42) {
-    throw new Error('Invalid token address')
-  }
-
-  if (!recipient.startsWith('0x') || recipient.length !== 42) {
-    throw new Error('Invalid recipient address')
-  }
-
-  const balance = await account.getTokenBalance(tokenAddress)
-  if (balance < amount) {
-    throw new Error('Insufficient token balance')
-  }
-
-  const nativeBalance = await account.getBalance()
-  if (nativeBalance === 0n) {
-    throw new Error('Need ETH for gas fees')
-  }
-
-  const quote = await account.quoteTransfer({
-    token: tokenAddress,
-    recipient,
-    amount
-  })
-  console.log('Transfer fee estimate:', quote.fee, 'wei')
-
-  const result = await account.transfer({
-    token: tokenAddress,
-    recipient,
-    amount
-  })
-  console.log('Transfer completed:', result.hash)
-  console.log('Fee paid:', result.fee, 'wei')
-
-  return result
+if (!tokenAddress.startsWith('0x') || tokenAddress.length !== 42) {
+  throw new Error('Invalid token address')
 }
+
+if (!recipient.startsWith('0x') || recipient.length !== 42) {
+  throw new Error('Invalid recipient address')
+}
+```
+{% endcode %}
+
+### 2. Check Balances
+
+Use [`account.getTokenBalance()`](/sdk/wallet-modules/wallet-evm/api-reference#gettokenbalance-tokenaddress) and [`account.getBalance()`](/sdk/wallet-modules/wallet-evm/api-reference#getbalance) to verify sufficient funds:
+
+{% code title="Balance Check" lineNumbers="true" %}
+```javascript
+const balance = await account.getTokenBalance(tokenAddress)
+if (balance < amount) {
+  throw new Error('Insufficient token balance')
+}
+
+const nativeBalance = await account.getBalance()
+if (nativeBalance === 0n) {
+  throw new Error('Need ETH for gas fees')
+}
+```
+{% endcode %}
+
+### 3. Quote and Execute Transfer
+
+Use [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-evm/api-reference#quotetransfer-options) to estimate fees, then [`account.transfer()`](/sdk/wallet-modules/wallet-evm/api-reference#transfer-options) to execute:
+
+{% code title="Quote and Execute" lineNumbers="true" %}
+```javascript
+const quote = await account.quoteTransfer({
+  token: tokenAddress,
+  recipient,
+  amount
+})
+console.log('Transfer fee estimate:', quote.fee, 'wei')
+
+const result = await account.transfer({
+  token: tokenAddress,
+  recipient,
+  amount
+})
+console.log('Transfer completed:', result.hash)
+console.log('Fee paid:', result.fee, 'wei')
 ```
 {% endcode %}
 
