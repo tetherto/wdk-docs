@@ -49,7 +49,7 @@
   * [wallet-evm](sdk/wallet-modules/wallet-evm/README.md)
     * [Usage](sdk/wallet-modules/wallet-evm/usage.md)
       * [Getting Started](sdk/wallet-modules/wallet-evm/guides/getting-started.md)
-      * [Manage Accounts](sdk/wallet-modules/wallet-evm/guides/account-management.md)
+      * [Manage Accounts](sdk/wallet-modules/wallet-evm/guides/manage-accounts.md)
       * [Check Balances](sdk/wallet-modules/wallet-evm/guides/check-balances.md)
       * [Send Transactions](sdk/wallet-modules/wallet-evm/guides/send-transactions.md)
       * [Transfer ERC-20 Tokens](sdk/wallet-modules/wallet-evm/guides/transfer-tokens.md)
