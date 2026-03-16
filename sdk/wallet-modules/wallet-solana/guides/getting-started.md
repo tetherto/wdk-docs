@@ -40,7 +40,7 @@ npm install @tetherto/wdk-wallet-solana
 
 ## 2. Create a Wallet
 
-Import the module and create a `WalletManagerSolana` instance with a BIP-39 seed phrase and a Solana RPC endpoint.
+Import the module and create a [`WalletManagerSolana`](/sdk/wallet-modules/wallet-solana/api-reference#walletmanagersolana) instance with a BIP-39 seed phrase and a Solana RPC endpoint.
 
 {% code title="Create Solana Wallet" lineNumbers="true" %}
 ```javascript

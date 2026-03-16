@@ -23,7 +23,7 @@ This guide explains how to transfer SPL tokens (such as USD₮), estimate fees, 
 
 ## Transfer Tokens
 
-Use `account.transfer()` to send SPL tokens to a recipient address. If the recipient does not have a token account, one is created automatically.
+Use [`account.transfer()`](/sdk/wallet-modules/wallet-solana/api-reference#transfer-options) to send SPL tokens to a recipient address. If the recipient does not have a token account, one is created automatically.
 
 {% code title="Transfer SPL Tokens" lineNumbers="true" %}
 ```javascript
@@ -41,7 +41,7 @@ console.log('Transfer fee:', transferResult.fee, 'lamports')
 
 ## Estimate Transfer Fees
 
-Use `account.quoteTransfer()` to get a fee estimate before executing the transfer.
+Use [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-solana/api-reference#quotetransfer-options) to get a fee estimate before executing the transfer.
 
 {% code title="Quote Token Transfer" lineNumbers="true" %}
 ```javascript
@@ -56,41 +56,55 @@ console.log('Transfer fee estimate:', transferQuote.fee, 'lamports')
 
 ## Transfer with Validation
 
-Validate addresses and check balances before transferring to catch errors early.
+You can validate addresses and check balances before transferring to catch errors early.
 
-{% code title="Validated SPL Token Transfer" lineNumbers="true" %}
+### 1. Validate Addresses
+
+{% code title="Address Validation" lineNumbers="true" %}
 ```javascript
-async function transferSPLWithValidation(account, splTokenMint, recipient, amount) {
-  if (typeof splTokenMint !== 'string' || splTokenMint.length < 32) {
-    throw new Error('Invalid SPL token mint address')
-  }
-
-  if (typeof recipient !== 'string' || recipient.length < 32) {
-    throw new Error('Invalid recipient address')
-  }
-
-  const balance = await account.getTokenBalance(splTokenMint)
-  if (balance < amount) {
-    throw new Error('Insufficient SPL token balance')
-  }
-
-  const quote = await account.quoteTransfer({
-    token: splTokenMint,
-    recipient,
-    amount
-  })
-  console.log('Transfer fee estimate:', quote.fee, 'lamports')
-
-  const result = await account.transfer({
-    token: splTokenMint,
-    recipient,
-    amount
-  })
-  console.log('Transfer hash:', result.hash)
-  console.log('Actual fee:', result.fee, 'lamports')
-
-  return result
+if (typeof splTokenMint !== 'string' || splTokenMint.length < 32) {
+  throw new Error('Invalid SPL token mint address')
 }
+
+if (typeof recipient !== 'string' || recipient.length < 32) {
+  throw new Error('Invalid recipient address')
+}
+```
+{% endcode %}
+
+### 2. Check Balance
+
+Use [`account.getTokenBalance()`](/sdk/wallet-modules/wallet-solana/api-reference#gettokenbalance-tokenmint) to verify sufficient funds:
+
+{% code title="Balance Check" lineNumbers="true" %}
+```javascript
+const balance = await account.getTokenBalance(splTokenMint)
+if (balance < amount) {
+  throw new Error('Insufficient SPL token balance')
+}
+```
+{% endcode %}
+
+### 3. Quote and Execute Transfer
+
+Use [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-solana/api-reference#quotetransfer-options) to estimate fees, then [`account.transfer()`](/sdk/wallet-modules/wallet-solana/api-reference#transfer-options) to execute:
+
+{% code title="Quote and Execute" lineNumbers="true" %}
+```javascript
+const quote = await account.quoteTransfer({
+  token: splTokenMint,
+  recipient,
+  amount
+})
+console.log('Transfer fee estimate:', quote.fee, 'lamports')
+
+const result = await account.transfer({
+  token: splTokenMint,
+  recipient,
+  amount
+})
+console.log('Transfer hash:', result.hash)
+console.log('Actual fee:', result.fee, 'lamports')
 ```
 {% endcode %}
 

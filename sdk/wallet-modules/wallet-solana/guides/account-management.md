@@ -23,7 +23,7 @@ This guide explains how to retrieve multiple accounts from your Solana wallet an
 
 ## Retrieve Accounts by Index
 
-Use `getAccount()` with a zero-based index to access accounts derived from the default derivation path.
+Use [`getAccount()`](/sdk/wallet-modules/wallet-solana/api-reference#getaccount-index) with a zero-based index to access accounts derived from the default derivation path.
 
 {% code title="Get Accounts by Index" lineNumbers="true" %}
 ```javascript
@@ -39,7 +39,7 @@ console.log('Account 1 address:', address1)
 
 ## Retrieve Account by Custom Derivation Path
 
-Use `getAccountByPath()` when you need a specific hierarchy beyond the default sequential index.
+Use [`getAccountByPath()`](/sdk/wallet-modules/wallet-solana/api-reference#getaccountbypath-path) when you need a specific hierarchy beyond the default sequential index.
 
 {% code title="Custom Derivation Path" lineNumbers="true" %}
 ```javascript

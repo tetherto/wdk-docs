@@ -31,7 +31,7 @@ On Solana, values are expressed in lamports (1 SOL = 10^9 lamports). Fees are ca
 
 ## Send Native SOL
 
-Use `sendTransaction()` to transfer SOL to a recipient address.
+Use [`account.sendTransaction()`](/sdk/wallet-modules/wallet-solana/api-reference#sendtransaction-tx) to transfer SOL to a recipient address.
 
 {% code title="Send SOL" lineNumbers="true" %}
 ```javascript
@@ -47,7 +47,7 @@ console.log('Transaction fee:', result.fee, 'lamports')
 
 ## Estimate Transaction Fees
 
-Use `quoteSendTransaction()` to get a fee estimate before sending.
+Use [`account.quoteSendTransaction()`](/sdk/wallet-modules/wallet-solana/api-reference#quotesendtransaction-tx) to get a fee estimate before sending.
 
 {% code title="Quote Transaction Fee" lineNumbers="true" %}
 ```javascript
@@ -61,7 +61,7 @@ console.log('Estimated fee:', quote.fee, 'lamports')
 
 ## Use Dynamic Fee Rates
 
-Retrieve current fee rates from the wallet manager. Rates are calculated based on the recent blockhash and compute unit prices.
+Retrieve current fee rates using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-solana/api-reference#getfeerates). Rates are calculated based on the recent blockhash and compute unit prices.
 
 {% code title="Dynamic Fee Rates" lineNumbers="true" %}
 ```javascript
