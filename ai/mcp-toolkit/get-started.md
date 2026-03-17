@@ -21,7 +21,7 @@ layout:
 # Get Started
 
 {% hint style="info" %}
-**Building a LangChain agent?** The `serve` command provides zero-config MCP server startup therefore no server script needed. See [LangChain Integration](langchain.md).
+**Building a LangChain agent?** The `serve` command provides zero-config MCP server startup -- no server script needed. See [LangChain Integration](langchain.md).
 {% endhint %}
 
 ## Setup Wizard
@@ -29,18 +29,15 @@ layout:
 The fastest way to get running. Clone the repository and let the wizard configure everything:
 
 {% code title="Terminal" %}
-
 ```bash
 git clone https://github.com/tetherto/wdk-mcp-toolkit.git
 cd wdk-mcp-toolkit
 npm install
 npm run setup
 ```
-
 {% endcode %}
 
 The wizard will:
-
 1. Prompt for your seed phrase (required)
 2. Ask for optional API keys (WDK Indexer, MoonPay)
 3. Generate `.vscode/mcp.json` with your credentials
@@ -52,7 +49,7 @@ Once complete, open the project in VS Code, start the MCP server from `.vscode/m
 **Security** - Your seed phrase is stored locally in `.vscode/mcp.json`, which is gitignored. Always use a **dedicated development wallet** with limited funds.
 {% endhint %}
 
----
+***
 
 ## Manual Setup
 
@@ -66,7 +63,6 @@ If you prefer to set things up yourself or want to integrate the toolkit into an
 Install the MCP Toolkit and the wallet modules you need:
 
 {% code title="Terminal" %}
-
 ```bash
 npm install @tetherto/wdk-mcp-toolkit @modelcontextprotocol/sdk
 
@@ -74,7 +70,6 @@ npm install @tetherto/wdk-mcp-toolkit @modelcontextprotocol/sdk
 npm install @tetherto/wdk-wallet-evm    # Ethereum, Polygon, Arbitrum, etc.
 npm install @tetherto/wdk-wallet-btc    # Bitcoin
 ```
-
 {% endcode %}
 
 {% endstep %}
@@ -86,40 +81,33 @@ npm install @tetherto/wdk-wallet-btc    # Bitcoin
 Create `index.js` with a basic multi-chain server:
 
 {% code title="index.js" lineNumbers="true" %}
-
 ```javascript
-import {
-  WdkMcpServer,
-  CHAINS,
-  WALLET_TOOLS,
-  PRICING_TOOLS,
-} from "@tetherto/wdk-mcp-toolkit";
-import WalletManagerEvm from "@tetherto/wdk-wallet-evm";
-import WalletManagerBtc from "@tetherto/wdk-wallet-btc";
+import { WdkMcpServer, CHAINS, WALLET_TOOLS, PRICING_TOOLS } from '@tetherto/wdk-mcp-toolkit'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
-const server = new WdkMcpServer("my-wallet-server", "1.0.0");
+const server = new WdkMcpServer('my-wallet-server', '1.0.0')
 
 // 1. Enable WDK with your seed phrase
-server.useWdk({ seed: process.env.WDK_SEED });
+server.useWdk({ seed: process.env.WDK_SEED })
 
 // 2. Register wallet modules
-server.registerWallet("ethereum", WalletManagerEvm, {
-  provider: "https://eth.drpc.org",
-});
+server.registerWallet('ethereum', WalletManagerEvm, {
+  provider: 'https://eth.drpc.org'
+})
 
-server.registerWallet("bitcoin", WalletManagerBtc, {
-  network: "bitcoin",
-  host: "electrum.blockstream.info",
-  port: 50001,
-});
+server.registerWallet('bitcoin', WalletManagerBtc, {
+  network: 'bitcoin',
+  host: 'electrum.blockstream.info',
+  port: 50001
+})
 
 // 3. Enable pricing
-server.usePricing();
+server.usePricing()
 
 // 4. Register tools and start
-server.registerTools([...WALLET_TOOLS, ...PRICING_TOOLS]);
+server.registerTools([...WALLET_TOOLS, ...PRICING_TOOLS])
 ```
-
 {% endcode %}
 
 {% endstep %}
@@ -136,7 +124,6 @@ Add the MCP server to your AI tool's configuration:
 **Config path:** `.vscode/mcp.json` (project-level)
 
 {% code title=".vscode/mcp.json" %}
-
 ```json
 {
   "servers": {
@@ -151,11 +138,9 @@ Add the MCP server to your AI tool's configuration:
   }
 }
 ```
-
 {% endcode %}
 
 Then in VS Code:
-
 1. Open `.vscode/mcp.json` and click **Start** above the server config
 2. Open GitHub Copilot Chat and select **Agent mode**
 3. Click **Tools** to verify the MCP tools are available
@@ -292,38 +277,31 @@ Write operations (sending, swapping, bridging) will show a **confirmation dialog
 {% endstep %}
 {% endstepper %}
 
----
+***
 
 ## Optional Capabilities
 
 Add more capabilities by installing additional packages and enabling them on the server:
 
 {% code title="Additional capabilities" lineNumbers="true" %}
-
 ```javascript
-import {
-  INDEXER_TOOLS,
-  SWAP_TOOLS,
-  BRIDGE_TOOLS,
-  LENDING_TOOLS,
-  FIAT_TOOLS,
-} from "@tetherto/wdk-mcp-toolkit";
-import VeloraProtocolEvm from "@tetherto/wdk-protocol-swap-velora-evm";
-import Usdt0ProtocolEvm from "@tetherto/wdk-protocol-bridge-usdt0-evm";
-import AaveProtocolEvm from "@tetherto/wdk-protocol-lending-aave-evm";
-import MoonPayProtocol from "@tetherto/wdk-protocol-fiat-moonpay";
+import { INDEXER_TOOLS, SWAP_TOOLS, BRIDGE_TOOLS, LENDING_TOOLS, FIAT_TOOLS } from '@tetherto/wdk-mcp-toolkit'
+import VeloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
+import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
+import AaveProtocolEvm from '@tetherto/wdk-protocol-lending-aave-evm'
+import MoonPayProtocol from '@tetherto/wdk-protocol-fiat-moonpay'
 
 // Indexer - transaction history
-server.useIndexer({ apiKey: process.env.WDK_INDEXER_API_KEY });
+server.useIndexer({ apiKey: process.env.WDK_INDEXER_API_KEY })
 
 // DeFi protocols
-server.registerProtocol("ethereum", "velora", VeloraProtocolEvm);
-server.registerProtocol("ethereum", "usdt0", Usdt0ProtocolEvm);
-server.registerProtocol("ethereum", "aave", AaveProtocolEvm);
-server.registerProtocol("ethereum", "moonpay", MoonPayProtocol, {
+server.registerProtocol('ethereum', 'velora', VeloraProtocolEvm)
+server.registerProtocol('ethereum', 'usdt0', Usdt0ProtocolEvm)
+server.registerProtocol('ethereum', 'aave', AaveProtocolEvm)
+server.registerProtocol('ethereum', 'moonpay', MoonPayProtocol, {
   secretKey: process.env.MOONPAY_SECRET_KEY,
-  apiKey: process.env.MOONPAY_API_KEY,
-});
+  apiKey: process.env.MOONPAY_API_KEY
+})
 
 // Register the corresponding tools
 server.registerTools([
@@ -331,31 +309,30 @@ server.registerTools([
   ...SWAP_TOOLS,
   ...BRIDGE_TOOLS,
   ...LENDING_TOOLS,
-  ...FIAT_TOOLS,
-]);
+  ...FIAT_TOOLS
+])
 ```
-
 {% endcode %}
 
----
+***
 
 ## Environment Variables
 
-| Variable              | Required | Description                                                                |
-| --------------------- | -------- | -------------------------------------------------------------------------- |
-| `WDK_SEED`            | Yes      | BIP-39 seed phrase for wallet derivation                                   |
-| `WDK_INDEXER_API_KEY` | No       | Enables `INDEXER_TOOLS` - [get a key](https://wdk-api.tether.io/register)  |
-| `MOONPAY_API_KEY`     | No       | Enables `FIAT_TOOLS` - [MoonPay Dashboard](https://dashboard.moonpay.com/) |
-| `MOONPAY_SECRET_KEY`  | No       | Required with `MOONPAY_API_KEY`                                            |
+| Variable | Required | Description |
+| --- | --- | --- |
+| `WDK_SEED` | Yes | BIP-39 seed phrase for wallet derivation |
+| `WDK_INDEXER_API_KEY` | No | Enables `INDEXER_TOOLS` - [get a key](https://wdk-api.tether.io/register) |
+| `MOONPAY_API_KEY` | No | Enables `FIAT_TOOLS` - [MoonPay Dashboard](https://dashboard.moonpay.com/) |
+| `MOONPAY_SECRET_KEY` | No | Required with `MOONPAY_API_KEY` |
 
----
+***
 
 ## Next Steps
 
-- [**Configuration**](configuration.md) - Wallets, tokens, protocols, custom tools, and security
-- [**API Reference**](api-reference.md) - All 35 built-in MCP tools with parameters and schemas
+* [**Configuration**](configuration.md) - Wallets, tokens, protocols, custom tools, and security
+* [**API Reference**](api-reference.md) - All 35 built-in MCP tools with parameters and schemas
 
----
+***
 
 ## Need Help?
 
