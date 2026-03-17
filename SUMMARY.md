@@ -22,6 +22,7 @@
   * [Get Started](ai/mcp-toolkit/get-started.md)
   * [Configuration](ai/mcp-toolkit/configuration.md)
   * [API Reference](ai/mcp-toolkit/api-reference.md)
+  * [LangChain Integration](ai/mcp-toolkit/langchain.md)
 * [Agent Skills](ai/agent-skills.md)
 * [OpenClaw](ai/openclaw.md)
 * [x402](ai/x402.md)

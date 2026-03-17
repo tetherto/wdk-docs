@@ -107,6 +107,18 @@ You can register **any** blockchain name - the `CHAINS` constants are for conven
 				<a href="./api-reference.md">api-reference.md</a>
 			</td>
 		</tr>
+		<tr>
+			<td>
+				<i class="fa-link">:link:</i>
+			</td>
+			<td>
+				<strong>LangChain Integration</strong>
+			</td>
+			<td>Use WDK tools in LangChain agents via the serve CLI</td>
+			<td>
+				<a href="./langchain.md">langchain.md</a>
+			</td>
+		</tr>
 	</tbody>
 </table>
 
