@@ -468,7 +468,7 @@ console.log('Signature valid:', isValid)
 ```
 
 ##### `dispose()`
-Closes any internal Electrum connection owned by this account. If a `client` was provided via config, the connection is left open (the caller manages its lifecycle).
+Closes any internal Electrum connection owned by this account. If a [`client`](/sdk/wallet-modules/wallet-btc/configuration#client) was provided via config, the connection is left open (the caller manages its lifecycle).
 
 **Returns:** `void`
 
