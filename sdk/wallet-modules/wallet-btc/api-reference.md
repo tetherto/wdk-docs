@@ -60,7 +60,7 @@ new WalletManagerBtc(seed, config)
 | `getAccount(index)` | Returns a wallet account at the specified index | `Promise<WalletAccountBtc>` |
 | `getAccountByPath(path)` | Returns a wallet account at the specified derivation path | `Promise<WalletAccountBtc>` |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` |
-| `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
+| `dispose()` | Disposes all wallet accounts, clearing private keys from memory and closing internal Electrum connections | `void` |
 
 
 ##### `getAccount(index)`
@@ -109,7 +109,7 @@ console.log('Fast fee rate:', feeRates.fast, 'sat/vB')
 ```
 
 ##### `dispose()`
-Disposes all wallet accounts and clears sensitive data from memory.
+Disposes all wallet accounts, clears sensitive data from memory, and closes internal Electrum connections.
 
 **Returns:** `void`
 
@@ -376,6 +376,7 @@ new WalletAccountReadOnlyBtc(address, config)
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<BtcTransactionReceipt \| null>` |
 | `getMaxSpendable()` | Returns the maximum spendable amount | `Promise<BtcMaxSpendableResult>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
+| `dispose()` | Closes any internal Electrum connection | `void` |
 
 
 ##### `getAddress()`
@@ -464,6 +465,16 @@ Verifies a message signature using the account's public key.
 ```javascript
 const isValid = await readOnlyAccount.verify('Hello Bitcoin!', signature)
 console.log('Signature valid:', isValid)
+```
+
+##### `dispose()`
+Closes any internal Electrum connection owned by this account. If a [`client`](/sdk/wallet-modules/wallet-btc/configuration#client) was provided via config, the connection is left open (the caller manages its lifecycle).
+
+**Returns:** `void`
+
+**Example:**
+```javascript
+readOnlyAccount.dispose()
 ```
 
 

@@ -24,6 +24,13 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### March 12, 2026
+
+**Changes**
+- **wallet-btc** ([v1.0.0-beta.6](https://github.com/tetherto/wdk-wallet-btc/releases/tag/v1.0.0-beta.6)): Added `dispose()` method to [`WalletAccountReadOnlyBtc`](../sdk/wallet-modules/wallet-btc/api-reference.md#walletaccountreadonlybtc) for closing internal Electrum connections. Security dependency updates.
+
+---
+
 ### March 6, 2026
 
 **Changes**
