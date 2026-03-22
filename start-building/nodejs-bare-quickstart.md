@@ -114,19 +114,9 @@ import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
 import WalletManagerTron from '@tetherto/wdk-wallet-tron'
 import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
-async function main() {
-  console.log('Starting WDK App...')
-  
-  try {
-    // Your code will go here
-  } catch (error) {
-    console.error('Application error:', error.message)
-    process.exit(1)
-  }
-}
+console.log('Starting WDK App...')
 
-// Run the application
-main()
+// Your code will go here
 ```
 {% endcode %}
 
@@ -134,12 +124,8 @@ Now, add the following code to generate a seed phrase:
 
 {% code title="app.js" lineNumbers="true" %}
 ```typescript
-  try {
-    const seedPhrase = WDK.getRandomSeedPhrase()
-    console.log('Generated seed phrase:', seedPhrase)
-  } catch (error) {
-    console.error('Application error:', error.message)
-  }
+const seedPhrase = WDK.getRandomSeedPhrase()
+console.log('Generated seed phrase:', seedPhrase)
 ```
 {% endcode %}
 
@@ -221,61 +207,49 @@ import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
 import WalletManagerTron from '@tetherto/wdk-wallet-tron'
 import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
-async function main() {
-  console.log('Starting WDK App...')
-  
-  try {
-    const seedPhrase = WDK.getRandomSeedPhrase()
-    console.log('Generated seed phrase:', seedPhrase)
+console.log('Starting WDK App...')
 
-    console.log('Registering wallets...')   
+const seedPhrase = WDK.getRandomSeedPhrase()
+console.log('Generated seed phrase:', seedPhrase)
 
-    const wdkWithWallets = new WDK(seedPhrase)
-      .registerWallet('ethereum', WalletManagerEvm, {
-        provider: 'https://eth.drpc.org'
-      })
-      .registerWallet('tron', WalletManagerTron, {
-        provider: 'https://api.trongrid.io'
-      })
-      .registerWallet('bitcoin', WalletManagerBtc, {
-        network: 'mainnet',
-        host: 'electrum.blockstream.info',
-        port: 50001
-      })
+console.log('Registering wallets...')
 
-    console.log('Wallets registered for Ethereum, TRON, and Bitcoin')
+const wdkWithWallets = new WDK(seedPhrase)
+  .registerWallet('ethereum', WalletManagerEvm, {
+    provider: 'https://eth.drpc.org'
+  })
+  .registerWallet('tron', WalletManagerTron, {
+    provider: 'https://api.trongrid.io'
+  })
+  .registerWallet('bitcoin', WalletManagerBtc, {
+    network: 'mainnet',
+    host: 'electrum.blockstream.info',
+    port: 50001
+  })
 
-    const accounts = {
-      ethereum: await wdkWithWallets.getAccount('ethereum', 0),
-      tron: await wdkWithWallets.getAccount('tron', 0),
-      bitcoin: await wdkWithWallets.getAccount('bitcoin', 0)
-    }
+console.log('Wallets registered for Ethereum, TRON, and Bitcoin')
 
-    console.log('Resolving addresses:')
-
-    for (const [chain, account] of Object.entries(accounts)) {
-      const address = await account.getAddress()
-      console.log(`   ${chain.toUpperCase()}: ${address}`)
-    }
-
-    console.log('Checking balances...')
-
-    for (const [chain, account] of Object.entries(accounts)) {
-        const balance = await account.getBalance()
-        console.log(`   ${chain.toUpperCase()}: ${balance.toString()} units`)
-    }
-
-    console.log('Application completed successfully!')
-    process.exit(0)
-
-  } catch (error) {
-    console.error('Application error:', error.message)
-    process.exit(1)
-  }
+const accounts = {
+  ethereum: await wdkWithWallets.getAccount('ethereum', 0),
+  tron: await wdkWithWallets.getAccount('tron', 0),
+  bitcoin: await wdkWithWallets.getAccount('bitcoin', 0)
 }
 
-// Run the application
-main()
+console.log('Resolving addresses:')
+
+for (const [chain, account] of Object.entries(accounts)) {
+  const address = await account.getAddress()
+  console.log(`   ${chain.toUpperCase()}: ${address}`)
+}
+
+console.log('Checking balances...')
+
+for (const [chain, account] of Object.entries(accounts)) {
+  const balance = await account.getBalance()
+  console.log(`   ${chain.toUpperCase()}: ${balance.toString()} units`)
+}
+
+console.log('Application completed successfully!')
 ```
 {% endcode %}
 
