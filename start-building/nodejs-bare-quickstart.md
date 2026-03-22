@@ -116,7 +116,12 @@ import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
 console.log('Starting WDK App...')
 
-// Your code will go here
+try {
+  // Your code will go here
+} catch (error) {
+  console.error('Application error:', error.message)
+  process.exit(1)
+}
 ```
 {% endcode %}
 
@@ -124,8 +129,13 @@ Now, add the following code to generate a seed phrase:
 
 {% code title="app.js" lineNumbers="true" %}
 ```typescript
-const seedPhrase = WDK.getRandomSeedPhrase()
-console.log('Generated seed phrase:', seedPhrase)
+try {
+  const seedPhrase = WDK.getRandomSeedPhrase()
+  console.log('Generated seed phrase:', seedPhrase)
+} catch (error) {
+  console.error('Application error:', error.message)
+  process.exit(1)
+}
 ```
 {% endcode %}
 
@@ -209,47 +219,52 @@ import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
 console.log('Starting WDK App...')
 
-const seedPhrase = WDK.getRandomSeedPhrase()
-console.log('Generated seed phrase:', seedPhrase)
+try {
+  const seedPhrase = WDK.getRandomSeedPhrase()
+  console.log('Generated seed phrase:', seedPhrase)
 
-console.log('Registering wallets...')
+  console.log('Registering wallets...')
 
-const wdkWithWallets = new WDK(seedPhrase)
-  .registerWallet('ethereum', WalletManagerEvm, {
-    provider: 'https://eth.drpc.org'
-  })
-  .registerWallet('tron', WalletManagerTron, {
-    provider: 'https://api.trongrid.io'
-  })
-  .registerWallet('bitcoin', WalletManagerBtc, {
-    network: 'mainnet',
-    host: 'electrum.blockstream.info',
-    port: 50001
-  })
+  const wdkWithWallets = new WDK(seedPhrase)
+    .registerWallet('ethereum', WalletManagerEvm, {
+      provider: 'https://eth.drpc.org'
+    })
+    .registerWallet('tron', WalletManagerTron, {
+      provider: 'https://api.trongrid.io'
+    })
+    .registerWallet('bitcoin', WalletManagerBtc, {
+      network: 'mainnet',
+      host: 'electrum.blockstream.info',
+      port: 50001
+    })
 
-console.log('Wallets registered for Ethereum, TRON, and Bitcoin')
+  console.log('Wallets registered for Ethereum, TRON, and Bitcoin')
 
-const accounts = {
-  ethereum: await wdkWithWallets.getAccount('ethereum', 0),
-  tron: await wdkWithWallets.getAccount('tron', 0),
-  bitcoin: await wdkWithWallets.getAccount('bitcoin', 0)
+  const accounts = {
+    ethereum: await wdkWithWallets.getAccount('ethereum', 0),
+    tron: await wdkWithWallets.getAccount('tron', 0),
+    bitcoin: await wdkWithWallets.getAccount('bitcoin', 0)
+  }
+
+  console.log('Resolving addresses:')
+
+  for (const [chain, account] of Object.entries(accounts)) {
+    const address = await account.getAddress()
+    console.log(`   ${chain.toUpperCase()}: ${address}`)
+  }
+
+  console.log('Checking balances...')
+
+  for (const [chain, account] of Object.entries(accounts)) {
+    const balance = await account.getBalance()
+    console.log(`   ${chain.toUpperCase()}: ${balance.toString()} units`)
+  }
+
+  console.log('Application completed successfully!')
+} catch (error) {
+  console.error('Application error:', error.message)
+  process.exit(1)
 }
-
-console.log('Resolving addresses:')
-
-for (const [chain, account] of Object.entries(accounts)) {
-  const address = await account.getAddress()
-  console.log(`   ${chain.toUpperCase()}: ${address}`)
-}
-
-console.log('Checking balances...')
-
-for (const [chain, account] of Object.entries(accounts)) {
-  const balance = await account.getBalance()
-  console.log(`   ${chain.toUpperCase()}: ${balance.toString()} units`)
-}
-
-console.log('Application completed successfully!')
 ```
 {% endcode %}
 
