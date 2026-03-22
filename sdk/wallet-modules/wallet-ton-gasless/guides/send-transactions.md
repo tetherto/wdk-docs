@@ -19,7 +19,7 @@ layout:
 
 # Send TON
 
-This guide explains how to send native TON transactions. Native TON sends are not gasless; for gasless Jetton token transfers, see [Transfer Jetton Tokens](./transfer-tokens.md).
+This guide explains how to [send native TON](#send-native-ton) and [use dynamic fee rates](#use-dynamic-fee-rates). Native TON sends are not gasless; for gasless Jetton token transfers, see [Transfer Jetton Tokens](./transfer-tokens.md).
 
 {% hint style="info" %}
 On TON, values are expressed in nanotons (1 TON = 10^9 nanotons).

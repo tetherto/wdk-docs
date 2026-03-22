@@ -19,7 +19,7 @@ layout:
 
 # Handle Errors
 
-This guide covers best practices for handling transaction errors, managing fee limits, and cleaning up sensitive data from memory.
+This guide covers how to [handle transaction errors](#handle-transaction-errors) and [handle token transfer errors](#handle-token-transfer-errors), plus [best practices](#best-practices) for fee management and memory cleanup.
 
 ## Handle Transaction Errors
 
@@ -71,7 +71,9 @@ try {
 ```
 {% endcode %}
 
-## Manage Fee Limits
+## Best Practices
+
+### Manage Fee Limits
 
 Set `transferMaxFee` when creating the wallet to prevent transactions from exceeding a maximum cost. You can retrieve current network rates using [`wallet.getFeeRates()`](../api-reference.md#getfeerates):
 
@@ -83,7 +85,7 @@ console.log('Fast fee rate:', feeRates.fast, 'sun')
 ```
 {% endcode %}
 
-## Dispose of Sensitive Data
+### Dispose of Sensitive Data
 
 Call [`dispose()`](../api-reference.md#dispose) on accounts and wallet managers to clear private keys and sensitive data from memory when they are no longer needed:
 

@@ -19,7 +19,7 @@ layout:
 
 # Sign and Verify Messages
 
-This guide explains how to sign arbitrary messages with an owned account and verify signatures.
+This guide explains how to [sign messages](#sign-a-message) with an owned account and [verify signatures](#verify-a-signature).
 
 ## Sign a Message
 

@@ -19,7 +19,7 @@ layout:
 
 # Check Balances
 
-This guide explains how to check native TON and Jetton token balances for both owned and read-only accounts.
+This guide explains how to check [native TON balances](#native-ton-balance), [Jetton token balances](#jetton-token-balance), and [read-only account balances](#read-only-account-balances).
 
 ## Native TON Balance
 

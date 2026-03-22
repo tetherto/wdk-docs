@@ -19,7 +19,7 @@ layout:
 
 # Send TRX
 
-This guide explains how to send native TRX, estimate transaction fees, and use dynamic fee rates.
+This guide explains how to [send native TRX](#send-native-trx), [estimate transaction fees](#estimate-transaction-fees), and [use dynamic fee rates](#use-dynamic-fee-rates).
 
 {% hint style="info" %}
 On Tron, values are expressed in sun (1 TRX = 1,000,000 sun).

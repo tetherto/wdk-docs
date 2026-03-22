@@ -19,7 +19,7 @@ layout:
 
 # Manage Accounts
 
-This guide explains how to retrieve multiple accounts from your gasless TON wallet and use custom derivation paths.
+This guide explains how to [retrieve accounts by index](#retrieve-accounts-by-index), [use custom derivation paths](#retrieve-account-by-custom-derivation-path), and [iterate over multiple accounts](#iterate-over-multiple-accounts).
 
 ## Retrieve Accounts by Index
 

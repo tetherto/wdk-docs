@@ -19,7 +19,7 @@ layout:
 
 # Handle Errors
 
-This guide covers best practices for handling transaction errors, managing fee limits, and cleaning up sensitive data from memory in gasless TON wallets.
+This guide covers how to [handle gasless transfer errors](#handle-gasless-transfer-errors) and [handle native TON transaction errors](#handle-native-ton-transaction-errors), plus [best practices](#best-practices) for fee management and memory cleanup.
 
 ## Handle Gasless Transfer Errors
 
@@ -52,7 +52,7 @@ try {
 
 ## Handle Native TON Transaction Errors
 
-Native TON sends via [`account.sendTransaction()`](../api-reference.md#sendtransaction-tx) can fail for standard reasons:
+Native TON transactions sent via [`account.sendTransaction()`](../api-reference.md#sendtransaction-tx) can fail for standard reasons:
 
 {% code title="Transaction Error Handling" lineNumbers="true" %}
 ```javascript
@@ -72,7 +72,9 @@ try {
 ```
 {% endcode %}
 
-## Manage Fee Limits
+## Best Practices
+
+### Manage Fee Limits
 
 Set `transferMaxFee` when creating the wallet to prevent gasless transfers from exceeding a maximum cost. You can retrieve current network rates using [`wallet.getFeeRates()`](../api-reference.md#getfeerates):
 
@@ -84,7 +86,7 @@ console.log('Fast fee rate:', feeRates.fast, 'nanotons')
 ```
 {% endcode %}
 
-## Dispose of Sensitive Data
+### Dispose of Sensitive Data
 
 Call [`dispose()`](../api-reference.md#dispose) on accounts and wallet managers to clear private keys and sensitive data from memory when they are no longer needed:
 

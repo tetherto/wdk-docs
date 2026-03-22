@@ -19,7 +19,7 @@ layout:
 
 # Send TRX
 
-This guide explains how to send native TRX transactions. Native TRX sends are not gas-free; for gas-free TRC20 token transfers, see [Transfer TRC20 Tokens](./transfer-tokens.md).
+This guide explains how to [send native TRX](#send-native-trx), [estimate transaction fees](#estimate-transaction-fees), and [use dynamic fee rates](#use-dynamic-fee-rates). Native TRX sends are not gas-free; for gas-free TRC20 token transfers, see [Transfer TRC20 Tokens](./transfer-tokens.md).
 
 {% hint style="info" %}
 On Tron, values are expressed in sun (1 TRX = 1,000,000 sun).

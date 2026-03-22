@@ -19,7 +19,7 @@ layout:
 
 # Manage Accounts
 
-This guide explains how to retrieve multiple accounts from your gas-free Tron wallet and use custom derivation paths.
+This guide explains how to [retrieve accounts by index](#retrieve-accounts-by-index), [use custom derivation paths](#retrieve-account-by-custom-derivation-path), and [iterate over multiple accounts](#iterate-over-multiple-accounts).
 
 ## Retrieve Accounts by Index
 
@@ -51,7 +51,7 @@ console.log('Custom account address:', customAddress)
 
 ## Iterate Over Multiple Accounts
 
-You can loop through multiple accounts using [`wallet.getAccount()`](../api-reference.md#getaccount-index) to inspect addresses and balances in bulk:
+You can iterate through multiple accounts using [`wallet.getAccount()`](../api-reference.md#getaccount-index) to inspect addresses and balances in bulk:
 
 {% code title="Multi-Account Iteration" lineNumbers="true" %}
 ```javascript

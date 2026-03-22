@@ -19,7 +19,7 @@ layout:
 
 # Send TON
 
-This guide explains how to send native TON, estimate transaction fees, and use dynamic fee rates.
+This guide explains how to [send native TON](#send-native-ton), [estimate transaction fees](#estimate-transaction-fees), and [use dynamic fee rates](#use-dynamic-fee-rates).
 
 {% hint style="info" %}
 On TON, values are expressed in nanotons (1 TON = 10^9 nanotons). Transactions support an optional `bounceable` parameter specific to the TON network.

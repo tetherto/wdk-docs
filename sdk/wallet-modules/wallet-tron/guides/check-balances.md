@@ -19,7 +19,7 @@ layout:
 
 # Check Balances
 
-This guide explains how to check native TRX and TRC20 token balances for both owned and read-only accounts.
+This guide explains how to check [native TRX balances](#native-trx-balance), [TRC20 token balances](#trc20-token-balance), and [read-only account balances](#read-only-account-balances).
 
 ## Native TRX Balance
 

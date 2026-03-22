@@ -19,7 +19,7 @@ layout:
 
 # Transfer Jetton Tokens
 
-This guide explains how to transfer Jetton tokens using gasless transactions, where fees are paid in a configured paymaster token instead of native TON.
+This guide explains how to [transfer Jetton tokens gaslessly](#transfer-tokens-gasless), [override paymaster configuration](#override-paymaster-configuration), [estimate transfer fees](#estimate-transfer-fees), and [validate inputs before executing](#transfer-with-validation).
 
 ## Transfer Tokens (Gasless)
 
@@ -75,7 +75,12 @@ console.log('Transfer fee estimate:', quote.fee, 'paymaster token units')
 
 ## Transfer with Validation
 
-Validate balances before transferring. Use [`account.getTokenBalance()`](../api-reference.md#gettokenbalance-tokenaddress) to check Jetton balance and [`account.getPaymasterTokenBalance()`](../api-reference.md#getpaymastertokenbalance) to verify sufficient paymaster funds:
+Validate balances before transferring:
+
+1. Use [`account.getTokenBalance()`](../api-reference.md#gettokenbalance-tokenaddress) to check Jetton balance.
+2. Use [`account.getPaymasterTokenBalance()`](../api-reference.md#getpaymastertokenbalance) to verify sufficient paymaster funds.
+3. Use [`account.quoteTransfer()`](../api-reference.md#quotetransfer-options) to estimate fees.
+4. Execute the transfer with [`account.transfer()`](../api-reference.md#transfer-options-config):
 
 {% code title="Validated Gasless Transfer" lineNumbers="true" %}
 ```javascript

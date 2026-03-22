@@ -19,7 +19,7 @@ layout:
 
 # Get Started
 
-This guide explains how to install the [`@tetherto/wdk-wallet-ton-gasless`](https://www.npmjs.com/package/@tetherto/wdk-wallet-ton-gasless) package and create a new gasless wallet instance.
+This guide explains how to [install the package](#1-install-the-package), [create a gasless wallet](#2-create-a-gasless-wallet), and [get your first account](#3-get-your-first-account).
 
 ## 1. Install the Package
 
@@ -79,6 +79,8 @@ const address = await account.getAddress()
 console.log('Wallet address:', address)
 ```
 {% endcode %}
+
+## 4. (optional) Convert to Read-Only
 
 You can convert an owned account to a read-only account using [`account.toReadOnlyAccount()`](../api-reference.md#toreadonlyaccount):
 

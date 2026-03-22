@@ -19,7 +19,7 @@ layout:
 
 # Check Balances
 
-This guide explains how to check native TON, Jetton, and paymaster token balances for both owned and read-only accounts.
+This guide explains how to check [native TON balances](#native-ton-balance), [Jetton token balances](#jetton-token-balance), [paymaster token balances](#paymaster-token-balance), and [read-only account balances](#read-only-account-balances).
 
 ## Native TON Balance
 
@@ -56,7 +56,7 @@ console.log('Paymaster Jetton balance:', paymasterBalance)
 {% endcode %}
 
 {% hint style="info" %}
-The paymaster token balance determines how many gasless transfers you can execute. Ensure sufficient paymaster token balance before initiating gasless transfers.
+The paymaster token balance determines how many gasless transfers you can execute. Ensure the paymaster has sufficient token balance before initiating gasless transfers.
 {% endhint %}
 
 ## Read-Only Account Balances

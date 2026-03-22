@@ -19,7 +19,7 @@ layout:
 
 # Transfer TRC20 Tokens
 
-This guide explains how to transfer TRC20 tokens (such as USD₮) using the gas-free service, estimate fees, and validate inputs before executing.
+This guide explains how to [transfer TRC20 tokens gas-free](#transfer-tokens-gas-free), [override the fee limit](#override-fee-limit), [estimate transfer fees](#estimate-transfer-fees), and [validate inputs before executing](#transfer-with-validation).
 
 ## Transfer Tokens (Gas-Free)
 
@@ -39,7 +39,7 @@ console.log('Transfer fee:', transferResult.fee, 'token units')
 
 ## Override Fee Limit
 
-You can set a maximum fee for a specific transfer by passing a second configuration argument to [`account.transfer()`](../api-reference.md#transfer-options-config):
+You can set a maximum fee for a specific transfer by passing a second configuration object specifying a `transferMaxFee` to [`account.transfer()`](../api-reference.md#transfer-options-config):
 
 {% code title="Transfer with Fee Limit" lineNumbers="true" %}
 ```javascript
@@ -72,7 +72,11 @@ console.log('Transfer fee estimate:', transferQuote.fee, 'token units')
 
 ## Transfer with Validation
 
-Validate addresses and check balances before transferring. Use [`account.getTokenBalance()`](../api-reference.md#gettokenbalance-tokenaddress) to verify sufficient funds, then [`account.quoteTransfer()`](../api-reference.md#quotetransfer-options) to confirm fees before executing with [`account.transfer()`](../api-reference.md#transfer-options-config):
+Validate addresses and check balances before transferring:
+
+1. Use [`account.getTokenBalance()`](../api-reference.md#gettokenbalance-tokenaddress) to verify sufficient funds.
+2. Use [`account.quoteTransfer()`](../api-reference.md#quotetransfer-options) to confirm fees.
+3. Execute the transfer with [`account.transfer()`](../api-reference.md#transfer-options-config):
 
 {% code title="Validated Gas-Free Transfer" lineNumbers="true" %}
 ```javascript

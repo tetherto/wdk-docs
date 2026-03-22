@@ -19,7 +19,7 @@ layout:
 
 # Get Started
 
-This guide explains how to install the [`@tetherto/wdk-wallet-tron-gasfree`](https://www.npmjs.com/package/@tetherto/wdk-wallet-tron-gasfree) package and create a new gas-free wallet instance.
+This guide explains how to [install the package](#1-install-the-package), [create a gas-free wallet](#2-create-a-gas-free-wallet), and [get your first account](#3-get-your-first-account).
 
 ## 1. Install the Package
 
@@ -75,6 +75,8 @@ const address = await account.getAddress()
 console.log('Gas-free account address:', address)
 ```
 {% endcode %}
+
+## 4. (optional) Convert to Read-Only
 
 You can convert an owned account to a read-only account using [`account.toReadOnlyAccount()`](../api-reference.md#toreadonlyaccount):
 

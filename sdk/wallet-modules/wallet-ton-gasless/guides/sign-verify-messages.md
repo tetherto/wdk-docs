@@ -19,7 +19,7 @@ layout:
 
 # Sign and Verify Messages
 
-This guide explains how to sign arbitrary messages with an owned account and verify signatures.
+This guide explains how to [sign messages](#sign-a-message) with an owned account and [verify signatures](#verify-a-signature).
 
 ## Sign a Message
 
@@ -44,9 +44,30 @@ console.log('Signature valid:', isValid)
 ```
 {% endcode %}
 
-{% hint style="info" %}
-You can also create a [`WalletAccountReadOnlyTonGasless`](../api-reference.md#walletaccountreadonlytongasless) from any public key to verify signatures without access to the private key.
-{% endhint %}
+You can also create a [`WalletAccountReadOnlyTonGasless`](../api-reference.md#walletaccountreadonlytongasless) from any public key to verify signatures without access to the private key:
+
+{% code title="Verify with Read-Only Account" lineNumbers="true" %}
+```javascript
+import { WalletAccountReadOnlyTonGasless } from '@tetherto/wdk-wallet-ton-gasless'
+
+const readOnlyAccount = new WalletAccountReadOnlyTonGasless(publicKey, {
+  tonClient: {
+    url: 'https://toncenter.com/api/v3',
+    secretKey: 'your-api-key'
+  },
+  tonApiClient: {
+    url: 'https://tonapi.io/v2',
+    secretKey: 'your-ton-api-key'
+  },
+  paymasterToken: {
+    address: 'EQ...'
+  }
+})
+
+const isValid = await readOnlyAccount.verify(message, signature)
+console.log('Signature valid:', isValid)
+```
+{% endcode %}
 
 ## Next Steps
 
