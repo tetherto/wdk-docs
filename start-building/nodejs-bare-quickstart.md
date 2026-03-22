@@ -261,6 +261,7 @@ try {
   }
 
   console.log('Application completed successfully!')
+  process.exit(0)
 } catch (error) {
   console.error('Application error:', error.message)
   process.exit(1)
