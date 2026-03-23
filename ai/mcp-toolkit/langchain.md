@@ -66,15 +66,15 @@ The command has built-in definitions for 13 chains and 4 protocol modules. When 
 
 | Module | Registers | Default |
 | --- | --- | --- |
-| `@tetherto/wdk-wallet-evm` | Ethereum, Arbitrum, Polygon, Optimism, Base, Avalanche, BNB, Plasma, Spark | Ethereum + Arbitrum enabled |
-| `@tetherto/wdk-wallet-btc` | Bitcoin | Enabled |
-| `@tetherto/wdk-wallet-sol` | Solana | Not enabled by default |
-| `@tetherto/wdk-wallet-ton` | TON | Not enabled by default |
-| `@tetherto/wdk-wallet-tron` | Tron | Not enabled by default |
-| `@tetherto/wdk-protocol-swap-velora-evm` | Swap tools (Ethereum, Arbitrum) | -- |
-| `@tetherto/wdk-protocol-bridge-usdt0-evm` | Bridge tools (Ethereum, Arbitrum) | -- |
-| `@tetherto/wdk-protocol-lending-aave-evm` | Lending tools (Ethereum) | -- |
-| `@tetherto/wdk-protocol-fiat-moonpay` | Fiat tools (Ethereum) | Requires `MOONPAY_*` env vars |
+| [`@tetherto/wdk-wallet-evm`](https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm) | Ethereum, Arbitrum, Polygon, Optimism, Base, Avalanche, BNB, Plasma, Spark | Ethereum + Arbitrum enabled |
+| [`@tetherto/wdk-wallet-btc`](https://docs.wdk.tether.io/sdk/wallet-modules/wallet-btc) | Bitcoin | Enabled |
+| [`@tetherto/wdk-wallet-solana`](https://docs.wdk.tether.io/sdk/wallet-modules/wallet-solana) | Solana | Not enabled by default |
+| [`@tetherto/wdk-wallet-ton`](https://docs.wdk.tether.io/sdk/wallet-modules/wallet-ton) | TON | Not enabled by default |
+| [`@tetherto/wdk-wallet-tron`](https://docs.wdk.tether.io/sdk/wallet-modules/wallet-tron) | Tron | Not enabled by default |
+| [`@tetherto/wdk-protocol-swap-velora-evm`](https://docs.wdk.tether.io/sdk/swap-modules/swap-velora-evm) | Swap tools (Ethereum, Arbitrum) | -- |
+| [`@tetherto/wdk-protocol-bridge-usdt0-evm`](https://docs.wdk.tether.io/sdk/bridge-modules/bridge-usdt0-evm) | Bridge tools (Ethereum, Arbitrum) | -- |
+| [`@tetherto/wdk-protocol-lending-aave-evm`](https://docs.wdk.tether.io/sdk/lending-modules/lending-aave-evm) | Lending tools (Ethereum) | -- |
+| [`@tetherto/wdk-protocol-fiat-moonpay`](https://docs.wdk.tether.io/sdk/fiat-modules/fiat-moonpay) | Fiat tools (Ethereum) | Requires `MOONPAY_*` env vars |
 
 {% hint style="info" %}
 Missing packages are silently skipped. Install only the modules you need and `serve` will pick them up. For chains or protocols **not** in the built-in registry, use a [custom config file](#custom-config-file).
