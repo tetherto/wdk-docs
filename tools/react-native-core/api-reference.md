@@ -32,6 +32,12 @@ layout:
 | [`BaseAsset`](#baseasset) | Class | Default `IAsset` implementation |
 | [`validateMnemonic`](#validatemnemonic) | Utility | Validate BIP39 mnemonic phrases |
 | [`balanceQueryKeys`](#balancequerykeys) | Utility | TanStack Query key factory |
+| `WdkAppProviderProps` | Type | Props for `WdkAppProvider` |
+| `WdkAppContextValue` | Type | Return type of `useWdkApp` |
+| `UseAccountParams` | Type | Parameters for `useAccount` |
+| `UseAccountReturn` | Type | Return type of `useAccount` |
+| `UseAddressesReturn` | Type | Return type of `useAddresses` |
+| `UseWalletManagerResult` | Type | Return type of `useWalletManager` |
 
 ---
 
@@ -60,10 +66,6 @@ import { WdkAppProvider } from '@tetherto/wdk-react-native-core'
 import { bundle } from './.wdk'
 
 const wdkConfigs = {
-  indexer: {
-    url: 'https://wdk-api.tether.io',
-    apiKey: 'YOUR_API_KEY',
-  },
   networks: {
     ethereum: {
       blockchain: 'ethereum',
@@ -264,7 +266,7 @@ Extends `UseAccountResponse`:
 | `success` | `boolean` | Whether the transaction succeeded |
 | `hash` | `string` | Transaction hash |
 | `fee` | `string` | Fee paid |
-| `error` | `string` | Error message (only if `success` is `false`) |
+| `error` | `string?` | Error message (only if `success` is `false`) |
 
 ### Example
 
@@ -415,6 +417,13 @@ Hook to fetch a single asset balance using TanStack Query. The network is derive
 
 A composite result combining address loading state with TanStack Query state:
 
+```typescript
+type UseBalanceResult = Omit<UseQueryResult<BalanceFetchResult | undefined, Error>, 'isLoading' | 'error'> & {
+  isLoading: boolean
+  error: Error | null
+}
+```
+
 | Property | Type | Description |
 |----------|------|-------------|
 | `data` | `BalanceFetchResult \| undefined` | Balance result |
@@ -471,6 +480,13 @@ Hook to fetch balances for multiple assets in a single query. Automatically load
 
 Same shape as `UseBalanceResult` but `data` is `BalanceFetchResult[]`.
 
+```typescript
+type UseBalancesForWalletResult = Omit<UseQueryResult<BalanceFetchResult[], Error>, 'isLoading' | 'error'> & {
+  isLoading: boolean
+  error: Error | null
+}
+```
+
 ### Example
 
 ```tsx
@@ -515,10 +531,10 @@ Call `mutate(params)` with:
 | Field | Type | Description |
 |-------|------|-------------|
 | `accountIndex` | `number` | Account index |
-| `network` | `string` | Network (required for `'token'` and `'network'` types) |
-| `assetId` | `string` | Asset ID (required for `'token'` type) |
-| `type` | `'token' \| 'wallet' \| 'network' \| 'all'` | Refresh scope (default: `'token'`) |
-| `walletId` | `string` | Optional wallet ID override |
+| `network` | `string?` | Network (required for `'token'` and `'network'` types) |
+| `assetId` | `string?` | Asset ID (required for `'token'` type) |
+| `type` | `'token' \| 'wallet' \| 'network' \| 'all'?` | Refresh scope (default: `'token'`) |
+| `walletId` | `string?` | Wallet ID override (defaults to active wallet) |
 
 ### Example
 
@@ -606,26 +622,39 @@ interface IAsset {
 
 ### WdkConfigs
 
-Root configuration object passed to `WdkAppProvider`. Defines network and protocol configurations for the WDK worklet.
+Root configuration object passed to `WdkAppProvider`. Defines network and protocol configurations for the WDK worklet. Extends `WdkWorkletConfig` from `@tetherto/pear-wrk-wdk`.
 
 ```typescript
-interface WdkConfigs<TNetwork = Record<string, unknown>, TProtocol = Record<string, unknown>> {
-  indexer: {
-    url: string
-    apiKey: string
-  }
+interface WdkConfigs<TNetwork = Record<string, unknown>, TProtocol = Record<string, unknown>> extends WdkWorkletConfig {
   networks: {
-    [blockchain: string]: {
-      blockchain: string
-      config: TNetwork
-    }
+    [blockchain: string]: WdkNetworkConfig<TNetwork>
   }
   protocols?: {
-    [protocolName: string]: {
-      protocol: string
-      config: TProtocol
-    }
+    [protocolName: string]: WdkProtocolConfig<TProtocol>
   }
+}
+```
+
+#### WdkNetworkConfig
+
+Wrapper around `NetworkConfig` with typed `config` field.
+
+```typescript
+interface WdkNetworkConfig<T = Record<string, unknown>> extends NetworkConfig {
+  blockchain: string
+  config: T
+}
+```
+
+#### WdkProtocolConfig
+
+Wrapper around `ProtocolConfig` with typed `config` field.
+
+```typescript
+interface WdkProtocolConfig<T = Record<string, unknown>> extends ProtocolConfig {
+  blockchain: string
+  protocolName: string
+  config: T
 }
 ```
 

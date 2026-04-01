@@ -264,10 +264,6 @@ Create a configuration file for your WDK setup (e.g., `src/config/wdk.ts`):
 import type { WdkConfigs } from '@tetherto/wdk-react-native-core'
 
 export const wdkConfigs: WdkConfigs = {
-  indexer: {
-    url: 'https://wdk-api.tether.io',
-    apiKey: 'YOUR_INDEXER_API_KEY',
-  },
   networks: {
     ethereum: {
       blockchain: 'ethereum',
@@ -288,10 +284,6 @@ export const wdkConfigs: WdkConfigs = {
   },
 }
 ```
-
-{% hint style="info" %}
-**Where do I get an Indexer API key?** The WDK Indexer is required for transaction history and balance indexing. Get your free API key from the [Indexer API setup guide](../tools/indexer-api/get-started.md).
-{% endhint %}
 
 {% hint style="info" %}
 This example uses **Sepolia testnet** with a free public RPC so you can start immediately without API keys. For production or mainnet configuration, see the [Chain Configuration Guide](../sdk/core-module/configuration.md).
