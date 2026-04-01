@@ -157,7 +157,9 @@ Local networks for development and testing:
 
 To test transactions without spending real assets, developers use "Testnets"—networks that mimic the main blockchain but use tokens with no monetary value. You can obtain these tokens for free from different publicly available "Faucets". Links to common "Faucets" are below.
 
-> **Important** The below faucets are for testnets. The USD₮ tokens and other tokens available at the links below are not real and do not entitle the holder to anything. In particular, they cannot be redeemed with Tether International, S.A. de C.V. ("Tether International") and are not Tether Tokens as described in [Tether International's Terms of Service](https://tether.to/en/legal). The USD₮ tokens available at the links below on various testnets are intended for testing WDK on the applicable testnet. The links below are links to third-party websites and are Third-Party Information as described in Tether Operations, S.A. de [C.V.'s Website Terms](https://tether.io/terms/).
+{% hint style="warning" %}
+The below faucets are for testnets. The USD₮ tokens and other tokens available at the links below are not real and do not entitle the holder to anything. In particular, they cannot be redeemed with Tether International, S.A. de C.V. ("Tether International") and are not Tether Tokens as described in [Tether International's Terms of Service](https://tether.to/en/legal). The USD₮ tokens available at the links below on various testnets are intended for testing WDK on the applicable testnet. The links below are links to third-party websites and are Third-Party Information as described in Tether Operations, S.A. de [C.V.'s Website Terms](https://tether.io/terms/).
+{% endhint %}
 
 #### Common Faucets
 *   **USD₮ Test Tokens (Sepolia)**: [Pimlico Faucet](https://dashboard.pimlico.io/test-erc20-faucet)
