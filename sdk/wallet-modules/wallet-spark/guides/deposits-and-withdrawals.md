@@ -19,7 +19,7 @@ layout:
 
 # Deposits and Withdrawals
 
-This guide explains how to [get a single-use deposit address](#get-a-single-use-deposit-address), [claim deposits](#claim-deposits), and [withdraw to Bitcoin layer 1](#withdraw-to-bitcoin-layer-1).
+This guide explains how to [get a single-use deposit address](#get-a-single-use-deposit-address), [claim deposits](#claim-deposits), [query static deposit addresses](#query-static-deposit-addresses), [query UTXOs for a deposit address](#query-utxos-for-a-deposit-address), and [withdraw to Bitcoin layer 1](#withdraw-to-bitcoin-layer-1).
 
 ## Get a Single-Use Deposit Address
 
@@ -67,8 +67,33 @@ console.log('Static deposit claimed:', staticLeaves)
 {% endcode %}
 
 {% hint style="info" %}
-You can list unused single-use addresses with [`account.getUnusedDepositAddresses()`](../api-reference.md#getunuseddepositaddresses).
+You can list unused single-use addresses with [`account.getUnusedDepositAddresses()`](../api-reference.md#getunuseddepositaddresses-options). The method returns a paginated result with `depositAddresses` and `offset` fields.
 {% endhint %}
+
+## Query Static Deposit Addresses
+
+You can list all existing static deposit addresses using [`account.getStaticDepositAddresses()`](../api-reference.md#getstaticdepositaddresses):
+
+{% code title="Query Static Deposit Addresses" lineNumbers="true" %}
+```javascript
+const addresses = await account.getStaticDepositAddresses()
+console.log('Static deposit addresses:', addresses)
+```
+{% endcode %}
+
+## Query UTXOs for a Deposit Address
+
+You can check confirmed UTXOs for a specific deposit address using [`account.getUtxosForDepositAddress()`](../api-reference.md#getutxosfordepositaddress-options):
+
+{% code title="Query UTXOs" lineNumbers="true" %}
+```javascript
+const result = await account.getUtxosForDepositAddress({
+  depositAddress: 'bc1q...'
+})
+console.log('Confirmed UTXOs:', result.utxos)
+console.log('Offset:', result.offset)
+```
+{% endcode %}
 
 ## Withdraw to Bitcoin Layer 1
 
@@ -94,15 +119,14 @@ You can initiate the withdrawal using [`account.withdraw()`](../api-reference.md
 ```javascript
 const withdrawal = await account.withdraw({
   onchainAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-  amountSats: 100000,
-  feeQuote: feeQuote
+  amountSats: 100000
 })
 console.log('Withdrawal request:', withdrawal)
 ```
 {% endcode %}
 
 {% hint style="info" %}
-[`withdraw()`](../api-reference.md#withdraw-options) uses `onchainAddress` and `amountSats`. Pass the object returned from [`quoteWithdraw()`](../api-reference.md#quotewithdraw-options) when the API expects `feeQuote`.
+[`withdraw()`](../api-reference.md#withdraw-options) accepts `onchainAddress` and `amountSats`. Run [`quoteWithdraw()`](../api-reference.md#quotewithdraw-options) first to understand the cooperative exit costs before initiating the withdrawal.
 {% endhint %}
 
 ## Next Steps

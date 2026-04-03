@@ -67,7 +67,7 @@ For development on **REGTEST**, you can request test funds from the [Lightspark 
 {% endhint %}
 
 {% hint style="info" %}
-The Spark wallet uses `@buildonspark/spark-sdk`. Network options are `MAINNET` or `REGTEST` only; there is no custom RPC provider option.
+The Spark wallet uses `@buildonspark/spark-sdk`. Network options are `MAINNET`, `SIGNET`, or `REGTEST`. There is no custom RPC provider option.
 {% endhint %}
 
 ## 3. Get Your First Account
