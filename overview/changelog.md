@@ -24,6 +24,20 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### April 3, 2026
+
+**Changes**
+- **wallet-spark** ([v1.0.0-beta.12](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.12)): [`WalletAccountReadOnlySpark`](../sdk/wallet-modules/wallet-spark/api-reference.md#walletaccountreadonlyspark) gained [`getTransfers()`](../sdk/wallet-modules/wallet-spark/api-reference.md#gettransfers-options), [`getUnusedDepositAddresses()`](../sdk/wallet-modules/wallet-spark/api-reference.md#getunuseddepositaddresses-options) (paginated return type), [`getStaticDepositAddresses()`](../sdk/wallet-modules/wallet-spark/api-reference.md#getstaticdepositaddresses), [`getUtxosForDepositAddress()`](../sdk/wallet-modules/wallet-spark/api-reference.md#getutxosfordepositaddress-options), and [`getSparkInvoices()`](../sdk/wallet-modules/wallet-spark/api-reference.md#getsparkinvoices-params) (new parameter type). Removed `sparkScanApiKey` config option and `SparkTransactionReceipt` type after dropping the `@sparkscan/api-node-sdk-client` dependency. [`getTransactionReceipt()`](../sdk/wallet-modules/wallet-spark/api-reference.md#gettransactionreceipt-hash) now returns `SparkTransfer` instead. Added [`getAccountByPath()`](../sdk/wallet-modules/wallet-spark/api-reference.md#getaccountbypath-path) to [`WalletManagerSpark`](../sdk/wallet-modules/wallet-spark/api-reference.md#walletmanagerspark). SIGNET network support documented. Dependency upgrades: `@buildonspark/spark-sdk` 0.7.3, `@buildonspark/bare` 0.0.53.
+
+---
+
+### March 12, 2026
+
+**Changes**
+- **wallet-btc** ([v1.0.0-beta.6](https://github.com/tetherto/wdk-wallet-btc/releases/tag/v1.0.0-beta.6)): Added `dispose()` method to [`WalletAccountReadOnlyBtc`](../sdk/wallet-modules/wallet-btc/api-reference.md#walletaccountreadonlybtc) for closing internal Electrum connections. Security dependency updates.
+
+---
+
 ### March 6, 2026
 
 **Changes**

@@ -20,6 +20,10 @@ layout:
 
 # Get Started
 
+{% hint style="info" %}
+**Building a LangChain agent?** The `serve` command provides zero-config MCP server startup -- no server script needed. See [LangChain Integration](langchain.md).
+{% endhint %}
+
 ## Setup Wizard
 
 The fastest way to get running. Clone the repository and let the wizard configure everything:

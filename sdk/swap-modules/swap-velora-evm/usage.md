@@ -18,217 +18,47 @@ layout:
     visible: false
 ---
 
-## Installation
+# Usage
 
-To install the `@tetherto/wdk-protocol-swap-velora-evm` package, run:
+The [@tetherto/wdk-protocol-swap-velora-evm](https://www.npmjs.com/package/@tetherto/wdk-protocol-swap-velora-evm) module routes ERC-20 swaps on EVM chains through Velora. Use the guides below for setup, execution, quotes, and error handling.
 
-```bash
-npm install @tetherto/wdk-protocol-swap-velora-evm
-```
 
-## Quick Start
-
-### Setting Up a Swap Service
-
-```javascript
-import VeloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
-import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
-
-// Create a wallet account first
-const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
-  provider: 'https://ethereum-rpc.publicnode.com'
-})
-
-// Create swap service
-const swapProtocol = new VeloraProtocolEvm(account, {
-  swapMaxFee: 200000000000000n // Optional: Max swap fee (wei)
-})
-```
-
-### Basic Swap Operation
-
-```javascript
-// Swap tokens via velora (USD₮ -> WETH)
-const result = await swapProtocol.swap({
-  tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USD₮
-  tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH
-  tokenInAmount: 1000000n // 1 USD₮ in base units (6 decimals)
-})
-
-console.log('Swap transaction hash:', result.hash)
-console.log('Total fee (wei):', result.fee)
-console.log('Tokens sold (base units):', result.tokenInAmount)
-console.log('Tokens bought (base units):', result.tokenOutAmount)
-```
-
-### Getting Swap Quotes
-
-```javascript
-// Get cost before swapping (USD₮ -> WETH)
-const quote = await swapProtocol.quoteSwap({
-  tokenIn: '0xdAC17F...ec7', // USD₮
-  tokenOut: '0xC02a...6Cc2', // WETH
-  tokenInAmount: 1000000n
-})
-
-console.log('Estimated fee (wei):', quote.fee)
-console.log('Tokens in (base units):', quote.tokenInAmount)
-console.log('Tokens out (base units):', quote.tokenOutAmount)
-```
-
-## Supported Networks
-
-### EVM Networks
-- **Ethereum**, **Polygon**, **Arbitrum**, and others supported by velora
-
-## Swap Operations
-
-### Standard EVM Account
-
-```javascript
-// Swap with standard EVM account
-const result = await swapProtocol.swap({
-  tokenIn: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH
-  tokenOut: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USD₮
-  tokenInAmount: 1000000000000000000n // 1 WETH (18 decimals)
-})
-
-console.log('Swap hash:', result.hash)
-console.log('Total fee (wei):', result.fee)
-console.log('Tokens sold:', result.tokenInAmount)
-console.log('Tokens bought:', result.tokenOutAmount)
-```
-
-### ERC‑4337 Smart Account
-
-```javascript
-import { WalletAccountEvmErc4337 } from '@tetherto/wdk-wallet-evm-erc-4337'
-
-const aa = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
-  chainId: 1,
-  provider: 'https://arb1.arbitrum.io/rpc',
-  bundlerUrl: 'YOUR_BUNDLER_URL',
-  paymasterUrl: 'YOUR_PAYMASTER_URL'
-})
-
-const swapAA = new VeloraProtocolEvm(aa, { swapMaxFee: 200000000000000n })
-
-const result = await swapAA.swap({
-  tokenIn: '0xdAC17F...ec7', // USD₮
-  tokenOut: '0xC02a...6Cc2', // WETH
-  tokenInAmount: 1000000n
-}, {
-  paymasterToken: 'USDT',
-  swapMaxFee: 200000000000000n
-})
-
-console.log('Swap hash:', result.hash)
-console.log('Total fee (wei):', result.fee)
-console.log('Tokens sold:', result.tokenInAmount)
-console.log('Tokens bought:', result.tokenOutAmount)
-```
-
-### Exact Output Swap
-
-```javascript
-// Receive an exact amount of output tokens (WETH)
-const result = await swapProtocol.swap({
-  tokenIn: '0xdAC17F...ec7',
-  tokenOut: '0xC02a...6Cc2',
-  tokenOutAmount: 500000000000000000n // 0.5 WETH
-})
-
-console.log('Swap hash:', result.hash)
-console.log('Tokens sold (base units):', result.tokenInAmount)
-console.log('Tokens bought (base units):', result.tokenOutAmount)
-```
-
-## Error Handling
-
-```javascript
-try {
-  const result = await swapProtocol.swap({
-    tokenIn: '0xTokenIn',
-    tokenOut: '0xBadToken',
-    tokenInAmount: 1000000n
-  })
-  console.log('Swap successful:', result.hash)
-} catch (error) {
-  console.error('Swap failed:', error.message)
-
-  if (error.message.includes('liquidity')) {
-    console.log('No route / insufficient liquidity for this pair')
-  }
-  if (error.message.includes('max fee')) {
-    console.log('Swap fee too high')
-  }
-  if (error.message.includes('read-only')) {
-    console.log('Read-only account cannot swap')
-  }
-}
-```
-
-## Complete Examples
-
-### Complete Swap Setup
-
-```javascript
-import VeloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
-import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
-
-async function setupSwap() {
-  // Create wallet account
-  const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
-    provider: 'https://ethereum-rpc.publicnode.com'
-  })
-
-  // Create swap service
-  const swapProtocol = new VeloraProtocolEvm(account, {
-    swapMaxFee: 200000000000000n
-  })
-
-  // Check account
-  const address = await account.getAddress()
-  const balance = await account.getBalance()
-  console.log('Account:', address)
-  console.log('Balance (wei):', balance)
-
-  return { account, swapProtocol }
-}
-```
-
-### Multiple Token Swaps
-
-```javascript
-async function swapMultipleTokens(swapProtocol) {
-  const swaps = [
-    { tokenIn: '0xdAC17F...ec7', tokenOut: '0xC02a...6Cc2', amount: 1000000n }, // USD₮ -> WETH
-    { tokenIn: '0xC02a...6Cc2', tokenOut: '0xdAC17F...ec7', amount: 200000000000000000n }, // WETH -> USD₮
-  ]
-
-  for (const s of swaps) {
-    try {
-      const quote = await swapProtocol.quoteSwap({
-        tokenIn: s.tokenIn,
-        tokenOut: s.tokenOut,
-        tokenInAmount: s.amount
-      })
-
-      console.log(`Swap ${s.tokenIn} → ${s.tokenOut}: fee ${quote.fee}, out ${quote.tokenOutAmount}`)
-
-      const result = await swapProtocol.swap({
-        tokenIn: s.tokenIn,
-        tokenOut: s.tokenOut,
-        tokenInAmount: s.amount
-      })
-
-      console.log('Tx hash:', result.hash)
-    } catch (e) {
-      console.error(`Swap ${s.tokenIn} → ${s.tokenOut} failed:`, e.message)
-    }
-  }
-}
-```
+<table data-card-size="large" data-view="cards">
+  <thead>
+    <tr>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th data-hidden data-card-target data-type="content-ref"></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><i class="fa-rocket">:rocket:</i></td>
+      <td><strong>Get Started</strong></td>
+      <td>Install the package, create VeloraProtocolEvm, and review supported networks.</td>
+      <td><a href="./guides/get-started.md">Get Started</a></td>
+    </tr>
+    <tr>
+      <td><i class="fa-exchange-alt">:exchange-alt:</i></td>
+      <td><strong>Execute Swaps</strong></td>
+      <td>Exact-input and exact-output swaps, including ERC-4337 smart accounts.</td>
+      <td><a href="./guides/execute-swaps.md">Execute Swaps</a></td>
+    </tr>
+    <tr>
+      <td><i class="fa-calculator">:calculator:</i></td>
+      <td><strong>Get Swap Quotes</strong></td>
+      <td>Quote before swapping and compare fees to your max fee cap.</td>
+      <td><a href="./guides/get-swap-quotes.md">Get Swap Quotes</a></td>
+    </tr>
+    <tr>
+      <td><i class="fa-exclamation-triangle">:exclamation-triangle:</i></td>
+      <td><strong>Handle Errors</strong></td>
+      <td>Handle swap and quote failures and dispose wallet state safely.</td>
+      <td><a href="./guides/handle-errors.md">Handle Errors</a></td>
+    </tr>
+  </tbody>
+</table>
 
 
 <table data-card-size="large" data-view="cards">
@@ -260,7 +90,7 @@ async function swapMultipleTokens(swapProtocol) {
 			<td>
 				<strong>WDK velora Swap Protocol Configuration</strong>
 			</td>
-			<td>Get started with WDK's velora Swap Protocol configuration</td>
+			<td>RPC, fee limits, and environment settings for the Velora swap protocol</td>
 			<td>
 				<a href="./configuration.md">WDK velora Swap Protocol Configuration</a>
 			</td>
@@ -272,7 +102,7 @@ async function swapMultipleTokens(swapProtocol) {
 			<td>
 				<strong>WDK velora Swap Protocol API</strong>
 			</td>
-			<td>Get started with WDK's velora Swap Protocol API</td>
+			<td>Methods, options, and error notes for VeloraProtocolEvm</td>
 			<td>
 				<a href="./api-reference.md">WDK velora Swap Protocol API</a>
 			</td>
@@ -280,12 +110,4 @@ async function swapMultipleTokens(swapProtocol) {
 	</tbody>
 </table>
 
-***
-
-### Need Help?
-
 {% include "../../../.gitbook/includes/support-cards.md" %}
-
-
-
-
