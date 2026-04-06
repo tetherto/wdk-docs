@@ -24,7 +24,7 @@ layout:
 
 ```javascript
 const config = {
-  network: 'MAINNET' // 'MAINNET' or 'REGTEST'
+  network: 'MAINNET' // 'MAINNET', 'SIGNET', or 'REGTEST'
 }
 
 const wallet = new WalletManagerSpark(seedPhrase, config)
@@ -57,20 +57,6 @@ The `network` option specifies which Spark network to use.
 ```javascript
 const config = {
   network: 'REGTEST' // Use REGTEST for development
-}
-```
-
-### SparkScan API Key
-
-The `sparkScanApiKey` option allows you to provide an API key for SparkScan API requests. This is used for read-only operations like fetching balances and transaction receipts.
-
-**Type:** `string` (optional)
-
-**Example:**
-```javascript
-const config = {
-  network: 'MAINNET',
-  sparkScanApiKey: 'your-api-key-here'
 }
 ```
 

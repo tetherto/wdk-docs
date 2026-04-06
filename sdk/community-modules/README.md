@@ -40,7 +40,7 @@ Want to extend WDK with your own custom module? Use the `create-wdk-module` CLI 
 
 {% code title="Scaffold a new module" %}
 ```bash
-npx create-wdk-module@latest
+npx @tetherto/create-wdk-module@latest
 ```
 {% endcode %}
 

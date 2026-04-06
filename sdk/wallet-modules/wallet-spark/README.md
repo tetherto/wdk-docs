@@ -47,6 +47,7 @@ A simple and secure package to manage BIP-32 wallets for the Spark blockchain. T
 This package supports the following Spark networks:
 
 - **Spark Mainnet**: Production Spark network
+- **Spark Signet**: Spark testing network
 - **Spark Regtest**: Local Spark network for testing
 
 {% hint style="info" %}
