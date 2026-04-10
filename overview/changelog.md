@@ -31,6 +31,20 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### April 2, 2026
+
+**Changes**
+- **react-native-core** ([v1.0.0-beta.7](https://www.npmjs.com/package/@tetherto/wdk-react-native-core/v/1.0.0-beta.7)): Added missing type exports: `WdkAppState`, `TransactionParams`, `TransactionResult`, `UseAccountResponse`, `AddressInfo`, `AddressInfoResult`, `BalanceQueryOptions`, `UseWdkAppResult`. Removed `indexer` as a top-level config prop.
+
+---
+
+### March 24, 2026
+
+**What's New**
+- **[React Native Core](../tools/react-native-core/)**: Added documentation for `@tetherto/wdk-react-native-core` ([v1.0.0-beta.6](https://github.com/tetherto/wdk-core-react-native/releases/tag/v1.0.0-beta.6)), the hooks-based React Native integration layer for WDK. Includes [API Reference](../tools/react-native-core/api-reference.md) covering `WdkAppProvider`, `useWdkApp`, `useWalletManager`, `useAccount`, `useBalance`, and more. Updated [React Native Quickstart](../start-building/react-native-quickstart.md) with step-by-step integration guide.
+
+---
+
 ### March 12, 2026
 
 **Changes**
