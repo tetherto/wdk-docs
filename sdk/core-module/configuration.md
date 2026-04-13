@@ -133,8 +133,8 @@ Middleware functions can be registered to enhance account functionality.
 wdk.registerMiddleware('ethereum', async (account) => {
   console.log('New account created:', await account.getAddress())
 })
-
-
+```
+{% endcode %}
 
 ## Environment Variables
 

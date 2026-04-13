@@ -31,7 +31,7 @@ In this quickstart, you'll integrate WDK into a React Native app to create a mul
 - [ ] Includes wallet creation, import, and unlock flows
 
 {% hint style="info" %}
-You can try all features without real funds required. You can use the Pimlico or Candide faucets to get some Sepolia USD₮. 
+You can try all features without real funds required. You can use the Pimlico or Candide faucets to get some Sepolia USD₮.
 
 <a class="button primary" href="https://dashboard.pimlico.io/test-erc20-faucet"> Get mock/test USD₮ on Pimlico </a>
 <a class="button primary" href="https://dashboard.candide.dev/faucet"> Get mock/test USD₮ on Candide </a>
@@ -114,7 +114,7 @@ EXPO_PUBLIC_TRON_API_SECRET=your_tron_api_secret
 ```
 
 {% hint style="info" %}
-Get your free WDK Indexer API key [here](../tools/indexer-api/get-started.md)
+**Where do I get an Indexer API key?** The WDK Indexer is required for transaction history and balance indexing. Get your free API key from the [Indexer API setup guide](../tools/indexer-api/get-started.md).
 {% endhint %}
 
 ### Step 4: Run Your App
@@ -145,48 +145,15 @@ npm run android
 
 ## Option 2: Add to Existing App
 
-Integrate WDK into your existing React Native or Expo project.
+Integrate WDK into your existing React Native or Expo project using `@tetherto/wdk-react-native-core`.
 
-### Step 1: Install the Provider Library
-
-```bash
-npm install @tetherto/wdk-react-native-provider
-```
-
-### Step 2: Install Peer Dependencies
-
-The library requires several peer dependencies for cryptographic operations and blockchain interactions:
+### Step 1: Install
 
 ```bash
-npm install \
-  @craftzdog/react-native-buffer \
-  @react-native-async-storage/async-storage \
-  @tetherto/pear-wrk-wdk \
-  @tetherto/wdk-secret-manager \
-  b4a \
-  bip39 \
-  browserify-zlib \
-  decimal.js \
-  events \
-  http2-wrapper \
-  https-browserify \
-  nice-grpc-web \
-  path-browserify \
-  process \
-  querystring-es3 \
-  react-native-bare-kit \
-  react-native-crypto \
-  react-native-device-info \
-  react-native-get-random-values \
-  react-native-keychain \
-  react-native-tcp-socket \
-  react-native-url-polyfill \
-  sodium-javascript \
-  stream-browserify \
-  stream-http
+npm install @tetherto/wdk-react-native-core
 ```
 
-### Step 3: Configure Android minSdkVersion
+### Step 2: Configure Android minSdkVersion
 
 The library requires **Android API 29** or higher to support `react-native-bare-kit`.
 
@@ -234,101 +201,97 @@ buildscript {
 {% endtab %}
 {% endtabs %}
 
-### Step 4: Configure Metro Bundler
+### Step 3: Configure the Bundle
 
-The library requires Node.js core module polyfills. Update your `metro.config.js`:
+The WDK engine runs inside a Bare worklet. You need to provide a bundle - choose one of two approaches:
 
 {% tabs %}
-{% tab title="Expo" %}
+{% tab title="Custom Bundle (Recommended)" %}
+Use the `@tetherto/wdk-worklet-bundler` CLI to generate a bundle with only the modules you need:
 
-```js
-const { getDefaultConfig } = require("expo/metro-config");
-const {
-  configureMetroForWDK,
-} = require("@tetherto/wdk-react-native-provider/metro-polyfills");
+```bash
+# 1. Install the bundler CLI
+npm install -g @tetherto/wdk-worklet-bundler
 
-const config = getDefaultConfig(__dirname);
-const configWdk = configureMetroForWDK(config);
+# 2. Initialize configuration in your React Native project
+wdk-worklet-bundler init
 
-module.exports = configWdk;
+# 3. Edit wdk.config.js to configure your networks (see example below)
+
+# 4. Install required WDK modules (pick the ones you need)
+npm install @tetherto/wdk @tetherto/wdk-wallet-evm-erc-4337
+
+# 5. Generate the bundle
+wdk-worklet-bundler generate
 ```
+
+This generates a `.wdk/` directory in your project. Import it:
+
+```typescript
+import { bundle } from './.wdk'
+```
+
+{% hint style="info" %}
+**Which WDK modules do I need?** Each blockchain requires its own wallet module (e.g., `wdk-wallet-evm-erc-4337` for Ethereum/Polygon, `wdk-wallet-btc` for Bitcoin). See the full list of available modules in the [wdk-worklet-bundler documentation](https://github.com/tetherto/wdk-worklet-bundler).
+{% endhint %}
 
 {% endtab %}
 
-{% tab title="Bare React Native" %}
+{% tab title="Pre-built Bundle" %}
+For quick prototyping, install and import the ready-made bundle from `@tetherto/pear-wrk-wdk`:
 
-```js
-const { getDefaultConfig, mergeConfig } = require("@react-native/metro-config");
-const {
-  configureMetroForWDK,
-} = require("@tetherto/wdk-react-native-provider/metro-polyfills");
-
-const config = getDefaultConfig(__dirname);
-const configWdk = configureMetroForWDK(config);
-
-module.exports = mergeConfig(config, configWdk);
+```bash
+npm install @tetherto/pear-wrk-wdk
 ```
+
+```typescript
+import { bundle } from '@tetherto/pear-wrk-wdk'
+```
+
+{% hint style="info" %}
+The pre-built bundle includes all blockchain modules, resulting in a larger bundle size. For production apps, generate a custom bundle with only the modules you need.
+{% endhint %}
 
 {% endtab %}
 {% endtabs %}
 
-{% hint style="success" %}
-Runtime polyfills for Buffer, process, and crypto are automatically initialized when you import the library. No additional setup needed!
-{% endhint %}
+### Step 4: Configure WDK Settings
 
-### Step 5: Configure Chain Settings
-
-Create a configuration file for your supported blockchains (e.g., `src/config/chains.ts`):
+Create a configuration file for your WDK setup (e.g., `src/config/wdk.ts`):
 
 ```typescript
-// src/config/chains.ts
-export const CHAINS_CONFIG = {
-  ethereum: {
-    chainId: 1,
-    blockchain: "ethereum",
-    provider: "https://mainnet.gateway.tenderly.co/YOUR_KEY",
-    bundlerUrl: "https://api.candide.dev/public/v3/ethereum",
-    paymasterUrl: "https://api.candide.dev/public/v3/ethereum",
-    paymasterAddress: "0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba",
-    entrypointAddress: "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
-    transferMaxFee: 5000000,
-    swapMaxFee: 5000000,
-    bridgeMaxFee: 5000000,
-    paymasterToken: {
-      address: "0xdAC17F958D2ee523a2206206994597C13D831ec7", // USDT
+// src/config/wdk.ts
+import type { WdkConfigs } from '@tetherto/wdk-react-native-core'
+
+export const wdkConfigs: WdkConfigs = {
+  networks: {
+    ethereum: {
+      blockchain: 'ethereum',
+      config: {
+        chainId: 11155111, // Sepolia testnet
+        provider: 'https://rpc.sepolia.org',
+        bundlerUrl: 'https://api.candide.dev/public/v3/sepolia',
+        paymasterUrl: 'https://api.candide.dev/public/v3/sepolia',
+        paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
+        entrypointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
+        transferMaxFee: 5000000,
+        paymasterToken: {
+          address: '0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0', // USDT on Sepolia
+        },
+      },
     },
+    // Add more networks as needed
   },
-  polygon: {
-    chainId: 137,
-    blockchain: "polygon",
-    provider: "https://polygon.gateway.tenderly.co/YOUR_KEY",
-    bundlerUrl: "https://api.candide.dev/public/v3/polygon",
-    paymasterUrl: "https://api.candide.dev/public/v3/polygon",
-    paymasterAddress: "0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba",
-    entrypointAddress: "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
-    transferMaxFee: 5000000,
-    swapMaxFee: 5000000,
-    bridgeMaxFee: 5000000,
-    paymasterToken: {
-      address: "0xc2132d05d31c914a87c6611c10748aeb04b58e8f", // USDT on Polygon
-    },
-    safeModulesVersion: "0.3.0",
-  },
-  bitcoin: {
-    host: "api.ordimint.com",
-    port: 50001,
-  },
-  // Add more chains as needed
-};
+}
 ```
 
 {% hint style="info" %}
-See the [Chain Configuration Guide](../sdk/core-module/configuration.md) for complete configuration options for all supported chains.
+This example uses **Sepolia testnet** with a free public RPC so you can start immediately without API keys. For production or mainnet configuration, see the [Chain Configuration Guide](../sdk/core-module/configuration.md).
 {% endhint %}
 
-### Step 6: Add WalletProvider
+### Step 5: Add WdkAppProvider
 
-Wrap your app with the `WalletProvider` to enable wallet functionality throughout your app.
+Wrap your app with `WdkAppProvider` to enable wallet functionality throughout your app.
 
 {% tabs %}
 {% tab title="Expo Router" %}
@@ -336,25 +299,17 @@ Add to your `app/_layout.tsx`:
 
 ```tsx
 // app/_layout.tsx
-import { WalletProvider } from "@tetherto/wdk-react-native-provider";
-import { Stack } from "expo-router";
-import { CHAINS_CONFIG } from "../config/chains";
+import { WdkAppProvider } from '@tetherto/wdk-react-native-core'
+import { bundle } from './.wdk'
+import { Stack } from 'expo-router'
+import { wdkConfigs } from '../config/wdk'
 
 export default function RootLayout() {
   return (
-    <WalletProvider
-      config={{
-        indexer: {
-          apiKey: process.env.EXPO_PUBLIC_WDK_INDEXER_API_KEY!,
-          url: process.env.EXPO_PUBLIC_WDK_INDEXER_BASE_URL!,
-        },
-        chains: CHAINS_CONFIG,
-        enableCaching: true,
-      }}
-    >
+    <WdkAppProvider bundle={{ bundle }} wdkConfigs={wdkConfigs}>
       <Stack />
-    </WalletProvider>
-  );
+    </WdkAppProvider>
+  )
 }
 ```
 
@@ -365,125 +320,57 @@ Update your `App.tsx`:
 
 ```tsx
 // App.tsx
-import React from "react";
-import { WalletProvider } from "@tetherto/wdk-react-native-provider";
-import { CHAINS_CONFIG } from "./src/config/chains";
-import { NavigationContainer } from "@react-navigation/native";
-import { MainNavigator } from "./src/navigation";
+import React from 'react'
+import { WdkAppProvider } from '@tetherto/wdk-react-native-core'
+import { bundle } from './.wdk'
+import { NavigationContainer } from '@react-navigation/native'
+import { MainNavigator } from './src/navigation'
+import { wdkConfigs } from './src/config/wdk'
 
 export default function App() {
   return (
-    <WalletProvider
-      config={{
-        indexer: {
-          apiKey: process.env.EXPO_PUBLIC_WDK_INDEXER_API_KEY!,
-          url: process.env.EXPO_PUBLIC_WDK_INDEXER_BASE_URL!,
-        },
-        chains: CHAINS_CONFIG,
-        enableCaching: true,
-      }}
-    >
+    <WdkAppProvider bundle={{ bundle }} wdkConfigs={wdkConfigs}>
       <NavigationContainer>
         <MainNavigator />
       </NavigationContainer>
-    </WalletProvider>
-  );
+    </WdkAppProvider>
+  )
 }
 ```
 
 {% endtab %}
 {% endtabs %}
 
-### Step 7: Use the Wallet Hook
+### Step 6: Use Hooks
 
-Now you can use the `useWallet` hook in any component to access wallet functionality:
+Now you can use the WDK hooks in any component inside `WdkAppProvider`:
 
 ```tsx
-// src/screens/WalletScreen.tsx
-import React from "react";
-import { View, Text, Button } from "react-native";
-import { useWallet } from "@tetherto/wdk-react-native-provider";
+import { useWdkApp, useWalletManager, useAccount } from '@tetherto/wdk-react-native-core'
 
-export function WalletScreen() {
-  const {
-    wallet,
-    balances,
-    transactions,
-    isInitialized,
-    isUnlocked,
-    createWallet,
-    unlockWallet,
-    refreshWalletBalance,
-  } = useWallet();
+function WalletScreen() {
+  const { state } = useWdkApp()
+  const { createWallet, unlock } = useWalletManager()
+  const { address } = useAccount({ network: 'ethereum', accountIndex: 0 })
 
-  // Create a new wallet
-  const handleCreateWallet = async () => {
-    try {
-      const wallet = await createWallet({
-        name: "Imported Wallet",
-        mnemonic: "your twelve word seed phrase goes here",
-      });
-      console.log("Wallet created:", wallet);
-    } catch (error) {
-      console.error("Failed to create wallet:", error);
-    }
-  };
-
-  // Unlock wallet
-  const handleUnlockWallet = async () => {
-    try {
-      await unlockWallet();
-      console.log("Wallet unlocked");
-    } catch (error) {
-      console.error("Failed to unlock wallet:", error);
-    }
-  };
-
-  if (!isInitialized) {
-    return <Text>Initializing WDK...</Text>;
+  switch (state.status) {
+    case 'INITIALIZING':
+      return <Text>Loading...</Text>
+    case 'NO_WALLET':
+      return <Button title="Create Wallet" onPress={() => createWallet('my-wallet')} />
+    case 'LOCKED':
+      return <Button title="Unlock" onPress={() => unlock()} />
+    case 'READY':
+      return <Text>Address: {address}</Text>
+    case 'ERROR':
+      return <Text>Error: {state.error.message}</Text>
   }
-
-  if (!wallet) {
-    return (
-      <View>
-        <Text>Create or Import a Wallet</Text>
-        <Button title="Create New Wallet" onPress={handleCreateWallet} />
-      </View>
-    );
-  }
-
-  if (!isUnlocked) {
-    return (
-      <View>
-        <Text>Wallet Locked</Text>
-        <Button title="Unlock Wallet" onPress={handleUnlockWallet} />
-      </View>
-    );
-  }
-
-  return (
-    <View>
-      <Text>Wallet: {wallet.name}</Text>
-      {/* Display balances */}
-      {balances.list.map((balance, index) => (
-        <Text key={index}>
-          {balance.denomination}: {balance.value}
-        </Text>
-      ))}
-
-      <Button
-        title="Refresh Balance"
-        onPress={refreshWalletBalance}
-        disabled={balances.isLoading}
-      />
-
-      {balances.isLoading && <Text>Loading balances...</Text>}
-    </View>
-  );
 }
 ```
 
-### Step 8: Rebuild and Run
+For the full list of available hooks and their parameters, see the [React Native Core API Reference](../tools/react-native-core/api-reference.md).
+
+### Step 7: Rebuild and Run
 
 {% tabs %}
 {% tab title="Expo" %}
@@ -518,80 +405,75 @@ npx react-native run-android
 
 Now that you have WDK integrated, here's what you can explore:
 
-### Access Balances and Transactions
-
-```tsx
-const { balances, transactions, addresses } = useWallet();
-...
-```
-
 ### Send Transactions
 
-Use the `WDKService` directly for advanced operations:
+Use the `useAccount()` hook to send transactions:
 
 ```tsx
-import {
-  WDKService,
-  NetworkType,
-  AssetTicker,
-} from "@tetherto/wdk-react-native-provider";
+import { useAccount, BaseAsset } from '@tetherto/wdk-react-native-core'
 
-// Send USDT on Ethereum
-const result = await WDKService.sendByNetwork(
-  NetworkType.ETHEREUM,
-  0, // account index
-  100, // amount
-  "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb", // recipient
-  AssetTicker.USDT
-);
+const usdt = new BaseAsset({
+  id: 'usdt-ethereum',
+  network: 'ethereum',
+  symbol: 'USDT',
+  name: 'Tether USD',
+  decimals: 6,
+  isNative: false,
+  address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+})
+
+function SendScreen() {
+  const { address, send } = useAccount({ network: 'ethereum', accountIndex: 0 })
+
+  const handleSend = async () => {
+    if (!address) return
+
+    const result = await send({
+      to: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+      asset: usdt,
+      amount: '1000000', // 1 USDT (6 decimals)
+    })
+
+    if (result.success) {
+      console.log('TX hash:', result.hash, 'Fee:', result.fee)
+    } else {
+      console.error('TX failed:', result.error)
+    }
+  }
+
+  return <Button title="Send 1 USDT" onPress={handleSend} />
+}
 ```
 
-### Quote Transaction Fees
+### Lock the Wallet
+
+Use `lock()` to clear sensitive data from memory:
 
 ```tsx
-// Get fee estimate before sending
-const feeEstimate = await WDKService.quoteSendByNetwork(
-  NetworkType.ETHEREUM,
-  0,
-  100,
-  "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
-  AssetTicker.USDT
-);
+const { lock } = useWalletManager()
 
-console.log("Estimated fee:", feeEstimate);
+// Lock wallet and clear all sensitive data
+lock()
 ```
 
-### Clear Wallet Data
-
-Call `clearWallet()` to securely wipe all sensitive data and secret keys from memory when you're done with wallet operations.
+### Refresh Balances
 
 ```tsx
-const { clearWallet } = useWallet();
+import { useRefreshBalance } from '@tetherto/wdk-react-native-core'
 
-// Clear wallet and all stored data
-await clearWallet();
+const { mutate: refreshBalance } = useRefreshBalance()
+
+// Refresh all balances for account 0
+refreshBalance({ accountIndex: 0, type: 'wallet' })
 ```
 
 ---
 
 ## Troubleshooting
 
-### "Unable to resolve module" errors
-
-If you see errors about missing Node.js modules like `stream`, `buffer`, or `crypto`:
-
-1. Ensure Metro polyfills are configured correctly
-2. Clear Metro cache: `npx expo start --clear` or `npx react-native start --reset-cache`
-3. Delete and reinstall dependencies:
-   ```bash
-   rm -rf node_modules
-   npm install
-   ```
-
-### Android build fails with "Execution failed for task ':app:checkDebugAarMetadata'"
+**Android build fails with "Execution failed for task ':app:checkDebugAarMetadata'"**
 
 This means your minSdkVersion is too low. Make sure you've set it to 29:
-
 
 ```json
 {
@@ -610,24 +492,40 @@ npx expo prebuild --clean
 npx expo run:android
 ```
 
-### "WDK Manager not initialized"
+**"useWdkApp must be used within WdkAppProvider"**
 
-The WDK service initializes automatically when `WalletProvider` mounts. Ensure:
-
-1. Your component is wrapped with `WalletProvider`
-2. You're checking `isInitialized` before performing wallet operations:
+Ensure your component is rendered inside `WdkAppProvider`. The provider must be at the root of your component tree:
 
 ```tsx
-const { isInitialized, createWallet } = useWallet();
+// Correct
+<WdkAppProvider bundle={{ bundle }} wdkConfigs={configs}>
+  <MyComponent />  {/* Can use useWdkApp() here */}
+</WdkAppProvider>
 
-if (isInitialized) {
-  await createWallet({ name: "My Wallet" });
-}
+// Wrong - hook used outside provider
+<MyComponent />  {/* Cannot use useWdkApp() here */}
+<WdkAppProvider bundle={{ bundle }} wdkConfigs={configs}>
+  ...
+</WdkAppProvider>
 ```
 
-### TypeScript errors about missing types
+**Biometric prompt not appearing on simulator**
 
-Some peer dependencies may lack type definitions. Add to your `tsconfig.json`:
+Biometric authentication is required by default. On iOS Simulator, enable Face ID via `Features > Face ID > Enrolled`. On Android Emulator, set up a fingerprint in `Settings > Security`. To disable biometrics during development, pass `requireBiometrics={false}` to `WdkAppProvider`.
+
+**Metro cache issues**
+
+If you see stale module errors after upgrading, clear the Metro cache:
+
+```bash
+npx expo start --clear
+# or
+npx react-native start --reset-cache
+```
+
+**TypeScript errors about missing types**
+
+Some native dependencies may lack type definitions. Add to your `tsconfig.json`:
 
 ```json
 {
@@ -641,20 +539,22 @@ Some peer dependencies may lack type definitions. Add to your `tsconfig.json`:
 
 **For Expo projects:**
 
-- ✅ Install `@tetherto/wdk-react-native-provider` and peer dependencies
-- ✅ Configure Android minSdkVersion to 29 in `app.json`
-- ✅ Configure Metro polyfills in `metro.config.js`
-- ✅ Add `WalletProvider` to `app/_layout.tsx`
-- ✅ Use `useWallet()` hook in components
-- ✅ Run `npx expo prebuild --clean` before building
+- Install `@tetherto/wdk-react-native-core`
+- Configure Android minSdkVersion to 29 in `app.json`
+- Set up bundle (custom or pre-built)
+- Create `WdkConfigs` configuration
+- Add `WdkAppProvider` to `app/_layout.tsx`
+- Use hooks (`useWdkApp`, `useWalletManager`, `useAccount`, `useBalance`)
+- Run `npx expo prebuild --clean` before building
 
 **For bare React Native:**
 
-- ✅ Install package and peer dependencies
-- ✅ Set minSdkVersion to 29 in `android/build.gradle`
-- ✅ Configure Metro polyfills in `metro.config.js`
-- ✅ Wrap root component with `WalletProvider`
-- ✅ Rebuild native code
+- Install package
+- Set minSdkVersion to 29 in `android/build.gradle`
+- Set up bundle (custom or pre-built)
+- Create `WdkConfigs` configuration
+- Wrap root component with `WdkAppProvider`
+- Rebuild native code
 
 ---
 
@@ -664,20 +564,14 @@ Ready to dive deeper? Check out these resources:
 
 ### Core Concepts
 
+- [**React Native Core Docs**](../tools/react-native-core/) - Full documentation for `@tetherto/wdk-react-native-core`
+- [**API Reference**](../tools/react-native-core/api-reference.md) - Complete hook and type reference
 - [**Chain Configuration**](../sdk/core-module/configuration.md#wallet-configuration) - Configure blockchain networks
-- [**Wallet Management**](../sdk/core-module/usage.md#account-management) - Create, import, and manage wallets
-- [**Transaction Handling**](../sdk/core-module/usage.md#transaction-operations) - Send and track transactions
 
 ### Examples & Starters
 
 - [**React Native Starter**](../examples-and-starters/react-native-starter.md) - Full-featured starter app
 - [**React Native UI Kit**](../ui-kits/react-native-ui-kit/) - Pre-built wallet components
-
-<!-- ### API Reference
-
-- [**WalletProvider API**](../api-reference/wallet-provider.md) - Provider configuration and props
-- [**useWallet Hook**](../api-reference/use-wallet-hook.md) - Hook API reference
-- [**WDKService API**](../api-reference/wdk-service.md) - Low-level service methods -->
 
 ### **Need Help?**
 
