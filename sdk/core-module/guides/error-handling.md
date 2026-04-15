@@ -46,11 +46,11 @@ Always use `try/catch` blocks when initializing sessions or accessing dynamic fe
 
 ## Memory Management
 
-For security, you should clear sensitive data from memory when a session is complete. The WDK provides a `.dispose()` method for this purpose.
+For security, clear sensitive data from memory when a session is complete. The WDK provides [`dispose()`](../api-reference.md#disposeblockchains) for this purpose.
 
 ### Disposing the Instance
 
-Calling `dispose()` clears the seed phrase and private keys derived in memory.
+You can clear every registered wallet using [`dispose()`](../api-reference.md#disposeblockchains):
 
 {% code title="Dispose WDK" lineNumbers="true" %}
 ```typescript
@@ -66,8 +66,19 @@ function endSession(wdk) {
 ```
 {% endcode %}
 
+### Disposing Specific Wallets
+
+You can dispose only the wallets you no longer need using [`dispose()`](../api-reference.md#disposeblockchains):
+
+{% code title="Dispose Specific Wallets" lineNumbers="true" %}
+```typescript
+// Keep the TON wallet registered, but dispose the Ethereum wallet
+wdk.dispose(['ethereum'])
+```
+{% endcode %}
+
 {% hint style="warning" %}
-**After Disposal:** Once disposed, any attempt to use the `wdk` instance or its derived accounts will result in an error. You must instantiate a new instance to resume operations.
+**After Disposal:** Once a wallet is disposed, any later call that depends on that wallet registration will fail until you register it again. If you call `wdk.dispose()` without arguments, you must instantiate a new WDK instance or register fresh wallets before resuming operations.
 {% endhint %}
 
 ## Security Best Practices

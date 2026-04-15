@@ -20,14 +20,15 @@ layout:
 
 # Configuration
 
-This page covers all configuration options for the MoonPay fiat module.
+This page covers all configuration options for the MoonPay fiat module, including optional URL signing and environment selection.
 
 ## Prerequisites
 
 Before using this module, you need:
 
 1. A MoonPay developer account - [Create an account on MoonPay Dashboard](https://dashboard.moonpay.com/signup)
-2. API credentials (API Key and Secret Key) from your dashboard
+2. A publishable API key from your dashboard
+3. If you want signed widget URLs, a trusted backend signing endpoint for the `signUrl` callback
 
 ## Installation
 
@@ -41,8 +42,25 @@ npm install @tetherto/wdk-protocol-fiat-moonpay
 import MoonPayProtocol from '@tetherto/wdk-protocol-fiat-moonpay';
 
 const moonpay = new MoonPayProtocol(walletAccount, {
-  apiKey: 'pk_live_xxxxx',      // Your MoonPay publishable API key
-  secretKey: 'sk_live_xxxxx',   // Your MoonPay secret key
+  apiKey: 'pk_live_xxxxx', // Your MoonPay publishable API key
+  signUrl: async (urlForSignature) => {
+    const response = await fetch('/api/moonpay/sign-url', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ urlForSignature }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to sign MoonPay URL: ${response.status} ${response.statusText}`);
+    }
+
+    const { signedUrl } = await response.json();
+
+    return signedUrl;
+  },
+  environment: 'sandbox',
 });
 ```
 
@@ -51,8 +69,9 @@ const moonpay = new MoonPayProtocol(walletAccount, {
 | Option | Type | Required | Default | Description |
 |--------|------|----------|---------|-------------|
 | `apiKey` | string | Yes | - | Your MoonPay publishable API key |
-| `secretKey` | string | Yes | - | Your MoonPay secret key |
+| `signUrl` | function | No | - | Callback used to sign buy and sell widget URLs through a trusted backend |
 | `cacheTime` | number | No | `600000` (10 min) | Duration in milliseconds to cache supported currencies |
+| `environment` | `'production' \| 'sandbox'` | No | `production` | MoonPay widget URL endpoint set |
 
 ## Constructor Overloads
 
@@ -73,12 +92,23 @@ const moonpay = new MoonPayProtocol(walletAccount, config);
 
 ### Sandbox (Testing)
 
-Use test API keys for development and testing:
+Use sandbox endpoints for development and testing:
 
 ```typescript
 const moonpay = new MoonPayProtocol(walletAccount, {
   apiKey: 'pk_test_xxxxx',
-  secretKey: 'sk_test_xxxxx',
+  signUrl: async (urlForSignature) => {
+    const response = await fetch('/api/moonpay/sign-url', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ urlForSignature }),
+    });
+
+    return (await response.json()).signedUrl;
+  },
+  environment: 'sandbox',
 });
 ```
 
@@ -87,14 +117,27 @@ In sandbox mode:
 - Use test card numbers provided by MoonPay
 - KYC verification is simulated
 
+If you do not need signed URLs, omit `signUrl` and the protocol returns unsigned widget URLs directly.
+
 ### Production
 
-For production deployments, use live API keys:
+For production deployments, use live API keys and the production endpoint set:
 
 ```typescript
 const moonpay = new MoonPayProtocol(walletAccount, {
   apiKey: 'pk_live_xxxxx',
-  secretKey: 'sk_live_xxxxx',
+  signUrl: async (urlForSignature) => {
+    const response = await fetch('/api/moonpay/sign-url', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ urlForSignature }),
+    });
+
+    return (await response.json()).signedUrl;
+  },
+  environment: 'production',
 });
 ```
 
@@ -121,7 +164,7 @@ const result = await moonpay.buy({
 | Option | Type | Description |
 |--------|------|-------------|
 | `colorCode` | string | Hexadecimal color for widget accent |
-| `theme` | `'dark'` \| `'light'` | Widget appearance theme |
+| `theme` | `'dark' \| 'light'` | Widget appearance theme |
 | `themeId` | string | ID of a custom theme |
 | `language` | string | ISO 639-1 language code |
 | `showAllCurrencies` | boolean | Show all supported cryptocurrencies |

@@ -43,6 +43,23 @@ console.log('Transaction fee:', result.fee)
 On-chain Spark transfers report `fee` as `0`. Memos are not supported on [`sendTransaction()`](../api-reference.md#sendtransaction-to-value). Use valid Spark network addresses.
 {% endhint %}
 
+If you enable [`syncAndRetry`](../configuration.md#automatic-retry), the wallet syncs its state and retries [`account.sendTransaction()`](../api-reference.md#sendtransaction-to-value) once after a failure:
+
+{% code title="Retry Failed Sends Once" lineNumbers="true" %}
+```javascript
+const wallet = new WalletManagerSpark(seedPhrase, {
+  network: 'MAINNET',
+  syncAndRetry: true,
+})
+
+const account = await wallet.getAccount(0)
+await account.sendTransaction({
+  to: 'spark1...',
+  value: 1000000,
+})
+```
+{% endcode %}
+
 ## Transfer Tokens
 
 You can move tokens to another Spark address using [`account.transfer()`](../api-reference.md#transfer-options):
@@ -107,6 +124,14 @@ console.log('Fast:', feeRates.fast)
 {% hint style="info" %}
 Spark network fees for native sends and token transfers are zero; [`wallet.getFeeRates()`](../api-reference.md#getfeerates) returns `{ normal: 0n, fast: 0n }`. Lightning flows can still incur fees; see [Lightning payments](./lightning-payments.md).
 {% endhint %}
+
+If you want to reconcile wallet state before retrying manually, call [`account.syncWalletBalance()`](../api-reference.md#syncwalletbalance):
+
+{% code title="Sync Wallet Balance" lineNumbers="true" %}
+```javascript
+await account.syncWalletBalance()
+```
+{% endcode %}
 
 ## Next Steps
 

@@ -67,7 +67,7 @@ const wdk2 = new WDK(seedBytes)
 | `getAccount(blockchain, index?)` | Returns a wallet account for a blockchain and index | `Promise<IWalletAccountWithProtocols>` | If wallet not registered |
 | `getAccountByPath(blockchain, path)` | Returns a wallet account for a blockchain and derivation path | `Promise<IWalletAccountWithProtocols>` | If wallet not registered |
 | `getFeeRates()` | Returns current fee rates | `Promise<FeeRates>` | - |
-| `dispose()` | Disposes all wallets and accounts, clearing sensitive data | `void` | - |
+| `dispose(blockchains?)` | Disposes all registered wallets, or only the named blockchains, and clears their sensitive data | `void` | - |
 
 ##### `registerWallet(blockchain, wallet, config)`
 Registers a new wallet manager for a specific blockchain.
@@ -247,14 +247,20 @@ console.log('Fee rates:', feeRates)
 ```
 {% endcode %}
 
-##### `dispose()`
-Disposes all wallets and accounts, erasing any sensitive data from memory.
+##### `dispose(blockchains?)`
+Disposes all registered wallets when called without arguments, or only the wallets for the named blockchains when you pass a string array.
+
+**Parameters:**
+- `blockchains` (string[], optional): The blockchain identifiers to dispose. Omit this parameter to dispose every registered wallet.
 
 **Example:**
 {% code title="Dispose WDK" lineNumbers="true" %}
 ```javascript
 // Clean up all sensitive data
 wdk.dispose()
+
+// Dispose only one registered wallet
+wdk.dispose(['ethereum'])
 ```
 {% endcode %}
 
