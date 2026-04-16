@@ -40,8 +40,9 @@ Creates a new MoonPayProtocol instance.
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
 | `apiKey` | string | Yes | - | Your MoonPay publishable API key |
-| `secretKey` | string | Yes | - | Your MoonPay secret key |
+| `signUrl` | function | No | - | Callback used to sign buy and sell widget URLs through a trusted backend |
 | `cacheTime` | number | No | `600000` | Cache duration for currencies (ms) |
+| `environment` | `'production' \| 'sandbox'` | No | `production` | MoonPay widget URL endpoint set |
 
 **Example:**
 
@@ -50,7 +51,8 @@ import MoonPayProtocol from '@tetherto/wdk-protocol-fiat-moonpay';
 
 const moonpay = new MoonPayProtocol(walletAccount, {
   apiKey: 'pk_live_xxxxx',
-  secretKey: 'sk_live_xxxxx',
+  signUrl: async (urlForSignature) => urlForSignature,
+  environment: 'production',
 });
 ```
 
@@ -60,7 +62,7 @@ const moonpay = new MoonPayProtocol(walletAccount, {
 
 ### `buy(options)`
 
-Generates a signed widget URL for purchasing cryptocurrency.
+Generates a MoonPay widget URL for purchasing cryptocurrency. If `signUrl` is configured, the URL is signed through that callback before being returned.
 
 **Parameters:**
 
@@ -81,7 +83,7 @@ Generates a signed widget URL for purchasing cryptocurrency.
 
 ### `sell(options)`
 
-Generates a signed widget URL for selling cryptocurrency.
+Generates a MoonPay widget URL for selling cryptocurrency. If `signUrl` is configured, the URL is signed through that callback before being returned.
 
 **Parameters:**
 
@@ -215,7 +217,7 @@ Retrieves details of a specific transaction.
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
 | `txId` | string | Yes | - | MoonPay transaction ID |
-| `direction` | `'buy'` \| `'sell'` | No | `'buy'` | Transaction type |
+| `direction` | `'buy' \| 'sell'` | No | `'buy'` | Transaction type |
 
 **Returns:** `Promise<MoonPayTransactionDetail>`
 
@@ -237,8 +239,9 @@ Retrieves details of a specific transaction.
 ```typescript
 interface MoonPayProtocolConfig {
   apiKey: string;
-  secretKey: string;
+  signUrl?: (urlForSignature: string) => Promise<string>;
   cacheTime?: number;
+  environment?: 'production' | 'sandbox';
 }
 ```
 

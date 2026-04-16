@@ -204,6 +204,18 @@
 * [Create WDK Module](tools/create-wdk-module.md)
 * [React Native Core](tools/react-native-core/README.md)
   * [API Reference](tools/react-native-core/api-reference.md)
+* [Failover Provider](tools/failover-provider/README.md)
+  * [Configuration](tools/failover-provider/configuration.md)
+  * [API Reference](tools/failover-provider/api-reference.md)
+* [Pear Worklet WDK](tools/pear-wrk-wdk/README.md)
+  * [Configuration](tools/pear-wrk-wdk/configuration.md)
+  * [API Reference](tools/pear-wrk-wdk/api-reference.md)
+* [WDK Utils](tools/wdk-utils/README.md)
+  * [Configuration](tools/wdk-utils/configuration.md)
+  * [API Reference](tools/wdk-utils/api-reference.md)
+* [Worklet Bundler](tools/worklet-bundler/README.md)
+  * [Configuration](tools/worklet-bundler/configuration.md)
+  * [API Reference](tools/worklet-bundler/api-reference.md)
 
 ## Resources and Guides
 

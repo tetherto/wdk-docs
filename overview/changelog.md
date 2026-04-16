@@ -24,6 +24,37 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### April 14, 2026
+
+**What's New**
+- **failover-provider** ([v1.0.0-beta.1](https://github.com/tetherto/wdk-failover-provider/releases/tag/v1.0.0-beta.1)): Initial release of a generic `FailoverProvider<T>` that chains provider candidates and retries sync or async failures with configurable `retries` and `shouldRetryOn(error)` logic.
+
+**Changes**
+- **fiat-moonpay** ([v1.0.0-beta.2](https://github.com/tetherto/wdk-protocol-fiat-moonpay/releases/tag/v1.0.0-beta.2)): [Breaking] Replace `secretKey` signing with optional backend `signUrl`, add `environment` selection for production or sandbox widget URLs, and return unsigned widget URLs when no signer is configured.
+
+---
+
+### April 13, 2026
+
+**What's New**
+- **wdk-utils** ([v1.0.0-beta.2](https://github.com/tetherto/wdk-utils/releases/tag/v1.0.0-beta.2)): Add EIP-681 request parsing utilities for transfer deeplinks, including request detection and structured parse results.
+- **wdk-core** ([v1.0.0-beta.7](https://github.com/tetherto/wdk/releases/tag/v1.0.0-beta.7)): Added `dispose(blockchains?)`, so you can dispose one or more registered wallets without tearing down every wallet in the WDK instance.
+- **pear-wrk-wdk** ([v1.0.0-beta.8](https://github.com/tetherto/pear-wrk-wdk/releases/tag/v1.0.0-beta.8)): Adds `resetWdkWallets({ config })` so custom Bare hosts can selectively dispose and re-register wallet modules from a new `networks` config.
+
+**Changes**
+- **wallet-spark** ([v1.0.0-beta.13](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.13)): Refresh `@buildonspark/bare` and `@buildonspark/spark-sdk` dependencies.
+- **wallet-spark** ([v1.0.0-beta.14](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.14)): Add SparkScan-backed balance polling for `getBalance()`.
+- **wallet-spark** ([v1.0.0-beta.15](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.15)): Refresh `@buildonspark/bare`, `@buildonspark/spark-sdk`, and `bare-node-runtime` dependencies.
+- **wallet-spark** ([v1.0.0-beta.16](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.16)): Add `syncAndRetry` and `syncWalletBalance()` for retrying failed `sendTransaction()` and `payLightningInvoice()` calls once after syncing wallet state.
+
+**Fixes**
+- **worklet-bundler** ([v1.0.0-beta.3](https://github.com/tetherto/wdk-worklet-bundler/releases/tag/v1.0.0-beta.3)): Generated worklet entrypoints now suspend and resume both HTTP and HTTPS global agents with Bare thread lifecycle events.
+- **wallet-btc** ([v1.0.0-beta.8](https://github.com/tetherto/wdk-wallet-btc/releases/tag/v1.0.0-beta.8)): `getBalance()` now includes unconfirmed funds when present, and `sendTransaction()` accepts an optional `timeoutMs` to keep polling after broadcast until spent inputs disappear from unspent outputs.
+- **wallet-evm** ([v1.0.0-beta.11](https://github.com/tetherto/wdk-wallet-evm/releases/tag/v1.0.0-beta.11)): Pin string-backed RPC providers to a static network during EVM account setup.
+- **wallet-evm-erc-4337** ([v1.0.0-beta.6](https://github.com/tetherto/wdk-wallet-evm-erc-4337/releases/tag/v1.0.0-beta.6)): Reuse the internal EVM read-only helper during ERC-4337 method calls instead of recreating it on each call.
+
+---
+
 ### April 3, 2026
 
 **Changes**

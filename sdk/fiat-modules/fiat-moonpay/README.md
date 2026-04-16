@@ -19,7 +19,7 @@ layout:
 
 # @tetherto/wdk-protocol-fiat-moonpay Overview
 
-A WDK module for integrating MoonPay's fiat on-ramp and off-ramp services. This module generates signed widget URLs that allow users to buy and sell cryptocurrency using fiat currencies directly within your application.
+A WDK module for integrating MoonPay's fiat on-ramp and off-ramp services. This module generates signed or unsigned widget URLs that allow users to buy and sell cryptocurrency using fiat currencies directly within your application. Provide a `signUrl` callback if you want the protocol to return signed URLs from a trusted backend, or omit it to use the unsigned widget URLs directly.
 
 Get started by reading the [Usage](./usage.md) guide.
 
@@ -27,10 +27,12 @@ Get started by reading the [Usage](./usage.md) guide.
 This module requires a MoonPay developer account. [Create your account here](https://dashboard.moonpay.com/signup).
 {% endhint %}
 
+If you want MoonPay to sign the widget URLs before they are returned, provide a `signUrl` callback that talks to a trusted backend signer. If you omit `signUrl`, the protocol returns unsigned widget URLs directly.
+
 ## Features
 
-- **Fiat On-Ramp**: Generate widget URLs for users to buy cryptocurrency with fiat
-- **Fiat Off-Ramp**: Generate widget URLs for users to sell cryptocurrency for fiat
+- **Fiat On-Ramp**: Generate signed or unsigned widget URLs for users to buy cryptocurrency with fiat
+- **Fiat Off-Ramp**: Generate signed or unsigned widget URLs for users to sell cryptocurrency with fiat
 - **Price Quotes**: Get real-time quotes for buy and sell operations
 - **Transaction Tracking**: Retrieve transaction status and details
 - **Currency Support**: Query supported cryptocurrencies, fiat currencies, and countries
@@ -70,7 +72,7 @@ This module supports purchasing and selling cryptocurrencies on networks compati
     <tr>
       <td>:gear:</td>
       <td><strong>Configuration</strong></td>
-      <td>Set up your MoonPay API credentials and configure the module</td>
+      <td>Set up your MoonPay API key, optional signing callback, and environment</td>
       <td><a href="./configuration.md">Configuration</a></td>
     </tr>
     <tr>

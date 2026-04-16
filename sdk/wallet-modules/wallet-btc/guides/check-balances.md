@@ -28,12 +28,12 @@ You can retrieve the confirmed balance in satoshis using [`account.getBalance()`
 {% code title="Get Native BTC Balance" lineNumbers="true" %}
 ```javascript
 const balance = await account.getBalance()
-console.log('Confirmed balance:', balance, 'satoshis')
+console.log('Total balance:', balance, 'satoshis')
 ```
 {% endcode %}
 
 {% hint style="info" %}
-On Bitcoin, balances are expressed in satoshis (1 BTC = 100,000,000 satoshis). The [`getBalance()`](../api-reference.md#getbalance) method returns confirmed balance only.
+On Bitcoin, balances are expressed in satoshis (1 BTC = 100,000,000 satoshis). The [`getBalance()`](../api-reference.md#getbalance) method returns the total balance, including unconfirmed funds when present.
 {% endhint %}
 
 ## Maximum Spendable Amount
@@ -80,6 +80,10 @@ const balance = await readOnlyAccount.getBalance()
 console.log('Read-only account balance:', balance, 'satoshis')
 ```
 {% endcode %}
+
+{% hint style="info" %}
+Read-only accounts follow the same balance behavior as owned accounts: [`getBalance()`](../api-reference.md#getbalance) includes unconfirmed funds when present.
+{% endhint %}
 
 {% hint style="info" %}
 You can also create a read-only account from an existing owned account using [`account.toReadOnlyAccount()`](../api-reference.md#toreadonlyaccount).
