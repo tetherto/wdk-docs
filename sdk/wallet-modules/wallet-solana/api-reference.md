@@ -42,8 +42,9 @@ new WalletManagerSolana(seed, config)
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (object): Configuration object
-  - `rpcUrl` (string | Connection): RPC endpoint URL or Solana Connection instance
+  - `rpcUrl` (string): RPC endpoint URL. At runtime, `v1.0.0-beta.6` also accepts an ordered list of endpoints for failover, but the published TypeScript definition still narrows this field to `string`.
   - `commitment` (string, optional): Commitment level ('processed', 'confirmed', or 'finalized')
+  - `retries` (number, optional): Retry count for failover requests (default: 3)
   - `transferMaxFee` (number, optional): Maximum fee amount for transfer operations (in lamports)
 
 **Example:**
@@ -60,7 +61,7 @@ const wallet = new WalletManagerSolana(seedPhrase, {
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getAccount(index)` | Returns a wallet account at the specified index | `Promise<WalletAccountSolana>` |
-| `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise<WalletAccountSolana>` |
+| `getAccountByPath(path)` | Returns a wallet account at the specified SLIP-0010 derivation path | `Promise<WalletAccountSolana>` |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
 
@@ -78,16 +79,16 @@ const account = await wallet.getAccount(0)
 ```
 
 ##### `getAccountByPath(path)`
-Returns a wallet account at the specified BIP-44 derivation path.
+Returns a wallet account at the specified SLIP-0010 derivation path.
 
 **Parameters:**
-- `path` (string): The derivation path (e.g., "0'/0/0")
+- `path` (string): The derivation path (e.g., "0'/0'/0'"). On Solana, every child segment must be hardened.
 
 **Returns:** `Promise<WalletAccountSolana>` - The wallet account
 
 **Example:**
 ```javascript
-const account = await wallet.getAccountByPath("0'/0/1")
+const account = await wallet.getAccountByPath("0'/0'/1'")
 ```
 
 ##### `getFeeRates()`
@@ -124,7 +125,7 @@ new WalletAccountSolana(seed, path, config)
 
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
-- `path` (string): BIP-44 derivation path (e.g., "0'/0/0")
+- `path` (string): SLIP-0010 derivation path (e.g., "0'/0'/0'")
 - `config` (SolanaWalletConfig, optional): Configuration object
 
 #### Methods
@@ -189,9 +190,11 @@ console.log('Signature valid:', isValid)
 Sends a Solana transaction.
 
 **Parameters:**
-- `tx` (SolanaTransaction): The transaction object
+- `tx` (SolanaTransaction): A simple transfer object or a prebuilt `TransactionMessage`
   - `to` (string): Recipient's Solana address (base58-encoded)
-  - `value` (number): Amount in lamports
+  - `value` (number | bigint): Amount in lamports
+
+When `tx` is a `TransactionMessage`, WDK preserves an existing recent blockhash or durable nonce lifetime. If no lifetime is present, WDK fetches the latest blockhash before quoting or sending. If you set an explicit `feePayer`, it must match the wallet address.
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Object containing transaction hash and fee (in lamports)
 
@@ -210,7 +213,7 @@ console.log('Transaction fee:', result.fee, 'lamports')
 Estimates the fee for a Solana transaction.
 
 **Parameters:**
-- `tx` (SolanaTransaction): The transaction object (same as sendTransaction)
+- `tx` (SolanaTransaction): The transaction object (same as `sendTransaction`)
 
 **Returns:** `Promise<{fee: bigint}>` - Object containing fee estimate (in lamports)
 
@@ -230,7 +233,7 @@ Transfers SPL tokens to another address.
 - `options` (TransferOptions): Transfer options
   - `token` (string): Token mint address (base58-encoded)
   - `recipient` (string): Recipient's Solana address (base58-encoded)
-  - `amount` (number): Amount in token's base units
+  - `amount` (number | bigint): Amount in token's base units
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Object containing transaction hash and fee (in lamports)
 
@@ -450,13 +453,26 @@ console.log('Transfer fee estimate:', quote.fee, 'lamports')
 
 ## Types
 
+### SolanaWalletConfig
+
+```typescript
+interface SolanaWalletConfig {
+  rpcUrl?: string;
+  commitment?: 'processed' | 'confirmed' | 'finalized';
+  retries?: number;
+  transferMaxFee?: number | bigint;
+}
+```
+
+At runtime, `v1.0.0-beta.6` also accepts `rpcUrl: string[]` to enable failover across multiple Solana RPC providers. The published TypeScript definition above has not caught up yet.
+
 ### TransferOptions
 
 ```typescript
 interface TransferOptions {
   token: string;
   recipient: string;
-  amount: number;
+  amount: number | bigint;
 }
 ```
 

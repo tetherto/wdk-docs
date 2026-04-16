@@ -24,6 +24,13 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### April 15, 2026
+
+**Changes**
+- **wallet-solana** ([v1.0.0-beta.6](https://www.npmjs.com/package/@tetherto/wdk-wallet-solana/v/1.0.0-beta.6)): Add runtime RPC failover support for ordered `rpcUrl` lists plus `retries`, and tighten custom `TransactionMessage` and derivation-path validation for durable nonce lifetimes, fee payer matching, and hardened SLIP-0010 child paths.
+
+---
+
 ### April 14, 2026
 
 **What's New**

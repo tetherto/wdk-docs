@@ -19,7 +19,7 @@ layout:
 
 # @tetherto/wdk-wallet-solana Overview
 
-A simple and secure package to manage BIP-44 wallets for the Solana blockchain. This package provides a clean API for creating, managing, and interacting with Solana wallets using BIP-39 seed phrases and Solana-specific derivation paths.
+A simple and secure package to manage SLIP-0010 wallets for the Solana blockchain. This package provides a clean API for creating, managing, and interacting with Solana wallets using BIP-39 seed phrases and Solana-specific derivation paths.
 
 {% hint style="warning" %}
 
@@ -32,14 +32,14 @@ The default derivation path was updated in v1.0.0-beta.4 to match ecosystem conv
 
 If you're upgrading from an earlier version, existing wallets created with the old path will generate different addresses. Make sure to migrate any existing wallets or use the old path explicitly if needed for compatibility.
 
-Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) to supply an explicit derivation path when importing or recreating legacy wallets.
+Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) to supply an explicit derivation path when importing or recreating legacy wallets. On Solana, every child segment in a custom path must be hardened.
 
 {% endhint %}
 
 ## Features
 
 - **BIP-39 Seed Phrase Support**: Generate and validate BIP-39 mnemonic seed phrases
-- **Solana Derivation Paths**: Support for BIP-44 standard derivation paths for Solana (m/44'/501')
+- **Solana Derivation Paths**: Support for SLIP-0010 derivation paths for Solana (m/44'/501')
 - **Multi-Account Management**: Create and manage multiple accounts from a single seed phrase
 - **Solana Address Support**: Generate and manage Solana public keys and addresses
 - **Message Signing**: Sign and verify messages using Ed25519 cryptography
@@ -47,7 +47,8 @@ Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) to supply an e
 - **SPL Token Support**: Query native SOL and SPL token balances
 - **TypeScript Support**: Full TypeScript definitions included
 - **Memory Safety**: Secure private key management with memory-safe implementation
-- **Provider Flexibility**: Support for custom Solana RPC endpoints
+- **Provider Flexibility**: Support for a single Solana RPC endpoint, plus runtime failover support for ordered RPC URL lists
+- **Transaction Message Support**: Quote or send prebuilt `TransactionMessage` flows with recent blockhash or durable nonce lifetimes
 - **Fee Estimation**: Dynamic fee calculation with recent blockhash
 - **Program Interaction**: Support for interacting with Solana programs
 

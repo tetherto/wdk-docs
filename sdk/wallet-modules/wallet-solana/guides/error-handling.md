@@ -61,13 +61,13 @@ async function safeTransfer(account, wallet) {
     }
 
     const quote = await account.quoteSendTransaction({
-      recipient: '11111111111111111111111111111112',
+      to: '11111111111111111111111111111112',
       value: transferAmount
     })
     console.log('Estimated fee:', quote.fee, 'lamports')
 
     const result = await account.sendTransaction({
-      recipient: '11111111111111111111111111111112',
+      to: '11111111111111111111111111111112',
       value: transferAmount
     })
     console.log('Transaction successful:', result.hash)
@@ -91,6 +91,14 @@ async function safeTransfer(account, wallet) {
 }
 ```
 {% endcode %}
+
+## Handle Prebuilt TransactionMessage Errors
+
+If you pass a prebuilt `TransactionMessage`, make sure it already has a recent blockhash or durable nonce lifetime, or let WDK inject the latest blockhash for you. If you set `feePayer`, it must match the wallet address.
+
+{% hint style="info" %}
+Durable nonce flows still need a valid nonce account and signer setup in the message you provide. WDK preserves that lifetime instead of replacing it.
+{% endhint %}
 
 ## Manage Fee Limits
 
