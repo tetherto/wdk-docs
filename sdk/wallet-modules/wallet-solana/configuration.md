@@ -60,9 +60,9 @@ const customAccount = await wallet.getAccountByPath("0'/0'/5'")
 
 ### rpcUrl
 
-The `rpcUrl` option specifies one Solana RPC endpoint for blockchain interactions. At runtime, `v1.0.0-beta.6` also accepts an ordered list of endpoints to enable provider failover.
+The `rpcUrl` option specifies one Solana RPC endpoint or an ordered list of endpoints for blockchain interactions.
 
-**Type:** `string` in the published TypeScript definition (optional)
+**Type:** `string | string[]` (optional)
 
 **Default:** If not provided, wallet functionality that requires RPC will throw an error
 
@@ -93,10 +93,6 @@ const config = {
 ```
 
 When `rpcUrl` is an array, WDK initializes a failover provider and tries the next RPC when the current provider fails.
-
-{% hint style="info" %}
-In `v1.0.0-beta.6`, the runtime accepts `rpcUrl: string[]` for failover, but the published TypeScript definition still narrows `rpcUrl` to `string`. If you're using TypeScript, cast the config or wrap it until the typings catch up.
-{% endhint %}
 
 ### retries
 

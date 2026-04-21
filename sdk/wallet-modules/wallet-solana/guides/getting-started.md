@@ -59,7 +59,7 @@ const wallet = new WalletManagerSolana(seedPhrase, {
 {% endcode %}
 
 {% hint style="info" %}
-To enable RPC failover, pass `rpcUrl` as an ordered array of endpoints and set `retries` to control how many times WDK retries each provider before moving to the next one. In `v1.0.0-beta.6`, the runtime supports this, but the published TypeScript definition still narrows `rpcUrl` to `string`.
+To enable RPC failover, pass `rpcUrl` as an ordered array of endpoints and set `retries` to control how many times WDK retries each provider before moving to the next one.
 {% endhint %}
 
 {% hint style="danger" %}

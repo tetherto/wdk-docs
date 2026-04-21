@@ -24,6 +24,13 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### April 19, 2026
+
+**Fixes**
+- **wallet-solana** ([v1.0.0-beta.7](https://www.npmjs.com/package/@tetherto/wdk-wallet-solana/v/1.0.0-beta.7)): Fix `SolanaWalletConfig.rpcUrl` typings to accept ordered `string[]` failover endpoints and align the published TypeScript definitions with the beta.6 runtime behavior.
+
+---
+
 ### April 15, 2026
 
 **Changes**

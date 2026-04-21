@@ -42,7 +42,7 @@ new WalletManagerSolana(seed, config)
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (object): Configuration object
-  - `rpcUrl` (string): RPC endpoint URL. At runtime, `v1.0.0-beta.6` also accepts an ordered list of endpoints for failover, but the published TypeScript definition still narrows this field to `string`.
+  - `rpcUrl` (string | string[]): RPC endpoint URL or an ordered list of endpoints for failover
   - `commitment` (string, optional): Commitment level ('processed', 'confirmed', or 'finalized')
   - `retries` (number, optional): Retry count for failover requests (default: 3)
   - `transferMaxFee` (number, optional): Maximum fee amount for transfer operations (in lamports)
@@ -457,14 +457,12 @@ console.log('Transfer fee estimate:', quote.fee, 'lamports')
 
 ```typescript
 interface SolanaWalletConfig {
-  rpcUrl?: string;
+  rpcUrl?: string | string[];
   commitment?: 'processed' | 'confirmed' | 'finalized';
   retries?: number;
   transferMaxFee?: number | bigint;
 }
 ```
-
-At runtime, `v1.0.0-beta.6` also accepts `rpcUrl: string[]` to enable failover across multiple Solana RPC providers. The published TypeScript definition above has not caught up yet.
 
 ### TransferOptions
 
