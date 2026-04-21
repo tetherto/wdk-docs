@@ -57,7 +57,9 @@ const aave = new AaveProtocolEvm(account)
 
 ## ERC‑4337 (Account Abstraction)
 
-When using ERC‑4337 smart accounts, you can optionally specify a `paymasterToken` per operation to sponsor gas.
+When using ERC‑4337 smart accounts, every mutating method and quote helper accepts an optional `config` override. In `v1.0.0-beta.4`, that override matches the three gas-payment families exposed by [`@tetherto/wdk-wallet-evm-erc-4337`](../../../wallet-modules/wallet-evm-erc-4337/configuration.md): paymaster token, sponsorship policy, or native coins.
+
+Use the fields that match the gas-payment mode you want for that call. For the full field-level definitions, see the [`@tetherto/wdk-wallet-evm-erc-4337` configuration docs](../../../wallet-modules/wallet-evm-erc-4337/configuration.md) and [`Config Override`](../../../wallet-modules/wallet-evm-erc-4337/api-reference.md#config-override) reference.
 
 ```javascript
 import { WalletAccountEvmErc4337 } from '@tetherto/wdk-wallet-evm-erc-4337'
@@ -72,9 +74,17 @@ const aa = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 const aaveAA = new AaveProtocolEvm(aa)
 
 const result = await aaveAA.supply({ token: '0xdAC17F...ec7', amount: 1000000n }, {
-  paymasterToken: 'USDT'
+  paymasterToken: {
+    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+  }
 })
 ```
+
+### Supported Override Families
+
+- **Paymaster token mode**: `paymasterUrl`, `paymasterAddress`, `paymasterToken`, `transferMaxFee`
+- **Sponsorship policy mode**: `isSponsored`, `paymasterUrl`, `sponsorshipPolicyId`
+- **Native coin mode**: `useNativeCoins`, `transferMaxFee`
 
 ## Network Support
 
@@ -174,6 +184,5 @@ await aave.repay({ token: 'TOKEN_ADDRESS', amount: 1000000n })
 ### Need Help?
 
 {% include "../../../.gitbook/includes/support-cards.md" %}
-
 
 

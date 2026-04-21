@@ -26,7 +26,11 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ### April 19, 2026
 
+**Changes**
+- **lending-aave-evm** ([v1.0.0-beta.4](https://www.npmjs.com/package/@tetherto/wdk-protocol-lending-aave-evm/v/1.0.0-beta.4)): Expand per-operation ERC‑4337 config overrides from `paymasterToken`-only to the wallet module's paymaster-token, sponsorship-policy, and native-coin gas modes.
+
 **Fixes**
+- **failover-provider** ([v1.0.0-beta.2](https://www.npmjs.com/package/@tetherto/wdk-failover-provider/v/1.0.0-beta.2)): Remove unnecessary published type definitions without changing the runtime failover behavior.
 - **wallet-solana** ([v1.0.0-beta.7](https://www.npmjs.com/package/@tetherto/wdk-wallet-solana/v/1.0.0-beta.7)): Fix `SolanaWalletConfig.rpcUrl` typings to accept ordered `string[]` failover endpoints and align the published TypeScript definitions with the beta.6 runtime behavior.
 
 ---

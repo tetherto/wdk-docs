@@ -125,7 +125,7 @@ Health factor and collateralization limits still apply. A quote does not guarant
 
 ## ERC-4337 smart accounts
 
-You can run the same methods through [`WalletAccountEvmErc4337`](../../../wallet-modules/wallet-evm-erc-4337/api-reference.md#walletaccountevmerc4337) and pass `paymasterToken` to [`supply()`](../api-reference.md#supply-options-config) (or other mutating calls) per the [ERC-4337 config](../api-reference.md#erc-4337-config-optional) section:
+You can run the same methods through [`WalletAccountEvmErc4337`](../../../wallet-modules/wallet-evm-erc-4337/api-reference.md#walletaccountevmerc4337) and pass a second `config` argument to override per-call gas payment settings. In `v1.0.0-beta.4`, the lending methods accept the same override families as the wallet module: paymaster token, sponsorship policy, and native coins. See the [ERC-4337 config override](../api-reference.md#erc-4337-config-override-optional) section for the full field list.
 
 {% code title="Supply with paymaster" lineNumbers="true" %}
 ```javascript
@@ -143,11 +143,21 @@ const aaveAA = new AaveProtocolEvm(aa)
 
 const result = await aaveAA.supply(
   { token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', amount: 1000000n },
-  { paymasterToken: 'USDT' }
+  {
+    paymasterToken: {
+      address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+    }
+  }
 )
 console.log('Supply hash:', result.hash)
 ```
 {% endcode %}
+
+You can use the same second argument to:
+
+- override paymaster-token mode with `paymasterUrl`, `paymasterAddress`, `paymasterToken`, or `transferMaxFee`
+- switch one call to sponsorship mode with `isSponsored`, `paymasterUrl`, and `sponsorshipPolicyId`
+- switch one call to native-coin gas mode with `useNativeCoins` and `transferMaxFee`
 
 Use token addresses that exist on the same chain as the smart account RPC.
 
