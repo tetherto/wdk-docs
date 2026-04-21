@@ -53,22 +53,22 @@ const wallet = new WalletManagerSolana(seedPhrase, accountConfig)
 const account = await wallet.getAccount(0)
 
 // Or get account by custom derivation path
-const customAccount = await wallet.getAccountByPath("0'/0/5")
+const customAccount = await wallet.getAccountByPath("0'/0'/5'")
 ```
 
 ## Configuration Options
 
 ### rpcUrl
 
-The `rpcUrl` option specifies the Solana RPC endpoint for blockchain interactions.
+The `rpcUrl` option specifies one Solana RPC endpoint or an ordered list of endpoints for blockchain interactions.
 
-**Type:** `string` (optional)
+**Type:** `string | string[]` (optional)
 
 **Default:** If not provided, wallet functionality that requires RPC will throw an error
 
 **Examples:**
 ```javascript
-// Mainnet
+// Single endpoint
 const config = {
   rpcUrl: 'https://api.mainnet-beta.solana.com'
 }
@@ -78,9 +78,38 @@ const config = {
   rpcUrl: 'https://api.devnet.solana.com'
 }
 
+// Failover across multiple endpoints
+const config = {
+  rpcUrl: [
+    'https://api.mainnet-beta.solana.com',
+    'https://rpc.ankr.com/solana'
+  ]
+}
+
 // Custom RPC
 const config = {
   rpcUrl: 'https://your-custom-rpc-endpoint.com'
+}
+```
+
+When `rpcUrl` is an array, WDK initializes a failover provider and tries the next RPC when the current provider fails.
+
+### retries
+
+The `retries` option controls how many times the failover provider retries a request before moving on to the next RPC entry.
+
+**Type:** `number` (optional)
+
+**Default:** `3`
+
+**Example:**
+```javascript
+const config = {
+  rpcUrl: [
+    'https://api.mainnet-beta.solana.com',
+    'https://rpc.ankr.com/solana'
+  ],
+  retries: 5
 }
 ```
 
@@ -131,9 +160,10 @@ const wallet = new WalletManagerSolana(seedPhrase, config)
 
 ## Derivation Paths
 
-Solana wallets use BIP-44 standard derivation paths. The default derivation path follows ecosystem conventions:
+Solana wallets use SLIP-0010 derivation paths. The default derivation path follows ecosystem conventions:
 
 - Default path: `m/44'/501'/{index}'/0'` (where `{index}` is the account index)
+- Custom child paths must keep every segment hardened, for example `0'/0'/5'`
 
 {% hint style="warning" %}
 
@@ -153,6 +183,7 @@ Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) to supply an e
 ## Security Considerations
 
 - Always use HTTPS URLs for RPC endpoints
+- Use RPC endpoints that serve the same Solana network when enabling failover
 - Set appropriate `transferMaxFee` limits for your use case
 - Consider using environment variables for configuration in production
 - Use trusted RPC providers or run your own Solana validator for production applications
@@ -224,5 +255,3 @@ Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) to supply an e
 ### Need Help?
 
 {% include "../../../.gitbook/includes/support-cards.md" %}
-
-

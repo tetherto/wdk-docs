@@ -31,8 +31,6 @@ const transferResult = await account.transfer({
   token: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT mint address
   recipient: 'publicKey', // Recipient's base58-encoded public key
   amount: 1000000n // Amount in token's base units (6 decimals for USDT)
-}, {
-  commitment: 'confirmed' // Optional: commitment level
 })
 console.log('Transfer hash:', transferResult.hash)
 console.log('Transfer fee:', transferResult.fee, 'lamports')
