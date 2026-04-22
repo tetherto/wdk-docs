@@ -36,9 +36,8 @@ Use [`account.sendTransaction()`](/sdk/wallet-modules/wallet-solana/api-referenc
 {% code title="Send SOL" lineNumbers="true" %}
 ```javascript
 const result = await account.sendTransaction({
-  recipient: 'publicKey', // Recipient's base58-encoded public key
-  value: 1000000000n, // 1 SOL in lamports
-  commitment: 'confirmed' // Optional: commitment level
+  to: 'publicKey', // Recipient's base58-encoded public key
+  value: 1000000000n // 1 SOL in lamports
 })
 console.log('Transaction hash:', result.hash)
 console.log('Transaction fee:', result.fee, 'lamports')
@@ -52,10 +51,28 @@ Use [`account.quoteSendTransaction()`](/sdk/wallet-modules/wallet-solana/api-ref
 {% code title="Quote Transaction Fee" lineNumbers="true" %}
 ```javascript
 const quote = await account.quoteSendTransaction({
-  recipient: 'publicKey',
+  to: 'publicKey',
   value: 1000000000n
 })
 console.log('Estimated fee:', quote.fee, 'lamports')
+```
+{% endcode %}
+
+## Quote or Send a TransactionMessage
+
+Use a prebuilt `TransactionMessage` when you need custom instructions or a durable nonce flow.
+
+{% hint style="info" %}
+If the transaction message already includes a recent blockhash or durable nonce lifetime, WDK preserves it. If it does not, WDK fetches the latest blockhash before quoting or sending. When you set `feePayer`, it must match the wallet address.
+{% endhint %}
+
+{% code title="Quote and Send a TransactionMessage" lineNumbers="true" %}
+```javascript
+const quote = await account.quoteSendTransaction(txMessage)
+console.log('Estimated fee:', quote.fee, 'lamports')
+
+const result = await account.sendTransaction(txMessage)
+console.log('Transaction hash:', result.hash)
 ```
 {% endcode %}
 
@@ -84,13 +101,13 @@ async function sendSOLTransfer(account, wallet) {
   }
 
   const quote = await account.quoteSendTransaction({
-    recipient: '11111111111111111111111111111112',
+    to: '11111111111111111111111111111112',
     value: transferAmount
   })
   console.log('Estimated fee:', quote.fee, 'lamports')
 
   const result = await account.sendTransaction({
-    recipient: '11111111111111111111111111111112',
+    to: '11111111111111111111111111111112',
     value: transferAmount
   })
 

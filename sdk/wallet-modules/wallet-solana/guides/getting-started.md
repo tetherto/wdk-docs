@@ -58,6 +58,10 @@ const wallet = new WalletManagerSolana(seedPhrase, {
 ```
 {% endcode %}
 
+{% hint style="info" %}
+To enable RPC failover, pass `rpcUrl` as an ordered array of endpoints and set `retries` to control how many times WDK retries each provider before moving to the next one.
+{% endhint %}
+
 {% hint style="danger" %}
 **Secure the Seed Phrase:** You must securely store this seed phrase immediately. If it is lost, the user will permanently lose access to their funds.
 {% endhint %}

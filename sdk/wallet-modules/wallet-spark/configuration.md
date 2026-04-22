@@ -24,7 +24,11 @@ layout:
 
 ```javascript
 const config = {
-  network: 'MAINNET' // 'MAINNET', 'SIGNET', or 'REGTEST'
+  network: 'MAINNET', // 'MAINNET', 'SIGNET', or 'REGTEST'
+  sparkscan: {
+    apiKey: 'your-api-key-here'
+  },
+  syncAndRetry: true
 }
 
 const wallet = new WalletManagerSpark(seedPhrase, config)
@@ -59,6 +63,47 @@ const config = {
   network: 'REGTEST' // Use REGTEST for development
 }
 ```
+
+### SparkScan Balance Polling
+
+The `sparkscan` option configures SparkScan-backed balance polling for [`getBalance()`](./api-reference.md#getbalance).
+
+**Type:** `SparkScanConfig` (optional)
+
+**Fields:**
+- `baseUrl` - Optional SparkScan URL, default: `https://api.sparkscan.io`
+- `network` - Optional Spark network. SparkScan supports `MAINNET` and `REGTEST`
+- `apiKey` - Optional SparkScan API key
+
+**Example:**
+```javascript
+const config = {
+  network: 'MAINNET',
+  sparkscan: {
+    apiKey: 'your-api-key-here'
+  }
+}
+```
+
+When `sparkscan` is configured, [`getBalance()`](./api-reference.md#getbalance) returns SparkScan's soft balance from `btcSoftBalanceSats`.
+
+### Automatic Retry
+
+The `syncAndRetry` option tells [`sendTransaction()`](./api-reference.md#sendtransaction-to-value) and [`payLightningInvoice()`](./api-reference.md#paylightninginvoice-options) to sync wallet state and retry once after a failure.
+
+**Type:** `boolean` (optional)
+
+**Default:** `false`
+
+**Example:**
+```javascript
+const config = {
+  network: 'MAINNET',
+  syncAndRetry: true
+}
+```
+
+You can also call [`syncWalletBalance()`](./api-reference.md#syncwalletbalance) directly when you want to reconcile wallet state before retrying an operation.
 
 ## Network Configuration
 
@@ -101,7 +146,11 @@ import WalletManagerSpark from '@tetherto/wdk-wallet-spark'
 // Create wallet manager with configuration
 const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
 const wallet = new WalletManagerSpark(seedPhrase, {
-  network: 'MAINNET'
+  network: 'MAINNET',
+  sparkscan: {
+    apiKey: 'your-api-key-here'
+  },
+  syncAndRetry: true
 })
 
 // Get accounts (no additional configuration needed)
@@ -180,6 +229,5 @@ wallet.dispose()
 ### Need Help?
 
 {% include "../../../.gitbook/includes/support-cards.md" %}
-
 
 

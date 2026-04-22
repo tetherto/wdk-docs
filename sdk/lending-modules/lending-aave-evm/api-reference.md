@@ -57,6 +57,8 @@ const aave = new AaveProtocolEvm(account)
 
 ---
 
+When `AaveProtocolEvm` is initialized with an ERC‑4337 smart account, the optional `config` argument on mutating and quote methods accepts the same gas-payment override families documented in [`@tetherto/wdk-wallet-evm-erc-4337`](../../../wallet-modules/wallet-evm-erc-4337/api-reference.md#config-override): paymaster token, sponsorship policy, and native coins.
+
 ### `supply(options, config?)`
 Add tokens to the pool.
 
@@ -197,9 +199,26 @@ Returns the following structure:
 
 ---
 
-## ERC‑4337 Config (optional)
+## ERC‑4337 Config Override (optional)
 
-- `paymasterToken` (`string`): token used to pay gas when sponsored.
+When the protocol uses `WalletAccountEvmErc4337` or `WalletAccountReadOnlyEvmErc4337`, the optional `config` argument on `supply`, `quoteSupply`, `withdraw`, `quoteWithdraw`, `borrow`, `quoteBorrow`, `repay`, `quoteRepay`, `setUseReserveAsCollateral`, and `setUserEMode` accepts the wallet module's per-call gas-payment overrides.
+
+- **Paymaster token mode**: `paymasterUrl`, `paymasterAddress`, `paymasterToken`, `transferMaxFee`
+- **Sponsorship policy mode**: `isSponsored`, `paymasterUrl`, `sponsorshipPolicyId`
+- **Native coin mode**: `useNativeCoins`, `transferMaxFee`
+
+Example:
+
+```javascript
+const res = await aave.supply(
+  { token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', amount: 1000000n },
+  {
+    paymasterToken: {
+      address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+    }
+  }
+)
+```
 
 ## Rules & Notes
 
@@ -264,5 +283,4 @@ Returns the following structure:
 ### Need Help?
 
 {% include "../../../.gitbook/includes/support-cards.md" %}
-
 

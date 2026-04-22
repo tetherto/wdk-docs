@@ -40,6 +40,28 @@ console.log('Transaction fee:', result.fee, 'satoshis')
 Bitcoin transactions support a single recipient only. Amounts and fees are always in satoshis (1 BTC = 100,000,000 satoshis). The minimum amount must be above the dust limit (294 satoshis for SegWit, 546 for legacy).
 {% endhint %}
 
+## Extend Post-Broadcast Polling
+
+If you want [`account.sendTransaction()`](../api-reference.md#sendtransaction-options-timeoutms) to keep polling after broadcast until spent inputs disappear from the unspent-output set, pass the optional `timeoutMs` argument:
+
+{% code title="Send BTC With Extended Polling" lineNumbers="true" %}
+```javascript
+const result = await account.sendTransaction(
+  {
+    to: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+    value: 100000n,
+  },
+  30000
+)
+
+console.log('Transaction hash:', result.hash)
+```
+{% endcode %}
+
+{% hint style="info" %}
+If you omit `timeoutMs`, the wallet uses the default post-broadcast polling window before returning.
+{% endhint %}
+
 ## Estimate Fees
 
 You can estimate the fee for a transaction without broadcasting it using [`account.quoteSendTransaction()`](../api-reference.md#quotesendtransaction-options):

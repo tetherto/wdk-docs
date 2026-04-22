@@ -37,6 +37,23 @@ console.log('Balance in BTC:', Number(balance) / 100000000)
 Balances are in satoshis (1 BTC = 100,000,000 satoshis).
 {% endhint %}
 
+If you configure [`sparkscan`](../configuration.md#sparkscan-balance-polling), [`account.getBalance()`](../api-reference.md#getbalance) returns SparkScan's `btcSoftBalanceSats` value instead of the Spark SDK balance:
+
+{% code title="SparkScan Balance Polling" lineNumbers="true" %}
+```javascript
+const wallet = new WalletManagerSpark(seedPhrase, {
+  network: 'MAINNET',
+  sparkscan: {
+    apiKey: 'your-api-key-here',
+  },
+})
+
+const account = await wallet.getAccount(0)
+const balance = await account.getBalance()
+console.log('SparkScan balance:', balance)
+```
+{% endcode %}
+
 ## Token Balance
 
 You can read a specific token balance using [`account.getTokenBalance()`](../api-reference.md#gettokenbalance-tokenaddress):
@@ -73,6 +90,10 @@ const balance = await readOnlyAccount.getBalance()
 console.log('Read-only balance:', balance, 'satoshis')
 ```
 {% endcode %}
+
+{% hint style="info" %}
+The same [`sparkscan`](../configuration.md#sparkscan-balance-polling) behavior applies to read-only accounts.
+{% endhint %}
 
 You can read a token balance on a read-only account using [`readOnlyAccount.getTokenBalance()`](../api-reference.md#gettokenbalance-tokenaddress):
 

@@ -42,6 +42,8 @@ new WalletManagerSpark(seed, config)
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (object, optional): Configuration object
   - `network` (string, optional): 'MAINNET', 'SIGNET', or 'REGTEST' (default: 'MAINNET')
+  - `sparkscan` (`SparkScanConfig`, optional): SparkScan configuration for balance polling
+  - `syncAndRetry` (boolean, optional): When true, failed sends and Lightning payments sync wallet state and retry once
 
 ### Methods
 
@@ -150,6 +152,7 @@ Represents an individual Spark wallet account. Implements `IWalletAccount` from 
 | `createSparkSatsInvoice(options)` | Creates a Spark invoice for receiving sats | `Promise<SparkAddressFormat>` |
 | `createSparkTokensInvoice(options)` | Creates a Spark invoice for receiving tokens | `Promise<SparkAddressFormat>` |
 | `paySparkInvoice(invoices)` | Pays one or more Spark invoices | `Promise<FulfillSparkInvoiceResponse>` |
+| `syncWalletBalance()` | Reconciles wallet state and waits for any triggered optimization to complete | `Promise<void>` |
 | `getSparkInvoices(params)` | Queries the status of Spark invoices | `Promise<{invoiceStatuses: InvoiceResponse[], offset: number}>` |
 | `toReadOnlyAccount()` | Creates a read-only version of this account | `Promise<WalletAccountReadOnlySpark>` |
 | `cleanupConnections()` | Cleans up network connections and resources | `Promise<void>` |
@@ -193,6 +196,8 @@ console.log('Identity key:', identityKey) // 02eda8...
 
 ##### `sendTransaction({to, value})`
 Sends a Spark transaction.
+
+When `syncAndRetry` is enabled, the wallet syncs state and retries once after a failure.
 
 **Parameters:**
 - `to` (string): Recipient's Spark address
@@ -268,7 +273,7 @@ console.log('Transfer fee:', Number(quote.fee))
 ```
 
 ##### `getBalance()`
-Returns the account's native token balance in satoshis.
+Returns the account's native token balance in satoshis. When `sparkscan` is configured, this uses SparkScan's `btcSoftBalanceSats` value.
 
 **Returns:** `Promise<bigint>` - Balance in satoshis
 
@@ -536,6 +541,8 @@ if (request) {
 ##### `payLightningInvoice(options)`
 Pays a Lightning invoice.
 
+When `syncAndRetry` is enabled, the wallet syncs state and retries once after a failure.
+
 **Parameters:**
 - `options` (PayLightningInvoiceParams): Payment options object
   - `encodedInvoice` (string): BOLT11 Lightning invoice
@@ -653,6 +660,16 @@ const result = await account.paySparkInvoice([
 console.log('Payment result:', result)
 ```
 
+##### `syncWalletBalance()`
+Reconciles the wallet's internal state with the server and waits for any triggered optimization to complete.
+
+**Returns:** `Promise<void>`
+
+**Example:**
+```javascript
+await account.syncWalletBalance()
+```
+
 ##### `getSparkInvoices(params)`
 Queries the status of Spark invoices.
 
@@ -763,7 +780,7 @@ console.log('Identity key:', identityKey) // 02eda8...
 ```
 
 ##### `getBalance()`
-Returns the account's native token balance in satoshis.
+Returns the account's native token balance in satoshis. When `sparkscan` is configured, this uses SparkScan's `btcSoftBalanceSats` value.
 
 **Returns:** `Promise<bigint>` - Balance in satoshis
 
@@ -920,11 +937,23 @@ console.log('Transfer fee:', Number(quote.fee))
 
 ## Types
 
+### SparkScanConfig
+
+```typescript
+interface SparkScanConfig {
+  baseUrl?: string  // Optional SparkScan URL (default: "https://api.sparkscan.io")
+  network?: 'MAINNET' | 'SIGNET' | 'REGTEST'  // Spark network, SparkScan only accepts MAINNET and REGTEST at runtime
+  apiKey?: string  // Optional API key for SparkScan requests
+}
+```
+
 ### SparkWalletConfig
 
 ```typescript
 interface SparkWalletConfig {
   network?: 'MAINNET' | 'SIGNET' | 'REGTEST'  // The network (default: "MAINNET")
+  sparkscan?: SparkScanConfig  // Optional SparkScan configuration for balance polling
+  syncAndRetry?: boolean       // When true, failed sends and Lightning payments sync wallet state and retry once
 }
 ```
 
@@ -1239,4 +1268,3 @@ interface RefundStaticDepositOptions {
 ### Need Help?
 
 {% include "../../../.gitbook/includes/support-cards.md" %}
-

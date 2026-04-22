@@ -43,14 +43,14 @@ Use [`getAccountByPath()`](/sdk/wallet-modules/wallet-solana/api-reference#getac
 
 {% code title="Custom Derivation Path" lineNumbers="true" %}
 ```javascript
-const customAccount = await wallet.getAccountByPath("0'/0/5")
+const customAccount = await wallet.getAccountByPath("0'/0'/5'")
 const customAddress = await customAccount.getAddress()
 console.log('Custom account address:', customAddress)
 ```
 {% endcode %}
 
 {% hint style="info" %}
-All addresses are base58-encoded Solana public keys. All accounts inherit the provider configuration from the wallet manager.
+Solana uses SLIP-0010 derivation paths. Every child segment in a custom path must be hardened, for example `0'/0'/5'`. All accounts inherit the provider configuration from the wallet manager.
 {% endhint %}
 
 ## Iterate Over Multiple Accounts

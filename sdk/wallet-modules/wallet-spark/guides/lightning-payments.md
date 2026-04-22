@@ -56,6 +56,23 @@ console.log('Payment result:', payment)
 ```
 {% endcode %}
 
+If you enable [`syncAndRetry`](../configuration.md#automatic-retry), the wallet syncs state and retries [`account.payLightningInvoice()`](../api-reference.md#paylightninginvoice-options) once after a failure:
+
+{% code title="Retry Lightning Payment Once" lineNumbers="true" %}
+```javascript
+const wallet = new WalletManagerSpark(seedPhrase, {
+  network: 'MAINNET',
+  syncAndRetry: true,
+})
+
+const account = await wallet.getAccount(0)
+await account.payLightningInvoice({
+  encodedInvoice: 'lnbc500u1p...',
+  maxFeeSats: 1000,
+})
+```
+{% endcode %}
+
 ## Estimate Lightning Fees
 
 You can estimate the routing fee before paying using [`account.quotePayLightningInvoice()`](../api-reference.md#quotepaylightninginvoice-options):

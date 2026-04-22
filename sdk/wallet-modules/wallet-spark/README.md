@@ -26,6 +26,8 @@ A simple and secure package to manage BIP-32 wallets for the Spark blockchain. T
 - **Spark Blockchain Support**: Full integration with the Spark Bitcoin [layer 2](../../../resources/concepts.md#layer-2-solutions) network
 - **Lightning Network Integration**: Create and pay [Lightning Network](../../../resources/concepts.md#lightning-network) invoices directly
 - **Spark Invoices**: Create and pay Spark invoices for receiving sats and tokens directly on the Spark network
+- **SparkScan Balance Polling**: Use SparkScan-backed balance polling in [`getBalance()`](./api-reference.md#getbalance) when `sparkscan` is configured
+- **Sync and Retry**: Optionally sync wallet state and retry failed [`sendTransaction()`](./api-reference.md) and [`payLightningInvoice()`](./api-reference.md) calls once
 - **Token Transfers**: Transfer tokens to other Spark addresses
 - **Bitcoin Layer 1 Bridge**: Deposit and withdraw Bitcoin between layer 1 and Spark
 - **Static Deposit Addresses**: Reusable deposit addresses for Bitcoin layer 1 deposits

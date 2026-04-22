@@ -145,8 +145,8 @@ new WalletAccountBtc(seed, path, config)
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's Bitcoin address | `Promise<string>` |
-| `getBalance()` | Returns the confirmed account balance in satoshis | `Promise<bigint>` |
-| `sendTransaction(options)` | Sends a Bitcoin transaction | `Promise<{hash: string, fee: bigint}>` |
+| `getBalance()` | Returns the total account balance in satoshis, including unconfirmed funds when present | `Promise<bigint>` |
+| `sendTransaction(options, timeoutMs?)` | Sends a Bitcoin transaction and optionally polls until spent inputs disappear from unspent outputs | `Promise<{hash: string, fee: bigint}>` |
 | `quoteSendTransaction(options)` | Estimates the fee for a transaction | `Promise<{fee: bigint}>` |
 | `getTransfers(options?)` | Returns the account's transfer history | `Promise<BtcTransfer[]>` |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<BtcTransactionReceipt \| null>` |
@@ -167,7 +167,7 @@ const address = await account.getAddress()
 console.log('Address:', address) // bc1q... (BIP-84) or 1... (BIP-44)
 ```
 ##### `getBalance()`
-Returns the account's confirmed balance in satoshis.
+Returns the account's total balance in satoshis, including unconfirmed funds when present.
 
 **Returns:** `Promise<bigint>` - Balance in satoshis
 
@@ -177,8 +177,8 @@ const balance = await account.getBalance()
 console.log('Balance:', balance, 'satoshis')
 ```
 
-##### `sendTransaction(options)`
-Sends a Bitcoin transaction to a single recipient.
+##### `sendTransaction(options, timeoutMs?)`
+Sends a Bitcoin transaction to a single recipient and optionally polls after broadcast until spent inputs disappear from the unspent-output set.
 
 **Parameters:**
 - `options` (BtcTransaction): Transaction options
@@ -186,6 +186,7 @@ Sends a Bitcoin transaction to a single recipient.
   - `value` (number | bigint): Amount in satoshis
   - `feeRate` (number | bigint, optional): Fee rate in sat/vB. If provided, overrides the fee rate estimated from the blockchain.
   - `confirmationTarget` (number, optional): Target blocks for confirmation (default: 1)
+- `timeoutMs` (number, optional): Maximum milliseconds to poll after broadcast before returning (default: 10000)
 
 **Returns:** `Promise<{hash: string, fee: bigint}>`
 - `hash`: Transaction hash
@@ -371,7 +372,7 @@ new WalletAccountReadOnlyBtc(address, config)
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's Bitcoin address | `Promise<string>` |
-| `getBalance()` | Returns the confirmed account balance in satoshis | `Promise<bigint>` |
+| `getBalance()` | Returns the total account balance in satoshis, including unconfirmed funds when present | `Promise<bigint>` |
 | `quoteSendTransaction(options)` | Estimates the fee for a transaction | `Promise<{fee: bigint}>` |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<BtcTransactionReceipt \| null>` |
 | `getMaxSpendable()` | Returns the maximum spendable amount | `Promise<BtcMaxSpendableResult>` |
