@@ -24,6 +24,13 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### April 22, 2026
+
+**Fixes**
+- **wdk-core** ([v1.0.0-beta.8](https://github.com/tetherto/wdk/releases/tag/v1.0.0-beta.8)): Fix `WDK.getRandomSeedPhrase(wordCount?)` so client code can generate 24-word BIP-39 seed phrases instead of always receiving the default 12-word mnemonic.
+
+---
+
 ### April 19, 2026
 
 **Changes**
