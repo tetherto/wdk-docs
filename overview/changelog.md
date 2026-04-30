@@ -24,6 +24,33 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### April 30, 2026
+
+**What's New**
+- **[Backup Cloud React Native](../tools/backup-cloud-react-native/)**: New documentation for `@tetherto/wdk-backup-cloud-react-native`, covering Google Drive and iCloud backup providers for encrypted wallet keys.
+- **[React Native Secure Storage](../tools/react-native-secure-storage/)**: New documentation for `@tetherto/wdk-react-native-secure-storage`, covering keychain-backed wallet credential storage, biometric options, and typed errors.
+- **[Safe Core SDK](../tools/safe-core-sdk/)**: New package map for Safe Core SDK packages used in WDK integrations, including Protocol Kit, API Kit, Relay Kit, and shared Safe types.
+
+---
+
+### April 29, 2026
+
+**What's New**
+- **wallet-btc** ([v1.0.0-beta.9](https://www.npmjs.com/package/@tetherto/wdk-wallet-btc/v/1.0.0-beta.9)): Add offline Bitcoin transaction signing with `signTransaction()` and ordered client failover with `retries`; reuse the read-only account helper and clarify that returned key-pair byte arrays should be treated as read-only.
+- **wallet-evm** ([v1.0.0-beta.12](https://www.npmjs.com/package/@tetherto/wdk-wallet-evm/v/1.0.0-beta.12)): Add ordered provider failover with automatic fallback on connection errors, offline EVM transaction signing with `signTransaction()`, optional `chainId` config for provider setup, optional `chainId` on `EvmTransaction`, and read-only helper reuse.
+
+---
+
+### April 28, 2026
+
+**What's New**
+- **wdk-wallet** ([v1.0.0-beta.8](https://www.npmjs.com/package/@tetherto/wdk-wallet/v/1.0.0-beta.8)): Add `signTransaction(tx)` to the base `IWalletAccount` interface so wallet modules can expose offline transaction signing without broadcasting.
+
+**Fixes**
+- **react-native-core** ([v1.0.0-beta.9](https://www.npmjs.com/package/@tetherto/wdk-react-native-core/v/1.0.0-beta.9)): Clean up balance fetch timeouts and prevent timed-out balance requests from updating state after they resolve.
+
+---
+
 ### April 22, 2026
 
 **Fixes**

@@ -23,15 +23,17 @@ layout:
 ## Wallet Configuration
 
 ```javascript
-import WalletManagerBtc, { ElectrumTcp } from '@tetherto/wdk-wallet-btc'
-
-const client = new ElectrumTcp({
-  host: 'electrum.blockstream.info',
-  port: 50001
-})
+import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
 const wallet = new WalletManagerBtc(seedPhrase, {
-  client,
+  client: {
+    type: 'electrum',
+    clientConfig: {
+      host: 'electrum.blockstream.info',
+      port: 50002,
+      protocol: 'tls'
+    }
+  },
   network: 'bitcoin'
 })
 ```
@@ -49,31 +51,44 @@ const customAccount = await wallet.getAccountByPath("0'/0/5") // Custom path
 
 ### Client
 
-The `client` option specifies an Electrum client instance to use for blockchain data. When provided, the `host`, `port`, and `protocol` options are ignored.
+The `client` option specifies how the wallet connects to Bitcoin network data. It accepts a pre-built `IBtcClient`, a client descriptor, or an ordered array of clients and descriptors for automatic failover.
 
-**Type:** `IElectrumClient`
+**Type:** `IBtcClient | BtcClientDescriptor | Array<IBtcClient | BtcClientDescriptor>`
 
-**Default:** None (falls back to host/port/protocol configuration)
+**Default:** Uses an Electrum descriptor for `electrum.blockstream.info:50001`.
 
 **Example:**
 ```javascript
-import { ElectrumTcp } from '@tetherto/wdk-wallet-btc'
-
 const config = {
-  client: new ElectrumTcp({ host: 'fulcrum.frznode.com', port: 50001 })
+  client: {
+    type: 'electrum',
+    clientConfig: {
+      host: 'fulcrum.frznode.com',
+      port: 50002,
+      protocol: 'tls'
+    }
+  }
 }
 ```
 
+`BtcClientDescriptor` supports:
+
+| Type | Description |
+|------|-------------|
+| `electrum` | Creates a TCP, TLS, or SSL Electrum client from `clientConfig`. |
+| `electrum-ws` | Creates a WebSocket Electrum client from `clientConfig`. |
+| `blockbook-http` | Creates a stateless Blockbook HTTP client from `clientConfig`. |
+
 #### Built-in Transport Clients
 
-The package provides four built-in transport clients:
+The package still exports built-in transport clients when you want to instantiate the client yourself:
 
 ```javascript
 import { 
   ElectrumTcp,   // TCP transport (default, port 50001)
   ElectrumTls,   // TLS transport (port 50002)
   ElectrumSsl,   // SSL transport (port 50002)
-  ElectrumWs     // WebSocket transport (port 50003)
+  ElectrumWs     // WebSocket transport
 } from '@tetherto/wdk-wallet-btc'
 
 // TCP (default)
@@ -86,29 +101,58 @@ const tlsClient = new ElectrumTls({ host: 'electrum.blockstream.info', port: 500
 const sslClient = new ElectrumSsl({ host: 'electrum.blockstream.info', port: 50002 })
 
 // WebSocket
-const wsClient = new ElectrumWs({ host: 'electrum.blockstream.info', port: 50003 })
+const wsClient = new ElectrumWs({ url: 'wss://electrum.example.com:50004' })
 ```
 
-#### Custom Electrum Client
+#### Custom Bitcoin Client
 
-You can implement your own client by extending `IElectrumClient`:
+You can implement your own client by implementing `IBtcClient`:
 
-```javascript
-import { IElectrumClient } from '@tetherto/wdk-wallet-btc'
+```typescript
+import { IBtcClient } from '@tetherto/wdk-wallet-btc'
 
-class MyCustomElectrumClient implements IElectrumClient {
+class MyCustomBitcoinClient implements IBtcClient {
   // Implement the required interface methods
 }
 
 const wallet = new WalletManagerBtc(seedPhrase, {
-  client: new MyCustomElectrumClient(params),
+  client: new MyCustomBitcoinClient(params),
+  network: 'bitcoin'
+})
+```
+
+#### Client Failover
+
+Pass an ordered `client` array to retry connection failures against fallback clients. Set `retries` to control how many additional attempts can happen after the first failed call.
+
+```javascript
+const wallet = new WalletManagerBtc(seedPhrase, {
+  client: [
+    {
+      type: 'electrum',
+      clientConfig: {
+        host: 'primary-electrum.example',
+        port: 50002,
+        protocol: 'tls'
+      }
+    },
+    {
+      type: 'electrum',
+      clientConfig: {
+        host: 'secondary-electrum.example',
+        port: 50002,
+        protocol: 'tls'
+      }
+    }
+  ],
+  retries: 1,
   network: 'bitcoin'
 })
 ```
 
 ### Host
 
-The `host` option specifies the Electrum server hostname to connect to for blockchain data. Ignored if `client` is provided.
+The `host` value belongs inside an `electrum` descriptor's `clientConfig` or an `Electrum*` client constructor. It is not a top-level wallet config option.
 
 **Type:** `string`
 
@@ -119,13 +163,20 @@ The `host` option specifies the Electrum server hostname to connect to for block
 **Example:**
 ```javascript
 const config = {
-  host: 'fulcrum.frznode.com' // Alternative public server
+  client: {
+    type: 'electrum',
+    clientConfig: {
+      host: 'fulcrum.frznode.com',
+      port: 50002,
+      protocol: 'tls'
+    }
+  }
 }
 ```
 
 ### Port
 
-The `port` option specifies the Electrum server port to connect to. Ignored if `client` is provided.
+The `port` value belongs inside an `electrum` descriptor's `clientConfig` or an `Electrum*` client constructor. It is not a top-level wallet config option.
 
 **Type:** `number`
 
@@ -139,13 +190,20 @@ The `port` option specifies the Electrum server port to connect to. Ignored if `
 **Example:**
 ```javascript
 const config = {
-  port: 50001
+  client: {
+    type: 'electrum',
+    clientConfig: {
+      host: 'electrum.blockstream.info',
+      port: 50002,
+      protocol: 'tls'
+    }
+  }
 }
 ```
 
 ### Protocol
 
-The `protocol` option specifies the transport protocol to use. Ignored if `client` is provided.
+The `protocol` value belongs inside an `electrum` descriptor's `clientConfig`. It is not a top-level wallet config option.
 
 **Type:** `string`
 
@@ -159,9 +217,31 @@ The `protocol` option specifies the transport protocol to use. Ignored if `clien
 **Example:**
 ```javascript
 const config = {
-  host: 'electrum.blockstream.info',
-  port: 50002,
-  protocol: 'tls'
+  client: {
+    type: 'electrum',
+    clientConfig: {
+      host: 'electrum.blockstream.info',
+      port: 50002,
+      protocol: 'tls'
+    }
+  }
+}
+```
+
+### Retries
+
+The `retries` option controls failover retry attempts when `client` is an array.
+
+**Type:** `number` (optional)
+
+**Example:**
+```javascript
+const config = {
+  client: [
+    { type: 'electrum', clientConfig: { host: 'primary.example', port: 50002, protocol: 'tls' } },
+    { type: 'electrum', clientConfig: { host: 'secondary.example', port: 50002, protocol: 'tls' } }
+  ],
+  retries: 2
 }
 ```
 

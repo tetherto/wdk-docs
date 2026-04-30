@@ -29,12 +29,13 @@ A simple and secure package to manage BIP-44 wallets for EVM (Ethereum Virtual M
 - **Multi-Account Management**: Create and manage multiple accounts from a single seed phrase
 - **EVM Address Support**: Generate and manage Ethereum-compatible addresses using ethers.js
 - **Message Signing**: Sign and verify messages using EVM cryptography
+- **Offline Transaction Signing**: Sign EVM transactions with `signTransaction()` without broadcasting them
 - **Transaction Management**: Send transactions and get fee estimates with EIP-1559 support
 - **ERC20 Support**: Query native token and ERC20 token balances using smart contract interactions
 - **Batch Token Balance Queries**: Fetch balances for multiple ERC20 tokens in one call with `getTokenBalances`
 - **TypeScript Support**: Full TypeScript definitions included
 - **Memory Safety**: Secure private key management with memory-safe HDNodeWallet implementation
-- **Provider Flexibility**: Support for both JSON-RPC URLs and EIP-1193 browser providers
+- **Provider Flexibility**: Support for JSON-RPC URLs, EIP-1193 browser providers, and ordered failover provider lists
 - **Gas Optimization**: Support for EIP-1559 maxFeePerGas and maxPriorityFeePerGas
 - **Fee Estimation**: Dynamic fee calculation with normal (1.1x) and fast (2.0x) multipliers
 
