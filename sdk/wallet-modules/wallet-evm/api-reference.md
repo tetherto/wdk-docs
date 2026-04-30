@@ -44,7 +44,9 @@ new WalletManagerEvm(seed, config?)
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (object, optional): Configuration object
-  - `provider` (string | Eip1193Provider, optional): RPC endpoint URL or EIP-1193 provider instance
+  - `provider` (string | Eip1193Provider | Array<string | Eip1193Provider>, optional): RPC endpoint URL, EIP-1193 provider instance, or ordered failover list
+  - `retries` (number, optional): Additional retry attempts when `provider` is an array
+  - `chainId` (number, optional): Network chain ID. When provided, skips automatic chain ID detection.
   - `transferMaxFee` (number | bigint, optional): Maximum fee amount for transfer operations (in wei)
 
 **Example:**
@@ -188,7 +190,9 @@ new WalletAccountEvm(seed, path, config?)
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `path` (string): BIP-44 derivation path (e.g., "0'/0/0")
 - `config` (object, optional): Configuration object
-  - `provider` (string | Eip1193Provider, optional): RPC endpoint URL or EIP-1193 provider instance
+  - `provider` (string | Eip1193Provider | Array<string | Eip1193Provider>, optional): RPC endpoint URL, EIP-1193 provider instance, or ordered failover list
+  - `retries` (number, optional): Additional retry attempts when `provider` is an array
+  - `chainId` (number, optional): Network chain ID. When provided, skips automatic chain ID detection.
   - `transferMaxFee` (number | bigint, optional): Maximum fee amount for transfer operations (in wei)
 
 **Throws:**
@@ -209,6 +213,7 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 | `getAddress()` | Returns the account's address | `Promise<string>` | - |
 | `sign(message)` | Signs a message using the account's private key | `Promise<string>` | - |
 | `signTypedData(typedData)` | Signs typed data according to EIP-712 | `Promise<string>` | - |
+| `signTransaction(tx)` | Signs an EVM transaction without broadcasting it | `Promise<string>` | If transaction signing fails |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies a typed data signature (EIP-712) | `Promise<boolean>` | - |
 | `sendTransaction(tx)` | Sends an EVM transaction | `Promise<{hash: string, fee: bigint}>` | If no provider |
@@ -287,6 +292,36 @@ const signature = await account.signTypedData(typedData)
 console.log('EIP-712 Signature:', signature)
 ```
 
+#### `signTransaction(tx)`
+Signs an EVM transaction and returns the signed raw transaction as a hex string. This method does not broadcast the transaction.
+
+**Parameters:**
+- `tx` (EvmTransaction): The transaction object
+  - `to` (string): Recipient address
+  - `value` (number | bigint): Amount in wei
+  - `data` (string, optional): Transaction data in hex format
+  - `gasLimit` (number | bigint, optional): Maximum gas units
+  - `gasPrice` (number | bigint, optional): Legacy gas price in wei
+  - `maxFeePerGas` (number | bigint, optional): EIP-1559 max fee per gas in wei
+  - `maxPriorityFeePerGas` (number | bigint, optional): EIP-1559 max priority fee per gas in wei
+  - `type` (number, optional): Transaction type, such as `4` for ERC-7702
+  - `nonce` (number, optional): Transaction nonce
+  - `chainId` (number | bigint, optional): Network chain ID
+  - `authorizationList` (AuthorizationLike[], optional): ERC-7702 authorization list for type 4 transactions
+
+**Returns:** `Promise<string>` - Signed raw transaction hex string
+
+**Example:**
+```javascript
+const signedTransaction = await account.signTransaction({
+  to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+  value: 1000000000000000000n,
+  chainId: 1
+})
+
+console.log('Signed transaction:', signedTransaction)
+```
+
 #### `verify(message, signature)`
 Verifies a message signature against the account's address.
 
@@ -331,6 +366,10 @@ Sends an EVM transaction and returns the result with hash and fee.
   - `gasPrice` (number | bigint, optional): Legacy gas price in wei
   - `maxFeePerGas` (number | bigint, optional): EIP-1559 max fee per gas in wei
   - `maxPriorityFeePerGas` (number | bigint, optional): EIP-1559 max priority fee per gas in wei
+  - `type` (number, optional): Transaction type, such as `4` for ERC-7702
+  - `nonce` (number, optional): Transaction nonce
+  - `chainId` (number | bigint, optional): Network chain ID
+  - `authorizationList` (AuthorizationLike[], optional): ERC-7702 authorization list for type 4 transactions
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
 
@@ -598,7 +637,9 @@ new WalletAccountReadOnlyEvm(address, config?)
 **Parameters:**
 - `address` (string): The account's Ethereum address
 - `config` (Omit\<EvmWalletConfig, 'transferMaxFee'\>, optional): Configuration object (same as `EvmWalletConfig` but without `transferMaxFee`, since read-only accounts cannot send transactions)
-  - `provider` (string | Eip1193Provider, optional): RPC endpoint URL or EIP-1193 provider instance
+  - `provider` (string | Eip1193Provider | Array<string | Eip1193Provider>, optional): RPC endpoint URL, EIP-1193 provider instance, or ordered failover list
+  - `retries` (number, optional): Additional retry attempts when `provider` is an array
+  - `chainId` (number, optional): Network chain ID. When provided, skips automatic chain ID detection.
 
 **Example:**
 ```javascript
@@ -813,6 +854,10 @@ interface EvmTransaction {
   gasPrice?: number | bigint;                // Legacy gas price in wei (optional)
   maxFeePerGas?: number | bigint;            // EIP-1559 max fee per gas in wei (optional)
   maxPriorityFeePerGas?: number | bigint;    // EIP-1559 priority fee in wei (optional)
+  type?: number;                             // Transaction type, such as 4 for ERC-7702 (optional)
+  nonce?: number;                            // Transaction nonce (optional)
+  chainId?: number | bigint;                 // Network chain ID (optional)
+  authorizationList?: AuthorizationLike[];   // ERC-7702 authorization list for type 4 transactions (optional)
 }
 ```
 
@@ -897,8 +942,10 @@ interface TypedDataField {
 
 ```typescript
 interface EvmWalletConfig {
-  provider?: string | Eip1193Provider;  // RPC URL or EIP-1193 provider instance
-  transferMaxFee?: number | bigint;     // Maximum fee for transfers in wei
+  provider?: string | Eip1193Provider | Array<string | Eip1193Provider>; // RPC URL, EIP-1193 provider, or ordered failover list
+  retries?: number;                                                  // Additional retry attempts for provider arrays
+  chainId?: number;                                                  // Network chain ID. Skips automatic detection when provided.
+  transferMaxFee?: number | bigint;                                  // Maximum fee for transfers in wei
 }
 ```
 
