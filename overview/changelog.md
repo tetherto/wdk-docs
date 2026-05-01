@@ -27,7 +27,7 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 ### April 30, 2026
 
 **What's New**
-- **[React Native Secure Storage](../tools/react-native-secure-storage/)**: New documentation for `@tetherto/wdk-react-native-secure-storage`, covering keychain-backed wallet credential storage, biometric options, and typed errors.
+- **[React Native Secure Storage](../tools/react-native-secure-storage/)**: Docs added for `@tetherto/wdk-react-native-secure-storage`, covering keychain-backed wallet credential storage, biometric options, and typed errors.
 - **wallet-spark** ([v1.0.0-beta.18](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.18)): Add `signTransaction(tx)` to `WalletAccountSpark` for `IWalletAccount` compatibility, document that standalone signed payloads are unsupported on Spark, reuse the cached read-only account helper, and refresh `@buildonspark/spark-sdk` to `0.7.16` and spark bare SDK to `0.0.66`.
 
 ---
