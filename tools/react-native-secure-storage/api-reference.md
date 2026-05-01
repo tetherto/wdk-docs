@@ -59,12 +59,12 @@ interface AuthenticationOptions {
 | `isBiometricAvailable()` | Checks whether biometric authentication is available. | `Promise<boolean>` |
 | `authenticate()` | Runs the configured authentication prompt. | `Promise<boolean>` |
 | `setEncryptionKey(key, identifier?, options?)` | Stores the wallet encryption key. | `Promise<void>` |
-| `getEncryptionKey(identifier?, options?)` | Reads the wallet encryption key. | `Promise<string | null>` |
+| `getEncryptionKey(identifier?, options?)` | Reads the wallet encryption key. | `Promise<string \| null>` |
 | `setEncryptedSeed(encryptedSeed, identifier?)` | Stores an encrypted seed payload. | `Promise<void>` |
-| `getEncryptedSeed(identifier?)` | Reads an encrypted seed payload. | `Promise<string | null>` |
+| `getEncryptedSeed(identifier?)` | Reads an encrypted seed payload. | `Promise<string \| null>` |
 | `setEncryptedEntropy(encryptedEntropy, identifier?)` | Stores encrypted entropy. | `Promise<void>` |
-| `getEncryptedEntropy(identifier?)` | Reads encrypted entropy. | `Promise<string | null>` |
-| `getAllEncrypted(identifier?)` | Reads encrypted seed, encrypted entropy, and encryption key together. | `Promise<{ encryptedSeed: string | null; encryptedEntropy: string | null; encryptionKey: string | null }>` |
+| `getEncryptedEntropy(identifier?)` | Reads encrypted entropy. | `Promise<string \| null>` |
+| `getAllEncrypted(identifier?)` | Reads encrypted seed, encrypted entropy, and encryption key together. | `Promise<{ encryptedSeed: string \| null; encryptedEntropy: string \| null; encryptionKey: string \| null }>` |
 | `hasWallet(identifier?)` | Checks whether any wallet material exists for the identifier. | `Promise<boolean>` |
 | `deleteWallet(identifier?)` | Deletes wallet material for the identifier. | `Promise<void>` |
 | `cleanup()` | Releases resources associated with the storage instance. | `void` |

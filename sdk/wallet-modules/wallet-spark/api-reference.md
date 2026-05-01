@@ -124,6 +124,7 @@ Represents an individual Spark wallet account. Implements `IWalletAccount` from 
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's Spark address | `Promise<SparkAddressFormat>` |
 | `sign(message)` | Signs a message using the account's identity key | `Promise<string>` |
+| `signTransaction(tx)` | Always throws because Spark does not support standalone signed transaction payloads | `Promise<never>` |
 | `getIdentityKey()` | Returns the account's identity public key | `Promise<string>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `sendTransaction(tx)` | Sends a Spark transaction | `Promise<{hash: string, fee: bigint}>` |
@@ -181,6 +182,26 @@ Signs a message using the account's identity key.
 ```javascript
 const signature = await account.sign('Hello, Spark!')
 console.log('Signature:', signature)
+```
+
+##### `signTransaction(tx)`
+Exposes the base `IWalletAccount.signTransaction(tx)` method, but standalone Spark transaction signing is not supported. Spark transfers are signed collaboratively with Spark operators through the FROST / Statechain protocol, so this method always throws. Use [`sendTransaction()`](#sendtransaction-to-value) to send Spark transactions.
+
+**Parameters:**
+- `tx` ([`SparkTransaction`](#sparktransaction)): The transaction request
+
+**Returns:** `Promise<never>` - Always throws
+
+**Example:**
+```javascript
+try {
+  await account.signTransaction({
+    to: 'spark1...',
+    value: 1000000
+  })
+} catch (error) {
+  console.error(error.message) // Method 'signTransaction(tx)' not supported on spark.
+}
 ```
 
 ##### `getIdentityKey()`
@@ -687,7 +708,7 @@ console.log('Invoice statuses:', result.invoiceStatuses)
 ```
 
 ##### `toReadOnlyAccount()`
-Creates a read-only version of this account that can query data but not sign transactions.
+Returns a read-only version of this account that can query data but not sign transactions. After the first call, subsequent calls reuse the same read-only account instance.
 
 **Returns:** `Promise<WalletAccountReadOnlySpark>` - Read-only account instance
 

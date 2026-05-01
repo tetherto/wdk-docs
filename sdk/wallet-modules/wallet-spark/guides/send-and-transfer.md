@@ -43,6 +43,10 @@ console.log('Transaction fee:', result.fee)
 On-chain Spark transfers report `fee` as `0`. Memos are not supported on [`sendTransaction()`](../api-reference.md#sendtransaction-to-value). Use valid Spark network addresses.
 {% endhint %}
 
+{% hint style="warning" %}
+[`account.signTransaction()`](../api-reference.md#signtransaction-tx) is exposed for `IWalletAccount` compatibility, but it always throws on Spark. Spark transfers are collaboratively signed with Spark operators, so a standalone signed payload cannot be produced for separate broadcast. Use [`account.sendTransaction()`](../api-reference.md#sendtransaction-to-value) for Spark sends.
+{% endhint %}
+
 If you enable [`syncAndRetry`](../configuration.md#automatic-retry), the wallet syncs its state and retries [`account.sendTransaction()`](../api-reference.md#sendtransaction-to-value) once after a failure:
 
 {% code title="Retry Failed Sends Once" lineNumbers="true" %}
