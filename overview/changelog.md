@@ -24,6 +24,13 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### May 01, 2026
+
+**What's New**
+- **wallet-solana** ([v1.0.0-beta.8](https://github.com/tetherto/wdk-wallet-solana/releases/tag/v1.0.0-beta.8)): Add `signTransaction(tx)` for offline Solana transaction signing and `getTokenBalances(tokenAddresses)` for batch SPL balance reads; prefer `provider` over the deprecated `rpcUrl` config alias, optimize `getTokenBalance()` to use one RPC call, reuse the cached read-only account helper, and bump `@tetherto/wdk-failover-provider` to `1.0.0-beta.2`.
+
+---
+
 ### April 30, 2026
 
 **What's New**

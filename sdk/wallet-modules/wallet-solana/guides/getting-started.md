@@ -52,14 +52,14 @@ import WalletManagerSolana, {
 const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
 
 const wallet = new WalletManagerSolana(seedPhrase, {
-  rpcUrl: 'https://api.mainnet-beta.solana.com',
+  provider: 'https://api.mainnet-beta.solana.com',
   commitment: 'confirmed' // Optional: commitment level
 })
 ```
 {% endcode %}
 
 {% hint style="info" %}
-To enable RPC failover, pass `rpcUrl` as an ordered array of endpoints and set `retries` to control how many times WDK retries each provider before moving to the next one.
+To enable RPC failover, pass [`provider`](../configuration.md#provider) as an ordered array of endpoints and set [`retries`](../configuration.md#retries) to control additional failover attempts. `rpcUrl` remains available as a deprecated alias for `provider`.
 {% endhint %}
 
 {% hint style="danger" %}
