@@ -27,9 +27,7 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 ### April 30, 2026
 
 **What's New**
-- **[Backup Cloud React Native](../tools/backup-cloud-react-native/)**: New documentation for `@tetherto/wdk-backup-cloud-react-native`, covering Google Drive and iCloud backup providers for encrypted wallet keys.
 - **[React Native Secure Storage](../tools/react-native-secure-storage/)**: New documentation for `@tetherto/wdk-react-native-secure-storage`, covering keychain-backed wallet credential storage, biometric options, and typed errors.
-- **[Safe Core SDK](../tools/safe-core-sdk/)**: New package map for Safe Core SDK packages used in WDK integrations, including Protocol Kit, API Kit, Relay Kit, and shared Safe types.
 
 ---
 
