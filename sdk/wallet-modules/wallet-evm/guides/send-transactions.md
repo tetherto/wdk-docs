@@ -19,7 +19,7 @@ layout:
 
 # Send Transactions
 
-This guide explains how to send native tokens (ETH, MATIC, BNB, etc.) on EVM chains, estimate fees, and configure gas parameters.
+This guide explains how to [send EVM transactions with EIP-1559 gas parameters](#send-with-eip-1559-gas-parameters), [send legacy gas transactions](#send-with-legacy-gas-parameters), [sign without broadcasting](#sign-without-broadcasting), [estimate fees](#estimate-transaction-fees), and [use dynamic fee rates](#use-dynamic-fee-rates).
 
 {% hint style="warning" %}
 **BigInt Usage:** Always use `BigInt` (the `n` suffix) for monetary values to avoid precision loss with large numbers.
@@ -57,6 +57,28 @@ const legacyResult = await account.sendTransaction({
 console.log('Transaction hash:', legacyResult.hash)
 ```
 {% endcode %}
+
+## Sign Without Broadcasting
+
+Use [`account.signTransaction()`](/sdk/wallet-modules/wallet-evm/api-reference#signtransaction-tx) when you need a signed raw transaction but want to submit it through a separate relay, service, or review flow.
+
+{% code title="Sign EVM Transaction" lineNumbers="true" %}
+```javascript
+const signedTransaction = await account.signTransaction({
+  to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+  value: 1000000000000000000n,
+  chainId: 1,
+  maxFeePerGas: 30000000000n,
+  maxPriorityFeePerGas: 2000000000n
+})
+
+console.log('Signed transaction:', signedTransaction)
+```
+{% endcode %}
+
+{% hint style="info" %}
+`signTransaction()` returns the signed transaction payload and does not broadcast it. Use `sendTransaction()` when WDK should sign, broadcast, and return the transaction hash.
+{% endhint %}
 
 ## Estimate Transaction Fees
 

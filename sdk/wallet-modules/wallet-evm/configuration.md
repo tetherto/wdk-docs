@@ -28,8 +28,14 @@ The `WalletManagerEvm` accepts a configuration object that defines how the walle
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
 
 const config = {
-  // Recommended: RPC endpoint URL or EIP-1193 provider (required for blockchain operations)
+  // Recommended: RPC endpoint URL, EIP-1193 provider, or ordered failover list
   provider: 'https://eth.drpc.org',
+
+  // Optional: Skip automatic chain ID detection when the network is known
+  chainId: 1,
+
+  // Optional: Additional failover attempts when provider is an array
+  retries: 2,
   
   // Optional: Maximum fee for transfer operations (in wei)
   transferMaxFee: 100000000000000 // 0.0001 ETH
@@ -68,9 +74,9 @@ const readOnlyAccount = new WalletAccountReadOnlyEvm(
 
 ### Provider
 
-The `provider` option specifies how to connect to the blockchain. It can be either a URL string or an EIP-1193 compatible provider instance.
+The `provider` option specifies how to connect to the blockchain. It can be a URL string, an EIP-1193 compatible provider instance, or an ordered array of URL strings and EIP-1193 providers for automatic failover.
 
-**Type:** `string | Eip1193Provider`
+**Type:** `string | Eip1193Provider | Array<string | Eip1193Provider>`
 
 **Examples:**
 
@@ -110,6 +116,50 @@ function createFetchProvider(rpcUrl) {
 
 const config = {
   provider: createFetchProvider('https://eth.drpc.org')
+}
+
+// Option 4: Using ordered provider failover
+const config = {
+  provider: [
+    'https://eth-mainnet.g.alchemy.com/v2/YOUR_KEY',
+    'https://eth.drpc.org',
+    createFetchProvider('https://ethereum.publicnode.com')
+  ],
+  retries: 2
+}
+```
+
+When `provider` is an array, the wallet uses the candidates in order and retries connection failures against the next provider. If `retries` is greater than the number of providers, the failover loop wraps around in round-robin order.
+
+### Retries
+
+The `retries` option controls how many additional attempts can happen after the first provider call fails. It only applies when `provider` is an array.
+
+**Type:** `number` (optional)
+**Default:** `3`
+
+**Example:**
+```javascript
+const config = {
+  provider: [
+    'https://primary.example',
+    'https://secondary.example'
+  ],
+  retries: 1
+}
+```
+
+### Chain ID
+
+The `chainId` option pins the provider to a known EVM chain ID. Use it when you already know the target network and want to skip automatic chain ID detection during provider setup.
+
+**Type:** `number` (optional)
+
+**Example:**
+```javascript
+const config = {
+  provider: 'https://polygon-rpc.com',
+  chainId: 137
 }
 ```
 
@@ -273,5 +323,3 @@ const sepoliaConfig = {
 ### Need Help?
 
 {% include "../../../.gitbook/includes/support-cards.md" %}
-
-
