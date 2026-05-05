@@ -20,7 +20,7 @@ layout:
 # Send Transactions
 
 
-You can send native tokens (like ETH, TON, or BTC) from any of your wallet accounts to another address.
+You can [send native tokens](#send-native-tokens), [sign a transaction without broadcasting it](#sign-without-broadcasting), [handle transaction responses](#handling-responses), and [orchestrate multi-chain payments](#multi-chain-transactions) from WDK wallet accounts.
 
 {% hint style="info" %}
 **Get Testnet Funds:** To test these transactions without spending real money, ensure you are on a testnet and have obtained funds. See [Testnet Funds & Faucets](../../../resources/concepts.md#testnet-funds--faucets) for a list of available faucets.
@@ -80,6 +80,27 @@ const tonResult = await tonAccount.sendTransaction({
 console.log('TON transaction:', tonResult.hash)
 ```
 {% endcode %}
+
+## Sign Without Broadcasting
+
+Use [`account.signTransaction()`](../api-reference.md#signtransaction-tx) when your app needs a signed transaction payload but does not want WDK to broadcast it immediately. Wallet modules accept their own transaction shape and may return a module-specific signed payload.
+
+{% code title="Sign An EVM Transaction" lineNumbers="true" %}
+```typescript
+const ethAccount = await wdk.getAccount('ethereum', 0)
+
+const signedTransaction = await ethAccount.signTransaction({
+  to: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+  value: 1000000000000000n
+})
+
+console.log('Signed transaction:', signedTransaction)
+```
+{% endcode %}
+
+{% hint style="info" %}
+`signTransaction()` only signs. Use `sendTransaction()` when you want WDK to sign, broadcast, and return the transaction hash.
+{% endhint %}
 
 ## Handling Responses
 

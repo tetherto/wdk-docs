@@ -25,7 +25,8 @@ layout:
 | Class | Description | Methods |
 |-------|-------------|---------|
 | [WDK](#wdk) | Main class for managing wallets across multiple blockchains. Orchestrates wallet managers and protocols. | [Constructor](#constructor), [Methods](#methods) |
-| [IWalletAccountWithProtocols](#iwalletaccountwithprotocols) | Extended wallet account interface that supports protocol registration and access. Extends `IWalletAccount`. | [Methods](#methods-1) |
+| [IWalletAccount](#iwalletaccount) | Base writable wallet account interface from `@tetherto/wdk-wallet`. | [Methods](#methods-1) |
+| [IWalletAccountWithProtocols](#iwalletaccountwithprotocols) | Extended wallet account interface that supports protocol registration and access. Extends `IWalletAccount`. | [Methods](#methods-2) |
 
 
 ## WDK
@@ -310,6 +311,45 @@ console.log('Seed phrase valid:', isValid) // true
 
 const isInvalid = WDK.isValidSeedPhrase('invalid seed phrase')
 console.log('Seed phrase valid:', isInvalid) // false
+```
+{% endcode %}
+
+## IWalletAccount
+
+Base writable wallet account interface exposed by `@tetherto/wdk-wallet`. Blockchain modules implement this interface and may narrow the transaction type accepted by `signTransaction()` and `sendTransaction()`.
+
+### Methods
+
+| Method | Description | Returns | Throws |
+|--------|-------------|---------|--------|
+| `getAddress()` | Returns the account address | `Promise<string>` | - |
+| `sign(message)` | Signs a message with the account private key | `Promise<string>` | - |
+| `signTransaction(tx)` | Signs a transaction without broadcasting it | `Promise<unknown>` | If the transaction is invalid for the module |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
+| `sendTransaction(tx)` | Signs, broadcasts, and returns the transaction result | `Promise<TransactionResult>` | If provider access or broadcast fails |
+| `transfer(options)` | Transfers a token where supported by the module | `Promise<TransferResult>` | If the module does not support token transfers |
+| `toReadOnlyAccount()` | Returns a read-only account copy | `Promise<IWalletAccountReadOnly>` | - |
+| `dispose()` | Clears sensitive account material from memory | `void` | - |
+
+##### `signTransaction(tx)`
+Signs a transaction with the account private key and returns the signed transaction payload without broadcasting it. Use this when your app needs offline signing, external transaction submission, or a separate review step before broadcast.
+
+**Parameters:**
+- `tx` (Transaction): Module-specific transaction object. For example, EVM accounts accept `EvmTransaction`, and Bitcoin accounts accept `BtcTransaction`.
+
+**Returns:** `Promise<unknown>` - The signed transaction payload. Wallet modules may narrow this return type, such as a hex string for EVM and Bitcoin transactions.
+
+**Example:**
+{% code title="Sign Without Broadcasting" lineNumbers="true" %}
+```typescript
+const account = await wdk.getAccount('ethereum', 0)
+
+const signedTransaction = await account.signTransaction({
+  to: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+  value: 1000000000000000n
+})
+
+console.log('Signed transaction:', signedTransaction)
 ```
 {% endcode %}
 

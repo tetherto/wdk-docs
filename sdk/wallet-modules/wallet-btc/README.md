@@ -42,9 +42,10 @@ Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) to supply an e
 - **Multi-Account Management**: Create and manage multiple accounts from a single seed phrase
 - **Address Types Support**: Generate Native SegWit (P2WPKH) addresses by default, with Legacy (P2PKH) support via configuration
 - **UTXO Management**: Track and manage unspent transaction outputs
+- **Offline Transaction Signing**: Sign Bitcoin transactions with `signTransaction()` without broadcasting them
 - **Transaction Management**: Create, sign, and broadcast Bitcoin transactions (single recipient per transaction)
 - **Fee Estimation**: Dynamic fee calculation via mempool.space API
-- **Electrum Support**: Connect to Electrum servers for network interaction
+- **Provider Failover**: Configure ordered Electrum, WebSocket, Blockbook, or custom client fallbacks
 - **TypeScript Support**: Full TypeScript definitions included
 - **Memory Safety**: Secure private key management with memory-safe implementation
 - **Network Flexibility**: Support for mainnet, testnet, and regtest

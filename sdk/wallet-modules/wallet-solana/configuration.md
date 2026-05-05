@@ -28,7 +28,7 @@ The `WalletManagerSolana` accepts an optional configuration object that defines 
 import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 
 const config = {
-  rpcUrl: 'https://api.mainnet-beta.solana.com', // Solana RPC endpoint
+  provider: 'https://api.mainnet-beta.solana.com', // Recommended: Solana RPC endpoint
   transferMaxFee: 10000000 // Optional: Maximum fee in lamports
 }
 
@@ -43,7 +43,7 @@ Accounts are obtained through the `WalletManagerSolana` instance using `getAccou
 import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 
 const accountConfig = {
-  rpcUrl: 'https://api.mainnet-beta.solana.com',
+  provider: 'https://api.mainnet-beta.solana.com',
   transferMaxFee: 10000000 // Optional: Maximum fee in lamports
 }
 
@@ -58,9 +58,9 @@ const customAccount = await wallet.getAccountByPath("0'/0'/5'")
 
 ## Configuration Options
 
-### rpcUrl
+### provider
 
-The `rpcUrl` option specifies one Solana RPC endpoint or an ordered list of endpoints for blockchain interactions.
+The `provider` option specifies one Solana RPC endpoint or an ordered list of endpoints for blockchain interactions.
 
 **Type:** `string | string[]` (optional)
 
@@ -70,17 +70,17 @@ The `rpcUrl` option specifies one Solana RPC endpoint or an ordered list of endp
 ```javascript
 // Single endpoint
 const config = {
-  rpcUrl: 'https://api.mainnet-beta.solana.com'
+  provider: 'https://api.mainnet-beta.solana.com'
 }
 
 // Devnet
 const config = {
-  rpcUrl: 'https://api.devnet.solana.com'
+  provider: 'https://api.devnet.solana.com'
 }
 
 // Failover across multiple endpoints
 const config = {
-  rpcUrl: [
+  provider: [
     'https://api.mainnet-beta.solana.com',
     'https://rpc.ankr.com/solana'
   ]
@@ -88,15 +88,21 @@ const config = {
 
 // Custom RPC
 const config = {
-  rpcUrl: 'https://your-custom-rpc-endpoint.com'
+  provider: 'https://your-custom-rpc-endpoint.com'
 }
 ```
 
-When `rpcUrl` is an array, WDK initializes a failover provider and tries the next RPC when the current provider fails.
+When `provider` is an array, WDK initializes a failover provider and tries the next RPC when the current provider fails.
+
+### rpcUrl
+
+The `rpcUrl` option is a deprecated alias for `provider`. Existing apps can keep using `rpcUrl`, but new code should use `provider`. If both keys are set, `provider` takes precedence.
+
+**Type:** `string | string[]` (optional)
 
 ### retries
 
-The `retries` option controls how many times the failover provider retries a request before moving on to the next RPC entry.
+The `retries` option controls additional retry attempts after the initial failover request fails. It applies when `provider` is an ordered array of RPC endpoints. Total attempts are `1 + retries`; if retries exceeds the provider count, WDK loops back through the provider list in round-robin order.
 
 **Type:** `number` (optional)
 
@@ -105,7 +111,7 @@ The `retries` option controls how many times the failover provider retries a req
 **Example:**
 ```javascript
 const config = {
-  rpcUrl: [
+  provider: [
     'https://api.mainnet-beta.solana.com',
     'https://rpc.ankr.com/solana'
   ],
@@ -134,8 +140,8 @@ const config = {
 import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 
 const config = {
-  // Required for most operations
-  rpcUrl: 'https://api.mainnet-beta.solana.com',
+  // Recommended for operations that query or submit transactions
+  provider: 'https://api.mainnet-beta.solana.com',
   
   // Optional: Fee protection
   transferMaxFee: 10000000 // 0.01 SOL maximum fee

@@ -19,7 +19,7 @@ layout:
 
 # Send SOL
 
-This guide explains how to send native SOL, estimate transaction fees, and use dynamic fee rates.
+This guide explains how to [send native SOL](#send-native-sol), [sign a transaction without broadcasting](#sign-a-transaction-without-broadcasting), [estimate transaction fees](#estimate-transaction-fees), [quote or send a TransactionMessage](#quote-or-send-a-transactionmessage), [use dynamic fee rates](#use-dynamic-fee-rates), and [run a complete SOL transfer flow](#complete-example).
 
 {% hint style="warning" %}
 **BigInt Usage:** Always use `BigInt` (the `n` suffix) for monetary values to avoid precision loss with large numbers.
@@ -41,6 +41,20 @@ const result = await account.sendTransaction({
 })
 console.log('Transaction hash:', result.hash)
 console.log('Transaction fee:', result.fee, 'lamports')
+```
+{% endcode %}
+
+## Sign a Transaction Without Broadcasting
+
+Use [`account.signTransaction()`](/sdk/wallet-modules/wallet-solana/api-reference#signtransaction-tx) when you need a fully signed transaction but want another process to review, relay, or submit it.
+
+{% code title="Sign SOL Transaction" lineNumbers="true" %}
+```javascript
+const signedTransaction = await account.signTransaction({
+  to: '11111111111111111111111111111112',
+  value: 1000000000n
+})
+console.log('Signed transaction:', signedTransaction)
 ```
 {% endcode %}
 

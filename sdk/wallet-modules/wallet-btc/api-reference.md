@@ -27,10 +27,10 @@ layout:
 | [WalletManagerBtc](#walletmanagerbtc) | Main class for managing Bitcoin wallets. Extends `WalletManager` from `@tetherto/wdk-wallet`. | [Constructor](#constructor), [Methods](#methods) |
 | [WalletAccountBtc](#walletaccountbtc) | Individual Bitcoin wallet account implementation. Implements `IWalletAccount`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties) |
 | [WalletAccountReadOnlyBtc](#walletaccountreadonlybtc) | Read-only Bitcoin wallet account. Extends `WalletAccountReadOnly` from `@tetherto/wdk-wallet`. | [Constructor](#constructor-2), [Methods](#methods-2) |
-| [ElectrumTcp](#electrumtcp) | Standard TCP Electrum client. Implements `IElectrumClient`. | [Constructor](#constructor-3) |
-| [ElectrumTls](#electrumtls) | TLS Electrum client. Implements `IElectrumClient`. | [Constructor](#constructor-4) |
-| [ElectrumSsl](#electrumssl) | SSL Electrum client. Implements `IElectrumClient`. | [Constructor](#constructor-5) |
-| [ElectrumWs](#electrumws) | WebSocket Electrum client for browser environments. Implements `IElectrumClient`. | [Constructor](#constructor-6), [Methods](#methods-3) |
+| [ElectrumTcp](#electrumtcp) | Standard TCP Electrum client. Implements `IBtcClient`. | [Constructor](#constructor-3) |
+| [ElectrumTls](#electrumtls) | TLS Electrum client. Implements `IBtcClient`. | [Constructor](#constructor-4) |
+| [ElectrumSsl](#electrumssl) | SSL Electrum client. Implements `IBtcClient`. | [Constructor](#constructor-5) |
+| [ElectrumWs](#electrumws) | WebSocket Electrum client for browser environments. Implements `IBtcClient`. | [Constructor](#constructor-6), [Methods](#methods-3) |
 
 ## WalletManagerBtc
 
@@ -46,12 +46,10 @@ new WalletManagerBtc(seed, config)
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (BtcWalletConfig, optional): Configuration object
-  - `client` (IElectrumClient, optional): Electrum client instance. If provided, host/port/protocol are ignored.
-  - `host` (string, optional): Electrum server hostname (default: "electrum.blockstream.info"). Ignored if client is provided.
-  - `port` (number, optional): Electrum server port (default: 50001). Ignored if client is provided.
-  - `protocol` (string, optional): Transport protocol - "tcp", "tls", or "ssl" (default: "tcp"). Ignored if client is provided.
+  - `client` (IBtcClient | BtcClientDescriptor | Array<IBtcClient | BtcClientDescriptor>, optional): Bitcoin client, descriptor, or ordered failover list
   - `network` (string, optional): "bitcoin", "testnet", or "regtest" (default: "bitcoin")
   - `bip` (number, optional): BIP address type - 44 (legacy) or 84 (native SegWit) (default: 84)
+  - `retries` (number, optional): Additional retry attempts when `client` is an array
 
 ### Methods
 
@@ -133,12 +131,10 @@ new WalletAccountBtc(seed, path, config)
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `path` (string): Derivation path suffix (e.g., "0'/0/0")
 - `config` (BtcWalletConfig, optional): Configuration object
-  - `client` (IElectrumClient, optional): Electrum client instance. If provided, host/port/protocol are ignored.
-  - `host` (string, optional): Electrum server hostname (default: "electrum.blockstream.info"). Ignored if client is provided.
-  - `port` (number, optional): Electrum server port (default: 50001). Ignored if client is provided.
-  - `protocol` (string, optional): Transport protocol - "tcp", "tls", or "ssl" (default: "tcp"). Ignored if client is provided.
+  - `client` (IBtcClient | BtcClientDescriptor | Array<IBtcClient | BtcClientDescriptor>, optional): Bitcoin client, descriptor, or ordered failover list
   - `network` (string, optional): "bitcoin", "testnet", or "regtest" (default: "bitcoin")
   - `bip` (number, optional): BIP address type - 44 (legacy) or 84 (native SegWit) (default: 84)
+  - `retries` (number, optional): Additional retry attempts when `client` is an array
 
 ### Methods
 
@@ -147,6 +143,7 @@ new WalletAccountBtc(seed, path, config)
 | `getAddress()` | Returns the account's Bitcoin address | `Promise<string>` |
 | `getBalance()` | Returns the total account balance in satoshis, including unconfirmed funds when present | `Promise<bigint>` |
 | `sendTransaction(options, timeoutMs?)` | Sends a Bitcoin transaction and optionally polls until spent inputs disappear from unspent outputs | `Promise<{hash: string, fee: bigint}>` |
+| `signTransaction(options)` | Signs a Bitcoin transaction without broadcasting it | `Promise<string>` |
 | `quoteSendTransaction(options)` | Estimates the fee for a transaction | `Promise<{fee: bigint}>` |
 | `getTransfers(options?)` | Returns the account's transfer history | `Promise<BtcTransfer[]>` |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<BtcTransactionReceipt \| null>` |
@@ -200,6 +197,29 @@ const result = await account.sendTransaction({
 })
 console.log('Transaction hash:', result.hash)
 console.log('Fee:', result.fee, 'satoshis')
+```
+
+##### `signTransaction(options)`
+Signs a Bitcoin transaction and returns the signed raw transaction as a hex string. This method does not broadcast the transaction.
+
+**Parameters:**
+- `options` (BtcTransaction): Transaction options
+  - `to` (string): Recipient's Bitcoin address
+  - `value` (number | bigint): Amount in satoshis
+  - `feeRate` (number | bigint, optional): Fee rate in sat/vB. If provided, overrides the fee rate estimated from the blockchain.
+  - `confirmationTarget` (number, optional): Target blocks for confirmation (default: 1)
+
+**Returns:** `Promise<string>` - Signed raw transaction hex string
+
+**Example:**
+```javascript
+const signedTransaction = await account.signTransaction({
+  to: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+  value: 50000n,
+  feeRate: 10n
+})
+
+console.log('Signed transaction:', signedTransaction)
 ```
 
 ##### `quoteSendTransaction(options)`
@@ -345,7 +365,7 @@ account.dispose()
 |----------|------|-------------|
 | `index` | `number` | The derivation path's index of this account |
 | `path` | `string` | The full derivation path of this account |
-| `keyPair` | `KeyPair` | The account's public and private key pair |
+| `keyPair` | `KeyPair` | The account's public and private key pair. Treat the returned `Uint8Array` values as read-only views because mutations affect the account's internal key material. |
 
 
 ## WalletAccountReadOnlyBtc
@@ -361,11 +381,9 @@ new WalletAccountReadOnlyBtc(address, config)
 **Parameters:**
 - `address` (string): The account's Bitcoin address
 - `config` (object, optional): Configuration object (same as BtcWalletConfig but without `bip`)
-  - `client` (IElectrumClient, optional): Electrum client instance. If provided, host/port/protocol are ignored.
-  - `host` (string, optional): Electrum server hostname (default: "electrum.blockstream.info"). Ignored if client is provided.
-  - `port` (number, optional): Electrum server port (default: 50001). Ignored if client is provided.
-  - `protocol` (string, optional): Transport protocol - "tcp", "tls", or "ssl" (default: "tcp"). Ignored if client is provided.
+  - `client` (IBtcClient | BtcClientDescriptor | Array<IBtcClient | BtcClientDescriptor>, optional): Bitcoin client, descriptor, or ordered failover list
   - `network` (string, optional): "bitcoin", "testnet", or "regtest" (default: "bitcoin")
+  - `retries` (number, optional): Additional retry attempts when `client` is an array
 
 ### Methods
 
@@ -482,7 +500,7 @@ readOnlyAccount.dispose()
 ## ElectrumTcp
 
 Electrum client using TCP transport. Standard for command-line and server-side environments.
-Implements `IElectrumClient`.
+Implements `IBtcClient`.
 
 #### Constructor
 
@@ -498,7 +516,7 @@ new ElectrumTcp(config)
 ## ElectrumTls
 
 Electrum client using TLS transport.
-Implements `IElectrumClient`.
+Implements `IBtcClient`.
 
 #### Constructor
 
@@ -514,7 +532,7 @@ new ElectrumTls(config)
 ## ElectrumSsl
 
 Electrum client using SSL transport.
-Implements `IElectrumClient`.
+Implements `IBtcClient`.
 
 #### Constructor
 
@@ -530,7 +548,7 @@ new ElectrumSsl(config)
 ## ElectrumWs
 
 Electrum client using WebSocket transport. Compatible with browser environments where TCP sockets are not available.
-Implements `IElectrumClient`.
+Implements `IBtcClient`.
 
 #### Constructor
 
@@ -616,8 +634,8 @@ interface BtcMaxSpendableResult {
 
 ```typescript
 interface KeyPair {
-  publicKey: Uint8Array          // Public key bytes
-  privateKey: Uint8Array | null  // Private key bytes (null after dispose)
+  publicKey: Uint8Array          // Public key bytes. Treat as read-only.
+  privateKey: Uint8Array | null  // Private key bytes. Treat as read-only. Null after dispose.
 }
 ```
 
@@ -625,20 +643,27 @@ interface KeyPair {
 
 ```typescript
 interface BtcWalletConfig {
-  client?: IElectrumClient                    // Electrum client instance. If provided, host/port/protocol are ignored.
-  host?: string                               // Electrum server hostname (default: "electrum.blockstream.info")
-  port?: number                               // Electrum server port (default: 50001)
-  protocol?: 'tcp' | 'tls' | 'ssl'            // Transport protocol (default: "tcp")
+  client?: IBtcClient | BtcClientDescriptor | Array<IBtcClient | BtcClientDescriptor> // Client, descriptor, or failover list
   network?: 'bitcoin' | 'testnet' | 'regtest' // Network to use (default: "bitcoin")
   bip?: 44 | 84                               // BIP address type - 44 (legacy) or 84 (native SegWit) (default: 84)
+  retries?: number                            // Additional retry attempts for client arrays
 }
 ```
 
-### IElectrumClient
+### BtcClientDescriptor
 
-Interface for implementing custom Electrum clients.
 ```typescript
-interface IElectrumClient {
+type BtcClientDescriptor =
+  | { type: 'electrum'; clientConfig: MempoolElectrumConfig }
+  | { type: 'electrum-ws'; clientConfig: ElectrumWsConfig }
+  | { type: 'blockbook-http'; clientConfig: BlockbookClientConfig }
+```
+
+### IBtcClient
+
+Interface for implementing custom Bitcoin network clients.
+```typescript
+interface IBtcClient {
   connect(): Promise<void>
   close(): Promise<void>
   reconnect(): Promise<void>

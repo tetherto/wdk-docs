@@ -19,7 +19,7 @@ layout:
 
 # Send Transactions
 
-This guide explains how to [send BTC](#send-btc), [estimate fees before sending](#estimate-fees), [use a custom fee rate](#send-with-custom-fee-rate), and [target a specific confirmation time](#send-with-confirmation-target).
+This guide explains how to [send BTC](#send-btc), [extend post-broadcast polling](#extend-post-broadcast-polling), [sign without broadcasting](#sign-without-broadcasting), [estimate fees before sending](#estimate-fees), [use a custom fee rate](#send-with-custom-fee-rate), and [target a specific confirmation time](#send-with-confirmation-target).
 
 ## Send BTC
 
@@ -60,6 +60,26 @@ console.log('Transaction hash:', result.hash)
 
 {% hint style="info" %}
 If you omit `timeoutMs`, the wallet uses the default post-broadcast polling window before returning.
+{% endhint %}
+
+## Sign Without Broadcasting
+
+Use [`account.signTransaction()`](../api-reference.md#signtransaction-options) when your app needs a signed raw Bitcoin transaction but does not want WDK to broadcast it immediately.
+
+{% code title="Sign BTC Transaction" lineNumbers="true" %}
+```javascript
+const signedTransaction = await account.signTransaction({
+  to: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+  value: 100000n,
+  feeRate: 10n
+})
+
+console.log('Signed transaction:', signedTransaction)
+```
+{% endcode %}
+
+{% hint style="info" %}
+`signTransaction()` returns the signed transaction hex. Use `sendTransaction()` when WDK should sign, broadcast, and return the transaction hash.
 {% endhint %}
 
 ## Estimate Fees
