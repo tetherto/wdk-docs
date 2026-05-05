@@ -24,6 +24,13 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### May 05, 2026
+
+**Changes**
+- **react-native-secure-storage** ([v1.0.0-beta.3](https://github.com/tetherto/wdk-react-native-secure-storage/releases/tag/v1.0.0-beta.3)): Refresh `expo-crypto` and `expo-local-authentication` dependencies to the current Expo SDK release line and keep dependency overrides limited to development tooling, with no public secure storage API changes.
+
+---
+
 ### May 01, 2026
 
 **What's New**
