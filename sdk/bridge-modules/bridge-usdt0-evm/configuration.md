@@ -145,8 +145,6 @@ await account.approve({
   token: '0x...', // USDT contract address
   spender: '0x...', // OFT or bridge spender address
   amount: 1000000n
-}, {
-  paymasterToken: { address: '0x...' }
 })
 
 const result = await bridgeProtocol.bridge({
@@ -175,10 +173,6 @@ await account.approve({
   token: '0x...', // USDT contract address
   spender: '0x...', // OFT or bridge spender address
   amount: 1000000n
-}, {
-  paymasterToken: {
-    address: '0x...' // Paymaster token address
-  }
 })
 
 const result = await bridgeProtocol.bridge({
@@ -366,5 +360,4 @@ try {
 ### Need Help?
 
 {% include "../../../.gitbook/includes/support-cards.md" %}
-
 

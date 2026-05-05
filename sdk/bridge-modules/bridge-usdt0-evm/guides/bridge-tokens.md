@@ -27,6 +27,8 @@ Complete [Get Started](./get-started.md): an account from [`new WalletAccountEvm
 
 Before calling [`bridge()`](../api-reference.md#bridge-options-config), approve the source-chain bridge spender for the token and amount you want to bridge. If you pass `oftContractAddress`, use the same address as the approval `spender`.
 
+For placeholder values such as `USDT0_OFT_ADDRESS`, use the current token and bridge contract addresses from the [USDT0 deployments](https://docs.usdt0.to/technical-documentation/deployments). For the route mapping used by the WDK package, see the package [`src/config.js`](https://github.com/tetherto/wdk-protocol-bridge-usdt0-evm/blob/main/src/config.js), especially `oftContract`, `legacyMeshContract`, and `xautOftContract`.
+
 ## Run a standard EVM-to-EVM bridge
 
 You can move USD₮ on the source chain toward another EVM chain by calling [`bridge()`](../api-reference.md#bridge-options-config) with `targetChain`, `recipient`, `token`, and `amount` (token base units). Amount `1000000n` is 1 USD₮ when the token uses 6 decimals.

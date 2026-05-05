@@ -25,6 +25,8 @@ This guide covers [prerequisites](#prerequisites) and how to [bridge to Solana](
 
 A [`Usdt0ProtocolEvm`](../api-reference.md#usdt0protocolevm) backed by a non-read-only EVM account, with enough USD₮ (and native gas for non-4337 accounts) on the source chain. Approve the source-chain bridge spender before calling [`bridge()`](../api-reference.md#bridge-options-config). Recipient strings must match each network’s address encoding.
 
+For `USDT_BRIDGE_SPENDER_ADDRESS`, use the source-chain OFT or bridge contract for the route. See [Bridge Tokens](./bridge-tokens.md#prerequisites) for address sources.
+
 ## Bridge to Solana
 
 You can set `targetChain` to `solana` and pass a base58 Solana address as `recipient` when calling [`bridge()`](../api-reference.md#bridge-options-config):

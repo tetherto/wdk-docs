@@ -76,8 +76,6 @@ await account.approve({
   token: USDT_TOKEN_ADDRESS,
   spender: USDT0_OFT_ADDRESS,
   amount
-}, {
-  paymasterToken
 })
 
 const result = await bridgeProtocol.bridge(
