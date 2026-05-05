@@ -32,11 +32,18 @@ You can wrap [`bridge()`](../api-reference.md#bridge-options-config) in `try/cat
 {% code title="Handle bridge errors" lineNumbers="true" %}
 ```javascript
 try {
+  await account.approve({
+    token: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+    spender: process.env.USDT0_OFT_ADDRESS,
+    amount: 1000000n
+  })
+
   const result = await bridgeProtocol.bridge({
     targetChain: 'arbitrum',
     recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
     token: '0xdac17f958d2ee523a2206206994597c13d831ec7',
-    amount: 1000000n
+    amount: 1000000n,
+    oftContractAddress: process.env.USDT0_OFT_ADDRESS
   })
   console.log('Bridge successful:', result.hash)
 } catch (error) {

@@ -63,19 +63,33 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 
 ## Run a gasless bridge with paymaster options
 
-You can execute [`bridge()`](../api-reference.md#bridge-options-config) with a second argument that includes `paymasterToken` (and optional `bridgeMaxFee` override) as described in the [methods table](../api-reference.md#methods). User operations bundle approvals and the bridge into a single user-op hash on the result.
+You can execute [`bridge()`](../api-reference.md#bridge-options-config) with a second argument that includes `paymasterToken` (and optional `bridgeMaxFee` override) as described in the [methods table](../api-reference.md#methods). Approve the source-chain bridge spender first, then call [`bridge()`](../api-reference.md#bridge-options-config). Each call returns one hash for the submitted user operation.
 
 {% code title="Gasless bridge with paymasterToken" lineNumbers="true" %}
 ```javascript
+const USDT_TOKEN_ADDRESS = '0xdac17f958d2ee523a2206206994597c13d831ec7'
+const USDT0_OFT_ADDRESS = process.env.USDT0_OFT_ADDRESS
+const amount = 1000000n
+const paymasterToken = { address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9' }
+
+await account.approve({
+  token: USDT_TOKEN_ADDRESS,
+  spender: USDT0_OFT_ADDRESS,
+  amount
+}, {
+  paymasterToken
+})
+
 const result = await bridgeProtocol.bridge(
   {
     targetChain: 'polygon',
     recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-    token: '0xdac17f958d2ee523a2206206994597c13d831ec7',
-    amount: 1000000n
+    token: USDT_TOKEN_ADDRESS,
+    amount,
+    oftContractAddress: USDT0_OFT_ADDRESS
   },
   {
-    paymasterToken: { address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9' },
+    paymasterToken,
     bridgeMaxFee: 1000000000000000n
   }
 )
@@ -87,7 +101,7 @@ console.log('Bridge fee:', result.bridgeFee)
 {% endcode %}
 
 {% hint style="info" %}
-Unlike the standard EVM account path, the bundled flow returns a single `hash` for the user operation rather than separate approve and bridge transaction hashes.
+The approval and bridge calls are separate user operations. Persist both hashes if your app needs to audit the complete flow.
 {% endhint %}
 
 {% hint style="warning" %}
