@@ -43,11 +43,11 @@ Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) to supply an e
 - **Multi-Account Management**: Create and manage multiple accounts from a single seed phrase
 - **Solana Address Support**: Generate and manage Solana public keys and addresses
 - **Message Signing**: Sign and verify messages using Ed25519 cryptography
-- **Transaction Management**: Send transactions and get fee estimates
-- **SPL Token Support**: Query native SOL and SPL token balances
+- **Transaction Management**: Sign, send, and quote Solana transactions
+- **SPL Token Support**: Query native SOL plus single or batch SPL token balances
 - **TypeScript Support**: Full TypeScript definitions included
 - **Memory Safety**: Secure private key management with memory-safe implementation
-- **Provider Flexibility**: Support for a single Solana RPC endpoint, plus runtime failover support for ordered RPC URL lists
+- **Provider Flexibility**: Support for a single Solana RPC endpoint, plus runtime failover support for ordered `provider` lists
 - **Transaction Message Support**: Quote or send prebuilt `TransactionMessage` flows with recent blockhash or durable nonce lifetimes
 - **Fee Estimation**: Dynamic fee calculation with recent blockhash
 - **Program Interaction**: Support for interacting with Solana programs

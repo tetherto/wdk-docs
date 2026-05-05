@@ -42,15 +42,16 @@ new WalletManagerSolana(seed, config)
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (object): Configuration object
-  - `rpcUrl` (string | string[]): RPC endpoint URL or an ordered list of endpoints for failover
+  - `provider` (string | string[], optional): Solana RPC endpoint URL or an ordered list of endpoints for failover
+  - `rpcUrl` (string | string[], optional): Deprecated alias for `provider`. If both are set, `provider` takes precedence
   - `commitment` (string, optional): Commitment level ('processed', 'confirmed', or 'finalized')
-  - `retries` (number, optional): Retry count for failover requests (default: 3)
+  - `retries` (number, optional): Additional retry attempts for ordered provider failover (default: 3)
   - `transferMaxFee` (number, optional): Maximum fee amount for transfer operations (in lamports)
 
 **Example:**
 ```javascript
 const wallet = new WalletManagerSolana(seedPhrase, {
-  rpcUrl: 'https://api.mainnet-beta.solana.com',
+  provider: 'https://api.mainnet-beta.solana.com',
   commitment: 'confirmed',
   transferMaxFee: 5000 // Maximum fee in lamports
 })
@@ -134,6 +135,7 @@ new WalletAccountSolana(seed, path, config)
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's Solana address | `Promise<string>` |
 | `sign(message)` | Signs a message using the account's private key | `Promise<string>` |
+| `signTransaction(tx)` | Signs a Solana transaction without broadcasting it | `Promise<FullySignedTransaction>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `sendTransaction(tx)` | Sends a Solana transaction | `Promise<{hash: string, fee: bigint}>` |
 | `quoteSendTransaction(tx)` | Estimates the fee for a transaction | `Promise<{fee: bigint}>` |
@@ -141,6 +143,7 @@ new WalletAccountSolana(seed, path, config)
 | `quoteTransfer(options)` | Estimates the fee for an SPL token transfer | `Promise<{fee: bigint}>` |
 | `getBalance()` | Returns the native SOL balance (in lamports) | `Promise<bigint>` |
 | `getTokenBalance(tokenMint)` | Returns the balance of a specific SPL token | `Promise<bigint>` |
+| `getTokenBalances(tokenAddresses)` | Returns balances for multiple SPL tokens | `Promise<Record<string, bigint>>` |
 | `getTransactionReceipt(hash)` | Gets the transaction receipt for a given transaction hash | `Promise<SolanaTransactionReceipt \| null>` |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlySolana>` |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
@@ -168,6 +171,27 @@ Signs a message using the account's private key.
 ```javascript
 const signature = await account.sign('Hello, Solana!')
 console.log('Signature:', signature)
+```
+
+##### `signTransaction(tx)`
+Signs a Solana transaction without broadcasting it. Use this method when a relay, review flow, or separate submission path needs a fully signed transaction.
+
+**Parameters:**
+- `tx` (SolanaTransaction): A simple transfer object or a prebuilt `TransactionMessage`
+
+When `tx` is a `TransactionMessage`, WDK preserves an existing recent blockhash or durable nonce lifetime. If no lifetime is present, WDK fetches the latest blockhash before signing. If you set an explicit `feePayer`, it must match the wallet address.
+
+**Returns:** `Promise<FullySignedTransaction>` - The signed transaction
+
+**Throws:** Error if wallet is not connected to a provider
+
+**Example:**
+```javascript
+const signedTransaction = await account.signTransaction({
+  to: '11111111111111111111111111111112',
+  value: 1000000000 // 1 SOL in lamports
+})
+console.log('Signed transaction:', signedTransaction)
 ```
 
 ##### `verify(message, signature)`
@@ -292,13 +316,30 @@ const tokenBalance = await account.getTokenBalance('Es9vMFrzaCERmJfrF4H2FYD4KCoN
 console.log('USDT balance:', tokenBalance)
 ```
 
+##### `getTokenBalances(tokenAddresses)`
+Returns balances for multiple SPL tokens. The wallet batches associated token account lookups with `getMultipleAccounts`, returns balances in base units, and reports `0n` for token accounts that do not exist.
+
+**Parameters:**
+- `tokenAddresses` (string[]): Token mint addresses (base58-encoded)
+
+**Returns:** `Promise<Record<string, bigint>>` - Mapping of token mint address to token balance in base units
+
+**Example:**
+```javascript
+const tokenBalances = await account.getTokenBalances([
+  'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+  'So11111111111111111111111111111111111111112'
+])
+console.log('Token balances:', tokenBalances)
+```
+
 ##### `getTransactionReceipt(hash)`
 Gets the transaction receipt for a given transaction hash.
 
 **Parameters:**
 - `hash` (string): Transaction hash
 
-**Returns:** `Promise<SolanaTransactionReceipt | null>` - Transaction receipt details, or null if not found
+**Returns:** `Promise<SolanaTransactionReceipt \| null>` - Transaction receipt details, or null if not found
 
 **Example:**
 ```javascript
@@ -307,7 +348,7 @@ console.log('Transaction receipt:', receipt)
 ```
 
 ##### `toReadOnlyAccount()`
-Returns a read-only copy of the account.
+Returns a read-only copy of the account. After the first call, subsequent calls reuse the same read-only account instance.
 
 **Returns:** `Promise<WalletAccountReadOnlySolana>` - The read-only account
 
@@ -357,6 +398,7 @@ new WalletAccountReadOnlySolana(publicKey, config)
 | `getAddress()` | Returns the account's Solana address | `Promise<string>` |
 | `getBalance()` | Returns the native SOL balance (in lamports) | `Promise<bigint>` |
 | `getTokenBalance(tokenMint)` | Returns the balance of a specific SPL token | `Promise<bigint>` |
+| `getTokenBalances(tokenAddresses)` | Returns balances for multiple SPL tokens | `Promise<Record<string, bigint>>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `quoteSendTransaction(tx)` | Estimates the fee for a transaction | `Promise<{fee: bigint}>` |
 | `quoteTransfer(options)` | Estimates the fee for an SPL token transfer | `Promise<{fee: bigint}>` |
@@ -395,6 +437,23 @@ Returns the balance of a specific SPL token.
 ```javascript
 const tokenBalance = await readOnlyAccount.getTokenBalance('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB')
 console.log('USDT balance:', tokenBalance)
+```
+
+##### `getTokenBalances(tokenAddresses)`
+Returns balances for multiple SPL tokens from the read-only account address.
+
+**Parameters:**
+- `tokenAddresses` (string[]): Token mint addresses (base58-encoded)
+
+**Returns:** `Promise<Record<string, bigint>>` - Mapping of token mint address to token balance in base units
+
+**Example:**
+```javascript
+const tokenBalances = await readOnlyAccount.getTokenBalances([
+  'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+  'So11111111111111111111111111111111111111112'
+])
+console.log('Read-only token balances:', tokenBalances)
 ```
 
 ##### `verify(message, signature)`
@@ -457,6 +516,8 @@ console.log('Transfer fee estimate:', quote.fee, 'lamports')
 
 ```typescript
 interface SolanaWalletConfig {
+  provider?: string | string[];
+  /** Deprecated alias for provider. provider takes precedence when both are set. */
   rpcUrl?: string | string[];
   commitment?: 'processed' | 'confirmed' | 'finalized';
   retries?: number;
