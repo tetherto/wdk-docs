@@ -96,18 +96,26 @@ const result = await velora.swap({
 ### Bridging Assets
 
 1. Use `getBridgeProtocol` to access cross-chain bridges.
-2. Call `bridge` from the bridge protocol to send tokens from one protocol to another.
+2. Approve the source-chain bridge spender for the token and amount.
+3. Call `bridge` from the bridge protocol to send tokens from one protocol to another.
 
 {% code title="Bridge Assets" lineNumbers="true" %}
 ```typescript
 const ethAccount = await wdk.getAccount('ethereum', 0)
 const usdt0 = ethAccount.getBridgeProtocol('usdt0')
 
+await ethAccount.approve({
+  token: '0x...', // ERC20 Token Address
+  spender: '0x...', // OFT or bridge spender address
+  amount: 1000000n
+})
+
 const result = await usdt0.bridge({
   targetChain: 'ton',
   recipient: 'UQBla...', // TON address
   token: '0x...', // ERC20 Token Address
-  amount: 1000000n
+  amount: 1000000n,
+  oftContractAddress: '0x...' // Same address used as approval spender
 })
 ```
 {% endcode %}

@@ -66,6 +66,8 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 #### `bridge(options, config?)`
 Bridges tokens to a different blockchain using the USD₮0 protocol.
 
+Before calling `bridge()`, approve the token allowance for the source-chain bridge spender. If you pass `oftContractAddress`, use the same address as the approval `spender`.
+
 **Parameters:**
 - `options` (BridgeOptions): Bridge operation options
   - `targetChain` (string): Destination chain name
@@ -88,25 +90,37 @@ Bridges tokens to a different blockchain using the USD₮0 protocol.
 **Example:**
 ```javascript
 // Standard EVM account
+await account.approve({
+  token: '0x...', // USDT contract address
+  spender: '0x...', // OFT or bridge spender address
+  amount: 1000000n
+})
+
 const result = await bridgeProtocol.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...', // Recipient address
   token: '0x...', // ₮ contract address
-  amount: 1000000n
+  amount: 1000000n,
+  oftContractAddress: '0x...' // Same address used as approval spender
 })
 
 console.log('Bridge hash:', result.hash)
-console.log('Approve hash:', result.approveHash)
-console.log('Reset allowance hash:', result.resetAllowanceHash) // Only for USDT on Ethereum
 console.log('Total fee:', result.fee)
 console.log('Bridge fee:', result.bridgeFee)
 
 // ERC-4337 account
+await account.approve({
+  token: '0x...', // USDT contract address
+  spender: '0x...', // OFT or bridge spender address
+  amount: 1000000n
+})
+
 const result2 = await bridgeProtocol.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...', // Recipient address
   token: '0x...', // USDT contract address
-  amount: 1000000n
+  amount: 1000000n,
+  oftContractAddress: '0x...' // Same address used as approval spender
 }, {
   paymasterToken: { address: '0x...' }, // Paymaster token configuration
   bridgeMaxFee: 1000000000000000n
@@ -119,6 +133,8 @@ console.log('Bridge fee:', result2.bridgeFee)
 
 #### `quoteBridge(options, config?)`
 Estimates the cost of a bridge operation without executing it.
+
+Some providers estimate the same bridge transaction that `bridge()` sends. If that estimate fails because token allowance is missing, approve the source-chain bridge spender before calling `quoteBridge()`.
 
 **Parameters:**
 - `options` (BridgeOptions): Bridge operation options (same as bridge method)
@@ -146,11 +162,18 @@ if (quote.fee + quote.bridgeFee > 1000000000000000n) {
   console.log('Bridge fees too high')
 } else {
   // Proceed with bridge
+  await account.approve({
+    token: '0x...', // USDT contract address
+    spender: '0x...', // OFT or bridge spender address
+    amount: 1000000n
+  })
+
   const result = await bridgeProtocol.bridge({
     targetChain: 'polygon',
     recipient: '0x...', // Recipient address
     token: '0x...', // USDT contract address
-    amount: 1000000n
+    amount: 1000000n,
+    oftContractAddress: '0x...' // Same address used as approval spender
   })
 }
 ```
@@ -177,8 +200,6 @@ interface BridgeResult {
   hash: string;                     // Main bridge transaction hash
   fee: bigint;                      // Total gas cost in wei
   bridgeFee: bigint;                // Bridge protocol fee in wei
-  approveHash?: string;             // Approve transaction hash (standard accounts only)
-  resetAllowanceHash?: string;      // Reset allowance hash (USDT on Ethereum only)
 }
 ```
 
@@ -240,11 +261,18 @@ The bridge protocol throws specific errors for different failure cases:
 
 ```javascript
 try {
+  await account.approve({
+    token: '0x...', // USDT contract address
+    spender: '0x...', // OFT or bridge spender address
+    amount: 1000000n
+  })
+
   const result = await bridgeProtocol.bridge({
     targetChain: 'arbitrum',
     recipient: '0x...', // Recipient address
     token: '0x...', // USDT contract address
-    amount: 1000000n
+    amount: 1000000n,
+    oftContractAddress: '0x...' // Same address used as approval spender
   })
 } catch (error) {
   if (error.message.includes('not supported')) {
@@ -295,11 +323,18 @@ async function bridgeTokens() {
   console.log('Bridge quote:', quote)
   
   // Execute bridge
+  await account.approve({
+    token: '0x...', // USDT contract address
+    spender: '0x...', // OFT or bridge spender address
+    amount: 1000000n
+  })
+
   const result = await bridgeProtocol.bridge({
     targetChain: 'arbitrum',
     recipient: '0x...', // Recipient address
     token: '0x...', // USDT contract address
-    amount: 1000000n
+    amount: 1000000n,
+    oftContractAddress: '0x...' // Same address used as approval spender
   })
   
   console.log('Bridge result:', result)
@@ -311,7 +346,7 @@ async function bridgeTokens() {
 ### Multi-Chain Bridge
 
 ```javascript
-async function bridgeToMultipleChains(bridgeProtocol) {
+async function bridgeToMultipleChains(account, bridgeProtocol) {
   const chains = ['arbitrum', 'polygon', 'ethereum']
   const token = '0x...' // USDT contract address
   const amount = 1000000n
@@ -332,11 +367,18 @@ async function bridgeToMultipleChains(bridgeProtocol) {
       console.log(`Bridge to ${chain}:`, quote)
       
       // Execute bridge
+      await account.approve({
+        token,
+        spender: '0x...', // OFT or bridge spender address for the source route
+        amount
+      })
+
       const result = await bridgeProtocol.bridge({
         targetChain: chain,
         recipient,
         token,
-        amount
+        amount,
+        oftContractAddress: '0x...' // Same address used as approval spender
       })
       
       results.push({ chain, result })
@@ -375,11 +417,18 @@ async function gaslessBridge() {
   })
   
   // Bridge with gasless transactions
+  await account.approve({
+    token: '0x...', // USDT contract address
+    spender: '0x...', // OFT or bridge spender address
+    amount: 1000000n
+  })
+
   const result = await bridgeProtocol.bridge({
     targetChain: 'polygon',
     recipient: '0x...', // Recipient address
     token: '0x...', // USDT contract address
-    amount: 1000000n
+    amount: 1000000n,
+    oftContractAddress: '0x...' // Same address used as approval spender
   }, {
     paymasterToken: { address: '0x...' } // Paymaster token configuration
   })
@@ -444,5 +493,3 @@ async function gaslessBridge() {
 ### Need Help?
 
 {% include "../../../.gitbook/includes/support-cards.md" %}
-
-

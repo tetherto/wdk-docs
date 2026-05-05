@@ -220,11 +220,17 @@ await velora.swap({ tokenIn: '0x...', tokenOut: '0x...', tokenInAmount: 1000000n
 ### Bridge
 ```javascript
 const bridge = new Usdt0ProtocolEvm(evmAccount, { bridgeMaxFee: 1000000000000000n })
+await evmAccount.approve({
+  token: '0x...',  // USDT0
+  spender: '0x...',  // OFT or bridge spender address
+  amount: 1000000n
+})
 await bridge.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...',
   token: '0x...',  // USDT0
-  amount: 1000000n
+  amount: 1000000n,
+  oftContractAddress: '0x...' // Same address used as approval spender
 })
 ```
 
