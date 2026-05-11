@@ -24,6 +24,16 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### May 08, 2026
+
+**What's New**
+- **wdk-utils** ([v1.0.0-beta.3](https://github.com/tetherto/wdk-utils/releases/tag/v1.0.0-beta.3)): Add `validateTronAddress()`, `decodeLightningInvoice()`, and `decodeLnurl()` so wallet UIs can validate Tron addresses and inspect BOLT11 invoices or LNURL strings before starting payment flows.
+
+**Changes**
+- **react-native-core** ([v1.0.0-beta.10](https://github.com/tetherto/wdk-react-native-core/releases/tag/v1.0.0-beta.10)): Use individual token balance reads when a wallet module does not expose batch token balance fetching, improving multi-chain balance support without changing the hook API.
+
+---
+
 ### May 05, 2026
 
 **Changes**
