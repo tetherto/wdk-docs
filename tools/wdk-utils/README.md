@@ -19,11 +19,12 @@ layout:
 
 # WDK Utils
 
-WDK Utils provides validation helpers for Bitcoin, EVM, Lightning, Spark, and UMA identifiers, plus EIP-681 request parsing helpers for token transfer deep links. Powered by [`@tetherto/wdk-utils`](https://github.com/tetherto/wdk-utils).
+WDK Utils provides validation helpers for Bitcoin, EVM, Lightning, Spark, Tron, and UMA identifiers, Lightning decoding helpers, plus EIP-681 request parsing helpers for token transfer deep links. Powered by [`@tetherto/wdk-utils`](https://github.com/tetherto/wdk-utils).
 
 ## Features
 
-- **Address validation helpers**: Validate Bitcoin, EVM, Lightning invoice, LNURL, Lightning address, Spark, and UMA inputs before you hand them to a wallet flow.
+- **Address validation helpers**: Validate Bitcoin, EVM, Lightning invoice, LNURL, Lightning address, Spark, Tron, and UMA inputs before you hand them to a wallet flow.
+- **Lightning decoding helpers**: Decode BOLT11 invoices and LNURL strings before you display or route payment details.
 - **EIP-681 request parsing**: Detect request-shaped EIP-681 strings and parse transfer payloads into `recipient`, `tokenAddress`, `chainId`, and `amountSmallest`.
 - **No runtime setup**: Import the functions you need. The package has no constructor or runtime configuration.
 - **TypeScript support**: The published package ships typed exports for every validator and parser.
@@ -76,4 +77,4 @@ WDK Utils provides validation helpers for Bitcoin, EVM, Lightning, Spark, and UM
 
 ## Need Help?
 
-{% include "../.gitbook/includes/support-cards.md" %}
+{% include "../../.gitbook/includes/support-cards.md" %}

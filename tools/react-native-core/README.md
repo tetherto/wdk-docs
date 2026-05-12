@@ -24,7 +24,7 @@ layout:
 ## Features
 
 - **Hooks-based architecture** - `useWdkApp`, `useWalletManager`, `useAccount`, `useBalance`, and more
-- **TanStack Query caching** - automatic balance fetching, cache invalidation, and optimistic updates
+- **TanStack Query caching** - automatic balance fetching, per-token fallback for modules without batch balance support, cache invalidation, and optimistic updates
 - **Zustand state management** - persisted wallet state with MMKV storage
 - **Worklet runtime** - runs WDK in an isolated Bare worklet
 - **Biometric authentication** - secure storage with device biometrics
@@ -174,7 +174,7 @@ WdkAppProvider
     +-- useAccount()        - address, send, sign, verify, estimateFee
     +-- useAddresses()      - load and query addresses
     +-- useBalance()        - single balance with TanStack Query
-    +-- useBalancesForWallet() - bulk balance fetch
+    +-- useBalancesForWallet() - bulk balance fetch with per-token fallback
     +-- useRefreshBalance() - invalidate and refetch balances
 ```
 
