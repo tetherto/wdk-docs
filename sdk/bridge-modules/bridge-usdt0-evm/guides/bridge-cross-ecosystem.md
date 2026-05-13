@@ -23,7 +23,9 @@ This guide covers [prerequisites](#prerequisites) and how to [bridge to Solana](
 
 ## Prerequisites
 
-A [`Usdt0ProtocolEvm`](../api-reference.md#usdt0protocolevm) backed by a non-read-only EVM account, with enough USD₮ (and native gas for non-4337 accounts) on the source chain. Recipient strings must match each network’s address encoding.
+A [`Usdt0ProtocolEvm`](../api-reference.md#usdt0protocolevm) backed by a non-read-only EVM account, with enough USD₮ (and native gas for non-4337 accounts) on the source chain. Approve the source-chain bridge spender before calling [`bridge()`](../api-reference.md#bridge-options-config). Recipient strings must match each network’s address encoding.
+
+For `USDT_BRIDGE_SPENDER_ADDRESS`, use the source-chain OFT or bridge contract for the route. See [Bridge Tokens](./bridge-tokens.md#prerequisites) for address sources.
 
 ## Bridge to Solana
 
@@ -31,11 +33,22 @@ You can set `targetChain` to `solana` and pass a base58 Solana address as `recip
 
 {% code title="Bridge toward Solana" lineNumbers="true" %}
 ```javascript
+const USDT_TOKEN_ADDRESS = '0xdac17f958d2ee523a2206206994597c13d831ec7'
+const USDT_BRIDGE_SPENDER_ADDRESS = process.env.USDT0_BRIDGE_SPENDER_ADDRESS
+const amount = 1000000n
+
+await account.approve({
+  token: USDT_TOKEN_ADDRESS,
+  spender: USDT_BRIDGE_SPENDER_ADDRESS,
+  amount
+})
+
 const solanaResult = await bridgeProtocol.bridge({
   targetChain: 'solana',
   recipient: 'HyXJcgYpURfDhgzuyRL7zxP4FhLg7LZQMeDrR4MXZcMN',
-  token: '0xdac17f958d2ee523a2206206994597c13d831ec7',
-  amount: 1000000n
+  token: USDT_TOKEN_ADDRESS,
+  amount,
+  oftContractAddress: USDT_BRIDGE_SPENDER_ADDRESS
 })
 
 console.log('Solana bridge hash:', solanaResult.hash)
@@ -53,11 +66,22 @@ You can set `targetChain` to `ton` and supply a TON user-friendly or raw address
 
 {% code title="Bridge toward TON" lineNumbers="true" %}
 ```javascript
+const USDT_TOKEN_ADDRESS = '0xdac17f958d2ee523a2206206994597c13d831ec7'
+const USDT_BRIDGE_SPENDER_ADDRESS = process.env.USDT0_BRIDGE_SPENDER_ADDRESS
+const amount = 1000000n
+
+await account.approve({
+  token: USDT_TOKEN_ADDRESS,
+  spender: USDT_BRIDGE_SPENDER_ADDRESS,
+  amount
+})
+
 const tonResult = await bridgeProtocol.bridge({
   targetChain: 'ton',
   recipient: 'EQAd31gAUhdO0d0NZsNb_cGl_Maa9PSuNhVLE9z8bBSjX6Gq',
-  token: '0xdac17f958d2ee523a2206206994597c13d831ec7',
-  amount: 1000000n
+  token: USDT_TOKEN_ADDRESS,
+  amount,
+  oftContractAddress: USDT_BRIDGE_SPENDER_ADDRESS
 })
 
 console.log('TON bridge hash:', tonResult.hash)
@@ -70,11 +94,22 @@ You can set `targetChain` to `tron` and pass a base58Check TRON address (typical
 
 {% code title="Bridge toward TRON" lineNumbers="true" %}
 ```javascript
+const USDT_TOKEN_ADDRESS = '0xdac17f958d2ee523a2206206994597c13d831ec7'
+const USDT_BRIDGE_SPENDER_ADDRESS = process.env.USDT0_BRIDGE_SPENDER_ADDRESS
+const amount = 1000000n
+
+await account.approve({
+  token: USDT_TOKEN_ADDRESS,
+  spender: USDT_BRIDGE_SPENDER_ADDRESS,
+  amount
+})
+
 const tronResult = await bridgeProtocol.bridge({
   targetChain: 'tron',
   recipient: 'TFG4wBaDQ8sHWWP1ACeSGnoNR6RRzevLPt',
-  token: '0xdac17f958d2ee523a2206206994597c13d831ec7',
-  amount: 1000000n
+  token: USDT_TOKEN_ADDRESS,
+  amount,
+  oftContractAddress: USDT_BRIDGE_SPENDER_ADDRESS
 })
 
 console.log('TRON bridge hash:', tronResult.hash)

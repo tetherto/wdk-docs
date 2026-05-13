@@ -28,9 +28,12 @@ import {
   validateBitcoinAddress,
   validateEVMAddress,
   validateLightningInvoice,
+  decodeLightningInvoice,
   validateLnurl,
+  decodeLnurl,
   validateLightningAddress,
   validateSparkAddress,
+  validateTronAddress,
   validateUmaAddress,
   resolveUmaUsername
 } from '@tetherto/wdk-utils'
@@ -39,7 +42,7 @@ import {
 
 ## Import EIP-681 helpers
 
-You can detect and parse token transfer requests using the `beta.2` EIP-681 helpers:
+You can detect and parse token transfer requests using the EIP-681 helpers:
 
 {% code title="Import EIP-681 Helpers" lineNumbers="true" %}
 ```javascript
@@ -54,6 +57,7 @@ import {
 
 - `@tetherto/wdk-utils` exports plain functions. There is no client object to initialize.
 - The package publishes a default module entrypoint through `index.js` and a bare runtime entrypoint through `bare.js`.
+- `decodeLightningInvoice()` returns decoded BOLT11 invoice data, and `decodeLnurl()` returns the decoded URL string when parsing succeeds.
 - `parseEip681Request()` currently supports transfer requests for the schemes implemented in the published runtime: `ethereum`, `pol`, `matic`, `polygon`, `arbitrum`, and `plasma`.
 - `parseEip681Request()` accepts both `uint256` and `value` query parameters for the amount field and normalizes the parsed amount into `amountSmallest`.
 
@@ -66,11 +70,13 @@ You can validate common wallet inputs before handing them to a module:
 import {
   validateBitcoinAddress,
   validateLightningAddress,
+  validateTronAddress,
   validateUmaAddress
 } from '@tetherto/wdk-utils'
 
 const btc = validateBitcoinAddress('bc1qu9yqnhc6wjj6s62s9x0shnl5l2r7gq5cudm94r7mvwv0uw4s7acq0hn9g6')
 const lightning = validateLightningAddress('sprycomfort92@waletofsatoshi.com')
+const tron = validateTronAddress('TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH')
 const uma = validateUmaAddress('$you@uma.money')
 ```
 {% endcode %}

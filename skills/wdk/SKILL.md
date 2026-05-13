@@ -196,7 +196,7 @@ All require human confirmation: `claimDeposit`, `claimStaticDeposit`, `refundSta
 #### Protocol write methods
 
 - **Swap**: `swap` (velora-evm) — may internally approve + reset allowance
-- **Bridge**: `bridge` (usdt0-evm) — may internally approve + reset allowance
+- **Bridge**: `bridge` (usdt0-evm) — requires prior token approval for the source-chain OFT or bridge spender
 - **Lending (Aave)**: `supply`, `withdraw`, `borrow`, `repay`, `setUseReserveAsCollateral`, `setUserEMode`
 - **Fiat (MoonPay)**: `buy`, `sell` (generate signed widget URLs)
 

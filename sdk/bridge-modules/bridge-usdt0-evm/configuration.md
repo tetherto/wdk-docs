@@ -89,11 +89,18 @@ const config = {
 
 // Usage example
 try {
+  await account.approve({
+    token: '0x...', // USDT contract address
+    spender: '0x...', // OFT or bridge spender address
+    amount: 1000000n
+  })
+
   const result = await bridgeProtocol.bridge({
     targetChain: 'arbitrum',
     recipient: '0x...', // Recipient address
     token: '0x...', // USDT contract address
-    amount: 1000000n
+    amount: 1000000n,
+    oftContractAddress: '0x...' // Same address used as approval spender
   })
 } catch (error) {
   if (error.message.includes('Exceeded maximum fee')) {
@@ -134,11 +141,18 @@ When using ERC-4337 accounts, you can override configuration options during brid
 
 ```javascript
 // Bridge with ERC-4337 account
+await account.approve({
+  token: '0x...', // USDT contract address
+  spender: '0x...', // OFT or bridge spender address
+  amount: 1000000n
+})
+
 const result = await bridgeProtocol.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...', // Recipient address
   token: '0x...', // USDT contract address
-  amount: 1000000n
+  amount: 1000000n,
+  oftContractAddress: '0x...' // Same address used as approval spender
 }, {
   paymasterToken: { address: '0x...' }, // Paymaster token for gasless transactions
   bridgeMaxFee: 1000000000000000n // Override maximum bridge fee
@@ -155,11 +169,18 @@ The `paymasterToken` option specifies which token to use for paying gas fees in 
 **Example:**
 
 ```javascript
+await account.approve({
+  token: '0x...', // USDT contract address
+  spender: '0x...', // OFT or bridge spender address
+  amount: 1000000n
+})
+
 const result = await bridgeProtocol.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...', // Recipient address
   token: '0x...', // USDT contract address
-  amount: 1000000n
+  amount: 1000000n,
+  oftContractAddress: '0x...' // Same address used as approval spender
 }, {
   paymasterToken: {
     address: '0x...' // Paymaster token address
@@ -201,6 +222,12 @@ const bridgeOptions = {
   oftContractAddress: '0x...', // Optional custom OFT contract address
   dstEid: 30110 // Optional LayerZero destination endpoint ID override
 }
+
+await account.approve({
+  token: bridgeOptions.token,
+  spender: bridgeOptions.oftContractAddress,
+  amount: bridgeOptions.amount
+})
 
 const result = await bridgeProtocol.bridge(bridgeOptions)
 ```
@@ -252,11 +279,18 @@ The bridge protocol will throw errors for invalid configurations:
 
 ```javascript
 try {
+  await account.approve({
+    token: '0x...', // USDT contract address
+    spender: '0x...', // OFT or bridge spender address
+    amount: 1000000n
+  })
+
   const result = await bridgeProtocol.bridge({
     targetChain: 'invalid-chain',
     recipient: '0x...', // Recipient address
     token: '0x...', // USDT contract address
-    amount: 1000000n
+    amount: 1000000n,
+    oftContractAddress: '0x...' // Same address used as approval spender
   })
 } catch (error) {
   if (error.message.includes('not supported')) {
@@ -326,6 +360,4 @@ try {
 ### Need Help?
 
 {% include "../../../.gitbook/includes/support-cards.md" %}
-
-
 

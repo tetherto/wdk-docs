@@ -25,29 +25,42 @@ This guide covers [prerequisites](#prerequisites), how to [run a standard EVM-to
 
 Complete [Get Started](./get-started.md): an account from [`new WalletAccountEvm(seed, path, config?)`](../../../wallet-modules/wallet-evm/api-reference.md#constructor-1) and a bridge from [`new Usdt0ProtocolEvm(account, config?)`](../api-reference.md#constructor). The source chain RPC must match the account network.
 
+Before calling [`bridge()`](../api-reference.md#bridge-options-config), approve the source-chain bridge spender for the token and amount you want to bridge. If you pass `oftContractAddress`, use the same address as the approval `spender`.
+
+For placeholder values such as `USDT0_OFT_ADDRESS`, use the current token and bridge contract addresses from the [USDT0 deployments](https://docs.usdt0.to/technical-documentation/deployments). For the route mapping used by the WDK package, see the package [`src/config.js`](https://github.com/tetherto/wdk-protocol-bridge-usdt0-evm/blob/main/src/config.js), especially `oftContract`, `legacyMeshContract`, and `xautOftContract`.
+
 ## Run a standard EVM-to-EVM bridge
 
 You can move USD₮ on the source chain toward another EVM chain by calling [`bridge()`](../api-reference.md#bridge-options-config) with `targetChain`, `recipient`, `token`, and `amount` (token base units). Amount `1000000n` is 1 USD₮ when the token uses 6 decimals.
 
 {% code title="Standard EVM bridge" lineNumbers="true" %}
 ```javascript
+const USDT_TOKEN_ADDRESS = '0xdac17f958d2ee523a2206206994597c13d831ec7'
+const USDT0_OFT_ADDRESS = process.env.USDT0_OFT_ADDRESS
+const amount = 1000000n
+
+await account.approve({
+  token: USDT_TOKEN_ADDRESS,
+  spender: USDT0_OFT_ADDRESS,
+  amount
+})
+
 const result = await bridgeProtocol.bridge({
   targetChain: 'arbitrum',
   recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-  token: '0xdac17f958d2ee523a2206206994597c13d831ec7',
-  amount: 1000000n
+  token: USDT_TOKEN_ADDRESS,
+  amount,
+  oftContractAddress: USDT0_OFT_ADDRESS
 })
 
 console.log('Bridge transaction hash:', result.hash)
-console.log('Approve hash:', result.approveHash)
-console.log('Reset allowance hash:', result.resetAllowanceHash)
 console.log('Total fee:', result.fee, 'wei')
 console.log('Bridge fee:', result.bridgeFee, 'wei')
 ```
 {% endcode %}
 
 {% hint style="warning" %}
-`resetAllowanceHash` appears for USD₮ on Ethereum when the implementation requires a zero allowance reset before a new approval.
+`bridge()` does not approve token allowance for you. Use a bounded approval for the bridge amount rather than an unlimited allowance.
 {% endhint %}
 
 ## Quote bridge fees
@@ -70,18 +83,32 @@ console.log('Bridge fee:', quote.bridgeFee, 'wei')
 
 Compare `quote.fee` and `quote.bridgeFee` to your risk limits before calling [`bridge()`](../api-reference.md#bridge-options-config).
 
+{% hint style="info" %}
+Some providers estimate the bridge transaction during [`quoteBridge()`](../api-reference.md#quotebridge-options-config). If the estimate fails because allowance is missing, approve the same `token`, `spender`, and `amount` before quoting.
+{% endhint %}
+
 ## Override OFT contract and destination endpoint
 
 You can point [`bridge()`](../api-reference.md#bridge-options-config) at a specific OFT contract and LayerZero destination endpoint ID when auto-resolution is not enough. Supply values from your deployment or integration configuration (environment variables shown for illustration):
 
 {% code title="Custom OFT and dstEid on bridge" lineNumbers="true" %}
 ```javascript
+const USDT_TOKEN_ADDRESS = '0xdac17f958d2ee523a2206206994597c13d831ec7'
+const USDT0_OFT_ADDRESS = process.env.USDT0_OFT_ADDRESS
+const amount = 1000000n
+
+await account.approve({
+  token: USDT_TOKEN_ADDRESS,
+  spender: USDT0_OFT_ADDRESS,
+  amount
+})
+
 const result = await bridgeProtocol.bridge({
   targetChain: 'arbitrum',
   recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-  token: '0xdac17f958d2ee523a2206206994597c13d831ec7',
-  amount: 1000000n,
-  oftContractAddress: process.env.USDT0_OFT_ADDRESS,
+  token: USDT_TOKEN_ADDRESS,
+  amount,
+  oftContractAddress: USDT0_OFT_ADDRESS,
   dstEid: Number(process.env.CUSTOM_DST_EID)
 })
 

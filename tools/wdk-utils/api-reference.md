@@ -19,9 +19,12 @@ icon: code
 | `validateEVMAddress(address)` | Validate an EVM address, including EIP-55 checksum rules for mixed-case inputs. | `EvmAddressValidationResult` |
 | `stripLightningPrefix(input)` | Remove a leading `lightning:` prefix before other Lightning validation steps. | `string` |
 | `validateLightningInvoice(address)` | Validate a Lightning invoice string. | `LightningInvoiceValidationResult` |
+| `decodeLightningInvoice(invoice)` | Decode a BOLT11 Lightning invoice into invoice metadata. | `LightningInvoiceDecodingResult` |
 | `validateLnurl(address)` | Validate an LNURL string. | `LnurlValidationResult` |
+| `decodeLnurl(address)` | Decode an LNURL string into its original URL. | `LnurlDecodingResult` |
 | `validateLightningAddress(address)` | Validate a Lightning Address in `user@domain.tld` form. | `LightningAddressValidationResult` |
 | `validateSparkAddress(address)` | Validate a Spark address or a Bitcoin L1 deposit address accepted by Spark flows. | `SparkAddressValidationResult` |
+| `validateTronAddress(address)` | Validate a Tron Base58Check address and prefix byte. | `TronAddressValidationResult` |
 | `validateUmaAddress(address)` | Validate a Universal Money Address. | `UmaAddressValidationResult` |
 | `resolveUmaUsername(uma)` | Split a valid UMA string into `localPart`, `domain`, and `lightningAddress`. | Parsed UMA details or `null`. |
 
@@ -130,6 +133,27 @@ const result = validateLightningInvoice(
 - `{ success: true, type: 'invoice' }`
 - `{ success: false, reason: string }`
 
+#### `decodeLightningInvoice(invoice)`
+
+Decode a BOLT11 Lightning invoice after trimming input and removing any `lightning:` URI prefix.
+
+{% code title="Decode A BOLT11 Invoice" lineNumbers="true" %}
+```javascript
+import { decodeLightningInvoice } from '@tetherto/wdk-utils'
+
+const result = decodeLightningInvoice(
+  'lnbc15u1p3xnhl2pp5jptserfk3zk4qy42tlucycrfwxhydvlemu9pqr93tuzlv9cc7g3sdqsvfhkcap3xyhx7un8cqzpgxqzjcsp5f8c52y2stc300gl6s4xswtjpc37hrnnr3c9wvtgjfuvqmpm35evq9qyyssqy4lgd8tj637qcjp05rdpxxykjenthxftej7a2zzmwrmrl70fyj9hvj0rewhzj7jfyuwkwcg9g2jpwtk3wkjtwnkdks84hsnu8xps5vsq4gj5hs'
+)
+```
+{% endcode %}
+
+`LightningInvoiceDecodingResult` is one of these shapes:
+
+- `{ success: true, type: 'invoice', data: DecodedLightningInvoice }`
+- `{ success: false, reason: string }`
+
+`DecodedLightningInvoice` contains decoded BOLT11 metadata such as `paymentRequest`, `network`, `satoshis`, `millisatoshis`, `timestamp`, `timeExpireDate`, `payeeNodeKey`, `signature`, and `tags` when the invoice includes those fields.
+
 #### `validateLnurl(address)`
 
 Validate an LNURL string that begins with `lnurl1`.
@@ -147,6 +171,25 @@ const result = validateLnurl(
 `LnurlValidationResult` is one of these shapes:
 
 - `{ success: true, type: 'lnurl' }`
+- `{ success: false, reason: string }`
+
+#### `decodeLnurl(address)`
+
+Decode an LNURL string into its original URL. The helper also accepts a leading `lightning:` URI prefix.
+
+{% code title="Decode An LNURL" lineNumbers="true" %}
+```javascript
+import { decodeLnurl } from '@tetherto/wdk-utils'
+
+const result = decodeLnurl(
+  'lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4kxctttdehhwm30d3h82unvwqhhxurj093k7mtxdae8gwfjnztwnf'
+)
+```
+{% endcode %}
+
+`LnurlDecodingResult` is one of these shapes:
+
+- `{ success: true, type: 'lnurl', data: string }`
 - `{ success: false, reason: string }`
 
 #### `validateLightningAddress(address)`
@@ -186,6 +229,23 @@ const l1Deposit = validateSparkAddress(
 `SparkAddressValidationResult` is one of these shapes:
 
 - `{ success: true, type: 'spark' | 'btc' }`
+- `{ success: false, reason: string }`
+
+#### `validateTronAddress(address)`
+
+Validate a Tron Base58Check address. The helper checks the `T` prefix, the 34-character address length, the Tron prefix byte, and the checksum.
+
+{% code title="Validate A Tron Address" lineNumbers="true" %}
+```javascript
+import { validateTronAddress } from '@tetherto/wdk-utils'
+
+const result = validateTronAddress('TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH')
+```
+{% endcode %}
+
+`TronAddressValidationResult` is one of these shapes:
+
+- `{ success: true, type: 'tron' }`
 - `{ success: false, reason: string }`
 
 #### `validateUmaAddress(address)`

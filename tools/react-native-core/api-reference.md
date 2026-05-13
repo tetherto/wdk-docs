@@ -466,7 +466,7 @@ function BalanceDisplay() {
 
 ## useBalancesForWallet
 
-Hook to fetch balances for multiple assets in a single query. Automatically loads addresses for all required networks before fetching balances.
+Hook to fetch balances for multiple assets in a single query. Automatically loads addresses for all required networks before fetching balances. For non-native assets, the hook tries the wallet module's batch token balance method first, then falls back to individual token balance calls when batch fetching is not available.
 
 ### Parameters
 

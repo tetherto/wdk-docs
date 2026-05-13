@@ -456,11 +456,18 @@ account.registerProtocol('usdt0', Usdt0ProtocolEvm)
 const usdt0 = account.getBridgeProtocol('usdt0')
 
 // Use the protocol
+await account.approve({
+  token: '0x...',
+  spender: '0x...', // OFT or bridge spender address
+  amount: 1000000n
+})
+
 const bridgeResult = await usdt0.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...',
   token: '0x...',
-  amount: 1000000n
+  amount: 1000000n,
+  oftContractAddress: '0x...' // Same address used as approval spender
 })
 ```
 {% endcode %}
@@ -533,6 +540,12 @@ const velora = accountEth.getSwapProtocol('velora')
 const swapResult = await velora.swap(swapOptions)
 
 const usdt0 = accountEth.getBridgeProtocol('usdt0')
+// bridgeOptions.oftContractAddress is the source-chain bridge spender.
+await accountEth.approve({
+  token: bridgeOptions.token,
+  spender: bridgeOptions.oftContractAddress,
+  amount: bridgeOptions.amount
+})
 const bridgeResult = await usdt0.bridge(bridgeOptions)
 
 // Clean up
