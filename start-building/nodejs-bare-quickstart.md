@@ -127,7 +127,6 @@ try {
 
 Now, add the following code to generate a seed phrase:
 
-{% code title="app.js" lineNumbers="true" %}
 ```typescript
 try {
   const seedPhrase = WDK.getRandomSeedPhrase()
@@ -137,11 +136,9 @@ try {
   process.exit(1)
 }
 ```
-{% endcode %}
 
 Now, let's register wallets for different blockchains:
 
-{% code title="app.js" lineNumbers="true" %}
 ```typescript
 // Add this code after the seed phrase generation
 console.log('Registering wallets...')
@@ -161,7 +158,6 @@ const wdkWithWallets = new WDK(seedPhrase)
 
 console.log('Wallets registered for Ethereum, TRON, and Bitcoin')
 ```
-{% endcode %}
 
 {% hint style="info" %}
 To learn more about configuring the wallet modules:
@@ -176,7 +172,6 @@ To learn more about configuring the wallet modules:
 
 To check balances, we first need to get accounts and addresses. Let's get accounts and addresses for all blockchains:
 
-{% code title="app.js" lineNumbers="true" %}
 ```typescript
 // Add this code after the wallet registration
 console.log('Retrieving accounts...')
@@ -194,7 +189,6 @@ for (const [chain, account] of Object.entries(accounts)) {
   console.log(`   ${chain.toUpperCase()}: ${address}`)
 }
 ```
-{% endcode %}
 
 Now, let's check balances across all chains:
 
@@ -333,7 +327,6 @@ For example, to add Solana support:
 npm install @tetherto/wdk-wallet-solana
 ```
 
-{% code lineNumbers="true" %}
 ```typescript
 import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 
@@ -346,11 +339,9 @@ wdk.registerWallet('solana', WalletManagerSolana, {
 })
 
 ```
-{% endcode %}
 
 ### Estimate Transaction Costs
 
-{% code lineNumbers="true" %}
 ```typescript
 for (const [chain, account] of Object.entries(accounts)) {
   try {
@@ -364,11 +355,9 @@ for (const [chain, account] of Object.entries(accounts)) {
   }
 }
 ```
-{% endcode %}
 
 ### **Send Transactions**
 
-{% code lineNumbers="true" %}
 ```typescript
 const result = await ethAccount.sendTransaction({
   to: '0x742d35Cc6634C05...a3b8D9C5c8b7b6e5f6e5',
@@ -377,7 +366,6 @@ const result = await ethAccount.sendTransaction({
 
 console.log('Transaction hash:', result.hash)
 ```
-{% endcode %}
 
 ### **Use DeFi Protocols**
 
@@ -385,7 +373,6 @@ console.log('Transaction hash:', result.hash)
 npm install @tetherto/wdk-protocol-swap-velora-evm
 ```
 
-{% code lineNumbers="true" %}
 ```typescript
 import VeloraProtocolEvm  from '@tetherto/wdk-protocol-swap-velora-evm'
 
@@ -393,7 +380,6 @@ wdk.registerProtocol('ethereum', 'swap-velora-evm', VeloraProtocolEvm, {
   provider: 'https://eth.drpc.org'
 })
 ```
-{% endcode %}
 
 
 ***
