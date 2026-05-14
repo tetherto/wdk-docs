@@ -46,7 +46,7 @@ New functionality is added through modules rather than modifying core code. Also
 
 #### Module Types
 
-WDK modules are organized into five main categories, each serving a specific purpose in the blockchain application stack:
+WDK modules are organized into six main categories, each serving a specific purpose in the blockchain application stack:
 
 <table data-view="cards">
 	<thead>
@@ -100,6 +100,15 @@ WDK modules are organized into five main categories, each serving a specific pur
 			<td>DeFi lending and borrowing</td>
 			<td>
 				<a href="./lending-modules/README.md">Lending Modules</a>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<strong>Fiat</strong>
+			</td>
+			<td>Fiat on/off-ramp integrations</td>
+			<td>
+				<a href="./fiat-modules/README.md">Fiat Modules</a>
 			</td>
 		</tr>
 	</tbody>
