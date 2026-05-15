@@ -1,6 +1,6 @@
 ---
-title: Send TON
-description: Send native TON transactions and estimate fees.
+title: Native TON Transactions
+description: Understand native TON transaction support in the gasless TON module.
 layout:
   width: default
   title:
@@ -17,28 +17,19 @@ layout:
     visible: false
 ---
 
-# Send TON
+# Native TON Transactions
 
-This guide explains how to [send native TON](#send-native-ton) and [use dynamic fee rates](#use-dynamic-fee-rates). Native TON sends are not gasless; for gasless Jetton token transfers, see [Transfer Jetton Tokens](./transfer-tokens.md).
+This guide explains native TON transaction support in `@tetherto/wdk-wallet-ton-gasless` and how to [use dynamic fee rates](#use-dynamic-fee-rates). For gasless Jetton token transfers, see [Transfer Jetton Tokens](./transfer-tokens.md).
 
 {% hint style="info" %}
 On TON, values are expressed in nanotons (1 TON = 10^9 nanotons).
 {% endhint %}
 
-## Send Native TON
+## Native TON Sends
 
-You can transfer TON to a recipient address using [`account.sendTransaction()`](../api-reference.md#sendtransaction-tx):
+`account.sendTransaction()` is not supported by the gasless TON module. It throws because this module only relays Jetton transfers through the TON API gasless flow.
 
-{% code title="Send TON" lineNumbers="true" %}
-```javascript
-const result = await account.sendTransaction({
-  to: 'EQ...',
-  value: 1000000000 // 1 TON in nanotons
-})
-console.log('Transaction hash:', result.hash)
-console.log('Transaction fee:', result.fee, 'nanotons')
-```
-{% endcode %}
+Use [`@tetherto/wdk-wallet-ton`](../../wallet-ton/) for native TON transfers. If you need to initialize the same gasless address before its first gasless transfer, make sure the initializer uses the same derivation path as the gasless account.
 
 ## Use Dynamic Fee Rates
 

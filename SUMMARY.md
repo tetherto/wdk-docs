@@ -114,7 +114,7 @@
       * [Get Started](sdk/wallet-modules/wallet-ton-gasless/guides/get-started.md)
       * [Manage Accounts](sdk/wallet-modules/wallet-ton-gasless/guides/manage-accounts.md)
       * [Check Balances](sdk/wallet-modules/wallet-ton-gasless/guides/check-balances.md)
-      * [Send TON](sdk/wallet-modules/wallet-ton-gasless/guides/send-transactions.md)
+      * [Native TON Transactions](sdk/wallet-modules/wallet-ton-gasless/guides/send-transactions.md)
       * [Transfer Jetton Tokens](sdk/wallet-modules/wallet-ton-gasless/guides/transfer-tokens.md)
       * [Sign and Verify Messages](sdk/wallet-modules/wallet-ton-gasless/guides/sign-verify-messages.md)
       * [Handle Errors](sdk/wallet-modules/wallet-ton-gasless/guides/handle-errors.md)

@@ -19,7 +19,7 @@ layout:
 
 # Handle Errors
 
-This guide covers how to [handle gasless transfer errors](#handle-gasless-transfer-errors) and [handle native TON transaction errors](#handle-native-ton-transaction-errors), plus [best practices](#best-practices) for fee management and memory cleanup.
+This guide covers how to [handle gasless transfer errors](#handle-gasless-transfer-errors) and [handle unsupported native TON sends](#handle-unsupported-native-ton-sends), plus [best practices](#best-practices) for fee management and memory cleanup.
 
 ## Handle Gasless Transfer Errors
 
@@ -43,6 +43,8 @@ try {
     console.error('The recipient address is invalid')
   } else if (error.message.includes('max fee')) {
     console.error('The transfer fee exceeds your configured maximum')
+  } else if (error.message.includes('Failed to parse error response')) {
+    console.error('TON API returned an unexpected error response. Check tonApiClient.url and account initialization.')
   } else {
     console.error('Transfer failed:', error.message)
   }
@@ -50,27 +52,25 @@ try {
 ```
 {% endcode %}
 
-## Handle Native TON Transaction Errors
+## Handle Unsupported Native TON Sends
 
-Native TON transactions sent via [`account.sendTransaction()`](../api-reference.md#sendtransaction-tx) can fail for standard reasons:
+Native TON transactions are not supported by `@tetherto/wdk-wallet-ton-gasless`. Calling [`account.sendTransaction()`](../api-reference.md#sendtransaction-tx) throws:
 
-{% code title="Transaction Error Handling" lineNumbers="true" %}
+{% code title="Unsupported Native TON Send" lineNumbers="true" %}
 ```javascript
 try {
-  const result = await account.sendTransaction({
+  await account.sendTransaction({
     to: 'EQ...',
     value: 1000000000
   })
-  console.log('Transaction hash:', result.hash)
 } catch (error) {
-  if (error.message.includes('insufficient balance')) {
-    console.error('Not enough TON to complete transaction')
-  } else {
-    console.error('Transaction failed:', error.message)
-  }
+  console.error(error.message)
+  // Method 'sendTransaction(tx)' not supported on ton gasless.
 }
 ```
 {% endcode %}
+
+Use `@tetherto/wdk-wallet-ton` when you need to send native TON.
 
 ## Best Practices
 

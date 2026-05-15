@@ -19,7 +19,17 @@ layout:
 
 # @tetherto/wdk-wallet-ton-gasless Overview
 
-A simple and secure package to manage gasless transactions on the TON blockchain. This package provides a clean API for creating, managing, and interacting with TON wallets using BIP-39 seed phrases and TON-specific derivation paths, with support for gasless transactions through a paymaster system.
+A simple and secure package to manage gasless Jetton transfers on the TON blockchain. This package provides a clean API for creating, managing, and interacting with TON wallets using BIP-39 seed phrases and TON-specific derivation paths, with support for paymaster-based Jetton transfers.
+
+{% hint style="warning" %}
+
+**Address Compatibility with `@tetherto/wdk-wallet-ton`**
+
+`@tetherto/wdk-wallet-ton-gasless` currently derives `wallet.getAccount(index)` from `m/44'/607'/0'/0/{index}`, while `@tetherto/wdk-wallet-ton` v1.0.0-beta.6+ derives `wallet.getAccount(index)` from `m/44'/607'/{index}'`.
+
+The same seed phrase can therefore produce different default addresses across the two TON modules. Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) when you need to recreate or initialize a specific address.
+
+{% endhint %}
 
 
 ## Features
@@ -29,7 +39,7 @@ A simple and secure package to manage gasless transactions on the TON blockchain
 - **Multi-Account Management**: Create and manage multiple accounts from a single seed phrase
 - **TON Address Support**: Generate and manage TON addresses using V5R1 wallet contracts
 - **Message Signing**: Sign and verify messages using TON cryptography
-- **Gasless Transactions**: Execute transactions without requiring TON for gas fees
+- **Gasless Jetton Transfers**: Execute supported Jetton transfers with fees paid in a paymaster token
 - **Paymaster Integration**: Built-in support for paymaster-based fee delegation
 - **Jetton Support**: Query native TON and Jetton token balances
 - **TypeScript Support**: Full TypeScript definitions included

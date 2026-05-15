@@ -20,7 +20,7 @@ layout:
 
 # Usage
 
-The `@tetherto/wdk-wallet-ton-gasless` module provides wallet management for the TON blockchain with gasless transaction support, where transfer fees are paid using a configured paymaster token instead of native TON.
+The `@tetherto/wdk-wallet-ton-gasless` module provides wallet management for the TON blockchain with gasless Jetton transfer support, where transfer fees are paid using a configured paymaster token instead of native TON.
 
 
 <table data-card-size="large" data-view="cards">
@@ -53,9 +53,9 @@ The `@tetherto/wdk-wallet-ton-gasless` module provides wallet management for the
     </tr>
     <tr>
       <td><i class="fa-exchange-alt">:exchange-alt:</i></td>
-      <td><strong>Send TON</strong></td>
-      <td>Send native TON transactions.</td>
-      <td><a href="./guides/send-transactions.md">Send TON</a></td>
+      <td><strong>Native TON Transactions</strong></td>
+      <td>Understand native TON transaction support.</td>
+      <td><a href="./guides/send-transactions.md">Native TON Transactions</a></td>
     </tr>
     <tr>
       <td><i class="fa-coins">:coins:</i></td>

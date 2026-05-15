@@ -45,7 +45,7 @@ new WalletManagerTon(seed, config)
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (object, optional): Configuration object
   - `tonClient` (object | TonClient, optional): TON client configuration or instance
-    - `url` (string): TON Center API URL (e.g., 'https://toncenter.com/api/v3')
+    - `url` (string): TON Center v2 JSON-RPC URL (e.g., 'https://toncenter.com/api/v2/jsonRPC')
     - `secretKey` (string, optional): API key for TON Center
   - `transferMaxFee` (number | bigint, optional): Maximum fee amount for transfer operations (in nanotons)
 
@@ -54,7 +54,7 @@ new WalletManagerTon(seed, config)
 ```javascript
 const wallet = new WalletManagerTon(seedPhrase, {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key'
   },
   transferMaxFee: 1000000000 // Maximum fee in nanotons (1 TON)
@@ -155,7 +155,7 @@ new WalletAccountTon(seed, path, config)
 ```javascript
 const account = new WalletAccountTon(seedPhrase, "0'/0/0", {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key'
   },
   transferMaxFee: 10000000 // Maximum fee in nanotons (e.g., 0.01 TON)
@@ -401,7 +401,7 @@ new WalletAccountReadOnlyTon(publicKey, config)
 ```javascript
 const readOnlyAccount = new WalletAccountReadOnlyTon(publicKey, {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key'
   }
 })
@@ -734,4 +734,3 @@ interface TonWalletConfig {
 ### Need Help?
 
 {% include "../../../.gitbook/includes/support-cards.md" %}
-

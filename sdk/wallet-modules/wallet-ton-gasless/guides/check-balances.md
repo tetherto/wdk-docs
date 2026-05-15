@@ -56,7 +56,7 @@ console.log('Paymaster Jetton balance:', paymasterBalance)
 {% endcode %}
 
 {% hint style="info" %}
-The paymaster token balance determines how many gasless transfers you can execute. Ensure the paymaster has sufficient token balance before initiating gasless transfers.
+The paymaster token balance determines how many gasless transfers the account can execute. Ensure the account has sufficient paymaster token balance before initiating gasless transfers.
 {% endhint %}
 
 ## Read-Only Account Balances
@@ -69,11 +69,11 @@ import { WalletAccountReadOnlyTonGasless } from '@tetherto/wdk-wallet-ton-gasles
 
 const readOnlyAccount = new WalletAccountReadOnlyTonGasless(publicKey, {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key' // Optional
   },
   tonApiClient: {
-    url: 'https://tonapi.io/v2',
+    url: 'https://tonapi.io',
     secretKey: 'your-ton-api-key' // Optional
   },
   paymasterToken: {
@@ -97,4 +97,4 @@ console.log('Paymaster token balance:', paymasterBalance)
 
 ## Next Steps
 
-With balance checks in place, learn how to [send TON](./send-transactions.md).
+With balance checks in place, learn how to [transfer Jetton tokens gaslessly](./transfer-tokens.md).

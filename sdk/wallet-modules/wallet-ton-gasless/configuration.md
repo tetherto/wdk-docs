@@ -28,12 +28,12 @@ import WalletManagerTonGasless from '@tetherto/wdk-wallet-ton-gasless'
 const config = {
   // Required: TON Center API client
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key' // Optional, for higher rate limits
   },
   // Required: TON API client (used for gasless transaction relay)
   tonApiClient: {
-    url: 'https://tonapi.io/v2',
+    url: 'https://tonapi.io',
     secretKey: 'your-tonapi-key' // Optional but recommended
   },
   // Required: Paymaster token used to pay gas fees
@@ -47,6 +47,10 @@ const config = {
 const wallet = new WalletManagerTonGasless(seedPhrase, config) // config is required
 ```
 
+{% hint style="info" %}
+`tonClient.url` must be a TON Center v2 JSON-RPC endpoint because the SDK passes it to `@ton/ton`'s `TonClient`. `tonApiClient.url` must be the TON API base URL; the TON API client appends `/v2/gasless/...` internally.
+{% endhint %}
+
 ## Account Configuration
 
 ```javascript
@@ -55,12 +59,12 @@ import { WalletAccountTonGasless } from '@tetherto/wdk-wallet-ton-gasless'
 const accountConfig = {
   // Required: TON Center API client
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key' // Optional
   },
   // Required: TON API client
   tonApiClient: {
-    url: 'https://tonapi.io/v2',
+    url: 'https://tonapi.io',
     secretKey: 'your-tonapi-key' // Optional but recommended
   },
   // Required: Paymaster token
@@ -82,12 +86,12 @@ import { WalletAccountReadOnlyTonGasless } from '@tetherto/wdk-wallet-ton-gasles
 const readOnlyConfig = {
   // Required: TON Center API client
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key' // Optional
   },
   // Required: TON API client
   tonApiClient: {
-    url: 'https://tonapi.io/v2',
+    url: 'https://tonapi.io',
     secretKey: 'your-tonapi-key' // Optional but recommended
   },
   // Required: Paymaster token
@@ -112,8 +116,8 @@ type TonClientOption = TonClientConfig | TonClient;
 
 interface TonClientConfig {
   /**
-   * TON Center API endpoint URL
-   * @example 'https://toncenter.com/api/v3'
+   * TON Center v2 JSON-RPC endpoint URL
+   * @example 'https://toncenter.com/api/v2/jsonRPC'
    */
   url: string;
 
@@ -137,8 +141,8 @@ type TonApiClientOption = TonApiClientConfig | TonApiClient;
 
 interface TonApiClientConfig {
   /**
-   * TON API endpoint URL
-   * @example 'https://tonapi.io/v2'
+   * TON API base URL
+   * @example 'https://tonapi.io'
    */
   url: string;
 
@@ -150,6 +154,10 @@ interface TonApiClientConfig {
 ```
 
 **Required:** Yes
+
+{% hint style="warning" %}
+Do not include `/v2` in `tonApiClient.url`. Use `https://tonapi.io`, not `https://tonapi.io/v2`, otherwise gasless requests are sent to `/v2/v2/gasless/...`.
+{% endhint %}
 
 ### paymasterToken
 
@@ -168,6 +176,10 @@ interface PaymasterTokenConfig {
 
 **Required:** Yes
 
+{% hint style="warning" %}
+`paymasterToken` must be an object with an `address` field, not a raw string.
+{% endhint %}
+
 **Example:**
 ```javascript
 const config = {
@@ -176,6 +188,12 @@ const config = {
   }
 }
 ```
+
+## Gasless Transfer Prerequisites
+
+Gasless Jetton transfers require the gasless TON account to be initialized on-chain before TON API can estimate and relay the transfer. If the account is still `uninit`, `quoteTransfer()` can fail at the gasless estimate step.
+
+Fund and initialize the gasless account through a supported onboarding flow before relying on gasless transfers for a zero-TON account. Using the non-gasless TON module to deploy the account is not a drop-in workaround unless you explicitly use the same derivation path, because `@tetherto/wdk-wallet-ton` and `@tetherto/wdk-wallet-ton-gasless` currently use different default paths for `getAccount(index)`.
 
 ### transferMaxFee
 
@@ -200,13 +218,13 @@ Here's a complete configuration example with all options:
 const config = {
   // TON Center API client (required)
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key'
   },
   
   // TON API client for gasless relay (required)
   tonApiClient: {
-    url: 'https://tonapi.io/v2',
+    url: 'https://tonapi.io',
     secretKey: 'your-tonapi-key'
   },
   
@@ -296,8 +314,6 @@ const config = {
 ### Need Help?
 
 {% include "../../../.gitbook/includes/support-cards.md" %}
-
-
 
 
 

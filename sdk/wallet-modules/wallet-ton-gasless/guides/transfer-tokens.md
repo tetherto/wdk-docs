@@ -25,6 +25,10 @@ This guide explains how to [transfer Jetton tokens gaslessly](#transfer-tokens-g
 
 You can send Jetton tokens gaslessly using [`account.transfer()`](../api-reference.md#transfer-options-config). Fees are deducted from the configured paymaster token:
 
+{% hint style="warning" %}
+The gasless account must be initialized on-chain before TON API can estimate and relay a gasless transfer. If the account is still `uninit`, `account.quoteTransfer()` can fail at the gasless estimate step, and the TON API client may surface the response as a parse error instead of the underlying HTTP status.
+{% endhint %}
+
 {% code title="Gasless Jetton Transfer" lineNumbers="true" %}
 ```javascript
 const result = await account.transfer({

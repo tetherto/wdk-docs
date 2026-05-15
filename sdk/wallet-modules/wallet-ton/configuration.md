@@ -29,7 +29,7 @@ import WalletManagerTon from '@tetherto/wdk-wallet-ton'
 
 const config = {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key' // Optional
   },
   transferMaxFee: 10000000 // Optional: maximum fee in nanotons for transfer operations
@@ -45,7 +45,7 @@ import { WalletAccountTon } from '@tetherto/wdk-wallet-ton'
 
 const accountConfig = {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key' // Optional
   },
   transferMaxFee: 10000000 // Optional: maximum fee in nanotons for transfer operations
@@ -66,8 +66,8 @@ type TonClientOption = TonClientConfig | TonClient;
 
 interface TonClientConfig {
   /**
-   * TON Center API endpoint URL
-   * @example 'https://toncenter.com/api/v3'
+   * TON Center v2 JSON-RPC endpoint URL
+   * @example 'https://toncenter.com/api/v2/jsonRPC'
    */
   url: string;
 
@@ -86,14 +86,14 @@ interface TonClientConfig {
 // Basic configuration
 const config = {
   tonClient: { 
-    url: 'https://toncenter.com/api/v3'
+    url: 'https://toncenter.com/api/v2/jsonRPC'
   }
 }
 
 // With API key for higher rate limits
 const config = {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key'
   }
 }
@@ -117,7 +117,7 @@ const config = {
 // Example with both options
 const config = {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key'
   },
   transferMaxFee: 1000000000
@@ -133,7 +133,7 @@ import { WalletAccountReadOnlyTon } from '@tetherto/wdk-wallet-ton'
 
 const readOnlyConfig = {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key' // Optional
   }
 }
@@ -145,8 +145,8 @@ const readOnlyAccount = new WalletAccountReadOnlyTon(publicKey, readOnlyConfig)
 
 The TON network (mainnet or testnet) is determined by the TON Center API endpoint URL:
 
-- Mainnet: `https://toncenter.com/api/v3`
-- Testnet: `https://testnet.toncenter.com/api/v3`
+- Mainnet: `https://toncenter.com/api/v2/jsonRPC`
+- Testnet: `https://testnet.toncenter.com/api/v2/jsonRPC`
 
 ## Derivation Paths
 
@@ -243,6 +243,5 @@ Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) to supply an e
 ### Need Help?
 
 {% include "../../../.gitbook/includes/support-cards.md" %}
-
 
 
