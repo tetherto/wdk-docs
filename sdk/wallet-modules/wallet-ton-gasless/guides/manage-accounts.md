@@ -25,6 +25,10 @@ This guide explains how to [retrieve accounts by index](#retrieve-accounts-by-in
 
 You can access accounts derived from the default BIP-44 path using [`wallet.getAccount()`](../api-reference.md#getaccount-index):
 
+{% hint style="warning" %}
+The gasless TON module's default `getAccount(index)` path is `m/44'/607'/0'/0/{index}`. The non-gasless TON module's current default path is `m/44'/607'/{index}'`, so the same seed phrase can produce different default addresses in each module.
+{% endhint %}
+
 {% code title="Get Accounts by Index" lineNumbers="true" %}
 ```javascript
 const account = await wallet.getAccount(0)

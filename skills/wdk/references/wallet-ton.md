@@ -36,7 +36,7 @@ import WalletManagerTonGasless from '@tetherto/wdk-wallet-ton-gasless'
 
 ## Key Details — wallet-ton
 
-- **Derivation**: BIP-44 (`m/44'/607'/0'/0/{index}`)
+- **Derivation**: BIP-44 (`m/44'/607'/{index}'` in v1.0.0-beta.6+)
 - **Key type**: Ed25519
 - **Wallet contract**: V5R1
 - **Fee unit**: nanotons (1 TON = 1,000,000,000 nanotons)
@@ -51,7 +51,7 @@ import WalletManagerTonGasless from '@tetherto/wdk-wallet-ton-gasless'
 ```javascript
 const wallet = new WalletManagerTon(seedPhrase, {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key'            // Optional but recommended for production
   },
   transferMaxFee: 1000000000n            // Optional: max fee in nanotons
@@ -60,22 +60,23 @@ const wallet = new WalletManagerTon(seedPhrase, {
 
 ## Key Details — wallet-ton-gasless
 
-- Same derivation and key type as wallet-ton
-- **Gasless**: Paymaster covers transaction fees; user pays in Jettons
-- Requires `tonApiClient` and `paymasterToken` config
+- **Derivation**: BIP-44 (`m/44'/607'/0'/0/{index}`), which differs from wallet-ton v1.0.0-beta.6+ defaults
+- Same key type as wallet-ton
+- **Gasless Jetton transfers**: Paymaster covers transaction fees; user pays in Jettons
+- Requires `tonApiClient` base URL and `paymasterToken.address` config
 - **Jetton-to-Jetton only**: `sendTransaction()` **throws** — use `transfer()` only
-- Fee is typically 0 or covered by paymaster
+- Account must be initialized on-chain before TON API can estimate and relay gasless transfers
 
 ## Configuration — wallet-ton-gasless
 
 ```javascript
 const wallet = new WalletManagerTonGasless(seedPhrase, {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key'
   },
   tonApiClient: {
-    url: 'https://tonapi.io/v3',
+    url: 'https://tonapi.io',
     secretKey: 'your-ton-api-key'
   },
   paymasterToken: {

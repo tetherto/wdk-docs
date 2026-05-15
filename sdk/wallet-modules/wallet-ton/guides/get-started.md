@@ -46,7 +46,7 @@ const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon aban
 
 const wallet = new WalletManagerTon(seedPhrase, {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key' // Optional
   }
 })

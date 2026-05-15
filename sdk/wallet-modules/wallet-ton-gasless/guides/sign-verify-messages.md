@@ -52,11 +52,11 @@ import { WalletAccountReadOnlyTonGasless } from '@tetherto/wdk-wallet-ton-gasles
 
 const readOnlyAccount = new WalletAccountReadOnlyTonGasless(publicKey, {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key'
   },
   tonApiClient: {
-    url: 'https://tonapi.io/v2',
+    url: 'https://tonapi.io',
     secretKey: 'your-ton-api-key'
   },
   paymasterToken: {

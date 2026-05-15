@@ -42,10 +42,10 @@ new WalletManagerTonGasless(seed, config)
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (TonGaslessWalletConfig): Configuration object (required)
   - `tonClient` (object | TonClient): TON client configuration or instance
-    - `url` (string): TON Center API URL (e.g., 'https://toncenter.com/api/v3')
+    - `url` (string): TON Center v2 JSON-RPC URL (e.g., 'https://toncenter.com/api/v2/jsonRPC')
     - `secretKey` (string, optional): API key for TON Center
   - `tonApiClient` (object | TonApiClient): TON API client configuration or instance
-    - `url` (string): TON API URL (e.g., 'https://tonapi.io/v2')
+    - `url` (string): TON API base URL (e.g., 'https://tonapi.io')
     - `secretKey` (string, optional): API key for TON API
   - `paymasterToken` (object): Paymaster token configuration
     - `address` (string): Paymaster token contract address
@@ -55,11 +55,11 @@ new WalletManagerTonGasless(seed, config)
 ```javascript
 const wallet = new WalletManagerTonGasless(seedPhrase, {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key'
   },
   tonApiClient: {
-    url: 'https://tonapi.io/v2',
+    url: 'https://tonapi.io',
     secretKey: 'your-tonapi-key'
   },
   paymasterToken: {
@@ -146,7 +146,7 @@ new WalletAccountTonGasless(seed, path, config)
 | `getAddress()` | Returns the account's TON address | `Promise<string>` |
 | `sign(message)` | Signs a message using the account's private key | `Promise<string>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
-| `sendTransaction(tx)` | Sends a TON transaction | `Promise<{hash: string, fee: bigint}>` |
+| `sendTransaction(tx)` | Not supported by this module; use `@tetherto/wdk-wallet-ton` for native TON sends | Throws |
 | `transfer(options, config?)` | Transfers tokens using gasless transactions | `Promise<{hash: string, fee: bigint}>` |
 | `quoteTransfer(options, config?)` | Estimates the fee for a token transfer | `Promise<{fee: bigint}>` |
 | `getBalance()` | Returns the native TON balance (in nanotons) | `Promise<bigint>` |
@@ -197,25 +197,11 @@ console.log('Signature valid:', isValid)
 ```
 
 ##### `sendTransaction(tx)`
-Sends a TON transaction.
+Not supported by `@tetherto/wdk-wallet-ton-gasless`.
 
-**Parameters:**
-- `tx` (TonTransaction): The transaction object
-  - `to` (string): Recipient TON address
-  - `value` (number | bigint): Amount in nanotons
-  - `bounceable` (boolean, optional): Whether the address is bounceable
-  - `body` (string | Cell, optional): Optional message body
+Use `@tetherto/wdk-wallet-ton` for native TON sends.
 
-**Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
-
-**Example:**
-```javascript
-const result = await account.sendTransaction({
-  to: 'EQ...',
-  value: 1000000000
-})
-console.log('Transaction hash:', result.hash)
-```
+**Throws:** `Method 'sendTransaction(tx)' not supported on ton gasless.`
 
 ##### `transfer(options, config?)`
 Transfers tokens using gasless transactions.
@@ -244,7 +230,7 @@ const result = await account.transfer({
 })
 ```
 
-##### `quoteTransfer(options)`
+##### `quoteTransfer(options, config?)`
 Estimates the fee for a Jetton (TON token) transfer.
 
 **Parameters:**
@@ -256,6 +242,8 @@ Estimates the fee for a Jetton (TON token) transfer.
   - `paymasterToken` (object, optional): Override default paymaster token
 
 **Returns:** `Promise<{fee: bigint}>` - Object containing fee estimate (in paymaster token base units)
+
+`quoteTransfer()` returns a fee estimate only. It does not return a transaction hash.
 
 **Example:**
 ```javascript
@@ -454,6 +442,8 @@ Estimates the fee for a token transfer.
 
 **Returns:** `Promise<{fee: bigint}>` - Object containing fee estimate (in paymaster token base units)
 
+`quoteTransfer()` returns a fee estimate only. It does not return a transaction hash.
+
 **Example:**
 ```javascript
 const quote = await readOnlyAccount.quoteTransfer({
@@ -489,12 +479,12 @@ if (receipt) {
 ```typescript
 interface TonGaslessWalletConfig {
   /**
-   * TON Center client configuration or an instance of TonClient
+   * TON Center v2 JSON-RPC client configuration or an instance of TonClient
    */
   tonClient: TonClientConfig | TonClient;
 
   /**
-   * TON API client configuration or an instance of TonApiClient
+   * TON API base client configuration or an instance of TonApiClient
    */
   tonApiClient: TonApiClientConfig | TonApiClient;
 
@@ -641,4 +631,3 @@ interface KeyPair {
 ### Need Help?
 
 {% include "../../../.gitbook/includes/support-cards.md" %}
-

@@ -58,7 +58,7 @@ import { WalletAccountReadOnlyTon } from '@tetherto/wdk-wallet-ton'
 
 const readOnlyAccount = new WalletAccountReadOnlyTon(publicKey, {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key' // Optional
   }
 })

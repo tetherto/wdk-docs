@@ -49,11 +49,11 @@ const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon aban
 
 const wallet = new WalletManagerTonGasless(seedPhrase, {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key' // Optional
   },
   tonApiClient: {
-    url: 'https://tonapi.io/v2',
+    url: 'https://tonapi.io',
     secretKey: 'your-ton-api-key' // Optional
   },
   paymasterToken: {
