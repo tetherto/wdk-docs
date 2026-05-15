@@ -1,0 +1,68 @@
+---
+title: Check Balances
+description: Query SOL and SPL token balances on Solana.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide explains how to check native SOL and SPL token balances for both owned and read-only accounts.
+
+## Owned Account Balances
+
+Use an account retrieved from [`WalletManagerSolana`](/sdk/wallet-modules/wallet-solana/api-reference) to query balances.
+
+### Native SOL Balance
+
+You can retrieve the native SOL balance from an `Account` object using [`account.getBalance()`](/sdk/wallet-modules/wallet-solana/api-reference):
+
+```javascript title="Get SOL Balance"
+const balance = await account.getBalance()
+console.log('Native SOL balance:', balance, 'lamports')
+```
+
+### SPL Token Balance
+
+You can retrieve an SPL token balance from an `Account` object using [`account.getTokenBalance(tokenMint)`](/sdk/wallet-modules/wallet-solana/api-reference#gettokenbalancetokenmint):
+
+```javascript title="Get SPL Token Balance"
+const splTokenAddress = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB' // USDT mint address
+const splTokenBalance = await account.getTokenBalance(splTokenAddress)
+console.log('SPL token balance:', splTokenBalance)
+```
+
+<Callout type="info">
+Token balances are returned in the token's smallest units. Adjust for the token's decimals when displaying (e.g., USD₮ has 6 decimals).
+</Callout>
+
+## Read-Only Account Balances
+
+Use [`WalletAccountReadOnlySolana`](/sdk/wallet-modules/wallet-solana/api-reference) to check balances for any public key without a seed phrase.
+
+### Native Balance
+
+```javascript title="Read-Only SOL Balance"
+import { WalletAccountReadOnlySolana } from '@tetherto/wdk-wallet-solana'
+
+const readOnlyAccount = new WalletAccountReadOnlySolana('publicKey', {
+  rpcUrl: 'https://api.mainnet-beta.solana.com',
+  commitment: 'confirmed'
+})
+
+const balance = await readOnlyAccount.getBalance()
+console.log('Native balance:', balance, 'lamports')
+```
+
+### Token Balance
+
+```javascript title="Read-Only Token Balance"
+const tokenBalance = await readOnlyAccount.getTokenBalance('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB')
+console.log('Token balance:', tokenBalance)
+```
+
+<Callout type="info">
+You can also create a read-only account from an existing owned account using [`await account.toReadOnlyAccount()`](/sdk/wallet-modules/wallet-solana/api-reference).
+</Callout>
+
+## Next Steps
+
+With balance checks in place, learn how to [send SOL](./send-transactions).

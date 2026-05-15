@@ -1,0 +1,80 @@
+---
+title: Handle Errors
+description: Catch swap failures, interpret common messages, and clean up sensitive state.
+---
+
+This guide covers [swap errors](#swap-errors), [quote errors](#quote-errors), and [best practices](#best-practices) for clearing wallet material after use.
+
+## Swap errors
+
+You can detect failed swaps by wrapping [`swap()`](../api-reference) in `try/catch` and inspecting `error.message`:
+
+```javascript title="Handle swap failures"
+try {
+  const result = await swapProtocol.swap({
+    tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+    tokenInAmount: 1000000n
+  })
+  console.log('Swap successful:', result.hash)
+} catch (error) {
+  console.error('Swap failed:', error.message)
+
+  if (error.message.includes('liquidity')) {
+    console.log('No route or insufficient liquidity for this pair')
+  }
+  if (error.message.includes('max fee')) {
+    console.log('Swap fee exceeds swapMaxFee')
+  }
+  if (error.message.includes('read-only')) {
+    console.log('Read-only account cannot swap')
+  }
+}
+```
+
+<Callout type="warn">
+Match string fragments only as a convenience; production apps should prefer stable error codes from your runtime when available.
+</Callout>
+
+## Quote errors
+
+You can handle failures from [`quoteSwap()`](../api-reference) the same way, including provider or routing errors:
+
+```javascript title="Handle quote failures"
+try {
+  const quote = await swapProtocol.quoteSwap({
+    tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+    tokenInAmount: 1000000n
+  })
+  console.log('Quoted fee (wei):', quote.fee)
+} catch (error) {
+  console.error('Quote failed:', error.message)
+}
+```
+
+Common causes are listed under [Errors](../api-reference) in the API reference (liquidity, fee cap, read-only send attempts, RPC issues).
+
+## Best Practices
+
+You can clear signing material when a session ends by calling [`dispose()`](../../../wallet-modules/wallet-evm/api-reference) on each [`WalletAccountEvm`](../../../wallet-modules/wallet-evm/api-reference), or [`dispose()`](../../../wallet-modules/wallet-evm/api-reference) on [`WalletManagerEvm`](../../../wallet-modules/wallet-evm/api-reference) if you use a manager:
+
+```javascript title="Dispose wallet accounts"
+try {
+  await swapProtocol.swap({
+    tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+    tokenInAmount: 1000000n
+  })
+} finally {
+  account.dispose()
+}
+```
+
+If you use an ERC-4337 account, call [`dispose()`](../../../wallet-modules/wallet-evm-erc-4337/api-reference) on that account type per its API reference. Drop references to your [`VeloraProtocolEvm`](../api-reference) instance when you no longer need it.
+
+## Next Steps
+
+- [Get swap quotes](get-swap-quotes)
+- [Execute swaps](execute-swaps)
+- [API reference](../api-reference)

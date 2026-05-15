@@ -1,0 +1,100 @@
+---
+title: Send SOL
+description: Send native SOL and estimate transaction fees on Solana.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide explains how to send native SOL, estimate transaction fees, and use dynamic fee rates.
+
+<Callout type="warn">
+**BigInt Usage:** Always use `BigInt` (the `n` suffix) for monetary values to avoid precision loss with large numbers.
+</Callout>
+
+<Callout type="info">
+On Solana, values are expressed in lamports (1 SOL = 10^9 lamports). Fees are calculated based on the recent blockhash and instruction count.
+</Callout>
+
+## Send Native SOL
+
+Use [`account.sendTransaction()`](/sdk/wallet-modules/wallet-solana/api-reference#sendtransactiontx) to transfer SOL to a recipient address.
+
+```javascript title="Send SOL"
+const result = await account.sendTransaction({
+  to: 'publicKey', // Recipient's base58-encoded public key
+  value: 1000000000n // 1 SOL in lamports
+})
+console.log('Transaction hash:', result.hash)
+console.log('Transaction fee:', result.fee, 'lamports')
+```
+
+## Estimate Transaction Fees
+
+Use [`account.quoteSendTransaction()`](/sdk/wallet-modules/wallet-solana/api-reference#quotesendtransactiontx) to get a fee estimate before sending.
+
+```javascript title="Quote Transaction Fee"
+const quote = await account.quoteSendTransaction({
+  to: 'publicKey',
+  value: 1000000000n
+})
+console.log('Estimated fee:', quote.fee, 'lamports')
+```
+
+## Quote or Send a TransactionMessage
+
+Use a prebuilt `TransactionMessage` when you need custom instructions or a durable nonce flow.
+
+<Callout type="info">
+If the transaction message already includes a recent blockhash or durable nonce lifetime, WDK preserves it. If it does not, WDK fetches the latest blockhash before quoting or sending. When you set `feePayer`, it must match the wallet address.
+</Callout>
+
+```javascript title="Quote and Send a TransactionMessage"
+const quote = await account.quoteSendTransaction(txMessage)
+console.log('Estimated fee:', quote.fee, 'lamports')
+
+const result = await account.sendTransaction(txMessage)
+console.log('Transaction hash:', result.hash)
+```
+
+## Use Dynamic Fee Rates
+
+Retrieve current fee rates using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-solana/api-reference). Rates are calculated based on the recent blockhash and compute unit prices.
+
+```javascript title="Dynamic Fee Rates"
+const feeRates = await wallet.getFeeRates()
+console.log('Normal fee rate:', feeRates.normal, 'lamports')
+console.log('Fast fee rate:', feeRates.fast, 'lamports')
+```
+
+## Complete Example
+
+```javascript title="Full SOL Transfer Flow"
+async function sendSOLTransfer(account, wallet) {
+  const solBalance = await account.getBalance()
+  const transferAmount = 1000000000n // 1 SOL
+
+  if (solBalance < transferAmount) {
+    throw new Error('Insufficient SOL balance')
+  }
+
+  const quote = await account.quoteSendTransaction({
+    to: '11111111111111111111111111111112',
+    value: transferAmount
+  })
+  console.log('Estimated fee:', quote.fee, 'lamports')
+
+  const result = await account.sendTransaction({
+    to: '11111111111111111111111111111112',
+    value: transferAmount
+  })
+
+  console.log('Transaction hash:', result.hash)
+  console.log('Fee paid:', result.fee, 'lamports')
+
+  return result
+}
+```
+
+## Next Steps
+
+To transfer SPL tokens instead of native SOL, see [Transfer SPL Tokens](./transfer-tokens).

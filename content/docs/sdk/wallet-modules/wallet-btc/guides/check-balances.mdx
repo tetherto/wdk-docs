@@ -1,0 +1,70 @@
+---
+title: Check Balances
+description: Query native BTC balances for owned and read-only accounts.
+---
+
+This guide explains how to check [native BTC balances](#native-btc-balance), [maximum spendable amounts](#maximum-spendable-amount), and [read-only account balances](#read-only-account-balances).
+
+## Native BTC Balance
+
+You can retrieve the confirmed balance in satoshis using [`account.getBalance()`](../api-reference):
+
+```javascript title="Get Native BTC Balance"
+const balance = await account.getBalance()
+console.log('Total balance:', balance, 'satoshis')
+```
+
+<Callout type="info">
+On Bitcoin, balances are expressed in satoshis (1 BTC = 100,000,000 satoshis). The [`getBalance()`](../api-reference) method returns the total balance, including unconfirmed funds when present.
+</Callout>
+
+## Maximum Spendable Amount
+
+You can check the maximum amount available to send in a single transaction using [`account.getMaxSpendable()`](../api-reference):
+
+```javascript title="Get Maximum Spendable"
+const { amount, fee } = await account.getMaxSpendable()
+console.log('Max spendable:', amount, 'satoshis')
+console.log('Estimated fee:', fee, 'satoshis')
+```
+
+<Callout type="info">
+The maximum spendable amount can differ from the total balance due to transaction fees, uneconomic UTXOs, the 200-input limit per transaction, and the dust threshold (294 satoshis for SegWit, 546 for legacy).
+</Callout>
+
+## Read-Only Account Balances
+
+You can check balances for any Bitcoin address without a seed phrase using [`WalletAccountReadOnlyBtc`](../api-reference):
+
+```javascript title="Create Read-Only Account"
+import { WalletAccountReadOnlyBtc, ElectrumTcp } from '@tetherto/wdk-wallet-btc'
+
+const client = new ElectrumTcp({
+  host: 'electrum.blockstream.info',
+  port: 50001
+})
+
+const readOnlyAccount = new WalletAccountReadOnlyBtc('bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh', {
+  client,
+  network: 'bitcoin'
+})
+```
+
+You can retrieve the balance from a read-only account using [`readOnlyAccount.getBalance()`](../api-reference):
+
+```javascript title="Read-Only Balance"
+const balance = await readOnlyAccount.getBalance()
+console.log('Read-only account balance:', balance, 'satoshis')
+```
+
+<Callout type="info">
+Read-only accounts follow the same balance behavior as owned accounts: [`getBalance()`](../api-reference) includes unconfirmed funds when present.
+</Callout>
+
+<Callout type="info">
+You can also create a read-only account from an existing owned account using [`account.toReadOnlyAccount()`](../api-reference).
+</Callout>
+
+## Next Steps
+
+With balance checks in place, learn how to [send BTC](./send-transactions).

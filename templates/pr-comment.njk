@@ -1,0 +1,48 @@
+{{ commentMarker }}
+## API Reference Version History
+
+This comment is maintained by automation from `auto/api-ref-sync`.
+
+{% if run.attempts %}
+### Latest Run
+
+- Trigger: `{{ eventName }}`
+- Module scope: `{{ moduleLabel }}`
+- Versions processed: {{ run.attempts }}
+- Docs changed: {{ run.docChanged }}
+- Note-only versions: {{ run.noteOnly }}
+- Failures: {{ run.failures }}
+- Ripple warnings: {{ run.rippleWarnings }}
+{% endif %}
+{% for module in modules %}
+
+### {{ module.name }} (`{{ module.key }}`)
+{% for step in module.steps %}
+
+#### `{{ step.toTag or 'manual' }}`
+
+- Transition: {% if step.fromTag %}`{{ step.fromTag }}` → {% endif %}`{{ step.toTag or 'manual' }}`
+- SHA: {{ step.sha | shortSha }}
+- Docs changed: {{ step.docsChangedLabel }}
+- Status: `{{ step.status }}`
+{% if step.releaseUrl %}
+- Release: [view release]({{ step.releaseUrl }})
+{% endif %}
+{% if step.compareUrl %}
+- Compare: [view diff]({{ step.compareUrl }})
+{% endif %}
+{% if step.rippleWarnings.length %}
+- Ripple warnings:
+{% for warning in step.rippleWarnings %}
+  - `{{ warning.file }}` references `{{ warning.symbol }}`
+{% endfor %}
+{% endif %}
+{% if step.releaseBody %}
+
+{{ step.releaseBody }}
+{% else %}
+
+_No release notes available._
+{% endif %}
+{% endfor %}
+{% endfor %}
