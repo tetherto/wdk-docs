@@ -1,0 +1,76 @@
+---
+title: Register Wallets
+description: Learn how to register wallet modules for different blockchains.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide explains how to register wallet modules with your WDK instance. The WDK Core module itself doesn't contain blockchain-specific logic; instead, you register separate modules for each chain you want to support (e.g., Ethereum, TON, Bitcoin).
+
+## How it works
+
+The WDK uses a builder pattern, allowing you to chain `.registerWallet()` calls. Each call connects a blockchain-specific manager to your central WDK instance.
+
+### Parameters
+
+The `registerWallet` method (see [API Reference](../api-reference)) requires three arguments:
+
+1.  **Symbol**: A unique string identifier for the chain (e.g., `'ethereum'`, `'ton'`). You will use this ID later to retrieve accounts.
+2.  **Manager Class**: The wallet manager class imported from the specific module (e.g., `WalletManagerEvm`).
+3.  **Configuration**: An object containing the chain-specific settings (e.g., RPC providers, API keys).
+
+## Installation
+
+Install the [wallet managers](../../wallet-modules/) for the blockchains you want to support:
+
+```bash
+npm install @tetherto/wdk-wallet-evm @tetherto/wdk-wallet-tron @tetherto/wdk-wallet-btc
+```
+
+## Example: Registering Multiple Wallets
+
+### Import the Wallet Manager Packages
+
+First, import the necessary wallet manager packages:
+
+```typescript title="Import Modules"
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import WalletManagerTron from '@tetherto/wdk-wallet-tron'
+import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
+```
+
+### Register the Wallets
+
+Then, [instantiate WDK](./getting-started#initialize-wdk) and chain the registration calls:
+
+```typescript title="Register Wallets"
+const wdk = new WDK(seedPhrase)
+  // 1. Register Ethereum
+  .registerWallet('ethereum', WalletManagerEvm, {
+    provider: 'https://eth.drpc.org'
+  })
+  // 2. Register TRON
+  .registerWallet('tron', WalletManagerTron, {
+    provider: 'https://api.trongrid.io'
+  })
+  // 3. Register Bitcoin
+  .registerWallet('bitcoin', WalletManagerBtc, {
+    provider: 'https://blockstream.info/api'
+  })
+```
+
+<Callout type="info">
+**RPC Providers:** The examples use public RPC endpoints for demonstration. We do not endorse any specific provider.
+*   **Testnets:** You can find public RPCs for Ethereum and other EVM chains on [Chainlist](https://chainlist.org).
+*   **Mainnet:** For production environments, we recommend using reliable, paid RPC providers to ensure stability.
+</Callout>
+
+<Callout type="info">
+**TRON Networks:** Choose the correct provider for your environment.
+*   **Mainnet:** `https://api.trongrid.io`
+*   **Shasta (Testnet):** `https://api.shasta.trongrid.io`
+</Callout>
+
+## Next Steps
+
+Once your wallets are registered, you can [manage accounts and specific addresses](./account-management).

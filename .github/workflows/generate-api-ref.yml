@@ -1,0 +1,378 @@
+name: Generate API References
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+
+  workflow_dispatch:
+    inputs:
+      module:
+        description: 'Module key from modules.json (or "all")'
+        required: false
+        default: 'all'
+      replay_pending:
+        description: 'Replay all pending tags after the stored sync tag'
+        required: false
+        type: boolean
+        default: true
+      force:
+        description: 'Single-module only; replay pending tags if present, otherwise regenerate the latest tag once'
+        required: false
+        type: boolean
+        default: false
+
+  repository_dispatch:
+    types: [sdk-updated]
+
+concurrency:
+  group: generate-api-ref
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  packages: read
+  pull-requests: write
+  issues: write
+
+env:
+  UPDATE_BRANCH: auto/api-ref-update
+  SYNC_BRANCH: auto/api-ref-sync
+  SUMMARY_FILE: scripts/api-ref-gen/.generate-summary.json
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout docs repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Configure git author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Install generator dependencies
+        working-directory: scripts/api-ref-gen
+        env:
+          GITHUB_TOKEN: ${{ secrets.NPM_READ_TOKEN || secrets.GITHUB_TOKEN || github.token }}
+        run: npm ci
+
+      - name: Determine module and flags
+        id: config
+        run: |
+          set -euo pipefail
+
+          MODULE="all"
+          REPLAY_PENDING="true"
+          FORCE="false"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            MODULE="${{ github.event.inputs.module }}"
+            REPLAY_PENDING="${{ github.event.inputs.replay_pending }}"
+            FORCE="${{ github.event.inputs.force }}"
+
+            if [ "$FORCE" = "true" ] && [ "$REPLAY_PENDING" = "true" ]; then
+              echo "workflow_dispatch cannot use replay_pending=true and force=true together"
+              exit 1
+            fi
+          fi
+
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            MODULE="${{ github.event.client_payload.module || '' }}"
+            REPLAY_PENDING="true"
+            FORCE="false"
+
+            if [ -z "$MODULE" ] || [ "$MODULE" = "all" ]; then
+              echo "repository_dispatch requires client_payload.module and it cannot be 'all'"
+              exit 1
+            fi
+          fi
+
+          if [ "$FORCE" = "true" ] && [ "$MODULE" = "all" ]; then
+            echo "--force cannot be used with module=all"
+            exit 1
+          fi
+
+          echo "module=$MODULE" >> "$GITHUB_OUTPUT"
+          echo "replay_pending=$REPLAY_PENDING" >> "$GITHUB_OUTPUT"
+          echo "force=$FORCE" >> "$GITHUB_OUTPUT"
+
+      - name: Restore sync state from sync branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN || github.token }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p "$RUNNER_TEMP/sync-baseline"
+          git fetch --no-tags origin "$SYNC_BRANCH" || true
+
+          if git show-ref --verify --quiet "refs/remotes/origin/$SYNC_BRANCH"; then
+            if git cat-file -e "origin/$SYNC_BRANCH:scripts/api-ref-gen/last-synced-shas.json" 2>/dev/null; then
+              git show "origin/$SYNC_BRANCH:scripts/api-ref-gen/last-synced-shas.json" > scripts/api-ref-gen/last-synced-shas.json
+            fi
+            if git cat-file -e "origin/$SYNC_BRANCH:scripts/api-ref-gen/sync-history.json" 2>/dev/null; then
+              git show "origin/$SYNC_BRANCH:scripts/api-ref-gen/sync-history.json" > scripts/api-ref-gen/sync-history.json
+            fi
+          fi
+
+          cp scripts/api-ref-gen/last-synced-shas.json "$RUNNER_TEMP/sync-baseline/last-synced-shas.json"
+          cp scripts/api-ref-gen/sync-history.json "$RUNNER_TEMP/sync-baseline/sync-history.json"
+
+      - name: Clean stale generator artifacts
+        run: |
+          rm -rf scripts/api-ref-gen/.tmp
+          rm -f "$SUMMARY_FILE"
+
+      - name: Generate API references
+        working-directory: scripts/api-ref-gen
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN || github.token }}
+          GITHUB_TOKEN: ${{ secrets.NPM_READ_TOKEN || secrets.GITHUB_TOKEN || github.token }}
+          NPM_READ_TOKEN: ${{ secrets.NPM_READ_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          ARGS=(--module "${{ steps.config.outputs.module }}")
+          if [ "${{ steps.config.outputs.replay_pending }}" = "true" ]; then
+            ARGS+=(--replay-pending)
+          fi
+          if [ "${{ steps.config.outputs.force }}" = "true" ]; then
+            ARGS+=(--force)
+          fi
+
+          node generate.mjs "${ARGS[@]}"
+
+      - name: Inspect run summary
+        id: summary
+        run: |
+          set -euo pipefail
+          node scripts/api-ref-gen/summary.mjs --mode gha-outputs --summary-file "$SUMMARY_FILE" >> "$GITHUB_OUTPUT"
+
+      - name: Detect docs and state changes
+        id: changes
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet -- content/docs/; then
+            echo "docs_changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "docs_changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+          if cmp -s scripts/api-ref-gen/last-synced-shas.json "$RUNNER_TEMP/sync-baseline/last-synced-shas.json" && \
+             cmp -s scripts/api-ref-gen/sync-history.json "$RUNNER_TEMP/sync-baseline/sync-history.json"; then
+            echo "state_changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "state_changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Export doc step list
+        if: steps.changes.outputs.docs_changed == 'true'
+        run: |
+          set -euo pipefail
+          node scripts/api-ref-gen/summary.mjs --mode doc-steps --summary-file "$SUMMARY_FILE" > "$RUNNER_TEMP/doc-steps.tsv"
+
+      - name: Render PR and summary outputs
+        if: steps.summary.outputs.has_summary == 'true'
+        run: |
+          set -euo pipefail
+          node scripts/api-ref-gen/render.mjs --mode pr-body --output "$RUNNER_TEMP/pr-body.md" --event-name "${{ github.event_name }}" --module "${{ steps.config.outputs.module }}"
+          node scripts/api-ref-gen/render.mjs --mode pr-comment --output "$RUNNER_TEMP/pr-comment.md" --event-name "${{ github.event_name }}" --module "${{ steps.config.outputs.module }}"
+          node scripts/api-ref-gen/render.mjs --mode step-summary --output "$RUNNER_TEMP/step-summary.md" --event-name "${{ github.event_name }}" --module "${{ steps.config.outputs.module }}"
+          cat "$RUNNER_TEMP/step-summary.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Note empty run in step summary
+        if: steps.summary.outputs.has_summary != 'true'
+        run: |
+          printf '%s\n' "# API Reference Run Summary" >> "$GITHUB_STEP_SUMMARY"
+          printf '\n' >> "$GITHUB_STEP_SUMMARY"
+          printf '%s\n' '- Trigger: `${{ github.event_name }}`' >> "$GITHUB_STEP_SUMMARY"
+          printf '%s\n' '- Module scope: `${{ steps.config.outputs.module }}`' >> "$GITHUB_STEP_SUMMARY"
+          printf '%s\n' '- No pending versions were processed.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build site
+        if: steps.changes.outputs.docs_changed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.NPM_READ_TOKEN || secrets.GITHUB_TOKEN || github.token }}
+        run: |
+          npm ci
+          npm run build
+
+      - name: Find open auto PR
+        id: pr_lookup
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN || github.token }}
+        run: |
+          set -euo pipefail
+
+          NUMBER=$(gh pr list --head "$UPDATE_BRANCH" --base develop --state open --json number --jq '.[0].number // ""')
+          URL=""
+
+          if [ -n "$NUMBER" ]; then
+            URL=$(gh pr view "$NUMBER" --json url --jq '.url')
+          fi
+
+          echo "number=$NUMBER" >> "$GITHUB_OUTPUT"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Update PR branch commits
+        if: steps.changes.outputs.docs_changed == 'true'
+        run: |
+          set -euo pipefail
+
+          if [ ! -s "$RUNNER_TEMP/doc-steps.tsv" ]; then
+            echo "docs_changed=true but no doc steps were exported"
+            exit 1
+          fi
+
+          PR_DIR="$RUNNER_TEMP/update-branch"
+          trap 'git worktree remove --force "$PR_DIR" >/dev/null 2>&1 || true' EXIT
+
+          git fetch origin "$UPDATE_BRANCH" || true
+
+          if [ -n "${{ steps.pr_lookup.outputs.number }}" ] && git ls-remote --exit-code --heads origin "$UPDATE_BRANCH" >/dev/null 2>&1; then
+            git worktree add -B "$UPDATE_BRANCH" "$PR_DIR" "origin/$UPDATE_BRANCH"
+          else
+            git fetch origin develop
+            git worktree add -B "$UPDATE_BRANCH" "$PR_DIR" origin/develop
+          fi
+
+          # Read line-by-line, then split each line with `cut` so empty
+          # fields (e.g. fromTag on the bootstrap step) are preserved.
+          # `read -r` with IFS=$'\t' would collapse adjacent tabs because
+          # tab is an IFS whitespace character.
+          while IFS= read -r LINE || [ -n "$LINE" ]; do
+            [ -z "$LINE" ] && continue
+
+            KEY=$(printf '%s' "$LINE" | cut -f1)
+            TO_TAG=$(printf '%s' "$LINE" | cut -f3)
+            OUTPUT_PATH=$(printf '%s' "$LINE" | cut -f4)
+            SNAPSHOT_PATH=$(printf '%s' "$LINE" | cut -f5)
+            COMMIT_MESSAGE=$(printf '%s' "$LINE" | cut -f6)
+
+            [ -z "$KEY" ] && continue
+
+            install -D "$SNAPSHOT_PATH" "$PR_DIR/$OUTPUT_PATH"
+
+            cd "$PR_DIR"
+            git add "$OUTPUT_PATH"
+
+            if git diff --cached --quiet; then
+              echo "Skipping $KEY @ ${TO_TAG:-(no tag)} because the PR branch already has this snapshot."
+              continue
+            fi
+
+            git commit -m "$COMMIT_MESSAGE"
+          done < "$RUNNER_TEMP/doc-steps.tsv"
+
+          cd "$PR_DIR"
+
+          if [ -n "${{ steps.pr_lookup.outputs.number }}" ]; then
+            git push origin HEAD:refs/heads/$UPDATE_BRANCH
+          elif git ls-remote --exit-code --heads origin "$UPDATE_BRANCH" >/dev/null 2>&1; then
+            git push --force-with-lease origin HEAD:refs/heads/$UPDATE_BRANCH
+          else
+            git push origin HEAD:refs/heads/$UPDATE_BRANCH
+          fi
+
+      - name: Update sync branch
+        if: steps.changes.outputs.state_changed == 'true'
+        run: |
+          set -euo pipefail
+
+          SYNC_DIR="$RUNNER_TEMP/sync-branch"
+          trap 'git worktree remove --force "$SYNC_DIR" >/dev/null 2>&1 || true' EXIT
+
+          git fetch origin "$SYNC_BRANCH" || true
+
+          if git ls-remote --exit-code --heads origin "$SYNC_BRANCH" >/dev/null 2>&1; then
+            git worktree add -B "$SYNC_BRANCH" "$SYNC_DIR" "origin/$SYNC_BRANCH"
+          else
+            git fetch origin develop
+            git worktree add -b "$SYNC_BRANCH" "$SYNC_DIR" origin/develop
+          fi
+
+          install -D scripts/api-ref-gen/last-synced-shas.json "$SYNC_DIR/scripts/api-ref-gen/last-synced-shas.json"
+          install -D scripts/api-ref-gen/sync-history.json "$SYNC_DIR/scripts/api-ref-gen/sync-history.json"
+
+          cd "$SYNC_DIR"
+          git add scripts/api-ref-gen/last-synced-shas.json scripts/api-ref-gen/sync-history.json
+
+          if git diff --cached --quiet; then
+            echo "No sync branch changes to commit."
+            exit 0
+          fi
+
+          git commit -m "chore(api-ref): update sync state"
+          git push origin HEAD:refs/heads/$SYNC_BRANCH
+
+      - name: Create or update PR
+        id: pr
+        if: steps.summary.outputs.has_summary == 'true' && (steps.changes.outputs.docs_changed == 'true' || steps.pr_lookup.outputs.number != '')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN || github.token }}
+        run: |
+          set -euo pipefail
+
+          NUMBER="${{ steps.pr_lookup.outputs.number }}"
+          URL="${{ steps.pr_lookup.outputs.url }}"
+
+          if [ -z "$NUMBER" ]; then
+            gh pr create \
+              --head "$UPDATE_BRANCH" \
+              --base develop \
+              --title "docs(api-ref): auto-update API references" \
+              --body-file "$RUNNER_TEMP/pr-body.md" \
+              --label api-ref \
+              --label automated
+            NUMBER=$(gh pr list --head "$UPDATE_BRANCH" --base develop --state open --json number --jq '.[0].number // ""')
+          else
+            gh pr edit "$NUMBER" --body-file "$RUNNER_TEMP/pr-body.md"
+            gh pr edit "$NUMBER" --add-label api-ref --add-label automated || true
+          fi
+
+          if [ -n "$NUMBER" ]; then
+            URL=$(gh pr view "$NUMBER" --json url --jq '.url')
+          fi
+
+          echo "number=$NUMBER" >> "$GITHUB_OUTPUT"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Find sticky PR comment
+        if: steps.summary.outputs.has_summary == 'true' && steps.pr.outputs.number != ''
+        id: sticky_comment
+        uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad
+        with:
+          issue-number: ${{ steps.pr.outputs.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: '<!-- api-ref-history-comment -->'
+
+      - name: Create or update sticky PR comment
+        if: steps.summary.outputs.has_summary == 'true' && steps.pr.outputs.number != ''
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9
+        with:
+          issue-number: ${{ steps.pr.outputs.number }}
+          comment-id: ${{ steps.sticky_comment.outputs.comment-id }}
+          body-path: ${{ runner.temp }}/pr-comment.md
+          edit-mode: replace
+
+      - name: Fail if any version processing failed
+        if: steps.summary.outputs.failures != '0'
+        run: |
+          echo "One or more version steps failed. Successful steps were still recorded; review the run summary for details."
+          exit 1
+
+      - name: Clean up generator artifacts
+        if: always()
+        run: |
+          rm -rf scripts/api-ref-gen/.tmp
+          rm -f "$SUMMARY_FILE"

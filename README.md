@@ -1,48 +1,67 @@
----
-title: Welcome to WDK
-description: >-
-  Build secure, multi-chain, self-custodial wallets for any device with minimal
-  effort and infinite scalability
-icon: rocket
-layout:
-  width: default
-  title:
-    visible: true
-  description:
-    visible: true
-  tableOfContents:
-    visible: true
-  outline:
-    visible: true
-  pagination:
-    visible: false
-  metadata:
-    visible: false
----
+# WDK docs
 
-# Welcome
+Official documentation for the Wallet Development Kit (WDK) by Tether.
 
-The **Wallet Development Kit _by Tether_ (WDK)** is Tether's open-source toolkit that empowers humans, machines and AI agents alike to build, deploy and use secure, multi-chain, self-custodial wallets that can be integrated anywhere from the smallest embedded device to any mobile, desktop and server operating system. WDK enables trillions of self-custodial wallets.
+Live at: [docs.wdk.tether.io](https://docs.wdk.tether.io)
 
-WDK provides a set of core libraries that give you the highest level of control and a wide range of user-interface templates and widgets to maximize your development and deployment speed.
+## Architecture
 
-{% embed url="https://www.youtube.com/embed/15IRw2mAFR0?si=6lEdGgHlHgRcwnN6" %}
+WDK docs website is a static website generated via SSG functionality from a Next.js+[Fumadocs](https://fumadocs.dev) application.
 
-***
 
-### Discover WDK
+## Development
 
-<table data-view="cards"><thead><tr><th></th><th></th><th data-hidden data-card-target data-type="content-ref"></th><th data-hidden data-card-cover data-type="image">Cover image</th></tr></thead><tbody><tr><td><strong>About WDK</strong></td><td>Understand WDK core features and design principles</td><td><a href="overview/about.md">about.md</a></td><td><a href="assets/about.png">about.png</a></td></tr><tr><td><strong>Our Vision</strong></td><td>Discover our philosophy and idea for the future wallets</td><td><a href="overview/vision.md">vision.md</a></td><td><a href="assets/vision.png">vision.png</a></td></tr><tr><td><strong>Key Concepts</strong></td><td>Learn foundational concepts and terminology</td><td><a href="resources/concepts.md">concepts.md</a></td><td><a href="assets/concepts.png">concepts.png</a></td></tr></tbody></table>
+`@tetherto/docs-seo-*` is installed from GitHub Packages. Add a package-read
+token to `.env.local`, then export it before installing dependencies:
 
-***
+```bash
+cp .env.example .env.local
+set -a && . ./.env.local && set +a
+```
 
-### Start Building
+```bash
+npm install
+npm run dev
+```
 
-<table data-card-size="large" data-view="cards"><thead><tr><th></th><th></th><th></th><th data-hidden data-card-target data-type="content-ref"></th></tr></thead><tbody><tr><td><i class="fa-code">:code:</i></td><td><strong>Node.js Quickstart</strong></td><td>Get started with WDK in a Node.js environment</td><td><a href="start-building/nodejs-bare-quickstart.md">nodejs-bare-quickstart.md</a></td></tr><tr><td><i class="fa-mobile-alt">:mobile-alt:</i></td><td><strong>React Native Quickstart</strong></td><td>Build mobile wallets with React Native Expo</td><td><a href="start-building/react-native-quickstart.md">react-native-quickstart.md</a></td></tr><tr><td><i class="fa-microchip">:microchip:</i></td><td><strong>Bare Runtime Quickstart</strong></td><td>Deploy WDK in lightweight environments</td><td><a href="start-building/nodejs-bare-quickstart.md">nodejs-bare-quickstart.md</a></td></tr><tr><td><i class="fa-puzzle-piece">:puzzle-piece:</i></td><td><strong>UI Kit</strong></td><td>Explore our React Native UI Kit with pre-built components</td><td><a href="ui-kits/react-native-ui-kit/">react-native-ui-kit</a></td></tr></tbody></table>
+## Build
 
-***
+```bash
+npm run build
+```
 
-### Get Involved
+The build outputs a fully static site to `dist/` and runs `@vahor/next-broken-links` to validate all internal links post-build.
 
-{% include ".gitbook/includes/get-involved-cards.md" %}
+Production builds should set `NEXT_PUBLIC_DOCS_ORIGIN=https://docs.wdk.tether.io`
+so canonical URLs, sitemap entries, Open Graph images, Twitter cards, and JSON-LD
+use the public docs origin.
 
+## SEO
+
+The docs site uses `@tetherto/docs-seo-*` for centralized SEO state, metadata,
+robots, sitemap, JSON-LD, frontmatter validation, and Takumi-generated Open
+Graph images.
+
+Important environment variables:
+
+- `GITHUB_TOKEN`: required for `npm install`; classic PAT or CI token with `read:packages`.
+- `NEXT_PUBLIC_DOCS_ORIGIN`: production docs origin for absolute SEO URLs.
+- `NEXT_PUBLIC_DOCS_PUBLISHER_LOGO_URL`: optional HTTPS logo for JSON-LD publisher data.
+- `SKIP_OG_BUILD=1`: skip the Takumi prebuild and use `/og-default.png`.
+- `DOCS_OG_SITE_LABEL` / `DOCS_OG_CONCURRENCY`: tune OG generation.
+- `DOCS_SEO_QUIET_GENERATED=1`: suppress warnings for generated/inferred fields.
+- `DOCS_SEO_SILENT=1`: suppress all SEO warnings.
+
+## Link Checking
+
+```bash
+# Comprehensive markdown-level link checker (internal + external + anchors + assets)
+node scripts/check-links.mjs
+
+# Internal-only (fast, no network)
+LINK_CHECK_EXTERNAL=false node scripts/check-links.mjs
+```
+
+## License
+
+Apache-2.0
