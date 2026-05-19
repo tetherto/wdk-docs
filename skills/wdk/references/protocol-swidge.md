@@ -1,4 +1,4 @@
-# protocol-swidge — Unified Swap and Bridge Interface
+# protocol-swidge — Shared Route Interface
 
 ## Links
 
@@ -9,7 +9,7 @@
 
 ## Interface
 
-Swidge is the shared interface for providers that can quote and execute a swap and bridge as one route. Use it when a provider may change both token and chain in one operation.
+Swidge is the shared interface for providers that can quote and execute asset routes. Use it for swap-only routes, bridge-only routes, or combined swap and bridge routes where the token changes, the chain changes, or both change.
 
 Existing standalone swap and bridge modules remain supported. WDK plans to deprecate those standalone interfaces in a future release after swidge provider modules are available.
 
@@ -50,7 +50,7 @@ const status = await swidge.getSwidgeStatus(result.id, {
 
 | Method | Description |
 |--------|-------------|
-| `quoteSwidge(options)` | Quote a unified swap + bridge route |
+| `quoteSwidge(options)` | Quote a swap-only, bridge-only, or combined route |
 | `executeSwidge(quote, config?)` | Execute a previously quoted route (⚠️ write method) |
 | `getSwidgeStatus(id, options?)` | Check status for an in-flight route |
 
