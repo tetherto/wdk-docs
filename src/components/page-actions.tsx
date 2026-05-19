@@ -51,16 +51,15 @@ export function LLMCopyButton({
     setLoading(true);
 
     try {
-      await navigator.clipboard.write([
-        new ClipboardItem({
-          'text/plain': fetch(markdownUrl).then(async (res) => {
-            const content = await res.text();
-            cache.set(markdownUrl, content);
+      const res = await fetch(markdownUrl);
+      const content = await res.text();
 
-            return content;
-          }),
-        }),
-      ]);
+      if (!res.ok) {
+        throw new Error(`Failed to fetch ${markdownUrl}: ${res.status} ${res.statusText}`);
+      }
+
+      cache.set(markdownUrl, content);
+      await navigator.clipboard.writeText(content);
       showToast(`Copied ${fileLabel} to clipboard`);
     } finally {
       setLoading(false);
