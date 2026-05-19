@@ -1,11 +1,11 @@
 ---
 title: Integrate Protocols
-description: Learn how to use Swaps, Bridges, and Lending protocols.
+description: Learn how to use Swidge, Swap, Bridge, and Lending protocols.
 docType: how-to
 schemaType: TechArticle
 ---
 
-The WDK Core module supports registering external protocols. This allows you to extend the basic wallet functionality with advanced features like [token swapping](#swapping-tokens), [cross-chain bridging](#bridging-assets), and lending, all through a unified interface.
+The WDK Core module supports registering external protocols. This allows you to extend the basic wallet functionality with advanced features like [unified swap and bridge routes](/sdk/swidge-modules), [token swapping](#swapping-tokens), [cross-chain bridging](#bridging-assets), and lending.
 
 ## Register Protocols
 
@@ -54,7 +54,35 @@ const wdk = new WDK(seedPhrase)
 
 ## Use Protocols
 
-Once [registered](#register-protocols), you can access the protocol instance using the specific getter methods: `getSwapProtocol`, `getBridgeProtocol`, or `getLendingProtocol`.
+Once [registered](#register-protocols), you can access the protocol instance using the specific getter methods, such as `getSwapProtocol`, `getBridgeProtocol`, `getLendingProtocol`, or `getFiatProtocol`.
+
+### Unified Swap and Bridge Routes
+
+Use a swidge provider module when one provider can quote and execute a route that may both swap tokens and bridge across chains. The shared swidge interface quotes with `quoteSwidge()`, executes with `executeSwidge()`, and tracks asynchronous settlement with `getSwidgeStatus()`. The example below assumes `swidge` is an instance of a concrete provider module that implements the shared interface.
+
+```typescript title="Swidge route flow"
+const quote = await swidge.quoteSwidge({
+  fromToken: '0xSourceToken...',
+  toToken: '0xDestinationToken...',
+  toChain: 'arbitrum',
+  recipient: '0xRecipient...',
+  fromTokenAmount: 1000000n,
+  slippage: 0.01
+})
+
+const result = await swidge.executeSwidge(quote, {
+  swidgeMaxFee: 200000000000000n
+})
+
+const status = await swidge.getSwidgeStatus(result.id, {
+  toChain: 'arbitrum',
+  providerData: result.providerData
+})
+```
+
+<Callout type="info">
+Existing swap and bridge modules keep their current accessors until swidge provider modules ship. See the [swidge protocol interface](/sdk/swidge-modules) for the shared API shape.
+</Callout>
 
 ### Swapping Tokens
 
