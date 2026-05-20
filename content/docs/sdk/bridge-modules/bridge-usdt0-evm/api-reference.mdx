@@ -26,19 +26,19 @@ new Usdt0ProtocolEvm(account, config?)
 **Parameters:**
 - `account` (WalletAccountEvm | WalletAccountEvmErc4337 | WalletAccountReadOnlyEvm | WalletAccountReadOnlyEvmErc4337): The wallet account to use for bridge operations
 - `config` (BridgeProtocolConfig, optional): Configuration object
-  - `bridgeMaxFee` (bigint, optional): Maximum total bridge cost in wei
+  - `bridgeMaxFee` (number | bigint, optional): Maximum total bridge cost in wei
 
 **Example:**
 ```javascript
 import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
 import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
-const account = new WalletAccountEvm(seedPhrase, {
-  provider: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key'
+const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
+  provider: 'https://eth.drpc.org'
 })
 
 const bridgeProtocol = new Usdt0ProtocolEvm(account, {
-  bridgeMaxFee: 1000000000000000n
+  bridgeMaxFee: 1000000000000000n // Maximum bridge fee in wei
 })
 ```
 
@@ -46,25 +46,27 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
-| `bridge(options, config?)` | Bridges tokens to another blockchain | `Promise\<BridgeResult\>` | If no provider or fee exceeds max |
-| `quoteBridge(options, config?)` | Estimates the cost of a bridge operation | `Promise\<Omit\<BridgeResult, 'hash' \| 'approveHash'\>\>` | If no provider |
+| `bridge(options, config?)` | Bridges tokens to another blockchain | `Promise<BridgeResult>` | If no provider or fee exceeds max |
+| `quoteBridge(options, config?)` | Estimates the cost of a bridge operation | `Promise<Omit<BridgeResult, 'hash'>>` | If no provider |
 
 #### `bridge(options, config?)`
 Bridges tokens to a different blockchain using the USD₮0 protocol.
 
+Before calling `bridge()`, approve the token allowance for the source-chain bridge spender. If you pass `oftContractAddress`, use the same address as the approval `spender`.
+
 **Parameters:**
 - `options` (BridgeOptions): Bridge operation options
   - `targetChain` (string): Destination chain name
-  - `recipient` (string): Address that will receive the bridged tokens
+  - `recipient` (string): Address that will receive the bridged tokens (EVM hex address, Solana base58 address, TON address, or TRON address)
   - `token` (string): Token contract address on source chain
-  - `amount` (bigint): Amount to bridge in token base units
-  - `oftContractAddress` (string, optional): Override the default OFT contract address
-  - `dstEid` (number, optional): Override the default LayerZero destination endpoint ID
+  - `amount` (number | bigint): Amount to bridge in token base units
+  - `oftContractAddress` (string, optional): Custom OFT contract address to use instead of auto-resolving from the source chain
+  - `dstEid` (number, optional): Custom LayerZero destination endpoint ID override
 - `config` (`Pick<EvmErc4337WalletConfig, 'paymasterToken'> & Pick<BridgeProtocolConfig, 'bridgeMaxFee'>`, optional): Override configuration for ERC-4337 accounts
-  - `paymasterToken` (string, optional): Token to use for paying gas fees
-  - `bridgeMaxFee` (bigint, optional): Override maximum bridge fee
+  - `paymasterToken` (`{ address: string }`, optional): Paymaster token configuration for gas fees
+  - `bridgeMaxFee` (number | bigint, optional): Override maximum bridge fee
 
-**Returns:** `Promise\<BridgeResult\>` - Bridge operation result
+**Returns:** `Promise<BridgeResult>` - Bridge operation result
 
 **Throws:**
 - Error if account is read-only
@@ -74,54 +76,58 @@ Bridges tokens to a different blockchain using the USD₮0 protocol.
 **Example:**
 ```javascript
 // Standard EVM account
+await account.approve({
+  token: '0x...', // USDT contract address
+  spender: '0x...', // OFT or bridge spender address
+  amount: 1000000n
+})
+
 const result = await bridgeProtocol.bridge({
   targetChain: 'arbitrum',
-  recipient: '0x...',
-  token: '0x...',
-  amount: 1000000000000000000n
+  recipient: '0x...', // Recipient address
+  token: '0x...', // ₮ contract address
+  amount: 1000000n,
+  oftContractAddress: '0x...' // Same address used as approval spender
 })
 
 console.log('Bridge hash:', result.hash)
-console.log('Approve hash:', result.approveHash)
-console.log('Reset allowance hash:', result.resetAllowanceHash)
 console.log('Total fee:', result.fee)
 console.log('Bridge fee:', result.bridgeFee)
 
 // ERC-4337 account
+await account.approve({
+  token: '0x...', // USDT contract address
+  spender: '0x...', // OFT or bridge spender address
+  amount: 1000000n
+})
+
 const result2 = await bridgeProtocol.bridge({
   targetChain: 'arbitrum',
-  recipient: '0x...',
-  token: '0x...',
-  amount: 1000000000000000000n
+  recipient: '0x...', // Recipient address
+  token: '0x...', // USDT contract address
+  amount: 1000000n,
+  oftContractAddress: '0x...' // Same address used as approval spender
 }, {
-  paymasterToken: '0x...',
+  paymasterToken: { address: '0x...' }, // Paymaster token configuration
   bridgeMaxFee: 1000000000000000n
 })
 
-console.log('Bridge hash:', result2.hash)
+console.log('Bridge hash:', result2.hash) // Single hash for bundled operations
 console.log('Total fee:', result2.fee)
 console.log('Bridge fee:', result2.bridgeFee)
-
-// Non-EVM destination with overrides
-const result3 = await bridgeProtocol.bridge({
-  targetChain: 'solana',
-  recipient: 'SolanaRecipientAddress...',
-  token: '0x...',
-  amount: 1000000000000000000n,
-  oftContractAddress: '0x...',
-  dstEid: 30168
-})
 ```
 
 #### `quoteBridge(options, config?)`
 Estimates the cost of a bridge operation without executing it.
 
+Some providers estimate the same bridge transaction that `bridge()` sends. If that estimate fails because token allowance is missing, approve the source-chain bridge spender before calling `quoteBridge()`.
+
 **Parameters:**
 - `options` (BridgeOptions): Bridge operation options (same as bridge method)
 - `config` (`Pick<EvmErc4337WalletConfig, 'paymasterToken'>`, optional): Override configuration for ERC-4337 accounts
-  - `paymasterToken` (string, optional): Token to use for paying gas fees
+  - `paymasterToken` (`{ address: string }`, optional): Paymaster token configuration for gas fees
 
-**Returns:** `Promise\<Omit\<BridgeResult, 'hash' | 'approveHash'\>\>` - Bridge cost estimate
+**Returns:** `Promise<Omit<BridgeResult, 'hash'>>` - Bridge cost estimate
 
 **Throws:** Error if no provider is configured
 
@@ -129,22 +135,31 @@ Estimates the cost of a bridge operation without executing it.
 ```javascript
 const quote = await bridgeProtocol.quoteBridge({
   targetChain: 'polygon',
-  recipient: '0x...',
-  token: '0x...',
-  amount: 1000000000000000000n
+  recipient: '0x...', // Recipient address
+  token: '0x...', // USDT contract address
+  amount: 1000000n
 })
 
 console.log('Estimated fee:', quote.fee, 'wei')
 console.log('Bridge fee:', quote.bridgeFee, 'wei')
 
+// Check if fees are acceptable
 if (quote.fee + quote.bridgeFee > 1000000000000000n) {
   console.log('Bridge fees too high')
 } else {
+  // Proceed with bridge
+  await account.approve({
+    token: '0x...', // USDT contract address
+    spender: '0x...', // OFT or bridge spender address
+    amount: 1000000n
+  })
+
   const result = await bridgeProtocol.bridge({
     targetChain: 'polygon',
-    recipient: '0x...',
-    token: '0x...',
-    amount: 1000000000000000000n
+    recipient: '0x...', // Recipient address
+    token: '0x...', // USDT contract address
+    amount: 1000000n,
+    oftContractAddress: '0x...' // Same address used as approval spender
   })
 }
 ```
@@ -155,12 +170,12 @@ if (quote.fee + quote.bridgeFee > 1000000000000000n) {
 
 ```typescript
 interface BridgeOptions {
-  targetChain: string;
-  recipient: string;
-  token: string;
-  amount: bigint;
-  oftContractAddress?: string; // Override OFT contract address
-  dstEid?: number;             // Override LayerZero destination endpoint ID
+  targetChain: string;              // Destination chain name
+  recipient: string;                // Address that will receive bridged tokens
+  token: string;                    // Token contract address on source chain
+  amount: number | bigint;          // Amount to bridge in token base units
+  oftContractAddress?: string;      // Optional custom OFT contract address
+  dstEid?: number;                  // Optional destination endpoint ID override
 }
 ```
 
@@ -168,11 +183,9 @@ interface BridgeOptions {
 
 ```typescript
 interface BridgeResult {
-  hash: string;
-  fee: bigint;
-  bridgeFee: bigint;
-  approveHash?: string;
-  resetAllowanceHash?: string;
+  hash: string;                     // Main bridge transaction hash
+  fee: bigint;                      // Total gas cost in wei
+  bridgeFee: bigint;                // Bridge protocol fee in wei
 }
 ```
 
@@ -180,7 +193,7 @@ interface BridgeResult {
 
 ```typescript
 interface BridgeProtocolConfig {
-  bridgeMaxFee?: bigint;
+  bridgeMaxFee?: number | bigint;    // Maximum total bridge cost in wei
 }
 ```
 
@@ -188,7 +201,9 @@ interface BridgeProtocolConfig {
 
 ```typescript
 interface EvmErc4337WalletConfig {
-  paymasterToken?: string;
+  paymasterToken?: {                // Token to use for paying gas fees
+    address: string;
+  };
 }
 ```
 
@@ -197,41 +212,34 @@ interface EvmErc4337WalletConfig {
 The bridge protocol supports the following chains:
 
 **Source Chains (EVM):**
-
-| Chain | Chain ID |
-|-------|----------|
-| Ethereum | 1 |
-| Arbitrum | 42161 |
-| Optimism | 10 |
-| Polygon | 137 |
-| Berachain | 80094 |
-| Ink | 57073 |
-| Plasma | 9745 |
-| Conflux eSpace | 1030 |
-| Corn | 21000000 |
-| Avalanche | 43114 |
-| Celo | 42220 |
-| Flare | 14 |
-| HyperEVM | 999 |
-| Mantle | 5000 |
-| MegaETH | 4326 |
-| Monad | 143 |
-| Morph | 2818 |
-| Rootstock | 30 |
-| Sei | 1329 |
-| Stable | 988 |
-| Unichain | 130 |
-| XLayer | 196 |
+- `'ethereum'` (Chain ID: 1)
+- `'arbitrum'` (Chain ID: 42161) - ERC-4337 support
+- `'optimism'` (Chain ID: 10)
+- `'polygon'` (Chain ID: 137)
+- `'berachain'` (Chain ID: 80094)
+- `'ink'` (Chain ID: 57073)
+- `'plasma'` (Chain ID: 9745)
+- `'conflux'` (Chain ID: 1030)
+- `'corn'` (Chain ID: 21000000)
+- `'avalanche'` (Chain ID: 43114)
+- `'celo'` (Chain ID: 42220)
+- `'flare'` (Chain ID: 14)
+- `'hyperevm'` (Chain ID: 999)
+- `'mantle'` (Chain ID: 5000)
+- `'megaeth'` (Chain ID: 4326)
+- `'monad'` (Chain ID: 143)
+- `'morph'` (Chain ID: 2818)
+- `'rootstock'` (Chain ID: 30)
+- `'sei'` (Chain ID: 1329)
+- `'stable'` (Chain ID: 988)
+- `'unichain'` (Chain ID: 130)
+- `'xlayer'` (Chain ID: 196)
 
 **Destination Chains:**
-
-All source chains above, plus:
-
-| Chain | Endpoint ID (EID) |
-|-------|-------------------|
-| Solana | 30168 |
-| TON | 30343 |
-| TRON | 30420 |
+- **EVM destinations**: same as source-chain set above
+- `'solana'` (EID: 30168)
+- `'ton'` (EID: 30343)
+- `'tron'` (EID: 30420)
 
 ## Error Handling
 
@@ -239,11 +247,18 @@ The bridge protocol throws specific errors for different failure cases:
 
 ```javascript
 try {
+  await account.approve({
+    token: '0x...', // USDT contract address
+    spender: '0x...', // OFT or bridge spender address
+    amount: 1000000n
+  })
+
   const result = await bridgeProtocol.bridge({
     targetChain: 'arbitrum',
-    recipient: '0x...',
-    token: '0x...',
-    amount: 1000000000000000000n
+    recipient: '0x...', // Recipient address
+    token: '0x...', // USDT contract address
+    amount: 1000000n,
+    oftContractAddress: '0x...' // Same address used as approval spender
   })
 } catch (error) {
   if (error.message.includes('not supported')) {
@@ -273,31 +288,43 @@ import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
 import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
 async function bridgeTokens() {
-  const account = new WalletAccountEvm(seedPhrase, {
-    provider: 'https://eth-mainnet.g.alchemy.com/v2/your-api-key'
+  // Create wallet account
+  const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
+    provider: 'https://eth.drpc.org'
   })
 
+  // Create bridge protocol
   const bridgeProtocol = new Usdt0ProtocolEvm(account, {
     bridgeMaxFee: 1000000000000000n
   })
 
+  // Get quote first
   const quote = await bridgeProtocol.quoteBridge({
     targetChain: 'arbitrum',
-    recipient: '0x...',
-    token: '0x...',
-    amount: 1000000000000000000n
+    recipient: '0x...', // Recipient address
+    token: '0x...', // USDT contract address
+    amount: 1000000n
   })
 
   console.log('Bridge quote:', quote)
 
+  // Execute bridge
+  await account.approve({
+    token: '0x...', // USDT contract address
+    spender: '0x...', // OFT or bridge spender address
+    amount: 1000000n
+  })
+
   const result = await bridgeProtocol.bridge({
     targetChain: 'arbitrum',
-    recipient: '0x...',
-    token: '0x...',
-    amount: 1000000000000000000n
+    recipient: '0x...', // Recipient address
+    token: '0x...', // USDT contract address
+    amount: 1000000n,
+    oftContractAddress: '0x...' // Same address used as approval spender
   })
 
   console.log('Bridge result:', result)
+
   return result
 }
 ```
@@ -305,16 +332,17 @@ async function bridgeTokens() {
 ### Multi-Chain Bridge
 
 ```javascript
-async function bridgeToMultipleChains(bridgeProtocol) {
+async function bridgeToMultipleChains(account, bridgeProtocol) {
   const chains = ['arbitrum', 'polygon', 'ethereum']
-  const token = '0x...'
-  const amount = 1000000000000000000n
-  const recipient = '0x...'
+  const token = '0x...' // USDT contract address
+  const amount = 1000000n
+  const recipient = '0x...' // Recipient address
 
   const results = []
 
   for (const chain of chains) {
     try {
+      // Get quote
       const quote = await bridgeProtocol.quoteBridge({
         targetChain: chain,
         recipient,
@@ -324,11 +352,19 @@ async function bridgeToMultipleChains(bridgeProtocol) {
 
       console.log(`Bridge to ${chain}:`, quote)
 
+      // Execute bridge
+      await account.approve({
+        token,
+        spender: '0x...', // OFT or bridge spender address for the source route
+        amount
+      })
+
       const result = await bridgeProtocol.bridge({
         targetChain: chain,
         recipient,
         token,
-        amount
+        amount,
+        oftContractAddress: '0x...' // Same address used as approval spender
       })
 
       results.push({ chain, result })
@@ -349,22 +385,38 @@ async function bridgeToMultipleChains(bridgeProtocol) {
 import { WalletAccountEvmErc4337 } from '@tetherto/wdk-wallet-evm-erc-4337'
 
 async function gaslessBridge() {
-  const account = new WalletAccountEvmErc4337(seedPhrase, {
+  // Create ERC-4337 account
+  const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
+    chainId: 42161,
     provider: 'https://arb1.arbitrum.io/rpc',
-    paymasterToken: '0x...'
+    bundlerUrl: 'https://api.candide.dev/public/v3/arbitrum',
+    entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
+    safeModulesVersion: '0.3.0',
+    paymasterUrl: 'https://api.candide.dev/public/v3/arbitrum',
+    paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
+    paymasterToken: { address: '0x...' } // Paymaster token configuration
   })
 
+  // Create bridge protocol
   const bridgeProtocol = new Usdt0ProtocolEvm(account, {
     bridgeMaxFee: 1000000000000000n
   })
 
+  // Bridge with gasless transactions
+  await account.approve({
+    token: '0x...', // USDT contract address
+    spender: '0x...', // OFT or bridge spender address
+    amount: 1000000n
+  })
+
   const result = await bridgeProtocol.bridge({
     targetChain: 'polygon',
-    recipient: '0x...',
-    token: '0x...',
-    amount: 1000000000000000000n
+    recipient: '0x...', // Recipient address
+    token: '0x...', // USDT contract address
+    amount: 1000000n,
+    oftContractAddress: '0x...' // Same address used as approval spender
   }, {
-    paymasterToken: '0x...'
+    paymasterToken: { address: '0x...' } // Paymaster token configuration
   })
 
   console.log('Gasless bridge result:', result)
@@ -373,19 +425,19 @@ async function gaslessBridge() {
 ```
 
 <Cards>
-<Card title="Node.js Quickstart" href="/start-building/nodejs-bare-quickstart">
+<Card title="Node.js Quickstart" href="../../../start-building/nodejs-bare-quickstart">
 Get started with WDK in a Node.js environment
 </Card>
-<Card title="Configuration" href="/sdk/bridge-modules/bridge-usdt0-evm/configuration">
-Configure the Bridge USD₮0 EVM Protocol
+<Card title="WDK Bridge USD₮0 EVM Protocol Configuration" href="./configuration">
+Get started with WDK's Bridge USD₮0 EVM Protocol configuration
 </Card>
-<Card title="Usage" href="/sdk/bridge-modules/bridge-usdt0-evm/usage">
-Installation, quick start, and usage examples
+<Card title="WDK Bridge USD₮0 EVM Protocol Usage" href="./usage">
+Get started with WDK's Bridge USD₮0 EVM Protocol usage
 </Card>
 </Cards>
 
----
+***
 
-## Need Help?
+### Need Help?
 
 <SupportCards />

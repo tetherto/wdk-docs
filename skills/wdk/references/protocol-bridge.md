@@ -39,11 +39,18 @@ const quote = await bridge.quoteBridge({
 })
 
 // Then bridge (requires human confirmation)
+await evmAccount.approve({
+  token: '0x...',      // USDT0 token address on source chain
+  spender: '0x...',    // OFT or bridge spender address
+  amount: 1000000n
+})
+
 await bridge.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...',
   token: '0x...',
-  amount: 1000000n
+  amount: 1000000n,
+  oftContractAddress: '0x...' // Same address used as approval spender
 })
 ```
 
@@ -57,7 +64,7 @@ Works with both wallet-evm and wallet-evm-erc-4337 accounts.
 ## How It Works
 
 - Uses **LayerZero OFT** (Omnichain Fungible Token) protocol for cross-chain messaging
-- May internally handle `approve()` + reset allowance for the OFT adapter contract
+- Requires prior token approval for the source-chain OFT or bridge spender
 - Bridge fees include LayerZero messaging fees (paid in native token of source chain)
 - Token addresses differ per chain — see `references/deployments.md` for the full table
 
