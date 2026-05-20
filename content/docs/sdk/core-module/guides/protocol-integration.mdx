@@ -40,12 +40,12 @@ Then, register the protocols for the specific chains they support:
 // Register protocols for specific chains
 const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, ethConfig)
-  
+
   // Register Velora Swap for Ethereum
   .registerProtocol('ethereum', 'velora', veloraProtocolEvm, {
     apiKey: 'YOUR_API_KEY'
   })
-  
+
   // Register USDT0 Bridge for Ethereum
   .registerProtocol('ethereum', 'usdt0', usdt0ProtocolEvm, {
      ethereumRpcUrl: 'https://eth.drpc.org' // Configuration depends on the module
@@ -74,22 +74,30 @@ const result = await velora.swap({
 ### Bridging Assets
 
 1. Use `getBridgeProtocol` to access cross-chain bridges.
-2. Call `bridge` from the bridge protocol to send tokens from one protocol to another.
+2. Approve the source-chain bridge spender for the token and amount.
+3. Call `bridge` from the bridge protocol to send tokens from one protocol to another.
 
 ```typescript title="Bridge Assets"
 const ethAccount = await wdk.getAccount('ethereum', 0)
 const usdt0 = ethAccount.getBridgeProtocol('usdt0')
 
+await ethAccount.approve({
+  token: '0x...', // ERC20 Token Address
+  spender: '0x...', // OFT or bridge spender address
+  amount: 1000000n
+})
+
 const result = await usdt0.bridge({
   targetChain: 'ton',
   recipient: 'UQBla...', // TON address
   token: '0x...', // ERC20 Token Address
-  amount: 1000000n
+  amount: 1000000n,
+  oftContractAddress: '0x...' // Same address used as approval spender
 })
 ```
 
 <Callout type="info">
-**Protocol Availability:** If you try to access a protocol that hasn't been registered (e.g., `getSwapProtocol('uniswap')`), the SDK will throw an error. Always ensure registration matches the ID you request.
+**Protocol Availability:** If you try to access a protocol that hasn't been registered (e.g., `getSwapProtocol('uniswap')`), the SDK will throw an error. always ensure registration matches the ID you request.
 </Callout>
 
 ## Next Steps

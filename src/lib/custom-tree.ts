@@ -484,6 +484,20 @@ export const customTree: Node[] = [
     ],
   },
   {
+    name: 'React Native Secure Storage',
+    type: 'folder',
+    icon: resolveIcon('LockKeyhole'),
+    index: {
+      name: 'React Native Secure Storage',
+      url: '/tools/react-native-secure-storage',
+      type: 'page',
+    },
+    children: [
+      { name: 'Configuration', url: '/tools/react-native-secure-storage/configuration', type: 'page', icon: resolveIcon('Settings') },
+      { name: 'API Reference', url: '/tools/react-native-secure-storage/api-reference', type: 'page', icon: resolveIcon('Code') },
+    ],
+  },
+  {
     name: 'Failover Provider',
     type: 'folder',
     icon: resolveIcon('ShieldCheck'),
