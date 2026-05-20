@@ -1114,7 +1114,7 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 **What's New**
 
-* **[Swidge Protocol Interface](../sdk/swidge-modules)**: New page covering WDK's shared route interface for swap-only, bridge-only, and combined swap and bridge providers, including `quoteSwidge()`, `executeSwidge()`, `getSwidgeStatus()`, route options, result fields, status values, fee handling, and migration guidance for the existing standalone swap and bridge interfaces.
+* **[Swidge Protocol Interface](../sdk/swidge-modules)**: New page covering WDK's preferred route interface for new swap, bridge, and combined route providers, including `quoteSwidge()`, `executeSwidge()`, `getSwidgeStatus()`, route options, result fields, status values, fee handling, and migration guidance for the existing standalone swap and bridge interfaces.
 
 ***
 
@@ -1981,11 +1981,11 @@ Wallet modules provide blockchain-specific wallet functionality for managing add
 | [`@tetherto/wdk-wallet-solana`](https://github.com/tetherto/wdk-wallet-solana)             | Solana     | Solana blockchain wallet                         | [Docs](./wallet-modules/wallet-solana/)       |
 | [`@tetherto/wdk-wallet-spark`](https://github.com/tetherto/wdk-wallet-spark)               | Spark      | Spark/Lightning Bitcoin L2 wallet                | [Docs](./wallet-modules/wallet-spark/)        |
 
-## Swidge Modules
+## Swidge Interface
 
-Swidge modules provide one interface for providers that can quote and execute swap-only, bridge-only, or combined swap and bridge routes.
+Swidge is the preferred interface for new protocol providers that can quote and execute asset routes. A route can be swap-only, bridge-only, or a combined swap and bridge route.
 
-No released swidge provider module is listed yet. See the [swidge protocol interface](./swidge-modules/) for the shared API shape provider modules should implement.
+No released swidge provider module is listed yet. See the [swidge protocol interface](./swidge-modules/) for the shared API shape that new provider modules should implement.
 
 ## Swap Modules
 
@@ -5427,7 +5427,7 @@ Both the Python and TypeScript examples support OpenAI and Anthropic. Set the co
 The Wallet Development Kit (WDK) provides a set of modules that support bridging between different blockchain networks. All modules share a common interface, ensuring consistent behavior across different blockchain implementations.
 
 <Callout type="info">
-  WDK is introducing the [swidge interface](/sdk/swidge-modules) for providers that can support swap-only, bridge-only, or combined swap and bridge routes through one route interface. Existing bridge modules remain supported, but the standalone bridge interface is expected to be deprecated in a future release once swidge provider modules are available.
+  WDK is introducing the [swidge interface](/sdk/swidge-modules) as the preferred interface for new swap, bridge, and combined route providers. Existing bridge modules remain supported, but new protocol integrations should prefer swidge because the standalone bridge interface is expected to be deprecated in a future release once swidge provider coverage is available.
 </Callout>
 
 ## Bridge Protocol Modules
@@ -6426,7 +6426,7 @@ The WDK Core module is the central orchestrator for your wallet interactions.
 The Swap Development Kit (WDK) provides a set of modules that support swap on top of multiple blockchain networks. All modules share a common interface, ensuring consistent behavior across different blockchain implementations.
 
 <Callout type="info">
-  WDK is introducing the [swidge interface](/sdk/swidge-modules) for providers that can support swap-only, bridge-only, or combined swap and bridge routes through one route interface. Existing swap modules remain supported, but the standalone swap interface is expected to be deprecated in a future release once swidge provider modules are available.
+  WDK is introducing the [swidge interface](/sdk/swidge-modules) as the preferred interface for new swap, bridge, and combined route providers. Existing swap modules remain supported, but new protocol integrations should prefer swidge because the standalone swap interface is expected to be deprecated in a future release once swidge provider coverage is available.
 </Callout>
 
 ## Swap Protocol Modules
@@ -6456,10 +6456,10 @@ You can also:
 
 
 
-The swidge interface is WDK's shared route interface for protocol providers that can quote and execute asset movement. A swidge route can be a swap-only route, a bridge-only route, or a combined swap and bridge route. It gives builders one quote, execution, and status shape for routes where the token changes, the chain changes, or both change.
+The swidge interface is WDK's preferred route interface for protocol providers that can quote and execute asset movement. A swidge route moves from one token and chain to another token and chain. The provider may fulfill that route as a swap-only route, a bridge-only route, a combined swap and bridge route, an intent, a solver route, or an aggregator route.
 
 <Callout type="info">
-  Existing standalone swap and bridge interfaces remain supported for released modules. WDK plans to deprecate those standalone interfaces in a future release after swidge provider coverage is available.
+  Use swidge for new protocol integrations. Existing standalone swap and bridge interfaces remain supported for released modules, but WDK plans to deprecate those standalone interfaces in a future release after swidge provider coverage is available.
 </Callout>
 
 ## When to use swidge
@@ -6471,11 +6471,11 @@ Use a swidge provider when a route matches any of these shapes:
 * Swap and bridge in one route.
 * Route between different tokens, different chains, or both.
 
-Use the existing [swap modules](/sdk/swap-modules) and [bridge modules](/sdk/bridge-modules) for provider modules that have not shipped a swidge implementation yet.
+Use the existing [swap modules](/sdk/swap-modules) and [bridge modules](/sdk/bridge-modules) docs when maintaining released modules that have not shipped a swidge implementation yet. For new provider modules, prefer the swidge interface.
 
 ## Interface methods
 
-Concrete swidge provider modules extend `SwidgeProtocol` from `@tetherto/wdk-wallet/protocols`. The base interface exposes three methods:
+Concrete swidge provider modules extend `SwidgeProtocol` from `@tetherto/wdk-wallet/protocols`. The base interface currently exposes three methods:
 
 | Method                          | Description                                                                                      |
 | ------------------------------- | ------------------------------------------------------------------------------------------------ |
@@ -6606,11 +6606,11 @@ Provider modules should document the route shapes, assets, and chains they suppo
   </Card>
 
   <Card title="Swap Modules" href="/sdk/swap-modules">
-    Use existing standalone swap modules
+    Maintain existing standalone swap modules
   </Card>
 
   <Card title="Bridge Modules" href="/sdk/bridge-modules">
-    Use existing standalone bridge modules
+    Maintain existing standalone bridge modules
   </Card>
 </Cards>
 
@@ -13096,7 +13096,7 @@ Once [registered](#register-protocols), you can access the protocol instance usi
 
 ### Swidge Routes
 
-Use a swidge provider module when one provider can quote and execute swap-only, bridge-only, or combined swap and bridge routes through the same interface. The shared swidge interface quotes with `quoteSwidge()`, executes with `executeSwidge()`, and tracks asynchronous settlement with `getSwidgeStatus()`. The example below assumes `swidge` is an instance of a concrete provider module that implements the shared interface.
+Use a swidge provider module for new swap, bridge, or combined route integrations. The shared swidge interface quotes with `quoteSwidge()`, executes with `executeSwidge()`, and tracks asynchronous settlement with `getSwidgeStatus()`. The provider can decide whether the route is fulfilled as a same-chain swap, same-token bridge, combined route, intent, solver route, or aggregator route. The example below assumes `swidge` is an instance of a concrete provider module that implements the shared interface.
 
 ```typescript title="Swidge route flow"
 const quote = await swidge.quoteSwidge({
@@ -13119,7 +13119,7 @@ const status = await swidge.getSwidgeStatus(result.id, {
 ```
 
 <Callout type="info">
-  Existing swap and bridge modules keep their current accessors until swidge provider modules ship. See the [swidge protocol interface](/sdk/swidge-modules) for the shared API shape.
+  Existing swap and bridge modules keep their current accessors for released modules. Prefer the [swidge protocol interface](/sdk/swidge-modules) for new protocol integrations because the standalone swap and bridge interfaces are expected to be deprecated after swidge provider coverage is available.
 </Callout>
 
 ### Swapping Tokens

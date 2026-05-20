@@ -9,9 +9,9 @@
 
 ## Interface
 
-Swidge is the shared interface for providers that can quote and execute asset routes. Use it for swap-only routes, bridge-only routes, or combined swap and bridge routes where the token changes, the chain changes, or both change.
+Swidge is the preferred interface for new providers that can quote and execute asset routes. Use it for swap-only routes, bridge-only routes, or combined swap and bridge routes where the token changes, the chain changes, or both change. Providers may fulfill those routes through swaps, bridges, intents, solvers, aggregators, or provider-specific routing.
 
-Existing standalone swap and bridge modules remain supported. WDK plans to deprecate those standalone interfaces in a future release after swidge provider modules are available.
+Existing standalone swap and bridge modules remain supported for released modules. New protocol integrations should prefer swidge because WDK plans to deprecate those standalone interfaces in a future release after swidge provider coverage is available.
 
 ```javascript
 // Concrete provider modules should extend SwidgeProtocol from:

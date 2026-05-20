@@ -35,7 +35,7 @@ This skill is organized into reference files for chain-specific and protocol-spe
 | `references/wallet-spark.md` | Spark: Lightning, key tree, deposits, withdrawals |
 | `references/wallet-ton.md` | TON + TON Gasless: Jettons, nanotons, paymaster |
 | `references/wallet-tron.md` | TRON + TRON Gasfree: TRC20, energy/bandwidth, gasFreeProvider |
-| `references/protocol-swidge.md` | Swidge: shared route interface for swap-only, bridge-only, and combined providers |
+| `references/protocol-swidge.md` | Swidge: preferred route interface for new swap, bridge, and combined providers |
 | `references/protocol-swap.md` | Velora EVM swap protocol |
 | `references/protocol-bridge.md` | USDT0 cross-chain bridge via LayerZero |
 | `references/protocol-lending.md` | Aave V3 lending: supply/withdraw/borrow/repay |
@@ -59,7 +59,7 @@ When a task targets a specific chain or protocol, read the relevant reference fi
     │   ├── wdk-wallet-tron     # TRON
     │   └── wdk-wallet-tron-gasfree  # TRON gas-free
     └── Protocol Modules
-        ├── swidge protocol interface             # Shared route interface for swap-only, bridge-only, or combined providers
+        ├── swidge protocol interface             # Preferred route interface for new swap, bridge, or combined providers
         ├── wdk-protocol-swap-velora-evm   # DEX swaps on EVM
         ├── wdk-protocol-bridge-usdt0-evm  # Cross-chain USDT0 bridge
         ├── wdk-protocol-lending-aave-evm  # Aave V3 lending

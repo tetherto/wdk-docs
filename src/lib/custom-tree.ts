@@ -279,7 +279,7 @@ export const customTree: Node[] = [
       },
     ],
   },
-  { name: 'Swidge Modules', url: '/sdk/swidge-modules', type: 'page', icon: resolveIcon('Route') },
+  { name: 'Swidge Interface', url: '/sdk/swidge-modules', type: 'page', icon: resolveIcon('Route') },
   {
     name: 'Swap Modules',
     type: 'folder',
