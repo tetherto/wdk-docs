@@ -24,13 +24,15 @@ Use the existing [swap modules](/sdk/swap-modules) and [bridge modules](/sdk/bri
 
 ## Interface methods
 
-Concrete swidge provider modules extend `SwidgeProtocol` from `@tetherto/wdk-wallet/protocols`. The base interface currently exposes three methods:
+Concrete swidge provider modules extend `SwidgeProtocol` from `@tetherto/wdk-wallet/protocols`. The base interface exposes discovery, quote, execution, and status methods:
 
 | Method | Description |
 |--------|-------------|
 | `quoteSwidge(options)` | Quotes the route before execution. |
 | `executeSwidge(quote, config?)` | Executes a quote returned by `quoteSwidge()`. This is a write method and must be user-confirmed. |
 | `getSwidgeStatus(id, options?)` | Looks up the status of an in-flight swidge execution. |
+| `getSupportedChains()` | Lists the provider's supported chains for swidge operations. |
+| `getSupportedTokens(options?)` | Lists supported tokens, optionally filtered by chain or route context. |
 
 ```typescript title="Swidge protocol shape"
 interface ISwidgeProtocol {
@@ -43,8 +45,37 @@ interface ISwidgeProtocol {
     id: string,
     options?: SwidgeStatusOptions
   ): Promise<SwidgeStatusResult>
+  getSupportedChains(): Promise<SwidgeSupportedChain[]>
+  getSupportedTokens(
+    options?: SwidgeSupportedTokensOptions
+  ): Promise<SwidgeSupportedToken[]>
 }
 ```
+
+## Discover supported chains and tokens
+
+Use `getSupportedChains()` and `getSupportedTokens()` before building route pickers or validating a requested route. These methods are read-only discovery calls; they do not quote or execute a transaction.
+
+```typescript title="Discover swidge support"
+const chains = await swidge.getSupportedChains()
+const ethereumTokens = await swidge.getSupportedTokens({
+  chain: 'ethereum'
+})
+
+const routeTokens = await swidge.getSupportedTokens({
+  fromChain: 'ethereum',
+  fromToken: '0xSourceToken...',
+  toChain: 'arbitrum'
+})
+```
+
+`getSupportedChains()` returns provider-specific chain identifiers plus display metadata. `getSupportedTokens(options?)` returns provider-specific token identifiers, chain identifiers, symbols, decimals, and optional token addresses. Use the returned `token` and `chain` values when calling `quoteSwidge()` unless the provider module documents a stricter identifier format.
+
+| Discovery type | Key fields |
+|----------------|------------|
+| `SwidgeSupportedChain` | `id`, `name`, optional `type`, optional `nativeToken`, optional `providerData` |
+| `SwidgeSupportedToken` | `token`, `chain`, `symbol`, `decimals`, optional `address`, optional `name`, optional `providerData` |
+| `SwidgeSupportedTokensOptions` | Optional `chain`, `fromChain`, `fromToken`, and `toChain` filters |
 
 ## Quote a route
 
@@ -145,7 +176,7 @@ Supported statuses are:
 
 ## Supported assets and chains
 
-Provider modules should document the route shapes, assets, and chains they support on their module pages. Dedicated discovery methods such as `getSupportedAssets()` and `getSupportedChains()` are not part of the current swidge interface surface documented here.
+Provider modules should still document route shapes, network caveats, token identifier formats, and provider-specific limits on their module pages. Use `getSupportedChains()` and `getSupportedTokens(options?)` for runtime discovery, then consult the provider module docs for behavior that cannot be represented in the shared discovery response.
 
 ## Next steps
 

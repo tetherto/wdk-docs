@@ -1114,7 +1114,7 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 **What's New**
 
-* **[Swidge Protocol Interface](../sdk/swidge-modules)**: New page covering WDK's preferred route interface for new swap, bridge, and combined route providers, including `quoteSwidge()`, `executeSwidge()`, `getSwidgeStatus()`, route options, result fields, status values, fee handling, and migration guidance for the existing standalone swap and bridge interfaces.
+* **[Swidge Protocol Interface](../sdk/swidge-modules)**: New page covering WDK's preferred route interface for new swap, bridge, and combined route providers, including `getSupportedChains()`, `getSupportedTokens()`, `quoteSwidge()`, `executeSwidge()`, `getSwidgeStatus()`, route options, result fields, status values, fee handling, and migration guidance for the existing standalone swap and bridge interfaces.
 
 ***
 
@@ -6146,10 +6146,14 @@ interface ISwidgeProtocol {
     id: string,
     options?: SwidgeStatusOptions
   ): Promise<SwidgeStatusResult>;
+  getSupportedChains(): Promise<SwidgeSupportedChain[]>;
+  getSupportedTokens(
+    options?: SwidgeSupportedTokensOptions
+  ): Promise<SwidgeSupportedToken[]>;
 }
 ```
 
-`ISwidgeProtocol` is the shared interface for providers that can execute swap-only, bridge-only, or combined swap and bridge routes. See [Swidge Protocol Interface](/sdk/swidge-modules) for the full option, quote, result, fee, and status shapes.
+`ISwidgeProtocol` is the shared interface for providers that can execute swap-only, bridge-only, or combined swap and bridge routes. It also exposes read-only discovery methods for supported chains and tokens. See [Swidge Protocol Interface](/sdk/swidge-modules) for the full option, quote, result, fee, status, and discovery shapes.
 
 ***
 
@@ -6475,13 +6479,15 @@ Use the existing [swap modules](/sdk/swap-modules) and [bridge modules](/sdk/bri
 
 ## Interface methods
 
-Concrete swidge provider modules extend `SwidgeProtocol` from `@tetherto/wdk-wallet/protocols`. The base interface currently exposes three methods:
+Concrete swidge provider modules extend `SwidgeProtocol` from `@tetherto/wdk-wallet/protocols`. The base interface exposes discovery, quote, execution, and status methods:
 
 | Method                          | Description                                                                                      |
 | ------------------------------- | ------------------------------------------------------------------------------------------------ |
 | `quoteSwidge(options)`          | Quotes the route before execution.                                                               |
 | `executeSwidge(quote, config?)` | Executes a quote returned by `quoteSwidge()`. This is a write method and must be user-confirmed. |
 | `getSwidgeStatus(id, options?)` | Looks up the status of an in-flight swidge execution.                                            |
+| `getSupportedChains()`          | Lists the provider's supported chains for swidge operations.                                     |
+| `getSupportedTokens(options?)`  | Lists supported tokens, optionally filtered by chain or route context.                           |
 
 ```typescript title="Swidge protocol shape"
 interface ISwidgeProtocol {
@@ -6494,8 +6500,37 @@ interface ISwidgeProtocol {
     id: string,
     options?: SwidgeStatusOptions
   ): Promise<SwidgeStatusResult>
+  getSupportedChains(): Promise<SwidgeSupportedChain[]>
+  getSupportedTokens(
+    options?: SwidgeSupportedTokensOptions
+  ): Promise<SwidgeSupportedToken[]>
 }
 ```
+
+## Discover supported chains and tokens
+
+Use `getSupportedChains()` and `getSupportedTokens()` before building route pickers or validating a requested route. These methods are read-only discovery calls; they do not quote or execute a transaction.
+
+```typescript title="Discover swidge support"
+const chains = await swidge.getSupportedChains()
+const ethereumTokens = await swidge.getSupportedTokens({
+  chain: 'ethereum'
+})
+
+const routeTokens = await swidge.getSupportedTokens({
+  fromChain: 'ethereum',
+  fromToken: '0xSourceToken...',
+  toChain: 'arbitrum'
+})
+```
+
+`getSupportedChains()` returns provider-specific chain identifiers plus display metadata. `getSupportedTokens(options?)` returns provider-specific token identifiers, chain identifiers, symbols, decimals, and optional token addresses. Use the returned `token` and `chain` values when calling `quoteSwidge()` unless the provider module documents a stricter identifier format.
+
+| Discovery type                 | Key fields                                                                                          |
+| ------------------------------ | --------------------------------------------------------------------------------------------------- |
+| `SwidgeSupportedChain`         | `id`, `name`, optional `type`, optional `nativeToken`, optional `providerData`                       |
+| `SwidgeSupportedToken`         | `token`, `chain`, `symbol`, `decimals`, optional `address`, optional `name`, optional `providerData` |
+| `SwidgeSupportedTokensOptions` | Optional `chain`, `fromChain`, `fromToken`, and `toChain` filters                                    |
 
 ## Quote a route
 
@@ -6596,7 +6631,7 @@ Supported statuses are:
 
 ## Supported assets and chains
 
-Provider modules should document the route shapes, assets, and chains they support on their module pages. Dedicated discovery methods such as `getSupportedAssets()` and `getSupportedChains()` are not part of the current swidge interface surface documented here.
+Provider modules should still document route shapes, network caveats, token identifier formats, and provider-specific limits on their module pages. Use `getSupportedChains()` and `getSupportedTokens(options?)` for runtime discovery, then consult the provider module docs for behavior that cannot be represented in the shared discovery response.
 
 ## Next steps
 
@@ -13096,9 +13131,15 @@ Once [registered](#register-protocols), you can access the protocol instance usi
 
 ### Swidge Routes
 
-Use a swidge provider module for new swap, bridge, or combined route integrations. The shared swidge interface quotes with `quoteSwidge()`, executes with `executeSwidge()`, and tracks asynchronous settlement with `getSwidgeStatus()`. The provider can decide whether the route is fulfilled as a same-chain swap, same-token bridge, combined route, intent, solver route, or aggregator route. The example below assumes `swidge` is an instance of a concrete provider module that implements the shared interface.
+Use a swidge provider module for new swap, bridge, or combined route integrations. The shared swidge interface discovers supported chains and tokens with `getSupportedChains()` and `getSupportedTokens()`, quotes with `quoteSwidge()`, executes with `executeSwidge()`, and tracks asynchronous settlement with `getSwidgeStatus()`. The provider can decide whether the route is fulfilled as a same-chain swap, same-token bridge, combined route, intent, solver route, or aggregator route. The example below assumes `swidge` is an instance of a concrete provider module that implements the shared interface.
 
 ```typescript title="Swidge route flow"
+const chains = await swidge.getSupportedChains()
+const tokens = await swidge.getSupportedTokens({
+  fromChain: 'ethereum',
+  toChain: 'arbitrum'
+})
+
 const quote = await swidge.quoteSwidge({
   fromToken: '0xSourceToken...',
   toToken: '0xDestinationToken...',
@@ -13117,6 +13158,8 @@ const status = await swidge.getSwidgeStatus(result.id, {
   providerData: result.providerData
 })
 ```
+
+Use discovery results to build token and chain selectors, but continue to show the quote details before execution. `executeSwidge()` is the only write step in the shared swidge flow.
 
 <Callout type="info">
   Existing swap and bridge modules keep their current accessors for released modules. Prefer the [swidge protocol interface](/sdk/swidge-modules) for new protocol integrations because the standalone swap and bridge interfaces are expected to be deprecated after swidge provider coverage is available.

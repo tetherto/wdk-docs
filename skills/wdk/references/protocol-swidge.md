@@ -50,9 +50,26 @@ const status = await swidge.getSwidgeStatus(result.id, {
 
 | Method | Description |
 |--------|-------------|
+| `getSupportedChains()` | List provider-supported chains for swidge operations |
+| `getSupportedTokens(options?)` | List provider-supported tokens, optionally filtered by chain or route |
 | `quoteSwidge(options)` | Quote a swap-only, bridge-only, or combined route |
 | `executeSwidge(quote, config?)` | Execute a previously quoted route (⚠️ write method) |
 | `getSwidgeStatus(id, options?)` | Check status for an in-flight route |
+
+## Discovery
+
+Use `getSupportedChains()` and `getSupportedTokens(options?)` to build route selectors and validate user-requested routes before quoting.
+
+```ts
+const chains = await swidge.getSupportedChains()
+const tokens = await swidge.getSupportedTokens({
+  fromChain: 'ethereum',
+  fromToken: '0xSourceToken...',
+  toChain: 'arbitrum'
+})
+```
+
+`getSupportedTokens(options?)` accepts optional `chain`, `fromChain`, `fromToken`, and `toChain` filters. Use returned provider-specific `token` and `chain` identifiers when constructing `quoteSwidge()` input unless the concrete provider docs say otherwise.
 
 ## Options
 
@@ -72,7 +89,8 @@ const status = await swidge.getSwidgeStatus(result.id, {
 
 ## Safety Rules
 
+- Use `getSupportedChains()` and `getSupportedTokens()` when selecting or validating swidge routes.
 - Always call `quoteSwidge()` before `executeSwidge()`.
 - Show source token, destination token, destination chain, recipient, minimum output, and fees to the user before execution.
 - Require explicit human confirmation before `executeSwidge()`.
-- Provider modules should document supported assets and chains until the base interface exposes dedicated discovery methods such as `getSupportedAssets()` and `getSupportedChains()`.
+- Provider modules should still document route-specific caveats, token identifier formats, provider limits, and any behavior not represented by shared discovery responses.

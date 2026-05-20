@@ -197,7 +197,7 @@ All require human confirmation: `claimDeposit`, `claimStaticDeposit`, `refundSta
 
 #### Protocol write methods
 
-- **Swidge**: `executeSwidge` — executes a quoted swap-only, bridge-only, or combined route. Quote first and require human confirmation.
+- **Swidge**: `getSupportedChains` and `getSupportedTokens` discover available routes; `executeSwidge` executes a quoted swap-only, bridge-only, or combined route. Quote first and require human confirmation.
 - **Swap**: `swap` (velora-evm) — quote first and require human confirmation. Check provider docs for token approval requirements.
 - **Bridge**: `bridge` (usdt0-evm) — quote first and require human confirmation. Check provider docs for token approval requirements.
 - **Lending (Aave)**: `supply`, `withdraw`, `borrow`, `repay`, `setUseReserveAsCollateral`, `setUserEMode`

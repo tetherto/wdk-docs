@@ -58,9 +58,15 @@ Once [registered](#register-protocols), you can access the protocol instance usi
 
 ### Swidge Routes
 
-Use a swidge provider module for new swap, bridge, or combined route integrations. The shared swidge interface quotes with `quoteSwidge()`, executes with `executeSwidge()`, and tracks asynchronous settlement with `getSwidgeStatus()`. The provider can decide whether the route is fulfilled as a same-chain swap, same-token bridge, combined route, intent, solver route, or aggregator route. The example below assumes `swidge` is an instance of a concrete provider module that implements the shared interface.
+Use a swidge provider module for new swap, bridge, or combined route integrations. The shared swidge interface discovers supported chains and tokens with `getSupportedChains()` and `getSupportedTokens()`, quotes with `quoteSwidge()`, executes with `executeSwidge()`, and tracks asynchronous settlement with `getSwidgeStatus()`. The provider can decide whether the route is fulfilled as a same-chain swap, same-token bridge, combined route, intent, solver route, or aggregator route. The example below assumes `swidge` is an instance of a concrete provider module that implements the shared interface.
 
 ```typescript title="Swidge route flow"
+const chains = await swidge.getSupportedChains()
+const tokens = await swidge.getSupportedTokens({
+  fromChain: 'ethereum',
+  toChain: 'arbitrum'
+})
+
 const quote = await swidge.quoteSwidge({
   fromToken: '0xSourceToken...',
   toToken: '0xDestinationToken...',
@@ -79,6 +85,8 @@ const status = await swidge.getSwidgeStatus(result.id, {
   providerData: result.providerData
 })
 ```
+
+Use discovery results to build token and chain selectors, but continue to show the quote details before execution. `executeSwidge()` is the only write step in the shared swidge flow.
 
 <Callout type="info">
 Existing swap and bridge modules keep their current accessors for released modules. Prefer the [swidge protocol interface](/sdk/swidge-modules) for new protocol integrations because the standalone swap and bridge interfaces are expected to be deprecated after swidge provider coverage is available.
