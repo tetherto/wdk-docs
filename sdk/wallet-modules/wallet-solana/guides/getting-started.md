@@ -40,7 +40,7 @@ npm install @tetherto/wdk-wallet-solana
 
 ## 2. Create a Wallet
 
-Import the module and create a [`WalletManagerSolana`](/sdk/wallet-modules/wallet-solana/api-reference#walletmanagersolana) instance with a BIP-39 seed phrase and a Solana RPC endpoint.
+Import the module and create a [`WalletManagerSolana`](/sdk/wallet-modules/wallet-solana/api-reference/#walletmanagersolana) instance with a BIP-39 seed phrase and a Solana RPC endpoint.
 
 {% code title="Create Solana Wallet" lineNumbers="true" %}
 ```javascript
@@ -59,7 +59,7 @@ const wallet = new WalletManagerSolana(seedPhrase, {
 {% endcode %}
 
 {% hint style="info" %}
-To enable RPC failover, pass [`provider`](../configuration.md#provider) as an ordered array of endpoints and set [`retries`](../configuration.md#retries) to control additional failover attempts. `rpcUrl` remains available as a deprecated alias for `provider`.
+To enable RPC failover, pass [`provider`](/sdk/wallet-modules/wallet-solana/configuration/#provider) as an ordered array of endpoints and set [`retries`](/sdk/wallet-modules/wallet-solana/configuration/#retries) to control additional failover attempts. `rpcUrl` remains available as a deprecated alias for `provider`.
 {% endhint %}
 
 {% hint style="danger" %}
@@ -86,4 +86,4 @@ All Solana addresses are base58-encoded public keys. Accounts inherit the provid
 
 ## Next Steps
 
-With your wallet ready, learn how to [manage multiple accounts](./account-management.md).
+With your wallet ready, learn how to [manage multiple accounts](/sdk/wallet-modules/wallet-solana/guides/account-management/).

@@ -165,7 +165,7 @@ The default derivation path was updated in v1.0.0-beta.6 to match ecosystem conv
 
 If you're upgrading from an earlier version, existing wallets created with the old path will generate different addresses. Make sure to migrate any existing wallets or use the old path explicitly if needed for compatibility.
 
-Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) to supply an explicit derivation path when importing or recreating legacy wallets.
+Use [`getAccountByPath`](/sdk/wallet-modules/wallet-ton/api-reference/#getaccountbypathpath) to supply an explicit derivation path when importing or recreating legacy wallets.
 
 {% endhint %}
 
@@ -196,7 +196,7 @@ Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) to supply an e
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="/start-building/nodejs-bare-quickstart/">nodejs-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -208,7 +208,7 @@ Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) to supply an e
 			</td>
 			<td>Build mobile wallets with React Native Expo</td>
 			<td>
-				<a href="../../../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
+				<a href="/start-building/react-native-quickstart/">react-native-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -220,7 +220,7 @@ Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) to supply an e
 			</td>
 			<td>Get started with WDK's TON Wallet Usage</td>
 			<td>
-				<a href="./usage.md">WDK TON Wallet Usage</a>
+				<a href="/sdk/wallet-modules/wallet-ton/usage/">WDK TON Wallet Usage</a>
 			</td>
 		</tr>
         <tr>
@@ -232,7 +232,7 @@ Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) to supply an e
 			</td>
 			<td>Get started with WDK's TON Wallet API</td>
 			<td>
-				<a href="./api-reference.md">WDK TON Wallet API</a>
+				<a href="/sdk/wallet-modules/wallet-ton/api-reference/">WDK TON Wallet API</a>
 			</td>
 		</tr>
 	</tbody>

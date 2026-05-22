@@ -61,7 +61,7 @@ Powered by [`@tetherto/wdk-secret-manager`](https://github.com/tetherto/wdk-secr
 			</td>
 			<td>Get started with WDK Secret Manager</td>
 			<td>
-				<a href="./configuration.md">configuration.md</a>
+				<a href="/tools/secret-manager/configuration/">configuration.md</a>
 			</td>
 		</tr>
 		<tr>
@@ -73,7 +73,7 @@ Powered by [`@tetherto/wdk-secret-manager`](https://github.com/tetherto/wdk-secr
 			</td>
 			<td>Check the API Reference and examples</td>
 			<td>
-				<a href="./api-reference.md">api-reference.md</a>
+				<a href="/tools/secret-manager/api-reference/">api-reference.md</a>
 			</td>
 		</tr>
 	</tbody>

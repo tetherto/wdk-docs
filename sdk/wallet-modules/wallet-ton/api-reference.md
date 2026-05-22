@@ -687,7 +687,7 @@ interface TonWalletConfig {
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="/start-building/nodejs-bare-quickstart/">nodejs-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -699,7 +699,7 @@ interface TonWalletConfig {
 			</td>
 			<td>Build mobile wallets with React Native Expo</td>
 			<td>
-				<a href="../../../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
+				<a href="/start-building/react-native-quickstart/">react-native-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -711,7 +711,7 @@ interface TonWalletConfig {
 			</td>
 			<td>Get started with WDK's TON Wallet Usage</td>
 			<td>
-				<a href="./usage.md">WDK TON Wallet Usage</a>
+				<a href="/sdk/wallet-modules/wallet-ton/usage/">WDK TON Wallet Usage</a>
 			</td>
 		</tr>
         <tr>
@@ -723,7 +723,7 @@ interface TonWalletConfig {
 			</td>
 			<td>Get started with WDK's TON Wallet Configuration</td>
 			<td>
-				<a href="./configuration.md">WDK TON Wallet Configuration</a>
+				<a href="/sdk/wallet-modules/wallet-ton/configuration/">WDK TON Wallet Configuration</a>
 			</td>
 		</tr>
 	</tbody>

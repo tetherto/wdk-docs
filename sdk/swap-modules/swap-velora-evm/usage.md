@@ -37,25 +37,25 @@ The [@tetherto/wdk-protocol-swap-velora-evm](https://www.npmjs.com/package/@teth
       <td><i class="fa-rocket">:rocket:</i></td>
       <td><strong>Get Started</strong></td>
       <td>Install the package, create VeloraProtocolEvm, and review supported networks.</td>
-      <td><a href="./guides/get-started.md">Get Started</a></td>
+      <td><a href="/sdk/swap-modules/swap-velora-evm/guides/get-started/">Get Started</a></td>
     </tr>
     <tr>
       <td><i class="fa-exchange-alt">:exchange-alt:</i></td>
       <td><strong>Execute Swaps</strong></td>
       <td>Exact-input and exact-output swaps, including ERC-4337 smart accounts.</td>
-      <td><a href="./guides/execute-swaps.md">Execute Swaps</a></td>
+      <td><a href="/sdk/swap-modules/swap-velora-evm/guides/execute-swaps/">Execute Swaps</a></td>
     </tr>
     <tr>
       <td><i class="fa-calculator">:calculator:</i></td>
       <td><strong>Get Swap Quotes</strong></td>
       <td>Quote before swapping and compare fees to your max fee cap.</td>
-      <td><a href="./guides/get-swap-quotes.md">Get Swap Quotes</a></td>
+      <td><a href="/sdk/swap-modules/swap-velora-evm/guides/get-swap-quotes/">Get Swap Quotes</a></td>
     </tr>
     <tr>
       <td><i class="fa-exclamation-triangle">:exclamation-triangle:</i></td>
       <td><strong>Handle Errors</strong></td>
       <td>Handle swap and quote failures and dispose wallet state safely.</td>
-      <td><a href="./guides/handle-errors.md">Handle Errors</a></td>
+      <td><a href="/sdk/swap-modules/swap-velora-evm/guides/handle-errors/">Handle Errors</a></td>
     </tr>
   </tbody>
 </table>
@@ -80,7 +80,7 @@ The [@tetherto/wdk-protocol-swap-velora-evm](https://www.npmjs.com/package/@teth
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">Node.js & Bare Quickstart</a>
+				<a href="/start-building/nodejs-bare-quickstart/">Node.js & Bare Quickstart</a>
 			</td>
 		</tr>
         <tr>
@@ -92,7 +92,7 @@ The [@tetherto/wdk-protocol-swap-velora-evm](https://www.npmjs.com/package/@teth
 			</td>
 			<td>RPC, fee limits, and environment settings for the Velora swap protocol</td>
 			<td>
-				<a href="./configuration.md">WDK velora Swap Protocol Configuration</a>
+				<a href="/sdk/swap-modules/swap-velora-evm/configuration/">WDK velora Swap Protocol Configuration</a>
 			</td>
 		</tr>
         <tr>
@@ -104,7 +104,7 @@ The [@tetherto/wdk-protocol-swap-velora-evm](https://www.npmjs.com/package/@teth
 			</td>
 			<td>Methods, options, and error notes for VeloraProtocolEvm</td>
 			<td>
-				<a href="./api-reference.md">WDK velora Swap Protocol API</a>
+				<a href="/sdk/swap-modules/swap-velora-evm/api-reference/">WDK velora Swap Protocol API</a>
 			</td>
 		</tr>
 	</tbody>

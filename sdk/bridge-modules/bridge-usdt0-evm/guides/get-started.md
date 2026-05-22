@@ -38,7 +38,7 @@ npm install @tetherto/wdk-protocol-bridge-usdt0-evm
 
 ## Create an EVM account
 
-You can construct a signing account using [`new WalletAccountEvm(seed, path, config?)`](../../../wallet-modules/wallet-evm/api-reference.md#constructor-1) from `@tetherto/wdk-wallet-evm` with an RPC `provider`:
+You can construct a signing account using [`new WalletAccountEvm(seed, path, config?)`](/sdk/wallet-modules/wallet-evm/api-reference/#constructor-1) from `@tetherto/wdk-wallet-evm` with an RPC `provider`:
 
 {% code title="Create WalletAccountEvm" lineNumbers="true" %}
 ```javascript
@@ -58,7 +58,7 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 
 ## Instantiate the bridge protocol
 
-You can create a [`Usdt0ProtocolEvm`](../api-reference.md#usdt0protocolevm) instance with the [`new Usdt0ProtocolEvm(account, config?)`](../api-reference.md#constructor) constructor. Optional `bridgeMaxFee` caps the total bridge cost in wei (see [BridgeProtocolConfig](../api-reference.md#bridgeprotocolconfig)):
+You can create a [`Usdt0ProtocolEvm`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#usdt0protocolevm) instance with the [`new Usdt0ProtocolEvm(account, config?)`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#constructor) constructor. Optional `bridgeMaxFee` caps the total bridge cost in wei (see [BridgeProtocolConfig](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#bridgeprotocolconfig)):
 
 {% code title="Construct Usdt0ProtocolEvm" lineNumbers="true" %}
 ```javascript
@@ -71,12 +71,12 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 {% endcode %}
 
 {% hint style="info" %}
-The account must not be read-only. Read-only accounts cannot call [`bridge()`](../api-reference.md#bridge-options-config).
+The account must not be read-only. Read-only accounts cannot call [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#bridge-options-config).
 {% endhint %}
 
 ## Supported chains
 
-Bridge operations use EVM source chains listed in the [API reference](../api-reference.md#supported-chains). Destination routes include the same EVM set where USD₮0 contracts are deployed, plus Solana (EID 30168), TON (EID 30343), and TRON (EID 30420).
+Bridge operations use EVM source chains listed in the [API reference](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#supported-chains). Destination routes include the same EVM set where USD₮0 contracts are deployed, plus Solana (EID 30168), TON (EID 30343), and TRON (EID 30420).
 
 **Source chains (EVM, `targetChain` keys)**
 
@@ -105,7 +105,7 @@ Bridge operations use EVM source chains listed in the [API reference](../api-ref
 | Unichain | `unichain` | 130 |
 | XLayer | `xlayer` | 196 |
 
-Arbitrum supports ERC-4337 workflows (see [Bridge with ERC-4337](./bridge-with-4337.md)).
+Arbitrum supports ERC-4337 workflows (see [Bridge with ERC-4337](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337/)).
 
 **Non-EVM destinations**
 
@@ -117,4 +117,4 @@ Arbitrum supports ERC-4337 workflows (see [Bridge with ERC-4337](./bridge-with-4
 
 ## Next Steps
 
-Run a standard EVM-to-EVM transfer with [Bridge tokens](./bridge-tokens.md), or use [Bridge with ERC-4337](./bridge-with-4337.md) for gasless flows on supported networks.
+Run a standard EVM-to-EVM transfer with [Bridge tokens](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens/), or use [Bridge with ERC-4337](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337/) for gasless flows on supported networks.

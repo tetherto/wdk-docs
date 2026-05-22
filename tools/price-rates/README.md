@@ -54,7 +54,7 @@ Powered by [`@tetherto/wdk-pricing-bitfinex-http`](https://github.com/tetherto/w
 			</td>
 			<td>Get started with WDK price clients</td>
 			<td>
-				<a href="./configuration.md">configuration.md</a>
+				<a href="/tools/price-rates/configuration/">configuration.md</a>
 			</td>
 		</tr>
 		<tr>
@@ -66,7 +66,7 @@ Powered by [`@tetherto/wdk-pricing-bitfinex-http`](https://github.com/tetherto/w
 			</td>
 			<td>Check the API reference and examples</td>
 			<td>
-				<a href="./api-reference.md">api-reference.md</a>
+				<a href="/tools/price-rates/api-reference/">api-reference.md</a>
 			</td>
 		</tr>
 	</tbody>

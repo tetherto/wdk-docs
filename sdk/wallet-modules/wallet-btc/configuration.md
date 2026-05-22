@@ -252,9 +252,9 @@ The `network` option specifies which Bitcoin network to use.
 **Type:** `string`
 
 **Values:**
-- `"bitcoin"` - Bitcoin [mainnet](../../../resources/concepts.md#mainnet) (production)
-- `"testnet"` - Bitcoin [testnet](../../../resources/concepts.md#testnet) (development)
-- `"regtest"` - Bitcoin [regtest](../../../resources/concepts.md#regtest) (local testing)
+- `"bitcoin"` - Bitcoin [mainnet](/resources/concepts/#mainnet) (production)
+- `"testnet"` - Bitcoin [testnet](/resources/concepts/#testnet) (development)
+- `"regtest"` - Bitcoin [regtest](/resources/concepts/#regtest) (local testing)
 
 **Default:** `"bitcoin"`
 
@@ -272,8 +272,8 @@ The `bip` option specifies the address type derivation standard to use.
 **Type:** `number`
 
 **Values:**
-- `84` - [BIP-84](../../../resources/concepts.md#bip-84-native-segwit) (P2WPKH / Native SegWit) - addresses start with `bc1` (mainnet) or `tb1` (testnet)
-- `44` - [BIP-44](../../../resources/concepts.md#bip-44-legacy) (P2PKH / Legacy) - addresses start with `1` (mainnet) or `m`/`n` (testnet)
+- `84` - [BIP-84](/resources/concepts/#bip-84-native-segwit) (P2WPKH / Native SegWit) - addresses start with `bc1` (mainnet) or `tb1` (testnet)
+- `44` - [BIP-44](/resources/concepts/#bip-44-legacy) (P2PKH / Legacy) - addresses start with `1` (mainnet) or `m`/`n` (testnet)
 
 **Default:** `84`
 
@@ -405,7 +405,7 @@ The default derivation path was updated in v1.0.0-beta.4 to use BIP-84 (Native S
 
 If you're upgrading from an earlier version, existing wallets created with the old path will generate different addresses. Make sure to migrate any existing wallets or use the old path explicitly if needed for compatibility.
 
-Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) to supply an explicit derivation path when importing or recreating legacy wallets.
+Use [`getAccountByPath`](/sdk/wallet-modules/wallet-btc/api-reference/#getaccountbypathpath) to supply an explicit derivation path when importing or recreating legacy wallets.
 
 {% endhint %}
 
@@ -470,7 +470,7 @@ wallet.dispose()
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="/start-building/nodejs-bare-quickstart/">nodejs-quickstart.md</a>
 			</td>
 		</tr>
     	<tr>
@@ -482,7 +482,7 @@ wallet.dispose()
 			</td>
 			<td>Build mobile wallets with React Native Expo</td>
 			<td>
-				<a href="../../../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
+				<a href="/start-building/react-native-quickstart/">react-native-quickstart.md</a>
 			</td>
 		</tr>
     	<tr>
@@ -494,7 +494,7 @@ wallet.dispose()
 			</td>
 			<td>Get started with WDK's BTC Wallet Usage</td>
 			<td>
-				<a href="./usage.md">WDK BTC Wallet Usage</a>
+				<a href="/sdk/wallet-modules/wallet-btc/usage/">WDK BTC Wallet Usage</a>
 			</td>
 		</tr>
         <tr>
@@ -506,7 +506,7 @@ wallet.dispose()
 			</td>
 			<td>Get started with WDK's BTC Wallet API</td>
 			<td>
-				<a href="./api-reference.md">WDK BTC Wallet API</a>
+				<a href="/sdk/wallet-modules/wallet-btc/api-reference/">WDK BTC Wallet API</a>
 			</td>
 		</tr>
 	 </tbody>

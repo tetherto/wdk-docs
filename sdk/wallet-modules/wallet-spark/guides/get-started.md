@@ -42,7 +42,7 @@ The WDK Spark wallet module uses ES Modules (`import` / `export`). Set `"type": 
 
 ## 2. Create a Wallet
 
-You can create a wallet manager using the [`WalletManagerSpark`](../api-reference.md#walletmanagerspark) constructor with a BIP-39 seed phrase:
+You can create a wallet manager using the [`WalletManagerSpark`](/sdk/wallet-modules/wallet-spark/api-reference/#walletmanagerspark) constructor with a BIP-39 seed phrase:
 
 {% code title="Create Spark Wallet" lineNumbers="true" %}
 ```javascript
@@ -72,10 +72,10 @@ The Spark wallet uses `@buildonspark/spark-sdk`. Network options are `MAINNET`, 
 
 ## 3. Get Your First Account
 
-1. Call [`wallet.getAccount()`](../api-reference.md#getaccount-index) with index `0`.
-2. Call [`account.getAddress()`](../api-reference.md#getaddress) to read the Spark address.
+1. Call [`wallet.getAccount()`](/sdk/wallet-modules/wallet-spark/api-reference/#getaccount-index) with index `0`.
+2. Call [`account.getAddress()`](/sdk/wallet-modules/wallet-spark/api-reference/#getaddress) to read the Spark address.
 
-You can retrieve the first account using [`wallet.getAccount()`](../api-reference.md#getaccount-index):
+You can retrieve the first account using [`wallet.getAccount()`](/sdk/wallet-modules/wallet-spark/api-reference/#getaccount-index):
 
 {% code title="Get First Account" lineNumbers="true" %}
 ```javascript
@@ -87,7 +87,7 @@ console.log('Account address:', address)
 
 ## 4. (optional) Convert to Read-Only
 
-You can create a read-only view of the account using [`account.toReadOnlyAccount()`](../api-reference.md#toreadonlyaccount):
+You can create a read-only view of the account using [`account.toReadOnlyAccount()`](/sdk/wallet-modules/wallet-spark/api-reference/#toreadonlyaccount):
 
 {% code title="Convert to Read-Only" lineNumbers="true" %}
 ```javascript
@@ -97,4 +97,4 @@ const readOnlyAccount = await account.toReadOnlyAccount()
 
 ## Next Steps
 
-With your wallet ready, learn how to [manage multiple accounts](./manage-accounts.md).
+With your wallet ready, learn how to [manage multiple accounts](/sdk/wallet-modules/wallet-spark/guides/manage-accounts/).

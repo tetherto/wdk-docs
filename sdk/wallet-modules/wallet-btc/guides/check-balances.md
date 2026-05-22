@@ -23,7 +23,7 @@ This guide explains how to check [native BTC balances](#native-btc-balance), [ma
 
 ## Native BTC Balance
 
-You can retrieve the confirmed balance in satoshis using [`account.getBalance()`](../api-reference.md#getbalance):
+You can retrieve the confirmed balance in satoshis using [`account.getBalance()`](/sdk/wallet-modules/wallet-btc/api-reference/#getbalance):
 
 {% code title="Get Native BTC Balance" lineNumbers="true" %}
 ```javascript
@@ -33,12 +33,12 @@ console.log('Total balance:', balance, 'satoshis')
 {% endcode %}
 
 {% hint style="info" %}
-On Bitcoin, balances are expressed in satoshis (1 BTC = 100,000,000 satoshis). The [`getBalance()`](../api-reference.md#getbalance) method returns the total balance, including unconfirmed funds when present.
+On Bitcoin, balances are expressed in satoshis (1 BTC = 100,000,000 satoshis). The [`getBalance()`](/sdk/wallet-modules/wallet-btc/api-reference/#getbalance) method returns the total balance, including unconfirmed funds when present.
 {% endhint %}
 
 ## Maximum Spendable Amount
 
-You can check the maximum amount available to send in a single transaction using [`account.getMaxSpendable()`](../api-reference.md#getmaxspendable):
+You can check the maximum amount available to send in a single transaction using [`account.getMaxSpendable()`](/sdk/wallet-modules/wallet-btc/api-reference/#getmaxspendable):
 
 {% code title="Get Maximum Spendable" lineNumbers="true" %}
 ```javascript
@@ -54,7 +54,7 @@ The maximum spendable amount can differ from the total balance due to transactio
 
 ## Read-Only Account Balances
 
-You can check balances for any Bitcoin address without a seed phrase using [`WalletAccountReadOnlyBtc`](../api-reference.md#walletaccountreadonlybtc):
+You can check balances for any Bitcoin address without a seed phrase using [`WalletAccountReadOnlyBtc`](/sdk/wallet-modules/wallet-btc/api-reference/#walletaccountreadonlybtc):
 
 {% code title="Create Read-Only Account" lineNumbers="true" %}
 ```javascript
@@ -72,7 +72,7 @@ const readOnlyAccount = new WalletAccountReadOnlyBtc('bc1qxy2kgdygjrsqtzq2n0yrf2
 ```
 {% endcode %}
 
-You can retrieve the balance from a read-only account using [`readOnlyAccount.getBalance()`](../api-reference.md#getbalance):
+You can retrieve the balance from a read-only account using [`readOnlyAccount.getBalance()`](/sdk/wallet-modules/wallet-btc/api-reference/#getbalance):
 
 {% code title="Read-Only Balance" lineNumbers="true" %}
 ```javascript
@@ -82,13 +82,13 @@ console.log('Read-only account balance:', balance, 'satoshis')
 {% endcode %}
 
 {% hint style="info" %}
-Read-only accounts follow the same balance behavior as owned accounts: [`getBalance()`](../api-reference.md#getbalance) includes unconfirmed funds when present.
+Read-only accounts follow the same balance behavior as owned accounts: [`getBalance()`](/sdk/wallet-modules/wallet-btc/api-reference/#getbalance) includes unconfirmed funds when present.
 {% endhint %}
 
 {% hint style="info" %}
-You can also create a read-only account from an existing owned account using [`account.toReadOnlyAccount()`](../api-reference.md#toreadonlyaccount).
+You can also create a read-only account from an existing owned account using [`account.toReadOnlyAccount()`](/sdk/wallet-modules/wallet-btc/api-reference/#toreadonlyaccount).
 {% endhint %}
 
 ## Next Steps
 
-With balance checks in place, learn how to [send BTC](./send-transactions.md).
+With balance checks in place, learn how to [send BTC](/sdk/wallet-modules/wallet-btc/guides/send-transactions/).

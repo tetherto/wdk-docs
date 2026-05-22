@@ -23,7 +23,7 @@ layout:
 WDK provides agent skills: structured instruction sets that teach AI agents how to create wallets, send transactions, swap tokens, bridge assets, and interact with DeFi protocols across 20+ blockchains. All operations are self-custodial. Keys stay on your machine, with no third-party custody dependency.
 
 {% hint style="info" %}
-**Skill vs MCP Toolkit**: Use an **agent skill** when your agent platform works with file-based instructions (e.g., OpenClaw, Cursor). Use the [MCP Toolkit](mcp-toolkit/README.md) when your agent supports the Model Context Protocol natively (e.g., Claude, Cursor). Use both for maximum coverage.
+**Skill vs MCP Toolkit**: Use an **agent skill** when your agent platform works with file-based instructions (e.g., OpenClaw, Cursor). Use the [MCP Toolkit](/ai/mcp-toolkit/) when your agent supports the Model Context Protocol natively (e.g., Claude, Cursor). Use both for maximum coverage.
 {% endhint %}
 
 ## What Are Agent Skills?
@@ -68,7 +68,7 @@ WDK's agent skills use a self-custodial model where your agent controls its own 
 | Custody model | Self-custodial | Coinbase-hosted | Privy-hosted (server) |
 | Multi-chain | Yes (EVM, Bitcoin, Solana, TON, Tron, Spark + more) | EVM + Solana | EVM + Solana + Bitcoin + more |
 | Open source | Yes (SDK + skills) | CLI/skills open, infra closed | Skills open, API closed |
-| MCP support | Yes ([MCP Toolkit](mcp-toolkit/README.md)) | Via skills | Via skills |
+| MCP support | Yes ([MCP Toolkit](/ai/mcp-toolkit/)) | Via skills | Via skills |
 | OpenClaw support | Yes (`npx skills add tetherto/wdk-agent-skills`) | Yes (npx skills) | Yes (ClawHub skill) |
 | x402 payments | Via [community extensions](#community-projects) | Yes (native) | No |
 | Key management | Local / self-managed | Coinbase infrastructure | Privy infrastructure |
@@ -77,10 +77,10 @@ WDK's agent skills use a self-custodial model where your agent controls its own 
 
 | Platform | How to Use |
 | --- | --- |
-| **OpenClaw** | Run `npx skills add tetherto/wdk-agent-skills` and select your agent. See [OpenClaw Integration](openclaw.md) |
+| **OpenClaw** | Run `npx skills add tetherto/wdk-agent-skills` and select your agent. See [OpenClaw Integration](/ai/openclaw/) |
 | **Claude** | Upload `SKILL.md` as project knowledge, or paste into conversation |
 | **Cursor / Windsurf** | Clone to `.cursor/skills/wdk` or `.windsurf/skills/wdk` |
-| **Any MCP-compatible agent** | Use the [MCP Toolkit](mcp-toolkit/README.md) for structured tool calling |
+| **Any MCP-compatible agent** | Use the [MCP Toolkit](/ai/mcp-toolkit/) for structured tool calling |
 | **Any other agent** | Copy `SKILL.md` into system prompt or conversation context |
 
 ## Community Projects

@@ -23,7 +23,7 @@ This guide explains how to [sign messages](#sign-a-message) and [verify signatur
 
 ## Sign a Message
 
-You can sign a message with the account's private key using [`account.sign()`](../api-reference.md#sign-message):
+You can sign a message with the account's private key using [`account.sign()`](/sdk/wallet-modules/wallet-btc/api-reference/#sign-message):
 
 {% code title="Sign Message" lineNumbers="true" %}
 ```javascript
@@ -39,7 +39,7 @@ The signature is returned as a base64-encoded string.
 
 ## Verify a Signature
 
-You can verify that a signature was produced by the corresponding private key using [`account.verify()`](../api-reference.md#verify-message-signature):
+You can verify that a signature was produced by the corresponding private key using [`account.verify()`](/sdk/wallet-modules/wallet-btc/api-reference/#verify-message-signature):
 
 {% code title="Verify Signature" lineNumbers="true" %}
 ```javascript
@@ -48,7 +48,7 @@ console.log('Signature valid:', isValid)
 ```
 {% endcode %}
 
-You can also verify signatures using a [read-only account](../api-reference.md#walletaccountreadonlybtc). Use [`account.toReadOnlyAccount()`](../api-reference.md#toreadonlyaccount) to create one from an owned account, then call [`readOnlyAccount.verify()`](../api-reference.md#verify-message-signature):
+You can also verify signatures using a [read-only account](/sdk/wallet-modules/wallet-btc/api-reference/#walletaccountreadonlybtc). Use [`account.toReadOnlyAccount()`](/sdk/wallet-modules/wallet-btc/api-reference/#toreadonlyaccount) to create one from an owned account, then call [`readOnlyAccount.verify()`](/sdk/wallet-modules/wallet-btc/api-reference/#verify-message-signature):
 
 {% code title="Verify with Read-Only Account" lineNumbers="true" %}
 ```javascript
@@ -60,4 +60,4 @@ console.log('Verified with read-only account:', isValid)
 
 ## Next Steps
 
-Learn how to [handle errors and manage resources](./handle-errors.md).
+Learn how to [handle errors and manage resources](/sdk/wallet-modules/wallet-btc/guides/handle-errors/).

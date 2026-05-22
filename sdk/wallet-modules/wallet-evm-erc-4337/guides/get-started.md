@@ -36,7 +36,7 @@ npm install @tetherto/wdk-wallet-evm-erc-4337
 
 ## 2. Create a Wallet
 
-You can create a new wallet instance using the [`WalletManagerEvmErc4337`](../api-reference.md#walletmanagerevmerc4337) constructor with a BIP-39 seed phrase and ERC-4337 configuration:
+You can create a new wallet instance using the [`WalletManagerEvmErc4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#walletmanagerevmerc4337) constructor with a BIP-39 seed phrase and ERC-4337 configuration:
 
 {% code title="Create ERC-4337 Wallet" lineNumbers="true" %}
 ```javascript
@@ -64,12 +64,12 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
 {% endhint %}
 
 {% hint style="info" %}
-To use test/mock tokens instead of real funds, see the [testnet configuration section](../configuration.md#network-specific-configurations).
+To use test/mock tokens instead of real funds, see the [testnet configuration section](/sdk/wallet-modules/wallet-evm-erc-4337/configuration/#network-specific-configurations).
 {% endhint %}
 
 ## 3. Get Your First Account
 
-You can retrieve a smart account at a given index using [`wallet.getAccount()`](../api-reference.md#getaccount-index):
+You can retrieve a smart account at a given index using [`wallet.getAccount()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#getaccount-index):
 
 {% code title="Get Account" lineNumbers="true" %}
 ```javascript
@@ -81,7 +81,7 @@ console.log('Smart account address:', address)
 
 ## 4. (optional) Convert to Read-Only
 
-You can convert an owned account to a read-only account using [`account.toReadOnlyAccount()`](../api-reference.md#toreadonlyaccount):
+You can convert an owned account to a read-only account using [`account.toReadOnlyAccount()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#toreadonlyaccount):
 
 {% code title="Convert to Read-Only" lineNumbers="true" %}
 ```javascript
@@ -91,4 +91,4 @@ const readOnlyAccount = await account.toReadOnlyAccount()
 
 ## Next Steps
 
-With your wallet ready, learn how to [manage multiple accounts](./manage-accounts.md).
+With your wallet ready, learn how to [manage multiple accounts](/sdk/wallet-modules/wallet-evm-erc-4337/guides/manage-accounts/).

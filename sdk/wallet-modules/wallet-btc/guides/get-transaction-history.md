@@ -23,7 +23,7 @@ This guide explains how to [retrieve all transfers](#retrieve-all-transfers), [f
 
 ## Retrieve All Transfers
 
-You can retrieve the account's transfer history using [`account.getTransfers()`](../api-reference.md#gettransfers-options):
+You can retrieve the account's transfer history using [`account.getTransfers()`](/sdk/wallet-modules/wallet-btc/api-reference/#gettransfers-options):
 
 {% code title="Get All Transfers" lineNumbers="true" %}
 ```javascript
@@ -38,7 +38,7 @@ The default limit is 10 transfers. Change outputs are automatically filtered out
 
 ## Filter by Direction
 
-You can filter transfers by direction using the `direction` option in [`account.getTransfers()`](../api-reference.md#gettransfers-options):
+You can filter transfers by direction using the `direction` option in [`account.getTransfers()`](/sdk/wallet-modules/wallet-btc/api-reference/#gettransfers-options):
 
 {% code title="Incoming Transfers" lineNumbers="true" %}
 ```javascript
@@ -47,7 +47,7 @@ console.log('Incoming transfers:', incoming)
 ```
 {% endcode %}
 
-You can retrieve outgoing transfers with a custom limit using [`account.getTransfers()`](../api-reference.md#gettransfers-options):
+You can retrieve outgoing transfers with a custom limit using [`account.getTransfers()`](/sdk/wallet-modules/wallet-btc/api-reference/#gettransfers-options):
 
 {% code title="Outgoing Transfers" lineNumbers="true" %}
 ```javascript
@@ -61,7 +61,7 @@ console.log('Outgoing transfers:', outgoing)
 
 ## Paginate Results
 
-You can paginate through transfer history using the `limit` and `skip` options in [`account.getTransfers()`](../api-reference.md#gettransfers-options):
+You can paginate through transfer history using the `limit` and `skip` options in [`account.getTransfers()`](/sdk/wallet-modules/wallet-btc/api-reference/#gettransfers-options):
 
 {% code title="Paginate Transfers" lineNumbers="true" %}
 ```javascript
@@ -76,7 +76,7 @@ console.log('Transfers 11-30:', page)
 
 ## Check Transaction Receipts
 
-You can check whether a specific transaction has been confirmed using [`account.getTransactionReceipt()`](../api-reference.md#gettransactionreceipt-hash):
+You can check whether a specific transaction has been confirmed using [`account.getTransactionReceipt()`](/sdk/wallet-modules/wallet-btc/api-reference/#gettransactionreceipt-hash):
 
 {% code title="Get Transaction Receipt" lineNumbers="true" %}
 ```javascript
@@ -89,4 +89,4 @@ if (receipt) {
 
 ## Next Steps
 
-Learn how to [sign and verify messages](./sign-verify-messages.md).
+Learn how to [sign and verify messages](/sdk/wallet-modules/wallet-btc/guides/sign-verify-messages/).

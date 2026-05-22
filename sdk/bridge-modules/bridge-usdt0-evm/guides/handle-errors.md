@@ -23,11 +23,11 @@ This guide describes [errors thrown by the bridge](#errors-from-the-bridge-proto
 
 ## Errors from the bridge protocol
 
-Calls to [`bridge()`](../api-reference.md#bridge-options-config) and [`quoteBridge()`](../api-reference.md#quotebridge-options-config) throw when the account is read-only, no provider is configured, the route is invalid, fees exceed [`bridgeMaxFee`](../api-reference.md#bridgeprotocolconfig), or the destination matches the source chain. The [API reference](../api-reference.md#error-handling) lists representative `error.message` substrings.
+Calls to [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#bridge-options-config) and [`quoteBridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#quotebridge-options-config) throw when the account is read-only, no provider is configured, the route is invalid, fees exceed [`bridgeMaxFee`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#bridgeprotocolconfig), or the destination matches the source chain. The [API reference](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#error-handling) lists representative `error.message` substrings.
 
 ## Catch and branch on error messages
 
-You can wrap [`bridge()`](../api-reference.md#bridge-options-config) in `try/catch` and inspect `error.message` for stable substrings:
+You can wrap [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#bridge-options-config) in `try/catch` and inspect `error.message` for stable substrings:
 
 {% code title="Handle bridge errors" lineNumbers="true" %}
 ```javascript
@@ -76,12 +76,12 @@ try {
 {% endcode %}
 
 {% hint style="info" %}
-Prefer [`quoteBridge()`](../api-reference.md#quotebridge-options-config) before [`bridge()`](../api-reference.md#bridge-options-config) when you want to fail early on fee or route issues without broadcasting.
+Prefer [`quoteBridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#quotebridge-options-config) before [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#bridge-options-config) when you want to fail early on fee or route issues without broadcasting.
 {% endhint %}
 
 ## Best practices
 
-You can clear private key material from memory when a session ends by calling [`account.dispose()`](../../../wallet-modules/wallet-evm/api-reference.md#dispose-1) on [`WalletAccountEvm`](../../../wallet-modules/wallet-evm/api-reference.md#walletaccountevm), or [`account.dispose()`](../../../wallet-modules/wallet-evm-erc-4337/api-reference.md#dispose-1) on [`WalletAccountEvmErc4337`](../../../wallet-modules/wallet-evm-erc-4337/api-reference.md#walletaccountevmerc4337):
+You can clear private key material from memory when a session ends by calling [`account.dispose()`](/sdk/wallet-modules/wallet-evm/api-reference/#dispose-1) on [`WalletAccountEvm`](/sdk/wallet-modules/wallet-evm/api-reference/#walletaccountevm), or [`account.dispose()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#dispose-1) on [`WalletAccountEvmErc4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#walletaccountevmerc4337):
 
 {% code title="Dispose EVM account after use" lineNumbers="true" %}
 ```javascript
@@ -93,8 +93,8 @@ account.dispose()
 Call dispose only when you no longer need signing for that account instance. Create a new account object for later sessions.
 {% endhint %}
 
-Combine quoting, fee caps via [`new Usdt0ProtocolEvm(account, config?)`](../api-reference.md#constructor), and user-facing validation of `targetChain` and `recipient` to reduce avoidable failures.
+Combine quoting, fee caps via [`new Usdt0ProtocolEvm(account, config?)`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#constructor), and user-facing validation of `targetChain` and `recipient` to reduce avoidable failures.
 
 ## Next Steps
 
-Review configuration defaults in [WDK Bridge USD₮0 EVM Protocol Configuration](../configuration.md) or return to [Get Started](./get-started.md) for setup.
+Review configuration defaults in [WDK Bridge USD₮0 EVM Protocol Configuration](/sdk/bridge-modules/bridge-usdt0-evm/configuration/) or return to [Get Started](/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started/) for setup.

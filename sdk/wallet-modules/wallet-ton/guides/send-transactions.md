@@ -27,7 +27,7 @@ On TON, values are expressed in nanotons (1 TON = 10^9 nanotons). Transactions s
 
 ## Send Native TON
 
-You can transfer TON to a recipient address using [`account.sendTransaction()`](../api-reference.md#sendtransaction-tx):
+You can transfer TON to a recipient address using [`account.sendTransaction()`](/sdk/wallet-modules/wallet-ton/api-reference/#sendtransaction-tx):
 
 {% code title="Send TON" lineNumbers="true" %}
 ```javascript
@@ -43,7 +43,7 @@ console.log('Transaction fee:', result.fee, 'nanotons')
 
 ## Estimate Transaction Fees
 
-You can get a fee estimate before sending using [`account.quoteSendTransaction()`](../api-reference.md#quotesendtransaction-tx):
+You can get a fee estimate before sending using [`account.quoteSendTransaction()`](/sdk/wallet-modules/wallet-ton/api-reference/#quotesendtransaction-tx):
 
 {% code title="Quote Transaction Fee" lineNumbers="true" %}
 ```javascript
@@ -58,7 +58,7 @@ console.log('Estimated fee:', quote.fee, 'nanotons')
 
 ## Use Dynamic Fee Rates
 
-You can retrieve current fee rates from the wallet manager using [`wallet.getFeeRates()`](../api-reference.md#getfeerates):
+You can retrieve current fee rates from the wallet manager using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-ton/api-reference/#getfeerates):
 
 {% code title="Get Fee Rates" lineNumbers="true" %}
 ```javascript
@@ -70,4 +70,4 @@ console.log('Fast fee rate:', feeRates.fast, 'nanotons')
 
 ## Next Steps
 
-To transfer Jetton tokens instead of native TON, see [Transfer Jetton Tokens](./transfer-tokens.md).
+To transfer Jetton tokens instead of native TON, see [Transfer Jetton Tokens](/sdk/wallet-modules/wallet-ton/guides/transfer-tokens/).

@@ -54,7 +54,7 @@ Worklet Bundler packages selected WDK wallet and protocol modules into a Bare ru
       </td>
       <td>Set up `wdk.config.js`, review defaults, and understand the generated runtime behavior.</td>
       <td>
-        <a href="./configuration.md">configuration.md</a>
+        <a href="/tools/worklet-bundler/configuration/">configuration.md</a>
       </td>
     </tr>
     <tr>
@@ -66,7 +66,7 @@ Worklet Bundler packages selected WDK wallet and protocol modules into a Bare ru
       </td>
       <td>Review the exported config types, dependency helpers, and bundle-generation functions.</td>
       <td>
-        <a href="./api-reference.md">api-reference.md</a>
+        <a href="/tools/worklet-bundler/api-reference/">api-reference.md</a>
       </td>
     </tr>
   </tbody>

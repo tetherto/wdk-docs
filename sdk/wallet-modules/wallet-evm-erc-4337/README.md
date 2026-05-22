@@ -48,7 +48,7 @@ ERC-4337 support depends on the Safe4337Module contract being deployed on the ta
 - **Plasma** (Chain ID: 9745)
 - **Ethereum Sepolia Testnet** (Chain ID: 11155111)
 
-See [Configuration](./configuration.md#verified-supported-networks) for the full compatibility matrix and ready-to-use config examples.
+See [Configuration](/sdk/wallet-modules/wallet-evm-erc-4337/configuration/#verified-supported-networks) for the full compatibility matrix and ready-to-use config examples.
 
 ## Next Steps
 
@@ -71,7 +71,7 @@ See [Configuration](./configuration.md#verified-supported-networks) for the full
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="/start-building/nodejs-bare-quickstart/">nodejs-quickstart.md</a>
 			</td>
 		</tr>
         <tr>
@@ -83,7 +83,7 @@ See [Configuration](./configuration.md#verified-supported-networks) for the full
 			</td>
 			<td>Get started with WDK's EVM with ERC-4337 Wallet configuration</td>
 			<td>
-				<a href="./configuration.md">WDK EVM with ERC-4337 Wallet Configuration</a>
+				<a href="/sdk/wallet-modules/wallet-evm-erc-4337/configuration/">WDK EVM with ERC-4337 Wallet Configuration</a>
 			</td>
 		</tr>
         <tr>
@@ -95,7 +95,7 @@ See [Configuration](./configuration.md#verified-supported-networks) for the full
 			</td>
 			<td>Get started with WDK's EVM with ERC-4337 Wallet API</td>
 			<td>
-				<a href="./api-reference.md">WDK EVM with ERC-4337 Wallet API</a>
+				<a href="/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/">WDK EVM with ERC-4337 Wallet API</a>
 			</td>
 		</tr>
         <tr>
@@ -107,7 +107,7 @@ See [Configuration](./configuration.md#verified-supported-networks) for the full
 			</td>
 			<td>Get started with WDK's EVM with ERC-4337 Wallet usage</td>
 			<td>
-				<a href="./usage.md">WDK EVM with ERC-4337 Wallet Usage</a>
+				<a href="/sdk/wallet-modules/wallet-evm-erc-4337/usage/">WDK EVM with ERC-4337 Wallet Usage</a>
 			</td>
 		</tr>
 	</tbody>

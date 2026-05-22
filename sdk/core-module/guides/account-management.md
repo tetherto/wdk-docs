@@ -114,4 +114,4 @@ for (const chain of chains) {
 
 ## Next Steps
 
-Now that you can access your accounts, learn how to [send transactions](./transactions.md).
+Now that you can access your accounts, learn how to [send transactions](/sdk/core-module/guides/transactions/).

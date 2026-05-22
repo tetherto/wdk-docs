@@ -23,7 +23,7 @@ This guide explains how to [handle transaction errors](#transaction-errors), [ha
 
 ## Transaction Errors
 
-Transactions sent via [`account.sendTransaction()`](../api-reference.md#sendtransaction-tx-config) can fail when the paymaster token balance is insufficient. Wrap calls in a `try/catch` block:
+Transactions sent via [`account.sendTransaction()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#sendtransaction-tx-config) can fail when the paymaster token balance is insufficient. Wrap calls in a `try/catch` block:
 
 {% code title="Handle Transaction Errors" lineNumbers="true" %}
 ```javascript
@@ -45,7 +45,7 @@ try {
 
 ## Transfer Errors
 
-Token transfers via [`account.transfer()`](../api-reference.md#transfer-options-config) can fail due to insufficient balance or exceeding the maximum fee limit:
+Token transfers via [`account.transfer()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#transfer-options-config) can fail due to insufficient balance or exceeding the maximum fee limit:
 
 {% code title="Handle Transfer Errors" lineNumbers="true" %}
 ```javascript
@@ -72,7 +72,7 @@ try {
 
 ### Fee Management
 
-You can retrieve current network fee rates using [`wallet.getFeeRates()`](../api-reference.md#getfeerates):
+You can retrieve current network fee rates using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#getfeerates):
 
 {% code title="Get Fee Rates" lineNumbers="true" %}
 ```javascript
@@ -84,7 +84,7 @@ console.log('Fast fee rate:', feeRates.fast)
 
 ### Dispose of Sensitive Data
 
-For security, clear sensitive data from memory when a session is complete. Use [`account.dispose()`](../api-reference.md#dispose-1) and [`wallet.dispose()`](../api-reference.md#dispose) to securely wipe private keys:
+For security, clear sensitive data from memory when a session is complete. Use [`account.dispose()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#dispose-1) and [`wallet.dispose()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#dispose) to securely wipe private keys:
 
 {% code title="Dispose Resources" lineNumbers="true" %}
 ```javascript
@@ -102,5 +102,5 @@ try {
 {% endcode %}
 
 {% hint style="warning" %}
-Always call [`dispose()`](../api-reference.md#dispose) when finished with accounts. Private keys are securely wiped from memory. Disposal is irreversible.
+Always call [`dispose()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#dispose) when finished with accounts. Private keys are securely wiped from memory. Disposal is irreversible.
 {% endhint %}

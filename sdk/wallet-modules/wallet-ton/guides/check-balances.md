@@ -23,7 +23,7 @@ This guide explains how to check [native TON balances](#native-ton-balance), [Je
 
 ## Native TON Balance
 
-You can retrieve the native TON balance using [`account.getBalance()`](../api-reference.md#getbalance):
+You can retrieve the native TON balance using [`account.getBalance()`](/sdk/wallet-modules/wallet-ton/api-reference/#getbalance):
 
 {% code title="Get Native TON Balance" lineNumbers="true" %}
 ```javascript
@@ -38,7 +38,7 @@ On TON, values are expressed in nanotons (1 TON = 10^9 nanotons).
 
 ## Jetton Token Balance
 
-You can check the balance of a specific Jetton token using [`account.getTokenBalance()`](../api-reference.md#gettokenbalance-tokenaddress):
+You can check the balance of a specific Jetton token using [`account.getTokenBalance()`](/sdk/wallet-modules/wallet-ton/api-reference/#gettokenbalance-tokenaddress):
 
 {% code title="Get Jetton Token Balance" lineNumbers="true" %}
 ```javascript
@@ -50,7 +50,7 @@ console.log('Jetton token balance:', jettonBalance)
 
 ## Read-Only Account Balances
 
-You can check balances for any public key without a seed phrase using [`WalletAccountReadOnlyTon`](../api-reference.md#walletaccountreadonlyton):
+You can check balances for any public key without a seed phrase using [`WalletAccountReadOnlyTon`](/sdk/wallet-modules/wallet-ton/api-reference/#walletaccountreadonlyton):
 
 {% code title="Create Read-Only Account" lineNumbers="true" %}
 ```javascript
@@ -65,7 +65,7 @@ const readOnlyAccount = new WalletAccountReadOnlyTon(publicKey, {
 ```
 {% endcode %}
 
-You can retrieve the native balance from a read-only account using [`readOnlyAccount.getBalance()`](../api-reference.md#getbalance):
+You can retrieve the native balance from a read-only account using [`readOnlyAccount.getBalance()`](/sdk/wallet-modules/wallet-ton/api-reference/#getbalance):
 
 {% code title="Read-Only Native Balance" lineNumbers="true" %}
 ```javascript
@@ -75,9 +75,9 @@ console.log('Read-only account balance:', balance)
 {% endcode %}
 
 {% hint style="info" %}
-You can also create a read-only account from an existing owned account using [`account.toReadOnlyAccount()`](../api-reference.md#toreadonlyaccount).
+You can also create a read-only account from an existing owned account using [`account.toReadOnlyAccount()`](/sdk/wallet-modules/wallet-ton/api-reference/#toreadonlyaccount).
 {% endhint %}
 
 ## Next Steps
 
-With balance checks in place, learn how to [send TON](./send-transactions.md).
+With balance checks in place, learn how to [send TON](/sdk/wallet-modules/wallet-ton/guides/send-transactions/).

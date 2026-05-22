@@ -37,31 +37,31 @@ The [@tetherto/wdk-protocol-bridge-usdt0-evm](https://www.npmjs.com/package/@tet
       <td><i class="fa-rocket">:rocket:</i></td>
       <td><strong>Get Started</strong></td>
       <td>Install the package, attach WalletAccountEvm, and review supported chains.</td>
-      <td><a href="./guides/get-started.md">Get Started</a></td>
+      <td><a href="/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started/">Get Started</a></td>
     </tr>
     <tr>
       <td><i class="fa-exchange-alt">:exchange-alt:</i></td>
       <td><strong>Bridge Tokens</strong></td>
       <td>EVM-to-EVM bridges, quotes, fee caps, and optional OFT or endpoint overrides.</td>
-      <td><a href="./guides/bridge-tokens.md">Bridge Tokens</a></td>
+      <td><a href="/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens/">Bridge Tokens</a></td>
     </tr>
     <tr>
       <td><i class="fa-bolt">:bolt:</i></td>
       <td><strong>Bridge with ERC-4337</strong></td>
       <td>Gasless bridging with WalletAccountEvmErc4337 and paymaster options.</td>
-      <td><a href="./guides/bridge-with-4337.md">Bridge with ERC-4337</a></td>
+      <td><a href="/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337/">Bridge with ERC-4337</a></td>
     </tr>
     <tr>
       <td><i class="fa-globe">:globe:</i></td>
       <td><strong>Bridge Cross-Ecosystem</strong></td>
       <td>Send toward Solana, TON, or TRON recipients from EVM.</td>
-      <td><a href="./guides/bridge-cross-ecosystem.md">Bridge Cross-Ecosystem</a></td>
+      <td><a href="/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-cross-ecosystem/">Bridge Cross-Ecosystem</a></td>
     </tr>
     <tr>
       <td><i class="fa-exclamation-triangle">:exclamation-triangle:</i></td>
       <td><strong>Handle Errors</strong></td>
       <td>Interpret bridge failures and dispose of signing material safely.</td>
-      <td><a href="./guides/handle-errors.md">Handle Errors</a></td>
+      <td><a href="/sdk/bridge-modules/bridge-usdt0-evm/guides/handle-errors/">Handle Errors</a></td>
     </tr>
   </tbody>
 </table>
@@ -86,7 +86,7 @@ The [@tetherto/wdk-protocol-bridge-usdt0-evm](https://www.npmjs.com/package/@tet
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">Node.js & Bare Quickstart</a>
+				<a href="/start-building/nodejs-bare-quickstart/">Node.js & Bare Quickstart</a>
 			</td>
 		</tr>
 		<tr>
@@ -98,7 +98,7 @@ The [@tetherto/wdk-protocol-bridge-usdt0-evm](https://www.npmjs.com/package/@tet
 			</td>
 			<td>Configure RPC, fees, and protocol options for this bridge</td>
 			<td>
-				<a href="./configuration.md">WDK Bridge USD₮0 EVM Protocol Configuration</a>
+				<a href="/sdk/bridge-modules/bridge-usdt0-evm/configuration/">WDK Bridge USD₮0 EVM Protocol Configuration</a>
 			</td>
 		</tr>
 		<tr>
@@ -110,7 +110,7 @@ The [@tetherto/wdk-protocol-bridge-usdt0-evm](https://www.npmjs.com/package/@tet
 			</td>
 			<td>Constructor, methods, types, and error behavior</td>
 			<td>
-				<a href="./api-reference.md">WDK Bridge USD₮0 EVM Protocol API</a>
+				<a href="/sdk/bridge-modules/bridge-usdt0-evm/api-reference/">WDK Bridge USD₮0 EVM Protocol API</a>
 			</td>
 		</tr>
 	</tbody>

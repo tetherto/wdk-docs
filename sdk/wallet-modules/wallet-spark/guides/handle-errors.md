@@ -23,7 +23,7 @@ This guide explains how to [handle transaction errors](#transaction-errors), [ha
 
 ## Transaction Errors
 
-Operations such as [`account.sendTransaction()`](../api-reference.md#sendtransaction-to-value), [`account.transfer()`](../api-reference.md#transfer-options), [`account.payLightningInvoice()`](../api-reference.md#paylightninginvoice-options), and [`account.withdraw()`](../api-reference.md#withdraw-options) can throw. Wrap each call in `try/catch` and branch on `message` or error type when your runtime allows it:
+Operations such as [`account.sendTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference/#sendtransaction-to-value), [`account.transfer()`](/sdk/wallet-modules/wallet-spark/api-reference/#transfer-options), [`account.payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference/#paylightninginvoice-options), and [`account.withdraw()`](/sdk/wallet-modules/wallet-spark/api-reference/#withdraw-options) can throw. Wrap each call in `try/catch` and branch on `message` or error type when your runtime allows it:
 
 {% code title="Handle Transaction Errors" lineNumbers="true" %}
 ```javascript
@@ -39,7 +39,7 @@ try {
 ```
 {% endcode %}
 
-You can isolate Lightning failures by wrapping [`account.payLightningInvoice()`](../api-reference.md#paylightninginvoice-options):
+You can isolate Lightning failures by wrapping [`account.payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference/#paylightninginvoice-options):
 
 {% code title="Handle Lightning Errors" lineNumbers="true" %}
 ```javascript
@@ -78,7 +78,7 @@ try {
 
 ### Fee management
 
-Native Spark sends and token transfers report zero fees, but withdrawals and Lightning payments can charge fees. Use [`wallet.getFeeRates()`](../api-reference.md#getfeerates) for wallet-level rate placeholders and [`account.quotePayLightningInvoice()`](../api-reference.md#quotepaylightninginvoice-options) for Lightning sends:
+Native Spark sends and token transfers report zero fees, but withdrawals and Lightning payments can charge fees. Use [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-spark/api-reference/#getfeerates) for wallet-level rate placeholders and [`account.quotePayLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference/#quotepaylightninginvoice-options) for Lightning sends:
 
 {% code title="Inspect Spark Fee Rates" lineNumbers="true" %}
 ```javascript
@@ -98,12 +98,12 @@ console.log('Estimated Lightning fee:', Number(lightningFee), 'satoshis')
 {% endcode %}
 
 {% hint style="info" %}
-[`quoteWithdraw()`](../api-reference.md#quotewithdraw-options) should run before [`withdraw()`](../api-reference.md#withdraw-options) so you understand cooperative exit costs.
+[`quoteWithdraw()`](/sdk/wallet-modules/wallet-spark/api-reference/#quotewithdraw-options) should run before [`withdraw()`](/sdk/wallet-modules/wallet-spark/api-reference/#withdraw-options) so you understand cooperative exit costs.
 {% endhint %}
 
 ### Dispose of sensitive data
 
-Clear keys from memory when a session ends. Call [`account.dispose()`](../api-reference.md#dispose-1) for each account and [`wallet.dispose()`](../api-reference.md#dispose) on the manager:
+Clear keys from memory when a session ends. Call [`account.dispose()`](/sdk/wallet-modules/wallet-spark/api-reference/#dispose-1) for each account and [`wallet.dispose()`](/sdk/wallet-modules/wallet-spark/api-reference/#dispose) on the manager:
 
 {% code title="Dispose Wallet Resources" lineNumbers="true" %}
 ```javascript
@@ -121,9 +121,9 @@ try {
 {% endcode %}
 
 {% hint style="warning" %}
-After [`dispose()`](../api-reference.md#dispose-1), the account cannot sign new operations. Call disposal when the wallet UI or job is finished.
+After [`dispose()`](/sdk/wallet-modules/wallet-spark/api-reference/#dispose-1), the account cannot sign new operations. Call disposal when the wallet UI or job is finished.
 {% endhint %}
 
 ## Next Steps
 
-Return to the [Spark wallet usage overview](../usage.md) or open the [API Reference](../api-reference.md) for full method signatures.
+Return to the [Spark wallet usage overview](/sdk/wallet-modules/wallet-spark/usage/) or open the [API Reference](/sdk/wallet-modules/wallet-spark/api-reference/) for full method signatures.

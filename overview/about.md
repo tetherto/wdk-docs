@@ -131,7 +131,7 @@ WDK combines four core components to deliver a complete wallet development solut
 			</td>
 			<td>Unified APIs for wallet and protocol operations across multiple blockchains</td>
 			<td>
-				<a href="../sdk/get-started.md">getting-started.md</a>
+				<a href="/sdk/get-started/">getting-started.md</a>
 			</td>
 			<td>
 				<a href="../assets/product-sdk.png">product-sdk.png</a>
@@ -143,7 +143,7 @@ WDK combines four core components to deliver a complete wallet development solut
 			</td>
 			<td>Reliable blockchain data access for balances, transactions, and historical data</td>
 			<td>
-				<a href="../tools/indexer-api/README.md">indexer</a>
+				<a href="/tools/indexer-api/">indexer</a>
 			</td>
 			<td>
 				<a href="../assets/product-indexer.png">product-indexer.png</a>
@@ -155,7 +155,7 @@ WDK combines four core components to deliver a complete wallet development solut
 			</td>
 			<td>Reusable React Native components for building wallet interfaces</td>
 			<td>
-				<a href="../ui-kits/react-native-ui-kit/">react-native</a>
+				<a href="/ui-kits/react-native-ui-kit/">react-native</a>
 			</td>
 			<td>
 				<a href="../assets/product-ui-kit.png">product-ui-kit.png</a>
@@ -167,7 +167,7 @@ WDK combines four core components to deliver a complete wallet development solut
 			</td>
 			<td>Production-ready wallet templates and reference implementations</td>
 			<td>
-				<a href="../examples-and-starters/react-native-starter.md">react-native</a>
+				<a href="/examples-and-starters/react-native-starter/">react-native</a>
 			</td>
 			<td>
 				<a href="../assets/product-starters.png">product-starters.png</a>
@@ -186,23 +186,23 @@ WDK natively supports a broad set of blockchains and standards out of the box:
 {% tab title="Wallet Modules" %}
 | Blockchain/Module                                               | Support |
 | --------------------------------------------------------------- | ------- |
-| [Bitcoin](../sdk/wallet-modules/wallet-btc/)                    | ✅       |
-| [Ethereum & EVM](../sdk/wallet-modules/wallet-evm/)             | ✅       |
-| [Ethereum ERC-4337](../sdk/wallet-modules/wallet-evm-erc-4337/) | ✅       |
-| [TON](../sdk/wallet-modules/wallet-ton/)                        | ✅       |
-| [TON Gasless](../sdk/wallet-modules/wallet-ton-gasless/)        | ✅       |
-| [TRON](../sdk/wallet-modules/wallet-tron/)                      | ✅       |
-| [TRON Gasfree](../sdk/wallet-modules/wallet-tron-gasfree/)      | ✅       |
-| [Solana](../sdk/wallet-modules/wallet-solana/)                  | ✅       |
-| [Spark/Lightning](../sdk/wallet-modules/wallet-spark/)          | ✅       |
+| [Bitcoin](/sdk/wallet-modules/wallet-btc/)                    | ✅       |
+| [Ethereum & EVM](/sdk/wallet-modules/wallet-evm/)             | ✅       |
+| [Ethereum ERC-4337](/sdk/wallet-modules/wallet-evm-erc-4337/) | ✅       |
+| [TON](/sdk/wallet-modules/wallet-ton/)                        | ✅       |
+| [TON Gasless](/sdk/wallet-modules/wallet-ton-gasless/)        | ✅       |
+| [TRON](/sdk/wallet-modules/wallet-tron/)                      | ✅       |
+| [TRON Gasfree](/sdk/wallet-modules/wallet-tron-gasfree/)      | ✅       |
+| [Solana](/sdk/wallet-modules/wallet-solana/)                  | ✅       |
+| [Spark/Lightning](/sdk/wallet-modules/wallet-spark/)          | ✅       |
 {% endtab %}
 
 {% tab title="DeFi Modules" %}
 | Protocol/Module                                                | Support |
 | -------------------------------------------------------------- | ------- |
-| [velora (EVM)](../sdk/swap-modules/swap-velora-evm/)       | ✅       |
-| [USD₮0 Bridge (EVM)](../sdk/bridge-modules/bridge-usdt0-evm/)  | ✅       |
-| [Aave Lending (EVM)](../sdk/lending-modules/lending-aave-evm/) | ✅       |
+| [velora (EVM)](/sdk/swap-modules/swap-velora-evm/)       | ✅       |
+| [USD₮0 Bridge (EVM)](/sdk/bridge-modules/bridge-usdt0-evm/)  | ✅       |
+| [Aave Lending (EVM)](/sdk/lending-modules/lending-aave-evm/) | ✅       |
 
 
 {% endtab %}
@@ -210,4 +210,4 @@ WDK natively supports a broad set of blockchains and standards out of the box:
 
 The modular architecture allows new chains, tokens, or protocols to be added by implementing dedicated modules.
 
-Ready to start building? Explore our [getting started guide](../start-building/nodejs-bare-quickstart.md) or dive into our [SDK documentation](../sdk/get-started.md). 
+Ready to start building? Explore our [getting started guide](/start-building/nodejs-bare-quickstart/) or dive into our [SDK documentation](/sdk/get-started/).

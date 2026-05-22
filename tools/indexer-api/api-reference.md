@@ -39,7 +39,7 @@ x-api-key: your-api-key-here
 {% endcode %}
 
 {% hint style="info" %}
-**Don't have an API key yet?** Request one by following the steps in our [Get Started](get-started.md) guide.
+**Don't have an API key yet?** Request one by following the steps in our [Get Started](/tools/indexer-api/get-started/) guide.
 {% endhint %}
 
 ***
@@ -115,8 +115,8 @@ The API returns standard HTTP error codes:
 
 ## Next Steps
 
-* [**Get Started**](get-started.md) - Quick start guide with setup instructions
-* [**React Native Starter**](../../examples-and-starters/react-native-starter.md) - See it in action
+* [**Get Started**](/tools/indexer-api/get-started/) - Quick start guide with setup instructions
+* [**React Native Starter**](/examples-and-starters/react-native-starter/) - See it in action
 
 ***
 

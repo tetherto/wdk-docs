@@ -82,4 +82,4 @@ const balance = await wallet.getBalance()
 
 ## Next Steps
 
-Learn about [error handling and best practices](./error-handling.md) to ensure your application is robust and secure.
+Learn about [error handling and best practices](/sdk/core-module/guides/error-handling/) to ensure your application is robust and secure.

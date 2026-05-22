@@ -23,7 +23,7 @@ This guide explains how to [retrieve accounts by index](#retrieve-accounts-by-in
 
 ## Retrieve Accounts by Index
 
-You can retrieve multiple accounts using [`wallet.getAccount()`](../api-reference.md#getaccount-index) with different index values:
+You can retrieve multiple accounts using [`wallet.getAccount()`](/sdk/wallet-modules/wallet-btc/api-reference/#getaccount-index) with different index values:
 
 {% code title="Retrieve Multiple Accounts" lineNumbers="true" %}
 ```javascript
@@ -37,7 +37,7 @@ console.log('Account 1 address:', address1)
 ```
 {% endcode %}
 
-You can iterate through multiple accounts using [`wallet.getAccount()`](../api-reference.md#getaccount-index) to inspect addresses and balances in bulk:
+You can iterate through multiple accounts using [`wallet.getAccount()`](/sdk/wallet-modules/wallet-btc/api-reference/#getaccount-index) to inspect addresses and balances in bulk:
 
 {% code title="Iterate Over Accounts" lineNumbers="true" %}
 ```javascript
@@ -52,7 +52,7 @@ for (let i = 0; i < 5; i++) {
 
 ## Retrieve Account by Custom Derivation Path
 
-You can retrieve an account at a specific derivation path using [`wallet.getAccountByPath()`](../api-reference.md#getaccountbypath-path):
+You can retrieve an account at a specific derivation path using [`wallet.getAccountByPath()`](/sdk/wallet-modules/wallet-btc/api-reference/#getaccountbypath-path):
 
 {% code title="Custom Derivation Path" lineNumbers="true" %}
 ```javascript
@@ -68,4 +68,4 @@ The default derivation scheme is BIP-84 (Native SegWit): `m/84'/0'/0'/0/{index}`
 
 ## Next Steps
 
-With accounts set up, learn how to [check balances](./check-balances.md).
+With accounts set up, learn how to [check balances](/sdk/wallet-modules/wallet-btc/guides/check-balances/).

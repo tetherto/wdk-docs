@@ -23,7 +23,7 @@ This guide explains how to [sign messages](#sign-a-message), [verify signatures]
 
 ## Sign a Message
 
-You can sign a message with the account's private key using [`account.sign()`](../api-reference.md#sign-message):
+You can sign a message with the account's private key using [`account.sign()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#sign-message):
 
 {% code title="Sign Message" lineNumbers="true" %}
 ```javascript
@@ -34,7 +34,7 @@ console.log('Signature:', signature)
 
 ## Verify a Signature
 
-You can verify a signature using a read-only account. Use [`account.toReadOnlyAccount()`](../api-reference.md#toreadonlyaccount) to create one, then call [`readOnlyAccount.verify()`](../api-reference.md#verify-message-signature):
+You can verify a signature using a read-only account. Use [`account.toReadOnlyAccount()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#toreadonlyaccount) to create one, then call [`readOnlyAccount.verify()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#verify-message-signature):
 
 {% code title="Verify Signature" lineNumbers="true" %}
 ```javascript
@@ -46,7 +46,7 @@ console.log('Signature valid:', isValid)
 
 ## Sign Typed Data (EIP-712)
 
-You can sign EIP-712 structured data using [`account.signTypedData()`](../api-reference.md#signtypeddata-typeddata):
+You can sign EIP-712 structured data using [`account.signTypedData()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#signtypeddata-typeddata):
 
 {% code title="Sign Typed Data" lineNumbers="true" %}
 ```javascript
@@ -76,7 +76,7 @@ console.log('Typed data signature:', typedDataSignature)
 ```
 {% endcode %}
 
-You can verify typed data signatures using [`readOnlyAccount.verifyTypedData()`](../api-reference.md#verifytypeddata-typeddata-signature):
+You can verify typed data signatures using [`readOnlyAccount.verifyTypedData()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#verifytypeddata-typeddata-signature):
 
 {% code title="Verify Typed Data" lineNumbers="true" %}
 ```javascript
@@ -88,4 +88,4 @@ console.log('Typed data signature valid:', isValid)
 
 ## Next Steps
 
-Learn how to [handle errors and manage resources](./handle-errors.md).
+Learn how to [handle errors and manage resources](/sdk/wallet-modules/wallet-evm-erc-4337/guides/handle-errors/).

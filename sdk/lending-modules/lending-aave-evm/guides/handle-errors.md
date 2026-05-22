@@ -23,7 +23,7 @@ This guide explains how to [handle operation errors](#operation-errors) and foll
 
 ## Operation errors
 
-You can catch failures from [`supply()`](../api-reference.md#supply-options-config), [`withdraw()`](../api-reference.md#withdraw-options-config), [`borrow()`](../api-reference.md#borrow-options-config), and [`repay()`](../api-reference.md#repay-options-config) with `try/catch`:
+You can catch failures from [`supply()`](/sdk/lending-modules/lending-aave-evm/api-reference/#supply-options-config), [`withdraw()`](/sdk/lending-modules/lending-aave-evm/api-reference/#withdraw-options-config), [`borrow()`](/sdk/lending-modules/lending-aave-evm/api-reference/#borrow-options-config), and [`repay()`](/sdk/lending-modules/lending-aave-evm/api-reference/#repay-options-config) with `try/catch`:
 
 {% code title="Handle a failed supply" lineNumbers="true" %}
 ```javascript
@@ -41,7 +41,7 @@ try {
 ```
 {% endcode %}
 
-You can isolate quote failures from [`quoteSupply()`](../api-reference.md#quotesupply-options-config) (or the other `quote*` methods) when you only need an estimate:
+You can isolate quote failures from [`quoteSupply()`](/sdk/lending-modules/lending-aave-evm/api-reference/#quotesupply-options-config) (or the other `quote*` methods) when you only need an estimate:
 
 {% code title="Handle quote errors" lineNumbers="true" %}
 ```javascript
@@ -58,12 +58,12 @@ try {
 {% endcode %}
 
 {% hint style="info" %}
-See [Rules & Notes](../api-reference.md#rules-notes) for address and amount validation expectations.
+See [Rules & Notes](/sdk/lending-modules/lending-aave-evm/api-reference/#rules-notes) for address and amount validation expectations.
 {% endhint %}
 
 ## Best Practices
 
-You can wipe private keys after lending work by calling [`dispose()`](../../../wallet-modules/wallet-evm/api-reference.md#dispose-1) on [`WalletAccountEvm`](../../../wallet-modules/wallet-evm/api-reference.md#walletaccountevm), or [`dispose()`](../../../wallet-modules/wallet-evm/api-reference.md#dispose) on [`WalletManagerEvm`](../../../wallet-modules/wallet-evm/api-reference.md#walletmanagerevm):
+You can wipe private keys after lending work by calling [`dispose()`](/sdk/wallet-modules/wallet-evm/api-reference/#dispose-1) on [`WalletAccountEvm`](/sdk/wallet-modules/wallet-evm/api-reference/#walletaccountevm), or [`dispose()`](/sdk/wallet-modules/wallet-evm/api-reference/#dispose) on [`WalletManagerEvm`](/sdk/wallet-modules/wallet-evm/api-reference/#walletmanagerevm):
 
 {% code title="Dispose after lending session" lineNumbers="true" %}
 ```javascript
@@ -78,10 +78,10 @@ try {
 ```
 {% endcode %}
 
-For ERC-4337 accounts, use [`dispose()`](../../../wallet-modules/wallet-evm-erc-4337/api-reference.md#dispose-1) on the smart-account type. Clear references to [`AaveProtocolEvm`](../api-reference.md#class-aaveprotocolevm) when the session ends.
+For ERC-4337 accounts, use [`dispose()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#dispose-1) on the smart-account type. Clear references to [`AaveProtocolEvm`](/sdk/lending-modules/lending-aave-evm/api-reference/#class-aaveprotocolevm) when the session ends.
 
 ## Next Steps
 
-- [Lending operations](lending-operations.md)
-- [Get started](get-started.md)
-- [API reference](../api-reference.md)
+- [Lending operations](/sdk/lending-modules/lending-aave-evm/guides/lending-operations/)
+- [Get started](/sdk/lending-modules/lending-aave-evm/guides/get-started/)
+- [API reference](/sdk/lending-modules/lending-aave-evm/api-reference/)

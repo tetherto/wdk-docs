@@ -19,17 +19,17 @@ layout:
 
 # Bridge Cross-Ecosystem
 
-This guide covers [prerequisites](#prerequisites) and how to [bridge to Solana](#bridge-to-solana), [bridge to TON](#bridge-to-ton), and [bridge to TRON](#bridge-to-tron) using [`bridge()`](../api-reference.md#bridge-options-config). The same [`Usdt0ProtocolEvm`](../api-reference.md#usdt0protocolevm) instance you use for EVM destinations applies; only `targetChain` and `recipient` formats change.
+This guide covers [prerequisites](#prerequisites) and how to [bridge to Solana](#bridge-to-solana), [bridge to TON](#bridge-to-ton), and [bridge to TRON](#bridge-to-tron) using [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#bridge-options-config). The same [`Usdt0ProtocolEvm`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#usdt0protocolevm) instance you use for EVM destinations applies; only `targetChain` and `recipient` formats change.
 
 ## Prerequisites
 
-A [`Usdt0ProtocolEvm`](../api-reference.md#usdt0protocolevm) backed by a non-read-only EVM account, with enough USD₮ (and native gas for non-4337 accounts) on the source chain. Approve the source-chain bridge spender before calling [`bridge()`](../api-reference.md#bridge-options-config). Recipient strings must match each network’s address encoding.
+A [`Usdt0ProtocolEvm`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#usdt0protocolevm) backed by a non-read-only EVM account, with enough USD₮ (and native gas for non-4337 accounts) on the source chain. Approve the source-chain bridge spender before calling [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#bridge-options-config). Recipient strings must match each network’s address encoding.
 
-For `USDT_BRIDGE_SPENDER_ADDRESS`, use the source-chain OFT or bridge contract for the route. See [Bridge Tokens](./bridge-tokens.md#prerequisites) for address sources.
+For `USDT_BRIDGE_SPENDER_ADDRESS`, use the source-chain OFT or bridge contract for the route. See [Bridge Tokens](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens/#prerequisites) for address sources.
 
 ## Bridge to Solana
 
-You can set `targetChain` to `solana` and pass a base58 Solana address as `recipient` when calling [`bridge()`](../api-reference.md#bridge-options-config):
+You can set `targetChain` to `solana` and pass a base58 Solana address as `recipient` when calling [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#bridge-options-config):
 
 {% code title="Bridge toward Solana" lineNumbers="true" %}
 ```javascript
@@ -62,7 +62,7 @@ Validate Solana addresses (length and base58 alphabet) before bridging. A malfor
 
 ## Bridge to TON
 
-You can set `targetChain` to `ton` and supply a TON user-friendly or raw address string as `recipient` in [`bridge()`](../api-reference.md#bridge-options-config):
+You can set `targetChain` to `ton` and supply a TON user-friendly or raw address string as `recipient` in [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#bridge-options-config):
 
 {% code title="Bridge toward TON" lineNumbers="true" %}
 ```javascript
@@ -90,7 +90,7 @@ console.log('TON bridge hash:', tonResult.hash)
 
 ## Bridge to TRON
 
-You can set `targetChain` to `tron` and pass a base58Check TRON address (typically starting with `T`) to [`bridge()`](../api-reference.md#bridge-options-config):
+You can set `targetChain` to `tron` and pass a base58Check TRON address (typically starting with `T`) to [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#bridge-options-config):
 
 {% code title="Bridge toward TRON" lineNumbers="true" %}
 ```javascript
@@ -117,9 +117,9 @@ console.log('TRON bridge hash:', tronResult.hash)
 {% endcode %}
 
 {% hint style="info" %}
-LayerZero endpoint IDs for these destinations are listed under [Supported chains](../api-reference.md#supported-chains) in the API reference.
+LayerZero endpoint IDs for these destinations are listed under [Supported chains](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#supported-chains) in the API reference.
 {% endhint %}
 
 ## Next Steps
 
-Harden integrations with [Handle errors](./handle-errors.md), or return to [Bridge tokens](./bridge-tokens.md) for EVM-only flows and quotes.
+Harden integrations with [Handle errors](/sdk/bridge-modules/bridge-usdt0-evm/guides/handle-errors/), or return to [Bridge tokens](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens/) for EVM-only flows and quotes.

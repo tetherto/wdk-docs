@@ -36,7 +36,7 @@ npm install @tetherto/wdk-wallet-tron
 
 ## 2. Create a Wallet
 
-You can create a new wallet instance using the [`WalletManagerTron`](../api-reference.md#walletmanagertron) constructor with a BIP-39 seed phrase and a Tron RPC provider:
+You can create a new wallet instance using the [`WalletManagerTron`](/sdk/wallet-modules/wallet-tron/api-reference/#walletmanagertron) constructor with a BIP-39 seed phrase and a Tron RPC provider:
 
 {% code title="Create Tron Wallet" lineNumbers="true" %}
 ```javascript
@@ -56,7 +56,7 @@ const wallet = new WalletManagerTron(seedPhrase, {
 
 ## 3. Get Your First Account
 
-You can retrieve an account at a given index using [`wallet.getAccount()`](../api-reference.md#getaccount-index):
+You can retrieve an account at a given index using [`wallet.getAccount()`](/sdk/wallet-modules/wallet-tron/api-reference/#getaccount-index):
 
 {% code title="Get Account" lineNumbers="true" %}
 ```javascript
@@ -68,7 +68,7 @@ console.log('Wallet address:', address)
 
 ## 4. (optional) Convert to Read-Only
 
-You can convert an owned account to a read-only account using [`account.toReadOnlyAccount()`](../api-reference.md#toreadonlyaccount):
+You can convert an owned account to a read-only account using [`account.toReadOnlyAccount()`](/sdk/wallet-modules/wallet-tron/api-reference/#toreadonlyaccount):
 
 {% code title="Convert to Read-Only" lineNumbers="true" %}
 ```javascript
@@ -82,4 +82,4 @@ All Tron addresses start with `T` and are 34 characters long.
 
 ## Next Steps
 
-With your wallet ready, learn how to [manage multiple accounts](./manage-accounts.md).
+With your wallet ready, learn how to [manage multiple accounts](/sdk/wallet-modules/wallet-tron/guides/manage-accounts/).

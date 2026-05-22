@@ -43,7 +43,7 @@ layout:
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="/start-building/nodejs-bare-quickstart/">nodejs-quickstart.md</a>
 			</td>
 		</tr>
         <tr>
@@ -55,7 +55,7 @@ layout:
 			</td>
 			<td>Get started with WDK's configuration</td>
 			<td>
-				<a href="./configuration.md">WDK Core Configuration</a>
+				<a href="/sdk/core-module/configuration/">WDK Core Configuration</a>
 			</td>
 		</tr>
         <tr>
@@ -67,7 +67,7 @@ layout:
 			</td>
 			<td>Get started with WDK's API</td>
 			<td>
-				<a href="./api-reference.md">WDK Core API</a>
+				<a href="/sdk/core-module/api-reference/">WDK Core API</a>
 			</td>
 		</tr>
         <tr>
@@ -79,7 +79,7 @@ layout:
 			</td>
 			<td>Get started with WDK's usage</td>
 			<td>
-				<a href="./usage.md">WDK Core Usage</a>
+				<a href="/sdk/core-module/usage/">WDK Core Usage</a>
 			</td>
 		</tr>
 	</tbody>

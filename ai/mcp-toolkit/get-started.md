@@ -21,7 +21,7 @@ layout:
 # Get Started
 
 {% hint style="info" %}
-**Building a LangChain agent?** The `serve` command provides zero-config MCP server startup -- no server script needed. See [LangChain Integration](langchain.md).
+**Building a LangChain agent?** The `serve` command provides zero-config MCP server startup -- no server script needed. See [LangChain Integration](/ai/mcp-toolkit/langchain/).
 {% endhint %}
 
 ## Setup Wizard
@@ -329,8 +329,8 @@ server.registerTools([
 
 ## Next Steps
 
-* [**Configuration**](configuration.md) - Wallets, tokens, protocols, custom tools, and security
-* [**API Reference**](api-reference.md) - All 35 built-in MCP tools with parameters and schemas
+* [**Configuration**](/ai/mcp-toolkit/configuration/) - Wallets, tokens, protocols, custom tools, and security
+* [**API Reference**](/ai/mcp-toolkit/api-reference/) - All 35 built-in MCP tools with parameters and schemas
 
 ***
 

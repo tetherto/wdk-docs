@@ -19,7 +19,7 @@ layout:
 
 # Buy and Sell
 
-This guide explains [buying crypto (on-ramp)](#buy-crypto-on-ramp), [selling crypto (off-ramp)](#sell-crypto-off-ramp), [quotes](#get-price-quotes), [supported currencies](#supported-currencies-and-countries), [widget customization](#widget-customization), and [custom recipients](#custom-recipient-addresses). It assumes a [`MoonPayProtocol`](../api-reference.md#new-moonpayprotocol-account-config) instance named `moonpay`.
+This guide explains [buying crypto (on-ramp)](#buy-crypto-on-ramp), [selling crypto (off-ramp)](#sell-crypto-off-ramp), [quotes](#get-price-quotes), [supported currencies](#supported-currencies-and-countries), [widget customization](#widget-customization), and [custom recipients](#custom-recipient-addresses). It assumes a [`MoonPayProtocol`](/sdk/fiat-modules/fiat-moonpay/api-reference/#new-moonpayprotocol-account-config) instance named `moonpay`.
 
 {% hint style="info" %}
 Amounts use smallest units: fiat in minor units (cents), crypto in on-chain base units (for example wei for ETH).
@@ -27,7 +27,7 @@ Amounts use smallest units: fiat in minor units (cents), crypto in on-chain base
 
 ## Buy crypto (on-ramp)
 
-You can build a signed purchase URL with [`buy()`](../api-reference.md#buy-options) when you know the fiat spend:
+You can build a signed purchase URL with [`buy()`](/sdk/fiat-modules/fiat-moonpay/api-reference/#buy-options) when you know the fiat spend:
 
 {% code title="Buy with fiat amount" lineNumbers="true" %}
 ```typescript
@@ -41,7 +41,7 @@ window.open(result.buyUrl, '_blank')
 ```
 {% endcode %}
 
-You can request a fixed crypto amount instead by passing `cryptoAmount` to [`buy()`](../api-reference.md#buy-options):
+You can request a fixed crypto amount instead by passing `cryptoAmount` to [`buy()`](/sdk/fiat-modules/fiat-moonpay/api-reference/#buy-options):
 
 {% code title="Buy with crypto amount" lineNumbers="true" %}
 ```typescript
@@ -57,7 +57,7 @@ window.open(result.buyUrl, '_blank')
 
 ## Sell crypto (off-ramp)
 
-You can generate a sell widget URL with [`sell()`](../api-reference.md#sell-options):
+You can generate a sell widget URL with [`sell()`](/sdk/fiat-modules/fiat-moonpay/api-reference/#sell-options):
 
 {% code title="Sell ETH for USD" lineNumbers="true" %}
 ```typescript
@@ -73,7 +73,7 @@ window.open(result.sellUrl, '_blank')
 
 ## Get price quotes
 
-You can preview economics before opening the widget using [`quoteBuy()`](../api-reference.md#quotebuy-options):
+You can preview economics before opening the widget using [`quoteBuy()`](/sdk/fiat-modules/fiat-moonpay/api-reference/#quotebuy-options):
 
 {% code title="Buy quote" lineNumbers="true" %}
 ```typescript
@@ -89,7 +89,7 @@ console.log('Exchange rate:', buyQuote.rate)
 ```
 {% endcode %}
 
-You can estimate proceeds for a sell with [`quoteSell()`](../api-reference.md#quotesell-options):
+You can estimate proceeds for a sell with [`quoteSell()`](/sdk/fiat-modules/fiat-moonpay/api-reference/#quotesell-options):
 
 {% code title="Sell quote" lineNumbers="true" %}
 ```typescript
@@ -105,7 +105,7 @@ console.log('Fiat amount:', sellQuote.fiatAmount)
 
 ## Supported currencies and countries
 
-You can list tradable assets with [`getSupportedCryptoAssets()`](../api-reference.md#getsupportedcryptoassets):
+You can list tradable assets with [`getSupportedCryptoAssets()`](/sdk/fiat-modules/fiat-moonpay/api-reference/#getsupportedcryptoassets):
 
 {% code title="Supported crypto" lineNumbers="true" %}
 ```typescript
@@ -114,7 +114,7 @@ console.log(cryptoAssets)
 ```
 {% endcode %}
 
-You can list fiat currencies with [`getSupportedFiatCurrencies()`](../api-reference.md#getsupportedfiatcurrencies):
+You can list fiat currencies with [`getSupportedFiatCurrencies()`](/sdk/fiat-modules/fiat-moonpay/api-reference/#getsupportedfiatcurrencies):
 
 {% code title="Supported fiat" lineNumbers="true" %}
 ```typescript
@@ -123,7 +123,7 @@ console.log(fiatCurrencies)
 ```
 {% endcode %}
 
-You can check regional availability with [`getSupportedCountries()`](../api-reference.md#getsupportedcountries):
+You can check regional availability with [`getSupportedCountries()`](/sdk/fiat-modules/fiat-moonpay/api-reference/#getsupportedcountries):
 
 {% code title="Supported countries" lineNumbers="true" %}
 ```typescript
@@ -134,7 +134,7 @@ console.log(countries)
 
 ## Widget customization
 
-You can pass UI options under `config` to [`buy()`](../api-reference.md#buy-options) (see [`MoonPayBuyParams`](../api-reference.md#moonpaybuyparams)):
+You can pass UI options under `config` to [`buy()`](/sdk/fiat-modules/fiat-moonpay/api-reference/#buy-options) (see [`MoonPayBuyParams`](/sdk/fiat-modules/fiat-moonpay/api-reference/#moonpaybuyparams)):
 
 {% code title="Themed buy widget" lineNumbers="true" %}
 ```typescript
@@ -159,7 +159,7 @@ window.open(result.buyUrl, '_blank')
 
 ## Custom recipient addresses
 
-By default [`buy()`](../api-reference.md#buy-options) credits the connected wallet. You can override the destination with `recipient`:
+By default [`buy()`](/sdk/fiat-modules/fiat-moonpay/api-reference/#buy-options) credits the connected wallet. You can override the destination with `recipient`:
 
 {% code title="Custom buy recipient" lineNumbers="true" %}
 ```typescript
@@ -174,7 +174,7 @@ window.open(result.buyUrl, '_blank')
 ```
 {% endcode %}
 
-You can set a refund destination on sells with `refundAddress` on [`sell()`](../api-reference.md#sell-options):
+You can set a refund destination on sells with `refundAddress` on [`sell()`](/sdk/fiat-modules/fiat-moonpay/api-reference/#sell-options):
 
 {% code title="Custom sell refund address" lineNumbers="true" %}
 ```typescript
@@ -191,6 +191,6 @@ window.open(result.sellUrl, '_blank')
 
 ## Next Steps
 
-- [Manage transactions](manage-transactions.md)
-- [Get started](get-started.md)
-- [API reference](../api-reference.md)
+- [Manage transactions](/sdk/fiat-modules/fiat-moonpay/guides/manage-transactions/)
+- [Get started](/sdk/fiat-modules/fiat-moonpay/guides/get-started/)
+- [API reference](/sdk/fiat-modules/fiat-moonpay/api-reference/)

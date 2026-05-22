@@ -94,7 +94,7 @@ This package supports bridging from EVM source chains to EVM and non-EVM destina
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">Node.js & Bare Quickstart</a>
+				<a href="/start-building/nodejs-bare-quickstart/">Node.js & Bare Quickstart</a>
 			</td>
 		</tr>
         <tr>
@@ -106,7 +106,7 @@ This package supports bridging from EVM source chains to EVM and non-EVM destina
 			</td>
 			<td>Get started with WDK's Bridge USD₮0 EVM Protocol configuration</td>
 			<td>
-				<a href="./configuration.md">WDK Bridge USD₮0 EVM Protocol Configuration</a>
+				<a href="/sdk/bridge-modules/bridge-usdt0-evm/configuration/">WDK Bridge USD₮0 EVM Protocol Configuration</a>
 			</td>
 		</tr>
         <tr>
@@ -118,7 +118,7 @@ This package supports bridging from EVM source chains to EVM and non-EVM destina
 			</td>
 			<td>Get started with WDK's Bridge USD₮0 EVM Protocol API</td>
 			<td>
-				<a href="./api-reference.md">WDK Bridge USD₮0 EVM Protocol API</a>
+				<a href="/sdk/bridge-modules/bridge-usdt0-evm/api-reference/">WDK Bridge USD₮0 EVM Protocol API</a>
 			</td>
 		</tr>
         <tr>
@@ -130,7 +130,7 @@ This package supports bridging from EVM source chains to EVM and non-EVM destina
 			</td>
 			<td>Get started with WDK's Bridge USD₮0 EVM Protocol usage</td>
 			<td>
-				<a href="./usage.md">WDK Bridge USD₮0 EVM Protocol Usage</a>
+				<a href="/sdk/bridge-modules/bridge-usdt0-evm/usage/">WDK Bridge USD₮0 EVM Protocol Usage</a>
 			</td>
 		</tr>
 	</tbody>

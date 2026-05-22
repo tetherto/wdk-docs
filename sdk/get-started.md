@@ -63,7 +63,7 @@ WDK modules are organized into five main categories, each serving a specific pur
 			</td>
 			<td>Main orchestrator and shared utilities</td>
 			<td>
-				<a href="./core-module/README.md">@tetherto/wdk</a>
+				<a href="/sdk/core-module/">@tetherto/wdk</a>
 			</td>
 		</tr>
 		<tr>
@@ -72,7 +72,7 @@ WDK modules are organized into five main categories, each serving a specific pur
 			</td>
 			<td>Blockchain-specific wallet operations</td>
 			<td>
-				<a href="./wallet-modules/README.md">Wallet Modules</a>
+				<a href="/sdk/wallet-modules/">Wallet Modules</a>
 			</td>
 		</tr>
 		<tr>
@@ -81,7 +81,7 @@ WDK modules are organized into five main categories, each serving a specific pur
 			</td>
 			<td>Token swapping across DEXs</td>
 			<td>
-				<a href="./swap-modules/README.md">Swap Modules</a>
+				<a href="/sdk/swap-modules/">Swap Modules</a>
 			</td>
 		</tr>
 		<tr>
@@ -90,7 +90,7 @@ WDK modules are organized into five main categories, each serving a specific pur
 			</td>
 			<td>Cross-chain asset transfers</td>
 			<td>
-				<a href="./bridge-modules/README.md">Bridge Modules</a>
+				<a href="/sdk/bridge-modules/">Bridge Modules</a>
 			</td>
 		</tr>
 		<tr>
@@ -99,7 +99,7 @@ WDK modules are organized into five main categories, each serving a specific pur
 			</td>
 			<td>DeFi lending and borrowing</td>
 			<td>
-				<a href="./lending-modules/README.md">Lending Modules</a>
+				<a href="/sdk/lending-modules/">Lending Modules</a>
 			</td>
 		</tr>
 	</tbody>
@@ -203,7 +203,7 @@ const swapResult = await wdkWithProtocols.executeProtocol('swap-velora-evm', {
 npx @tetherto/create-wdk-module@latest
 ```
 
-See the [Create WDK Module](../tools/create-wdk-module.md) page for the full guide, CLI options, and generated project structure.
+See the [Create WDK Module](/tools/create-wdk-module/) page for the full guide, CLI options, and generated project structure.
 {% endhint %}
 
 WDK's modular architecture makes it straightforward to add support for new blockchains or protocols. Each module type has a specific interface that must be implemented.
@@ -319,7 +319,7 @@ const balance = await customAccount.getBalance()
 
 
 {% hint style="info" %}
-**Learn More**: For detailed information on creating custom modules, check out the [Create WDK Module](../tools/create-wdk-module.md) tool and the [Community Modules](../community-modules/) page.
+**Learn More**: For detailed information on creating custom modules, check out the [Create WDK Module](/tools/create-wdk-module/) tool and the [Community Modules](/sdk/community-modules/) page.
 {% endhint %}
 
 ***
@@ -347,7 +347,7 @@ Ready to start building? Choose your development environment:
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="/start-building/nodejs-bare-quickstart/">nodejs-quickstart.md</a>
 			</td>
 		</tr>
 		<tr>
@@ -359,7 +359,7 @@ Ready to start building? Choose your development environment:
 			</td>
 			<td>Build mobile wallets with React Native Expo</td>
 			<td>
-				<a href="../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
+				<a href="/start-building/react-native-quickstart/">react-native-quickstart.md</a>
 			</td>
 		</tr>
 	</tbody>

@@ -126,4 +126,4 @@ const result = await usdt0.bridge({
 
 ## Next Steps
 
-Learn how to [configure middleware](./middleware.md) to add logging or failover protection to your wallet interactions.
+Learn how to [configure middleware](/sdk/core-module/guides/middleware/) to add logging or failover protection to your wallet interactions.

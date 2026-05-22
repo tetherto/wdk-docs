@@ -36,11 +36,11 @@ You can try all features without real funds required. You can use the Pimlico or
 <a class="button primary" href="https://dashboard.pimlico.io/test-erc20-faucet"> Get mock/test USD₮ on Pimlico </a>
 <a class="button primary" href="https://dashboard.candide.dev/faucet"> Get mock/test USD₮ on Candide </a>
 
-See the [configuration.md](../sdk/wallet-modules/wallet-evm-erc-4337/configuration.md) for quick setup and Sepolia testnet configuration.
+See the [configuration.md](/sdk/wallet-modules/wallet-evm-erc-4337/configuration/) for quick setup and Sepolia testnet configuration.
 {% endhint %}
 
 {% hint style="info" %}
-**Want to build faster?** Connect your AI coding assistant to WDK docs for context-aware help. [Learn how →](build-with-ai.md)
+**Want to build faster?** Connect your AI coding assistant to WDK docs for context-aware help. [Learn how →](/start-building/build-with-ai/)
 {% endhint %}
 
 
@@ -114,7 +114,7 @@ EXPO_PUBLIC_TRON_API_SECRET=your_tron_api_secret
 ```
 
 {% hint style="info" %}
-**Where do I get an Indexer API key?** The WDK Indexer is required for transaction history and balance indexing. Get your free API key from the [Indexer API setup guide](../tools/indexer-api/get-started.md).
+**Where do I get an Indexer API key?** The WDK Indexer is required for transaction history and balance indexing. Get your free API key from the [Indexer API setup guide](/tools/indexer-api/get-started/).
 {% endhint %}
 
 ### Step 4: Run Your App
@@ -286,7 +286,7 @@ export const wdkConfigs: WdkConfigs = {
 ```
 
 {% hint style="info" %}
-This example uses **Sepolia testnet** with a free public RPC so you can start immediately without API keys. For production or mainnet configuration, see the [Chain Configuration Guide](../sdk/core-module/configuration.md).
+This example uses **Sepolia testnet** with a free public RPC so you can start immediately without API keys. For production or mainnet configuration, see the [Chain Configuration Guide](/sdk/core-module/configuration/).
 {% endhint %}
 
 ### Step 5: Add WdkAppProvider
@@ -368,7 +368,7 @@ function WalletScreen() {
 }
 ```
 
-For the full list of available hooks and their parameters, see the [React Native Core API Reference](../tools/react-native-core/api-reference.md).
+For the full list of available hooks and their parameters, see the [React Native Core API Reference](/tools/react-native-core/api-reference/).
 
 ### Step 7: Rebuild and Run
 
@@ -564,14 +564,14 @@ Ready to dive deeper? Check out these resources:
 
 ### Core Concepts
 
-- [**React Native Core Docs**](../tools/react-native-core/) - Full documentation for `@tetherto/wdk-react-native-core`
-- [**API Reference**](../tools/react-native-core/api-reference.md) - Complete hook and type reference
-- [**Chain Configuration**](../sdk/core-module/configuration.md#wallet-configuration) - Configure blockchain networks
+- [**React Native Core Docs**](/tools/react-native-core/) - Full documentation for `@tetherto/wdk-react-native-core`
+- [**API Reference**](/tools/react-native-core/api-reference/) - Complete hook and type reference
+- [**Chain Configuration**](/sdk/core-module/configuration/#wallet-configuration) - Configure blockchain networks
 
 ### Examples & Starters
 
-- [**React Native Starter**](../examples-and-starters/react-native-starter.md) - Full-featured starter app
-- [**React Native UI Kit**](../ui-kits/react-native-ui-kit/) - Pre-built wallet components
+- [**React Native Starter**](/examples-and-starters/react-native-starter/) - Full-featured starter app
+- [**React Native UI Kit**](/ui-kits/react-native-ui-kit/) - Pre-built wallet components
 
 ### **Need Help?**
 

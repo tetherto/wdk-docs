@@ -37,43 +37,43 @@ The `@tetherto/wdk-wallet-tron-gasfree` module provides wallet management for th
       <td><i class="fa-rocket">:rocket:</i></td>
       <td><strong>Get Started</strong></td>
       <td>Install the package and create your first gas-free wallet.</td>
-      <td><a href="./guides/get-started.md">Get Started</a></td>
+      <td><a href="/sdk/wallet-modules/wallet-tron-gasfree/guides/get-started/">Get Started</a></td>
     </tr>
     <tr>
       <td><i class="fa-user">:user:</i></td>
       <td><strong>Manage Accounts</strong></td>
       <td>Work with multiple accounts and custom derivation paths.</td>
-      <td><a href="./guides/manage-accounts.md">Manage Accounts</a></td>
+      <td><a href="/sdk/wallet-modules/wallet-tron-gasfree/guides/manage-accounts/">Manage Accounts</a></td>
     </tr>
     <tr>
       <td><i class="fa-wallet">:wallet:</i></td>
       <td><strong>Check Balances</strong></td>
       <td>Query native TRX and TRC20 token balances.</td>
-      <td><a href="./guides/check-balances.md">Check Balances</a></td>
+      <td><a href="/sdk/wallet-modules/wallet-tron-gasfree/guides/check-balances/">Check Balances</a></td>
     </tr>
     <tr>
       <td><i class="fa-exchange-alt">:exchange-alt:</i></td>
       <td><strong>Send TRX</strong></td>
       <td>Send native TRX transactions.</td>
-      <td><a href="./guides/send-transactions.md">Send TRX</a></td>
+      <td><a href="/sdk/wallet-modules/wallet-tron-gasfree/guides/send-transactions/">Send TRX</a></td>
     </tr>
     <tr>
       <td><i class="fa-coins">:coins:</i></td>
       <td><strong>Transfer TRC20 Tokens</strong></td>
       <td>Transfer TRC20 tokens gas-free.</td>
-      <td><a href="./guides/transfer-tokens.md">Transfer TRC20 Tokens</a></td>
+      <td><a href="/sdk/wallet-modules/wallet-tron-gasfree/guides/transfer-tokens/">Transfer TRC20 Tokens</a></td>
     </tr>
     <tr>
       <td><i class="fa-key">:key:</i></td>
       <td><strong>Sign and Verify Messages</strong></td>
       <td>Sign messages and verify signatures.</td>
-      <td><a href="./guides/sign-verify-messages.md">Sign and Verify Messages</a></td>
+      <td><a href="/sdk/wallet-modules/wallet-tron-gasfree/guides/sign-verify-messages/">Sign and Verify Messages</a></td>
     </tr>
     <tr>
       <td><i class="fa-exclamation-triangle">:exclamation-triangle:</i></td>
       <td><strong>Handle Errors</strong></td>
       <td>Handle errors, manage fees, and dispose of sensitive data.</td>
-      <td><a href="./guides/handle-errors.md">Handle Errors</a></td>
+      <td><a href="/sdk/wallet-modules/wallet-tron-gasfree/guides/handle-errors/">Handle Errors</a></td>
     </tr>
   </tbody>
 </table>
@@ -98,7 +98,7 @@ The `@tetherto/wdk-wallet-tron-gasfree` module provides wallet management for th
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="/start-building/nodejs-bare-quickstart/">nodejs-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -110,7 +110,7 @@ The `@tetherto/wdk-wallet-tron-gasfree` module provides wallet management for th
 			</td>
 			<td>Build mobile wallets with React Native Expo</td>
 			<td>
-				<a href="../../../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
+				<a href="/start-building/react-native-quickstart/">react-native-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -122,7 +122,7 @@ The `@tetherto/wdk-wallet-tron-gasfree` module provides wallet management for th
 			</td>
 			<td>Get started with WDK's Tron Gasfree Wallet Configuration</td>
 			<td>
-				<a href="./configuration.md">WDK Tron Gasfree Wallet Configuration</a>
+				<a href="/sdk/wallet-modules/wallet-tron-gasfree/configuration/">WDK Tron Gasfree Wallet Configuration</a>
 			</td>
 		</tr>
         <tr>
@@ -134,7 +134,7 @@ The `@tetherto/wdk-wallet-tron-gasfree` module provides wallet management for th
 			</td>
 			<td>Get started with WDK's Tron Gasfree Wallet API</td>
 			<td>
-				<a href="./api-reference.md">WDK Tron Gasfree Wallet API</a>
+				<a href="/sdk/wallet-modules/wallet-tron-gasfree/api-reference/">WDK Tron Gasfree Wallet API</a>
 			</td>
 		</tr>
 	</tbody>

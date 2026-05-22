@@ -23,7 +23,7 @@ This guide explains how to check [native token balances](#native-token-balance),
 
 ## Native Token Balance
 
-You can retrieve the native token balance (e.g., ETH) using [`account.getBalance()`](../api-reference.md#getbalance):
+You can retrieve the native token balance (e.g., ETH) using [`account.getBalance()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#getbalance):
 
 {% code title="Get Native Balance" lineNumbers="true" %}
 ```javascript
@@ -34,7 +34,7 @@ console.log('Native balance:', balance, 'wei')
 
 ## ERC-20 Token Balance
 
-You can check the balance of a specific ERC-20 token using [`account.getTokenBalance()`](../api-reference.md#gettokenbalance-tokenaddress):
+You can check the balance of a specific ERC-20 token using [`account.getTokenBalance()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#gettokenbalance-tokenaddress):
 
 {% code title="Get ERC-20 Balance" lineNumbers="true" %}
 ```javascript
@@ -45,7 +45,7 @@ console.log('USDT balance:', tokenBalance)
 
 ## Multiple Token Balances
 
-You can check balances for multiple ERC-20 tokens in a single call using [`account.getTokenBalances()`](../api-reference.md#gettokenbalances-tokenaddresses):
+You can check balances for multiple ERC-20 tokens in a single call using [`account.getTokenBalances()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#gettokenbalances-tokenaddresses):
 
 {% code title="Get Multiple Token Balances" lineNumbers="true" %}
 ```javascript
@@ -59,7 +59,7 @@ console.log('Multi-token balances:', tokenBalances)
 
 ## Paymaster Token Balance
 
-You can check the paymaster token balance used for paying gas fees using [`account.getPaymasterTokenBalance()`](../api-reference.md#getpaymastertokenbalance):
+You can check the paymaster token balance used for paying gas fees using [`account.getPaymasterTokenBalance()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#getpaymastertokenbalance):
 
 {% code title="Get Paymaster Token Balance" lineNumbers="true" %}
 ```javascript
@@ -74,7 +74,7 @@ The paymaster token balance determines how many gasless transactions you can exe
 
 ## Read-Only Account Balances
 
-You can check balances for any smart account address without a seed phrase using [`WalletAccountReadOnlyEvmErc4337`](../api-reference.md#walletaccountreadonlyevmerc4337):
+You can check balances for any smart account address without a seed phrase using [`WalletAccountReadOnlyEvmErc4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#walletaccountreadonlyevmerc4337):
 
 {% code title="Read-Only Balance" lineNumbers="true" %}
 ```javascript
@@ -100,4 +100,4 @@ console.log('Read-only account balance:', balance, 'wei')
 
 ## Next Steps
 
-With balance checks in place, learn how to [send gasless transactions](./send-transactions.md).
+With balance checks in place, learn how to [send gasless transactions](/sdk/wallet-modules/wallet-evm-erc-4337/guides/send-transactions/).

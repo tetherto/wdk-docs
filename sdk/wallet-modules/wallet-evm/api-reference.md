@@ -1001,7 +1001,7 @@ interface EvmTransactionReceipt {
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="/start-building/nodejs-bare-quickstart/">nodejs-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -1013,7 +1013,7 @@ interface EvmTransactionReceipt {
 			</td>
 			<td>Build mobile wallets with React Native Expo</td>
 			<td>
-				<a href="../../../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
+				<a href="/start-building/react-native-quickstart/">react-native-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -1025,7 +1025,7 @@ interface EvmTransactionReceipt {
 			</td>
 			<td>Get started with WDK's EVM Wallet Usage</td>
 			<td>
-				<a href="./usage.md">WDK EVM Wallet Usage</a>
+				<a href="/sdk/wallet-modules/wallet-evm/usage/">WDK EVM Wallet Usage</a>
 			</td>
 		</tr>
         <tr>
@@ -1037,7 +1037,7 @@ interface EvmTransactionReceipt {
 			</td>
 			<td>Get started with WDK's EVM Wallet Configuration</td>
 			<td>
-				<a href="./configuration.md">WDK EVM Wallet Configuration</a>
+				<a href="/sdk/wallet-modules/wallet-evm/configuration/">WDK EVM Wallet Configuration</a>
 			</td>
 		</tr>
 	</tbody>

@@ -79,7 +79,7 @@ function WalletScreen() {
 }
 ```
 
-For a full integration guide, see the [React Native Quickstart](../../start-building/react-native-quickstart.md).
+For a full integration guide, see the [React Native Quickstart](/start-building/react-native-quickstart/).
 
 ## Bundle Configuration
 
@@ -199,7 +199,7 @@ WdkAppProvider
 			</td>
 			<td>Complete reference for all hooks, components, types, and utilities</td>
 			<td>
-				<a href="./api-reference.md">api-reference.md</a>
+				<a href="/tools/react-native-core/api-reference/">api-reference.md</a>
 			</td>
 		</tr>
 		<tr>
@@ -211,7 +211,7 @@ WdkAppProvider
 			</td>
 			<td>Step-by-step integration guide for new and existing apps</td>
 			<td>
-				<a href="../../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
+				<a href="/start-building/react-native-quickstart/">react-native-quickstart.md</a>
 			</td>
 		</tr>
 	</tbody>

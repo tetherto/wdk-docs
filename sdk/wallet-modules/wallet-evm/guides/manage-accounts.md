@@ -80,4 +80,4 @@ async function listAccounts(wallet) {
 
 ## Next Steps
 
-Now that you can access your accounts, learn how to [check balances](./check-balances.md).
+Now that you can access your accounts, learn how to [check balances](/sdk/wallet-modules/wallet-evm/guides/check-balances/).

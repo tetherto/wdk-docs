@@ -212,5 +212,5 @@ For `sell()`, the widget config uses `MoonPaySellParams` with different options:
 
 ## Next Steps
 
-- [Usage Guide](./usage.md) - Learn how to integrate MoonPay
-- [API Reference](./api-reference.md) - Complete API documentation
+- [Usage Guide](/sdk/fiat-modules/fiat-moonpay/usage/) - Learn how to integrate MoonPay
+- [API Reference](/sdk/fiat-modules/fiat-moonpay/api-reference/) - Complete API documentation

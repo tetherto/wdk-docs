@@ -19,7 +19,7 @@ layout:
 
 # Execute Swaps
 
-This guide explains how to run a [basic exact-input swap](#basic-exact-input-swap), an [exact-output swap](#exact-output-swap), and a [swap from an ERC-4337 smart account](#swap-with-erc-4337). You should already have a [`VeloraProtocolEvm`](../api-reference.md#class-veloraprotocolevm) instance.
+This guide explains how to run a [basic exact-input swap](#basic-exact-input-swap), an [exact-output swap](#exact-output-swap), and a [swap from an ERC-4337 smart account](#swap-with-erc-4337). You should already have a [`VeloraProtocolEvm`](/sdk/swap-modules/swap-velora-evm/api-reference/#class-veloraprotocolevm) instance.
 
 {% hint style="warning" %}
 Swaps spend tokens and gas on-chain. Use amounts you control and an RPC you trust.
@@ -27,7 +27,7 @@ Swaps spend tokens and gas on-chain. Use amounts you control and an RPC you trus
 
 ## Basic exact-input swap
 
-You can sell an exact amount of the input token using [`swap()`](../api-reference.md#swap-options-config):
+You can sell an exact amount of the input token using [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference/#swap-options-config):
 
 {% code title="Exact input: USDT to WETH" lineNumbers="true" %}
 ```javascript
@@ -46,7 +46,7 @@ console.log('Tokens bought (base units):', result.tokenOutAmount)
 
 ## Exact output swap
 
-You can receive an exact amount of the output token by passing `tokenOutAmount` to [`swap()`](../api-reference.md#swap-options-config):
+You can receive an exact amount of the output token by passing `tokenOutAmount` to [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference/#swap-options-config):
 
 {% code title="Exact output amount" lineNumbers="true" %}
 ```javascript
@@ -64,7 +64,7 @@ console.log('Tokens bought (base units):', result.tokenOutAmount)
 
 ## Swap with ERC-4337
 
-You can perform a user-operation-backed swap by constructing [`VeloraProtocolEvm`](../api-reference.md#class-veloraprotocolevm) with [`WalletAccountEvmErc4337`](../../../wallet-modules/wallet-evm-erc-4337/api-reference.md#walletaccountevmerc4337) and passing paymaster options to [`swap()`](../api-reference.md#swap-options-config):
+You can perform a user-operation-backed swap by constructing [`VeloraProtocolEvm`](/sdk/swap-modules/swap-velora-evm/api-reference/#class-veloraprotocolevm) with [`WalletAccountEvmErc4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#walletaccountevmerc4337) and passing paymaster options to [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference/#swap-options-config):
 
 {% code title="Swap with smart account and paymaster" lineNumbers="true" %}
 ```javascript
@@ -100,6 +100,6 @@ Token addresses must match the chain your account uses (for example, mainnet USD
 
 ## Next Steps
 
-- [Get swap quotes](get-swap-quotes.md) before sending
-- [Handle errors](handle-errors.md)
-- [Get started](get-started.md) if you still need setup
+- [Get swap quotes](/sdk/swap-modules/swap-velora-evm/guides/get-swap-quotes/) before sending
+- [Handle errors](/sdk/swap-modules/swap-velora-evm/guides/handle-errors/)
+- [Get started](/sdk/swap-modules/swap-velora-evm/guides/get-started/) if you still need setup

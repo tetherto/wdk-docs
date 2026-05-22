@@ -57,9 +57,9 @@ const aave = new AaveProtocolEvm(account)
 
 ## ERC‑4337 (Account Abstraction)
 
-When using ERC‑4337 smart accounts, every mutating method and quote helper accepts an optional `config` override. In `v1.0.0-beta.4`, that override matches the three gas-payment families exposed by [`@tetherto/wdk-wallet-evm-erc-4337`](../../../wallet-modules/wallet-evm-erc-4337/configuration.md): paymaster token, sponsorship policy, or native coins.
+When using ERC‑4337 smart accounts, every mutating method and quote helper accepts an optional `config` override. In `v1.0.0-beta.4`, that override matches the three gas-payment families exposed by [`@tetherto/wdk-wallet-evm-erc-4337`](/sdk/wallet-modules/wallet-evm-erc-4337/configuration/): paymaster token, sponsorship policy, or native coins.
 
-Use the fields that match the gas-payment mode you want for that call. For the full field-level definitions, see the [`@tetherto/wdk-wallet-evm-erc-4337` configuration docs](../../../wallet-modules/wallet-evm-erc-4337/configuration.md) and [`Config Override`](../../../wallet-modules/wallet-evm-erc-4337/api-reference.md#config-override) reference.
+Use the fields that match the gas-payment mode you want for that call. For the full field-level definitions, see the [`@tetherto/wdk-wallet-evm-erc-4337` configuration docs](/sdk/wallet-modules/wallet-evm-erc-4337/configuration/) and [`Config Override`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#config-override) reference.
 
 ```javascript
 import { WalletAccountEvmErc4337 } from '@tetherto/wdk-wallet-evm-erc-4337'
@@ -149,7 +149,7 @@ await aave.repay({ token: 'TOKEN_ADDRESS', amount: 1000000n })
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">Node.js & Bare Quickstart</a>
+				<a href="/start-building/nodejs-bare-quickstart/">Node.js & Bare Quickstart</a>
 			</td>
 		</tr>
     <tr>
@@ -161,7 +161,7 @@ await aave.repay({ token: 'TOKEN_ADDRESS', amount: 1000000n })
 			</td>
 			<td>Get started with WDK's Lending Aave EVM Protocol API</td>
 			<td>
-				<a href="./api-reference.md">WDK Lending Aave EVM Protocol API</a>
+				<a href="/sdk/lending-modules/lending-aave-evm/api-reference/">WDK Lending Aave EVM Protocol API</a>
 			</td>
 		</tr>
         <tr>
@@ -173,7 +173,7 @@ await aave.repay({ token: 'TOKEN_ADDRESS', amount: 1000000n })
 			</td>
 			<td>Get started with WDK's Lending Aave EVM Protocol usage</td>
 			<td>
-				<a href="./usage.md">WDK Lending Aave EVM Protocol Usage</a>
+				<a href="/sdk/lending-modules/lending-aave-evm/usage/">WDK Lending Aave EVM Protocol Usage</a>
 			</td>
 		</tr>
 	</tbody>
@@ -184,5 +184,4 @@ await aave.repay({ token: 'TOKEN_ADDRESS', amount: 1000000n })
 ### Need Help?
 
 {% include "../../../.gitbook/includes/support-cards.md" %}
-
 

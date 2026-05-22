@@ -23,15 +23,15 @@ This guide covers [prerequisites](#prerequisites), how to [run a standard EVM-to
 
 ## Prerequisites
 
-Complete [Get Started](./get-started.md): an account from [`new WalletAccountEvm(seed, path, config?)`](../../../wallet-modules/wallet-evm/api-reference.md#constructor-1) and a bridge from [`new Usdt0ProtocolEvm(account, config?)`](../api-reference.md#constructor). The source chain RPC must match the account network.
+Complete [Get Started](/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started/): an account from [`new WalletAccountEvm(seed, path, config?)`](/sdk/wallet-modules/wallet-evm/api-reference/#constructor-1) and a bridge from [`new Usdt0ProtocolEvm(account, config?)`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#constructor). The source chain RPC must match the account network.
 
-Before calling [`bridge()`](../api-reference.md#bridge-options-config), approve the source-chain bridge spender for the token and amount you want to bridge. If you pass `oftContractAddress`, use the same address as the approval `spender`.
+Before calling [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#bridge-options-config), approve the source-chain bridge spender for the token and amount you want to bridge. If you pass `oftContractAddress`, use the same address as the approval `spender`.
 
 For placeholder values such as `USDT0_OFT_ADDRESS`, use the current token and bridge contract addresses from the [USDT0 deployments](https://docs.usdt0.to/technical-documentation/deployments). For the route mapping used by the WDK package, see the package [`src/config.js`](https://github.com/tetherto/wdk-protocol-bridge-usdt0-evm/blob/main/src/config.js), especially `oftContract`, `legacyMeshContract`, and `xautOftContract`.
 
 ## Run a standard EVM-to-EVM bridge
 
-You can move USD₮ on the source chain toward another EVM chain by calling [`bridge()`](../api-reference.md#bridge-options-config) with `targetChain`, `recipient`, `token`, and `amount` (token base units). Amount `1000000n` is 1 USD₮ when the token uses 6 decimals.
+You can move USD₮ on the source chain toward another EVM chain by calling [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#bridge-options-config) with `targetChain`, `recipient`, `token`, and `amount` (token base units). Amount `1000000n` is 1 USD₮ when the token uses 6 decimals.
 
 {% code title="Standard EVM bridge" lineNumbers="true" %}
 ```javascript
@@ -65,7 +65,7 @@ console.log('Bridge fee:', result.bridgeFee, 'wei')
 
 ## Quote bridge fees
 
-You can estimate gas and protocol fees without sending transactions using [`quoteBridge()`](../api-reference.md#quotebridge-options-config):
+You can estimate gas and protocol fees without sending transactions using [`quoteBridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#quotebridge-options-config):
 
 {% code title="Quote before bridging" lineNumbers="true" %}
 ```javascript
@@ -81,15 +81,15 @@ console.log('Bridge fee:', quote.bridgeFee, 'wei')
 ```
 {% endcode %}
 
-Compare `quote.fee` and `quote.bridgeFee` to your risk limits before calling [`bridge()`](../api-reference.md#bridge-options-config).
+Compare `quote.fee` and `quote.bridgeFee` to your risk limits before calling [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#bridge-options-config).
 
 {% hint style="info" %}
-Some providers estimate the bridge transaction during [`quoteBridge()`](../api-reference.md#quotebridge-options-config). If the estimate fails because allowance is missing, approve the same `token`, `spender`, and `amount` before quoting.
+Some providers estimate the bridge transaction during [`quoteBridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#quotebridge-options-config). If the estimate fails because allowance is missing, approve the same `token`, `spender`, and `amount` before quoting.
 {% endhint %}
 
 ## Override OFT contract and destination endpoint
 
-You can point [`bridge()`](../api-reference.md#bridge-options-config) at a specific OFT contract and LayerZero destination endpoint ID when auto-resolution is not enough. Supply values from your deployment or integration configuration (environment variables shown for illustration):
+You can point [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#bridge-options-config) at a specific OFT contract and LayerZero destination endpoint ID when auto-resolution is not enough. Supply values from your deployment or integration configuration (environment variables shown for illustration):
 
 {% code title="Custom OFT and dstEid on bridge" lineNumbers="true" %}
 ```javascript
@@ -116,7 +116,7 @@ console.log('Bridge transaction hash:', result.hash)
 ```
 {% endcode %}
 
-You can obtain matching fee estimates with [`quoteBridge()`](../api-reference.md#quotebridge-options-config) using the same `oftContractAddress` and `dstEid` fields:
+You can obtain matching fee estimates with [`quoteBridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#quotebridge-options-config) using the same `oftContractAddress` and `dstEid` fields:
 
 {% code title="Quote with OFT overrides" lineNumbers="true" %}
 ```javascript
@@ -139,7 +139,7 @@ Invalid pairings of `oftContractAddress` and `dstEid` fail at execution time. Va
 
 ## Cap fees with bridgeMaxFee
 
-You can pass `bridgeMaxFee` into the [`new Usdt0ProtocolEvm(account, config?)`](../api-reference.md#constructor) constructor so [`bridge()`](../api-reference.md#bridge-options-config) rejects operations whose cost exceeds the cap:
+You can pass `bridgeMaxFee` into the [`new Usdt0ProtocolEvm(account, config?)`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#constructor) constructor so [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#bridge-options-config) rejects operations whose cost exceeds the cap:
 
 {% code title="Protocol-level bridgeMaxFee" lineNumbers="true" %}
 ```javascript
@@ -152,9 +152,9 @@ const cappedBridge = new Usdt0ProtocolEvm(account, {
 {% endcode %}
 
 {% hint style="warning" %}
-If the quote exceeds `bridgeMaxFee`, [`bridge()`](../api-reference.md#bridge-options-config) throws (for example when the message includes `Exceeded maximum fee`). ERC-4337 accounts can also pass `bridgeMaxFee` in the second argument to [`bridge()`](../api-reference.md#bridge-options-config); see [Bridge with ERC-4337](./bridge-with-4337.md).
+If the quote exceeds `bridgeMaxFee`, [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#bridge-options-config) throws (for example when the message includes `Exceeded maximum fee`). ERC-4337 accounts can also pass `bridgeMaxFee` in the second argument to [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#bridge-options-config); see [Bridge with ERC-4337](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337/).
 {% endhint %}
 
 ## Next Steps
 
-Bridge to Solana, TON, or TRON in [Bridge cross-ecosystem](./bridge-cross-ecosystem.md), or switch to a smart account in [Bridge with ERC-4337](./bridge-with-4337.md).
+Bridge to Solana, TON, or TRON in [Bridge cross-ecosystem](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-cross-ecosystem/), or switch to a smart account in [Bridge with ERC-4337](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337/).

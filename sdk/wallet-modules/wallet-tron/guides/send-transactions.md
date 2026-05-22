@@ -27,7 +27,7 @@ On Tron, values are expressed in sun (1 TRX = 1,000,000 sun).
 
 ## Send Native TRX
 
-You can transfer TRX to a recipient address using [`account.sendTransaction()`](../api-reference.md#sendtransaction-tx):
+You can transfer TRX to a recipient address using [`account.sendTransaction()`](/sdk/wallet-modules/wallet-tron/api-reference/#sendtransaction-tx):
 
 {% code title="Send TRX" lineNumbers="true" %}
 ```javascript
@@ -42,7 +42,7 @@ console.log('Transaction fee:', result.fee, 'sun')
 
 ## Estimate Transaction Fees
 
-You can get a fee estimate before sending using [`account.quoteSendTransaction()`](../api-reference.md#quotesendtransaction-tx):
+You can get a fee estimate before sending using [`account.quoteSendTransaction()`](/sdk/wallet-modules/wallet-tron/api-reference/#quotesendtransaction-tx):
 
 {% code title="Quote Transaction Fee" lineNumbers="true" %}
 ```javascript
@@ -56,7 +56,7 @@ console.log('Estimated fee:', quote.fee, 'sun')
 
 ## Use Dynamic Fee Rates
 
-You can retrieve current fee rates from the wallet manager using [`wallet.getFeeRates()`](../api-reference.md#getfeerates):
+You can retrieve current fee rates from the wallet manager using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-tron/api-reference/#getfeerates):
 
 {% code title="Get Fee Rates" lineNumbers="true" %}
 ```javascript
@@ -68,4 +68,4 @@ console.log('Fast fee rate:', feeRates.fast, 'sun')
 
 ## Next Steps
 
-To transfer TRC20 tokens instead of native TRX, see [Transfer TRC20 Tokens](./transfer-tokens.md).
+To transfer TRC20 tokens instead of native TRX, see [Transfer TRC20 Tokens](/sdk/wallet-modules/wallet-tron/guides/transfer-tokens/).

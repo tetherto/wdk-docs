@@ -23,7 +23,7 @@ This guide explains how to transfer ERC-20 tokens (such as USD₮ or XAU₮), es
 
 ## Transfer Tokens
 
-Use [`account.transfer()`](/sdk/wallet-modules/wallet-evm/api-reference#transfer-options) to send ERC-20 tokens to a recipient address.
+Use [`account.transfer()`](/sdk/wallet-modules/wallet-evm/api-reference/#transfer-options) to send ERC-20 tokens to a recipient address.
 
 {% code title="Transfer ERC-20 Tokens" lineNumbers="true" %}
 ```javascript
@@ -39,7 +39,7 @@ console.log('Transfer fee:', transferResult.fee, 'wei')
 
 ## Estimate Transfer Fees
 
-Use [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-evm/api-reference#quotetransfer-options) to get a fee estimate before executing the transfer.
+Use [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-evm/api-reference/#quotetransfer-options) to get a fee estimate before executing the transfer.
 
 {% code title="Quote Token Transfer" lineNumbers="true" %}
 ```javascript
@@ -72,7 +72,7 @@ if (!recipient.startsWith('0x') || recipient.length !== 42) {
 
 ### 2. Check Balances
 
-Use [`account.getTokenBalance()`](/sdk/wallet-modules/wallet-evm/api-reference#gettokenbalance-tokenaddress) and [`account.getBalance()`](/sdk/wallet-modules/wallet-evm/api-reference#getbalance) to verify sufficient funds:
+Use [`account.getTokenBalance()`](/sdk/wallet-modules/wallet-evm/api-reference/#gettokenbalance-tokenaddress) and [`account.getBalance()`](/sdk/wallet-modules/wallet-evm/api-reference/#getbalance) to verify sufficient funds:
 
 {% code title="Balance Check" lineNumbers="true" %}
 ```javascript
@@ -90,7 +90,7 @@ if (nativeBalance === 0n) {
 
 ### 3. Quote and Execute Transfer
 
-Use [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-evm/api-reference#quotetransfer-options) to estimate fees, then [`account.transfer()`](/sdk/wallet-modules/wallet-evm/api-reference#transfer-options) to execute:
+Use [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-evm/api-reference/#quotetransfer-options) to estimate fees, then [`account.transfer()`](/sdk/wallet-modules/wallet-evm/api-reference/#transfer-options) to execute:
 
 {% code title="Quote and Execute" lineNumbers="true" %}
 ```javascript
@@ -113,4 +113,4 @@ console.log('Fee paid:', result.fee, 'wei')
 
 ## Next Steps
 
-Learn how to [sign and verify messages](./sign-verify-messages.md) with your EVM account.
+Learn how to [sign and verify messages](/sdk/wallet-modules/wallet-evm/guides/sign-verify-messages/) with your EVM account.

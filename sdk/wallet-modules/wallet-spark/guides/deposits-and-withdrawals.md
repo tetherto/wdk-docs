@@ -23,10 +23,10 @@ This guide explains how to [get a single-use deposit address](#get-a-single-use-
 
 ## Get a Single-Use Deposit Address
 
-1. Call [`account.getSingleUseDepositAddress()`](../api-reference.md#getsingleusedepositaddress).
+1. Call [`account.getSingleUseDepositAddress()`](/sdk/wallet-modules/wallet-spark/api-reference/#getsingleusedepositaddress).
 2. Send Bitcoin to the returned on-chain address and wait for confirmation.
 
-You can generate a one-time Bitcoin deposit address using [`account.getSingleUseDepositAddress()`](../api-reference.md#getsingleusedepositaddress):
+You can generate a one-time Bitcoin deposit address using [`account.getSingleUseDepositAddress()`](/sdk/wallet-modules/wallet-spark/api-reference/#getsingleusedepositaddress):
 
 {% code title="Single-Use Deposit Address" lineNumbers="true" %}
 ```javascript
@@ -38,9 +38,9 @@ console.log('Send Bitcoin to:', depositAddress)
 ## Claim Deposits
 
 1. Identify the Bitcoin transaction id that funded the deposit.
-2. Call [`account.claimDeposit()`](../api-reference.md#claimdeposit-txid) with that id.
+2. Call [`account.claimDeposit()`](/sdk/wallet-modules/wallet-spark/api-reference/#claimdeposit-txid) with that id.
 
-You can credit the wallet after the deposit confirms using [`account.claimDeposit()`](../api-reference.md#claimdeposit-txid):
+You can credit the wallet after the deposit confirms using [`account.claimDeposit()`](/sdk/wallet-modules/wallet-spark/api-reference/#claimdeposit-txid):
 
 {% code title="Claim Single-Use Deposit" lineNumbers="true" %}
 ```javascript
@@ -52,7 +52,7 @@ console.log('Deposit claimed:', walletLeaves)
 
 ### 1. (optional) Use a static deposit address
 
-You can reuse one on-chain deposit address using [`account.getStaticDepositAddress()`](../api-reference.md#getstaticdepositaddress), then credit the wallet with [`account.claimStaticDeposit()`](../api-reference.md#claimstaticdeposit-txid) after the Bitcoin transaction confirms:
+You can reuse one on-chain deposit address using [`account.getStaticDepositAddress()`](/sdk/wallet-modules/wallet-spark/api-reference/#getstaticdepositaddress), then credit the wallet with [`account.claimStaticDeposit()`](/sdk/wallet-modules/wallet-spark/api-reference/#claimstaticdeposit-txid) after the Bitcoin transaction confirms:
 
 {% code title="Static Deposit Flow" lineNumbers="true" %}
 ```javascript
@@ -67,12 +67,12 @@ console.log('Static deposit claimed:', staticLeaves)
 {% endcode %}
 
 {% hint style="info" %}
-You can list unused single-use addresses with [`account.getUnusedDepositAddresses()`](../api-reference.md#getunuseddepositaddresses-options). The method returns a paginated result with `depositAddresses` and `offset` fields.
+You can list unused single-use addresses with [`account.getUnusedDepositAddresses()`](/sdk/wallet-modules/wallet-spark/api-reference/#getunuseddepositaddresses-options). The method returns a paginated result with `depositAddresses` and `offset` fields.
 {% endhint %}
 
 ## Query Static Deposit Addresses
 
-You can list all existing static deposit addresses using [`account.getStaticDepositAddresses()`](../api-reference.md#getstaticdepositaddresses):
+You can list all existing static deposit addresses using [`account.getStaticDepositAddresses()`](/sdk/wallet-modules/wallet-spark/api-reference/#getstaticdepositaddresses):
 
 {% code title="Query Static Deposit Addresses" lineNumbers="true" %}
 ```javascript
@@ -83,7 +83,7 @@ console.log('Static deposit addresses:', addresses)
 
 ## Query UTXOs for a Deposit Address
 
-You can check confirmed UTXOs for a specific deposit address using [`account.getUtxosForDepositAddress()`](../api-reference.md#getutxosfordepositaddress-options):
+You can check confirmed UTXOs for a specific deposit address using [`account.getUtxosForDepositAddress()`](/sdk/wallet-modules/wallet-spark/api-reference/#getutxosfordepositaddress-options):
 
 {% code title="Query UTXOs" lineNumbers="true" %}
 ```javascript
@@ -98,10 +98,10 @@ console.log('Offset:', result.offset)
 ## Withdraw to Bitcoin Layer 1
 
 1. Choose a Bitcoin `onchainAddress` and `amountSats`.
-2. Request a cooperative exit quote with [`account.quoteWithdraw()`](../api-reference.md#quotewithdraw-options).
-3. Call [`account.withdraw()`](../api-reference.md#withdraw-options) with the destination and amount.
+2. Request a cooperative exit quote with [`account.quoteWithdraw()`](/sdk/wallet-modules/wallet-spark/api-reference/#quotewithdraw-options).
+3. Call [`account.withdraw()`](/sdk/wallet-modules/wallet-spark/api-reference/#withdraw-options) with the destination and amount.
 
-You can request a withdrawal fee quote using [`account.quoteWithdraw()`](../api-reference.md#quotewithdraw-options):
+You can request a withdrawal fee quote using [`account.quoteWithdraw()`](/sdk/wallet-modules/wallet-spark/api-reference/#quotewithdraw-options):
 
 {% code title="Quote Withdrawal" lineNumbers="true" %}
 ```javascript
@@ -113,7 +113,7 @@ console.log('Withdrawal fee quote:', feeQuote)
 ```
 {% endcode %}
 
-You can initiate the withdrawal using [`account.withdraw()`](../api-reference.md#withdraw-options):
+You can initiate the withdrawal using [`account.withdraw()`](/sdk/wallet-modules/wallet-spark/api-reference/#withdraw-options):
 
 {% code title="Withdraw to On-Chain Bitcoin" lineNumbers="true" %}
 ```javascript
@@ -126,9 +126,9 @@ console.log('Withdrawal request:', withdrawal)
 {% endcode %}
 
 {% hint style="info" %}
-[`withdraw()`](../api-reference.md#withdraw-options) accepts `onchainAddress` and `amountSats`. Run [`quoteWithdraw()`](../api-reference.md#quotewithdraw-options) first to understand the cooperative exit costs before initiating the withdrawal.
+[`withdraw()`](/sdk/wallet-modules/wallet-spark/api-reference/#withdraw-options) accepts `onchainAddress` and `amountSats`. Run [`quoteWithdraw()`](/sdk/wallet-modules/wallet-spark/api-reference/#quotewithdraw-options) first to understand the cooperative exit costs before initiating the withdrawal.
 {% endhint %}
 
 ## Next Steps
 
-Learn how to [handle errors and follow operational best practices](./handle-errors.md).
+Learn how to [handle errors and follow operational best practices](/sdk/wallet-modules/wallet-spark/guides/handle-errors/).

@@ -28,7 +28,7 @@ This guide covers [prerequisites](#prerequisites), how to [create an ERC-4337 ac
 
 ## Create a WalletAccountEvmErc4337 account
 
-You can construct an ERC-4337 signing account using [`new WalletAccountEvmErc4337(seed, path, config)`](../../../wallet-modules/wallet-evm-erc-4337/api-reference.md#constructor-1) with chain, provider, bundler, entry point, and paymaster settings:
+You can construct an ERC-4337 signing account using [`new WalletAccountEvmErc4337(seed, path, config)`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#constructor-1) with chain, provider, bundler, entry point, and paymaster settings:
 
 {% code title="ERC-4337 account on Arbitrum" lineNumbers="true" %}
 ```javascript
@@ -49,7 +49,7 @@ const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 ```
 {% endcode %}
 
-You can wrap that account with the [`new Usdt0ProtocolEvm(account, config?)`](../api-reference.md#constructor) constructor:
+You can wrap that account with the [`new Usdt0ProtocolEvm(account, config?)`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#constructor) constructor:
 
 {% code title="Usdt0ProtocolEvm with ERC-4337 account" lineNumbers="true" %}
 ```javascript
@@ -63,7 +63,7 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 
 ## Run a gasless bridge with paymaster options
 
-You can execute [`bridge()`](../api-reference.md#bridge-options-config) with a second argument that includes `paymasterToken` (and optional `bridgeMaxFee` override) as described in the [methods table](../api-reference.md#methods). Approve the source-chain bridge spender first, then call [`bridge()`](../api-reference.md#bridge-options-config). Each call returns one hash for the submitted user operation.
+You can execute [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#bridge-options-config) with a second argument that includes `paymasterToken` (and optional `bridgeMaxFee` override) as described in the [methods table](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#methods). Approve the source-chain bridge spender first, then call [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference/#bridge-options-config). Each call returns one hash for the submitted user operation.
 
 {% code title="Gasless bridge with paymasterToken" lineNumbers="true" %}
 ```javascript
@@ -108,4 +108,4 @@ Paymaster policies, token addresses, and URLs are service-specific. Confirm supp
 
 ## Next Steps
 
-Bridge to non-EVM chains in [Bridge cross-ecosystem](./bridge-cross-ecosystem.md). For failure modes and cleanup, read [Handle errors](./handle-errors.md).
+Bridge to non-EVM chains in [Bridge cross-ecosystem](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-cross-ecosystem/). For failure modes and cleanup, read [Handle errors](/sdk/bridge-modules/bridge-usdt0-evm/guides/handle-errors/).

@@ -23,7 +23,7 @@ This guide explains how to [send a gasless transaction](#send-a-gasless-transact
 
 ## Send a Gasless Transaction
 
-You can send a transaction with gas fees paid in the paymaster token using [`account.sendTransaction()`](../api-reference.md#sendtransaction-tx-config):
+You can send a transaction with gas fees paid in the paymaster token using [`account.sendTransaction()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#sendtransaction-tx-config):
 
 {% code title="Send Gasless Transaction" lineNumbers="true" %}
 ```javascript
@@ -42,7 +42,7 @@ ERC-4337 transactions are gasless for the end user. Gas fees are paid through th
 
 ## Estimate Fees
 
-You can estimate the fee for a transaction without broadcasting it using [`account.quoteSendTransaction()`](../api-reference.md#quotesendtransaction-tx-config):
+You can estimate the fee for a transaction without broadcasting it using [`account.quoteSendTransaction()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#quotesendtransaction-tx-config):
 
 {% code title="Estimate Fee" lineNumbers="true" %}
 ```javascript
@@ -56,7 +56,7 @@ console.log('Estimated fee:', quote.fee)
 
 ## Send with Custom Paymaster Token
 
-You can override the default paymaster token for a specific transaction by passing a config object to [`account.sendTransaction()`](../api-reference.md#sendtransaction-tx-config):
+You can override the default paymaster token for a specific transaction by passing a config object to [`account.sendTransaction()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#sendtransaction-tx-config):
 
 {% code title="Custom Paymaster Token" lineNumbers="true" %}
 ```javascript
@@ -73,4 +73,4 @@ const result = await account.sendTransaction({
 
 ## Next Steps
 
-Learn how to [transfer ERC-20 tokens](./transfer-tokens.md).
+Learn how to [transfer ERC-20 tokens](/sdk/wallet-modules/wallet-evm-erc-4337/guides/transfer-tokens/).

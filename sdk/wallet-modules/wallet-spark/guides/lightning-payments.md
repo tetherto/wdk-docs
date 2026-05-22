@@ -24,9 +24,9 @@ This guide explains how to [create a Lightning invoice](#create-a-lightning-invo
 ## Create a Lightning Invoice
 
 1. Choose an amount in satoshis and an optional memo.
-2. Call [`account.createLightningInvoice()`](../api-reference.md#createlightninginvoice-options).
+2. Call [`account.createLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference/#createlightninginvoice-options).
 
-You can create a BOLT11 invoice using [`account.createLightningInvoice()`](../api-reference.md#createlightninginvoice-options):
+You can create a BOLT11 invoice using [`account.createLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference/#createlightninginvoice-options):
 
 {% code title="Create Lightning Invoice" lineNumbers="true" %}
 ```javascript
@@ -42,9 +42,9 @@ console.log('Lightning invoice:', invoice.invoice)
 
 1. Obtain a BOLT11 `encodedInvoice` string.
 2. Set `maxFeeSats` to cap routing fees.
-3. Call [`account.payLightningInvoice()`](../api-reference.md#paylightninginvoice-options).
+3. Call [`account.payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference/#paylightninginvoice-options).
 
-You can pay an invoice using [`account.payLightningInvoice()`](../api-reference.md#paylightninginvoice-options):
+You can pay an invoice using [`account.payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference/#paylightninginvoice-options):
 
 {% code title="Pay Lightning Invoice" lineNumbers="true" %}
 ```javascript
@@ -56,7 +56,7 @@ console.log('Payment result:', payment)
 ```
 {% endcode %}
 
-If you enable [`syncAndRetry`](../configuration.md#automatic-retry), the wallet syncs state and retries [`account.payLightningInvoice()`](../api-reference.md#paylightninginvoice-options) once after a failure:
+If you enable [`syncAndRetry`](/sdk/wallet-modules/wallet-spark/configuration/#automatic-retry), the wallet syncs state and retries [`account.payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference/#paylightninginvoice-options) once after a failure:
 
 {% code title="Retry Lightning Payment Once" lineNumbers="true" %}
 ```javascript
@@ -75,7 +75,7 @@ await account.payLightningInvoice({
 
 ## Estimate Lightning Fees
 
-You can estimate the routing fee before paying using [`account.quotePayLightningInvoice()`](../api-reference.md#quotepaylightninginvoice-options):
+You can estimate the routing fee before paying using [`account.quotePayLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference/#quotepaylightninginvoice-options):
 
 {% code title="Quote Lightning Payment Fee" lineNumbers="true" %}
 ```javascript
@@ -87,12 +87,12 @@ console.log('Fee estimate:', Number(feeEstimate), 'satoshis')
 {% endcode %}
 
 {% hint style="info" %}
-Older references to `getLightningSendFeeEstimate()` map to [`quotePayLightningInvoice()`](../api-reference.md#quotepaylightninginvoice-options).
+Older references to `getLightningSendFeeEstimate()` map to [`quotePayLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference/#quotepaylightninginvoice-options).
 {% endhint %}
 
 ## Fetch a Lightning Send Request
 
-You can load a prior send request by id using [`account.getLightningSendRequest()`](../api-reference.md#getlightningsendrequest-requestid):
+You can load a prior send request by id using [`account.getLightningSendRequest()`](/sdk/wallet-modules/wallet-spark/api-reference/#getlightningsendrequest-requestid):
 
 {% code title="Get Lightning Send Request" lineNumbers="true" %}
 ```javascript
@@ -104,9 +104,9 @@ if (sendRequest) {
 {% endcode %}
 
 {% hint style="info" %}
-Use the `id` from the object returned by [`payLightningInvoice()`](../api-reference.md#paylightninginvoice-options).
+Use the `id` from the object returned by [`payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference/#paylightninginvoice-options).
 {% endhint %}
 
 ## Next Steps
 
-Learn how to [handle Bitcoin layer 1 deposits and withdrawals](./deposits-and-withdrawals.md).
+Learn how to [handle Bitcoin layer 1 deposits and withdrawals](/sdk/wallet-modules/wallet-spark/guides/deposits-and-withdrawals/).

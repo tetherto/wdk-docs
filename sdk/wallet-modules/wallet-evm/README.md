@@ -74,7 +74,7 @@ This package works with any EVM-compatible blockchain, including:
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="/start-building/nodejs-bare-quickstart/">nodejs-quickstart.md</a>
 			</td>
 		</tr>
         <tr>
@@ -86,7 +86,7 @@ This package works with any EVM-compatible blockchain, including:
 			</td>
 			<td>Get started with WDK's EVM Wallet configuration</td>
 			<td>
-				<a href="./configuration.md">WDK EVM Wallet Configuration</a>
+				<a href="/sdk/wallet-modules/wallet-evm/configuration/">WDK EVM Wallet Configuration</a>
 			</td>
 		</tr>
         <tr>
@@ -98,7 +98,7 @@ This package works with any EVM-compatible blockchain, including:
 			</td>
 			<td>Get started with WDK's EVM Wallet API</td>
 			<td>
-				<a href="./api-reference.md">WDK EVM Wallet API</a>
+				<a href="/sdk/wallet-modules/wallet-evm/api-reference/">WDK EVM Wallet API</a>
 			</td>
 		</tr>
         <tr>
@@ -110,7 +110,7 @@ This package works with any EVM-compatible blockchain, including:
 			</td>
 			<td>Get started with WDK's EVM Wallet usage</td>
 			<td>
-				<a href="./usage.md">WDK EVM Wallet Usage</a>
+				<a href="/sdk/wallet-modules/wallet-evm/usage/">WDK EVM Wallet Usage</a>
 			</td>
 		</tr>
 	</tbody>

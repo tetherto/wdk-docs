@@ -276,7 +276,7 @@ const sepoliaConfig = {
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="/start-building/nodejs-bare-quickstart/">nodejs-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -288,7 +288,7 @@ const sepoliaConfig = {
 			</td>
 			<td>Build mobile wallets with React Native Expo</td>
 			<td>
-				<a href="../../../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
+				<a href="/start-building/react-native-quickstart/">react-native-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -300,7 +300,7 @@ const sepoliaConfig = {
 			</td>
 			<td>Get started with WDK's EVM Wallet Usage</td>
 			<td>
-				<a href="./usage.md">WDK EVM Wallet Usage</a>
+				<a href="/sdk/wallet-modules/wallet-evm/usage/">WDK EVM Wallet Usage</a>
 			</td>
 		</tr>
         <tr>
@@ -312,7 +312,7 @@ const sepoliaConfig = {
 			</td>
 			<td>Get started with WDK's EVM Wallet API</td>
 			<td>
-				<a href="./api-reference.md">WDK EVM Wallet API</a>
+				<a href="/sdk/wallet-modules/wallet-evm/api-reference/">WDK EVM Wallet API</a>
 			</td>
 		</tr>
 	</tbody>

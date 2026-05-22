@@ -46,11 +46,11 @@ Always use `try/catch` blocks when initializing sessions or accessing dynamic fe
 
 ## Memory Management
 
-For security, clear sensitive data from memory when a session is complete. The WDK provides [`dispose()`](../api-reference.md#disposeblockchains) for this purpose.
+For security, clear sensitive data from memory when a session is complete. The WDK provides [`dispose()`](/sdk/core-module/api-reference/#disposeblockchains) for this purpose.
 
 ### Disposing the Instance
 
-You can clear every registered wallet using [`dispose()`](../api-reference.md#disposeblockchains):
+You can clear every registered wallet using [`dispose()`](/sdk/core-module/api-reference/#disposeblockchains):
 
 {% code title="Dispose WDK" lineNumbers="true" %}
 ```typescript
@@ -68,7 +68,7 @@ function endSession(wdk) {
 
 ### Disposing Specific Wallets
 
-You can dispose only the wallets you no longer need using [`dispose()`](../api-reference.md#disposeblockchains):
+You can dispose only the wallets you no longer need using [`dispose()`](/sdk/core-module/api-reference/#disposeblockchains):
 
 {% code title="Dispose Specific Wallets" lineNumbers="true" %}
 ```typescript

@@ -200,7 +200,7 @@ The published CLI exposes these commands through `wdk-worklet-bundler`:
 | `list-modules` | List available WDK modules. | `--json` |
 | `clean` | Remove the generated `.wdk` folder. | `--yes` |
 
-For the end-to-end config workflow, see [Worklet Bundler Configuration](./configuration.md).
+For the end-to-end config workflow, see [Worklet Bundler Configuration](/tools/worklet-bundler/configuration/).
 
 ***
 

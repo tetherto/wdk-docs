@@ -205,7 +205,7 @@ try {
 			</td>
 			<td>Get started with WDK's usage</td>
 			<td>
-				<a href="./usage.md">WDK Core Usage</a>
+				<a href="/sdk/core-module/usage/">WDK Core Usage</a>
 			</td>
 		</tr>
     	<tr>
@@ -217,7 +217,7 @@ try {
 			</td>
 			<td>Get started with WDK's API</td>
 			<td>
-				<a href="./api-reference.md">WDK Core API</a>
+				<a href="/sdk/core-module/api-reference/">WDK Core API</a>
 			</td>
 		</tr>
     	<tr>
@@ -229,7 +229,7 @@ try {
 			</td>
 			<td>Explore blockchain-specific wallet modules</td>
 			<td>
-				<a href="../wallet-modules/README.md">WDK Wallet Modules</a>
+				<a href="/sdk/wallet-modules/">WDK Wallet Modules</a>
 			</td>
 		</tr>
     	<tr>
@@ -241,7 +241,7 @@ try {
             </td>
             <td>Cross-chain USD₮0 bridges</td>
             <td>
-                <a href="../bridge-modules/README.md">Bridge Modules</a>
+                <a href="/sdk/bridge-modules/">Bridge Modules</a>
             </td>
         </tr>
 	</tbody>

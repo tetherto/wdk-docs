@@ -37,43 +37,43 @@ The `@tetherto/wdk-wallet-btc` module provides wallet management for the Bitcoin
       <td><i class="fa-rocket">:rocket:</i></td>
       <td><strong>Get Started</strong></td>
       <td>Install the package and create your first wallet.</td>
-      <td><a href="./guides/get-started.md">Get Started</a></td>
+      <td><a href="/sdk/wallet-modules/wallet-btc/guides/get-started/">Get Started</a></td>
     </tr>
     <tr>
       <td><i class="fa-user">:user:</i></td>
       <td><strong>Manage Accounts</strong></td>
       <td>Work with multiple accounts and custom derivation paths.</td>
-      <td><a href="./guides/manage-accounts.md">Manage Accounts</a></td>
+      <td><a href="/sdk/wallet-modules/wallet-btc/guides/manage-accounts/">Manage Accounts</a></td>
     </tr>
     <tr>
       <td><i class="fa-wallet">:wallet:</i></td>
       <td><strong>Check Balances</strong></td>
       <td>Query native BTC balances for owned and read-only accounts.</td>
-      <td><a href="./guides/check-balances.md">Check Balances</a></td>
+      <td><a href="/sdk/wallet-modules/wallet-btc/guides/check-balances/">Check Balances</a></td>
     </tr>
     <tr>
       <td><i class="fa-exchange-alt">:exchange-alt:</i></td>
       <td><strong>Send BTC</strong></td>
       <td>Send Bitcoin and estimate transaction fees.</td>
-      <td><a href="./guides/send-transactions.md">Send BTC</a></td>
+      <td><a href="/sdk/wallet-modules/wallet-btc/guides/send-transactions/">Send BTC</a></td>
     </tr>
     <tr>
       <td><i class="fa-history">:history:</i></td>
       <td><strong>Transaction History</strong></td>
       <td>Retrieve and filter transfer history.</td>
-      <td><a href="./guides/get-transaction-history.md">Transaction History</a></td>
+      <td><a href="/sdk/wallet-modules/wallet-btc/guides/get-transaction-history/">Transaction History</a></td>
     </tr>
     <tr>
       <td><i class="fa-key">:key:</i></td>
       <td><strong>Sign and Verify Messages</strong></td>
       <td>Sign messages and verify signatures.</td>
-      <td><a href="./guides/sign-verify-messages.md">Sign and Verify Messages</a></td>
+      <td><a href="/sdk/wallet-modules/wallet-btc/guides/sign-verify-messages/">Sign and Verify Messages</a></td>
     </tr>
     <tr>
       <td><i class="fa-exclamation-triangle">:exclamation-triangle:</i></td>
       <td><strong>Handle Errors</strong></td>
       <td>Handle errors, manage fees, and dispose of sensitive data.</td>
-      <td><a href="./guides/handle-errors.md">Handle Errors</a></td>
+      <td><a href="/sdk/wallet-modules/wallet-btc/guides/handle-errors/">Handle Errors</a></td>
     </tr>
   </tbody>
 </table>
@@ -98,7 +98,7 @@ The `@tetherto/wdk-wallet-btc` module provides wallet management for the Bitcoin
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="/start-building/nodejs-bare-quickstart/">nodejs-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -110,7 +110,7 @@ The `@tetherto/wdk-wallet-btc` module provides wallet management for the Bitcoin
 			</td>
 			<td>Build mobile wallets with React Native Expo</td>
 			<td>
-				<a href="../../../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
+				<a href="/start-building/react-native-quickstart/">react-native-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -122,7 +122,7 @@ The `@tetherto/wdk-wallet-btc` module provides wallet management for the Bitcoin
 			</td>
 			<td>Get started with WDK's Bitcoin Wallet Configuration</td>
 			<td>
-				<a href="./configuration.md">WDK Bitcoin Wallet Configuration</a>
+				<a href="/sdk/wallet-modules/wallet-btc/configuration/">WDK Bitcoin Wallet Configuration</a>
 			</td>
 		</tr>
         <tr>
@@ -134,7 +134,7 @@ The `@tetherto/wdk-wallet-btc` module provides wallet management for the Bitcoin
 			</td>
 			<td>Get started with WDK's Bitcoin Wallet API</td>
 			<td>
-				<a href="./api-reference.md">WDK Bitcoin Wallet API</a>
+				<a href="/sdk/wallet-modules/wallet-btc/api-reference/">WDK Bitcoin Wallet API</a>
 			</td>
 		</tr>
 	</tbody>

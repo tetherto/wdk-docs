@@ -24,9 +24,9 @@ Build with WDK alongside Tether. Whether you're integrating WDK into your produc
 
 WDK is built to be open and extensible, but we know that building great products often takes more than just great documentation. We offer a selected group of partners a direct connection with Tether's engineering and product teams so you can ship faster, with confidence. We offer 3 partnership tracks depending on how you plan to work with WDK.
 
-- [Project Partners](partner-program.md#project-partners)
-- [WDK Tech Contributors](partner-program.md#wdk-tech-contributors)
-- [Consulting & Implementation Partners (Alpha)](partner-program.md#consulting-and-implementation-partners-alpha)
+- [Project Partners](/overview/partner-program/#project-partners)
+- [WDK Tech Contributors](/overview/partner-program/#wdk-tech-contributors)
+- [Consulting & Implementation Partners (Alpha)](/overview/partner-program/#consulting-and-implementation-partners-alpha)
 
 ***
 

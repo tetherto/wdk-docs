@@ -28,11 +28,11 @@ There are two ways to provide WDK context to your AI:
 2. **[Connect via Markdown](#connect-wdk-docs-via-markdown)** - Works with any AI tool. Feed documentation directly into the context window.
 
 {% hint style="info" %}
-**Want to give AI agents wallet access?** The [MCP Toolkit](../ai/mcp-toolkit/README.md) creates an MCP server that exposes WDK wallets as tools - letting AI agents check balances, send transactions, swap tokens, and more.
+**Want to give AI agents wallet access?** The [MCP Toolkit](/ai/mcp-toolkit/) creates an MCP server that exposes WDK wallets as tools - letting AI agents check balances, send transactions, swap tokens, and more.
 {% endhint %}
 
 {% hint style="info" %}
-**Want agents to pay for resources?** The [x402 guide](../ai/x402.md) shows how to use WDK wallets with the x402 protocol for instant, programmatic USD₮ payments over HTTP.
+**Want agents to pay for resources?** The [x402 guide](/ai/x402/) shows how to use WDK wallets with the x402 protocol for instant, programmatic USD₮ payments over HTTP.
 {% endhint %}
 
 ---
@@ -236,5 +236,5 @@ Check the WDK documentation for the correct configuration and initialization pat
 - **Be specific about the chain.** Tell the AI which blockchain you're targeting (e.g., "I'm building on Ethereum using `@tetherto/wdk-wallet-evm`") so it picks the right module.
 - **Reference the exact package name.** Mention the full `@tetherto/wdk-*` package name in your prompt for more accurate code generation.
 - **Ask the AI to check docs first.** Prompt with "Check the WDK documentation before answering" to ensure it uses the MCP-connected docs rather than outdated training data.
-- **Start with a quickstart.** Point the AI at the [Node.js Quickstart](nodejs-bare-quickstart.md) or [React Native Quickstart](react-native-quickstart.md) as a working reference before building custom features.
+- **Start with a quickstart.** Point the AI at the [Node.js Quickstart](/start-building/nodejs-bare-quickstart/) or [React Native Quickstart](/start-building/react-native-quickstart/) as a working reference before building custom features.
 - **Iterate in steps.** Use the AI to scaffold your WDK integration first, then refine module configuration and error handling in follow-up prompts.

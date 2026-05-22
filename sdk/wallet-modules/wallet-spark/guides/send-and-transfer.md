@@ -24,9 +24,9 @@ This guide explains how to [send native Spark](#send-spark), [transfer tokens](#
 ## Send Spark
 
 1. Build the recipient Spark address and amount in satoshis.
-2. Call [`account.sendTransaction()`](../api-reference.md#sendtransaction-to-value).
+2. Call [`account.sendTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference/#sendtransaction-to-value).
 
-You can send native Spark (satoshis) using [`account.sendTransaction()`](../api-reference.md#sendtransaction-to-value):
+You can send native Spark (satoshis) using [`account.sendTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference/#sendtransaction-to-value):
 
 {% code title="Send Native Spark" lineNumbers="true" %}
 ```javascript
@@ -40,14 +40,14 @@ console.log('Transaction fee:', result.fee)
 {% endcode %}
 
 {% hint style="info" %}
-On-chain Spark transfers report `fee` as `0`. Memos are not supported on [`sendTransaction()`](../api-reference.md#sendtransaction-to-value). Use valid Spark network addresses.
+On-chain Spark transfers report `fee` as `0`. Memos are not supported on [`sendTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference/#sendtransaction-to-value). Use valid Spark network addresses.
 {% endhint %}
 
 {% hint style="warning" %}
-[`account.signTransaction()`](../api-reference.md#signtransaction-tx) is exposed for `IWalletAccount` compatibility, but it always throws on Spark. Spark transfers are collaboratively signed with Spark operators, so a standalone signed payload cannot be produced for separate broadcast. Use [`account.sendTransaction()`](../api-reference.md#sendtransaction-to-value) for Spark sends.
+[`account.signTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference/#signtransaction-tx) is exposed for `IWalletAccount` compatibility, but it always throws on Spark. Spark transfers are collaboratively signed with Spark operators, so a standalone signed payload cannot be produced for separate broadcast. Use [`account.sendTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference/#sendtransaction-to-value) for Spark sends.
 {% endhint %}
 
-If you enable [`syncAndRetry`](../configuration.md#automatic-retry), the wallet syncs its state and retries [`account.sendTransaction()`](../api-reference.md#sendtransaction-to-value) once after a failure:
+If you enable [`syncAndRetry`](/sdk/wallet-modules/wallet-spark/configuration/#automatic-retry), the wallet syncs its state and retries [`account.sendTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference/#sendtransaction-to-value) once after a failure:
 
 {% code title="Retry Failed Sends Once" lineNumbers="true" %}
 ```javascript
@@ -66,7 +66,7 @@ await account.sendTransaction({
 
 ## Transfer Tokens
 
-You can move tokens to another Spark address using [`account.transfer()`](../api-reference.md#transfer-options):
+You can move tokens to another Spark address using [`account.transfer()`](/sdk/wallet-modules/wallet-spark/api-reference/#transfer-options):
 
 {% code title="Transfer Tokens" lineNumbers="true" %}
 ```javascript
@@ -88,7 +88,7 @@ Token identifiers use Bech32m (for example `btkn1...`). Amounts use the token’
 
 ### Spark native and token transfer quotes
 
-You can preview the fee for a native send using [`account.quoteSendTransaction()`](../api-reference.md#quotesendtransaction-to-value):
+You can preview the fee for a native send using [`account.quoteSendTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference/#quotesendtransaction-to-value):
 
 {% code title="Quote Native Send" lineNumbers="true" %}
 ```javascript
@@ -100,7 +100,7 @@ console.log('Estimated fee:', quote.fee)
 ```
 {% endcode %}
 
-You can preview the fee for a token transfer using [`account.quoteTransfer()`](../api-reference.md#quotetransfer-options):
+You can preview the fee for a token transfer using [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-spark/api-reference/#quotetransfer-options):
 
 {% code title="Quote Token Transfer" lineNumbers="true" %}
 ```javascript
@@ -115,7 +115,7 @@ console.log('Estimated transfer fee:', Number(transferQuote.fee))
 
 ### Wallet-level fee rates
 
-You can read wallet-level fee rate placeholders using [`wallet.getFeeRates()`](../api-reference.md#getfeerates):
+You can read wallet-level fee rate placeholders using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-spark/api-reference/#getfeerates):
 
 {% code title="Wallet Fee Rates" lineNumbers="true" %}
 ```javascript
@@ -126,10 +126,10 @@ console.log('Fast:', feeRates.fast)
 {% endcode %}
 
 {% hint style="info" %}
-Spark network fees for native sends and token transfers are zero; [`wallet.getFeeRates()`](../api-reference.md#getfeerates) returns `{ normal: 0n, fast: 0n }`. Lightning flows can still incur fees; see [Lightning payments](./lightning-payments.md).
+Spark network fees for native sends and token transfers are zero; [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-spark/api-reference/#getfeerates) returns `{ normal: 0n, fast: 0n }`. Lightning flows can still incur fees; see [Lightning payments](/sdk/wallet-modules/wallet-spark/guides/lightning-payments/).
 {% endhint %}
 
-If you want to reconcile wallet state before retrying manually, call [`account.syncWalletBalance()`](../api-reference.md#syncwalletbalance):
+If you want to reconcile wallet state before retrying manually, call [`account.syncWalletBalance()`](/sdk/wallet-modules/wallet-spark/api-reference/#syncwalletbalance):
 
 {% code title="Sync Wallet Balance" lineNumbers="true" %}
 ```javascript
@@ -139,4 +139,4 @@ await account.syncWalletBalance()
 
 ## Next Steps
 
-Learn how to [create and pay Lightning invoices](./lightning-payments.md).
+Learn how to [create and pay Lightning invoices](/sdk/wallet-modules/wallet-spark/guides/lightning-payments/).

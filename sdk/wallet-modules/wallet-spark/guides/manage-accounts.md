@@ -23,10 +23,10 @@ This guide explains how to [retrieve accounts by index](#retrieve-accounts-by-in
 
 ## Retrieve Accounts by Index
 
-1. Call [`wallet.getAccount()`](../api-reference.md#getaccount-index) with the account index.
-2. Call [`account.getAddress()`](../api-reference.md#getaddress) for each account.
+1. Call [`wallet.getAccount()`](/sdk/wallet-modules/wallet-spark/api-reference/#getaccount-index) with the account index.
+2. Call [`account.getAddress()`](/sdk/wallet-modules/wallet-spark/api-reference/#getaddress) for each account.
 
-You can retrieve multiple accounts using [`wallet.getAccount()`](../api-reference.md#getaccount-index) with different index values:
+You can retrieve multiple accounts using [`wallet.getAccount()`](/sdk/wallet-modules/wallet-spark/api-reference/#getaccount-index) with different index values:
 
 {% code title="Retrieve Accounts by Index" lineNumbers="true" %}
 ```javascript
@@ -46,7 +46,7 @@ Accounts use BIP-44 paths `m/44'/998'/{networkNumber}'/0/{index}` where `998` is
 
 ## Retrieve Accounts by Derivation Path
 
-You can retrieve an account at a specific BIP-44 derivation path using [`wallet.getAccountByPath()`](../api-reference.md#getaccountbypath-path):
+You can retrieve an account at a specific BIP-44 derivation path using [`wallet.getAccountByPath()`](/sdk/wallet-modules/wallet-spark/api-reference/#getaccountbypath-path):
 
 {% code title="Retrieve Account by Path" lineNumbers="true" %}
 ```javascript
@@ -57,12 +57,12 @@ console.log('Account address:', address)
 {% endcode %}
 
 {% hint style="info" %}
-The path segment is appended to the base path `m/44'/998'/`. For example, `"0'/0/0"` resolves to `m/44'/998'/0'/0/0` on MAINNET. See [`getAccountByPath()`](../api-reference.md#getaccountbypath-path) in the API reference.
+The path segment is appended to the base path `m/44'/998'/`. For example, `"0'/0/0"` resolves to `m/44'/998'/0'/0/0` on MAINNET. See [`getAccountByPath()`](/sdk/wallet-modules/wallet-spark/api-reference/#getaccountbypath-path) in the API reference.
 {% endhint %}
 
 ## Iterate Over Accounts
 
-You can walk a range of indices using [`wallet.getAccount()`](../api-reference.md#getaccount-index) inside a loop:
+You can walk a range of indices using [`wallet.getAccount()`](/sdk/wallet-modules/wallet-spark/api-reference/#getaccount-index) inside a loop:
 
 {% code title="Iterate Over Accounts" lineNumbers="true" %}
 ```javascript
@@ -77,4 +77,4 @@ for (let i = 0; i < 5; i++) {
 
 ## Next Steps
 
-With accounts set up, learn how to [check balances](./check-balances.md).
+With accounts set up, learn how to [check balances](/sdk/wallet-modules/wallet-spark/guides/check-balances/).

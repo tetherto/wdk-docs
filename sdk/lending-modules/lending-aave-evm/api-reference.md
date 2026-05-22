@@ -57,7 +57,7 @@ const aave = new AaveProtocolEvm(account)
 
 ---
 
-When `AaveProtocolEvm` is initialized with an ERC‑4337 smart account, the optional `config` argument on mutating and quote methods accepts the same gas-payment override families documented in [`@tetherto/wdk-wallet-evm-erc-4337`](../../../wallet-modules/wallet-evm-erc-4337/api-reference.md#config-override): paymaster token, sponsorship policy, and native coins.
+When `AaveProtocolEvm` is initialized with an ERC‑4337 smart account, the optional `config` argument on mutating and quote methods accepts the same gas-payment override families documented in [`@tetherto/wdk-wallet-evm-erc-4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#config-override): paymaster token, sponsorship policy, and native coins.
 
 ### `supply(options, config?)`
 Add tokens to the pool.
@@ -248,7 +248,7 @@ const res = await aave.supply(
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">Node.js & Bare Quickstart</a>
+				<a href="/start-building/nodejs-bare-quickstart/">Node.js & Bare Quickstart</a>
 			</td>
 		</tr>
         <tr>
@@ -260,7 +260,7 @@ const res = await aave.supply(
 			</td>
 			<td>Get started with WDK's Lending Aave EVM Protocol configuration</td>
 			<td>
-				<a href="./configuration.md">WDK Lending Aave EVM Protocol Configuration</a>
+				<a href="/sdk/lending-modules/lending-aave-evm/configuration/">WDK Lending Aave EVM Protocol Configuration</a>
 			</td>
 		</tr>
     <tr>
@@ -272,7 +272,7 @@ const res = await aave.supply(
 			</td>
 			<td>Get started with WDK's Lending Aave EVM Protocol usage</td>
 			<td>
-				<a href="./usage.md">WDK Lending Aave EVM Protocol Usage</a>
+				<a href="/sdk/lending-modules/lending-aave-evm/usage/">WDK Lending Aave EVM Protocol Usage</a>
 			</td>
 		</tr>
 	</tbody>
@@ -283,4 +283,3 @@ const res = await aave.supply(
 ### Need Help?
 
 {% include "../../../.gitbook/includes/support-cards.md" %}
-

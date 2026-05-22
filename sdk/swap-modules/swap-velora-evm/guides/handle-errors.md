@@ -23,7 +23,7 @@ This guide covers [swap errors](#swap-errors), [quote errors](#quote-errors), an
 
 ## Swap errors
 
-You can detect failed swaps by wrapping [`swap()`](../api-reference.md#swap-options-config) in `try/catch` and inspecting `error.message`:
+You can detect failed swaps by wrapping [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference/#swap-options-config) in `try/catch` and inspecting `error.message`:
 
 {% code title="Handle swap failures" lineNumbers="true" %}
 ```javascript
@@ -56,7 +56,7 @@ Match string fragments only as a convenience; production apps should prefer stab
 
 ## Quote errors
 
-You can handle failures from [`quoteSwap()`](../api-reference.md#quoteswap-options-config) the same way, including provider or routing errors:
+You can handle failures from [`quoteSwap()`](/sdk/swap-modules/swap-velora-evm/api-reference/#quoteswap-options-config) the same way, including provider or routing errors:
 
 {% code title="Handle quote failures" lineNumbers="true" %}
 ```javascript
@@ -73,11 +73,11 @@ try {
 ```
 {% endcode %}
 
-Common causes are listed under [Errors](../api-reference.md#errors) in the API reference (liquidity, fee cap, read-only send attempts, RPC issues).
+Common causes are listed under [Errors](/sdk/swap-modules/swap-velora-evm/api-reference/#errors) in the API reference (liquidity, fee cap, read-only send attempts, RPC issues).
 
 ## Best Practices
 
-You can clear signing material when a session ends by calling [`dispose()`](../../../wallet-modules/wallet-evm/api-reference.md#dispose-1) on each [`WalletAccountEvm`](../../../wallet-modules/wallet-evm/api-reference.md#walletaccountevm), or [`dispose()`](../../../wallet-modules/wallet-evm/api-reference.md#dispose) on [`WalletManagerEvm`](../../../wallet-modules/wallet-evm/api-reference.md#walletmanagerevm) if you use a manager:
+You can clear signing material when a session ends by calling [`dispose()`](/sdk/wallet-modules/wallet-evm/api-reference/#dispose-1) on each [`WalletAccountEvm`](/sdk/wallet-modules/wallet-evm/api-reference/#walletaccountevm), or [`dispose()`](/sdk/wallet-modules/wallet-evm/api-reference/#dispose) on [`WalletManagerEvm`](/sdk/wallet-modules/wallet-evm/api-reference/#walletmanagerevm) if you use a manager:
 
 {% code title="Dispose wallet accounts" lineNumbers="true" %}
 ```javascript
@@ -93,10 +93,10 @@ try {
 ```
 {% endcode %}
 
-If you use an ERC-4337 account, call [`dispose()`](../../../wallet-modules/wallet-evm-erc-4337/api-reference.md#dispose-1) on that account type per its API reference. Drop references to your [`VeloraProtocolEvm`](../api-reference.md#class-veloraprotocolevm) instance when you no longer need it.
+If you use an ERC-4337 account, call [`dispose()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#dispose-1) on that account type per its API reference. Drop references to your [`VeloraProtocolEvm`](/sdk/swap-modules/swap-velora-evm/api-reference/#class-veloraprotocolevm) instance when you no longer need it.
 
 ## Next Steps
 
-- [Get swap quotes](get-swap-quotes.md)
-- [Execute swaps](execute-swaps.md)
-- [API reference](../api-reference.md)
+- [Get swap quotes](/sdk/swap-modules/swap-velora-evm/guides/get-swap-quotes/)
+- [Execute swaps](/sdk/swap-modules/swap-velora-evm/guides/execute-swaps/)
+- [API reference](/sdk/swap-modules/swap-velora-evm/api-reference/)

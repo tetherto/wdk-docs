@@ -19,11 +19,11 @@ layout:
 
 # Manage Transactions
 
-This guide shows how to [check transaction status](#check-transaction-status) and [read transaction details](#read-transaction-details) with [`getTransactionDetail()`](../api-reference.md#gettransactiondetail-txid-direction). Pass the identifier MoonPay returns after checkout (for example from your redirect URL or webhook payload).
+This guide shows how to [check transaction status](#check-transaction-status) and [read transaction details](#read-transaction-details) with [`getTransactionDetail()`](/sdk/fiat-modules/fiat-moonpay/api-reference/#gettransactiondetail-txid-direction). Pass the identifier MoonPay returns after checkout (for example from your redirect URL or webhook payload).
 
 ## Check transaction status
 
-You can read the high-level state of a buy with [`getTransactionDetail()`](../api-reference.md#gettransactiondetail-txid-direction):
+You can read the high-level state of a buy with [`getTransactionDetail()`](/sdk/fiat-modules/fiat-moonpay/api-reference/#gettransactiondetail-txid-direction):
 
 {% code title="Buy transaction status" lineNumbers="true" %}
 ```typescript
@@ -37,7 +37,7 @@ console.log('Status:', buyTx.status)
 
 ## Read transaction details
 
-You can load the same record to inspect assets and currencies using [`getTransactionDetail()`](../api-reference.md#gettransactiondetail-txid-direction):
+You can load the same record to inspect assets and currencies using [`getTransactionDetail()`](/sdk/fiat-modules/fiat-moonpay/api-reference/#gettransactiondetail-txid-direction):
 
 {% code title="Buy transaction fields" lineNumbers="true" %}
 ```typescript
@@ -49,7 +49,7 @@ console.log('Metadata:', buyTx.metadata)
 ```
 {% endcode %}
 
-You can query a sell the same way by passing `sell` as the direction to [`getTransactionDetail()`](../api-reference.md#gettransactiondetail-txid-direction):
+You can query a sell the same way by passing `sell` as the direction to [`getTransactionDetail()`](/sdk/fiat-modules/fiat-moonpay/api-reference/#gettransactiondetail-txid-direction):
 
 {% code title="Sell transaction details" lineNumbers="true" %}
 ```typescript
@@ -67,6 +67,6 @@ The second argument defaults to `buy` when omitted; set it explicitly for sell f
 
 ## Next Steps
 
-- [Buy and sell](buy-and-sell.md)
-- [Get started](get-started.md)
-- [Configuration](../configuration.md)
+- [Buy and sell](/sdk/fiat-modules/fiat-moonpay/guides/buy-and-sell/)
+- [Get started](/sdk/fiat-modules/fiat-moonpay/guides/get-started/)
+- [Configuration](/sdk/fiat-modules/fiat-moonpay/configuration/)

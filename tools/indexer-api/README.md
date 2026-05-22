@@ -24,7 +24,7 @@ The WDK Indexer REST API provides fast, reliable access to balances, token trans
 A blockchain indexer continuously monitors and organizes blockchain transactions, making them instantly searchable through a simple REST API.
 {% endhint %}
 
-<a class="button primary" href="./get-started.md" target="_blank">Get Started</a>
+<a class="button primary" href="/tools/indexer-api/get-started/" target="_blank">Get Started</a>
 
 
 ## Supported Chains and Tokens
@@ -73,7 +73,7 @@ The WDK Indexer currently supports the following blockchain networks and tokens:
 			</td>
         <td>Learn how to make your first API call</td>
 			<td>
-				<a href="./get-started.md">get-started.md</a>
+				<a href="/tools/indexer-api/get-started/">get-started.md</a>
 			</td>
 		</tr>
 		<tr>
@@ -85,7 +85,7 @@ The WDK Indexer currently supports the following blockchain networks and tokens:
 			</td>
         <td>Endpoints, parameters, and responses</td>
 			<td>
-				<a href="./api-reference.md">api-reference.md</a>
+				<a href="/tools/indexer-api/api-reference/">api-reference.md</a>
 			</td>
 		</tr>
 	</tbody>

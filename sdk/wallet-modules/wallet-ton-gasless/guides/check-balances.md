@@ -23,7 +23,7 @@ This guide explains how to check [native TON balances](#native-ton-balance), [Je
 
 ## Native TON Balance
 
-You can retrieve the native TON balance using [`account.getBalance()`](../api-reference.md#getbalance):
+You can retrieve the native TON balance using [`account.getBalance()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#getbalance):
 
 {% code title="Get Native TON Balance" lineNumbers="true" %}
 ```javascript
@@ -34,7 +34,7 @@ console.log('Native TON balance:', balance, 'nanotons')
 
 ## Jetton Token Balance
 
-You can check the balance of a specific Jetton token using [`account.getTokenBalance()`](../api-reference.md#gettokenbalance-tokenaddress):
+You can check the balance of a specific Jetton token using [`account.getTokenBalance()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#gettokenbalance-tokenaddress):
 
 {% code title="Get Jetton Token Balance" lineNumbers="true" %}
 ```javascript
@@ -46,7 +46,7 @@ console.log('Jetton token balance:', jettonBalance)
 
 ## Paymaster Token Balance
 
-You can check the balance of the configured paymaster token using [`account.getPaymasterTokenBalance()`](../api-reference.md#getpaymastertokenbalance):
+You can check the balance of the configured paymaster token using [`account.getPaymasterTokenBalance()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#getpaymastertokenbalance):
 
 {% code title="Get Paymaster Token Balance" lineNumbers="true" %}
 ```javascript
@@ -61,7 +61,7 @@ The paymaster token balance determines how many gasless transfers you can execut
 
 ## Read-Only Account Balances
 
-You can check balances for any public key without a seed phrase using [`WalletAccountReadOnlyTonGasless`](../api-reference.md#walletaccountreadonlytongasless):
+You can check balances for any public key without a seed phrase using [`WalletAccountReadOnlyTonGasless`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#walletaccountreadonlytongasless):
 
 {% code title="Create Read-Only Account" lineNumbers="true" %}
 ```javascript
@@ -83,7 +83,7 @@ const readOnlyAccount = new WalletAccountReadOnlyTonGasless(publicKey, {
 ```
 {% endcode %}
 
-You can retrieve balances from a read-only account using [`readOnlyAccount.getBalance()`](../api-reference.md#getbalance) and [`readOnlyAccount.getPaymasterTokenBalance()`](../api-reference.md#getpaymastertokenbalance):
+You can retrieve balances from a read-only account using [`readOnlyAccount.getBalance()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#getbalance) and [`readOnlyAccount.getPaymasterTokenBalance()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#getpaymastertokenbalance):
 
 {% code title="Read-Only Balances" lineNumbers="true" %}
 ```javascript
@@ -97,4 +97,4 @@ console.log('Paymaster token balance:', paymasterBalance)
 
 ## Next Steps
 
-With balance checks in place, learn how to [send TON](./send-transactions.md).
+With balance checks in place, learn how to [send TON](/sdk/wallet-modules/wallet-ton-gasless/guides/send-transactions/).

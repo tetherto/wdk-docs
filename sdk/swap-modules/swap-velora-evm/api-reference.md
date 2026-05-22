@@ -144,7 +144,7 @@ Common errors include:
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">Node.js & Bare Quickstart</a>
+				<a href="/start-building/nodejs-bare-quickstart/">Node.js & Bare Quickstart</a>
 			</td>
 		</tr>
         <tr>
@@ -156,7 +156,7 @@ Common errors include:
 			</td>
 			<td>Get started with WDK's Swap velora EVM Protocol configuration</td>
 			<td>
-				<a href="./configuration.md">WDK Swap velora EVM Protocol Configuration</a>
+				<a href="/sdk/swap-modules/swap-velora-evm/configuration/">WDK Swap velora EVM Protocol Configuration</a>
 			</td>
 		</tr>
     <tr>
@@ -168,7 +168,7 @@ Common errors include:
 			</td>
 			<td>Get started with WDK's Swap velora EVM Protocol usage</td>
 			<td>
-				<a href="./usage.md">WDK Swap velora EVM Protocol Usage</a>
+				<a href="/sdk/swap-modules/swap-velora-evm/usage/">WDK Swap velora EVM Protocol Usage</a>
 			</td>
 		</tr>
 	</tbody>

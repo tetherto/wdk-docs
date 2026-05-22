@@ -37,43 +37,43 @@ The `@tetherto/wdk-wallet-evm-erc-4337` module provides account abstraction wall
       <td><i class="fa-rocket">:rocket:</i></td>
       <td><strong>Get Started</strong></td>
       <td>Install the package and create your first smart account.</td>
-      <td><a href="./guides/get-started.md">Get Started</a></td>
+      <td><a href="/sdk/wallet-modules/wallet-evm-erc-4337/guides/get-started/">Get Started</a></td>
     </tr>
     <tr>
       <td><i class="fa-user">:user:</i></td>
       <td><strong>Manage Accounts</strong></td>
       <td>Work with multiple smart accounts and custom derivation paths.</td>
-      <td><a href="./guides/manage-accounts.md">Manage Accounts</a></td>
+      <td><a href="/sdk/wallet-modules/wallet-evm-erc-4337/guides/manage-accounts/">Manage Accounts</a></td>
     </tr>
     <tr>
       <td><i class="fa-wallet">:wallet:</i></td>
       <td><strong>Check Balances</strong></td>
       <td>Query native, ERC-20, and paymaster token balances.</td>
-      <td><a href="./guides/check-balances.md">Check Balances</a></td>
+      <td><a href="/sdk/wallet-modules/wallet-evm-erc-4337/guides/check-balances/">Check Balances</a></td>
     </tr>
     <tr>
       <td><i class="fa-exchange-alt">:exchange-alt:</i></td>
       <td><strong>Send Transactions</strong></td>
       <td>Send gasless transactions and estimate fees.</td>
-      <td><a href="./guides/send-transactions.md">Send Transactions</a></td>
+      <td><a href="/sdk/wallet-modules/wallet-evm-erc-4337/guides/send-transactions/">Send Transactions</a></td>
     </tr>
     <tr>
       <td><i class="fa-coins">:coins:</i></td>
       <td><strong>Transfer Tokens</strong></td>
       <td>Transfer ERC-20 tokens with gasless transactions.</td>
-      <td><a href="./guides/transfer-tokens.md">Transfer Tokens</a></td>
+      <td><a href="/sdk/wallet-modules/wallet-evm-erc-4337/guides/transfer-tokens/">Transfer Tokens</a></td>
     </tr>
     <tr>
       <td><i class="fa-key">:key:</i></td>
       <td><strong>Sign and Verify Messages</strong></td>
       <td>Sign messages and EIP-712 typed data.</td>
-      <td><a href="./guides/sign-verify-messages.md">Sign and Verify Messages</a></td>
+      <td><a href="/sdk/wallet-modules/wallet-evm-erc-4337/guides/sign-verify-messages/">Sign and Verify Messages</a></td>
     </tr>
     <tr>
       <td><i class="fa-exclamation-triangle">:exclamation-triangle:</i></td>
       <td><strong>Handle Errors</strong></td>
       <td>Handle errors, manage fees, and dispose of sensitive data.</td>
-      <td><a href="./guides/handle-errors.md">Handle Errors</a></td>
+      <td><a href="/sdk/wallet-modules/wallet-evm-erc-4337/guides/handle-errors/">Handle Errors</a></td>
     </tr>
   </tbody>
 </table>
@@ -98,7 +98,7 @@ The `@tetherto/wdk-wallet-evm-erc-4337` module provides account abstraction wall
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="/start-building/nodejs-bare-quickstart/">nodejs-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -110,7 +110,7 @@ The `@tetherto/wdk-wallet-evm-erc-4337` module provides account abstraction wall
 			</td>
 			<td>Build mobile wallets with React Native Expo</td>
 			<td>
-				<a href="../../../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
+				<a href="/start-building/react-native-quickstart/">react-native-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -122,7 +122,7 @@ The `@tetherto/wdk-wallet-evm-erc-4337` module provides account abstraction wall
 			</td>
 			<td>Get started with WDK's EVM ERC-4337 Wallet Configuration</td>
 			<td>
-				<a href="./configuration.md">WDK EVM ERC-4337 Wallet Configuration</a>
+				<a href="/sdk/wallet-modules/wallet-evm-erc-4337/configuration/">WDK EVM ERC-4337 Wallet Configuration</a>
 			</td>
 		</tr>
         <tr>
@@ -134,7 +134,7 @@ The `@tetherto/wdk-wallet-evm-erc-4337` module provides account abstraction wall
 			</td>
 			<td>Get started with WDK's EVM ERC-4337 Wallet API</td>
 			<td>
-				<a href="./api-reference.md">WDK EVM ERC-4337 Wallet API</a>
+				<a href="/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/">WDK EVM ERC-4337 Wallet API</a>
 			</td>
 		</tr>
 	</tbody>

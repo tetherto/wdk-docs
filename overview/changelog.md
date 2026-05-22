@@ -51,7 +51,7 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 ### April 30, 2026
 
 **What's New**
-- **[React Native Secure Storage](../tools/react-native-secure-storage/)**: Docs added for `@tetherto/wdk-react-native-secure-storage`, covering keychain-backed wallet credential storage, biometric options, and typed errors.
+- **[React Native Secure Storage](/tools/react-native-secure-storage/)**: Docs added for `@tetherto/wdk-react-native-secure-storage`, covering keychain-backed wallet credential storage, biometric options, and typed errors.
 - **wallet-spark** ([v1.0.0-beta.18](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.18)): Add `signTransaction(tx)` to `WalletAccountSpark` for `IWalletAccount` compatibility, document that standalone signed payloads are unsupported on Spark, reuse the cached read-only account helper, and refresh `@buildonspark/spark-sdk` to `0.7.16` and spark bare SDK to `0.0.66`.
 
 ---
@@ -133,7 +133,7 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 ### April 3, 2026
 
 **Changes**
-- **wallet-spark** ([v1.0.0-beta.12](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.12)): [`WalletAccountReadOnlySpark`](../sdk/wallet-modules/wallet-spark/api-reference.md#walletaccountreadonlyspark) gained [`getTransfers()`](../sdk/wallet-modules/wallet-spark/api-reference.md#gettransfers-options), [`getUnusedDepositAddresses()`](../sdk/wallet-modules/wallet-spark/api-reference.md#getunuseddepositaddresses-options) (paginated return type), [`getStaticDepositAddresses()`](../sdk/wallet-modules/wallet-spark/api-reference.md#getstaticdepositaddresses), [`getUtxosForDepositAddress()`](../sdk/wallet-modules/wallet-spark/api-reference.md#getutxosfordepositaddress-options), and [`getSparkInvoices()`](../sdk/wallet-modules/wallet-spark/api-reference.md#getsparkinvoices-params) (new parameter type). Removed `sparkScanApiKey` config option and `SparkTransactionReceipt` type after dropping the `@sparkscan/api-node-sdk-client` dependency. [`getTransactionReceipt()`](../sdk/wallet-modules/wallet-spark/api-reference.md#gettransactionreceipt-hash) now returns `SparkTransfer` instead. Added [`getAccountByPath()`](../sdk/wallet-modules/wallet-spark/api-reference.md#getaccountbypath-path) to [`WalletManagerSpark`](../sdk/wallet-modules/wallet-spark/api-reference.md#walletmanagerspark). SIGNET network support documented. Dependency upgrades: `@buildonspark/spark-sdk` 0.7.3, `@buildonspark/bare` 0.0.53.
+- **wallet-spark** ([v1.0.0-beta.12](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.12)): [`WalletAccountReadOnlySpark`](/sdk/wallet-modules/wallet-spark/api-reference/#walletaccountreadonlyspark) gained [`getTransfers()`](/sdk/wallet-modules/wallet-spark/api-reference/#gettransfers-options), [`getUnusedDepositAddresses()`](/sdk/wallet-modules/wallet-spark/api-reference/#getunuseddepositaddresses-options) (paginated return type), [`getStaticDepositAddresses()`](/sdk/wallet-modules/wallet-spark/api-reference/#getstaticdepositaddresses), [`getUtxosForDepositAddress()`](/sdk/wallet-modules/wallet-spark/api-reference/#getutxosfordepositaddress-options), and [`getSparkInvoices()`](/sdk/wallet-modules/wallet-spark/api-reference/#getsparkinvoices-params) (new parameter type). Removed `sparkScanApiKey` config option and `SparkTransactionReceipt` type after dropping the `@sparkscan/api-node-sdk-client` dependency. [`getTransactionReceipt()`](/sdk/wallet-modules/wallet-spark/api-reference/#gettransactionreceipt-hash) now returns `SparkTransfer` instead. Added [`getAccountByPath()`](/sdk/wallet-modules/wallet-spark/api-reference/#getaccountbypath-path) to [`WalletManagerSpark`](/sdk/wallet-modules/wallet-spark/api-reference/#walletmanagerspark). SIGNET network support documented. Dependency upgrades: `@buildonspark/spark-sdk` 0.7.3, `@buildonspark/bare` 0.0.53.
 
 ---
 
@@ -147,14 +147,14 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 ### March 24, 2026
 
 **What's New**
-- **[React Native Core](../tools/react-native-core/)**: Added documentation for `@tetherto/wdk-react-native-core` ([v1.0.0-beta.6](https://github.com/tetherto/wdk-core-react-native/releases/tag/v1.0.0-beta.6)), the hooks-based React Native integration layer for WDK. Includes [API Reference](../tools/react-native-core/api-reference.md) covering `WdkAppProvider`, `useWdkApp`, `useWalletManager`, `useAccount`, `useBalance`, and more. Updated [React Native Quickstart](../start-building/react-native-quickstart.md) with step-by-step integration guide.
+- **[React Native Core](/tools/react-native-core/)**: Added documentation for `@tetherto/wdk-react-native-core` ([v1.0.0-beta.6](https://github.com/tetherto/wdk-core-react-native/releases/tag/v1.0.0-beta.6)), the hooks-based React Native integration layer for WDK. Includes [API Reference](/tools/react-native-core/api-reference/) covering `WdkAppProvider`, `useWdkApp`, `useWalletManager`, `useAccount`, `useBalance`, and more. Updated [React Native Quickstart](/start-building/react-native-quickstart/) with step-by-step integration guide.
 
 ---
 
 ### March 12, 2026
 
 **Changes**
-- **wallet-btc** ([v1.0.0-beta.6](https://github.com/tetherto/wdk-wallet-btc/releases/tag/v1.0.0-beta.6)): Added `dispose()` method to [`WalletAccountReadOnlyBtc`](../sdk/wallet-modules/wallet-btc/api-reference.md#walletaccountreadonlybtc) for closing internal Electrum connections. Security dependency updates.
+- **wallet-btc** ([v1.0.0-beta.6](https://github.com/tetherto/wdk-wallet-btc/releases/tag/v1.0.0-beta.6)): Added `dispose()` method to [`WalletAccountReadOnlyBtc`](/sdk/wallet-modules/wallet-btc/api-reference/#walletaccountreadonlybtc) for closing internal Electrum connections. Security dependency updates.
 
 ---
 
@@ -170,7 +170,7 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 ### March 5, 2026
 
 **What's New**
-- **create-wdk-module**: Added documentation for the [`create-wdk-module`](../tools/create-wdk-module.md) CLI scaffolding tool. Updated [Community Modules](../sdk/community-modules/) and [SDK Get Started](../sdk/get-started.md) pages with references to the new tool.
+- **create-wdk-module**: Added documentation for the [`create-wdk-module`](/tools/create-wdk-module/) CLI scaffolding tool. Updated [Community Modules](/sdk/community-modules/) and [SDK Get Started](/sdk/get-started/) pages with references to the new tool.
 
 ---
 
@@ -184,8 +184,8 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 ### February 25, 2026
 
 **Changes**
-- **wallet-evm** ([v1.0.0-beta.8](https://github.com/tetherto/wdk-wallet-evm/releases/tag/v1.0.0-beta.8)): Added [`getTokenBalances(tokenAddresses)`](../sdk/wallet-modules/wallet-evm/api-reference.md#gettokenbalancestokenaddresses) to [`WalletAccountReadOnlyEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountreadonlyevm), also available on [`WalletAccountEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountevm) through inheritance.
-- **wallet-evm-erc-4337** ([v1.0.0-beta.5](https://github.com/tetherto/wdk-wallet-evm-erc-4337/releases/tag/v1.0.0-beta.5)): Added EIP-712 typed data methods [`signTypedData(typedData)`](../sdk/wallet-modules/wallet-evm-erc-4337/api-reference.md#signtypeddatatypeddata) and [`verifyTypedData(typedData, signature)`](../sdk/wallet-modules/wallet-evm-erc-4337/api-reference.md#verifytypeddatatypeddata-signature), plus multicall token balance method [`getTokenBalances(tokenAddresses)`](../sdk/wallet-modules/wallet-evm-erc-4337/api-reference.md#gettokenbalancestokenaddresses).
+- **wallet-evm** ([v1.0.0-beta.8](https://github.com/tetherto/wdk-wallet-evm/releases/tag/v1.0.0-beta.8)): Added [`getTokenBalances(tokenAddresses)`](/sdk/wallet-modules/wallet-evm/api-reference/#gettokenbalancestokenaddresses) to [`WalletAccountReadOnlyEvm`](/sdk/wallet-modules/wallet-evm/api-reference/#walletaccountreadonlyevm), also available on [`WalletAccountEvm`](/sdk/wallet-modules/wallet-evm/api-reference/#walletaccountevm) through inheritance.
+- **wallet-evm-erc-4337** ([v1.0.0-beta.5](https://github.com/tetherto/wdk-wallet-evm-erc-4337/releases/tag/v1.0.0-beta.5)): Added EIP-712 typed data methods [`signTypedData(typedData)`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#signtypeddatatypeddata) and [`verifyTypedData(typedData, signature)`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#verifytypeddatatypeddata-signature), plus multicall token balance method [`getTokenBalances(tokenAddresses)`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#gettokenbalancestokenaddresses).
 
 ---
 
@@ -199,22 +199,22 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 ### February 20, 2026
 
 **What's New**
-- **[Showcase](../overview/showcase.md)**: More visibility for our showcase page, we value contributions! Added 4 featured community projects: [wdk-mcp](https://github.com/dieselftw/wdk-mcp), [wdk-starter-browser-extension](https://github.com/base58-io/wdk-starter-browser-extension), [wdk-wallet-evm-x402-facilitator](https://github.com/SemanticPay/wdk-wallet-evm-x402-facilitator), and [x402-usdt0](https://github.com/baghdadgherras/x402-usdt0).
-- **[Community Modules](../sdk/community-modules/README.md)**: Added [`@base58-io/wdk-wallet-cosmos`](https://github.com/base58-io/wdk-wallet-cosmos) — wallet module for Cosmos-compatible blockchains by [Base58](https://base58.io/).
+- **[Showcase](/overview/showcase/)**: More visibility for our showcase page, we value contributions! Added 4 featured community projects: [wdk-mcp](https://github.com/dieselftw/wdk-mcp), [wdk-starter-browser-extension](https://github.com/base58-io/wdk-starter-browser-extension), [wdk-wallet-evm-x402-facilitator](https://github.com/SemanticPay/wdk-wallet-evm-x402-facilitator), and [x402-usdt0](https://github.com/baghdadgherras/x402-usdt0).
+- **[Community Modules](/sdk/community-modules/)**: Added [`@base58-io/wdk-wallet-cosmos`](https://github.com/base58-io/wdk-wallet-cosmos) — wallet module for Cosmos-compatible blockchains by [Base58](https://base58.io/).
 
 ---
 
 ### February 18, 2026
 
 **What's New**
-- **[x402 Payments](../ai/x402.md)**: New guide for accepting and making instant USD₮ payments over HTTP using WDK self-custodial wallets. Covers the x402 protocol, buyer integration with `@tetherto/wdk-wallet-evm`, seller setup with hosted and self-hosted facilitators, and bridging USD₮ to Plasma and Stable chains.
+- **[x402 Payments](/ai/x402/)**: New guide for accepting and making instant USD₮ payments over HTTP using WDK self-custodial wallets. Covers the x402 protocol, buyer integration with `@tetherto/wdk-wallet-evm`, seller setup with hosted and self-hosted facilitators, and bridging USD₮ to Plasma and Stable chains.
 
 ---
 
 ### February 15, 2026
 
 **Changes**
-- **wallet-spark**: Added [`getIdentityKey()`](../sdk/wallet-modules/wallet-spark/api-reference.md#getidentitykey) method to [`WalletAccountReadOnlySpark`](../sdk/wallet-modules/wallet-spark/api-reference.md#walletaccountreadonlyspark) for retrieving the account's identity public key ([v1.0.0-beta.10](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.10))
+- **wallet-spark**: Added [`getIdentityKey()`](/sdk/wallet-modules/wallet-spark/api-reference/#getidentitykey) method to [`WalletAccountReadOnlySpark`](/sdk/wallet-modules/wallet-spark/api-reference/#walletaccountreadonlyspark) for retrieving the account's identity public key ([v1.0.0-beta.10](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.10))
 
 ---
 
@@ -228,26 +228,26 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 ### February 12, 2026
 
 **What's New**
-- **[Agent Skills](../ai/agent-skills.md)**: New page covering WDK's agent skill capabilities, self-custodial vs hosted comparison, and platform compatibility with OpenClaw, Claude, Cursor, and other agent platforms.
-- **[OpenClaw Integration](../ai/openclaw.md)**: New page for installing and configuring the WDK skill in OpenClaw via ClawHub, including security precautions for running agents locally.
+- **[Agent Skills](/ai/agent-skills/)**: New page covering WDK's agent skill capabilities, self-custodial vs hosted comparison, and platform compatibility with OpenClaw, Claude, Cursor, and other agent platforms.
+- **[OpenClaw Integration](/ai/openclaw/)**: New page for installing and configuring the WDK skill in OpenClaw via ClawHub, including security precautions for running agents locally.
 
 **Changes**
 - **wallet-evm** ([v1.0.0-beta.7](https://github.com/tetherto/wdk-wallet-evm/releases/tag/v1.0.0-beta.7)): Added [EIP-712](https://eips.ethereum.org/EIPS/eip-712) typed data support:
-  - Added [`signTypedData(typedData)`](../sdk/wallet-modules/wallet-evm/api-reference.md#signtypeddatatypeddata) method to [`WalletAccountEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountevm) for signing structured data
-  - Added [`verifyTypedData(typedData, signature)`](../sdk/wallet-modules/wallet-evm/api-reference.md#verifytypeddatatypeddata-signature) method to [`WalletAccountEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountevm) and [`WalletAccountReadOnlyEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountreadonlyevm) for verifying typed data signatures
+  - Added [`signTypedData(typedData)`](/sdk/wallet-modules/wallet-evm/api-reference/#signtypeddatatypeddata) method to [`WalletAccountEvm`](/sdk/wallet-modules/wallet-evm/api-reference/#walletaccountevm) for signing structured data
+  - Added [`verifyTypedData(typedData, signature)`](/sdk/wallet-modules/wallet-evm/api-reference/#verifytypeddatatypeddata-signature) method to [`WalletAccountEvm`](/sdk/wallet-modules/wallet-evm/api-reference/#walletaccountevm) and [`WalletAccountReadOnlyEvm`](/sdk/wallet-modules/wallet-evm/api-reference/#walletaccountreadonlyevm) for verifying typed data signatures
 - **wallet-evm-erc-4337** ([v1.0.0-beta.4](https://github.com/tetherto/wdk-wallet-evm-erc-4337/releases/tag/v1.0.0-beta.4)):
-  - Added 2 new gas payment modes: [Sponsorship Policy](../sdk/wallet-modules/wallet-evm-erc-4337/configuration.md#gas-payment-mode-flags) and [Native Coins](../sdk/wallet-modules/wallet-evm-erc-4337/configuration.md#gas-payment-mode-flags), alongside the existing Paymaster Token mode
-  - Added per-call [config override](../sdk/wallet-modules/wallet-evm-erc-4337/api-reference.md#config-override) parameter to `sendTransaction`, `transfer`, `quoteSendTransaction`, and `quoteTransfer`
-  - Added [`getUserOperationReceipt(hash)`](../sdk/wallet-modules/wallet-evm-erc-4337/api-reference.md#getuseroperationreceipthash) method for retrieving ERC-4337 UserOperation receipts
-  - Added [`ConfigurationError`](../sdk/wallet-modules/wallet-evm-erc-4337/api-reference.md#configurationerror) error type for invalid configuration validation
+  - Added 2 new gas payment modes: [Sponsorship Policy](/sdk/wallet-modules/wallet-evm-erc-4337/configuration/#gas-payment-mode-flags) and [Native Coins](/sdk/wallet-modules/wallet-evm-erc-4337/configuration/#gas-payment-mode-flags), alongside the existing Paymaster Token mode
+  - Added per-call [config override](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#config-override) parameter to `sendTransaction`, `transfer`, `quoteSendTransaction`, and `quoteTransfer`
+  - Added [`getUserOperationReceipt(hash)`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#getuseroperationreceipthash) method for retrieving ERC-4337 UserOperation receipts
+  - Added [`ConfigurationError`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#configurationerror) error type for invalid configuration validation
 
 ---
 
 ### February 10, 2026
 
 **What's New**
-- **[Build with AI](../start-building/build-with-ai.md)**: New guide for using AI coding assistants with WDK. Includes MCP server setup, Markdown context endpoints, project rules, and example prompts. Supports Cursor, Claude Code, GitHub Copilot, Windsurf, Cline, and Continue.
-- **[MCP Toolkit](../ai/mcp-toolkit/README.md)**: New documentation for `@tetherto/wdk-mcp-toolkit` (`v1.0.0-beta.1`). Covers the `WdkMcpServer` class, 35 built-in MCP tools across 7 categories (wallet, pricing, indexer, swap, bridge, lending, fiat), setup wizard, multi-tool configuration, and full API reference.
+- **[Build with AI](/start-building/build-with-ai/)**: New guide for using AI coding assistants with WDK. Includes MCP server setup, Markdown context endpoints, project rules, and example prompts. Supports Cursor, Claude Code, GitHub Copilot, Windsurf, Cline, and Continue.
+- **[MCP Toolkit](/ai/mcp-toolkit/)**: New documentation for `@tetherto/wdk-mcp-toolkit` (`v1.0.0-beta.1`). Covers the `WdkMcpServer` class, 35 built-in MCP tools across 7 categories (wallet, pricing, indexer, swap, bridge, lending, fiat), setup wizard, multi-tool configuration, and full API reference.
 
 ---
 
@@ -261,8 +261,8 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 ### February 02, 2026
 
 **Changes**
-- **wallet-ton-gasless**: Added `verify` method to [`WalletAccountReadOnlyTonGasless`](../sdk/wallet-modules/wallet-ton-gasless/api-reference.md#walletaccountreadonlytongasless) ([v1.0.0-beta.4](https://github.com/tetherto/wdk-wallet-ton-gasless/releases/tag/v1.0.0-beta.4))
-- **wallet-tron-gasfree**: Added `verify` method to [`WalletAccountReadOnlyTronGasfree`](../sdk/wallet-modules/wallet-tron-gasfree/api-reference.md#walletaccountreadonlytrongasfree) ([v1.0.0-beta.4](https://github.com/tetherto/wdk-wallet-tron-gasfree/releases/tag/v1.0.0-beta.4))
+- **wallet-ton-gasless**: Added `verify` method to [`WalletAccountReadOnlyTonGasless`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#walletaccountreadonlytongasless) ([v1.0.0-beta.4](https://github.com/tetherto/wdk-wallet-ton-gasless/releases/tag/v1.0.0-beta.4))
+- **wallet-tron-gasfree**: Added `verify` method to [`WalletAccountReadOnlyTronGasfree`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference/#walletaccountreadonlytrongasfree) ([v1.0.0-beta.4](https://github.com/tetherto/wdk-wallet-tron-gasfree/releases/tag/v1.0.0-beta.4))
 
 ---
 
@@ -282,27 +282,27 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 **Changes**
 - **wallet-btc** ([v1.0.0-beta.5](https://github.com/tetherto/wdk-wallet-btc/releases/tag/v1.0.0-beta.5)):
-  - Added `verify` method to [`WalletAccountReadOnlyBtc`](../sdk/wallet-modules/wallet-btc/api-reference.md#walletaccountreadonlybtc)
-  - Added Pluggable Transport classes: [`ElectrumTcp`](../sdk/wallet-modules/wallet-btc/api-reference.md#electrumtcp), [`ElectrumTls`](../sdk/wallet-modules/wallet-btc/api-reference.md#electrumtls), [`ElectrumSsl`](../sdk/wallet-modules/wallet-btc/api-reference.md#electrumssl), [`ElectrumWs`](../sdk/wallet-modules/wallet-btc/api-reference.md#electrumws)
-- **wallet-evm**: Added `verify` method to [`WalletAccountReadOnlyEvm`](../sdk/wallet-modules/wallet-evm/api-reference.md#walletaccountreadonlyevm) ([v1.0.0-beta.5](https://github.com/tetherto/wdk-wallet-evm/releases/tag/v1.0.0-beta.5))
-- **wallet-solana**: Added `verify` method to [`WalletAccountReadOnlySolana`](../sdk/wallet-modules/wallet-solana/api-reference.md#walletaccountreadonlysolana) ([v1.0.0-beta.5](https://github.com/tetherto/wdk-wallet-solana/releases/tag/v1.0.0-beta.5))
-- **wallet-ton**: Added `verify` method to [`WalletAccountReadOnlyTon`](../sdk/wallet-modules/wallet-ton/api-reference.md#walletaccountreadonlyton) ([v1.0.0-beta.7](https://github.com/tetherto/wdk-wallet-ton/releases/tag/v1.0.0-beta.7))
-- **wallet-tron**: Added `verify` method to [`WalletAccountReadOnlyTron`](../sdk/wallet-modules/wallet-tron/api-reference.md#walletaccountreadonlytron) ([v1.0.0-beta.4](https://github.com/tetherto/wdk-wallet-tron/releases/tag/v1.0.0-beta.4))
-- **wallet-spark**: Added `verify` method to [`WalletAccountReadOnlySpark`](../sdk/wallet-modules/wallet-spark/api-reference.md#walletaccountreadonlyspark) ([v1.0.0-beta.7](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.7))
+  - Added `verify` method to [`WalletAccountReadOnlyBtc`](/sdk/wallet-modules/wallet-btc/api-reference/#walletaccountreadonlybtc)
+  - Added Pluggable Transport classes: [`ElectrumTcp`](/sdk/wallet-modules/wallet-btc/api-reference/#electrumtcp), [`ElectrumTls`](/sdk/wallet-modules/wallet-btc/api-reference/#electrumtls), [`ElectrumSsl`](/sdk/wallet-modules/wallet-btc/api-reference/#electrumssl), [`ElectrumWs`](/sdk/wallet-modules/wallet-btc/api-reference/#electrumws)
+- **wallet-evm**: Added `verify` method to [`WalletAccountReadOnlyEvm`](/sdk/wallet-modules/wallet-evm/api-reference/#walletaccountreadonlyevm) ([v1.0.0-beta.5](https://github.com/tetherto/wdk-wallet-evm/releases/tag/v1.0.0-beta.5))
+- **wallet-solana**: Added `verify` method to [`WalletAccountReadOnlySolana`](/sdk/wallet-modules/wallet-solana/api-reference/#walletaccountreadonlysolana) ([v1.0.0-beta.5](https://github.com/tetherto/wdk-wallet-solana/releases/tag/v1.0.0-beta.5))
+- **wallet-ton**: Added `verify` method to [`WalletAccountReadOnlyTon`](/sdk/wallet-modules/wallet-ton/api-reference/#walletaccountreadonlyton) ([v1.0.0-beta.7](https://github.com/tetherto/wdk-wallet-ton/releases/tag/v1.0.0-beta.7))
+- **wallet-tron**: Added `verify` method to [`WalletAccountReadOnlyTron`](/sdk/wallet-modules/wallet-tron/api-reference/#walletaccountreadonlytron) ([v1.0.0-beta.4](https://github.com/tetherto/wdk-wallet-tron/releases/tag/v1.0.0-beta.4))
+- **wallet-spark**: Added `verify` method to [`WalletAccountReadOnlySpark`](/sdk/wallet-modules/wallet-spark/api-reference/#walletaccountreadonlyspark) ([v1.0.0-beta.7](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.7))
 
 ---
 
 ### January 23, 2026
 
 **What's New**
-- **wdk-core docs**: Added comprehensive [Core Module Guides](../sdk/core-module/guides/getting-started.md) covering:
-  - [Getting Started](../sdk/core-module/guides/getting-started.md) - Installation and instantiation
-  - [Wallet Registration](../sdk/core-module/guides/wallet-registration.md) - Registering wallet modules for different blockchains
-  - [Account Management](../sdk/core-module/guides/account-management.md) - Working with accounts and addresses
-  - [Transactions](../sdk/core-module/guides/transactions.md) - Sending native tokens
-  - [Protocol Integration](../sdk/core-module/guides/protocol-integration.md) - Using swaps, bridges, and lending protocols
-  - [Middleware](../sdk/core-module/guides/middleware.md) - Configuring logging and failover protection
-  - [Error Handling](../sdk/core-module/guides/error-handling.md) - Best practices and memory management
+- **wdk-core docs**: Added comprehensive [Core Module Guides](/sdk/core-module/guides/getting-started/) covering:
+  - [Getting Started](/sdk/core-module/guides/getting-started/) - Installation and instantiation
+  - [Wallet Registration](/sdk/core-module/guides/wallet-registration/) - Registering wallet modules for different blockchains
+  - [Account Management](/sdk/core-module/guides/account-management/) - Working with accounts and addresses
+  - [Transactions](/sdk/core-module/guides/transactions/) - Sending native tokens
+  - [Protocol Integration](/sdk/core-module/guides/protocol-integration/) - Using swaps, bridges, and lending protocols
+  - [Middleware](/sdk/core-module/guides/middleware/) - Configuring logging and failover protection
+  - [Error Handling](/sdk/core-module/guides/error-handling/) - Best practices and memory management
 - **wdk-core**: Added support for 24-word seed phrases via `WDK.getRandomSeedPhrase(24)`
 - **indexer-api**: 
   - Added new `/api/v1/chains` endpoint to list supported blockchains and tokens
@@ -332,13 +332,13 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 ### December 23, 2025
 
 **What's New**
-- Added [MoonPay Fiat Module](../sdk/fiat-modules/fiat-moonpay/) for on-ramp and off-ramp functionality
-- Added [Community Modules](../sdk/community-modules/) section to highlight community-built modules
+- Added [MoonPay Fiat Module](/sdk/fiat-modules/fiat-moonpay/) for on-ramp and off-ramp functionality
+- Added [Community Modules](/sdk/community-modules/) section to highlight community-built modules
 
 **Changes**
 - Added this changelog page in the docs!
 - **wallet-spark**: Updated Spark SDK to latest version ([v1.0.0-beta.6](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.6))
-- Introduced [All Modules](../sdk/all-modules.md) page in docs for comprehensive module listings
+- Introduced [All Modules](/sdk/all-modules/) page in docs for comprehensive module listings
 - Reorganized documentation structure for better navigation
 
 ---

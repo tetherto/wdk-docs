@@ -623,7 +623,7 @@ interface KeyPair {
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="/start-building/nodejs-bare-quickstart/">nodejs-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -635,7 +635,7 @@ interface KeyPair {
 			</td>
 			<td>Build mobile wallets with React Native Expo</td>
 			<td>
-				<a href="../../../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
+				<a href="/start-building/react-native-quickstart/">react-native-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -647,7 +647,7 @@ interface KeyPair {
 			</td>
 			<td>Get started with WDK's Tron Gasfree Wallet Usage</td>
 			<td>
-				<a href="./usage.md">WDK Tron Gasfree Wallet Usage</a>
+				<a href="/sdk/wallet-modules/wallet-tron-gasfree/usage/">WDK Tron Gasfree Wallet Usage</a>
 			</td>
 		</tr>
         <tr>
@@ -659,7 +659,7 @@ interface KeyPair {
 			</td>
 			<td>Get started with WDK's Tron Gasfree Wallet Configuration</td>
 			<td>
-				<a href="./configuration.md">WDK Tron Gasfree Wallet Configuration</a>
+				<a href="/sdk/wallet-modules/wallet-tron-gasfree/configuration/">WDK Tron Gasfree Wallet Configuration</a>
 			</td>
 		</tr>
 	</tbody>

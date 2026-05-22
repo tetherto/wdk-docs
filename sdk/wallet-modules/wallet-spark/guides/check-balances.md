@@ -23,7 +23,7 @@ This guide explains how to read a [native Spark balance](#native-spark-balance),
 
 ## Native Spark Balance
 
-You can read the account balance in satoshis using [`account.getBalance()`](../api-reference.md#getbalance):
+You can read the account balance in satoshis using [`account.getBalance()`](/sdk/wallet-modules/wallet-spark/api-reference/#getbalance):
 
 {% code title="Native Spark Balance" lineNumbers="true" %}
 ```javascript
@@ -37,7 +37,7 @@ console.log('Balance in BTC:', Number(balance) / 100000000)
 Balances are in satoshis (1 BTC = 100,000,000 satoshis).
 {% endhint %}
 
-If you configure [`sparkscan`](../configuration.md#sparkscan-balance-polling), [`account.getBalance()`](../api-reference.md#getbalance) returns SparkScan's `btcSoftBalanceSats` value instead of the Spark SDK balance:
+If you configure [`sparkscan`](/sdk/wallet-modules/wallet-spark/configuration/#sparkscan-balance-polling), [`account.getBalance()`](/sdk/wallet-modules/wallet-spark/api-reference/#getbalance) returns SparkScan's `btcSoftBalanceSats` value instead of the Spark SDK balance:
 
 {% code title="SparkScan Balance Polling" lineNumbers="true" %}
 ```javascript
@@ -56,7 +56,7 @@ console.log('SparkScan balance:', balance)
 
 ## Token Balance
 
-You can read a specific token balance using [`account.getTokenBalance()`](../api-reference.md#gettokenbalance-tokenaddress):
+You can read a specific token balance using [`account.getTokenBalance()`](/sdk/wallet-modules/wallet-spark/api-reference/#gettokenbalance-tokenaddress):
 
 {% code title="Token Balance" lineNumbers="true" %}
 ```javascript
@@ -67,10 +67,10 @@ console.log('Token balance:', tokenBalance)
 
 ## Read-Only Account Balances
 
-1. Construct a [`WalletAccountReadOnlySpark`](../api-reference.md#walletaccountreadonlyspark) instance with the Spark address and optional config.
-2. Call [`readOnlyAccount.getBalance()`](../api-reference.md#getbalance).
+1. Construct a [`WalletAccountReadOnlySpark`](/sdk/wallet-modules/wallet-spark/api-reference/#walletaccountreadonlyspark) instance with the Spark address and optional config.
+2. Call [`readOnlyAccount.getBalance()`](/sdk/wallet-modules/wallet-spark/api-reference/#getbalance).
 
-You can create a read-only account from a Spark address using the [`WalletAccountReadOnlySpark`](../api-reference.md#walletaccountreadonlyspark) constructor:
+You can create a read-only account from a Spark address using the [`WalletAccountReadOnlySpark`](/sdk/wallet-modules/wallet-spark/api-reference/#walletaccountreadonlyspark) constructor:
 
 {% code title="Read-Only Account" lineNumbers="true" %}
 ```javascript
@@ -82,7 +82,7 @@ const readOnlyAccount = new WalletAccountReadOnlySpark('spark1...', {
 ```
 {% endcode %}
 
-You can read the native balance from that account using [`readOnlyAccount.getBalance()`](../api-reference.md#getbalance):
+You can read the native balance from that account using [`readOnlyAccount.getBalance()`](/sdk/wallet-modules/wallet-spark/api-reference/#getbalance):
 
 {% code title="Read-Only Native Balance" lineNumbers="true" %}
 ```javascript
@@ -92,10 +92,10 @@ console.log('Read-only balance:', balance, 'satoshis')
 {% endcode %}
 
 {% hint style="info" %}
-The same [`sparkscan`](../configuration.md#sparkscan-balance-polling) behavior applies to read-only accounts.
+The same [`sparkscan`](/sdk/wallet-modules/wallet-spark/configuration/#sparkscan-balance-polling) behavior applies to read-only accounts.
 {% endhint %}
 
-You can read a token balance on a read-only account using [`readOnlyAccount.getTokenBalance()`](../api-reference.md#gettokenbalance-tokenaddress):
+You can read a token balance on a read-only account using [`readOnlyAccount.getTokenBalance()`](/sdk/wallet-modules/wallet-spark/api-reference/#gettokenbalance-tokenaddress):
 
 {% code title="Read-Only Token Balance" lineNumbers="true" %}
 ```javascript
@@ -105,9 +105,9 @@ console.log('Read-only token balance:', tokenBalance)
 {% endcode %}
 
 {% hint style="info" %}
-You can also obtain a read-only handle from an owned account with [`account.toReadOnlyAccount()`](../api-reference.md#toreadonlyaccount).
+You can also obtain a read-only handle from an owned account with [`account.toReadOnlyAccount()`](/sdk/wallet-modules/wallet-spark/api-reference/#toreadonlyaccount).
 {% endhint %}
 
 ## Next Steps
 
-With balances verified, learn how to [send Spark and transfer tokens](./send-and-transfer.md).
+With balances verified, learn how to [send Spark and transfer tokens](/sdk/wallet-modules/wallet-spark/guides/send-and-transfer/).

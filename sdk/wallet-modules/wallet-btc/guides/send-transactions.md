@@ -23,7 +23,7 @@ This guide explains how to [send BTC](#send-btc), [extend post-broadcast polling
 
 ## Send BTC
 
-You can send Bitcoin to a recipient using [`account.sendTransaction()`](../api-reference.md#sendtransaction-options):
+You can send Bitcoin to a recipient using [`account.sendTransaction()`](/sdk/wallet-modules/wallet-btc/api-reference/#sendtransaction-options):
 
 {% code title="Send BTC" lineNumbers="true" %}
 ```javascript
@@ -42,7 +42,7 @@ Bitcoin transactions support a single recipient only. Amounts and fees are alway
 
 ## Extend Post-Broadcast Polling
 
-If you want [`account.sendTransaction()`](../api-reference.md#sendtransaction-options-timeoutms) to keep polling after broadcast until spent inputs disappear from the unspent-output set, pass the optional `timeoutMs` argument:
+If you want [`account.sendTransaction()`](/sdk/wallet-modules/wallet-btc/api-reference/#sendtransaction-options-timeoutms) to keep polling after broadcast until spent inputs disappear from the unspent-output set, pass the optional `timeoutMs` argument:
 
 {% code title="Send BTC With Extended Polling" lineNumbers="true" %}
 ```javascript
@@ -64,7 +64,7 @@ If you omit `timeoutMs`, the wallet uses the default post-broadcast polling wind
 
 ## Sign Without Broadcasting
 
-Use [`account.signTransaction()`](../api-reference.md#signtransaction-options) when your app needs a signed raw Bitcoin transaction but does not want WDK to broadcast it immediately.
+Use [`account.signTransaction()`](/sdk/wallet-modules/wallet-btc/api-reference/#signtransaction-options) when your app needs a signed raw Bitcoin transaction but does not want WDK to broadcast it immediately.
 
 {% code title="Sign BTC Transaction" lineNumbers="true" %}
 ```javascript
@@ -84,7 +84,7 @@ console.log('Signed transaction:', signedTransaction)
 
 ## Estimate Fees
 
-You can estimate the fee for a transaction without broadcasting it using [`account.quoteSendTransaction()`](../api-reference.md#quotesendtransaction-options):
+You can estimate the fee for a transaction without broadcasting it using [`account.quoteSendTransaction()`](/sdk/wallet-modules/wallet-btc/api-reference/#quotesendtransaction-options):
 
 {% code title="Estimate Fee" lineNumbers="true" %}
 ```javascript
@@ -98,7 +98,7 @@ console.log('Estimated fee:', quote.fee, 'satoshis')
 
 ## Send with Custom Fee Rate
 
-You can override automatic fee estimation by providing a `feeRate` in sat/vB to [`account.sendTransaction()`](../api-reference.md#sendtransaction-options):
+You can override automatic fee estimation by providing a `feeRate` in sat/vB to [`account.sendTransaction()`](/sdk/wallet-modules/wallet-btc/api-reference/#sendtransaction-options):
 
 {% code title="Custom Fee Rate" lineNumbers="true" %}
 ```javascript
@@ -116,7 +116,7 @@ When `feeRate` is provided, the `confirmationTarget` parameter is ignored.
 
 ## Send with Confirmation Target
 
-You can target a specific number of blocks for confirmation using the `confirmationTarget` parameter in [`account.sendTransaction()`](../api-reference.md#sendtransaction-options):
+You can target a specific number of blocks for confirmation using the `confirmationTarget` parameter in [`account.sendTransaction()`](/sdk/wallet-modules/wallet-btc/api-reference/#sendtransaction-options):
 
 {% code title="Confirmation Target" lineNumbers="true" %}
 ```javascript
@@ -130,4 +130,4 @@ const result = await account.sendTransaction({
 
 ## Next Steps
 
-Learn how to [view transaction history](./get-transaction-history.md).
+Learn how to [view transaction history](/sdk/wallet-modules/wallet-btc/guides/get-transaction-history/).

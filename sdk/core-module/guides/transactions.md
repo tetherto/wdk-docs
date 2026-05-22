@@ -23,7 +23,7 @@ layout:
 You can [send native tokens](#send-native-tokens), [sign a transaction without broadcasting it](#sign-without-broadcasting), [handle transaction responses](#handling-responses), and [orchestrate multi-chain payments](#multi-chain-transactions) from WDK wallet accounts.
 
 {% hint style="info" %}
-**Get Testnet Funds:** To test these transactions without spending real money, ensure you are on a testnet and have obtained funds. See [Testnet Funds & Faucets](../../../resources/concepts.md#testnet-funds--faucets) for a list of available faucets.
+**Get Testnet Funds:** To test these transactions without spending real money, ensure you are on a testnet and have obtained funds. See [Testnet Funds & Faucets](/resources/concepts/#testnet-funds--faucets) for a list of available faucets.
 {% endhint %}
 
 {% hint style="warning" %}
@@ -42,7 +42,7 @@ On EVM chains, values are typically expressed in Wei (1 ETH = 10^18 Wei).
 
 The following example will:
 
-1. Retrieve the first Ethereum account (see [Manage Accounts](./account-management.md))
+1. Retrieve the first Ethereum account (see [Manage Accounts](/sdk/core-module/guides/account-management/))
 2. Send 0.001 ETH (1000000000000000 wei) to an account using `sendTransaction`.
 
 {% code title="Send ETH" lineNumbers="true" %}
@@ -83,7 +83,7 @@ console.log('TON transaction:', tonResult.hash)
 
 ## Sign Without Broadcasting
 
-Use [`account.signTransaction()`](../api-reference.md#signtransaction-tx) when your app needs a signed transaction payload but does not want WDK to broadcast it immediately. Wallet modules accept their own transaction shape and may return a module-specific signed payload.
+Use [`account.signTransaction()`](/sdk/core-module/api-reference/#signtransaction-tx) when your app needs a signed transaction payload but does not want WDK to broadcast it immediately. Wallet modules accept their own transaction shape and may return a module-specific signed payload.
 
 {% code title="Sign An EVM Transaction" lineNumbers="true" %}
 ```typescript
@@ -104,7 +104,7 @@ console.log('Signed transaction:', signedTransaction)
 
 ## Handling Responses
 
-The `sendTransaction` method returns a [transaction result object](../api-reference.md). The most important field is typically `hash`, which represents the transaction ID on the blockchain. You can use this hash to track the status of your payment on a block explorer.
+The `sendTransaction` method returns a [transaction result object](/sdk/core-module/api-reference/). The most important field is typically `hash`, which represents the transaction ID on the blockchain. You can use this hash to track the status of your payment on a block explorer.
 
 ## Multi-Chain Transactions
 
@@ -138,4 +138,4 @@ async function sendCrossChainPayments(wdk) {
 
 ## Next Steps
 
-For more complex interactions like swapping tokens or bridging assets, learn how to [integrate protocols](./protocol-integration.md).
+For more complex interactions like swapping tokens or bridging assets, learn how to [integrate protocols](/sdk/core-module/guides/protocol-integration/).

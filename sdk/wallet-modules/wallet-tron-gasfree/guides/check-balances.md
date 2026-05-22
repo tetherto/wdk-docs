@@ -23,7 +23,7 @@ This guide explains how to check [native TRX balances](#native-trx-balance), [TR
 
 ## Native TRX Balance
 
-You can retrieve the native TRX balance using [`account.getBalance()`](../api-reference.md#getbalance):
+You can retrieve the native TRX balance using [`account.getBalance()`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference/#getbalance):
 
 {% code title="Get Native TRX Balance" lineNumbers="true" %}
 ```javascript
@@ -38,7 +38,7 @@ On Tron, values are expressed in sun (1 TRX = 1,000,000 sun).
 
 ## TRC20 Token Balance
 
-You can check the balance of a specific TRC20 token using [`account.getTokenBalance()`](../api-reference.md#gettokenbalance-tokenaddress):
+You can check the balance of a specific TRC20 token using [`account.getTokenBalance()`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference/#gettokenbalance-tokenaddress):
 
 {% code title="Get TRC20 Token Balance" lineNumbers="true" %}
 ```javascript
@@ -50,7 +50,7 @@ console.log('TRC20 token balance:', trc20Balance)
 
 ## Read-Only Account Balances
 
-You can check balances for any Tron address without a seed phrase using [`WalletAccountReadOnlyTronGasfree`](../api-reference.md#walletaccountreadonlytrongasfree):
+You can check balances for any Tron address without a seed phrase using [`WalletAccountReadOnlyTronGasfree`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference/#walletaccountreadonlytrongasfree):
 
 {% code title="Create Read-Only Account" lineNumbers="true" %}
 ```javascript
@@ -68,7 +68,7 @@ const readOnlyAccount = new WalletAccountReadOnlyTronGasfree('TLyqzVGLV1srkB7dTo
 ```
 {% endcode %}
 
-You can retrieve the native balance from a read-only account using [`readOnlyAccount.getBalance()`](../api-reference.md#getbalance):
+You can retrieve the native balance from a read-only account using [`readOnlyAccount.getBalance()`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference/#getbalance):
 
 {% code title="Read-Only Native Balance" lineNumbers="true" %}
 ```javascript
@@ -78,9 +78,9 @@ console.log('Read-only account balance:', balance)
 {% endcode %}
 
 {% hint style="info" %}
-You can also create a read-only account from an existing owned account using [`account.toReadOnlyAccount()`](../api-reference.md#toreadonlyaccount).
+You can also create a read-only account from an existing owned account using [`account.toReadOnlyAccount()`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference/#toreadonlyaccount).
 {% endhint %}
 
 ## Next Steps
 
-With balance checks in place, learn how to [send TRX](./send-transactions.md).
+With balance checks in place, learn how to [send TRX](/sdk/wallet-modules/wallet-tron-gasfree/guides/send-transactions/).

@@ -23,7 +23,7 @@ This guide explains how to [sign messages](#sign-a-message) with an owned accoun
 
 ## Sign a Message
 
-You can produce a cryptographic signature for any string message using [`account.sign()`](../api-reference.md#sign-message):
+You can produce a cryptographic signature for any string message using [`account.sign()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#sign-message):
 
 {% code title="Sign a Message" lineNumbers="true" %}
 ```javascript
@@ -35,7 +35,7 @@ console.log('Signature:', signature)
 
 ## Verify a Signature
 
-You can verify that a signature is valid using [`account.verify()`](../api-reference.md#verify-message-signature):
+You can verify that a signature is valid using [`account.verify()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#verify-message-signature):
 
 {% code title="Verify a Signature" lineNumbers="true" %}
 ```javascript
@@ -44,7 +44,7 @@ console.log('Signature valid:', isValid)
 ```
 {% endcode %}
 
-You can also create a [`WalletAccountReadOnlyTonGasless`](../api-reference.md#walletaccountreadonlytongasless) from any public key to verify signatures without access to the private key:
+You can also create a [`WalletAccountReadOnlyTonGasless`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#walletaccountreadonlytongasless) from any public key to verify signatures without access to the private key:
 
 {% code title="Verify with Read-Only Account" lineNumbers="true" %}
 ```javascript
@@ -71,4 +71,4 @@ console.log('Signature valid:', isValid)
 
 ## Next Steps
 
-For best practices on handling errors, managing fees, and cleaning up memory, see [Handle Errors](./handle-errors.md).
+For best practices on handling errors, managing fees, and cleaning up memory, see [Handle Errors](/sdk/wallet-modules/wallet-ton-gasless/guides/handle-errors/).

@@ -27,7 +27,7 @@ This guide explains how to [send EVM transactions with EIP-1559 gas parameters](
 
 ## Send with EIP-1559 Gas Parameters
 
-You can use [`account.sendTransaction()`](/sdk/wallet-modules/wallet-evm/api-reference#sendtransaction-tx) to send an EIP-1559 transaction. EIP-1559 transactions provide more predictable gas fees and faster inclusion times.
+You can use [`account.sendTransaction()`](/sdk/wallet-modules/wallet-evm/api-reference/#sendtransaction-tx) to send an EIP-1559 transaction. EIP-1559 transactions provide more predictable gas fees and faster inclusion times.
 
 {% code title="EIP-1559 Transaction" lineNumbers="true" %}
 ```javascript
@@ -44,7 +44,7 @@ console.log('Transaction fee:', result.fee, 'wei')
 
 ## Send with Legacy Gas Parameters
 
-You can also use [`account.sendTransaction()`](/sdk/wallet-modules/wallet-evm/api-reference#sendtransaction-tx) with legacy gas settings for chains that do not support EIP-1559.
+You can also use [`account.sendTransaction()`](/sdk/wallet-modules/wallet-evm/api-reference/#sendtransaction-tx) with legacy gas settings for chains that do not support EIP-1559.
 
 {% code title="Legacy Transaction" lineNumbers="true" %}
 ```javascript
@@ -60,7 +60,7 @@ console.log('Transaction hash:', legacyResult.hash)
 
 ## Sign Without Broadcasting
 
-Use [`account.signTransaction()`](/sdk/wallet-modules/wallet-evm/api-reference#signtransaction-tx) when you need a signed raw transaction but want to submit it through a separate relay, service, or review flow.
+Use [`account.signTransaction()`](/sdk/wallet-modules/wallet-evm/api-reference/#signtransaction-tx) when you need a signed raw transaction but want to submit it through a separate relay, service, or review flow.
 
 {% code title="Sign EVM Transaction" lineNumbers="true" %}
 ```javascript
@@ -82,7 +82,7 @@ console.log('Signed transaction:', signedTransaction)
 
 ## Estimate Transaction Fees
 
-Use [`account.quoteSendTransaction()`](/sdk/wallet-modules/wallet-evm/api-reference#quotesendtransaction-tx) to get a fee estimate before sending.
+Use [`account.quoteSendTransaction()`](/sdk/wallet-modules/wallet-evm/api-reference/#quotesendtransaction-tx) to get a fee estimate before sending.
 
 {% code title="Quote Transaction Fee" lineNumbers="true" %}
 ```javascript
@@ -96,7 +96,7 @@ console.log('Estimated fee:', quote.fee, 'wei')
 
 ## Use Dynamic Fee Rates
 
-Retrieve current fee rates using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-evm/api-reference#getfeerates) and apply them to your transaction.
+Retrieve current fee rates using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-evm/api-reference/#getfeerates) and apply them to your transaction.
 
 {% code title="Dynamic Fee Rates" lineNumbers="true" %}
 ```javascript
@@ -123,4 +123,4 @@ console.log('Fee paid:', result.fee, 'wei')
 
 ## Next Steps
 
-To transfer ERC-20 tokens instead of native tokens, see [Transfer ERC-20 Tokens](./transfer-tokens.md).
+To transfer ERC-20 tokens instead of native tokens, see [Transfer ERC-20 Tokens](/sdk/wallet-modules/wallet-evm/guides/transfer-tokens/).

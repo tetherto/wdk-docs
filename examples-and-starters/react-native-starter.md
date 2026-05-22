@@ -26,7 +26,7 @@ The React Native Starter Alpha is an Expo + React Native app showing how to buil
 ***
 
 {% hint style="warning" %}
-**Prerequisites:** Node.js 22+, and either Xcode (iOS) or Android SDK API 29+ (Android). See the [React Native Quickstart](../start-building/react-native-quickstart.md#prerequisites) for details.
+**Prerequisites:** Node.js 22+, and either Xcode (iOS) or Android SDK API 29+ (Android). See the [React Native Quickstart](/start-building/react-native-quickstart/#prerequisites) for details.
 {% endhint %}
 
 ### Quick Start
@@ -49,7 +49,7 @@ git clone https://github.com/tetherto/wdk-starter-react-native.git && cd wdk-sta
 cp .env.example .env
 ```
 
-Get your free WDK Indexer API key [here](../tools/indexer-api/get-started.md) and add it to your `.env` file:
+Get your free WDK Indexer API key [here](/tools/indexer-api/get-started/) and add it to your `.env` file:
 
 ```bash
 EXPO_PUBLIC_WDK_INDEXER_BASE_URL=https://wdk-api.tether.io
@@ -82,7 +82,7 @@ npm run android # Android Emulator
 ***
 
 {% hint style="info" %}
-**Need detailed instructions?** Check out the complete [React Native Quickstart](../start-building/react-native-quickstart.md) guide for step-by-step setup, configuration, and troubleshooting.
+**Need detailed instructions?** Check out the complete [React Native Quickstart](/start-building/react-native-quickstart/) guide for step-by-step setup, configuration, and troubleshooting.
 {% endhint %}
 
 ### Features
@@ -101,9 +101,9 @@ npm run android # Android Emulator
 
 **Asset Management**
 
-* **Real-Time Balances**: Live balance updates via [WDK Indexer](../tools/indexer-api/README.md)
-* **Transaction History**: Complete transaction tracking and history via [WDK Indexer](../tools/indexer-api/README.md)
-* **Price Conversion**: Real-time fiat pricing via [Pricing Provider](../tools/price-rates/README.md)
+* **Real-Time Balances**: Live balance updates via [WDK Indexer](/tools/indexer-api/)
+* **Transaction History**: Complete transaction tracking and history via [WDK Indexer](/tools/indexer-api/)
+* **Price Conversion**: Real-time fiat pricing via [Pricing Provider](/tools/price-rates/)
 
 **User Experience**
 
@@ -182,26 +182,26 @@ Detailed project structure can be found in the [Github Repository](https://githu
 
 **Customizing the UI**
 
-This starter uses components from the [WDK React Native UI Kit](../ui-kits/react-native-ui-kit/). To customize the look and feel:
+This starter uses components from the [WDK React Native UI Kit](/ui-kits/react-native-ui-kit/). To customize the look and feel:
 
-* [**Theming Guide**](../ui-kits/react-native-ui-kit/theming.md) - Deep dive into theming capabilities
-* [**Component Reference**](../ui-kits/react-native-ui-kit/api-reference.md) - Complete component documentation
+* [**Theming Guide**](/ui-kits/react-native-ui-kit/theming/) - Deep dive into theming capabilities
+* [**Component Reference**](/ui-kits/react-native-ui-kit/api-reference/) - Complete component documentation
 
 
 **Add new functionality**
 
 This starter provides a solid foundation that you can extend with additional functionality:
 
-* **Add support for other tokens** using wallet modules in the [WDK SDK](../sdk/get-started.md)
-* **Add DeFi protocols** like swaps, bridges, and lending using [protocol modules](../sdk/get-started.md)
+* **Add support for other tokens** using wallet modules in the [WDK SDK](/sdk/get-started/)
+* **Add DeFi protocols** like swaps, bridges, and lending using [protocol modules](/sdk/get-started/)
 
 
 **Or explore documentation**
 
-* [**WDK SDK Documentation**](../sdk/get-started.md) - Learn about the underlying SDK
-* [**UI Kit Documentation**](../ui-kits/react-native-ui-kit/get-started.md) - Customize the interface
-* [**WDK Indexer**](../tools/indexer-api/README.md) - Understand data fetching
-* [**Secret Manager**](../tools/secret-manager/README.md) - Learn about secure key management
+* [**WDK SDK Documentation**](/sdk/get-started/) - Learn about the underlying SDK
+* [**UI Kit Documentation**](/ui-kits/react-native-ui-kit/get-started/) - Customize the interface
+* [**WDK Indexer**](/tools/indexer-api/) - Understand data fetching
+* [**Secret Manager**](/tools/secret-manager/) - Learn about secure key management
 
 ***
 

@@ -54,7 +54,7 @@ Use this package for local encrypted storage in React Native wallet apps. It doe
       </td>
       <td>Install dependencies, configure authentication prompts, and create a storage instance.</td>
       <td>
-        <a href="./configuration.md">configuration.md</a>
+        <a href="/tools/react-native-secure-storage/configuration/">configuration.md</a>
       </td>
     </tr>
     <tr>
@@ -66,7 +66,7 @@ Use this package for local encrypted storage in React Native wallet apps. It doe
       </td>
       <td>Review `createSecureStorage`, storage methods, options, constants, and errors.</td>
       <td>
-        <a href="./api-reference.md">api-reference.md</a>
+        <a href="/tools/react-native-secure-storage/api-reference/">api-reference.md</a>
       </td>
     </tr>
   </tbody>

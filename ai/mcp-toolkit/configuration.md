@@ -78,7 +78,7 @@ server.registerWallet('solana', WalletManagerSolana, {
 })
 ```
 
-Each `registerWallet()` call registers the chain name and makes it available to all wallet tools. For configuration details of each wallet module, see the [Wallet Modules](../../sdk/wallet-modules/README.md) documentation.
+Each `registerWallet()` call registers the chain name and makes it available to all wallet tools. For configuration details of each wallet module, see the [Wallet Modules](/sdk/wallet-modules/) documentation.
 
 ***
 

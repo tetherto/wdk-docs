@@ -66,7 +66,7 @@ const config = {
 
 ### SparkScan Balance Polling
 
-The `sparkscan` option configures SparkScan-backed balance polling for [`getBalance()`](./api-reference.md#getbalance).
+The `sparkscan` option configures SparkScan-backed balance polling for [`getBalance()`](/sdk/wallet-modules/wallet-spark/api-reference/#getbalance).
 
 **Type:** `SparkScanConfig` (optional)
 
@@ -85,11 +85,11 @@ const config = {
 }
 ```
 
-When `sparkscan` is configured, [`getBalance()`](./api-reference.md#getbalance) returns SparkScan's soft balance from `btcSoftBalanceSats`.
+When `sparkscan` is configured, [`getBalance()`](/sdk/wallet-modules/wallet-spark/api-reference/#getbalance) returns SparkScan's soft balance from `btcSoftBalanceSats`.
 
 ### Automatic Retry
 
-The `syncAndRetry` option tells [`sendTransaction()`](./api-reference.md#sendtransaction-to-value) and [`payLightningInvoice()`](./api-reference.md#paylightninginvoice-options) to sync wallet state and retry once after a failure.
+The `syncAndRetry` option tells [`sendTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference/#sendtransaction-to-value) and [`payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference/#paylightninginvoice-options) to sync wallet state and retry once after a failure.
 
 **Type:** `boolean` (optional)
 
@@ -103,7 +103,7 @@ const config = {
 }
 ```
 
-You can also call [`syncWalletBalance()`](./api-reference.md#syncwalletbalance) directly when you want to reconcile wallet state before retrying an operation.
+You can also call [`syncWalletBalance()`](/sdk/wallet-modules/wallet-spark/api-reference/#syncwalletbalance) directly when you want to reconcile wallet state before retrying an operation.
 
 ## Network Configuration
 
@@ -125,7 +125,7 @@ const regtestConfig = {
 
 ## BIP-44 Derivation Path
 
-Spark uses the [BIP-44](../../../resources/concepts.md#bip-44-multi-account-hierarchy) coin type 998, resulting in derivation paths like:
+Spark uses the [BIP-44](/resources/concepts/#bip-44-multi-account-hierarchy) coin type 998, resulting in derivation paths like:
 - `m/44'/998'/0'/0/0` for MAINNET account index 0
 - `m/44'/998'/0'/0/1` for MAINNET account index 1
 - `m/44'/998'/2'/0/0` for SIGNET account index 0
@@ -136,7 +136,7 @@ The path follows the pattern `m/44'/998'/{networkNumber}'/0/{index}` where:
 - `networkNumber` is 0 for MAINNET, 2 for SIGNET, or 3 for REGTEST
 - `index` is the account index
 
-This ensures compatibility with standard [BIP-44](../../../resources/concepts.md#bip-44-multi-account-hierarchy) wallets while using Spark's unique coin type identifier.
+This ensures compatibility with standard [BIP-44](/resources/concepts/#bip-44-multi-account-hierarchy) wallets while using Spark's unique coin type identifier.
 
 ## Complete Configuration Example
 
@@ -182,7 +182,7 @@ wallet.dispose()
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="/start-building/nodejs-bare-quickstart/">nodejs-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -194,7 +194,7 @@ wallet.dispose()
 			</td>
 			<td>Build mobile wallets with React Native Expo</td>
 			<td>
-				<a href="../../../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
+				<a href="/start-building/react-native-quickstart/">react-native-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -206,7 +206,7 @@ wallet.dispose()
 			</td>
 			<td>Get started with WDK's Spark Wallet Usage</td>
 			<td>
-				<a href="./usage.md">WDK Spark Wallet Usage</a>
+				<a href="/sdk/wallet-modules/wallet-spark/usage/">WDK Spark Wallet Usage</a>
 			</td>
 		</tr>
         <tr>
@@ -218,7 +218,7 @@ wallet.dispose()
 			</td>
 			<td>Get started with WDK's Spark Wallet API</td>
 			<td>
-				<a href="./api-reference.md">WDK Spark Wallet API</a>
+				<a href="/sdk/wallet-modules/wallet-spark/api-reference/">WDK Spark Wallet API</a>
 			</td>
 		</tr>
 	</tbody>

@@ -23,7 +23,7 @@ This guide explains how to transfer SPL tokens (such as USD₮), estimate fees, 
 
 ## Transfer Tokens
 
-Use [`account.transfer()`](/sdk/wallet-modules/wallet-solana/api-reference#transfer-options) to send SPL tokens to a recipient address. If the recipient does not have a token account, one is created automatically.
+Use [`account.transfer()`](/sdk/wallet-modules/wallet-solana/api-reference/#transfer-options) to send SPL tokens to a recipient address. If the recipient does not have a token account, one is created automatically.
 
 {% code title="Transfer SPL Tokens" lineNumbers="true" %}
 ```javascript
@@ -39,7 +39,7 @@ console.log('Transfer fee:', transferResult.fee, 'lamports')
 
 ## Estimate Transfer Fees
 
-Use [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-solana/api-reference#quotetransfer-options) to get a fee estimate before executing the transfer.
+Use [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-solana/api-reference/#quotetransfer-options) to get a fee estimate before executing the transfer.
 
 {% code title="Quote Token Transfer" lineNumbers="true" %}
 ```javascript
@@ -72,7 +72,7 @@ if (typeof recipient !== 'string' || recipient.length < 32) {
 
 ### 2. Check Balance
 
-Use [`account.getTokenBalance()`](/sdk/wallet-modules/wallet-solana/api-reference#gettokenbalance-tokenmint) to verify sufficient funds:
+Use [`account.getTokenBalance()`](/sdk/wallet-modules/wallet-solana/api-reference/#gettokenbalance-tokenmint) to verify sufficient funds:
 
 {% code title="Balance Check" lineNumbers="true" %}
 ```javascript
@@ -85,7 +85,7 @@ if (balance < amount) {
 
 ### 3. Quote and Execute Transfer
 
-Use [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-solana/api-reference#quotetransfer-options) to estimate fees, then [`account.transfer()`](/sdk/wallet-modules/wallet-solana/api-reference#transfer-options) to execute:
+Use [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-solana/api-reference/#quotetransfer-options) to estimate fees, then [`account.transfer()`](/sdk/wallet-modules/wallet-solana/api-reference/#transfer-options) to execute:
 
 {% code title="Quote and Execute" lineNumbers="true" %}
 ```javascript
@@ -108,4 +108,4 @@ console.log('Actual fee:', result.fee, 'lamports')
 
 ## Next Steps
 
-Learn how to [sign and verify messages](./sign-verify-messages.md) with your Solana account.
+Learn how to [sign and verify messages](/sdk/wallet-modules/wallet-solana/guides/sign-verify-messages/) with your Solana account.

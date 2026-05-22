@@ -261,7 +261,7 @@ Protocol modules generate a single provider file rather than the three-file wall
 			</td>
 			<td>See how official wallet modules are structured and documented</td>
 			<td>
-				<a href="../sdk/wallet-modules/">wallet-modules</a>
+				<a href="/sdk/wallet-modules/">wallet-modules</a>
 			</td>
 		</tr>
 		<tr>
@@ -273,7 +273,7 @@ Protocol modules generate a single provider file rather than the three-file wall
 			</td>
 			<td>Explore community-built modules and submit your own</td>
 			<td>
-				<a href="../sdk/community-modules/">community-modules</a>
+				<a href="/sdk/community-modules/">community-modules</a>
 			</td>
 		</tr>
 	</tbody>

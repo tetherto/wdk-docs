@@ -26,7 +26,7 @@ DeFi lending functionality for different lending & borrowing protocols
 
 | Module | Route | Status | Documentation |
 |--------|-------|--------|---------------|
-| [`@tetherto/wdk-protocol-lending-aave-evm`](https://github.com/tetherto/wdk-protocol-lending-aave-evm) | EVM | ✅ Ready | [Documentation](./lending-aave-evm/README.md) |
+| [`@tetherto/wdk-protocol-lending-aave-evm`](https://github.com/tetherto/wdk-protocol-lending-aave-evm) | EVM | ✅ Ready | [Documentation](/sdk/lending-modules/lending-aave-evm/) |
 
 
 ## Next Steps
@@ -52,7 +52,7 @@ To get started with WDK modules, follow these steps:
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="/start-building/nodejs-bare-quickstart/">nodejs-quickstart.md</a>
 			</td>
 		</tr>
 		<tr>
@@ -64,7 +64,7 @@ To get started with WDK modules, follow these steps:
 			</td>
 			<td>Build mobile wallets with React Native Expo</td>
 			<td>
-				<a href="../../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
+				<a href="/start-building/react-native-quickstart/">react-native-quickstart.md</a>
 			</td>
 		</tr>
         <tr>
@@ -76,7 +76,7 @@ To get started with WDK modules, follow these steps:
 			</td>
 			<td>Manage wallet and protocol modules</td>
 			<td>
-				<a href="../core-module/README.md">WDK Core</a>
+				<a href="/sdk/core-module/">WDK Core</a>
 			</td>
 		</tr>
 	</tbody>

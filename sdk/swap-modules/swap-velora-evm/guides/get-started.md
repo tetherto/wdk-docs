@@ -37,7 +37,7 @@ You also need an EVM wallet account from [`@tetherto/wdk-wallet-evm`](https://ww
 
 ## Create the swap protocol
 
-You can construct a swap client with [`new VeloraProtocolEvm(account, config?)`](../api-reference.md#constructor) on top of [`VeloraProtocolEvm`](../api-reference.md#class-veloraprotocolevm):
+You can construct a swap client with [`new VeloraProtocolEvm(account, config?)`](/sdk/swap-modules/swap-velora-evm/api-reference/#constructor) on top of [`VeloraProtocolEvm`](/sdk/swap-modules/swap-velora-evm/api-reference/#class-veloraprotocolevm):
 
 {% code title="Create VeloraProtocolEvm" lineNumbers="true" %}
 ```javascript
@@ -54,14 +54,14 @@ const swapProtocol = new VeloraProtocolEvm(account, {
 ```
 {% endcode %}
 
-Optional `swapMaxFee` caps the total gas fee in wei for swaps. See [configuration](../configuration.md) for environment-specific settings.
+Optional `swapMaxFee` caps the total gas fee in wei for swaps. See [configuration](/sdk/swap-modules/swap-velora-evm/configuration/) for environment-specific settings.
 
 ## Supported networks
 
-Velora routing works on EVM networks the aggregator supports, including **Ethereum**, **Polygon**, **Arbitrum**, and other chains where Velora exposes liquidity. Use an RPC endpoint for the network your [`WalletAccountEvm`](../../../wallet-modules/wallet-evm/api-reference.md#walletaccountevm) is configured for so [`swap()`](../api-reference.md#swap-options-config) and [`quoteSwap()`](../api-reference.md#quoteswap-options-config) target the correct chain.
+Velora routing works on EVM networks the aggregator supports, including **Ethereum**, **Polygon**, **Arbitrum**, and other chains where Velora exposes liquidity. Use an RPC endpoint for the network your [`WalletAccountEvm`](/sdk/wallet-modules/wallet-evm/api-reference/#walletaccountevm) is configured for so [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference/#swap-options-config) and [`quoteSwap()`](/sdk/swap-modules/swap-velora-evm/api-reference/#quoteswap-options-config) target the correct chain.
 
 ## Next Steps
 
-- [Execute swaps](execute-swaps.md)
-- [Get swap quotes](get-swap-quotes.md)
-- [Handle errors](handle-errors.md)
+- [Execute swaps](/sdk/swap-modules/swap-velora-evm/guides/execute-swaps/)
+- [Get swap quotes](/sdk/swap-modules/swap-velora-evm/guides/get-swap-quotes/)
+- [Handle errors](/sdk/swap-modules/swap-velora-evm/guides/handle-errors/)

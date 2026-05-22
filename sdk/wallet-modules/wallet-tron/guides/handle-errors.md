@@ -23,7 +23,7 @@ This guide covers how to [handle transaction errors](#handle-transaction-errors)
 
 ## Handle Transaction Errors
 
-Wrap transactions in `try/catch` blocks to handle common failure scenarios. Use [`account.sendTransaction()`](../api-reference.md#sendtransaction-tx) with proper error handling:
+Wrap transactions in `try/catch` blocks to handle common failure scenarios. Use [`account.sendTransaction()`](/sdk/wallet-modules/wallet-tron/api-reference/#sendtransaction-tx) with proper error handling:
 
 {% code title="Transaction Error Handling" lineNumbers="true" %}
 ```javascript
@@ -48,7 +48,7 @@ try {
 
 ## Handle Token Transfer Errors
 
-TRC20 transfers can fail for additional reasons such as insufficient token balances. Use [`account.transfer()`](../api-reference.md#transfer-options) with error handling:
+TRC20 transfers can fail for additional reasons such as insufficient token balances. Use [`account.transfer()`](/sdk/wallet-modules/wallet-tron/api-reference/#transfer-options) with error handling:
 
 {% code title="Token Transfer Error Handling" lineNumbers="true" %}
 ```javascript
@@ -75,7 +75,7 @@ try {
 
 ### Manage Fee Limits
 
-Set `transferMaxFee` when creating the wallet to prevent transactions from exceeding a maximum cost. You can retrieve current network rates using [`wallet.getFeeRates()`](../api-reference.md#getfeerates):
+Set `transferMaxFee` when creating the wallet to prevent transactions from exceeding a maximum cost. You can retrieve current network rates using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-tron/api-reference/#getfeerates):
 
 {% code title="Fee Management" lineNumbers="true" %}
 ```javascript
@@ -87,7 +87,7 @@ console.log('Fast fee rate:', feeRates.fast, 'sun')
 
 ### Dispose of Sensitive Data
 
-Call [`dispose()`](../api-reference.md#dispose) on accounts and wallet managers to clear private keys and sensitive data from memory when they are no longer needed:
+Call [`dispose()`](/sdk/wallet-modules/wallet-tron/api-reference/#dispose) on accounts and wallet managers to clear private keys and sensitive data from memory when they are no longer needed:
 
 {% code title="Memory Cleanup" lineNumbers="true" %}
 ```javascript
@@ -98,5 +98,5 @@ wallet.dispose()
 {% endcode %}
 
 {% hint style="warning" %}
-Always call [`dispose()`](../api-reference.md#dispose) in a `finally` block or cleanup handler to ensure sensitive data is cleared even if an error occurs.
+Always call [`dispose()`](/sdk/wallet-modules/wallet-tron/api-reference/#dispose) in a `finally` block or cleanup handler to ensure sensitive data is cleared even if an error occurs.
 {% endhint %}

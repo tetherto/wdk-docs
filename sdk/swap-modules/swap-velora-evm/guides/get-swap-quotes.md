@@ -19,11 +19,11 @@ layout:
 
 # Get Swap Quotes
 
-This guide shows how to [quote before swapping](#quote-before-swapping) and use quotes for [fee estimation](#fee-estimation). Quotes use [`quoteSwap()`](../api-reference.md#quoteswap-options-config), which works with read-only accounts as well as signing accounts.
+This guide shows how to [quote before swapping](#quote-before-swapping) and use quotes for [fee estimation](#fee-estimation). Quotes use [`quoteSwap()`](/sdk/swap-modules/swap-velora-evm/api-reference/#quoteswap-options-config), which works with read-only accounts as well as signing accounts.
 
 ## Quote before swapping
 
-You can preview fee and token amounts for the same parameters you would pass to [`swap()`](../api-reference.md#swap-options-config) using [`quoteSwap()`](../api-reference.md#quoteswap-options-config):
+You can preview fee and token amounts for the same parameters you would pass to [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference/#swap-options-config) using [`quoteSwap()`](/sdk/swap-modules/swap-velora-evm/api-reference/#quoteswap-options-config):
 
 {% code title="Quote exact input swap" lineNumbers="true" %}
 ```javascript
@@ -39,7 +39,7 @@ console.log('Tokens out (base units):', quote.tokenOutAmount)
 ```
 {% endcode %}
 
-You can quote an exact-output style trade the same way by passing `tokenOutAmount` instead of `tokenInAmount` to [`quoteSwap()`](../api-reference.md#quoteswap-options-config):
+You can quote an exact-output style trade the same way by passing `tokenOutAmount` instead of `tokenInAmount` to [`quoteSwap()`](/sdk/swap-modules/swap-velora-evm/api-reference/#quoteswap-options-config):
 
 {% code title="Quote exact output swap" lineNumbers="true" %}
 ```javascript
@@ -56,7 +56,7 @@ console.log('Required token in (base units):', quote.tokenInAmount)
 
 ## Fee estimation
 
-You can read `quote.fee` from [`quoteSwap()`](../api-reference.md#quoteswap-options-config) as the estimated total swap fee in wei before calling [`swap()`](../api-reference.md#swap-options-config):
+You can read `quote.fee` from [`quoteSwap()`](/sdk/swap-modules/swap-velora-evm/api-reference/#quoteswap-options-config) as the estimated total swap fee in wei before calling [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference/#swap-options-config):
 
 {% code title="Quote fee before deciding" lineNumbers="true" %}
 ```javascript
@@ -71,7 +71,7 @@ console.log('Quoted fee (wei):', quote.fee, 'cap:', maxFee)
 ```
 {% endcode %}
 
-You can compare that estimate to `swapMaxFee` on [`VeloraProtocolEvm`](../api-reference.md#class-veloraprotocolevm) and only then call [`swap()`](../api-reference.md#swap-options-config) when the quote is within your cap:
+You can compare that estimate to `swapMaxFee` on [`VeloraProtocolEvm`](/sdk/swap-modules/swap-velora-evm/api-reference/#class-veloraprotocolevm) and only then call [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference/#swap-options-config) when the quote is within your cap:
 
 {% code title="Swap when fee is under cap" lineNumbers="true" %}
 ```javascript
@@ -94,11 +94,11 @@ if (quote.fee <= maxFee) {
 {% endcode %}
 
 {% hint style="info" %}
-On-chain conditions can change between quote and execution. The executed [`swap()`](../api-reference.md#swap-options-config) may still differ slightly from the last [`quoteSwap()`](../api-reference.md#quoteswap-options-config) result.
+On-chain conditions can change between quote and execution. The executed [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference/#swap-options-config) may still differ slightly from the last [`quoteSwap()`](/sdk/swap-modules/swap-velora-evm/api-reference/#quoteswap-options-config) result.
 {% endhint %}
 
 ## Next Steps
 
-- [Execute swaps](execute-swaps.md)
-- [Handle errors](handle-errors.md)
-- [Get started](get-started.md)
+- [Execute swaps](/sdk/swap-modules/swap-velora-evm/guides/execute-swaps/)
+- [Handle errors](/sdk/swap-modules/swap-velora-evm/guides/handle-errors/)
+- [Get started](/sdk/swap-modules/swap-velora-evm/guides/get-started/)

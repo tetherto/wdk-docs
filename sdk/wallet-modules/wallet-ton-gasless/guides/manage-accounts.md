@@ -23,7 +23,7 @@ This guide explains how to [retrieve accounts by index](#retrieve-accounts-by-in
 
 ## Retrieve Accounts by Index
 
-You can access accounts derived from the default BIP-44 path using [`wallet.getAccount()`](../api-reference.md#getaccount-index):
+You can access accounts derived from the default BIP-44 path using [`wallet.getAccount()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#getaccount-index):
 
 {% code title="Get Accounts by Index" lineNumbers="true" %}
 ```javascript
@@ -39,7 +39,7 @@ console.log('Account 1 address:', address1)
 
 ## Retrieve Account by Custom Derivation Path
 
-You can request an account at a specific BIP-44 derivation path using [`wallet.getAccountByPath()`](../api-reference.md#getaccountbypath-path):
+You can request an account at a specific BIP-44 derivation path using [`wallet.getAccountByPath()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#getaccountbypath-path):
 
 {% code title="Custom Derivation Path" lineNumbers="true" %}
 ```javascript
@@ -51,7 +51,7 @@ console.log('Custom account address:', customAddress)
 
 ## Iterate Over Multiple Accounts
 
-You can loop through multiple accounts using [`wallet.getAccount()`](../api-reference.md#getaccount-index) to inspect addresses and balances in bulk:
+You can loop through multiple accounts using [`wallet.getAccount()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#getaccount-index) to inspect addresses and balances in bulk:
 
 {% code title="Multi-Account Iteration" lineNumbers="true" %}
 ```javascript
@@ -74,4 +74,4 @@ async function listAccounts(wallet) {
 
 ## Next Steps
 
-Now that you can access your accounts, learn how to [check balances](./check-balances.md).
+Now that you can access your accounts, learn how to [check balances](/sdk/wallet-modules/wallet-ton-gasless/guides/check-balances/).

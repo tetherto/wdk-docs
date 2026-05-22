@@ -23,7 +23,7 @@ This guide explains how to [sign messages](#sign-a-message) with an owned accoun
 
 ## Sign a Message
 
-You can produce a cryptographic signature for any string message using [`account.sign()`](../api-reference.md#sign-message):
+You can produce a cryptographic signature for any string message using [`account.sign()`](/sdk/wallet-modules/wallet-tron/api-reference/#sign-message):
 
 {% code title="Sign a Message" lineNumbers="true" %}
 ```javascript
@@ -35,7 +35,7 @@ console.log('Signature:', signature)
 
 ## Verify a Signature
 
-You can verify that a signature was produced by the corresponding private key using [`readOnlyAccount.verify()`](../api-reference.md#verify-message-signature):
+You can verify that a signature was produced by the corresponding private key using [`readOnlyAccount.verify()`](/sdk/wallet-modules/wallet-tron/api-reference/#verify-message-signature):
 
 {% code title="Verify a Signature" lineNumbers="true" %}
 ```javascript
@@ -46,9 +46,9 @@ console.log('Signature valid:', isValid)
 {% endcode %}
 
 {% hint style="info" %}
-You can also create a [`WalletAccountReadOnlyTron`](../api-reference.md#walletaccountreadonlytron) from any Tron address to verify signatures without access to the private key.
+You can also create a [`WalletAccountReadOnlyTron`](/sdk/wallet-modules/wallet-tron/api-reference/#walletaccountreadonlytron) from any Tron address to verify signatures without access to the private key.
 {% endhint %}
 
 ## Next Steps
 
-For best practices on handling errors, managing fees, and cleaning up memory, see [Handle Errors](./handle-errors.md).
+For best practices on handling errors, managing fees, and cleaning up memory, see [Handle Errors](/sdk/wallet-modules/wallet-tron/guides/handle-errors/).

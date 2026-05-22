@@ -23,7 +23,7 @@ This guide explains how to [handle transaction errors](#transaction-errors), [ha
 
 ## Transaction Errors
 
-Transactions sent via [`account.sendTransaction()`](../api-reference.md#sendtransaction-options) can fail for several reasons. Wrap transaction calls in a `try/catch` block to handle specific error types:
+Transactions sent via [`account.sendTransaction()`](/sdk/wallet-modules/wallet-btc/api-reference/#sendtransaction-options) can fail for several reasons. Wrap transaction calls in a `try/catch` block to handle specific error types:
 
 {% code title="Handle Transaction Errors" lineNumbers="true" %}
 ```javascript
@@ -72,7 +72,7 @@ try {
 
 ### Fee Management
 
-You can retrieve current network fee rates using [`wallet.getFeeRates()`](../api-reference.md#getfeerates):
+You can retrieve current network fee rates using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-btc/api-reference/#getfeerates):
 
 {% code title="Get Fee Rates" lineNumbers="true" %}
 ```javascript
@@ -83,12 +83,12 @@ console.log('Fast fee rate:', feeRates.fast, 'sat/vB')
 {% endcode %}
 
 {% hint style="info" %}
-[`wallet.getFeeRates()`](../api-reference.md#getfeerates) fetches rates from the mempool.space API, while [`account.sendTransaction()`](../api-reference.md#sendtransaction-options) estimates fees from the connected Electrum server. Use [`getFeeRates()`](../api-reference.md#getfeerates) for display purposes.
+[`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-btc/api-reference/#getfeerates) fetches rates from the mempool.space API, while [`account.sendTransaction()`](/sdk/wallet-modules/wallet-btc/api-reference/#sendtransaction-options) estimates fees from the connected Electrum server. Use [`getFeeRates()`](/sdk/wallet-modules/wallet-btc/api-reference/#getfeerates) for display purposes.
 {% endhint %}
 
 ### Dispose of Sensitive Data
 
-For security, clear sensitive data from memory when a session is complete. Use [`account.dispose()`](../api-reference.md#dispose-1) and [`wallet.dispose()`](../api-reference.md#dispose) to securely wipe private keys:
+For security, clear sensitive data from memory when a session is complete. Use [`account.dispose()`](/sdk/wallet-modules/wallet-btc/api-reference/#dispose-1) and [`wallet.dispose()`](/sdk/wallet-modules/wallet-btc/api-reference/#dispose) to securely wipe private keys:
 
 {% code title="Dispose Resources" lineNumbers="true" %}
 ```javascript
@@ -106,5 +106,5 @@ try {
 {% endcode %}
 
 {% hint style="warning" %}
-Always call [`dispose()`](../api-reference.md#dispose) when finished with accounts. Private keys are securely wiped from memory using `sodium_memzero`. Electrum connections are automatically closed. Disposal is irreversible.
+Always call [`dispose()`](/sdk/wallet-modules/wallet-btc/api-reference/#dispose) when finished with accounts. Private keys are securely wiped from memory using `sodium_memzero`. Electrum connections are automatically closed. Disposal is irreversible.
 {% endhint %}

@@ -37,19 +37,19 @@ The [@tetherto/wdk-protocol-lending-aave-evm](https://www.npmjs.com/package/@tet
       <td><i class="fa-rocket">:rocket:</i></td>
       <td><strong>Get Started</strong></td>
       <td>Install the package, create AaveProtocolEvm, and review prerequisites.</td>
-      <td><a href="./guides/get-started.md">Get Started</a></td>
+      <td><a href="/sdk/lending-modules/lending-aave-evm/guides/get-started/">Get Started</a></td>
     </tr>
     <tr>
       <td><i class="fa-coins">:coins:</i></td>
       <td><strong>Lending Operations</strong></td>
       <td>Supply, withdraw, borrow, repay, quotes, ERC-4337, and account data.</td>
-      <td><a href="./guides/lending-operations.md">Lending Operations</a></td>
+      <td><a href="/sdk/lending-modules/lending-aave-evm/guides/lending-operations/">Lending Operations</a></td>
     </tr>
     <tr>
       <td><i class="fa-exclamation-triangle">:exclamation-triangle:</i></td>
       <td><strong>Handle Errors</strong></td>
       <td>Handle failures and dispose wallet secrets when finished.</td>
-      <td><a href="./guides/handle-errors.md">Handle Errors</a></td>
+      <td><a href="/sdk/lending-modules/lending-aave-evm/guides/handle-errors/">Handle Errors</a></td>
     </tr>
   </tbody>
 </table>
@@ -74,7 +74,7 @@ The [@tetherto/wdk-protocol-lending-aave-evm](https://www.npmjs.com/package/@tet
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">Node.js & Bare Quickstart</a>
+				<a href="/start-building/nodejs-bare-quickstart/">Node.js & Bare Quickstart</a>
 			</td>
 		</tr>
         <tr>
@@ -86,7 +86,7 @@ The [@tetherto/wdk-protocol-lending-aave-evm](https://www.npmjs.com/package/@tet
 			</td>
 			<td>Networks and deployment settings for the Aave lending protocol</td>
 			<td>
-				<a href="./configuration.md">WDK Lending Aave EVM Protocol Configuration</a>
+				<a href="/sdk/lending-modules/lending-aave-evm/configuration/">WDK Lending Aave EVM Protocol Configuration</a>
 			</td>
 		</tr>
         <tr>
@@ -98,7 +98,7 @@ The [@tetherto/wdk-protocol-lending-aave-evm](https://www.npmjs.com/package/@tet
 			</td>
 			<td>Methods and parameters for AaveProtocolEvm</td>
 			<td>
-				<a href="./api-reference.md">WDK Lending Aave EVM Protocol API</a>
+				<a href="/sdk/lending-modules/lending-aave-evm/api-reference/">WDK Lending Aave EVM Protocol API</a>
 			</td>
 		</tr>
 	</tbody>

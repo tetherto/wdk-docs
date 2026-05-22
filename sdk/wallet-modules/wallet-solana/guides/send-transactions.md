@@ -31,7 +31,7 @@ On Solana, values are expressed in lamports (1 SOL = 10^9 lamports). Fees are ca
 
 ## Send Native SOL
 
-Use [`account.sendTransaction()`](/sdk/wallet-modules/wallet-solana/api-reference#sendtransaction-tx) to transfer SOL to a recipient address.
+Use [`account.sendTransaction()`](/sdk/wallet-modules/wallet-solana/api-reference/#sendtransaction-tx) to transfer SOL to a recipient address.
 
 {% code title="Send SOL" lineNumbers="true" %}
 ```javascript
@@ -46,7 +46,7 @@ console.log('Transaction fee:', result.fee, 'lamports')
 
 ## Sign a Transaction Without Broadcasting
 
-Use [`account.signTransaction()`](/sdk/wallet-modules/wallet-solana/api-reference#signtransaction-tx) when you need a fully signed transaction but want another process to review, relay, or submit it.
+Use [`account.signTransaction()`](/sdk/wallet-modules/wallet-solana/api-reference/#signtransaction-tx) when you need a fully signed transaction but want another process to review, relay, or submit it.
 
 {% code title="Sign SOL Transaction" lineNumbers="true" %}
 ```javascript
@@ -60,7 +60,7 @@ console.log('Signed transaction:', signedTransaction)
 
 ## Estimate Transaction Fees
 
-Use [`account.quoteSendTransaction()`](/sdk/wallet-modules/wallet-solana/api-reference#quotesendtransaction-tx) to get a fee estimate before sending.
+Use [`account.quoteSendTransaction()`](/sdk/wallet-modules/wallet-solana/api-reference/#quotesendtransaction-tx) to get a fee estimate before sending.
 
 {% code title="Quote Transaction Fee" lineNumbers="true" %}
 ```javascript
@@ -92,7 +92,7 @@ console.log('Transaction hash:', result.hash)
 
 ## Use Dynamic Fee Rates
 
-Retrieve current fee rates using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-solana/api-reference#getfeerates). Rates are calculated based on the recent blockhash and compute unit prices.
+Retrieve current fee rates using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-solana/api-reference/#getfeerates). Rates are calculated based on the recent blockhash and compute unit prices.
 
 {% code title="Dynamic Fee Rates" lineNumbers="true" %}
 ```javascript
@@ -135,4 +135,4 @@ async function sendSOLTransfer(account, wallet) {
 
 ## Next Steps
 
-To transfer SPL tokens instead of native SOL, see [Transfer SPL Tokens](./transfer-tokens.md).
+To transfer SPL tokens instead of native SOL, see [Transfer SPL Tokens](/sdk/wallet-modules/wallet-solana/guides/transfer-tokens/).

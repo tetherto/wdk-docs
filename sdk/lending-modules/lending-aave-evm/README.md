@@ -67,7 +67,7 @@ Works on Aave V3 supported EVM networks (e.g., Ethereum, Arbitrum, Base, Optimis
       </td>
       <td>How to supply, withdraw, borrow and repay with Aave</td>
       <td>
-        <a href="./usage.md">Lending Aave EVM Usage</a>
+        <a href="/sdk/lending-modules/lending-aave-evm/usage/">Lending Aave EVM Usage</a>
       </td>
     </tr>
     <tr>
@@ -79,7 +79,7 @@ Works on Aave V3 supported EVM networks (e.g., Ethereum, Arbitrum, Base, Optimis
       </td>
       <td>Service setup, account config, ERC‑4337 options</td>
       <td>
-        <a href="./configuration.md">Lending Aave EVM Configuration</a>
+        <a href="/sdk/lending-modules/lending-aave-evm/configuration/">Lending Aave EVM Configuration</a>
       </td>
     </tr>
     <tr>
@@ -91,7 +91,7 @@ Works on Aave V3 supported EVM networks (e.g., Ethereum, Arbitrum, Base, Optimis
       </td>
       <td>Full API for Aave Protocol Evm methods and types</td>
       <td>
-        <a href="./api-reference.md">Lending Aave EVM API</a>
+        <a href="/sdk/lending-modules/lending-aave-evm/api-reference/">Lending Aave EVM API</a>
       </td>
     </tr>
   </tbody>

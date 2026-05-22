@@ -64,7 +64,7 @@ This package works with the Tron blockchain, including:
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="/start-building/nodejs-bare-quickstart/">nodejs-quickstart.md</a>
 			</td>
 		</tr>
         <tr>
@@ -76,7 +76,7 @@ This package works with the Tron blockchain, including:
 			</td>
 			<td>Get started with WDK's Tron Gasfree Wallet configuration</td>
 			<td>
-				<a href="./configuration.md">WDK Tron Gasfree Wallet Configuration</a>
+				<a href="/sdk/wallet-modules/wallet-tron-gasfree/configuration/">WDK Tron Gasfree Wallet Configuration</a>
 			</td>
 		</tr>
         <tr>
@@ -88,7 +88,7 @@ This package works with the Tron blockchain, including:
 			</td>
 			<td>Get started with WDK's Tron Gasfree Wallet API</td>
 			<td>
-				<a href="./api-reference.md">WDK Tron Gasfree Wallet API</a>
+				<a href="/sdk/wallet-modules/wallet-tron-gasfree/api-reference/">WDK Tron Gasfree Wallet API</a>
 			</td>
 		</tr>
         <tr>
@@ -100,7 +100,7 @@ This package works with the Tron blockchain, including:
 			</td>
 			<td>Get started with WDK's with Tron Gasfree Wallet usage</td>
 			<td>
-				<a href="./usage.md">WDK with Tron Gasfree Wallet Usage</a>
+				<a href="/sdk/wallet-modules/wallet-tron-gasfree/usage/">WDK with Tron Gasfree Wallet Usage</a>
 			</td>
 		</tr>
 	</tbody>

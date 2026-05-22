@@ -23,7 +23,7 @@ This guide covers how to [handle gasless transfer errors](#handle-gasless-transf
 
 ## Handle Gasless Transfer Errors
 
-Gasless transfers can fail for reasons specific to the paymaster model. Wrap calls to [`account.transfer()`](../api-reference.md#transfer-options-config) in `try/catch` blocks:
+Gasless transfers can fail for reasons specific to the paymaster model. Wrap calls to [`account.transfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#transfer-options-config) in `try/catch` blocks:
 
 {% code title="Gasless Transfer Error Handling" lineNumbers="true" %}
 ```javascript
@@ -52,7 +52,7 @@ try {
 
 ## Handle Native TON Transaction Errors
 
-Native TON transactions sent via [`account.sendTransaction()`](../api-reference.md#sendtransaction-tx) can fail for standard reasons:
+Native TON transactions sent via [`account.sendTransaction()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#sendtransaction-tx) can fail for standard reasons:
 
 {% code title="Transaction Error Handling" lineNumbers="true" %}
 ```javascript
@@ -76,7 +76,7 @@ try {
 
 ### Manage Fee Limits
 
-Set `transferMaxFee` when creating the wallet to prevent gasless transfers from exceeding a maximum cost. You can retrieve current network rates using [`wallet.getFeeRates()`](../api-reference.md#getfeerates):
+Set `transferMaxFee` when creating the wallet to prevent gasless transfers from exceeding a maximum cost. You can retrieve current network rates using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#getfeerates):
 
 {% code title="Fee Management" lineNumbers="true" %}
 ```javascript
@@ -88,7 +88,7 @@ console.log('Fast fee rate:', feeRates.fast, 'nanotons')
 
 ### Dispose of Sensitive Data
 
-Call [`dispose()`](../api-reference.md#dispose) on accounts and wallet managers to clear private keys and sensitive data from memory when they are no longer needed:
+Call [`dispose()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#dispose) on accounts and wallet managers to clear private keys and sensitive data from memory when they are no longer needed:
 
 {% code title="Memory Cleanup" lineNumbers="true" %}
 ```javascript
@@ -99,5 +99,5 @@ wallet.dispose()
 {% endcode %}
 
 {% hint style="warning" %}
-Always call [`dispose()`](../api-reference.md#dispose) in a `finally` block or cleanup handler to ensure sensitive data is cleared even if an error occurs.
+Always call [`dispose()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#dispose) in a `finally` block or cleanup handler to ensure sensitive data is cleared even if an error occurs.
 {% endhint %}

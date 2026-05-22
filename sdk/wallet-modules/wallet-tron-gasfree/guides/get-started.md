@@ -36,7 +36,7 @@ npm install @tetherto/wdk-wallet-tron-gasfree
 
 ## 2. Create a Gas-Free Wallet
 
-You can create a new gas-free wallet instance using the [`WalletManagerTronGasfree`](../api-reference.md#walletmanagertrongasfree) constructor with a BIP-39 seed phrase, Tron RPC provider, and gas-free service configuration:
+You can create a new gas-free wallet instance using the [`WalletManagerTronGasfree`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference/#walletmanagertrongasfree) constructor with a BIP-39 seed phrase, Tron RPC provider, and gas-free service configuration:
 
 {% code title="Create Gas-Free Tron Wallet" lineNumbers="true" %}
 ```javascript
@@ -66,7 +66,7 @@ const wallet = new WalletManagerTronGasfree(seedPhrase, {
 
 ## 3. Get Your First Account
 
-You can retrieve an account at a given index using [`wallet.getAccount()`](../api-reference.md#getaccount-index):
+You can retrieve an account at a given index using [`wallet.getAccount()`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference/#getaccount-index):
 
 {% code title="Get Account" lineNumbers="true" %}
 ```javascript
@@ -78,7 +78,7 @@ console.log('Gas-free account address:', address)
 
 ## 4. (optional) Convert to Read-Only
 
-You can convert an owned account to a read-only account using [`account.toReadOnlyAccount()`](../api-reference.md#toreadonlyaccount):
+You can convert an owned account to a read-only account using [`account.toReadOnlyAccount()`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference/#toreadonlyaccount):
 
 {% code title="Convert to Read-Only" lineNumbers="true" %}
 ```javascript
@@ -92,4 +92,4 @@ All Tron addresses start with `T` and are 34 characters long.
 
 ## Next Steps
 
-With your wallet ready, learn how to [manage multiple accounts](./manage-accounts.md).
+With your wallet ready, learn how to [manage multiple accounts](/sdk/wallet-modules/wallet-tron-gasfree/guides/manage-accounts/).

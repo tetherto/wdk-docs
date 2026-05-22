@@ -19,7 +19,7 @@ layout:
 
 # Failover Provider
 
-Failover Provider wraps multiple provider-like objects behind one proxy so your integration can retry failed calls against the next candidate without rewriting each call site. Use this page to review the [Configuration](./configuration.md) and [API Reference](./api-reference.md) for the released `@tetherto/wdk-failover-provider` surface.
+Failover Provider wraps multiple provider-like objects behind one proxy so your integration can retry failed calls against the next candidate without rewriting each call site. Use this page to review the [Configuration](/tools/failover-provider/configuration/) and [API Reference](/tools/failover-provider/api-reference/) for the released `@tetherto/wdk-failover-provider` surface.
 
 Powered by [`@tetherto/wdk-failover-provider`](https://github.com/tetherto/wdk-failover-provider).
 
@@ -56,7 +56,7 @@ Powered by [`@tetherto/wdk-failover-provider`](https://github.com/tetherto/wdk-f
       </td>
       <td>Install the package, add provider candidates, and tune retry behavior.</td>
       <td>
-        <a href="./configuration.md">configuration.md</a>
+        <a href="/tools/failover-provider/configuration/">configuration.md</a>
       </td>
     </tr>
     <tr>
@@ -68,7 +68,7 @@ Powered by [`@tetherto/wdk-failover-provider`](https://github.com/tetherto/wdk-f
       </td>
       <td>Review `FailoverProvider<T>`, its config, and the proxied runtime behavior.</td>
       <td>
-        <a href="./api-reference.md">api-reference.md</a>
+        <a href="/tools/failover-provider/api-reference/">api-reference.md</a>
       </td>
     </tr>
   </tbody>

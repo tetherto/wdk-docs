@@ -60,7 +60,7 @@ Use this package when you need direct control over the worklet host and RPC laye
 			</td>
 			<td>Build the worklet context and pass the JSON config payloads used by initialize and reset requests</td>
 			<td>
-				<a href="./configuration.md">configuration.md</a>
+				<a href="/tools/pear-wrk-wdk/configuration/">configuration.md</a>
 			</td>
 		</tr>
 		<tr>
@@ -72,7 +72,7 @@ Use this package when you need direct control over the worklet host and RPC laye
 			</td>
 			<td>Review the exported class, server helper, and request shapes</td>
 			<td>
-				<a href="./api-reference.md">api-reference.md</a>
+				<a href="/tools/pear-wrk-wdk/api-reference/">api-reference.md</a>
 			</td>
 		</tr>
 	</tbody>

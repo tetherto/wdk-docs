@@ -23,7 +23,7 @@ This guide explains how to [transfer ERC-20 tokens](#transfer-erc-20-tokens), [e
 
 ## Transfer ERC-20 Tokens
 
-You can transfer ERC-20 tokens using gasless transactions with [`account.transfer()`](../api-reference.md#transfer-options-config):
+You can transfer ERC-20 tokens using gasless transactions with [`account.transfer()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#transfer-options-config):
 
 {% code title="Transfer ERC-20 Tokens" lineNumbers="true" %}
 ```javascript
@@ -39,7 +39,7 @@ console.log('Transfer fee:', result.fee)
 
 ## Estimate Transfer Fees
 
-You can estimate the fee for a token transfer without executing it using [`account.quoteTransfer()`](../api-reference.md#quotetransfer-options-config):
+You can estimate the fee for a token transfer without executing it using [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#quotetransfer-options-config):
 
 {% code title="Estimate Transfer Fee" lineNumbers="true" %}
 ```javascript
@@ -54,7 +54,7 @@ console.log('Estimated transfer fee:', quote.fee)
 
 ## Transfer with Maximum Fee Limit
 
-You can set a maximum fee for a specific transfer by passing a `transferMaxFee` in the config object to [`account.transfer()`](../api-reference.md#transfer-options-config):
+You can set a maximum fee for a specific transfer by passing a `transferMaxFee` in the config object to [`account.transfer()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#transfer-options-config):
 
 {% code title="Transfer with Fee Limit" lineNumbers="true" %}
 ```javascript
@@ -74,4 +74,4 @@ If the estimated fee exceeds `transferMaxFee`, the transfer is cancelled with an
 
 ## Next Steps
 
-Learn how to [sign and verify messages](./sign-verify-messages.md).
+Learn how to [sign and verify messages](/sdk/wallet-modules/wallet-evm-erc-4337/guides/sign-verify-messages/).

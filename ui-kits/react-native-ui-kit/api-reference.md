@@ -22,15 +22,15 @@ layout:
 
 | Component | Description |
 | --- | --- |
-| [`AmountInput`](api-reference.md#amountinput) | Numeric input with token/fiat toggle, balance helper and Max action |
-| [`AssetSelector`](api-reference.md#assetselector) | Token search & pick list with recent items and empty states |
-| [`NetworkSelector`](api-reference.md#networkselector) | Network picker with gas level indicators and colors |
-| [`Balance`](api-reference.md#balance) | Displays a balance value with optional masking and custom loader |
-| [`CryptoAddressInput`](api-reference.md#cryptoaddressinput) | Address input with QR scan and paste helpers, validation state |
-| [`QRCode`](api-reference.md#qrcode) | QR renderer for addresses/payment requests with labeling and styling |
-| [`TransactionItem`](api-reference.md#transactionitem) | Single transaction row (sent/received) with token, amounts, network |
-| [`TransactionList`](api-reference.md#transactionlist) | Virtualized list of transactions using `TransactionItem` |
-| [`SeedPhrase`](api-reference.md#seedphrase) | Grid of seed words with optional editing and loading states |
+| [`AmountInput`](/ui-kits/react-native-ui-kit/api-reference/#amountinput) | Numeric input with token/fiat toggle, balance helper and Max action |
+| [`AssetSelector`](/ui-kits/react-native-ui-kit/api-reference/#assetselector) | Token search & pick list with recent items and empty states |
+| [`NetworkSelector`](/ui-kits/react-native-ui-kit/api-reference/#networkselector) | Network picker with gas level indicators and colors |
+| [`Balance`](/ui-kits/react-native-ui-kit/api-reference/#balance) | Displays a balance value with optional masking and custom loader |
+| [`CryptoAddressInput`](/ui-kits/react-native-ui-kit/api-reference/#cryptoaddressinput) | Address input with QR scan and paste helpers, validation state |
+| [`QRCode`](/ui-kits/react-native-ui-kit/api-reference/#qrcode) | QR renderer for addresses/payment requests with labeling and styling |
+| [`TransactionItem`](/ui-kits/react-native-ui-kit/api-reference/#transactionitem) | Single transaction row (sent/received) with token, amounts, network |
+| [`TransactionList`](/ui-kits/react-native-ui-kit/api-reference/#transactionlist) | Virtualized list of transactions using `TransactionItem` |
+| [`SeedPhrase`](/ui-kits/react-native-ui-kit/api-reference/#seedphrase) | Grid of seed words with optional editing and loading states |
 
 
 ***
@@ -442,9 +442,9 @@ function WalletBackup({ seedWords, editable, onWordChange }) {
 
 ## Next Steps
 
-- [Get Started](get-started.md) - Quick start guide and basic usage
-- [Theming Guide](theming.md) - Deep dive into theming capabilities
-- [React Native Starter](../../start-building/react-native-quickstart.md) - Complete implementation example
+- [Get Started](/ui-kits/react-native-ui-kit/get-started/) - Quick start guide and basic usage
+- [Theming Guide](/ui-kits/react-native-ui-kit/theming/) - Deep dive into theming capabilities
+- [React Native Starter](/start-building/react-native-quickstart/) - Complete implementation example
 
 ***
 

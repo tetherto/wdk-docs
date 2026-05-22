@@ -75,7 +75,7 @@ Once the skill is loaded, your agent can:
 - **Lend and borrow** through Aave V3
 - **Buy and sell crypto** via MoonPay fiat on/off-ramps
 
-For the full list of capabilities and how skills work, see [Agent Skills](agent-skills.md).
+For the full list of capabilities and how skills work, see [Agent Skills](/ai/agent-skills/).
 
 ## Security Risks and Safety Precautions
 
@@ -118,8 +118,8 @@ OpenClaw makes use of artificial intelligence and machine learning technologies.
 
 ## Next Steps
 
-- [Agent Skills](agent-skills.md) - Full capabilities, how skills work, and a comparison with other agentic wallet solutions
-- [MCP Toolkit](mcp-toolkit/README.md) - Programmatic wallet access for MCP-compatible agents
+- [Agent Skills](/ai/agent-skills/) - Full capabilities, how skills work, and a comparison with other agentic wallet solutions
+- [MCP Toolkit](/ai/mcp-toolkit/) - Programmatic wallet access for MCP-compatible agents
 - [OpenClaw Skills Documentation](https://docs.openclaw.ai/tools/skills) - How OpenClaw discovers and loads skills
 
 ***

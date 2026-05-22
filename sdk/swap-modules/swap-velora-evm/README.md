@@ -72,7 +72,7 @@ The swap service supports multiple EVM wallet types:
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">Node.js & Bare Quickstart</a>
+				<a href="/start-building/nodejs-bare-quickstart/">Node.js & Bare Quickstart</a>
 			</td>
 		</tr>
         <tr>
@@ -84,7 +84,7 @@ The swap service supports multiple EVM wallet types:
 			</td>
 			<td>Get started with WDK's velora Swap Protocol configuration</td>
 			<td>
-				<a href="./configuration.md">WDK velora Swap Protocol Configuration</a>
+				<a href="/sdk/swap-modules/swap-velora-evm/configuration/">WDK velora Swap Protocol Configuration</a>
 			</td>
 		</tr>
         <tr>
@@ -96,7 +96,7 @@ The swap service supports multiple EVM wallet types:
 			</td>
 			<td>Get started with WDK's velora Swap Protocol API</td>
 			<td>
-				<a href="./api-reference.md">WDK velora Swap Protocol API</a>
+				<a href="/sdk/swap-modules/swap-velora-evm/api-reference/">WDK velora Swap Protocol API</a>
 			</td>
 		</tr>
         <tr>
@@ -108,7 +108,7 @@ The swap service supports multiple EVM wallet types:
 			</td>
 			<td>Get started with WDK's velora Swap Protocol usage</td>
 			<td>
-				<a href="./usage.md">WDK velora Swap Protocol Usage</a>
+				<a href="/sdk/swap-modules/swap-velora-evm/usage/">WDK velora Swap Protocol Usage</a>
 			</td>
 		</tr>
 	</tbody>

@@ -332,5 +332,5 @@ interface MoonPayQuoteSellParams {
 
 ## Next Steps
 
-- [Configuration](./configuration.md) - Setup and configuration options
-- [Usage Guide](./usage.md) - Common usage patterns
+- [Configuration](/sdk/fiat-modules/fiat-moonpay/configuration/) - Setup and configuration options
+- [Usage Guide](/sdk/fiat-modules/fiat-moonpay/usage/) - Common usage patterns

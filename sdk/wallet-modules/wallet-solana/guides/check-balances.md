@@ -23,11 +23,11 @@ This guide explains how to check [owned account balances](#owned-account-balance
 
 ## Owned Account Balances
 
-Use an account retrieved from [`WalletManagerSolana`](/sdk/wallet-modules/wallet-solana/api-reference#walletmanagersolana) to query balances.
+Use an account retrieved from [`WalletManagerSolana`](/sdk/wallet-modules/wallet-solana/api-reference/#walletmanagersolana) to query balances.
 
 ### Native SOL Balance
 
-You can retrieve the native SOL balance from an `Account` object using [`account.getBalance()`](/sdk/wallet-modules/wallet-solana/api-reference#getbalance):
+You can retrieve the native SOL balance from an `Account` object using [`account.getBalance()`](/sdk/wallet-modules/wallet-solana/api-reference/#getbalance):
 
 {% code title="Get SOL Balance" lineNumbers="true" %}
 ```javascript
@@ -38,7 +38,7 @@ console.log('Native SOL balance:', balance, 'lamports')
 
 ### SPL Token Balance
 
-You can retrieve an SPL token balance from an `Account` object using [`account.getTokenBalance(tokenMint)`](/sdk/wallet-modules/wallet-solana/api-reference#gettokenbalance-tokenmint):
+You can retrieve an SPL token balance from an `Account` object using [`account.getTokenBalance(tokenMint)`](/sdk/wallet-modules/wallet-solana/api-reference/#gettokenbalance-tokenmint):
 
 {% code title="Get SPL Token Balance" lineNumbers="true" %}
 ```javascript
@@ -54,7 +54,7 @@ Token balances are returned in the token's smallest units. Adjust for the token'
 
 ### Batch SPL Token Balances
 
-You can retrieve multiple SPL token balances in one batch using [`account.getTokenBalances()`](/sdk/wallet-modules/wallet-solana/api-reference#gettokenbalances-tokenaddresses):
+You can retrieve multiple SPL token balances in one batch using [`account.getTokenBalances()`](/sdk/wallet-modules/wallet-solana/api-reference/#gettokenbalances-tokenaddresses):
 
 {% code title="Get Batch SPL Token Balances" lineNumbers="true" %}
 ```javascript
@@ -74,7 +74,7 @@ The returned object maps each token mint address to a `bigint` balance in base u
 
 ## Read-Only Account Balances
 
-Use [`WalletAccountReadOnlySolana`](/sdk/wallet-modules/wallet-solana/api-reference#walletaccountreadonlysolana) to check balances for any public key without a seed phrase.
+Use [`WalletAccountReadOnlySolana`](/sdk/wallet-modules/wallet-solana/api-reference/#walletaccountreadonlysolana) to check balances for any public key without a seed phrase.
 
 ### Native Balance
 
@@ -101,7 +101,7 @@ console.log('Token balance:', tokenBalance)
 ```
 {% endcode %}
 
-You can also batch read SPL token balances from a read-only account using [`readOnlyAccount.getTokenBalances()`](/sdk/wallet-modules/wallet-solana/api-reference#gettokenbalances-tokenaddresses):
+You can also batch read SPL token balances from a read-only account using [`readOnlyAccount.getTokenBalances()`](/sdk/wallet-modules/wallet-solana/api-reference/#gettokenbalances-tokenaddresses):
 
 {% code title="Read-Only Batch Token Balances" lineNumbers="true" %}
 ```javascript
@@ -114,9 +114,9 @@ console.log('Read-only token balances:', tokenBalances)
 {% endcode %}
 
 {% hint style="info" %}
-You can also create a read-only account from an existing owned account using [`await account.toReadOnlyAccount()`](/sdk/wallet-modules/wallet-solana/api-reference#toreadonlyaccount).
+You can also create a read-only account from an existing owned account using [`await account.toReadOnlyAccount()`](/sdk/wallet-modules/wallet-solana/api-reference/#toreadonlyaccount).
 {% endhint %}
 
 ## Next Steps
 
-With balance checks in place, learn how to [send SOL](./send-transactions.md).
+With balance checks in place, learn how to [send SOL](/sdk/wallet-modules/wallet-solana/guides/send-transactions/).

@@ -31,7 +31,7 @@ The default derivation path was updated in v1.0.0-beta.4 to use BIP-84 (Native S
 
 If you're upgrading from an earlier version, existing wallets created with the old path will generate different addresses. Make sure to migrate any existing wallets or use the old path explicitly if needed for compatibility.
 
-Use [`getAccountByPath`](./api-reference.md#getaccountbypathpath) to supply an explicit derivation path when importing or recreating legacy wallets.
+Use [`getAccountByPath`](/sdk/wallet-modules/wallet-btc/api-reference/#getaccountbypathpath) to supply an explicit derivation path when importing or recreating legacy wallets.
 
 {% endhint %}
 
@@ -93,7 +93,7 @@ This package works with Bitcoin networks:
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">Node.js & Bare Quickstart</a>
+				<a href="/start-building/nodejs-bare-quickstart/">Node.js & Bare Quickstart</a>
 			</td>
 		</tr>
         <tr>
@@ -105,7 +105,7 @@ This package works with Bitcoin networks:
 			</td>
 			<td>Get started with WDK's Bitcoin Wallet configuration</td>
 			<td>
-				<a href="./configuration.md">WDK Bitcoin Wallet Configuration</a>
+				<a href="/sdk/wallet-modules/wallet-btc/configuration/">WDK Bitcoin Wallet Configuration</a>
 			</td>
 		</tr>
         <tr>
@@ -117,7 +117,7 @@ This package works with Bitcoin networks:
 			</td>
 			<td>Get started with WDK's Bitcoin Wallet API</td>
 			<td>
-				<a href="./api-reference.md">WDK Bitcoin Wallet API</a>
+				<a href="/sdk/wallet-modules/wallet-btc/api-reference/">WDK Bitcoin Wallet API</a>
 			</td>
 		</tr>
         <tr>
@@ -129,7 +129,7 @@ This package works with Bitcoin networks:
 			</td>
 			<td>Get started with WDK's Bitcoin Wallet usage</td>
 			<td>
-				<a href="./usage.md">WDK Bitcoin Wallet Usage</a>
+				<a href="/sdk/wallet-modules/wallet-btc/usage/">WDK Bitcoin Wallet Usage</a>
 			</td>
 		</tr>
 	</tbody>

@@ -46,7 +46,7 @@ module.exports = (rpc) => {
 
 ## Worklet Config Payload
 
-Both [`initializeWDK()`](./api-reference.md#initializewdk) and [`resetWdkWallets()`](./api-reference.md#resetwdkwallets) expect `config` to be a JSON string. The decoded object must contain at least one entry under `networks`.
+Both [`initializeWDK()`](/tools/pear-wrk-wdk/api-reference/#initializewdk) and [`resetWdkWallets()`](/tools/pear-wrk-wdk/api-reference/#resetwdkwallets) expect `config` to be a JSON string. The decoded object must contain at least one entry under `networks`.
 
 {% code title="Minimal Worklet Config JSON" lineNumbers="true" %}
 ```javascript
@@ -81,7 +81,7 @@ const workletConfig = {
 
 ## Initialize WDK
 
-You can create and register the WDK instance inside the worklet using [`initializeWDK()`](./api-reference.md#initializewdk):
+You can create and register the WDK instance inside the worklet using [`initializeWDK()`](/tools/pear-wrk-wdk/api-reference/#initializewdk):
 
 {% code title="Initialize WDK" lineNumbers="true" %}
 ```javascript
@@ -105,7 +105,7 @@ await hrpc.initializeWDK({
 
 ## Reset Selected Wallets
 
-You can selectively dispose and re-register wallet modules using [`resetWdkWallets()`](./api-reference.md#resetwdkwallets):
+You can selectively dispose and re-register wallet modules using [`resetWdkWallets()`](/tools/pear-wrk-wdk/api-reference/#resetwdkwallets):
 
 {% code title="Reset Selected Wallet Modules" lineNumbers="true" %}
 ```javascript
@@ -133,7 +133,7 @@ await hrpc.resetWdkWallets({
 
 ## Call Wallet Methods
 
-You can execute wallet account methods through [`callMethod()`](./api-reference.md#callmethod):
+You can execute wallet account methods through [`callMethod()`](/tools/pear-wrk-wdk/api-reference/#callmethod):
 
 {% code title="Call a Wallet Method" lineNumbers="true" %}
 ```javascript

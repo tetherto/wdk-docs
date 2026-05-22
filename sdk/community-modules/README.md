@@ -44,7 +44,7 @@ npx @tetherto/create-wdk-module@latest
 ```
 {% endcode %}
 
-The CLI generates source files, tests, TypeScript type definitions, and CI workflows for all five module types (wallet, swap, bridge, lending, fiat). See the [Create WDK Module documentation](../../tools/create-wdk-module.md) for the full guide, CLI options, and generated project structure.
+The CLI generates source files, tests, TypeScript type definitions, and CI workflows for all five module types (wallet, swap, bridge, lending, fiat). See the [Create WDK Module documentation](/tools/create-wdk-module/) for the full guide, CLI options, and generated project structure.
 
 You can also:
 

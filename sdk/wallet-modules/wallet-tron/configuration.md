@@ -97,7 +97,7 @@ const config = {
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="/start-building/nodejs-bare-quickstart/">nodejs-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -109,7 +109,7 @@ const config = {
 			</td>
 			<td>Build mobile wallets with React Native Expo</td>
 			<td>
-				<a href="../../../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
+				<a href="/start-building/react-native-quickstart/">react-native-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -121,7 +121,7 @@ const config = {
 			</td>
 			<td>Get started with WDK's Tron Wallet Usage</td>
 			<td>
-				<a href="./usage.md">WDK Tron Wallet Usage</a>
+				<a href="/sdk/wallet-modules/wallet-tron/usage/">WDK Tron Wallet Usage</a>
 			</td>
 		</tr>
         <tr>
@@ -133,7 +133,7 @@ const config = {
 			</td>
 			<td>Get started with WDK's Tron Wallet API</td>
 			<td>
-				<a href="./api-reference.md">WDK Tron Wallet API</a>
+				<a href="/sdk/wallet-modules/wallet-tron/api-reference/">WDK Tron Wallet API</a>
 			</td>
 		</tr>
 	</tbody>

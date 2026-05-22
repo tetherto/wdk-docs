@@ -27,7 +27,7 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 {% endhint %}
 
 {% hint style="info" %}
-Looking for community-built WDK modules you can install and use in your project? Check out the [Community Modules](../sdk/community-modules/README.md) page instead.
+Looking for community-built WDK modules you can install and use in your project? Check out the [Community Modules](/sdk/community-modules/) page instead.
 {% endhint %}
 
 ## Featured Projects

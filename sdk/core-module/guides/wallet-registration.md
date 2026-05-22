@@ -27,7 +27,7 @@ The WDK uses a builder pattern, allowing you to chain `.registerWallet()` calls.
 
 ### Parameters
 
-The `registerWallet` method (see [API Reference](../api-reference.md#registerwalletblockchain-wallet-config)) requires three arguments:
+The `registerWallet` method (see [API Reference](/sdk/core-module/api-reference/#registerwalletblockchain-wallet-config)) requires three arguments:
 
 1.  **Symbol**: A unique string identifier for the chain (e.g., `'ethereum'`, `'ton'`). You will use this ID later to retrieve accounts.
 2.  **Manager Class**: The wallet manager class imported from the specific module (e.g., `WalletManagerEvm`).
@@ -35,7 +35,7 @@ The `registerWallet` method (see [API Reference](../api-reference.md#registerwal
 
 ## Installation
 
-Install the [wallet managers](../../wallet-modules/README.md) for the blockchains you want to support:
+Install the [wallet managers](/sdk/wallet-modules/) for the blockchains you want to support:
 
 
 ```bash
@@ -58,7 +58,7 @@ import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
 ### Register the Wallets
 
-Then, [instantiate WDK](./getting-started.md#initialize-wdk) and chain the registration calls:
+Then, [instantiate WDK](/sdk/core-module/guides/getting-started/#initialize-wdk) and chain the registration calls:
 
 {% code title="Register Wallets" lineNumbers="true" %}
 ```typescript
@@ -92,4 +92,4 @@ const wdk = new WDK(seedPhrase)
 
 ## Next Steps
 
-Once your wallets are registered, you can [manage accounts and specific addresses](./account-management.md).
+Once your wallets are registered, you can [manage accounts and specific addresses](/sdk/core-module/guides/account-management/).

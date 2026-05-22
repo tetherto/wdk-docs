@@ -80,7 +80,7 @@ You can register **any** blockchain name - the `CHAINS` constants are for conven
 			</td>
 			<td>Install and run your first MCP server in minutes</td>
 			<td>
-				<a href="./get-started.md">get-started.md</a>
+				<a href="/ai/mcp-toolkit/get-started/">get-started.md</a>
 			</td>
 		</tr>
 		<tr>
@@ -92,7 +92,7 @@ You can register **any** blockchain name - the `CHAINS` constants are for conven
 			</td>
 			<td>Wallets, capabilities, tokens, protocols, and custom tools</td>
 			<td>
-				<a href="./configuration.md">configuration.md</a>
+				<a href="/ai/mcp-toolkit/configuration/">configuration.md</a>
 			</td>
 		</tr>
 		<tr>
@@ -104,7 +104,7 @@ You can register **any** blockchain name - the `CHAINS` constants are for conven
 			</td>
 			<td>All 35 built-in MCP tools and the WdkMcpServer class</td>
 			<td>
-				<a href="./api-reference.md">api-reference.md</a>
+				<a href="/ai/mcp-toolkit/api-reference/">api-reference.md</a>
 			</td>
 		</tr>
 		<tr>
@@ -116,14 +116,14 @@ You can register **any** blockchain name - the `CHAINS` constants are for conven
 			</td>
 			<td>Use WDK tools in LangChain agents via the serve CLI</td>
 			<td>
-				<a href="./langchain.md">langchain.md</a>
+				<a href="/ai/mcp-toolkit/langchain/">langchain.md</a>
 			</td>
 		</tr>
 	</tbody>
 </table>
 
 {% hint style="info" %}
-**Already using an AI coding assistant?** See [Build with AI](../../start-building/build-with-ai.md) for how to connect WDK docs as context via MCP or Markdown.
+**Already using an AI coding assistant?** See [Build with AI](/start-building/build-with-ai/) for how to connect WDK docs as context via MCP or Markdown.
 {% endhint %}
 
 ***

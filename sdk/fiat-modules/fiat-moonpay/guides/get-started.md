@@ -33,7 +33,7 @@ npm install @tetherto/wdk-protocol-fiat-moonpay
 
 ## Initialize MoonPayProtocol
 
-You can create a fiat ramp client with [`new MoonPayProtocol(account, config)`](../api-reference.md#new-moonpayprotocol-account-config):
+You can create a fiat ramp client with [`new MoonPayProtocol(account, config)`](/sdk/fiat-modules/fiat-moonpay/api-reference/#new-moonpayprotocol-account-config):
 
 {% code title="Construct MoonPayProtocol" lineNumbers="true" %}
 ```typescript
@@ -50,9 +50,9 @@ const moonpay = new MoonPayProtocol(walletAccount, {
 Never ship a secret key to browsers. Run server-side signing where your architecture allows, and rotate keys if they leak.
 {% endhint %}
 
-See [Configuration](../configuration.md) for `cacheTime` and related options.
+See [Configuration](/sdk/fiat-modules/fiat-moonpay/configuration/) for `cacheTime` and related options.
 
 ## Next Steps
 
-- [Buy and sell](buy-and-sell.md)
-- [Manage transactions](manage-transactions.md)
+- [Buy and sell](/sdk/fiat-modules/fiat-moonpay/guides/buy-and-sell/)
+- [Manage transactions](/sdk/fiat-modules/fiat-moonpay/guides/manage-transactions/)

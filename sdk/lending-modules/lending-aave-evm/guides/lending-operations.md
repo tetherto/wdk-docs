@@ -19,11 +19,11 @@ layout:
 
 # Lending Operations
 
-This guide walks through [supply](#supply), [withdraw](#withdraw), [borrow](#borrow), [repay](#repay), [quotes](#quotes-before-sending), [ERC-4337 usage](#erc-4337-smart-accounts), and [reading account data](#reading-account-data). It assumes an [`AaveProtocolEvm`](../api-reference.md#class-aaveprotocolevm) instance named `aave` and the USD₮ contract on Ethereum mainnet `0xdAC17F958D2ee523a2206206994597C13D831ec7`.
+This guide walks through [supply](#supply), [withdraw](#withdraw), [borrow](#borrow), [repay](#repay), [quotes](#quotes-before-sending), [ERC-4337 usage](#erc-4337-smart-accounts), and [reading account data](#reading-account-data). It assumes an [`AaveProtocolEvm`](/sdk/lending-modules/lending-aave-evm/api-reference/#class-aaveprotocolevm) instance named `aave` and the USD₮ contract on Ethereum mainnet `0xdAC17F958D2ee523a2206206994597C13D831ec7`.
 
 ## Supply
 
-You can deposit reserves into the pool using [`supply()`](../api-reference.md#supply-options-config):
+You can deposit reserves into the pool using [`supply()`](/sdk/lending-modules/lending-aave-evm/api-reference/#supply-options-config):
 
 {% code title="Supply USDT" lineNumbers="true" %}
 ```javascript
@@ -36,7 +36,7 @@ console.log('Supply tx hash:', tx.hash)
 
 ## Withdraw
 
-You can remove supplied liquidity using [`withdraw()`](../api-reference.md#withdraw-options-config):
+You can remove supplied liquidity using [`withdraw()`](/sdk/lending-modules/lending-aave-evm/api-reference/#withdraw-options-config):
 
 {% code title="Withdraw USDT" lineNumbers="true" %}
 ```javascript
@@ -49,7 +49,7 @@ console.log('Withdraw tx hash:', tx.hash)
 
 ## Borrow
 
-You can draw debt against your collateral using [`borrow()`](../api-reference.md#borrow-options-config):
+You can draw debt against your collateral using [`borrow()`](/sdk/lending-modules/lending-aave-evm/api-reference/#borrow-options-config):
 
 {% code title="Borrow USDT" lineNumbers="true" %}
 ```javascript
@@ -62,7 +62,7 @@ console.log('Borrow tx hash:', tx.hash)
 
 ## Repay
 
-You can pay down debt using [`repay()`](../api-reference.md#repay-options-config):
+You can pay down debt using [`repay()`](/sdk/lending-modules/lending-aave-evm/api-reference/#repay-options-config):
 
 {% code title="Repay USDT" lineNumbers="true" %}
 ```javascript
@@ -75,7 +75,7 @@ console.log('Repay tx hash:', tx.hash)
 
 ## Quotes before sending
 
-You can estimate the supply fee with [`quoteSupply()`](../api-reference.md#quotesupply-options-config):
+You can estimate the supply fee with [`quoteSupply()`](/sdk/lending-modules/lending-aave-evm/api-reference/#quotesupply-options-config):
 
 {% code title="Quote supply fee" lineNumbers="true" %}
 ```javascript
@@ -86,7 +86,7 @@ console.log('Supply fee (wei):', supplyQuote.fee)
 ```
 {% endcode %}
 
-You can estimate the withdraw fee with [`quoteWithdraw()`](../api-reference.md#quotewithdraw-options-config):
+You can estimate the withdraw fee with [`quoteWithdraw()`](/sdk/lending-modules/lending-aave-evm/api-reference/#quotewithdraw-options-config):
 
 {% code title="Quote withdraw fee" lineNumbers="true" %}
 ```javascript
@@ -97,7 +97,7 @@ console.log('Withdraw fee (wei):', withdrawQuote.fee)
 ```
 {% endcode %}
 
-You can estimate the borrow fee with [`quoteBorrow()`](../api-reference.md#quoteborrow-options-config):
+You can estimate the borrow fee with [`quoteBorrow()`](/sdk/lending-modules/lending-aave-evm/api-reference/#quoteborrow-options-config):
 
 {% code title="Quote borrow fee" lineNumbers="true" %}
 ```javascript
@@ -108,7 +108,7 @@ console.log('Borrow fee (wei):', borrowQuote.fee)
 ```
 {% endcode %}
 
-You can estimate the repay fee with [`quoteRepay()`](../api-reference.md#quoterepay-options-config):
+You can estimate the repay fee with [`quoteRepay()`](/sdk/lending-modules/lending-aave-evm/api-reference/#quoterepay-options-config):
 
 {% code title="Quote repay fee" lineNumbers="true" %}
 ```javascript
@@ -125,7 +125,7 @@ Health factor and collateralization limits still apply. A quote does not guarant
 
 ## ERC-4337 smart accounts
 
-You can run the same methods through [`WalletAccountEvmErc4337`](../../../wallet-modules/wallet-evm-erc-4337/api-reference.md#walletaccountevmerc4337) and pass a second `config` argument to override per-call gas payment settings. In `v1.0.0-beta.4`, the lending methods accept the same override families as the wallet module: paymaster token, sponsorship policy, and native coins. See the [ERC-4337 config override](../api-reference.md#erc-4337-config-override-optional) section for the full field list.
+You can run the same methods through [`WalletAccountEvmErc4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#walletaccountevmerc4337) and pass a second `config` argument to override per-call gas payment settings. In `v1.0.0-beta.4`, the lending methods accept the same override families as the wallet module: paymaster token, sponsorship policy, and native coins. See the [ERC-4337 config override](/sdk/lending-modules/lending-aave-evm/api-reference/#erc-4337-config-override-optional) section for the full field list.
 
 {% code title="Supply with paymaster" lineNumbers="true" %}
 ```javascript
@@ -163,7 +163,7 @@ Use token addresses that exist on the same chain as the smart account RPC.
 
 ## Reading account data
 
-You can inspect collateral, debt, and health using [`getAccountData()`](../api-reference.md#getaccountdata-account):
+You can inspect collateral, debt, and health using [`getAccountData()`](/sdk/lending-modules/lending-aave-evm/api-reference/#getaccountdata-account):
 
 {% code title="Read Aave account data" lineNumbers="true" %}
 ```javascript
@@ -182,6 +182,6 @@ console.log({
 
 ## Next Steps
 
-- [Handle errors](handle-errors.md)
-- [Get started](get-started.md)
-- [API reference](../api-reference.md)
+- [Handle errors](/sdk/lending-modules/lending-aave-evm/guides/handle-errors/)
+- [Get started](/sdk/lending-modules/lending-aave-evm/guides/get-started/)
+- [API reference](/sdk/lending-modules/lending-aave-evm/api-reference/)

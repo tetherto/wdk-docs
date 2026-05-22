@@ -64,7 +64,7 @@ This package works with the TON blockchain (The Open Network), including:
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="/start-building/nodejs-bare-quickstart/">nodejs-quickstart.md</a>
 			</td>
 		</tr>
         <tr>
@@ -76,7 +76,7 @@ This package works with the TON blockchain (The Open Network), including:
 			</td>
 			<td>Get started with WDK's TON Gasless Wallet configuration</td>
 			<td>
-				<a href="./configuration.md">WDK TON Gasless Wallet Configuration</a>
+				<a href="/sdk/wallet-modules/wallet-ton-gasless/configuration/">WDK TON Gasless Wallet Configuration</a>
 			</td>
 		</tr>
         <tr>
@@ -88,7 +88,7 @@ This package works with the TON blockchain (The Open Network), including:
 			</td>
 			<td>Get started with WDK's TON Gasless Wallet API</td>
 			<td>
-				<a href="./api-reference.md">WDK TON Gasless Wallet API</a>
+				<a href="/sdk/wallet-modules/wallet-ton-gasless/api-reference/">WDK TON Gasless Wallet API</a>
 			</td>
 		</tr>
         <tr>
@@ -100,7 +100,7 @@ This package works with the TON blockchain (The Open Network), including:
 			</td>
 			<td>Get started with WDK's with TON Gasless Wallet usage</td>
 			<td>
-				<a href="./usage.md">WDK with TON Gasless Wallet Usage</a>
+				<a href="/sdk/wallet-modules/wallet-ton-gasless/usage/">WDK with TON Gasless Wallet Usage</a>
 			</td>
 		</tr>
 	</tbody>

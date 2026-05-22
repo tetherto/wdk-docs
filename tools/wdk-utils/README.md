@@ -55,7 +55,7 @@ WDK Utils provides validation helpers for Bitcoin, EVM, Lightning, Spark, Tron, 
       </td>
       <td>Install the package, import the helpers, and review runtime notes.</td>
       <td>
-        <a href="./configuration.md">configuration.md</a>
+        <a href="/tools/wdk-utils/configuration/">configuration.md</a>
       </td>
     </tr>
     <tr>
@@ -67,7 +67,7 @@ WDK Utils provides validation helpers for Bitcoin, EVM, Lightning, Spark, Tron, 
       </td>
       <td>Review the exported validators, parsers, and result types.</td>
       <td>
-        <a href="./api-reference.md">api-reference.md</a>
+        <a href="/tools/wdk-utils/api-reference/">api-reference.md</a>
       </td>
     </tr>
   </tbody>

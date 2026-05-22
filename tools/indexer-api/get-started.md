@@ -81,14 +81,14 @@ console.log(`Balance: ${balance.amount} ${balance.token.toUpperCase()}`);
 {% endtabs %}
 
 {% hint style="info" %}
-**Want more info?** Check out the complete [API Reference](api-reference.md) for detailed method documentation, parameters, and response formats.
+**Want more info?** Check out the complete [API Reference](/tools/indexer-api/api-reference/) for detailed method documentation, parameters, and response formats.
 {% endhint %}
 
 ***
 
 ## Next Steps
 
-* [**API Reference**](api-reference.md) - Complete method documentation with examples and response formats
+* [**API Reference**](/tools/indexer-api/api-reference/) - Complete method documentation with examples and response formats
 
 ***
 

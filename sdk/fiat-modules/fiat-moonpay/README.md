@@ -21,7 +21,7 @@ layout:
 
 A WDK module for integrating MoonPay's fiat on-ramp and off-ramp services. This module generates signed or unsigned widget URLs that allow users to buy and sell cryptocurrency using fiat currencies directly within your application. Provide a `signUrl` callback if you want the protocol to return signed URLs from a trusted backend, or omit it to use the unsigned widget URLs directly.
 
-Get started by reading the [Usage](./usage.md) guide.
+Get started by reading the [Usage](/sdk/fiat-modules/fiat-moonpay/usage/) guide.
 
 {% hint style="info" %}
 This module requires a MoonPay developer account. [Create your account here](https://dashboard.moonpay.com/signup).
@@ -73,19 +73,19 @@ This module supports purchasing and selling cryptocurrencies on networks compati
       <td>:gear:</td>
       <td><strong>Configuration</strong></td>
       <td>Set up your MoonPay API key, optional signing callback, and environment</td>
-      <td><a href="./configuration.md">Configuration</a></td>
+      <td><a href="/sdk/fiat-modules/fiat-moonpay/configuration/">Configuration</a></td>
     </tr>
     <tr>
       <td>:book:</td>
       <td><strong>Usage Guide</strong></td>
       <td>Learn how to integrate MoonPay in your application</td>
-      <td><a href="./usage.md">Usage</a></td>
+      <td><a href="/sdk/fiat-modules/fiat-moonpay/usage/">Usage</a></td>
     </tr>
     <tr>
       <td>:page_facing_up:</td>
       <td><strong>API Reference</strong></td>
       <td>Complete API documentation for the module</td>
-      <td><a href="./api-reference.md">API Reference</a></td>
+      <td><a href="/sdk/fiat-modules/fiat-moonpay/api-reference/">API Reference</a></td>
     </tr>
   </tbody>
 </table>

@@ -625,7 +625,7 @@ interface ILendingProtocol {
 			</td>
 			<td>Get started with WDK's configuration</td>
 			<td>
-				<a href="./configuration.md">WDK Core Configuration</a>
+				<a href="/sdk/core-module/configuration/">WDK Core Configuration</a>
 			</td>
 		</tr>
         <tr>
@@ -637,7 +637,7 @@ interface ILendingProtocol {
 			</td>
 			<td>Get started with WDK's Usage</td>
 			<td>
-				<a href="./usage.md">WDK Core Usage</a>
+				<a href="/sdk/core-module/usage/">WDK Core Usage</a>
 			</td>
 		</tr>
         <tr>
@@ -649,7 +649,7 @@ interface ILendingProtocol {
 			</td>
 			<td>Explore blockchain-specific wallet modules</td>
 			<td>
-				<a href="../wallet-modules/README.md">WDK Wallet Modules</a>
+				<a href="/sdk/wallet-modules/">WDK Wallet Modules</a>
 			</td>
 		</tr>
         <tr>
@@ -661,7 +661,7 @@ interface ILendingProtocol {
 			</td>
 			<td>Cross-chain USD₮0 bridges</td>
 			<td>
-				<a href="../bridge-modules/README.md">Bridge Modules</a>
+				<a href="/sdk/bridge-modules/">Bridge Modules</a>
 			</td>
 		</tr>
 	</tbody>

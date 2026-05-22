@@ -95,4 +95,4 @@ const wdk = new WDK(existingSeed)
 
 ## Next Steps
 
-With your WDK instance ready, you can now [register wallet modules](./wallet-registration.md) to interact with specific blockchains like [Ethereum](../../wallet-modules/wallet-evm/README.md), [TON](../../wallet-modules/wallet-ton/README.md), or [Bitcoin](../../wallet-modules/wallet-btc/README.md).
+With your WDK instance ready, you can now [register wallet modules](/sdk/core-module/guides/wallet-registration/) to interact with specific blockchains like [Ethereum](/sdk/wallet-modules/wallet-evm/), [TON](/sdk/wallet-modules/wallet-ton/), or [Bitcoin](/sdk/wallet-modules/wallet-btc/).

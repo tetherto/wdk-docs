@@ -19,7 +19,7 @@ layout:
 
 # Send TON
 
-This guide explains how to [send native TON](#send-native-ton) and [use dynamic fee rates](#use-dynamic-fee-rates). Native TON sends are not gasless; for gasless Jetton token transfers, see [Transfer Jetton Tokens](./transfer-tokens.md).
+This guide explains how to [send native TON](#send-native-ton) and [use dynamic fee rates](#use-dynamic-fee-rates). Native TON sends are not gasless; for gasless Jetton token transfers, see [Transfer Jetton Tokens](/sdk/wallet-modules/wallet-ton-gasless/guides/transfer-tokens/).
 
 {% hint style="info" %}
 On TON, values are expressed in nanotons (1 TON = 10^9 nanotons).
@@ -27,7 +27,7 @@ On TON, values are expressed in nanotons (1 TON = 10^9 nanotons).
 
 ## Send Native TON
 
-You can transfer TON to a recipient address using [`account.sendTransaction()`](../api-reference.md#sendtransaction-tx):
+You can transfer TON to a recipient address using [`account.sendTransaction()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#sendtransaction-tx):
 
 {% code title="Send TON" lineNumbers="true" %}
 ```javascript
@@ -42,7 +42,7 @@ console.log('Transaction fee:', result.fee, 'nanotons')
 
 ## Use Dynamic Fee Rates
 
-You can retrieve current fee rates from the wallet manager using [`wallet.getFeeRates()`](../api-reference.md#getfeerates):
+You can retrieve current fee rates from the wallet manager using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#getfeerates):
 
 {% code title="Get Fee Rates" lineNumbers="true" %}
 ```javascript
@@ -54,4 +54,4 @@ console.log('Fast fee rate:', feeRates.fast, 'nanotons')
 
 ## Next Steps
 
-To transfer Jetton tokens with gasless fees (paid in paymaster tokens), see [Transfer Jetton Tokens](./transfer-tokens.md).
+To transfer Jetton tokens with gasless fees (paid in paymaster tokens), see [Transfer Jetton Tokens](/sdk/wallet-modules/wallet-ton-gasless/guides/transfer-tokens/).

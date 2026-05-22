@@ -23,7 +23,7 @@ This guide explains how to [transfer Jetton tokens gaslessly](#transfer-tokens-g
 
 ## Transfer Tokens (Gasless)
 
-You can send Jetton tokens gaslessly using [`account.transfer()`](../api-reference.md#transfer-options-config). Fees are deducted from the configured paymaster token:
+You can send Jetton tokens gaslessly using [`account.transfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#transfer-options-config). Fees are deducted from the configured paymaster token:
 
 {% code title="Gasless Jetton Transfer" lineNumbers="true" %}
 ```javascript
@@ -39,7 +39,7 @@ console.log('Transfer fee:', result.fee, 'paymaster token units')
 
 ## Override Paymaster Configuration
 
-You can override the default paymaster token and maximum fee on a per-transfer basis by passing a second configuration argument to [`account.transfer()`](../api-reference.md#transfer-options-config):
+You can override the default paymaster token and maximum fee on a per-transfer basis by passing a second configuration argument to [`account.transfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#transfer-options-config):
 
 {% code title="Transfer with Config Override" lineNumbers="true" %}
 ```javascript
@@ -60,7 +60,7 @@ console.log('Transfer fee:', result.fee, 'paymaster token units')
 
 ## Estimate Transfer Fees
 
-You can get a fee estimate before executing the transfer using [`account.quoteTransfer()`](../api-reference.md#quotetransfer-options):
+You can get a fee estimate before executing the transfer using [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#quotetransfer-options):
 
 {% code title="Quote Gasless Transfer" lineNumbers="true" %}
 ```javascript
@@ -77,10 +77,10 @@ console.log('Transfer fee estimate:', quote.fee, 'paymaster token units')
 
 Validate balances before transferring:
 
-1. Use [`account.getTokenBalance()`](../api-reference.md#gettokenbalance-tokenaddress) to check Jetton balance.
-2. Use [`account.getPaymasterTokenBalance()`](../api-reference.md#getpaymastertokenbalance) to verify sufficient paymaster funds.
-3. Use [`account.quoteTransfer()`](../api-reference.md#quotetransfer-options) to estimate fees.
-4. Execute the transfer with [`account.transfer()`](../api-reference.md#transfer-options-config):
+1. Use [`account.getTokenBalance()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#gettokenbalance-tokenaddress) to check Jetton balance.
+2. Use [`account.getPaymasterTokenBalance()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#getpaymastertokenbalance) to verify sufficient paymaster funds.
+3. Use [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#quotetransfer-options) to estimate fees.
+4. Execute the transfer with [`account.transfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference/#transfer-options-config):
 
 {% code title="Validated Gasless Transfer" lineNumbers="true" %}
 ```javascript
@@ -123,4 +123,4 @@ async function transferWithValidation(account, jettonAddress, recipient, amount)
 
 ## Next Steps
 
-Learn how to [sign and verify messages](./sign-verify-messages.md) with your gasless TON account.
+Learn how to [sign and verify messages](/sdk/wallet-modules/wallet-ton-gasless/guides/sign-verify-messages/) with your gasless TON account.

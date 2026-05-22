@@ -23,7 +23,7 @@ This guide explains how to [retrieve accounts by index](#retrieve-accounts-by-in
 
 ## Retrieve Accounts by Index
 
-You can retrieve multiple smart accounts using [`wallet.getAccount()`](../api-reference.md#getaccount-index) with different index values:
+You can retrieve multiple smart accounts using [`wallet.getAccount()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#getaccount-index) with different index values:
 
 {% code title="Retrieve Multiple Accounts" lineNumbers="true" %}
 ```javascript
@@ -39,7 +39,7 @@ console.log('Account 1 address:', address1)
 
 ## Retrieve Account by Custom Derivation Path
 
-You can retrieve an account at a specific derivation path using [`wallet.getAccountByPath()`](../api-reference.md#getaccountbypath-path):
+You can retrieve an account at a specific derivation path using [`wallet.getAccountByPath()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/#getaccountbypath-path):
 
 {% code title="Custom Derivation Path" lineNumbers="true" %}
 ```javascript
@@ -51,4 +51,4 @@ console.log('Custom account address:', customAddress)
 
 ## Next Steps
 
-With accounts set up, learn how to [check balances](./check-balances.md).
+With accounts set up, learn how to [check balances](/sdk/wallet-modules/wallet-evm-erc-4337/guides/check-balances/).

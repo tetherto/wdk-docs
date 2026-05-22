@@ -23,7 +23,7 @@ This guide explains how to [transfer TRC20 tokens gas-free](#transfer-tokens-gas
 
 ## Transfer Tokens (Gas-Free)
 
-You can send TRC20 tokens gas-free using [`account.transfer()`](../api-reference.md#transfer-options-config). The gas-free service handles the fee payment:
+You can send TRC20 tokens gas-free using [`account.transfer()`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference/#transfer-options-config). The gas-free service handles the fee payment:
 
 {% code title="Gas-Free TRC20 Transfer" lineNumbers="true" %}
 ```javascript
@@ -39,7 +39,7 @@ console.log('Transfer fee:', transferResult.fee, 'token units')
 
 ## Override Fee Limit
 
-You can set a maximum fee for a specific transfer by passing a second configuration object specifying a `transferMaxFee` to [`account.transfer()`](../api-reference.md#transfer-options-config):
+You can set a maximum fee for a specific transfer by passing a second configuration object specifying a `transferMaxFee` to [`account.transfer()`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference/#transfer-options-config):
 
 {% code title="Transfer with Fee Limit" lineNumbers="true" %}
 ```javascript
@@ -57,7 +57,7 @@ console.log('Transfer fee:', result.fee, 'token units')
 
 ## Estimate Transfer Fees
 
-You can get a fee estimate before executing the transfer using [`account.quoteTransfer()`](../api-reference.md#quotetransfer-options):
+You can get a fee estimate before executing the transfer using [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference/#quotetransfer-options):
 
 {% code title="Quote Gas-Free Transfer" lineNumbers="true" %}
 ```javascript
@@ -74,9 +74,9 @@ console.log('Transfer fee estimate:', transferQuote.fee, 'token units')
 
 Validate addresses and check balances before transferring:
 
-1. Use [`account.getTokenBalance()`](../api-reference.md#gettokenbalance-tokenaddress) to verify sufficient funds.
-2. Use [`account.quoteTransfer()`](../api-reference.md#quotetransfer-options) to confirm fees.
-3. Execute the transfer with [`account.transfer()`](../api-reference.md#transfer-options-config):
+1. Use [`account.getTokenBalance()`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference/#gettokenbalance-tokenaddress) to verify sufficient funds.
+2. Use [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference/#quotetransfer-options) to confirm fees.
+3. Execute the transfer with [`account.transfer()`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference/#transfer-options-config):
 
 {% code title="Validated Gas-Free Transfer" lineNumbers="true" %}
 ```javascript
@@ -116,4 +116,4 @@ async function transferWithValidation(account, tokenAddress, recipient, amount) 
 
 ## Next Steps
 
-Learn how to [sign and verify messages](./sign-verify-messages.md) with your gas-free Tron account.
+Learn how to [sign and verify messages](/sdk/wallet-modules/wallet-tron-gasfree/guides/sign-verify-messages/) with your gas-free Tron account.

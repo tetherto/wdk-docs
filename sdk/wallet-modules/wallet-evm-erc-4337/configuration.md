@@ -462,7 +462,7 @@ Ethereum Sepolia is a testnet. The USD₮ tokens available at the links below ar
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="/start-building/nodejs-bare-quickstart/">nodejs-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -474,7 +474,7 @@ Ethereum Sepolia is a testnet. The USD₮ tokens available at the links below ar
 			</td>
 			<td>Build mobile wallets with React Native Expo</td>
 			<td>
-				<a href="../../../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
+				<a href="/start-building/react-native-quickstart/">react-native-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -486,7 +486,7 @@ Ethereum Sepolia is a testnet. The USD₮ tokens available at the links below ar
 			</td>
 			<td>Get started with WDK's EVM with ERC-4337 Wallet Usage</td>
 			<td>
-				<a href="./usage.md">WDK EVM with ERC-4337 Wallet Usage</a>
+				<a href="/sdk/wallet-modules/wallet-evm-erc-4337/usage/">WDK EVM with ERC-4337 Wallet Usage</a>
 			</td>
 		</tr>
         <tr>
@@ -498,7 +498,7 @@ Ethereum Sepolia is a testnet. The USD₮ tokens available at the links below ar
 			</td>
 			<td>Get started with WDK's EVM with ERC-4337 Wallet API</td>
 			<td>
-				<a href="./api-reference.md">WDK EVM with ERC-4337 Wallet API</a>
+				<a href="/sdk/wallet-modules/wallet-evm-erc-4337/api-reference/">WDK EVM with ERC-4337 Wallet API</a>
 			</td>
 		</tr>
 	</tbody>

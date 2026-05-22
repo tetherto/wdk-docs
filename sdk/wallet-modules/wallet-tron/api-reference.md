@@ -559,7 +559,7 @@ interface TransferResult {
 			</td>
 			<td>Get started with WDK in a Node.js environment</td>
 			<td>
-				<a href="../../../start-building/nodejs-bare-quickstart.md">nodejs-quickstart.md</a>
+				<a href="/start-building/nodejs-bare-quickstart/">nodejs-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -571,7 +571,7 @@ interface TransferResult {
 			</td>
 			<td>Build mobile wallets with React Native Expo</td>
 			<td>
-				<a href="../../../start-building/react-native-quickstart.md">react-native-quickstart.md</a>
+				<a href="/start-building/react-native-quickstart/">react-native-quickstart.md</a>
 			</td>
 		</tr>
     <tr>
@@ -583,7 +583,7 @@ interface TransferResult {
 			</td>
 			<td>Get started with WDK's Tron Wallet Usage</td>
 			<td>
-				<a href="./usage.md">WDK Tron Wallet Usage</a>
+				<a href="/sdk/wallet-modules/wallet-tron/usage/">WDK Tron Wallet Usage</a>
 			</td>
 		</tr>
         <tr>
@@ -595,7 +595,7 @@ interface TransferResult {
 			</td>
 			<td>Get started with WDK's Tron Wallet Configuration</td>
 			<td>
-				<a href="./configuration.md">WDK Tron Wallet Configuration</a>
+				<a href="/sdk/wallet-modules/wallet-tron/configuration/">WDK Tron Wallet Configuration</a>
 			</td>
 		</tr>
 	</tbody>

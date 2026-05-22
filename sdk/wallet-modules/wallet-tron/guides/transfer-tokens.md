@@ -23,7 +23,7 @@ This guide explains how to [transfer TRC20 tokens](#transfer-tokens), [estimate 
 
 ## Transfer Tokens
 
-You can send TRC20 tokens to a recipient address using [`account.transfer()`](../api-reference.md#transfer-options):
+You can send TRC20 tokens to a recipient address using [`account.transfer()`](/sdk/wallet-modules/wallet-tron/api-reference/#transfer-options):
 
 {% code title="Transfer TRC20 Tokens" lineNumbers="true" %}
 ```javascript
@@ -39,7 +39,7 @@ console.log('Transfer fee:', transferResult.fee, 'sun')
 
 ## Estimate Transfer Fees
 
-You can get a fee estimate before executing the transfer using [`account.quoteTransfer()`](../api-reference.md#quotetransfer-options):
+You can get a fee estimate before executing the transfer using [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-tron/api-reference/#quotetransfer-options):
 
 {% code title="Quote Token Transfer" lineNumbers="true" %}
 ```javascript
@@ -56,9 +56,9 @@ console.log('Transfer fee estimate:', transferQuote.fee, 'sun')
 
 Validate addresses and check balances before transferring to catch errors early:
 
-1. Use [`account.getTokenBalance()`](../api-reference.md#gettokenbalance-tokenaddress) to verify sufficient funds.
-2. Use [`account.quoteTransfer()`](../api-reference.md#quotetransfer-options) to confirm fees.
-3. Execute the transfer with [`account.transfer()`](../api-reference.md#transfer-options):
+1. Use [`account.getTokenBalance()`](/sdk/wallet-modules/wallet-tron/api-reference/#gettokenbalance-tokenaddress) to verify sufficient funds.
+2. Use [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-tron/api-reference/#quotetransfer-options) to confirm fees.
+3. Execute the transfer with [`account.transfer()`](/sdk/wallet-modules/wallet-tron/api-reference/#transfer-options):
 
 {% code title="Validated TRC20 Transfer" lineNumbers="true" %}
 ```javascript
@@ -98,4 +98,4 @@ async function transferTRC20WithValidation(account, trc20Address, recipient, amo
 
 ## Next Steps
 
-Learn how to [sign and verify messages](./sign-verify-messages.md) with your Tron account.
+Learn how to [sign and verify messages](/sdk/wallet-modules/wallet-tron/guides/sign-verify-messages/) with your Tron account.
