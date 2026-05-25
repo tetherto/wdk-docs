@@ -1,0 +1,71 @@
+---
+title: Get Started
+description: Install and create your first Bitcoin wallet.
+---
+
+This guide explains how to [install the package](#1-install-the-package), [create a wallet](#2-create-a-wallet), [get your first account](#3-get-your-first-account), and optionally [convert to read-only](#4-optional-convert-to-read-only).
+
+## 1. Install the Package
+
+### Prerequisites
+
+*   **[Node.js](https://nodejs.org/)**: version 18 or higher.
+*   **[npm](https://www.npmjs.com/)**: usually comes with Node.js.
+
+```bash title="Install @tetherto/wdk-wallet-btc"
+npm install @tetherto/wdk-wallet-btc
+```
+
+## 2. Create a Wallet
+
+You can create a new wallet instance using the [`WalletManagerBtc`](../api-reference) constructor with a BIP-39 seed phrase and an Electrum client:
+
+```javascript title="Create Bitcoin Wallet"
+import WalletManagerBtc, { ElectrumTcp } from '@tetherto/wdk-wallet-btc'
+
+const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
+
+const client = new ElectrumTcp({
+  host: 'electrum.blockstream.info',
+  port: 50001
+})
+
+const wallet = new WalletManagerBtc(seedPhrase, {
+  client,
+  network: 'bitcoin'
+})
+```
+
+<Callout type="error">
+**Secure the Seed Phrase:** You must securely store this seed phrase immediately. If it is lost, the user will permanently lose access to their funds.
+</Callout>
+
+<Callout type="warn">
+**Electrum Server Performance:** Public servers like Blockstream's can be 10-300x slower than private servers. For production use, set up your own [Fulcrum](https://github.com/cculianu/Fulcrum) server. For development, consider `fulcrum.frznode.com` as a faster alternative.
+</Callout>
+
+## 3. Get Your First Account
+
+You can retrieve an account at a given index using [`wallet.getAccount()`](../api-reference):
+
+```javascript title="Get Account"
+const account = await wallet.getAccount(0)
+const address = await account.getAddress()
+console.log('Wallet address:', address)
+```
+
+<Callout type="info">
+This implementation uses BIP-84 derivation paths and generates Native SegWit (bech32) addresses by default. Addresses start with `bc1` on mainnet. Set `bip: 44` in config for legacy (P2PKH) addresses.
+</Callout>
+
+## 4. (optional) Convert to Read-Only
+
+You can convert an owned account to a read-only account using [`account.toReadOnlyAccount()`](../api-reference):
+
+```javascript title="Convert to Read-Only"
+const readOnlyAccount = await account.toReadOnlyAccount()
+```
+
+## Next Steps
+
+With your wallet ready, learn how to [manage multiple accounts](./manage-accounts).

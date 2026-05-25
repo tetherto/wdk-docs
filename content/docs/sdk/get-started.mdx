@@ -1,0 +1,257 @@
+---
+title: Get Started
+description: Learn about the SDK and modules architecture
+docType: getting-started
+schemaType: TechArticle
+icon: Rocket
+---
+
+The SDK is a comprehensive, modular plug-in framework designed to simplify multi-chain wallet development.
+
+It is built on some core principles: **self-custodial and stateless** (private keys never leave your app and no data is stored by WDK), **unified interface** (consistent API across all blockchains), and **cross-platform compatibility** (works seamlessly from Node.js to React Native to embedded systems).
+
+#### Capabilities
+
+* **Multi-Chain Support**: Bitcoin, Ethereum, TON, TRON, Solana, Spark, and more
+* **Account Abstraction**: Gasless transactions on supported chains
+* **DeFi Integration**: Plug-in support for swaps, bridges, and lending protocols
+* **Extensible Design**: Add custom modules for new blockchains or protocols
+
+***
+
+### Modular Architecture
+
+WDK's architecture is built around the concept of composable modules. Each module is a specialized component that handles specific functionality, allowing you to build exactly what you need without unnecessary complexity.
+
+
+Each module has a single responsibility. Wallet modules handle blockchain operations, protocol modules manage DeFi interactions, and the core module orchestrates everything.
+
+New functionality is added through modules rather than modifying core code. Also, modules are configured through simple objects, making them easy to customize for different environments and use cases.
+
+***
+
+#### Module Types
+
+WDK modules are organized into five main categories, each serving a specific purpose in the blockchain application stack:
+
+<Cards>
+<Card title="Core" href="/sdk/core-module">
+Main orchestrator and shared utilities
+</Card>
+<Card title="Wallet" href="/sdk/wallet-modules">
+Blockchain-specific wallet operations
+</Card>
+<Card title="Swap" href="/sdk/swap-modules">
+Token swapping across DEXs
+</Card>
+<Card title="Bridge" href="/sdk/bridge-modules">
+Cross-chain asset transfers
+</Card>
+<Card title="Lending" href="/sdk/lending-modules">
+DeFi lending and borrowing
+</Card>
+</Cards>
+
+***
+
+### How to use the SDK
+
+The WDK SDK uses a registration-based system where modules are added to a central orchestrator. This creates a unified interface while maintaining module independence.
+
+#### Registration Flow
+
+**1. Core Module Initialization**
+
+```typescript title="Initialize WDK"
+import WDK from '@tetherto/wdk'
+
+// Generate 24-word seed phrase for higher security
+const seedPhrase = WDK.getRandomSeedPhrase(24)
+
+// Or use 12-word seed phrase (default)
+// const seedPhrase = WDK.getRandomSeedPhrase()
+
+const wdk = new WDK(seedPhrase)
+```
+
+**2. Wallet Module Registration**
+
+```typescript title="Register Wallets"
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
+
+const wdkWithWallets = wdk
+  .registerWallet('ethereum', WalletManagerEvm, {
+    provider: 'https://eth.drpc.org'
+  })
+  .registerWallet('bitcoin', WalletManagerBtc, {
+    provider: 'https://blockstream.info/api'
+  })
+```
+
+**3. Protocol Module Registration**
+
+```typescript title="Register Protocols"
+import SwapveloraEvm from '@tetherto/wdk-protocol-swap-velora-evm'
+
+const wdkWithProtocols = wdkWithWallets
+  .registerProtocol('swap-velora-evm', SwapveloraEvm)
+```
+
+#### Unified Operations
+
+Once registered, all modules work through the same interface:
+
+```typescript title="Unified Operations"
+// Get accounts from different blockchains using the same method
+const ethAccount = await wdkWithProtocols.getAccount('ethereum', 0)
+const btcAccount = await wdkWithProtocols.getAccount('bitcoin', 0)
+
+// Check balances using unified interface
+const ethBalance = await ethAccount.getBalance()
+const btcBalance = await btcAccount.getBalance()
+
+// Send transactions with consistent API
+const ethTx = await ethAccount.sendTransaction({
+  to: '0x...',
+  value: '1000000000000000000'
+})
+
+const btcTx = await btcAccount.sendTransaction({
+  to: '1A1z...',
+  value: 100000000
+})
+
+// Use DeFi protocols through the same interface
+const swapResult = await wdkWithProtocols.executeProtocol('swap-velora-evm', {
+  fromToken: 'ETH',
+  toToken: 'USDT',
+  amount: '1000000000000000000'
+})
+```
+
+***
+
+### Creating Custom Modules
+
+WDK's modular architecture makes it straightforward to add support for new blockchains or protocols. Each module type has a specific interface that must be implemented.
+
+#### Wallet Module Interface
+
+```typescript title="Custom Wallet Module Setup"
+interface WalletModule {
+  // Account management
+  getAccount(index: number): Promise<Account>
+  getAddress(index: number): Promise<string>
+  getBalance(index: number): Promise<BigNumber>
+  
+  // Transaction operations
+  sendTransaction(params: TransactionParams): Promise<TransactionResult>
+  estimateTransaction(params: TransactionParams): Promise<TransactionQuote>
+  
+  // Key management
+  signMessage(message: string, index: number): Promise<string>
+  verifySignature(message: string, signature: string, address: string): Promise<boolean>
+  
+  // Blockchain-specific operations
+  getTransactionHistory(index: number, limit?: number): Promise<Transaction[]>
+  getTokenBalance(index: number, tokenAddress: string): Promise<BigNumber>
+}
+```
+
+#### Protocol Module Interface
+
+```typescript title="Custom Protocol Module Setup"
+interface ProtocolModule {
+  // Protocol execution
+  execute(params: ProtocolParams): Promise<ProtocolResult>
+  estimate(params: ProtocolParams): Promise<ProtocolQuote>
+  
+  // Supported operations
+  getSupportedTokens(): Promise<Token[]>
+  getSupportedChains(): Promise<Chain[]>
+  getOperationTypes(): Promise<OperationType[]>
+  
+  // Protocol-specific methods
+  getLiquidityPools?(): Promise<Pool[]>
+  getLendingRates?(): Promise<Rate[]>
+  getBridgeRoutes?(): Promise<Route[]>
+}
+```
+
+#### Module Implementation Example
+
+```typescript title="Custom Wallet Module Implementation"
+class CustomWalletModule implements WalletModule {
+  private provider: string
+  private chainId: number
+  
+  constructor(config: { provider: string; chainId: number }) {
+    this.provider = config.provider
+    this.chainId = config.chainId
+  }
+  
+  async getAccount(index: number): Promise<Account> {
+    // Implement account derivation logic
+    const privateKey = await this.derivePrivateKey(index)
+    return new CustomAccount(privateKey, this.provider)
+  }
+  
+  async getAddress(index: number): Promise<string> {
+    const account = await this.getAccount(index)
+    return account.getAddress()
+  }
+  
+  async getBalance(index: number): Promise<BigNumber> {
+    const address = await this.getAddress(index)
+    // Implement balance fetching logic
+    const balance = await this.fetchBalance(address)
+    return new BigNumber(balance)
+  }
+  
+  async sendTransaction(params: TransactionParams): Promise<TransactionResult> {
+    // Implement transaction sending logic
+    const account = await this.getAccount(params.accountIndex)
+    const tx = await account.sendTransaction(params)
+    return tx
+  }
+  
+  // Additional methods...
+}
+```
+
+#### Module Registration
+
+```typescript title="Custom Wallet Module Registration"
+// Register your custom module
+const wdkWithCustom = wdk.registerWallet('custom-chain', CustomWalletModule, {
+  provider: 'https://custom-rpc-endpoint.com',
+  chainId: 12345
+})
+
+// Use it like any other module
+const customAccount = await wdkWithCustom.getAccount('custom-chain', 0)
+const balance = await customAccount.getBalance()
+```
+
+
+***
+
+### Quickstart Paths
+
+Ready to start building? Choose your development environment:
+
+<Cards>
+<Card title="Node.js Quickstart" href="/start-building/nodejs-bare-quickstart">
+Get started with WDK in a Node.js environment
+</Card>
+<Card title="React Native Quickstart" href="/start-building/react-native-quickstart">
+Build mobile wallets with React Native Expo
+</Card>
+</Cards>
+
+***
+
+## Need Help?
+
+<SupportCards />

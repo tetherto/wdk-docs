@@ -1,0 +1,200 @@
+---
+title: Wallet Solana Configuration
+description: Configuration options and settings for @tetherto/wdk-wallet-solana
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+## Wallet Configuration
+
+The `WalletManagerSolana` accepts an optional configuration object that defines how the wallet interacts with the Solana blockchain:
+
+```javascript
+import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
+
+const config = {
+  provider: 'https://api.mainnet-beta.solana.com', // Recommended: Solana RPC endpoint
+  transferMaxFee: 10000000 // Optional: Maximum fee in lamports
+}
+
+const wallet = new WalletManagerSolana(seedPhrase, config)
+```
+
+## Account Configuration
+
+Accounts are obtained through the `WalletManagerSolana` instance using `getAccount()` or `getAccountByPath()`:
+
+```javascript
+import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
+
+const accountConfig = {
+  provider: 'https://api.mainnet-beta.solana.com',
+  transferMaxFee: 10000000 // Optional: Maximum fee in lamports
+}
+
+const wallet = new WalletManagerSolana(seedPhrase, accountConfig)
+
+// Get account by index
+const account = await wallet.getAccount(0)
+
+// Or get account by custom derivation path
+const customAccount = await wallet.getAccountByPath("0'/0'/5'")
+```
+
+## Configuration Options
+
+### provider
+
+The `provider` option specifies one Solana RPC endpoint or an ordered list of endpoints for blockchain interactions.
+
+**Type:** `string | string[]` (optional)
+
+**Default:** If not provided, wallet functionality that requires RPC will throw an error
+
+**Examples:**
+```javascript
+// Single endpoint
+const config = {
+  provider: 'https://api.mainnet-beta.solana.com'
+}
+
+// Devnet
+const config = {
+  provider: 'https://api.devnet.solana.com'
+}
+
+// Failover across multiple endpoints
+const config = {
+  provider: [
+    'https://api.mainnet-beta.solana.com',
+    'https://rpc.ankr.com/solana'
+  ]
+}
+
+// Custom RPC
+const config = {
+  provider: 'https://your-custom-rpc-endpoint.com'
+}
+```
+
+When `provider` is an array, WDK initializes a failover provider and tries the next RPC when the current provider fails.
+
+### rpcUrl
+
+The `rpcUrl` option is a deprecated alias for `provider`. Existing apps can keep using `rpcUrl`, but new code should use `provider`. If both keys are set, `provider` takes precedence.
+
+**Type:** `string | string[]` (optional)
+
+### retries
+
+The `retries` option controls additional retry attempts after the initial failover request fails. It applies when `provider` is an ordered array of RPC endpoints. Total attempts are `1 + retries`; if retries exceeds the provider count, WDK loops back through the provider list in round-robin order.
+
+**Type:** `number` (optional)
+
+**Default:** `3`
+
+**Example:**
+```javascript
+const config = {
+  provider: [
+    'https://api.mainnet-beta.solana.com',
+    'https://rpc.ankr.com/solana'
+  ],
+  retries: 5
+}
+```
+
+### transferMaxFee
+
+The `transferMaxFee` option sets the maximum allowed fee (in lamports) for transfer operations. This helps prevent unexpectedly high transaction fees.
+
+**Type:** `number` (optional)
+
+**Unit:** Lamports (1 SOL = 1,000,000,000 lamports)
+
+**Example:**
+```javascript
+const config = {
+  transferMaxFee: 10000000 // 0.01 SOL in lamports
+}
+```
+
+## Complete Configuration Example
+
+```javascript
+import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
+
+const config = {
+  // Recommended for operations that query or submit transactions
+  provider: 'https://api.mainnet-beta.solana.com',
+
+  // Optional: Fee protection
+  transferMaxFee: 10000000 // 0.01 SOL maximum fee
+}
+
+const wallet = new WalletManagerSolana(seedPhrase, config)
+```
+
+## Network Endpoints
+
+### Mainnet
+- RPC: `https://api.mainnet-beta.solana.com`
+- WebSocket: `wss://api.mainnet-beta.solana.com/`
+
+### Devnet
+- RPC: `https://api.devnet.solana.com`
+- WebSocket: `wss://api.devnet.solana.com/`
+
+### Testnet
+- RPC: `https://api.testnet.solana.com`
+- WebSocket: `wss://api.testnet.solana.com/`
+
+## Derivation Paths
+
+Solana wallets use SLIP-0010 derivation paths. The default derivation path follows ecosystem conventions:
+
+- Default path: `m/44'/501'/{index}'/0'` (where `{index}` is the account index)
+- Custom child paths must keep every segment hardened, for example `0'/0'/5'`
+
+<Callout type="warn">
+**Default Derivation Path Change in v1.0.0-beta.4+**
+
+The default derivation path was updated in v1.0.0-beta.4 to match ecosystem conventions:
+
+- **Before** (up to v1.0.0-beta.3): `m/44'/501'/0'/0/{index}`
+- **After** (v1.0.0-beta.4+): `m/44'/501'/{index}'/0'`
+
+If you're upgrading from an earlier version, existing wallets created with the old path will generate different addresses. Make sure to migrate any existing wallets or use the old path explicitly if needed for compatibility.
+
+Use [`getAccountByPath`](./api-reference#getaccountbypathpath) to supply an explicit derivation path when importing or recreating legacy wallets.
+</Callout>
+
+## Security Considerations
+
+- Always use HTTPS URLs for RPC endpoints
+- Use RPC endpoints that serve the same Solana network when enabling failover
+- Set appropriate `transferMaxFee` limits for your use case
+- Consider using environment variables for configuration in production
+- Use trusted RPC providers or run your own Solana validator for production applications
+
+<Cards>
+<Card title="Node.js Quickstart" href="../../../start-building/nodejs-bare-quickstart">
+Get started with WDK in a Node.js environment
+</Card>
+<Card title="React Native Quickstart" href="../../../start-building/react-native-quickstart">
+Build mobile wallets with React Native Expo
+</Card>
+<Card title="WDK Solana Wallet Usage" href="./usage">
+Get started with WDK's Solana Wallet Usage
+</Card>
+<Card title="WDK Solana Wallet API" href="./api-reference">
+Get started with WDK's Solana Wallet API
+</Card>
+</Cards>
+
+***
+
+### Need Help?
+
+<SupportCards />

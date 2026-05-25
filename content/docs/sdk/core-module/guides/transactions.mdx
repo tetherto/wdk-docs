@@ -1,0 +1,118 @@
+---
+title: Send Transactions
+description: Learn how to send native tokens on different blockchains.
+docType: how-to
+schemaType: TechArticle
+---
+
+You can [send native tokens](#send-native-tokens), [sign a transaction without broadcasting it](#sign-without-broadcasting), [handle transaction responses](#handling-responses), and [orchestrate multi-chain payments](#multi-chain-transactions) from WDK wallet accounts.
+
+<Callout type="info">
+**Get Testnet Funds:** To test these transactions without spending real money, ensure you are on a testnet and have obtained funds. See [Testnet Funds & Faucets](../../../resources/concepts#testnet-funds--faucets) for a list of available faucets.
+</Callout>
+
+<Callout type="warn">
+**BigInt Usage:** Always use `BigInt` (the `n` suffix) for monetary values to avoid precision loss with large numbers.
+</Callout>
+
+## Send Native Tokens
+
+The `sendTransaction` method allows you to transfer value. It accepts a unified configuration object, though specific parameters (like `value` formatting) may vary slightly depending on the blockchain.
+
+### Ethereum Example
+
+<Callout type="info">
+On EVM chains, values are typically expressed in Wei (1 ETH = 10^18 Wei).
+</Callout>
+
+The following example will:
+
+1. Retrieve the first Ethereum account (see [Manage Accounts](./account-management))
+2. Send 0.001 ETH (1000000000000000 wei) to an account using `sendTransaction`.
+
+```typescript title="Send ETH"
+const ethAccount = await wdk.getAccount('ethereum', 0)
+
+const result = await ethAccount.sendTransaction({
+  to: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+  value: 1000000000000000n // 0.001 ETH (in Wei)
+})
+
+console.log('Transaction sent! Hash:', result.hash)
+```
+
+### TON Example
+
+<Callout type="info">
+On TON, values are expressed in Nanotons (1 TON = 10^9 Nanotons).
+</Callout>
+
+The following example will:
+
+1. Retrieve the first TON account
+2. Send 1 TON (1000000000 nton) to an account using `sendTransaction`.
+
+```typescript title="Send TON"
+// Send TON transaction
+const tonAccount = await wdk.getAccount('ton', 0)
+const tonResult = await tonAccount.sendTransaction({
+  to: 'UQCz5ON7jjK32HnqPushubsHxgsXgeSZDZPvh8P__oqol90r',
+  value: 1000000000n // 1 TON (in nanotons)
+})
+console.log('TON transaction:', tonResult.hash)
+```
+
+## Sign Without Broadcasting
+
+Use [`account.signTransaction()`](../api-reference#signtransactiontx) when your app needs a signed transaction payload but does not want WDK to broadcast it immediately. Wallet modules accept their own transaction shape and may return a module-specific signed payload.
+
+```typescript title="Sign An EVM Transaction"
+const ethAccount = await wdk.getAccount('ethereum', 0)
+
+const signedTransaction = await ethAccount.signTransaction({
+  to: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+  value: 1000000000000000n
+})
+
+console.log('Signed transaction:', signedTransaction)
+```
+
+<Callout type="info">
+`signTransaction()` only signs. Use `sendTransaction()` when you want WDK to sign, broadcast, and return the transaction hash.
+</Callout>
+
+## Handling Responses
+
+The `sendTransaction` method returns a [transaction result object](../api-reference). The most important field is typically `hash`, which represents the transaction ID on the blockchain. You can use this hash to track the status of your payment on a block explorer.
+
+## Multi-Chain Transactions
+
+You can orchestrate payments across different chains in a single function by acting on multiple account objects sequentially.
+
+The following example will:
+1. Retrieve an ETH and ton account using the `getAccount()` method.
+2. Send ETH and `await` the transaction.
+3. Send TON and `await` the transaction.
+
+```typescript title="Multi-Chain Payment"
+async function sendCrossChainPayments(wdk) {
+  const ethAccount = await wdk.getAccount('ethereum', 0)
+  const tonAccount = await wdk.getAccount('ton', 0)
+
+  // 1. Send ETH
+  await ethAccount.sendTransaction({
+    to: '0x...',
+    value: 1000000000000000000n
+  })
+
+  // 2. Send TON
+  await tonAccount.sendTransaction({
+    to: 'EQ...',
+    value: 1000000000n
+  })
+}
+```
+
+## Next Steps
+
+For more complex interactions like swapping tokens or bridging assets, learn how to [integrate protocols](./protocol-integration).

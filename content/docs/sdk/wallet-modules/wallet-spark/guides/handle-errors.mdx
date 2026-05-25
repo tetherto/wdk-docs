@@ -1,0 +1,101 @@
+---
+title: Handle Errors
+description: Handle Spark transaction and connection failures, plus fees and disposal.
+---
+
+This guide explains how to [handle transaction errors](#transaction-errors), [handle connection errors](#connection-errors), and apply [best practices](#best-practices) for fees and secure cleanup.
+
+## Transaction Errors
+
+Operations such as [`account.sendTransaction()`](../api-reference), [`account.transfer()`](../api-reference), [`account.payLightningInvoice()`](../api-reference), and [`account.withdraw()`](../api-reference) can throw. Wrap each call in `try/catch` and branch on `message` or error type when your runtime allows it:
+
+```javascript title="Handle Transaction Errors"
+try {
+  const result = await account.sendTransaction({
+    to: 'spark1...',
+    value: 1000000
+  })
+  console.log('Transaction hash:', result.hash)
+} catch (error) {
+  console.error('Send failed:', error.message)
+}
+```
+
+You can isolate Lightning failures by wrapping [`account.payLightningInvoice()`](../api-reference):
+
+```javascript title="Handle Lightning Errors"
+try {
+  const payment = await account.payLightningInvoice({
+    encodedInvoice: 'lnbc500u1p...',
+    maxFeeSats: 1000
+  })
+  console.log('Payment id:', payment.id)
+} catch (error) {
+  console.error('Lightning payment failed:', error.message)
+}
+```
+
+## Connection Errors
+
+Spark relies on network access through the Spark SDK. Failures may surface as timeouts, refused connections, or generic SDK errors. Handle them around any async wallet call:
+
+```javascript title="Handle Connection Errors"
+try {
+  const balance = await account.getBalance()
+  console.log('Balance:', balance, 'satoshis')
+} catch (error) {
+  if (error.message.includes('timeout') || error.message.includes('ECONNREFUSED')) {
+    console.error('Network error: check connectivity and Spark service status')
+  } else {
+    console.error('Operation failed:', error.message)
+  }
+}
+```
+
+## Best Practices
+
+### Fee management
+
+Native Spark sends and token transfers report zero fees, but withdrawals and Lightning payments can charge fees. Use [`wallet.getFeeRates()`](../api-reference) for wallet-level rate placeholders and [`account.quotePayLightningInvoice()`](../api-reference) for Lightning sends:
+
+```javascript title="Inspect Spark Fee Rates"
+const feeRates = await wallet.getFeeRates()
+console.log('Normal fee rate:', feeRates.normal)
+console.log('Fast fee rate:', feeRates.fast)
+```
+
+```javascript title="Quote Lightning Fee Before Paying"
+const lightningFee = await account.quotePayLightningInvoice({
+  encodedInvoice: 'lnbc500u1p...'
+})
+console.log('Estimated Lightning fee:', Number(lightningFee), 'satoshis')
+```
+
+<Callout type="info">
+[`quoteWithdraw()`](../api-reference) should run before [`withdraw()`](../api-reference) so you understand cooperative exit costs.
+</Callout>
+
+### Dispose of sensitive data
+
+Clear keys from memory when a session ends. Call [`account.dispose()`](../api-reference) for each account and [`wallet.dispose()`](../api-reference) on the manager:
+
+```javascript title="Dispose Wallet Resources"
+try {
+  const result = await account.sendTransaction({
+    to: 'spark1...',
+    value: 1000000
+  })
+  console.log('Transaction hash:', result.hash)
+} finally {
+  account.dispose()
+  wallet.dispose()
+}
+```
+
+<Callout type="warn">
+After [`dispose()`](../api-reference), the account cannot sign new operations. Call disposal when the wallet UI or job is finished.
+</Callout>
+
+## Next Steps
+
+Return to the [Spark wallet usage overview](../usage) or open the [API Reference](../api-reference) for full method signatures.

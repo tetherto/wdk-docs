@@ -1,0 +1,173 @@
+---
+title: Wallet Spark Configuration
+description: Configuration options and settings for @tetherto/wdk-wallet-spark
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+# Configuration
+
+## Wallet Configuration
+
+```javascript
+const config = {
+  network: 'MAINNET', // 'MAINNET', 'SIGNET', or 'REGTEST'
+  sparkscan: {
+    apiKey: 'your-api-key-here'
+  },
+  syncAndRetry: true
+}
+
+const wallet = new WalletManagerSpark(seedPhrase, config)
+```
+
+## Account Creation
+
+```javascript
+// WalletAccountSpark is created by the WalletManagerSpark
+// It does not take configuration parameters directly
+const account = await wallet.getAccount(0) // Get account at index 0
+```
+
+## Configuration Options
+
+### Network
+
+The `network` option specifies which Spark network to use.
+
+**Type:** `string`
+
+**Values:**
+- `"MAINNET"` - Spark mainnet (production)
+- `"SIGNET"` - Spark signet (testing)
+- `"REGTEST"` - Spark regtest (local development) - [Get test funds](https://app.lightspark.com/regtest-faucet)
+
+**Default:** `"MAINNET"`
+
+**Example:**
+```javascript
+const config = {
+  network: 'REGTEST' // Use REGTEST for development
+}
+```
+
+### SparkScan Balance Polling
+
+The `sparkscan` option configures SparkScan-backed balance polling for [`getBalance()`](./api-reference).
+
+**Type:** `SparkScanConfig` (optional)
+
+**Fields:**
+- `baseUrl` - Optional SparkScan URL, default: `https://api.sparkscan.io`
+- `network` - Optional Spark network. SparkScan supports `MAINNET` and `REGTEST`
+- `apiKey` - Optional SparkScan API key
+
+**Example:**
+```javascript
+const config = {
+  network: 'MAINNET',
+  sparkscan: {
+    apiKey: 'your-api-key-here'
+  }
+}
+```
+
+When `sparkscan` is configured, [`getBalance()`](./api-reference) returns SparkScan's soft balance from `btcSoftBalanceSats`.
+
+### Automatic Retry
+
+The `syncAndRetry` option tells [`sendTransaction()`](./api-reference) and [`payLightningInvoice()`](./api-reference) to sync wallet state and retry once after a failure.
+
+**Type:** `boolean` (optional)
+
+**Default:** `false`
+
+**Example:**
+```javascript
+const config = {
+  network: 'MAINNET',
+  syncAndRetry: true
+}
+```
+
+You can also call [`syncWalletBalance()`](./api-reference) directly when you want to reconcile wallet state before retrying an operation.
+
+## Network Configuration
+
+The wallet can be configured for different Spark networks:
+
+```javascript
+// Mainnet configuration
+const mainnetConfig = {
+  network: 'MAINNET'
+}
+
+
+
+// Regtest configuration
+const regtestConfig = {
+  network: 'REGTEST'
+}
+```
+
+## BIP-44 Derivation Path
+
+Spark uses the [BIP-44](../../../resources/concepts#bip-44-multi-account-hierarchy) coin type 998, resulting in derivation paths like:
+- `m/44'/998'/0'/0/0` for MAINNET account index 0
+- `m/44'/998'/0'/0/1` for MAINNET account index 1
+- `m/44'/998'/2'/0/0` for SIGNET account index 0
+- `m/44'/998'/3'/0/0` for REGTEST account index 0
+
+The path follows the pattern `m/44'/998'/{networkNumber}'/0/{index}` where:
+- `998` is the coin type for Spark
+- `networkNumber` is 0 for MAINNET, 2 for SIGNET, or 3 for REGTEST
+- `index` is the account index
+
+This ensures compatibility with standard [BIP-44](../../../resources/concepts#bip-44-multi-account-hierarchy) wallets while using Spark's unique coin type identifier.
+
+## Complete Configuration Example
+
+```javascript
+import WalletManagerSpark from '@tetherto/wdk-wallet-spark'
+
+// Create wallet manager with configuration
+const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
+const wallet = new WalletManagerSpark(seedPhrase, {
+  network: 'MAINNET',
+  sparkscan: {
+    apiKey: 'your-api-key-here'
+  },
+  syncAndRetry: true
+})
+
+// Get accounts (no additional configuration needed)
+const account0 = await wallet.getAccount(0)
+const account1 = await wallet.getAccount(1)
+
+// Clean up when done
+wallet.dispose()
+```
+
+
+
+<Cards>
+<Card title="Node.js Quickstart" href="/start-building/nodejs-bare-quickstart">
+Get started with WDK in a Node.js environment
+</Card>
+<Card title="React Native Quickstart" href="/start-building/react-native-quickstart">
+Build mobile wallets with React Native Expo
+</Card>
+<Card title="WDK Spark Wallet Usage" href="/sdk/wallet-modules/wallet-spark/usage">
+Get started with WDK's Spark Wallet Usage
+</Card>
+<Card title="WDK Spark Wallet API" href="/sdk/wallet-modules/wallet-spark/api-reference">
+Get started with WDK's Spark Wallet API
+</Card>
+</Cards>
+
+***
+
+### Need Help?
+
+<SupportCards />
