@@ -6,15 +6,13 @@ schemaType: APIReference
 icon: Code
 ---
 
-# API Reference
-
 ## Table of Contents
 
 | Class | Description | Methods |
 |-------|-------------|---------|
 | [WDK](#wdk) | Main class for managing wallets across multiple blockchains. Orchestrates wallet managers and protocols. | [Constructor](#constructor), [Methods](#methods) |
-| [IWalletAccountWithProtocols](#iwalletaccountwithprotocols) | Extended wallet account interface that supports protocol registration and access. Extends `IWalletAccount`. | [Methods](#methods-1) |
-
+| [IWalletAccount](#iwalletaccount) | Base writable wallet account interface from `@tetherto/wdk-wallet`. | [Methods](#methods-1) |
+| [IWalletAccountWithProtocols](#iwalletaccountwithprotocols) | Extended wallet account interface that supports protocol registration and access. Extends `IWalletAccount`. | [Methods](#methods-2) |
 
 ## WDK
 
@@ -48,9 +46,9 @@ const wdk2 = new WDK(seedBytes)
 | `registerWallet(blockchain, wallet, config)` | Registers a new wallet manager for a blockchain | `WDK` | - |
 | `registerProtocol(blockchain, label, protocol, config)` | Registers a protocol globally for a blockchain | `WDK` | - |
 | `registerMiddleware(blockchain, middleware)` | Registers middleware for account decoration | `WDK` | - |
-| `getAccount(blockchain, index?)` | Returns a wallet account for a blockchain and index | `Promise\<IWalletAccountWithProtocols\>` | If wallet not registered |
-| `getAccountByPath(blockchain, path)` | Returns a wallet account for a blockchain and derivation path | `Promise\<IWalletAccountWithProtocols\>` | If wallet not registered |
-| `getFeeRates()` | Returns current fee rates | `Promise\<FeeRates\>` | - |
+| `getAccount(blockchain, index?)` | Returns a wallet account for a blockchain and index | `Promise<IWalletAccountWithProtocols>` | If wallet not registered |
+| `getAccountByPath(blockchain, path)` | Returns a wallet account for a blockchain and derivation path | `Promise<IWalletAccountWithProtocols>` | If wallet not registered |
+| `getFeeRates()` | Returns current fee rates | `Promise<FeeRates>` | - |
 | `dispose(blockchains?)` | Disposes all registered wallets, or only the named blockchains, and clears their sensitive data | `void` | - |
 
 ##### `registerWallet(blockchain, wallet, config)`
@@ -129,7 +127,7 @@ Registers middleware for account decoration and enhanced functionality.
 
 **Parameters:**
 - `blockchain` (string): The name of the blockchain
-- `middleware` (`\<A extends IWalletAccount\>(account: A) =\> Promise\<A | void\>`): Middleware function called when deriving accounts
+- `middleware` (`<A extends IWalletAccount>(account: A) => Promise<A | void>`): Middleware function called when deriving accounts
 
 **Returns:** `WDK` - The wdk manager instance (supports method chaining)
 
@@ -165,7 +163,7 @@ Returns a wallet account for a specific blockchain and index using BIP-44 deriva
 - `blockchain` (string): The name of the blockchain (e.g., "ethereum")
 - `index` (number, optional): The index of the account to get (default: 0)
 
-**Returns:** `Promise\<IWalletAccountWithProtocols\>` - The wallet account with protocol support
+**Returns:** `Promise<IWalletAccountWithProtocols>` - The wallet account with protocol support
 
 **Throws:** Error if no wallet has been registered for the given blockchain
 
@@ -195,7 +193,7 @@ Returns a wallet account for a specific blockchain and BIP-44 derivation path.
 - `blockchain` (string): The name of the blockchain (e.g., "ethereum")
 - `path` (string): The derivation path (e.g., "0'/0/0")
 
-**Returns:** `Promise\<IWalletAccountWithProtocols\>` - The wallet account with protocol support
+**Returns:** `Promise<IWalletAccountWithProtocols>` - The wallet account with protocol support
 
 **Throws:** Error if no wallet has been registered for the given blockchain
 
@@ -211,7 +209,7 @@ const customAccount = await wdk.getAccountByPath('ton', "1'/2/3")
 ##### `getFeeRates()`
 Returns current fee rates for all registered blockchains.
 
-**Returns:** `Promise\<FeeRates\>` - The fee rates in base units
+**Returns:** `Promise<FeeRates>` - The fee rates in base units
 
 **Example:**
 ```javascript title="Get Fee Rates"
@@ -277,6 +275,43 @@ console.log('Seed phrase valid:', isValid) // true
 
 const isInvalid = WDK.isValidSeedPhrase('invalid seed phrase')
 console.log('Seed phrase valid:', isInvalid) // false
+```
+
+## IWalletAccount
+
+Base writable wallet account interface exposed by `@tetherto/wdk-wallet`. Blockchain modules implement this interface and may narrow the transaction type accepted by `signTransaction()` and `sendTransaction()`.
+
+### Methods
+
+| Method | Description | Returns | Throws |
+|--------|-------------|---------|--------|
+| `getAddress()` | Returns the account address | `Promise<string>` | - |
+| `sign(message)` | Signs a message with the account private key | `Promise<string>` | - |
+| `signTransaction(tx)` | Signs a transaction without broadcasting it | `Promise<unknown>` | If the transaction is invalid for the module |
+| `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
+| `sendTransaction(tx)` | Signs, broadcasts, and returns the transaction result | `Promise<TransactionResult>` | If provider access or broadcast fails |
+| `transfer(options)` | Transfers a token where supported by the module | `Promise<TransferResult>` | If the module does not support token transfers |
+| `toReadOnlyAccount()` | Returns a read-only account copy | `Promise<IWalletAccountReadOnly>` | - |
+| `dispose()` | Clears sensitive account material from memory | `void` | - |
+
+##### `signTransaction(tx)`
+Signs a transaction with the account private key and returns the signed transaction payload without broadcasting it. Use this when your app needs offline signing, external transaction submission, or a separate review step before broadcast.
+
+**Parameters:**
+- `tx` (Transaction): Module-specific transaction object. For example, EVM accounts accept `EvmTransaction`, and Bitcoin accounts accept `BtcTransaction`.
+
+**Returns:** `Promise<unknown>` - The signed transaction payload. Wallet modules may narrow this return type, such as a hex string for EVM and Bitcoin transactions.
+
+**Example:**
+```typescript title="Sign Without Broadcasting"
+const account = await wdk.getAccount('ethereum', 0)
+
+const signedTransaction = await account.signTransaction({
+  to: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+  value: 1000000000000000n
+})
+
+console.log('Signed transaction:', signedTransaction)
 ```
 
 ## IWalletAccountWithProtocols
@@ -377,11 +412,18 @@ account.registerProtocol('usdt0', Usdt0ProtocolEvm)
 const usdt0 = account.getBridgeProtocol('usdt0')
 
 // Use the protocol
+await account.approve({
+  token: '0x...',
+  spender: '0x...', // OFT or bridge spender address
+  amount: 1000000n
+})
+
 const bridgeResult = await usdt0.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...',
   token: '0x...',
-  amount: 1000000n
+  amount: 1000000n,
+  oftContractAddress: '0x...' // Same address used as approval spender
 })
 ```
 
@@ -450,6 +492,12 @@ const velora = accountEth.getSwapProtocol('velora')
 const swapResult = await velora.swap(swapOptions)
 
 const usdt0 = accountEth.getBridgeProtocol('usdt0')
+// bridgeOptions.oftContractAddress is the source-chain bridge spender.
+await accountEth.approve({
+  token: bridgeOptions.token,
+  spender: bridgeOptions.oftContractAddress,
+  amount: bridgeOptions.amount
+})
 const bridgeResult = await usdt0.bridge(bridgeOptions)
 
 // Clean up
@@ -485,7 +533,7 @@ interface ISwapProtocol {
   swap(options: SwapOptions): Promise<SwapResult>;
 }
 
-// Bridge Protocol  
+// Bridge Protocol
 interface IBridgeProtocol {
   bridge(options: BridgeOptions): Promise<BridgeResult>;
 }
@@ -523,16 +571,16 @@ interface ISwidgeProtocol {
 ## Next Steps
 
 <Cards>
-<Card title="WDK Core Configuration" href="/sdk/core-module/configuration">
+<Card title="WDK Core Configuration" href="./configuration">
 Get started with WDK's configuration
 </Card>
-<Card title="WDK Core Usage" href="/sdk/core-module/usage">
+<Card title="WDK Core Usage" href="./usage">
 Get started with WDK's Usage
 </Card>
-<Card title="Wallet Modules" href="/sdk/wallet-modules">
+<Card title="Wallet Modules" href="../wallet-modules">
 Explore blockchain-specific wallet modules
 </Card>
-<Card title="Bridge Modules" href="/sdk/bridge-modules">
+<Card title="Bridge Modules" href="../bridge-modules">
 Cross-chain USD₮0 bridges
 </Card>
 </Cards>

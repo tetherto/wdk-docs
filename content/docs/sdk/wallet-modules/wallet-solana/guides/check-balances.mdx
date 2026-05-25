@@ -5,15 +5,15 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-This guide explains how to check native SOL and SPL token balances for both owned and read-only accounts.
+This guide explains how to check [owned account balances](#owned-account-balances), [batch SPL token balances](#batch-spl-token-balances), and [read-only account balances](#read-only-account-balances).
 
 ## Owned Account Balances
 
-Use an account retrieved from [`WalletManagerSolana`](/sdk/wallet-modules/wallet-solana/api-reference) to query balances.
+Use an account retrieved from [`WalletManagerSolana`](/sdk/wallet-modules/wallet-solana/api-reference#walletmanagersolana) to query balances.
 
 ### Native SOL Balance
 
-You can retrieve the native SOL balance from an `Account` object using [`account.getBalance()`](/sdk/wallet-modules/wallet-solana/api-reference):
+You can retrieve the native SOL balance from an `Account` object using [`account.getBalance()`](/sdk/wallet-modules/wallet-solana/api-reference#getbalance):
 
 ```javascript title="Get SOL Balance"
 const balance = await account.getBalance()
@@ -34,9 +34,27 @@ console.log('SPL token balance:', splTokenBalance)
 Token balances are returned in the token's smallest units. Adjust for the token's decimals when displaying (e.g., USD₮ has 6 decimals).
 </Callout>
 
+### Batch SPL Token Balances
+
+You can retrieve multiple SPL token balances in one batch using [`account.getTokenBalances()`](/sdk/wallet-modules/wallet-solana/api-reference#gettokenbalancestokenaddresses):
+
+```javascript title="Get Batch SPL Token Balances"
+const tokenBalances = await account.getTokenBalances([
+  'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+  'So11111111111111111111111111111111111111112'
+])
+
+console.log('USDT balance:', tokenBalances['Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'])
+console.log('Wrapped SOL balance:', tokenBalances['So11111111111111111111111111111111111111112'])
+```
+
+<Callout type="info">
+The returned object maps each token mint address to a `bigint` balance in base units. Missing associated token accounts return `0n`.
+</Callout>
+
 ## Read-Only Account Balances
 
-Use [`WalletAccountReadOnlySolana`](/sdk/wallet-modules/wallet-solana/api-reference) to check balances for any public key without a seed phrase.
+Use [`WalletAccountReadOnlySolana`](/sdk/wallet-modules/wallet-solana/api-reference#walletaccountreadonlysolana) to check balances for any public key without a seed phrase.
 
 ### Native Balance
 
@@ -44,7 +62,7 @@ Use [`WalletAccountReadOnlySolana`](/sdk/wallet-modules/wallet-solana/api-refere
 import { WalletAccountReadOnlySolana } from '@tetherto/wdk-wallet-solana'
 
 const readOnlyAccount = new WalletAccountReadOnlySolana('publicKey', {
-  rpcUrl: 'https://api.mainnet-beta.solana.com',
+  provider: 'https://api.mainnet-beta.solana.com',
   commitment: 'confirmed'
 })
 
@@ -59,8 +77,18 @@ const tokenBalance = await readOnlyAccount.getTokenBalance('Es9vMFrzaCERmJfrF4H2
 console.log('Token balance:', tokenBalance)
 ```
 
+You can also batch read SPL token balances from a read-only account using [`readOnlyAccount.getTokenBalances()`](/sdk/wallet-modules/wallet-solana/api-reference#gettokenbalancestokenaddresses):
+
+```javascript title="Read-Only Batch Token Balances"
+const tokenBalances = await readOnlyAccount.getTokenBalances([
+  'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+  'So11111111111111111111111111111111111111112'
+])
+console.log('Read-only token balances:', tokenBalances)
+```
+
 <Callout type="info">
-You can also create a read-only account from an existing owned account using [`await account.toReadOnlyAccount()`](/sdk/wallet-modules/wallet-solana/api-reference).
+You can also create a read-only account from an existing owned account using [`await account.toReadOnlyAccount()`](/sdk/wallet-modules/wallet-solana/api-reference#toreadonlyaccount).
 </Callout>
 
 ## Next Steps
