@@ -29,7 +29,7 @@ Concrete swidge provider modules extend `SwidgeProtocol` from `@tetherto/wdk-wal
 | Method | Description |
 |--------|-------------|
 | `quoteSwidge(options)` | Quotes the route before execution. |
-| `executeSwidge(quote, config?)` | Executes a quote returned by `quoteSwidge()`. This is a write method and must be user-confirmed. |
+| `swidge(options, config?)` | Executes a swidge operation. This is a write method and must be user-confirmed. |
 | `getSwidgeStatus(id, options?)` | Looks up the status of an in-flight swidge execution. |
 | `getSupportedChains()` | Lists the provider's supported chains for swidge operations. |
 | `getSupportedTokens(options?)` | Lists supported tokens, optionally filtered by chain or route context. |
@@ -37,8 +37,8 @@ Concrete swidge provider modules extend `SwidgeProtocol` from `@tetherto/wdk-wal
 ```typescript title="Swidge protocol shape"
 interface ISwidgeProtocol {
   quoteSwidge(options: SwidgeOptions): Promise<SwidgeQuote>
-  executeSwidge(
-    quote: SwidgeQuote,
+  swidge(
+    options: SwidgeOptions,
     config?: SwidgeProtocolConfig
   ): Promise<SwidgeResult>
   getSwidgeStatus(
@@ -59,7 +59,7 @@ Use `getSupportedChains()` and `getSupportedTokens()` before building route pick
 ```typescript title="Discover swidge support"
 const chains = await swidge.getSupportedChains()
 const ethereumTokens = await swidge.getSupportedTokens({
-  chain: 'ethereum'
+  fromChain: 'ethereum'
 })
 
 const routeTokens = await swidge.getSupportedTokens({
@@ -73,9 +73,9 @@ const routeTokens = await swidge.getSupportedTokens({
 
 | Discovery type | Key fields |
 |----------------|------------|
-| `SwidgeSupportedChain` | `id`, `name`, optional `type`, optional `nativeToken`, optional `providerData` |
-| `SwidgeSupportedToken` | `token`, `chain`, `symbol`, `decimals`, optional `address`, optional `name`, optional `providerData` |
-| `SwidgeSupportedTokensOptions` | Optional `chain`, `fromChain`, `fromToken`, and `toChain` filters |
+| `SwidgeSupportedChain` | `id`, `name`, `type`, `nativeToken` |
+| `SwidgeSupportedToken` | `token`, `chain`, `symbol`, `decimals`, optional `address`, optional `name` |
+| `SwidgeSupportedTokensOptions` | Optional `fromChain`, `fromToken`, and `toChain` filters |
 
 ## Quote a route
 
@@ -104,18 +104,31 @@ console.log('Fees:', quote.fees)
 | `toToken` | `string` | Destination token address or provider-specific asset identifier. |
 | `toChain` | `string \| number` | Destination chain identifier. For same-chain swaps, this is usually the source or account chain. |
 | `recipient` | `string` | Optional recipient for the output tokens. |
+| `refundAddress` | `string` | Optional address that receives refunds if the transaction cannot complete. |
 | `slippage` | `number` | Optional decimal slippage tolerance, for example `0.01` for 1%. |
 | `fromTokenAmount` | `number \| bigint` | Exact source amount to spend. Do not pass with `toTokenAmount`. |
 | `toTokenAmount` | `number \| bigint` | Exact destination amount to receive. Do not pass with `fromTokenAmount`. |
 
-## Execute a quote
+## Execute a route
 
-Call `executeSwidge()` with the quote returned by `quoteSwidge()`. Apply fee caps with `SwidgeProtocolConfig` where supported by the provider.
+Call `quoteSwidge()` first, show the quote to the user, then call `swidge()` with the same route options after explicit confirmation. Apply fee caps with `SwidgeProtocolConfig` where supported by the provider.
 
-```typescript title="Execute a swidge quote"
-const result = await swidge.executeSwidge(quote, {
-  swidgeMaxFee: 200000000000000n,
-  swidgeMaxProtocolFee: 100000000000000n
+```typescript title="Execute a swidge route"
+const options = {
+  fromToken: '0xSourceToken...',
+  toToken: '0xDestinationToken...',
+  toChain: 'arbitrum',
+  recipient: '0xRecipient...',
+  fromTokenAmount: 1000000n,
+  slippage: 0.01
+}
+
+const quote = await swidge.quoteSwidge(options)
+// Show quote details and ask for confirmation before continuing.
+
+const result = await swidge.swidge(options, {
+  maxNetworkFeeBps: 50,
+  maxProtocolFeeBps: 25
 })
 
 console.log('Swidge ID:', result.id)
@@ -124,8 +137,15 @@ console.log('Transactions:', result.transactions)
 ```
 
 <Callout type="warn">
-`executeSwidge()` can submit one or more transactions. Ask for explicit user confirmation before calling it, and display the quote amounts, fee breakdown, route, and recipient first.
+`swidge()` can submit one or more transactions. Ask for explicit user confirmation before calling it, and display the quote amounts, fee breakdown, route, and recipient first.
 </Callout>
+
+`SwidgeProtocolConfig` supports fee limits expressed in basis points of the input amount:
+
+| Config field | Type | Description |
+|--------------|------|-------------|
+| `maxNetworkFeeBps` | `number \| bigint` | Maximum acceptable network fee in basis points of the input amount. |
+| `maxProtocolFeeBps` | `number \| bigint` | Maximum acceptable protocol fee in basis points of the input amount. |
 
 ## Track status
 
@@ -134,8 +154,7 @@ Use `getSwidgeStatus()` when the provider returns an execution ID and the final 
 ```typescript title="Check swidge status"
 const status = await swidge.getSwidgeStatus(result.id, {
   fromChain: 'ethereum',
-  toChain: 'arbitrum',
-  providerData: result.providerData
+  toChain: 'arbitrum'
 })
 
 if (status.status === 'completed') {
@@ -163,16 +182,13 @@ Supported statuses are:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `id` | `string` | Execution identifier returned by `executeSwidge()`. |
+| `id` | `string` | Execution identifier returned by `swidge()`. |
 | `hash` | `string` | Primary transaction hash, if available immediately. |
 | `transactions` | `SwidgeTransaction[]` | Source, destination, approval, refund, or other transaction hashes. |
 | `fromTokenAmount` | `bigint` | Actual source amount spent. |
 | `toTokenAmount` | `bigint` | Actual or expected destination amount. |
 | `toTokenAmountMin` | `bigint` | Minimum destination amount after slippage. |
-| `fee` | `bigint` | Total aggregated fee, if the provider exposes one. |
-| `protocolFee` | `bigint` | Protocol-specific fee portion, if exposed. |
 | `fees` | `SwidgeFee[]` | Itemized fee breakdown. |
-| `providerData` | `object` | Opaque provider payload for execution or status tracking. |
 
 ## Supported assets and chains
 
