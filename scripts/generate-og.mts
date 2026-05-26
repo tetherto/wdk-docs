@@ -34,7 +34,7 @@ function getFooterHost(): string {
   const origin =
     process.env.NEXT_PUBLIC_DOCS_ORIGIN ??
     process.env.NEXT_PUBLIC_SITE_URL ??
-    'https://docs.wdk.tether.su';
+    'https://docs.wdk.tether.io';
 
   try {
     return new URL(origin).host;
