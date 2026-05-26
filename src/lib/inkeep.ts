@@ -3,10 +3,8 @@ import type { TransformSource } from "@inkeep/cxkit-types";
 const DOCS_HOSTS = new Set([
   "wallet.tether.io",
   "wdk.tether.io",
-  "wdk.tether.su",
   "docs.wallet.tether.io",
   "docs.wdk.tether.io",
-  "docs.wdk.tether.su",
 ]);
 
 type ConsoleState = {
@@ -53,7 +51,7 @@ export function ensureInkeepDevConsolePatched() {
 
 function getCurrentDocsOrigin() {
   if (typeof window !== "undefined") return window.location.origin;
-  return "https://docs.wdk.tether.su";
+  return "https://docs.wdk.tether.io";
 }
 
 export function rewriteDocsUrl(rawUrl: string) {
