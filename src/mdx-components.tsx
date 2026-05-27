@@ -11,6 +11,7 @@ import { GithubInfo } from 'fumadocs-ui/components/github-info';
 import { CustomTabs, CustomTabsItem } from "@/components/custom-tabs";
 import { Embed } from '@/components/embed';
 import { ImageCard, ImageCards } from '@/components/image-card';
+import { FeaturedShowcaseProducts } from '@/components/showcase-products';
 import { CommunityCards, GetInvolvedCards, SupportCards } from '@/components/support-cards';
 
 function WrapCode({ children }: { children: React.ReactNode }) {
@@ -55,6 +56,7 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     Embed,
     ImageCard,
     ImageCards,
+    FeaturedShowcaseProducts,
     CommunityCards,
     GetInvolvedCards,
     SupportCards,
