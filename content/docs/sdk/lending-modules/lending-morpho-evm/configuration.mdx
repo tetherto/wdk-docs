@@ -1,0 +1,179 @@
+---
+title: Lending Morpho EVM Configuration
+description: Configuration options and settings for @morpho-org/wdk-protocol-lending-morpho-evm
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+# Configuration
+
+## Installation
+
+Install the Morpho lending module with the EVM wallet module used by the examples and the `viem` peer dependency:
+
+```bash title="Install with npm"
+npm install @morpho-org/wdk-protocol-lending-morpho-evm @tetherto/wdk-wallet-evm viem
+```
+
+```bash title="Install with pnpm"
+pnpm add @morpho-org/wdk-protocol-lending-morpho-evm @tetherto/wdk-wallet-evm viem
+```
+
+The package declares Node.js `22.13` or later in its published engine metadata. If you use ERC-4337 smart accounts, also install `@tetherto/wdk-wallet-evm-erc-4337`.
+
+## Service Setup
+
+Create a WDK-compatible EVM wallet account, then pass it to `MorphoProtocolEvm` with either presets or explicit Morpho targets.
+
+```javascript title="Create MorphoProtocolEvm with presets"
+import MorphoProtocolEvm from '@morpho-org/wdk-protocol-lending-morpho-evm'
+import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
+
+const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
+  provider: 'https://ethereum-rpc.publicnode.com'
+})
+
+const morpho = new MorphoProtocolEvm(account, {
+  presets: {
+    earn: 'sky-money-usdt-savings',
+    borrow: 'wsteth'
+  }
+})
+```
+
+## Constructor
+
+```javascript
+new MorphoProtocolEvm(account, options)
+```
+
+Parameters:
+
+- `account`: `WalletAccountEvm`, `WalletAccountReadOnlyEvm`, `WalletAccountEvmErc4337`, or `WalletAccountReadOnlyEvmErc4337`
+- `options`: Morpho target configuration
+
+The wallet account must include a provider. Read-only accounts can read positions and quote transactions; mutating methods require a writable account.
+
+## Presets
+
+Built-in presets target Ethereum mainnet USDT earn and borrow flows.
+
+```javascript title="Use built-in presets"
+const morpho = new MorphoProtocolEvm(account, {
+  presets: {
+    earn: 'steakhouse-prime-instant',
+    borrow: 'wbtc'
+  }
+})
+```
+
+Borrow presets:
+
+| Preset | Chain ID | Market ID | Collateral | LLTV |
+|--------|----------|-----------|------------|------|
+| `susds` | `1` | `0x3274643db77a064abd3bc851de77556a4ad2e2f502f4f0c80845fa8f909ecf0b` | sUSDS | 96.5% |
+| `wsteth` | `1` | `0xe7e9694b754c4d4f7e21faf7223f6fa71abaeb10296a4c43a54a7977149687d2` | wstETH | 86% |
+| `wbtc` | `1` | `0xa921ef34e2fc7a27ccc50ae7e4b154e16c9799d3387076c421423ef52ac4df99` | WBTC | 86% |
+| `xaut` | `1` | `0xb7843fe78e7e7fd3106a1b939645367967d1f986c2e45edb8932ad1896450877` | XAUt | 77% |
+
+Earn presets:
+
+| Preset | Chain ID | Vault Address | Vault |
+|--------|----------|---------------|-------|
+| `sky-money-usdt-savings` | `1` | `0x23f5E9c35820f4baB695Ac1F19c203cC3f8e1e11` | sky.money USDT Savings V2 |
+| `steakhouse-prime-instant` | `1` | `0xbeef003C68896c7D2c3c60d363e8d71a49Ab2bf9` | Steakhouse Prime Instant V2 |
+
+## Explicit Targets
+
+Use explicit targets when you need a vault or market outside the built-in presets.
+
+```javascript title="Use explicit Morpho targets"
+const morpho = new MorphoProtocolEvm(account, {
+  chainId: 1,
+  earnVaultAddress: '0x23f5E9c35820f4baB695Ac1F19c203cC3f8e1e11',
+  borrowMarketId: '0xe7e9694b754c4d4f7e21faf7223f6fa71abaeb10296a4c43a54a7977149687d2'
+})
+```
+
+When you use `earnVaultAddress`, `borrowMarketParams`, or `borrowMarketId` directly, pass `chainId`. The adapter uses it to guard transaction building if a browser wallet switches chains.
+
+Use `borrowMarketParams` when you already know the full Morpho Blue market configuration:
+
+```javascript title="Use explicit Morpho Blue market params"
+const morpho = new MorphoProtocolEvm(account, {
+  chainId: 1,
+  borrowMarketParams: {
+    loanToken: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    collateralToken: 'COLLATERAL_TOKEN_ADDRESS',
+    oracle: 'ORACLE_ADDRESS',
+    irm: 'INTEREST_RATE_MODEL_ADDRESS',
+    lltv: 860000000000000000n
+  }
+})
+```
+
+`InputMarketParams` contains `loanToken`, `collateralToken`, `oracle`, `irm`, and `lltv`. Confirm explicit market params against Morpho market data before using them in production.
+
+## Options
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `chainId` | `number \| bigint` | Required with explicit Morpho targets |
+| `earnVaultAddress` | `string` | Explicit Morpho Vault V2 address |
+| `borrowMarketParams` | `InputMarketParams` | Explicit Morpho Blue market params |
+| `borrowMarketId` | `string` | Market id used to fetch market params on-chain |
+| `presets` | `{ earn?: string, borrow?: string }` | Built-in earn and borrow target names |
+| `slippageTolerance` | `bigint` | Morpho SDK slippage tolerance in WAD precision |
+| `supportSignature` | `boolean` | Enables Morpho SDK permit or Permit2 requirements |
+| `supportDeployless` | `boolean` | Enables Morpho SDK deployless reads |
+| `metadata` | `Metadata` | Optional Morpho SDK metadata passed to action encoders |
+
+## Native Amounts
+
+For vault deposits and collateral supply, pass either `amount`, `nativeAmount`, or both. `nativeAmount` follows Morpho SDK semantics and is only valid when the configured vault asset or collateral token is the wrapped native token for the chain.
+
+```javascript title="Supply with native amount"
+await morpho.supply({
+  token: 'WRAPPED_NATIVE_TOKEN_ADDRESS',
+  nativeAmount: 1000000000000000n
+})
+```
+
+## ERC-4337 Config Overrides
+
+When using `WalletAccountEvmErc4337`, mutating methods and quote helpers accept an optional second `config` argument for the wallet module's per-call gas payment settings.
+
+```javascript title="Supply with an ERC-4337 config override"
+await morpho.supply(
+  {
+    token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    amount: 1000000n
+  },
+  {
+    paymasterToken: {
+      address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+    }
+  }
+)
+```
+
+See the [`@tetherto/wdk-wallet-evm-erc-4337` configuration docs](/sdk/wallet-modules/wallet-evm-erc-4337/configuration) for paymaster token, sponsorship policy, and native coin override fields.
+
+<Cards>
+<Card title="Node.js Quickstart" href="/start-building/nodejs-bare-quickstart">
+Get started with WDK in a Node.js environment
+</Card>
+<Card title="WDK Lending Morpho EVM API" href="/sdk/lending-modules/lending-morpho-evm/api-reference">
+Methods and parameters for MorphoProtocolEvm
+</Card>
+<Card title="WDK Lending Morpho EVM Usage" href="/sdk/lending-modules/lending-morpho-evm/usage">
+Get started with Morpho lending operations
+</Card>
+</Cards>
+
+***
+
+### Need Help?
+
+<SupportCards />

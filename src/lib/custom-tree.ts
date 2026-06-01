@@ -350,8 +350,8 @@ export const customTree: Node[] = [
     },
     children: [
       {
-        name: 'lending-aave-evm', type: 'folder',
-        index: { name: 'lending-aave-evm', url: '/sdk/lending-modules/lending-aave-evm', type: 'page' },
+        name: 'Aave EVM', type: 'folder',
+        index: { name: 'Aave EVM', url: '/sdk/lending-modules/lending-aave-evm', type: 'page' },
         children: [
           { name: 'Usage', url: '/sdk/lending-modules/lending-aave-evm/usage', type: 'page' },
           {
@@ -364,6 +364,23 @@ export const customTree: Node[] = [
           },
           { name: 'Configuration', url: '/sdk/lending-modules/lending-aave-evm/configuration', type: 'page' },
           { name: 'API Reference', url: '/sdk/lending-modules/lending-aave-evm/api-reference', type: 'page' },
+        ],
+      },
+      {
+        name: 'Morpho EVM', type: 'folder',
+        index: { name: 'Morpho EVM', url: '/sdk/lending-modules/lending-morpho-evm', type: 'page' },
+        children: [
+          { name: 'Usage', url: '/sdk/lending-modules/lending-morpho-evm/usage', type: 'page' },
+          {
+            name: 'Guides', type: 'folder', icon: resolveIcon('BookOpen'),
+            children: [
+              { name: 'Get Started', url: '/sdk/lending-modules/lending-morpho-evm/guides/get-started', type: 'page' },
+              { name: 'Lending Operations', url: '/sdk/lending-modules/lending-morpho-evm/guides/lending-operations', type: 'page' },
+              { name: 'Handle Errors', url: '/sdk/lending-modules/lending-morpho-evm/guides/handle-errors', type: 'page' },
+            ],
+          },
+          { name: 'Configuration', url: '/sdk/lending-modules/lending-morpho-evm/configuration', type: 'page' },
+          { name: 'API Reference', url: '/sdk/lending-modules/lending-morpho-evm/api-reference', type: 'page' },
         ],
       },
     ],
