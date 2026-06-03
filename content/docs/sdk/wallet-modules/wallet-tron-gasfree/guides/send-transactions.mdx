@@ -1,50 +1,36 @@
 ---
-title: Send TRX
-description: Send native TRX transactions and estimate fees.
+title: Native TRX Transactions
+description: Understand native TRX transaction limitations in the gas-free Tron wallet module.
 docType: how-to
 schemaType: TechArticle
 ---
 
-This guide explains how to [send native TRX](#send-native-trx), [estimate transaction fees](#estimate-transaction-fees), and [use dynamic fee rates](#use-dynamic-fee-rates). Native TRX sends are not gas-free; for gas-free TRC20 token transfers, see [Transfer TRC20 Tokens](/sdk/wallet-modules/wallet-tron-gasfree/guides/transfer-tokens).
+The Tron GasFree wallet module is for gas-free TRC20 token transfers. It does not support native TRX transaction execution or native transaction fee quotes.
 
-<Callout type="info">
-On Tron, values are expressed in sun (1 TRX = 1,000,000 sun).
-</Callout>
+For gas-free TRC20 transfers, use [`transfer(options)`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference#transferoptions) and [`quoteTransfer(options)`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference#quotetransferoptions). If you need native TRX transactions, use the base `@tetherto/wdk-wallet-tron` module instead.
 
-## Send Native TRX
+## Unsupported Methods
 
-You can transfer TRX to a recipient address using [`account.sendTransaction()`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference):
+The following native transaction methods exist on the public surface for wallet-interface compatibility, but they throw on Tron GasFree accounts:
 
-```javascript title="Send TRX"
-const result = await account.sendTransaction({
-  to: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
-  value: 1000000 // 1 TRX in sun
+- [`account.sendTransaction(tx)`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference#sendtransactiontx) throws `"Method 'sendTransaction(tx)' not supported on tron gasfree."`
+- [`account.quoteSendTransaction(tx)`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference#quotesendtransactiontx) throws `"Method 'quoteSendTransaction(tx)' not supported on tron gasfree."`
+- [`account.signTransaction(tx)`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference#signtransactiontx) throws `"Method 'signTransaction(tx)' not supported on tron gasfree."`
+
+## Use Gas-Free Token Transfers Instead
+
+Use `quoteTransfer()` before executing a gas-free TRC20 transfer:
+
+```javascript title="Quote Gas-Free TRC20 Transfer"
+const quote = await account.quoteTransfer({
+  token: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
+  recipient: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
+  amount: 1000000
 })
-console.log('Transaction hash:', result.hash)
-console.log('Fee paid:', result.fee, 'sun')
+console.log('Gas-free transfer fee estimate:', quote.fee, 'token units')
 ```
 
-## Estimate Transaction Fees
-
-You can get a fee estimate before sending using [`account.quoteSendTransaction()`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference):
-
-```javascript title="Quote Transaction Fee"
-const quote = await account.quoteSendTransaction({
-  to: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
-  value: 1000000
-})
-console.log('Estimated fee:', quote.fee, 'sun')
-```
-
-## Use Dynamic Fee Rates
-
-You can retrieve current fee rates from the wallet manager using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference):
-
-```javascript title="Get Fee Rates"
-const feeRates = await wallet.getFeeRates()
-console.log('Normal fee rate:', feeRates.normal, 'sun')
-console.log('Fast fee rate:', feeRates.fast, 'sun')
-```
+The fee estimate includes the token transfer fee and, when the GasFree account is inactive, the token activation fee returned by the provider.
 
 ## Next Steps
 
