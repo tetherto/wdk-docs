@@ -545,6 +545,52 @@ interface ILendingProtocol {
   borrow(options: LendingOptions): Promise<LendingResult>;
   repay(options: LendingOptions): Promise<LendingResult>;
 }
+
+// Swidge Protocol (unified swap + bridge + route)
+interface ISwidgeProtocol extends ISwapProtocol, IBridgeProtocol {
+  quoteSwidge(options: SwidgeOptions): Promise<SwidgeQuote>;
+  swidge(options: SwidgeOptions, config?: SwidgeProtocolConfig): Promise<SwidgeResult>;
+  getSwidgeStatus(id: string, options?: SwidgeStatusOptions): Promise<SwidgeStatusResult>;
+  getSupportedChains(): Promise<SwidgeSupportedChain[]>;
+  getSupportedTokens(options?: SwidgeSupportedTokensOptions): Promise<SwidgeSupportedToken[]>;
+}
+```
+
+### Swidge Protocol
+
+`SwidgeProtocol` is an abstract base class exported from `@tetherto/wdk-wallet/protocols` for provider packages that implement a single, route-aware surface for same-chain swaps and cross-chain bridges. It implements `ISwidgeProtocol`, which extends both `ISwapProtocol` and `IBridgeProtocol`, so the base class derives `swap()`, `quoteSwap()`, `bridge()`, and `quoteBridge()` by delegating to `swidge()` and `quoteSwidge()`. Provider subclasses implement the abstract methods below.
+
+| Method | Description | Returns |
+|--------|-------------|---------|
+| `quoteSwidge(options)` | Returns a non-binding quote for a swap/bridge operation | `Promise<SwidgeQuote>` |
+| `swidge(options, config?)` | Executes a swap/bridge operation | `Promise<SwidgeResult>` |
+| `getSwidgeStatus(id, options?)` | Returns the current status of an in-flight operation | `Promise<SwidgeStatusResult>` |
+| `getSupportedChains()` | Returns the chains the provider supports | `Promise<SwidgeSupportedChain[]>` |
+| `getSupportedTokens(options?)` | Returns the tokens the provider supports, optionally route-scoped | `Promise<SwidgeSupportedToken[]>` |
+
+The `SwidgeOptions` input combines common fields (`fromToken`, `toToken`, optional `toChain`, `recipient`, `refundAddress`, `slippage`) with either an exact-in (`fromTokenAmount`) or exact-out (`toTokenAmount`) amount. The optional `SwidgeProtocolConfig` accepts `maxNetworkFeeBps` and `maxProtocolFeeBps` to cap acceptable fees.
+
+```typescript title="Type: ISwidgeProtocol Options and Results"
+type SwidgeProtocolConfig = {
+  maxNetworkFeeBps?: number | bigint;
+  maxProtocolFeeBps?: number | bigint;
+};
+
+type SwidgeOptions = {
+  fromToken: string;
+  toToken: string;
+  toChain?: string | number;     // defaults to the source chain (same-chain swap)
+  recipient?: string;
+  refundAddress?: string;
+  slippage?: number;             // decimal, e.g. 0.01 for 1%
+} & (
+  | { fromTokenAmount: number | bigint }  // exact-in
+  | { toTokenAmount: number | bigint }    // exact-out
+);
+
+type SwidgeStatus =
+  | 'pending' | 'action-required' | 'completed' | 'failed'
+  | 'refund-pending' | 'refunded' | 'cancelled' | 'expired' | 'partial';
 ```
 
 ***

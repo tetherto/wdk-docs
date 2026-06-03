@@ -397,6 +397,40 @@ export const customTree: Node[] = [
       },
     ],
   },
+  {
+    name: 'React Native',
+    type: 'folder',
+    icon: resolveIcon('Smartphone'),
+    children: [
+      {
+        name: 'React Native Core',
+        type: 'folder',
+        icon: resolveIcon('Smartphone'),
+        index: {
+          name: 'React Native Core',
+          url: '/tools/react-native-core',
+          type: 'page',
+        },
+        children: [
+          { name: 'API Reference', url: '/tools/react-native-core/api-reference', type: 'page', icon: resolveIcon('Code') },
+        ],
+      },
+      {
+        name: 'React Native Secure Storage',
+        type: 'folder',
+        icon: resolveIcon('LockKeyhole'),
+        index: {
+          name: 'React Native Secure Storage',
+          url: '/tools/react-native-secure-storage',
+          type: 'page',
+        },
+        children: [
+          { name: 'Configuration', url: '/tools/react-native-secure-storage/configuration', type: 'page', icon: resolveIcon('Settings') },
+          { name: 'API Reference', url: '/tools/react-native-secure-storage/api-reference', type: 'page', icon: resolveIcon('Code') },
+        ],
+      },
+    ],
+  },
   { name: 'Community Modules', url: '/sdk/community-modules', type: 'page', icon: resolveIcon('Users') },
   {
     type: 'separator',
@@ -469,33 +503,6 @@ export const customTree: Node[] = [
     ],
   },
   { name: 'Create WDK Module', url: '/tools/create-wdk-module', type: 'page', icon: resolveIcon('Hammer') },
-  {
-    name: 'React Native Core',
-    type: 'folder',
-    icon: resolveIcon('Smartphone'),
-    index: {
-      name: 'React Native Core',
-      url: '/tools/react-native-core',
-      type: 'page',
-    },
-    children: [
-      { name: 'API Reference', url: '/tools/react-native-core/api-reference', type: 'page', icon: resolveIcon('Code') },
-    ],
-  },
-  {
-    name: 'React Native Secure Storage',
-    type: 'folder',
-    icon: resolveIcon('LockKeyhole'),
-    index: {
-      name: 'React Native Secure Storage',
-      url: '/tools/react-native-secure-storage',
-      type: 'page',
-    },
-    children: [
-      { name: 'Configuration', url: '/tools/react-native-secure-storage/configuration', type: 'page', icon: resolveIcon('Settings') },
-      { name: 'API Reference', url: '/tools/react-native-secure-storage/api-reference', type: 'page', icon: resolveIcon('Code') },
-    ],
-  },
   {
     name: 'Failover Provider',
     type: 'folder',

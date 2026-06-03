@@ -330,10 +330,12 @@ console.log('Signature valid:', isValid)
 Sends a transaction via UserOperation through the bundler.
 
 **Parameters:**
-- `tx` (EvmTransaction | EvmTransaction[]): Transaction object or array for batch transactions
+- `tx` (EvmErc4337Transaction | EvmErc4337Transaction[]): Transaction object or array for batch transactions
   - `to` (string): Recipient address
   - `value` (number | bigint): Amount in wei
   - `data` (string, optional): Transaction data in hex format
+  - `callGasLimit`, `verificationGasLimit`, `preVerificationGas` (number | bigint, optional): Per-call overrides for the UserOperation gas limits
+  - `maxFeePerGas`, `maxPriorityFeePerGas` (number | bigint, optional): Per-call overrides for the EIP-1559 fee pair; set both together. In a batch, only the first transaction's gas overrides apply (see [EvmErc4337Transaction](#evmerc4337transaction))
 - `config` (optional): Per-call configuration override. Accepts a partial version of the gas payment mode fields (see [Config Override](#config-override)).
 
 **Returns:** `Promise\<{hash: string, fee: bigint}\>` - UserOperation hash and fee
@@ -364,13 +366,21 @@ const customResult = await account.sendTransaction({
 }, {
   paymasterToken: { address: '0xNewToken...' }
 })
+
+// With per-call gas overrides (EIP-1559 fee pair set together)
+const fastResult = await account.sendTransaction({
+  to: '0x...',
+  value: 1000000000000000000n,
+  maxFeePerGas: 30000000000n,        // 30 gwei
+  maxPriorityFeePerGas: 2000000000n  // 2 gwei
+})
 ```
 
 ##### `quoteSendTransaction(tx, config?)`
 Estimates the fee for a UserOperation without sending it.
 
 **Parameters:**
-- `tx` (EvmTransaction | EvmTransaction[]): Transaction object or array (same as sendTransaction)
+- `tx` (EvmErc4337Transaction | EvmErc4337Transaction[]): Transaction object or array (same as sendTransaction)
 - `config` (optional): Per-call configuration override (see [Config Override](#config-override))
 
 **Returns:** `Promise\<{fee: bigint}\>` - Fee estimate
@@ -829,7 +839,7 @@ console.log('Allowance:', allowance)
 Estimates the fee for a UserOperation.
 
 **Parameters:**
-- `tx` (EvmTransaction | EvmTransaction[]): Transaction object or array
+- `tx` (EvmErc4337Transaction | EvmErc4337Transaction[]): Transaction object or array
 - `config` (optional): Per-call configuration override (see [Config Override](#config-override))
 
 **Returns:** `Promise\<{fee: bigint}\>` - Fee estimate
@@ -1042,19 +1052,24 @@ type ConfigOverride = Partial<
 - `sponsorshipPolicyId` (string): Set sponsorship policy
 - `transferMaxFee` (number | bigint): Override maximum fee
 
-### EvmTransaction
+### EvmErc4337Transaction
+
+The transaction shape accepted by `sendTransaction`, `quoteSendTransaction`, and `signTransaction`. Beyond the call fields (`to`, `value`, `data`), it accepts optional gas overrides that are applied to the resulting UserOperation.
 
 ```typescript
-interface EvmTransaction {
+interface EvmErc4337Transaction {
   to: string;                               // Recipient address
-  value: number | bigint;                   // Amount in wei
-  data?: string;                            // Transaction data (optional)
-  gasLimit?: number | bigint;               // Gas limit (optional)
-  gasPrice?: number | bigint;               // Legacy gas price (optional)
-  maxFeePerGas?: number | bigint;           // EIP-1559 max fee (optional)
-  maxPriorityFeePerGas?: number | bigint;   // EIP-1559 priority fee (optional)
+  value: number | bigint;                   // Amount of native coin in wei
+  data?: string;                            // Call data in hex format (optional)
+  callGasLimit?: number | bigint;           // Override the UserOperation call gas limit (optional)
+  verificationGasLimit?: number | bigint;   // Override the UserOperation verification gas limit (optional)
+  preVerificationGas?: number | bigint;     // Override the UserOperation pre-verification gas (optional)
+  maxFeePerGas?: number | bigint;           // Override the UserOperation max fee per gas — EIP-1559 cap (optional)
+  maxPriorityFeePerGas?: number | bigint;   // Override the UserOperation max priority fee per gas (optional)
 }
 ```
+
+The gas-override fields are optional. When omitted, the gas limits fall back to AbstractionKit's estimation and the fee pair (`maxFeePerGas` / `maxPriorityFeePerGas`) falls back to the bundler-fetched gas price. Setting either fee field disables the bundler-fetched fee fallback for both, so set them together. In a batched call (`tx` passed as an array), only the gas overrides on the first transaction are honored — a UserOperation carries a single set of gas fields regardless of how many calls it batches.
 
 ### TransferOptions
 

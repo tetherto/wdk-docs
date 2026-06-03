@@ -44,7 +44,7 @@ const account = new WalletAccountTon(seedPhrase, "0'/0/0", accountConfig)
 
 ### tonClient
 
-The `tonClient` option configures the TON Center API client for blockchain interactions.
+The `tonClient` option configures the TON Center API client for blockchain interactions. It accepts a single client configuration, a `TonClient` instance, or an array of either for endpoint failover.
 
 **Type:**
 ```typescript
@@ -60,6 +60,12 @@ interface TonClientConfig {
    */
   secretKey?: string;
 }
+
+// tonClient accepts one config/instance or an array of them
+type TonClientOption =
+  | TonClientConfig
+  | TonClient
+  | Array<TonClientConfig | TonClient>;
 ```
 
 **Examples:**
@@ -77,6 +83,26 @@ const config = {
     url: 'https://toncenter.com/api/v3',
     secretKey: 'your-api-key'
   }
+}
+```
+
+### tonClient (array) and retries
+
+Since v1.0.0-beta.8, `tonClient` also accepts an array of configurations or instances. When a connection error occurs, the wallet automatically fails over to the next client in the list. The `retries` option sets the number of additional retry attempts after the initial call fails.
+
+**Type:** `retries` is `number` (optional)
+
+**Default:** `3`
+
+The total number of attempts is `1 + retries`. For example, `retries: 3` with four clients tries each client once before throwing. If `retries` exceeds the number of clients, the failover loops back and retries already-failed clients in round-robin order.
+
+```javascript
+const config = {
+  tonClient: [
+    { url: 'https://toncenter.com/api/v3', secretKey: 'your-api-key' },
+    { url: 'https://toncenter.com/api/v3' }
+  ],
+  retries: 3 // Optional: additional retry attempts after the first failure
 }
 ```
 

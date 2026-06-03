@@ -157,14 +157,15 @@ const account = new WalletAccountTon(seedPhrase, "0'/0/0", {
 | `getAddress()` | Returns the account's TON address | `Promise\<string\>` |
 | `sign(message)` | Signs a message using the account's private key | `Promise\<string\>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` |
+| `signTransaction(tx)` | Signs a transaction offline without broadcasting it | `Promise\<Cell\>` |
 | `sendTransaction(tx)` | Sends a TON transaction | `Promise\<{hash: string, fee: number}\>` |
 | `quoteSendTransaction(tx)` | Estimates the fee for a TON transaction | `Promise\<{fee: number}\>` |
 | `transfer(options)` | Transfers Jetton tokens to another address | `Promise\<{hash: string, fee: number}\>` |
 | `quoteTransfer(options)` | Estimates the fee for a Jetton transfer | `Promise\<{fee: number}\>` |
 | `getBalance()` | Returns the native TON balance (in nanotons) | `Promise\<bigint\>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific Jetton token | `Promise\<bigint\>` |
-| `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise\<TonTransactionReceipt \| null\>` |
+| `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise\<WalletAccountReadOnlyTon\>` |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
 
 ##### `verify(message, signature)`
@@ -208,6 +209,27 @@ const signature = await account.sign('Hello, World!')
 console.log('Signature:', signature)
 ```
 
+##### `signTransaction(tx)`
+Signs a transaction offline and returns the signed external-message body without broadcasting it. Use this to build a transaction on a signing device and broadcast it elsewhere. Added in v1.0.0-beta.8.
+
+**Parameters:**
+- `tx` (object): The transaction object (same shape as `sendTransaction`)
+  - `to` (string): Recipient TON address (e.g., 'EQ...')
+  - `value` (number | bigint): Amount in nanotons (1 TON = 1,000,000,000 nanotons)
+  - `bounceable` (boolean, optional): Whether the destination address is bounceable
+  - `body` (string | Cell, optional): Optional message body
+
+**Returns:** `Promise\<Cell\>` - The signed external-message body as a TON `Cell`. Call `cell.toBoc().toString('base64')` to obtain a wire-format payload ready for broadcast.
+
+**Example:**
+```javascript
+const cell = await account.signTransaction({
+  to: 'EQ...', // TON address
+  value: 1000000000 // 1 TON in nanotons
+});
+const boc = cell.toBoc().toString('base64');
+console.log('Signed payload:', boc);
+```
 
 ##### `sendTransaction(tx)`
 Sends a TON transaction and returns the result with hash and fee.
@@ -333,6 +355,17 @@ const receipt = await account.getTransactionReceipt('EQ...')
 console.log('Transaction confirmed:', receipt.success)
 ```
 
+##### `toReadOnlyAccount()`
+Returns a read-only copy of the account. The read-only account exposes balance and verification methods without holding the private key. The instance is cached, so repeated calls return the same read-only account.
+
+**Returns:** `Promise\<WalletAccountReadOnlyTon\>` - The read-only account
+
+**Example:**
+```javascript
+const readOnlyAccount = await account.toReadOnlyAccount()
+const address = await readOnlyAccount.getAddress()
+```
+
 ##### `dispose()`
 Disposes the wallet account, clearing private keys from memory.
 
@@ -347,7 +380,9 @@ account.dispose()
 |----------|------|-------------|
 | `index` | `number` | The derivation path's index of this account |
 | `path` | `string` | The full derivation path of this account |
-| `keyPair` | `{publicKey: Buffer, privateKey: Buffer}` | The account's public and private key pair as buffers |
+| `keyPair` | `{publicKey: Uint8Array, privateKey: Uint8Array \| null}` | The account's public and private key pair. `privateKey` is `null` after the account is disposed. |
+
+The key pair arrays are bound to the wallet account: any external change to them is reflected in the account's internal state. Treat the key pair as a read-only view and never mutate its contents.
 
 **Example:**
 ```javascript
@@ -443,23 +478,17 @@ interface TonTransaction {
    * Amount to send in nanotons (1 TON = 1,000,000,000 nanotons)
    * @example 1000000000 // 1 TON
    */
-  value: number;
+  value: number | bigint;
 
   /**
-   * Whether the destination address is bounceable
-   * @default true
+   * If set, overrides the bounceability of the transaction
    */
   bounceable?: boolean;
 
   /**
-   * Optional message payload
+   * Optional message body
    */
-  payload?: string;
-
-  /**
-   * Optional contract initialization state
-   */
-  stateInit?: Cell | null;
+  body?: string | Cell;
 }
 ```
 
@@ -530,13 +559,13 @@ interface KeyPair {
   /**
    * Ed25519 public key
    */
-  publicKey: Buffer;
+  publicKey: Uint8Array;
 
   /**
-   * Ed25519 private key (sensitive data)
+   * Ed25519 private key (sensitive data; null after the account is disposed)
    * @security Never expose or log this value
    */
-  privateKey: Buffer;
+  privateKey: Uint8Array | null;
 }
 ```
 
@@ -545,26 +574,37 @@ interface KeyPair {
 ```typescript
 interface TonWalletConfig {
   /**
-   * TON Center client configuration
+   * TON Center client configuration, a TonClient instance, or an array of
+   * either. When an array is provided, connection errors cause the wallet to
+   * fail over to the next client in the list.
    */
-  tonClient?: {
-    /**
-     * TON Center API endpoint
-     * @example 'https://toncenter.com/api/v3'
-     */
-    url: string;
+  tonClient?: TonClientConfig | TonClient | Array<TonClientConfig | TonClient>;
 
-    /**
-     * Optional API key for higher rate limits
-     */
-    secretKey?: string;
-  };
+  /**
+   * Number of additional retry attempts after the initial call fails, used
+   * only when tonClient is an array. Total attempts = 1 + retries.
+   * @default 3
+   */
+  retries?: number;
 
   /**
    * Maximum allowed fee for transfers (in nanotons)
    * @example 1000000000 // 1 TON
    */
-  transferMaxFee?: number;
+  transferMaxFee?: number | bigint;
+}
+
+interface TonClientConfig {
+  /**
+   * TON Center API endpoint
+   * @example 'https://toncenter.com/api/v3'
+   */
+  url: string;
+
+  /**
+   * Optional API key for higher rate limits
+   */
+  secretKey?: string;
 }
 ```
 

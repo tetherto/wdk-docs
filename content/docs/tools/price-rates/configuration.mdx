@@ -36,9 +36,11 @@ const series = await client.getHistoricalPrice({
 
 ## Provider Integration
 
-Works with `@tetherto/wdk-pricing-provider` as a PricingClient implementation.
+Works with `@tetherto/wdk-pricing-provider` as a `PricingClient` implementation.
 
-```javascript title="Wrap with PricingProvider"
+You can pass a single client or an array of clients. When an array is provided, connection errors trigger automatic failover to the next client in the list.
+
+```javascript title="Single client"
 import { PricingProvider } from '@tetherto/wdk-pricing-provider'
 
 const provider = new PricingProvider({
@@ -48,6 +50,19 @@ const provider = new PricingProvider({
 
 const last = await provider.getLastPrice('BTC', 'USD')
 const hist = await provider.getHistoricalPrice({ from: 'BTC', to: 'USD' })
+```
+
+To enable failover, pass an ordered array of `PricingClient` instances. The provider tries each client in order when a connection error occurs.
+
+```javascript title="Failover across multiple clients"
+import { PricingProvider } from '@tetherto/wdk-pricing-provider'
+
+const provider = new PricingProvider({
+  client: [primaryClient, secondaryClient, tertiaryClient],
+  retries: 3 // optional, defaults to 3
+})
+
+const last = await provider.getLastPrice('BTC', 'USD')
 ```
 
 ***
