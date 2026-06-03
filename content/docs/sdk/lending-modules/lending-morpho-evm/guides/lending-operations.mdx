@@ -1,0 +1,318 @@
+---
+title: Lending Operations
+description: Supply, withdraw, manage collateral, borrow, repay, quote fees, handle requirements, and read positions.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide walks through [vault supply](#vault-supply), [vault withdraw](#vault-withdraw), [collateral](#collateral), [borrow](#borrow), [repay](#repay), [requirements](#requirements), [quotes](#quotes-before-sending), [ERC-4337 usage](#erc-4337-smart-accounts), and [position reads](#reading-positions). It assumes a [`MorphoProtocolEvm`](/sdk/lending-modules/lending-morpho-evm/api-reference) instance named `morpho`.
+
+## Vault supply
+
+Deposit into the configured Morpho Vault V2 target with [`supply()`](/sdk/lending-modules/lending-morpho-evm/api-reference):
+
+```javascript title="Supply USDT to the configured vault"
+const USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+
+const requirements = await morpho.getSupplyRequirements({
+  token: USDT,
+  amount: 1000000n
+})
+
+console.log('Supply requirements:', requirements)
+
+const tx = await morpho.supply({
+  token: USDT,
+  amount: 1000000n
+})
+
+console.log('Supply tx hash:', tx.hash)
+```
+
+The `token` must match the configured vault asset.
+
+## Vault withdraw
+
+Withdraw from the configured vault with [`withdraw()`](/sdk/lending-modules/lending-morpho-evm/api-reference):
+
+```javascript title="Withdraw USDT from the configured vault"
+const USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+
+const tx = await morpho.withdraw({
+  token: USDT,
+  amount: 1000000n
+})
+
+console.log('Withdraw tx hash:', tx.hash)
+```
+
+If you pass `to`, it must equal the connected wallet address.
+
+## Collateral
+
+Supply collateral to the configured Morpho Blue market with [`supplyCollateral()`](/sdk/lending-modules/lending-morpho-evm/api-reference):
+
+```javascript title="Supply collateral"
+const COLLATERAL = 'COLLATERAL_TOKEN_ADDRESS'
+
+const requirements = await morpho.getSupplyCollateralRequirements({
+  token: COLLATERAL,
+  amount: 1000000000000000000n
+})
+
+console.log('Collateral requirements:', requirements)
+
+const tx = await morpho.supplyCollateral({
+  token: COLLATERAL,
+  amount: 1000000000000000000n
+})
+
+console.log('Collateral supply tx hash:', tx.hash)
+```
+
+Withdraw collateral with [`withdrawCollateral()`](/sdk/lending-modules/lending-morpho-evm/api-reference):
+
+```javascript title="Withdraw collateral"
+const COLLATERAL = 'COLLATERAL_TOKEN_ADDRESS'
+
+const tx = await morpho.withdrawCollateral({
+  token: COLLATERAL,
+  amount: 1000000000000000000n
+})
+
+console.log('Collateral withdrawal tx hash:', tx.hash)
+```
+
+The collateral token must match the configured market collateral token. If you pass `to`, it must equal the connected wallet address.
+
+## Borrow
+
+Borrow from the configured market with [`borrow()`](/sdk/lending-modules/lending-morpho-evm/api-reference):
+
+```javascript title="Borrow USDT"
+const USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+
+const requirements = await morpho.getBorrowRequirements({
+  token: USDT,
+  amount: 1000000n
+})
+
+console.log('Borrow requirements:', requirements)
+
+const tx = await morpho.borrow({
+  token: USDT,
+  amount: 1000000n
+})
+
+console.log('Borrow tx hash:', tx.hash)
+```
+
+The borrow token must match the configured market loan token.
+
+## Repay
+
+Repay by asset amount, or pass `amount: 'max'` to repay current borrow shares:
+
+```javascript title="Repay max borrow shares"
+const USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+
+const requirements = await morpho.getRepayRequirements({
+  token: USDT,
+  amount: 'max'
+})
+
+console.log('Repay requirements:', requirements)
+
+const tx = await morpho.repay({
+  token: USDT,
+  amount: 'max'
+})
+
+console.log('Repay tx hash:', tx.hash)
+```
+
+<Callout type="warn">
+For `amount: "max"`, Morpho repays borrow shares. The loan-token transfer amount returned by `getRepayRequirements()` is computed from live market state, so accrued interest can make a delayed approval or permit insufficient. Re-run `getRepayRequirements({ amount: "max" })` immediately before `repay()`, or approve `getChainAddresses(chainId).bundler3.generalAdapter1` with a small buffer above current debt and pass a non-zero `slippageTolerance`. `slippageTolerance` caps the repay share price or transfer amount; it is not approval slippage. Residual loan tokens pulled in shares mode are skimmed back to the user.
+</Callout>
+
+The repay token must match the configured market loan token.
+
+## Requirements
+
+Morpho SDK actions can require approvals, Permit or Permit2 signatures, or Morpho authorization before the final action.
+
+| Requirement source | Final action |
+|--------------------|--------------|
+| `getSupplyRequirements()` | `supply()` |
+| `getSupplyCollateralRequirements()` | `supplyCollateral()` |
+| `getBorrowRequirements()` | `borrow()` |
+| `getRepayRequirements()` | `repay()` |
+
+For EOA accounts, send returned transaction requirements before the final operation. For signature requirements, call the returned requirement's `sign(client, userAddress)` method and pass the result as `requirementSignature`.
+
+```javascript title="Resolve EOA requirements before the final action"
+async function resolveRequirements({ account, walletClient, userAddress, requirements }) {
+  let requirementSignature
+
+  for (const requirement of requirements) {
+    if (typeof requirement.sign === 'function') {
+      requirementSignature = await requirement.sign(walletClient, userAddress)
+      continue
+    }
+
+    await account.sendTransaction({
+      to: requirement.to,
+      value: requirement.value,
+      data: requirement.data
+    })
+  }
+
+  return requirementSignature
+}
+
+const requirements = await morpho.getSupplyRequirements({
+  token: USDT,
+  amount: 1000000n
+})
+
+const requirementSignature = await resolveRequirements({
+  account,
+  walletClient,
+  userAddress,
+  requirements
+})
+
+const tx = await morpho.supply({
+  token: USDT,
+  amount: 1000000n,
+  requirementSignature
+})
+```
+
+Create `walletClient` with `viem` using the same signer and address as the WDK EVM account. Borrow requirements are authorization transactions, so send them before `borrow()`:
+
+```javascript title="Resolve borrow authorization requirements"
+const requirements = await morpho.getBorrowRequirements({
+  token: USDT,
+  amount: 1000000n
+})
+
+for (const requirement of requirements) {
+  await account.sendTransaction({
+    to: requirement.to,
+    value: requirement.value,
+    data: requirement.data
+  })
+}
+
+await morpho.borrow({
+  token: USDT,
+  amount: 1000000n
+})
+```
+
+For ERC-4337 accounts, you can batch returned transaction requirements with your account-level flow when supported by the wallet module. Signature requirements still need to be signed before the final action.
+
+<Callout type="warn">
+Morpho SDK enforces builder and executor invariants for bundled actions. In this WDK adapter, `onBehalfOf` and vault or collateral withdrawal `to` must equal the connected wallet address when set.
+</Callout>
+
+## Quotes before sending
+
+Quote helpers build the target transaction and return the account-level fee estimate without sending it:
+
+```javascript title="Quote Morpho operations"
+const USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+const COLLATERAL = 'COLLATERAL_TOKEN_ADDRESS'
+
+const supplyQuote = await morpho.quoteSupply({ token: USDT, amount: 1000000n })
+const withdrawQuote = await morpho.quoteWithdraw({ token: USDT, amount: 1000000n })
+const collateralQuote = await morpho.quoteSupplyCollateral({
+  token: COLLATERAL,
+  amount: 1000000000000000000n
+})
+const borrowQuote = await morpho.quoteBorrow({ token: USDT, amount: 1000000n })
+const repayQuote = await morpho.quoteRepay({ token: USDT, amount: 'max' })
+
+console.log({
+  supplyQuote,
+  withdrawQuote,
+  collateralQuote,
+  borrowQuote,
+  repayQuote
+})
+```
+
+<Callout type="warn">
+Quotes do not guarantee that a later transaction will succeed if balances, allowances, authorization, market state, or vault state change.
+</Callout>
+
+## ERC-4337 smart accounts
+
+You can use the same methods with [`WalletAccountEvmErc4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference) and pass a second `config` argument for per-call gas payment overrides.
+
+```javascript title="Supply with an ERC-4337 paymaster override"
+const result = await morpho.supply(
+  {
+    token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    amount: 1000000n
+  },
+  {
+    paymasterToken: {
+      address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+    }
+  }
+)
+
+console.log('Supply hash:', result.hash)
+```
+
+Use token addresses that exist on the same chain as the smart account RPC.
+
+## Reading positions
+
+Read the configured vault position with [`getVaultPosition()`](/sdk/lending-modules/lending-morpho-evm/api-reference):
+
+```javascript title="Read configured vault position"
+const vaultPosition = await morpho.getVaultPosition()
+
+console.log({
+  shares: vaultPosition.shares,
+  assets: vaultPosition.assets,
+  vaultAddress: vaultPosition.vaultAddress
+})
+```
+
+Read the configured market position with [`getMarketPosition()`](/sdk/lending-modules/lending-morpho-evm/api-reference):
+
+```javascript title="Read configured market position"
+const marketPosition = await morpho.getMarketPosition()
+
+console.log({
+  supplyShares: marketPosition.supplyShares,
+  borrowShares: marketPosition.borrowShares,
+  borrowAssets: marketPosition.borrowAssets,
+  collateral: marketPosition.collateral,
+  marketId: marketPosition.marketId
+})
+```
+
+Read both configured positions with [`getAccountData()`](/sdk/lending-modules/lending-morpho-evm/api-reference):
+
+```javascript title="Read combined Morpho account data"
+const data = await morpho.getAccountData()
+
+console.log({
+  vaultAssets: data.vaultAssets,
+  marketBorrowAssets: data.marketBorrowAssets,
+  collateral: data.collateral,
+  vaultAddress: data.vaultAddress,
+  marketId: data.marketId
+})
+```
+
+## Next Steps
+
+- [Handle errors](handle-errors)
+- [Get started](get-started)
+- [API reference](/sdk/lending-modules/lending-morpho-evm/api-reference)
