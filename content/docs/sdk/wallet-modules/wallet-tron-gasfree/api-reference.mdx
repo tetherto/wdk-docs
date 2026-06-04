@@ -27,25 +27,25 @@ new WalletManagerTronGasfree(seed, config)
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (object): Configuration object
-  - `chainId` (string): The blockchain's id
-  - `provider` (string): Tron RPC endpoint URL
+  - `chainId` (number): The blockchain's id
+  - `provider` (string | TronWeb): Tron RPC endpoint URL or TronWeb instance
   - `gasFreeProvider` (string): Gas-free service endpoint
-  - `gasFreeApiKey` (string): API key for gas-free provider
-  - `gasFreeApiSecret` (string): API secret for gas-free provider
   - `serviceProvider` (string): Service provider Tron address
   - `verifyingContract` (string): Gas-free verifying contract address
+  - `gasFreeApiKey` (string, optional): API key for signed GasFree provider requests
+  - `gasFreeApiSecret` (string, optional): API secret for signed GasFree provider requests. Provide together with `gasFreeApiKey`.
   - `transferMaxFee` (number, optional): Maximum fee for transfer operations
 
 **Example:**
 ```javascript
 const wallet = new WalletManagerTronGasfree(seedPhrase, {
-  chainId: '728126428',
+  chainId: 728126428,
   provider: 'https://api.trongrid.io',
   gasFreeProvider: 'https://gasfree.provider.url',
-  gasFreeApiKey: 'your-api-key',
-  gasFreeApiSecret: 'your-api-secret',
   serviceProvider: 'T...',
   verifyingContract: 'T...',
+  gasFreeApiKey: 'your-api-key', // Optional: provide with gasFreeApiSecret
+  gasFreeApiSecret: 'your-api-secret',
   transferMaxFee: 10000000 // Optional
 })
 ```
@@ -129,9 +129,12 @@ new WalletAccountTronGasfree(seed, path, config)
 | `getAddress()` | Returns the account's address | `Promise\<string\>` |
 | `getBalance()` | Returns the native TRX balance (in sun) | `Promise\<bigint\>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise\<bigint\>` |
-| `transfer(options)` | Transfers TRC20 tokens to another address | `Promise\<{hash: string, fee: number}\>` |
-| `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: number}\>` |
+| `transfer(options)` | Transfers TRC20 tokens to another address | `Promise\<{hash: string, fee: bigint}\>` |
+| `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: bigint}\>` |
 | `sign(message)` | Signs a message using the account's private key | `Promise\<string\>` |
+| `signTransaction(tx)` | Unsupported on Tron GasFree; always throws | `Promise\<never\>` |
+| `sendTransaction(tx)` | Unsupported on Tron GasFree; always throws | `Promise\<TransactionResult\>` |
+| `quoteSendTransaction(tx)` | Unsupported on Tron GasFree; always throws | `Promise\<Omit\<TransactionResult, 'hash'\>\>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
 
@@ -180,7 +183,7 @@ Transfers TRC20 tokens to another address using the gas-free service.
   - `recipient` (string): Recipient's Tron address
   - `amount` (number): Amount in token base units
 
-**Returns:** `Promise\<{hash: string, fee: number}\>` - Object containing transaction hash and fee paid in token base units
+**Returns:** `Promise\<{hash: string, fee: bigint}\>` - Object containing transaction hash and fee paid in token base units. The returned fee includes the estimated transfer fee plus any activation fee returned by the GasFree service.
 
 **Example:**
 ```javascript
@@ -199,7 +202,7 @@ Estimates the fee for a TRC20 token transfer.
 **Parameters:**
 - `options` (TransferOptions): Transfer options (same as transfer method)
 
-**Returns:** `Promise\<{fee: number}\>` - Estimated fee in token base units
+**Returns:** `Promise\<{fee: bigint}\>` - Estimated fee in token base units. The estimate includes the token's transfer fee and, when the GasFree account is inactive, the token activation fee.
 
 **Example:**
 ```javascript
@@ -224,6 +227,30 @@ Signs a message using the account's private key.
 const signature = await account.sign('Hello, World!')
 console.log('Signature:', signature)
 ```
+
+##### `signTransaction(tx)`
+Transaction signing is not supported by the Tron GasFree module. This method is present for `IWalletAccount` compatibility and always throws `"Method 'signTransaction(tx)' not supported on tron gasfree."`.
+
+**Parameters:**
+- `tx` (TronTransaction): The transaction object
+
+**Returns:** `Promise\<never\>` - Never resolves successfully.
+
+##### `sendTransaction(tx)`
+Native Tron transaction sending is not supported by the Tron GasFree module. Use `transfer(options)` for gas-free TRC20 transfers, or use the base Tron wallet module when you need native TRX transactions.
+
+**Parameters:**
+- `tx` (TronTransaction): The transaction object
+
+**Returns:** `Promise\<TransactionResult\>` - The method always throws `"Method 'sendTransaction(tx)' not supported on tron gasfree."`.
+
+##### `quoteSendTransaction(tx)`
+Native Tron transaction fee quotes are not supported by the Tron GasFree module.
+
+**Parameters:**
+- `tx` (TronTransaction): The transaction object
+
+**Returns:** `Promise\<Omit\<TransactionResult, 'hash'\>\>` - The method always throws `"Method 'quoteSendTransaction(tx)' not supported on tron gasfree."`.
 
 ##### `verify(message, signature)`
 Verifies a message signature.
@@ -261,13 +288,13 @@ new WalletAccountReadOnlyTronGasfree(address, config)
 **Parameters:**
 - `address` (string): The account's Tron address
 - `config` (object): Configuration object
-  - `chainId` (string): The blockchain's id
-  - `provider` (string): Tron RPC endpoint URL
+  - `chainId` (number): The blockchain's id
+  - `provider` (string | TronWeb): Tron RPC endpoint URL or TronWeb instance
   - `gasFreeProvider` (string): Gas-free service endpoint
-  - `gasFreeApiKey` (string): API key for gas-free provider
-  - `gasFreeApiSecret` (string): API secret for gas-free provider
   - `serviceProvider` (string): Service provider Tron address
   - `verifyingContract` (string): Gas-free verifying contract address
+  - `gasFreeApiKey` (string, optional): API key for signed GasFree provider requests
+  - `gasFreeApiSecret` (string, optional): API secret for signed GasFree provider requests. Provide together with `gasFreeApiKey`.
 
 #### Methods
 
@@ -276,7 +303,8 @@ new WalletAccountReadOnlyTronGasfree(address, config)
 | `getAddress()` | Returns the account's address | `Promise\<string\>` |
 | `getBalance()` | Returns the native TRX balance (in sun) | `Promise\<bigint\>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise\<bigint\>` |
-| `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: number}\>` |
+| `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: bigint}\>` |
+| `quoteSendTransaction(tx)` | Unsupported on Tron GasFree; always throws | `Promise\<Omit\<TransactionResult, 'hash'\>\>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` |
 
 ##### `getAddress()`
@@ -324,7 +352,7 @@ Estimates the fee for a TRC20 token transfer without requiring private keys.
   - `recipient` (string): Recipient's Tron address
   - `amount` (number): Amount in token base units
 
-**Returns:** `Promise\<{fee: number}\>` - Estimated fee in token base units
+**Returns:** `Promise\<{fee: bigint}\>` - Estimated fee in token base units. The estimate includes the token's transfer fee and, when the GasFree account is inactive, the token activation fee.
 
 **Example:**
 ```javascript
@@ -335,6 +363,14 @@ const quote = await readOnlyAccount.quoteTransfer({
 })
 console.log('Estimated fee:', quote.fee, 'token base units')
 ```
+
+##### `quoteSendTransaction(tx)`
+Native Tron transaction fee quotes are not supported by the Tron GasFree module.
+
+**Parameters:**
+- `tx` (TronTransaction): The transaction object
+
+**Returns:** `Promise\<Omit\<TransactionResult, 'hash'\>\>` - The method always throws `"Method 'quoteSendTransaction(tx)' not supported on tron gasfree."`.
 
 ##### `verify(message, signature)`
 Verifies a message signature.
@@ -393,7 +429,7 @@ interface TransferResult {
    * Fee paid in token base units
    * @example 1000 // Fee in token base units
    */
-  fee: number;
+  fee: bigint;
 }
 ```
 
@@ -416,6 +452,82 @@ interface FeeRates {
 }
 ```
 
+### TronGasfreeAssetInfo
+Asset metadata returned by the GasFree account service.
+
+```typescript
+interface TronGasfreeAssetInfo {
+  /**
+   * Token smart contract address
+   * @example 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'
+   */
+  tokenAddress: string;
+
+  /**
+   * Token symbol
+   * @example 'USDT'
+   */
+  tokenSymbol: string;
+
+  /**
+   * Fee to activate the GasFree account for this token
+   */
+  activateFee: number;
+
+  /**
+   * Fee for transferring this token
+   */
+  transferFee: number;
+
+  /**
+   * Token decimals
+   */
+  decimal: number;
+
+  /**
+   * Whether the token is frozen by the GasFree service
+   */
+  frozen: number;
+}
+```
+
+### TronGasfreeAccountInfo
+Account metadata returned by the GasFree account service.
+
+```typescript
+interface TronGasfreeAccountInfo {
+  /**
+   * Owner account address
+   */
+  accountAddress: string;
+
+  /**
+   * GasFree contract address for the account
+   */
+  gasFreeAddress: string;
+
+  /**
+   * Whether the GasFree account is active
+   */
+  active: boolean;
+
+  /**
+   * Account nonce used by GasFree transfers
+   */
+  nonce: number;
+
+  /**
+   * Whether the account can submit GasFree transactions
+   */
+  allowSubmit: boolean;
+
+  /**
+   * Supported assets and their fee metadata
+   */
+  assets: TronGasfreeAssetInfo[];
+}
+```
+
 ### TronGasfreeWalletConfig
 Configuration options for wallet initialization.
 
@@ -423,9 +535,9 @@ Configuration options for wallet initialization.
 interface TronGasfreeWalletConfig {
   /**
    * The blockchain's ID
-   * @example '728126428' // Tron Mainnet
+   * @example 728126428 // Tron Mainnet
    */
-  chainId: string;
+  chainId: number;
 
   /**
    * Tron RPC endpoint URL or TronWeb instance
@@ -440,14 +552,17 @@ interface TronGasfreeWalletConfig {
   gasFreeProvider: string;
 
   /**
-   * API key for gas-free provider
+   * API key for signed GasFree provider requests
+   * @optional
    */
-  gasFreeApiKey: string;
+  gasFreeApiKey?: string;
 
   /**
-   * API secret for gas-free provider
+   * API secret for signed GasFree provider requests.
+   * Provide together with gasFreeApiKey.
+   * @optional
    */
-  gasFreeApiSecret: string;
+  gasFreeApiSecret?: string;
 
   /**
    * Service provider Tron address
@@ -466,7 +581,7 @@ interface TronGasfreeWalletConfig {
    * @optional
    * @example 10000000
    */
-  transferMaxFee?: number;
+  transferMaxFee?: number | bigint;
 }
 ```
 
@@ -486,6 +601,8 @@ interface KeyPair {
   privateKey: Buffer;
 }
 ```
+
+The returned byte arrays are a read-only view of the wallet account's internal key material. Do not mutate `publicKey` or `privateKey`; external changes can alter the internal representation.
 
 <Cards>
 <Card title="Node.js Quickstart" href="/start-building/nodejs-bare-quickstart">
@@ -507,4 +624,3 @@ Get started with WDK's Tron Gasfree Wallet Configuration
 ## Need Help?
 
 <SupportCards />
-
