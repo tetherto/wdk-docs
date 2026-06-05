@@ -1,32 +1,31 @@
 ---
-title: Send TON
-description: Send native TON transactions and estimate fees.
+title: Send Transactions
+description: Why native TON sends are unsupported on the gasless module and what to use instead.
 docType: how-to
 schemaType: TechArticle
 ---
 
-This guide explains how to [send native TON](#send-native-ton) and [use dynamic fee rates](#use-dynamic-fee-rates). Native TON sends are not gasless; for gasless Jetton token transfers, see [Transfer Jetton Tokens](/sdk/wallet-modules/wallet-ton-gasless/guides/transfer-tokens).
+This guide explains why [native TON sends are not supported](#native-ton-sends-are-not-supported) on the gasless module and how to [check current fee rates](#check-current-fee-rates).
 
-<Callout type="info">
-On TON, values are expressed in nanotons (1 TON = 10^9 nanotons).
-</Callout>
+## Native TON Sends Are Not Supported
 
-## Send Native TON
+The gasless module does not send native TON. Both [`account.sendTransaction()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#sendtransactiontx) and [`account.signTransaction()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#signtransactiontx) throw on this module. The module's purpose is to relay paymaster-funded Jetton transfers, so the only way to move funds is [`account.transfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#transferoptions-config).
 
-You can transfer TON to a recipient address using [`account.sendTransaction()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference):
+Calling `sendTransaction()` throws an error:
 
-```javascript title="Send TON"
-const result = await account.sendTransaction({
+```javascript title="sendTransaction Throws"
+// Throws: "Method 'sendTransaction(tx)' not supported on ton gasless."
+await account.sendTransaction({
   to: 'EQ...',
   value: 1000000000 // 1 TON in nanotons
 })
-console.log('Transaction hash:', result.hash)
-console.log('Transaction fee:', result.fee, 'nanotons')
 ```
 
-## Use Dynamic Fee Rates
+To send native TON, use the standard `@tetherto/wdk-wallet-ton` module. For gasless Jetton transfers, see [Transfer Jetton Tokens](/sdk/wallet-modules/wallet-ton-gasless/guides/transfer-tokens).
 
-You can retrieve current fee rates from the wallet manager using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference):
+## Check Current Fee Rates
+
+You can retrieve current fee rates from the wallet manager using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#getfeerates):
 
 ```javascript title="Get Fee Rates"
 const feeRates = await wallet.getFeeRates()

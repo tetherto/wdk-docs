@@ -27,15 +27,16 @@ new WalletManagerTonGasless(seed, config)
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (TonGaslessWalletConfig): Configuration object
-  - `tonClient` (object | TonClient): TON client configuration or instance
+  - `tonClient` (object | TonClient | array): TON client configuration, instance, or an array of configurations or instances for failover
     - `url` (string): TON Center API URL (e.g., 'https://toncenter.com/api/v3')
     - `secretKey` (string, optional): API key for TON Center
-  - `tonApiClient` (object | TonApiClient): TON API client configuration or instance
+  - `tonApiClient` (object | TonApiClient | array): TON API client configuration, instance, or an array of configurations or instances for failover
     - `url` (string): TON API URL (e.g., 'https://tonapi.io/v2')
     - `secretKey` (string, optional): API key for TON API
   - `paymasterToken` (object): Paymaster token configuration
-    - `address` (string): Paymaster token contract address
-  - `transferMaxFee` (number, optional): Maximum fee for transfer operations
+    - `address` (string): Paymaster Jetton master contract address
+  - `retries` (number, optional): Failover retries used when `tonClient` and `tonApiClient` are arrays (default: 3)
+  - `transferMaxFee` (number | bigint, optional): Maximum fee for transfer operations
 
 **Example:**
 ```javascript
@@ -51,6 +52,7 @@ const wallet = new WalletManagerTonGasless(seedPhrase, {
   paymasterToken: {
     address: 'EQ...'
   },
+  retries: 3,
   transferMaxFee: 1000000000
 })
 ```
@@ -65,7 +67,7 @@ const wallet = new WalletManagerTonGasless(seedPhrase, {
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
 
 ##### `getAccount(index)`
-Returns a gasless wallet account at the specified index.
+Returns a gasless wallet account at the specified index. Index `n` derives the account at `m/44'/607'/n'`.
 
 **Parameters:**
 - `index` (number, optional): The index of the account to get (default: 0)
@@ -74,20 +76,22 @@ Returns a gasless wallet account at the specified index.
 
 **Example:**
 ```javascript
+// Derivation path m/44'/607'/0'
 const account = await wallet.getAccount(0)
 ```
 
 ##### `getAccountByPath(path)`
-Returns a gasless wallet account at the specified BIP-44 derivation path.
+Returns a gasless wallet account at the specified BIP-44 derivation path, relative to `m/44'/607'`.
 
 **Parameters:**
-- `path` (string): The derivation path (e.g., "0'/0/0")
+- `path` (string): The derivation path (e.g., "0'")
 
 **Returns:** `Promise\<WalletAccountTonGasless\>` - The wallet account
 
 **Example:**
 ```javascript
-const account = await wallet.getAccountByPath("0'/0/1")
+// Derivation path m/44'/607'/1'
+const account = await wallet.getAccountByPath("1'")
 ```
 
 ##### `getFeeRates()`
@@ -131,6 +135,8 @@ new WalletAccountTonGasless(seed, path, config)
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's TON address | `Promise\<string\>` |
 | `sign(message)` | Signs a message using the account's private key | `Promise\<string\>` |
+| `signTransaction(tx)` | Not supported on gasless; always throws | `Promise\<never\>` |
+| `sendTransaction(tx)` | Not supported on gasless; always throws | `Promise\<never\>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` |
 | `transfer(options, config?)` | Transfers tokens using gasless transactions | `Promise\<{hash: string, fee: number}\>` |
 | `quoteTransfer(options, config?)` | Estimates the fee for a token transfer | `Promise\<{fee: number}\>` |
@@ -165,6 +171,34 @@ const signature = await account.sign('Hello, World!')
 console.log('Signature:', signature)
 ```
 
+##### `signTransaction(tx)`
+Not supported on the gasless module. This method always throws. The gasless module only supports paymaster-funded Jetton transfers through [`transfer()`](#transferoptions-config). Use the standard `@tetherto/wdk-wallet-ton` module for offline transaction signing.
+
+**Parameters:**
+- `tx` (TonTransaction): The transaction
+
+**Returns:** `Promise\<never\>` - Never resolves; always throws
+
+**Example:**
+```javascript
+// Throws: "Method 'signTransaction(tx)' not supported on ton gasless."
+await account.signTransaction({ to: 'EQ...', value: 1000000000n })
+```
+
+##### `sendTransaction(tx)`
+Not supported on the gasless module. This method always throws. To move funds, use [`transfer()`](#transferoptions-config), which relays a paymaster-funded Jetton transfer.
+
+**Parameters:**
+- `tx` (TonTransaction): The transaction
+
+**Returns:** `Promise\<never\>` - Never resolves; always throws
+
+**Example:**
+```javascript
+// Throws: "Method 'sendTransaction(tx)' not supported on ton gasless."
+await account.sendTransaction({ to: 'EQ...', value: 1000000000n })
+```
+
 ##### `verify(message, signature)`
 Verifies a message signature.
 
@@ -181,7 +215,7 @@ console.log('Signature valid:', isValid)
 ```
 
 ##### `transfer(options, config?)`
-Transfers tokens using gasless transactions. **Note:** `sendTransaction()` is not supported and will throw an error.
+Transfers a Jetton using a gasless transaction, paying the fee with the configured paymaster token. This is the only way to move funds on the gasless module: `sendTransaction()` and `signTransaction()` are not supported and throw.
 
 **Parameters:**
 - `options` (TransferOptions): Transfer options
@@ -230,17 +264,6 @@ const quote = await account.quoteTransfer({
 console.log('Transfer fee estimate:', quote.fee, 'paymaster token units');
 ```
 
-##### `getPaymasterTokenBalance()`
-Returns the balance of the paymaster Jetton (used for gasless fees).
-
-**Returns:** `Promise\<bigint\>` - Paymaster Jetton balance in base units
-
-**Example:**
-```javascript
-const paymasterBalance = await account.getPaymasterTokenBalance();
-console.log('Paymaster Jetton balance:', paymasterBalance);
-```
-
 ##### `getBalance()`
 Returns the native TON balance (in nanotons).
 
@@ -266,6 +289,27 @@ const tokenBalance = await account.getTokenBalance('EQ...');
 console.log('Token balance:', tokenBalance, 'token base units');
 ```
 
+##### `getPaymasterTokenBalance()`
+Returns the balance of the paymaster Jetton (used for gasless fees).
+
+**Returns:** `Promise\<bigint\>` - Paymaster Jetton balance in base units
+
+**Example:**
+```javascript
+const paymasterBalance = await account.getPaymasterTokenBalance();
+console.log('Paymaster Jetton balance:', paymasterBalance);
+```
+
+##### `toReadOnlyAccount()`
+Returns a read-only copy of the account. The same instance is reused on subsequent calls.
+
+**Returns:** `Promise\<WalletAccountReadOnlyTonGasless\>` - The read-only account
+
+**Example:**
+```javascript
+const readOnlyAccount = await account.toReadOnlyAccount()
+```
+
 ##### `dispose()`
 Disposes the wallet account, clearing private keys from memory.
 
@@ -280,13 +324,15 @@ account.dispose()
 |----------|------|-------------|
 | `index` | `number` | The derivation path's index of this account |
 | `path` | `string` | The full derivation path of this account |
-| `keyPair` | `{publicKey: Buffer, privateKey: Buffer}` | The account's public and private key pair as buffers |
+| `keyPair` | `{publicKey: Uint8Array, privateKey: Uint8Array \| null}` | The account's public and private key pair. `privateKey` is `null` after [`dispose()`](#dispose-1) |
+
+The key pair's `Uint8Array` values are bound to the wallet account: any external change reflects on the internal representation. Treat the key pair as a read-only view of the keys and never mutate its contents.
 
 **Example:**
 ```javascript
 const { publicKey, privateKey } = account.keyPair
 console.log('Public key length:', publicKey.length)
-console.log('Private key length:', privateKey.length)
+console.log('Private key length:', privateKey?.length)
 ```
 
 ### WalletAccountReadOnlyTonGasless
@@ -423,56 +469,53 @@ if (receipt) {
 ### TonGaslessWalletConfig
 
 ```typescript
-interface TonGaslessWalletConfig {
+type TonClientConfig = {
+  /** TON Center API URL @example 'https://toncenter.com/api/v3' */
+  url: string;
+  /** Optional API key for TON Center */
+  secretKey?: string;
+};
+
+type TonApiClientConfig = {
+  /** TON API URL @example 'https://tonapi.io/v2' */
+  url: string;
+  /** Optional API key for TON API */
+  secretKey?: string;
+};
+
+type TonGaslessWalletConfig = {
   /**
-   * TON client configuration
+   * TON client configuration or instance. Provide an array of configurations
+   * or instances to enable failover across clients.
    */
-  tonClient: {
-    /**
-     * TON Center API URL
-     * @example 'https://toncenter.com/api/v3'
-     */
-    url: string;
-
-    /**
-     * Optional API key for TON Center
-     */
-    secretKey?: string;
-  };
+  tonClient: TonClientConfig | TonClient | Array<TonClientConfig | TonClient>;
 
   /**
-   * TON API client configuration
+   * TON API client configuration or instance. Provide an array of
+   * configurations or instances to enable failover across API clients.
    */
-  tonApiClient: {
-    /**
-     * TON API URL
-     * @example 'https://tonapi.io/v2'
-     */
-    url: string;
-
-    /**
-     * Optional API key for TON API
-     */
-    secretKey?: string;
-  };
+  tonApiClient: TonApiClientConfig | TonApiClient | Array<TonApiClientConfig | TonApiClient>;
 
   /**
    * Paymaster token configuration
    */
   paymasterToken: {
-    /**
-     * Paymaster token contract address
-     * @example 'EQ...'
-     */
+    /** Paymaster Jetton master contract address @example 'EQ...' */
     address: string;
   };
 
   /**
-   * Maximum fee for transfer operations
-   * @optional
+   * Additional failover retry attempts after the initial call fails, used only
+   * when tonClient and tonApiClient are arrays. Total attempts = 1 + retries.
+   * @default 3
    */
-  transferMaxFee?: number;
-}
+  retries?: number;
+
+  /**
+   * Maximum fee for transfer operations (in paymaster Jetton base units)
+   */
+  transferMaxFee?: number | bigint;
+};
 ```
 
 ### TransferOptions
@@ -517,16 +560,16 @@ interface TransferResult {
 ### KeyPair
 
 ```typescript
-interface KeyPair {
+type KeyPair = {
   /**
-   * Public key as buffer
+   * Public key bytes
    */
-  publicKey: Buffer;
+  publicKey: Uint8Array;
 
   /**
-   * Private key as buffer (sensitive data)
+   * Private key bytes (sensitive data). Set to null after dispose().
    */
-  privateKey: Buffer;
+  privateKey: Uint8Array | null;
 }
 ```
 

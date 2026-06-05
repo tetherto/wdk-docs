@@ -17,15 +17,17 @@ const config = {
     url: 'https://toncenter.com/api/v3',
     secretKey: 'your-api-key' // Optional
   },
-  gasFreeProvider: 'https://your-gasfree-provider.com',
-  gasFreeApiKey: 'your-gasfree-api-key',
-  gasFreeApiSecret: 'your-gasfree-api-secret',
-  serviceProvider: 'EQ...', // Service provider's TON address
-  verifyingContract: 'EQ...', // Verifying contract address
-  chainId: '1', // TON chain ID
-  
+  tonApiClient: {
+    url: 'https://tonapi.io/v2',
+    secretKey: 'your-ton-api-key' // Optional
+  },
+  paymasterToken: {
+    address: 'EQ...' // Paymaster Jetton master contract address
+  },
+
   // Optional parameters
-  transferMaxFee: 10000000 // Maximum fee in token base units
+  retries: 3, // Failover retries when tonClient/tonApiClient are arrays
+  transferMaxFee: 10000000 // Maximum fee in paymaster Jetton base units
 }
 
 const wallet = new WalletManagerTonGasless(seedPhrase, config)
@@ -42,29 +44,31 @@ const accountConfig = {
     url: 'https://toncenter.com/api/v3',
     secretKey: 'your-api-key' // Optional
   },
-  gasFreeProvider: 'https://your-gasfree-provider.com',
-  gasFreeApiKey: 'your-gasfree-api-key',
-  gasFreeApiSecret: 'your-gasfree-api-secret',
-  serviceProvider: 'EQ...', // Service provider's TON address
-  verifyingContract: 'EQ...', // Verifying contract address
-  chainId: '1', // TON chain ID
-  
+  tonApiClient: {
+    url: 'https://tonapi.io/v2',
+    secretKey: 'your-ton-api-key' // Optional
+  },
+  paymasterToken: {
+    address: 'EQ...' // Paymaster Jetton master contract address
+  },
+
   // Optional parameters
-  transferMaxFee: 10000000 // Maximum fee in token base units
+  retries: 3, // Failover retries when tonClient/tonApiClient are arrays
+  transferMaxFee: 10000000 // Maximum fee in paymaster Jetton base units
 }
 
-const account = new WalletAccountTonGasless(seedPhrase, "0'/0/0", accountConfig)
+const account = new WalletAccountTonGasless(seedPhrase, "0'", accountConfig)
 ```
 
 ## Configuration Options
 
 ### tonClient
 
-The `tonClient` option configures the TON Center API client for blockchain interactions.
+The `tonClient` option configures the TON Center API client for blockchain interactions. You can pass a single configuration object, a `TonClient` instance, or an array of configurations or instances to enable failover.
 
 **Type:**
 ```typescript
-interface TonClientConfig {
+type TonClientConfig = {
   /**
    * TON Center API endpoint URL
    * @example 'https://toncenter.com/api/v3'
@@ -76,128 +80,136 @@ interface TonClientConfig {
    * Required for higher rate limits
    */
   secretKey?: string;
-}
+};
+
+// tonClient accepts a single config/instance or an array for failover
+type TonClient = TonClientConfig | TonClientInstance | Array<TonClientConfig | TonClientInstance>;
 ```
 
-### gasFreeProvider
+**Required:** Yes
 
-The `gasFreeProvider` option specifies the gas-free service endpoint.
+When you provide an array, the wallet automatically falls back to the next client in the list if a connection error occurs. See [retries](#retries) for the retry count.
 
-**Type:** `string`
+### tonApiClient
+
+The `tonApiClient` option configures the TON API client used to build and relay gasless transfers. Like `tonClient`, it accepts a single configuration object, a `TonApiClient` instance, or an array of configurations or instances for failover.
+
+**Type:**
+```typescript
+type TonApiClientConfig = {
+  /**
+   * TON API endpoint URL
+   * @example 'https://tonapi.io/v2'
+   */
+  url: string;
+
+  /**
+   * Optional API key for TON API
+   */
+  secretKey?: string;
+};
+```
+
+**Required:** Yes
+
+### paymasterToken
+
+The `paymasterToken` option specifies the Jetton used to pay gasless transfer fees instead of native TON.
+
+**Type:**
+```typescript
+type PaymasterToken = {
+  /**
+   * Paymaster Jetton master contract address
+   * @example 'EQ...'
+   */
+  address: string;
+};
+```
 
 **Required:** Yes
 
 **Example:**
 ```javascript
 const config = {
-  gasFreeProvider: 'https://your-gasfree-provider.com'
+  paymasterToken: {
+    address: 'EQ...' // Paymaster Jetton master contract address
+  }
 }
 ```
 
-### gasFreeApiKey and gasFreeApiSecret
+### retries
 
-API credentials for the gas-free service.
+The `retries` option sets the number of additional failover attempts after the initial call fails, used only when `tonClient` and `tonApiClient` are arrays of configurations or instances. Total attempts equal `1 + retries`. If `retries` exceeds the number of clients, failover loops back and retries already-failed clients in round-robin order.
 
-**Type:** `string`
+**Type:** `number`
 
-**Required:** Yes
+**Required:** No (default: `3`)
 
 **Example:**
 ```javascript
 const config = {
-  gasFreeApiKey: 'your-gasfree-api-key',
-  gasFreeApiSecret: 'your-gasfree-api-secret'
-}
-```
-
-### serviceProvider
-
-The TON address of the service provider that handles gas-free transactions.
-
-**Type:** `string`
-
-**Required:** Yes
-
-**Example:**
-```javascript
-const config = {
-  serviceProvider: 'EQ...' // TON address
-}
-```
-
-### verifyingContract
-
-The TON address of the contract that verifies gas-free transactions.
-
-**Type:** `string`
-
-**Required:** Yes
-
-**Example:**
-```javascript
-const config = {
-  verifyingContract: 'EQ...' // TON address
-}
-```
-
-### chainId
-
-The blockchain's identifier.
-
-**Type:** `string`
-
-**Required:** Yes
-
-**Example:**
-```javascript
-const config = {
-  chainId: '1' // TON mainnet
+  tonClient: [
+    { url: 'https://toncenter.com/api/v3' },
+    { url: 'https://backup.toncenter.com/api/v3', secretKey: 'your-api-key' }
+  ],
+  tonApiClient: [
+    { url: 'https://tonapi.io/v2' },
+    { url: 'https://backup.tonapi.io/v2' }
+  ],
+  retries: 3
 }
 ```
 
 ### transferMaxFee
 
-The `transferMaxFee` option sets the maximum allowed fee in token base units for transfer operations.
+The `transferMaxFee` option sets the maximum allowed fee in paymaster Jetton base units for transfer operations. A transfer throws if its estimated fee reaches this limit.
 
-**Type:** `number`
+**Type:** `number | bigint`
 
 **Required:** No
 
 **Example:**
 ```javascript
 const config = {
-  transferMaxFee: 10000000 // Maximum fee in token base units
+  transferMaxFee: 10000000 // Maximum fee in paymaster Jetton base units
 }
 ```
 
 ## Complete Configuration Example
 
-Here's a complete configuration example with all options:
+Here's a complete configuration example with all options, including failover:
 
 ```javascript
 const config = {
-  // TON Client (Required)
-  tonClient: {
-    url: 'https://toncenter.com/api/v3',
-    secretKey: 'your-api-key'
+  // TON Client (Required) - array enables failover
+  tonClient: [
+    { url: 'https://toncenter.com/api/v3', secretKey: 'your-api-key' },
+    { url: 'https://backup.toncenter.com/api/v3' }
+  ],
+
+  // TON API Client (Required) - array enables failover
+  tonApiClient: [
+    { url: 'https://tonapi.io/v2', secretKey: 'your-ton-api-key' },
+    { url: 'https://backup.tonapi.io/v2' }
+  ],
+
+  // Paymaster Token (Required)
+  paymasterToken: {
+    address: 'EQ...' // Paymaster Jetton master contract address
   },
-  
-  // Gas-free Service (Required)
-  gasFreeProvider: 'https://your-gasfree-provider.com',
-  gasFreeApiKey: 'your-gasfree-api-key',
-  gasFreeApiSecret: 'your-gasfree-api-secret',
-  
-  // Contract Addresses (Required)
-  serviceProvider: 'EQ...', // Service provider's address
-  verifyingContract: 'EQ...', // Verifying contract address
-  
-  // Chain Configuration (Required)
-  chainId: '1', // TON mainnet
-  
+
+  // Failover Retries (Optional)
+  retries: 3,
+
   // Fee Limits (Optional)
-  transferMaxFee: 10000000 // Maximum fee in token base units
+  transferMaxFee: 10000000 // Maximum fee in paymaster Jetton base units
 }
 ```
+
+<Callout type="warning">
+The default derivation path changed in `1.0.0-beta.5`. Accounts now derive at `m/44'/607'/{index}'` to align with `@tetherto/wdk-wallet-ton`. Wallets created with `1.0.0-beta.4` or earlier derived `getAccount(index)` at `m/44'/607'/0'/0/{index}`, so the same seed produces different addresses after upgrading. Migrate existing accounts using [`getAccountByPath()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#getaccountbypathpath) with the old path if you need to keep prior addresses.
+</Callout>
 
 ## Security Considerations
 
@@ -205,7 +217,7 @@ const config = {
 - Use environment variables for sensitive configuration values
 - Always use HTTPS URLs for API endpoints
 - Set appropriate `transferMaxFee` limits to prevent excessive fees
-- Validate contract addresses before using them in configuration
+- Validate the paymaster token address before using it in configuration
 
 <Cards>
 <Card title="Node.js Quickstart" href="/start-building/nodejs-bare-quickstart">
@@ -227,4 +239,3 @@ Get started with WDK's TON Gasless Wallet API
 ## Need Help?
 
 <SupportCards />
-

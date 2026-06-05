@@ -5,7 +5,7 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-This guide covers how to [handle gas-free transfer errors](#handle-gas-free-transfer-errors) and [handle native TRX transaction errors](#handle-native-trx-transaction-errors), plus [best practices](#best-practices) for fee management and memory cleanup.
+This guide covers how to [handle gas-free transfer errors](#handle-gas-free-transfer-errors) and [unsupported native transaction methods](#handle-unsupported-native-transaction-methods), plus [best practices](#best-practices) for fee management and memory cleanup.
 
 ## Handle Gas-Free Transfer Errors
 
@@ -30,22 +30,19 @@ try {
 }
 ```
 
-## Handle Native TRX Transaction Errors
+## Handle Unsupported Native Transaction Methods
 
-Native TRX sends via [`account.sendTransaction()`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference) can fail for standard reasons:
+The Tron GasFree module does not support native TRX transaction execution, native fee quotes, or offline transaction signing. The related methods are present for wallet-interface compatibility and throw module-specific errors:
 
-```javascript title="Transaction Error Handling"
+```javascript title="Unsupported Native Transaction Methods"
 try {
-  const result = await account.sendTransaction({
+  await account.sendTransaction({
     to: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
     value: 1000000
   })
-  console.log('Transaction hash:', result.hash)
 } catch (error) {
-  if (error.message.toLowerCase().includes('insufficient')) {
-    console.error('Not enough TRX to complete transaction')
-  } else {
-    console.error('Transaction failed:', error.message)
+  if (error.message.includes("Method 'sendTransaction(tx)' not supported")) {
+    console.error('Use the base Tron wallet module for native TRX transactions.')
   }
 }
 ```

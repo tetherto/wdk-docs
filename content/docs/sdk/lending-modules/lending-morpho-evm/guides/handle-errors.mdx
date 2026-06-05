@@ -1,0 +1,113 @@
+---
+title: Handle Errors
+description: Catch Morpho lending failures and release wallet secrets safely.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide explains how to [handle operation errors](#operation-errors), [handle requirement errors](#requirement-errors), and follow [best practices](#best-practices) for disposing wallet state.
+
+## Operation errors
+
+You can catch failures from [`supply()`](/sdk/lending-modules/lending-morpho-evm/api-reference), [`withdraw()`](/sdk/lending-modules/lending-morpho-evm/api-reference), [`supplyCollateral()`](/sdk/lending-modules/lending-morpho-evm/api-reference), [`borrow()`](/sdk/lending-modules/lending-morpho-evm/api-reference), [`repay()`](/sdk/lending-modules/lending-morpho-evm/api-reference), and [`withdrawCollateral()`](/sdk/lending-modules/lending-morpho-evm/api-reference) with `try/catch`:
+
+```javascript title="Handle a failed supply"
+try {
+  await morpho.supply({
+    token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    amount: 0n
+  })
+} catch (e) {
+  console.error('Morpho lending failed:', e.message)
+
+  if (e.message.includes('amount')) {
+    console.log('Amount must be greater than zero')
+  }
+}
+```
+
+Common failure causes include:
+
+- wallet account does not have a provider configured
+- write method is called with a read-only account
+- token does not match the configured vault asset, market loan token, or market collateral token
+- explicit target is used without the required `chainId`
+- connected chain does not match the configured Morpho target
+- amount is zero, invalid, or larger than the account balance
+- `onBehalfOf` or `to` does not match the connected wallet address when required
+
+Use this checklist to map the most common failures to fixes:
+
+| Symptom | Likely cause | Fix |
+|---------|--------------|-----|
+| Constructor fails before any operation | Wallet account has no provider | Create the EVM account with a provider or use a read-only account with an RPC provider |
+| Write method fails on a read-only account | Read-only account can quote and read, but cannot send transactions | Use `WalletAccountEvm` or `WalletAccountEvmErc4337` for mutating methods |
+| Explicit target fails during setup | `chainId` is missing, invalid, or does not match the wallet chain | Pass the expected `chainId` with `earnVaultAddress`, `borrowMarketId`, or `borrowMarketParams` |
+| Token mismatch error | The supplied token is not the configured vault asset, market loan token, or collateral token | Use the token from the configured vault or market target |
+| Zero amount error | `amount` and `nativeAmount` are both absent or zero | Pass a positive ERC-20 `amount`, a positive `nativeAmount`, or `amount: "max"` for repay |
+| Requirement lookup returns approval or authorization | Allowance, permit, Permit2, or Morpho authorization is missing | Send returned transaction requirements or sign the returned signature requirement before the final action |
+| Final action fails after requirements | Allowance, balance, signature, authorization, quote, or market state changed after the requirement lookup | Re-run the matching `get*Requirements()` method and rebuild the final action |
+| Quote succeeds but write fails | On-chain state changed, the account lacks balance, or requirements were not satisfied | Re-check requirements, balances, token addresses, and chain before sending |
+
+## Requirement errors
+
+Requirement helpers can fail if the configured target, token, account, or provider cannot produce a valid Morpho SDK action.
+
+```javascript title="Handle requirement errors"
+try {
+  const requirements = await morpho.getBorrowRequirements({
+    token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    amount: 1000000n
+  })
+
+  console.log('Borrow requirements:', requirements)
+} catch (e) {
+  console.error('Requirement lookup failed:', e.message)
+}
+```
+
+If a final action fails after requirements were returned, re-check the requirements. Allowances, signatures, authorizations, or on-chain market state can change between the requirement lookup and the final transaction.
+
+## Quote errors
+
+You can isolate quote failures from write failures when you only need an estimate:
+
+```javascript title="Handle quote errors"
+try {
+  const quote = await morpho.quoteBorrow({
+    token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    amount: 1000000n
+  })
+
+  console.log('Borrow fee:', quote.fee)
+} catch (e) {
+  console.error('Quote failed:', e.message)
+}
+```
+
+<Callout type="info">
+See [Rules & Notes](/sdk/lending-modules/lending-morpho-evm/api-reference) for address, token, amount, and target validation expectations.
+</Callout>
+
+## Best Practices
+
+Dispose wallet secrets after a lending session by calling [`dispose()`](/sdk/wallet-modules/wallet-evm/api-reference) on [`WalletAccountEvm`](/sdk/wallet-modules/wallet-evm/api-reference), or the matching dispose method on your smart account type.
+
+```javascript title="Dispose after a Morpho lending session"
+try {
+  await morpho.supply({
+    token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    amount: 1000000n
+  })
+} finally {
+  account.dispose()
+}
+```
+
+For ERC-4337 accounts, use [`dispose()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference) on the smart-account type. Clear references to [`MorphoProtocolEvm`](/sdk/lending-modules/lending-morpho-evm/api-reference) when the session ends.
+
+## Next Steps
+
+- [Lending operations](lending-operations)
+- [Get started](get-started)
+- [API reference](/sdk/lending-modules/lending-morpho-evm/api-reference)

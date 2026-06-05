@@ -1,0 +1,387 @@
+---
+title: Lending Morpho EVM API Reference
+description: API Reference for @morpho-org/wdk-protocol-lending-morpho-evm
+docType: reference
+schemaType: APIReference
+icon: Code
+---
+
+# API Reference
+
+## Class: MorphoProtocolEvm
+
+Main class for Morpho Vault V2 and Morpho Blue lending on EVM.
+
+### Constructor
+
+```javascript
+new MorphoProtocolEvm(account, options)
+```
+
+Parameters:
+
+- `account`: `WalletAccountEvm | WalletAccountReadOnlyEvm | WalletAccountEvmErc4337 | WalletAccountReadOnlyEvmErc4337`
+- `options`: `MorphoProtocolOptions`
+
+Example:
+
+```javascript
+const morpho = new MorphoProtocolEvm(account, {
+  presets: {
+    earn: 'sky-money-usdt-savings',
+    borrow: 'wsteth'
+  }
+})
+```
+
+### Methods
+
+| Method | Description | Returns |
+|--------|-------------|---------|
+| `supply(options, config?)` | Deposit assets into the configured vault | `Promise<SupplyResult>` |
+| `getSupplyRequirements(options, requirementOptions?)` | Return approval or signature requirements for vault deposit | `Promise<ApprovalOrSignatureRequirement[]>` |
+| `quoteSupply(options, config?)` | Quote vault deposit | `Promise<Omit<SupplyResult, "hash">>` |
+| `withdraw(options, config?)` | Withdraw assets from the configured vault | `Promise<WithdrawResult>` |
+| `quoteWithdraw(options, config?)` | Quote vault withdrawal | `Promise<Omit<WithdrawResult, "hash">>` |
+| `supplyCollateral(options, config?)` | Supply collateral to the configured market | `Promise<SupplyResult>` |
+| `getSupplyCollateralRequirements(options, requirementOptions?)` | Return approval or signature requirements for collateral supply | `Promise<ApprovalOrSignatureRequirement[]>` |
+| `quoteSupplyCollateral(options, config?)` | Quote collateral supply | `Promise<Omit<SupplyResult, "hash">>` |
+| `borrow(options, config?)` | Borrow from the configured market | `Promise<BorrowResult>` |
+| `getBorrowRequirements(options)` | Return Morpho authorization requirements for borrow | `Promise<RequirementAuthorization[]>` |
+| `quoteBorrow(options, config?)` | Quote borrow | `Promise<Omit<BorrowResult, "hash">>` |
+| `repay(options, config?)` | Repay the configured market | `Promise<RepayResult>` |
+| `getRepayRequirements(options, requirementOptions?)` | Return approval or signature requirements for repay | `Promise<ApprovalOrSignatureRequirement[]>` |
+| `quoteRepay(options, config?)` | Quote repay | `Promise<Omit<RepayResult, "hash">>` |
+| `withdrawCollateral(options, config?)` | Withdraw collateral from the configured market | `Promise<WithdrawResult>` |
+| `quoteWithdrawCollateral(options, config?)` | Quote collateral withdrawal | `Promise<Omit<WithdrawResult, "hash">>` |
+| `getVaultPosition(account?)` | Read configured vault position | `Promise<VaultPosition>` |
+| `getMarketPosition(account?)` | Read configured market position | `Promise<MarketPosition>` |
+| `getAccountData(account?)` | Read combined configured vault and market position | `Promise<AccountData>` |
+| `getVaultAddress()` | Return the configured vault address | `Address` |
+| `getBorrowMarketId()` | Return the configured borrow market id | `string` |
+
+---
+
+## Requirements and Results
+
+- `ApprovalOrSignatureRequirement`: returned by supply, collateral supply, and repay requirement helpers. Each item is either a Morpho SDK approval transaction with `to`, `value`, and `data`, or a signature requirement with `sign(client, userAddress)`.
+- `RequirementAuthorization`: returned by `getBorrowRequirements()`. These are Morpho authorization transactions with `to`, `value`, and `data`.
+- `RequirementSignature`: returned by a signature requirement's `sign(client, userAddress)` helper. Pass it to `supply()`, `supplyCollateral()`, or `repay()` as `requirementSignature`.
+- Write methods return the WDK wallet transaction result, including `hash` and `fee`. Quote methods return the same protocol result without `hash`.
+
+---
+
+### `supply(options, config?)`
+
+Deposit assets into the configured Morpho vault.
+
+Options:
+
+- `token` (`string`): configured vault asset
+- `amount` (`number | bigint`, optional when `nativeAmount` is set): ERC-20 amount in base units
+- `nativeAmount` (`number | bigint`, optional): native amount to wrap and supply
+- `onBehalfOf` (`string`, optional): must equal the connected wallet address when set
+- `requirementSignature` (`RequirementSignature`, optional): signature returned by a Morpho SDK requirement
+- `slippageTolerance` (`bigint`, optional): per-call Morpho SDK slippage tolerance
+
+```javascript
+const tx = await morpho.supply({
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  amount: 1000000n
+})
+```
+
+### `getSupplyRequirements(options, requirementOptions?)`
+
+Return Morpho SDK approval or signature requirements for a vault deposit. Use it before `supply()` when the account has not approved the required spender or when signature support is enabled.
+
+```javascript
+const requirements = await morpho.getSupplyRequirements({
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  amount: 1000000n
+})
+```
+
+### `quoteSupply(options, config?)`
+
+Quote the fee for a vault deposit transaction.
+
+```javascript
+const quote = await morpho.quoteSupply({
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  amount: 1000000n
+})
+```
+
+---
+
+### `withdraw(options, config?)`
+
+Withdraw assets from the configured Morpho vault.
+
+Options:
+
+- `token` (`string`): configured vault asset
+- `amount` (`number | bigint`): amount in base units
+- `to` (`string`, optional): must equal the connected wallet address when set
+
+```javascript
+const tx = await morpho.withdraw({
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  amount: 1000000n
+})
+```
+
+### `quoteWithdraw(options, config?)`
+
+Quote the fee for a vault withdrawal transaction.
+
+```javascript
+const quote = await morpho.quoteWithdraw({
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  amount: 1000000n
+})
+```
+
+---
+
+### `supplyCollateral(options, config?)`
+
+Supply collateral to the configured Morpho Blue market.
+
+Options:
+
+- `token` (`string`): configured market collateral token
+- `amount` (`number | bigint`, optional when `nativeAmount` is set): ERC-20 amount in base units
+- `nativeAmount` (`number | bigint`, optional): native amount to wrap and supply
+- `onBehalfOf` (`string`, optional): must equal the connected wallet address when set
+- `requirementSignature` (`RequirementSignature`, optional): signature returned by a Morpho SDK requirement
+
+```javascript
+const tx = await morpho.supplyCollateral({
+  token: 'COLLATERAL_TOKEN_ADDRESS',
+  amount: 1000000000000000000n
+})
+```
+
+### `getSupplyCollateralRequirements(options, requirementOptions?)`
+
+Return Morpho SDK approval or signature requirements for collateral supply.
+
+```javascript
+const requirements = await morpho.getSupplyCollateralRequirements({
+  token: 'COLLATERAL_TOKEN_ADDRESS',
+  amount: 1000000000000000000n
+})
+```
+
+### `quoteSupplyCollateral(options, config?)`
+
+Quote the fee for supplying collateral.
+
+```javascript
+const quote = await morpho.quoteSupplyCollateral({
+  token: 'COLLATERAL_TOKEN_ADDRESS',
+  amount: 1000000000000000000n
+})
+```
+
+---
+
+### `borrow(options, config?)`
+
+Borrow assets from the configured Morpho Blue market.
+
+Options:
+
+- `token` (`string`): configured market loan token
+- `amount` (`number | bigint`): amount in base units
+- `onBehalfOf` (`string`, optional): must equal the connected wallet address when set
+- `reallocations` (`readonly VaultReallocation[]`, optional): Morpho Vault V2 reallocations
+- `slippageTolerance` (`bigint`, optional): per-call Morpho SDK slippage tolerance
+
+```javascript
+const tx = await morpho.borrow({
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  amount: 1000000n
+})
+```
+
+### `getBorrowRequirements(options)`
+
+Return Morpho authorization requirements for borrow flows.
+
+```javascript
+const requirements = await morpho.getBorrowRequirements({
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  amount: 1000000n
+})
+```
+
+### `quoteBorrow(options, config?)`
+
+Quote the fee for borrowing.
+
+```javascript
+const quote = await morpho.quoteBorrow({
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  amount: 1000000n
+})
+```
+
+---
+
+### `repay(options, config?)`
+
+Repay assets to the configured Morpho Blue market.
+
+Options:
+
+- `token` (`string`): configured market loan token
+- `amount` (`number | bigint | "max"`): amount in base units, or `"max"` to repay current borrow shares
+- `onBehalfOf` (`string`, optional): must equal the connected wallet address when set
+- `requirementSignature` (`RequirementSignature`, optional): signature returned by a Morpho SDK requirement
+- `slippageTolerance` (`bigint`, optional): per-call Morpho SDK slippage tolerance
+
+```javascript
+const tx = await morpho.repay({
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  amount: 'max'
+})
+```
+
+When `amount` is `"max"`, Morpho repays borrow shares. Re-run `getRepayRequirements({ amount: "max" })` immediately before sending `repay()` so the approval or permit reflects current market state, or approve `getChainAddresses(chainId).bundler3.generalAdapter1` with a small buffer above current debt and pass a non-zero `slippageTolerance`. `slippageTolerance` caps the repay share price or transfer amount; it is not approval slippage.
+
+### `getRepayRequirements(options, requirementOptions?)`
+
+Return Morpho SDK approval or signature requirements for repayment.
+
+```javascript
+const requirements = await morpho.getRepayRequirements({
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  amount: 'max'
+})
+```
+
+### `quoteRepay(options, config?)`
+
+Quote the fee for repayment.
+
+```javascript
+const quote = await morpho.quoteRepay({
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  amount: 'max'
+})
+```
+
+---
+
+### `withdrawCollateral(options, config?)`
+
+Withdraw collateral from the configured Morpho Blue market.
+
+Options:
+
+- `token` (`string`): configured market collateral token
+- `amount` (`number | bigint`): amount in base units
+- `to` (`string`, optional): must equal the connected wallet address when set
+
+```javascript
+const tx = await morpho.withdrawCollateral({
+  token: 'COLLATERAL_TOKEN_ADDRESS',
+  amount: 1000000000000000000n
+})
+```
+
+### `quoteWithdrawCollateral(options, config?)`
+
+Quote the fee for withdrawing collateral.
+
+```javascript
+const quote = await morpho.quoteWithdrawCollateral({
+  token: 'COLLATERAL_TOKEN_ADDRESS',
+  amount: 1000000000000000000n
+})
+```
+
+---
+
+## Position Reads
+
+### `getVaultPosition(account?)`
+
+Read this or another account's configured vault position.
+
+Returns:
+
+```javascript
+{
+  shares: bigint,
+  assets: bigint,
+  vaultAddress: Address
+}
+```
+
+### `getMarketPosition(account?)`
+
+Read this or another account's configured market position.
+
+Returns:
+
+```javascript
+{
+  supplyShares: bigint,
+  borrowShares: bigint,
+  borrowAssets: bigint,
+  collateral: bigint,
+  marketId: string
+}
+```
+
+### `getAccountData(account?)`
+
+Read combined configured vault and market position data.
+
+Returns:
+
+```javascript
+{
+  vaultShares: bigint,
+  vaultAssets: bigint,
+  marketSupplyShares: bigint,
+  marketBorrowShares: bigint,
+  marketBorrowAssets: bigint,
+  collateral: bigint,
+  vaultAddress: Address,
+  marketId: string
+}
+```
+
+## Rules & Notes
+
+- The wallet account must include a provider.
+- Write methods require a writable EVM account.
+- `token`, `onBehalfOf`, `to`, and `account` addresses must be valid when provided.
+- For vault supply and collateral supply, pass `amount`, `nativeAmount`, or both, and make sure the combined supplied amount is greater than zero.
+- Withdraw, borrow, and collateral-withdraw amounts must be greater than zero. `repay()` also accepts `amount: "max"`.
+- Vault operations require the token to match the configured vault asset.
+- Market borrow and repay operations require the token to match the configured market loan token.
+- Collateral operations require the token to match the configured market collateral token.
+- `onBehalfOf` and vault or collateral withdrawal `to` must equal the connected wallet address when set.
+- `slippageTolerance` applies to vault supply, borrow, and repay calls in the published adapter. Collateral supply uses the Morpho SDK collateral-supply action defaults.
+- Use `get*Requirements` methods before final actions when the Morpho SDK reports approval, signature, or authorization requirements.
+
+<Cards>
+<Card title="WDK Lending Morpho EVM Configuration" href="/sdk/lending-modules/lending-morpho-evm/configuration">
+Presets, explicit targets, and Morpho SDK options
+</Card>
+<Card title="WDK Lending Morpho EVM Usage" href="/sdk/lending-modules/lending-morpho-evm/usage">
+Get started with Morpho lending operations
+</Card>
+</Cards>
+
+***
+
+### Need Help?
+
+<SupportCards />

@@ -1,0 +1,209 @@
+---
+title: Swidge Protocol Interface
+description: Learn the preferred WDK swidge interface for swap-only, bridge-only, and combined asset routes.
+docType: reference
+schemaType: TechArticle
+---
+
+The swidge interface is WDK's preferred route interface for protocol providers that can quote and execute asset movement. A swidge route moves from one token and chain to another token and chain. The provider may fulfill that route as a swap-only route, a bridge-only route, a combined swap and bridge route, an intent, a solver route, or an aggregator route.
+
+<Callout type="info">
+Use swidge for new protocol integrations. Existing standalone swap and bridge interfaces remain supported for released modules, but WDK plans to deprecate those standalone interfaces in a future release after swidge provider coverage is available.
+</Callout>
+
+## When to use swidge
+
+Use a swidge provider when a route matches any of these shapes:
+
+- Swap one token into another token on the same chain.
+- Bridge the same token from one chain to another chain.
+- Swap and bridge in one route.
+- Route between different tokens, different chains, or both.
+
+Use the existing [swap modules](/sdk/swap-modules) and [bridge modules](/sdk/bridge-modules) docs when maintaining released modules that have not shipped a swidge implementation yet. For new provider modules, prefer the swidge interface.
+
+## Interface methods
+
+Concrete swidge provider modules extend `SwidgeProtocol` from `@tetherto/wdk-wallet/protocols`. The base interface exposes discovery, quote, execution, and status methods:
+
+| Method | Description |
+|--------|-------------|
+| `quoteSwidge(options)` | Quotes the route before execution. |
+| `swidge(options, config?)` | Executes a swidge operation. This is a write method and must be user-confirmed. |
+| `getSwidgeStatus(id, options?)` | Looks up the status of an in-flight swidge execution. |
+| `getSupportedChains()` | Lists the provider's supported chains for swidge operations. |
+| `getSupportedTokens(options?)` | Lists supported tokens, optionally filtered by chain or route context. |
+
+```typescript title="Swidge protocol shape"
+interface ISwidgeProtocol {
+  quoteSwidge(options: SwidgeOptions): Promise<SwidgeQuote>
+  swidge(
+    options: SwidgeOptions,
+    config?: SwidgeProtocolConfig
+  ): Promise<SwidgeResult>
+  getSwidgeStatus(
+    id: string,
+    options?: SwidgeStatusOptions
+  ): Promise<SwidgeStatusResult>
+  getSupportedChains(): Promise<SwidgeSupportedChain[]>
+  getSupportedTokens(
+    options?: SwidgeSupportedTokensOptions
+  ): Promise<SwidgeSupportedToken[]>
+}
+```
+
+## Discover supported chains and tokens
+
+Use `getSupportedChains()` and `getSupportedTokens()` before building route pickers or validating a requested route. These methods are read-only discovery calls; they do not quote or execute a transaction.
+
+```typescript title="Discover swidge support"
+const chains = await swidge.getSupportedChains()
+const ethereumTokens = await swidge.getSupportedTokens({
+  fromChain: 'ethereum'
+})
+
+const routeTokens = await swidge.getSupportedTokens({
+  fromChain: 'ethereum',
+  fromToken: '0xSourceToken...',
+  toChain: 'arbitrum'
+})
+```
+
+`getSupportedChains()` returns provider-specific chain identifiers plus display metadata. `getSupportedTokens(options?)` returns provider-specific token identifiers, chain identifiers, symbols, decimals, and optional token addresses. Use the returned `token` and `chain` values when calling `quoteSwidge()` unless the provider module documents a stricter identifier format.
+
+| Discovery type | Key fields |
+|----------------|------------|
+| `SwidgeSupportedChain` | `id`, `name`, `type`, `nativeToken` |
+| `SwidgeSupportedToken` | `token`, `chain`, `symbol`, `decimals`, optional `address`, optional `name` |
+| `SwidgeSupportedTokensOptions` | Optional `fromChain`, `fromToken`, and `toChain` filters |
+
+## Quote a route
+
+Call `quoteSwidge()` before execution so the user can review source amount, expected destination amount, minimum output, fees, and quote expiry.
+
+```typescript title="Quote a swidge route"
+const quote = await swidge.quoteSwidge({
+  fromToken: '0xSourceToken...',
+  toToken: '0xDestinationToken...',
+  toChain: 'arbitrum',
+  recipient: '0xRecipient...',
+  fromTokenAmount: 1000000n,
+  slippage: 0.01
+})
+
+console.log('Expected output:', quote.toTokenAmount)
+console.log('Minimum output:', quote.toTokenAmountMin)
+console.log('Fees:', quote.fees)
+```
+
+`SwidgeOptions` supports exact-in and exact-out routes:
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `fromToken` | `string` | Source token address or provider-specific asset identifier. |
+| `toToken` | `string` | Destination token address or provider-specific asset identifier. |
+| `toChain` | `string \| number` | Optional destination chain identifier. If omitted, it defaults to the source chain for same-chain swaps. |
+| `recipient` | `string` | Optional recipient for the output tokens. |
+| `refundAddress` | `string` | Optional address that receives refunds if the transaction cannot complete. |
+| `slippage` | `number` | Optional decimal slippage tolerance, for example `0.01` for 1%. |
+| `fromTokenAmount` | `number \| bigint` | Exact source amount to spend. Do not pass with `toTokenAmount`. |
+| `toTokenAmount` | `number \| bigint` | Exact destination amount to receive. Do not pass with `fromTokenAmount`. |
+
+## Execute a route
+
+Call `quoteSwidge()` first, show the quote to the user, then call `swidge()` with the same route options after explicit confirmation. Apply fee caps with `SwidgeProtocolConfig` where supported by the provider.
+
+```typescript title="Execute a swidge route"
+const options = {
+  fromToken: '0xSourceToken...',
+  toToken: '0xDestinationToken...',
+  toChain: 'arbitrum',
+  recipient: '0xRecipient...',
+  fromTokenAmount: 1000000n,
+  slippage: 0.01
+}
+
+const quote = await swidge.quoteSwidge(options)
+// Show quote details and ask for confirmation before continuing.
+
+const result = await swidge.swidge(options, {
+  maxNetworkFeeBps: 50,
+  maxProtocolFeeBps: 25
+})
+
+console.log('Swidge ID:', result.id)
+console.log('Primary transaction:', result.hash)
+console.log('Transactions:', result.transactions)
+```
+
+<Callout type="warn">
+`swidge()` can submit one or more transactions. Ask for explicit user confirmation before calling it, and display the quote amounts, fee breakdown, route, and recipient first.
+</Callout>
+
+`SwidgeProtocolConfig` supports fee limits expressed in basis points of the input amount:
+
+| Config field | Type | Description |
+|--------------|------|-------------|
+| `maxNetworkFeeBps` | `number \| bigint` | Maximum acceptable network fee in basis points of the input amount. |
+| `maxProtocolFeeBps` | `number \| bigint` | Maximum acceptable protocol fee in basis points of the input amount. |
+
+## Track status
+
+Use `getSwidgeStatus()` when the provider returns an execution ID and the final destination result may settle asynchronously.
+
+```typescript title="Check swidge status"
+const status = await swidge.getSwidgeStatus(result.id, {
+  fromChain: 'ethereum',
+  toChain: 'arbitrum'
+})
+
+if (status.status === 'completed') {
+  console.log('Swidge complete')
+}
+```
+
+Supported statuses are:
+
+| Status | Meaning |
+|--------|---------|
+| `pending` | The route has started and is waiting for progress. |
+| `action-required` | The user or integrator must take another action. |
+| `completed` | The route completed successfully. |
+| `failed` | The route failed. |
+| `refund-pending` | A refund has started but has not completed. |
+| `refunded` | The route was refunded. |
+| `cancelled` | The route was cancelled. |
+| `expired` | The quote or route expired. |
+| `partial` | The route partially completed. |
+
+## Result fields
+
+`SwidgeQuote` and `SwidgeResult` can include an itemized `fees` array. Prefer displaying the itemized fees when available. Public fee categories are `network`, `protocol`, `affiliate`, and `other`; providers can use the optional fee `description` for route-specific detail.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Execution identifier returned by `swidge()`. |
+| `hash` | `string` | Primary transaction hash, if available immediately. |
+| `transactions` | `SwidgeTransaction[]` | Source, destination, approval, refund, or other transaction hashes. |
+| `fromTokenAmount` | `bigint` | Actual source amount spent. |
+| `toTokenAmount` | `bigint` | Actual or expected destination amount. |
+| `toTokenAmountMin` | `bigint` | Minimum destination amount after slippage. |
+| `fees` | `SwidgeFee[]` | Itemized fee breakdown. |
+
+## Supported assets and chains
+
+Provider modules should still document route shapes, network caveats, token identifier formats, and provider-specific limits on their module pages. Use `getSupportedChains()` and `getSupportedTokens(options?)` for runtime discovery, then consult the provider module docs for behavior that cannot be represented in the shared discovery response.
+
+## Next steps
+
+<Cards>
+<Card title="Protocol Integration" href="/sdk/core-module/guides/protocol-integration">
+Register and use protocol modules with WDK accounts
+</Card>
+<Card title="Swap Modules" href="/sdk/swap-modules">
+Maintain existing standalone swap modules
+</Card>
+<Card title="Bridge Modules" href="/sdk/bridge-modules">
+Maintain existing standalone bridge modules
+</Card>
+</Cards>

@@ -25,7 +25,7 @@ new BitfinexPricingClient(options?)
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getCurrentPrice(base, quote)` | Fetch latest price for base/quote pair | `Promise\<number\>` |
-| `getHistoricalPrice({ from, to, start?, end? })` | Fetch historical series (downscaled to ≤ 100 points if needed) | `Promise\<any[]\>` |
+| `getHistoricalPrice(from, to, opts?)` | Fetch historical series (downscaled to ≤ 100 points if needed) | `Promise\<HistoricalPriceResult[]\>` |
 
 ##### `getCurrentPrice(base, quote)`
 
@@ -33,14 +33,12 @@ new BitfinexPricingClient(options?)
 const price = await client.getCurrentPrice('BTC', 'USD')
 ```
 
-##### `getHistoricalPrice({ from, to, start?, end? })`
+##### `getHistoricalPrice(from, to, opts?)`
 
 If the returned series exceeds 100 points, it is downscaled by powers of two until ≤ 100.
 
 ```javascript title="Historical Prices"
-const series = await client.getHistoricalPrice({
-  from: 'BTC',
-  to: 'USD',
+const series = await client.getHistoricalPrice('BTC', 'USD', {
   start: 1709906400000, // optional
   end:   1709913600000  // optional
 })
@@ -56,12 +54,14 @@ Cache-aware wrapper providing a unified API over a `PricingClient` implementatio
 
 ```javascript title="Create Provider"
 new PricingProvider({
-  client,                 // required: implements PricingClient
+  client,                 // required: PricingClient or PricingClient[]
+  retries,                // optional: number of retry attempts (default 3, only applies when client is an array)
   priceCacheDurationMs    // optional: defaults to 1h
 })
 ```
 
-- `client`: instance implementing the `PricingClient` contract
+- `client` (`PricingClient | PricingClient[]`): a single client instance or an ordered array of client instances. When an array is provided, connection errors trigger automatic failover to the next client in the list.
+- `retries` (number, optional): number of additional retry attempts after the initial call fails. Total attempts = `1 + retries`. When `retries` exceeds the number of provided clients, the failover loops back in round-robin order. Default: `3`. Only applies when `client` is an array.
 - `priceCacheDurationMs` (number, optional): cache TTL for last price in ms (default 3,600,000)
 
 #### Methods
@@ -69,7 +69,7 @@ new PricingProvider({
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getLastPrice(base, quote)` | Returns cached last price; refreshes when TTL expires | `Promise\<number\>` |
-| `getHistoricalPrice({ from, to, start?, end? })` | Delegates to client for historical data | `Promise\<any[]\>` |
+| `getHistoricalPrice(from, to, opts?)` | Delegates to client for historical data | `Promise\<HistoricalPriceResult[]\>` |
 
 ##### `getLastPrice(base, quote)`
 
@@ -78,10 +78,13 @@ const provider = new PricingProvider({ client })
 const last = await provider.getLastPrice('BTC', 'USD')
 ```
 
-##### `getHistoricalPrice({ from, to, start?, end? })`
+##### `getHistoricalPrice(from, to, opts?)`
 
 ```javascript title="Historical via Provider"
-const hist = await provider.getHistoricalPrice({ from: 'BTC', to: 'USD' })
+const hist = await provider.getHistoricalPrice('BTC', 'USD', {
+  start: 1709906400000,
+  end: 1709913600000
+})
 ```
 
 ### Interface: `PricingClient` (abstract)
@@ -91,7 +94,7 @@ Implement this interface to plug your data source into `PricingProvider`.
 | Method | Signature | Notes |
 |--------|-----------|-------|
 | `getCurrentPrice` | `(from: string, to: string) =\> Promise\<number\>` | Should return spot price |
-| `getHistoricalPrice` | `(opts: { from: string, to: string, start?: number, end?: number }) =\> Promise\<any[]\>` | Return series for charting |
+| `getHistoricalPrice` | `(from: string, to: string, opts?: HistoricalPriceOptions) =\> Promise\<HistoricalPriceResult[]\>` | Return series for charting |
 
 ## Notes
 
@@ -103,4 +106,3 @@ Implement this interface to plug your data source into `PricingProvider`.
 ## Need Help?
 
 <SupportCards />
-
