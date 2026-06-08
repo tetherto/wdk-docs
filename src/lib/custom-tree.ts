@@ -278,6 +278,7 @@ export const customTree: Node[] = [
       },
     ],
   },
+  { name: 'Swidge Interface', url: '/sdk/swidge-modules', type: 'page', icon: resolveIcon('Route') },
   {
     name: 'Swap Modules',
     type: 'folder',
@@ -350,8 +351,8 @@ export const customTree: Node[] = [
     },
     children: [
       {
-        name: 'lending-aave-evm', type: 'folder',
-        index: { name: 'lending-aave-evm', url: '/sdk/lending-modules/lending-aave-evm', type: 'page' },
+        name: 'Aave EVM', type: 'folder',
+        index: { name: 'Aave EVM', url: '/sdk/lending-modules/lending-aave-evm', type: 'page' },
         children: [
           { name: 'Usage', url: '/sdk/lending-modules/lending-aave-evm/usage', type: 'page' },
           {
@@ -364,6 +365,23 @@ export const customTree: Node[] = [
           },
           { name: 'Configuration', url: '/sdk/lending-modules/lending-aave-evm/configuration', type: 'page' },
           { name: 'API Reference', url: '/sdk/lending-modules/lending-aave-evm/api-reference', type: 'page' },
+        ],
+      },
+      {
+        name: 'Morpho EVM', type: 'folder',
+        index: { name: 'Morpho EVM', url: '/sdk/lending-modules/lending-morpho-evm', type: 'page' },
+        children: [
+          { name: 'Usage', url: '/sdk/lending-modules/lending-morpho-evm/usage', type: 'page' },
+          {
+            name: 'Guides', type: 'folder', icon: resolveIcon('BookOpen'),
+            children: [
+              { name: 'Get Started', url: '/sdk/lending-modules/lending-morpho-evm/guides/get-started', type: 'page' },
+              { name: 'Lending Operations', url: '/sdk/lending-modules/lending-morpho-evm/guides/lending-operations', type: 'page' },
+              { name: 'Handle Errors', url: '/sdk/lending-modules/lending-morpho-evm/guides/handle-errors', type: 'page' },
+            ],
+          },
+          { name: 'Configuration', url: '/sdk/lending-modules/lending-morpho-evm/configuration', type: 'page' },
+          { name: 'API Reference', url: '/sdk/lending-modules/lending-morpho-evm/api-reference', type: 'page' },
         ],
       },
     ],
@@ -393,6 +411,40 @@ export const customTree: Node[] = [
           },
           { name: 'Configuration', url: '/sdk/fiat-modules/fiat-moonpay/configuration', type: 'page' },
           { name: 'API Reference', url: '/sdk/fiat-modules/fiat-moonpay/api-reference', type: 'page' },
+        ],
+      },
+    ],
+  },
+  {
+    name: 'React Native',
+    type: 'folder',
+    icon: resolveIcon('Smartphone'),
+    children: [
+      {
+        name: 'React Native Core',
+        type: 'folder',
+        icon: resolveIcon('Smartphone'),
+        index: {
+          name: 'React Native Core',
+          url: '/tools/react-native-core',
+          type: 'page',
+        },
+        children: [
+          { name: 'API Reference', url: '/tools/react-native-core/api-reference', type: 'page', icon: resolveIcon('Code') },
+        ],
+      },
+      {
+        name: 'React Native Secure Storage',
+        type: 'folder',
+        icon: resolveIcon('LockKeyhole'),
+        index: {
+          name: 'React Native Secure Storage',
+          url: '/tools/react-native-secure-storage',
+          type: 'page',
+        },
+        children: [
+          { name: 'Configuration', url: '/tools/react-native-secure-storage/configuration', type: 'page', icon: resolveIcon('Settings') },
+          { name: 'API Reference', url: '/tools/react-native-secure-storage/api-reference', type: 'page', icon: resolveIcon('Code') },
         ],
       },
     ],
@@ -469,33 +521,6 @@ export const customTree: Node[] = [
     ],
   },
   { name: 'Create WDK Module', url: '/tools/create-wdk-module', type: 'page', icon: resolveIcon('Hammer') },
-  {
-    name: 'React Native Core',
-    type: 'folder',
-    icon: resolveIcon('Smartphone'),
-    index: {
-      name: 'React Native Core',
-      url: '/tools/react-native-core',
-      type: 'page',
-    },
-    children: [
-      { name: 'API Reference', url: '/tools/react-native-core/api-reference', type: 'page', icon: resolveIcon('Code') },
-    ],
-  },
-  {
-    name: 'React Native Secure Storage',
-    type: 'folder',
-    icon: resolveIcon('LockKeyhole'),
-    index: {
-      name: 'React Native Secure Storage',
-      url: '/tools/react-native-secure-storage',
-      type: 'page',
-    },
-    children: [
-      { name: 'Configuration', url: '/tools/react-native-secure-storage/configuration', type: 'page', icon: resolveIcon('Settings') },
-      { name: 'API Reference', url: '/tools/react-native-secure-storage/api-reference', type: 'page', icon: resolveIcon('Code') },
-    ],
-  },
   {
     name: 'Failover Provider',
     type: 'folder',

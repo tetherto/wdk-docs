@@ -1,0 +1,72 @@
+---
+title: Get Started
+description: Install the package, create MorphoProtocolEvm, and review prerequisites.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide covers [installation](#installation), [creating the lending client](#create-the-lending-client), and [prerequisites](#prerequisites). Use [Node.js](https://nodejs.org/) `22.13` or later and [npm](https://www.npmjs.com/) on your machine.
+
+## Installation
+
+Run the following to install [@morpho-org/wdk-protocol-lending-morpho-evm](https://www.npmjs.com/package/@morpho-org/wdk-protocol-lending-morpho-evm), the EVM wallet module used by the examples, and the `viem` peer dependency:
+
+```bash title="Install with npm"
+npm install @morpho-org/wdk-protocol-lending-morpho-evm @tetherto/wdk-wallet-evm viem
+```
+
+```bash title="Install with pnpm"
+pnpm add @morpho-org/wdk-protocol-lending-morpho-evm @tetherto/wdk-wallet-evm viem
+```
+
+If you use ERC-4337 smart accounts, also install `@tetherto/wdk-wallet-evm-erc-4337`.
+
+## Create the lending client
+
+You can attach Morpho actions to an EVM account from [`WalletAccountEvm`](/sdk/wallet-modules/wallet-evm/api-reference) with [`new MorphoProtocolEvm(account, options)`](/sdk/lending-modules/lending-morpho-evm/api-reference):
+
+```javascript title="Create MorphoProtocolEvm"
+import MorphoProtocolEvm from '@morpho-org/wdk-protocol-lending-morpho-evm'
+import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
+
+const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
+  provider: 'https://ethereum-rpc.publicnode.com'
+})
+
+const morpho = new MorphoProtocolEvm(account, {
+  presets: {
+    earn: 'sky-money-usdt-savings',
+    borrow: 'wsteth'
+  }
+})
+```
+
+## Prerequisites
+
+<Callout type="info">
+**Runtime:** Use Node.js `22.13` or later. **Token balance:** To supply, supply collateral, or repay, hold the required ERC-20 in the wallet. **Gas:** Keep native balance for transaction fees unless you use sponsored ERC-4337 flows. **Targets:** Confirm the configured vault or market matches the token and chain you plan to use.
+</Callout>
+
+The built-in presets target Ethereum mainnet. If you configure an explicit vault address, market id, or market params, set `chainId` in [`MorphoProtocolOptions`](/sdk/lending-modules/lending-morpho-evm/configuration).
+
+## Requirements before actions
+
+Morpho SDK actions can return approval, signature, or authorization requirements. Call the matching `get*Requirements` method before the final action when the account has not already satisfied those requirements.
+
+```javascript title="Check supply requirements"
+const USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+
+const requirements = await morpho.getSupplyRequirements({
+  token: USDT,
+  amount: 1000000n
+})
+
+console.log('Requirements:', requirements)
+```
+
+Send any returned transaction requirements with your EVM account flow before calling the final action. For signature requirements, call the requirement's `sign(client, userAddress)` helper, then pass the returned `requirementSignature` to `supply`, `supplyCollateral`, or `repay`.
+
+## Next Steps
+
+- [Lending operations](lending-operations)
+- [Handle errors](handle-errors)

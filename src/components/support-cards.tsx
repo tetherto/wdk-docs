@@ -138,7 +138,11 @@ function LinkCardGrid({ cards }: { cards: LinkCard[] }) {
 }
 
 export function SupportCards() {
-  return <LinkCardGrid cards={supportCards} />;
+  return (
+    <div className="mt-6">
+      <LinkCardGrid cards={supportCards} />
+    </div>
+  );
 }
 
 export function CommunityCards() {

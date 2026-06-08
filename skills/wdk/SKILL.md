@@ -1,3 +1,8 @@
+---
+name: wdk
+description: Tether Wallet Development Kit (WDK) for building non-custodial multi-chain wallets. Use when working with @tetherto/wdk-core, wallet modules (wdk-wallet-btc, wdk-wallet-evm, wdk-wallet-evm-erc-4337, wdk-wallet-solana, wdk-wallet-spark, wdk-wallet-ton, wdk-wallet-tron, ton-gasless, tron-gasfree), and protocol modules including swidge, swap (wdk-protocol-swap-velora-evm), bridge (wdk-protocol-bridge-usdt0-evm), lending (wdk-protocol-lending-aave-evm), and fiat (wdk-protocol-fiat-moonpay). Covers wallet creation, transactions, token transfers, swidge asset routes, DEX swaps, cross-chain bridges, DeFi lending/borrowing, and fiat on/off ramps.
+---
+
 # Tether WDK
 
 Multi-chain wallet SDK. All modules share common interfaces from `@tetherto/wdk-wallet`.
@@ -29,6 +34,7 @@ This skill is organized into reference files for chain-specific and protocol-spe
 | `references/wallet-spark.md` | Spark: Lightning, key tree, deposits, withdrawals |
 | `references/wallet-ton.md` | TON + TON Gasless: Jettons, nanotons, paymaster |
 | `references/wallet-tron.md` | TRON + TRON Gasfree: TRC20, energy/bandwidth, gasFreeProvider |
+| `references/protocol-swidge.md` | Swidge: preferred route interface for new swap, bridge, and combined providers |
 | `references/protocol-swap.md` | Velora EVM swap protocol |
 | `references/protocol-bridge.md` | USDT0 cross-chain bridge via LayerZero |
 | `references/protocol-lending.md` | Aave V3 lending: supply/withdraw/borrow/repay |
@@ -51,6 +57,7 @@ When a task targets a specific chain or protocol, read the relevant reference fi
     │   ├── wdk-wallet-tron     # TRON
     │   └── wdk-wallet-tron-gasfree  # TRON gas-free
     └── Protocol Modules
+        ├── swidge protocol interface             # Preferred route interface for new swap, bridge, or combined providers
         ├── wdk-protocol-swap-velora-evm   # DEX swaps on EVM
         ├── wdk-protocol-bridge-usdt0-evm  # Cross-chain USDT0 bridge
         ├── wdk-protocol-lending-aave-evm  # Aave V3 lending
@@ -181,8 +188,9 @@ All require human confirmation: `claimDeposit`, `claimStaticDeposit`, `refundSta
 
 #### Protocol write methods
 
-- **Swap**: `swap` (velora-evm) — may internally approve + reset allowance
-- **Bridge**: `bridge` (usdt0-evm) — requires prior token approval for the source-chain OFT or bridge spender
+- **Swidge**: `getSupportedChains` and `getSupportedTokens` discover available routes; `swidge` executes a swap-only, bridge-only, or combined route. Quote first with `quoteSwidge` and require human confirmation before execution.
+- **Swap**: `swap` (velora-evm) — quote first and require human confirmation. May internally approve + reset allowance.
+- **Bridge**: `bridge` (usdt0-evm) — quote first and require human confirmation. Requires prior token approval for the source-chain OFT or bridge spender.
 - **Lending (Aave)**: `supply`, `withdraw`, `borrow`, `repay`, `setUseReserveAsCollateral`, `setUserEMode`
 - **Fiat (MoonPay)**: `buy`, `sell` (generate signed widget URLs)
 

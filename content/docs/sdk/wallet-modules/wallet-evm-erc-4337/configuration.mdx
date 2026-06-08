@@ -18,7 +18,6 @@ const config = {
   chainId: 1,
   provider: 'https://rpc.mevblocker.io/fast',
   safeModulesVersion: '0.3.0', // '0.2.0' and '0.3.0' are valid
-  entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   bundlerUrl: `https://api.pimlico.io/v1/ethereum/rpc?apikey=${PIMLICO_API_KEY}`,
   paymasterUrl: `https://api.pimlico.io/v2/ethereum/rpc?apikey=${PIMLICO_API_KEY}`,
   paymasterAddress: '0x777777777777AeC03fd955926DbF81597e66834C',
@@ -54,7 +53,6 @@ const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337(
     bundlerUrl: 'https://api.candide.dev/public/v3/ethereum',
     paymasterUrl: 'https://api.candide.dev/public/v3/ethereum',
     paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
-    entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
     safeModulesVersion: '0.3.0',
     paymasterToken: {
       address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
@@ -68,9 +66,9 @@ const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337(
 
 ### Chain ID
 
-The `chainId` option specifies the blockchain network ID. **Required** for fee estimation and Safe4337Pack initialization.
+The `chainId` option specifies the blockchain network ID. **Required** for fee estimation and smart account initialization.
 
-**Type:** `number`  
+**Type:** `number`
 **Required:** Yes
 
 **Examples:**
@@ -78,7 +76,7 @@ The `chainId` option specifies the blockchain network ID. **Required** for fee e
 // Ethereum Mainnet
 const config = { chainId: 1 }
 
-// Polygon Mainnet  
+// Polygon Mainnet
 const config = { chainId: 137 }
 
 // Arbitrum One
@@ -91,9 +89,9 @@ const config = { chainId: 43114 }
 
 ### Provider
 
-The `provider` option specifies the RPC endpoint or EIP-1193 provider instance for blockchain interactions. **Required** for all operations.
+The `provider` option specifies the RPC endpoint or EIP-1193 provider instance for blockchain interactions. **Required** for all operations. You can also pass an array of endpoints or providers to enable automatic failover: when a request to one provider fails, the wallet retries the next provider in the list.
 
-**Type:** `string | Eip1193Provider`  
+**Type:** `string | Eip1193Provider | Array<string | Eip1193Provider>`
 **Required:** Yes
 
 **Examples:**
@@ -113,13 +111,40 @@ import { JsonRpcProvider } from 'ethers'
 const config = {
   provider: new JsonRpcProvider('https://rpc.mevblocker.io/fast')
 }
+
+// Using multiple providers for automatic failover
+const config = {
+  provider: [
+    'https://rpc.mevblocker.io/fast',
+    'https://eth.llamarpc.com'
+  ],
+  retries: 3 // Optional: additional retry attempts after the initial call fails
+}
+```
+
+### Retries
+
+The `retries` option sets the number of additional retry attempts after the initial call fails. It only applies when `provider` is an array of endpoints or providers. Total attempts equal `1 + retries`. If `retries` exceeds the number of providers, the failover loops back and retries already-failed providers in round-robin order.
+
+**Type:** `number`
+**Required:** No (optional)
+**Default:** `3`
+
+```javascript
+const config = {
+  provider: [
+    'https://rpc.mevblocker.io/fast',
+    'https://eth.llamarpc.com'
+  ],
+  retries: 5
+}
 ```
 
 ### Bundler URL
 
 The `bundlerUrl` option specifies the URL of the ERC-4337 bundler service that handles UserOperation bundling and submission to the mempool. **Required** for transaction processing.
 
-**Type:** `string`  
+**Type:** `string`
 **Required:** Yes
 
 **Example:**
@@ -133,7 +158,7 @@ const config = {
 
 The `paymasterUrl` option specifies the URL of the paymaster service that sponsors transaction fees using ERC-20 tokens or sponsorship policies.
 
-**Type:** `string`  
+**Type:** `string`
 **Required:** Yes, for Paymaster Token mode and Sponsorship Policy mode. Not used in Native Coins mode.
 
 **Example:**
@@ -147,7 +172,7 @@ const config = {
 
 The `paymasterAddress` option specifies the address of the paymaster smart contract.
 
-**Type:** `string`  
+**Type:** `string`
 **Required:** Yes, for Paymaster Token mode only. Not used in Sponsorship Policy or Native Coins modes.
 
 **Example:**
@@ -157,25 +182,41 @@ const config = {
 }
 ```
 
-### Entry Point Address
+### On-Chain Identifier
 
-The `entryPointAddress` option specifies the address of the ERC-4337 EntryPoint smart contract. **Required** for UserOperation processing.
+The `onChainIdentifier` option appends a 50-byte project marker to every UserOperation's call data. Pass a string to use it as the project name, or pass an object for more control over the platform and tool fields.
 
-**Type:** `string`  
-**Required:** Yes
+**Type:** `string | OnChainIdentifier`
+**Required:** No (optional)
 
-**Standard EntryPoint v0.7:**
+**Properties (object form):**
+- `project` (string): The project name included in the marker
+- `platform` (`'Web' | 'Mobile' | 'Safe App' | 'Widget'`, optional): The platform type (default: `'Web'`)
+- `tool` (string, optional): The tool name used to create the UserOperation
+- `toolVersion` (string, optional): Semver-style tool version string (e.g., `'1.0.0'`)
+
 ```javascript
+// String form
 const config = {
-  entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032'
+  onChainIdentifier: 'my-project'
+}
+
+// Object form
+const config = {
+  onChainIdentifier: {
+    project: 'my-project',
+    platform: 'Mobile',
+    tool: 'my-wallet',
+    toolVersion: '1.0.0'
+  }
 }
 ```
 
 ### Safe Modules Version
 
-The `safeModulesVersion` option specifies the Safe modules version for smart contract wallet implementation. **Required** for Safe4337Pack initialization.
+The `safeModulesVersion` option specifies the Safe modules version for smart contract wallet implementation. **Required** for smart account initialization.
 
-**Type:** `string`  
+**Type:** `string`
 **Required:** Yes
 
 **Example:**
@@ -189,7 +230,7 @@ const config = {
 
 The `paymasterToken` option specifies the ERC-20 token used for paying transaction fees through the paymaster.
 
-**Type:** `object`  
+**Type:** `object`
 **Required:** Yes, for Paymaster Token mode only. Not used in Sponsorship Policy or Native Coins modes.
 
 **Properties:**
@@ -208,7 +249,7 @@ const config = {
 
 The `sponsorshipPolicyId` option specifies the sponsorship policy identifier for sponsored transactions.
 
-**Type:** `string`  
+**Type:** `string`
 **Required:** No (optional), only used in Sponsorship Policy mode.
 
 **Example:**
@@ -227,7 +268,7 @@ These boolean flags control which gas payment mode is used. Only one mode should
 
 Enables Sponsorship Policy mode, where a sponsor covers transaction fees.
 
-**Type:** `boolean`  
+**Type:** `boolean`
 **Default:** `false`
 
 ```javascript
@@ -241,7 +282,7 @@ const config = {
 
 Enables Native Coins mode, where the user pays fees in the chain's native currency (ETH, MATIC, etc.).
 
-**Type:** `boolean`  
+**Type:** `boolean`
 **Default:** `false`
 
 ```javascript
@@ -255,8 +296,8 @@ const config = {
 
 The `transferMaxFee` option sets the maximum fee amount **in paymaster token units** for transfer operations. This prevents transactions with unexpectedly high fees. **Optional** parameter.
 
-**Type:** `number | bigint`  
-**Required:** No (optional)  
+**Type:** `number | bigint`
+**Required:** No (optional)
 **Unit:** Paymaster token base units
 
 **Example:**
@@ -300,7 +341,6 @@ const ethereumConfig = {
   bundlerUrl: 'https://api.candide.dev/public/v3/ethereum',
   paymasterUrl: 'https://api.candide.dev/public/v3/ethereum',
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
-  entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USDT
@@ -318,7 +358,6 @@ const polygonConfig = {
   bundlerUrl: 'https://api.candide.dev/public/v3/polygon',
   paymasterUrl: 'https://api.candide.dev/public/v3/polygon',
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
-  entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
     address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F' // USDT on Polygon
@@ -336,7 +375,6 @@ const arbitrumConfig = {
   bundlerUrl: 'https://public.pimlico.io/v2/42161/rpc',
   paymasterUrl: 'https://public.pimlico.io/v2/42161/rpc',
   paymasterAddress: '0x777777777777AeC03fd955926DbF81597e66834C',
-  entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
     address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9' // USDT on Arbitrum
@@ -354,7 +392,6 @@ const avalancheConfig = {
   bundlerUrl: "https://public.pimlico.io/v2/43114/rpc",
   paymasterUrl: "https://public.pimlico.io/v2/43114/rpc",
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
-  entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
     address: '0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7' // USDT
@@ -374,7 +411,6 @@ const plasmaConfig = {
   bundlerUrl: 'https://api.candide.dev/public/v3/9745',
   paymasterUrl: 'https://api.candide.dev/public/v3/9745',
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
-  entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
     address: '0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb' // USDT
@@ -394,11 +430,10 @@ const sepoliaConfigPimlico = {
   bundlerUrl: 'https://public.pimlico.io/v2/11155111/rpc',
   paymasterUrl: 'https://public.pimlico.io/v2/11155111/rpc',
   paymasterAddress: '0x777777777777AeC03fd955926DbF81597e66834C',
-  entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
     address: '0xd077a400968890eacc75cdc901f0356c943e4fdb' // USDT Sepolia
-  }, 
+  },
   transferMaxFee: 100000 // 0.1 USDT (6 decimals)
 }
 
@@ -409,11 +444,10 @@ const sepoliaConfigCandide = {
   bundlerUrl: 'https://api.candide.dev/public/v3/11155111',
   paymasterUrl: 'https://api.candide.dev/public/v3/11155111',
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
-  entryPointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
     address: '0xd077a400968890eacc75cdc901f0356c943e4fdb' // USDT Sepolia
-  },   
+  },
   transferMaxFee: 100000
 }
 ````
@@ -447,4 +481,3 @@ Get started with WDK's EVM with ERC-4337 Wallet API
 ## Need Help?
 
 <SupportCards />
-
