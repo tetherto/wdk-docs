@@ -1,6 +1,6 @@
 ---
 title: WDK Utils API Reference
-description: API for @tetherto/wdk-utils
+description: Validation, BOLT11, and EIP-681 APIs for @tetherto/wdk-utils
 docType: reference
 schemaType: APIReference
 ---
@@ -18,6 +18,10 @@ schemaType: APIReference
 | `validateEVMAddress(address)` | Validate an EVM address, including EIP-55 checksum rules for mixed-case inputs. | `EvmAddressValidationResult` |
 | `stripLightningPrefix(input)` | Remove a leading `lightning:` prefix before other Lightning validation steps. | `string` |
 | `validateLightningInvoice(address)` | Validate a Lightning invoice string. | `LightningInvoiceValidationResult` |
+| `decode(invoice)` | Decode a BOLT11 Lightning invoice into structured invoice data. | `LightningInvoiceDecodingResult` |
+| `getHashToSign(invoiceData)` | Return the SHA-256 hash that must be signed for a BOLT11 invoice. | `LightningInvoiceHashingResult` |
+| `sign(invoiceData, privateKey)` | Sign BOLT11 invoice data with a hex string or `Uint8Array` private key. | `LightningInvoiceSigningResult` |
+| `encode(invoiceData)` | Encode BOLT11 invoice data into an invoice string. | `LightningInvoiceEncodingResult` |
 | `validateLnurl(address)` | Validate an LNURL string. | `LnurlValidationResult` |
 | `decodeLnurl(address)` | Decode an LNURL string into its original URL. | `LnurlDecodingResult` |
 | `validateLightningAddress(address)` | Validate a Lightning Address in `user@domain.tld` form. | `LightningAddressValidationResult` |
@@ -115,6 +119,72 @@ const result = validateLightningInvoice(
 `LightningInvoiceValidationResult` is one of these shapes:
 
 - `{ success: true, type: 'invoice' }`
+- `{ success: false, reason: string }`
+
+#### `decode(invoice)`
+
+Decode a BOLT11 Lightning invoice into structured invoice data. The exported function name is `decode`, so alias it at import sites when your code also decodes other payloads.
+
+Payment descriptions are user-defined. Sanitize `description` tag values before rendering them in HTML or storing them.
+
+```javascript title="Decode A BOLT11 Invoice"
+import { decode as decodeBolt11 } from '@tetherto/wdk-utils'
+
+const result = decodeBolt11(
+  'lnbc1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqypqdpl2pkx2ctnv5sxxmmwwd5kgetjypeh2ursdae8g6twvus8g6rfwvs8qun0dfjkxaq8rkx3yf5tcsyz3d73gafnh3cax9rn449d9p5uxz9ezhhypd0elx87sjle52x86fux2ypatgddc6k63n7erqz25le42c4u4ecky03ylcqca784w'
+)
+```
+
+`LightningInvoiceDecodingResult` is one of these shapes:
+
+- `{ success: true, type: 'invoice', data: DecodedLightningInvoice }`
+- `{ success: false, reason: string }`
+
+`DecodedLightningInvoice` includes the invoice `network` (`bitcoin`, `testnet`, `regtest`, or `signet`), optional `millisatoshis`, optional `timestamp`, optional `timeExpireDate`, optional `payeeNodeKey`, optional `signature`, optional `recoveryFlag`, required `tags`, and optional `paymentRequest`.
+
+#### `getHashToSign(invoiceData)`
+
+Return the SHA-256 hash that must be signed for a BOLT11 invoice.
+
+```javascript title="Get The Invoice Signing Hash"
+import { getHashToSign } from '@tetherto/wdk-utils'
+
+const hash = getHashToSign(invoiceData)
+```
+
+`LightningInvoiceHashingResult` is one of these shapes:
+
+- `{ success: true, type: 'hash', data: Uint8Array }`
+- `{ success: false, reason: string }`
+
+#### `sign(invoiceData, privateKey)`
+
+Sign BOLT11 invoice data. The private key can be a hex string or `Uint8Array`.
+
+```javascript title="Sign A BOLT11 Invoice"
+import { sign as signBolt11 } from '@tetherto/wdk-utils'
+
+const signed = signBolt11(invoiceData, privateKey)
+```
+
+`LightningInvoiceSigningResult` is one of these shapes:
+
+- `{ success: true, type: 'invoice', data: DecodedLightningInvoice }`
+- `{ success: false, reason: string }`
+
+#### `encode(invoiceData)`
+
+Encode BOLT11 invoice data into an invoice string.
+
+```javascript title="Encode A BOLT11 Invoice"
+import { encode as encodeBolt11 } from '@tetherto/wdk-utils'
+
+const encoded = encodeBolt11(signed.data)
+```
+
+`LightningInvoiceEncodingResult` is one of these shapes:
+
+- `{ success: true, type: 'invoice', data: string }`
 - `{ success: false, reason: string }`
 
 #### `validateLnurl(address)`
