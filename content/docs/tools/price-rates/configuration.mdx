@@ -17,8 +17,36 @@ const client = new BitfinexPricingClient()
 
 ### Current Price
 
+Current-price lookups use Bitfinex's FX conversion endpoint. If Bitfinex cannot quote the pair directly, the client tries a two-leg `from -> USD -> to` conversion. If the pair still cannot be resolved, the result is `null`.
+
 ```javascript title="Get Current Price"
 const price = await client.getCurrentPrice('BTC', 'USD')
+const brlPrice = await client.getCurrentPrice('BTC', 'BRL') // resolved through USD when available
+
+if (price === null) {
+  // Show an unavailable-price state in your UI
+}
+```
+
+### Batch Current Prices
+
+Batch lookups return results in the same order as the input list. Entries that cannot be resolved are `null`.
+
+```javascript title="Get Batch Current Prices"
+const prices = await client.getMultiCurrentPrices([
+  { from: 'BTC', to: 'USD' },
+  { from: 'ETH', to: 'BRL' }
+])
+```
+
+### Batch Price Data
+
+Use `getMultiPriceData()` when you need the last price plus 24-hour absolute and relative change. This method uses Bitfinex ticker data and only supports pairs Bitfinex quotes directly.
+
+```javascript title="Get Batch Price Data"
+const priceData = await client.getMultiPriceData([
+  { from: 'BTC', to: 'USD' }
+])
 ```
 
 ### Historical Series
@@ -47,6 +75,10 @@ const provider = new PricingProvider({
 })
 
 const last = await provider.getLastPrice('BTC', 'USD')
+const prices = await provider.getMultiLastPrices([
+  { from: 'BTC', to: 'USD' },
+  { from: 'ETH', to: 'BRL' }
+])
 const hist = await provider.getHistoricalPrice('BTC', 'USD', {
   start: 1709906400000,
   end: 1709913600000
