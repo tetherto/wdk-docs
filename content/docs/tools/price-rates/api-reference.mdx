@@ -24,13 +24,39 @@ new BitfinexPricingClient(options?)
 
 | Method | Description | Returns |
 |--------|-------------|---------|
-| `getCurrentPrice(base, quote)` | Fetch latest price for base/quote pair | `Promise\<number\>` |
+| `getCurrentPrice(base, quote)` | Fetch latest price for base/quote pair | `Promise\<number \| null\>` |
+| `getMultiCurrentPrices(pairs)` | Fetch latest prices for multiple pairs in one batch | `Promise\<Array\<number \| null\>\>` |
+| `getMultiPriceData(pairs)` | Fetch last price and 24h change data for multiple directly quoted pairs | `Promise\<Array\<PriceData \| null\>\>` |
 | `getHistoricalPrice(from, to, opts?)` | Fetch historical series (downscaled to ≤ 100 points if needed) | `Promise\<HistoricalPriceResult[]\>` |
 
 ##### `getCurrentPrice(base, quote)`
 
+Uses Bitfinex's `/calc/fx/batch` endpoint. If Bitfinex cannot quote the pair directly, the client tries a two-leg USD pivot. Returns `null` when the pair cannot be resolved.
+
 ```javascript title="Current Price"
 const price = await client.getCurrentPrice('BTC', 'USD')
+const brl = await client.getCurrentPrice('BTC', 'BRL')
+```
+
+##### `getMultiCurrentPrices(pairs)`
+
+Returns current prices in the same order as the input pairs. Each unresolved pair returns `null`.
+
+```javascript title="Batch Current Prices"
+const prices = await client.getMultiCurrentPrices([
+  { from: 'BTC', to: 'USD' },
+  { from: 'ETH', to: 'BRL' }
+])
+```
+
+##### `getMultiPriceData(pairs)`
+
+Returns last price plus 24-hour absolute and relative change. This method reads Bitfinex ticker data and does not use the USD-pivot fallback, so unsupported entries return `null`.
+
+```javascript title="Batch Price Data"
+const data = await client.getMultiPriceData([
+  { from: 'BTC', to: 'USD' }
+])
 ```
 
 ##### `getHistoricalPrice(from, to, opts?)`
@@ -69,6 +95,9 @@ new PricingProvider({
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getLastPrice(base, quote)` | Returns cached last price; refreshes when TTL expires | `Promise\<number\>` |
+| `getMultiLastPrices(pairs)` | Returns cached last prices for multiple pairs | `Promise\<number[]\>` |
+| `getLastPriceData(base, quote)` | Returns cached last price plus daily change data | `Promise\<PriceData\>` |
+| `getMultiLastPriceData(pairs)` | Returns cached price data for multiple pairs | `Promise\<PriceData[]\>` |
 | `getHistoricalPrice(from, to, opts?)` | Delegates to client for historical data | `Promise\<HistoricalPriceResult[]\>` |
 
 ##### `getLastPrice(base, quote)`
@@ -76,6 +105,30 @@ new PricingProvider({
 ```javascript title="Last Price with Caching"
 const provider = new PricingProvider({ client })
 const last = await provider.getLastPrice('BTC', 'USD')
+```
+
+##### `getMultiLastPrices(pairs)`
+
+```javascript title="Cached Batch Last Prices"
+const prices = await provider.getMultiLastPrices([
+  { from: 'BTC', to: 'USD' },
+  { from: 'ETH', to: 'BRL' }
+])
+```
+
+##### `getLastPriceData(base, quote)`
+
+```javascript title="Cached Price Data"
+const data = await provider.getLastPriceData('BTC', 'USD')
+console.log(data.lastPrice, data.dailyChange, data.dailyChangeRelative)
+```
+
+##### `getMultiLastPriceData(pairs)`
+
+```javascript title="Cached Batch Price Data"
+const data = await provider.getMultiLastPriceData([
+  { from: 'BTC', to: 'USD' }
+])
 ```
 
 ##### `getHistoricalPrice(from, to, opts?)`
@@ -93,12 +146,15 @@ Implement this interface to plug your data source into `PricingProvider`.
 
 | Method | Signature | Notes |
 |--------|-----------|-------|
-| `getCurrentPrice` | `(from: string, to: string) =\> Promise\<number\>` | Should return spot price |
+| `getCurrentPrice` | `(from: string, to: string) =\> Promise\<number \| null\>` | Return spot price or `null` when the pair cannot be resolved |
+| `getMultiCurrentPrices` | `(list: PricePair[]) =\> Promise\<Array\<number \| null\>\>` | Return one result per pair; unresolved entries are `null` |
+| `getMultiPriceData` | `(list: PricePair[]) =\> Promise\<Array\<PriceData \| null\>\>` | Return last price and daily change data; unresolved entries are `null` |
 | `getHistoricalPrice` | `(from: string, to: string, opts?: HistoricalPriceOptions) =\> Promise\<HistoricalPriceResult[]\>` | Return series for charting |
 
 ## Notes
 
-- Uses Bitfinex Public HTTP API (`/v2/ticker` and `/v2/candles`) under the hood for the Bitfinex client
+- Uses Bitfinex Public HTTP API (`/v2/calc/fx/batch`, `/v2/tickers`, and `/v2/candles`) under the hood for the Bitfinex client
+- Current-price lookups can pivot through USD for fiat pairs Bitfinex does not quote directly; historical prices and `getMultiPriceData()` do not use that pivot
 - Provider caches last price per pair using in-memory store and TTL
 
 ***
