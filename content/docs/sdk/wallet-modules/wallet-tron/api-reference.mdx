@@ -21,8 +21,8 @@ The main class for managing Tron wallets. Extends `WalletManager` from `@tethert
 ### Fee Rate Constants
 
 ```javascript
-const FEE_RATE_NORMAL_MULTIPLIER = 1.1
-const FEE_RATE_FAST_MULTIPLIER = 2.0
+const FEE_RATE_NORMAL_MULTIPLIER = 110n
+const FEE_RATE_FAST_MULTIPLIER = 200n
 ```
 
 ### Constructor
@@ -34,21 +34,31 @@ new WalletManagerTron(seed, config?)
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (TronWalletConfig, optional): Configuration object
-  - `provider` (string | TronWeb, optional): Tron RPC endpoint URL or TronWeb instance
-  - `transferMaxFee` (number, optional): Maximum fee amount for transfer operations (in sun)
+  - `provider` (`string | TronWeb | Array<string | TronWeb>`, optional): Tron RPC endpoint URL, TronWeb instance, or ordered failover list
+  - `retries` (number, optional): Additional failover attempts when `provider` is an array (default: 3)
+  - `transferMaxFee` (`number | bigint`, optional): Maximum fee amount for TRC20 transfer operations (in sun)
 
 **Example:**
 ```javascript
 const wallet = new WalletManagerTron(seedPhrase, {
   provider: 'https://api.trongrid.io', // Tron RPC endpoint
-  transferMaxFee: 10000000 // 10 TRX in sun
+  transferMaxFee: 10000000n // 10 TRX in sun
 })
 
 // Or with TronWeb instance
 const tronWeb = new TronWeb({ fullHost: 'https://api.trongrid.io' })
 const wallet2 = new WalletManagerTron(seedPhrase, {
   provider: tronWeb,
-  transferMaxFee: 10000000
+  transferMaxFee: 10000000n
+})
+
+// Or with ordered provider failover
+const wallet3 = new WalletManagerTron(seedPhrase, {
+  provider: [
+    'https://api.trongrid.io',
+    'https://secondary-tron-rpc.example'
+  ],
+  retries: 3
 })
 ```
 
@@ -58,7 +68,7 @@ const wallet2 = new WalletManagerTron(seedPhrase, {
 |--------|-------------|---------|--------|
 | `getAccount(index?)` | Returns a wallet account at the specified index | `Promise\<WalletAccountTron\>` | - |
 | `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise\<WalletAccountTron\>` | - |
-| `getFeeRates()` | Returns current fee rates from Tron network | `Promise\<{normal: number, fast: number}\>` | If no provider |
+| `getFeeRates()` | Returns current fee rates from Tron network | `Promise\<{normal: bigint, fast: bigint}\>` | If no provider |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` | - |
 
 ##### `getAccount(index?)`
@@ -95,7 +105,7 @@ const account = await wallet.getAccountByPath("0'/0/1")
 ##### `getFeeRates()`
 Returns current fee rates from Tron network chain parameters.
 
-**Returns:** `Promise\<{normal: number, fast: number}\>` - Fee rates in sun
+**Returns:** `Promise\<{normal: bigint, fast: bigint}\>` - Fee rates in sun
 - `normal`: Base fee × 1.1
 - `fast`: Base fee × 2.0
 
@@ -124,7 +134,7 @@ Represents an individual Tron wallet account. Extends `WalletAccountReadOnlyTron
 
 ```javascript
 const BIP_44_TRON_DERIVATION_PATH_PREFIX = "m/44'/195'"
-const BANDWIDTH_PRICE = 1_000
+const BANDWIDTH_PRICE = 1_000n
 ```
 
 ### Constructor
@@ -144,7 +154,7 @@ new WalletAccountTron(seed, path, config?)
 ```javascript
 const account = new WalletAccountTron(seedPhrase, "0'/0/0", {
   provider: 'https://api.trongrid.io',
-  transferMaxFee: 10000000 // 10 TRX in sun
+  transferMaxFee: 10000000n // 10 TRX in sun
 })
 ```
 
@@ -155,10 +165,10 @@ const account = new WalletAccountTron(seedPhrase, "0'/0/0", {
 | `getAddress()` | Returns the account's Tron address | `Promise\<string\>` | - |
 | `sign(message)` | Signs a message using the account's private key | `Promise\<string\>` | - |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` | - |
-| `sendTransaction(tx)` | Sends a Tron transaction | `Promise\<{hash: string, fee: number}\>` | If no provider or fee exceeds max |
-| `quoteSendTransaction(tx)` | Estimates the fee for a Tron transaction | `Promise\<{fee: number}\>` | If no provider |
-| `transfer(options)` | Transfers TRC20 tokens to another address | `Promise\<{hash: string, fee: number}\>` | If no provider or fee exceeds max |
-| `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: number}\>` | If no provider |
+| `sendTransaction(tx)` | Sends a Tron transaction | `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` | If no provider |
+| `quoteSendTransaction(tx)` | Estimates the fee for a Tron transaction | `Promise\<{fee: bigint, activationFee: bigint}\>` | If no provider |
+| `transfer(options)` | Transfers TRC20 tokens to another address | `Promise\<{hash: string, fee: bigint}\>` | If no provider or fee exceeds `transferMaxFee` |
+| `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: bigint}\>` | If no provider |
 | `getBalance()` | Returns the native TRX balance (in sun) | `Promise\<bigint\>` | If no provider |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise\<bigint\>` | If no provider |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise\<TronTransactionReceipt \| null\>` | If no provider |
@@ -207,18 +217,17 @@ console.log('Signature valid:', isValid)
 ```
 
 ##### `sendTransaction(tx)`
-Sends a TRX transaction and returns the result with hash and fee.
+Sends a TRX transaction and returns the result with hash, fee, and activation fee details.
 
 **Parameters:**
 - `tx` (TronTransaction): The transaction object
   - `to` (string): Recipient Tron address (e.g., 'T...')
-  - `value` (number): Amount in sun (1 TRX = 1,000,000 sun)
+  - `value` (number | bigint): Amount in sun (1 TRX = 1,000,000 sun)
 
-**Returns:** `Promise\<{hash: string, fee: number}\>` - Transaction hash and fee in sun
+**Returns:** `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` - Transaction hash, total fee in sun, and the portion used for account activation
 
 **Throws:** 
 - Error if no TronWeb provider is configured
-- Error if fee exceeds `transferMaxFee`
 
 **Example:**
 ```javascript
@@ -228,15 +237,16 @@ const result = await account.sendTransaction({
 })
 console.log('Transaction hash:', result.hash)
 console.log('Transaction fee:', result.fee, 'sun')
+console.log('Activation fee:', result.activationFee, 'sun')
 ```
 
 ##### `quoteSendTransaction(tx)`
-Estimates the bandwidth cost for a TRX transaction.
+Estimates the bandwidth and activation fee cost for a TRX transaction.
 
 **Parameters:**
 - `tx` (TronTransaction): The transaction object (same as sendTransaction)
 
-**Returns:** `Promise\<{fee: number}\>` - Fee estimate in sun
+**Returns:** `Promise\<{fee: bigint, activationFee: bigint}\>` - Fee estimate in sun and the portion used for account activation
 
 **Throws:** Error if no TronWeb provider is configured
 
@@ -247,6 +257,7 @@ const quote = await account.quoteSendTransaction({
   value: 1000000
 })
 console.log('Estimated fee:', quote.fee, 'sun')
+console.log('Activation fee:', quote.activationFee, 'sun')
 ```
 
 ##### `transfer(options)`
@@ -258,7 +269,7 @@ Transfers TRC20 tokens using smart contract call.
   - `recipient` (string): Recipient Tron address (e.g., 'T...')
   - `amount` (number | bigint): Amount in token's base units
 
-**Returns:** `Promise\<{hash: string, fee: number}\>` - Transaction hash and fee in sun
+**Returns:** `Promise\<{hash: string, fee: bigint}\>` - Transaction hash and fee in sun
 
 **Throws:** 
 - Error if no TronWeb provider is configured
@@ -276,12 +287,12 @@ console.log('Transfer fee:', result.fee, 'sun')
 ```
 
 ##### `quoteTransfer(options)`
-Estimates the energy and bandwidth cost for a TRC20 token transfer.
+Estimates the TRC20 token transfer cost from current chain parameters, account resources, contract energy use, and bandwidth use.
 
 **Parameters:**
 - `options` (TransferOptions): Transfer options (same as transfer)
 
-**Returns:** `Promise\<{fee: number}\>` - Fee estimate in sun (energy + bandwidth costs)
+**Returns:** `Promise\<{fee: bigint}\>` - Fee estimate in sun (energy + bandwidth costs)
 
 **Throws:** Error if no TronWeb provider is configured
 
@@ -367,20 +378,21 @@ account.dispose()
 |----------|------|-------------|
 | `index` | `number` | The derivation path's index of this account |
 | `path` | `string` | The full BIP-44 derivation path of this account |
-| `keyPair` | `{privateKey: Buffer, publicKey: Buffer}` | The account's key pair (⚠️ Contains sensitive data) |
+| `keyPair` | `{privateKey: Uint8Array \| null, publicKey: Uint8Array}` | Read-only view of the account's key pair. `privateKey` is `null` after `dispose()` |
 
 **Example:**
 ```javascript
 console.log('Account index:', account.index) // 0, 1, 2, etc.
 console.log('Account path:', account.path) // m/44'/195'/0'/0/0
 
-// ⚠️ SENSITIVE: Handle with care
 const { privateKey, publicKey } = account.keyPair
 console.log('Public key length:', publicKey.length) // 33 bytes (compressed)
-console.log('Private key length:', privateKey.length) // 32 bytes
+console.log('Private key length:', privateKey?.length) // 32 bytes before dispose()
 ```
 
-⚠️ **Security Note**: The `keyPair` property contains sensitive cryptographic material. Never log, display, or expose the private key.
+<Callout type="warn">
+The `keyPair` byte arrays are bound to the wallet account. Treat them as a read-only view: do not mutate, log, display, or expose the private key.
+</Callout>
 
 ## WalletAccountReadOnlyTron
 
@@ -409,8 +421,8 @@ const readOnlyAccount = new WalletAccountReadOnlyTron('TLyqzVGLV1srkB7dToTAEqgDS
 |--------|-------------|---------|--------|
 | `getBalance()` | Returns the native TRX balance (in sun) | `Promise\<bigint\>` | If no provider |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise\<bigint\>` | If no provider |
-| `quoteSendTransaction(tx)` | Estimates the fee for a TRX transaction | `Promise\<{fee: number}\>` | If no provider |
-| `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: number}\>` | If no provider |
+| `quoteSendTransaction(tx)` | Estimates the fee for a TRX transaction | `Promise\<{fee: bigint, activationFee: bigint}\>` | If no provider |
+| `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: bigint}\>` | If no provider |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` | - |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise\<TronTransactionReceipt \| null\>` | If no provider |
 
@@ -444,22 +456,22 @@ console.log('USDT balance:', tokenBalance)
 ```
 
 ##### `quoteSendTransaction(tx)`
-Estimates the bandwidth cost for a TRX transaction.
+Estimates the bandwidth and activation fee cost for a TRX transaction.
 
 **Parameters:**
 - `tx` (TronTransaction): The transaction object
 
-**Returns:** `Promise\<{fee: number}\>` - Fee estimate in sun
+**Returns:** `Promise\<{fee: bigint, activationFee: bigint}\>` - Fee estimate in sun and the portion used for account activation
 
 **Throws:** Error if no TronWeb provider is configured
 
 ##### `quoteTransfer(options)`
-Estimates the energy and bandwidth cost for a TRC20 transfer.
+Estimates the TRC20 token transfer cost from current chain parameters, account resources, contract energy use, and bandwidth use.
 
 **Parameters:**
 - `options` (TransferOptions): Transfer options
 
-**Returns:** `Promise\<{fee: number}\>` - Fee estimate in sun
+**Returns:** `Promise\<{fee: bigint}\>` - Fee estimate in sun
 
 **Throws:** Error if no TronWeb provider is configured
 
@@ -495,8 +507,9 @@ Returns a transaction's receipt if it has been processed.
 
 ```typescript
 interface TronWalletConfig {
-  provider?: string | TronWeb;        // Tron RPC URL or TronWeb instance
-  transferMaxFee?: number;            // Maximum fee in sun
+  provider?: string | TronWeb | Array<string | TronWeb>; // RPC, TronWeb, or failover list
+  retries?: number;                   // Additional failover attempts, default 3
+  transferMaxFee?: number | bigint;   // Maximum TRC20 transfer fee in sun
 }
 ```
 
@@ -505,7 +518,7 @@ interface TronWalletConfig {
 ```typescript
 interface TronTransaction {
   to: string;                         // Recipient Tron address
-  value: number;                      // Amount in sun (1 TRX = 1,000,000 sun)
+  value: number | bigint;             // Amount in sun (1 TRX = 1,000,000 sun)
 }
 ```
 
@@ -524,7 +537,15 @@ interface TransferOptions {
 ```typescript
 interface TransactionResult {
   hash: string;                       // Transaction hash
-  fee: number;                        // Fee paid in sun
+  fee: bigint;                        // Fee paid in sun
+}
+```
+
+### TronActivationFee
+
+```typescript
+interface TronActivationFee {
+  activationFee: bigint;              // Portion of the fee used for account activation
 }
 ```
 
@@ -533,7 +554,7 @@ interface TransactionResult {
 ```typescript
 interface TransferResult {
   hash: string;                       // Transaction hash
-  fee: number;                        // Fee paid in sun
+  fee: bigint;                        // Fee paid in sun
 }
 ```
 
@@ -542,11 +563,11 @@ interface TransferResult {
 ```typescript
 // Tron-specific constants
 const BIP_44_TRON_DERIVATION_PATH_PREFIX: string = "m/44'/195'";
-const BANDWIDTH_PRICE: number = 1_000;
+const BANDWIDTH_PRICE: bigint = 1_000n;
 
 // Fee rate multipliers
-const FEE_RATE_NORMAL_MULTIPLIER: number = 1.1;
-const FEE_RATE_FAST_MULTIPLIER: number = 2.0;
+const FEE_RATE_NORMAL_MULTIPLIER: bigint = 110n;
+const FEE_RATE_FAST_MULTIPLIER: bigint = 200n;
 ```
 
 <Cards>
