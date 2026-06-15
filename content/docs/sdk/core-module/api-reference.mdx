@@ -169,6 +169,8 @@ Registers one or more local transaction policies on the WDK instance.
 
 Policies are evaluated before wrapped account and protocol write methods execute. Matching `DENY` rules throw `PolicyViolationError`; matching `ALLOW` rules permit the call. Governed runtime accounts also expose `account.simulate.<method>(...)` mirrors so you can dry-run policy evaluation without sending, signing, or broadcasting.
 
+For policy scoping, default-deny behavior, account-level overrides, and protocol simulation examples, see [Transaction Policies](/sdk/core-module/guides/transaction-policies).
+
 **Parameters:**
 - `policies` (`Policy | Policy[]`): A single policy or an array of policies to register.
 - `options` (`RegisterPolicyOptions`, optional): Engine-level settings. `conditionTimeoutMs` defaults to `30000` milliseconds; the most recent value wins.
@@ -189,6 +191,13 @@ const wdk = new WDK(seedPhrase)
     scope: 'project',
     wallet: 'ethereum',
     rules: [
+      {
+        name: 'allow-normal-operations',
+        operation: '*',
+        action: 'ALLOW',
+        reason: 'Default local approval',
+        conditions: [() => true]
+      },
       {
         name: 'block-large-send',
         operation: 'sendTransaction',
@@ -228,6 +237,8 @@ try {
 ```
 
 Supported `PolicyOperation` values are `sendTransaction`, `signTransaction`, `transfer`, `approve`, `sign`, `signTypedData`, `signAuthorization`, `delegate`, `revokeDelegation`, `swap`, `bridge`, `supply`, `withdraw`, `borrow`, `repay`, `buy`, `sell`, `swidge`, and `*`.
+
+Use `sign` for message-style signing in this release. `signMessage` and `signHash` are not valid policy operation names.
 
 ##### `getAccount(blockchain, index?)`
 Returns a wallet account for a specific blockchain and index using BIP-44 derivation.

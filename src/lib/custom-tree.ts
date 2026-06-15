@@ -68,6 +68,7 @@ export const customTree: Node[] = [
           { name: 'Register Wallets', url: '/sdk/core-module/guides/wallet-registration', type: 'page' },
           { name: 'Account Management', url: '/sdk/core-module/guides/account-management', type: 'page' },
           { name: 'Send Transactions', url: '/sdk/core-module/guides/transactions', type: 'page' },
+          { name: 'Transaction Policies', url: '/sdk/core-module/guides/transaction-policies', type: 'page' },
           { name: 'Protocol Integration', url: '/sdk/core-module/guides/protocol-integration', type: 'page' },
           { name: 'Middleware', url: '/sdk/core-module/guides/middleware', type: 'page' },
           { name: 'Error Handling', url: '/sdk/core-module/guides/error-handling', type: 'page' },
@@ -518,6 +519,20 @@ export const customTree: Node[] = [
     children: [
       { name: 'Configuration', url: '/tools/price-rates/configuration', type: 'page', icon: resolveIcon('Settings') },
       { name: 'API Reference', url: '/tools/price-rates/api-reference', type: 'page', icon: resolveIcon('Code') },
+    ],
+  },
+  {
+    name: 'Asset Registry',
+    type: 'folder',
+    icon: resolveIcon('Tags'),
+    index: {
+      name: 'Asset Registry',
+      url: '/tools/asset-registry',
+      type: 'page',
+    },
+    children: [
+      { name: 'Configuration', url: '/tools/asset-registry/configuration', type: 'page', icon: resolveIcon('Settings') },
+      { name: 'API Reference', url: '/tools/asset-registry/api-reference', type: 'page', icon: resolveIcon('Code') },
     ],
   },
   { name: 'Create WDK Module', url: '/tools/create-wdk-module', type: 'page', icon: resolveIcon('Hammer') },

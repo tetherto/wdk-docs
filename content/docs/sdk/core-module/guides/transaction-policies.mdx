@@ -1,0 +1,221 @@
+---
+title: Transaction Policies
+description: Register local ALLOW and DENY rules for WDK account and protocol write methods.
+docType: how-to
+schemaType: TechArticle
+---
+
+Local transaction policies let a WDK app evaluate rules before account or protocol write methods execute. Use them for local approval limits, account-level exceptions, preflight checks, or UI flows that need a dry-run verdict before calling a wallet method.
+
+<Callout type="warn">
+Transaction policies are local pre-execution controls. They do not enforce rules on-chain, replace smart-contract permissions, or validate live token metadata, balances, prices, or contract state.
+</Callout>
+
+## Register Policies
+
+Register wallets before policies. `wdk.registerPolicy()` validates wallet bindings synchronously and throws `PolicyConfigurationError` if a policy references a wallet identifier that has not been registered.
+
+The example below allows normal operations, then denies ETH sends above a local approval limit. The wildcard `ALLOW` rule is intentional: once a policy governs an account, wrapped write operations are default-denied unless a matching `ALLOW` permits them.
+
+```typescript title="Register A Local Send Limit"
+import WDK, { PolicyViolationError } from '@tetherto/wdk'
+
+const wdk = new WDK(seedPhrase)
+  .registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
+  .registerPolicy({
+    id: 'eth-local-send-limit',
+    name: 'ETH local send limit',
+    scope: 'project',
+    wallet: 'ethereum',
+    rules: [
+      {
+        name: 'allow-normal-operations',
+        operation: '*',
+        action: 'ALLOW',
+        reason: 'Default local approval',
+        conditions: [() => true]
+      },
+      {
+        name: 'deny-large-eth-send',
+        operation: 'sendTransaction',
+        action: 'DENY',
+        reason: 'Amount exceeds the local approval limit',
+        conditions: [
+          ({ params }) => {
+            const value = (params as { value?: bigint } | null)?.value
+            return typeof value === 'bigint' && value > 1000000000000000000n
+          }
+        ]
+      }
+    ]
+  })
+
+const account = await wdk.getAccount('ethereum', 0)
+
+try {
+  await account.sendTransaction({
+    to: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+    value: 2000000000000000000n
+  })
+} catch (error) {
+  if (error instanceof PolicyViolationError) {
+    console.error(error.reason)
+  }
+}
+```
+
+## Scope Policies
+
+Policies can target a whole project, selected wallets, or selected accounts.
+
+| Scope | Required fields | Applies to |
+| --- | --- | --- |
+| `project` without `wallet` | `scope`, `rules` | All registered wallets |
+| `project` with `wallet` | `scope`, `wallet`, `rules` | One wallet identifier or a list of wallet identifiers |
+| `account` | `scope`, `wallet`, `accounts`, `rules` | Specific account indices or derivation paths for one wallet |
+
+Account entries can be non-negative account indices or derivation-path strings. Index entries match accounts returned by `getAccount(wallet, index)`. Path entries match accounts returned by path-based retrieval.
+
+## Evaluation Rules
+
+- Account-scoped rules are evaluated before project-scoped rules.
+- `DENY` wins when both `ALLOW` and `DENY` rules match.
+- A governed account is default-denied for wrapped write methods that do not match an `ALLOW` rule.
+- `override_broader_scope: true` is only valid on account-scoped `ALLOW` rules, and it lets that account-level allow rule bypass broader project policies when it matches.
+
+```typescript title="Account-Level Exception"
+wdk.registerPolicy([
+  {
+    id: 'project-send-limit',
+    name: 'Project send limit',
+    scope: 'project',
+    wallet: 'ethereum',
+    rules: [
+      {
+        name: 'allow-normal-operations',
+        operation: '*',
+        action: 'ALLOW',
+        conditions: [() => true]
+      },
+      {
+        name: 'deny-large-send',
+        operation: 'sendTransaction',
+        action: 'DENY',
+        reason: 'Project send limit exceeded',
+        conditions: [
+          ({ params }) => {
+            const value = (params as { value?: bigint } | null)?.value
+            return typeof value === 'bigint' && value > 1000000000000000000n
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'treasury-account-override',
+    name: 'Treasury account override',
+    scope: 'account',
+    wallet: 'ethereum',
+    accounts: [0],
+    rules: [
+      {
+        name: 'allow-treasury-sends',
+        operation: 'sendTransaction',
+        action: 'ALLOW',
+        override_broader_scope: true,
+        reason: 'Treasury account has a higher local approval limit',
+        conditions: [
+          ({ params }) => {
+            const value = (params as { value?: bigint } | null)?.value
+            return typeof value === 'bigint' && value <= 10000000000000000000n
+          }
+        ]
+      }
+    ]
+  }
+])
+```
+
+## Supported Operations
+
+Use these operation names in `PolicyRule.operation`:
+
+| Operation | Method family |
+| --- | --- |
+| `sendTransaction` | Native transaction send |
+| `signTransaction` | Transaction signing without broadcast |
+| `transfer` | Token transfer methods |
+| `approve` | Token allowance approvals |
+| `sign` | Message or payload signing |
+| `signTypedData` | EIP-712 style typed-data signing |
+| `signAuthorization` | Authorization signing |
+| `delegate` | Delegation writes |
+| `revokeDelegation` | Delegation revocation |
+| `swap` | Swap protocol execution |
+| `bridge` | Bridge protocol execution |
+| `supply`, `withdraw`, `borrow`, `repay` | Lending protocol writes |
+| `buy`, `sell` | Fiat protocol writes |
+| `swidge` | Combined swap and bridge route execution |
+| `*` | Wildcard rule for all wrapped write operations |
+
+Use `sign` for message-style signing in this release. `signMessage` and `signHash` are not valid `PolicyOperation` values.
+
+## Inspect Policy Context
+
+Conditions receive a frozen `PolicyContext`:
+
+| Field | Description |
+| --- | --- |
+| `operation` | The operation being evaluated |
+| `wallet` | The wallet identifier bound to the account |
+| `account` | Read-only account view exposed by the wallet module |
+| `params` | The first argument passed to the wrapped method |
+| `args` | All arguments passed to the wrapped method |
+
+Conditions can be synchronous or asynchronous. `conditionTimeoutMs` defaults to `30000` milliseconds and can be set through `registerPolicy(policies, options)`. If a `DENY` condition throws or times out, WDK blocks the call. If an `ALLOW` condition throws or times out, WDK treats that allow rule as unmatched.
+
+## Simulate Before Execution
+
+When a policy applies to an account, WDK adds runtime `simulate` mirrors for wrapped account and protocol write methods. Simulation returns the policy verdict and does not call the underlying wallet or protocol method.
+
+```typescript title="Dry-Run A Transaction Policy"
+const account = await wdk.getAccount('ethereum', 0)
+
+const result = await (account as any).simulate.sendTransaction({
+  to: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+  value: 2000000000000000000n
+})
+
+console.log(result.decision, result.reason, result.trace)
+```
+
+Simulation results include `decision`, `policy_id`, `matched_rule`, `reason`, and `trace`. Protocol write methods are also mirrored, for example `account.simulate.getSwapProtocol(label).swap(...)`.
+
+<Callout type="info">
+In this beta, `simulate` is added at runtime but is not typed on the account return type. Use a local helper interface or a narrow `as any` cast at the call site.
+</Callout>
+
+## Handle Errors
+
+`PolicyConfigurationError` means WDK rejected the policy setup. Common causes include invalid scopes, actions, operation names, condition functions, timeout options, missing account bindings, or wallet identifiers that have not been registered.
+
+`PolicyViolationError` means an enforced write call matched a blocking policy rule. Catch it around the write call and surface the `reason` to the user or approval workflow.
+
+## Runtime Caveats
+
+- Policies wrap the WDK account/protocol proxy surface. Private fields, underscore methods, protocol internals, or nested calls made inside a module can bypass local policy evaluation.
+- Quote and read methods are not wrapped. Policies apply to write methods such as sends, signs, swaps, bridges, lending writes, fiat writes, and swidge execution.
+- Wallet accounts must expose a read-only account view when a policy applies, otherwise `getAccount()` fails with `PolicyConfigurationError`.
+- Avoid relying on engine-managed durable policy state in this beta. Use explicit application state or closures for local checks that need state.
+
+## Next Steps
+
+- Review [`registerPolicy()`](/sdk/core-module/api-reference#registerpolicypolicies-options) in the API reference.
+- Use [Send Transactions](/sdk/core-module/guides/transactions) for base account send flows.
+- Use [Protocol Integration](/sdk/core-module/guides/protocol-integration) for swap, bridge, lending, fiat, and swidge method setup.
+
+***
+
+## Need Help?
+
+<SupportCards />
