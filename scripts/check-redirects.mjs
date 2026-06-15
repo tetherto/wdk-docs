@@ -31,8 +31,13 @@ const expectedRedirects = [
     status: '301',
   },
   {
-    source: '/sdk/lending-aave-evm/',
+    source: '/sdk/lending-aave-evm',
     target: '/sdk/lending-modules/lending-aave-evm',
+    status: '301',
+  },
+  {
+    source: '/sdk/lending-aave-evm/',
+    target: '/sdk/lending-modules/lending-aave-evm/',
     status: '301',
   },
   {
@@ -168,18 +173,18 @@ function validateModuleRedirectShape(redirects, failures) {
 
   for (const { source, target } of moduleRedirects) {
     const bareRule = bySource.get(source);
-    if (bareRule) {
+    if (!bareRule || bareRule.target !== target || bareRule.status !== '301') {
       failures.push({
-        line: bareRule.line,
-        reason: `Module alias "${source}" should use only the trailing-slash and splat rules.`,
+        line: bareRule?.line ?? 0,
+        reason: `Missing module landing redirect: ${source} -> ${target} 301`,
       });
     }
 
     const indexRule = bySource.get(`${source}/`);
-    if (!indexRule || indexRule.target !== target || indexRule.status !== '301') {
+    if (indexRule) {
       failures.push({
-        line: indexRule?.line ?? 0,
-        reason: `Missing module landing redirect: ${source}/ -> ${target} 301`,
+        line: indexRule.line,
+        reason: `Module alias "${source}/" should be covered by the splat rule.`,
       });
     }
 
