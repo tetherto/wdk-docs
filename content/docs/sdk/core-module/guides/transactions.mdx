@@ -81,6 +81,59 @@ console.log('Signed transaction:', signedTransaction)
 `signTransaction()` only signs. Use `sendTransaction()` when you want WDK to sign, broadcast, and return the transaction hash.
 </Callout>
 
+## Apply Local Transaction Policies
+
+Use [`wdk.registerPolicy()`](/sdk/core-module/api-reference#registerpolicypolicies-options) to evaluate local ALLOW and DENY rules before account or protocol write methods run. Policies can target a full wallet identifier or selected account indices and derivation paths.
+
+```typescript title="Deny Large ETH Sends"
+import { PolicyViolationError } from '@tetherto/wdk'
+
+wdk.registerPolicy({
+  id: 'large-eth-send-limit',
+  name: 'Large ETH send limit',
+  scope: 'project',
+  wallet: 'ethereum',
+  rules: [
+    {
+      name: 'deny-large-send',
+      operation: 'sendTransaction',
+      action: 'DENY',
+      reason: 'Amount exceeds the local approval limit',
+      conditions: [
+        ({ params }) => {
+          const value = (params as { value?: bigint } | null)?.value
+          return typeof value === 'bigint' && value > 1000000000000000000n
+        }
+      ]
+    }
+  ]
+})
+
+const ethAccount = await wdk.getAccount('ethereum', 0)
+
+const preview = await (ethAccount as any).simulate.sendTransaction({
+  to: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+  value: 2000000000000000000n
+})
+
+if (preview.decision === 'DENY') {
+  console.warn(preview.reason)
+}
+
+try {
+  await ethAccount.sendTransaction({
+    to: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+    value: 2000000000000000000n
+  })
+} catch (error) {
+  if (error instanceof PolicyViolationError) {
+    console.error(error.reason)
+  }
+}
+```
+
+`simulate` methods return a structured verdict and do not call the underlying wallet or protocol method. The enforced write call throws `PolicyViolationError` when a matching DENY rule blocks execution.
+
 ## Handling Responses
 
 The `sendTransaction` method returns a [transaction result object](/sdk/core-module/api-reference). The most important field is typically `hash`, which represents the transaction ID on the blockchain. You can use this hash to track the status of your payment on a block explorer.

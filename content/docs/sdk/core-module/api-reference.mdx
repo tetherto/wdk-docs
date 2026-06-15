@@ -10,7 +10,7 @@ icon: Code
 
 | Class | Description | Methods |
 |-------|-------------|---------|
-| [WDK](#wdk) | Main class for managing wallets across multiple blockchains. Orchestrates wallet managers and protocols. | [Constructor](#constructor), [Methods](#methods) |
+| [WDK](#wdk) | Main class for managing wallets across multiple blockchains. Orchestrates wallet managers, protocols, middleware, and local transaction policies. | [Constructor](#constructor), [Methods](#methods) |
 | [IWalletAccount](#iwalletaccount) | Base writable wallet account interface from `@tetherto/wdk-wallet`. | [Methods](#methods-1) |
 | [IWalletAccountWithProtocols](#iwalletaccountwithprotocols) | Extended wallet account interface that supports protocol registration and access. Extends `IWalletAccount`. | [Methods](#methods-2) |
 
@@ -46,9 +46,10 @@ const wdk2 = new WDK(seedBytes)
 | `registerWallet(blockchain, wallet, config)` | Registers a new wallet manager for a blockchain | `WDK` | If a wallet is already registered for that blockchain |
 | `registerProtocol(blockchain, label, protocol, config)` | Registers a protocol globally for a blockchain | `WDK` | - |
 | `registerMiddleware(blockchain, middleware)` | Registers middleware for account decoration | `WDK` | - |
+| `registerPolicy(policies, options?)` | Registers local transaction policies for wallet account and protocol write methods | `WDK` | If policy configuration is invalid |
 | `getAccount(blockchain, index?)` | Returns a wallet account for a blockchain and index | `Promise<IWalletAccountWithProtocols>` | If wallet not registered |
 | `getAccountByPath(blockchain, path)` | Returns a wallet account for a blockchain and derivation path | `Promise<IWalletAccountWithProtocols>` | If wallet not registered |
-| `getFeeRates()` | Returns current fee rates | `Promise<FeeRates>` | - |
+| `getFeeRates(blockchain)` | Returns current fee rates for a registered blockchain | `Promise<FeeRates>` | If wallet not registered |
 | `dispose(blockchains?)` | Disposes all registered wallets, or only the named blockchains, and clears their sensitive data | `void` | - |
 
 ##### `registerWallet(blockchain, wallet, config)`
@@ -62,7 +63,7 @@ Registers a new wallet manager for a specific blockchain.
 - `wallet` (W): The wallet manager class
 - `config` (`ConstructorParameters<W>[1]`): The configuration object for the wallet
 
-**Returns:** `WDK` - The wdk manager instance (supports method chaining)
+**Returns:** `WDK` - The WDK instance (supports method chaining)
 
 **Throws:** Error if a wallet is already registered for the same blockchain. Call `dispose([blockchain])` before registering a replacement wallet for that blockchain.
 
@@ -105,7 +106,7 @@ For swidge integrations, pass a concrete provider class that extends `SwidgeProt
 - `protocol` (P): The protocol class
 - `config` (`ConstructorParameters<P>[1]`): The protocol configuration
 
-**Returns:** `WDK` - The wdk manager instance (supports method chaining)
+**Returns:** `WDK` - The WDK instance (supports method chaining)
 
 **Example:**
 ```javascript title="Register Protocols"
@@ -136,7 +137,7 @@ Registers middleware for account decoration and enhanced functionality.
 - `blockchain` (string): The name of the blockchain
 - `middleware` (`<A extends IWalletAccount>(account: A) => Promise<A | void>`): Middleware function called when deriving accounts
 
-**Returns:** `WDK` - The wdk manager instance (supports method chaining)
+**Returns:** `WDK` - The WDK instance (supports method chaining)
 
 **Example:**
 ```javascript title="Register Middleware"
@@ -163,6 +164,71 @@ const wdk2 = new WDK(seedPhrase)
   })
 ```
 
+##### `registerPolicy(policies, options?)`
+Registers one or more local transaction policies on the WDK instance.
+
+Policies are evaluated before wrapped account and protocol write methods execute. Matching `DENY` rules throw `PolicyViolationError`; matching `ALLOW` rules permit the call. Governed runtime accounts also expose `account.simulate.<method>(...)` mirrors so you can dry-run policy evaluation without sending, signing, or broadcasting.
+
+**Parameters:**
+- `policies` (`Policy | Policy[]`): A single policy or an array of policies to register.
+- `options` (`RegisterPolicyOptions`, optional): Engine-level settings. `conditionTimeoutMs` defaults to `30000` milliseconds; the most recent value wins.
+
+**Returns:** `WDK` - The WDK instance (supports method chaining)
+
+**Throws:** `PolicyConfigurationError` if a policy or option fails validation, if an account-scoped policy omits its account binding, or if a policy references a wallet identifier that has not been registered.
+
+**Example:**
+```typescript title="Register A Send Policy"
+import WDK, { PolicyViolationError } from '@tetherto/wdk'
+
+const wdk = new WDK(seedPhrase)
+  .registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
+  .registerPolicy({
+    id: 'eth-send-limit',
+    name: 'ETH send limit',
+    scope: 'project',
+    wallet: 'ethereum',
+    rules: [
+      {
+        name: 'block-large-send',
+        operation: 'sendTransaction',
+        action: 'DENY',
+        reason: 'Transaction value exceeds local policy',
+        conditions: [
+          ({ params }) => {
+            const value = (params as { value?: bigint } | null)?.value
+            return typeof value === 'bigint' && value > 1000000000000000000n
+          }
+        ]
+      }
+    ]
+  })
+
+const account = await wdk.getAccount('ethereum', 0)
+
+const simulation = await (account as any).simulate.sendTransaction({
+  to: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+  value: 2000000000000000000n
+})
+
+if (simulation.decision === 'DENY') {
+  console.warn(simulation.reason)
+}
+
+try {
+  await account.sendTransaction({
+    to: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+    value: 2000000000000000000n
+  })
+} catch (error) {
+  if (error instanceof PolicyViolationError) {
+    console.error(error.reason)
+  }
+}
+```
+
+Supported `PolicyOperation` values are `sendTransaction`, `signTransaction`, `transfer`, `approve`, `sign`, `signTypedData`, `signAuthorization`, `delegate`, `revokeDelegation`, `swap`, `bridge`, `supply`, `withdraw`, `borrow`, `repay`, `buy`, `sell`, `swidge`, and `*`.
+
 ##### `getAccount(blockchain, index?)`
 Returns a wallet account for a specific blockchain and index using BIP-44 derivation.
 
@@ -170,9 +236,9 @@ Returns a wallet account for a specific blockchain and index using BIP-44 deriva
 - `blockchain` (string): The name of the blockchain (e.g., "ethereum")
 - `index` (number, optional): The index of the account to get (default: 0)
 
-**Returns:** `Promise<IWalletAccountWithProtocols>` - The wallet account with protocol support
+**Returns:** `Promise<IWalletAccountWithProtocols>` - The wallet account with protocol support. When a registered policy targets the account, the returned runtime account is policy-enforced and exposes matching `simulate` helpers.
 
-**Throws:** Error if no wallet has been registered for the given blockchain
+**Throws:** Error if no wallet has been registered for the given blockchain. Throws `PolicyConfigurationError` if a registered policy applies but the wallet account does not expose a read-only account view.
 
 **Example:**
 ```javascript title="Get Account"
@@ -200,9 +266,9 @@ Returns a wallet account for a specific blockchain and BIP-44 derivation path.
 - `blockchain` (string): The name of the blockchain (e.g., "ethereum")
 - `path` (string): The derivation path (e.g., "0'/0/0")
 
-**Returns:** `Promise<IWalletAccountWithProtocols>` - The wallet account with protocol support
+**Returns:** `Promise<IWalletAccountWithProtocols>` - The wallet account with protocol support. When a registered policy targets the account, the returned runtime account is policy-enforced and exposes matching `simulate` helpers.
 
-**Throws:** Error if no wallet has been registered for the given blockchain
+**Throws:** Error if no wallet has been registered for the given blockchain. Throws `PolicyConfigurationError` if a registered policy applies but the wallet account does not expose a read-only account view.
 
 **Example:**
 ```javascript title="Get Account by Path"
@@ -213,14 +279,19 @@ const account = await wdk.getAccountByPath('ethereum', "0'/0/1")
 const customAccount = await wdk.getAccountByPath('ton', "1'/2/3")
 ```
 
-##### `getFeeRates()`
-Returns current fee rates for all registered blockchains.
+##### `getFeeRates(blockchain)`
+Returns current fee rates for a registered blockchain.
+
+**Parameters:**
+- `blockchain` (string): The blockchain identifier passed to `registerWallet()`
 
 **Returns:** `Promise<FeeRates>` - The fee rates in base units
 
+**Throws:** Error if no wallet has been registered for the given blockchain.
+
 **Example:**
 ```javascript title="Get Fee Rates"
-const feeRates = await wdk.getFeeRates()
+const feeRates = await wdk.getFeeRates('ethereum')
 console.log('Fee rates:', feeRates)
 ```
 
@@ -244,7 +315,7 @@ wdk.dispose(['ethereum'])
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getRandomSeedPhrase(wordCount?)` | Returns a random BIP-39 seed phrase (12 or 24 words) | `string` |
-| `isValidSeedPhrase(seedPhrase)` | Checks if a seed phrase is valid | `boolean` |
+| `isValidSeed(seed)` | Checks if a seed phrase or seed bytes value is valid | `boolean` |
 
 ##### `getRandomSeedPhrase(wordCount?)`
 Returns a random BIP-39 seed phrase. Supports both 12-word (128-bit entropy) and 24-word (256-bit entropy) seed phrases.
@@ -267,20 +338,20 @@ console.log('Generated 24-word seed:', seedPhrase24)
 // Output: "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon art"
 ```
 
-##### `isValidSeedPhrase(seedPhrase)`
-Checks if a seed phrase is valid according to BIP-39 standards.
+##### `isValidSeed(seed)`
+Checks if a seed phrase or seed bytes value is valid.
 
 **Parameters:**
-- `seedPhrase` (string): The seed phrase to validate
+- `seed` (string | Uint8Array): The seed phrase or seed bytes to validate
 
-**Returns:** `boolean` - True if the seed phrase is valid
+**Returns:** `boolean` - True if the seed is valid
 
 **Example:**
-```javascript title="Validate Seed Phrase"
-const isValid = WDK.isValidSeedPhrase('abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about')
+```javascript title="Validate Seed"
+const isValid = WDK.isValidSeed('abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about')
 console.log('Seed phrase valid:', isValid) // true
 
-const isInvalid = WDK.isValidSeedPhrase('invalid seed phrase')
+const isInvalid = WDK.isValidSeed('invalid seed phrase')
 console.log('Seed phrase valid:', isInvalid) // false
 ```
 
@@ -588,6 +659,70 @@ type MiddlewareFunction = <A extends IWalletAccount>(
   account: A
 ) => Promise<A | void>;
 ```
+
+### Policy Types
+
+```typescript title="Types: Policy Engine"
+type PolicyAction = 'ALLOW' | 'DENY'
+type PolicyScope = 'project' | 'account'
+
+type PolicyOperation =
+  | 'sendTransaction'
+  | 'signTransaction'
+  | 'transfer'
+  | 'approve'
+  | 'sign'
+  | 'signTypedData'
+  | 'signAuthorization'
+  | 'delegate'
+  | 'revokeDelegation'
+  | 'swap'
+  | 'bridge'
+  | 'supply'
+  | 'withdraw'
+  | 'borrow'
+  | 'repay'
+  | 'buy'
+  | 'sell'
+  | 'swidge'
+  | '*'
+
+type PolicyCondition = (context: PolicyContext) => boolean | Promise<boolean>
+
+interface PolicyContext {
+  operation: PolicyOperation
+  wallet: string
+  account: IWalletAccountReadOnly
+  params: unknown
+  args: readonly unknown[]
+}
+
+interface PolicyRule {
+  name: string
+  operation: PolicyOperation | PolicyOperation[]
+  action: PolicyAction
+  conditions: PolicyCondition[]
+  reason?: string
+  override_broader_scope?: boolean
+}
+
+interface Policy {
+  id: string
+  name: string
+  scope: PolicyScope
+  wallet?: string | string[]
+  accounts?: Array<string | number>
+  rules: PolicyRule[]
+}
+
+interface RegisterPolicyOptions {
+  conditionTimeoutMs?: number
+}
+```
+
+`scope: 'project'` can apply across all registered wallets or only the wallets named in `wallet`. `scope: 'account'` requires both `wallet` and `accounts`; account entries can be a derivation path string or an account index number.
+
+Simulation results returned by the runtime `account.simulate.<method>(...)` mirrors include `decision`, `policy_id`, `matched_rule`, `reason`, and a `trace` array that records evaluated rules.
 
 ### Protocol Types
 

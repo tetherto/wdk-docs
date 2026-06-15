@@ -1,6 +1,6 @@
 ---
 title: WDK Utils API Reference
-description: Validation, BOLT11, and EIP-681 APIs for @tetherto/wdk-utils
+description: Validation, BIP-21, BOLT11, and EIP-681 APIs for @tetherto/wdk-utils
 docType: reference
 schemaType: APIReference
 ---
@@ -295,6 +295,69 @@ import { resolveUmaUsername } from '@tetherto/wdk-utils'
 
 const result = resolveUmaUsername('$alice@wallet.com')
 ```
+
+### BIP-21 Bitcoin Payment URI Helpers
+
+| Function | Description | Returns |
+| --- | --- | --- |
+| `isBip21Request(input)` | Detect whether a string has the shape of a Bitcoin payment URI. | `boolean` |
+| `parseBip21Request(input)` | Parse a supported `bitcoin:` URI into structured payment details. | `Bip21ParseResult` |
+| `encodeBip21Request(request)` | Encode a validated request object into a `bitcoin:` URI. | `string` |
+
+#### `isBip21Request(input)`
+
+Detect whether a string looks like a BIP-21 Bitcoin payment URI before attempting a full parse. This is a syntactic check only; use `parseBip21Request()` when you need address and parameter validation.
+
+```javascript title="Detect A BIP-21 Request"
+import { isBip21Request } from '@tetherto/wdk-utils'
+
+const looksLikeRequest = isBip21Request(
+  'bitcoin:1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH?amount=0.001&label=Coffee'
+)
+```
+
+#### `parseBip21Request(input)`
+
+Parse a BIP-21 Bitcoin payment URI. The helper validates the Bitcoin address, accepts optional `amount`, `label`, and `message` parameters, rejects unsupported `req-` parameters, and returns machine-readable failure reasons.
+
+```javascript title="Parse A BIP-21 Request"
+import { parseBip21Request } from '@tetherto/wdk-utils'
+
+const result = parseBip21Request(
+  'bitcoin:1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH?amount=0.001&label=Coffee&message=Thanks'
+)
+```
+
+`Bip21ParseResult` is one of these shapes:
+
+- `{ success: true, type: 'bip21', value: Bip21Request }`
+- `{ success: false, reason: 'INVALID_FORMAT' | 'INVALID_ADDRESS' | 'INVALID_AMOUNT' | 'UNSUPPORTED_REQUIRED_PARAM' }`
+
+`Bip21Request` contains:
+
+- `address: string`
+- `amount?: string`
+- `label?: string`
+- `message?: string`
+
+`amount` is a decimal BTC string with up to eight decimal places and a maximum value of `21000000`.
+
+#### `encodeBip21Request(request)`
+
+Encode a BIP-21 Bitcoin payment URI from a request object. The helper validates the Bitcoin address and amount before returning the URI.
+
+```javascript title="Encode A BIP-21 Request"
+import { encodeBip21Request } from '@tetherto/wdk-utils'
+
+const uri = encodeBip21Request({
+  address: '1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH',
+  amount: '0.001',
+  label: 'Coffee',
+  message: 'Thanks'
+})
+```
+
+`encodeBip21Request()` throws `INVALID_REQUEST`, `INVALID_ADDRESS`, or `INVALID_AMOUNT` when the request object cannot be encoded.
 
 ### EIP-681 Request Parsing Helpers
 
