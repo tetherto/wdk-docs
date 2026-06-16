@@ -19,6 +19,7 @@ export const customTree: Node[] = [
   },
   { name: 'Node.js & Bare Quickstart', url: '/start-building/nodejs-bare-quickstart', type: 'page', icon: resolveIcon('Terminal') },
   { name: 'React Native Quickstart', url: '/start-building/react-native-quickstart', type: 'page', icon: resolveIcon('Smartphone') },
+  { name: 'Build with AI', url: '/start-building/build-with-ai', type: 'page', icon: resolveIcon('Bot') },
   {
     type: 'separator',
     name: 'AI',
