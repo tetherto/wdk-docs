@@ -1,0 +1,119 @@
+---
+title: Handle Errors
+description: Handle EIP-7702 gasless wallet configuration, paymaster, fee-limit, and receipt states.
+docType: how-to
+---
+
+This guide explains the main error cases exposed by `@tetherto/wdk-wallet-evm-7702-gasless`.
+
+## Configuration Errors
+
+Account creation and per-call config overrides can throw `ConfigurationError` when required fields are missing. The wallet manager stores the config, then account creation validates it before the account is used.
+
+```javascript title="Handle configuration errors"
+import WalletManagerEvm7702Gasless, { ConfigurationError } from '@tetherto/wdk-wallet-evm-7702-gasless'
+
+try {
+  const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
+    provider: 'https://rpc.mevblocker.io/fast',
+    bundlerUrl: 'https://api.pimlico.io/v2/1/rpc?apikey=YOUR_KEY',
+    isSponsored: true
+  })
+
+  const account = await wallet.getAccount(0)
+  console.log(await account.getAddress())
+} catch (error) {
+  if (error instanceof ConfigurationError) {
+    console.error('Invalid wallet configuration:', error.message)
+  }
+}
+```
+
+Common configuration errors include missing `provider`, `bundlerUrl`, `delegationAddress`, or `paymasterToken` when the account is not sponsored.
+
+## Paymaster Token Errors
+
+Token paymaster sends can fail when the account does not have enough paymaster-token balance to repay the paymaster.
+
+```javascript title="Handle paymaster balance errors"
+try {
+  const result = await account.sendTransaction({
+    to: '0x742C4265F5Ba4F8E0842e2b9EfE66302F7a13B6F',
+    value: 0n,
+    data: '0x'
+  })
+} catch (error) {
+  if (error.message.includes('not enough funds')) {
+    console.error('Insufficient paymaster token balance')
+  } else {
+    console.error('Transaction failed:', error.message)
+  }
+}
+```
+
+If a generic ERC-7677 paymaster does not support the configured token, the operation throws an error that includes `Token <address> is not supported by the paymaster.`
+
+## Paymaster Address Mismatch
+
+When `paymasterAddress` is configured, the module checks it against the paymaster returned by the RPC. A mismatch throws `ConfigurationError`.
+
+```javascript title="Paymaster address mismatch"
+try {
+  await account.quoteSendTransaction({
+    to: '0x742C4265F5Ba4F8E0842e2b9EfE66302F7a13B6F',
+    value: 0n,
+    data: '0x'
+  })
+} catch (error) {
+  if (error instanceof ConfigurationError && error.message.includes('paymasterAddress mismatch')) {
+    console.error('Unexpected paymaster address returned by RPC')
+  }
+}
+```
+
+## Transfer Fee Cap
+
+`transfer()` throws when paymaster-token fee estimation meets or exceeds `transferMaxFee`.
+
+```javascript title="Handle transfer fee cap"
+try {
+  await account.transfer({
+    token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    recipient: '0x742C4265F5Ba4F8E0842e2b9EfE66302F7a13B6F',
+    amount: 1000000n
+  })
+} catch (error) {
+  if (error.message.includes('Exceeded maximum fee')) {
+    console.error('Transfer cancelled because the estimated fee exceeded transferMaxFee')
+  }
+}
+```
+
+## Receipt Not Included Yet
+
+Receipt methods return `null` before the UserOperation is included.
+
+```javascript title="Poll receipt"
+const txReceipt = await account.getTransactionReceipt(userOperationHash)
+
+if (txReceipt === null) {
+  console.log('UserOperation is not included yet')
+}
+```
+
+## Dispose of Sensitive State
+
+Use `dispose()` when the account is no longer needed.
+
+```javascript title="Dispose state"
+try {
+  const result = await account.transfer({
+    token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    recipient: '0x742C4265F5Ba4F8E0842e2b9EfE66302F7a13B6F',
+    amount: 1000000n
+  })
+} finally {
+  account.dispose()
+  wallet.dispose()
+}
+```

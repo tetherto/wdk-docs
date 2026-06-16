@@ -12,8 +12,12 @@ icon: Settings
 import WalletManagerTron from '@tetherto/wdk-wallet-tron'
 
 const config = {
-  provider: 'https://api.trongrid.io', // Tron RPC endpoint
-  transferMaxFee: 10000000 // Maximum fee in sun (optional)
+  provider: [
+    'https://api.trongrid.io',
+    'https://secondary-tron-rpc.example'
+  ], // Tron RPC endpoints; array enables failover
+  retries: 3, // Additional failover attempts when provider is an array
+  transferMaxFee: 10000000n // Maximum transfer fee in sun (optional)
 }
 
 const wallet = new WalletManagerTron(seedPhrase, config)
@@ -26,7 +30,7 @@ import { WalletAccountTron } from '@tetherto/wdk-wallet-tron'
 
 const accountConfig = {
   provider: 'https://api.trongrid.io',
-  transferMaxFee: 10000000 // Maximum fee in sun (optional)
+  transferMaxFee: 10000000n // Maximum transfer fee in sun (optional)
 }
 
 const account = new WalletAccountTron(seedPhrase, "0'/0/0", accountConfig)
@@ -36,28 +40,65 @@ const account = new WalletAccountTron(seedPhrase, "0'/0/0", accountConfig)
 
 ### Provider
 
-The `provider` option specifies the Tron RPC endpoint or TronWeb instance for blockchain interactions.
+The `provider` option specifies how the wallet connects to Tron. It accepts a Tron RPC endpoint URL, a TronWeb instance, or an ordered list of URLs and TronWeb instances for automatic failover.
 
-**Type:** `string | TronWeb`
+**Type:** `string | TronWeb | Array<string | TronWeb>`
+
+**Examples:**
+```javascript
+// Single RPC endpoint
+const config = {
+  provider: 'https://api.trongrid.io'
+}
+
+// TronWeb instance
+const config = {
+  provider: tronWeb
+}
+
+// Ordered failover list
+const config = {
+  provider: [
+    'https://api.trongrid.io',
+    'https://secondary-tron-rpc.example'
+  ],
+  retries: 3
+}
+```
+
+When `provider` is an array, connection errors fail over to the next provider in the list. Empty arrays throw during provider initialization. Use endpoints that serve the same Tron network.
+
+If the array contains TronWeb instances, the first instance becomes the wallet's primary client. Additional instances contribute their `fullNode`, `solidityNode`, and `eventServer` connections to the failover pool.
+
+### Retries
+
+The `retries` option controls how many additional failover attempts can happen after the initial provider call fails. It only applies when `provider` is an array.
+
+**Type:** `number` (optional)
+**Default:** `3`
 
 **Example:**
 ```javascript
 const config = {
-  provider: 'https://api.trongrid.io'
+  provider: [
+    'https://api.trongrid.io',
+    'https://secondary-tron-rpc.example'
+  ],
+  retries: 1
 }
 ```
 
 ### Transfer Max Fee
 
-The `transferMaxFee` option sets the maximum fee amount (in sun) for transfer operations. This helps prevent transactions from being sent with unexpectedly high fees.
+The `transferMaxFee` option sets the maximum fee amount (in sun) for TRC20 `transfer()` operations. This helps prevent transfers from being sent with unexpectedly high fees.
 
-**Type:** `number` (optional)  
+**Type:** `number | bigint` (optional)
 **Unit:** Sun (1 TRX = 1,000,000 Sun)
 
 **Example:**
 ```javascript
 const config = {
-  transferMaxFee: 10000000 // 10 TRX in sun
+  transferMaxFee: 10000000n // 10 TRX in sun
 }
 ```
 

@@ -3,7 +3,7 @@ title: Transfer Tokens
 description: Transfer ERC-20 tokens with gasless transactions.
 ---
 
-This guide explains how to [transfer ERC-20 tokens](#transfer-erc-20-tokens), [estimate transfer fees](#estimate-transfer-fees), and [set a maximum fee limit](#transfer-with-maximum-fee-limit).
+This guide explains how to [transfer ERC-20 tokens](#transfer-erc-20-tokens), [estimate transfer fees](#estimate-transfer-fees), [set a maximum fee limit](#transfer-with-maximum-fee-limit), and [apply UserOperation gas overrides](#transfer-with-useroperation-gas-overrides).
 
 ## Transfer ERC-20 Tokens
 
@@ -49,6 +49,31 @@ const result = await account.transfer({
 <Callout type="warn">
 If the estimated fee exceeds `transferMaxFee`, the transfer is cancelled with an "Exceeded maximum fee" error.
 </Callout>
+
+## Transfer with UserOperation Gas Overrides
+
+Use the third argument to pass UserOperation gas or EIP-1559 fee overrides through `transfer()` or `quoteTransfer()`. Set `maxFeePerGas` and `maxPriorityFeePerGas` together.
+
+```javascript title="Transfer with Gas Overrides"
+const txOverrides = {
+  callGasLimit: 90000n,
+  verificationGasLimit: 120000n,
+  maxFeePerGas: 30000000000n,
+  maxPriorityFeePerGas: 2000000000n
+}
+
+const quote = await account.quoteTransfer({
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+  amount: 1000000
+}, undefined, txOverrides)
+
+const result = await account.transfer({
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+  amount: 1000000
+}, undefined, txOverrides)
+```
 
 ## Next Steps
 

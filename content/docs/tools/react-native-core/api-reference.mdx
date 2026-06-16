@@ -14,6 +14,7 @@ schemaType: APIReference
 | [`useAddresses`](#useaddresses) | Hook | Load and query wallet addresses |
 | [`useBalance`](#usebalance) | Hook | Single asset balance with TanStack Query |
 | [`useBalancesForWallet`](#usebalancesforwallet) | Hook | Bulk balance fetch for multiple assets |
+| [`useBalancesForWallets`](#usebalancesforwallets) | Hook | Bulk balance fetch for multiple assets across account indices |
 | [`useRefreshBalance`](#userefreshbalance) | Hook | Invalidate and refetch balances |
 | [`BaseAsset`](#baseasset) | Class | Default `IAsset` implementation |
 | [`validateMnemonic`](#validatemnemonic) | Utility | Validate BIP39 mnemonic phrases |
@@ -495,6 +496,61 @@ function PortfolioScreen() {
       {balances?.map((b) => (
         <Text key={b.assetId}>
           {b.assetId}: {b.success ? b.balance : 'Error'}
+        </Text>
+      ))}
+    </View>
+  )
+}
+```
+
+---
+
+## useBalancesForWallets
+
+Hook to fetch balances for multiple assets across multiple account indices in a single TanStack Query. The hook loads addresses for every required account/network pair before fetching balances, reuses cached balance data as initial query data, and returns per-account token failures instead of failing the entire query when one account fetch fails.
+
+### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `accountIndices` | `number[]` | Account indices to fetch balances for |
+| `assetConfigs` | [`IAsset[]`](#iasset) | Array of assets to fetch for each account index |
+| `options` | [`BalanceQueryOptions`](#balancequeryoptions) & `{ concurrencyLimit?: number }` | Optional query configuration and per-account fetch concurrency. Defaults to `2` concurrent account fetches |
+
+### Returns `UseBalancesForWalletsResult`
+
+Same shape as `UseBalancesForWalletResult`; `data` is a flattened `BalanceFetchResult[]` for all requested account indices and assets.
+
+```typescript
+type UseBalancesForWalletsResult = Omit<UseQueryResult<BalanceFetchResult[], Error>, 'isLoading' | 'error'> & {
+  isLoading: boolean
+  error: Error | null
+}
+```
+
+### Example
+
+```tsx
+import { useBalancesForWallets, BaseAsset } from '@tetherto/wdk-react-native-core'
+
+const assets = [
+  new BaseAsset({ id: 'eth', network: 'ethereum', symbol: 'ETH', name: 'Ether', decimals: 18, isNative: true }),
+  new BaseAsset({ id: 'usdt-eth', network: 'ethereum', symbol: 'USDT', name: 'Tether USD', decimals: 6, isNative: false, address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' }),
+]
+
+function AccountsPortfolioScreen() {
+  const { data: balances, isLoading } = useBalancesForWallets([0, 1, 2], assets, {
+    concurrencyLimit: 2,
+    refetchInterval: 60000,
+  })
+
+  if (isLoading) return <Text>Loading balances...</Text>
+
+  return (
+    <View>
+      {balances?.map((b) => (
+        <Text key={`${b.accountIndex}-${b.assetId}`}>
+          Account {b.accountIndex} {b.assetId}: {b.success ? b.balance : 'Error'}
         </Text>
       ))}
     </View>

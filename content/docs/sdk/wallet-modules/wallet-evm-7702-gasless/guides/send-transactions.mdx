@@ -1,0 +1,87 @@
+---
+title: Send Transactions
+description: Quote and send EVM transactions through EIP-7702 gasless UserOperations.
+docType: how-to
+---
+
+This guide explains how to quote and send EVM transactions through ERC-4337 UserOperations.
+
+## Send a Transaction
+
+Use `sendTransaction(tx)` with a single transaction object or an array of transaction objects.
+
+```javascript title="Send a transaction"
+const result = await account.sendTransaction({
+  to: '0x742C4265F5Ba4F8E0842e2b9EfE66302F7a13B6F',
+  value: 1000000000000000n,
+  data: '0x'
+})
+
+console.log('UserOperation hash:', result.hash)
+console.log('Fee:', result.fee)
+```
+
+The returned `hash` is a UserOperation hash. Use `getUserOperationReceipt(hash)` or `getTransactionReceipt(hash)` to check inclusion.
+
+## Send a Batch
+
+```javascript title="Send a batch"
+const result = await account.sendTransaction([
+  {
+    to: '0x1111111111111111111111111111111111111111',
+    value: 0n,
+    data: '0x'
+  },
+  {
+    to: '0x2222222222222222222222222222222222222222',
+    value: 0n,
+    data: '0x'
+  }
+])
+```
+
+## Quote Before Sending
+
+Use `quoteSendTransaction(tx)` to estimate the fee without submitting the UserOperation.
+
+```javascript title="Quote then send"
+const tx = {
+  to: '0x742C4265F5Ba4F8E0842e2b9EfE66302F7a13B6F',
+  value: 0n,
+  data: '0x'
+}
+
+const quote = await account.quoteSendTransaction(tx)
+console.log('Estimated fee:', quote.fee)
+
+const result = await account.sendTransaction(tx)
+console.log('UserOperation hash:', result.hash)
+```
+
+For paymaster-token mode, the fee is returned in the paymaster token's base units. For sponsorship mode, the quote returns `fee: 0n`.
+
+## Quote Reuse
+
+Owned accounts cache a recently quoted transaction for up to 2 minutes. If `sendTransaction()` receives the same transaction during that window, the account can reuse the built UserOperation. If the account must include a fresh EIP-7702 authorization, it rebuilds the UserOperation before sending.
+
+## Override Fee Mode for One Send
+
+```javascript title="Per-call fee config"
+const result = await account.sendTransaction({
+  to: '0x742C4265F5Ba4F8E0842e2b9EfE66302F7a13B6F',
+  value: 0n,
+  data: '0x'
+}, {
+  isSponsored: true,
+  sponsorshipPolicyId: 'sp_special_case'
+})
+```
+
+## Read Receipts
+
+```javascript title="Read receipts"
+const userOpReceipt = await account.getUserOperationReceipt(result.hash)
+const txReceipt = await account.getTransactionReceipt(result.hash)
+```
+
+`getTransactionReceipt()` returns `null` until the bundler receipt includes an EVM transaction hash.

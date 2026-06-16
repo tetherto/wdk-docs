@@ -1,6 +1,6 @@
 ---
 title: WDK Utils Configuration
-description: Install and import validation helpers and EIP-681 parsers from @tetherto/wdk-utils
+description: Install and import validation, BIP-21, BOLT11, and EIP-681 helpers from @tetherto/wdk-utils
 ---
 
 This package does not have constructor options or runtime configuration. This page shows how to install `@tetherto/wdk-utils`, import the helpers you need, and understand the published runtime surface.
@@ -43,10 +43,41 @@ import {
 } from '@tetherto/wdk-utils'
 ```
 
+## Import BIP-21 helpers
+
+You can detect, parse, and encode Bitcoin payment URIs using the BIP-21 helpers:
+
+```javascript title="Import BIP-21 Helpers"
+import {
+  encodeBip21Request,
+  isBip21Request,
+  parseBip21Request
+} from '@tetherto/wdk-utils'
+```
+
+## Import BOLT11 helpers
+
+You can validate, decode, sign, and encode BOLT11 Lightning invoices from the package entrypoint:
+
+```javascript title="Import BOLT11 Helpers"
+import {
+  decode as decodeBolt11,
+  encode as encodeBolt11,
+  getHashToSign,
+  sign as signBolt11,
+  validateLightningInvoice
+} from '@tetherto/wdk-utils'
+```
+
 ## Runtime notes
 
 - `@tetherto/wdk-utils` exports plain functions. There is no client object to initialize.
 - The package publishes a default module entrypoint through `index.js` and a bare runtime entrypoint through `bare.js`.
+- `parseBip21Request()` accepts `bitcoin:` URIs with a validated Bitcoin address and optional `amount`, `label`, and `message` parameters.
+- `encodeBip21Request()` validates the Bitcoin address and amount before returning a `bitcoin:` URI.
+- BIP-21 amounts are decimal BTC strings with up to eight decimal places and a maximum value of `21000000`.
+- BOLT11 helpers support invoices for `bitcoin`, `testnet`, `regtest`, and `signet` networks.
+- `decode()` returns user-provided invoice descriptions when they are present. Sanitize descriptions before rendering them in HTML or storing them.
 - `decodeLnurl()` returns the decoded URL string when parsing succeeds.
 - `parseEip681Request()` currently supports transfer requests for the schemes implemented in the published runtime: `ethereum`, `pol`, `matic`, `polygon`, `arbitrum`, and `plasma`.
 - `parseEip681Request()` accepts both `uint256` and `value` query parameters for the amount field and normalizes the parsed amount into `amountSmallest`.
@@ -67,6 +98,32 @@ const btc = validateBitcoinAddress('bc1qu9yqnhc6wjj6s62s9x0shnl5l2r7gq5cudm94r7m
 const lightning = validateLightningAddress('sprycomfort92@waletofsatoshi.com')
 const tron = validateTronAddress('TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH')
 const uma = validateUmaAddress('$you@uma.money')
+```
+
+You can decode BOLT11 invoice details before presenting a payment request:
+
+```javascript title="Decode A BOLT11 Invoice"
+import { decode as decodeBolt11 } from '@tetherto/wdk-utils'
+
+const invoice = decodeBolt11(
+  'lnbc1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqypqdpl2pkx2ctnv5sxxmmwwd5kgetjypeh2ursdae8g6twvus8g6rfwvs8qun0dfjkxaq8rkx3yf5tcsyz3d73gafnh3cax9rn449d9p5uxz9ezhhypd0elx87sjle52x86fux2ypatgddc6k63n7erqz25le42c4u4ecky03ylcqca784w'
+)
+```
+
+You can parse and encode a BIP-21 Bitcoin payment request:
+
+```javascript title="Handle A BIP-21 Request"
+import { encodeBip21Request, parseBip21Request } from '@tetherto/wdk-utils'
+
+const parsed = parseBip21Request(
+  'bitcoin:1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH?amount=0.001&label=Coffee'
+)
+
+const encoded = encodeBip21Request({
+  address: '1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH',
+  amount: '0.001',
+  label: 'Coffee'
+})
 ```
 
 You can parse a request-shaped EIP-681 transfer string into structured data:

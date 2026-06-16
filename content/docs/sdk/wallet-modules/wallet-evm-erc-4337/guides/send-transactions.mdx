@@ -3,7 +3,7 @@ title: Send Transactions
 description: Send gasless transactions and estimate fees.
 ---
 
-This guide explains how to [send a gasless transaction](#send-a-gasless-transaction), [estimate fees](#estimate-fees), and [use a custom paymaster token](#send-with-custom-paymaster-token).
+This guide explains how to [send a gasless transaction](#send-a-gasless-transaction), [estimate fees](#estimate-fees), [reuse a recent quote](#reuse-a-recent-quote), and [use a custom paymaster token](#send-with-custom-paymaster-token).
 
 ## Send a Gasless Transaction
 
@@ -32,6 +32,23 @@ const quote = await account.quoteSendTransaction({
   value: 1000000000000000n
 })
 console.log('Estimated fee:', quote.fee)
+```
+
+## Reuse a Recent Quote
+
+Quotes are cached for up to 2 minutes. If you call `sendTransaction()` with the same transaction during that window, the account checks the current on-chain nonce before reusing the cached UserOperation. If the nonce has moved, it builds a fresh quote before sending.
+
+```javascript title="Quote Then Send"
+const tx = {
+  to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+  value: 1000000000000000n
+}
+
+const quote = await account.quoteSendTransaction(tx)
+console.log('Estimated fee:', quote.fee)
+
+const result = await account.sendTransaction(tx)
+console.log('Transaction hash:', result.hash)
 ```
 
 ## Send with Custom Paymaster Token

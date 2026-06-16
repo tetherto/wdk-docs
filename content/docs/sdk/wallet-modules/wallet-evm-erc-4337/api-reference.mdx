@@ -265,9 +265,9 @@ const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` | - |
 | `sendTransaction(tx, config?)` | Sends a transaction via UserOperation | `Promise\<{hash: string, fee: bigint}\>` | If fee exceeds max |
 | `quoteSendTransaction(tx, config?)` | Estimates the fee for a UserOperation | `Promise\<{fee: bigint}\>` | - |
-| `transfer(options, config?)` | Transfers ERC20 tokens via UserOperation | `Promise\<{hash: string, fee: bigint}\>` | If fee exceeds max |
-| `quoteTransfer(options, config?)` | Estimates the fee for an ERC20 transfer | `Promise\<{fee: bigint}\>` | - |
-| `approve(options)` | Approves a spender to spend ERC20 tokens | `Promise\<{hash: string, fee: bigint}\>` | - |
+| `transfer(options, config?, txOverrides?)` | Transfers ERC20 tokens via UserOperation | `Promise\<{hash: string, fee: bigint}\>` | If fee exceeds max |
+| `quoteTransfer(options, config?, txOverrides?)` | Estimates the fee for an ERC20 transfer | `Promise\<{fee: bigint}\>` | - |
+| `approve(options, txOverrides?)` | Approves a spender to spend ERC20 tokens | `Promise\<{hash: string, fee: bigint}\>` | - |
 | `getBalance()` | Returns the native token balance (in wei) | `Promise\<bigint\>` | - |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise\<bigint\>` | - |
 | `getPaymasterTokenBalance()` | Returns the paymaster token balance | `Promise\<bigint\>` | - |
@@ -374,6 +374,8 @@ const fastResult = await account.sendTransaction({
 ##### `quoteSendTransaction(tx, config?)`
 Estimates the fee for a UserOperation without sending it.
 
+Quoted UserOperations are cached internally for up to 2 minutes. When a later `sendTransaction()` matches the quoted transaction, the account performs a lightweight on-chain nonce check before reuse and re-quotes if the nonce has moved.
+
 **Parameters:**
 - `tx` (EvmErc4337Transaction | EvmErc4337Transaction[]): Transaction object or array (same as sendTransaction)
 - `config` (optional): Per-call configuration override (see [Config Override](#config-override))
@@ -389,7 +391,7 @@ const quote = await account.quoteSendTransaction({
 console.log('Estimated fee:', quote.fee)
 ```
 
-##### `transfer(options, config?)`
+##### `transfer(options, config?, txOverrides?)`
 Transfers ERC20 tokens via UserOperation.
 
 **Parameters:**
@@ -398,6 +400,7 @@ Transfers ERC20 tokens via UserOperation.
   - `recipient` (string): Recipient address
   - `amount` (number | bigint): Amount in token base units
 - `config` (optional): Per-call configuration override (see [Config Override](#config-override))
+- `txOverrides` (optional): UserOperation gas and fee overrides (see [EvmErc4337GasOverrides](#evmerc4337gasoverrides))
 
 **Returns:** `Promise\<{hash: string, fee: bigint}\>` - UserOperation hash and fee
 
@@ -413,17 +416,21 @@ const result = await account.transfer({
   amount: 1000000 // 1 USD₮ (6 decimals)
 }, {
   transferMaxFee: 50000 // Override max fee for this call
+}, {
+  maxFeePerGas: 30000000000n,
+  maxPriorityFeePerGas: 2000000000n
 })
 console.log('Transfer hash:', result.hash)
 console.log('Transfer fee:', result.fee)
 ```
 
-##### `quoteTransfer(options, config?)`
+##### `quoteTransfer(options, config?, txOverrides?)`
 Estimates the fee for an ERC20 token transfer.
 
 **Parameters:**
 - `options` (TransferOptions): Transfer options (same as transfer)
 - `config` (optional): Per-call configuration override (see [Config Override](#config-override))
+- `txOverrides` (optional): UserOperation gas and fee overrides (see [EvmErc4337GasOverrides](#evmerc4337gasoverrides))
 
 **Returns:** `Promise\<{fee: bigint}\>` - Fee estimate
 
@@ -478,7 +485,7 @@ if (paymasterBalance < 10000n) {
 }
 ```
 
-##### `approve(options)`
+##### `approve(options, txOverrides?)`
 Approves a spender to spend ERC20 tokens on behalf of the Safe account.
 
 **Parameters:**
@@ -486,6 +493,7 @@ Approves a spender to spend ERC20 tokens on behalf of the Safe account.
   - `token` (string): ERC20 token contract address
   - `spender` (string): The address allowed to spend the tokens
   - `amount` (number | bigint): Amount to approve in token base units
+- `txOverrides` (optional): UserOperation gas and fee overrides (see [EvmErc4337GasOverrides](#evmerc4337gasoverrides))
 
 **Returns:** `Promise\<{hash: string, fee: bigint}\>` - Transaction result
 
@@ -495,6 +503,9 @@ const result = await account.approve({
   token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
   spender: '0xSpenderContract...',
   amount: 1000000n // 1 USD₮
+}, {
+  callGasLimit: 90000n,
+  verificationGasLimit: 120000n
 })
 console.log('Approval hash:', result.hash)
 ```
@@ -742,7 +753,7 @@ const sameAddress = WalletAccountEvmErc4337.predictSafeAddress(
 | `getPaymasterTokenBalance()` | Returns the paymaster token balance | `Promise\<bigint\>` | - |
 | `getAllowance(token, spender)` | Returns current token allowance for a spender | `Promise\<bigint\>` | - |
 | `quoteSendTransaction(tx, config?)` | Estimates the fee for a UserOperation | `Promise\<{fee: bigint}\>` | If simulation fails |
-| `quoteTransfer(options, config?)` | Estimates the fee for an ERC20 transfer | `Promise\<{fee: bigint}\>` | If simulation fails |
+| `quoteTransfer(options, config?, txOverrides?)` | Estimates the fee for an ERC20 transfer | `Promise\<{fee: bigint}\>` | If simulation fails |
 | `getTransactionReceipt(hash)` | Returns a transaction receipt | `Promise\<EvmTransactionReceipt \| null\>` | - |
 | `getUserOperationReceipt(hash)` | Returns a UserOperation receipt | `Promise\<UserOperationReceipt \| null\>` | - |
 | `signTypedData(typedData)` | Signs EIP-712 typed structured data | `Promise\<string\>` | - |
@@ -855,12 +866,13 @@ try {
 }
 ```
 
-##### `quoteTransfer(options, config?)`
+##### `quoteTransfer(options, config?, txOverrides?)`
 Estimates the fee for an ERC20 token transfer.
 
 **Parameters:**
 - `options` (TransferOptions): Transfer options
 - `config` (optional): Per-call configuration override (see [Config Override](#config-override))
+- `txOverrides` (optional): UserOperation gas and fee overrides (see [EvmErc4337GasOverrides](#evmerc4337gasoverrides))
 
 **Returns:** `Promise\<{fee: bigint}\>` - Fee estimate
 
@@ -1063,6 +1075,20 @@ interface EvmErc4337Transaction {
 ```
 
 The gas-override fields are optional. When omitted, the gas limits fall back to AbstractionKit's estimation and the fee pair (`maxFeePerGas` / `maxPriorityFeePerGas`) falls back to the bundler-fetched gas price. Setting either fee field disables the bundler-fetched fee fallback for both, so set them together. In a batched call (`tx` passed as an array), only the gas overrides on the first transaction are honored — a UserOperation carries a single set of gas fields regardless of how many calls it batches.
+
+### EvmErc4337GasOverrides
+
+The helper methods `transfer()`, `quoteTransfer()`, and `approve()` accept these same UserOperation gas and fee override fields as a separate `txOverrides` argument.
+
+```typescript
+interface EvmErc4337GasOverrides {
+  callGasLimit?: number | bigint;
+  verificationGasLimit?: number | bigint;
+  preVerificationGas?: number | bigint;
+  maxFeePerGas?: number | bigint;
+  maxPriorityFeePerGas?: number | bigint;
+}
+```
 
 ### TransferOptions
 
