@@ -12,7 +12,7 @@ icon: Code
 
 | Export | Description |
 | --- | --- |
-| `WdkBaseAssetRegistry` | Default base registry class for assets that include `id` and `chainId` |
+| `default` | Base registry class for assets that include `id` and `chainId`; import it as `WdkBaseAssetRegistry` |
 | `WdkTokenAssetRegistry` | Token registry class with token-specific lookup helpers |
 | `BaseAssetSchema` | Zod schema for base asset records |
 | `BaseAssetJsonSchema` | JSON schema for base asset records |
@@ -44,7 +44,7 @@ Pass zero or more asset arrays to preload records.
 | `registerAssets(assets, upsert?)` | Register a list of assets | `void` |
 | `getAssets()` | Return all registered assets | `BaseAsset[]` |
 | `getAssetById(id)` | Return one asset by exact ID | `BaseAsset \| null` |
-| `getAsset(filter, options?)` | Return the first asset matching one or more partial filters | `BaseAsset \| null` |
+| `getAsset(filter, options?)` | Return all assets matching one or more partial filters | `BaseAsset[]` |
 
 #### `registerAsset(asset, upsert?)`
 
@@ -78,10 +78,12 @@ const asset = registry.getAssetById('eip155:1')
 
 #### `getAsset(filter, options?)`
 
-Finds the first asset that matches a partial filter. Keys inside one filter object are AND conditions. Multiple filter objects are OR conditions.
+Finds assets that match one or more partial filters. Pass an array of filter objects. Keys inside one filter object are AND conditions. Multiple filter objects are OR conditions.
 
 ```javascript title="Filter Assets"
-const byChain = registry.getAsset({ chainId: 'eip155:1' })
+const byChain = registry.getAsset([
+  { chainId: 'eip155:1' }
+])
 
 const byOneOfMany = registry.getAsset([
   { chainId: 'eip155:1' },
@@ -108,14 +110,14 @@ const registry = new WdkTokenAssetRegistry(commonTokens)
 | --- | --- | --- |
 | `getTokens()` | Return all registered token assets | `TokenAsset[]` |
 | `getTokenById(id)` | Return one token by exact ID | `TokenAsset \| null` |
-| `getTokenByAddress(address, options?)` | Return the first token matching an address | `TokenAsset \| null` |
-| `getTokenBySymbol(symbol, options?)` | Return the first token matching a symbol | `TokenAsset \| null` |
-| `getTokenByChain(chainId, options?)` | Return the first token matching a chain ID | `TokenAsset \| null` |
+| `getTokenByAddress(address, options?)` | Return all tokens matching an address | `TokenAsset[]` |
+| `getTokenBySymbol(symbol, options?)` | Return all tokens matching a symbol | `TokenAsset[]` |
+| `getTokenByChain(chainId, options?)` | Return all tokens matching a chain ID | `TokenAsset[]` |
 
 ```javascript title="Token Lookups"
-const usdt = registry.getTokenBySymbol('USDT')
-const token = registry.getTokenByAddress('0xdAC17F958D2ee523a2206206994597C13D831ec7')
-const chainToken = registry.getTokenByChain('eip155:1')
+const usdtTokens = registry.getTokenBySymbol('USDT')
+const tokensByAddress = registry.getTokenByAddress('0xdAC17F958D2ee523a2206206994597C13D831ec7')
+const chainTokens = registry.getTokenByChain('eip155:1')
 ```
 
 ## Helper Functions
@@ -196,7 +198,7 @@ type BaseAssetFilter<TSchema extends object> = Partial<TSchema>
 
 ## Notes
 
-- Registry lookups return `null` when no asset matches.
+- Exact ID lookups return `null` when no asset matches. Filter and token-helper lookups return an empty array.
 - `registerAssets()` validates and registers each asset sequentially. It is not an atomic batch transaction.
 - The token registry validates records with `TokenAssetSchema`.
 - Asset registry metadata is static and local; use live providers for balances, prices, quotes, chain state, or contract validation.
