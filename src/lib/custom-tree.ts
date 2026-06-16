@@ -152,6 +152,27 @@ export const customTree: Node[] = [
         ],
       },
       {
+        name: 'wallet-evm-7702-gasless', type: 'folder',
+        index: { name: 'wallet-evm-7702-gasless', url: '/sdk/wallet-modules/wallet-evm-7702-gasless', type: 'page' },
+        children: [
+          { name: 'Usage', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/usage', type: 'page' },
+          {
+            name: 'Guides', type: 'folder', icon: resolveIcon('BookOpen'),
+            children: [
+              { name: 'Get Started', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/get-started', type: 'page' },
+              { name: 'Manage Accounts', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/manage-accounts', type: 'page' },
+              { name: 'Check Balances', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/check-balances', type: 'page' },
+              { name: 'Send Transactions', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/send-transactions', type: 'page' },
+              { name: 'Transfer Tokens', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/transfer-tokens', type: 'page' },
+              { name: 'Sign and Verify Messages', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/sign-verify-messages', type: 'page' },
+              { name: 'Handle Errors', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/handle-errors', type: 'page' },
+            ],
+          },
+          { name: 'Configuration', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/configuration', type: 'page' },
+          { name: 'API Reference', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/api-reference', type: 'page' },
+        ],
+      },
+      {
         name: 'wallet-solana', type: 'folder',
         index: { name: 'wallet-solana', url: '/sdk/wallet-modules/wallet-solana', type: 'page' },
         children: [

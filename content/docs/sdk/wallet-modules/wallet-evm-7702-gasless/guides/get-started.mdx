@@ -1,0 +1,65 @@
+---
+title: Get Started
+description: Install @tetherto/wdk-wallet-evm-7702-gasless and create an EIP-7702 gasless account.
+docType: how-to
+---
+
+This guide shows how to install the module, create a sponsored EIP-7702 gasless wallet, and get the account address.
+
+## Install
+
+```bash
+npm install @tetherto/wdk-wallet-evm-7702-gasless
+```
+
+## Create a Sponsored Wallet
+
+```javascript title="Create a sponsored EIP-7702 gasless wallet"
+import WalletManagerEvm7702Gasless from '@tetherto/wdk-wallet-evm-7702-gasless'
+
+const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
+  provider: 'https://rpc.mevblocker.io/fast',
+  delegationAddress: '0xe6Cae83BdE06E4c305530e199D7217f42808555B',
+  bundlerUrl: 'https://api.pimlico.io/v2/1/rpc?apikey=YOUR_KEY',
+  isSponsored: true,
+  sponsorshipPolicyId: 'sp_my_policy'
+})
+
+const account = await wallet.getAccount(0)
+const address = await account.getAddress()
+
+console.log('EOA address:', address)
+```
+
+`getAddress()` returns the EOA address. The module signs EIP-7702 authorization only when the account is not already delegated to the configured `delegationAddress`.
+
+## Use Paymaster-token Mode
+
+If the user pays gas with an ERC-20 paymaster token, configure `paymasterToken` instead of `isSponsored: true`.
+
+```javascript title="Create a paymaster-token wallet"
+const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
+  provider: 'https://rpc.mevblocker.io/fast',
+  delegationAddress: '0xe6Cae83BdE06E4c305530e199D7217f42808555B',
+  bundlerUrl: 'https://api.pimlico.io/v2/1/rpc?apikey=YOUR_KEY',
+  paymasterToken: {
+    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+  },
+  transferMaxFee: 100000000000000n
+})
+```
+
+## Clean Up
+
+Call `dispose()` when the account or wallet manager is no longer needed.
+
+```javascript title="Dispose account state"
+account.dispose()
+wallet.dispose()
+```
+
+## Next Steps
+
+- Review [configuration](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration) for fee modes and provider failover.
+- Learn how to [send transactions](/sdk/wallet-modules/wallet-evm-7702-gasless/guides/send-transactions).
+- Learn how to [transfer ERC-20 tokens](/sdk/wallet-modules/wallet-evm-7702-gasless/guides/transfer-tokens).

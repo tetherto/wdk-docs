@@ -1,0 +1,89 @@
+---
+title: Manage Accounts
+description: Manage account indices, derivation paths, read-only accounts, and existing EVM accounts.
+docType: how-to
+---
+
+This guide explains how to derive accounts, use custom paths, create read-only accounts, and wrap an existing `WalletAccountEvm`.
+
+## Get an Account by Index
+
+`getAccount(index)` derives accounts with the EVM BIP-44 path suffix `0'/0/{index}`.
+
+```javascript title="Get accounts by index"
+const account0 = await wallet.getAccount()
+const account1 = await wallet.getAccount(1)
+
+console.log(await account0.getAddress())
+console.log(await account1.getAddress())
+```
+
+`getAccount()` defaults to index `0`.
+
+## Get an Account by Path
+
+Use `getAccountByPath(path)` when you need a specific derivation path suffix.
+
+```javascript title="Get account by path"
+const account = await wallet.getAccountByPath("0'/0/5")
+
+console.log(account.path)
+console.log(account.index)
+```
+
+The full derivation path is based on the EVM account path convention, for example `m/44'/60'/0'/0/5`.
+
+## Convert to a Read-only Account
+
+Use `toReadOnlyAccount()` when a flow needs balances, quotes, receipts, allowances, or signature verification without signing access.
+
+```javascript title="Create a read-only account"
+const account = await wallet.getAccount(0)
+const readOnlyAccount = await account.toReadOnlyAccount()
+
+const balance = await readOnlyAccount.getBalance()
+```
+
+Read-only accounts do not expose `sign()`, `signTypedData()`, `sendTransaction()`, `transfer()`, or `approve()`.
+
+## Create a Read-only Account from an Address
+
+```javascript title="Read-only account from address"
+import { WalletAccountReadOnlyEvm7702Gasless } from '@tetherto/wdk-wallet-evm-7702-gasless'
+
+const readOnlyAccount = new WalletAccountReadOnlyEvm7702Gasless('0x742C4265F5Ba4F8E0842e2b9EfE66302F7a13B6F', {
+  provider: 'https://rpc.mevblocker.io/fast',
+  delegationAddress: '0xe6Cae83BdE06E4c305530e199D7217f42808555B',
+  bundlerUrl: 'https://api.pimlico.io/v2/1/rpc?apikey=YOUR_KEY',
+  isSponsored: true
+})
+```
+
+## Wrap an Existing EVM Account
+
+`WalletAccountEvm7702Gasless` can wrap a `WalletAccountEvm` instance. Use this when your application already manages the base EVM account.
+
+```javascript title="Wrap WalletAccountEvm"
+import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
+import { WalletAccountEvm7702Gasless } from '@tetherto/wdk-wallet-evm-7702-gasless'
+
+const evmAccount = new WalletAccountEvm(seedPhrase, "0'/0/0", {
+  provider: 'https://rpc.mevblocker.io/fast'
+})
+
+const gaslessAccount = new WalletAccountEvm7702Gasless(evmAccount, {
+  provider: 'https://rpc.mevblocker.io/fast',
+  delegationAddress: '0xe6Cae83BdE06E4c305530e199D7217f42808555B',
+  bundlerUrl: 'https://api.pimlico.io/v2/1/rpc?apikey=YOUR_KEY',
+  isSponsored: true
+})
+```
+
+## Clean Up Account State
+
+```javascript title="Dispose accounts"
+gaslessAccount.dispose()
+wallet.dispose()
+```
+
+`dispose()` clears the account quote cache and disposes the wrapped EVM account.

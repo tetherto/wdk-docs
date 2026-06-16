@@ -1,0 +1,157 @@
+---
+title: Configuration
+description: Configuration options for @tetherto/wdk-wallet-evm-7702-gasless.
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+## Wallet Configuration
+
+`WalletManagerEvm7702Gasless`, `WalletAccountEvm7702Gasless`, and `WalletAccountReadOnlyEvm7702Gasless` use the same base configuration. The account must also choose one fee mode: sponsorship policy or paymaster token.
+
+```javascript title="Sponsored wallet configuration"
+import WalletManagerEvm7702Gasless from '@tetherto/wdk-wallet-evm-7702-gasless'
+
+const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
+  provider: 'https://rpc.mevblocker.io/fast',
+  delegationAddress: '0xe6Cae83BdE06E4c305530e199D7217f42808555B',
+  bundlerUrl: 'https://api.pimlico.io/v2/1/rpc?apikey=YOUR_KEY',
+  isSponsored: true,
+  sponsorshipPolicyId: 'sp_my_policy'
+})
+```
+
+```javascript title="Paymaster-token wallet configuration"
+const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
+  provider: 'https://rpc.mevblocker.io/fast',
+  delegationAddress: '0xe6Cae83BdE06E4c305530e199D7217f42808555B',
+  bundlerUrl: 'https://api.pimlico.io/v2/1/rpc?apikey=YOUR_KEY',
+  paymasterAddress: '0x888888888888Ec68A58AB8094Cc1AD20Ba3D2402',
+  paymasterToken: {
+    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+  },
+  transferMaxFee: 100000000000000n
+})
+```
+
+## Required Common Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `provider` | `string \| Eip1193Provider \| Array\<string \| Eip1193Provider\>` | RPC endpoint, EIP-1193 provider, or ordered failover list. |
+| `bundlerUrl` | `string` | ERC-4337 bundler endpoint used to build and submit UserOperations. |
+| `delegationAddress` | `string` | Smart-account implementation address used for EIP-7702 delegation. |
+
+The constructor throws `ConfigurationError` if any required common field is missing.
+
+## Optional Common Fields
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `paymasterUrl` | `string` | `bundlerUrl` | Paymaster endpoint when it differs from the bundler endpoint. |
+| `retries` | `number` | `3` | Additional retry attempts when `provider` is an array. Total attempts are `1 + retries`. |
+
+### Provider Failover
+
+Pass an ordered array when you want read and quote calls to retry against multiple RPC providers:
+
+```javascript title="Provider failover"
+const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
+  provider: [
+    'https://rpc.mevblocker.io/fast',
+    'https://eth.llamarpc.com'
+  ],
+  retries: 3,
+  delegationAddress: '0xe6Cae83BdE06E4c305530e199D7217f42808555B',
+  bundlerUrl: 'https://api.pimlico.io/v2/1/rpc?apikey=YOUR_KEY',
+  isSponsored: true
+})
+```
+
+<Callout type="warn">
+An empty provider array throws `ConfigurationError`. Include at least one RPC URL or EIP-1193 provider.
+</Callout>
+
+## Fee Mode Configuration
+
+### Sponsorship Policy
+
+Use sponsorship mode when a paymaster sponsors UserOperation fees.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `isSponsored` | `true` | Yes | Enables sponsorship mode. |
+| `sponsorshipPolicyId` | `string` | No | Policy identifier passed to the paymaster context. |
+
+```javascript title="Sponsorship mode"
+const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
+  provider: 'https://rpc.mevblocker.io/fast',
+  delegationAddress: '0xe6Cae83BdE06E4c305530e199D7217f42808555B',
+  bundlerUrl: 'https://api.pimlico.io/v2/1/rpc?apikey=YOUR_KEY',
+  isSponsored: true,
+  sponsorshipPolicyId: 'sp_my_policy'
+})
+```
+
+In sponsorship mode, `quoteSendTransaction()` and `quoteTransfer()` return `{ fee: 0n }`.
+
+### Paymaster Token
+
+Use paymaster-token mode when the account pays UserOperation fees with an ERC-20 token.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `isSponsored` | `false` | No | Omit this field or set it to `false`. |
+| `paymasterToken.address` | `string` | Yes | ERC-20 token address used for fee payment. |
+| `paymasterAddress` | `string` | No | Pins the expected paymaster contract address. |
+| `transferMaxFee` | `number \| bigint` | No | Maximum fee for `transfer()` operations, in paymaster-token base units. |
+
+If `isSponsored` is omitted or `false`, `paymasterToken` is required.
+
+```javascript title="Paymaster token mode"
+const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
+  provider: 'https://rpc.mevblocker.io/fast',
+  delegationAddress: '0xe6Cae83BdE06E4c305530e199D7217f42808555B',
+  bundlerUrl: 'https://api.pimlico.io/v2/1/rpc?apikey=YOUR_KEY',
+  paymasterToken: {
+    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+  },
+  transferMaxFee: 100000000000000n
+})
+```
+
+When `paymasterAddress` is set, the account checks the paymaster address returned by the RPC response and throws `ConfigurationError` if it does not match.
+
+## Separate Paymaster Endpoint
+
+Some providers use different bundler and paymaster URLs. Set `paymasterUrl` when the paymaster service is not available at `bundlerUrl`.
+
+```javascript title="Separate paymaster endpoint"
+const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
+  provider: 'https://rpc.mevblocker.io/fast',
+  delegationAddress: '0xe6Cae83BdE06E4c305530e199D7217f42808555B',
+  bundlerUrl: 'https://api.candide.dev/bundler/v3/1/YOUR_KEY',
+  paymasterUrl: 'https://api.candide.dev/paymaster/v3/1/YOUR_KEY',
+  isSponsored: true,
+  sponsorshipPolicyId: 'your_policy_id'
+})
+```
+
+## Per-call Overrides
+
+`quoteSendTransaction()`, `sendTransaction()`, `quoteTransfer()`, and `transfer()` accept a partial fee-mode config override. Use this to switch sponsorship policy or paymaster token for one operation:
+
+```javascript title="Override the paymaster token"
+const result = await account.sendTransaction({
+  to: '0x742C4265F5Ba4F8E0842e2b9EfE66302F7a13B6F',
+  value: 0n,
+  data: '0x'
+}, {
+  paymasterToken: {
+    address: '0x68749665FF8D2d112Fa859AA293F07A622782F38'
+  }
+})
+```
+
+When an override is provided, the merged config is validated before the operation runs.

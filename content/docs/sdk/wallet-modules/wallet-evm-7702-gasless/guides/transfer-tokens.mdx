@@ -1,0 +1,74 @@
+---
+title: Transfer Tokens
+description: Transfer ERC-20 tokens through EIP-7702 gasless UserOperations.
+docType: how-to
+---
+
+This guide explains how to quote and send ERC-20 transfers.
+
+## Transfer an ERC-20 Token
+
+Use `transfer(options)` with the token address, recipient, and amount in token base units.
+
+```javascript title="Transfer ERC-20 tokens"
+const result = await account.transfer({
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  recipient: '0x742C4265F5Ba4F8E0842e2b9EfE66302F7a13B6F',
+  amount: 1000000n
+})
+
+console.log('UserOperation hash:', result.hash)
+console.log('Fee:', result.fee)
+```
+
+## Quote a Transfer
+
+```javascript title="Quote a transfer"
+const quote = await account.quoteTransfer({
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  recipient: '0x742C4265F5Ba4F8E0842e2b9EfE66302F7a13B6F',
+  amount: 1000000n
+})
+
+console.log('Estimated fee:', quote.fee)
+```
+
+`quoteTransfer()` builds the same ERC-20 transfer transaction shape that `transfer()` sends.
+
+## Cap Transfer Fees
+
+In paymaster-token mode, set `transferMaxFee` to cancel `transfer()` when the estimated fee meets or exceeds the cap.
+
+```javascript title="Cap transfer fee"
+import WalletManagerEvm7702Gasless from '@tetherto/wdk-wallet-evm-7702-gasless'
+
+const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
+  provider: 'https://rpc.mevblocker.io/fast',
+  delegationAddress: '0xe6Cae83BdE06E4c305530e199D7217f42808555B',
+  bundlerUrl: 'https://api.pimlico.io/v2/1/rpc?apikey=YOUR_KEY',
+  paymasterToken: {
+    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+  },
+  transferMaxFee: 100000000000000n
+})
+```
+
+<Callout type="info">
+`transferMaxFee` applies to `transfer()` in paymaster-token mode. Sponsored transfers return `fee: 0n`.
+</Callout>
+
+## Approve a Spender
+
+Use `approve(options)` when a dapp contract needs allowance for an ERC-20 token.
+
+```javascript title="Approve a spender"
+const result = await account.approve({
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  spender: '0x742C4265F5Ba4F8E0842e2b9EfE66302F7a13B6F',
+  amount: 1000000n
+})
+```
+
+<Callout type="warn">
+On Ethereum mainnet, USDT requires an existing non-zero allowance to be reset to `0` before setting a new non-zero allowance. The module throws before sending when this rule would be violated.
+</Callout>

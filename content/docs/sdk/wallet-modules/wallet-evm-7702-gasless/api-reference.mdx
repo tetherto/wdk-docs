@@ -1,0 +1,216 @@
+---
+title: Wallet EVM 7702 Gasless API Reference
+description: Complete API documentation for @tetherto/wdk-wallet-evm-7702-gasless.
+docType: reference
+schemaType: APIReference
+icon: Code
+---
+
+## Table of Contents
+
+| Export | Description |
+|--------|-------------|
+| [WalletManagerEvm7702Gasless](#walletmanagerevm7702gasless) | Default export. Manages EIP-7702 gasless EVM wallet accounts. |
+| [WalletAccountEvm7702Gasless](#walletaccountevm7702gasless) | Owned EIP-7702 gasless account with signing, approval, transfer, and send methods. |
+| [WalletAccountReadOnlyEvm7702Gasless](#walletaccountreadonlyevm7702gasless) | Read-only account with balances, quotes, receipts, allowances, and verification. |
+| [ConfigurationError](#configurationerror) | Error thrown for invalid wallet configuration. |
+| [Config Types](#config-types) | `Evm7702GaslessWalletConfig` and related fee-mode types. |
+
+## WalletManagerEvm7702Gasless
+
+Default export from `@tetherto/wdk-wallet-evm-7702-gasless`.
+
+```javascript
+import WalletManagerEvm7702Gasless from '@tetherto/wdk-wallet-evm-7702-gasless'
+```
+
+### Constructor
+
+```javascript
+new WalletManagerEvm7702Gasless(seed, config)
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `seed` | `string \| Uint8Array` | BIP-39 mnemonic seed phrase or seed bytes. |
+| `config` | `Evm7702GaslessWalletConfig` | Wallet configuration with common fields and one fee mode. |
+
+### Methods
+
+| Method | Parameters | Returns | Notes |
+|--------|------------|---------|-------|
+| `getAccount(index?)` | `index?: number` | `Promise\<WalletAccountEvm7702Gasless\>` | Defaults to index `0` and derives `0'/0/{index}`. |
+| `getAccountByPath(path)` | `path: string` | `Promise\<WalletAccountEvm7702Gasless\>` | Returns a cached account for the derivation path suffix. |
+| `getFeeRates()` | - | `Promise\<{ normal: bigint, fast: bigint }\>` | Uses provider fee data. Throws if no provider is connected. |
+| `dispose()` | - | `void` | Inherited from `WalletManager`; disposes managed accounts. |
+
+`getFeeRates()` returns fee rates in wei. The `normal` value applies the EVM wallet normal multiplier, and `fast` applies the EVM wallet fast multiplier to the provider fee.
+
+## WalletAccountEvm7702Gasless
+
+Named export for owned EIP-7702 gasless accounts.
+
+```javascript
+import { WalletAccountEvm7702Gasless } from '@tetherto/wdk-wallet-evm-7702-gasless'
+```
+
+### Constructors
+
+```javascript
+new WalletAccountEvm7702Gasless(seed, path, config)
+new WalletAccountEvm7702Gasless(walletAccountEvm, config)
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `seed` | `string \| Uint8Array` | BIP-39 mnemonic seed phrase or seed bytes. |
+| `path` | `string` | EVM derivation path suffix, for example `"0'/0/0"`. |
+| `walletAccountEvm` | `WalletAccountEvm` | Existing EVM account to wrap. |
+| `config` | `Evm7702GaslessWalletConfig` | Wallet configuration. |
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `index` | `number` | Derivation path index from the wrapped EVM account. |
+| `path` | `string` | Derivation path suffix from the wrapped EVM account. |
+| `keyPair` | `KeyPair` | Read-only view of the wrapped EVM account key pair. |
+
+Treat the arrays returned through `keyPair` as read-only. Call `dispose()` when the account is no longer needed.
+
+### Methods
+
+| Method | Parameters | Returns | Notes |
+|--------|------------|---------|-------|
+| `getAddress()` | - | `Promise\<string\>` | Inherited read-only method. Returns the EOA address. |
+| `getBalance()` | - | `Promise\<bigint\>` | Native token balance in wei. |
+| `getTokenBalance(tokenAddress)` | `tokenAddress: string` | `Promise\<bigint\>` | ERC-20 balance in base units. |
+| `getTokenBalances(tokenAddresses)` | `tokenAddresses: string[]` | `Promise\<Record\<string, bigint\>\>` | Multiple ERC-20 balances in base units. |
+| `getPaymasterTokenBalance()` | - | `Promise\<bigint\>` | Throws `ConfigurationError` when no `paymasterToken` is configured. |
+| `sign(message)` | `message: string` | `Promise\<string\>` | Signs with the wrapped EVM account. |
+| `signTypedData(typedData)` | `TypedData` | `Promise\<string\>` | Signs EIP-712 typed data. |
+| `verify(message, signature)` | `message: string`, `signature: string` | `Promise\<boolean\>` | Verifies a plain message signature. |
+| `verifyTypedData(typedData, signature)` | `TypedData`, `signature: string` | `Promise\<boolean\>` | Verifies EIP-712 typed data. |
+| `approve(options)` | `ApproveOptions` | `Promise\<TransactionResult\>` | Sends an ERC-20 approval as a UserOperation. |
+| `quoteSendTransaction(tx, config?)` | `EvmTransaction \| EvmTransaction[]`, partial fee-mode config | `Promise\<Omit\<TransactionResult, 'hash'\>\>` | Returns `{ fee }`; owned accounts cache paymaster-token quotes for up to 2 minutes. |
+| `sendTransaction(tx, config?)` | `EvmTransaction \| EvmTransaction[]`, partial fee-mode config | `Promise\<TransactionResult\>` | Returns a UserOperation hash and fee. |
+| `quoteTransfer(options, config?)` | `EvmTransferOptions`, partial fee-mode config | `Promise\<Omit\<TransferResult, 'hash'\>\>` | Quotes an ERC-20 transfer. |
+| `transfer(options, config?)` | `EvmTransferOptions`, partial fee-mode config | `Promise\<TransferResult\>` | Sends an ERC-20 transfer as a UserOperation. |
+| `getAllowance(token, spender)` | `token: string`, `spender: string` | `Promise\<bigint\>` | Reads ERC-20 allowance. |
+| `getUserOperationReceipt(hash)` | `hash: string` | `Promise\<UserOperationReceipt \| null\>` | Reads the raw bundler receipt. |
+| `getTransactionReceipt(hash)` | `hash: string` | `Promise\<EvmTransactionReceipt \| null\>` | Maps a UserOperation hash to an EVM receipt when included. |
+| `toReadOnlyAccount()` | - | `Promise\<WalletAccountReadOnlyEvm7702Gasless\>` | Returns a cached read-only account. |
+| `dispose()` | - | `void` | Clears quote cache and disposes the wrapped EVM account. |
+
+### Quote and Send Behavior
+
+- Sponsored mode returns `fee: 0n` from quote methods.
+- Paymaster-token mode returns fees in the configured paymaster token's base units.
+- Owned account quotes are cached for up to 2 minutes for the same serialized transaction.
+- `sendTransaction()` signs the UserOperation typed data before submitting it to the bundler.
+- If the account is already delegated to `delegationAddress`, the send path does not include a new EIP-7702 authorization.
+
+### Transfer Fee Cap
+
+`transfer()` checks `transferMaxFee` only in paymaster-token mode. It throws when the estimated fee is greater than or equal to the configured cap.
+
+### USDT Approval Rule
+
+On Ethereum mainnet, `approve()` checks the USDT allowance rule. If the current allowance is non-zero and the requested amount is non-zero, the method throws before sending. Send an approval with amount `0` first, then send the new non-zero approval.
+
+## WalletAccountReadOnlyEvm7702Gasless
+
+Named export for read-only accounts.
+
+```javascript
+import { WalletAccountReadOnlyEvm7702Gasless } from '@tetherto/wdk-wallet-evm-7702-gasless'
+```
+
+### Constructor
+
+```javascript
+new WalletAccountReadOnlyEvm7702Gasless(address, config)
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `address` | `string` | EOA address. |
+| `config` | `Omit\<Evm7702GaslessWalletConfig, 'transferMaxFee'\>` | Read-only configuration. |
+
+### Methods
+
+| Method | Parameters | Returns | Notes |
+|--------|------------|---------|-------|
+| `getAddress()` | - | `Promise\<string\>` | Returns the configured address. |
+| `getBalance()` | - | `Promise\<bigint\>` | Native token balance in wei. |
+| `getTokenBalance(tokenAddress)` | `tokenAddress: string` | `Promise\<bigint\>` | ERC-20 balance in base units. |
+| `getTokenBalances(tokenAddresses)` | `tokenAddresses: string[]` | `Promise\<Record\<string, bigint\>\>` | Multiple ERC-20 balances. |
+| `getPaymasterTokenBalance()` | - | `Promise\<bigint\>` | Reads the configured paymaster token balance. |
+| `quoteSendTransaction(tx, config?)` | `EvmTransaction \| EvmTransaction[]`, partial fee-mode config | `Promise\<Omit\<TransactionResult, 'hash'\>\>` | Quotes without signing or sending. |
+| `quoteTransfer(options, config?)` | `EvmTransferOptions`, partial fee-mode config | `Promise\<Omit\<TransferResult, 'hash'\>\>` | Quotes an ERC-20 transfer. |
+| `getAllowance(token, spender)` | `token: string`, `spender: string` | `Promise\<bigint\>` | Reads ERC-20 allowance. |
+| `getUserOperationReceipt(hash)` | `hash: string` | `Promise\<UserOperationReceipt \| null\>` | Reads the raw bundler receipt. |
+| `getTransactionReceipt(hash)` | `hash: string` | `Promise\<EvmTransactionReceipt \| null\>` | Returns `null` until the UserOperation maps to an EVM transaction. |
+| `verify(message, signature)` | `message: string`, `signature: string` | `Promise\<boolean\>` | Verifies a plain message signature. |
+| `verifyTypedData(typedData, signature)` | `TypedData`, `signature: string` | `Promise\<boolean\>` | Verifies EIP-712 typed data. |
+
+Read-only accounts cannot sign, approve, send, or transfer.
+
+## ConfigurationError
+
+```javascript
+import { ConfigurationError } from '@tetherto/wdk-wallet-evm-7702-gasless'
+```
+
+`ConfigurationError` extends `Error` and is thrown when wallet configuration is invalid.
+
+Known configuration errors include:
+
+- missing `provider`;
+- missing `bundlerUrl`;
+- missing `delegationAddress`;
+- missing `paymasterToken` when `isSponsored` is absent or `false`;
+- empty provider array;
+- configured `paymasterAddress` does not match the paymaster returned by the RPC.
+
+## Config Types
+
+### Evm7702GaslessWalletCommonConfig
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `provider` | `string \| Eip1193Provider \| Array\<string \| Eip1193Provider\>` | Yes | RPC endpoint, EIP-1193 provider, or provider failover list. |
+| `retries` | `number` | No | Additional retry attempts for provider arrays. Defaults to `3`. |
+| `bundlerUrl` | `string` | Yes | ERC-4337 bundler endpoint. |
+| `paymasterUrl` | `string` | No | Paymaster endpoint when different from `bundlerUrl`. |
+| `delegationAddress` | `string` | Yes | Smart-account implementation address used for EIP-7702 delegation. |
+
+### Evm7702GaslessSponsorshipPolicyConfig
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `isSponsored` | `true` | Yes | Enables sponsored fee mode. |
+| `sponsorshipPolicyId` | `string` | No | Paymaster sponsorship policy ID. |
+
+### Evm7702GaslessPaymasterTokenConfig
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `isSponsored` | `false` | No | Omit or set to `false` for paymaster-token mode. |
+| `paymasterAddress` | `string` | No | Expected paymaster contract address. |
+| `paymasterToken.address` | `string` | Yes | ERC-20 token used for fee payment. |
+| `transferMaxFee` | `number \| bigint` | No | Maximum fee for `transfer()` in token base units. |
+
+### Evm7702GaslessWalletConfig
+
+```typescript
+type Evm7702GaslessWalletConfig =
+  Evm7702GaslessWalletCommonConfig &
+  (Evm7702GaslessSponsorshipPolicyConfig | Evm7702GaslessPaymasterTokenConfig)
+```
+
+### Exported Types
+
+The package also re-exports EVM wallet types from `@tetherto/wdk-wallet-evm`, including `FeeRates`, `KeyPair`, `EvmTransaction`, `TransactionResult`, `EvmTransferOptions`, `TransferResult`, `EvmTransactionReceipt`, `ApproveOptions`, `TypedData`, `TypedDataDomain`, and `TypedDataField`.
+
+Module-specific exported types include `UserOperationReceipt`, `Eip7702AuthorizationOverride`, `BuildSponsoredUserOperationOverrides`, and `SponsoredUserOperation`.
