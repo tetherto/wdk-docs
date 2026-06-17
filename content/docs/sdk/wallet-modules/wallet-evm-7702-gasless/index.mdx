@@ -1,0 +1,64 @@
+---
+title: Wallet EVM 7702 Gasless Overview
+description: Overview of the @tetherto/wdk-wallet-evm-7702-gasless module.
+docType: explanation
+schemaType: TechArticle
+---
+
+The `@tetherto/wdk-wallet-evm-7702-gasless` module manages EVM externally owned accounts that use EIP-7702 delegation and ERC-4337 UserOperations for gasless transaction flows.
+
+Use this module when your application needs the user to keep an EOA address while submitting transactions through a bundler and paymaster. The module handles EIP-7702 authorization, UserOperation construction, UserOperation signing, paymaster data, and receipt lookup behind the WDK wallet account interface.
+
+## What It Provides
+
+- **EOA-based EIP-7702 accounts**: `getAddress()` returns the EOA address. The account delegates execution to the configured `delegationAddress` when needed.
+- **Sponsored transactions**: Set `isSponsored: true` to use a sponsorship policy. Quotes return a zero fee in sponsored mode.
+- **Paymaster-token transactions**: Configure `paymasterToken` to pay UserOperation costs in an ERC-20 token.
+- **Provider failover**: Pass one provider or an ordered list of RPC URLs / EIP-1193 providers. Provider arrays support `retries`.
+- **UserOperation receipts**: Resolve a UserOperation hash through `getUserOperationReceipt()` or map it to an EVM transaction receipt with `getTransactionReceipt()`.
+- **Read-only and signing accounts**: Use `WalletAccountReadOnlyEvm7702Gasless` for balances, quotes, receipts, allowances, and verification. Use `WalletAccountEvm7702Gasless` when you need signing and sending.
+- **EVM signing support**: Sign plain messages and EIP-712 typed data through the wrapped EVM account.
+
+## Requirements
+
+This module depends on EVM infrastructure that supports both EIP-7702 account delegation and ERC-4337 UserOperations. You need:
+
+- an RPC provider for a chain where the EIP-7702 flow is available;
+- an ERC-4337 bundler URL;
+- a paymaster endpoint, either the same as `bundlerUrl` or a separate `paymasterUrl`;
+- a trusted smart-account implementation address for `delegationAddress`;
+- either a sponsorship policy or an ERC-20 paymaster token configuration.
+
+<Callout type="warn">
+The EOA delegates execution to the configured `delegationAddress`. Treat that address as security-sensitive and verify it before using it with real funds.
+</Callout>
+
+## Fee Modes
+
+| Mode | Required Fields | Quote Behavior |
+|------|-----------------|----------------|
+| Sponsorship policy | `isSponsored: true`, optional `sponsorshipPolicyId` | `quoteSendTransaction()` and `quoteTransfer()` return `fee: 0n`. |
+| Paymaster token | `paymasterToken.address`, optional `paymasterAddress`, optional `transferMaxFee` | Quotes return a fee in the paymaster token's base units. |
+
+## Next Steps
+
+<Cards>
+<Card title="Get Started" href="/sdk/wallet-modules/wallet-evm-7702-gasless/guides/get-started">
+Install the package and create an EIP-7702 gasless account.
+</Card>
+<Card title="Configuration" href="/sdk/wallet-modules/wallet-evm-7702-gasless/configuration">
+Review required fields, fee modes, provider failover, and per-call overrides.
+</Card>
+<Card title="API Reference" href="/sdk/wallet-modules/wallet-evm-7702-gasless/api-reference">
+See the public classes, methods, config types, and error behavior.
+</Card>
+<Card title="Send Transactions" href="/sdk/wallet-modules/wallet-evm-7702-gasless/guides/send-transactions">
+Quote and submit EVM transactions through ERC-4337 UserOperations.
+</Card>
+</Cards>
+
+***
+
+## Need Help?
+
+<SupportCards />

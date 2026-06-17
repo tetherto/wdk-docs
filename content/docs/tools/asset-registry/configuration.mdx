@@ -1,0 +1,103 @@
+---
+title: Asset Registry Configuration
+description: Install and configure @tetherto/wdk-asset-registry for local asset metadata lookup
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+`@tetherto/wdk-asset-registry` has no API keys, environment variables, RPC providers, or runtime service configuration. Create an in-memory registry, preload optional asset lists, and register any project-specific asset metadata your app needs.
+
+## Install the package
+
+```bash title="Install @tetherto/wdk-asset-registry"
+npm install @tetherto/wdk-asset-registry
+```
+
+## Create a token registry
+
+Import the token registry and preload the bundled common-token metadata.
+
+```javascript title="Create A Token Registry"
+import { WdkTokenAssetRegistry } from '@tetherto/wdk-asset-registry'
+import commonTokens from '@tetherto/wdk-asset-registry/assets/common-tokens' with { type: 'json' }
+
+const registry = new WdkTokenAssetRegistry(commonTokens)
+
+const usdt = registry.getTokenBySymbol('USDT')
+```
+
+<Callout type="info">
+Plain Node.js ESM requires the JSON import attribute. Some bundlers can load the same asset JSON without `with { type: 'json' }`.
+</Callout>
+
+## Register project assets
+
+Use `registerAsset()` for one token or `registerAssets()` for a list. Duplicate IDs throw `AssetRegistryError` unless you pass `true` as the `upsert` argument.
+
+```javascript title="Register A Token"
+registry.registerAsset({
+  id: 'eip155:1/0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  chainId: 'eip155:1',
+  address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  symbol: 'USDT',
+  name: 'Tether USD',
+  decimals: 6,
+  isNative: false
+})
+
+registry.registerAsset(
+  {
+    id: 'eip155:1/0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    chainId: 'eip155:1',
+    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+    symbol: 'USDT',
+    name: 'Tether USD',
+    decimals: 6,
+    isNative: false
+  },
+  true
+)
+```
+
+## Look up tokens
+
+String lookups are case-insensitive by default. Pass `{ caseSensitive: true }` when casing must match exactly.
+
+```javascript title="Lookup Tokens"
+const bySymbol = registry.getTokenBySymbol('usdt')
+const byAddress = registry.getTokenByAddress('0xdAC17F958D2ee523a2206206994597C13D831ec7')
+const byChain = registry.getTokenByChain('eip155:1')
+const exactSymbol = registry.getTokenBySymbol('USDT', { caseSensitive: true })
+```
+
+## Normalize token lists
+
+Use the Uniswap helpers when importing token metadata from a token-list compatible source.
+
+```javascript title="Normalize Uniswap Tokens"
+import {
+  WdkTokenAssetRegistry,
+  fromUniswapTokenList
+} from '@tetherto/wdk-asset-registry'
+
+const normalizedTokens = fromUniswapTokenList(uniswapTokenList.tokens)
+const registry = new WdkTokenAssetRegistry(normalizedTokens)
+```
+
+`fromUniswapToken()` maps numeric EVM chain IDs to `eip155:<chainId>`, builds token IDs as `<chainId>/<address>`, sets `isNative` to `false`, and validates the result as a `TokenAsset`.
+
+## Runtime notes
+
+- Registries are in-memory. Persist custom asset lists in your application storage if they must survive process restarts.
+- `common-tokens` is static bundled metadata. It is not a freshness guarantee.
+- The package does not fetch balances, prices, quotes, token images, chain state, or contract verification data.
+- `TokenAsset` requires `id`, `chainId`, `address`, `symbol`, `name`, `decimals`, and `isNative`.
+- `decimals` must be an integer between `0` and `255`.
+- Uniswap helpers normalize only fields required by `TokenAsset`; fields such as `logoURI`, `tags`, and `extensions` are not preserved.
+
+***
+
+## Need Help?
+
+<SupportCards />

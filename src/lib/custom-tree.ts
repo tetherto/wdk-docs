@@ -69,6 +69,7 @@ export const customTree: Node[] = [
           { name: 'Register Wallets', url: '/sdk/core-module/guides/wallet-registration', type: 'page' },
           { name: 'Account Management', url: '/sdk/core-module/guides/account-management', type: 'page' },
           { name: 'Send Transactions', url: '/sdk/core-module/guides/transactions', type: 'page' },
+          { name: 'Transaction Policies', url: '/sdk/core-module/guides/transaction-policies', type: 'page' },
           { name: 'Protocol Integration', url: '/sdk/core-module/guides/protocol-integration', type: 'page' },
           { name: 'Middleware', url: '/sdk/core-module/guides/middleware', type: 'page' },
           { name: 'Error Handling', url: '/sdk/core-module/guides/error-handling', type: 'page' },
@@ -149,6 +150,27 @@ export const customTree: Node[] = [
           },
           { name: 'Configuration', url: '/sdk/wallet-modules/wallet-evm-erc-4337/configuration', type: 'page' },
           { name: 'API Reference', url: '/sdk/wallet-modules/wallet-evm-erc-4337/api-reference', type: 'page' },
+        ],
+      },
+      {
+        name: 'wallet-evm-7702-gasless', type: 'folder',
+        index: { name: 'wallet-evm-7702-gasless', url: '/sdk/wallet-modules/wallet-evm-7702-gasless', type: 'page' },
+        children: [
+          { name: 'Usage', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/usage', type: 'page' },
+          {
+            name: 'Guides', type: 'folder', icon: resolveIcon('BookOpen'),
+            children: [
+              { name: 'Get Started', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/get-started', type: 'page' },
+              { name: 'Manage Accounts', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/manage-accounts', type: 'page' },
+              { name: 'Check Balances', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/check-balances', type: 'page' },
+              { name: 'Send Transactions', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/send-transactions', type: 'page' },
+              { name: 'Transfer Tokens', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/transfer-tokens', type: 'page' },
+              { name: 'Sign and Verify Messages', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/sign-verify-messages', type: 'page' },
+              { name: 'Handle Errors', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/handle-errors', type: 'page' },
+            ],
+          },
+          { name: 'Configuration', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/configuration', type: 'page' },
+          { name: 'API Reference', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/api-reference', type: 'page' },
         ],
       },
       {
@@ -279,7 +301,6 @@ export const customTree: Node[] = [
       },
     ],
   },
-  { name: 'Swidge Interface', url: '/sdk/swidge-modules', type: 'page', icon: resolveIcon('Route') },
   {
     name: 'Swap Modules',
     type: 'folder',
@@ -519,6 +540,20 @@ export const customTree: Node[] = [
     children: [
       { name: 'Configuration', url: '/tools/price-rates/configuration', type: 'page', icon: resolveIcon('Settings') },
       { name: 'API Reference', url: '/tools/price-rates/api-reference', type: 'page', icon: resolveIcon('Code') },
+    ],
+  },
+  {
+    name: 'Asset Registry',
+    type: 'folder',
+    icon: resolveIcon('Tags'),
+    index: {
+      name: 'Asset Registry',
+      url: '/tools/asset-registry',
+      type: 'page',
+    },
+    children: [
+      { name: 'Configuration', url: '/tools/asset-registry/configuration', type: 'page', icon: resolveIcon('Settings') },
+      { name: 'API Reference', url: '/tools/asset-registry/api-reference', type: 'page', icon: resolveIcon('Code') },
     ],
   },
   { name: 'Create WDK Module', url: '/tools/create-wdk-module', type: 'page', icon: resolveIcon('Hammer') },
