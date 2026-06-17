@@ -113,6 +113,60 @@ npm run check:links
 LINK_CHECK_EXTERNAL=false npm run check:links
 ```
 
+## Banners and badges
+
+Built something with WDK? Add a badge or banner to your README, website, or app. It is a simple way to highlight your project, help others discover WDK, and strengthen our community.
+
+By using these badges and banners, you help foster the WDK ecosystem!
+
+Choose a banner or badge below and copy its Markdown snippet, or copy its image URL and use the hosted asset directly.
+
+### Banners
+
+Large format badges (240x60) for prominent placement in your README header.
+
+**Dark with circuit pattern**</br>
+![Dark with circuit pattern](https://raw.githubusercontent.com/tetherto/wdk-docs/refs/heads/main/public/assets/branding/wdk-banner-dark-circuit.png)
+
+**Dark with colorful flow**</br>
+![Dark with colorful flow](https://raw.githubusercontent.com/tetherto/wdk-docs/refs/heads/main/public/assets/branding/wdk-banner-dark-flow.png)
+
+**Dark with simple wordmark**</br>
+![Dark with simple wordmark](https://raw.githubusercontent.com/tetherto/wdk-docs/refs/heads/main/public/assets/branding/wdk-banner-dark-simple.png)
+
+**Dark with stars pattern**</br>
+![Dark with stars pattern](https://raw.githubusercontent.com/tetherto/wdk-docs/refs/heads/main/public/assets/branding/wdk-banner-dark-stars.png)
+
+**Banner usage**
+
+```md
+[![Built with WDK](https://raw.githubusercontent.com/tetherto/wdk-docs/refs/heads/main/public/assets/branding/wdk-banner-dark-circuit.png)](https://docs.wdk.tether.io)
+```
+
+### Badges
+
+Compact badges for use alongside other shields/badges in your README.
+
+**Compact**
+
+| Variant | Dark bg | Light bg |
+|---------|---------|----------|
+| Color logo | ![Color on dark](https://raw.githubusercontent.com/tetherto/wdk-docs/refs/heads/main/public/assets/branding/wdk-badge-color-dark.svg) | ![Color on light](https://raw.githubusercontent.com/tetherto/wdk-docs/refs/heads/main/public/assets/branding/wdk-badge-color-light.svg) |
+| Monochrome | ![Mono on dark](https://raw.githubusercontent.com/tetherto/wdk-docs/refs/heads/main/public/assets/branding/wdk-badge-mono-dark.svg) | ![Mono on light](https://raw.githubusercontent.com/tetherto/wdk-docs/refs/heads/main/public/assets/branding/wdk-badge-mono-light.svg) |
+
+**Inline**
+
+| Variant | Dark bg | Light bg |
+|---------|---------|----------|
+| Color logo | ![Color on dark](https://raw.githubusercontent.com/tetherto/wdk-docs/refs/heads/main/public/assets/branding/wdk-badge-inline-color-dark.svg) | ![Color on light](https://raw.githubusercontent.com/tetherto/wdk-docs/refs/heads/main/public/assets/branding/wdk-badge-inline-color-light.svg) |
+| Monochrome | ![Mono on dark](https://raw.githubusercontent.com/tetherto/wdk-docs/refs/heads/main/public/assets/branding/wdk-badge-inline-mono-dark.svg) | ![Mono on light](https://raw.githubusercontent.com/tetherto/wdk-docs/refs/heads/main/public/assets/branding/wdk-badge-inline-mono-light.svg) |
+
+**Badge usage**
+
+```md
+[![Built with WDK](https://raw.githubusercontent.com/tetherto/wdk-docs/refs/heads/main/public/assets/branding/wdk-badge-color-dark.svg)](https://docs.wdk.tether.io)
+```
+
 ## License
 
 Apache-2.0
