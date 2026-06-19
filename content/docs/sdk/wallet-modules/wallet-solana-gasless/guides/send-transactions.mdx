@@ -1,0 +1,93 @@
+---
+title: Send Transactions
+description: Quote, sign, and send paymaster-funded Solana transactions.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide explains how to send native SOL, sign without broadcasting, quote paymaster fees, and use prebuilt transaction messages.
+
+<Callout type="warn">
+Use `BigInt` values for token and lamport amounts to avoid precision loss.
+</Callout>
+
+## Send Native SOL
+
+Use `sendTransaction({ to, value })` to send native SOL through the configured paymaster:
+
+```javascript title="Send SOL through the paymaster"
+const result = await account.sendTransaction({
+  to: 'Recipient1111111111111111111111111111111',
+  value: 1000000n
+})
+
+console.log('Transaction hash:', result.hash)
+console.log('Paymaster fee:', result.fee)
+```
+
+The returned `fee` is denominated in the configured paymaster token's base units, not lamports.
+
+## Quote Before Sending
+
+Use `quoteSendTransaction()` to get the paymaster fee before submitting:
+
+```javascript title="Quote SOL send"
+const quote = await account.quoteSendTransaction({
+  to: 'Recipient1111111111111111111111111111111',
+  value: 1000000n
+})
+
+console.log('Paymaster fee estimate:', quote.fee)
+```
+
+## Sign Without Broadcasting
+
+Use `signTransaction()` when another process will inspect or submit the fully signed transaction:
+
+```javascript title="Sign paymaster-funded transaction"
+const signedTransaction = await account.signTransaction({
+  to: 'Recipient1111111111111111111111111111111',
+  value: 1000000n
+})
+
+console.log('Signed transaction:', signedTransaction)
+```
+
+The module signs with the owner account, asks the paymaster to sign, and returns a fully signed Solana transaction. It does not broadcast from `signTransaction()`.
+
+## Use a TransactionMessage
+
+Pass a prebuilt `TransactionMessage` when your app needs custom instructions.
+
+```javascript title="Quote and send a TransactionMessage"
+const quote = await account.quoteSendTransaction(transactionMessage)
+console.log('Paymaster fee estimate:', quote.fee)
+
+const result = await account.sendTransaction(transactionMessage)
+console.log('Transaction hash:', result.hash)
+```
+
+If the message already includes a recent blockhash or durable nonce lifetime, the module preserves it. If it does not, the module fetches the latest blockhash.
+
+<Callout type="warn">
+If a prebuilt message sets `feePayer`, it must equal `paymasterAddress`. The module sets the fee payer to the paymaster address before asking the paymaster for fee instructions.
+</Callout>
+
+## Override Paymaster Token
+
+You can override the paymaster token for one quote, sign, or send call:
+
+```javascript title="Override fee token for one send"
+const result = await account.sendTransaction({
+  to: 'Recipient1111111111111111111111111111111',
+  value: 1000000n
+}, {
+  paymasterToken: {
+    address: 'AlternateFeeMint11111111111111111111111111'
+  }
+})
+```
+
+## Next Steps
+
+To transfer SPL tokens instead of native SOL, see [Transfer SPL Tokens](/sdk/wallet-modules/wallet-solana-gasless/guides/transfer-tokens).

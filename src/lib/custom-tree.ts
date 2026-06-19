@@ -195,6 +195,27 @@ export const customTree: Node[] = [
         ],
       },
       {
+        name: 'wallet-solana-gasless', type: 'folder',
+        index: { name: 'wallet-solana-gasless', url: '/sdk/wallet-modules/wallet-solana-gasless', type: 'page' },
+        children: [
+          { name: 'Usage', url: '/sdk/wallet-modules/wallet-solana-gasless/usage', type: 'page' },
+          {
+            name: 'Guides', type: 'folder', icon: resolveIcon('BookOpen'),
+            children: [
+              { name: 'Get Started', url: '/sdk/wallet-modules/wallet-solana-gasless/guides/get-started', type: 'page' },
+              { name: 'Manage Accounts', url: '/sdk/wallet-modules/wallet-solana-gasless/guides/manage-accounts', type: 'page' },
+              { name: 'Check Balances', url: '/sdk/wallet-modules/wallet-solana-gasless/guides/check-balances', type: 'page' },
+              { name: 'Send Transactions', url: '/sdk/wallet-modules/wallet-solana-gasless/guides/send-transactions', type: 'page' },
+              { name: 'Transfer SPL Tokens', url: '/sdk/wallet-modules/wallet-solana-gasless/guides/transfer-tokens', type: 'page' },
+              { name: 'Sign and Verify Messages', url: '/sdk/wallet-modules/wallet-solana-gasless/guides/sign-verify-messages', type: 'page' },
+              { name: 'Handle Errors', url: '/sdk/wallet-modules/wallet-solana-gasless/guides/handle-errors', type: 'page' },
+            ],
+          },
+          { name: 'Configuration', url: '/sdk/wallet-modules/wallet-solana-gasless/configuration', type: 'page' },
+          { name: 'API Reference', url: '/sdk/wallet-modules/wallet-solana-gasless/api-reference', type: 'page' },
+        ],
+      },
+      {
         name: 'wallet-spark', type: 'folder',
         index: { name: 'wallet-spark', url: '/sdk/wallet-modules/wallet-spark', type: 'page' },
         children: [
