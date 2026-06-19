@@ -7,6 +7,7 @@ const repoRoot = process.cwd();
 const redirectsPath = path.join(repoRoot, '_redirects');
 const docsRoot = path.join(repoRoot, 'content', 'docs');
 const publicRoot = path.join(repoRoot, 'public');
+const generatedStaticTargets = new Set(['/404.html']);
 
 const moduleRedirects = [
   ['/sdk/wallet-evm', '/sdk/wallet-modules/wallet-evm'],
@@ -54,6 +55,11 @@ const expectedRedirects = [
     source: '/sdk/wallet-evm/guides/getting-started',
     target: '/sdk/wallet-modules/wallet-evm/guides/getting-started',
     status: '301',
+  },
+  {
+    source: '/__missing-sevalla-404-check',
+    target: '/404.html',
+    status: '404',
   },
 ];
 
@@ -198,6 +204,33 @@ function validateModuleRedirectShape(redirects, failures) {
   }
 }
 
+function validateCatchAll404Redirect(redirects, failures) {
+  const catchAllRule = redirects.find((redirect) => redirect.source === '/*');
+
+  if (!catchAllRule) {
+    failures.push({
+      line: 0,
+      reason: 'Missing catch-all 404 redirect: /* -> /404.html 404',
+    });
+    return;
+  }
+
+  if (catchAllRule.target !== '/404.html' || catchAllRule.status !== '404') {
+    failures.push({
+      line: catchAllRule.line,
+      reason: `Expected catch-all 404 redirect to be /* -> /404.html 404, got ${catchAllRule.target} ${catchAllRule.status ?? ''}`.trim(),
+    });
+  }
+
+  const lastRule = redirects.at(-1);
+  if (lastRule && catchAllRule.line !== lastRule.line) {
+    failures.push({
+      line: catchAllRule.line,
+      reason: 'Catch-all 404 redirect must be the last rule in _redirects.',
+    });
+  }
+}
+
 async function run() {
   if (!fs.existsSync(redirectsPath)) {
     console.log('✅ check-redirects: no _redirects file found.');
@@ -236,7 +269,7 @@ async function run() {
     }
 
     const targetRoute = targetRouteForValidation(redirect.target);
-    if (!validTargets.has(targetRoute)) {
+    if (!validTargets.has(targetRoute) && !generatedStaticTargets.has(targetRoute)) {
       failures.push({
         line: redirect.line,
         reason: `Target route does not exist in content/docs or public: ${redirect.target}`,
@@ -245,6 +278,7 @@ async function run() {
   }
 
   validateModuleRedirectShape(redirects, failures);
+  validateCatchAll404Redirect(redirects, failures);
 
   for (const expected of expectedRedirects) {
     const redirect = resolveRedirect(redirects, expected.source);
