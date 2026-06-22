@@ -14,6 +14,10 @@ const ALLOWED_EMBED_HOSTS = [
 ];
 
 function isAllowedUrl(url: string, allowedHosts?: string[]): boolean {
+  if (url.startsWith('/') && !url.startsWith('//')) {
+    return !allowedHosts;
+  }
+
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false;
@@ -24,6 +28,13 @@ function isAllowedUrl(url: string, allowedHosts?: string[]): boolean {
   }
 }
 
+function getVideoType(url: string): 'video/mp4' | 'video/webm' | null {
+  const pathname = url.split(/[?#]/, 1)[0].toLowerCase();
+  if (pathname.endsWith('.mp4')) return 'video/mp4';
+  if (pathname.endsWith('.webm')) return 'video/webm';
+  return null;
+}
+
 export function Embed({ url, title }: EmbedProps) {
   if (isAllowedUrl(url, ALLOWED_EMBED_HOSTS)) {
     const videoId = extractYouTubeId(url);
@@ -32,11 +43,12 @@ export function Embed({ url, title }: EmbedProps) {
     }
   }
 
-  if (isAllowedUrl(url) && (url.endsWith('.mp4') || url.endsWith('.webm'))) {
+  const videoType = getVideoType(url);
+  if (videoType && isAllowedUrl(url)) {
     return (
       <div className="relative w-full max-w-2xl overflow-hidden rounded-lg">
         <video controls className="w-full max-h-[480px]" preload="metadata">
-          <source src={url} type={url.endsWith('.mp4') ? 'video/mp4' : 'video/webm'} />
+          <source src={url} type={videoType} />
         </video>
       </div>
     );
