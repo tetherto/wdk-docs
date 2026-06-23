@@ -1,6 +1,6 @@
 ---
 title: WDK Utils API Reference
-description: Validation, BIP-21, BOLT11, and EIP-681 APIs for @tetherto/wdk-utils
+description: Validation, encryption, BIP-21, BOLT11, and EIP-681 APIs for @tetherto/wdk-utils
 docType: reference
 schemaType: APIReference
 ---
@@ -294,6 +294,71 @@ Resolve a valid UMA string into the local part, domain, and underlying Lightning
 import { resolveUmaUsername } from '@tetherto/wdk-utils'
 
 const result = resolveUmaUsername('$alice@wallet.com')
+```
+
+### Seed Encryption Helpers
+
+| Function | Description | Returns |
+| --- | --- | --- |
+| `encrypt(plaintext, password, scryptParams?)` | Encrypt a string with AES-256-GCM using a scrypt-derived key. | `EncryptedPayload` |
+| `decrypt(payload, password)` | Decrypt an encrypted payload with the passphrase used to create it. | `string` |
+| `deriveKey(password, salt, scryptParams?)` | Derive a 32-byte AES key from a passphrase and salt. | `Uint8Array` |
+| `decryptWithKey(payload, key)` | Decrypt an encrypted payload with a pre-derived 32-byte AES key. | `string` |
+| `DEFAULT_SCRYPT_PARAMS` | Default scrypt cost parameters. | `{ N: 65536, r: 8, p: 1 }` |
+
+#### `encrypt(plaintext, password, scryptParams?)`
+
+Encrypt a plaintext string with AES-256-GCM. The helper generates a random 32-byte salt and 12-byte initialization vector, derives a 32-byte key with scrypt, and returns a versioned payload with hex-encoded binary fields.
+
+```javascript title="Encrypt A Seed Phrase"
+import { encrypt } from '@tetherto/wdk-utils'
+
+const encrypted = encrypt(seedPhrase, passphrase)
+```
+
+`EncryptedPayload` contains:
+
+- `version: 1`
+- `salt: string`
+- `iv: string`
+- `tag: string`
+- `ciphertext: string`
+- `scryptN?: number`
+- `scryptR?: number`
+- `scryptP?: number`
+
+Pass optional scrypt cost parameters as `{ N, r, p }`. Defaults are `N: 65536`, `r: 8`, and `p: 1`.
+
+#### `decrypt(payload, password)`
+
+Decrypt a payload produced by `encrypt()`. The helper reads `scryptN`, `scryptR`, and `scryptP` from the payload when present, then clears the derived key from memory after decryption.
+
+```javascript title="Decrypt A Seed Phrase"
+import { decrypt } from '@tetherto/wdk-utils'
+
+const seedPhrase = decrypt(encrypted, passphrase)
+```
+
+`decrypt()` throws if the payload version is unsupported, the password is wrong, or the authentication tag does not verify.
+
+#### `deriveKey(password, salt, scryptParams?)`
+
+Derive a 32-byte AES key from a passphrase and salt. Use this when your app needs to manage the derived key explicitly before calling `decryptWithKey()`.
+
+```javascript title="Derive An Encryption Key"
+import { deriveKey } from '@tetherto/wdk-utils'
+
+const key = deriveKey(passphrase, saltBytes)
+```
+
+#### `decryptWithKey(payload, key)`
+
+Decrypt a payload with a pre-derived key. The key must be a 32-byte `Uint8Array`.
+
+```javascript title="Decrypt With A Pre-Derived Key"
+import { decryptWithKey } from '@tetherto/wdk-utils'
+
+const plaintext = decryptWithKey(encrypted, key)
 ```
 
 ### BIP-21 Bitcoin Payment URI Helpers
