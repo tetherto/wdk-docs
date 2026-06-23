@@ -1,0 +1,134 @@
+---
+title: Pricing CoinGecko HTTP API Reference
+description: API Reference for @tetherto/wdk-pricing-coingecko-http.
+docType: reference
+schemaType: APIReference
+icon: Code
+---
+
+# API Reference
+
+## Package
+
+```bash
+npm install @tetherto/wdk-pricing-coingecko-http
+```
+
+```javascript title="Import"
+import { CoingeckoPricingClient } from '@tetherto/wdk-pricing-coingecko-http'
+```
+
+## Class: `CoingeckoPricingClient`
+
+CoinGecko-backed implementation of `PricingClient` from `@tetherto/wdk-pricing-provider`.
+
+### Constructor
+
+```javascript
+new CoingeckoPricingClient(options?)
+```
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `baseURL` | `string` | CoinGecko API base URL. Defaults to `https://api.coingecko.com/api/v3`. |
+| `coinIds` | `Record<string, string>` | Symbol-to-CoinGecko-ID overrides merged with the built-in map. |
+| `apiKey` | `string` | CoinGecko API key. Uses the Demo or Pro header based on `baseURL`. |
+
+### Methods
+
+| Method | Description | Returns |
+|--------|-------------|---------|
+| `getCurrentPrice(from, to)` | Fetch current price for one pair | `Promise<number \| null>` |
+| `getMultiCurrentPrices(list)` | Fetch current prices for many pairs in one request | `Promise<Array<number \| null>>` |
+| `getMultiPriceData(list)` | Fetch last price plus 24-hour change for many pairs | `Promise<Array<PriceData \| null>>` |
+| `getHistoricalPrice(from, to, opts)` | Fetch historical prices for a pair over a time range | `Promise<HistoricalPriceResult[]>` |
+
+`from` is a ticker symbol resolved through `coinIds`; `to` is a CoinGecko `vs_currency` code. Both are case-insensitive.
+
+### `getCurrentPrice(from, to)`
+
+```javascript title="Current price"
+const price = await client.getCurrentPrice('BTC', 'USD')
+```
+
+Returns the current price as a number, or `null` when CoinGecko returns no data for the pair.
+
+Throws when `from` has no configured CoinGecko ID.
+
+### `getMultiCurrentPrices(list)`
+
+```javascript title="Batch current prices"
+const prices = await client.getMultiCurrentPrices([
+  { from: 'BTC', to: 'USD' },
+  { from: 'ETH', to: 'EUR' }
+])
+```
+
+The client de-duplicates CoinGecko IDs and quote currencies before calling `/simple/price`. Results are returned in the same order as the input list. Missing entries return `null`.
+
+An empty input list returns an empty array.
+
+### `getMultiPriceData(list)`
+
+```javascript title="Batch price data"
+const data = await client.getMultiPriceData([
+  { from: 'BTC', to: 'USD' }
+])
+```
+
+Returns `PriceData` objects:
+
+```typescript
+type PriceData = {
+  lastPrice: number
+  dailyChange: number
+  dailyChangeRelative: number
+}
+```
+
+CoinGecko returns 24-hour change as a percentage. The client derives `dailyChange` from `lastPrice` and that percentage, so the absolute change is an approximation.
+
+### `getHistoricalPrice(from, to, opts)`
+
+```javascript title="Historical prices"
+const series = await client.getHistoricalPrice('BTC', 'USD', {
+  start: Date.now() - 7 * 24 * 60 * 60 * 1000,
+  end: Date.now(),
+  maxEntries: 100
+})
+```
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `start` | `number` | Yes | Range start as a Unix timestamp in milliseconds. |
+| `end` | `number` | Yes | Range end as a Unix timestamp in milliseconds. |
+| `maxEntries` | `number` | No | Evenly downsample the returned series to at most this many points. |
+
+Returns points ordered oldest first:
+
+```typescript
+type HistoricalPriceResult = {
+  price: number
+  timestamp: number
+}
+```
+
+When `maxEntries` is set, the client keeps the first and last point and samples the middle of the series evenly. Without `maxEntries`, it returns every point from CoinGecko.
+
+Throws when `start` or `end` is missing. On the public or Demo API host, it also throws when `start` is older than the trailing 365 days. Use the Pro host and Pro key for older ranges.
+
+## Error Handling
+
+| Condition | Behavior |
+|-----------|----------|
+| Unknown `from` symbol | Throws `Unknown symbol: ...` |
+| Missing `start` or `end` | Throws `start and end timestamps are required` |
+| Historical range older than 365 days on non-Pro host | Throws `Start date older than 365 days requires a CoinGecko Pro API key` |
+| CoinGecko has no data for a pair | Resolves to `null` for current and batched price methods |
+| CoinGecko rate limit or network error | Rejects with the underlying HTTP client error |
+
+***
+
+## Need Help?
+
+<SupportCards />

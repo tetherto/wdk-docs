@@ -1,0 +1,66 @@
+---
+title: Fetch Historical Prices
+description: Fetch historical price series with CoingeckoPricingClient.
+docType: how-to
+schemaType: TechArticle
+---
+
+Use `getHistoricalPrice(from, to, opts)` for chart data over a time range.
+
+## Fetch a Range
+
+Pass `start` and `end` as Unix timestamps in milliseconds:
+
+```javascript title="Fetch seven days of BTC/USD"
+const end = Date.now()
+const start = end - 7 * 24 * 60 * 60 * 1000
+
+const series = await client.getHistoricalPrice('BTC', 'USD', {
+  start,
+  end
+})
+
+console.log(series)
+```
+
+Each point has a `price` and `timestamp`:
+
+```typescript
+type HistoricalPriceResult = {
+  price: number
+  timestamp: number
+}
+```
+
+Results are ordered oldest first.
+
+## Downsample Long Series
+
+Use `maxEntries` when you only need a fixed number of points for a chart:
+
+```javascript title="Downsample to 100 points"
+const series = await client.getHistoricalPrice('BTC', 'USD', {
+  start,
+  end,
+  maxEntries: 100
+})
+```
+
+The client keeps the first and last point and samples the middle of the series evenly.
+
+## Free and Pro Ranges
+
+CoinGecko's public and Demo API host supports historical data inside the trailing 365-day window. For older ranges, configure the Pro host and a Pro key:
+
+```javascript title="Older historical range with Pro"
+const client = new CoingeckoPricingClient({
+  baseURL: 'https://pro-api.coingecko.com/api/v3',
+  apiKey: process.env.COINGECKO_PRO_API_KEY
+})
+```
+
+## Next Steps
+
+- [Configure the client](/sdk/pricing-modules/pricing-coingecko-http/configuration)
+- [Handle errors](/sdk/pricing-modules/pricing-coingecko-http/guides/handle-errors)
+- [API reference](/sdk/pricing-modules/pricing-coingecko-http/api-reference)

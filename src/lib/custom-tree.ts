@@ -302,6 +302,36 @@ export const customTree: Node[] = [
     ],
   },
   {
+    name: 'Pricing Modules',
+    type: 'folder',
+    icon: resolveIcon('TrendingUp'),
+    index: {
+      name: 'Pricing Modules',
+      url: '/sdk/pricing-modules',
+      type: 'page',
+    },
+    children: [
+      {
+        name: 'pricing-coingecko-http', type: 'folder',
+        index: { name: 'pricing-coingecko-http', url: '/sdk/pricing-modules/pricing-coingecko-http', type: 'page' },
+        children: [
+          { name: 'Usage', url: '/sdk/pricing-modules/pricing-coingecko-http/usage', type: 'page' },
+          {
+            name: 'Guides', type: 'folder', icon: resolveIcon('BookOpen'),
+            children: [
+              { name: 'Get Started', url: '/sdk/pricing-modules/pricing-coingecko-http/guides/get-started', type: 'page' },
+              { name: 'Fetch Current Prices', url: '/sdk/pricing-modules/pricing-coingecko-http/guides/fetch-current-prices', type: 'page' },
+              { name: 'Fetch Historical Prices', url: '/sdk/pricing-modules/pricing-coingecko-http/guides/fetch-historical-prices', type: 'page' },
+              { name: 'Handle Errors', url: '/sdk/pricing-modules/pricing-coingecko-http/guides/handle-errors', type: 'page' },
+            ],
+          },
+          { name: 'Configuration', url: '/sdk/pricing-modules/pricing-coingecko-http/configuration', type: 'page' },
+          { name: 'API Reference', url: '/sdk/pricing-modules/pricing-coingecko-http/api-reference', type: 'page' },
+        ],
+      },
+    ],
+  },
+  {
     name: 'Swap Modules',
     type: 'folder',
     icon: resolveIcon('ArrowLeftRight'),
