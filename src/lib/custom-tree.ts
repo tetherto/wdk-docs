@@ -335,6 +335,18 @@ export const customTree: Node[] = [
   folder('Fetch token prices', '/tools/price-rates', 'TrendingUp', [
     configuration('/tools/price-rates/configuration'),
     apiReference('/tools/price-rates/api-reference'),
+    page('Pricing module reference', '/sdk/pricing-modules', 'LayoutGrid'),
+    folder('CoinGecko HTTP', '/sdk/pricing-modules/pricing-coingecko-http', 'TrendingUp', [
+      usage('/sdk/pricing-modules/pricing-coingecko-http/usage'),
+      guides([
+        page('Get Started', '/sdk/pricing-modules/pricing-coingecko-http/guides/get-started'),
+        page('Fetch Current Prices', '/sdk/pricing-modules/pricing-coingecko-http/guides/fetch-current-prices'),
+        page('Fetch Historical Prices', '/sdk/pricing-modules/pricing-coingecko-http/guides/fetch-historical-prices'),
+        page('Handle Errors', '/sdk/pricing-modules/pricing-coingecko-http/guides/handle-errors'),
+      ]),
+      configuration('/sdk/pricing-modules/pricing-coingecko-http/configuration'),
+      apiReference('/sdk/pricing-modules/pricing-coingecko-http/api-reference'),
+    ]),
   ]),
   folder('Look up asset metadata', '/tools/asset-registry', 'Tags', [
     configuration('/tools/asset-registry/configuration'),
