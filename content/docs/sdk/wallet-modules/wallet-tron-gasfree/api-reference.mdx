@@ -129,8 +129,8 @@ new WalletAccountTronGasfree(seed, path, config)
 | `getAddress()` | Returns the account's address | `Promise\<string\>` |
 | `getBalance()` | Returns the native TRX balance (in sun) | `Promise\<bigint\>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise\<bigint\>` |
-| `transfer(options)` | Transfers TRC20 tokens to another address | `Promise\<{hash: string, fee: bigint}\>` |
-| `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: bigint}\>` |
+| `transfer(options)` | Transfers TRC20 tokens to another address | `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` |
+| `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: bigint, activationFee: bigint}\>` |
 | `sign(message)` | Signs a message using the account's private key | `Promise\<string\>` |
 | `signTransaction(tx)` | Unsupported on Tron GasFree; always throws | `Promise\<never\>` |
 | `sendTransaction(tx)` | Unsupported on Tron GasFree; always throws | `Promise\<TransactionResult\>` |
@@ -183,7 +183,7 @@ Transfers TRC20 tokens to another address using the gas-free service.
   - `recipient` (string): Recipient's Tron address
   - `amount` (number): Amount in token base units
 
-**Returns:** `Promise\<{hash: string, fee: bigint}\>` - Object containing transaction hash and fee paid in token base units. The returned fee includes the estimated transfer fee plus any activation fee returned by the GasFree service.
+**Returns:** `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` - Object containing transaction hash, total fee paid in token base units, and the activation-fee portion. `activationFee` is `0n` when no account activation fee applies.
 
 **Example:**
 ```javascript
@@ -194,6 +194,7 @@ const result = await account.transfer({
 })
 console.log('Transaction hash:', result.hash)
 console.log('Fee paid:', result.fee, 'token base units')
+console.log('Activation fee:', result.activationFee, 'token base units')
 ```
 
 ##### `quoteTransfer(options)`
@@ -202,7 +203,7 @@ Estimates the fee for a TRC20 token transfer.
 **Parameters:**
 - `options` (TransferOptions): Transfer options (same as transfer method)
 
-**Returns:** `Promise\<{fee: bigint}\>` - Estimated fee in token base units. The estimate includes the token's transfer fee and, when the GasFree account is inactive, the token activation fee.
+**Returns:** `Promise\<{fee: bigint, activationFee: bigint}\>` - Estimated total fee in token base units, plus the activation-fee portion. `activationFee` is `0n` when no account activation fee applies.
 
 **Example:**
 ```javascript
@@ -212,6 +213,7 @@ const quote = await account.quoteTransfer({
   amount: 1000000
 })
 console.log('Estimated fee:', quote.fee, 'token base units')
+console.log('Activation fee:', quote.activationFee, 'token base units')
 ```
 
 ##### `sign(message)`
@@ -303,7 +305,7 @@ new WalletAccountReadOnlyTronGasfree(address, config)
 | `getAddress()` | Returns the account's address | `Promise\<string\>` |
 | `getBalance()` | Returns the native TRX balance (in sun) | `Promise\<bigint\>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise\<bigint\>` |
-| `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: bigint}\>` |
+| `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: bigint, activationFee: bigint}\>` |
 | `quoteSendTransaction(tx)` | Unsupported on Tron GasFree; always throws | `Promise\<Omit\<TransactionResult, 'hash'\>\>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` |
 
@@ -352,7 +354,7 @@ Estimates the fee for a TRC20 token transfer without requiring private keys.
   - `recipient` (string): Recipient's Tron address
   - `amount` (number): Amount in token base units
 
-**Returns:** `Promise\<{fee: bigint}\>` - Estimated fee in token base units. The estimate includes the token's transfer fee and, when the GasFree account is inactive, the token activation fee.
+**Returns:** `Promise\<{fee: bigint, activationFee: bigint}\>` - Estimated total fee in token base units, plus the activation-fee portion. `activationFee` is `0n` when no account activation fee applies.
 
 **Example:**
 ```javascript
@@ -362,6 +364,7 @@ const quote = await readOnlyAccount.quoteTransfer({
   amount: 1000000
 })
 console.log('Estimated fee:', quote.fee, 'token base units')
+console.log('Activation fee:', quote.activationFee, 'token base units')
 ```
 
 ##### `quoteSendTransaction(tx)`

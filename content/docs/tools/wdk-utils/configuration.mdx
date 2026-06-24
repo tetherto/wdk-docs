@@ -1,6 +1,6 @@
 ---
 title: WDK Utils Configuration
-description: Install and import validation, BIP-21, BOLT11, and EIP-681 helpers from @tetherto/wdk-utils
+description: Install and import validation, encryption, BIP-21, BOLT11, and EIP-681 helpers from @tetherto/wdk-utils
 ---
 
 This package does not have constructor options or runtime configuration. This page shows how to install `@tetherto/wdk-utils`, import the helpers you need, and understand the published runtime surface.
@@ -55,6 +55,19 @@ import {
 } from '@tetherto/wdk-utils'
 ```
 
+## Import seed encryption helpers
+
+You can encrypt and decrypt seed phrases or other local strings with the AES-256-GCM helpers:
+
+```javascript title="Import Seed Encryption Helpers"
+import {
+  decrypt,
+  decryptWithKey,
+  deriveKey,
+  encrypt
+} from '@tetherto/wdk-utils'
+```
+
 ## Import BOLT11 helpers
 
 You can validate, decode, sign, and encode BOLT11 Lightning invoices from the package entrypoint:
@@ -75,6 +88,9 @@ import {
 - The package publishes a default module entrypoint through `index.js` and a bare runtime entrypoint through `bare.js`.
 - `parseBip21Request()` accepts `bitcoin:` URIs with a validated Bitcoin address and optional `amount`, `label`, and `message` parameters.
 - `encodeBip21Request()` validates the Bitcoin address and amount before returning a `bitcoin:` URI.
+- `encrypt()` returns a versioned payload with hex-encoded `salt`, `iv`, `tag`, and `ciphertext` fields plus the scrypt cost parameters used for key derivation.
+- `decrypt()` reads the scrypt cost parameters from the encrypted payload when they are present.
+- `deriveKey()` returns a 32-byte `Uint8Array` key, and `decryptWithKey()` can reuse that key for decrypting a payload.
 - BIP-21 amounts are decimal BTC strings with up to eight decimal places and a maximum value of `21000000`.
 - BOLT11 helpers support invoices for `bitcoin`, `testnet`, `regtest`, and `signet` networks.
 - `decode()` returns user-provided invoice descriptions when they are present. Sanitize descriptions before rendering them in HTML or storing them.
@@ -134,6 +150,15 @@ import { parseEip681Request } from '@tetherto/wdk-utils'
 const request = parseEip681Request(
   'pol:0xc2132D05D31c914a87C6611C10748AEb04B58e8F@137/transfer?address=0xA9e338082A061d657014c08e652D96B38639F22a&uint256=0.175309000e6'
 )
+```
+
+You can protect a seed phrase with a passphrase before storing it in local app state:
+
+```javascript title="Encrypt A Seed Phrase"
+import { decrypt, encrypt } from '@tetherto/wdk-utils'
+
+const encrypted = encrypt(seedPhrase, passphrase)
+const restoredSeedPhrase = decrypt(encrypted, passphrase)
 ```
 
 ***
