@@ -67,8 +67,8 @@ const wallet = new WalletManagerEvm(seedPhrase, {
 const wallet = new WalletManagerEvmErc4337(seedPhrase, {
   provider: 'https://arb1.arbitrum.io/rpc',
   chainId: 42161,
-  bundlerUrl: 'https://api.candide.dev/public/v3/arbitrum',
-  paymasterUrl: 'https://api.candide.dev/public/v3/arbitrum',
+  bundlerUrl: 'https://api.candide.dev/public/v3/42161',
+  paymasterUrl: 'https://api.candide.dev/public/v3/42161',
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
   entrypointAddress: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
   paymasterToken: {
