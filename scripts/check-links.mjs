@@ -170,10 +170,10 @@ function fileToRoute(relativeMdxPath) {
   return normalizeRoute(`/${noExt}`);
 }
 
-function fileToBaseRoute(relativeMdxPath, route) {
-  const noExt = stripMarkdownExtension(toPosix(relativeMdxPath));
-  if (noExt === 'index' || noExt.endsWith('/index')) return route;
-  return normalizeRoute(path.posix.dirname(route));
+function fileToBaseRoute(_relativeMdxPath, route) {
+  // Exported pages use trailingSlash, so browser-relative hrefs resolve from
+  // the rendered page URL, not from the source MDX file's parent directory.
+  return route;
 }
 
 function createLineResolver(content) {
