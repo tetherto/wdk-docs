@@ -37,19 +37,22 @@ new WalletManagerTron(seed, config?)
   - `provider` (`string | TronWeb | Array<string | TronWeb>`, optional): Tron RPC endpoint URL, TronWeb instance, or ordered failover list
   - `retries` (number, optional): Additional failover attempts when `provider` is an array (default: 3)
   - `transferMaxFee` (`number | bigint`, optional): Maximum fee amount for TRC20 transfer operations (in sun)
+  - `transactionMaxFee` (`number | bigint`, optional): Maximum fee amount for native TRX `sendTransaction()` and `signTransaction()` operations (in sun)
 
 **Example:**
 ```javascript
 const wallet = new WalletManagerTron(seedPhrase, {
   provider: 'https://api.trongrid.io', // Tron RPC endpoint
-  transferMaxFee: 10000000n // 10 TRX in sun
+  transferMaxFee: 10000000n, // Maximum TRC20 transfer fee in sun
+  transactionMaxFee: 10000000n // Maximum native TRX send/sign fee in sun
 })
 
 // Or with TronWeb instance
 const tronWeb = new TronWeb({ fullHost: 'https://api.trongrid.io' })
 const wallet2 = new WalletManagerTron(seedPhrase, {
   provider: tronWeb,
-  transferMaxFee: 10000000n
+  transferMaxFee: 10000000n,
+  transactionMaxFee: 10000000n
 })
 
 // Or with ordered provider failover
@@ -154,7 +157,8 @@ new WalletAccountTron(seed, path, config?)
 ```javascript
 const account = new WalletAccountTron(seedPhrase, "0'/0/0", {
   provider: 'https://api.trongrid.io',
-  transferMaxFee: 10000000n // 10 TRX in sun
+  transferMaxFee: 10000000n, // Maximum TRC20 transfer fee in sun
+  transactionMaxFee: 10000000n // Maximum native TRX send/sign fee in sun
 })
 ```
 
@@ -165,6 +169,7 @@ const account = new WalletAccountTron(seedPhrase, "0'/0/0", {
 | `getAddress()` | Returns the account's Tron address | `Promise\<string\>` | - |
 | `sign(message)` | Signs a message using the account's private key | `Promise\<string\>` | - |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` | - |
+| `signTransaction(tx)` | Signs a native TRX transaction without broadcasting it | `Promise\<SignedTransaction\>` | If no provider or fee exceeds `transactionMaxFee` |
 | `sendTransaction(tx)` | Sends a Tron transaction | `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` | If no provider |
 | `quoteSendTransaction(tx)` | Estimates the fee for a Tron transaction | `Promise\<{fee: bigint, activationFee: bigint}\>` | If no provider |
 | `transfer(options)` | Transfers TRC20 tokens to another address | `Promise\<{hash: string, fee: bigint}\>` | If no provider or fee exceeds `transferMaxFee` |
@@ -216,6 +221,30 @@ const isValid = await account.verify('Hello, Tron!', signature)
 console.log('Signature valid:', isValid)
 ```
 
+##### `signTransaction(tx)`
+Signs a native TRX transaction and returns the signed transaction object. This method does not broadcast the transaction.
+
+**Parameters:**
+- `tx` (TronTransaction): The transaction object
+  - `to` (string): Recipient Tron address (e.g., 'T...')
+  - `value` (number | bigint): Amount in sun (1 TRX = 1,000,000 sun)
+
+**Returns:** `Promise\<SignedTransaction\>` - Signed Tron transaction object with a `signature` array
+
+**Throws:**
+- Error if no TronWeb provider is configured
+- Error if fee exceeds `transactionMaxFee` when configured
+
+**Example:**
+```javascript
+const signedTransaction = await account.signTransaction({
+  to: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
+  value: 1000000
+})
+
+console.log('Signed transaction:', signedTransaction)
+```
+
 ##### `sendTransaction(tx)`
 Sends a TRX transaction and returns the result with hash, fee, and activation fee details.
 
@@ -228,6 +257,7 @@ Sends a TRX transaction and returns the result with hash, fee, and activation fe
 
 **Throws:** 
 - Error if no TronWeb provider is configured
+- Error if fee exceeds `transactionMaxFee` when configured
 
 **Example:**
 ```javascript
@@ -406,7 +436,7 @@ new WalletAccountReadOnlyTron(address, config?)
 
 **Parameters:**
 - `address` (string): The account's Tron address
-- `config` (`Omit<TronWalletConfig, 'transferMaxFee'>`, optional): Configuration object without transferMaxFee
+- `config` (`Omit<TronWalletConfig, 'transferMaxFee' | 'transactionMaxFee'>`, optional): Configuration object without send-only fee caps
 
 **Example:**
 ```javascript
@@ -510,6 +540,7 @@ interface TronWalletConfig {
   provider?: string | TronWeb | Array<string | TronWeb>; // RPC, TronWeb, or failover list
   retries?: number;                   // Additional failover attempts, default 3
   transferMaxFee?: number | bigint;   // Maximum TRC20 transfer fee in sun
+  transactionMaxFee?: number | bigint; // Maximum native TRX send/sign fee in sun
 }
 ```
 
@@ -538,6 +569,16 @@ interface TransferOptions {
 interface TransactionResult {
   hash: string;                       // Transaction hash
   fee: bigint;                        // Fee paid in sun
+}
+```
+
+### SignedTransaction
+
+```typescript
+interface SignedTransaction {
+  txID: string;                       // Tron transaction ID
+  signature: string[];                // Serialized secp256k1 signature
+  [key: string]: unknown;             // Other fields from the unsigned Tron transaction
 }
 ```
 

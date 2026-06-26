@@ -36,6 +36,7 @@ new WalletManagerTon(seed, config)
     - `url` (string): TON Center API URL (e.g., 'https://toncenter.com/api/v3')
     - `secretKey` (string, optional): API key for TON Center
   - `transferMaxFee` (number, optional): Maximum fee amount for transfer operations (in nanotons)
+  - `transactionMaxFee` (number | bigint, optional): Maximum fee amount for native `sendTransaction()` and `signTransaction()` operations (in nanotons)
 
 
 **Example:**
@@ -45,7 +46,8 @@ const wallet = new WalletManagerTon(seedPhrase, {
     url: 'https://toncenter.com/api/v3',
     secretKey: 'your-api-key'
   },
-  transferMaxFee: 1000000000 // Maximum fee in nanotons (1 TON)
+  transferMaxFee: 1000000000, // Maximum Jetton transfer fee in nanotons
+  transactionMaxFee: 1000000000 // Maximum native send/sign fee in nanotons
 })
 ```
 
@@ -137,6 +139,7 @@ new WalletAccountTon(seed, path, config)
     - `url` (string): TON Center API URL
     - `secretKey` (string, optional): API key for TON Center
   - `transferMaxFee` (number, optional): Maximum fee amount for transfer operations
+  - `transactionMaxFee` (number | bigint, optional): Maximum fee amount for native `sendTransaction()` and `signTransaction()` operations
 
 
 **Example:**
@@ -146,7 +149,8 @@ const account = new WalletAccountTon(seedPhrase, "0'/0/0", {
     url: 'https://toncenter.com/api/v3',
     secretKey: 'your-api-key'
   },
-  transferMaxFee: 10000000 // Maximum fee in nanotons (e.g., 0.01 TON)
+  transferMaxFee: 10000000, // Maximum Jetton transfer fee in nanotons
+  transactionMaxFee: 10000000 // Maximum native send/sign fee in nanotons
 })
 ```
 
@@ -221,6 +225,8 @@ Signs a transaction offline and returns the signed external-message body without
 
 **Returns:** `Promise\<Cell\>` - The signed external-message body as a TON `Cell`. Call `cell.toBoc().toString('base64')` to obtain a wire-format payload ready for broadcast.
 
+**Throws:** Error if the estimated transaction fee exceeds `transactionMaxFee` when configured.
+
 **Example:**
 ```javascript
 const cell = await account.signTransaction({
@@ -242,6 +248,8 @@ Sends a TON transaction and returns the result with hash and fee.
 
 
 **Returns:** `Promise\<{hash: string, fee: number}\>` - Object containing hash and fee (in nanotons)
+
+**Throws:** Error if the estimated transaction fee exceeds `transactionMaxFee` when configured.
 
 **Example:**
 ```javascript
@@ -403,7 +411,7 @@ new WalletAccountReadOnlyTon(publicKey, config)
 
 **Parameters:**
 - `publicKey` (string): The account's public key (hex or base64)
-- `config` (object): Configuration object (same as WalletManagerTon)
+- `config` (object): TON client and retry configuration without send-only fee caps
 
 #### Methods
 
@@ -592,6 +600,12 @@ interface TonWalletConfig {
    * @example 1000000000 // 1 TON
    */
   transferMaxFee?: number | bigint;
+
+  /**
+   * Maximum allowed fee for native send/sign operations (in nanotons)
+   * @example 1000000000 // 1 TON
+   */
+  transactionMaxFee?: number | bigint;
 }
 
 interface TonClientConfig {
@@ -630,4 +644,3 @@ Get started with WDK's TON Wallet Configuration
 ## Need Help?
 
 <SupportCards />
-

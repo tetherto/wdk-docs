@@ -172,6 +172,8 @@ Conditions receive a frozen `PolicyContext`:
 | `params` | The first argument passed to the wrapped method |
 | `args` | All arguments passed to the wrapped method |
 
+For governed write calls, WDK snapshots the method arguments once before policy evaluation. Conditions see that snapshot, and WDK forwards the same approved values to the underlying wallet method. This prevents a caller from mutating a transaction object while an asynchronous policy condition is running.
+
 Conditions can be synchronous or asynchronous. `conditionTimeoutMs` defaults to `30000` milliseconds and can be set through `registerPolicy(policies, options)`. If a `DENY` condition throws or times out, WDK blocks the call. If an `ALLOW` condition throws or times out, WDK treats that allow rule as unmatched.
 
 ## Simulate Before Execution
@@ -197,7 +199,7 @@ In this beta, `simulate` is added at runtime but is not typed on the account ret
 
 ## Handle Errors
 
-`PolicyConfigurationError` means WDK rejected the policy setup. Common causes include invalid scopes, actions, operation names, condition functions, timeout options, missing account bindings, or wallet identifiers that have not been registered.
+`PolicyConfigurationError` means WDK rejected the policy setup or could not safely evaluate a governed call. Common causes include invalid scopes, actions, operation names, condition functions, timeout options, missing account bindings, wallet identifiers that have not been registered, or governed method arguments that are not structured-cloneable.
 
 `PolicyViolationError` means an enforced write call was blocked by a matching `DENY` rule or by default-deny when no `ALLOW` rule matched. Catch it around the write call and surface the `reason` to the user or approval workflow.
 
@@ -206,6 +208,7 @@ In this beta, `simulate` is added at runtime but is not typed on the account ret
 - Policies wrap the WDK account/protocol proxy surface. Private fields, underscore methods, protocol internals, or nested calls made inside a module can bypass local policy evaluation.
 - Quote and read methods are not wrapped. Policies apply to write methods such as sends, signs, swaps, bridges, lending writes, fiat writes, and swidge execution.
 - Wallet accounts must expose a read-only account view when a policy applies, otherwise `getAccount()` fails with `PolicyConfigurationError`.
+- Governed write-call arguments must be structured-cloneable, such as primitives, plain objects, arrays, `bigint`, and typed arrays. Functions, live class instances, and other non-cloneable values fail closed with `PolicyConfigurationError` instead of being forwarded unsafely.
 - Avoid relying on engine-managed durable policy state in this beta. Use explicit application state or closures for local checks that need state.
 
 ## Next Steps
