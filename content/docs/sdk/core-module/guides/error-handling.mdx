@@ -32,15 +32,63 @@ Always use `try/catch` blocks when initializing sessions or accessing dynamic fe
 
 ## Memory Management
 
-For security, clear sensitive data from memory when a session is complete. The WDK provides [`dispose()`](/sdk/core-module/api-reference) for this purpose.
+For security, clear wallet state from memory when a session is complete. The WDK provides [`dispose()`](/sdk/core-module/api-reference) for this purpose.
+
+### Seed Lifecycle
+
+WDK does not own the seed you pass to `new WDK(seed)`. The seed comes from your app, so your app is responsible for storing it, decrypting it, and clearing it when it is no longer needed.
+
+Use this lifecycle for sessions that need explicit cleanup:
+
+1. Decrypt or load the seed into a mutable buffer.
+2. Initialize and use WDK.
+3. Call [`dispose()`](/sdk/core-module/api-reference#disposeblockchains) on the WDK instance.
+4. Zero the seed buffer when no WDK instance or wallet needs it anymore.
+
+```typescript title="Seed lifecycle cleanup"
+import WDK from '@tetherto/wdk'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+
+type SeedDecrypter = (encryptedSeed: Uint8Array) => Promise<Uint8Array>
+
+async function runWalletSession(
+  encryptedSeed: Uint8Array,
+  decryptSeedBytes: SeedDecrypter
+) {
+  let seedBytes: Uint8Array | undefined
+  let wdk: WDK | undefined
+
+  try {
+    seedBytes = await decryptSeedBytes(encryptedSeed)
+
+    wdk = new WDK(seedBytes)
+      .registerWallet('ethereum', WalletManagerEvm, {
+        provider: 'https://eth.drpc.org'
+      })
+
+    const account = await wdk.getAccount('ethereum', 0)
+    const address = await account.getAddress()
+    return address
+  } finally {
+    wdk?.dispose()
+    seedBytes?.fill(0)
+  }
+}
+```
+
+In this example, `decryptSeedBytes()` represents your app's secure storage or decryption layer. It should return seed bytes as a `Uint8Array`.
+
+<Callout type="warn">
+[`dispose()`](/sdk/core-module/api-reference#disposeblockchains) clears keys and account state managed by WDK, including private keys held by registered wallets. It does not mutate or zero the seed value you passed to WDK. If your app requires explicit seed cleanup, prefer a mutable `Uint8Array`; JavaScript strings cannot be reliably zeroed.
+</Callout>
 
 ### Disposing the Instance
 
-You can clear every registered wallet using [`dispose()`](/sdk/core-module/api-reference):
+You can dispose every registered wallet using [`dispose()`](/sdk/core-module/api-reference):
 
 ```typescript title="Dispose WDK"
 function endSession(wdk) {
-  // 1. Clean up sensitive data
+  // 1. Dispose registered wallets and account private keys
   wdk.dispose()
   
   // 2. Modify app state to reflect logged-out status
