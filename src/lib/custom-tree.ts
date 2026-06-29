@@ -233,6 +233,18 @@ export const customTree: Node[] = [
   ]),
 
   separator('Swap and Bridge'),
+  page('Swidge protocol interface', '/sdk/swidge-modules', 'Route'),
+  folder('Orchestra', '/sdk/swidge-modules/swidge-orchestra', 'Waypoints', [
+    usage('/sdk/swidge-modules/swidge-orchestra/usage'),
+    guides([
+      page('Get Started', '/sdk/swidge-modules/swidge-orchestra/guides/get-started'),
+      page('Quote and Execute', '/sdk/swidge-modules/swidge-orchestra/guides/quote-and-execute'),
+      page('State and Recovery', '/sdk/swidge-modules/swidge-orchestra/guides/state-and-recovery'),
+      page('Handle Errors', '/sdk/swidge-modules/swidge-orchestra/guides/handle-errors'),
+    ]),
+    configuration('/sdk/swidge-modules/swidge-orchestra/configuration'),
+    apiReference('/sdk/swidge-modules/swidge-orchestra/api-reference'),
+  ]),
   page('Swap module reference', '/sdk/swap-modules', 'ArrowLeftRight'),
   folder('Velora', '/sdk/swap-modules/swap-velora-evm', 'ArrowLeftRight', [
     usage('/sdk/swap-modules/swap-velora-evm/usage'),

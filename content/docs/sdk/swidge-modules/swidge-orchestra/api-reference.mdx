@@ -1,0 +1,200 @@
+---
+title: Orchestra API Reference
+description: API reference for the Flashnet Orchestra community Swidge module.
+docType: reference
+schemaType: APIReference
+icon: Code
+---
+
+# API Reference
+
+## Package
+
+```javascript
+import Orchestra, {
+  OrchestraApiError,
+  OrchestraError,
+  OrchestraStateError,
+  OrchestraSubmitError,
+  OrchestraTimeoutError
+} from 'wdk-protocol-swidge-orchestra'
+```
+
+The package exports `Orchestra` as both the default export and a named export.
+
+## Class: Orchestra
+
+`Orchestra` extends `SwidgeProtocol` from `@tetherto/wdk-wallet/protocols`.
+
+### Constructor
+
+```javascript
+new Orchestra(account, config?)
+```
+
+Parameters:
+
+- `account`: `IWalletAccount | IWalletAccountReadOnly | undefined`
+- `config`: `OrchestraConfig`
+
+Use `undefined` only for discovery or status flows that do not send source payments. Write flows require a WDK account with source-payment methods.
+
+### Swidge methods
+
+| Method | Description | Returns |
+|---|---|---|
+| `quoteSwidge(options)` | Calls Orchestra estimate and returns a side-effect-free WDK Swidge quote. | `Promise<SwidgeQuote>` |
+| `swidge(options, config?)` | Creates a quote, sends the source payment, submits the source transaction, and returns a WDK Swidge result. | `Promise<SwidgeResult>` |
+| `getSwidgeStatus(id, options?)` | Reads an Orchestra order and maps the order status to WDK Swidge status. | `Promise<SwidgeStatusResult>` |
+| `getSupportedChains()` | Reads Orchestra's route matrix and returns supported chains. | `Promise<SwidgeSupportedChain[]>` |
+| `getSupportedTokens(options?)` | Reads supported tokens, optionally filtered by source chain, source token, or destination chain. | `Promise<SwidgeSupportedToken[]>` |
+
+### Production flow methods
+
+| Method | Description | Returns |
+|---|---|---|
+| `prepareSwap(options, requestOptions?)` | Creates a durable Orchestra quote with deposit address and idempotency keys. Persist the returned intent before source payment. | `Promise<OrchestraSwapIntent>` |
+| `executeSwapIntent(intentOrState, options?)` | Sends the source payment and submits the transfer id to Orchestra. | `Promise<OrchestraSwapState>` |
+| `submitSourceTx(intentOrState, sourceTxHash, options?)` | Submits an already-sent source transaction without sending another source payment. | `Promise<OrchestraSwapState>` |
+| `resumeSwap(state, options?)` | Reads status, submits an existing source transaction, or resumes a fresh source payment only when explicitly allowed. | `Promise<OrchestraSwapState \| StatusResponse>` |
+| `getOrderStatus(target)` | Reads status by order id, quote id, or source transaction hash. | `Promise<StatusResponse>` |
+| `waitForCompletion(target, options?)` | Polls status until a terminal Orchestra order status or timeout. | `Promise<StatusResponse>` |
+| `subscribeOrder(target, callbacks, options?)` | Opens an SSE status subscription and returns a closable subscription. | `OrderSubscription` |
+
+### `quoteSwidge(options)`
+
+```javascript
+const quote = await orchestra.quoteSwidge({
+  fromToken: 'spark:BTC',
+  toToken: 'tron:USDT',
+  fromTokenAmount: 7116n,
+  recipient: 'TRecipient...',
+  slippage: 0.01
+})
+```
+
+`quoteSwidge()` calls the estimate endpoint. It does not reserve a deposit address and does not move funds.
+
+### `swidge(options, config?)`
+
+```javascript
+const result = await orchestra.swidge({
+  fromToken: 'spark:BTC',
+  toToken: 'tron:USDT',
+  fromTokenAmount: 7116n,
+  recipient: 'TRecipient...'
+}, {
+  maxNetworkFeeBps: 20n,
+  maxProtocolFeeBps: 100n
+})
+```
+
+`swidge()` can send a source payment. Show confirmation first and persist state through `onStateChange` when using this path.
+
+## Options
+
+### `OrchestraSwidgeOptions`
+
+| Field | Type | Description |
+|---|---|---|
+| `fromToken` | `string` | Source token, preferably chain-qualified such as `spark:BTC` or `bsc:USDT`. |
+| `toToken` | `string` | Destination token, preferably chain-qualified. |
+| `fromChain` | `string \| number` | Optional source-chain override. |
+| `toChain` | `string \| number` | Optional destination-chain override. |
+| `recipient` | `string` | Destination recipient. Required when the destination is not the source account. |
+| `refundChain` | `string` | Refund chain for routes that need refund metadata. |
+| `refundAddress` | `string` | Refund address for routes that need refund metadata. |
+| `fromTokenAmount` | `number \| bigint \| string` | Exact source amount. Do not pass with `toTokenAmount`. |
+| `toTokenAmount` | `number \| bigint \| string` | Exact destination amount. Do not pass with `fromTokenAmount`. |
+| `slippage` | `number` | Decimal slippage, for example `0.01` for 1%. |
+| `slippageBps` | `number` | Slippage in basis points. |
+| `idempotencyKey` | `string` | Quote idempotency key for `prepareSwap()`. |
+| `submitIdempotencyKey` | `string` | Submit idempotency key. |
+| `sourceTxHash` | `string` | Existing source transaction id to submit instead of sending a new payment. |
+| `sourceNetworkFee` | `bigint \| number \| string` | Source wallet fee for an existing source transaction. |
+| `sourceAddress` | `string` | Source wallet address used for submit metadata. |
+| `sourceSparkAddress` | `string` | Spark source address used for Spark submit metadata. |
+| `sourceTxVout` | `number` | Bitcoin output index when needed for submit metadata. |
+| `feeRate` | `number \| bigint` | Bitcoin source fee rate option. |
+| `confirmationTarget` | `number` | Bitcoin source confirmation target option. |
+| `broadcastTimeoutMs` | `number` | Bitcoin broadcast timeout. |
+| `allowNewSourcePayment` | `boolean` | Allows `resumeSwap()` to send a fresh source payment. Use only after wallet-history recovery. |
+| `ignoreQuoteExpiry` | `boolean` | Bypasses quote expiry protection. |
+| `quoteExpirySafetyMs` | `number` | Per-call quote expiry safety window. |
+| `appFees` | `AppFee[]` | App fee metadata passed to Orchestra. |
+| `affiliateId` | `string` | Affiliate id metadata. |
+| `affiliateIds` | `string[]` | Affiliate id metadata. |
+
+### `OrchestraConfig`
+
+See [Configuration](/sdk/swidge-modules/swidge-orchestra/configuration) for the full constructor config. Common fields are `apiKey`, `baseUrl`, `authMode`, `sourceChain`, `sourceTokenAddresses`, `sparkTokenIdentifiers`, `onStateChange`, timeout settings, and retry settings.
+
+## State objects
+
+### `OrchestraSwapIntent`
+
+Returned by `prepareSwap()`. Persist it before calling `executeSwapIntent()`.
+
+Key fields:
+
+- `version`
+- `quoteId`
+- `sourceChain`
+- `sourceAsset`
+- `destinationChain`
+- `destinationAsset`
+- `recipientAddress`
+- `amountMode`
+- `amountIn`
+- `estimatedOut`
+- `depositAddress`
+- `expiresAt`
+- `quoteIdempotencyKey`
+- `submitIdempotencyKey`
+- `createdAt`
+
+### `OrchestraSwapState`
+
+Returned after source payment, submit, or recovery steps. It extends `OrchestraSwapIntent`.
+
+Additional key fields:
+
+- `sourceTxHash`
+- `sourceNetworkFee`
+- `orderId`
+- `status`
+- `readToken`
+- `sourcePaymentStartedAt`
+- `fundedAt`
+- `submittedAt`
+
+Persist the full object, not only `orderId`. Recovery may need the quote id, deposit address, source transaction hash, read token, source chain, and idempotency keys.
+
+## Status mapping
+
+`getSwidgeStatus()` maps Orchestra order statuses to WDK Swidge statuses:
+
+| Orchestra status | WDK Swidge status |
+|---|---|
+| `processing` or unknown in-flight state | `pending` |
+| `completed` | `completed` |
+| `failed` | `failed` |
+| `unfulfilled` | `failed` |
+| `expired` | `expired` |
+| `refunded` | `refunded` |
+
+## Errors
+
+All package-specific errors extend `OrchestraError`.
+
+| Error | Description | Useful fields |
+|---|---|---|
+| `OrchestraError` | Base package error. | `code`, `details` |
+| `OrchestraApiError` | Orchestra returned an API error or invalid API response. | `code`, `status`, `details` |
+| `OrchestraStateError` | Input state is incomplete, unsafe to resume, expired, or incompatible with the requested source payment. | `code`, `details` |
+| `OrchestraSubmitError` | Source payment was sent, but submit, post-submit validation, or post-submit state persistence failed. | `state`, `cause` |
+| `OrchestraTimeoutError` | HTTP request or wait operation timed out. | `code`, `details` |
+
+## Source repository tooling
+
+The package repository includes a funded live-test harness. Those commands can move mainnet funds by default and are not required for normal WDK docs examples. Review the package repository before running them.

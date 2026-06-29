@@ -1,0 +1,159 @@
+---
+title: Quote and Execute Orchestra Routes
+description: Quote Orchestra Swidge routes, show confirmation, and execute from WDK source accounts.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide covers [route discovery](#route-discovery), [quotes](#quotes), [one-call execution](#one-call-execution), and [source-chain examples](#source-chain-examples).
+
+## Route discovery
+
+Use discovery methods to build a wallet UI from Orchestra's live route matrix.
+
+```javascript title="Discover chains and tokens"
+const chains = await orchestra.getSupportedChains()
+
+const tokens = await orchestra.getSupportedTokens({
+  fromChain: 'spark',
+  toChain: 'tron'
+})
+```
+
+Use chain-qualified asset references such as `spark:BTC`, `bitcoin:BTC`, `bsc:USDT`, or `tron:USDT`.
+
+## Quotes
+
+`quoteSwidge()` is side-effect-free. It calls Orchestra's estimate endpoint and does not reserve a deposit address.
+
+```javascript title="Quote exact source amount"
+const quote = await orchestra.quoteSwidge({
+  fromToken: 'spark:BTC',
+  toToken: 'tron:USDT',
+  fromTokenAmount: 7116n,
+  recipient: 'TRecipient...',
+  slippage: 0.01
+})
+```
+
+Show the user:
+
+- source amount and source asset
+- expected destination amount
+- minimum destination amount
+- fees
+- route and recipient
+- expiry, if present
+
+## One-call execution
+
+Call `swidge()` only after user confirmation. The method creates a fresh Orchestra quote, sends the source payment from the WDK account, submits the source transaction id to Orchestra, and returns the Orchestra order id.
+
+```javascript title="Execute with fee caps"
+const result = await orchestra.swidge({
+  fromToken: 'spark:BTC',
+  toToken: 'tron:USDT',
+  fromTokenAmount: 7116n,
+  recipient: 'TRecipient...'
+}, {
+  maxNetworkFeeBps: 20n,
+  maxProtocolFeeBps: 100n
+})
+
+console.log(result.id)
+console.log(result.hash)
+```
+
+<Callout type="warn">
+There is a recovery gap after the source payment is sent and before Orchestra accepts the transaction id. Use the split flow in [State and Recovery](/sdk/swidge-modules/swidge-orchestra/guides/state-and-recovery) for production funds.
+</Callout>
+
+## Source-chain examples
+
+### Spark BTC to USDT
+
+Spark signs the BTC transfer. Orchestra settles USDT on the destination chain.
+
+```javascript title="Prepare Spark BTC to TRON USDT"
+const spark = await wdk.getAccount('spark', 0)
+const orchestra = new Orchestra(spark, {
+  sourceChain: 'spark',
+  apiKey: process.env.FLASHNET_API_KEY
+})
+
+const intent = await orchestra.prepareSwap({
+  fromToken: 'spark:BTC',
+  toToken: 'tron:USDT',
+  fromTokenAmount: 7116n,
+  recipient: 'TRecipient...'
+})
+```
+
+### EVM USDT to Spark BTC
+
+EVM token sources use the WDK account's `transfer({ token, recipient, amount })` path. The source account needs native gas for its chain.
+
+```javascript title="Prepare BSC USDT to Spark BTC"
+const bsc = await wdk.getAccount('bsc', 0)
+const spark = await wdk.getAccount('spark', 0)
+
+const orchestra = new Orchestra(bsc, {
+  sourceChain: 'bsc',
+  apiKey: process.env.FLASHNET_API_KEY,
+  sourceTokenAddresses: {
+    'bsc:USDT': '0x55d398326f99059ff775485246999027b3197955'
+  }
+})
+
+const intent = await orchestra.prepareSwap({
+  fromToken: 'bsc:USDT',
+  toToken: 'spark:BTC',
+  fromTokenAmount: 5000000n,
+  recipient: await spark.getAddress()
+})
+```
+
+### Bitcoin L1 source
+
+Bitcoin L1 can be a source or destination. For Bitcoin source routes, the package submits `bitcoinTxid` to Orchestra and can retry `tx_not_found` or `vout_not_found` submit responses with the same idempotency key while the transaction propagates.
+
+```javascript title="Execute Bitcoin L1 to Spark BTC"
+const bitcoin = await wdk.getAccount('bitcoin', 0)
+const spark = await wdk.getAccount('spark', 0)
+
+const orchestra = new Orchestra(bitcoin, {
+  sourceChain: 'bitcoin',
+  apiKey: process.env.FLASHNET_API_KEY
+})
+
+const intent = await orchestra.prepareSwap({
+  fromToken: 'bitcoin:BTC',
+  toToken: 'spark:BTC',
+  fromTokenAmount: 100000n,
+  recipient: await spark.getAddress()
+})
+
+await saveSwap(intent)
+
+const submitted = await orchestra.executeSwapIntent(intent, {
+  feeRate: 12n,
+  confirmationTarget: 2
+})
+```
+
+### Destination Lightning
+
+Orchestra supports destination Lightning routes where the live route matrix exposes them. Pass a BOLT11 invoice or Lightning Address as `recipient`, and include refund metadata required by the route.
+
+```javascript title="Prepare USDT to destination Lightning"
+const intent = await orchestra.prepareSwap({
+  fromToken: 'bsc:USDT',
+  toToken: 'lightning:BTC',
+  fromTokenAmount: 5000000n,
+  recipient: bolt11Invoice,
+  refundChain: 'bsc',
+  refundAddress: await bsc.getAddress()
+})
+```
+
+Lightning as a source is not supported through this package's standard `swidge()` or `executeSwapIntent()` flow.

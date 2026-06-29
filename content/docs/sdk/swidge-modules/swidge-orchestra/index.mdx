@@ -1,0 +1,63 @@
+---
+title: Route with Orchestra
+description: Use the Flashnet Orchestra community Swidge module for BTC and USDT routes from WDK wallet accounts.
+docType: explanation
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Use [`wdk-protocol-swidge-orchestra`](https://www.npmjs.com/package/wdk-protocol-swidge-orchestra) when your wallet needs a WDK `SwidgeProtocol` provider for BTC and USDT routes served by Flashnet Orchestra. The package connects WDK wallet accounts to the Flashnet Orchestra API for route discovery, quotes, source payments, order submission, and status tracking.
+
+The package is maintained by Flashnet at [`flashnetxyz/wdk-protocol-swidge-orchestra`](https://github.com/flashnetxyz/wdk-protocol-swidge-orchestra). The reviewed package source for version `0.2.0` is covered by the upstream package review PR: [`flashnetxyz/wdk-protocol-swidge-orchestra#1`](https://github.com/flashnetxyz/wdk-protocol-swidge-orchestra/pull/1).
+
+## When to use it
+
+Use Orchestra when your application needs to route between BTC on Spark or Bitcoin L1 and USDT routes returned by Orchestra.
+
+| Use case | Module |
+|---|---|
+| Combined BTC and USDT routes across Spark, Bitcoin L1, EVM chains, Solana, TON, TRON, and destination Lightning routes where Orchestra supports them | `wdk-protocol-swidge-orchestra` |
+| Standalone EVM token swaps through Velora | [`@tetherto/wdk-protocol-swap-velora-evm`](/sdk/swap-modules/swap-velora-evm/) |
+| Standalone USDT0 bridge routes | [`@tetherto/wdk-protocol-bridge-usdt0-evm`](/sdk/bridge-modules/bridge-usdt0-evm/) |
+
+For standard WDK execution through this package, do not expose Lightning as a source route. The package sends source payments from WDK accounts and submits source transaction identifiers to Orchestra; it does not implement a source Lightning receive-request flow.
+
+## Responsibility model
+
+| Area | Owner |
+|---|---|
+| Wallet accounts, key material, and source transaction signing | WDK wallet modules |
+| Route quotes, deposit addresses, order state, and settlement | Flashnet Orchestra |
+| Durable state storage and recovery policy | Host wallet application |
+
+`quoteSwidge()` is side-effect-free. `swidge()` and `executeSwapIntent()` can move funds from the source account. Production wallets should persist the full intent and state objects returned by the package before and after source payment.
+
+## Key capabilities
+
+- Discover route support with `getSupportedChains()` and `getSupportedTokens(options?)`.
+- Quote routes with `quoteSwidge(options)` before showing a confirmation screen.
+- Execute Swidge routes with `swidge(options, config?)` when the host app has recovery around the call.
+- Use `prepareSwap()` and `executeSwapIntent()` when you need an explicit persistence boundary before source funds move.
+- Recover or continue orders with `submitSourceTx()`, `resumeSwap()`, `getOrderStatus()`, `waitForCompletion()`, and `subscribeOrder()`.
+
+## Next steps
+
+<Cards>
+<Card title="Get Started" href="/sdk/swidge-modules/swidge-orchestra/guides/get-started">
+Install the package, create a WDK account, and construct Orchestra.
+</Card>
+<Card title="Quote and Execute" href="/sdk/swidge-modules/swidge-orchestra/guides/quote-and-execute">
+Quote routes, show confirmation, and execute one-call Swidge operations.
+</Card>
+<Card title="State and Recovery" href="/sdk/swidge-modules/swidge-orchestra/guides/state-and-recovery">
+Persist intents and resume orders after source payment or process failure.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-orchestra/api-reference">
+Review methods, configuration fields, state objects, and errors.
+</Card>
+</Cards>

@@ -1,0 +1,157 @@
+---
+title: Orchestra State and Recovery
+description: Persist Orchestra intents and resume routes after source payment, submit, or process failure.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide covers [the production split flow](#production-split-flow), [state callbacks](#state-callbacks), [resume rules](#resume-rules), and [status tracking](#status-tracking).
+
+## Production split flow
+
+Use `prepareSwap()` and `executeSwapIntent()` when funds are at risk. The split flow gives the host wallet a persistence boundary before the source payment is sent.
+
+1. `prepareSwap()` creates an Orchestra quote and reserves a deposit address.
+2. The app persists the returned intent.
+3. `executeSwapIntent()` sends the source payment and submits the transfer id.
+4. The app persists the submitted state.
+5. The app tracks status with `getOrderStatus()`, `getSwidgeStatus()`, `waitForCompletion()`, or `subscribeOrder()`.
+
+```javascript title="Split flow with persisted state"
+const intent = await orchestra.prepareSwap({
+  fromToken: 'spark:BTC',
+  toToken: 'tron:USDT',
+  fromTokenAmount: 7116n,
+  recipient: 'TRecipient...'
+})
+
+await saveSwap(intent)
+
+const submitted = await orchestra.executeSwapIntent(intent)
+await saveSwap(submitted)
+
+const finalStatus = await orchestra.waitForCompletion(submitted, {
+  onStatus: async (status) => {
+    await saveOrderStatus(status)
+  }
+})
+```
+
+`saveSwap` and `saveOrderStatus` are your app code, not package exports. Back them with durable storage before moving real funds.
+
+## State callbacks
+
+Use `onStateChange` to persist every state transition that can affect funds.
+
+```javascript title="Persist state callbacks"
+const orchestra = new Orchestra(account, {
+  sourceChain: 'spark',
+  apiKey: process.env.FLASHNET_API_KEY,
+  onStateChange: async (event, state) => {
+    await saveSwapState(event, state)
+  }
+})
+```
+
+State events:
+
+| Event | Meaning |
+|---|---|
+| `intent_created` | Quote exists and has a deposit address. No source funds moved. |
+| `source_payment_started` | The package is about to broadcast or send the source payment. Persist before the callback returns. |
+| `source_payment_sent` | Source payment returned a transaction id. |
+| `submitted` | Orchestra accepted the source transaction and created or updated the order. |
+
+Persist the full state object. Do not store only the order id. Recovery may need the quote id, deposit address, source transaction hash, read token, source chain, and submit idempotency key.
+
+## Resume rules
+
+Call `resumeSwap(savedState, options?)` with the most complete saved state.
+
+```javascript title="Resume from saved state"
+const next = await orchestra.resumeSwap(savedState)
+await saveSwap(next)
+```
+
+`resumeSwap()` follows these rules:
+
+| Saved state | Behavior |
+|---|---|
+| Has `orderId` | Reads order status. |
+| Has `sourceTxHash` | Submits or re-submits the source transaction id. |
+| Has only the intent | Refuses to send a fresh source payment unless `allowNewSourcePayment: true` is set. |
+
+Use `allowNewSourcePayment: true` only after checking wallet history for a prior payment to the quote deposit address.
+
+```javascript title="Resume an intent only after wallet-history recovery"
+await orchestra.resumeSwap(intentOnlyState, {
+  allowNewSourcePayment: true
+})
+```
+
+## Submit an existing source transaction
+
+Use `submitSourceTx()` when your app already has the source transaction hash and should not send another source payment.
+
+```javascript title="Submit an existing source transaction"
+const submitted = await orchestra.submitSourceTx(
+  intent,
+  'spark_transfer_existing',
+  {
+    sourceNetworkFee: 3n
+  }
+)
+
+await saveSwap(submitted)
+```
+
+## Submit failure recovery
+
+If submit fails after source payment, the package throws `OrchestraSubmitError`. Persist `error.state` before retrying.
+
+```javascript title="Recover after submit failure"
+try {
+  const submitted = await orchestra.executeSwapIntent(intent)
+  await saveSwap(submitted)
+  return submitted
+} catch (err) {
+  if (err.name !== 'OrchestraSubmitError') throw err
+
+  await saveSwap(err.state)
+  return await orchestra.resumeSwap(err.state)
+}
+```
+
+## Status tracking
+
+Use `waitForCompletion()` for polling:
+
+```javascript title="Poll until terminal status"
+const finalStatus = await orchestra.waitForCompletion(submitted, {
+  pollIntervalMs: 5000,
+  timeoutMs: 7200000,
+  onStatus: async (status) => {
+    await saveOrderStatus(status)
+  }
+})
+```
+
+Use `subscribeOrder()` for SSE status updates:
+
+```javascript title="Subscribe to order status"
+const subscription = orchestra.subscribeOrder(submitted, {
+  onStatus: (status) => {
+    console.log(status)
+  },
+  onError: (err) => {
+    console.error(err)
+  },
+  onClose: () => {
+    console.log('Subscription closed')
+  }
+})
+
+subscription.close()
+```
+
+For direct browser SSE, provide `sseToken` or `getSseToken`, or proxy SSE from a backend. Admin keys should stay on trusted infrastructure.
