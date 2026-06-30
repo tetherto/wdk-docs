@@ -297,17 +297,17 @@ export const customTree: Node[] = [
 
   separator('AI'),
   page('Build with AI', '/start-building/build-with-ai', 'Bot'),
-  folder('MCP Toolkit', '/ai/mcp-toolkit', 'Wand', [
-    page('Get Started', '/ai/mcp-toolkit/get-started', 'Rocket'),
-    configuration('/ai/mcp-toolkit/configuration'),
-    apiReference('/ai/mcp-toolkit/api-reference'),
-    page('LangChain Integration', '/ai/mcp-toolkit/langchain', 'Link'),
-  ]),
   folder('WDK CLI', '/ai/wdk-cli', 'Terminal', [
     page('Get Started', '/ai/wdk-cli/get-started', 'Rocket'),
     configuration('/ai/wdk-cli/configuration'),
     page('Commands', '/ai/wdk-cli/commands', 'ListChecks'),
     page('MCP', '/ai/wdk-cli/mcp', 'Wand'),
+  ]),
+  folder('MCP Toolkit', '/ai/mcp-toolkit', 'Wand', [
+    page('Get Started', '/ai/mcp-toolkit/get-started', 'Rocket'),
+    configuration('/ai/mcp-toolkit/configuration'),
+    apiReference('/ai/mcp-toolkit/api-reference'),
+    page('LangChain Integration', '/ai/mcp-toolkit/langchain', 'Link'),
   ]),
   page('Agent Skills', '/ai/agent-skills', 'Brain'),
   page('OpenClaw', '/ai/openclaw', 'Cat'),
