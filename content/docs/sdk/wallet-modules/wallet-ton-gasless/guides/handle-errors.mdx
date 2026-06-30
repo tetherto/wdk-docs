@@ -26,7 +26,7 @@ try {
     console.error('Please add more paymaster tokens for gas fees')
   } else if (error.message.includes('invalid address')) {
     console.error('The recipient address is invalid')
-  } else if (error.message.includes('max fee')) {
+  } else if (error.message.toLowerCase().includes('fee')) {
     console.error('The transfer fee exceeds your configured maximum')
   } else {
     console.error('Transfer failed:', error.message)
@@ -36,7 +36,7 @@ try {
 
 ## Handle Unsupported Method Errors
 
-The gasless module supports only paymaster-funded Jetton transfers. Both [`account.sendTransaction()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#sendtransactiontx) and [`account.signTransaction()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#signtransactiontx) throw when called. Use [`account.transfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#transferoptions-config) instead, and guard any code path that might reach these methods:
+The gasless module supports only paymaster-funded Jetton transfers. [`account.sendTransaction()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#sendtransactiontx), [`account.quoteSendTransaction()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#quotesendtransactiontx), and [`account.signTransaction()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#signtransactiontx) reject or throw when called. Use [`account.transfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#transferoptions-config) instead, and guard any code path that might reach these methods:
 
 ```javascript title="Unsupported Method Handling"
 try {
@@ -54,7 +54,7 @@ try {
 
 ### Manage Fee Limits
 
-Set `transferMaxFee` when creating the wallet to prevent gasless transfers from exceeding a maximum cost. You can retrieve current network rates using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#getfeerates):
+Set `transferMaxFee` when creating the wallet to prevent gasless transfers from exceeding a maximum cost. Fee caps reject estimates greater than the configured limit, so an estimate equal to the cap is allowed. Native `sendTransaction()`, `quoteSendTransaction()`, and `signTransaction()` are unsupported on this module, so `transactionMaxFee` does not cap gasless transfers. You can retrieve current network rates using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#getfeerates):
 
 ```javascript title="Fee Management"
 const feeRates = await wallet.getFeeRates()
