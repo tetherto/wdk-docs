@@ -1,0 +1,192 @@
+---
+title: Commands
+description: WDK CLI command reference for wallets, reads, sends, config, networks, tokens, ramps, and MCP
+docType: reference
+schemaType: TechArticle
+icon: ListChecks
+---
+
+WDK CLI exposes one root command, `wdk`, plus the `wdk-mcp` and `wdk-daemon` binaries used by the MCP server and daemon.
+
+## Global Flags
+
+| Flag | Applies to | Description |
+| --- | --- | --- |
+| `--json` | All commands | Print machine-readable JSON output where supported |
+| `--verbose` | All commands | Print debug output and full errors |
+| `--wallet NAME` | Wallet-dependent commands | Use a named wallet instead of the default wallet |
+| `--index N` | Address, balance, history, send, buy, sell | Use a BIP account index instead of the configured default |
+
+## Wallets
+
+| Command | Purpose |
+| --- | --- |
+| `wdk wallet create --name NAME --words WORD_COUNT` | Create a new named wallet. `WORD_COUNT` is `12` or `24` |
+| `wdk wallet import --name NAME` | Import an existing seed phrase |
+| `wdk wallet export --name NAME` | Display the seed phrase for an existing wallet |
+| `wdk wallet list` | List wallets and their lock/default status |
+| `wdk wallet unlock --name NAME --ttl MINUTES` | Unlock a wallet and start the daemon if needed |
+| `wdk wallet lock --name NAME` | Lock one wallet |
+| `wdk wallet lock --all` | Lock every wallet and stop the daemon when none remain unlocked |
+| `wdk wallet delete --name NAME` | Delete a wallet after passphrase confirmation |
+| `wdk wallet default --name NAME` | Set the default wallet |
+| `wdk wallet rename --name OLD --new-name NEW` | Rename a wallet |
+
+Example flow:
+
+```bash title="Terminal"
+wdk wallet create --name dev --words 24
+wdk wallet unlock --name dev --ttl 5
+wdk wallet default --name dev
+wdk wallet list
+```
+
+Commands that need a passphrase prompt can use `WDK_PASSPHRASE` for non-interactive local automation:
+
+```bash title="Terminal"
+WDK_PASSPHRASE=<passphrase> wdk wallet unlock --name dev --json
+```
+
+## Read Commands
+
+| Command | Purpose |
+| --- | --- |
+| `wdk get address --network NETWORK` | Derive an address for one network |
+| `wdk get address --all` | Derive addresses for all mainnet networks |
+| `wdk get address --all --testnet` | Include testnet networks |
+| `wdk get balance --network NETWORK` | Read native balance for one network |
+| `wdk get balance --network NETWORK --token TICKER` | Read a registered token balance |
+| `wdk get balance --all` | Read balances across mainnet networks |
+| `wdk get history --network NETWORK` | Read transaction history through the indexer |
+| `wdk get history --network NETWORK --token TICKER --limit 50` | Filter history by registered token and limit |
+
+Examples:
+
+```bash title="Terminal"
+wdk get address --network ethereum --wallet dev
+wdk get balance --network ethereum --token usdt --wallet dev
+wdk get history --network ethereum --from-date 2026-01-01 --to-date 2026-03-31
+```
+
+`get history` requires indexer support for the network and an indexer API key when the endpoint requires one.
+
+## Send
+
+`wdk send` supports native and registered token transfers. Amounts are decimal by default.
+
+| Option | Required | Description |
+| --- | --- | --- |
+| `--network NETWORK` | Yes | Network to send on |
+| `--to ADDRESS` | Yes | Recipient address |
+| `--amount AMOUNT` | Yes | Decimal amount unless `--base-units` is set |
+| `--token TICKER` | No | Registered token ticker. Omit for native transfers |
+| `--base-units` | No | Treat `--amount` as raw base units |
+| `--dry-run` | No | Preview the transfer without broadcasting |
+
+Preview first:
+
+```bash title="Terminal"
+wdk send \
+  --network ethereum \
+  --to 0x000000000000000000000000000000000000dEaD \
+  --amount 0.001 \
+  --dry-run
+```
+
+Send a token transfer after checking the preview:
+
+```bash title="Terminal"
+wdk send \
+  --network ethereum \
+  --token usdt \
+  --to 0x000000000000000000000000000000000000dEaD \
+  --amount 1.5
+```
+
+Use `--base-units` only when your script already has wei, satoshi, lamports, or another token base-unit value.
+
+## Config
+
+| Command | Purpose |
+| --- | --- |
+| `wdk config get --all` | Print all config |
+| `wdk config get --key KEY` | Print a single key |
+| `wdk config get --network NETWORK` | Print network-scoped config |
+| `wdk config set --key KEY --value VALUE` | Set a global key |
+| `wdk config set --network NETWORK --key KEY --value VALUE` | Set a network key |
+| `wdk config reset --key KEY` | Reset one key |
+| `wdk config reset --all` | Reset stored config while preserving custom networks, custom tokens, and default wallet |
+| `wdk config path` | Print the config file path |
+
+Network config updates lock wallets so new SDK settings take effect on the next unlock.
+
+## Networks
+
+| Command | Purpose |
+| --- | --- |
+| `wdk network list` | List built-in and custom networks |
+| `wdk network list --mainnet` | Show only mainnets |
+| `wdk network list --testnet` | Show only testnets |
+| `wdk network info --network NETWORK` | Show one network's details |
+| `wdk network create JSON_OR_FILE` | Add a custom network |
+| `wdk network delete --name NAME` | Delete a custom network |
+
+Custom network data can be an inline JSON string or a path to a JSON file:
+
+```bash title="Terminal"
+wdk network create ./optimism.json
+```
+
+## Tokens
+
+| Command | Purpose |
+| --- | --- |
+| `wdk token list` | List all registered tokens |
+| `wdk token list --network NETWORK` | List tokens for one network |
+| `wdk token info --network NETWORK --token TICKER` | Show one token entry |
+| `wdk token add JSON_OR_FILE` | Add or override a custom token |
+| `wdk token delete --network NETWORK --token TICKER` | Delete a custom token |
+
+The `--token` flag on `get balance`, `get history`, `send`, `buy`, and `sell` resolves through this registry.
+
+## Buy And Sell
+
+| Command | Purpose |
+| --- | --- |
+| `wdk buy --network NETWORK --token TICKER` | Create a MoonPay buy URL |
+| `wdk sell --network NETWORK --token TICKER` | Create a MoonPay sell URL |
+
+Options:
+
+| Option | Description |
+| --- | --- |
+| `--module MODULE` | Fiat provider. The current source defaults to `moonpay` |
+| `--fiat-currency CURRENCY` | Fiat currency code, default `usd` |
+| `--fiat-amount VALUE` | Fiat amount. Mutually exclusive with `--crypto-amount` |
+| `--crypto-amount VALUE` | Crypto amount. Mutually exclusive with `--fiat-amount` |
+
+Examples:
+
+```bash title="Terminal"
+wdk buy --network ethereum --token usdt --fiat-amount 100
+wdk sell --network polygon --token usdt --crypto-amount 50
+```
+
+## MCP
+
+| Command | Purpose |
+| --- | --- |
+| `wdk mcp setup --ai-tool claude-desktop` | Register `wdk-mcp` with Claude Desktop |
+| `wdk mcp setup --ai-tool claude-code` | Register `wdk-mcp` with Claude Code |
+| `wdk mcp setup --ai-tool openclaw` | Register `wdk-mcp` with OpenClaw |
+| `wdk mcp verify-setup --ai-tool TOOL` | Verify the MCP setup for one tool |
+| `wdk mcp remove --ai-tool TOOL` | Remove the WDK MCP server from one tool |
+| `wdk mcp list` | Show setup status for supported AI tools |
+
+See [MCP](/ai/wdk-cli/mcp/) for the MCP tool list and the required two-step `send_token` flow.
+
+***
+
+## Need Help?
+
+<SupportCards />

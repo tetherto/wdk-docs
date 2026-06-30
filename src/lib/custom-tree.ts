@@ -303,6 +303,12 @@ export const customTree: Node[] = [
     apiReference('/ai/mcp-toolkit/api-reference'),
     page('LangChain Integration', '/ai/mcp-toolkit/langchain', 'Link'),
   ]),
+  folder('WDK CLI', '/ai/wdk-cli', 'Terminal', [
+    page('Get Started', '/ai/wdk-cli/get-started', 'Rocket'),
+    configuration('/ai/wdk-cli/configuration'),
+    page('Commands', '/ai/wdk-cli/commands', 'ListChecks'),
+    page('MCP', '/ai/wdk-cli/mcp', 'Wand'),
+  ]),
   page('Agent Skills', '/ai/agent-skills', 'Brain'),
   page('OpenClaw', '/ai/openclaw', 'Cat'),
   page('x402', '/ai/x402', 'CreditCard'),

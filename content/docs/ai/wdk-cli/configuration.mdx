@@ -1,0 +1,219 @@
+---
+title: Configuration
+description: Configure WDK CLI wallets, sessions, networks, tokens, indexer access, and ramps
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+WDK CLI stores wallet files and user configuration locally. Read commands can inspect configuration without an unlocked wallet. Write commands such as `config set`, `config reset`, `network create`, `network delete`, `token add`, and `token delete` require passphrase confirmation or an unlocked wallet depending on the operation.
+
+## Local Paths
+
+| Data | Default path |
+| --- | --- |
+| Config directory | `~/.config/wdk-cli` |
+| Wallet seed file | `~/.config/wdk-cli/wallets/NAME/seed.enc` |
+| Daemon socket | `~/.config/wdk-cli/daemon.sock` on Unix-like systems |
+| Daemon PID file | `~/.config/wdk-cli/daemon.pid` |
+
+When `XDG_CONFIG_HOME` is set, the config directory becomes `$XDG_CONFIG_HOME/wdk-cli`.
+
+Use the CLI to print the exact config file path for your system:
+
+```bash title="Terminal"
+wdk config path
+```
+
+## Environment Variables
+
+| Variable | Applies to | Notes |
+| --- | --- | --- |
+| `WDK_PASSPHRASE` | Passphrase-protected commands | Skips the interactive passphrase prompt for automation |
+| `WDK_INDEXER_API_KEY` | `indexer.apiKey` | Overrides the stored indexer API key at read time |
+
+<Callout type="info">
+The current CLI source maps only `WDK_INDEXER_API_KEY` as an indexer environment override. Configure the indexer base URL with `wdk config set --key indexer.baseUrl --value ...` if you need to change it.
+</Callout>
+
+## Wallet Sessions
+
+Unlocking a wallet starts the daemon if it is not already running:
+
+```bash title="Terminal"
+wdk wallet unlock --name dev --ttl 5
+```
+
+Each wallet has its own TTL. The default is 5 minutes.
+
+| TTL | Behavior |
+| --- | --- |
+| omitted | Uses the default 5 minute session |
+| `--ttl 60` | Keeps that wallet unlocked for 60 minutes |
+| `--ttl 0` | Keeps that wallet unlocked until you lock it or the daemon exits |
+
+Lock a wallet after use:
+
+```bash title="Terminal"
+wdk wallet lock --name dev
+```
+
+## Global Config
+
+Read all config:
+
+```bash title="Terminal"
+wdk config get --all
+```
+
+Read a single key:
+
+```bash title="Terminal"
+wdk config get --key indexer.apiKey
+```
+
+Set a single key:
+
+```bash title="Terminal"
+wdk config set --key indexer.apiKey --value <api-key>
+```
+
+Set structured values by passing JSON:
+
+```bash title="Terminal"
+wdk config set \
+  --key ramp.moonpay \
+  --value '{"apiKey":"pk_test_...","signUrl":"https://example.com/sign","environment":"sandbox"}'
+```
+
+Reset a key:
+
+```bash title="Terminal"
+wdk config reset --key ramp.moonpay.apiKey
+```
+
+Reset all config:
+
+```bash title="Terminal"
+wdk config reset --all
+```
+
+`config reset --all` preserves default wallet, custom network, and custom token state.
+
+## Network Config
+
+Read one network's config:
+
+```bash title="Terminal"
+wdk config get --network ethereum
+```
+
+Set a network provider:
+
+```bash title="Terminal"
+wdk config set \
+  --network ethereum \
+  --key provider \
+  --value https://eth-mainnet.g.alchemy.com/v2/<key>
+```
+
+Set the full network config with JSON:
+
+```bash title="Terminal"
+wdk config set \
+  --network ethereum \
+  --value '{"provider":"https://eth-mainnet.g.alchemy.com/v2/<key>","chainId":1}'
+```
+
+Changing `networks.*` config locks all wallets so stale wallet managers are dropped. Unlock the wallet again before continuing:
+
+```bash title="Terminal"
+wdk wallet unlock --name dev
+```
+
+## Indexer
+
+Transaction history uses the WDK Indexer API. Set the API key in config or use the environment variable:
+
+```bash title="Terminal"
+wdk config set --key indexer.apiKey --value <api-key>
+```
+
+```bash title="Terminal"
+WDK_INDEXER_API_KEY=<api-key> wdk get history --network ethereum --wallet dev
+```
+
+If you need a custom indexer endpoint, store it in config:
+
+```bash title="Terminal"
+wdk config set --key indexer.baseUrl --value https://indexer.example.com
+```
+
+## Custom Networks
+
+Create a custom network from inline JSON:
+
+```bash title="Terminal"
+wdk network create '{"network":"optimism","module":"@tetherto/wdk-wallet-evm","indexerSlug":"ethereum","config":{"provider":"https://mainnet.optimism.io","chainId":10}}'
+```
+
+Or create it from a file:
+
+```bash title="Terminal"
+wdk network create ./optimism.json
+```
+
+Custom network specs can include `tokens` so the network and token registry update together. If a token entry fails validation, the network is not created.
+
+Delete only custom networks:
+
+```bash title="Terminal"
+wdk network delete --name optimism
+```
+
+## Custom Tokens
+
+Add a token from inline JSON:
+
+```bash title="Terminal"
+wdk token add '{"network":"ethereum","token":"dai","symbol":"DAI","decimals":18,"isNative":false,"address":"0x6B175474E89094C44Da98b954EedeAC495271d0F"}'
+```
+
+Or add it from a file:
+
+```bash title="Terminal"
+wdk token add ./dai-on-ethereum.json
+```
+
+List tokens:
+
+```bash title="Terminal"
+wdk token list --network ethereum
+wdk token info --network ethereum --token usdt
+```
+
+Delete only custom tokens:
+
+```bash title="Terminal"
+wdk token delete --network ethereum --token dai
+```
+
+Built-in tokens can be overridden by a custom token with the same ticker. Removing the custom token restores the built-in entry.
+
+## MoonPay Buy/Sell
+
+`wdk buy` and `wdk sell` use MoonPay as the fiat provider in the current source. Configure all three values:
+
+```bash title="Terminal"
+wdk config set --key ramp.moonpay.apiKey --value <publishable-key>
+wdk config set --key ramp.moonpay.signUrl --value https://example.com/moonpay/sign
+wdk config set --key ramp.moonpay.environment --value sandbox
+```
+
+The environment must be `sandbox` or `production`. The CLI rejects testnet purchases with a production MoonPay environment, and rejects mainnet purchases with a sandbox environment.
+
+***
+
+## Need Help?
+
+<SupportCards />

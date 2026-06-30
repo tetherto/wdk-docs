@@ -1,0 +1,139 @@
+---
+title: Get Started
+description: Install WDK CLI from source and run a local development wallet
+docType: getting-started
+schemaType: TechArticle
+icon: Rocket
+---
+
+<Callout type="warn">
+WDK CLI is not release-installable yet. The implementation is under review in [tetherto/wdk-cli#1](https://github.com/tetherto/wdk-cli/pull/1), and the public `wdk-cli` npm package is still a placeholder. Install from source until a real package is published.
+</Callout>
+
+## Prerequisites
+
+- Node.js `>=22.18.0`
+- npm
+- GitHub CLI, if you want to check out the pull request directly
+- A dedicated development wallet seed with limited or no funds
+
+Check your Node.js version:
+
+```bash title="Terminal"
+node --version
+```
+
+## Install From The Source PR
+
+Clone the repository and check out the active CLI pull request:
+
+```bash title="Terminal"
+gh repo clone tetherto/wdk-cli
+cd wdk-cli
+gh pr checkout 1
+npm install
+npm link
+```
+
+`npm link` makes the `wdk`, `wdk-mcp`, and `wdk-daemon` binaries available on your local PATH.
+
+Verify the CLI is available:
+
+```bash title="Terminal"
+wdk --help
+wdk wallet --help
+```
+
+<Callout type="info">
+If you cannot use GitHub CLI, clone the pull request source branch from GitHub and run the same `npm install` and `npm link` commands from that checkout.
+</Callout>
+
+## Create A Development Wallet
+
+Create a named wallet. The CLI prompts for a passphrase interactively.
+
+```bash title="Terminal"
+wdk wallet create --name dev --words 24
+wdk wallet default --name dev
+```
+
+Unlock the wallet before reading balances or sending transactions:
+
+```bash title="Terminal"
+wdk wallet unlock --name dev --ttl 5
+```
+
+The daemon keeps the unlocked wallet in memory for the requested TTL. The default TTL is 5 minutes. Use `--ttl 0` only when a local agent session needs a wallet to stay unlocked and you accept that risk.
+
+## Read An Address And Balance
+
+Get an address for a single network:
+
+```bash title="Terminal"
+wdk get address --network ethereum --wallet dev
+```
+
+Check the native balance:
+
+```bash title="Terminal"
+wdk get balance --network ethereum --wallet dev
+```
+
+Use `--json` when another program or AI agent needs structured output:
+
+```bash title="Terminal"
+wdk get balance --network ethereum --wallet dev --json
+```
+
+## Preview A Send
+
+Always start with a dry run. This estimates the transfer and fee without broadcasting a transaction.
+
+```bash title="Terminal"
+wdk send \
+  --network ethereum \
+  --to 0x000000000000000000000000000000000000dEaD \
+  --amount 0.001 \
+  --wallet dev \
+  --dry-run
+```
+
+Token transfers use registered token tickers:
+
+```bash title="Terminal"
+wdk send \
+  --network ethereum \
+  --token usdt \
+  --to 0x000000000000000000000000000000000000dEaD \
+  --amount 1.5 \
+  --wallet dev \
+  --dry-run
+```
+
+Only remove `--dry-run` after you have checked the preview and intend to broadcast the transaction.
+
+## Lock The Wallet
+
+Lock the wallet when the session is finished:
+
+```bash title="Terminal"
+wdk wallet lock --name dev
+```
+
+Lock every unlocked wallet:
+
+```bash title="Terminal"
+wdk wallet lock --all
+```
+
+## Next Steps
+
+- [Configuration](/ai/wdk-cli/configuration/) - Configure indexer access, providers, custom networks, tokens, and MoonPay
+- [Commands](/ai/wdk-cli/commands/) - Review every command group
+- [MCP](/ai/wdk-cli/mcp/) - Connect the same wallet daemon to Claude Desktop, Claude Code, or OpenClaw
+
+***
+
+## Need Help?
+
+<SupportCards />
