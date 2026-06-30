@@ -36,7 +36,8 @@ new WalletManagerTonGasless(seed, config)
   - `paymasterToken` (object): Paymaster token configuration
     - `address` (string): Paymaster Jetton master contract address
   - `retries` (number, optional): Failover retries used when `tonClient` and `tonApiClient` are arrays (default: 3)
-  - `transferMaxFee` (number | bigint, optional): Maximum fee for transfer operations
+  - `transferMaxFee` (number | bigint, optional): Maximum fee for gasless transfer operations
+  - `transactionMaxFee` (number | bigint, optional): Shared wallet config option; native `sendTransaction()`, `quoteSendTransaction()`, and `signTransaction()` are unsupported on this module
 
 **Example:**
 ```javascript
@@ -136,7 +137,8 @@ new WalletAccountTonGasless(seed, path, config)
 | `getAddress()` | Returns the account's TON address | `Promise\<string\>` |
 | `sign(message)` | Signs a message using the account's private key | `Promise\<string\>` |
 | `signTransaction(tx)` | Not supported on gasless; always throws | `Promise\<never\>` |
-| `sendTransaction(tx)` | Not supported on gasless; always throws | `Promise\<never\>` |
+| `sendTransaction(tx)` | Not supported on gasless; always rejects | `Promise\<TransactionResult\>` |
+| `quoteSendTransaction(tx)` | Not supported on gasless; always rejects | `Promise\<Omit\<TransactionResult, 'hash'\>\>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` |
 | `transfer(options, config?)` | Transfers tokens using gasless transactions | `Promise\<{hash: string, fee: number}\>` |
 | `quoteTransfer(options, config?)` | Estimates the fee for a token transfer | `Promise\<{fee: number}\>` |
@@ -186,17 +188,31 @@ await account.signTransaction({ to: 'EQ...', value: 1000000000n })
 ```
 
 ##### `sendTransaction(tx)`
-Not supported on the gasless module. This method always throws. To move funds, use [`transfer()`](#transferoptions-config), which relays a paymaster-funded Jetton transfer.
+Not supported on the gasless module. This method is typed as `Promise<TransactionResult>` for wallet-interface compatibility, but it always rejects at runtime. To move funds, use [`transfer()`](#transferoptions-config), which relays a paymaster-funded Jetton transfer.
 
 **Parameters:**
 - `tx` (TonTransaction): The transaction
 
-**Returns:** `Promise\<never\>` - Never resolves; always throws
+**Returns:** `Promise\<TransactionResult\>` - Interface-compatible return type; never resolves successfully on this module
 
 **Example:**
 ```javascript
 // Throws: "Method 'sendTransaction(tx)' not supported on ton gasless."
 await account.sendTransaction({ to: 'EQ...', value: 1000000000n })
+```
+
+##### `quoteSendTransaction(tx)`
+Not supported on the gasless module. This method is inherited for wallet-interface compatibility and always rejects at runtime. Use [`quoteTransfer()`](#quotetransferoptions) to estimate gasless Jetton transfer fees.
+
+**Parameters:**
+- `tx` (TonTransaction): The transaction
+
+**Returns:** `Promise\<Omit\<TransactionResult, 'hash'\>\>` - Interface-compatible return type; never resolves successfully on this module
+
+**Example:**
+```javascript
+// Throws: "Method 'quoteSendTransaction(tx)' not supported on ton gasless."
+await account.quoteSendTransaction({ to: 'EQ...', value: 1000000000n })
 ```
 
 ##### `verify(message, signature)`
@@ -215,7 +231,7 @@ console.log('Signature valid:', isValid)
 ```
 
 ##### `transfer(options, config?)`
-Transfers a Jetton using a gasless transaction, paying the fee with the configured paymaster token. This is the only way to move funds on the gasless module: `sendTransaction()` and `signTransaction()` are not supported and throw.
+Transfers a Jetton using a gasless transaction, paying the fee with the configured paymaster token. This is the only way to move funds on the gasless module: `sendTransaction()`, `quoteSendTransaction()`, and `signTransaction()` are not supported and reject or throw.
 
 **Parameters:**
 - `options` (TransferOptions): Transfer options
@@ -225,7 +241,7 @@ Transfers a Jetton using a gasless transaction, paying the fee with the configur
 - `config` (object, optional): Override configuration
   - `paymasterToken` (object, optional): Override default paymaster token
     - `address` (string): Paymaster token address
-  - `transferMaxFee` (number, optional): Override maximum fee
+  - `transferMaxFee` (number | bigint, optional): Override maximum fee. Transfers throw only when the estimated fee is greater than this cap, so an equal estimate is allowed.
 
 **Returns:** `Promise\<{hash: string, fee: number}\>` - Transfer result
 
@@ -357,6 +373,7 @@ new WalletAccountReadOnlyTonGasless(publicKey, config)
 | `getBalance()` | Returns the native TON balance | `Promise\<bigint\>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific token | `Promise\<bigint\>` |
 | `getPaymasterTokenBalance()` | Returns the balance of the paymaster token | `Promise\<bigint\>` |
+| `quoteSendTransaction(tx)` | Not supported on gasless; always rejects | `Promise\<Omit\<TransactionResult, 'hash'\>\>` |
 | `quoteTransfer(options, config?)` | Estimates the fee for a token transfer | `Promise\<{fee: number}\>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise\<TonTransactionReceipt \| null\>` |
@@ -406,6 +423,20 @@ Returns the balance of the paymaster token (used for gasless fees).
 ```javascript
 const paymasterBalance = await readOnlyAccount.getPaymasterTokenBalance()
 console.log('Paymaster token balance:', paymasterBalance)
+```
+
+##### `quoteSendTransaction(tx)`
+Not supported on the gasless module. This method is present for wallet-interface compatibility and always rejects. Use [`quoteTransfer()`](#quotetransferoptions-config) to estimate gasless Jetton transfer fees.
+
+**Parameters:**
+- `tx` (TonTransaction): The transaction
+
+**Returns:** `Promise\<Omit\<TransactionResult, 'hash'\>\>` - Interface-compatible return type; never resolves successfully on this module
+
+**Example:**
+```javascript
+// Throws: "Method 'quoteSendTransaction(tx)' not supported on ton gasless."
+await readOnlyAccount.quoteSendTransaction({ to: 'EQ...', value: 1000000000n })
 ```
 
 ##### `quoteTransfer(options, config?)`
@@ -515,6 +546,13 @@ type TonGaslessWalletConfig = {
    * Maximum fee for transfer operations (in paymaster Jetton base units)
    */
   transferMaxFee?: number | bigint;
+
+  /**
+   * Shared wallet config option. Native sendTransaction(), quoteSendTransaction(),
+   * and signTransaction() are unsupported on this gasless module; use transferMaxFee
+   * for gasless transfers.
+   */
+  transactionMaxFee?: number | bigint;
 };
 ```
 
@@ -593,4 +631,3 @@ Get started with WDK's TON Gasless Wallet Configuration
 ## Need Help?
 
 <SupportCards />
-
