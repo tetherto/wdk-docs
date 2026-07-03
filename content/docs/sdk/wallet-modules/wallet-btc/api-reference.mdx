@@ -35,6 +35,7 @@ new WalletManagerBtc(seed, config)
   - `network` (string, optional): "bitcoin", "testnet", or "regtest" (default: "bitcoin")
   - `bip` (number, optional): BIP address type - 44 (legacy) or 84 (native SegWit) (default: 84)
   - `retries` (number, optional): Additional retry attempts when `client` is an array
+  - `transactionMaxFee` (number | bigint, optional): Maximum fee amount for `sendTransaction()` and `signTransaction()` operations (in satoshis)
 
 ### Methods
 
@@ -118,6 +119,7 @@ new WalletAccountBtc(seed, path, config)
   - `network` (string, optional): "bitcoin", "testnet", or "regtest" (default: "bitcoin")
   - `bip` (number, optional): BIP address type - 44 (legacy) or 84 (native SegWit) (default: 84)
   - `retries` (number, optional): Additional retry attempts when `client` is an array
+  - `transactionMaxFee` (number | bigint, optional): Maximum fee amount for `sendTransaction()` and `signTransaction()` operations (in satoshis)
 
 ### Methods
 
@@ -172,6 +174,8 @@ Sends a Bitcoin transaction to a single recipient and optionally polls after bro
 - `hash`: Transaction hash
 - `fee`: Transaction fee in satoshis
 
+**Throws:** Error if the estimated transaction fee exceeds `transactionMaxFee` when configured.
+
 **Example:**
 ```javascript
 const result = await account.sendTransaction({
@@ -193,6 +197,8 @@ Signs a Bitcoin transaction and returns the signed raw transaction as a hex stri
   - `confirmationTarget` (number, optional): Target blocks for confirmation (default: 1)
 
 **Returns:** `Promise<string>` - Signed raw transaction hex string
+
+**Throws:** Error if the estimated transaction fee exceeds `transactionMaxFee` when configured.
 
 **Example:**
 ```javascript
@@ -361,7 +367,7 @@ new WalletAccountReadOnlyBtc(address, config)
 
 **Parameters:**
 - `address` (string): The account's Bitcoin address
-- `config` (object, optional): Configuration object (same as BtcWalletConfig but without `bip`)
+- `config` (object, optional): Configuration object (same as BtcWalletConfig but without `bip` and `transactionMaxFee`)
   - `client` (`IBtcClient | BtcClientDescriptor | Array<IBtcClient | BtcClientDescriptor>`, optional): Bitcoin client, descriptor, or ordered failover list
   - `network` (string, optional): "bitcoin", "testnet", or "regtest" (default: "bitcoin")
   - `retries` (number, optional): Additional retry attempts when `client` is an array
@@ -554,6 +560,18 @@ new ElectrumWs(config)
 | `estimateFee(blocks)` | Returns estimated fee rate | `Promise<number>` |
 
 ## Types
+
+### BtcWalletConfig
+
+```typescript
+interface BtcWalletConfig {
+  client?: IBtcClient | BtcClientDescriptor | Array<IBtcClient | BtcClientDescriptor>
+  network?: 'bitcoin' | 'testnet' | 'regtest'
+  bip?: 44 | 84
+  retries?: number
+  transactionMaxFee?: number | bigint // Maximum send/sign fee in satoshis
+}
+```
 
 ### BtcTransaction
 

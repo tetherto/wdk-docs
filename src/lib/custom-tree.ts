@@ -1,621 +1,379 @@
 import type { Node } from 'fumadocs-core/page-tree';
 import { resolveIcon } from "@/lib/resolveIcon";
 
+function separator(name: string): Node {
+  return { type: 'separator', name };
+}
+
+function page(name: string, url: string, icon?: string): Node {
+  return { name, url, type: 'page', icon: resolveIcon(icon) } as Node;
+}
+
+function folder(
+  name: string,
+  url: string,
+  icon: string,
+  children: Node[] = [],
+  indexName = name,
+): Node {
+  return {
+    name,
+    type: 'folder',
+    icon: resolveIcon(icon),
+    index: {
+      name: indexName,
+      url,
+      type: 'page',
+    },
+    children,
+  } as Node;
+}
+
+function group(name: string, icon: string, children: Node[]): Node {
+  return {
+    name,
+    type: 'folder',
+    icon: resolveIcon(icon),
+    children,
+  } as Node;
+}
+
+const guides = (children: Node[]): Node => group('Guides', 'BookOpen', children);
+
+const apiReference = (url: string): Node => page('API Reference', url, 'Code');
+const configuration = (url: string): Node => page('Configuration', url, 'Settings');
+const usage = (url: string): Node => page('Usage', url, 'Play');
+
 export const customTree: Node[] = [
-  {
-    type: 'separator',
-    name: 'Overview',
-  },
-  { name: 'Welcome', url: '/', type: 'page', icon: resolveIcon('Rocket') },
-  { name: 'About WDK', url: '/overview/about', type: 'page', icon: resolveIcon('Info') },
-  { name: 'Our Vision', url: '/overview/vision', type: 'page', icon: resolveIcon('Lightbulb') },
-  { name: 'Partner with WDK', url: '/overview/partner-program', type: 'page', icon: resolveIcon('Handshake') },
-  { name: 'Get Support', url: '/overview/support', type: 'page', icon: resolveIcon('CircleQuestionMark') },
-  { name: 'Changelog', url: '/overview/changelog', type: 'page', icon: resolveIcon('History') },
-  { name: 'Showcase', url: '/overview/showcase', type: 'page', icon: resolveIcon('Trophy') },
-  {
-    type: 'separator',
-    name: 'Start Building',
-  },
-  { name: 'Node.js & Bare Quickstart', url: '/start-building/nodejs-bare-quickstart', type: 'page', icon: resolveIcon('Terminal') },
-  { name: 'React Native Quickstart', url: '/start-building/react-native-quickstart', type: 'page', icon: resolveIcon('Smartphone') },
-  { name: 'Build with AI', url: '/start-building/build-with-ai', type: 'page', icon: resolveIcon('Bot') },
-  {
-    type: 'separator',
-    name: 'AI',
-  },
-  {
-    name: 'MCP Toolkit',
-    type: 'folder',
-    icon: resolveIcon('Wand'),
-    index: {
-      name: 'MCP Toolkit',
-      url: '/ai/mcp-toolkit',
-      type: 'page',
-    },
-    children: [
-      { name: 'Get Started', url: '/ai/mcp-toolkit/get-started', type: 'page', icon: resolveIcon('Rocket') },
-      { name: 'Configuration', url: '/ai/mcp-toolkit/configuration', type: 'page', icon: resolveIcon('Settings') },
-      { name: 'API Reference', url: '/ai/mcp-toolkit/api-reference', type: 'page', icon: resolveIcon('Code') },
-      { name: 'LangChain Integration', url: '/ai/mcp-toolkit/langchain', type: 'page', icon: resolveIcon('Link') },
-    ],
-  },
-  { name: 'Agent Skills', url: '/ai/agent-skills', type: 'page', icon: resolveIcon('Brain') },
-  { name: 'OpenClaw', url: '/ai/openclaw', type: 'page', icon: resolveIcon('Cat') },
-  { name: 'x402', url: '/ai/x402', type: 'page', icon: resolveIcon('CreditCard') },
-  {
-    type: 'separator',
-    name: 'SDK',
-  },
-  { name: 'Get Started', url: '/sdk/get-started', type: 'page', icon: resolveIcon('Rocket') },
-  { name: 'All Modules', url: '/sdk/all-modules', type: 'page', icon: resolveIcon('LayoutGrid') },
-  {
-    name: 'Core Module',
-    type: 'folder',
-    icon: resolveIcon('Box'),
-    index: {
-      name: 'Core Module',
-      url: '/sdk/core-module',
-      type: 'page',
-    },
-    children: [
-      { name: 'Usage', url: '/sdk/core-module/usage', type: 'page', icon: resolveIcon('Play') },
-      {
-        name: 'Guides',
-        type: 'folder',
-        icon: resolveIcon('BookOpen'),
-        children: [
-          { name: 'Getting Started', url: '/sdk/core-module/guides/getting-started', type: 'page' },
-          { name: 'Register Wallets', url: '/sdk/core-module/guides/wallet-registration', type: 'page' },
-          { name: 'Account Management', url: '/sdk/core-module/guides/account-management', type: 'page' },
-          { name: 'Send Transactions', url: '/sdk/core-module/guides/transactions', type: 'page' },
-          { name: 'Transaction Policies', url: '/sdk/core-module/guides/transaction-policies', type: 'page' },
-          { name: 'Protocol Integration', url: '/sdk/core-module/guides/protocol-integration', type: 'page' },
-          { name: 'Middleware', url: '/sdk/core-module/guides/middleware', type: 'page' },
-          { name: 'Error Handling', url: '/sdk/core-module/guides/error-handling', type: 'page' },
-        ],
-      },
-      { name: 'Configuration', url: '/sdk/core-module/configuration', type: 'page', icon: resolveIcon('Settings') },
-      { name: 'API Reference', url: '/sdk/core-module/api-reference', type: 'page', icon: resolveIcon('Code') },
-    ],
-  },
-  {
-    name: 'Wallet Modules',
-    type: 'folder',
-    icon: resolveIcon('Wallet'),
-    index: {
-      name: 'Wallet Modules',
-      url: '/sdk/wallet-modules',
-      type: 'page',
-    },
-    children: [
-      {
-        name: 'wallet-btc', type: 'folder',
-        index: { name: 'wallet-btc', url: '/sdk/wallet-modules/wallet-btc', type: 'page' },
-        children: [
-          { name: 'Usage', url: '/sdk/wallet-modules/wallet-btc/usage', type: 'page' },
-          {
-            name: 'Guides', type: 'folder', icon: resolveIcon('BookOpen'),
-            children: [
-              { name: 'Get Started', url: '/sdk/wallet-modules/wallet-btc/guides/get-started', type: 'page' },
-              { name: 'Manage Accounts', url: '/sdk/wallet-modules/wallet-btc/guides/manage-accounts', type: 'page' },
-              { name: 'Check Balances', url: '/sdk/wallet-modules/wallet-btc/guides/check-balances', type: 'page' },
-              { name: 'Send BTC', url: '/sdk/wallet-modules/wallet-btc/guides/send-transactions', type: 'page' },
-              { name: 'Transaction History', url: '/sdk/wallet-modules/wallet-btc/guides/get-transaction-history', type: 'page' },
-              { name: 'Sign and Verify Messages', url: '/sdk/wallet-modules/wallet-btc/guides/sign-verify-messages', type: 'page' },
-              { name: 'Handle Errors', url: '/sdk/wallet-modules/wallet-btc/guides/handle-errors', type: 'page' },
-            ],
-          },
-          { name: 'Configuration', url: '/sdk/wallet-modules/wallet-btc/configuration', type: 'page' },
-          { name: 'API Reference', url: '/sdk/wallet-modules/wallet-btc/api-reference', type: 'page' },
-        ],
-      },
-      {
-        name: 'wallet-evm', type: 'folder',
-        index: { name: 'wallet-evm', url: '/sdk/wallet-modules/wallet-evm', type: 'page' },
-        children: [
-          { name: 'Usage', url: '/sdk/wallet-modules/wallet-evm/usage', type: 'page' },
-          {
-            name: 'Guides', type: 'folder', icon: resolveIcon('BookOpen'),
-            children: [
-              { name: 'Getting Started', url: '/sdk/wallet-modules/wallet-evm/guides/getting-started', type: 'page' },
-              { name: 'Manage Accounts', url: '/sdk/wallet-modules/wallet-evm/guides/manage-accounts', type: 'page' },
-              { name: 'Check Balances', url: '/sdk/wallet-modules/wallet-evm/guides/check-balances', type: 'page' },
-              { name: 'Send Transactions', url: '/sdk/wallet-modules/wallet-evm/guides/send-transactions', type: 'page' },
-              { name: 'Transfer ERC-20 Tokens', url: '/sdk/wallet-modules/wallet-evm/guides/transfer-tokens', type: 'page' },
-              { name: 'Sign and Verify Messages', url: '/sdk/wallet-modules/wallet-evm/guides/sign-verify-messages', type: 'page' },
-              { name: 'Error Handling', url: '/sdk/wallet-modules/wallet-evm/guides/error-handling', type: 'page' },
-            ],
-          },
-          { name: 'Configuration', url: '/sdk/wallet-modules/wallet-evm/configuration', type: 'page' },
-          { name: 'API Reference', url: '/sdk/wallet-modules/wallet-evm/api-reference', type: 'page' },
-        ],
-      },
-      {
-        name: 'wallet-evm-erc-4337', type: 'folder',
-        index: { name: 'wallet-evm-erc-4337', url: '/sdk/wallet-modules/wallet-evm-erc-4337', type: 'page' },
-        children: [
-          { name: 'Usage', url: '/sdk/wallet-modules/wallet-evm-erc-4337/usage', type: 'page' },
-          {
-            name: 'Guides', type: 'folder', icon: resolveIcon('BookOpen'),
-            children: [
-              { name: 'Get Started', url: '/sdk/wallet-modules/wallet-evm-erc-4337/guides/get-started', type: 'page' },
-              { name: 'Manage Accounts', url: '/sdk/wallet-modules/wallet-evm-erc-4337/guides/manage-accounts', type: 'page' },
-              { name: 'Check Balances', url: '/sdk/wallet-modules/wallet-evm-erc-4337/guides/check-balances', type: 'page' },
-              { name: 'Send Transactions', url: '/sdk/wallet-modules/wallet-evm-erc-4337/guides/send-transactions', type: 'page' },
-              { name: 'Transfer Tokens', url: '/sdk/wallet-modules/wallet-evm-erc-4337/guides/transfer-tokens', type: 'page' },
-              { name: 'Sign and Verify Messages', url: '/sdk/wallet-modules/wallet-evm-erc-4337/guides/sign-verify-messages', type: 'page' },
-              { name: 'Handle Errors', url: '/sdk/wallet-modules/wallet-evm-erc-4337/guides/handle-errors', type: 'page' },
-            ],
-          },
-          { name: 'Configuration', url: '/sdk/wallet-modules/wallet-evm-erc-4337/configuration', type: 'page' },
-          { name: 'API Reference', url: '/sdk/wallet-modules/wallet-evm-erc-4337/api-reference', type: 'page' },
-        ],
-      },
-      {
-        name: 'wallet-evm-7702-gasless', type: 'folder',
-        index: { name: 'wallet-evm-7702-gasless', url: '/sdk/wallet-modules/wallet-evm-7702-gasless', type: 'page' },
-        children: [
-          { name: 'Usage', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/usage', type: 'page' },
-          {
-            name: 'Guides', type: 'folder', icon: resolveIcon('BookOpen'),
-            children: [
-              { name: 'Get Started', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/get-started', type: 'page' },
-              { name: 'Manage Accounts', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/manage-accounts', type: 'page' },
-              { name: 'Check Balances', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/check-balances', type: 'page' },
-              { name: 'Send Transactions', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/send-transactions', type: 'page' },
-              { name: 'Transfer Tokens', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/transfer-tokens', type: 'page' },
-              { name: 'Sign and Verify Messages', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/sign-verify-messages', type: 'page' },
-              { name: 'Handle Errors', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/handle-errors', type: 'page' },
-            ],
-          },
-          { name: 'Configuration', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/configuration', type: 'page' },
-          { name: 'API Reference', url: '/sdk/wallet-modules/wallet-evm-7702-gasless/api-reference', type: 'page' },
-        ],
-      },
-      {
-        name: 'wallet-solana', type: 'folder',
-        index: { name: 'wallet-solana', url: '/sdk/wallet-modules/wallet-solana', type: 'page' },
-        children: [
-          { name: 'Usage', url: '/sdk/wallet-modules/wallet-solana/usage', type: 'page' },
-          {
-            name: 'Guides', type: 'folder', icon: resolveIcon('BookOpen'),
-            children: [
-              { name: 'Getting Started', url: '/sdk/wallet-modules/wallet-solana/guides/getting-started', type: 'page' },
-              { name: 'Manage Accounts', url: '/sdk/wallet-modules/wallet-solana/guides/account-management', type: 'page' },
-              { name: 'Check Balances', url: '/sdk/wallet-modules/wallet-solana/guides/check-balances', type: 'page' },
-              { name: 'Send SOL', url: '/sdk/wallet-modules/wallet-solana/guides/send-transactions', type: 'page' },
-              { name: 'Transfer SPL Tokens', url: '/sdk/wallet-modules/wallet-solana/guides/transfer-tokens', type: 'page' },
-              { name: 'Sign and Verify Messages', url: '/sdk/wallet-modules/wallet-solana/guides/sign-verify-messages', type: 'page' },
-              { name: 'Error Handling', url: '/sdk/wallet-modules/wallet-solana/guides/error-handling', type: 'page' },
-            ],
-          },
-          { name: 'Configuration', url: '/sdk/wallet-modules/wallet-solana/configuration', type: 'page' },
-          { name: 'API Reference', url: '/sdk/wallet-modules/wallet-solana/api-reference', type: 'page' },
-        ],
-      },
-      {
-        name: 'wallet-spark', type: 'folder',
-        index: { name: 'wallet-spark', url: '/sdk/wallet-modules/wallet-spark', type: 'page' },
-        children: [
-          { name: 'Usage', url: '/sdk/wallet-modules/wallet-spark/usage', type: 'page' },
-          {
-            name: 'Guides', type: 'folder', icon: resolveIcon('BookOpen'),
-            children: [
-              { name: 'Get Started', url: '/sdk/wallet-modules/wallet-spark/guides/get-started', type: 'page' },
-              { name: 'Manage Accounts', url: '/sdk/wallet-modules/wallet-spark/guides/manage-accounts', type: 'page' },
-              { name: 'Check Balances', url: '/sdk/wallet-modules/wallet-spark/guides/check-balances', type: 'page' },
-              { name: 'Send and Transfer', url: '/sdk/wallet-modules/wallet-spark/guides/send-and-transfer', type: 'page' },
-              { name: 'Lightning Payments', url: '/sdk/wallet-modules/wallet-spark/guides/lightning-payments', type: 'page' },
-              { name: 'Deposits and Withdrawals', url: '/sdk/wallet-modules/wallet-spark/guides/deposits-and-withdrawals', type: 'page' },
-              { name: 'Handle Errors', url: '/sdk/wallet-modules/wallet-spark/guides/handle-errors', type: 'page' },
-            ],
-          },
-          { name: 'Configuration', url: '/sdk/wallet-modules/wallet-spark/configuration', type: 'page' },
-          { name: 'API Reference', url: '/sdk/wallet-modules/wallet-spark/api-reference', type: 'page' },
-        ],
-      },
-      {
-        name: 'wallet-ton', type: 'folder',
-        index: { name: 'wallet-ton', url: '/sdk/wallet-modules/wallet-ton', type: 'page' },
-        children: [
-          { name: 'Usage', url: '/sdk/wallet-modules/wallet-ton/usage', type: 'page' },
-          {
-            name: 'Guides', type: 'folder', icon: resolveIcon('BookOpen'),
-            children: [
-              { name: 'Get Started', url: '/sdk/wallet-modules/wallet-ton/guides/get-started', type: 'page' },
-              { name: 'Manage Accounts', url: '/sdk/wallet-modules/wallet-ton/guides/manage-accounts', type: 'page' },
-              { name: 'Check Balances', url: '/sdk/wallet-modules/wallet-ton/guides/check-balances', type: 'page' },
-              { name: 'Send TON', url: '/sdk/wallet-modules/wallet-ton/guides/send-transactions', type: 'page' },
-              { name: 'Transfer Jetton Tokens', url: '/sdk/wallet-modules/wallet-ton/guides/transfer-tokens', type: 'page' },
-              { name: 'Sign and Verify Messages', url: '/sdk/wallet-modules/wallet-ton/guides/sign-verify-messages', type: 'page' },
-              { name: 'Handle Errors', url: '/sdk/wallet-modules/wallet-ton/guides/handle-errors', type: 'page' },
-            ],
-          },
-          { name: 'Configuration', url: '/sdk/wallet-modules/wallet-ton/configuration', type: 'page' },
-          { name: 'API Reference', url: '/sdk/wallet-modules/wallet-ton/api-reference', type: 'page' },
-        ],
-      },
-      {
-        name: 'wallet-ton-gasless', type: 'folder',
-        index: { name: 'wallet-ton-gasless', url: '/sdk/wallet-modules/wallet-ton-gasless', type: 'page' },
-        children: [
-          { name: 'Usage', url: '/sdk/wallet-modules/wallet-ton-gasless/usage', type: 'page' },
-          {
-            name: 'Guides', type: 'folder', icon: resolveIcon('BookOpen'),
-            children: [
-              { name: 'Get Started', url: '/sdk/wallet-modules/wallet-ton-gasless/guides/get-started', type: 'page' },
-              { name: 'Manage Accounts', url: '/sdk/wallet-modules/wallet-ton-gasless/guides/manage-accounts', type: 'page' },
-              { name: 'Check Balances', url: '/sdk/wallet-modules/wallet-ton-gasless/guides/check-balances', type: 'page' },
-              { name: 'Send TON', url: '/sdk/wallet-modules/wallet-ton-gasless/guides/send-transactions', type: 'page' },
-              { name: 'Transfer Jetton Tokens', url: '/sdk/wallet-modules/wallet-ton-gasless/guides/transfer-tokens', type: 'page' },
-              { name: 'Sign and Verify Messages', url: '/sdk/wallet-modules/wallet-ton-gasless/guides/sign-verify-messages', type: 'page' },
-              { name: 'Handle Errors', url: '/sdk/wallet-modules/wallet-ton-gasless/guides/handle-errors', type: 'page' },
-            ],
-          },
-          { name: 'Configuration', url: '/sdk/wallet-modules/wallet-ton-gasless/configuration', type: 'page' },
-          { name: 'API Reference', url: '/sdk/wallet-modules/wallet-ton-gasless/api-reference', type: 'page' },
-        ],
-      },
-      {
-        name: 'wallet-tron', type: 'folder',
-        index: { name: 'wallet-tron', url: '/sdk/wallet-modules/wallet-tron', type: 'page' },
-        children: [
-          { name: 'Usage', url: '/sdk/wallet-modules/wallet-tron/usage', type: 'page' },
-          {
-            name: 'Guides', type: 'folder', icon: resolveIcon('BookOpen'),
-            children: [
-              { name: 'Get Started', url: '/sdk/wallet-modules/wallet-tron/guides/get-started', type: 'page' },
-              { name: 'Manage Accounts', url: '/sdk/wallet-modules/wallet-tron/guides/manage-accounts', type: 'page' },
-              { name: 'Check Balances', url: '/sdk/wallet-modules/wallet-tron/guides/check-balances', type: 'page' },
-              { name: 'Send TRX', url: '/sdk/wallet-modules/wallet-tron/guides/send-transactions', type: 'page' },
-              { name: 'Transfer TRC20 Tokens', url: '/sdk/wallet-modules/wallet-tron/guides/transfer-tokens', type: 'page' },
-              { name: 'Sign and Verify Messages', url: '/sdk/wallet-modules/wallet-tron/guides/sign-verify-messages', type: 'page' },
-              { name: 'Handle Errors', url: '/sdk/wallet-modules/wallet-tron/guides/handle-errors', type: 'page' },
-            ],
-          },
-          { name: 'Configuration', url: '/sdk/wallet-modules/wallet-tron/configuration', type: 'page' },
-          { name: 'API Reference', url: '/sdk/wallet-modules/wallet-tron/api-reference', type: 'page' },
-        ],
-      },
-      {
-        name: 'wallet-tron-gasfree', type: 'folder',
-        index: { name: 'wallet-tron-gasfree', url: '/sdk/wallet-modules/wallet-tron-gasfree', type: 'page' },
-        children: [
-          { name: 'Usage', url: '/sdk/wallet-modules/wallet-tron-gasfree/usage', type: 'page' },
-          {
-            name: 'Guides', type: 'folder', icon: resolveIcon('BookOpen'),
-            children: [
-              { name: 'Get Started', url: '/sdk/wallet-modules/wallet-tron-gasfree/guides/get-started', type: 'page' },
-              { name: 'Manage Accounts', url: '/sdk/wallet-modules/wallet-tron-gasfree/guides/manage-accounts', type: 'page' },
-              { name: 'Check Balances', url: '/sdk/wallet-modules/wallet-tron-gasfree/guides/check-balances', type: 'page' },
-              { name: 'Send TRX', url: '/sdk/wallet-modules/wallet-tron-gasfree/guides/send-transactions', type: 'page' },
-              { name: 'Transfer TRC20 Tokens', url: '/sdk/wallet-modules/wallet-tron-gasfree/guides/transfer-tokens', type: 'page' },
-              { name: 'Sign and Verify Messages', url: '/sdk/wallet-modules/wallet-tron-gasfree/guides/sign-verify-messages', type: 'page' },
-              { name: 'Handle Errors', url: '/sdk/wallet-modules/wallet-tron-gasfree/guides/handle-errors', type: 'page' },
-            ],
-          },
-          { name: 'Configuration', url: '/sdk/wallet-modules/wallet-tron-gasfree/configuration', type: 'page' },
-          { name: 'API Reference', url: '/sdk/wallet-modules/wallet-tron-gasfree/api-reference', type: 'page' },
-        ],
-      },
-    ],
-  },
-  {
-    name: 'Swap Modules',
-    type: 'folder',
-    icon: resolveIcon('ArrowLeftRight'),
-    index: {
-      name: 'Swap Modules',
-      url: '/sdk/swap-modules',
-      type: 'page',
-    },
-    children: [
-      {
-        name: 'swap-velora-evm', type: 'folder',
-        index: { name: 'swap-velora-evm', url: '/sdk/swap-modules/swap-velora-evm', type: 'page' },
-        children: [
-          { name: 'Usage', url: '/sdk/swap-modules/swap-velora-evm/usage', type: 'page' },
-          {
-            name: 'Guides', type: 'folder', icon: resolveIcon('BookOpen'),
-            children: [
-              { name: 'Get Started', url: '/sdk/swap-modules/swap-velora-evm/guides/get-started', type: 'page' },
-              { name: 'Execute Swaps', url: '/sdk/swap-modules/swap-velora-evm/guides/execute-swaps', type: 'page' },
-              { name: 'Get Swap Quotes', url: '/sdk/swap-modules/swap-velora-evm/guides/get-swap-quotes', type: 'page' },
-              { name: 'Handle Errors', url: '/sdk/swap-modules/swap-velora-evm/guides/handle-errors', type: 'page' },
-            ],
-          },
-          { name: 'Configuration', url: '/sdk/swap-modules/swap-velora-evm/configuration', type: 'page' },
-          { name: 'API Reference', url: '/sdk/swap-modules/swap-velora-evm/api-reference', type: 'page' },
-        ],
-      },
-    ],
-  },
-  {
-    name: 'Bridge Modules',
-    type: 'folder',
-    icon: resolveIcon('Link'),
-    index: {
-      name: 'Bridge Modules',
-      url: '/sdk/bridge-modules',
-      type: 'page',
-    },
-    children: [
-      {
-        name: 'bridge-usdt0-evm', type: 'folder',
-        index: { name: 'bridge-usdt0-evm', url: '/sdk/bridge-modules/bridge-usdt0-evm', type: 'page' },
-        children: [
-          { name: 'Usage', url: '/sdk/bridge-modules/bridge-usdt0-evm/usage', type: 'page' },
-          {
-            name: 'Guides', type: 'folder', icon: resolveIcon('BookOpen'),
-            children: [
-              { name: 'Get Started', url: '/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started', type: 'page' },
-              { name: 'Bridge Tokens', url: '/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens', type: 'page' },
-              { name: 'Bridge with ERC-4337', url: '/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337', type: 'page' },
-              { name: 'Bridge Cross-Ecosystem', url: '/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-cross-ecosystem', type: 'page' },
-              { name: 'Handle Errors', url: '/sdk/bridge-modules/bridge-usdt0-evm/guides/handle-errors', type: 'page' },
-            ],
-          },
-          { name: 'Configuration', url: '/sdk/bridge-modules/bridge-usdt0-evm/configuration', type: 'page' },
-          { name: 'API Reference', url: '/sdk/bridge-modules/bridge-usdt0-evm/api-reference', type: 'page' },
-        ],
-      },
-    ],
-  },
-  {
-    name: 'Lending Modules',
-    type: 'folder',
-    icon: resolveIcon('Banknote'),
-    index: {
-      name: 'Lending Modules',
-      url: '/sdk/lending-modules',
-      type: 'page',
-    },
-    children: [
-      {
-        name: 'Aave EVM', type: 'folder',
-        index: { name: 'Aave EVM', url: '/sdk/lending-modules/lending-aave-evm', type: 'page' },
-        children: [
-          { name: 'Usage', url: '/sdk/lending-modules/lending-aave-evm/usage', type: 'page' },
-          {
-            name: 'Guides', type: 'folder', icon: resolveIcon('BookOpen'),
-            children: [
-              { name: 'Get Started', url: '/sdk/lending-modules/lending-aave-evm/guides/get-started', type: 'page' },
-              { name: 'Lending Operations', url: '/sdk/lending-modules/lending-aave-evm/guides/lending-operations', type: 'page' },
-              { name: 'Handle Errors', url: '/sdk/lending-modules/lending-aave-evm/guides/handle-errors', type: 'page' },
-            ],
-          },
-          { name: 'Configuration', url: '/sdk/lending-modules/lending-aave-evm/configuration', type: 'page' },
-          { name: 'API Reference', url: '/sdk/lending-modules/lending-aave-evm/api-reference', type: 'page' },
-        ],
-      },
-      {
-        name: 'Morpho EVM', type: 'folder',
-        index: { name: 'Morpho EVM', url: '/sdk/lending-modules/lending-morpho-evm', type: 'page' },
-        children: [
-          { name: 'Usage', url: '/sdk/lending-modules/lending-morpho-evm/usage', type: 'page' },
-          {
-            name: 'Guides', type: 'folder', icon: resolveIcon('BookOpen'),
-            children: [
-              { name: 'Get Started', url: '/sdk/lending-modules/lending-morpho-evm/guides/get-started', type: 'page' },
-              { name: 'Lending Operations', url: '/sdk/lending-modules/lending-morpho-evm/guides/lending-operations', type: 'page' },
-              { name: 'Handle Errors', url: '/sdk/lending-modules/lending-morpho-evm/guides/handle-errors', type: 'page' },
-            ],
-          },
-          { name: 'Configuration', url: '/sdk/lending-modules/lending-morpho-evm/configuration', type: 'page' },
-          { name: 'API Reference', url: '/sdk/lending-modules/lending-morpho-evm/api-reference', type: 'page' },
-        ],
-      },
-    ],
-  },
-  {
-    name: 'Fiat Modules',
-    type: 'folder',
-    icon: resolveIcon('DollarSign'),
-    index: {
-      name: 'Fiat Modules',
-      url: '/sdk/fiat-modules',
-      type: 'page',
-    },
-    children: [
-      {
-        name: 'fiat-moonpay', type: 'folder',
-        index: { name: 'fiat-moonpay', url: '/sdk/fiat-modules/fiat-moonpay', type: 'page' },
-        children: [
-          { name: 'Usage', url: '/sdk/fiat-modules/fiat-moonpay/usage', type: 'page' },
-          {
-            name: 'Guides', type: 'folder', icon: resolveIcon('BookOpen'),
-            children: [
-              { name: 'Get Started', url: '/sdk/fiat-modules/fiat-moonpay/guides/get-started', type: 'page' },
-              { name: 'Buy and Sell', url: '/sdk/fiat-modules/fiat-moonpay/guides/buy-and-sell', type: 'page' },
-              { name: 'Manage Transactions', url: '/sdk/fiat-modules/fiat-moonpay/guides/manage-transactions', type: 'page' },
-            ],
-          },
-          { name: 'Configuration', url: '/sdk/fiat-modules/fiat-moonpay/configuration', type: 'page' },
-          { name: 'API Reference', url: '/sdk/fiat-modules/fiat-moonpay/api-reference', type: 'page' },
-        ],
-      },
-    ],
-  },
-  {
-    name: 'React Native',
-    type: 'folder',
-    icon: resolveIcon('Smartphone'),
-    children: [
-      {
-        name: 'React Native Core',
-        type: 'folder',
-        icon: resolveIcon('Smartphone'),
-        index: {
-          name: 'React Native Core',
-          url: '/tools/react-native-core',
-          type: 'page',
-        },
-        children: [
-          { name: 'API Reference', url: '/tools/react-native-core/api-reference', type: 'page', icon: resolveIcon('Code') },
-        ],
-      },
-      {
-        name: 'React Native Secure Storage',
-        type: 'folder',
-        icon: resolveIcon('LockKeyhole'),
-        index: {
-          name: 'React Native Secure Storage',
-          url: '/tools/react-native-secure-storage',
-          type: 'page',
-        },
-        children: [
-          { name: 'Configuration', url: '/tools/react-native-secure-storage/configuration', type: 'page', icon: resolveIcon('Settings') },
-          { name: 'API Reference', url: '/tools/react-native-secure-storage/api-reference', type: 'page', icon: resolveIcon('Code') },
-        ],
-      },
-    ],
-  },
-  { name: 'Community Modules', url: '/sdk/community-modules', type: 'page', icon: resolveIcon('Users') },
-  {
-    type: 'separator',
-    name: 'UI Kits',
-  },
-  {
-    name: 'React Native UI Kit',
-    type: 'folder',
-    icon: resolveIcon('Smartphone'),
-    index: {
-      name: 'React Native UI Kit',
-      url: '/ui-kits/react-native-ui-kit',
-      type: 'page',
-    },
-    children: [
-      { name: 'Get Started', url: '/ui-kits/react-native-ui-kit/get-started', type: 'page', icon: resolveIcon('Rocket') },
-      { name: 'API Reference', url: '/ui-kits/react-native-ui-kit/api-reference', type: 'page', icon: resolveIcon('Code') },
-      { name: 'Theming', url: '/ui-kits/react-native-ui-kit/theming', type: 'page', icon: resolveIcon('Palette') },
-    ],
-  },
-  {
-    type: 'separator',
-    name: 'Examples & Starters',
-  },
-  { name: 'React Native Starter', url: '/examples-and-starters/react-native-starter', type: 'page', icon: resolveIcon('Smartphone') },
-  {
-    type: 'separator',
-    name: 'Tools',
-  },
-  {
-    name: 'Indexer API',
-    type: 'folder',
-    icon: resolveIcon('Database'),
-    index: {
-      name: 'Indexer API',
-      url: '/tools/indexer-api',
-      type: 'page',
-    },
-    children: [
-      { name: 'Get Started', url: '/tools/indexer-api/get-started', type: 'page', icon: resolveIcon('Rocket') },
-      { name: 'API Reference', url: '/tools/indexer-api/api-reference', type: 'page', icon: resolveIcon('Code') },
-    ],
-  },
-  {
-    name: 'Secret Manager',
-    type: 'folder',
-    icon: resolveIcon('KeyRound'),
-    index: {
-      name: 'Secret Manager',
-      url: '/tools/secret-manager',
-      type: 'page',
-    },
-    children: [
-      { name: 'Configuration', url: '/tools/secret-manager/configuration', type: 'page', icon: resolveIcon('Settings') },
-      { name: 'API Reference', url: '/tools/secret-manager/api-reference', type: 'page', icon: resolveIcon('Code') },
-    ],
-  },
-  {
-    name: 'Price Rates',
-    type: 'folder',
-    icon: resolveIcon('TrendingUp'),
-    index: {
-      name: 'Price Rates',
-      url: '/tools/price-rates',
-      type: 'page',
-    },
-    children: [
-      { name: 'Configuration', url: '/tools/price-rates/configuration', type: 'page', icon: resolveIcon('Settings') },
-      { name: 'API Reference', url: '/tools/price-rates/api-reference', type: 'page', icon: resolveIcon('Code') },
-    ],
-  },
-  {
-    name: 'Asset Registry',
-    type: 'folder',
-    icon: resolveIcon('Tags'),
-    index: {
-      name: 'Asset Registry',
-      url: '/tools/asset-registry',
-      type: 'page',
-    },
-    children: [
-      { name: 'Configuration', url: '/tools/asset-registry/configuration', type: 'page', icon: resolveIcon('Settings') },
-      { name: 'API Reference', url: '/tools/asset-registry/api-reference', type: 'page', icon: resolveIcon('Code') },
-    ],
-  },
-  { name: 'Create WDK Module', url: '/tools/create-wdk-module', type: 'page', icon: resolveIcon('Hammer') },
-  {
-    name: 'Failover Provider',
-    type: 'folder',
-    icon: resolveIcon('ShieldCheck'),
-    index: {
-      name: 'Failover Provider',
-      url: '/tools/failover-provider',
-      type: 'page',
-    },
-    children: [
-      { name: 'Configuration', url: '/tools/failover-provider/configuration', type: 'page', icon: resolveIcon('Settings') },
-      { name: 'API Reference', url: '/tools/failover-provider/api-reference', type: 'page', icon: resolveIcon('Code') },
-    ],
-  },
-  {
-    name: 'Pear Worklet WDK',
-    type: 'folder',
-    icon: resolveIcon('Cpu'),
-    index: {
-      name: 'Pear Worklet WDK',
-      url: '/tools/pear-wrk-wdk',
-      type: 'page',
-    },
-    children: [
-      { name: 'Configuration', url: '/tools/pear-wrk-wdk/configuration', type: 'page', icon: resolveIcon('Settings') },
-      { name: 'API Reference', url: '/tools/pear-wrk-wdk/api-reference', type: 'page', icon: resolveIcon('Code') },
-    ],
-  },
-  {
-    name: 'WDK Utils',
-    type: 'folder',
-    icon: resolveIcon('Wrench'),
-    index: {
-      name: 'WDK Utils',
-      url: '/tools/wdk-utils',
-      type: 'page',
-    },
-    children: [
-      { name: 'Configuration', url: '/tools/wdk-utils/configuration', type: 'page', icon: resolveIcon('Settings') },
-      { name: 'API Reference', url: '/tools/wdk-utils/api-reference', type: 'page', icon: resolveIcon('Code') },
-    ],
-  },
-  {
-    name: 'Worklet Bundler',
-    type: 'folder',
-    icon: resolveIcon('Package'),
-    index: {
-      name: 'Worklet Bundler',
-      url: '/tools/worklet-bundler',
-      type: 'page',
-    },
-    children: [
-      { name: 'Configuration', url: '/tools/worklet-bundler/configuration', type: 'page', icon: resolveIcon('Settings') },
-      { name: 'API Reference', url: '/tools/worklet-bundler/api-reference', type: 'page', icon: resolveIcon('Code') },
-    ],
-  },
-  {
-    type: 'separator',
-    name: 'Resources',
-  },
-  { name: 'Concepts', url: '/resources/concepts', type: 'page', icon: resolveIcon('GraduationCap') },
+  separator('Overview'),
+  page('Welcome', '/', 'Rocket'),
+  page('About WDK', '/overview/about', 'Info'),
+  page('Our Vision', '/overview/vision', 'Lightbulb'),
+  page('Partner with WDK', '/overview/partner-program', 'Handshake'),
+  page('Showcase', '/overview/showcase', 'Trophy'),
+
+  separator('Start Building'),
+  page('Node.js and Bare Quickstart', '/start-building/nodejs-bare-quickstart', 'Terminal'),
+  page('React Native Quickstart', '/start-building/react-native-quickstart', 'Smartphone'),
+  page('React Native Starter', '/examples-and-starters/react-native-starter', 'Smartphone'),
+
+  separator('Foundation'),
+  page('Understand WDK architecture', '/sdk/get-started', 'Network'),
+  folder('Core SDK', '/sdk/core-module', 'Box', [
+    usage('/sdk/core-module/usage'),
+    guides([
+      page('Getting Started', '/sdk/core-module/guides/getting-started'),
+      page('Register Wallets', '/sdk/core-module/guides/wallet-registration'),
+      page('Account Management', '/sdk/core-module/guides/account-management'),
+      page('Send Transactions', '/sdk/core-module/guides/transactions'),
+      page('Transaction Policies', '/sdk/core-module/guides/transaction-policies'),
+      page('Protocol Integration', '/sdk/core-module/guides/protocol-integration'),
+      page('Middleware', '/sdk/core-module/guides/middleware'),
+      page('Error Handling', '/sdk/core-module/guides/error-handling'),
+    ]),
+    configuration('/sdk/core-module/configuration'),
+    apiReference('/sdk/core-module/api-reference'),
+  ]),
+  page('All modules reference', '/sdk/all-modules', 'LayoutGrid'),
+
+  separator('Wallets'),
+  page('Which wallet module do I need?', '/sdk/wallet-modules/which-wallet-module', 'ListChecks'),
+  page('Wallet module reference', '/sdk/wallet-modules', 'WalletCards'),
+  group('EVM', 'Blocks', [
+    folder('Standard EVM', '/sdk/wallet-modules/wallet-evm', 'Wallet', [
+      usage('/sdk/wallet-modules/wallet-evm/usage'),
+      guides([
+        page('Getting Started', '/sdk/wallet-modules/wallet-evm/guides/getting-started'),
+        page('Manage Accounts', '/sdk/wallet-modules/wallet-evm/guides/manage-accounts'),
+        page('Check Balances', '/sdk/wallet-modules/wallet-evm/guides/check-balances'),
+        page('Send Transactions', '/sdk/wallet-modules/wallet-evm/guides/send-transactions'),
+        page('Transfer ERC-20 Tokens', '/sdk/wallet-modules/wallet-evm/guides/transfer-tokens'),
+        page('Sign and Verify Messages', '/sdk/wallet-modules/wallet-evm/guides/sign-verify-messages'),
+        page('Error Handling', '/sdk/wallet-modules/wallet-evm/guides/error-handling'),
+      ]),
+      configuration('/sdk/wallet-modules/wallet-evm/configuration'),
+      apiReference('/sdk/wallet-modules/wallet-evm/api-reference'),
+    ]),
+    folder('Smart accounts (ERC-4337)', '/sdk/wallet-modules/wallet-evm-erc-4337', 'ShieldCheck', [
+      usage('/sdk/wallet-modules/wallet-evm-erc-4337/usage'),
+      guides([
+        page('Get Started', '/sdk/wallet-modules/wallet-evm-erc-4337/guides/get-started'),
+        page('Manage Accounts', '/sdk/wallet-modules/wallet-evm-erc-4337/guides/manage-accounts'),
+        page('Check Balances', '/sdk/wallet-modules/wallet-evm-erc-4337/guides/check-balances'),
+        page('Send Transactions', '/sdk/wallet-modules/wallet-evm-erc-4337/guides/send-transactions'),
+        page('Transfer Tokens', '/sdk/wallet-modules/wallet-evm-erc-4337/guides/transfer-tokens'),
+        page('Sign and Verify Messages', '/sdk/wallet-modules/wallet-evm-erc-4337/guides/sign-verify-messages'),
+        page('Handle Errors', '/sdk/wallet-modules/wallet-evm-erc-4337/guides/handle-errors'),
+      ]),
+      configuration('/sdk/wallet-modules/wallet-evm-erc-4337/configuration'),
+      apiReference('/sdk/wallet-modules/wallet-evm-erc-4337/api-reference'),
+    ]),
+    folder('EIP-7702 accounts', '/sdk/wallet-modules/wallet-evm-7702-gasless', 'BadgeCheck', [
+      usage('/sdk/wallet-modules/wallet-evm-7702-gasless/usage'),
+      guides([
+        page('Get Started', '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/get-started'),
+        page('Manage Accounts', '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/manage-accounts'),
+        page('Check Balances', '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/check-balances'),
+        page('Send Transactions', '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/send-transactions'),
+        page('Transfer Tokens', '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/transfer-tokens'),
+        page('Sign and Verify Messages', '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/sign-verify-messages'),
+        page('Handle Errors', '/sdk/wallet-modules/wallet-evm-7702-gasless/guides/handle-errors'),
+      ]),
+      configuration('/sdk/wallet-modules/wallet-evm-7702-gasless/configuration'),
+      apiReference('/sdk/wallet-modules/wallet-evm-7702-gasless/api-reference'),
+    ]),
+  ]),
+  folder('Bitcoin', '/sdk/wallet-modules/wallet-btc', 'Bitcoin', [
+    usage('/sdk/wallet-modules/wallet-btc/usage'),
+    guides([
+      page('Get Started', '/sdk/wallet-modules/wallet-btc/guides/get-started'),
+      page('Manage Accounts', '/sdk/wallet-modules/wallet-btc/guides/manage-accounts'),
+      page('Check Balances', '/sdk/wallet-modules/wallet-btc/guides/check-balances'),
+      page('Send BTC', '/sdk/wallet-modules/wallet-btc/guides/send-transactions'),
+      page('Transaction History', '/sdk/wallet-modules/wallet-btc/guides/get-transaction-history'),
+      page('Sign and Verify Messages', '/sdk/wallet-modules/wallet-btc/guides/sign-verify-messages'),
+      page('Handle Errors', '/sdk/wallet-modules/wallet-btc/guides/handle-errors'),
+    ]),
+    configuration('/sdk/wallet-modules/wallet-btc/configuration'),
+    apiReference('/sdk/wallet-modules/wallet-btc/api-reference'),
+  ]),
+  folder('Lightning (Spark)', '/sdk/wallet-modules/wallet-spark', 'Zap', [
+    usage('/sdk/wallet-modules/wallet-spark/usage'),
+    guides([
+      page('Get Started', '/sdk/wallet-modules/wallet-spark/guides/get-started'),
+      page('Manage Accounts', '/sdk/wallet-modules/wallet-spark/guides/manage-accounts'),
+      page('Check Balances', '/sdk/wallet-modules/wallet-spark/guides/check-balances'),
+      page('Send and Transfer', '/sdk/wallet-modules/wallet-spark/guides/send-and-transfer'),
+      page('Lightning Payments', '/sdk/wallet-modules/wallet-spark/guides/lightning-payments'),
+      page('Deposits and Withdrawals', '/sdk/wallet-modules/wallet-spark/guides/deposits-and-withdrawals'),
+      page('Handle Errors', '/sdk/wallet-modules/wallet-spark/guides/handle-errors'),
+    ]),
+    configuration('/sdk/wallet-modules/wallet-spark/configuration'),
+    apiReference('/sdk/wallet-modules/wallet-spark/api-reference'),
+  ]),
+  group('TON', 'Circle', [
+    folder('Standard TON', '/sdk/wallet-modules/wallet-ton', 'Wallet', [
+      usage('/sdk/wallet-modules/wallet-ton/usage'),
+      guides([
+        page('Get Started', '/sdk/wallet-modules/wallet-ton/guides/get-started'),
+        page('Manage Accounts', '/sdk/wallet-modules/wallet-ton/guides/manage-accounts'),
+        page('Check Balances', '/sdk/wallet-modules/wallet-ton/guides/check-balances'),
+        page('Send TON', '/sdk/wallet-modules/wallet-ton/guides/send-transactions'),
+        page('Transfer Jetton Tokens', '/sdk/wallet-modules/wallet-ton/guides/transfer-tokens'),
+        page('Sign and Verify Messages', '/sdk/wallet-modules/wallet-ton/guides/sign-verify-messages'),
+        page('Handle Errors', '/sdk/wallet-modules/wallet-ton/guides/handle-errors'),
+      ]),
+      configuration('/sdk/wallet-modules/wallet-ton/configuration'),
+      apiReference('/sdk/wallet-modules/wallet-ton/api-reference'),
+    ]),
+    folder('Gasless TON', '/sdk/wallet-modules/wallet-ton-gasless', 'Fuel', [
+      usage('/sdk/wallet-modules/wallet-ton-gasless/usage'),
+      guides([
+        page('Get Started', '/sdk/wallet-modules/wallet-ton-gasless/guides/get-started'),
+        page('Manage Accounts', '/sdk/wallet-modules/wallet-ton-gasless/guides/manage-accounts'),
+        page('Check Balances', '/sdk/wallet-modules/wallet-ton-gasless/guides/check-balances'),
+        page('Native Sends Unsupported', '/sdk/wallet-modules/wallet-ton-gasless/guides/send-transactions'),
+        page('Transfer Jetton Tokens', '/sdk/wallet-modules/wallet-ton-gasless/guides/transfer-tokens'),
+        page('Sign and Verify Messages', '/sdk/wallet-modules/wallet-ton-gasless/guides/sign-verify-messages'),
+        page('Handle Errors', '/sdk/wallet-modules/wallet-ton-gasless/guides/handle-errors'),
+      ]),
+      configuration('/sdk/wallet-modules/wallet-ton-gasless/configuration'),
+      apiReference('/sdk/wallet-modules/wallet-ton-gasless/api-reference'),
+    ]),
+  ]),
+  group('TRON', 'Triangle', [
+    folder('Standard TRON', '/sdk/wallet-modules/wallet-tron', 'Wallet', [
+      usage('/sdk/wallet-modules/wallet-tron/usage'),
+      guides([
+        page('Get Started', '/sdk/wallet-modules/wallet-tron/guides/get-started'),
+        page('Manage Accounts', '/sdk/wallet-modules/wallet-tron/guides/manage-accounts'),
+        page('Check Balances', '/sdk/wallet-modules/wallet-tron/guides/check-balances'),
+        page('Send TRX', '/sdk/wallet-modules/wallet-tron/guides/send-transactions'),
+        page('Transfer TRC20 Tokens', '/sdk/wallet-modules/wallet-tron/guides/transfer-tokens'),
+        page('Sign and Verify Messages', '/sdk/wallet-modules/wallet-tron/guides/sign-verify-messages'),
+        page('Handle Errors', '/sdk/wallet-modules/wallet-tron/guides/handle-errors'),
+      ]),
+      configuration('/sdk/wallet-modules/wallet-tron/configuration'),
+      apiReference('/sdk/wallet-modules/wallet-tron/api-reference'),
+    ]),
+    folder('Gasfree TRON', '/sdk/wallet-modules/wallet-tron-gasfree', 'Fuel', [
+      usage('/sdk/wallet-modules/wallet-tron-gasfree/usage'),
+      guides([
+        page('Get Started', '/sdk/wallet-modules/wallet-tron-gasfree/guides/get-started'),
+        page('Manage Accounts', '/sdk/wallet-modules/wallet-tron-gasfree/guides/manage-accounts'),
+        page('Check Balances', '/sdk/wallet-modules/wallet-tron-gasfree/guides/check-balances'),
+        page('Send TRX', '/sdk/wallet-modules/wallet-tron-gasfree/guides/send-transactions'),
+        page('Transfer TRC20 Tokens', '/sdk/wallet-modules/wallet-tron-gasfree/guides/transfer-tokens'),
+        page('Sign and Verify Messages', '/sdk/wallet-modules/wallet-tron-gasfree/guides/sign-verify-messages'),
+        page('Handle Errors', '/sdk/wallet-modules/wallet-tron-gasfree/guides/handle-errors'),
+      ]),
+      configuration('/sdk/wallet-modules/wallet-tron-gasfree/configuration'),
+      apiReference('/sdk/wallet-modules/wallet-tron-gasfree/api-reference'),
+    ]),
+  ]),
+  folder('Solana', '/sdk/wallet-modules/wallet-solana', 'Sun', [
+    usage('/sdk/wallet-modules/wallet-solana/usage'),
+    guides([
+      page('Getting Started', '/sdk/wallet-modules/wallet-solana/guides/getting-started'),
+      page('Manage Accounts', '/sdk/wallet-modules/wallet-solana/guides/account-management'),
+      page('Check Balances', '/sdk/wallet-modules/wallet-solana/guides/check-balances'),
+      page('Send SOL', '/sdk/wallet-modules/wallet-solana/guides/send-transactions'),
+      page('Transfer SPL Tokens', '/sdk/wallet-modules/wallet-solana/guides/transfer-tokens'),
+      page('Sign and Verify Messages', '/sdk/wallet-modules/wallet-solana/guides/sign-verify-messages'),
+      page('Error Handling', '/sdk/wallet-modules/wallet-solana/guides/error-handling'),
+    ]),
+    configuration('/sdk/wallet-modules/wallet-solana/configuration'),
+    apiReference('/sdk/wallet-modules/wallet-solana/api-reference'),
+  ]),
+  folder('RGB', '/sdk/community-modules/wdk-wallet-rgb', 'Palette', [
+    apiReference('/sdk/community-modules/wdk-wallet-rgb/api-reference'),
+  ]),
+  folder('Cosmos', '/sdk/community-modules/wdk-wallet-cosmos', 'Orbit', [
+    apiReference('/sdk/community-modules/wdk-wallet-cosmos/api-reference'),
+  ]),
+
+  separator('Swap and Bridge'),
+  page('Swap module reference', '/sdk/swap-modules', 'ArrowLeftRight'),
+  folder('Velora', '/sdk/swap-modules/swap-velora-evm', 'ArrowLeftRight', [
+    usage('/sdk/swap-modules/swap-velora-evm/usage'),
+    guides([
+      page('Get Started', '/sdk/swap-modules/swap-velora-evm/guides/get-started'),
+      page('Execute Swaps', '/sdk/swap-modules/swap-velora-evm/guides/execute-swaps'),
+      page('Get Swap Quotes', '/sdk/swap-modules/swap-velora-evm/guides/get-swap-quotes'),
+      page('Handle Errors', '/sdk/swap-modules/swap-velora-evm/guides/handle-errors'),
+    ]),
+    configuration('/sdk/swap-modules/swap-velora-evm/configuration'),
+    apiReference('/sdk/swap-modules/swap-velora-evm/api-reference'),
+  ]),
+  page('Bridge module reference', '/sdk/bridge-modules', 'Link'),
+  folder('USDT0 bridge', '/sdk/bridge-modules/bridge-usdt0-evm', 'Waypoints', [
+    usage('/sdk/bridge-modules/bridge-usdt0-evm/usage'),
+    guides([
+      page('Get Started', '/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started'),
+      page('Bridge Tokens', '/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens'),
+      page('Bridge with ERC-4337', '/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337'),
+      page('Bridge Cross-Ecosystem', '/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-cross-ecosystem'),
+      page('Handle Errors', '/sdk/bridge-modules/bridge-usdt0-evm/guides/handle-errors'),
+    ]),
+    configuration('/sdk/bridge-modules/bridge-usdt0-evm/configuration'),
+    apiReference('/sdk/bridge-modules/bridge-usdt0-evm/api-reference'),
+  ]),
+
+  separator('Lending'),
+  page('Lending module reference', '/sdk/lending-modules', 'Banknote'),
+  folder('Aave', '/sdk/lending-modules/lending-aave-evm', 'Landmark', [
+    usage('/sdk/lending-modules/lending-aave-evm/usage'),
+    guides([
+      page('Get Started', '/sdk/lending-modules/lending-aave-evm/guides/get-started'),
+      page('Lending Operations', '/sdk/lending-modules/lending-aave-evm/guides/lending-operations'),
+      page('Handle Errors', '/sdk/lending-modules/lending-aave-evm/guides/handle-errors'),
+    ]),
+    configuration('/sdk/lending-modules/lending-aave-evm/configuration'),
+    apiReference('/sdk/lending-modules/lending-aave-evm/api-reference'),
+  ]),
+  folder('Morpho', '/sdk/lending-modules/lending-morpho-evm', 'Sprout', [
+    usage('/sdk/lending-modules/lending-morpho-evm/usage'),
+    guides([
+      page('Get Started', '/sdk/lending-modules/lending-morpho-evm/guides/get-started'),
+      page('Lending Operations', '/sdk/lending-modules/lending-morpho-evm/guides/lending-operations'),
+      page('Handle Errors', '/sdk/lending-modules/lending-morpho-evm/guides/handle-errors'),
+    ]),
+    configuration('/sdk/lending-modules/lending-morpho-evm/configuration'),
+    apiReference('/sdk/lending-modules/lending-morpho-evm/api-reference'),
+  ]),
+
+  separator('On-ramp and Off-ramp'),
+  page('Fiat module reference', '/sdk/fiat-modules', 'DollarSign'),
+  folder('MoonPay', '/sdk/fiat-modules/fiat-moonpay', 'CreditCard', [
+    usage('/sdk/fiat-modules/fiat-moonpay/usage'),
+    guides([
+      page('Get Started', '/sdk/fiat-modules/fiat-moonpay/guides/get-started'),
+      page('Buy and Sell', '/sdk/fiat-modules/fiat-moonpay/guides/buy-and-sell'),
+      page('Manage Transactions', '/sdk/fiat-modules/fiat-moonpay/guides/manage-transactions'),
+    ]),
+    configuration('/sdk/fiat-modules/fiat-moonpay/configuration'),
+    apiReference('/sdk/fiat-modules/fiat-moonpay/api-reference'),
+  ]),
+
+  separator('AI'),
+  page('Build with AI', '/start-building/build-with-ai', 'Bot'),
+  folder('MCP Toolkit', '/ai/mcp-toolkit', 'Wand', [
+    page('Get Started', '/ai/mcp-toolkit/get-started', 'Rocket'),
+    configuration('/ai/mcp-toolkit/configuration'),
+    apiReference('/ai/mcp-toolkit/api-reference'),
+    page('LangChain Integration', '/ai/mcp-toolkit/langchain', 'Link'),
+  ]),
+  page('Agent Skills', '/ai/agent-skills', 'Brain'),
+  page('OpenClaw', '/ai/openclaw', 'Cat'),
+  page('x402', '/ai/x402', 'CreditCard'),
+
+  separator('React Native'),
+  folder('React Native Core', '/tools/react-native-core', 'Smartphone', [
+    apiReference('/tools/react-native-core/api-reference'),
+  ]),
+  folder('React Native Secure Storage', '/tools/react-native-secure-storage', 'LockKeyhole', [
+    configuration('/tools/react-native-secure-storage/configuration'),
+    apiReference('/tools/react-native-secure-storage/api-reference'),
+  ]),
+
+  separator('UI Kits'),
+  folder('React Native UI Kit', '/ui-kits/react-native-ui-kit', 'PanelsTopLeft', [
+    page('Get Started', '/ui-kits/react-native-ui-kit/get-started', 'Rocket'),
+    apiReference('/ui-kits/react-native-ui-kit/api-reference'),
+    page('Theming', '/ui-kits/react-native-ui-kit/theming', 'Palette'),
+  ]),
+
+  separator('Tools and Infrastructure'),
+  folder('Track balances and transactions', '/tools/indexer-api', 'Database', [
+    page('Get Started', '/tools/indexer-api/get-started', 'Rocket'),
+    apiReference('/tools/indexer-api/api-reference'),
+  ]),
+  folder('Manage wallet secrets safely', '/tools/secret-manager', 'KeyRound', [
+    configuration('/tools/secret-manager/configuration'),
+    apiReference('/tools/secret-manager/api-reference'),
+  ]),
+  folder('Fetch token prices', '/tools/price-rates', 'TrendingUp', [
+    configuration('/tools/price-rates/configuration'),
+    apiReference('/tools/price-rates/api-reference'),
+    page('Pricing module reference', '/sdk/pricing-modules', 'LayoutGrid'),
+    folder('CoinGecko HTTP', '/sdk/pricing-modules/pricing-coingecko-http', 'TrendingUp', [
+      usage('/sdk/pricing-modules/pricing-coingecko-http/usage'),
+      guides([
+        page('Get Started', '/sdk/pricing-modules/pricing-coingecko-http/guides/get-started'),
+        page('Fetch Current Prices', '/sdk/pricing-modules/pricing-coingecko-http/guides/fetch-current-prices'),
+        page('Fetch Historical Prices', '/sdk/pricing-modules/pricing-coingecko-http/guides/fetch-historical-prices'),
+        page('Handle Errors', '/sdk/pricing-modules/pricing-coingecko-http/guides/handle-errors'),
+      ]),
+      configuration('/sdk/pricing-modules/pricing-coingecko-http/configuration'),
+      apiReference('/sdk/pricing-modules/pricing-coingecko-http/api-reference'),
+    ]),
+  ]),
+  folder('Look up asset metadata', '/tools/asset-registry', 'Tags', [
+    configuration('/tools/asset-registry/configuration'),
+    apiReference('/tools/asset-registry/api-reference'),
+  ]),
+  folder('Add provider failover', '/tools/failover-provider', 'ShieldCheck', [
+    configuration('/tools/failover-provider/configuration'),
+    apiReference('/tools/failover-provider/api-reference'),
+  ]),
+  folder('Run WDK in a Pear worklet', '/tools/pear-wrk-wdk', 'Cpu', [
+    configuration('/tools/pear-wrk-wdk/configuration'),
+    apiReference('/tools/pear-wrk-wdk/api-reference'),
+  ]),
+  folder('Validate addresses and parse payment links', '/tools/wdk-utils', 'Wrench', [
+    configuration('/tools/wdk-utils/configuration'),
+    apiReference('/tools/wdk-utils/api-reference'),
+  ]),
+  folder('Bundle WDK for a Bare worklet', '/tools/worklet-bundler', 'Package', [
+    configuration('/tools/worklet-bundler/configuration'),
+    apiReference('/tools/worklet-bundler/api-reference'),
+  ]),
+
+  separator('Partners and Contributors'),
+  page('Contribute a module to WDK', '/tools/create-wdk-module', 'Hammer'),
+
+  separator('Resources'),
+  page('Concepts', '/resources/concepts', 'GraduationCap'),
+  page('Get Support', '/overview/support', 'CircleQuestionMark'),
+  page('Changelog', '/overview/changelog', 'History'),
 ];

@@ -1,0 +1,135 @@
+---
+title: RGB wallet API reference
+description: API reference for the independently maintained @utexo/wdk-wallet-rgb module.
+docType: reference
+schemaType: TechArticle
+---
+
+This page summarizes the public API exposed by `@utexo/wdk-wallet-rgb` based on the package README, `package.json`, generated TypeScript declarations, and source files from commit `6d28bc9`.
+
+<Callout type="warn">
+This module is developed and maintained independently by a third-party contributor. Tether and the WDK team do not endorse or assume responsibility for its code, security, or maintenance. Review the package and use your own judgment before using it with real funds.
+</Callout>
+
+## Package
+
+| Field | Value |
+|---|---|
+| Package | `@utexo/wdk-wallet-rgb` |
+| Repository | [UTEXO-Protocol/wdk-wallet-rgb](https://github.com/UTEXO-Protocol/wdk-wallet-rgb) |
+| Main entry | `index.js` |
+| Bare entry | `bare.js` |
+| Types | `types/index.d.ts` |
+
+## Exports
+
+| Export | Description |
+|---|---|
+| `default` | `WalletManagerRgb` |
+| `WalletAccountRgb` | Full RGB wallet account implementation |
+| `WalletAccountReadOnlyRgb` | Read-only RGB wallet account implementation |
+| `RgbWalletConfig` | RGB wallet configuration type |
+| `RgbTransaction` | Native BTC transaction shape for the RGB wallet |
+| `TransferOptions` | RGB transfer options |
+| `RgbTransactionReceipt` | RGB transaction receipt type from `@utexo/rgb-sdk` |
+| `RgbTransferReceipt` | RGB transfer receipt type from `@utexo/rgb-sdk` |
+
+## `RgbWalletConfig`
+
+| Field | Required | Description |
+|---|---:|---|
+| `network` | Yes | Target RGB network. Runtime source maps `mainnet`, `testnet`, `testnet4`, `signet`, `utexo`, and `regtest`; generated typedefs currently list `mainnet`, `testnet`, and `regtest`. |
+| `dataDir` | Yes | Persistent app-private path where RGB wallet state is stored. Losing this directory can lose RGB asset state. |
+| `keys` | No | Derived RGB wallet keys. The manager derives these from the seed before creating an account. |
+| `indexerUrl` | No | Electrs indexer URL. |
+| `transportEndpoint` | No | RGB transport endpoint. |
+| `transferMaxFee` | No | Maximum fee amount for transfer operations. |
+
+## `WalletManagerRgb`
+
+```js
+import WalletManagerRgb from '@utexo/wdk-wallet-rgb'
+
+const manager = new WalletManagerRgb(seed, config)
+```
+
+| Method | Description |
+|---|---|
+| `constructor(seed, config)` | Creates a manager from a BIP-39 seed phrase or seed bytes. `network` and `dataDir` are required in config. |
+| `getAccount(index = 0)` | Returns the RGB account. RGB supports only account index `0`; other indexes throw. |
+| `restoreAccountFromBackup(restoreConfig)` | Restores account state from encrypted backup material. |
+| `getAccountByPath(path)` | Always throws because RGB does not support arbitrary BIP-44 account paths in this module. |
+| `getFeeRates()` | Fetches normal and fast Bitcoin fee rates from mempool.space. |
+| `dispose()` | Clears cached account and key material from the manager. |
+
+## `WalletAccountRgb`
+
+| Method or property | Description |
+|---|---|
+| `static at(seed, config)` | Creates a full RGB wallet account. |
+| `static fromBackup(seed, config)` | Creates an account from encrypted backup material. |
+| `index` | Account index. |
+| `path` | WDK-compatible path representation for the RGB account. |
+| `coloredPath` | RGB colored-account path representation. |
+| `keyPair` | Public key material and RGB-specific extended public keys. |
+| `getAddress()` | Returns the wallet address. |
+| `sign(message)` | Signs a message. |
+| `verify(message, signature)` | Verifies a message signature. |
+| `sendTransaction(options)` | Sends native BTC through the RGB wallet flow. |
+| `quoteSendTransaction(options)` | Quotes native BTC send cost. |
+| `transfer(options)` | Transfers an RGB asset. |
+| `quoteTransfer(options)` | Quotes RGB asset transfer cost. |
+| `toReadOnlyAccount()` | Returns a `WalletAccountReadOnlyRgb`. |
+| `dispose()` | Erases account key material managed by this wrapper. |
+| `getRgbWallet()` | Returns the underlying RGB SDK wallet manager. |
+
+## RGB-specific account methods
+
+| Method | Description |
+|---|---|
+| `listAssets()` | Lists RGB assets in the wallet. |
+| `issueAssetNia(options)` | Issues a Non-Inflatable Asset. |
+| `receiveAsset(options)` | Creates a blind or witness receive invoice. |
+| `sendBegin(options)` | Begins an RGB send and returns a PSBT. |
+| `signPsbt(psbt)` | Signs a PSBT. |
+| `sendEnd(options)` | Broadcasts a signed RGB send. |
+| `createUtxos(options)` | Creates UTXOs using the combined flow. |
+| `createUtxosBegin(options)` | Begins UTXO creation and returns a PSBT. |
+| `createUtxosEnd(options)` | Finalizes UTXO creation from a signed PSBT. |
+| `listUnspents()` | Lists UTXOs. |
+| `listTransactions()` | Lists Bitcoin transactions. |
+| `getTransfers(options)` | Lists RGB transfers with optional asset filtering and pagination. |
+| `listTransfers(assetId)` | Lists RGB transfers for an optional asset ID. |
+| `failTransfers(transferId)` | Marks a transfer as failed. |
+| `createBackup(options)` | Creates an encrypted wallet backup. |
+| `restoreFromBackup(params)` | Restores a wallet from encrypted backup material. |
+
+## `WalletAccountReadOnlyRgb`
+
+| Method | Description |
+|---|---|
+| `verify(message, signature)` | Verifies a message signature without private key access. |
+| `getBalance()` | Returns the Bitcoin balance in satoshis. |
+| `getTokenBalance(tokenAddress)` | Returns the settled RGB asset balance for the given asset ID. |
+| `quoteSendTransaction(tx)` | Throws; use `WalletAccountRgb` for this operation. |
+| `quoteTransfer(options)` | Throws; use `WalletAccountRgb` for this operation. |
+| `getTransactionReceipt(hash)` | Looks up a Bitcoin transaction receipt by hash. |
+| `getTransferReceipt(hash)` | Looks up an RGB transfer receipt by hash. |
+
+## Transfer options
+
+| Field | Required | Description |
+|---|---:|---|
+| `token` | Yes | RGB asset ID. |
+| `recipient` | Yes | RGB invoice recipient. |
+| `amount` | Yes | Transfer amount. |
+| `feeRate` | No | Fee rate in sat/vbyte. |
+| `minConfirmations` | No | Minimum confirmations. |
+| `witnessData` | No | Witness data for transfer construction. |
+
+## Limitations
+
+- RGB account creation is limited to account index `0`.
+- `getAccountByPath()` is not supported.
+- Read-only accounts cannot quote transactions or transfers.
+- `dataDir` is part of the wallet state and needs durable storage.

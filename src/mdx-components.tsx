@@ -13,6 +13,7 @@ import { Embed } from '@/components/embed';
 import { ImageCard, ImageCards } from '@/components/image-card';
 import { FeaturedShowcaseProducts } from '@/components/showcase-products';
 import { CommunityCards, GetInvolvedCards, SupportCards } from '@/components/support-cards';
+import { WalletModuleChooser } from '@/components/wallet-module-chooser';
 
 function WrapCode({ children }: { children: React.ReactNode }) {
   return <div className="fd-code-wrap">{children}</div>;
@@ -60,6 +61,7 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     CommunityCards,
     GetInvolvedCards,
     SupportCards,
+    WalletModuleChooser,
     ...TabsComponents,
     Tabs: CustomTabs,
     Tab: CustomTabsItem,

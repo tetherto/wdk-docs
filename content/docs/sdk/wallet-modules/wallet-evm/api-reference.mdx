@@ -32,12 +32,14 @@ new WalletManagerEvm(seed, config?)
   - `retries` (number, optional): Additional retry attempts when `provider` is an array
   - `chainId` (number, optional): Network chain ID. When provided, skips automatic chain ID detection.
   - `transferMaxFee` (number | bigint, optional): Maximum fee amount for transfer operations (in wei)
+  - `transactionMaxFee` (number | bigint, optional): Maximum fee amount for native `sendTransaction()` and provider-backed `signTransaction()` operations (in wei)
 
 **Example:**
 ```javascript
 const wallet = new WalletManagerEvm(seedPhrase, {
   provider: 'https://rpc.mevblocker.io/fast',
-  transferMaxFee: 100000000000000 // Maximum fee in wei
+  transferMaxFee: 100000000000000, // Maximum ERC-20 transfer fee in wei
+  transactionMaxFee: 100000000000000 // Maximum native send/sign fee in wei
 })
 ```
 
@@ -176,6 +178,7 @@ new WalletAccountEvm(seed, path, config?)
   - `retries` (number, optional): Additional retry attempts when `provider` is an array
   - `chainId` (number, optional): Network chain ID. When provided, skips automatic chain ID detection.
   - `transferMaxFee` (number | bigint, optional): Maximum fee amount for transfer operations (in wei)
+  - `transactionMaxFee` (number | bigint, optional): Maximum fee amount for native `sendTransaction()` and `signTransaction()` operations (in wei)
 
 **Throws:**
 - Error if seed phrase is invalid (BIP-39 validation fails)
@@ -184,7 +187,8 @@ new WalletAccountEvm(seed, path, config?)
 ```javascript
 const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
   provider: 'https://rpc.mevblocker.io/fast',
-  transferMaxFee: 100000000000000
+  transferMaxFee: 100000000000000,
+  transactionMaxFee: 100000000000000
 })
 ```
 
@@ -293,6 +297,8 @@ Signs an EVM transaction and returns the signed raw transaction as a hex string.
 
 **Returns:** `Promise<string>` - Signed raw transaction hex string
 
+**Throws:** Error if a provider is configured and the estimated transaction fee exceeds `transactionMaxFee`.
+
 **Example:**
 ```javascript
 const signedTransaction = await account.signTransaction({
@@ -355,7 +361,9 @@ Sends an EVM transaction and returns the result with hash and fee.
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
 
-**Throws:** Error if no provider is configured
+**Throws:**
+- Error if no provider is configured
+- Error if fee exceeds `transactionMaxFee` when configured
 
 **Example:**
 ```javascript
@@ -620,7 +628,7 @@ new WalletAccountReadOnlyEvm(address, config?)
 
 **Parameters:**
 - `address` (string): The account's Ethereum address
-- `config` (`Omit<EvmWalletConfig, 'transferMaxFee'>`, optional): Configuration object (same as `EvmWalletConfig` but without `transferMaxFee`, since read-only accounts cannot send transactions)
+- `config` (`Omit<EvmWalletConfig, 'transferMaxFee' | 'transactionMaxFee'>`, optional): Configuration object (same as `EvmWalletConfig` but without send-only fee caps, since read-only accounts cannot send transactions)
   - `provider` (`string | Eip1193Provider | Array<string | Eip1193Provider>`, optional): RPC endpoint URL, EIP-1193 provider instance, or ordered failover list
   - `retries` (number, optional): Additional retry attempts when `provider` is an array
   - `chainId` (number, optional): Network chain ID. When provided, skips automatic chain ID detection.
@@ -929,7 +937,8 @@ interface EvmWalletConfig {
   provider?: string | Eip1193Provider | Array<string | Eip1193Provider>; // RPC URL, EIP-1193 provider, or ordered failover list
   retries?: number;                                                  // Additional retry attempts for provider arrays
   chainId?: number;                                                  // Network chain ID. Skips automatic detection when provided.
-  transferMaxFee?: number | bigint;                                  // Maximum fee for transfers in wei
+  transferMaxFee?: number | bigint;                                  // Maximum ERC-20 transfer fee in wei
+  transactionMaxFee?: number | bigint;                               // Maximum native send/sign fee in wei
 }
 ```
 

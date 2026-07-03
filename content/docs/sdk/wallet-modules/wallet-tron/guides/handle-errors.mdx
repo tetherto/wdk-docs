@@ -18,11 +18,6 @@ try {
     value: 1000000 // 1 TRX in sun
   }
 
-  const quote = await account.quoteSendTransaction(tx)
-  if (quote.fee > 10000000n) {
-    throw new Error('Transaction fee exceeds configured threshold')
-  }
-
   const result = await account.sendTransaction(tx)
   console.log('Transaction hash:', result.hash)
   console.log('Fee paid:', result.fee, 'sun')
@@ -30,8 +25,8 @@ try {
 } catch (error) {
   if (error.message.toLowerCase().includes('insufficient')) {
     console.error('Not enough TRX to complete transaction')
-  } else if (error.message.toLowerCase().includes('configured threshold')) {
-    console.error('The transaction fee exceeds your configured threshold')
+  } else if (error.message.includes('Exceeded maximum fee')) {
+    console.error('The transaction fee exceeds transactionMaxFee')
   } else {
     console.error('Transaction failed:', error.message)
   }
@@ -65,7 +60,7 @@ try {
 
 ### Manage Fee Limits
 
-Set `transferMaxFee` when creating the wallet to prevent TRC20 transfers from exceeding a maximum cost. For native TRX sends, call [`account.quoteSendTransaction()`](/sdk/wallet-modules/wallet-tron/api-reference#quotesendtransactiontx) and compare `quote.fee` before calling `sendTransaction()`.
+Set `transactionMaxFee` when creating the wallet to cap native TRX `sendTransaction()` and `signTransaction()` costs. Set `transferMaxFee` separately for TRC20 `transfer()` costs. Native TRX quotes and results include `activationFee` when the recipient account must be activated.
 
 You can retrieve current network rates using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-tron/api-reference):
 
