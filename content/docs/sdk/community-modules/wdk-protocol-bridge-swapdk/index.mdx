@@ -1,0 +1,155 @@
+---
+title: SwapDK bridge
+description: Use the SwapDK bridge protocol modules to move assets across Bitcoin, EVM, Cosmos-family, Solana, and TRON via THORChain, MAYAChain, and Chainflip.
+docType: explanation
+schemaType: TechArticle
+---
+
+`@swapdk/wdk-protocol-bridge-swapdk-*` is a family of WDK bridge protocol modules for arbitrary-asset cross-chain swaps. Each package handles a specific source chain family and dispatches routing to the SwapDK swap-engine, which selects between THORChain, MAYAChain, and Chainflip server-side.
+
+Powered by [`Swap-DK/wdk-protocol-bridges-swapdk`](https://github.com/Swap-DK/wdk-protocol-bridges-swapdk).
+
+<Callout type="warn">
+This module is developed and maintained independently by a third-party contributor. Tether and the WDK team do not endorse or assume responsibility for its code, security, or maintenance. Review the package and use your own judgment before using it with real funds.
+</Callout>
+
+## When to use it
+
+Use this suite when your application needs to bridge or swap arbitrary assets across chains (not just USD₮0), with server-side routing across multiple providers.
+
+| Use case | Module |
+|---|---|
+| Bridge BTC to EVM, TRON, or Cosmos-family destinations | `@swapdk/wdk-protocol-bridge-swapdk-btc` |
+| Bridge native RUNE or CACAO from Cosmos-family chains | `@swapdk/wdk-protocol-bridge-swapdk-cosmos` |
+| Bridge or same-chain swap on EVM (ETH, USDC, USDT, arbitrary ERC-20) | `@swapdk/wdk-protocol-bridge-swapdk-evm` |
+| Bridge SOL or SPL tokens from Solana | `@swapdk/wdk-protocol-bridge-swapdk-solana` |
+| Bridge TRX or TRC-20 tokens (USDT, USDC) from TRON | `@swapdk/wdk-protocol-bridge-swapdk-tron` |
+
+## Package suite
+
+Each package is published to npm independently and pairs with the standard WDK wallet module for its source chain family.
+
+| Bridge module | Source chain | Wallet peer | Source |
+|---|---|---|---|
+| [`@swapdk/wdk-protocol-bridge-swapdk-btc`](https://www.npmjs.com/package/@swapdk/wdk-protocol-bridge-swapdk-btc) | Bitcoin | [`@tetherto/wdk-wallet-btc`](/sdk/wallet-modules/wallet-btc) | [GitHub](https://github.com/Swap-DK/wdk-protocol-bridges-swapdk/tree/main/packages/btc) |
+| [`@swapdk/wdk-protocol-bridge-swapdk-cosmos`](https://www.npmjs.com/package/@swapdk/wdk-protocol-bridge-swapdk-cosmos) | THORChain, MAYAChain | [`@base58-io/wdk-wallet-cosmos`](/sdk/community-modules/wdk-wallet-cosmos) | [GitHub](https://github.com/Swap-DK/wdk-protocol-bridges-swapdk/tree/main/packages/cosmos) |
+| [`@swapdk/wdk-protocol-bridge-swapdk-evm`](https://www.npmjs.com/package/@swapdk/wdk-protocol-bridge-swapdk-evm) | Ethereum, Arbitrum, Base, BSC, Avalanche, Optimism, Polygon | [`@tetherto/wdk-wallet-evm`](/sdk/wallet-modules/wallet-evm) | [GitHub](https://github.com/Swap-DK/wdk-protocol-bridges-swapdk/tree/main/packages/evm) |
+| [`@swapdk/wdk-protocol-bridge-swapdk-solana`](https://www.npmjs.com/package/@swapdk/wdk-protocol-bridge-swapdk-solana) | Solana | [`@tetherto/wdk-wallet-solana`](/sdk/wallet-modules/wallet-solana) | [GitHub](https://github.com/Swap-DK/wdk-protocol-bridges-swapdk/tree/main/packages/solana) |
+| [`@swapdk/wdk-protocol-bridge-swapdk-tron`](https://www.npmjs.com/package/@swapdk/wdk-protocol-bridge-swapdk-tron) | TRON (TRX + TRC-20) | [`@tetherto/wdk-wallet-tron`](/sdk/wallet-modules/wallet-tron) | [GitHub](https://github.com/Swap-DK/wdk-protocol-bridges-swapdk/tree/main/packages/tron) |
+
+The EVM package also exports `SwapDKSwapEvm` (extends the WDK `SwapProtocol`) for same-chain DEX-style swaps in addition to `SwapDKBridgeEvm` (extends `BridgeProtocol`) for cross-chain bridging.
+
+## How routing works
+
+Each bridge module is a thin client for the SwapDK swap-engine. Route discovery, provider selection (THORChain vs. MAYAChain vs. Chainflip), quoting, and calldata generation all happen server-side; the module signs and broadcasts the returned transaction through the paired WDK wallet account.
+
+1. Client calls `bridge.quoteBridge({ targetChain, tokenOut, amount, recipient })` (or `bridge.bridge(...)` to execute).
+2. Module posts to swap-engine `/quote` (and, for execution, `/swap`) with the source asset, destination asset, and recipient.
+3. Swap-engine returns the best route across providers, plus prebuilt calldata / PSBT / memo suitable for the source chain.
+4. Module signs the transaction through the WDK wallet account and broadcasts.
+5. Optional: track the cross-chain swap through `bridge.trackBridge(hash)`, which threads through swap-engine's status API.
+
+Because provider selection is server-side, downstream code does not need to know whether a given route lands on THORChain, MAYAChain, or Chainflip — the module presents a uniform interface across all supported source chains.
+
+## Requirements
+
+The suite requires:
+
+- A BIP-39 seed phrase or seed bytes, passed to the paired wallet module.
+- A SwapDK swap-engine base URL and API key. Request access through [swapdk.com](https://swapdk.com).
+- The standard chain-specific wallet dependencies (RPC endpoints for EVM / TRON / Solana / Cosmos; Electrum host + port for BTC; a TronWeb instance for TRON).
+
+## Install
+
+Install the bridge package for your source chain along with its wallet peer. For an EVM source that also does same-chain swaps:
+
+```bash
+npm install @swapdk/wdk-protocol-bridge-swapdk-evm @tetherto/wdk-wallet-evm
+```
+
+For a Bitcoin source:
+
+```bash
+npm install @swapdk/wdk-protocol-bridge-swapdk-btc @tetherto/wdk-wallet-btc
+```
+
+For a TRON source (the TronWeb instance is passed via config, not imported by the bridge itself):
+
+```bash
+npm install @swapdk/wdk-protocol-bridge-swapdk-tron @tetherto/wdk-wallet-tron tronweb
+```
+
+## Minimal setup
+
+EVM source (Ethereum → Bitcoin, native ETH):
+
+```js
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import { SwapDKBridgeEvm } from '@swapdk/wdk-protocol-bridge-swapdk-evm'
+
+const wallet = new WalletManagerEvm(seedPhrase, { provider: process.env.RPC_URL_ETHEREUM })
+const account = await wallet.getAccount(0)
+
+const bridge = new SwapDKBridgeEvm(account, {
+  apiUrl: 'https://api.swapdk.com',
+  apiKey: process.env.SWAPDK_API_KEY,
+})
+bridge.setSourceChain('ethereum')
+
+const quote = await bridge.quoteBridge({
+  targetChain: 'bitcoin',
+  tokenOut: 'BTC.BTC',
+  amount: 10_000_000_000_000_000n, // 0.01 ETH in wei
+  recipient: 'bc1qexampleRecipient…',
+})
+console.log('estimated BTC out:', quote.tokenOutAmount)
+
+const result = await bridge.bridge({
+  targetChain: 'bitcoin',
+  tokenOut: 'BTC.BTC',
+  amount: 10_000_000_000_000_000n,
+  recipient: 'bc1qexampleRecipient…',
+})
+console.log('source tx:', result.hash)
+```
+
+Bitcoin source (BTC → Ethereum, USDC on destination):
+
+```js
+import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
+import { SwapDKBridgeBtc } from '@swapdk/wdk-protocol-bridge-swapdk-btc'
+
+const wallet = new WalletManagerBtc(seedPhrase, {
+  clientConfig: { type: 'electrum-ws', clientConfig: { host: 'electrum.blockstream.info', port: 50002 } },
+})
+const account = await wallet.getAccount(0)
+
+const bridge = new SwapDKBridgeBtc(account, {
+  apiUrl: 'https://api.swapdk.com',
+  apiKey: process.env.SWAPDK_API_KEY,
+})
+bridge.setSourceChain('bitcoin')
+
+const result = await bridge.bridge({
+  targetChain: 'ethereum',
+  tokenOut: 'ETH.USDC-0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+  amount: 100_000n, // 0.001 BTC in satoshis
+  recipient: '0xRecipient…',
+})
+```
+
+The BTC source relies on the memo parameter of `@tetherto/wdk-wallet-btc`'s `sendTransaction` to attach the THORChain routing memo as an `OP_RETURN` output — no PSBT construction is required by the caller.
+
+## Reference
+
+<Cards>
+<Card title="Source repository" href="https://github.com/Swap-DK/wdk-protocol-bridges-swapdk">
+Open the monorepo source, per-package READMEs, and CHANGELOGs on GitHub.
+</Card>
+<Card title="npm packages" href="https://www.npmjs.com/org/swapdk">
+Browse all published `@swapdk/*` packages on npm.
+</Card>
+<Card title="Community modules" href="/sdk/community-modules">
+Review the community module disclaimer and submission flow.
+</Card>
+</Cards>
