@@ -1,11 +1,11 @@
 ---
-title: Send TRX
-description: Send native TRX and estimate transaction fees on Tron.
+title: Send TRX and Transactions
+description: Send native TRX, smart-contract calls, and pre-built TronWeb transactions on Tron.
 docType: how-to
 schemaType: TechArticle
 ---
 
-This guide explains how to [send native TRX](#send-native-trx), [estimate transaction fees](#estimate-transaction-fees), [cap transaction fees](#cap-transaction-fees), [sign without broadcasting](#sign-without-broadcasting), and [use dynamic fee rates](#use-dynamic-fee-rates).
+This guide explains how to [send native TRX](#send-native-trx), [send smart-contract calls](#send-smart-contract-calls), [send pre-built TronWeb transactions](#send-pre-built-tronweb-transactions), [estimate transaction fees](#estimate-transaction-fees), [cap transaction fees](#cap-transaction-fees), [sign without broadcasting](#sign-without-broadcasting), and [use dynamic fee rates](#use-dynamic-fee-rates).
 
 <Callout type="info">
 On Tron, values are expressed in sun (1 TRX = 1,000,000 sun).
@@ -25,9 +25,51 @@ console.log('Transaction fee:', result.fee, 'sun')
 console.log('Activation fee:', result.activationFee, 'sun')
 ```
 
+## Send Smart-Contract Calls
+
+`sendTransaction()`, `quoteSendTransaction()`, and `signTransaction()` also accept smart-contract call descriptors. WDK builds a TronWeb `TriggerSmartContract` transaction from the contract address, function selector, parameters, and optional trigger options.
+
+```javascript title="Send A Smart-Contract Call"
+const result = await account.sendTransaction({
+  contractAddress: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
+  functionSelector: 'transfer(address,uint256)',
+  parameters: [
+    { type: 'address', value: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH' },
+    { type: 'uint256', value: 1000000 }
+  ],
+  options: {
+    feeLimit: 20_000_000
+  }
+})
+
+console.log('Transaction hash:', result.hash)
+console.log('Total fee:', result.fee, 'sun')
+```
+
+Smart-contract quotes include bandwidth plus the net energy cost after the sender's available resources are considered.
+
+## Send Pre-built TronWeb Transactions
+
+Pass a pre-built TronWeb transaction when you need a transaction type that WDK does not model directly, such as staking or voting. This example uses `sendTrx()` for brevity; the same pattern works with other TronWeb transaction-builder methods that return an unsigned transaction owned by the account.
+
+```javascript title="Send A Pre-built TronWeb Transaction"
+const address = await account.getAddress()
+
+const transaction = await tronWeb.transactionBuilder.sendTrx(
+  'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
+  1_000_000,
+  address
+)
+
+const result = await account.sendTransaction(transaction)
+console.log('Transaction hash:', result.hash)
+```
+
+Before signing or sending a pre-built transaction, WDK checks that the transaction owner address matches the wallet account address.
+
 ## Estimate Transaction Fees
 
-You can get a fee estimate before sending using [`account.quoteSendTransaction()`](/sdk/wallet-modules/wallet-tron/api-reference#quotesendtransactiontx). The quote includes `activationFee`, which is non-zero when the recipient account must be activated:
+You can get a fee estimate before sending using [`account.quoteSendTransaction()`](/sdk/wallet-modules/wallet-tron/api-reference#quotesendtransactiontx). For native TRX transfers, the quote includes `activationFee`, which is non-zero when the recipient account must be activated:
 
 ```javascript title="Quote Transaction Fee"
 const quote = await account.quoteSendTransaction({
@@ -40,7 +82,7 @@ console.log('Activation fee:', quote.activationFee, 'sun')
 
 ## Cap Transaction Fees
 
-Set [`transactionMaxFee`](/sdk/wallet-modules/wallet-tron/configuration#transaction-max-fee) when you create the wallet to stop native `sendTransaction()` and `signTransaction()` calls if the estimated fee exceeds your limit.
+Set [`transactionMaxFee`](/sdk/wallet-modules/wallet-tron/configuration#transaction-max-fee) when you create the wallet to stop `sendTransaction()` and `signTransaction()` calls if the estimated fee exceeds your limit.
 
 ```javascript title="Cap Native TRX Fees"
 const wallet = new WalletManagerTron(seedPhrase, {
@@ -51,7 +93,7 @@ const wallet = new WalletManagerTron(seedPhrase, {
 
 ## Sign Without Broadcasting
 
-Use [`account.signTransaction()`](/sdk/wallet-modules/wallet-tron/api-reference#signtransactiontx) when you need a signed TRX transaction but do not want WDK to broadcast it.
+Use [`account.signTransaction()`](/sdk/wallet-modules/wallet-tron/api-reference#signtransactiontx) when you need a signed Tron transaction but do not want WDK to broadcast it.
 
 ```javascript title="Sign TRX Transaction"
 const signedTransaction = await account.signTransaction({
