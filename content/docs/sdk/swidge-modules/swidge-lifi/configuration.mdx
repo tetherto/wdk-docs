@@ -1,0 +1,100 @@
+---
+title: LI.FI Swidge Configuration
+description: Configuration options for @kenny_io/wdk-protocol-swidge-lifi.
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+Configure `LifiSwidgeProtocol` with a WDK EVM account when you need execution, or without an account when you only need discovery.
+
+```javascript
+import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
+import { LifiSwidgeProtocol } from '@kenny_io/wdk-protocol-swidge-lifi'
+
+const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
+  provider: 'https://mainnet.infura.io/v3/YOUR_KEY'
+})
+
+const swidge = new LifiSwidgeProtocol(account, {
+  integrator: 'my-app',
+  order: 'RECOMMENDED',
+  maxNetworkFeeBps: 100,
+  maxProtocolFeeBps: 50
+})
+```
+
+## Constructor
+
+```typescript
+new LifiSwidgeProtocol(account?, config?)
+```
+
+| Parameter | Description |
+|-----------|-------------|
+| `account` | Optional WDK EVM account. Writable accounts can execute. Read-only accounts can quote, check status, and discover support. |
+| `config` | Optional `LifiSwidgeProtocolConfig` for fee caps, provider setup, LI.FI route selection, retries, and contract validation. |
+
+## Configuration Options
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `provider` | `string \| Eip1193Provider` | RPC URL or EIP-1193 provider. Falls back to `account._config.provider` when omitted. |
+| `integrator` | `string` | LI.FI integrator identifier sent with API requests. |
+| `apiKey` | `string` | LI.FI API key for higher rate limits. Keep it server-side. |
+| `order` | `'RECOMMENDED' \| 'FASTEST' \| 'CHEAPEST'` | Route selection strategy. Defaults to `RECOMMENDED`. |
+| `allowBridges` | `string[]` | Bridge protocol allowlist, for example `['stargate']`. |
+| `denyBridges` | `string[]` | Bridge protocol denylist, for example `['across']`. |
+| `maxNetworkFeeBps` | `number \| bigint` | Rejects execution when network fees exceed this many basis points of the input amount. |
+| `maxProtocolFeeBps` | `number \| bigint` | Rejects execution when protocol fees exceed this many basis points of the input amount. |
+| `timeout` | `number` | Per-request timeout in milliseconds. Defaults to `30000`. |
+| `retries` | `number` | Extra attempts for transient failures. Defaults to `1`; set `0` to disable retries. |
+| `retryDelay` | `number` | Base retry delay in milliseconds. Defaults to `500` and backs off exponentially. |
+| `trustedContracts` | `true \| Record<number, string \| string[]>` | Requires quote transaction targets and approval addresses to match known LI.FI contracts before execution. Off by default. |
+
+## Per-Call Overrides
+
+Pass a config object to `swidge(options, config)` to override fee caps or execution settings for one operation.
+
+```javascript
+await swidge.swidge(options, {
+  maxProtocolFeeBps: 20,
+  maxNetworkFeeBps: 75
+})
+```
+
+## Contract Validation
+
+The module always validates returned transaction data before forwarding it to the wallet. Enable `trustedContracts` when the integration also needs an allowlist check against LI.FI Diamond deployments and Permit2.
+
+```javascript
+const swidge = new LifiSwidgeProtocol(account, {
+  trustedContracts: true
+})
+```
+
+To extend the built-in allowlist for a chain, pass chain IDs mapped to one or more extra trusted addresses:
+
+```javascript
+const swidge = new LifiSwidgeProtocol(account, {
+  trustedContracts: {
+    137: ['0x...']
+  }
+})
+```
+
+## Security Notes
+
+- Do not expose LI.FI API keys in browser clients.
+- Use explicit fee caps when routing user funds.
+- Validate route choices with `getSupportedChains()` and `getSupportedTokens()` before quoting.
+- Ask for user confirmation before calling `swidge()`.
+
+<Cards>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-lifi/usage">
+Quote, execute, and track LI.FI swidge routes.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-lifi/api-reference">
+Detailed method, type, status, fee, and error reference.
+</Card>
+</Cards>
