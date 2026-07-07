@@ -245,7 +245,6 @@ export const customTree: Node[] = [
     configuration('/sdk/swidge-modules/swidge-orchestra/configuration'),
     apiReference('/sdk/swidge-modules/swidge-orchestra/api-reference'),
   ]),
-  page('Swap module reference', '/sdk/swap-modules', 'ArrowLeftRight'),
   folder('Velora', '/sdk/swap-modules/swap-velora-evm', 'ArrowLeftRight', [
     usage('/sdk/swap-modules/swap-velora-evm/usage'),
     guides([
@@ -257,7 +256,6 @@ export const customTree: Node[] = [
     configuration('/sdk/swap-modules/swap-velora-evm/configuration'),
     apiReference('/sdk/swap-modules/swap-velora-evm/api-reference'),
   ]),
-  page('Bridge module reference', '/sdk/bridge-modules', 'Link'),
   folder('USDT0 bridge', '/sdk/bridge-modules/bridge-usdt0-evm', 'Waypoints', [
     usage('/sdk/bridge-modules/bridge-usdt0-evm/usage'),
     guides([
