@@ -18,7 +18,6 @@ import WalletManagerSolanaGasless from '@tetherto/wdk-wallet-solana-gasless'
 
 ```javascript title="Named imports"
 import {
-  ConfigurationError,
   WalletAccountReadOnlySolanaGasless,
   WalletAccountSolanaGasless
 } from '@tetherto/wdk-wallet-solana-gasless'
@@ -31,7 +30,7 @@ import {
 | `WalletManagerSolanaGasless` | Class, default export | Derives Solana gasless accounts from a seed. |
 | `WalletAccountSolanaGasless` | Class | Owned account with signing, sending, SPL transfer, quote, and read methods. |
 | `WalletAccountReadOnlySolanaGasless` | Class | Read-only account for balances, quotes, receipts, and signature verification. |
-| `ConfigurationError` | Class | Error thrown when required paymaster configuration is missing or invalid. |
+| `KeyPair` | Type | Raw account key pair shape inherited from `@tetherto/wdk-wallet`. |
 | `SolanaGaslessWalletConfig` | Type | Solana wallet config plus required paymaster options. |
 | `SolanaGaslessWalletPaymasterConfig` | Type | Paymaster endpoint, address, and token configuration. |
 | `SolanaGaslessWalletPaymasterConfigOverrides` | Type | Per-call overrides for paymaster token and fee caps. |
@@ -300,9 +299,10 @@ Combines the base Solana wallet configuration with the required paymaster config
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
-| `provider` | `string \| string[]` | Yes | Solana RPC endpoint or ordered failover list. |
+| `provider` | `string \| string[]` | No | Solana RPC endpoint or ordered failover list. RPC-backed reads, quotes, signing, sending, and transfers require a usable `provider` or `rpcUrl`. |
 | `rpcUrl` | `string \| string[]` | No | Deprecated alias inherited from the base Solana wallet module. Use `provider`. |
 | `commitment` | `'processed' \| 'confirmed' \| 'finalized'` | No | Solana commitment level for reads and receipts. |
+| `retries` | `number` | No | Additional retry attempts for ordered Solana RPC or paymaster failover lists. Default: `3`. |
 | `paymasterUrl` | `string \| KoraClientOptions \| Array<string \| KoraClientOptions>` | Yes | Kora-compatible paymaster endpoint, client options, or ordered failover list. |
 | `paymasterAddress` | `string` | Yes | Solana address used as the transaction fee payer. |
 | `paymasterToken` | `PaymasterTokenConfig` | Yes | Token used by the paymaster to quote and charge fees. |
@@ -346,13 +346,15 @@ Pass overrides as the second argument to quote, sign, send, or transfer methods.
 
 ## ConfigurationError
 
+The beta.1 TypeScript declarations include `ConfigurationError`, and the runtime uses that error name for missing required paymaster fields. The beta.1 JavaScript root entrypoint does not re-export the class, so JavaScript code should not import `ConfigurationError` from `@tetherto/wdk-wallet-solana-gasless`.
+
 ```typescript
 class ConfigurationError extends Error {
   constructor(message: string)
 }
 ```
 
-Thrown when required configuration is missing or invalid, such as an empty paymaster failover list or missing required paymaster fields.
+Missing `paymasterUrl`, `paymasterAddress`, or `paymasterToken` throws an error named `ConfigurationError`. An empty `paymasterUrl` failover list throws a plain `Error`.
 
 ## Next Steps
 
