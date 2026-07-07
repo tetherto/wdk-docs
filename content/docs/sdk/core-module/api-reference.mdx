@@ -169,6 +169,16 @@ Registers one or more local transaction policies on the WDK instance.
 
 Policies are evaluated before wrapped account and protocol write methods execute. Matching `DENY` rules and governed-account default-deny outcomes throw `PolicyViolationError`; matching `ALLOW` rules permit the call only when no higher-priority `DENY` rule applies. Governed runtime accounts also expose `account.simulate.<method>(...)` mirrors so you can dry-run policy evaluation without sending, signing, or broadcasting.
 
+Evaluation order:
+
+1. Account-scoped policies run before project-scoped policies.
+2. Policies and rules run in registration order within their scope.
+3. A matching account-scoped `DENY` blocks immediately.
+4. A matching account-scoped `ALLOW` with `override_broader_scope: true` allows immediately and skips project-scoped policies.
+5. Project-scoped `DENY` rules block after account-scoped rules unless an override allow already matched.
+6. If no `DENY` matches and at least one `ALLOW` matched, WDK allows the call.
+7. Governed wrapped operations deny by default when no rule addresses the operation or no addressed rule matches.
+
 For policy scoping, default-deny behavior, account-level overrides, and protocol simulation examples, see [Transaction Policies](/sdk/core-module/guides/transaction-policies).
 
 **Parameters:**
@@ -719,6 +729,8 @@ interface PolicyRule {
   conditions: PolicyCondition[]
   reason?: string
   override_broader_scope?: boolean
+  state?: Record<string, unknown>
+  onSuccess?: (c: PolicyContext) => void | Promise<void>
 }
 
 interface Policy {
@@ -731,13 +743,34 @@ interface Policy {
 }
 
 interface RegisterPolicyOptions {
+  state?: Record<string, unknown>
   conditionTimeoutMs?: number
+}
+
+interface SimulationTraceEntry {
+  scope: PolicyScope
+  policy_id: string
+  rule_name: string
+  matched: boolean
+  error?: string
+}
+
+interface SimulationResult {
+  decision: 'ALLOW' | 'DENY'
+  policy_id: string | null
+  matched_rule: string | null
+  reason: string | null
+  trace: SimulationTraceEntry[]
 }
 ```
 
 `scope: 'project'` can apply across all registered wallets or only the wallets named in `wallet`. `scope: 'account'` requires both `wallet` and `accounts`; account entries can be a derivation path string or an account index number.
 
-Simulation results returned by the runtime `account.simulate.<method>(...)` mirrors include `decision`, `policy_id`, `matched_rule`, `reason`, and a `trace` array that records evaluated rules.
+`override_broader_scope` is valid only on account-scoped `ALLOW` rules. When that rule matches, WDK allows the call without evaluating project-scoped policies.
+
+`state` and `onSuccess` are reserved for future engine-managed state and are ignored at runtime in this beta. Conditions can use app-owned state through closures or external stores, but keep that state outside `rule.state`; WDK does not persist or update `state`, run `onSuccess`, or provide built-in counters or cumulative spend accounting.
+
+Simulation results returned by the runtime `account.simulate.<method>(...)` mirrors include `decision`, `policy_id`, `matched_rule`, `reason`, and a `trace` array that records evaluated rules. `reason` can include a rule reason or one of the engine outcomes: `matched`, `override`, `no-applicable-rule`, or `governed-but-unmatched`.
 
 ### Protocol Types
 

@@ -32,14 +32,16 @@ new WalletManagerSolana(seed, config)
   - `rpcUrl` (string | string[], optional): Deprecated alias for `provider`. If both are set, `provider` takes precedence
   - `commitment` (string, optional): Commitment level ('processed', 'confirmed', or 'finalized')
   - `retries` (number, optional): Additional retry attempts for ordered provider failover (default: 3)
-  - `transferMaxFee` (number, optional): Maximum fee amount for transfer operations (in lamports)
+  - `transferMaxFee` (number | bigint, optional): Maximum fee amount for SPL token transfer operations (in lamports)
+  - `transactionMaxFee` (number | bigint, optional): Maximum fee amount for native SOL send/sign operations (in lamports)
 
 **Example:**
 ```javascript
 const wallet = new WalletManagerSolana(seedPhrase, {
   provider: 'https://api.mainnet-beta.solana.com',
   commitment: 'confirmed',
-  transferMaxFee: 5000 // Maximum fee in lamports
+  transferMaxFee: 5000, // Maximum SPL transfer fee in lamports
+  transactionMaxFee: 5000 // Maximum native send/sign fee in lamports
 })
 ```
 
@@ -173,7 +175,7 @@ When `tx` is a `TransactionMessage`, WDK preserves an existing recent blockhash 
 
 **Returns:** `Promise<FullySignedTransaction>` - The signed transaction
 
-**Throws:** Error if wallet is not connected to a provider
+**Throws:** Error if wallet is not connected to a provider or if the estimated fee is greater than `transactionMaxFee`
 
 **Example:**
 ```javascript
@@ -211,7 +213,7 @@ When `tx` is a `TransactionMessage`, WDK preserves an existing recent blockhash 
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Object containing transaction hash and fee (in lamports)
 
-**Throws:** Error if wallet is not connected to a provider
+**Throws:** Error if wallet is not connected to a provider or if the estimated fee is greater than `transactionMaxFee`
 
 **Example:**
 ```javascript
@@ -509,6 +511,7 @@ interface SolanaWalletConfig {
   commitment?: 'processed' | 'confirmed' | 'finalized';
   retries?: number;
   transferMaxFee?: number | bigint;
+  transactionMaxFee?: number | bigint;
 }
 ```
 

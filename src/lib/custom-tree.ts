@@ -172,7 +172,7 @@ export const customTree: Node[] = [
         page('Get Started', '/sdk/wallet-modules/wallet-ton-gasless/guides/get-started'),
         page('Manage Accounts', '/sdk/wallet-modules/wallet-ton-gasless/guides/manage-accounts'),
         page('Check Balances', '/sdk/wallet-modules/wallet-ton-gasless/guides/check-balances'),
-        page('Send TON', '/sdk/wallet-modules/wallet-ton-gasless/guides/send-transactions'),
+        page('Native Sends Unsupported', '/sdk/wallet-modules/wallet-ton-gasless/guides/send-transactions'),
         page('Transfer Jetton Tokens', '/sdk/wallet-modules/wallet-ton-gasless/guides/transfer-tokens'),
         page('Sign and Verify Messages', '/sdk/wallet-modules/wallet-ton-gasless/guides/sign-verify-messages'),
         page('Handle Errors', '/sdk/wallet-modules/wallet-ton-gasless/guides/handle-errors'),

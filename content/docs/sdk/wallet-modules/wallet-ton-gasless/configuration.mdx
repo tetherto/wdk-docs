@@ -163,7 +163,7 @@ const config = {
 
 ### transferMaxFee
 
-The `transferMaxFee` option sets the maximum allowed fee in paymaster Jetton base units for transfer operations. A transfer throws if its estimated fee reaches this limit.
+The `transferMaxFee` option sets the maximum allowed fee in paymaster Jetton base units for transfer operations. A transfer throws if its estimated fee is greater than this limit, so an estimate equal to the configured cap is allowed.
 
 **Type:** `number | bigint`
 
@@ -176,9 +176,17 @@ const config = {
 }
 ```
 
+### transactionMaxFee
+
+`TonGaslessWalletConfig` includes `transactionMaxFee` for alignment with the shared wallet config shape. The gasless module does not support `sendTransaction()`, `quoteSendTransaction()`, or `signTransaction()`, so this option does not cap gasless Jetton transfers. Use `transferMaxFee` for `transfer()` fee enforcement, and use `quoteTransfer()` to inspect estimated fees before transferring.
+
+**Type:** `number | bigint`
+
+**Required:** No
+
 ## Complete Configuration Example
 
-Here's a complete configuration example with all options, including failover:
+Here's a complete configuration example with required clients, failover, and gasless transfer fee protection:
 
 ```javascript
 const config = {
@@ -203,7 +211,7 @@ const config = {
   retries: 3,
 
   // Fee Limits (Optional)
-  transferMaxFee: 10000000 // Maximum fee in paymaster Jetton base units
+  transferMaxFee: 10000000 // Maximum gasless transfer fee in paymaster Jetton base units
 }
 ```
 
@@ -216,7 +224,8 @@ The default derivation path changed in `1.0.0-beta.5`. Accounts now derive at `m
 - Keep API keys and secrets secure and never expose them in client-side code
 - Use environment variables for sensitive configuration values
 - Always use HTTPS URLs for API endpoints
-- Set appropriate `transferMaxFee` limits to prevent excessive fees
+- Set appropriate `transferMaxFee` limits to prevent excessive gasless transfer fees
+- Do not rely on `transactionMaxFee` for gasless transfers; native send, quote, and sign methods are unsupported in this module
 - Validate the paymaster token address before using it in configuration
 
 <Cards>
