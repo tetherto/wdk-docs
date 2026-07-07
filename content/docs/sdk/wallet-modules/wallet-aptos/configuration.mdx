@@ -1,0 +1,102 @@
+---
+title: Wallet Aptos Configuration
+description: Configuration options for @tetherto/wdk-wallet-aptos.
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+Configure the Aptos wallet module with an Aptos fullnode REST endpoint. A provider is required for balance reads, fee quotes, transaction submission, and receipt polling.
+
+```javascript
+import WalletManagerAptos from '@tetherto/wdk-wallet-aptos'
+
+const wallet = new WalletManagerAptos(seedPhrase, {
+  provider: 'https://fullnode.mainnet.aptoslabs.com/v1',
+  transferMaxFee: 100000n
+})
+```
+
+## Wallet Configuration
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `provider` | `string` | Aptos fullnode REST API URL. Required for chain operations. |
+| `transferMaxFee` | `number \| bigint` | Optional maximum fee in octas for transfer operations. |
+
+## Account Configuration
+
+You can construct accounts directly when you need a specific derivation path.
+
+```javascript
+import { WalletAccountAptos } from '@tetherto/wdk-wallet-aptos'
+
+const account = new WalletAccountAptos(seedPhrase, "0'/0'/0'", {
+  provider: 'https://fullnode.mainnet.aptoslabs.com/v1',
+  transferMaxFee: 100000n
+})
+```
+
+Read-only accounts require only an address and provider configuration.
+
+```javascript
+import { WalletAccountReadOnlyAptos } from '@tetherto/wdk-wallet-aptos'
+
+const readOnlyAccount = new WalletAccountReadOnlyAptos('0x...', {
+  provider: 'https://fullnode.mainnet.aptoslabs.com/v1'
+})
+```
+
+## Network Selection
+
+Network selection is controlled by the fullnode URL.
+
+| Network | Provider URL |
+|---------|--------------|
+| Mainnet | `https://fullnode.mainnet.aptoslabs.com/v1` |
+| Testnet | `https://fullnode.testnet.aptoslabs.com/v1` |
+
+## Derivation Paths
+
+The module uses SLIP-0010 Ed25519 derivation. `getAccount(index)` derives:
+
+```text
+m/44'/637'/index'/0'/0'
+```
+
+Use `getAccountByPath(path)` to provide a relative path after `m/44'/637'/`.
+
+```javascript
+const account = await wallet.getAccountByPath("5'/0'/0'")
+```
+
+<Callout type="warn">
+Every Aptos path segment must be hardened. A path segment without an apostrophe is invalid for this module's Ed25519 derivation.
+</Callout>
+
+## Fee Limit
+
+`transferMaxFee` caps estimated transaction fees before signing and submitting transfer operations.
+
+```javascript
+const wallet = new WalletManagerAptos(seedPhrase, {
+  provider: 'https://fullnode.mainnet.aptoslabs.com/v1',
+  transferMaxFee: 100000n
+})
+```
+
+## Security Notes
+
+- Keep seed phrases and seed bytes outside logs and client-visible error reporting.
+- Use trusted fullnode endpoints for production wallets.
+- Set a fee cap for user-facing transfers.
+- Call `dispose()` on accounts and managers when secret material is no longer needed.
+
+<Cards>
+<Card title="Usage" href="/sdk/wallet-modules/wallet-aptos/usage">
+Create accounts, read balances, send transactions, and transfer fungible assets.
+</Card>
+<Card title="API Reference" href="/sdk/wallet-modules/wallet-aptos/api-reference">
+Detailed class, method, config, and type reference.
+</Card>
+</Cards>

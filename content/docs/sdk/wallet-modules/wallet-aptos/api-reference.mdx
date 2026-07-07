@@ -1,0 +1,152 @@
+---
+title: Wallet Aptos API Reference
+description: API reference for @tetherto/wdk-wallet-aptos.
+docType: reference
+schemaType: APIReference
+icon: Code
+---
+
+## Exports
+
+```javascript
+import WalletManagerAptos, {
+  WalletAccountAptos,
+  WalletAccountReadOnlyAptos
+} from '@tetherto/wdk-wallet-aptos'
+```
+
+## WalletManagerAptos
+
+Creates and manages seed-derived Aptos accounts.
+
+```typescript
+new WalletManagerAptos(
+  seed: string | Uint8Array,
+  config?: AptosWalletConfig
+)
+```
+
+### Methods
+
+| Method | Description | Returns |
+|--------|-------------|---------|
+| `getAccount(index?)` | Returns the account at `m/44'/637'/index'/0'/0'`. | `Promise<WalletAccountAptos>` |
+| `getAccountByPath(path)` | Returns an account at a relative hardened path. | `Promise<WalletAccountAptos>` |
+| `getFeeRates()` | Returns Aptos fee rates in octas per gas unit. | `Promise<FeeRates>` |
+| `dispose()` | Clears managed account secret material. | `void` |
+
+## WalletAccountAptos
+
+Writable Aptos account with signing and transaction submission support.
+
+```typescript
+new WalletAccountAptos(
+  seed: string | Uint8Array,
+  path: string,
+  config?: AptosWalletConfig
+)
+```
+
+### Properties
+
+| Property | Description |
+|----------|-------------|
+| `index` | Index parsed from the derivation path. |
+| `path` | Relative derivation path. |
+| `keyPair` | Public/private key pair view. The private key is unavailable after `dispose()`. |
+
+### Methods
+
+| Method | Description | Returns |
+|--------|-------------|---------|
+| `getAddress()` | Returns the Aptos account address. | `Promise<string>` |
+| `getBalance()` | Returns the native APT balance in octas. | `Promise<bigint>` |
+| `getTokenBalance(tokenAddress)` | Returns a fungible asset balance by metadata address. | `Promise<bigint>` |
+| `quoteSendTransaction(tx)` | Estimates fee for a native APT transfer. | `Promise<{ fee: bigint }>` |
+| `sendTransaction(tx)` | Signs and submits a native APT transfer. | `Promise<TransactionResult>` |
+| `signTransaction(tx)` | Signs a native APT transfer without broadcasting. | `Promise<SignedTransaction>` |
+| `quoteTransfer(options)` | Estimates fee for a fungible asset transfer. | `Promise<{ fee: bigint }>` |
+| `transfer(options)` | Signs and submits a fungible asset transfer. | `Promise<TransferResult>` |
+| `getTransactionReceipt(hash)` | Looks up a transaction receipt. | `Promise<TransactionReceipt \| null>` |
+| `sign(message)` | Signs a message with the account key. | `Promise<string>` |
+| `verify(message, signature)` | Verifies a message signature. | `Promise<boolean>` |
+| `toReadOnlyAccount()` | Returns a read-only account for the same address. | `Promise<WalletAccountReadOnlyAptos>` |
+| `dispose()` | Clears private key material from memory. | `void` |
+
+## WalletAccountReadOnlyAptos
+
+Read-only account for address-based reads and verification.
+
+```typescript
+new WalletAccountReadOnlyAptos(
+  address: string,
+  config?: AptosWalletConfig
+)
+```
+
+| Method | Description | Returns |
+|--------|-------------|---------|
+| `getAddress()` | Returns the normalized Aptos address. | `Promise<string>` |
+| `getBalance()` | Returns the native APT balance in octas. | `Promise<bigint>` |
+| `getTokenBalance(tokenAddress)` | Returns a fungible asset balance by metadata address. | `Promise<bigint>` |
+| `quoteSendTransaction(tx)` | Estimates fee for a native APT transfer. | `Promise<{ fee: bigint }>` |
+| `quoteTransfer(options)` | Estimates fee for a fungible asset transfer. | `Promise<{ fee: bigint }>` |
+| `getTransactionReceipt(hash)` | Looks up a transaction receipt. | `Promise<TransactionReceipt \| null>` |
+| `verify(message, signature)` | Verifies a message signature. | `Promise<boolean>` |
+
+## Config Type
+
+```typescript
+type AptosWalletConfig = {
+  provider?: string
+  transferMaxFee?: number | bigint
+}
+```
+
+## Transaction Types
+
+```typescript
+type AptosTransaction = {
+  to: string
+  value: number | bigint
+}
+
+type TransferOptions = {
+  token: string
+  recipient: string
+  amount: number | bigint
+}
+```
+
+`token` is an Aptos fungible asset metadata address.
+
+## Result Types
+
+```typescript
+type TransactionResult = {
+  hash: string
+  fee: bigint
+}
+
+type TransferResult = {
+  hash: string
+  fee: bigint
+}
+```
+
+## Signed Transaction
+
+`signTransaction(tx)` returns a JSON-form signed transaction accepted by the Aptos REST API. It includes sender, sequence number, gas fields, payload, and Ed25519 signature.
+
+<Callout type="warn">
+`signTransaction()` signs native APT transfers only. Use `transfer()` for fungible asset transfers.
+</Callout>
+
+<Cards>
+<Card title="Usage" href="/sdk/wallet-modules/wallet-aptos/usage">
+Create accounts, read balances, transfer funds, and sign messages.
+</Card>
+<Card title="Configuration" href="/sdk/wallet-modules/wallet-aptos/configuration">
+Provider, network, fee, and derivation path options.
+</Card>
+</Cards>

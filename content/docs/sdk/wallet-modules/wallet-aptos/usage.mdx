@@ -1,0 +1,158 @@
+---
+title: Wallet Aptos Usage
+description: Install and use @tetherto/wdk-wallet-aptos for Aptos accounts, balances, transfers, and signing.
+docType: how-to
+schemaType: TechArticle
+icon: BookOpen
+---
+
+## Install
+
+```bash
+npm install @tetherto/wdk-wallet-aptos
+```
+
+## Create a Wallet Manager
+
+```javascript
+import WalletManagerAptos from '@tetherto/wdk-wallet-aptos'
+
+const wallet = new WalletManagerAptos(seedPhrase, {
+  provider: 'https://fullnode.mainnet.aptoslabs.com/v1',
+  transferMaxFee: 100000n
+})
+
+const account = await wallet.getAccount(0)
+const address = await account.getAddress()
+```
+
+## Manage Accounts
+
+```javascript
+const first = await wallet.getAccount(0)
+const second = await wallet.getAccount(1)
+
+const custom = await wallet.getAccountByPath("5'/0'/0'")
+
+console.log(await first.getAddress())
+console.log(await second.getAddress())
+console.log(await custom.getAddress())
+```
+
+`getAccount(index)` maps to `m/44'/637'/index'/0'/0'`.
+
+## Read Balances
+
+```javascript
+const aptBalance = await account.getBalance()
+console.log('APT balance in octas:', aptBalance)
+
+const usdtMetadataAddress =
+  '0x357b0b74bc833e95a115ad22604854d6b0fca151cecd94111770e5d6ffc9dc2b'
+
+const usdtBalance = await account.getTokenBalance(usdtMetadataAddress)
+console.log('USDT balance:', usdtBalance)
+```
+
+Read-only accounts support the same balance reads without a seed phrase.
+
+```javascript
+import { WalletAccountReadOnlyAptos } from '@tetherto/wdk-wallet-aptos'
+
+const readOnlyAccount = new WalletAccountReadOnlyAptos('0x...', {
+  provider: 'https://fullnode.mainnet.aptoslabs.com/v1'
+})
+
+const balance = await readOnlyAccount.getBalance()
+```
+
+## Send Native APT
+
+```javascript
+const quote = await account.quoteSendTransaction({
+  to: '0x...',
+  value: 100000000n
+})
+
+console.log('Estimated fee in octas:', quote.fee)
+
+const result = await account.sendTransaction({
+  to: '0x...',
+  value: 100000000n
+})
+
+console.log('Transaction hash:', result.hash)
+console.log('Fee in octas:', result.fee)
+```
+
+`sendTransaction()` submits a native APT transfer through `0x1::aptos_account::transfer`.
+
+## Transfer Fungible Assets
+
+Use the fungible asset metadata address as `token`.
+
+```javascript
+const quote = await account.quoteTransfer({
+  token: usdtMetadataAddress,
+  recipient: '0x...',
+  amount: 1000000n
+})
+
+console.log('Estimated fee in octas:', quote.fee)
+
+const result = await account.transfer({
+  token: usdtMetadataAddress,
+  recipient: '0x...',
+  amount: 1000000n
+})
+
+console.log('Transfer hash:', result.hash)
+console.log('Fee in octas:', result.fee)
+```
+
+`transfer()` submits `0x1::primary_fungible_store::transfer` and can auto-create the recipient primary store.
+
+## Sign and Verify Messages
+
+```javascript
+const message = 'Hello, Aptos'
+const signature = await account.sign(message)
+
+const readOnly = await account.toReadOnlyAccount()
+const valid = await readOnly.verify(message, signature)
+
+console.log('Signature valid:', valid)
+```
+
+## Sign Native APT Transfers Offline
+
+`signTransaction()` signs a native APT transfer without broadcasting it.
+
+```javascript
+const signed = await account.signTransaction({
+  to: '0x...',
+  value: 100000000n
+})
+
+console.log('Signed Aptos transaction:', signed)
+```
+
+<Callout type="info">
+Offline signing is for native APT transfers. Fungible asset transfers are built and submitted through `transfer()`.
+</Callout>
+
+## Dispose Secret Material
+
+```javascript
+account.dispose()
+wallet.dispose()
+```
+
+<Cards>
+<Card title="Configuration" href="/sdk/wallet-modules/wallet-aptos/configuration">
+Provider, fee, network, and derivation path configuration.
+</Card>
+<Card title="API Reference" href="/sdk/wallet-modules/wallet-aptos/api-reference">
+Detailed method and type reference.
+</Card>
+</Cards>
