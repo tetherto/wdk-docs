@@ -247,7 +247,12 @@ export const customTree: Node[] = [
   ]),
 
   separator('Swap and Bridge'),
-  page('Swap module reference', '/sdk/swap-modules', 'ArrowLeftRight'),
+  page('Swidge protocol interface', '/sdk/swidge-modules', 'Route'),
+  folder('rhino.fi', '/sdk/swidge-modules/swidge-rhinofi', 'Waypoints', [
+    usage('/sdk/swidge-modules/swidge-rhinofi/usage'),
+    configuration('/sdk/swidge-modules/swidge-rhinofi/configuration'),
+    apiReference('/sdk/swidge-modules/swidge-rhinofi/api-reference'),
+  ]),
   folder('Velora', '/sdk/swap-modules/swap-velora-evm', 'ArrowLeftRight', [
     usage('/sdk/swap-modules/swap-velora-evm/usage'),
     guides([
@@ -259,7 +264,6 @@ export const customTree: Node[] = [
     configuration('/sdk/swap-modules/swap-velora-evm/configuration'),
     apiReference('/sdk/swap-modules/swap-velora-evm/api-reference'),
   ]),
-  page('Bridge module reference', '/sdk/bridge-modules', 'Link'),
   folder('USDT0 bridge', '/sdk/bridge-modules/bridge-usdt0-evm', 'Waypoints', [
     usage('/sdk/bridge-modules/bridge-usdt0-evm/usage'),
     guides([
