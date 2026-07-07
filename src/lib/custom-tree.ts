@@ -237,6 +237,7 @@ export const customTree: Node[] = [
       page('Handle Errors', '/sdk/wallet-modules/wallet-solana-gasless/guides/handle-errors'),
     ]),
     configuration('/sdk/wallet-modules/wallet-solana-gasless/configuration'),
+    apiReference('/sdk/wallet-modules/wallet-solana-gasless/api-reference'),
   ]),
   folder('RGB', '/sdk/community-modules/wdk-wallet-rgb', 'Palette', [
     apiReference('/sdk/community-modules/wdk-wallet-rgb/api-reference'),
