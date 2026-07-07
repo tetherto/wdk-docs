@@ -31,7 +31,7 @@ const swap = new VeloraProtocolEvm(account, { swapMaxFee: 200000000000000n })
 
 | Method | Description | Returns |
 |--------|-------------|---------|
-| `swap(options, config?)` | Perform a token swap | `Promise<{hash: string, fee: bigint, tokenInAmount: bigint, tokenOutAmount: bigint, approveHash?: string, resetAllowanceHash?: string}>` |
+| `swap(options, config?)` | Perform a token swap | `Promise<{hash: string, fee: bigint, tokenInAmount: bigint, tokenOutAmount: bigint}>` |
 | `quoteSwap(options, config?)` | Get estimated fee and amounts | `Promise<{fee: bigint, tokenInAmount: bigint, tokenOutAmount: bigint}>` |
 
 ---
@@ -47,15 +47,18 @@ Options:
 - `to` (`string`, optional): Recipient address (defaults to account address)
 
 Config (ERC‑4337 only):
-- `paymasterToken` (`string`, optional): Token symbol/address for fee sponsorship
+- `paymasterToken` (`{ address: string }`, optional): Paymaster token override for this swap
+- `isSponsored` (`true`, optional): Use sponsorship mode for this swap
+- `sponsorshipPolicyId` (`string`, optional): Sponsorship policy override
+- `useNativeCoins` (`true`, optional): Pay fees in the chain's native token
 - `swapMaxFee` (`bigint`, optional): Per‑swap fee cap (wei)
 
 Returns:
-- Standard account: `{ hash, fee, tokenInAmount, tokenOutAmount, approveHash?, resetAllowanceHash? }`
-- ERC‑4337 account: `{ hash, fee, tokenInAmount, tokenOutAmount }` (approve may be bundled)
+- Standard account: `{ hash, fee, tokenInAmount, tokenOutAmount }`
+- ERC‑4337 account: `{ hash, fee, tokenInAmount, tokenOutAmount }`
 
 Notes:
-- On Ethereum mainnet, selling USD₮ may first set allowance to 0, then approve.
+- Approve the input token with the wallet account before swapping if the spender does not already have enough allowance.
 - Requires a provider; requires a non read‑only account to send transactions.
 
 Example:
@@ -78,7 +81,10 @@ Options are the same as `swap`.
 Returns: `{ fee, tokenInAmount, tokenOutAmount }`
 
 Config (ERC‑4337 only):
-- `paymasterToken` (`string`, optional): Token symbol/address for fee sponsorship
+- `paymasterToken` (`{ address: string }`, optional): Paymaster token override for fee estimation
+- `isSponsored` (`true`, optional): Use sponsorship mode for fee estimation
+- `sponsorshipPolicyId` (`string`, optional): Sponsorship policy override
+- `useNativeCoins` (`true`, optional): Estimate fees in the chain's native token
 
 Works with read‑only accounts.
 
@@ -108,7 +114,7 @@ Common errors include:
 
 - `swapMaxFee: bigint` — Upper bound for gas fees (wei)
 - `tokenInAmount/tokenOutAmount: bigint` — ERC‑20 base units
-- `paymasterToken: string` — token symbol or address (AA only)
+- `paymasterToken: { address: string }` — ERC‑4337 paymaster token override
 
 <Cards>
 <Card title="Node.js Quickstart" href="/start-building/nodejs-bare-quickstart">

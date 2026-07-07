@@ -31,11 +31,11 @@ new BitfinexPricingClient(options?)
 
 ##### `getCurrentPrice(base, quote)`
 
-Uses Bitfinex's `/calc/fx/batch` endpoint. If Bitfinex cannot quote the pair directly, the client tries a two-leg USD pivot. Returns `null` when the pair cannot be resolved.
+Uses Bitfinex's `/calc/fx/batch` endpoint. Returns `null` when Bitfinex cannot quote the pair directly. The client does not try a two-leg USD pivot.
 
 ```javascript title="Current Price"
 const price = await client.getCurrentPrice('BTC', 'USD')
-const brl = await client.getCurrentPrice('BTC', 'BRL')
+const unsupported = await client.getCurrentPrice('BTC', 'BRL') // null when unsupported
 ```
 
 ##### `getMultiCurrentPrices(pairs)`
@@ -45,7 +45,8 @@ Returns current prices in the same order as the input pairs. Each unresolved pai
 ```javascript title="Batch Current Prices"
 const prices = await client.getMultiCurrentPrices([
   { from: 'BTC', to: 'USD' },
-  { from: 'ETH', to: 'BRL' }
+  { from: 'ETH', to: 'USD' },
+  { from: 'BTC', to: 'BRL' }
 ])
 ```
 
@@ -153,8 +154,8 @@ Implement this interface to plug your data source into `PricingProvider`.
 
 ## Notes
 
-- Uses Bitfinex Public HTTP API (`/v2/calc/fx/batch`, `/v2/tickers`, and `/v2/candles`) under the hood for the Bitfinex client
-- Current-price lookups can pivot through USD for fiat pairs Bitfinex does not quote directly; historical prices and `getMultiPriceData()` do not use that pivot
+- Uses Bitfinex Public HTTP API (`/v2/calc/fx/batch`, `/v2/tickers`, and `/v2/tickers/hist`) under the hood for the Bitfinex client
+- Bitfinex lookups support only pairs Bitfinex quotes directly. Unsupported current-price and price-data pairs return `null`; unsupported historical pairs return an empty series.
 - Use [`@tetherto/wdk-pricing-coingecko-http`](/sdk/pricing-modules/pricing-coingecko-http/) when you need a CoinGecko-backed `PricingClient`
 - Provider caches last price per pair using in-memory store and TTL
 
