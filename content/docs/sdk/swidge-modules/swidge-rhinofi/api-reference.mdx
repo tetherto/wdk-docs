@@ -1,0 +1,133 @@
+---
+title: rhino.fi Swidge API Reference
+description: API reference for @rhino.fi/wdk-protocol-swidge-rhinofi.
+docType: reference
+schemaType: APIReference
+icon: Code
+---
+
+## RhinofiProtocol
+
+`RhinofiProtocol` extends `SwidgeProtocol` from `@tetherto/wdk-wallet/protocols` and implements the shared WDK swidge methods.
+
+```javascript
+import RhinofiProtocol, {
+  AccountRequiredError,
+  ConfigurationError
+} from '@rhino.fi/wdk-protocol-swidge-rhinofi'
+
+const rhinofi = new RhinofiProtocol(account, config)
+```
+
+## Constructor
+
+```typescript
+new RhinofiProtocol(account?, config)
+```
+
+| Account | Available operations |
+|---------|----------------------|
+| `WalletAccountEvm` | Discovery, quote, status, and execution. |
+| `WalletAccountEvmErc4337` | Discovery, quote, status, and execution through a smart account. |
+| `WalletAccountReadOnlyEvm` | Discovery and quotes for routes that do not need signing. |
+| `undefined` | Discovery and account-independent setup when route context allows it. |
+
+## Methods
+
+| Method | Description |
+|--------|-------------|
+| `quoteSwidge(options)` | Returns a non-binding rhino.fi route quote. |
+| `swidge(options, config?)` | Executes a route and returns when the source deposit is broadcast. |
+| `getSwidgeStatus(id, options?)` | Maps rhino.fi operation state to WDK `SwidgeStatus`. |
+| `getSupportedChains()` | Returns chains supported by rhino.fi config. |
+| `getSupportedTokens(options?)` | Returns tokens supported by rhino.fi config, optionally filtered by chain context. |
+
+### `quoteSwidge(options)`
+
+```typescript
+quoteSwidge(options: SwidgeOptions): Promise<SwidgeQuote>
+```
+
+The source chain is derived from the account when required by the route.
+
+### `swidge(options, config?)`
+
+```typescript
+swidge(
+  options: SwidgeOptions,
+  config?: RhinofiProtocolConfig
+): Promise<SwidgeResult>
+```
+
+Requires a writable WDK EVM account. The method submits the source-chain deposit and returns the operation ID and source transaction hash.
+
+### `getSwidgeStatus(id, options?)`
+
+```typescript
+getSwidgeStatus(
+  id: string,
+  options?: SwidgeStatusOptions
+): Promise<SwidgeStatusResult>
+```
+
+Use the `id` returned by `swidge()`.
+
+## Config Type
+
+```typescript
+type RhinofiProtocolConfig = {
+  apiKey: string
+  apiBaseUrl?: string
+  maxNetworkFeeBps?: number | bigint
+  maxProtocolFeeBps?: number | bigint
+  configTtlMs?: number
+}
+```
+
+## Status Mapping
+
+| rhino.fi state | WDK status |
+|----------------|------------|
+| `PENDING`, `PENDING_CONFIRMATION`, `DEPOSIT_ACCEPTED`, `ACCEPTED` | `pending` |
+| `EXECUTED` | `completed` |
+| `SWAP_FAILED` | `refund-pending` |
+| `SWAP_FAILED_REFUNDED`, `DEPOSIT_RECEIVED_AFTER_GRACE_PERIOD_REFUNDED` | `refunded` |
+| `DEPOSIT_RECEIVED_AFTER_GRACE_PERIOD` | `action-required` |
+| `FAILED` | `failed` |
+| `CANCELLED` | `cancelled` |
+
+## Fee Mapping
+
+| rhino.fi quote fee | WDK fee type | Legacy field |
+|--------------------|--------------|--------------|
+| `gasFee` plus `sourceGasFee` | `network` | `fee` |
+| Platform and percentage fee remainder | `protocol` | `bridgeFee` |
+
+The `network` and `protocol` fee amounts are itemized in `SwidgeFee[]` and denominated in the input token.
+
+## Error Types
+
+All rhino.fi module errors extend `RhinofiProtocolError`.
+
+| Error | When thrown |
+|-------|-------------|
+| `AccountRequiredError` | `swidge()` is called without a writable account. |
+| `ConfigurationError` | Required configuration is missing, such as `apiKey`. |
+| `UnsupportedChainError` | A chain is unknown, unsupported, or invalid as a source chain. |
+| `UnsupportedTokenError` | A token is unknown or unsupported on the selected chain. |
+| `FeeLimitExceededError` | Quoted fees exceed configured fee caps. |
+| `UnknownOperationError` | Status is requested for an unknown operation ID. |
+| `SwidgeExecutionError` | rhino.fi quote or execution fails. The `.code` field can carry provider failure codes. |
+
+## Legacy Delegations
+
+Inherited `swap`, `quoteSwap`, `bridge`, and `quoteBridge` calls delegate to `swidge()` and `quoteSwidge()`. Because those legacy option shapes do not carry source-chain context, the source chain must be derivable from the bound account.
+
+<Cards>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-rhinofi/usage">
+Install, quote, execute, and track rhino.fi routes.
+</Card>
+<Card title="Swidge Interface" href="/sdk/swidge-modules">
+Review the shared WDK swidge protocol shape.
+</Card>
+</Cards>
