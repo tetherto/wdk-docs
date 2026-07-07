@@ -11,6 +11,27 @@ Local transaction policies let a WDK app evaluate rules before account or protoc
 Transaction policies are local pre-execution controls. They do not enforce rules on-chain, replace smart-contract permissions, or validate live token metadata, balances, prices, or contract state.
 </Callout>
 
+## Policy Structure
+
+A transaction policy is a named local configuration object registered with `wdk.registerPolicy()`. Each policy chooses where it applies, then evaluates its ordered `rules` array before a governed account or protocol write method runs.
+
+| Concept | What you configure |
+| --- | --- |
+| Scope | `scope: 'project'` for project or wallet-level rules, or `scope: 'account'` for selected account indices or derivation paths |
+| Wallet | Optional `wallet` bindings for project policies, required `wallet` bindings for account policies |
+| Rules | Ordered `rules` array evaluated before a governed account or protocol write method runs |
+| Action | `ALLOW` to permit a matching governed call, or `DENY` to block it with `PolicyViolationError` |
+| Operation | The wallet or protocol write operation a rule addresses, such as `sendTransaction`, `transfer`, `swap`, or `*` |
+| Conditions | Functions that receive `PolicyContext` and return truthy when the rule should match |
+
+Use `scope: 'project'` for rules that apply across all wallets or selected wallet identifiers. Use `scope: 'account'` with `wallet` and `accounts` for rules that apply only to specific account indices or derivation paths.
+
+Each rule addresses one operation, multiple operations, or `*`. A matching `ALLOW` can permit the governed call, while a matching `DENY` blocks the call with `PolicyViolationError`.
+
+<Callout type="info">
+WDK does not manage durable policy state for you. Conditions can inspect the current `PolicyContext` and app-owned inputs, including in-memory or externally stored state, but WDK does not persist `rule.state`, update counters, or run `onSuccess` hooks. Keep app-owned state outside `rule.state`; that field is reserved for future runtime semantics.
+</Callout>
+
 ## Register Policies
 
 Register wallets before policies. `wdk.registerPolicy()` validates wallet bindings synchronously and throws `PolicyConfigurationError` if a policy references a wallet identifier that has not been registered.
@@ -78,10 +99,20 @@ Account entries can be non-negative account indices or derivation-path strings. 
 
 ## Evaluation Rules
 
-- Account-scoped rules are evaluated before project-scoped rules.
-- `DENY` wins when both `ALLOW` and `DENY` rules match.
-- A governed account is default-denied for wrapped write methods that do not match an `ALLOW` rule.
-- `override_broader_scope: true` is only valid on account-scoped `ALLOW` rules, and it lets that account-level allow rule bypass broader project policies when it matches.
+WDK evaluates policies in this order:
+
+1. If no registered policy applies to the account, WDK returns the original account. No policy proxy or `simulate` mirror is added.
+2. If at least one policy applies, the account is governed. WDK wraps every supported write or signing operation that exists on that account, plus registered protocol write methods.
+3. If no rule addresses the attempted operation, WDK blocks the call with `PolicyViolationError` and `reason: 'no-applicable-rule'`.
+4. Account-scoped policies run before project-scoped policies. Within each scope, policies and rules run in registration order.
+5. A matching account-scoped `DENY` blocks immediately. A matching account-scoped `ALLOW` is recorded unless it has `override_broader_scope: true`.
+6. A matching account-scoped `ALLOW` with `override_broader_scope: true` allows the call immediately and skips project-scoped policies. This option is only valid on account-scoped `ALLOW` rules.
+7. Project-scoped rules run after account-scoped rules. A matching project-scoped `DENY` blocks. If no `DENY` matches and at least one `ALLOW` matched, WDK allows the call.
+8. If rules addressed the operation but none matched, WDK blocks with `reason: 'governed-but-unmatched'`.
+
+Conditions run in array order and every condition must return truthy for the rule to match. If an `ALLOW` condition throws or times out, WDK treats that rule as unmatched. If a `DENY` condition throws or times out, WDK blocks the call.
+
+You can create an account-scoped exception using [`wdk.registerPolicy()`](/sdk/core-module/api-reference#registerpolicypolicies-options):
 
 ```typescript title="Account-Level Exception"
 wdk.registerPolicy([
@@ -105,7 +136,7 @@ wdk.registerPolicy([
         conditions: [
           ({ params }) => {
             const value = (params as { value?: bigint } | null)?.value
-            return typeof value === 'bigint' && value > 1000000000000000000n
+            return typeof value === 'bigint' && value > 1000000000000000n
           }
         ]
       }
@@ -127,7 +158,7 @@ wdk.registerPolicy([
         conditions: [
           ({ params }) => {
             const value = (params as { value?: bigint } | null)?.value
-            return typeof value === 'bigint' && value <= 10000000000000000000n
+            return typeof value === 'bigint' && value <= 10000000000000000n
           }
         ]
       }
@@ -135,6 +166,8 @@ wdk.registerPolicy([
   }
 ])
 ```
+
+In the example above, the treasury account can send up to `0.01 ETH` because the account-scoped `ALLOW` rule matches and skips the project-scoped limit. If the account rule does not match, project-scoped rules still run and can block the call.
 
 ## Supported Operations
 
@@ -160,6 +193,131 @@ Use these operation names in `PolicyRule.operation`:
 
 Use `sign` for message-style signing in this release. `signMessage` and `signHash` are not valid `PolicyOperation` values.
 
+## Common Policy Patterns
+
+WDK policies use JavaScript condition functions. Inspect the `params` and `args` passed by the wallet or protocol method you are governing, then return `true` only when that rule should match.
+
+<Callout type="info">
+WDK does not fetch prices, decode calldata, maintain address lists, or manage durable policy state for you. Keep app-owned inputs current, and handle persistence and concurrency when a condition depends on counters or cumulative limits.
+</Callout>
+
+You can allow sends to approved recipients using [`wdk.registerPolicy()`](/sdk/core-module/api-reference#registerpolicypolicies-options):
+
+```typescript title="Address Allowlist"
+const allowedRecipients = new Set([
+  '0x71C7656EC7ab88b098defB751B7401B5f6d8976F'.toLowerCase()
+])
+
+wdk.registerPolicy({
+  id: 'approved-recipients',
+  name: 'Approved recipients',
+  scope: 'project',
+  wallet: 'ethereum',
+  rules: [
+    {
+      name: 'allow-approved-send',
+      operation: 'sendTransaction',
+      action: 'ALLOW',
+      conditions: [
+        ({ params }) => {
+          const to = (params as { to?: string } | null)?.to
+          return typeof to === 'string' && allowedRecipients.has(to.toLowerCase())
+        }
+      ]
+    }
+  ]
+})
+```
+
+You can require both a chain and value limit using [`wdk.registerPolicy()`](/sdk/core-module/api-reference#registerpolicypolicies-options):
+
+```typescript title="Network And Value Gate"
+wdk.registerPolicy({
+  id: 'base-small-sends',
+  name: 'Base small sends',
+  scope: 'project',
+  wallet: 'ethereum',
+  rules: [
+    {
+      name: 'allow-base-small-send',
+      operation: 'sendTransaction',
+      action: 'ALLOW',
+      conditions: [
+        ({ params }) => {
+          const tx = params as { chainId?: number | string; value?: bigint } | null
+          const value = tx?.value
+
+          return String(tx?.chainId) === '8453' &&
+            typeof value === 'bigint' &&
+            value <= 1000000000000000n
+        }
+      ]
+    }
+  ]
+})
+```
+
+You can restrict typed-data signing to approved domains using [`wdk.registerPolicy()`](/sdk/core-module/api-reference#registerpolicypolicies-options):
+
+```typescript title="Typed Data Domain Gate"
+const approvedTypedDataDomains = new Set([
+  '1:0x000000000022d473030f116ddee9f6b43ac78ba3'
+])
+
+wdk.registerPolicy({
+  id: 'approved-typed-data-domains',
+  name: 'Approved typed data domains',
+  scope: 'project',
+  wallet: 'ethereum',
+  rules: [
+    {
+      name: 'allow-approved-typed-data-domain',
+      operation: 'signTypedData',
+      action: 'ALLOW',
+      conditions: [
+        ({ params }) => {
+          const typedData = params as {
+            domain?: { chainId?: number | string; verifyingContract?: string }
+          } | null
+          const verifyingContract = typedData?.domain?.verifyingContract
+          const domainKey = `${typedData?.domain?.chainId}:${verifyingContract}`.toLowerCase()
+
+          return typeof verifyingContract === 'string' &&
+            approvedTypedDataDomains.has(domainKey)
+        }
+      ]
+    }
+  ]
+})
+```
+
+You can gate protocol write methods by their method parameters using [`wdk.registerPolicy()`](/sdk/core-module/api-reference#registerpolicypolicies-options):
+
+```typescript title="Protocol Write Gate"
+wdk.registerPolicy({
+  id: 'small-swaps-only',
+  name: 'Small swaps only',
+  scope: 'project',
+  wallet: 'ethereum',
+  rules: [
+    {
+      name: 'allow-small-swaps',
+      operation: 'swap',
+      action: 'ALLOW',
+      conditions: [
+        ({ params }) => {
+          const swap = params as { tokenInAmount?: bigint } | null
+          const tokenInAmount = swap?.tokenInAmount
+
+          return typeof tokenInAmount === 'bigint' &&
+            tokenInAmount <= 1000000000n
+        }
+      ]
+    }
+  ]
+})
+```
+
 ## Inspect Policy Context
 
 Conditions receive a frozen `PolicyContext`:
@@ -172,18 +330,22 @@ Conditions receive a frozen `PolicyContext`:
 | `params` | The first argument passed to the wrapped method |
 | `args` | All arguments passed to the wrapped method |
 
+For governed write calls, WDK snapshots the method arguments once before policy evaluation. Conditions see that snapshot, and WDK forwards the same approved values to the underlying wallet method. This prevents a caller from mutating a transaction object while an asynchronous policy condition is running.
+
 Conditions can be synchronous or asynchronous. `conditionTimeoutMs` defaults to `30000` milliseconds and can be set through `registerPolicy(policies, options)`. If a `DENY` condition throws or times out, WDK blocks the call. If an `ALLOW` condition throws or times out, WDK treats that allow rule as unmatched.
 
 ## Simulate Before Execution
 
 When a policy applies to an account, WDK adds runtime `simulate` mirrors for wrapped account and protocol write methods. Simulation returns the policy verdict and does not call the underlying wallet or protocol method.
 
+You can dry-run a governed account method through the runtime `simulate` mirror:
+
 ```typescript title="Dry-Run A Transaction Policy"
 const account = await wdk.getAccount('ethereum', 0)
 
 const result = await (account as any).simulate.sendTransaction({
   to: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
-  value: 2000000000000000000n
+  value: 2000000000000000n
 })
 
 console.log(result.decision, result.reason, result.trace)
@@ -197,7 +359,7 @@ In this beta, `simulate` is added at runtime but is not typed on the account ret
 
 ## Handle Errors
 
-`PolicyConfigurationError` means WDK rejected the policy setup. Common causes include invalid scopes, actions, operation names, condition functions, timeout options, missing account bindings, or wallet identifiers that have not been registered.
+`PolicyConfigurationError` means WDK rejected the policy setup or could not safely evaluate a governed call. Common causes include invalid scopes, actions, operation names, condition functions, timeout options, missing account bindings, wallet identifiers that have not been registered, or governed method arguments that are not structured-cloneable.
 
 `PolicyViolationError` means an enforced write call was blocked by a matching `DENY` rule or by default-deny when no `ALLOW` rule matched. Catch it around the write call and surface the `reason` to the user or approval workflow.
 
@@ -205,8 +367,10 @@ In this beta, `simulate` is added at runtime but is not typed on the account ret
 
 - Policies wrap the WDK account/protocol proxy surface. Private fields, underscore methods, protocol internals, or nested calls made inside a module can bypass local policy evaluation.
 - Quote and read methods are not wrapped. Policies apply to write methods such as sends, signs, swaps, bridges, lending writes, fiat writes, and swidge execution.
+- Policy conditions receive local method arguments. WDK does not decode calldata, fetch prices, validate token metadata, or calculate fiat value unless your condition function does that work.
 - Wallet accounts must expose a read-only account view when a policy applies, otherwise `getAccount()` fails with `PolicyConfigurationError`.
-- Avoid relying on engine-managed durable policy state in this beta. Use explicit application state or closures for local checks that need state.
+- Governed write-call arguments must be structured-cloneable, such as primitives, plain objects, arrays, `bigint`, and typed arrays. Functions, live class instances, and other non-cloneable values fail closed with `PolicyConfigurationError` instead of being forwarded unsafely.
+- Engine-managed state hooks are not active in this beta. The schema accepts `state` and `onSuccess`, but WDK does not pass `state` into conditions, update it after execution, persist it, or call `onSuccess`. Conditions can still use app-owned state through closures or external stores; keep that state outside `rule.state`, and have your app own durability, concurrency, and rollback behavior.
 
 ## Next Steps
 

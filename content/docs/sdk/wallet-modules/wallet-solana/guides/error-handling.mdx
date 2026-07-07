@@ -61,8 +61,8 @@ async function safeTransfer(account, wallet) {
       console.error('Please add more SOL to your wallet')
     } else if (error.message.includes('invalid address')) {
       console.error('The recipient address is invalid')
-    } else if (error.message.includes('max fee')) {
-      console.error('The transfer fee exceeds your configured maximum')
+    } else if (error.message.toLowerCase().includes('fee')) {
+      console.error('The transaction fee exceeds your configured maximum')
     } else {
       console.error('Transaction failed:', error.message)
     }
@@ -84,12 +84,18 @@ Durable nonce flows still need a valid nonce account and signer setup in the mes
 
 ## Manage Fee Limits
 
-Set `transferMaxFee` when creating the wallet to prevent transactions from exceeding a maximum cost. Retrieve current network rates with [`getFeeRates()`](/sdk/wallet-modules/wallet-solana/api-reference) to make informed decisions.
+Set `transactionMaxFee` when creating the wallet to cap native SOL `sendTransaction()` and `signTransaction()` costs. Set `transferMaxFee` separately for SPL token `transfer()` costs. Fee caps reject estimates greater than the configured limit, so an estimate equal to the cap is allowed. Retrieve current network rates with [`getFeeRates()`](/sdk/wallet-modules/wallet-solana/api-reference#getfeerates) to make informed decisions.
 
 ```javascript title="Fee Management"
 const feeRates = await wallet.getFeeRates()
 console.log('Normal fee rate:', feeRates.normal, 'lamports')
 console.log('Fast fee rate:', feeRates.fast, 'lamports')
+
+const walletWithCaps = new WalletManagerSolana(seedPhrase, {
+  provider: 'https://api.mainnet-beta.solana.com',
+  transactionMaxFee: 10000000n,
+  transferMaxFee: 10000000n
+})
 ```
 
 ## Dispose of Sensitive Data

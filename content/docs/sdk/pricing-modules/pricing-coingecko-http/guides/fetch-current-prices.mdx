@@ -1,0 +1,90 @@
+---
+title: Fetch Current Prices
+description: Fetch current prices and batched price data with CoingeckoPricingClient.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide shows how to read current prices for one pair, batch multiple pairs, and use the client through `PricingProvider`.
+
+## One Pair
+
+Use `getCurrentPrice(from, to)` for a single ticker/currency pair:
+
+```javascript title="Fetch one pair"
+const price = await client.getCurrentPrice('BTC', 'USD')
+
+if (price === null) {
+  // Show an unavailable-price state.
+} else {
+  console.log(price)
+}
+```
+
+## Multiple Pairs
+
+Use `getMultiCurrentPrices(list)` to batch pairs into one `/simple/price` request:
+
+```javascript title="Fetch many pairs"
+const prices = await client.getMultiCurrentPrices([
+  { from: 'BTC', to: 'USD' },
+  { from: 'ETH', to: 'USD' },
+  { from: 'BTC', to: 'EUR' }
+])
+
+console.log(prices)
+```
+
+The result order matches the input order. If CoinGecko does not return data for one entry, that entry is `null`.
+
+## Price Data with Daily Change
+
+Use `getMultiPriceData(list)` when you need last price and 24-hour change:
+
+```javascript title="Fetch price data"
+const data = await client.getMultiPriceData([
+  { from: 'BTC', to: 'USD' },
+  { from: 'ETH', to: 'USD' }
+])
+
+for (const entry of data) {
+  if (entry === null) continue
+
+  console.log(entry.lastPrice)
+  console.log(entry.dailyChange)
+  console.log(entry.dailyChangeRelative)
+}
+```
+
+CoinGecko returns the 24-hour change as a percentage. The client derives the absolute `dailyChange`, so use it as an approximation.
+
+## Use PricingProvider
+
+Wrap the client with `PricingProvider` for last-price caching:
+
+```javascript title="Cached last prices"
+import { PricingProvider } from '@tetherto/wdk-pricing-provider'
+import { CoingeckoPricingClient } from '@tetherto/wdk-pricing-coingecko-http'
+
+const provider = new PricingProvider({
+  client: new CoingeckoPricingClient(),
+  priceCacheDurationMs: 60 * 60 * 1000
+})
+
+const last = await provider.getLastPrice('BTC', 'USD')
+```
+
+Use an ordered client array when CoinGecko should act as a fallback:
+
+```javascript title="Failover pricing"
+const provider = new PricingProvider({
+  client: [primaryClient, new CoingeckoPricingClient()],
+  retries: 1
+})
+```
+
+## Next Steps
+
+- [Fetch historical prices](/sdk/pricing-modules/pricing-coingecko-http/guides/fetch-historical-prices)
+- [Handle errors](/sdk/pricing-modules/pricing-coingecko-http/guides/handle-errors)
+- [API reference](/sdk/pricing-modules/pricing-coingecko-http/api-reference)

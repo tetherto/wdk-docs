@@ -23,6 +23,7 @@ const moduleRedirects = [
   ['/sdk/swap-velora-evm', '/sdk/swap-modules/swap-velora-evm'],
   ['/sdk/bridge-usdt0-evm', '/sdk/bridge-modules/bridge-usdt0-evm'],
   ['/sdk/lending-aave-evm', '/sdk/lending-modules/lending-aave-evm'],
+  ['/sdk/pricing-coingecko-http', '/sdk/pricing-modules/pricing-coingecko-http'],
   ['/sdk/fiat-moonpay', '/sdk/fiat-modules/fiat-moonpay'],
 ].map(([source, target]) => ({ source, target }));
 

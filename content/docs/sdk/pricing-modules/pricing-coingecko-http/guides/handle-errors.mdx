@@ -1,0 +1,84 @@
+---
+title: Handle Errors
+description: Handle unavailable pairs, unknown symbols, range limits, and CoinGecko rate limits.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide covers the main error and unavailable-data cases from `CoingeckoPricingClient`.
+
+## Unknown Symbols
+
+The client throws when `from` is not in its `coinIds` map:
+
+```javascript title="Add missing symbols"
+const client = new CoingeckoPricingClient({
+  coinIds: {
+    PEPE: 'pepe'
+  }
+})
+```
+
+Handle the error if symbols come from user input:
+
+```javascript title="Catch unknown symbols"
+try {
+  const price = await client.getCurrentPrice(userSymbol, 'USD')
+  console.log(price)
+} catch (error) {
+  if (error.message.includes('Unknown symbol')) {
+    console.log('Add this symbol to coinIds before requesting it.')
+  }
+}
+```
+
+## Unavailable Pairs
+
+Current-price methods resolve to `null` when CoinGecko returns no data for a pair:
+
+```javascript title="Handle null prices"
+const price = await client.getCurrentPrice('BTC', 'USD')
+
+if (price === null) {
+  console.log('Price unavailable')
+}
+```
+
+Batch methods preserve input order and place `null` only at unavailable entries.
+
+## Historical Range Limits
+
+`getHistoricalPrice()` requires both `start` and `end`:
+
+```javascript title="Required range"
+await client.getHistoricalPrice('BTC', 'USD', {
+  start,
+  end
+})
+```
+
+On the public or Demo API host, a `start` value older than the trailing 365 days throws. Use CoinGecko Pro for older ranges.
+
+## Rate Limits and Network Errors
+
+CoinGecko rate-limit and network failures reject with the underlying HTTP client error. Handle those failures separately from `null` results:
+
+```javascript title="Separate unavailable data from request failures"
+try {
+  const price = await client.getCurrentPrice('BTC', 'USD')
+
+  if (price === null) {
+    console.log('Pair unavailable')
+  }
+} catch (error) {
+  console.error('CoinGecko request failed:', error.message)
+}
+```
+
+When using `PricingProvider` with multiple clients, connection errors can trigger failover to the next client in the ordered list. A `null` result means the client completed the request but did not resolve that pair.
+
+## Next Steps
+
+- [Fetch current prices](/sdk/pricing-modules/pricing-coingecko-http/guides/fetch-current-prices)
+- [Fetch historical prices](/sdk/pricing-modules/pricing-coingecko-http/guides/fetch-historical-prices)
+- [Configuration](/sdk/pricing-modules/pricing-coingecko-http/configuration)

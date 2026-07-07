@@ -50,7 +50,7 @@ const wdk2 = new WDK(seedBytes)
 | `getAccount(blockchain, index?)` | Returns a wallet account for a blockchain and index | `Promise<IWalletAccountWithProtocols>` | If wallet not registered |
 | `getAccountByPath(blockchain, path)` | Returns a wallet account for a blockchain and derivation path | `Promise<IWalletAccountWithProtocols>` | If wallet not registered |
 | `getFeeRates(blockchain)` | Returns current fee rates for a registered blockchain | `Promise<FeeRates>` | If wallet not registered |
-| `dispose(blockchains?)` | Disposes all registered wallets, or only the named blockchains, and clears their sensitive data | `void` | - |
+| `dispose(blockchains?)` | Disposes all registered wallets, or only the named blockchains, and clears keys and account state managed by WDK | `void` | - |
 
 ##### `registerWallet(blockchain, wallet, config)`
 Registers a new wallet manager for a specific blockchain.
@@ -169,6 +169,16 @@ Registers one or more local transaction policies on the WDK instance.
 
 Policies are evaluated before wrapped account and protocol write methods execute. Matching `DENY` rules and governed-account default-deny outcomes throw `PolicyViolationError`; matching `ALLOW` rules permit the call only when no higher-priority `DENY` rule applies. Governed runtime accounts also expose `account.simulate.<method>(...)` mirrors so you can dry-run policy evaluation without sending, signing, or broadcasting.
 
+Evaluation order:
+
+1. Account-scoped policies run before project-scoped policies.
+2. Policies and rules run in registration order within their scope.
+3. A matching account-scoped `DENY` blocks immediately.
+4. A matching account-scoped `ALLOW` with `override_broader_scope: true` allows immediately and skips project-scoped policies.
+5. Project-scoped `DENY` rules block after account-scoped rules unless an override allow already matched.
+6. If no `DENY` matches and at least one `ALLOW` matched, WDK allows the call.
+7. Governed wrapped operations deny by default when no rule addresses the operation or no addressed rule matches.
+
 For policy scoping, default-deny behavior, account-level overrides, and protocol simulation examples, see [Transaction Policies](/sdk/core-module/guides/transaction-policies).
 
 **Parameters:**
@@ -177,7 +187,7 @@ For policy scoping, default-deny behavior, account-level overrides, and protocol
 
 **Returns:** `WDK` - The WDK instance (supports method chaining)
 
-**Throws:** `PolicyConfigurationError` if a policy or option fails validation, if an account-scoped policy omits its account binding, or if a policy references a wallet identifier that has not been registered.
+**Throws:** `PolicyConfigurationError` if a policy or option fails validation, if an account-scoped policy omits its account binding, or if a policy references a wallet identifier that has not been registered. Governed write calls also throw `PolicyConfigurationError` when WDK cannot snapshot a method argument safely.
 
 **Example:**
 ```typescript title="Register A Send Policy"
@@ -239,6 +249,8 @@ try {
 Supported `PolicyOperation` values are `sendTransaction`, `signTransaction`, `transfer`, `approve`, `sign`, `signTypedData`, `signAuthorization`, `delegate`, `revokeDelegation`, `swap`, `bridge`, `supply`, `withdraw`, `borrow`, `repay`, `buy`, `sell`, `swidge`, and `*`.
 
 Use `sign` for message-style signing in this release. `signMessage` and `signHash` are not valid policy operation names.
+
+Policy-enforced calls snapshot method arguments before evaluation and forward the same approved values to the wallet method. Pass structured-cloneable values such as primitives, plain objects, arrays, `bigint`, and typed arrays. Non-cloneable governed arguments fail closed with `PolicyConfigurationError`.
 
 ##### `getAccount(blockchain, index?)`
 Returns a wallet account for a specific blockchain and index using BIP-44 derivation.
@@ -309,12 +321,14 @@ console.log('Fee rates:', feeRates)
 ##### `dispose(blockchains?)`
 Disposes all registered wallets when called without arguments, or only the wallets for the named blockchains when you pass a string array.
 
+This clears keys and account state managed by WDK, including private keys held by registered wallets. It does not mutate or zero the seed value passed to `new WDK(seed)`. See [Seed Lifecycle](/sdk/core-module/guides/error-handling#seed-lifecycle) for the recommended cleanup pattern.
+
 **Parameters:**
 - `blockchains` (string[], optional): The blockchain identifiers to dispose. Omit this parameter to dispose every registered wallet.
 
 **Example:**
 ```javascript title="Dispose WDK"
-// Clean up all sensitive data
+// Dispose all registered wallets
 wdk.dispose()
 
 // Dispose only one registered wallet
@@ -715,6 +729,8 @@ interface PolicyRule {
   conditions: PolicyCondition[]
   reason?: string
   override_broader_scope?: boolean
+  state?: Record<string, unknown>
+  onSuccess?: (c: PolicyContext) => void | Promise<void>
 }
 
 interface Policy {
@@ -727,13 +743,34 @@ interface Policy {
 }
 
 interface RegisterPolicyOptions {
+  state?: Record<string, unknown>
   conditionTimeoutMs?: number
+}
+
+interface SimulationTraceEntry {
+  scope: PolicyScope
+  policy_id: string
+  rule_name: string
+  matched: boolean
+  error?: string
+}
+
+interface SimulationResult {
+  decision: 'ALLOW' | 'DENY'
+  policy_id: string | null
+  matched_rule: string | null
+  reason: string | null
+  trace: SimulationTraceEntry[]
 }
 ```
 
 `scope: 'project'` can apply across all registered wallets or only the wallets named in `wallet`. `scope: 'account'` requires both `wallet` and `accounts`; account entries can be a derivation path string or an account index number.
 
-Simulation results returned by the runtime `account.simulate.<method>(...)` mirrors include `decision`, `policy_id`, `matched_rule`, `reason`, and a `trace` array that records evaluated rules.
+`override_broader_scope` is valid only on account-scoped `ALLOW` rules. When that rule matches, WDK allows the call without evaluating project-scoped policies.
+
+`state` and `onSuccess` are reserved for future engine-managed state and are ignored at runtime in this beta. Conditions can use app-owned state through closures or external stores, but keep that state outside `rule.state`; WDK does not persist or update `state`, run `onSuccess`, or provide built-in counters or cumulative spend accounting.
+
+Simulation results returned by the runtime `account.simulate.<method>(...)` mirrors include `decision`, `policy_id`, `matched_rule`, `reason`, and a `trace` array that records evaluated rules. `reason` can include a rule reason or one of the engine outcomes: `matched`, `override`, `no-applicable-rule`, or `governed-but-unmatched`.
 
 ### Protocol Types
 

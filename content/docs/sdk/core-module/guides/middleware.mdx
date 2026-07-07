@@ -5,7 +5,7 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-Middleware allows you to intercept wallet operations. You can use this to add [logging](#logging), implement retry logic, or handle [failovers for RPC providers](#failover-protection-with-provider-failover).
+Middleware allows you to intercept wallet operations. You can use this to add [logging](#logging), implement retry logic, or route provider failover to the supported failover provider.
 
 ## Register Middleware
 
@@ -24,43 +24,25 @@ wdk.registerMiddleware('ethereum', async (account) => {
 })
 ```
 
-## Failover Protection with Provider Failover
+## Use provider failover
 
-The [`@tetherto/wdk-provider-failover`](https://www.npmjs.com/package/@tetherto/wdk-provider-failover) package provides a resilient wrapper for wallet instances. Unlike standard middleware, you wrap your wallet class instantiation directly.
+Provider failover is handled outside core middleware. Use the current [`@tetherto/wdk-failover-provider`](https://www.npmjs.com/package/@tetherto/wdk-failover-provider) package when you need provider-level retry and fallback across RPC endpoints.
 
-### Install `@tetherto/wdk-provider-failover`
-
-You can install the `@tetherto/wdk-provider-failover` using npm with the following command:
+Install the failover provider package:
 
 ```bash
-npm install @tetherto/wdk-provider-failover
+npm install @tetherto/wdk-failover-provider
 ```
 
-### Use `createFallbackWallet`
+Import the provider in your wallet or infrastructure setup:
 
-You can import the `createFallbackWallet` function to ensure that if your primary RPC fails, the wallet automatically retries with the fallback providers.
-
-With this configuration, if `sendTransaction` fails due to a network error, the WDK will automatically retry using the fallback providers without throwing an error to your application.
-
-```typescript title="Failover Wrapper Usage"
-import { createFallbackWallet } from '@tetherto/wdk-provider-failover'
-import { WalletAccountReadOnlyEvm } from '@tetherto/wdk-wallet-evm'
-
-const wallet = createFallbackWallet(
-  WalletAccountReadOnlyEvm,
-  ['0x...'], // constructor args
-  {
-    primary: { provider: 'https://mainnet.infura.io/v3/YOUR_KEY' },
-    fallbacks: [
-      { provider: 'https://eth.llamarpc.com' },
-      { provider: 'https://ethereum.publicnode.com' }
-    ]
-  }
-)
-
-// Use the wallet instance directly
-const balance = await wallet.getBalance()
+```typescript
+import FailoverProvider from '@tetherto/wdk-failover-provider'
 ```
+
+Use this when your app depends on external RPC providers and needs a backup route if the primary provider is slow or unavailable.
+
+See [Add provider failover](/tools/failover-provider/), [failover configuration](/tools/failover-provider/configuration/), and the [failover API reference](/tools/failover-provider/api-reference/) for the supported setup.
 
 ## Next Steps
 

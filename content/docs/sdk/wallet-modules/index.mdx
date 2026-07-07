@@ -16,6 +16,23 @@ Wallet modules can expose fee caps through their configuration objects. Use the 
 | `transferMaxFee` | `transfer()` | Caps token transfer fees in the module's base fee unit. |
 | `transactionMaxFee` | `sendTransaction()` and `signTransaction()` | Caps native transaction send/sign flows separately from token transfers when the module supports that base wallet option. |
 
+## Shared Signer Interface
+
+The base `@tetherto/wdk-wallet` package defines a cross-chain `ISigner` interface for wallet modules that support external signing. Signer-aware modules can be constructed from a default signer instead of a seed, can register named signers with `addSigner(name, signer)`, and can resolve accounts by passing `signerName` to account retrieval methods.
+
+| Surface | Description |
+| --- | --- |
+| `ISigner.derive(relPath)` | Derives a child signer from a relative derivation path, when the signer supports derivation. |
+| `ISigner.getAddress()` | Returns the address controlled by the signer. |
+| `ISigner.dispose()` | Clears signer-held secret material or external resources. |
+| `WalletManager.addSigner(name, signer)` | Registers a named signer. Blank names throw an error. |
+| `WalletManager.getSigner(name?)` | Returns a named signer, or the default signer when called without a name. |
+| `WalletManager.getSigners()` | Returns a shallow copy of the named signer map. |
+
+`signTransaction(tx)` is an account-level operation, not part of `ISigner`. Use the chain account's `IWalletAccount.signTransaction(tx)` when a module supports signing without broadcast. Modules can also type their signed transaction payloads so `sendTransaction(tx)` and `quoteSendTransaction(tx)` accept either unsigned transactions or module-specific signed payloads where that behavior is implemented.
+
+Module support depends on the chain-specific wallet implementation. Check each module's reference before relying on signer-based account creation.
+
 ## Supported Networks
 
 This package works with multiple blockchain networks through wallet registration.
@@ -56,7 +73,7 @@ Standard wallet implementations that use native blockchain tokens for transactio
 | [`@tetherto/wdk-wallet-spark`](https://github.com/tetherto/wdk-wallet-spark) | Spark | ✅ Ready | [Documentation](/sdk/wallet-modules/wallet-spark) |
 | [`@tetherto/wdk-wallet-tron`](https://github.com/tetherto/wdk-wallet-tron) | TRON | ✅ Ready | [Documentation](/sdk/wallet-modules/wallet-tron) |
 | [`@tetherto/wdk-wallet-solana`](https://github.com/tetherto/wdk-wallet-solana) | Solana | ✅ Ready | [Documentation](/sdk/wallet-modules/wallet-solana) |
-| `@tetherto/wdk-wallet-ark` | Ark | In progress | - |
+| [`@arkade-os/wdk`](https://github.com/arkade-os/arkade-wdk) | Arkade | ✅ Ready | [README](https://github.com/arkade-os/arkade-wdk#readme) |
 
 ## Account Abstraction Wallet Modules
 

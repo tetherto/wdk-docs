@@ -1,0 +1,101 @@
+---
+title: Pricing CoinGecko HTTP Configuration
+description: Configure @tetherto/wdk-pricing-coingecko-http options.
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+# Configuration
+
+Create a `CoingeckoPricingClient` with no options for public CoinGecko API access:
+
+```javascript title="Public CoinGecko client"
+import { CoingeckoPricingClient } from '@tetherto/wdk-pricing-coingecko-http'
+
+const client = new CoingeckoPricingClient()
+```
+
+The public host is `https://api.coingecko.com/api/v3`.
+
+## Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `baseURL` | `string` | `https://api.coingecko.com/api/v3` | CoinGecko API base URL. Use `https://pro-api.coingecko.com/api/v3` with a Pro key. |
+| `apiKey` | `string` | none | CoinGecko API key. The client chooses `x-cg-demo-api-key` or `x-cg-pro-api-key` from `baseURL`. |
+| `coinIds` | `Record<string, string>` | built-in map | Symbol-to-CoinGecko-ID overrides merged on top of defaults. |
+
+## API Keys
+
+Pass `apiKey` when you want CoinGecko authenticated requests:
+
+```javascript title="Demo API key"
+const demoClient = new CoingeckoPricingClient({
+  apiKey: process.env.COINGECKO_API_KEY
+})
+```
+
+Use the Pro API host with a Pro key:
+
+```javascript title="Pro API key"
+const proClient = new CoingeckoPricingClient({
+  baseURL: 'https://pro-api.coingecko.com/api/v3',
+  apiKey: process.env.COINGECKO_PRO_API_KEY
+})
+```
+
+When `baseURL` includes `pro-api.coingecko.com`, the client sends the key with `x-cg-pro-api-key`. Otherwise it sends `x-cg-demo-api-key`.
+
+## Coin ID Overrides
+
+CoinGecko uses asset IDs such as `bitcoin`, `ethereum`, and `tether-gold`. Tickers are not always enough to derive the correct ID, so the client keeps a small default map and lets you extend it.
+
+```javascript title="Add custom symbols"
+const client = new CoingeckoPricingClient({
+  coinIds: {
+    PEPE: 'pepe',
+    SHIB: 'shiba-inu'
+  }
+})
+
+const pepeUsd = await client.getCurrentPrice('PEPE', 'USD')
+```
+
+You can also override a built-in mapping:
+
+```javascript title="Override a default symbol"
+const client = new CoingeckoPricingClient({
+  coinIds: {
+    BTC: 'wrapped-bitcoin'
+  }
+})
+```
+
+## Provider Failover
+
+Use `CoingeckoPricingClient` as a fallback behind another pricing client by passing an ordered array to `PricingProvider`:
+
+```javascript title="Fail over to CoinGecko"
+import { PricingProvider } from '@tetherto/wdk-pricing-provider'
+import { BitfinexPricingClient } from '@tetherto/wdk-pricing-bitfinex-http'
+import { CoingeckoPricingClient } from '@tetherto/wdk-pricing-coingecko-http'
+
+const provider = new PricingProvider({
+  client: [
+    new BitfinexPricingClient(),
+    new CoingeckoPricingClient({ apiKey: process.env.COINGECKO_API_KEY })
+  ],
+  retries: 1
+})
+
+const btcUsd = await provider.getLastPrice('BTC', 'USD')
+```
+
+The provider failover layer retries connection errors. A pair that resolves to `null` is still an unavailable result for that client.
+
+## Runtime Notes
+
+- Install `@tetherto/wdk-pricing-provider` when you want caching or failover through `PricingProvider`.
+- The package exposes a Bare runtime entrypoint through its package export map.
+- Integration tests hit the live CoinGecko API and can fail with `429` under repeated free-tier runs.

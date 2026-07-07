@@ -175,7 +175,9 @@ function dedupeCitationAnchors(root: Document | ShadowRoot) {
         }
 
         const rewrittenHref = rewriteDocsUrl(anchor.href);
-        anchor.href = rewrittenHref;
+        if (rewrittenHref !== anchor.href) {
+          anchor.href = rewrittenHref;
+        }
 
         const isDuplicate = rewrittenHref === previousHref && normalizedLabel === previousLabel;
         anchor.hidden = isDuplicate;

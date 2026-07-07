@@ -1,0 +1,114 @@
+---
+title: Cosmos wallet API reference
+description: API reference for the independently maintained @base58-io/wdk-wallet-cosmos module.
+docType: reference
+schemaType: TechArticle
+---
+
+This page summarizes the public API exposed by `@base58-io/wdk-wallet-cosmos` based on the package README, `package.json`, generated TypeScript declarations, and source files from commit `b924dba`.
+
+<Callout type="warn">
+This module is developed and maintained independently by a third-party contributor. Tether and the WDK team do not endorse or assume responsibility for its code, security, or maintenance. Review the package and use your own judgment before using it with real funds.
+</Callout>
+
+## Package
+
+| Field | Value |
+|---|---|
+| Package | `@base58-io/wdk-wallet-cosmos` |
+| Repository | [base58-io/wdk-wallet-cosmos](https://github.com/base58-io/wdk-wallet-cosmos) |
+| Main entry | `index.js` |
+| Bare entry | `bare.js` |
+| Types | `types/index.d.ts` |
+
+## Exports
+
+| Export | Description |
+|---|---|
+| `default` | `WalletManagerCosmos` |
+| `WalletAccountCosmos` | Cosmos wallet account implementation |
+| `CosmosWalletConfig` | Wallet configuration type |
+| `ResolvedChainConfig` | Resolved chain configuration type |
+| `resolveChainConfig(config)` | Resolves chain config from chain-registry or custom fields |
+| `getAvailableChains()` | Returns chain names available through the bundled chain-registry data |
+| `isKnownChain(chainName)` | Returns whether a chain name exists in the registry data |
+
+## `CosmosWalletConfig`
+
+| Field | Required | Description |
+|---|---:|---|
+| `chainName` | No | Chain name from chain-registry, such as `cosmoshub`, `osmosis`, or `juno`. |
+| `rpcEndpoints` | No | RPC endpoint URLs. If provided, they override registry endpoints. |
+| `retryCount` | No | Maximum retry rounds for RPC fallback. Default is `3`. |
+| `retryDelay` | No | Base retry delay in milliseconds. Default is `150`. |
+| `addressPrefix` | No | Bech32 address prefix. Defaults to `cosmos` when not resolved from registry. |
+| `nativeDenom` | No | Native token denomination. Defaults to `uatom` when not resolved from registry. |
+| `coinType` | No | BIP-44 coin type. Defaults to `118` when not resolved from registry. |
+| `gasPrice` | No | Gas price with denomination, such as `0.025uatom`. |
+| `transferMaxFee` | No | Maximum fee amount for transfer operations. |
+| `ibcChannels` | No | IBC channel map keyed by destination Bech32 prefix. |
+
+## `WalletManagerCosmos`
+
+```js
+import WalletManagerCosmos from '@base58-io/wdk-wallet-cosmos'
+
+const manager = new WalletManagerCosmos(seed, config)
+```
+
+| Method or property | Description |
+|---|---|
+| `constructor(seed, config)` | Creates a manager from a BIP-39 seed phrase or seed bytes. |
+| `getAccount(index = 0)` | Returns the Cosmos account at a BIP-44 index. |
+| `getAccountByPath(path)` | Returns the Cosmos account for a specific BIP-44 derivation suffix. |
+| `getFeeRates()` | Returns normal and fast fee rates from chain-registry fee tiers or configured gas price. Requires RPC configuration. |
+| `isDisposed` | Returns whether the manager has been disposed. |
+| `dispose()` | Disposes cached wallet accounts and clears manager state. |
+
+## `WalletAccountCosmos`
+
+| Method or property | Description |
+|---|---|
+| `static create(seed, path, config)` | Creates an account for a BIP-44 path. |
+| `getAddress()` | Returns the Bech32 account address. |
+| `getBalance(denom?)` | Returns a token balance in base units. Defaults to the configured native denomination. |
+| `getTokenBalance(denom)` | Returns a single token balance in base units. |
+| `getTokenBalances(denoms)` | Returns balances for multiple denominations. |
+| `transfer(options)` | Sends a token transfer and returns the transaction hash and fee. |
+| `quoteTransfer(options)` | Quotes a transfer fee without sending. |
+| `keyPair` | Returns the account key pair. |
+| `sign(message)` | Signs an arbitrary message using ADR-36. |
+| `verify(message, signature)` | Verifies an ADR-36 signature. |
+| `signTransaction(transaction)` | Signs a Cosmos transaction without broadcasting it. |
+| `sendTransaction(transaction)` | Signs and broadcasts a Cosmos transaction. |
+| `quoteSendTransaction(transaction)` | Quotes a Cosmos transaction fee. |
+| `getTransactionReceipt(hash)` | Looks up a transaction by hash through RPC. |
+| `index` | Account index parsed from the derivation path. |
+| `path` | Full account derivation path. |
+| `isDisposed` | Returns whether the account has been disposed. |
+| `dispose()` | Erases sensitive account data from memory and prevents further use. |
+
+## Transfer options
+
+The module uses WDK `TransferOptions` for token transfers.
+
+| Field | Required | Description |
+|---|---:|---|
+| `token` | Yes | Cosmos denomination, such as `uatom`. |
+| `recipient` | Yes | Destination Bech32 address. |
+| `amount` | Yes | Amount in base units. |
+
+## Helper functions
+
+| Function | Description |
+|---|---|
+| `resolveChainConfig(config)` | Resolves a chain config from `chainName`, custom config, and chain-registry metadata. Throws if `chainName` is unknown. |
+| `getAvailableChains()` | Returns known chain names from chain-registry. |
+| `isKnownChain(chainName)` | Returns `true` when `chainName` is available in chain-registry. |
+
+## Limitations
+
+- RPC endpoints are required for balance reads, fee quotes, transfers, and receipt lookup.
+- `toReadOnlyAccount()` is present on the account class but throws because read-only accounts are not implemented.
+- `transferMaxFee` rejects transfer or send quotes when the estimated fee is greater than or equal to the configured limit.
+- IBC transfer support depends on `ibcChannels` configuration for the destination Bech32 prefix.
