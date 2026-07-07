@@ -21,7 +21,8 @@ const config = {
   paymasterToken: {
     address: 'TokenMint111111111111111111111111111111111'
   },
-  transferMaxFee: 1000000n
+  transferMaxFee: 1000000n,
+  transactionMaxFee: 1000000n
 }
 
 const wallet = new WalletManagerSolanaGasless(seedPhrase, config)
@@ -51,7 +52,7 @@ const readOnlyAccount = new WalletAccountReadOnlySolanaGasless('SolanaAddress...
 })
 ```
 
-Read-only accounts do not accept `transferMaxFee` in their public type because they cannot send transfers.
+Read-only accounts do not accept `transferMaxFee` or `transactionMaxFee` in their public type because they cannot send transfers or sign transactions.
 
 ## Configuration Options
 
@@ -139,7 +140,7 @@ Additional retry attempts used by failover providers when `provider` or `paymast
 
 ### transferMaxFee
 
-Maximum allowed paymaster fee for `transfer()` calls, in the configured paymaster token's base units. `transfer()` throws when the quoted fee is greater than or equal to this cap.
+Maximum allowed paymaster fee for `transfer()` calls, in the configured paymaster token's base units. `transfer()` throws when the quoted fee is greater than this cap.
 
 **Type:** `number | bigint`
 
@@ -154,6 +155,25 @@ const result = await account.transfer({
   amount: 1000000n
 }, {
   transferMaxFee: 500000n
+})
+```
+
+### transactionMaxFee
+
+Maximum allowed paymaster fee for `sendTransaction()` and `signTransaction()` calls, in the configured paymaster token's base units. These methods throw when the quoted fee is greater than this cap.
+
+**Type:** `number | bigint`
+
+**Required:** No
+
+**Example:**
+
+```javascript
+const result = await account.sendTransaction({
+  to: 'Recipient1111111111111111111111111111111',
+  value: 1000000n
+}, {
+  transactionMaxFee: 500000n
 })
 ```
 
@@ -174,14 +194,14 @@ const quote = await account.quoteTransfer({
 })
 ```
 
-The current merged module applies `transferMaxFee` to `transfer()` only. `sendTransaction()` and `signTransaction()` do not enforce a separate transaction fee cap in the merged release.
+Use `transferMaxFee` for `transfer()` fee protection and `transactionMaxFee` for `sendTransaction()` or `signTransaction()` fee protection. `quoteTransfer()` and `quoteSendTransaction()` return estimates without enforcing either cap.
 
 ## Security Considerations
 
 - Use HTTPS Solana RPC and paymaster endpoints.
 - Use RPC endpoints that serve the same Solana network when enabling failover.
 - Keep paymaster tokens funded for the accounts that need sponsored transactions.
-- Set `transferMaxFee` for token transfers when your application needs fee protection.
+- Set `transferMaxFee` for token transfers and `transactionMaxFee` for send/sign flows when your application needs fee protection.
 - Validate the paymaster address and paymaster token address before using them in production configuration.
 - Call `dispose()` on owned accounts and wallet managers when private keys are no longer needed.
 
@@ -191,9 +211,6 @@ Create a gasless Solana account.
 </Card>
 <Card title="Usage" href="/sdk/wallet-modules/wallet-solana-gasless/usage">
 Choose a guide for common gasless Solana flows.
-</Card>
-<Card title="API Reference" href="/sdk/wallet-modules/wallet-solana-gasless/api-reference">
-Review methods and config types.
 </Card>
 </Cards>
 

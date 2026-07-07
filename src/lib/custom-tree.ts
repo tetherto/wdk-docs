@@ -212,7 +212,6 @@ export const customTree: Node[] = [
             ],
           },
           { name: 'Configuration', url: '/sdk/wallet-modules/wallet-solana-gasless/configuration', type: 'page' },
-          { name: 'API Reference', url: '/sdk/wallet-modules/wallet-solana-gasless/api-reference', type: 'page' },
         ],
       },
       {
