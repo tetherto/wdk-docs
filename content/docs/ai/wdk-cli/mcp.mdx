@@ -1,0 +1,135 @@
+---
+title: MCP
+description: Connect WDK CLI to Claude Desktop, Claude Code, or OpenClaw with the bundled MCP server
+docType: how-to
+schemaType: TechArticle
+icon: Wand
+---
+
+WDK CLI includes `wdk-mcp`, a Model Context Protocol server that exposes local wallet actions as structured tools. The MCP server talks to the same `wdk-daemon` used by the CLI.
+
+<Callout type="warn">
+Create and unlock a dedicated development wallet before connecting an AI client. Do not connect a production seed phrase or meaningful funds to a local source checkout.
+</Callout>
+
+## Prepare The Wallet
+
+Install WDK CLI from source first. See [Get Started](/ai/wdk-cli/get-started/).
+
+Create and unlock a wallet:
+
+```bash title="Terminal"
+wdk wallet create --name agent-dev --words 24
+wdk wallet unlock --name agent-dev --ttl 5
+wdk wallet default --name agent-dev
+```
+
+Use a short TTL while you are testing. Increase the TTL only when your local agent workflow needs it.
+
+## Set Up An AI Tool
+
+WDK CLI supports three setup targets:
+
+```bash title="Terminal"
+wdk mcp setup --ai-tool claude-desktop
+wdk mcp setup --ai-tool claude-code
+wdk mcp setup --ai-tool openclaw
+```
+
+Setup resolves the local Node.js executable, points the AI tool at `wdk-mcp`, verifies the MCP server when possible, and writes or delegates the tool config:
+
+| AI tool | Setup behavior |
+| --- | --- |
+| Claude Desktop | Writes the `wdk-wallet` server entry into Claude Desktop's MCP config file |
+| Claude Code | Runs `claude mcp add -s user wdk-wallet -- ...` |
+| OpenClaw | Runs `openclaw mcp set wdk-wallet ...` |
+
+Verify setup:
+
+```bash title="Terminal"
+wdk mcp verify-setup --ai-tool claude-desktop
+wdk mcp list
+```
+
+Remove setup:
+
+```bash title="Terminal"
+wdk mcp remove --ai-tool claude-desktop
+```
+
+## MCP Tools
+
+| Tool | Purpose |
+| --- | --- |
+| `get_networks` | List supported networks, optionally filtered by mainnet or testnet |
+| `list_tokens` | List registered tokens for one network or every network |
+| `get_token` | Read one token registry entry |
+| `get_address` | Get one address or all addresses |
+| `get_balance` | Get one balance or all balances with USD values |
+| `get_history` | Get transaction history through the indexer |
+| `send_token` | Preview or execute a native or token transfer |
+| `buy_crypto` | Create a signed MoonPay buy URL |
+| `sell_crypto` | Create a signed MoonPay sell URL |
+
+Wallet-dependent tools accept an optional `wallet` parameter. When omitted, the daemon uses the default wallet.
+
+## Send Token Confirmation Flow
+
+`send_token` defaults to `dryRun: true`. Agents must use a two-step flow:
+
+1. Call `send_token` with the transfer details and no `dryRun` value, or with `dryRun: true`.
+2. Show the preview, amount, recipient, network, token, and fee information to the user.
+3. Call `send_token` again with `dryRun: false` only after the user confirms.
+
+Example dry-run request:
+
+```json
+{
+  "network": "ethereum",
+  "token": "usdt",
+  "to": "0x000000000000000000000000000000000000dEaD",
+  "amount": "1.5"
+}
+```
+
+Example execution request after confirmation:
+
+```json
+{
+  "network": "ethereum",
+  "token": "usdt",
+  "to": "0x000000000000000000000000000000000000dEaD",
+  "amount": "1.5",
+  "dryRun": false
+}
+```
+
+## Security Notes
+
+- The MCP server does not receive seed phrases or private keys from the AI client.
+- The MCP server routes wallet actions to the local daemon over IPC.
+- The daemon holds unlocked wallet instances in memory until the wallet is locked or its TTL expires.
+- `--ttl 0` disables automatic expiry for that wallet. Use it only for controlled local development sessions.
+- Use `WDK_PASSPHRASE` only in trusted local automation. Do not commit it to shell profiles, logs, scripts, or MCP config files.
+- Lock the wallet after the agent session:
+
+```bash title="Terminal"
+wdk wallet lock --name agent-dev
+```
+
+## When To Use The MCP Toolkit Instead
+
+Use [MCP Toolkit](/ai/mcp-toolkit/) instead of WDK CLI when you need to:
+
+- Build a custom MCP server in application code
+- Choose exactly which WDK tools are registered
+- Add custom MCP tools beside WDK tools
+- Embed wallet behavior in a larger service instead of using a local daemon
+
+Use WDK CLI when you want a local wallet daemon and ready-made MCP setup for supported AI tools.
+
+***
+
+## Need Help?
+
+<SupportCards />
