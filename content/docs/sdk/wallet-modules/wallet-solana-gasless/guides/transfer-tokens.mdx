@@ -1,0 +1,102 @@
+---
+title: Transfer SPL Tokens
+description: Transfer SPL tokens through a Kora-compatible paymaster.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide explains how to quote and transfer SPL tokens with paymaster-funded fees.
+
+## Transfer Tokens
+
+Use `transfer(options)` to send SPL tokens through the configured paymaster:
+
+```javascript title="Transfer SPL tokens"
+const result = await account.transfer({
+  token: 'TokenMint111111111111111111111111111111111',
+  recipient: 'Recipient1111111111111111111111111111111',
+  amount: 1000000n
+})
+
+console.log('Transaction hash:', result.hash)
+console.log('Paymaster fee:', result.fee)
+```
+
+If the recipient associated token account does not exist, the module adds an idempotent create-associated-token-account instruction with the paymaster as payer.
+
+## Quote Transfer Fees
+
+Use `quoteTransfer()` to estimate the paymaster fee before submitting:
+
+```javascript title="Quote SPL transfer"
+const quote = await account.quoteTransfer({
+  token: 'TokenMint111111111111111111111111111111111',
+  recipient: 'Recipient1111111111111111111111111111111',
+  amount: 1000000n
+})
+
+console.log('Estimated paymaster fee:', quote.fee)
+```
+
+The returned `fee` is in the configured paymaster token's base units.
+
+## Set a Transfer Fee Cap
+
+Set `transferMaxFee` in the wallet config or as a per-call override:
+
+```javascript title="Transfer with fee cap"
+const result = await account.transfer({
+  token: 'TokenMint111111111111111111111111111111111',
+  recipient: 'Recipient1111111111111111111111111111111',
+  amount: 1000000n
+}, {
+  transferMaxFee: 500000n
+})
+```
+
+The module throws when the quoted transfer fee is greater than `transferMaxFee`.
+
+## Override Paymaster Token
+
+Use a different paymaster token for one transfer:
+
+```javascript title="Transfer with alternate fee token"
+const result = await account.transfer({
+  token: 'TokenMint111111111111111111111111111111111',
+  recipient: 'Recipient1111111111111111111111111111111',
+  amount: 1000000n
+}, {
+  paymasterToken: {
+    address: 'AlternateFeeMint11111111111111111111111111'
+  },
+  transferMaxFee: 500000n
+})
+```
+
+## Validate Before Sending
+
+Check token balances and quote fees before sending:
+
+```javascript title="Validated SPL transfer"
+async function transferWithValidation(account, token, recipient, amount) {
+  const balance = await account.getTokenBalance(token)
+  if (balance < amount) {
+    throw new Error('Insufficient SPL token balance')
+  }
+
+  const quote = await account.quoteTransfer({ token, recipient, amount })
+  console.log('Paymaster fee estimate:', quote.fee)
+
+  return await account.transfer({ token, recipient, amount })
+}
+```
+
+## Limitations
+
+- `amount` must fit in an unsigned 64-bit integer.
+- JavaScript `number` amounts must fit within `Number.MAX_SAFE_INTEGER`; use `bigint` for large token amounts.
+- Token-2022 extensions and token-transfer memos are not supported by this module.
+
+## Next Steps
+
+Learn how to [sign and verify messages](/sdk/wallet-modules/wallet-solana-gasless/guides/sign-verify-messages).
