@@ -11,6 +11,7 @@ schemaType: APIReference
 | [`useWdkApp`](#usewdkapp) | Hook | App-level state (discriminated union) |
 | [`useWalletManager`](#usewalletmanager) | Hook | Wallet lifecycle (create, restore, lock, unlock) |
 | [`useAccount`](#useaccount) | Hook | Account operations (send, sign, verify, estimateFee) |
+| [`useProtocol`](#useprotocol) | Hook | Protocol method calls through the active worklet account |
 | [`useAddresses`](#useaddresses) | Hook | Load and query wallet addresses |
 | [`useBalance`](#usebalance) | Hook | Single asset balance with TanStack Query |
 | [`useBalancesForWallet`](#usebalancesforwallet) | Hook | Bulk balance fetch for multiple assets |
@@ -23,6 +24,7 @@ schemaType: APIReference
 | `WdkAppContextValue` | Type | Return type of `useWdkApp` |
 | `UseAccountParams` | Type | Parameters for `useAccount` |
 | `UseAccountReturn` | Type | Return type of `useAccount` |
+| `UseProtocolParams` | Type | Parameters for `useProtocol` |
 | `UseAddressesReturn` | Type | Return type of `useAddresses` |
 | `UseWalletManagerResult` | Type | Return type of `useWalletManager` |
 
@@ -319,6 +321,62 @@ const { extension } = useAccount<{ getTransfers: () => Promise<Transfer[]> }>({
 // Safe to call at any time - waits for wallet initialization internally
 const btcApi = extension()
 const transfers = await btcApi.getTransfers()
+```
+
+---
+
+## useProtocol
+
+Hook to call configured protocol modules through the active WDK worklet account. It returns a typed proxy, so each method you access is forwarded to the protocol registered for the requested account, network, type, and name.
+
+### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `params.network` | `string` | Network identifier configured in `wdkConfigs` |
+| `params.accountIndex` | `number` | Account index to use for the protocol call |
+| `params.protocolType` | `'bridge' \| 'swap' \| 'lending' \| 'fiat'` | Protocol category |
+| `params.protocolName` | `string` | Registered protocol name |
+
+### Returns
+
+Returns `T`, a proxy for the protocol methods you type with the hook generic. Each method returns a promise from the worklet call.
+
+If no active account is available, protocol method calls log an error and return `undefined`.
+
+### Example
+
+```tsx
+import { useProtocol } from '@tetherto/wdk-react-native-core'
+
+type SwapProtocol = {
+  quoteSwap: (params: {
+    tokenIn: string
+    tokenOut: string
+    tokenInAmount: string
+  }) => Promise<{ tokenOutAmount: string; fee: string }>
+}
+
+function SwapQuoteScreen() {
+  const swap = useProtocol<SwapProtocol>({
+    network: 'ethereum',
+    accountIndex: 0,
+    protocolType: 'swap',
+    protocolName: 'velora',
+  })
+
+  const loadQuote = async () => {
+    const quote = await swap.quoteSwap({
+      tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+      tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+      tokenInAmount: '1000000',
+    })
+
+    console.log('Quoted output:', quote?.tokenOutAmount)
+  }
+
+  return <Button title="Quote" onPress={loadQuote} />
+}
 ```
 
 ---

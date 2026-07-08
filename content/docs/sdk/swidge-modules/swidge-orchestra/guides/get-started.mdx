@@ -1,0 +1,116 @@
+---
+title: Get Started with Orchestra
+description: Install the Flashnet Orchestra community Swidge module and create an Orchestra protocol instance.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide shows how to [install the package](#install-the-package), [create source accounts](#create-source-accounts), [create Orchestra](#create-orchestra), and [make a first quote](#make-a-first-quote).
+
+## Install the package
+
+Install Orchestra and the WDK wallet base package:
+
+```bash title="Install Orchestra"
+npm install wdk-protocol-swidge-orchestra @tetherto/wdk-wallet@1.0.0-beta.11
+```
+
+Install the WDK wallet modules for the chains you plan to support:
+
+```bash title="Install WDK wallet modules"
+npm install @tetherto/wdk @tetherto/wdk-wallet-spark @tetherto/wdk-wallet-btc @tetherto/wdk-wallet-evm
+```
+
+## Create source accounts
+
+Create WDK accounts for the source chains your wallet supports. This example registers Spark, Bitcoin L1, and Arbitrum source accounts.
+
+```javascript title="Create WDK accounts"
+import WDK from '@tetherto/wdk'
+import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import WalletManagerSpark from '@tetherto/wdk-wallet-spark'
+
+const wdk = new WDK(seedPhrase)
+  .registerWallet('spark', WalletManagerSpark, {
+    network: 'MAINNET',
+    syncAndRetry: true
+  })
+  .registerWallet('bitcoin', WalletManagerBtc, {
+    network: 'bitcoin',
+    client: {
+      type: 'electrum',
+      clientConfig: {
+        host: 'electrum.blockstream.info',
+        port: 50001
+      }
+    }
+  })
+  .registerWallet('arbitrum', WalletManagerEvm, {
+    chainId: 42161,
+    provider: process.env.ARBITRUM_RPC_URL
+  })
+
+const spark = await wdk.getAccount('spark', 0)
+const arbitrum = await wdk.getAccount('arbitrum', 0)
+```
+
+## Create Orchestra
+
+Create one `Orchestra` instance per source wallet account. Set `sourceChain` explicitly.
+
+```javascript title="Create Orchestra for Spark source routes"
+import Orchestra from 'wdk-protocol-swidge-orchestra'
+
+const orchestra = new Orchestra(spark, {
+  sourceChain: 'spark',
+  apiKey: process.env.FLASHNET_API_KEY,
+  baseUrl: 'https://orchestration.flashnet.xyz'
+})
+```
+
+EVM token sources need token contract addresses. Common USDT addresses are built in, but production wallets should pass their own allowlist.
+
+```javascript title="Create Orchestra for Arbitrum USDT source routes"
+const arbitrumOrchestra = new Orchestra(arbitrum, {
+  sourceChain: 'arbitrum',
+  apiKey: process.env.FLASHNET_API_KEY,
+  sourceTokenAddresses: {
+    'arbitrum:USDT': '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9'
+  }
+})
+```
+
+## Make a first quote
+
+Use `quoteSwidge()` to estimate a route before showing a confirmation screen.
+
+```javascript title="Quote Spark BTC to TRON USDT"
+const quote = await orchestra.quoteSwidge({
+  fromToken: 'spark:BTC',
+  toToken: 'tron:USDT',
+  fromTokenAmount: 7116n,
+  recipient: 'TRecipient...',
+  slippage: 0.01
+})
+
+console.log(quote.toTokenAmount)
+console.log(quote.toTokenAmountMin)
+console.log(quote.fees)
+```
+
+`quoteSwidge()` does not reserve a deposit address or move funds. Call `swidge()` or the split `prepareSwap()` and `executeSwapIntent()` flow only after the user has reviewed the route, amount, fees, and recipient.
+
+## Next steps
+
+<Cards>
+<Card title="Quote and Execute" href="/sdk/swidge-modules/swidge-orchestra/guides/quote-and-execute">
+Show confirmation and execute Orchestra routes.
+</Card>
+<Card title="State and Recovery" href="/sdk/swidge-modules/swidge-orchestra/guides/state-and-recovery">
+Use the production split flow and persist state.
+</Card>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-orchestra/configuration">
+Review auth, source-chain, token, timeout, and callback options.
+</Card>
+</Cards>

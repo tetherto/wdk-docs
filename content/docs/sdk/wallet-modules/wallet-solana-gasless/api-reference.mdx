@@ -1,0 +1,377 @@
+---
+title: API Reference
+description: API documentation for @tetherto/wdk-wallet-solana-gasless.
+docType: reference
+schemaType: APIReference
+icon: Code
+---
+
+<Callout type="info">
+This page documents the published `@tetherto/wdk-wallet-solana-gasless@1.0.0-beta.1` type declarations.
+</Callout>
+
+## Imports
+
+```javascript title="Default import"
+import WalletManagerSolanaGasless from '@tetherto/wdk-wallet-solana-gasless'
+```
+
+```javascript title="Named imports"
+import {
+  WalletAccountReadOnlySolanaGasless,
+  WalletAccountSolanaGasless
+} from '@tetherto/wdk-wallet-solana-gasless'
+```
+
+## Exports
+
+| Export | Kind | Description |
+|--------|------|-------------|
+| `WalletManagerSolanaGasless` | Class, default export | Derives Solana gasless accounts from a seed. |
+| `WalletAccountSolanaGasless` | Class | Owned account with signing, sending, SPL transfer, quote, and read methods. |
+| `WalletAccountReadOnlySolanaGasless` | Class | Read-only account for balances, quotes, receipts, and signature verification. |
+| `KeyPair` | Type | Raw account key pair shape inherited from `@tetherto/wdk-wallet`. |
+| `SolanaGaslessWalletConfig` | Type | Solana wallet config plus required paymaster options. |
+| `SolanaGaslessWalletPaymasterConfig` | Type | Paymaster endpoint, address, and token configuration. |
+| `SolanaGaslessWalletPaymasterConfigOverrides` | Type | Per-call overrides for paymaster token and fee caps. |
+| `PaymasterTokenConfig` | Type | Paymaster fee token configuration. |
+| `SolanaTransaction` | Type | Simple Solana transaction input or transaction message input inherited from the Solana wallet module. |
+| `SolanaTransactionReceipt` | Type | Return type for `getTransactionReceipt()`. |
+| `FullySignedTransaction` | Type | Fully signed Solana transaction returned by `signTransaction()`. |
+| `TransactionResult` | Type | Result shape for send operations. |
+| `TransferOptions` | Type | SPL transfer input options. |
+| `TransferResult` | Type | Result shape for SPL token transfers. |
+
+## WalletManagerSolanaGasless
+
+Derives and returns owned Solana gasless accounts from a BIP-39 seed phrase or seed bytes. Extends `WalletManager` from `@tetherto/wdk-wallet`.
+
+### Constructor
+
+```typescript
+new WalletManagerSolanaGasless(
+  seed: string | Uint8Array,
+  config?: SolanaGaslessWalletConfig
+)
+```
+
+**Parameters:**
+
+- `seed`: BIP-39 mnemonic seed phrase or seed bytes.
+- `config`: Solana RPC and Kora-compatible paymaster configuration.
+
+### Methods
+
+| Method | Description | Returns |
+|--------|-------------|---------|
+| `getAccount(index?)` | Returns the account at the default Solana derivation path for the given index. | `Promise<WalletAccountSolanaGasless>` |
+| `getAccountByPath(path)` | Returns the account at a specific SLIP-0010 derivation path. | `Promise<WalletAccountSolanaGasless>` |
+
+#### getAccount
+
+```typescript
+getAccount(index?: number): Promise<WalletAccountSolanaGasless>
+```
+
+Returns the account for `m/44'/501'/index'/0'`. If `index` is omitted, the module uses `0`.
+
+```javascript title="Get the first account"
+const wallet = new WalletManagerSolanaGasless(seedPhrase, config)
+const account = await wallet.getAccount(0)
+```
+
+#### getAccountByPath
+
+```typescript
+getAccountByPath(path: string): Promise<WalletAccountSolanaGasless>
+```
+
+Returns the account at a specific Solana SLIP-0010 derivation path.
+
+```javascript title="Get an account by path"
+const account = await wallet.getAccountByPath("0'/0'/1'")
+```
+
+## WalletAccountSolanaGasless
+
+Owned Solana gasless account. Extends `WalletAccountReadOnlySolanaGasless` and implements `IWalletAccount` from `@tetherto/wdk-wallet`.
+
+### Constructor
+
+```typescript
+new WalletAccountSolanaGasless(
+  seed: string | Uint8Array,
+  path: string,
+  config: SolanaGaslessWalletConfig
+)
+```
+
+**Parameters:**
+
+- `seed`: BIP-39 mnemonic seed phrase or seed bytes.
+- `path`: SLIP-0010 derivation path, for example `"0'/0'/0'"`.
+- `config`: Solana RPC and Kora-compatible paymaster configuration.
+
+### Properties
+
+| Property | Description | Type |
+|----------|-------------|------|
+| `index` | Derivation path index for this account. | `number` |
+| `path` | Derivation path for this account. | `string` |
+| `keyPair` | Raw Solana Ed25519 key pair bytes. | `KeyPair` |
+
+### Methods
+
+| Method | Description | Returns |
+|--------|-------------|---------|
+| `getAddress()` | Returns the account address. | `Promise<string>` |
+| `sign(message)` | Signs a message with the account private key. | `Promise<string>` |
+| `verify(message, signature)` | Verifies a message signature against the account address. | `Promise<boolean>` |
+| `getBalance()` | Returns the native SOL balance in lamports. | `Promise<bigint>` |
+| `getTokenBalance(tokenAddress)` | Returns one SPL token balance in base units. | `Promise<bigint>` |
+| `getTokenBalances(tokenAddresses)` | Returns multiple SPL token balances in base units. | `Promise<Record<string, bigint>>` |
+| `getPaymasterTokenBalance()` | Returns the configured paymaster token balance in base units. | `Promise<bigint>` |
+| `quoteSendTransaction(tx, config?)` | Quotes the paymaster fee for a native send or transaction message. | `Promise<Omit<TransactionResult, 'hash'>>` |
+| `signTransaction(tx, config?)` | Returns a fully signed paymaster-funded transaction without broadcasting it. | `Promise<FullySignedTransaction>` |
+| `sendTransaction(tx, config?)` | Sends a paymaster-funded native transfer or transaction message. | `Promise<TransactionResult>` |
+| `quoteTransfer(options, config?)` | Quotes the paymaster fee for an SPL transfer. | `Promise<Omit<TransferResult, 'hash'>>` |
+| `transfer(options, config?)` | Transfers SPL tokens through the configured paymaster. | `Promise<TransferResult>` |
+| `getTransactionReceipt(hash)` | Reads a Solana transaction receipt by signature. | `Promise<SolanaTransactionReceipt \| null>` |
+| `toReadOnlyAccount()` | Returns a read-only copy of the account. | `Promise<WalletAccountReadOnlySolanaGasless>` |
+| `dispose()` | Clears private key material held by the account. | `void` |
+
+#### getAddress
+
+```typescript
+getAddress(): Promise<string>
+```
+
+Returns the account's base58-encoded Solana address.
+
+#### sign
+
+```typescript
+sign(message: string): Promise<string>
+```
+
+Signs a message and returns its signature.
+
+#### signTransaction
+
+```typescript
+signTransaction(
+  tx: SolanaTransaction,
+  config?: SolanaGaslessWalletPaymasterConfigOverrides
+): Promise<FullySignedTransaction>
+```
+
+Signs a paymaster-funded transaction without broadcasting it. The module adds paymaster payment instructions, signs with the account owner, asks the paymaster to sign, and returns the fully signed transaction.
+
+The method throws when the quoted paymaster fee is greater than `transactionMaxFee`.
+
+#### sendTransaction
+
+```typescript
+sendTransaction(
+  tx: SolanaTransaction,
+  config?: SolanaGaslessWalletPaymasterConfigOverrides
+): Promise<TransactionResult>
+```
+
+Sends a paymaster-funded native transfer or prebuilt transaction message.
+
+```javascript title="Send native SOL"
+const result = await account.sendTransaction({
+  to: 'Recipient1111111111111111111111111111111',
+  value: 1000000n
+}, {
+  transactionMaxFee: 500000n
+})
+
+console.log(result.hash)
+console.log(result.fee)
+```
+
+The method throws when the quoted paymaster fee is greater than `transactionMaxFee`.
+
+#### transfer
+
+```typescript
+transfer(
+  options: TransferOptions,
+  config?: SolanaGaslessWalletPaymasterConfigOverrides
+): Promise<TransferResult>
+```
+
+Transfers SPL tokens through the paymaster. Native SOL transfers are handled by `sendTransaction()` instead.
+
+```javascript title="Transfer an SPL token"
+const result = await account.transfer({
+  token: 'TokenMint111111111111111111111111111111111',
+  recipient: 'Recipient1111111111111111111111111111111',
+  amount: 1000000n
+}, {
+  transferMaxFee: 500000n
+})
+```
+
+The method throws when the quoted paymaster fee is greater than `transferMaxFee`.
+
+#### quoteSendTransaction
+
+```typescript
+quoteSendTransaction(
+  tx: SolanaTransaction,
+  config?: SolanaGaslessWalletPaymasterConfigOverrides
+): Promise<Omit<TransactionResult, 'hash'>>
+```
+
+Quotes the paymaster fee for `sendTransaction()` or `signTransaction()` inputs. Quote methods return estimates and do not enforce `transactionMaxFee`.
+
+#### quoteTransfer
+
+```typescript
+quoteTransfer(
+  options: TransferOptions,
+  config?: SolanaGaslessWalletPaymasterConfigOverrides
+): Promise<Omit<TransferResult, 'hash'>>
+```
+
+Quotes the paymaster fee for `transfer()` inputs. Quote methods return estimates and do not enforce `transferMaxFee`.
+
+#### getTransactionReceipt
+
+```typescript
+getTransactionReceipt(hash: string): Promise<SolanaTransactionReceipt | null>
+```
+
+Returns the Solana transaction receipt for a submitted signature, or `null` if the transaction has not been included in a block yet.
+
+#### toReadOnlyAccount
+
+```typescript
+toReadOnlyAccount(): Promise<WalletAccountReadOnlySolanaGasless>
+```
+
+Returns a read-only account for the same address.
+
+## WalletAccountReadOnlySolanaGasless
+
+Read-only Solana gasless account for an address. Extends `WalletAccountReadOnly` from `@tetherto/wdk-wallet`.
+
+### Constructor
+
+```typescript
+new WalletAccountReadOnlySolanaGasless(
+  addr: string,
+  config: Omit<SolanaGaslessWalletConfig, 'transferMaxFee' | 'transactionMaxFee'>
+)
+```
+
+**Parameters:**
+
+- `addr`: Solana account address.
+- `config`: Solana RPC and paymaster configuration. Read-only accounts do not accept `transferMaxFee` or `transactionMaxFee`.
+
+### Methods
+
+| Method | Description | Returns |
+|--------|-------------|---------|
+| `getBalance()` | Returns the native SOL balance in lamports. | `Promise<bigint>` |
+| `getTokenBalance(tokenAddress)` | Returns one SPL token balance in base units. | `Promise<bigint>` |
+| `getTokenBalances(tokenAddresses)` | Returns multiple SPL token balances in base units. | `Promise<Record<string, bigint>>` |
+| `getPaymasterTokenBalance()` | Returns the configured paymaster token balance in base units. | `Promise<bigint>` |
+| `quoteSendTransaction(tx, config?)` | Quotes the paymaster fee for a native send or transaction message. | `Promise<Omit<TransactionResult, 'hash'>>` |
+| `quoteTransfer(options, config?)` | Quotes the paymaster fee for an SPL transfer. | `Promise<Omit<TransferResult, 'hash'>>` |
+| `getTransactionReceipt(hash)` | Reads a Solana transaction receipt by signature. | `Promise<SolanaTransactionReceipt \| null>` |
+| `verify(message, signature)` | Verifies a message signature against the account address. | `Promise<boolean>` |
+
+## Configuration Types
+
+### SolanaGaslessWalletConfig
+
+```typescript
+type SolanaGaslessWalletConfig =
+  SolanaWalletConfig & SolanaGaslessWalletPaymasterConfig
+```
+
+Combines the base Solana wallet configuration with the required paymaster configuration.
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `provider` | `string \| string[]` | No | Solana RPC endpoint or ordered failover list. RPC-backed reads, quotes, signing, sending, and transfers require a usable `provider` or `rpcUrl`. |
+| `rpcUrl` | `string \| string[]` | No | Deprecated alias inherited from the base Solana wallet module. Use `provider`. |
+| `commitment` | `'processed' \| 'confirmed' \| 'finalized'` | No | Solana commitment level for reads and receipts. |
+| `retries` | `number` | No | Additional retry attempts for ordered Solana RPC or paymaster failover lists. Default: `3`. |
+| `paymasterUrl` | `string \| KoraClientOptions \| Array<string \| KoraClientOptions>` | Yes | Kora-compatible paymaster endpoint, client options, or ordered failover list. |
+| `paymasterAddress` | `string` | Yes | Solana address used as the transaction fee payer. |
+| `paymasterToken` | `PaymasterTokenConfig` | Yes | Token used by the paymaster to quote and charge fees. |
+| `transferMaxFee` | `number \| bigint` | No | Fee cap for `transfer()` calls, in the paymaster token's base units. |
+| `transactionMaxFee` | `number \| bigint` | No | Fee cap for `sendTransaction()` and `signTransaction()` calls, in the paymaster token's base units. |
+
+### SolanaGaslessWalletPaymasterConfig
+
+```typescript
+type SolanaGaslessWalletPaymasterConfig = {
+  paymasterUrl: string | KoraClientOptions | (string | KoraClientOptions)[]
+  paymasterAddress: string
+  paymasterToken: PaymasterTokenConfig
+}
+```
+
+### PaymasterTokenConfig
+
+```typescript
+type PaymasterTokenConfig = {
+  address: string
+}
+```
+
+### SolanaGaslessWalletPaymasterConfigOverrides
+
+```typescript
+type SolanaGaslessWalletPaymasterConfigOverrides = Partial<
+  Pick<SolanaGaslessWalletPaymasterConfig, 'paymasterToken'> &
+  Pick<SolanaWalletConfig, 'transferMaxFee' | 'transactionMaxFee'>
+>
+```
+
+Pass overrides as the second argument to quote, sign, send, or transfer methods.
+
+| Override | Applies to | Description |
+|----------|------------|-------------|
+| `paymasterToken` | Quotes, signing, sends, transfers | Overrides the fee token for one call. |
+| `transactionMaxFee` | `sendTransaction()`, `signTransaction()` | Cancels the operation when the quoted transaction fee is above the cap. |
+| `transferMaxFee` | `transfer()` | Cancels the operation when the quoted transfer fee is above the cap. |
+
+## ConfigurationError
+
+The beta.1 TypeScript declarations include `ConfigurationError`, and the runtime uses that error name for missing required paymaster fields. The beta.1 JavaScript root entrypoint does not re-export the class, so JavaScript code should not import `ConfigurationError` from `@tetherto/wdk-wallet-solana-gasless`.
+
+```typescript
+class ConfigurationError extends Error {
+  constructor(message: string)
+}
+```
+
+Missing `paymasterUrl`, `paymasterAddress`, or `paymasterToken` throws an error named `ConfigurationError`. An empty `paymasterUrl` failover list throws a plain `Error`.
+
+## Next Steps
+
+<Cards>
+<Card title="Configuration" href="/sdk/wallet-modules/wallet-solana-gasless/configuration">
+Configure Solana RPC, paymaster endpoints, fee tokens, and fee caps.
+</Card>
+<Card title="Send Transactions" href="/sdk/wallet-modules/wallet-solana-gasless/guides/send-transactions">
+Quote, sign, and send paymaster-funded transactions.
+</Card>
+<Card title="Transfer SPL Tokens" href="/sdk/wallet-modules/wallet-solana-gasless/guides/transfer-tokens">
+Transfer SPL tokens through the paymaster.
+</Card>
+</Cards>
+
+***
+
+## Need Help?
+
+<SupportCards />

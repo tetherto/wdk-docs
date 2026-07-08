@@ -1,0 +1,168 @@
+---
+title: Orchestra Configuration
+description: Configure Flashnet Orchestra API access, source chains, asset identifiers, timeouts, and state callbacks.
+docType: reference
+schemaType: TechArticle
+---
+
+`Orchestra` accepts a WDK wallet account and an `OrchestraConfig` object.
+
+```javascript title="Create an Orchestra instance"
+import Orchestra from 'wdk-protocol-swidge-orchestra'
+
+const orchestra = new Orchestra(account, {
+  sourceChain: 'spark',
+  apiKey: process.env.FLASHNET_API_KEY,
+  baseUrl: 'https://orchestration.flashnet.xyz'
+})
+```
+
+Create one `Orchestra` instance per source wallet account. Set `sourceChain` explicitly because WDK accounts do not always expose a canonical chain id to protocol constructors.
+
+## Install
+
+Install the Orchestra package and the WDK wallet base package:
+
+```bash title="Install Orchestra"
+npm install wdk-protocol-swidge-orchestra @tetherto/wdk-wallet@1.0.0-beta.11
+```
+
+Install the WDK wallet modules for the source accounts your application supports:
+
+```bash title="Install WDK wallet modules"
+npm install @tetherto/wdk @tetherto/wdk-wallet-spark @tetherto/wdk-wallet-btc @tetherto/wdk-wallet-evm
+```
+
+## Constructor
+
+```javascript
+new Orchestra(account, config?)
+```
+
+Parameters:
+
+- `account` (`IWalletAccount | IWalletAccountReadOnly | undefined`): WDK account used for source payments, read-only status access, or discovery-only use.
+- `config` (`OrchestraConfig`, optional): API, source-chain, asset, timeout, and callback settings.
+
+## Core config
+
+| Field | Type | Description |
+|---|---|---|
+| `apiKey` | `string` | Flashnet Orchestra API key. Can be a backend key or scoped client key. |
+| `baseUrl` | `string` | Orchestra API base URL. Defaults to the package client default when omitted. |
+| `fetch` | `typeof fetch` | Custom fetch implementation. |
+| `authMode` | `'admin' \| 'client' \| 'auto'` | Controls API key handling for status and SSE flows. |
+| `sourceChain` | `string` | Default source chain for unqualified source assets. |
+| `defaultSourceChain` | `string` | Alias for `sourceChain`. |
+| `chain` | `string` | Alias for `sourceChain`. |
+| `client` | `OrchestraClient` | Custom client instance. |
+
+## Authentication
+
+Use a backend key from a server or trusted runtime:
+
+```javascript title="Backend key"
+const orchestra = new Orchestra(account, {
+  sourceChain: 'spark',
+  apiKey: process.env.FLASHNET_API_KEY
+})
+```
+
+Use `authMode: 'client'` for scoped client keys:
+
+```javascript title="Scoped client key"
+const orchestra = new Orchestra(account, {
+  sourceChain: 'spark',
+  apiKey: process.env.FLASHNET_CLIENT_KEY,
+  authMode: 'client'
+})
+```
+
+Scoped client-key submissions can return `readToken`. Store that token with the submitted state and pass the full state back to status methods.
+
+Backend proxy integrations can provide headers per request:
+
+```javascript title="Backend proxy headers"
+const orchestra = new Orchestra(account, {
+  sourceChain: 'spark',
+  baseUrl: 'https://your-api.example.com/orchestra',
+  getAuthHeaders: async () => ({
+    Authorization: `Bearer ${await getSessionToken()}`
+  })
+})
+```
+
+For direct browser SSE, provide a scoped SSE token with `sseToken` or `getSseToken`, or proxy SSE through your backend.
+
+## Asset config
+
+| Field | Type | Description |
+|---|---|---|
+| `sourceTokenAddresses` | `Record<string, string>` | Source token contract addresses keyed by `'<chain>:<asset>'`. |
+| `tokenAddresses` | `Record<string, string>` | Alias for `sourceTokenAddresses`. |
+| `assetAddresses` | `Record<string, string>` | Alias for `sourceTokenAddresses`. |
+| `sparkTokenIdentifiers` | `Record<string, string>` | Spark token identifiers keyed by Orchestra asset symbol. |
+| `tokenIdentifiers` | `Record<string, string>` | Alias for `sparkTokenIdentifiers`. |
+| `nativeAssets` | `Record<string, string>` | Native asset overrides by source chain. |
+| `tokenDecimals` | `Record<string, number>` | Token decimal overrides by chain-qualified asset key. |
+
+EVM token sources need token contract addresses. The package includes common USDT source addresses, but production wallets should pass their own allowlist.
+
+```javascript title="Configure EVM USDT source token"
+const orchestra = new Orchestra(arbitrumAccount, {
+  sourceChain: 'arbitrum',
+  apiKey: process.env.FLASHNET_API_KEY,
+  sourceTokenAddresses: {
+    'arbitrum:USDT': '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9'
+  }
+})
+```
+
+Spark tokens other than BTC need Spark token identifiers:
+
+```javascript title="Configure Spark token identifiers"
+const orchestra = new Orchestra(sparkAccount, {
+  sourceChain: 'spark',
+  apiKey: process.env.FLASHNET_API_KEY,
+  sparkTokenIdentifiers: {
+    USDB: 'btkn1...'
+  }
+})
+```
+
+## Safety and timeout config
+
+| Field | Type | Description |
+|---|---|---|
+| `slippageBps` | `number` | Default slippage in basis points. |
+| `timeoutMs` | `number` | HTTP request timeout. |
+| `maxRetries` | `number` | General request retry count. |
+| `retryDelayMs` | `number` | General retry delay. |
+| `submitMaxRetries` | `number` | Submit retry count. Bitcoin submit retries cover propagation delays for `tx_not_found` and `vout_not_found`. |
+| `submitRetryDelayMs` | `number` | Submit retry delay. |
+| `quoteExpirySafetyMs` | `number` | Safety window before quote expiry when sending source payments. |
+| `pollIntervalMs` | `number` | Default polling interval for `waitForCompletion()`. |
+| `waitTimeoutMs` | `number` | Default wait timeout for `waitForCompletion()`. |
+| `idempotencyKeyFactory` | `() => string` | Custom idempotency key factory for quote and submit calls. |
+
+## State callbacks
+
+| Field | Type | Description |
+|---|---|---|
+| `onIntent` | `(intent) => void \| Promise<void>` | Called after `prepareSwap()` creates an intent. |
+| `onStateChange` | `(event, state) => void \| Promise<void>` | Called for persisted state transitions. |
+| `onOrderStatus` | `(status) => void \| Promise<void>` | Called by `waitForCompletion()` after each status read. |
+
+Use `onStateChange` to persist state transitions that can affect funds:
+
+```javascript title="Persist state transitions"
+const orchestra = new Orchestra(account, {
+  sourceChain: 'spark',
+  apiKey: process.env.FLASHNET_API_KEY,
+  onStateChange: async (event, state) => {
+    await saveSwapState(event, state)
+  }
+})
+```
+
+See [State and Recovery](/sdk/swidge-modules/swidge-orchestra/guides/state-and-recovery) before using this package with production funds.

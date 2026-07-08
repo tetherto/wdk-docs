@@ -1,0 +1,121 @@
+---
+title: Handle Errors
+description: Handle paymaster, fee, transaction, and cleanup errors in Solana gasless wallets.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide covers configuration errors, paymaster failures, fee caps, transaction message fee payer checks, and memory cleanup.
+
+## Handle Configuration Errors
+
+The module validates required paymaster fields when you create an account:
+
+```javascript title="Configuration error handling"
+try {
+  const account = await wallet.getAccount(0)
+} catch (error) {
+  if (error.name === 'ConfigurationError') {
+    console.error('Invalid paymaster config:', error.message)
+  }
+}
+```
+
+Required paymaster fields are `paymasterUrl`, `paymasterAddress`, and `paymasterToken`.
+
+<Callout type="info">
+In `1.0.0-beta.1`, the JavaScript root entrypoint does not re-export the `ConfigurationError` class. Check `error.name` or `error.message` instead of importing the class from the package root.
+</Callout>
+
+## Handle Transaction Fee Caps
+
+`sendTransaction()` and `signTransaction()` throw when the quoted fee is greater than `transactionMaxFee`:
+
+```javascript title="Transaction fee cap handling"
+try {
+  const result = await account.sendTransaction({
+    to: 'Recipient1111111111111111111111111111111',
+    value: 1000000n
+  }, {
+    transactionMaxFee: 500000n
+  })
+  console.log('Transaction submitted:', result.hash)
+} catch (error) {
+  if (error.message.includes('Exceeded maximum fee cost for transaction operation')) {
+    console.error('Transaction cancelled because the paymaster fee exceeded the cap.')
+  }
+}
+```
+
+## Handle Transfer Fee Caps
+
+`transfer()` throws when its quoted fee is greater than `transferMaxFee`:
+
+```javascript title="Transfer fee cap handling"
+try {
+  const result = await account.transfer({
+    token: 'TokenMint111111111111111111111111111111111',
+    recipient: 'Recipient1111111111111111111111111111111',
+    amount: 1000000n
+  }, {
+    transferMaxFee: 500000n
+  })
+  console.log('Transfer submitted:', result.hash)
+} catch (error) {
+  if (error.message.includes('Exceeded maximum fee cost')) {
+    console.error('Transfer cancelled because the paymaster fee exceeded the cap.')
+  }
+}
+```
+
+## Handle Fee Payer Mismatches
+
+When you pass a prebuilt `TransactionMessage`, the explicit fee payer must match `paymasterAddress`:
+
+```javascript title="Fee payer mismatch handling"
+try {
+  await account.sendTransaction(transactionMessage)
+} catch (error) {
+  if (error.message.includes('does not match paymaster address')) {
+    console.error('Set the TransactionMessage fee payer to the configured paymaster address.')
+  }
+}
+```
+
+## Handle Paymaster Failures
+
+Paymaster calls can fail when the endpoint is unavailable, the paymaster cannot quote the transaction, or the paymaster token is not funded for the requested flow. Wrap quote and send calls in `try/catch` blocks:
+
+```javascript title="Paymaster error handling"
+try {
+  const quote = await account.quoteSendTransaction({
+    to: 'Recipient1111111111111111111111111111111',
+    value: 1000000n
+  })
+  console.log('Paymaster fee estimate:', quote.fee)
+} catch (error) {
+  console.error('Unable to quote paymaster fee:', error.message)
+}
+```
+
+Use ordered `paymasterUrl` arrays and `retries` when you need endpoint failover.
+
+## Dispose of Sensitive Data
+
+Call `dispose()` on owned accounts and wallet managers when private keys are no longer needed:
+
+```javascript title="Memory cleanup"
+try {
+  await account.sendTransaction({
+    to: 'Recipient1111111111111111111111111111111',
+    value: 1000000n
+  })
+} finally {
+  account.dispose()
+  wallet.dispose()
+}
+```
+
+<Callout type="warn">
+Read-only accounts do not hold private keys, but owned accounts wrap a standard Solana account and should be disposed after use.
+</Callout>
