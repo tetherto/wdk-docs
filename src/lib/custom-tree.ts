@@ -250,6 +250,17 @@ export const customTree: Node[] = [
 
   separator('Swap and Bridge'),
   page('Swidge protocol interface', '/sdk/swidge-modules', 'Route'),
+  folder('Orchestra', '/sdk/swidge-modules/swidge-orchestra', 'Waypoints', [
+    usage('/sdk/swidge-modules/swidge-orchestra/usage'),
+    guides([
+      page('Get Started', '/sdk/swidge-modules/swidge-orchestra/guides/get-started'),
+      page('Quote and Execute', '/sdk/swidge-modules/swidge-orchestra/guides/quote-and-execute'),
+      page('State and Recovery', '/sdk/swidge-modules/swidge-orchestra/guides/state-and-recovery'),
+      page('Handle Errors', '/sdk/swidge-modules/swidge-orchestra/guides/handle-errors'),
+    ]),
+    configuration('/sdk/swidge-modules/swidge-orchestra/configuration'),
+    apiReference('/sdk/swidge-modules/swidge-orchestra/api-reference'),
+  ]),
   folder('Rhino.fi', '/sdk/swidge-modules/swidge-rhinofi', 'Waypoints', [
     usage('/sdk/swidge-modules/swidge-rhinofi/usage'),
     configuration('/sdk/swidge-modules/swidge-rhinofi/configuration'),

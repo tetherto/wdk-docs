@@ -1,0 +1,138 @@
+---
+title: Orchestra Usage
+description: Discover, quote, execute, and track Orchestra Swidge routes from WDK wallet accounts.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide explains how to [discover routes](#discover-routes), [quote before execution](#quote-before-execution), [execute routes](#execute-routes), and [track status](#track-status) with `wdk-protocol-swidge-orchestra`.
+
+## Discover routes
+
+Use `getSupportedChains()` and `getSupportedTokens(options?)` to build route selectors from the package-filtered route set. The live [route matrix](https://orchestration.flashnet.xyz/v1/orchestration/routes) is provider-level data; filter it through registered WDK source accounts and the package caveats before exposing routes in your UI.
+
+```javascript title="Discover supported routes"
+const chains = await orchestra.getSupportedChains()
+
+const sparkToTronTokens = await orchestra.getSupportedTokens({
+  fromChain: 'spark',
+  toChain: 'tron'
+})
+
+console.log(chains)
+console.log(sparkToTronTokens)
+```
+
+The returned token identifiers use chain-qualified asset references such as `spark:BTC`, `bitcoin:BTC`, `bsc:USDT`, or `tron:USDT`. Use the values returned by discovery when building UI route options.
+
+## Quote before execution
+
+Call `quoteSwidge()` before execution. It calls the Orchestra estimate endpoint and does not reserve a deposit address.
+
+```javascript title="Quote Spark BTC to TRON USDT"
+const quote = await orchestra.quoteSwidge({
+  fromToken: 'spark:BTC',
+  toToken: 'tron:USDT',
+  fromTokenAmount: 7116n,
+  recipient: 'TRecipient...',
+  slippage: 0.01
+})
+
+console.log(quote.fromTokenAmount)
+console.log(quote.toTokenAmount)
+console.log(quote.toTokenAmountMin)
+console.log(quote.fees)
+```
+
+Treat quote output as indicative UI data. `swidge()` creates a fresh Orchestra quote through `prepareSwap()`, so do not assume a prior `quoteSwidge()` response locks rate, amount, fee, expiry, or deposit address.
+
+Use smallest units:
+
+| Asset | Unit |
+|---|---|
+| BTC | sats |
+| USDT | 6-decimal token units |
+| EVM native gas asset | wei |
+
+## Execute routes
+
+Use `swidge()` only after showing the quote details, route, recipient, fees, and expected output to the user.
+
+```javascript title="Execute after user confirmation"
+const options = {
+  fromToken: 'spark:BTC',
+  toToken: 'tron:USDT',
+  fromTokenAmount: 7116n,
+  recipient: 'TRecipient...',
+  slippage: 0.01
+}
+
+const quote = await orchestra.quoteSwidge(options)
+showConfirmation(quote)
+
+const result = await orchestra.swidge(options, {
+  maxNetworkFeeBps: 20n,
+  maxProtocolFeeBps: 100n
+})
+
+console.log(result.id)
+console.log(result.hash)
+console.log(result.transactions)
+```
+
+<Callout type="warn">
+`swidge()` can send the source payment from the WDK account. Production wallets should persist every state transition through `onStateChange` and persist `OrchestraSubmitError.state` before retrying after failures.
+</Callout>
+
+For production funds, prefer the split flow documented in [State and Recovery](/sdk/swidge-modules/swidge-orchestra/guides/state-and-recovery).
+
+## Track status
+
+Use `getSwidgeStatus()` when you have the Swidge result id:
+
+```javascript title="Read Swidge status"
+const status = await orchestra.getSwidgeStatus(result.id)
+
+if (status.status === 'completed') {
+  console.log('Route completed')
+}
+```
+
+For submitted Orchestra states, use `getOrderStatus()`, `waitForCompletion()`, or `subscribeOrder()`:
+
+```javascript title="Wait for final order status"
+const finalStatus = await orchestra.waitForCompletion(submitted, {
+  pollIntervalMs: 5000,
+  timeoutMs: 7200000,
+  onStatus: async (status) => {
+    await saveOrderStatus(status)
+  }
+})
+
+console.log(finalStatus.order?.status ?? finalStatus.status)
+```
+
+Scoped client-key submissions can return a `readToken`. Preserve it with the submitted state so later status reads can authenticate without an admin key. Keep admin API keys on trusted infrastructure.
+
+```javascript title="Read status with a client read token"
+const submitted = await loadSubmittedState(result.id)
+const readToken = submitted.readToken
+
+const status = await orchestra.getSwidgeStatus(result.id, {
+  readToken
+})
+```
+
+## Next steps
+
+<Cards>
+<Card title="Get Started" href="/sdk/swidge-modules/swidge-orchestra/guides/get-started">
+Install and configure the package.
+</Card>
+<Card title="State and Recovery" href="/sdk/swidge-modules/swidge-orchestra/guides/state-and-recovery">
+Persist intents and resume in-flight orders.
+</Card>
+<Card title="Handle Errors" href="/sdk/swidge-modules/swidge-orchestra/guides/handle-errors">
+Recover from API, state, submit, and timeout failures.
+</Card>
+</Cards>
