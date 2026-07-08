@@ -1,0 +1,147 @@
+---
+title: LI.FI Swidge API Reference
+description: API reference for @kenny_io/wdk-protocol-swidge-lifi.
+docType: reference
+schemaType: APIReference
+icon: Code
+---
+
+## LifiSwidgeProtocol
+
+`LifiSwidgeProtocol` extends `SwidgeProtocol` from `@tetherto/wdk-wallet/protocols` and implements the shared WDK swidge methods.
+
+```javascript
+import {
+  LifiSwidgeProtocol
+} from '@kenny_io/wdk-protocol-swidge-lifi'
+
+const swidge = new LifiSwidgeProtocol(account, config)
+```
+
+## Constructor
+
+```typescript
+new LifiSwidgeProtocol(account?, config?)
+```
+
+| Account | Available operations |
+|---------|----------------------|
+| `WalletAccountEvm` | Discovery, quote, status, and execution. |
+| `WalletAccountEvmErc4337` | Discovery, quote, status, and execution through a smart account. |
+| `WalletAccountReadOnlyEvm` | Discovery, quote, and status. |
+| `undefined` | Discovery and account-independent quote setup. |
+
+## Methods
+
+| Method | Description |
+|--------|-------------|
+| `quoteSwidge(options)` | Returns a non-binding LI.FI route quote. |
+| `swidge(options, config?)` | Executes a swap, bridge, or combined route. |
+| `getSwidgeStatus(id, options?)` | Maps LI.FI status to WDK `SwidgeStatus`. |
+| `getSupportedChains()` | Returns chains supported by LI.FI. |
+| `getSupportedTokens(options?)` | Returns tokens supported by LI.FI, optionally filtered by chain context. |
+
+### `quoteSwidge(options)`
+
+```typescript
+quoteSwidge(options: SwidgeOptions): Promise<SwidgeQuote>
+```
+
+Use this before execution to estimate output amounts, minimum output, and fees.
+
+### `swidge(options, config?)`
+
+```typescript
+swidge(
+  options: SwidgeOptions,
+  config?: LifiSwidgeProtocolConfig
+): Promise<SwidgeResult>
+```
+
+Executes through the bound writable account. The module sends required approval transactions before the route transaction where needed.
+
+Throws before execution when validation fails, a configured fee cap is exceeded, or `trustedContracts` rejects the quote target or approval address.
+
+### `getSwidgeStatus(id, options?)`
+
+```typescript
+getSwidgeStatus(
+  id: string,
+  options?: SwidgeStatusOptions
+): Promise<SwidgeStatusResult>
+```
+
+Chain hints are optional:
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `fromChain` | `string \| number` | Source chain name or LI.FI chain ID. |
+| `toChain` | `string \| number` | Destination chain name or LI.FI chain ID. |
+
+## Config Type
+
+```typescript
+type LifiRouteOrder = 'RECOMMENDED' | 'FASTEST' | 'CHEAPEST'
+
+type LifiSwidgeProtocolConfig = {
+  maxNetworkFeeBps?: number | bigint
+  maxProtocolFeeBps?: number | bigint
+  provider?: string | Eip1193Provider
+  integrator?: string
+  apiKey?: string
+  order?: LifiRouteOrder
+  allowBridges?: string[]
+  denyBridges?: string[]
+  timeout?: number
+  retries?: number
+  retryDelay?: number
+  trustedContracts?: true | Record<number, string | string[]>
+}
+```
+
+## Status Mapping
+
+| LI.FI status | Substatus | WDK status |
+|--------------|-----------|------------|
+| `PENDING` | Any | `pending` |
+| `DONE` | `COMPLETED` | `completed` |
+| `DONE` | `PARTIAL` | `partial` |
+| `DONE` | `REFUNDED` | `refunded` |
+| `DONE` | `NOT_PROCESSABLE_REFUND_NEEDED` | `refund-pending` |
+| `FAILED` | Any | `failed` |
+| Any | Required actions present | `action-required` |
+
+## Fee Mapping
+
+| LI.FI cost | WDK fee type | Legacy field |
+|------------|--------------|--------------|
+| `gasCosts[].type === 'SEND'` | `network` | `fee` |
+| `feeCosts[]` | `protocol` | `bridgeFee` |
+
+## Error Types
+
+All LI.FI module errors extend `LifiProtocolError`.
+
+| Error | When thrown |
+|-------|-------------|
+| `LifiConfigurationError` | Required provider or configuration is missing or invalid. |
+| `LifiQuoteError` | LI.FI quote or token API request fails. |
+| `LifiExecutionError` | Execution cannot proceed, including fee-cap failures. |
+| `LifiStatusError` | Status lookup fails or the operation ID is invalid. |
+| `LifiReadOnlyAccountError` | `swidge()` is called without a writable account. |
+| `LifiUnsupportedChainError` | An unknown chain name is passed. |
+| `LifiTimeoutError` | A LI.FI request exceeds the configured timeout. |
+| `LifiNetworkError` | Network failures persist after retries. |
+| `LifiRateLimitError` | LI.FI returns 429 after retries are exhausted. |
+| `LifiSlippageError` | LI.FI returns 409 for a stale quote. |
+| `LifiValidationError` | User input or API transaction data fails validation. |
+| `LifiUntrustedContractError` | `trustedContracts` rejects a target or approval address. |
+
+<Cards>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-lifi/usage">
+Install, quote, execute, and track LI.FI routes.
+</Card>
+<Card title="Swidge Interface" href="/sdk/swidge-modules">
+Review the shared WDK swidge protocol shape.
+</Card>
+</Cards>

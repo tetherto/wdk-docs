@@ -1,0 +1,149 @@
+---
+title: LI.FI Swidge Usage
+description: Install and use @kenny_io/wdk-protocol-swidge-lifi for LI.FI swap and bridge routes.
+docType: how-to
+schemaType: TechArticle
+icon: BookOpen
+---
+
+## Install
+
+```bash
+npm install @kenny_io/wdk-protocol-swidge-lifi
+```
+
+Install the wallet module for the account type you plan to use:
+
+```bash
+npm install @tetherto/wdk-wallet-evm
+npm install @tetherto/wdk-wallet-evm-erc-4337
+```
+
+## Create the Protocol
+
+```javascript
+import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
+import { LifiSwidgeProtocol } from '@kenny_io/wdk-protocol-swidge-lifi'
+
+const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
+  provider: 'https://mainnet.infura.io/v3/YOUR_KEY'
+})
+
+const swidge = new LifiSwidgeProtocol(account, {
+  integrator: 'my-app',
+  order: 'RECOMMENDED'
+})
+```
+
+## Discover Chains and Tokens
+
+Discovery calls are read-only. They can be used before a wallet account is available.
+
+```javascript
+const discovery = new LifiSwidgeProtocol(undefined, {
+  provider: 'https://mainnet.infura.io/v3/YOUR_KEY'
+})
+
+const chains = await discovery.getSupportedChains()
+const ethereumTokens = await discovery.getSupportedTokens({
+  fromChain: 1
+})
+```
+
+Use returned chain and token identifiers when building route forms.
+
+## Quote a Route
+
+Call `quoteSwidge()` before execution so users can review the expected output and fees.
+
+```javascript
+const quote = await swidge.quoteSwidge({
+  fromToken: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  toToken: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  toChain: 'arbitrum',
+  recipient: '0xRecipient...',
+  fromTokenAmount: 10_000_000n,
+  slippage: 0.01
+})
+
+console.log('Expected output:', quote.toTokenAmount)
+console.log('Minimum output:', quote.toTokenAmountMin)
+console.log('Fees:', quote.fees)
+```
+
+For same-chain swaps, omit `toChain` and provide the destination token on the source chain.
+
+```javascript
+const quote = await swidge.quoteSwidge({
+  fromToken: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  toToken: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+  fromTokenAmount: 10_000_000n
+})
+```
+
+## Execute a Route
+
+After the user confirms the quote, call `swidge()` with the same route shape. The module handles required ERC-20 approvals, including reset-to-zero flows for tokens such as USDT on Ethereum.
+
+```javascript
+const result = await swidge.swidge({
+  fromToken: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  toToken: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  toChain: 'arbitrum',
+  recipient: '0xRecipient...',
+  fromTokenAmount: 10_000_000n
+}, {
+  maxNetworkFeeBps: 100,
+  maxProtocolFeeBps: 50
+})
+
+console.log('Swidge ID:', result.id)
+console.log('Transaction hash:', result.hash)
+```
+
+## Track Status
+
+Use `getSwidgeStatus()` with the returned operation ID. Chain hints can speed up indexing.
+
+```javascript
+const status = await swidge.getSwidgeStatus(result.id, {
+  fromChain: 1,
+  toChain: 42161
+})
+
+if (status.status === 'completed') {
+  console.log('Route completed')
+}
+```
+
+## Handle Common Failures
+
+```javascript
+import {
+  LifiProtocolError,
+  LifiRateLimitError,
+  LifiSlippageError,
+  LifiTimeoutError
+} from '@kenny_io/wdk-protocol-swidge-lifi'
+
+try {
+  await swidge.swidge(options)
+} catch (error) {
+  if (error instanceof LifiSlippageError) {
+    // Request a fresh quote before retrying.
+  } else if (error instanceof LifiRateLimitError || error instanceof LifiTimeoutError) {
+    // Retry later or use a configured API key.
+  } else if (error instanceof LifiProtocolError) {
+    // Handle another LI.FI module error.
+  }
+}
+```
+
+<Cards>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-lifi/configuration">
+Review route, API, fee, retry, and contract-validation options.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-lifi/api-reference">
+Detailed method, type, status, fee, and error reference.
+</Card>
+</Cards>
