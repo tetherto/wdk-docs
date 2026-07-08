@@ -248,7 +248,7 @@ export const customTree: Node[] = [
 
   separator('Swap and Bridge'),
   page('Swidge protocol interface', '/sdk/swidge-modules', 'Route'),
-  folder('rhino.fi', '/sdk/swidge-modules/swidge-rhinofi', 'Waypoints', [
+  folder('Rhino.fi', '/sdk/swidge-modules/swidge-rhinofi', 'Waypoints', [
     usage('/sdk/swidge-modules/swidge-rhinofi/usage'),
     configuration('/sdk/swidge-modules/swidge-rhinofi/configuration'),
     apiReference('/sdk/swidge-modules/swidge-rhinofi/api-reference'),
