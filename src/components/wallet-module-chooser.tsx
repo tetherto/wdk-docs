@@ -199,7 +199,7 @@ const walletModules: WalletModule[] = [
   },
   {
     id: "solana",
-    label: "Solana",
+    label: "Standard Solana",
     chain: "solana",
     goals: ["standard"],
     packageName: "@tetherto/wdk-wallet-solana",
@@ -210,6 +210,21 @@ const walletModules: WalletModule[] = [
       "You need Solana addresses, balances, transfers, and message signing.",
       "Your app is not using a separate gasless Solana module.",
       "You want the standard Solana wallet integration.",
+    ],
+  },
+  {
+    id: "solana-gasless",
+    label: "Gasless Solana",
+    chain: "solana",
+    goals: ["gasless"],
+    packageName: "@tetherto/wdk-wallet-solana-gasless",
+    docsHref: "/sdk/wallet-modules/wallet-solana-gasless",
+    apiHref: "/sdk/wallet-modules/wallet-solana-gasless/api-reference",
+    bestFor: "Solana transaction flows funded through a Kora-compatible paymaster.",
+    chooseWhen: [
+      "You need paymaster-funded SOL or SPL token transfers.",
+      "Your app can provide the required Solana RPC and paymaster configuration.",
+      "You want Solana support without requiring users to fund fees directly.",
     ],
   },
   {
