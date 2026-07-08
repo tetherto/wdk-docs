@@ -1,0 +1,63 @@
+---
+title: Manage Accounts
+description: Work with gasless Solana accounts and custom derivation paths.
+docType: how-to
+schemaType: TechArticle
+---
+
+`WalletManagerSolanaGasless` derives accounts using Solana SLIP-0010 paths and caches accounts by path.
+
+## Retrieve Accounts by Index
+
+Use `getAccount(index)` to access accounts derived from the default path.
+
+```javascript title="Get accounts by index"
+const account0 = await wallet.getAccount(0)
+console.log('Account 0:', await account0.getAddress())
+
+const account1 = await wallet.getAccount(1)
+console.log('Account 1:', await account1.getAddress())
+```
+
+Index `n` derives `m/44'/501'/{n}'/0'`.
+
+## Retrieve Account by Custom Path
+
+Use `getAccountByPath(path)` when you need an explicit derivation path suffix:
+
+```javascript title="Get account by path"
+const account = await wallet.getAccountByPath("0'/0'/5'")
+console.log('Custom account:', await account.getAddress())
+```
+
+<Callout type="info">
+Solana custom child segments should be hardened, for example `0'/0'/5'`. Gasless accounts inherit the wallet manager's RPC and paymaster configuration.
+</Callout>
+
+## Create a Read-Only Account
+
+Convert an owned account to a read-only account when you only need balances, quotes, receipts, or signature verification:
+
+```javascript title="Convert to read-only"
+const readOnlyAccount = await account.toReadOnlyAccount()
+console.log(await readOnlyAccount.getBalance())
+```
+
+You can also construct a read-only account for any Solana address:
+
+```javascript title="Construct read-only account"
+import { WalletAccountReadOnlySolanaGasless } from '@tetherto/wdk-wallet-solana-gasless'
+
+const readOnlyAccount = new WalletAccountReadOnlySolanaGasless('SolanaAddress...', {
+  provider: 'https://api.devnet.solana.com',
+  paymasterUrl: 'https://your-kora-paymaster.example',
+  paymasterAddress: 'Paymaster111111111111111111111111111111111',
+  paymasterToken: {
+    address: 'TokenMint111111111111111111111111111111111'
+  }
+})
+```
+
+## Next Steps
+
+Now that you can access accounts, learn how to [check balances](/sdk/wallet-modules/wallet-solana-gasless/guides/check-balances).

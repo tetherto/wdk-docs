@@ -22,11 +22,11 @@ Extends `WalletManager` from `@tetherto/wdk-wallet`.
 ### Constructor
 
 ```javascript
-new WalletManagerEvm(seed, config?)
+new WalletManagerEvm(seedOrSigner, config?)
 ```
 
 **Parameters:**
-- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
+- `seedOrSigner` (`string | Uint8Array | ISigner`): BIP-39 mnemonic seed phrase, seed bytes, or a derivable root signer
 - `config` (object, optional): Configuration object
   - `provider` (`string | Eip1193Provider | Array<string | Eip1193Provider>`, optional): RPC endpoint URL, EIP-1193 provider instance, or ordered failover list
   - `retries` (number, optional): Additional retry attempts when `provider` is an array
@@ -34,12 +34,21 @@ new WalletManagerEvm(seed, config?)
   - `transferMaxFee` (number | bigint, optional): Maximum fee amount for transfer operations (in wei)
   - `transactionMaxFee` (number | bigint, optional): Maximum fee amount for native `sendTransaction()` and provider-backed `signTransaction()` operations (in wei)
 
+The default signer must support derivation. Register non-derivable signers, such as private-key signers, with `addSigner()` and retrieve them by name.
+
 **Example:**
 ```javascript
 const wallet = new WalletManagerEvm(seedPhrase, {
   provider: 'https://rpc.mevblocker.io/fast',
   transferMaxFee: 100000000000000, // Maximum ERC-20 transfer fee in wei
   transactionMaxFee: 100000000000000 // Maximum native send/sign fee in wei
+})
+
+import { SeedSignerEvm } from '@tetherto/wdk-wallet-evm/signers'
+
+const signer = new SeedSignerEvm(seedPhrase)
+const signerWallet = new WalletManagerEvm(signer, {
+  provider: 'https://rpc.mevblocker.io/fast'
 })
 ```
 
@@ -49,8 +58,12 @@ const wallet = new WalletManagerEvm(seedPhrase, {
 |--------|-------------|---------|--------|
 | `getRandomSeedPhrase(wordCount?)` | (static) Returns a random BIP-39 seed phrase | `string` | - |
 | `isValidSeedPhrase(seedPhrase)` | (static) Checks if a seed phrase is valid | `boolean` | - |
-| `getAccount(index?)` | Returns a wallet account at the specified index | `Promise<WalletAccountEvm>` | - |
-| `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise<WalletAccountEvm>` | - |
+| `addSigner(signerName, signer)` | Registers a named signer on the manager | `WalletManagerEvm` | If `signerName` is empty |
+| `getSigner(signerName?)` | Returns the default signer or a named signer | `ISigner` | If the requested signer is unavailable |
+| `getSigners()` | Returns registered named signers | `Record<string, ISigner>` | - |
+| `getAccount(index?, options?)` | Returns a wallet account at the specified index, optionally from a named signer | `Promise<WalletAccountEvm>` | If the requested signer is unavailable or cannot derive |
+| `getAccount(signerName)` | Returns the account associated with a registered signer | `Promise<WalletAccountEvm>` | If the named signer is unavailable |
+| `getAccountByPath(path, options?)` | Returns a wallet account at the specified BIP-44 derivation path, optionally from a named signer | `Promise<WalletAccountEvm>` | If the requested signer is unavailable or cannot derive |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` | If no provider is set |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` | - |
 
@@ -91,11 +104,41 @@ const isValid = WalletManagerEvm.isValidSeedPhrase('abandon abandon abandon ...'
 console.log('Valid:', isValid)
 ```
 
+#### `addSigner(signerName, signer)`
+Registers a signer under a name. Use this for external or non-default signers that should be retrieved explicitly.
+
+**Parameters:**
+- `signerName` (string): Name used for lookup
+- `signer` (ISigner): Signer instance
+
+**Returns:** `WalletManagerEvm` - The wallet manager
+
+**Example:**
+```javascript
+import { PrivateKeySignerEvm } from '@tetherto/wdk-wallet-evm/signers'
+
+wallet.addSigner('treasury', new PrivateKeySignerEvm(privateKey))
+```
+
+#### `getSigner(signerName?)`
+Returns the default signer when called with no argument, or a registered named signer.
+
+**Parameters:**
+- `signerName` (string, optional): Name registered with `addSigner()`
+
+**Returns:** `ISigner` - The signer
+
+#### `getSigners()`
+Returns a shallow copy of the named signers registered with `addSigner()`. The default signer is not included.
+
+**Returns:** `Record<string, ISigner>` - Registered named signers
+
 #### `getAccount(index?)`
-Returns a wallet account at the specified index following BIP-44 standard.
+Returns a wallet account at the specified index following BIP-44 standard. Pass `options.signerName` to derive the account from a registered derivable signer.
 
 **Parameters:**
 - `index` (number, optional): The index of the account to get (default: 0)
+- `options.signerName` (string, optional): Registered signer name
 
 **Returns:** `Promise<WalletAccountEvm>` - The wallet account
 
@@ -109,13 +152,30 @@ const account1 = await wallet.getAccount(1)
 
 // Get first account (default)
 const defaultAccount = await wallet.getAccount()
+
+// Derive account 2 from a registered derivable signer
+const signerAccount = await wallet.getAccount(2, { signerName: 'hardware-root' })
+```
+
+#### `getAccount(signerName)`
+Returns the wallet account associated with a registered signer. Non-derivable signers return their single account.
+
+**Parameters:**
+- `signerName` (string): Name registered with `addSigner()`
+
+**Returns:** `Promise<WalletAccountEvm>` - The signer-backed wallet account
+
+**Example:**
+```javascript
+const treasuryAccount = await wallet.getAccount('treasury')
 ```
 
 #### `getAccountByPath(path)`
-Returns a wallet account at the specified BIP-44 derivation path.
+Returns a wallet account at the specified BIP-44 derivation path. Pass `options.signerName` to derive from a registered derivable signer.
 
 **Parameters:**
 - `path` (string): The derivation path (e.g., "0'/0/0")
+- `options.signerName` (string, optional): Registered signer name
 
 **Returns:** `Promise<WalletAccountEvm>` - The wallet account
 
@@ -126,6 +186,10 @@ const account = await wallet.getAccountByPath("0'/0/1")
 
 // Custom path: m/44'/60'/0'/0/5
 const customAccount = await wallet.getAccountByPath("0'/0/5")
+
+const customSignerAccount = await wallet.getAccountByPath("0'/0/5", {
+  signerName: 'hardware-root'
+})
 ```
 
 #### `getFeeRates()`
@@ -168,11 +232,13 @@ Represents an individual wallet account. Extends `WalletAccountReadOnlyEvm` and 
 
 ```javascript
 new WalletAccountEvm(seed, path, config?)
+new WalletAccountEvm(signer, config?)
 ```
 
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `path` (string): BIP-44 derivation path (e.g., "0'/0/0")
+- `signer`: Object implementing the EVM signer shape
 - `config` (object, optional): Configuration object
   - `provider` (`string | Eip1193Provider | Array<string | Eip1193Provider>`, optional): RPC endpoint URL, EIP-1193 provider instance, or ordered failover list
   - `retries` (number, optional): Additional retry attempts when `provider` is an array
@@ -190,7 +256,20 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
   transferMaxFee: 100000000000000,
   transactionMaxFee: 100000000000000
 })
+
+import { PrivateKeySignerEvm } from '@tetherto/wdk-wallet-evm/signers'
+
+const signerAccount = new WalletAccountEvm(
+  new PrivateKeySignerEvm(privateKey),
+  { provider: 'https://rpc.mevblocker.io/fast' }
+)
 ```
+
+### Static Methods
+
+| Method | Description | Returns | Throws |
+|--------|-------------|---------|--------|
+| `fromPrivateKey(privateKey, config?)` | Creates a standalone account from a raw private key | `WalletAccountEvm` | If the private key is invalid |
 
 ### Methods
 
@@ -213,7 +292,26 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 | `getAllowance(token, spender)` | Returns current allowance for a spender | `Promise<bigint>` | If no provider |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<EvmTransactionReceipt \| null>` | If no provider |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlyEvm>` | - |
+| `signAuthorization(auth)` | Signs an ERC-7702 authorization tuple | `Promise<Authorization>` | If signing fails |
+| `delegate(delegateAddress)` | Delegates the EOA to a contract through an ERC-7702 type 4 transaction | `Promise<{hash: string, fee: bigint}>` | If no provider |
+| `revokeDelegation()` | Revokes active ERC-7702 delegation by delegating to the zero address | `Promise<{hash: string, fee: bigint}>` | If no provider |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` | - |
+
+#### `fromPrivateKey(privateKey, config?)` (static)
+Creates a standalone EVM account from a raw private key.
+
+**Parameters:**
+- `privateKey` (`string | Uint8Array`): Raw private key, as a hex string with or without `0x`, or 32 bytes
+- `config` (object, optional): EVM wallet configuration
+
+**Returns:** `WalletAccountEvm` - The wallet account
+
+**Example:**
+```javascript
+const account = WalletAccountEvm.fromPrivateKey(privateKey, {
+  provider: 'https://rpc.mevblocker.io/fast'
+})
+```
 
 #### `getAddress()`
 Returns the account's Ethereum address.
@@ -283,7 +381,7 @@ Signs an EVM transaction and returns the signed raw transaction as a hex string.
 
 **Parameters:**
 - `tx` (EvmTransaction): The transaction object
-  - `to` (string): Recipient address
+  - `to` (string | null, optional): Recipient address; omit or pass `null` for contract creation
   - `value` (number | bigint): Amount in wei
   - `data` (string, optional): Transaction data in hex format
   - `gasLimit` (number | bigint, optional): Maximum gas units
@@ -347,7 +445,7 @@ Sends an EVM transaction and returns the result with hash and fee.
 
 **Parameters:**
 - `tx` (EvmTransaction): The transaction object
-  - `to` (string): Recipient address
+  - `to` (string | null, optional): Recipient address; omit or pass `null` for contract creation
   - `value` (number | bigint): Amount in wei
   - `data` (string, optional): Transaction data in hex format
   - `gasLimit` (number | bigint, optional): Maximum gas units
@@ -583,6 +681,36 @@ const balance = await readOnlyAccount.getBalance()
 // readOnlyAccount.sendTransaction() // Would throw error
 ```
 
+#### `signAuthorization(auth)`
+Signs an ERC-7702 authorization tuple.
+
+**Parameters:**
+- `auth` (AuthorizationRequest): ERC-7702 authorization request
+
+**Returns:** `Promise<Authorization>` - The signed authorization
+
+**Example:**
+```javascript
+const authorization = await account.signAuthorization({
+  chainId: 1,
+  address: delegateContract,
+  nonce: 0
+})
+```
+
+#### `delegate(delegateAddress)`
+Delegates the EOA to a smart contract through an ERC-7702 type 4 transaction.
+
+**Parameters:**
+- `delegateAddress` (string): Contract address to delegate to
+
+**Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
+
+#### `revokeDelegation()`
+Revokes active ERC-7702 delegation by delegating to the zero address.
+
+**Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
+
 #### `dispose()`
 Disposes the wallet account, erasing the private key from memory.
 
@@ -658,6 +786,7 @@ const readOnlyAccount = new WalletAccountReadOnlyEvm('0x742d35Cc6634C0532925a3b8
 | `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | If no provider |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies a typed data signature (EIP-712) | `Promise<boolean>` | - |
+| `getDelegation()` | Checks active ERC-7702 delegation status | `Promise<DelegationInfo>` | If no provider |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<EvmTransactionReceipt \| null>` | If no provider |
 | `getAllowance(token, spender)` | Returns current allowance for a spender | `Promise<bigint>` | If no provider |
 
@@ -793,6 +922,18 @@ const isValid = await readOnlyAccount.verifyTypedData(typedData, signature)
 console.log('Typed data signature valid:', isValid) // true
 ```
 
+#### `getDelegation()`
+Checks whether the account currently has an active ERC-7702 delegation.
+
+**Returns:** `Promise<DelegationInfo>` - Delegation status and delegate address
+
+**Example:**
+```javascript
+const delegation = await readOnlyAccount.getDelegation()
+console.log('Delegated:', delegation.isDelegated)
+console.log('Delegate:', delegation.delegateAddress)
+```
+
 #### `getTransactionReceipt(hash)`
 Returns a transaction's receipt if it has been mined.
 
@@ -839,7 +980,7 @@ console.log('Allowance:', allowance)
 
 ```typescript
 interface EvmTransaction {
-  to: string;                               // The transaction's recipient address
+  to?: string | null;                       // Recipient address; omit or pass null for contract creation
   value: number | bigint;                    // The amount of ethers to send (in wei)
   data?: string;                             // The transaction's data in hex format (optional)
   gasLimit?: number | bigint;                // Maximum amount of gas this transaction can use (optional)
@@ -899,6 +1040,50 @@ interface KeyPair {
 }
 ```
 
+### EVM signer structural shape
+
+```typescript
+interface EvmSignerLike extends ISigner {
+  readonly isDerivable: boolean;
+  readonly index?: number;
+  readonly path?: string;
+  readonly address?: string;
+  readonly keyPair: KeyPair;
+  derive(relPath: string): Promise<EvmSignerLike>;
+  getAddress(): Promise<string>;
+  sign(message: string): Promise<string>;
+  signTransaction(unsignedTx: UnsignedEvmTransaction): Promise<string>;
+  signTypedData(typedData: TypedData): Promise<string>;
+  signAuthorization(auth: AuthorizationRequest): Promise<Authorization>;
+  dispose(): void;
+}
+```
+
+`SeedSignerEvm` and `PrivateKeySignerEvm` are exported from `@tetherto/wdk-wallet-evm/signers`. `SeedSignerEvm` supports derivation and can be used as a manager default signer. `PrivateKeySignerEvm` represents one private-key account, does not support derivation, and should be registered by name or used directly with `WalletAccountEvm`.
+
+### UnsignedEvmTransaction
+
+```typescript
+interface UnsignedEvmTransaction {
+  chainId: number;
+  nonce: number;
+  from: string;
+  to: string | null;
+  data: string;
+  value: number | bigint;
+  type: number;
+  gasLimit: number | bigint;
+  gasPrice?: number | bigint;
+  maxFeePerGas?: number | bigint;
+  maxPriorityFeePerGas?: number | bigint;
+  accessList?: any[];
+  maxFeePerBlobGas?: number | bigint;
+  blobs?: any[];
+  blobVersionedHashes?: string[];
+  authorizationList?: AuthorizationLike[];
+}
+```
+
 ### TypedData
 
 ```typescript
@@ -939,6 +1124,15 @@ interface EvmWalletConfig {
   chainId?: number;                                                  // Network chain ID. Skips automatic detection when provided.
   transferMaxFee?: number | bigint;                                  // Maximum ERC-20 transfer fee in wei
   transactionMaxFee?: number | bigint;                               // Maximum native send/sign fee in wei
+}
+```
+
+### DelegationInfo
+
+```typescript
+interface DelegationInfo {
+  isDelegated: boolean;              // Whether the account has an active ERC-7702 delegation
+  delegateAddress: string | null;    // Delegate contract address, or null when not delegated
 }
 ```
 

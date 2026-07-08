@@ -17,13 +17,13 @@ const client = new BitfinexPricingClient()
 
 ### Current Price
 
-Current-price lookups use Bitfinex's FX conversion endpoint. If Bitfinex cannot quote the pair directly, the client tries a two-leg `from -> USD -> to` conversion. If the pair still cannot be resolved, the result is `null`.
+Current-price lookups use Bitfinex's FX conversion endpoint. The client returns a price only when Bitfinex can quote the pair directly. Unsupported pairs return `null`; the client does not try a USD-pivot fallback.
 
 ```javascript title="Get Current Price"
 const price = await client.getCurrentPrice('BTC', 'USD')
-const brlPrice = await client.getCurrentPrice('BTC', 'BRL') // resolved through USD when available
+const unsupported = await client.getCurrentPrice('BTC', 'BRL') // null when Bitfinex has no direct quote
 
-if (price === null) {
+if (unsupported === null) {
   // Show an unavailable-price state in your UI
 }
 ```
@@ -35,7 +35,8 @@ Batch lookups return results in the same order as the input list. Entries that c
 ```javascript title="Get Batch Current Prices"
 const prices = await client.getMultiCurrentPrices([
   { from: 'BTC', to: 'USD' },
-  { from: 'ETH', to: 'BRL' }
+  { from: 'ETH', to: 'USD' },
+  { from: 'BTC', to: 'BRL' } // null when unsupported
 ])
 ```
 
@@ -77,7 +78,7 @@ const provider = new PricingProvider({
 const last = await provider.getLastPrice('BTC', 'USD')
 const prices = await provider.getMultiLastPrices([
   { from: 'BTC', to: 'USD' },
-  { from: 'ETH', to: 'BRL' }
+  { from: 'ETH', to: 'USD' }
 ])
 const hist = await provider.getHistoricalPrice('BTC', 'USD', {
   start: 1709906400000,

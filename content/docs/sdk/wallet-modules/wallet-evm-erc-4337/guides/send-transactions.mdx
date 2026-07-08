@@ -3,7 +3,7 @@ title: Send Transactions
 description: Send gasless transactions and estimate fees.
 ---
 
-This guide explains how to [send a gasless transaction](#send-a-gasless-transaction), [estimate fees](#estimate-fees), [reuse a recent quote](#reuse-a-recent-quote), and [use a custom paymaster token](#send-with-custom-paymaster-token).
+This guide explains how to [send a gasless transaction](#send-a-gasless-transaction), [estimate fees](#estimate-fees), [cap transaction fees](#cap-transaction-fees), [reuse a recent quote](#reuse-a-recent-quote), and [use a custom paymaster token](#send-with-custom-paymaster-token).
 
 ## Send a Gasless Transaction
 
@@ -34,6 +34,23 @@ const quote = await account.quoteSendTransaction({
 console.log('Estimated fee:', quote.fee)
 ```
 
+## Cap Transaction Fees
+
+Set `transactionMaxFee` to reject non-sponsored `sendTransaction()` and `signTransaction()` operations when the estimated UserOperation fee is above your cap. Use `transferMaxFee` separately for token transfers.
+
+```javascript title="Cap sendTransaction fees"
+const result = await account.sendTransaction({
+  to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+  value: 1000000000000000n
+}, {
+  transactionMaxFee: 100000
+})
+```
+
+<Callout type="info">
+`transactionMaxFee` applies to Paymaster Token and Native Coins modes. Sponsored operations return a zero fee to the caller and do not use this cap.
+</Callout>
+
 ## Reuse a Recent Quote
 
 Quotes are cached for up to 2 minutes. If you call `sendTransaction()` with the same transaction during that window, the account checks the current on-chain nonce before reusing the cached UserOperation. If the nonce has moved, it builds a fresh quote before sending.
@@ -50,6 +67,14 @@ console.log('Estimated fee:', quote.fee)
 const result = await account.sendTransaction(tx)
 console.log('Transaction hash:', result.hash)
 ```
+
+## Send Rapid Transactions
+
+When you call `sendTransaction()` or `transfer()` rapidly from the same account instance, the wallet reserves local nonces so concurrent UserOperations use sequential nonces. If submission fails before bundler acceptance, the reserved nonce is released. If the failure is ambiguous, such as a transport error after submission, the wallet keeps the nonce reserved to avoid accidental reuse.
+
+<Callout type="info">
+The wallet reads the on-chain nonce before reserving locally. If that read does not complete within 30 seconds, the operation fails instead of guessing the next nonce.
+</Callout>
 
 ## Send with Custom Paymaster Token
 

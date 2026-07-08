@@ -1,0 +1,128 @@
+---
+title: Rhino.fi Swidge Usage
+description: Install and use @rhino.fi/wdk-protocol-swidge-rhinofi for Rhino.fi cross-chain routes.
+docType: how-to
+schemaType: TechArticle
+icon: BookOpen
+---
+
+## Install
+
+```bash
+npm install @rhino.fi/wdk-protocol-swidge-rhinofi@1.0.0-beta.2 @tetherto/wdk-wallet-evm
+```
+
+Install ERC-4337 support when you need smart-account execution:
+
+```bash
+npm install @tetherto/wdk-wallet-evm-erc-4337
+```
+
+## Create the Protocol
+
+```javascript
+import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
+import RhinofiProtocol from '@rhino.fi/wdk-protocol-swidge-rhinofi'
+
+const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
+  provider: 'https://arb1.arbitrum.io/rpc'
+})
+
+const rhinofi = new RhinofiProtocol(account, {
+  apiKey: process.env.RHINO_API_KEY,
+  maxNetworkFeeBps: 50,
+  maxProtocolFeeBps: 30
+})
+```
+
+## Discover Chains and Tokens
+
+```javascript
+const chains = await rhinofi.getSupportedChains()
+const tokens = await rhinofi.getSupportedTokens({
+  fromChain: 'ARBITRUM'
+})
+```
+
+The module reads live Rhino.fi chain and token config. The source chain must be derivable from the WDK account for execution.
+
+## Quote a Route
+
+```javascript
+const quote = await rhinofi.quoteSwidge({
+  fromToken: 'USDT',
+  toToken: 'USDC',
+  toChain: 'BASE',
+  recipient: '0xRecipient...',
+  fromTokenAmount: 1_000_000n
+})
+
+console.log('Expected output:', quote.toTokenAmount)
+console.log('Minimum output:', quote.toTokenAmountMin)
+console.log('Fees:', quote.fees)
+```
+
+Use `toTokenAmount` instead of `fromTokenAmount` for exact-output routes when supported by the provider route.
+
+## Execute a Route
+
+After the user confirms the quote, call `swidge()`.
+
+```javascript
+const result = await rhinofi.swidge({
+  fromToken: 'USDT',
+  toToken: 'USDC',
+  toChain: 'BASE',
+  recipient: '0xRecipient...',
+  fromTokenAmount: 1_000_000n
+})
+
+console.log('Operation ID:', result.id)
+console.log('Source transaction:', result.hash)
+```
+
+`swidge()` resolves after the source deposit transaction is broadcast. The destination settlement can continue after the method returns.
+
+## Track Status
+
+```javascript
+const status = await rhinofi.getSwidgeStatus(result.id)
+
+if (status.status === 'completed') {
+  console.log('Route completed')
+}
+```
+
+## Handle Errors
+
+```javascript
+import {
+  AccountRequiredError,
+  ConfigurationError,
+  FeeLimitExceededError,
+  RhinofiProtocolError
+} from '@rhino.fi/wdk-protocol-swidge-rhinofi'
+
+try {
+  await rhinofi.swidge(options)
+} catch (error) {
+  if (error instanceof AccountRequiredError) {
+    // Bind a writable WDK EVM account before execution.
+  } else if (error instanceof ConfigurationError) {
+    // Check apiKey and API configuration.
+  } else if (error instanceof FeeLimitExceededError) {
+    // Ask the user to approve the quoted fee or lower the amount.
+  } else if (error instanceof RhinofiProtocolError) {
+    // Handle another Rhino.fi module error.
+  }
+}
+```
+
+<Cards>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-rhinofi/configuration">
+Review API, fee, and config-cache settings.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-rhinofi/api-reference">
+Detailed method, type, status, fee, and error reference.
+</Card>
+</Cards>

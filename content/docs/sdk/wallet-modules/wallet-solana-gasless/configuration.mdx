@@ -1,0 +1,221 @@
+---
+title: Configuration
+description: Configuration options for @tetherto/wdk-wallet-solana-gasless.
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+## Wallet Configuration
+
+`WalletManagerSolanaGasless` accepts a seed phrase or seed bytes plus a Solana gasless wallet configuration:
+
+```javascript title="Create a gasless Solana wallet"
+import WalletManagerSolanaGasless from '@tetherto/wdk-wallet-solana-gasless'
+
+const config = {
+  provider: 'https://api.devnet.solana.com',
+  commitment: 'confirmed',
+  paymasterUrl: 'https://your-kora-paymaster.example',
+  paymasterAddress: 'Paymaster111111111111111111111111111111111',
+  paymasterToken: {
+    address: 'TokenMint111111111111111111111111111111111'
+  },
+  transferMaxFee: 1000000n,
+  transactionMaxFee: 1000000n
+}
+
+const wallet = new WalletManagerSolanaGasless(seedPhrase, config)
+const account = await wallet.getAccount(0)
+```
+
+## Account Configuration
+
+You can also construct an owned or read-only account directly:
+
+```javascript title="Create accounts directly"
+import {
+  WalletAccountReadOnlySolanaGasless,
+  WalletAccountSolanaGasless
+} from '@tetherto/wdk-wallet-solana-gasless'
+
+const account = new WalletAccountSolanaGasless(seedPhrase, "0'/0'", config)
+
+const readOnlyAccount = new WalletAccountReadOnlySolanaGasless('SolanaAddress...', {
+  provider: 'https://api.devnet.solana.com',
+  commitment: 'confirmed',
+  paymasterUrl: 'https://your-kora-paymaster.example',
+  paymasterAddress: 'Paymaster111111111111111111111111111111111',
+  paymasterToken: {
+    address: 'TokenMint111111111111111111111111111111111'
+  }
+})
+```
+
+Read-only accounts do not accept `transferMaxFee` or `transactionMaxFee` in their public type because they cannot send transfers or sign transactions.
+
+## Configuration Options
+
+### provider
+
+Solana RPC endpoint, or an ordered list of RPC endpoints for failover. This is required for balance reads, blockhash lookup, quotes, signing transactions, sending transactions, and transfers.
+
+**Type:** `string | string[]`
+
+**Example:**
+
+```javascript
+const config = {
+  provider: [
+    'https://api.devnet.solana.com',
+    'https://backup-solana-rpc.example'
+  ]
+}
+```
+
+### rpcUrl
+
+Deprecated alias for `provider`, inherited from the base Solana wallet module. New code should use `provider`.
+
+**Type:** `string | string[]`
+
+### commitment
+
+Solana commitment level used for RPC reads such as balances, blockhashes, and receipts.
+
+**Type:** `'processed' | 'confirmed' | 'finalized'`
+
+### paymasterUrl
+
+Kora-compatible paymaster RPC endpoint, Kora client options object, or ordered failover list.
+
+**Type:** `string | KoraClientOptions | Array<string | KoraClientOptions>`
+
+**Required:** Yes
+
+**Example:**
+
+```javascript
+const config = {
+  paymasterUrl: [
+    'https://primary-paymaster.example',
+    { rpcUrl: 'https://backup-paymaster.example' }
+  ]
+}
+```
+
+An empty `paymasterUrl` array throws an error.
+
+### paymasterAddress
+
+Solana address used as the transaction fee payer. For prebuilt `TransactionMessage` inputs, an explicit `feePayer` must be absent or equal to this address.
+
+**Type:** `string`
+
+**Required:** Yes
+
+### paymasterToken
+
+Token used by the paymaster to quote and charge fees.
+
+**Type:**
+
+```typescript
+type PaymasterTokenConfig = {
+  address: string
+}
+```
+
+**Required:** Yes
+
+The module passes `paymasterToken.address` to the paymaster as the fee token and returns fees in that token's base units.
+
+### retries
+
+Additional retry attempts used by failover providers when `provider` or `paymasterUrl` is an ordered list.
+
+**Type:** `number`
+
+**Default:** `3`
+
+### transferMaxFee
+
+Maximum allowed paymaster fee for `transfer()` calls, in the configured paymaster token's base units. `transfer()` throws when the quoted fee is greater than this cap.
+
+**Type:** `number | bigint`
+
+**Required:** No
+
+**Example:**
+
+```javascript
+const result = await account.transfer({
+  token: 'TokenMint111111111111111111111111111111111',
+  recipient: 'Recipient1111111111111111111111111111111',
+  amount: 1000000n
+}, {
+  transferMaxFee: 500000n
+})
+```
+
+### transactionMaxFee
+
+Maximum allowed paymaster fee for `sendTransaction()` and `signTransaction()` calls, in the configured paymaster token's base units. These methods throw when the quoted fee is greater than this cap.
+
+**Type:** `number | bigint`
+
+**Required:** No
+
+**Example:**
+
+```javascript
+const result = await account.sendTransaction({
+  to: 'Recipient1111111111111111111111111111111',
+  value: 1000000n
+}, {
+  transactionMaxFee: 500000n
+})
+```
+
+## Paymaster Overrides
+
+Quote, send, sign, and transfer methods accept a second configuration object for per-call fee-token and fee-cap overrides:
+
+```javascript title="Override paymaster token for one call"
+const quote = await account.quoteTransfer({
+  token: 'TokenMint111111111111111111111111111111111',
+  recipient: 'Recipient1111111111111111111111111111111',
+  amount: 1000000n
+}, {
+  paymasterToken: {
+    address: 'AlternateFeeMint11111111111111111111111111'
+  },
+  transferMaxFee: 500000n
+})
+```
+
+In `1.0.0-beta.1`, overrides support `paymasterToken`, `transferMaxFee`, and `transactionMaxFee`. Use `transferMaxFee` for `transfer()` fee protection and `transactionMaxFee` for `sendTransaction()` or `signTransaction()` fee protection. `quoteTransfer()` and `quoteSendTransaction()` return estimates without enforcing either cap.
+
+## Security Considerations
+
+- Use HTTPS Solana RPC and paymaster endpoints.
+- Use RPC endpoints that serve the same Solana network when enabling failover.
+- Keep paymaster tokens funded for the accounts that need sponsored transactions.
+- Set `transferMaxFee` for token transfers and `transactionMaxFee` for send/sign flows when your application needs fee protection.
+- Validate the paymaster address and paymaster token address before using them in production configuration.
+- Call `dispose()` on owned accounts and wallet managers when private keys are no longer needed.
+
+<Cards>
+<Card title="Get Started" href="/sdk/wallet-modules/wallet-solana-gasless/guides/get-started">
+Create a gasless Solana account.
+</Card>
+<Card title="Usage" href="/sdk/wallet-modules/wallet-solana-gasless/usage">
+Choose a guide for common gasless Solana flows.
+</Card>
+</Cards>
+
+***
+
+## Need Help?
+
+<SupportCards />
