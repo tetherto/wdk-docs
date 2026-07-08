@@ -15,7 +15,8 @@ import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 
 const config = {
   provider: 'https://api.mainnet-beta.solana.com', // Recommended: Solana RPC endpoint
-  transferMaxFee: 10000000 // Optional: Maximum fee in lamports
+  transferMaxFee: 10000000, // Optional: Maximum SPL transfer fee in lamports
+  transactionMaxFee: 10000000 // Optional: Maximum native send/sign fee in lamports
 }
 
 const wallet = new WalletManagerSolana(seedPhrase, config)
@@ -30,7 +31,8 @@ import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 
 const accountConfig = {
   provider: 'https://api.mainnet-beta.solana.com',
-  transferMaxFee: 10000000 // Optional: Maximum fee in lamports
+  transferMaxFee: 10000000, // Optional: Maximum SPL transfer fee in lamports
+  transactionMaxFee: 10000000 // Optional: Maximum native send/sign fee in lamports
 }
 
 const wallet = new WalletManagerSolana(seedPhrase, accountConfig)
@@ -107,9 +109,9 @@ const config = {
 
 ### transferMaxFee
 
-The `transferMaxFee` option sets the maximum allowed fee (in lamports) for transfer operations. This helps prevent unexpectedly high transaction fees.
+The `transferMaxFee` option sets the maximum allowed fee, in lamports, for SPL token `transfer()` operations. This helps prevent unexpectedly high token-transfer fees.
 
-**Type:** `number` (optional)
+**Type:** `number | bigint` (optional)
 
 **Unit:** Lamports (1 SOL = 1,000,000,000 lamports)
 
@@ -117,6 +119,23 @@ The `transferMaxFee` option sets the maximum allowed fee (in lamports) for trans
 ```javascript
 const config = {
   transferMaxFee: 10000000 // 0.01 SOL in lamports
+}
+```
+
+### transactionMaxFee
+
+The `transactionMaxFee` option sets the maximum allowed fee, in lamports, for native SOL `sendTransaction()` and `signTransaction()` operations. This is separate from `transferMaxFee`, which applies to SPL token transfers.
+
+**Type:** `number | bigint` (optional)
+
+**Unit:** Lamports (1 SOL = 1,000,000,000 lamports)
+
+WDK rejects native send/sign operations when the estimated fee is greater than `transactionMaxFee`. A fee equal to the configured cap is allowed.
+
+**Example:**
+```javascript
+const config = {
+  transactionMaxFee: 10000000 // 0.01 SOL in lamports
 }
 ```
 
@@ -130,7 +149,8 @@ const config = {
   provider: 'https://api.mainnet-beta.solana.com',
 
   // Optional: Fee protection
-  transferMaxFee: 10000000 // 0.01 SOL maximum fee
+  transferMaxFee: 10000000, // 0.01 SOL maximum SPL transfer fee
+  transactionMaxFee: 10000000 // 0.01 SOL maximum native send/sign fee
 }
 
 const wallet = new WalletManagerSolana(seedPhrase, config)
@@ -174,7 +194,7 @@ Use [`getAccountByPath`](/sdk/wallet-modules/wallet-solana/api-reference#getacco
 
 - Always use HTTPS URLs for RPC endpoints
 - Use RPC endpoints that serve the same Solana network when enabling failover
-- Set appropriate `transferMaxFee` limits for your use case
+- Set appropriate `transferMaxFee` and `transactionMaxFee` limits for your use case
 - Consider using environment variables for configuration in production
 - Use trusted RPC providers or run your own Solana validator for production applications
 

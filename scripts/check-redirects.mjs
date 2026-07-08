@@ -14,6 +14,7 @@ const moduleRedirects = [
   ['/sdk/wallet-evm-erc-4337', '/sdk/wallet-modules/wallet-evm-erc-4337'],
   ['/sdk/wallet-btc', '/sdk/wallet-modules/wallet-btc'],
   ['/sdk/wallet-solana', '/sdk/wallet-modules/wallet-solana'],
+  ['/sdk/wallet-solana-gasless', '/sdk/wallet-modules/wallet-solana-gasless'],
   ['/sdk/wallet-ton', '/sdk/wallet-modules/wallet-ton'],
   ['/sdk/wallet-ton-gasless', '/sdk/wallet-modules/wallet-ton-gasless'],
   ['/sdk/wallet-tron', '/sdk/wallet-modules/wallet-tron'],

@@ -54,20 +54,22 @@ Fees are paid using an ERC-20 token through a paymaster service.
 - `paymasterAddress` (string): The address of the paymaster smart contract
 - `paymasterToken` (object): The paymaster token configuration
   - `address` (string): The address of the ERC-20 token used for fees
+- `transactionMaxFee` (number | bigint, optional): Maximum fee limit for `sendTransaction()` and `signTransaction()` in paymaster token units
 - `transferMaxFee` (number | bigint, optional): Maximum fee limit in paymaster token units
 
 ```javascript
 const wallet = new WalletManagerEvmErc4337(seedPhrase, {
   chainId: 1,
   provider: 'https://rpc.mevblocker.io/fast',
-  bundlerUrl: 'https://api.candide.dev/public/v3/ethereum',
+  bundlerUrl: 'https://api.candide.dev/public/v3/1',
   safeModulesVersion: '0.3.0',
   // Paymaster token mode
-  paymasterUrl: 'https://api.candide.dev/public/v3/ethereum',
+  paymasterUrl: 'https://api.candide.dev/public/v3/1',
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
   paymasterToken: {
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USD₮
   },
+  transactionMaxFee: 100000, // Optional: max send/sign fee in token units
   transferMaxFee: 100000 // Optional: max fee in token units
 })
 ```
@@ -83,11 +85,11 @@ Fees are sponsored by a third party via a sponsorship policy.
 const wallet = new WalletManagerEvmErc4337(seedPhrase, {
   chainId: 1,
   provider: 'https://rpc.mevblocker.io/fast',
-  bundlerUrl: 'https://api.candide.dev/public/v3/ethereum',
+  bundlerUrl: 'https://api.candide.dev/public/v3/1',
   safeModulesVersion: '0.3.0',
   // Sponsorship mode
   isSponsored: true,
-  paymasterUrl: 'https://api.candide.dev/public/v3/ethereum',
+  paymasterUrl: 'https://api.candide.dev/public/v3/1',
   sponsorshipPolicyId: 'your-policy-id' // Optional
 })
 ```
@@ -96,16 +98,18 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
 Fees are paid using the chain's native token (e.g., ETH).
 
 - `useNativeCoins` (true): Enables native coin fee payment
+- `transactionMaxFee` (number | bigint, optional): Maximum fee limit for `sendTransaction()` and `signTransaction()` in native token units
 - `transferMaxFee` (number | bigint, optional): Maximum fee limit in native token units
 
 ```javascript
 const wallet = new WalletManagerEvmErc4337(seedPhrase, {
   chainId: 1,
   provider: 'https://rpc.mevblocker.io/fast',
-  bundlerUrl: 'https://api.candide.dev/public/v3/ethereum',
+  bundlerUrl: 'https://api.candide.dev/public/v3/1',
   safeModulesVersion: '0.3.0',
   // Native coins mode
   useNativeCoins: true,
+  transactionMaxFee: 100000000000000n, // Optional: max send/sign fee in wei
   transferMaxFee: 100000000000000n // Optional: max fee in wei
 })
 ```
@@ -245,9 +249,9 @@ new WalletAccountEvmErc4337(seed, path, config)
 const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
   chainId: 1,
   provider: 'https://rpc.mevblocker.io/fast',
-  bundlerUrl: 'https://api.candide.dev/public/v3/ethereum',
+  bundlerUrl: 'https://api.candide.dev/public/v3/1',
   safeModulesVersion: '0.3.0',
-  paymasterUrl: 'https://api.candide.dev/public/v3/ethereum',
+  paymasterUrl: 'https://api.candide.dev/public/v3/1',
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
   paymasterToken: {
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
@@ -335,7 +339,7 @@ Sends a transaction via UserOperation through the bundler.
 
 **Returns:** `Promise\<{hash: string, fee: bigint}\>` - UserOperation hash and fee
 
-**Throws:** Error if fee exceeds `transferMaxFee`
+**Throws:** Error if fee exceeds `transactionMaxFee`
 
 **Example:**
 ```javascript
@@ -370,6 +374,8 @@ const fastResult = await account.sendTransaction({
   maxPriorityFeePerGas: 2000000000n  // 2 gwei
 })
 ```
+
+The account reserves a local nonce for each pending `sendTransaction()` or `transfer()` from the same account instance. Pre-acceptance failures release the reserved nonce; ambiguous transport failures keep it reserved to avoid nonce reuse.
 
 ##### `quoteSendTransaction(tx, config?)`
 Estimates the fee for a UserOperation without sending it.
@@ -693,16 +699,16 @@ new WalletAccountReadOnlyEvmErc4337(address, config)
 
 **Parameters:**
 - `address` (string): The EOA address (owner address)
-- `config` (`Omit<EvmErc4337WalletConfig, 'transferMaxFee'>`): Configuration object without `transferMaxFee`
+- `config` (`Omit<EvmErc4337WalletConfig, 'transferMaxFee' | 'transactionMaxFee'>`): Configuration object without send-only fee caps
 
 **Example:**
 ```javascript
 const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337('0x...', {
   chainId: 1,
   provider: 'https://rpc.mevblocker.io/fast',
-  bundlerUrl: 'https://api.candide.dev/public/v3/ethereum',
+  bundlerUrl: 'https://api.candide.dev/public/v3/1',
   safeModulesVersion: '0.3.0',
-  paymasterUrl: 'https://api.candide.dev/public/v3/ethereum',
+  paymasterUrl: 'https://api.candide.dev/public/v3/1',
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
   paymasterToken: {
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
@@ -1011,7 +1017,8 @@ interface EvmErc4337WalletPaymasterTokenConfig {
   paymasterUrl: string;                     // Paymaster service URL
   paymasterAddress: string;                 // Paymaster contract address
   paymasterToken: { address: string };      // ERC-20 token for fees
-  transferMaxFee?: number | bigint;         // Maximum fee limit
+  transferMaxFee?: number | bigint;         // Maximum transfer fee limit
+  transactionMaxFee?: number | bigint;      // Maximum send/sign fee limit
 }
 
 // Mode 2: Sponsorship Policy
@@ -1026,7 +1033,8 @@ interface EvmErc4337WalletSponsorshipPolicyConfig {
 interface EvmErc4337WalletNativeCoinsConfig {
   isSponsored?: false;
   useNativeCoins: true;
-  transferMaxFee?: number | bigint;         // Maximum fee limit
+  transferMaxFee?: number | bigint;         // Maximum transfer fee limit
+  transactionMaxFee?: number | bigint;      // Maximum send/sign fee limit
 }
 
 // Full config type
@@ -1038,7 +1046,7 @@ type EvmErc4337WalletConfig = EvmErc4337WalletCommonConfig &
 
 ### Config Override
 
-The `config` parameter on `sendTransaction`, `quoteSendTransaction`, `transfer`, and `quoteTransfer` allows per-call overrides of gas payment settings:
+The `config` parameter on `sendTransaction`, `signTransaction`, `quoteSendTransaction`, `transfer`, and `quoteTransfer` allows per-call overrides of gas payment settings:
 
 ```typescript
 type ConfigOverride = Partial<
@@ -1055,6 +1063,7 @@ type ConfigOverride = Partial<
 - `paymasterAddress` (string): Override paymaster contract
 - `paymasterToken` (\{address: string\}): Override paymaster token
 - `sponsorshipPolicyId` (string): Set sponsorship policy
+- `transactionMaxFee` (number | bigint): Override maximum fee for `sendTransaction()` and `signTransaction()`
 - `transferMaxFee` (number | bigint): Override maximum fee
 
 ### EvmErc4337Transaction
