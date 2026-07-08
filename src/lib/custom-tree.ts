@@ -225,6 +225,20 @@ export const customTree: Node[] = [
     configuration('/sdk/wallet-modules/wallet-solana/configuration'),
     apiReference('/sdk/wallet-modules/wallet-solana/api-reference'),
   ]),
+  folder('Solana gasless', '/sdk/wallet-modules/wallet-solana-gasless', 'Fuel', [
+    usage('/sdk/wallet-modules/wallet-solana-gasless/usage'),
+    guides([
+      page('Get Started', '/sdk/wallet-modules/wallet-solana-gasless/guides/get-started'),
+      page('Manage Accounts', '/sdk/wallet-modules/wallet-solana-gasless/guides/manage-accounts'),
+      page('Check Balances', '/sdk/wallet-modules/wallet-solana-gasless/guides/check-balances'),
+      page('Send Transactions', '/sdk/wallet-modules/wallet-solana-gasless/guides/send-transactions'),
+      page('Transfer SPL Tokens', '/sdk/wallet-modules/wallet-solana-gasless/guides/transfer-tokens'),
+      page('Sign and Verify Messages', '/sdk/wallet-modules/wallet-solana-gasless/guides/sign-verify-messages'),
+      page('Handle Errors', '/sdk/wallet-modules/wallet-solana-gasless/guides/handle-errors'),
+    ]),
+    configuration('/sdk/wallet-modules/wallet-solana-gasless/configuration'),
+    apiReference('/sdk/wallet-modules/wallet-solana-gasless/api-reference'),
+  ]),
   folder('RGB', '/sdk/community-modules/wdk-wallet-rgb', 'Palette', [
     apiReference('/sdk/community-modules/wdk-wallet-rgb/api-reference'),
   ]),
