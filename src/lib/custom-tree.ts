@@ -69,7 +69,7 @@ export const customTree: Node[] = [
       page('Transaction Policies', '/sdk/core-module/guides/transaction-policies'),
       page('Protocol Integration', '/sdk/core-module/guides/protocol-integration'),
       page('Middleware', '/sdk/core-module/guides/middleware'),
-      page('Error Handling', '/sdk/core-module/guides/error-handling'),
+      page('Best Practices', '/sdk/core-module/guides/error-handling'),
     ]),
     configuration('/sdk/core-module/configuration'),
     apiReference('/sdk/core-module/api-reference'),
