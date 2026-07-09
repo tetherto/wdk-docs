@@ -37,14 +37,14 @@ new WalletManagerTron(seed, config?)
   - `provider` (`string | TronWeb | Array<string | TronWeb>`, optional): Tron RPC endpoint URL, TronWeb instance, or ordered failover list
   - `retries` (number, optional): Additional failover attempts when `provider` is an array (default: 3)
   - `transferMaxFee` (`number | bigint`, optional): Maximum fee amount for TRC20 transfer operations (in sun)
-  - `transactionMaxFee` (`number | bigint`, optional): Maximum fee amount for native TRX `sendTransaction()` and `signTransaction()` operations (in sun)
+  - `transactionMaxFee` (`number | bigint`, optional): Maximum fee amount for `sendTransaction()` and `signTransaction()` operations (in sun)
 
 **Example:**
 ```javascript
 const wallet = new WalletManagerTron(seedPhrase, {
   provider: 'https://api.trongrid.io', // Tron RPC endpoint
   transferMaxFee: 10000000n, // Maximum TRC20 transfer fee in sun
-  transactionMaxFee: 10000000n // Maximum native TRX send/sign fee in sun
+  transactionMaxFee: 10000000n // Maximum send/sign transaction fee in sun
 })
 
 // Or with TronWeb instance
@@ -158,7 +158,7 @@ new WalletAccountTron(seed, path, config?)
 const account = new WalletAccountTron(seedPhrase, "0'/0/0", {
   provider: 'https://api.trongrid.io',
   transferMaxFee: 10000000n, // Maximum TRC20 transfer fee in sun
-  transactionMaxFee: 10000000n // Maximum native TRX send/sign fee in sun
+  transactionMaxFee: 10000000n // Maximum send/sign transaction fee in sun
 })
 ```
 
@@ -169,8 +169,8 @@ const account = new WalletAccountTron(seedPhrase, "0'/0/0", {
 | `getAddress()` | Returns the account's Tron address | `Promise\<string\>` | - |
 | `sign(message)` | Signs a message using the account's private key | `Promise\<string\>` | - |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` | - |
-| `signTransaction(tx)` | Signs a native TRX transaction without broadcasting it | `Promise\<SignedTransaction\>` | If no provider or fee exceeds `transactionMaxFee` |
-| `sendTransaction(tx)` | Sends a Tron transaction | `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` | If no provider |
+| `signTransaction(tx)` | Signs a Tron transaction without broadcasting it | `Promise\<SignedTransaction\>` | If no provider, fee exceeds `transactionMaxFee`, or a pre-built transaction owner does not match the account |
+| `sendTransaction(tx)` | Sends a Tron transaction | `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` | If no provider, fee exceeds `transactionMaxFee`, or a pre-built transaction owner does not match the account |
 | `quoteSendTransaction(tx)` | Estimates the fee for a Tron transaction | `Promise\<{fee: bigint, activationFee: bigint}\>` | If no provider |
 | `transfer(options)` | Transfers TRC20 tokens to another address | `Promise\<{hash: string, fee: bigint}\>` | If no provider or fee exceeds `transferMaxFee` |
 | `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: bigint}\>` | If no provider |
@@ -222,18 +222,17 @@ console.log('Signature valid:', isValid)
 ```
 
 ##### `signTransaction(tx)`
-Signs a native TRX transaction and returns the signed transaction object. This method does not broadcast the transaction.
+Signs a Tron transaction and returns the signed transaction object. This method does not broadcast the transaction.
 
 **Parameters:**
-- `tx` (TronTransaction): The transaction object
-  - `to` (string): Recipient Tron address (e.g., 'T...')
-  - `value` (number | bigint): Amount in sun (1 TRX = 1,000,000 sun)
+- `tx` (TronTransaction): Native TRX transfer, smart-contract call descriptor, or pre-built TronWeb transaction
 
 **Returns:** `Promise\<SignedTransaction\>` - Signed Tron transaction object with a `signature` array
 
 **Throws:**
 - Error if no TronWeb provider is configured
 - Error if fee exceeds `transactionMaxFee` when configured
+- Error if a pre-built transaction is owned by a different account
 
 **Example:**
 ```javascript
@@ -246,18 +245,17 @@ console.log('Signed transaction:', signedTransaction)
 ```
 
 ##### `sendTransaction(tx)`
-Sends a TRX transaction and returns the result with hash, fee, and activation fee details.
+Sends a Tron transaction and returns the result with hash, fee, and activation fee details.
 
 **Parameters:**
-- `tx` (TronTransaction): The transaction object
-  - `to` (string): Recipient Tron address (e.g., 'T...')
-  - `value` (number | bigint): Amount in sun (1 TRX = 1,000,000 sun)
+- `tx` (TronTransaction): Native TRX transfer, smart-contract call descriptor, or pre-built TronWeb transaction
 
 **Returns:** `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` - Transaction hash, total fee in sun, and the portion used for account activation
 
 **Throws:** 
 - Error if no TronWeb provider is configured
 - Error if fee exceeds `transactionMaxFee` when configured
+- Error if a pre-built transaction is owned by a different account
 
 **Example:**
 ```javascript
@@ -271,7 +269,7 @@ console.log('Activation fee:', result.activationFee, 'sun')
 ```
 
 ##### `quoteSendTransaction(tx)`
-Estimates the bandwidth and activation fee cost for a TRX transaction.
+Estimates the cost for a Tron transaction. Quotes include bandwidth for every transaction, energy for smart-contract execution, and activation fee for native transfers to inactive recipients.
 
 **Parameters:**
 - `tx` (TronTransaction): The transaction object (same as sendTransaction)
@@ -451,7 +449,7 @@ const readOnlyAccount = new WalletAccountReadOnlyTron('TLyqzVGLV1srkB7dToTAEqgDS
 |--------|-------------|---------|--------|
 | `getBalance()` | Returns the native TRX balance (in sun) | `Promise\<bigint\>` | If no provider |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise\<bigint\>` | If no provider |
-| `quoteSendTransaction(tx)` | Estimates the fee for a TRX transaction | `Promise\<{fee: bigint, activationFee: bigint}\>` | If no provider |
+| `quoteSendTransaction(tx)` | Estimates the fee for a Tron transaction | `Promise\<{fee: bigint, activationFee: bigint}\>` | If no provider |
 | `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: bigint}\>` | If no provider |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` | - |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise\<TronTransactionReceipt \| null\>` | If no provider |
@@ -486,7 +484,7 @@ console.log('USDT balance:', tokenBalance)
 ```
 
 ##### `quoteSendTransaction(tx)`
-Estimates the bandwidth and activation fee cost for a TRX transaction.
+Estimates the cost for a Tron transaction. Quotes include bandwidth for every transaction, energy for smart-contract execution, and activation fee for native transfers to inactive recipients.
 
 **Parameters:**
 - `tx` (TronTransaction): The transaction object
@@ -540,18 +538,31 @@ interface TronWalletConfig {
   provider?: string | TronWeb | Array<string | TronWeb>; // RPC, TronWeb, or failover list
   retries?: number;                   // Additional failover attempts, default 3
   transferMaxFee?: number | bigint;   // Maximum TRC20 transfer fee in sun
-  transactionMaxFee?: number | bigint; // Maximum native TRX send/sign fee in sun
+  transactionMaxFee?: number | bigint; // Maximum sendTransaction/signTransaction fee in sun
 }
 ```
 
 ### TronTransaction
 
 ```typescript
-interface TronTransaction {
+type TronTransaction = TronTrxTransfer | TronSmartContractCall | Transaction;
+
+interface TronTrxTransfer {
   to: string;                         // Recipient Tron address
   value: number | bigint;             // Amount in sun (1 TRX = 1,000,000 sun)
 }
+
+interface TronSmartContractCall {
+  contractAddress: string;            // Smart contract address to call
+  functionSelector: string;           // Function selector, e.g. 'transfer(address,uint256)'
+  parameters?: ContractFunctionParameter[];
+  options?: TriggerSmartContractOptions;
+}
+
+type Transaction = import('tronweb').Types.Transaction;
 ```
+
+`ContractFunctionParameter` and `TriggerSmartContractOptions` are TronWeb types used by `transactionBuilder.triggerSmartContract()`. Pre-built `Transaction` values are the unsigned transaction objects returned by TronWeb transaction-builder methods.
 
 ### TransferOptions
 

@@ -39,6 +39,12 @@ function TitleText({
   return <>{title}</>;
 }
 
+function getMarkdownUrl(pageUrl: string) {
+  const trimmed = pageUrl.replace(/\/+$/, '');
+
+  return trimmed.length === 0 ? '/index.md' : `${trimmed}.md`;
+}
+
 export default async function Page(props: PageProps<'/[[...slug]]'>) {
   const params = await props.params;
   const page = source.getPage(params.slug);
@@ -63,6 +69,7 @@ export default async function Page(props: PageProps<'/[[...slug]]'>) {
   const seoConfig = getDocsSeoConfig();
   const seoState = getPageSeoState(page, seoConfig);
   const jsonLd = buildJsonLdGraph(page, seoState, seoConfig);
+  const markdownUrl = getMarkdownUrl(page.url);
   
   return (
     <DocsPage toc={filteredToc} tableOfContent={{ style: "clerk" }} tableOfContentPopover={{ style: "clerk" }} full={page.data.full}>
@@ -83,9 +90,9 @@ export default async function Page(props: PageProps<'/[[...slug]]'>) {
       </DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
       <div className="flex flex-row gap-2 items-center border-b pb-6 -mt-6">
-        <LLMCopyButton markdownUrl={`/llms-full.txt`} />
+        <LLMCopyButton markdownUrl={markdownUrl} />
         <ViewOptions
-          markdownUrl={`/llms-full.txt`}
+          markdownUrl={markdownUrl}
         />
       </div>
       <DocsBody>

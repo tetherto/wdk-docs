@@ -33,6 +33,46 @@ const config = {
 const wallet = new WalletManagerEvm(seedPhrase, config)
 ```
 
+## Signer Configuration
+
+`WalletManagerEvm` accepts either a BIP-39 seed phrase/seed bytes or a derivable EVM signer as its first argument. Use the `@tetherto/wdk-wallet-evm/signers` entrypoint when you need explicit signer objects:
+
+```javascript title="Create A Manager From A Seed Signer"
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import { SeedSignerEvm } from '@tetherto/wdk-wallet-evm/signers'
+
+const signer = new SeedSignerEvm(seedPhrase)
+
+const wallet = new WalletManagerEvm(signer, {
+  provider: 'https://eth.drpc.org'
+})
+```
+
+The manager's default signer must support derivation. Non-derivable signers, such as private-key signers, can be registered by name and used to retrieve signer-backed accounts:
+
+```javascript title="Register A Private-Key Signer"
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import { PrivateKeySignerEvm } from '@tetherto/wdk-wallet-evm/signers'
+
+const wallet = new WalletManagerEvm(seedPhrase, {
+  provider: 'https://eth.drpc.org'
+})
+
+wallet.addSigner('treasury', new PrivateKeySignerEvm(privateKey))
+
+const treasury = await wallet.getAccount('treasury')
+```
+
+For a standalone account backed by one private key, construct the account directly:
+
+```javascript title="Standalone Private-Key Account"
+import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
+
+const account = WalletAccountEvm.fromPrivateKey(privateKey, {
+  provider: 'https://eth.drpc.org'
+})
+```
+
 ## Account Configuration
 
 Both `WalletAccountEvm` and `WalletAccountReadOnlyEvm` share similar configuration options:

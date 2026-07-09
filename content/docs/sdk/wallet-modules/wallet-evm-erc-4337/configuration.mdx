@@ -21,10 +21,11 @@ const config = {
   bundlerUrl: `https://api.pimlico.io/v1/ethereum/rpc?apikey=${PIMLICO_API_KEY}`,
   paymasterUrl: `https://api.pimlico.io/v2/ethereum/rpc?apikey=${PIMLICO_API_KEY}`,
   paymasterAddress: '0x777777777777AeC03fd955926DbF81597e66834C',
-  transferMaxFee: 100000000000000,
   paymasterToken: {
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
-  }
+  },
+  transactionMaxFee: 100000,
+  transferMaxFee: 100000
 }
 
 const wallet = new WalletManagerEvmErc4337(seedPhrase, config)
@@ -44,7 +45,7 @@ const account = new WalletAccountEvmErc4337(
   config    // Same config as wallet manager
 )
 
-// Read-only account (transferMaxFee not needed)
+// Read-only account (fee caps for sending are not needed)
 const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337(
   '0x...', // Smart contract wallet address
   {
@@ -57,7 +58,7 @@ const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337(
     paymasterToken: {
       address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
     }
-    // Note: transferMaxFee omitted for read-only accounts
+    // Note: transferMaxFee and transactionMaxFee omitted for read-only accounts
   }
 )
 ```
@@ -288,17 +289,45 @@ Enables Native Coins mode, where the user pays fees in the chain's native curren
 ```javascript
 const config = {
   useNativeCoins: true,
-  transferMaxFee: 100000000000000n // Optional: max fee in wei
+  transactionMaxFee: 100000000000000n, // Optional: max send/sign fee in wei
+  transferMaxFee: 100000000000000n // Optional: max transfer fee in wei
+}
+```
+
+### Transaction Max Fee
+
+The `transactionMaxFee` option sets the maximum fee amount for non-sponsored `sendTransaction()` and `signTransaction()` operations. It applies in Paymaster Token and Native Coins modes and is separate from `transferMaxFee`, which only caps token transfer operations. **Optional** parameter.
+
+**Type:** `number | bigint`
+**Required:** No (optional)
+**Unit:** Paymaster token base units in Paymaster Token mode; native token base units in Native Coins mode
+
+**Example:**
+```javascript
+const config = {
+  transactionMaxFee: 100000, // 100,000 paymaster token units
+  transferMaxFee: 100000
+}
+
+try {
+  const result = await account.sendTransaction({
+    to: '0x...',
+    value: 1000000000000000n
+  })
+} catch (error) {
+  if (error.message.includes('Exceeded maximum fee')) {
+    console.error('Transaction cancelled: Fee too high')
+  }
 }
 ```
 
 ### Transfer Max Fee
 
-The `transferMaxFee` option sets the maximum fee amount **in paymaster token units** for transfer operations. This prevents transactions with unexpectedly high fees. **Optional** parameter.
+The `transferMaxFee` option sets the maximum fee amount for transfer operations. In Paymaster Token mode, the cap uses paymaster token base units. In Native Coins mode, the cap uses native token base units. This prevents transactions with unexpectedly high fees. **Optional** parameter.
 
 **Type:** `number | bigint`
 **Required:** No (optional)
-**Unit:** Paymaster token base units
+**Unit:** Paymaster token base units in Paymaster Token mode; native token base units in Native Coins mode
 
 **Example:**
 ```javascript

@@ -1,0 +1,114 @@
+---
+title: Handle Orchestra Errors
+description: Recover from Orchestra API, state, submit, timeout, and status errors.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide explains how to [handle submit failures](#submit-failures), [handle state errors](#state-errors), [handle API and timeout errors](#api-and-timeout-errors), and [dispose wallet resources](#dispose-wallet-resources).
+
+## Error classes
+
+All package-specific errors extend `OrchestraError`.
+
+| Error | When it is thrown | Useful fields |
+|---|---|---|
+| `OrchestraError` | Base class for package-specific failures. | `code`, `details` |
+| `OrchestraApiError` | Orchestra returns an API error or an invalid API response. | `code`, `status`, `details` |
+| `OrchestraStateError` | Input state is incomplete, unsafe to resume, expired, or incompatible with the requested source payment. | `code`, `details` |
+| `OrchestraSubmitError` | Source payment was sent, but submit, post-submit validation, or post-submit state persistence failed. | `state`, `cause` |
+| `OrchestraTimeoutError` | HTTP request or wait operation exceeds its timeout. | `code`, `details` |
+
+## Submit failures
+
+`OrchestraSubmitError` is the most important error for funds-moving flows. It means a source payment may already have been sent. Persist `err.state` before retrying or resuming.
+
+```javascript title="Persist submit failure state"
+try {
+  const submitted = await orchestra.executeSwapIntent(intent)
+  await saveSwap(submitted)
+  return submitted
+} catch (err) {
+  if (err.name !== 'OrchestraSubmitError') throw err
+
+  await saveSwap(err.state)
+  return await orchestra.resumeSwap(err.state)
+}
+```
+
+Common submit-failure causes include:
+
+- Orchestra rejected or could not find a newly broadcast source transaction.
+- Status validation failed after Orchestra accepted the source payment.
+- Your `onStateChange` persistence callback failed after submit.
+- Source network fee was unavailable while a fee cap required it.
+
+For Bitcoin source routes, the package retries `tx_not_found` and `vout_not_found` submit responses with the same idempotency key because a newly broadcast Bitcoin transaction may need time to propagate.
+
+## State errors
+
+`OrchestraStateError` is thrown before unsafe operations, including:
+
+- calling a write method without a writable WDK account
+- passing both `fromTokenAmount` and `toTokenAmount`
+- trying to resume an intent-only state without `allowNewSourcePayment: true`
+- using an expired quote before source payment
+- missing a source token address for an EVM token source
+- missing a Spark token identifier for a non-BTC Spark token
+- omitting a recipient when the destination is not the source account
+
+```javascript title="Handle unsafe resume"
+try {
+  await orchestra.resumeSwap(savedIntent)
+} catch (err) {
+  if (err.name === 'OrchestraStateError') {
+    console.error('Recovery needs a source transaction or wallet-history check:', err.message)
+  }
+}
+```
+
+Use `allowNewSourcePayment: true` only after checking wallet history for a prior payment to the quote deposit address.
+
+## API and timeout errors
+
+Catch `OrchestraApiError` and `OrchestraTimeoutError` separately when you need to distinguish API failures from local state failures.
+
+```javascript title="Handle API and timeout failures"
+try {
+  const status = await orchestra.getOrderStatus(submitted)
+  console.log(status.order?.status ?? status.status)
+} catch (err) {
+  if (err.name === 'OrchestraApiError') {
+    console.error('Orchestra API failed:', err.code, err.status)
+  } else if (err.name === 'OrchestraTimeoutError') {
+    console.error('Timed out waiting for Orchestra:', err.message)
+  } else {
+    throw err
+  }
+}
+```
+
+## Status errors
+
+`getOrderStatus()` requires an `orderId`, `quoteId`, or `sourceTxHash`. Scoped client-key status reads also need the `readToken` returned in the submitted state.
+
+```javascript title="Read status with submitted state"
+const status = await orchestra.getOrderStatus(submitted)
+```
+
+When status polling runs too long, `waitForCompletion()` throws `OrchestraTimeoutError`.
+
+## Dispose wallet resources
+
+Dispose WDK wallet accounts after a route flow completes or fails. Keep the persisted Orchestra state until the order is terminal or your recovery policy has completed.
+
+```javascript title="Dispose wallet resources"
+try {
+  const submitted = await orchestra.executeSwapIntent(intent)
+  await saveSwap(submitted)
+} finally {
+  account.dispose?.()
+}
+```
+
+For in-flight routes, do not delete persisted intent, submit, order id, read token, or source transaction data just because the account object was disposed.

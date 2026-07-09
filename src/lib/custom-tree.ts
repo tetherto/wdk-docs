@@ -211,19 +211,35 @@ export const customTree: Node[] = [
       apiReference('/sdk/wallet-modules/wallet-tron-gasfree/api-reference'),
     ]),
   ]),
-  folder('Solana', '/sdk/wallet-modules/wallet-solana', 'Sun', [
-    usage('/sdk/wallet-modules/wallet-solana/usage'),
-    guides([
-      page('Getting Started', '/sdk/wallet-modules/wallet-solana/guides/getting-started'),
-      page('Manage Accounts', '/sdk/wallet-modules/wallet-solana/guides/account-management'),
-      page('Check Balances', '/sdk/wallet-modules/wallet-solana/guides/check-balances'),
-      page('Send SOL', '/sdk/wallet-modules/wallet-solana/guides/send-transactions'),
-      page('Transfer SPL Tokens', '/sdk/wallet-modules/wallet-solana/guides/transfer-tokens'),
-      page('Sign and Verify Messages', '/sdk/wallet-modules/wallet-solana/guides/sign-verify-messages'),
-      page('Error Handling', '/sdk/wallet-modules/wallet-solana/guides/error-handling'),
+  group('Solana', 'Sun', [
+    folder('Standard Solana', '/sdk/wallet-modules/wallet-solana', 'Wallet', [
+      usage('/sdk/wallet-modules/wallet-solana/usage'),
+      guides([
+        page('Getting Started', '/sdk/wallet-modules/wallet-solana/guides/getting-started'),
+        page('Manage Accounts', '/sdk/wallet-modules/wallet-solana/guides/account-management'),
+        page('Check Balances', '/sdk/wallet-modules/wallet-solana/guides/check-balances'),
+        page('Send SOL', '/sdk/wallet-modules/wallet-solana/guides/send-transactions'),
+        page('Transfer SPL Tokens', '/sdk/wallet-modules/wallet-solana/guides/transfer-tokens'),
+        page('Sign and Verify Messages', '/sdk/wallet-modules/wallet-solana/guides/sign-verify-messages'),
+        page('Error Handling', '/sdk/wallet-modules/wallet-solana/guides/error-handling'),
+      ]),
+      configuration('/sdk/wallet-modules/wallet-solana/configuration'),
+      apiReference('/sdk/wallet-modules/wallet-solana/api-reference'),
     ]),
-    configuration('/sdk/wallet-modules/wallet-solana/configuration'),
-    apiReference('/sdk/wallet-modules/wallet-solana/api-reference'),
+    folder('Gasless Solana', '/sdk/wallet-modules/wallet-solana-gasless', 'Fuel', [
+      usage('/sdk/wallet-modules/wallet-solana-gasless/usage'),
+      guides([
+        page('Get Started', '/sdk/wallet-modules/wallet-solana-gasless/guides/get-started'),
+        page('Manage Accounts', '/sdk/wallet-modules/wallet-solana-gasless/guides/manage-accounts'),
+        page('Check Balances', '/sdk/wallet-modules/wallet-solana-gasless/guides/check-balances'),
+        page('Send Transactions', '/sdk/wallet-modules/wallet-solana-gasless/guides/send-transactions'),
+        page('Transfer SPL Tokens', '/sdk/wallet-modules/wallet-solana-gasless/guides/transfer-tokens'),
+        page('Sign and Verify Messages', '/sdk/wallet-modules/wallet-solana-gasless/guides/sign-verify-messages'),
+        page('Handle Errors', '/sdk/wallet-modules/wallet-solana-gasless/guides/handle-errors'),
+      ]),
+      configuration('/sdk/wallet-modules/wallet-solana-gasless/configuration'),
+      apiReference('/sdk/wallet-modules/wallet-solana-gasless/api-reference'),
+    ]),
   ]),
   folder('RGB', '/sdk/community-modules/wdk-wallet-rgb', 'Palette', [
     apiReference('/sdk/community-modules/wdk-wallet-rgb/api-reference'),
@@ -233,7 +249,23 @@ export const customTree: Node[] = [
   ]),
 
   separator('Swap and Bridge'),
-  page('Swap module reference', '/sdk/swap-modules', 'ArrowLeftRight'),
+  page('Swidge protocol interface', '/sdk/swidge-modules', 'Route'),
+  folder('Orchestra', '/sdk/swidge-modules/swidge-orchestra', 'Waypoints', [
+    usage('/sdk/swidge-modules/swidge-orchestra/usage'),
+    guides([
+      page('Get Started', '/sdk/swidge-modules/swidge-orchestra/guides/get-started'),
+      page('Quote and Execute', '/sdk/swidge-modules/swidge-orchestra/guides/quote-and-execute'),
+      page('State and Recovery', '/sdk/swidge-modules/swidge-orchestra/guides/state-and-recovery'),
+      page('Handle Errors', '/sdk/swidge-modules/swidge-orchestra/guides/handle-errors'),
+    ]),
+    configuration('/sdk/swidge-modules/swidge-orchestra/configuration'),
+    apiReference('/sdk/swidge-modules/swidge-orchestra/api-reference'),
+  ]),
+  folder('Rhino.fi', '/sdk/swidge-modules/swidge-rhinofi', 'Waypoints', [
+    usage('/sdk/swidge-modules/swidge-rhinofi/usage'),
+    configuration('/sdk/swidge-modules/swidge-rhinofi/configuration'),
+    apiReference('/sdk/swidge-modules/swidge-rhinofi/api-reference'),
+  ]),
   folder('Velora', '/sdk/swap-modules/swap-velora-evm', 'ArrowLeftRight', [
     usage('/sdk/swap-modules/swap-velora-evm/usage'),
     guides([
@@ -245,7 +277,6 @@ export const customTree: Node[] = [
     configuration('/sdk/swap-modules/swap-velora-evm/configuration'),
     apiReference('/sdk/swap-modules/swap-velora-evm/api-reference'),
   ]),
-  page('Bridge module reference', '/sdk/bridge-modules', 'Link'),
   folder('USDT0 bridge', '/sdk/bridge-modules/bridge-usdt0-evm', 'Waypoints', [
     usage('/sdk/bridge-modules/bridge-usdt0-evm/usage'),
     guides([

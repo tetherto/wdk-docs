@@ -1,0 +1,91 @@
+---
+title: Rhino.fi Swidge Configuration
+description: Configuration options for @rhino.fi/wdk-protocol-swidge-rhinofi.
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+`RhinofiProtocol` requires a Rhino.fi API key. The SDK authenticates every call, including quote and discovery calls. Create and manage API keys in the [Rhino.fi Console](https://console.rhino.fi/).
+
+```javascript
+import RhinofiProtocol from '@rhino.fi/wdk-protocol-swidge-rhinofi'
+
+const rhinofi = new RhinofiProtocol(account, {
+  apiKey: process.env.RHINO_API_KEY,
+  maxNetworkFeeBps: 50,
+  maxProtocolFeeBps: 30
+})
+```
+
+## Constructor
+
+```typescript
+new RhinofiProtocol(account?, config)
+```
+
+| Parameter | Description |
+|-----------|-------------|
+| `account` | Optional WDK EVM account. Writable accounts can execute. Read-only accounts can quote and discover support. |
+| `config` | Required `RhinofiProtocolConfig`. Must include `apiKey`. |
+
+## Configuration Options
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `apiKey` | `string` | Rhino.fi API key. Required for every call. |
+| `apiBaseUrl` | `string` | Optional Rhino.fi API base URL override. Use `https://`. |
+| `maxNetworkFeeBps` | `number \| bigint` | Rejects execution when network fees exceed this many basis points of the input amount. |
+| `maxProtocolFeeBps` | `number \| bigint` | Rejects execution when protocol fees exceed this many basis points of the input amount. |
+| `configTtlMs` | `number` | Milliseconds to cache Rhino.fi config and swap-token lists. Defaults to `60000`; set `0` to always fetch fresh. |
+
+## Per-Call Overrides
+
+Pass config to `swidge(options, config)` to override fee caps for a single execution.
+
+```javascript
+await rhinofi.swidge(options, {
+  maxNetworkFeeBps: 40,
+  maxProtocolFeeBps: 25
+})
+```
+
+## API Base URL
+
+Use `https://` API URLs. `http://` URLs can redirect and break authenticated SDK requests.
+
+```javascript
+const rhinofi = new RhinofiProtocol(account, {
+  apiKey: process.env.RHINO_API_KEY,
+  apiBaseUrl: 'https://api.rhino.fi'
+})
+```
+
+## Config Caching
+
+The module caches Rhino.fi chain config and swap-token lists for `configTtlMs`.
+
+```javascript
+const rhinofi = new RhinofiProtocol(account, {
+  apiKey: process.env.RHINO_API_KEY,
+  configTtlMs: 60000
+})
+```
+
+Set `configTtlMs: 0` when you need every call to fetch fresh provider configuration.
+
+## Security Notes
+
+- Store `apiKey` in server-side or secret-managed configuration.
+- Use trusted RPC providers for WDK EVM accounts.
+- Set fee caps for user-facing flows.
+- Ask for user confirmation before calling `swidge()`.
+
+<Cards>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-rhinofi/usage">
+Quote, execute, and track Rhino.fi swidge routes.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-rhinofi/api-reference">
+Detailed method, type, status, fee, and error reference.
+</Card>
+</Cards>
