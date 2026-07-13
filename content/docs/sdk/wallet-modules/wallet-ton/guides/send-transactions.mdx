@@ -5,7 +5,7 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-This guide explains how to [send native TON](#send-native-ton), [estimate transaction fees](#estimate-transaction-fees), [cap transaction fees](#cap-transaction-fees), [use dynamic fee rates](#use-dynamic-fee-rates), and [sign a transaction offline](#sign-a-transaction-offline).
+This guide explains how to [send native TON](#send-native-ton), [estimate transaction fees](#estimate-transaction-fees), [cap transaction fees](#cap-transaction-fees), [read mainnet fee rates](#read-mainnet-fee-rates), and [prepare a signed transaction body](#prepare-a-signed-transaction-body).
 
 <Callout type="info">
 On TON, values are expressed in nanotons (1 TON = 10^9 nanotons). Transactions support an optional `bounceable` parameter specific to the TON network.
@@ -21,7 +21,7 @@ const result = await account.sendTransaction({
   value: 1000000000, // 1 TON in nanotons
   bounceable: true // Optional: specify if the address is bounceable
 })
-console.log('Transaction hash:', result.hash)
+console.log('Signed transfer body hash:', result.hash)
 console.log('Transaction fee:', result.fee, 'nanotons')
 ```
 
@@ -44,14 +44,14 @@ Set [`transactionMaxFee`](/sdk/wallet-modules/wallet-ton/configuration#transacti
 
 ```javascript title="Cap Native Transaction Fees"
 const wallet = new WalletManagerTon(seedPhrase, {
-  tonClient: { url: 'https://toncenter.com/api/v3' },
+  tonClient: { url: 'https://toncenter.com/api/v2/jsonRPC' },
   transactionMaxFee: 1000000000n
 })
 ```
 
-## Use Dynamic Fee Rates
+## Read Mainnet Fee Rates
 
-You can retrieve current fee rates from the wallet manager using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-ton/api-reference):
+You can retrieve mainnet TON API fee rates from the wallet manager using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-ton/api-reference#getfeerates). In `1.0.0-beta.10`, this method does not follow a configured testnet client and returns the same calculated value for `normal` and `fast`:
 
 ```javascript title="Get Fee Rates"
 const feeRates = await wallet.getFeeRates()
@@ -59,19 +59,17 @@ console.log('Normal fee rate:', feeRates.normal, 'nanotons')
 console.log('Fast fee rate:', feeRates.fast, 'nanotons')
 ```
 
-## Sign a Transaction Offline
+## Prepare a Signed Transaction Body
 
-You can sign a transaction without broadcasting it using [`account.signTransaction()`](/sdk/wallet-modules/wallet-ton/api-reference#signtransactiontx). This returns the signed external-message body as a TON `Cell`, which you can serialize and broadcast from another environment.
+You can build a signed transaction body without broadcasting it using [`account.signTransaction()`](/sdk/wallet-modules/wallet-ton/api-reference#signtransactiontx). The method still requires the configured TON client to read the current sequence number and, when a fee cap is configured, estimate the fee. It returns the body `Cell` accepted by the matching opened `WalletContractV5R1.send()` call, not a complete external-message BOC.
 
-```javascript title="Sign Transaction Offline"
+```javascript title="Prepare Signed Transaction Body"
 const cell = await account.signTransaction({
   to: 'EQ...', // TON address
   value: 1000000000 // 1 TON in nanotons
 })
 
-// Serialize to a wire-format payload for broadcast elsewhere
-const boc = cell.toBoc().toString('base64')
-console.log('Signed payload:', boc)
+// `cell` is not broadcast by signTransaction().
 ```
 
 ## Next Steps

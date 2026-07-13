@@ -28,13 +28,13 @@ new WalletManagerTonGasless(seed, config)
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (TonGaslessWalletConfig): Configuration object
   - `tonClient` (object | TonClient | array): TON client configuration, instance, or an array of configurations or instances for failover
-    - `url` (string): TON Center API URL (e.g., 'https://toncenter.com/api/v3')
+    - `url` (string): TON Center v2 JSON-RPC URL (e.g., 'https://toncenter.com/api/v2/jsonRPC')
     - `secretKey` (string, optional): API key for TON Center
   - `tonApiClient` (object | TonApiClient | array): TON API client configuration, instance, or an array of configurations or instances for failover
-    - `url` (string): TON API URL (e.g., 'https://tonapi.io/v2')
+    - `url` (string): TON API base URL (e.g., 'https://tonapi.io')
     - `secretKey` (string, optional): API key for TON API
   - `paymasterToken` (object): Paymaster token configuration
-    - `address` (string): Paymaster Jetton master contract address
+    - `address` (string): Supported paymaster Jetton master contract address
   - `retries` (number, optional): Failover retries used when `tonClient` and `tonApiClient` are arrays (default: 3)
   - `transferMaxFee` (number | bigint, optional): Maximum fee for gasless transfer operations
   - `transactionMaxFee` (number | bigint, optional): Shared wallet config option; native `sendTransaction()`, `quoteSendTransaction()`, and `signTransaction()` are unsupported on this module
@@ -43,11 +43,11 @@ new WalletManagerTonGasless(seed, config)
 ```javascript
 const wallet = new WalletManagerTonGasless(seedPhrase, {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key'
   },
   tonApiClient: {
-    url: 'https://tonapi.io/v2',
+    url: 'https://tonapi.io',
     secretKey: 'your-tonapi-key'
   },
   paymasterToken: {
@@ -64,8 +64,8 @@ const wallet = new WalletManagerTonGasless(seedPhrase, {
 |--------|-------------|---------|
 | `getAccount(index)` | Returns a gasless wallet account at the specified index | `Promise\<WalletAccountTonGasless\>` |
 | `getAccountByPath(path)` | Returns a gasless wallet account at the specified BIP-44 derivation path | `Promise\<WalletAccountTonGasless\>` |
-| `getFeeRates()` | Returns current fee rates for transactions | `Promise\<{normal: number, fast: number}\>` |
-| `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
+| `getFeeRates()` | Returns fee rates from the mainnet TON API configuration | `Promise\<{normal: bigint, fast: bigint}\>` |
+| `dispose()` | Disposes cached accounts and signers; the manager seed remains in memory | `void` |
 
 ##### `getAccount(index)`
 Returns a gasless wallet account at the specified index. Index `n` derives the account at `m/44'/607'/n'`.
@@ -96,9 +96,9 @@ const account = await wallet.getAccountByPath("1'")
 ```
 
 ##### `getFeeRates()`
-Returns current fee rates for transactions based on blockchain config.
+Returns fee rates from the mainnet TON API configuration. In `1.0.0-beta.7`, this method always requests `https://tonapi.io/v2`, does not follow the configured client network, and returns the same calculated value for both fields.
 
-**Returns:** `Promise\<{normal: number, fast: number}\>` - Object containing fee rates
+**Returns:** `Promise\<{normal: bigint, fast: bigint}\>` - Object containing fee rates
 
 **Example:**
 ```javascript
@@ -108,7 +108,7 @@ console.log('Fast fee rate:', feeRates.fast)
 ```
 
 ##### `dispose()`
-Disposes all wallet accounts, clearing private keys from memory.
+Disposes cached wallet accounts and signers, clearing their derived private keys. In the current beta, this method does not zero or unset the wallet manager's seed bytes.
 
 **Example:**
 ```javascript
@@ -140,8 +140,8 @@ new WalletAccountTonGasless(seed, path, config)
 | `sendTransaction(tx)` | Not supported on gasless; always rejects | `Promise\<TransactionResult\>` |
 | `quoteSendTransaction(tx)` | Not supported on gasless; always rejects | `Promise\<Omit\<TransactionResult, 'hash'\>\>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` |
-| `transfer(options, config?)` | Transfers tokens using gasless transactions | `Promise\<{hash: string, fee: number}\>` |
-| `quoteTransfer(options, config?)` | Estimates the fee for a token transfer | `Promise\<{fee: number}\>` |
+| `transfer(options, config?)` | Transfers tokens using gasless transactions | `Promise\<{hash: string, fee: bigint}\>` |
+| `quoteTransfer(options, config?)` | Estimates the fee for a token transfer | `Promise\<{fee: bigint}\>` |
 | `getBalance()` | Returns the native TON balance (in nanotons) | `Promise\<bigint\>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific token | `Promise\<bigint\>` |
 | `getPaymasterTokenBalance()` | Returns the balance of the paymaster token | `Promise\<bigint\>` |
@@ -174,7 +174,7 @@ console.log('Signature:', signature)
 ```
 
 ##### `signTransaction(tx)`
-Not supported on the gasless module. This method always throws. The gasless module only supports paymaster-funded Jetton transfers through [`transfer()`](#transferoptions-config). Use the standard `@tetherto/wdk-wallet-ton` module for offline transaction signing.
+Not supported on the gasless module. This method always throws. The gasless module only supports paymaster-funded Jetton transfers through [`transfer()`](#transferoptions-config). Use the standard `@tetherto/wdk-wallet-ton` module to build signed native transaction bodies.
 
 **Parameters:**
 - `tx` (TonTransaction): The transaction
@@ -202,7 +202,7 @@ await account.sendTransaction({ to: 'EQ...', value: 1000000000n })
 ```
 
 ##### `quoteSendTransaction(tx)`
-Not supported on the gasless module. This method is inherited for wallet-interface compatibility and always rejects at runtime. Use [`quoteTransfer()`](#quotetransferoptions) to estimate gasless Jetton transfer fees.
+Not supported on the gasless module. This method is inherited for wallet-interface compatibility and always rejects at runtime. Use [`quoteTransfer()`](#quotetransferoptions-config) to estimate gasless Jetton transfer fees.
 
 **Parameters:**
 - `tx` (TonTransaction): The transaction
@@ -237,13 +237,13 @@ Transfers a Jetton using a gasless transaction, paying the fee with the configur
 - `options` (TransferOptions): Transfer options
   - `token` (string): Token contract address
   - `recipient` (string): Recipient TON address
-  - `amount` (number): Amount in token's base units
-- `config` (object, optional): Override configuration
-  - `paymasterToken` (object, optional): Override default paymaster token
+  - `amount` (number | bigint): Amount in token's base units
+- `config` (object, optional): Per-call configuration. When supplied, it replaces the wallet-level transfer configuration for this call.
+  - `paymasterToken` (object, required when `config` is supplied): Paymaster token for this transfer
     - `address` (string): Paymaster token address
   - `transferMaxFee` (number | bigint, optional): Override maximum fee. Transfers throw only when the estimated fee is greater than this cap, so an equal estimate is allowed.
 
-**Returns:** `Promise\<{hash: string, fee: number}\>` - Transfer result
+**Returns:** `Promise\<{hash: string, fee: bigint}\>` - The signed transfer body hash as lowercase hex and the fee in paymaster Jetton base units
 
 **Example:**
 ```javascript
@@ -257,18 +257,21 @@ const result = await account.transfer({
 })
 ```
 
-##### `quoteTransfer(options)`
+##### `quoteTransfer(options, config?)`
 Estimates the fee for a Jetton (TON token) transfer.
 
 **Parameters:**
 - `options` (TransferOptions): Transfer options
   - `token` (string): Token contract address
   - `recipient` (string): Recipient TON address
-  - `amount` (number): Amount in token's base units
-- `config` (object, optional): Override configuration
-  - `paymasterToken` (object, optional): Override default paymaster token
+  - `amount` (number | bigint): Amount in token's base units
+- `config` (object, optional): Per-call configuration. When supplied, it replaces the wallet-level quote configuration for this call.
+  - `paymasterToken` (object, required when `config` is supplied): Paymaster token for this quote
+    - `address` (string): Paymaster token address
 
-**Returns:** `Promise\<{fee: number}\>` - Object containing fee estimate (in paymaster token base units)
+**Returns:** `Promise\<{fee: bigint}\>` - Object containing fee estimate (in paymaster token base units)
+
+`quoteTransfer()` returns a fee estimate only. It does not submit a transfer or return a transaction hash.
 
 **Example:**
 ```javascript
@@ -362,8 +365,8 @@ new WalletAccountReadOnlyTonGasless(publicKey, config)
 ```
 
 **Parameters:**
-- `publicKey` (string | Uint8Array): The account's public key
-- `config` (TonGaslessWalletConfig): Configuration object
+- `publicKey` (string | Uint8Array): The account's public key. String values must be hex encoded.
+- `config` (object): Client, retry, and paymaster configuration. `transferMaxFee` and `transactionMaxFee` are not accepted by the read-only constructor.
 
 #### Methods
 
@@ -374,7 +377,7 @@ new WalletAccountReadOnlyTonGasless(publicKey, config)
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific token | `Promise\<bigint\>` |
 | `getPaymasterTokenBalance()` | Returns the balance of the paymaster token | `Promise\<bigint\>` |
 | `quoteSendTransaction(tx)` | Not supported on gasless; always rejects | `Promise\<Omit\<TransactionResult, 'hash'\>\>` |
-| `quoteTransfer(options, config?)` | Estimates the fee for a token transfer | `Promise\<{fee: number}\>` |
+| `quoteTransfer(options, config?)` | Estimates the fee for a token transfer | `Promise\<{fee: bigint}\>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise\<TonTransactionReceipt \| null\>` |
 
@@ -446,11 +449,14 @@ Estimates the fee for a token transfer.
 - `options` (TransferOptions): Transfer options
   - `token` (string): Token contract address
   - `recipient` (string): Recipient TON address
-  - `amount` (number): Amount in token's base units
-- `config` (object, optional): Override configuration
-  - `paymasterToken` (object, optional): Override default paymaster token
+  - `amount` (number | bigint): Amount in token's base units
+- `config` (object, optional): Per-call configuration. When supplied, it replaces the account's wallet-level quote configuration for this call.
+  - `paymasterToken` (object, required when `config` is supplied): Paymaster token for this quote
+    - `address` (string): Paymaster token address
 
-**Returns:** `Promise\<{fee: number}\>` - Object containing fee estimate (in paymaster token base units)
+**Returns:** `Promise\<{fee: bigint}\>` - Object containing fee estimate (in paymaster token base units)
+
+`quoteTransfer()` returns a fee estimate only. It does not submit a transfer or return a transaction hash.
 
 **Example:**
 ```javascript
@@ -480,8 +486,10 @@ console.log('Signature valid:', isValid)
 ##### `getTransactionReceipt(hash)`
 Returns a transaction's receipt.
 
+In `1.0.0-beta.7`, the inherited initial receipt lookup always queries mainnet TON Center v3. Do not rely on this method for testnet receipts; see [Network Selection](/sdk/wallet-modules/wallet-ton-gasless/configuration#network-selection).
+
 **Parameters:**
-- `hash` (string): The transaction's hash
+- `hash` (string): The signed transfer body hash returned by `transfer()`
 
 **Returns:** `Promise\<TonTransactionReceipt | null\>` - The receipt, or null if the transaction has not been included in a block yet
 
@@ -501,14 +509,14 @@ if (receipt) {
 
 ```typescript
 type TonClientConfig = {
-  /** TON Center API URL @example 'https://toncenter.com/api/v3' */
+  /** TON Center v2 JSON-RPC URL @example 'https://toncenter.com/api/v2/jsonRPC' */
   url: string;
   /** Optional API key for TON Center */
   secretKey?: string;
 };
 
 type TonApiClientConfig = {
-  /** TON API URL @example 'https://tonapi.io/v2' */
+  /** TON API base URL @example 'https://tonapi.io' */
   url: string;
   /** Optional API key for TON API */
   secretKey?: string;
@@ -575,7 +583,7 @@ interface TransferOptions {
   /**
    * Amount in token's base units
    */
-  amount: number;
+  amount: number | bigint;
 }
 ```
 
@@ -584,14 +592,15 @@ interface TransferOptions {
 ```typescript
 interface TransferResult {
   /**
-   * Transaction hash
+   * Signed transfer body hash as a lowercase hex string; pass it to getTransactionReceipt()
+   * @example '7f83b1657ff1fc53b92dc18148a1d65dfa13501404a55e63ddfde593f4f5f9d8'
    */
   hash: string;
 
   /**
    * Fee paid in paymaster token units
    */
-  fee: number;
+  fee: bigint;
 }
 ```
 

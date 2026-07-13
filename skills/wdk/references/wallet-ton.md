@@ -6,10 +6,10 @@
 |----------|-----|
 | **npm** | https://www.npmjs.com/package/@tetherto/wdk-wallet-ton |
 | **GitHub** | https://github.com/tetherto/wdk-wallet-ton |
-| **Docs — Overview** | https://docs.wallet.tether.io/sdk/wallet-modules/wallet-ton |
-| **Docs — Usage** | https://docs.wallet.tether.io/sdk/wallet-modules/wallet-ton/usage |
-| **Docs — Configuration** | https://docs.wallet.tether.io/sdk/wallet-modules/wallet-ton/configuration |
-| **Docs — API Reference** | https://docs.wallet.tether.io/sdk/wallet-modules/wallet-ton/api-reference |
+| **Docs — Overview** | https://docs.wdk.tether.io/sdk/wallet-modules/wallet-ton |
+| **Docs — Usage** | https://docs.wdk.tether.io/sdk/wallet-modules/wallet-ton/usage |
+| **Docs — Configuration** | https://docs.wdk.tether.io/sdk/wallet-modules/wallet-ton/configuration |
+| **Docs — API Reference** | https://docs.wdk.tether.io/sdk/wallet-modules/wallet-ton/api-reference |
 
 ## Links — wallet-ton-gasless
 
@@ -17,10 +17,10 @@
 |----------|-----|
 | **npm** | https://www.npmjs.com/package/@tetherto/wdk-wallet-ton-gasless |
 | **GitHub** | https://github.com/tetherto/wdk-wallet-ton-gasless |
-| **Docs — Overview** | https://docs.wallet.tether.io/sdk/wallet-modules/wallet-ton-gasless |
-| **Docs — Usage** | https://docs.wallet.tether.io/sdk/wallet-modules/wallet-ton-gasless/usage |
-| **Docs — Configuration** | https://docs.wallet.tether.io/sdk/wallet-modules/wallet-ton-gasless/configuration |
-| **Docs — API Reference** | https://docs.wallet.tether.io/sdk/wallet-modules/wallet-ton-gasless/api-reference |
+| **Docs — Overview** | https://docs.wdk.tether.io/sdk/wallet-modules/wallet-ton-gasless |
+| **Docs — Usage** | https://docs.wdk.tether.io/sdk/wallet-modules/wallet-ton-gasless/usage |
+| **Docs — Configuration** | https://docs.wdk.tether.io/sdk/wallet-modules/wallet-ton-gasless/configuration |
+| **Docs — API Reference** | https://docs.wdk.tether.io/sdk/wallet-modules/wallet-ton-gasless/api-reference |
 
 ## Packages
 
@@ -36,13 +36,13 @@ import WalletManagerTonGasless from '@tetherto/wdk-wallet-ton-gasless'
 
 ## Key Details — wallet-ton
 
-- **Derivation**: BIP-44 (`m/44'/607'/0'/0/{index}`)
+- **Derivation**: BIP-44 (`m/44'/607'/{index}'` in v1.0.0-beta.6+)
 - **Key type**: Ed25519
 - **Wallet contract**: V5R1
 - **Fee unit**: nanotons (1 TON = 1,000,000,000 nanotons)
 - **Token standard**: Jettons via `transfer()`
 - **USDT Jetton master**: `EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs`
-- `sendTransaction` accepts a `payload` field for arbitrary contract calls — treat with caution.
+- `sendTransaction` accepts a `body` field for arbitrary contract calls — treat with caution.
 
 > **Derivation path change in v1.0.0-beta.6+**: Previous default was `m/44'/607'/0'/0/{index}`, updated to match ecosystem conventions. Existing wallets created with old path will generate different addresses. Use `getAccountByPath` for legacy wallet recovery.
 
@@ -51,7 +51,7 @@ import WalletManagerTonGasless from '@tetherto/wdk-wallet-ton-gasless'
 ```javascript
 const wallet = new WalletManagerTon(seedPhrase, {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key'            // Optional but recommended for production
   },
   transferMaxFee: 1000000000n            // Optional: max fee in nanotons
@@ -60,22 +60,22 @@ const wallet = new WalletManagerTon(seedPhrase, {
 
 ## Key Details — wallet-ton-gasless
 
-- Same derivation and key type as wallet-ton
-- **Gasless**: Paymaster covers transaction fees; user pays in Jettons
-- Requires `tonApiClient` and `paymasterToken` config
-- **Jetton-to-Jetton only**: `sendTransaction()` **throws** — use `transfer()` only
-- Fee is typically 0 or covered by paymaster
+- Same default derivation and key type as wallet-ton in gasless v1.0.0-beta.5+
+- **Gasless Jetton transfers**: fees are paid in a supported paymaster Jetton instead of native TON
+- Requires a `tonApiClient` base URL and `paymasterToken.address` configuration
+- **Jetton transfers only**: `sendTransaction()`, `quoteSendTransaction()`, and `signTransaction()` are unsupported — use `transfer()` and `quoteTransfer()`
+- Transfer fees are returned in paymaster Jetton base units. The account pays them from its configured paymaster Jetton balance; if that Jetton is also being transferred, the same balance must cover both the transfer amount and the final fee.
 
 ## Configuration — wallet-ton-gasless
 
 ```javascript
 const wallet = new WalletManagerTonGasless(seedPhrase, {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key'
   },
   tonApiClient: {
-    url: 'https://tonapi.io/v3',
+    url: 'https://tonapi.io',
     secretKey: 'your-ton-api-key'
   },
   paymasterToken: {
