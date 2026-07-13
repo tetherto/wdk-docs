@@ -1,0 +1,206 @@
+---
+title: SwapDK Swidge Usage
+description: Install, configure, discover chains and tokens, quote and execute a swidge route through @swapdk/wdk-protocol-swidge-swapdk.
+docType: how-to
+schemaType: TechArticle
+---
+
+## Install
+
+```bash
+npm install @swapdk/wdk-protocol-swidge-swapdk
+```
+
+Also install the WDK wallet module for your source-chain family:
+
+```bash
+# EVM sources (Ethereum, Arbitrum, Base, BSC, Avalanche)
+npm install @tetherto/wdk-wallet-evm
+
+# Bitcoin
+npm install @swapdk/wdk-wallet-btc
+
+# TRON (needs a tronweb instance too)
+npm install @tetherto/wdk-wallet-tron tronweb
+
+# Cosmos-family (THORChain / MAYAChain)
+npm install @base58-io/wdk-wallet-cosmos
+
+# Solana (native SOL only)
+npm install @tetherto/wdk-wallet-solana
+```
+
+## Base peer dependency
+
+`@swapdk/wdk-protocol-swidge-swapdk` pins `@tetherto/wdk-wallet` to exact `1.0.0-beta.11`. If your project already installs another `@tetherto/wdk-wallet-*` package with a `^1.0.0-beta.7` peer range, npm resolves the intersection to `1.0.0-beta.11` and both packages coexist. Same pin the [Rhino.fi swidge module](https://www.npmjs.com/package/@rhino.fi/wdk-protocol-swidge-rhinofi) uses (upstream `1.0.0-beta.12+` dropped the `SwidgeProtocol` re-export from `/protocols/index.js`; the pin loosens once upstream restores it).
+
+## Construct
+
+For an EVM source with a THORChain destination:
+
+```ts
+import WalletManagerEvm from "@tetherto/wdk-wallet-evm";
+import { SwapDKSwidge } from "@swapdk/wdk-protocol-swidge-swapdk";
+
+const wallet = new WalletManagerEvm(seedPhrase, {
+  provider: process.env.RPC_URL_ETHEREUM,
+});
+const account = await wallet.getAccount(0);
+
+const swidge = new SwapDKSwidge(account, {
+  apiUrl: "https://api.swapdk.com",
+  apiKey: process.env.SWAPDK_API_KEY!,
+  defaultFromChain: "ethereum",   // fallback when options omit fromChain
+  defaultSlippage: 0.01,          // 1% (optional; default is 0.03 = 3%)
+});
+```
+
+For a TRON source, pass the tronweb instance the wallet manager was constructed with:
+
+```ts
+import { TronWeb } from "tronweb";
+import WalletManagerTron from "@tetherto/wdk-wallet-tron";
+import { SwapDKSwidge } from "@swapdk/wdk-protocol-swidge-swapdk";
+
+const tronWeb = new TronWeb({ fullHost: process.env.TRON_PROVIDER_URL });
+const wallet = new WalletManagerTron(seedPhrase, { provider: tronWeb });
+const account = await wallet.getAccount(0);
+
+const swidge = new SwapDKSwidge(account, {
+  apiUrl: "https://api.swapdk.com",
+  apiKey: process.env.SWAPDK_API_KEY!,
+  defaultFromChain: "tron",
+  tronWeb,   // required for TRON sources; ignored elsewhere
+});
+```
+
+For Bitcoin, optionally set a miner-fee rate:
+
+```ts
+const swidge = new SwapDKSwidge(account, {
+  apiUrl: "https://api.swapdk.com",
+  apiKey: process.env.SWAPDK_API_KEY!,
+  defaultFromChain: "bitcoin",
+  feeRate: 15,   // sats/vB — optional; wallet estimates from Electrum if omitted
+});
+```
+
+## Discover chains and tokens
+
+Discovery methods work on a read-only instance (constructed without an account):
+
+```ts
+const readOnly = new SwapDKSwidge(undefined, { apiUrl, apiKey });
+
+const chains = await readOnly.getSupportedChains();
+// [
+//   { id: "bitcoin", name: "Bitcoin", type: "bitcoin", nativeToken: "BTC" },
+//   { id: "ethereum", name: "Ethereum", type: "evm", nativeToken: "ETH" },
+//   { id: "tron", name: "TRON", type: "tron", nativeToken: "TRX" },
+//   …
+// ]
+
+const tokens = await readOnly.getSupportedTokens({ fromChain: "ethereum" });
+// [
+//   { token: "ETH", chain: "ethereum", symbol: "ETH", decimals: 18 },
+//   {
+//     token: "0xA0b86991C6218b36C1d19D4a2e9Eb0cE3606eB48",
+//     chain: "ethereum",
+//     symbol: "USDC",
+//     decimals: 6,
+//     address: "0xA0b86991C6218b36C1d19D4a2e9Eb0cE3606eB48",
+//     name: "USD Coin",
+//   },
+//   …
+// ]
+```
+
+The `token` identifier follows the same convention across the module: **contract address for fungible tokens** (EIP-55 checksummed hex for EVM, base58check for TRON, base58 mint for SPL), **upper-case ticker for native gas coins** (`"ETH"`, `"BTC"`, `"TRX"`).
+
+## Quote a route
+
+Quote is a read operation — no wallet needed, no funds moved. Use it to show the user expected output and fees before execution.
+
+```ts
+const quote = await swidge.quoteSwidge({
+  fromToken: "ETH",
+  fromChain: "ethereum",
+  toToken: "BTC",
+  toChain: "bitcoin",
+  fromTokenAmount: 10_000_000_000_000_000n,   // 0.01 ETH in wei
+  recipient: "bc1qexampleRecipient…",
+  slippage: 0.01,
+});
+
+console.log("expected BTC out:", quote.toTokenAmount);
+console.log("min BTC out (post-slippage):", quote.toTokenAmountMin);
+console.log("fees:", quote.fees);
+console.log("estimated duration (s):", quote.estimatedDuration);
+```
+
+`SwidgeQuote.fees` is an array of `{ type, amount, token }` — `type` is one of `"network"` (outbound), `"protocol"` (liquidity), `"affiliate"`, or `"other"`.
+
+## Execute a route
+
+`swidge()` broadcasts the source-chain transaction(s). Requires a wallet-backed instance (not read-only).
+
+```ts
+const options = {
+  fromToken: "ETH",
+  fromChain: "ethereum",
+  toToken: "BTC",
+  toChain: "bitcoin",
+  fromTokenAmount: 10_000_000_000_000_000n,
+  recipient: "bc1qexampleRecipient…",
+  slippage: 0.01,
+};
+
+// Show the user the quote first — swidge() has real cost.
+const quote = await swidge.quoteSwidge(options);
+await confirmWithUser(quote);   // your app's confirmation UX
+
+const result = await swidge.swidge(options);
+console.log("source tx:", result.hash);
+console.log("id (for status polling):", result.id);
+console.log("all txs (approve + main, when applicable):", result.transactions);
+```
+
+The `SwidgeResult.transactions` array records every source-chain tx in order — for ERC-20 sources you'll see `{ type: "approval" }` first, then `{ type: "source" }` for the main deposit.
+
+## Track status
+
+Cross-chain settlement is asynchronous. Poll `getSwidgeStatus()` with the id returned by `swidge()`:
+
+```ts
+async function pollUntilSettled(id: string, fromChain: string) {
+  for (let i = 0; i < 60; i++) {   // up to 10 min at 10s cadence
+    const status = await swidge.getSwidgeStatus(id, { fromChain });
+    if (status.status === "completed") return status;
+    if (status.status === "failed" || status.status === "refunded") return status;
+    await new Promise((r) => setTimeout(r, 10_000));
+  }
+  throw new Error(`swidge ${id} still pending after 10 minutes`);
+}
+
+const settled = await pollUntilSettled(result.id, "ethereum");
+console.log("final:", settled);
+console.log("all legs:", settled.transactions);
+```
+
+`SwidgeStatus` values: `pending`, `action-required`, `completed`, `failed`, `refund-pending`, `refunded`, `cancelled`, `expired`, `partial`.
+
+## Legacy bridge compatibility
+
+Because the base `SwidgeProtocol` class implements `bridge/quoteBridge/swap/quoteSwap` by delegating to `swidge/quoteSwidge`, existing consumers of `IBridgeProtocol` or `ISwapProtocol` can use this module as a drop-in replacement:
+
+```ts
+// Legacy IBridgeProtocol call — works because the base class delegates.
+const bridgeResult = await swidge.bridge({
+  token: "ETH",
+  targetChain: "bitcoin",
+  recipient: "bc1qexampleRecipient…",
+  amount: 10_000_000_000_000_000n,
+});
+```
+
+The mapping is documented on the [`SwidgeProtocol` base class](https://docs.wdk.tether.io/sdk/swidge-modules/); fields on `BridgeOptions` are re-derived to `SwidgeOptions` internally.

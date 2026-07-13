@@ -1,0 +1,80 @@
+---
+title: SwapDK Swidge Overview
+description: Overview of the @swapdk/wdk-protocol-swidge-swapdk module for cross-chain swaps and bridges across Bitcoin, EVM, Cosmos-family, Solana, and TRON via SwapDK's swap-engine.
+docType: explanation
+schemaType: TechArticle
+---
+
+The SwapDK Swidge module lets WDK accounts on any of five source-chain families quote and execute cross-chain swaps and bridges through the SwapDK swap-engine, using the shared `SwidgeProtocol` interface. A single class covers Bitcoin, EVM (Ethereum / Arbitrum / Base / BSC / Avalanche), Cosmos (THORChain / MAYAChain), Solana, and TRON as source chains — internally it dispatches to a per-family adapter that knows how to build the outbound transaction for the paired wallet.
+
+Use this module when an app needs arbitrary-asset cross-chain routing (not just USD₮0), server-side provider selection across THORChain / MAYAChain / Chainflip, and a single API surface that spans multiple source families.
+
+Powered by [`@swapdk/wdk-protocol-swidge-swapdk`](https://github.com/Swap-DK/wdk-protocol-bridges-swapdk/tree/main/packages/swidge).
+
+<Callout type="warn">
+This module is developed and maintained independently by a third-party contributor. Tether and the WDK team do not endorse or assume responsibility for its code, security, or maintenance. Review the package and use your own judgment before using it with real funds.
+</Callout>
+
+<Callout type="info">
+Currently on `1.0.0-alpha.0`. The API surface is stable enough for early integration but breaking changes are still possible before `1.0.0`.
+</Callout>
+
+## Features
+
+- **Unified route interface**: Implements `quoteSwidge()`, `swidge()`, `getSwidgeStatus()`, `getSupportedChains()`, and `getSupportedTokens()`.
+- **Five source-chain families in one class**: Internal per-family adapters (Bitcoin, EVM, Cosmos, Solana, TRON) share the same discovery / quote / status surface.
+- **Server-side provider selection**: SwapDK's swap-engine picks between THORChain, MAYAChain, and Chainflip based on live pool state; downstream code sees a uniform interface.
+- **Halt-aware discovery**: `getSupportedChains()` returns only chains that are currently routable at at least one provider. Pool-level halts on THORChain / MAYAChain are surfaced via `/chains` filter.
+- **Authenticated API calls**: Uses a SwapDK API key for quotes, execution, discovery, and status. Request access at [swapdk.com](https://swapdk.com).
+- **Legacy compatibility for free**: The base `SwidgeProtocol` class delegates `bridge/quoteBridge/swap/quoteSwap` to `swidge/quoteSwidge`, so consumers still on the older `IBridgeProtocol` / `ISwapProtocol` API keep working without code changes.
+
+## Supported Routes
+
+Call `getSupportedChains()` and `getSupportedTokens()` at runtime — the SwapDK swap-engine controls the live route set and returns halt-filtered results.
+
+| Ecosystem | Source-chain support | Peer wallet |
+|-----------|----------------------|-------------|
+| Bitcoin | Supported (native BTC) | [`@swapdk/wdk-wallet-btc`](https://www.npmjs.com/package/@swapdk/wdk-wallet-btc) or [`@tetherto/wdk-wallet-btc`](/sdk/wallet-modules/wallet-btc) with memo support |
+| EVM | Supported (Ethereum, Arbitrum, Base, BSC, Avalanche) | [`@tetherto/wdk-wallet-evm`](/sdk/wallet-modules/wallet-evm) |
+| Cosmos | Supported (THORChain, MAYAChain) | [`@base58-io/wdk-wallet-cosmos`](/sdk/community-modules/wdk-wallet-cosmos) |
+| Solana | Supported (native SOL only; SPL is planned) | [`@tetherto/wdk-wallet-solana`](/sdk/wallet-modules/wallet-solana) |
+| TRON | Supported (TRX and TRC-20 including USDT / USDC) | [`@tetherto/wdk-wallet-tron`](/sdk/wallet-modules/wallet-tron) |
+
+Destinations follow whatever the swap-engine routes — typically the same set of chains plus a wider destination reach (BTC ↔ EVM ↔ TRON ↔ Cosmos-family, etc.).
+
+## Execution Model
+
+`swidge()` submits the source-chain deposit after any required ERC-20 / TRC-20 approval. It resolves once the deposit transaction is broadcast; cross-chain settlement continues asynchronously.
+
+Use `getSwidgeStatus(result.id, { fromChain })` to track the route to completion. Status values follow the WDK canonical `SwidgeStatus` enum (`pending`, `swapping` → mapped to `pending`, `completed`, `refunded`, `failed`).
+
+<Callout type="warn">
+`swidge()` can submit one or more transactions (approve leg + main deposit) and, on Bitcoin's Chainflip path, allocates a broker channel that consumes broker resources. Show the quote, fee breakdown, recipient, source token, destination token, and destination chain before calling it.
+</Callout>
+
+## Known Limits (v1.0.0-alpha)
+
+- **`SwidgeProtocolConfig.maxNetworkFeeBps` / `maxProtocolFeeBps` are accepted but currently no-op.** The module returns fee data on `SwidgeResult.fees` so callers can enforce caps client-side. Server-side enforcement lands in a subsequent release.
+- **`SwidgeOptions.minAmountOut` is accepted but not forwarded to `/quote`.** Use `slippage` to control slippage tolerance.
+- **Solana source: native SOL only.** SPL tokens require a separate instruction path (roadmap).
+- **`getSupportedTokens.fromToken` filter is passed to the backend but does not currently narrow the returned list.**
+
+## Next Steps
+
+<Cards>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-swapdk/configuration">
+Configure API authentication, source-chain defaults, slippage, and per-family wallet options (TronWeb, Bitcoin feeRate, Chainflip broker channel).
+</Card>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-swapdk/usage">
+Install the package, discover chains and tokens, quote a route, execute a route, and poll status.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-swapdk/api-reference">
+Review constructor options, methods, adapter account interfaces, config fields, status mapping, and errors.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

@@ -1,0 +1,242 @@
+---
+title: SwapDK Swidge API Reference
+description: API reference for @swapdk/wdk-protocol-swidge-swapdk — class, methods, options, adapter interfaces, status mapping, errors.
+docType: reference
+schemaType: APIReference
+icon: Code
+---
+
+## Package
+
+```bash
+npm install @swapdk/wdk-protocol-swidge-swapdk
+```
+
+## Class: `SwapDKSwidge`
+
+Extends [`SwidgeProtocol`](/sdk/swidge-modules) from `@tetherto/wdk-wallet/protocols`. Implements the five abstract methods (`quoteSwidge`, `swidge`, `getSwidgeStatus`, `getSupportedChains`, `getSupportedTokens`); the base class handles `bridge/quoteBridge/swap/quoteSwap` by delegating to `swidge/quoteSwidge`.
+
+### Constructor
+
+```ts
+new SwapDKSwidge(account, config)
+```
+
+**Parameters:**
+
+- `account` (`SwidgeWalletAccount | undefined`) — WDK wallet account for the source chain, or `undefined` for a read-only instance.
+- `config` (`SwapDKSwidgeConfig`) — see [Configuration](/sdk/swidge-modules/swidge-swapdk/configuration).
+
+## Methods
+
+| Method | Purpose |
+|--------|---------|
+| `quoteSwidge(options)` | Non-binding quote. Reads only. |
+| `swidge(options, config?)` | Executes a swidge operation. Broadcasts source-chain tx(s). |
+| `getSwidgeStatus(id, options?)` | Looks up the status of an in-flight swidge. |
+| `getSupportedChains()` | Lists discoverable source + destination chains. |
+| `getSupportedTokens(options?)` | Lists discoverable tokens with optional filters. |
+
+### `quoteSwidge(options)`
+
+```ts
+quoteSwidge(options: SwapDKSwidgeOptions): Promise<SwidgeQuote>
+```
+
+Posts to swap-engine `/quote`, picks the best route, and maps the response to a `SwidgeQuote`. No source-chain transaction is built or broadcast.
+
+**Throws:**
+
+- `SwapDKUserError` when `fromChain` is missing (and no `defaultFromChain` on config), the chain is unknown, or the swap-engine returns no usable route.
+- `SwapDKUserError` when `toTokenAmount` is passed (exact-out is not yet supported by the swap-engine).
+
+### `swidge(options, config?)`
+
+```ts
+swidge(
+  options: SwapDKSwidgeOptions,
+  config?: SwidgeProtocolConfig,
+): Promise<SwidgeResult>
+```
+
+Full flow: `/quote` (with `includeTx: true`) → `/swap` (for calldata-requiring source families; skipped for Bitcoin) → adapter dispatch → returns the source-tx hash + all transactions produced (approve leg + main).
+
+Requires a writable wallet account at construction. Requires `fromChain` (or `defaultFromChain`) matching a supported swidge chain id.
+
+The optional `config` parameter is the base `SwidgeProtocolConfig` — currently the `maxNetworkFeeBps` / `maxProtocolFeeBps` fields are **accepted but not enforced** (see [Known Limits](/sdk/swidge-modules/swidge-swapdk#known-limits-v100-alpha)). Applying caps client-side against `SwidgeResult.fees` is the current workaround.
+
+**Throws:**
+
+- `SwapDKUserError` when constructed without an account, missing `fromChain`, unsupported chain, or provider returns no route.
+- `SwapDKUserError` from the adapter when source-chain-specific input is invalid (missing memo for THORChain BTC/Solana, missing `tronWeb` config for TRON, SPL source on Solana, etc.).
+
+### `getSwidgeStatus(id, options?)`
+
+```ts
+getSwidgeStatus(
+  id: string,
+  options?: SwidgeStatusOptions,
+): Promise<SwidgeStatusResult>
+```
+
+Posts to swap-engine `/track`. `id` is the source-chain tx hash returned by `swidge()`. The optional `options.fromChain` is passed to swap-engine as the `chainId` hint; when omitted, `SwapDKSwidgeConfig.defaultFromChain` is used.
+
+Returns `{ status: "pending" }` on `track_not_found` — the normal state briefly after `swidge()` returns, before the deposit is observed by the destination protocol.
+
+**Throws:**
+
+- `SwapDKUserError` when `id` is empty.
+- `SwapDKApiError` on non-404 upstream errors.
+
+### `getSupportedChains()`
+
+```ts
+getSupportedChains(): Promise<SwidgeSupportedChain[]>
+```
+
+Proxies GET `/chains`. Returns the halt-filtered union across THORChain / MAYAChain / Chainflip.
+
+### `getSupportedTokens(options?)`
+
+```ts
+getSupportedTokens(
+  options?: SwidgeSupportedTokensOptions,
+): Promise<SwidgeSupportedToken[]>
+```
+
+Proxies GET `/tokens?shape=swidge`. Optional `fromChain` / `toChain` filters are passed to the backend. The `fromToken` field is accepted for forward-compatibility but currently does not narrow the returned list.
+
+## Options
+
+### `SwapDKSwidgeOptions`
+
+Extends the base [`SwidgeOptions`](/sdk/swidge-modules#execute-a-route) with an explicit `fromChain` (required for multi-family source support).
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `fromToken` | `string` | Source token identifier. Native gas coins: upper-case ticker (`"ETH"`, `"BTC"`, `"TRX"`). Fungibles: contract address in chain-native format. |
+| `fromChain` | `string \| number` | Source chain id — see `getSupportedChains()`. Required unless `config.defaultFromChain` is set. |
+| `toToken` | `string` | Destination token — same conventions as `fromToken`. |
+| `toChain` | `string \| number` | Destination chain id. Omit for same-chain swaps (defaults to `fromChain`). |
+| `recipient` | `string` | Address receiving the destination tokens. Required for cross-chain routes; Bitcoin → Chainflip encodes it into the broker channel. |
+| `refundAddress` | `string` | Address receiving refunds if the route cannot complete. Optional; defaults to the source address. |
+| `slippage` | `number` | Decimal slippage tolerance (0.01 = 1%). |
+| `minAmountOut` | `bigint \| number` | **Accepted but not forwarded to `/quote`** in the current release. Use `slippage` instead. |
+| `fromTokenAmount` | `bigint \| number` | Exact amount to spend (base units of the source token). Mutually exclusive with `toTokenAmount`. |
+| `toTokenAmount` | `bigint \| number` | Exact amount to receive. **Not yet supported** — throws `SwapDKUserError`. |
+
+### `SwidgeSupportedTokensOptions`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `fromChain` | `string \| number` | Filter to tokens on this chain. |
+| `fromToken` | `string` | Reserved for future route-scoped discovery. Currently no-op. |
+| `toChain` | `string \| number` | Filter to tokens routable to this destination chain. |
+
+## Return shapes
+
+### `SwidgeQuote`
+
+```ts
+{
+  fromTokenAmount: bigint;
+  toTokenAmount: bigint;
+  toTokenAmountMin: bigint;
+  fees: SwidgeFee[];
+  estimatedDuration?: number;   // seconds, when available
+  expiry?: number;              // unix timestamp when quote expires
+  priceImpact?: number;         // decimal (0.01 = 1%)
+}
+```
+
+### `SwidgeResult`
+
+```ts
+{
+  id: string;                        // source-chain tx hash — pass to getSwidgeStatus
+  hash?: string;                     // same as id for single-tx routes
+  fees: SwidgeFee[];
+  transactions?: SwidgeTransaction[]; // approve + main (or Chainflip broker + deposit)
+  fromTokenAmount: bigint;
+  toTokenAmount: bigint;
+  toTokenAmountMin?: bigint;
+}
+```
+
+### `SwidgeStatusResult`
+
+```ts
+{
+  status: SwidgeStatus;
+  transactions?: SwidgeTransaction[];  // source + destination legs
+}
+```
+
+### `SwidgeFee`
+
+```ts
+{
+  type: "network" | "protocol" | "affiliate" | "other";
+  amount: bigint;      // base units of the fee token
+  token: string;       // SwapKit asset string (e.g. "ETH.ETH", "BTC.BTC")
+  chain?: string | number;
+  included?: boolean;
+  description?: string;
+}
+```
+
+### `SwidgeTransaction`
+
+```ts
+{
+  hash: string;
+  chain?: string | number;
+  type?: "source" | "destination" | "approval" | "refund" | "other";
+}
+```
+
+## Status mapping
+
+| SwapDK swap-engine `/track` status | WDK `SwidgeStatus` |
+|-----------------------------------|-------------------|
+| `completed` | `completed` |
+| `failed` | `failed` |
+| `refunded` | `refunded` |
+| `pending`, `swapping`, `not_started` | `pending` |
+| `track_not_found` (404) | `pending` (transient — hash not yet indexed) |
+
+## Adapter account interfaces
+
+The concrete wallet passed to the constructor must match the interface for its source-chain family. All five are exported from the top level:
+
+```ts
+import type {
+  SwidgeBtcAccount,      // structural subset of @swapdk/wdk-wallet-btc's WalletAccountBtc
+  SwidgeCosmosAccount,   // structural subset of @base58-io/wdk-wallet-cosmos's account
+  SwidgeEvmAccount,      // structural subset of @tetherto/wdk-wallet-evm's WalletAccountEvm
+  SwidgeSolanaAccount,   // structural subset of @tetherto/wdk-wallet-solana's WalletAccountSolana
+  SwidgeTronAccount,     // structural subset of @tetherto/wdk-wallet-tron's WalletAccountTron
+} from "@swapdk/wdk-protocol-swidge-swapdk";
+```
+
+The base `SwidgeWalletAccount` interface is a common minimum (`getAddress` + `sendTransaction`) accepted by the class constructor; adapters narrow it per family internally.
+
+## Errors
+
+Exposed from `@swapdk/wdk-protocol-swidge-swapdk` (re-exported from `@swapdk/swap-engine-client`):
+
+- `SwapDKUserError` — caller-fixable input problems (missing options, unsupported chain, invalid token).
+- `SwapDKApiError` — swap-engine responded with a non-2xx status. Carries `status`, `errorCode`, `message`, and (on response-shape mismatch) a `cause: ZodError`.
+- `SwapDKNetworkError` — transport-level failure (timeout, DNS, connection refused).
+- `SwapDKProviderError` — swap-engine returned no route because every provider surfaced a `providerErrors[]` entry (no pool, min-amount below threshold, etc.).
+- `SwapDKError` — abstract base for all of the above.
+
+## Configuration reference
+
+See [Configuration](/sdk/swidge-modules/swidge-swapdk/configuration) for the full `SwapDKSwidgeConfig` field list including source-chain-specific options (`tronWeb`, `feeRate`, `chainflip.*`).
+
+## Source repository
+
+- Monorepo: [Swap-DK/wdk-protocol-bridges-swapdk](https://github.com/Swap-DK/wdk-protocol-bridges-swapdk)
+- Package: [`packages/swidge/`](https://github.com/Swap-DK/wdk-protocol-bridges-swapdk/tree/main/packages/swidge)
+- npm: [`@swapdk/wdk-protocol-swidge-swapdk`](https://www.npmjs.com/package/@swapdk/wdk-protocol-swidge-swapdk)
