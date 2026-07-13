@@ -3,15 +3,18 @@ title: Worklet Bundler Configuration
 description: Configure wdk.config.js and generate Bare worklet bundles with @tetherto/wdk-worklet-bundler
 ---
 
-This page shows how to install `@tetherto/wdk-worklet-bundler`, shape `wdk.config.js`, and generate a Bare worklet bundle for your WDK modules.
+This page shows how to install `@tetherto/wdk-worklet-bundler` and its Pear runtime, shape `wdk.config.js`, and generate a Bare worklet bundle for your WDK modules.
 
-## Install the package
+## Install the packages
 
-Install the bundler as a development dependency in the host project:
+Install the bundler as a development dependency and Pear Worklet as a runtime dependency in the host project:
 
-```bash title="Install @tetherto/wdk-worklet-bundler"
-npm install --save-dev @tetherto/wdk-worklet-bundler
+```bash title="Install The Bundler And Runtime"
+npm install @tetherto/pear-wrk-wdk@1.0.0-beta.9
+npm install --save-dev @tetherto/wdk-worklet-bundler@1.0.0-beta.5
 ```
+
+Worklet Bundler beta.5 generates entrypoints that import Pear Worklet, but `generate --install` does not add that package. Beta.9 is also required for the generated JSON-RPC entrypoint and HRPC generic-module methods documented here.
 
 ## Create `wdk.config.js`
 
@@ -21,7 +24,7 @@ Use `init` to create a starter config, or write the file yourself:
 npx wdk-worklet-bundler init
 ```
 
-The published config surface accepts `networks`, optional `protocols`, optional `preloadModules`, optional `output`, and optional `options`:
+The published config surface accepts `networks`, optional `protocols`, HRPC-only generic `modules`, `transport`, `preloadModules`, `output`, and `options`:
 
 ```javascript title="Example wdk.config.js"
 module.exports = {
@@ -40,18 +43,25 @@ module.exports = {
     }
   },
 
+  modules: {
+    preferences: {
+      package: '@your-org/wdk-module-preferences',
+      factory: 'createModule',
+      events: ['changed']
+    }
+  },
+
+  transport: 'hrpc',
+
   preloadModules: [
     'spark-frost-bare-addon'
   ],
 
   output: {
-    bundle: './.wdk-bundle/wdk-worklet.bundle.js',
-    types: './.wdk/index.d.ts'
+    bundle: './.wdk-bundle/wdk-worklet.bundle.js'
   },
 
   options: {
-    minify: false,
-    sourceMaps: false,
     targets: ['ios-arm64', 'android-arm64']
   }
 }
@@ -81,21 +91,77 @@ module.exports = {
 
 Use `protocols` when the worklet should preload WDK protocol packages alongside wallet modules.
 
+### `modules` (optional, HRPC only)
+
+Use `modules` for named generic packages that expose a module factory. Each entry supports:
+
+- `package` (`string`, required): Package name or local path.
+- `factory` (`string`, optional): Named factory export. When omitted, the package's callable default export is used.
+- `events` (`string[]`, optional): Event names forwarded from the worklet to the host.
+
+The factory receives `{ seed, config, capabilities, emit }` and can return the module instance or a promise for it. A module that needs the seed must consume it synchronously rather than retain it. The build-time name, such as `preferences`, must match the key in the host's runtime module config.
+
+<Callout type="warn">
+Beta.5 generic modules are included only in generated HRPC entrypoints. Do not configure `modules` with `transport: 'jsonrpc'`; the current schema accepts the field, but JSON-RPC generation ignores it.
+</Callout>
+
+### `transport` (optional)
+
+Choose `hrpc` or `jsonrpc`. HRPC is the default and is the transport used by React Native Core. JSON-RPC produces a length-prefixed bundle for a native host and enables addon linking and ESM-to-CJS conversion by default.
+
 ### `preloadModules` (optional)
 
 Use `preloadModules` for native addons or other modules that must be required before the generated worklet starts.
 
 ### `output` (optional)
 
-If you omit `output.bundle`, the loader resolves the bundle path to `./.wdk-bundle/wdk-worklet.bundle.js`. If you omit `output.types`, the loader resolves the type path to `./.wdk/index.d.ts`.
+Supported output fields are:
+
+- `bundle`: Bundle path. Defaults to `./.wdk-bundle/wdk-worklet.bundle.js` for HRPC and `./.wdk-bundle/wdk-worklet.bundle` for JSON-RPC.
+- `types`: Declared in the beta.5 config type, but the generator does not honor a custom value and always writes declarations to `./.wdk/index.d.ts`.
+- `addons.ios`, `addons.macos`, `addons.android`: Platform addon directories. Defaults are `./ios-addons`, `./mac-addons`, and `./android-addons`.
+- `addonsYml`: BareKit Swift dependency file. Defaults to `./ios-addons/addons.yml` and is generated when iOS addons are linked.
 
 ### `options` (optional)
 
 The published config type supports these build options:
 
-- `minify` (`boolean`): Minify the generated bundle.
-- `sourceMaps` (`boolean`): Request source map output.
+- `minify` (`boolean`): Declared in the beta.5 config type but not read by the bundle path. JSON-RPC ESM-to-CJS conversion minifies independently of this field.
+- `sourceMaps` (`boolean`): Declared in the beta.5 config type but not read by the bundle path, so it does not produce source maps.
 - `targets` (`string[]`): Override the default Bare build hosts. The shipped defaults cover iOS arm64 and simulator targets plus Android arm, arm64, ia32, and x64 hosts.
+- `linkAddons` (`boolean`): Link native addons with `bare-link`. Defaults to `true` for JSON-RPC and `false` for HRPC.
+- `platforms` (`('ios' | 'macos' | 'android')[]`): Addon platforms. Defaults to all three when addon linking is active.
+- `swiftTarget` (`string`): Xcode target written to `addons.yml`. Defaults to `app`.
+- `convertEsmToCjs` (`boolean`): Convert the bundle for JSC runtimes. Defaults to `true` for JSON-RPC and `false` for HRPC. Android uses V8, so Android-only JSON-RPC builds can set this to `false`.
+
+## Configure JSON-RPC and native addons
+
+Use JSON-RPC when a native host will implement Pear Worklet's length-prefixed JSON-RPC protocol:
+
+```javascript title="JSON-RPC wdk.config.js"
+module.exports = {
+  networks: {
+    ethereum: {
+      package: '@tetherto/wdk-wallet-evm'
+    }
+  },
+  transport: 'jsonrpc',
+  output: {
+    addons: {
+      ios: './ios-addons',
+      macos: './mac-addons',
+      android: './android-addons'
+    },
+    addonsYml: './ios-addons/addons.yml'
+  },
+  options: {
+    platforms: ['ios', 'android'],
+    swiftTarget: 'app'
+  }
+}
+```
+
+JSON-RPC generation defaults to a bundle without a `.js` suffix, ESM-to-CJS conversion, and addon linking. It links `bare-posix` with the other required Bare modules automatically. See the [Pear Worklet API reference](/tools/pear-wrk-wdk/api-reference#json-rpc-transport) for framing and supported methods.
 
 ## Validate and generate the bundle
 
@@ -111,13 +177,15 @@ Use `generate` to build the worklet artifact:
 npx wdk-worklet-bundler generate --install
 ```
 
-`generate --install` can auto-install missing configured modules after the package manager is detected from the project root. Use `--source-only` when you want the generated `.wdk/wdk-worklet.generated.js` entrypoint and related artifacts without running `bare-pack`.
+`generate --install` can auto-install missing configured wallet, protocol, generic, and preload modules after the package manager is detected from the project root. In beta.5 it does not install the Pear Worklet runtime imported by generated entrypoints; install Pear explicitly as shown above. Use `--source-only` when you want the generated `.wdk/wdk-worklet.generated.js` entrypoint and related artifacts without running `bare-pack`.
+
+The `generate` command also accepts `--transport hrpc|jsonrpc`, `--link-addons`, `--skip-link-addons`, `--platforms ios,macos,android`, and `--no-esm-to-cjs`. Set `transport` in `wdk.config.js` when you rely on its transport-specific default bundle path. In beta.5, `--transport` changes the generated transport after output paths have already been resolved, so it does not switch `.js` HRPC output to the extensionless JSON-RPC default, or vice versa. If you use the flag, set `output.bundle` explicitly to the intended path.
 
 ## Suspend and resume behavior
 
-Generated `beta.3` worklet entrypoints register Bare lifecycle handlers for `suspend` and `resume`, then apply those handlers to both the `bare-http1` and `bare-https` global agents. No config flag is required for this behavior.
+Generated HRPC worklet entrypoints register Bare lifecycle handlers for `suspend` and `resume`, then apply those handlers to both the `bare-http1` and `bare-https` global agents. No config flag is required for this behavior.
 
-This matters when a generated worklet performs HTTPS-backed fetches. In `beta.2`, only the `bare-http1` agent was suspended and resumed. In `beta.3`, generated worklets suspend and resume both agents together.
+This matters when a generated HRPC worklet performs HTTPS-backed fetches. Starting in beta.3, those generated entrypoints suspend and resume both agents together.
 
 ## Troubleshooting
 

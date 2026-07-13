@@ -1,9 +1,9 @@
 ---
 title: Pear Worklet WDK
-description: Low-level HRPC infrastructure for running WDK inside a Bare worklet
+description: HRPC and framed JSON-RPC infrastructure for running WDK inside a Bare worklet
 ---
 
-Pear Worklet WDK is the low-level transport and handler layer for running WDK inside a Bare worklet. It provides the `HRPC` client, the `registerRpcHandlers()` server helper, and the typed request payloads needed to initialize WDK, call wallet methods, and reset selected wallet modules from the host app.
+Pear Worklet WDK is the low-level transport and handler layer for running WDK inside a Bare worklet. It provides an `HRPC` client and server helper, a separate framed JSON-RPC server entrypoint for native hosts, and typed request payloads for WDK, wallet, protocol, and HRPC-only generic-module operations.
 
 Powered by `@tetherto/pear-wrk-wdk`.
 
@@ -13,6 +13,8 @@ Powered by `@tetherto/pear-wrk-wdk`.
 - **Typed lifecycle requests**: Initialize WDK with `initializeWDK({ config, encryptionKey, encryptedSeed })` and tear it down with `dispose()`
 - **Selective wallet resets**: Re-register only the wallet modules listed in a new worklet `networks` config using `resetWdkWallets({ config })`
 - **Generic wallet method calls**: Call account methods through `callMethod({ methodName, network, accountIndex, args, options })`
+- **HRPC generic modules**: Construct named modules during WDK initialization, call their methods with `callModule()`, and forward declared events to the host
+- **Framed JSON-RPC server**: Register a length-prefixed JSON-RPC 2.0 server through `@tetherto/pear-wrk-wdk/jsonrpc`
 - **Dynamic registration hooks**: Register additional wallets or protocols with `registerWallet()` and `registerProtocol()`
 
 ## Why this matters
@@ -20,14 +22,19 @@ Powered by `@tetherto/pear-wrk-wdk`.
 - You can keep WDK state and signing operations off the main thread in Bare-based apps
 - You can reconfigure selected wallet modules without fully disposing the worklet
 - You can use one transport layer across custom mobile, desktop, or embedded Bare integrations
+- You can host the same wallet and protocol handlers behind HRPC or a native JSON-RPC bridge, within each transport's supported method set
 
 <Callout type="info">
 Use this package when you need direct control over the worklet host and RPC layer. If you want generated worklet entry files instead, start with [`@tetherto/wdk-worklet-bundler`](https://github.com/tetherto/wdk-worklet-bundler).
 </Callout>
 
+<Callout type="warn">
+Generic-module calls and events are HRPC-only in `v1.0.0-beta.9`; the JSON-RPC handler does not expose them. This package also does not export a pre-built WDK bundle.
+</Callout>
+
 <Cards>
 <Card title="Pear Worklet WDK Configuration" href="/tools/pear-wrk-wdk/configuration">
-Build the worklet context and pass the JSON config payloads used by initialize and reset requests
+Build HRPC or JSON-RPC contexts and configure WDK, wallet, protocol, and generic-module initialization
 </Card>
 <Card title="Pear Worklet WDK API Reference" href="/tools/pear-wrk-wdk/api-reference">
 Review the exported class, server helper, and request shapes

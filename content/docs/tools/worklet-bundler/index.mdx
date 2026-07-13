@@ -3,21 +3,31 @@ title: Worklet Bundler
 description: CLI tool for generating WDK Bare worklet bundles
 ---
 
-Worklet Bundler packages selected WDK wallet and protocol modules into a Bare runtime bundle that runs outside your main React Native application thread. Powered by [`@tetherto/wdk-worklet-bundler`](https://github.com/tetherto/wdk-worklet-bundler).
+Worklet Bundler packages selected WDK wallet, protocol, and optional generic modules into a Bare runtime bundle that runs outside the host application thread. It can generate the default HRPC worklet used by React Native Core or a framed JSON-RPC bundle for a native host. Powered by [`@tetherto/wdk-worklet-bundler`](https://github.com/tetherto/wdk-worklet-bundler).
 
 ## Features
 
-- **Config-driven bundle generation**: Map logical network names to wallet packages and optional protocol names to protocol packages in `wdk.config.js`.
-- **Generated worklet artifact**: Produce a bundle for the Bare runtime plus generated TypeScript types for the host app.
+- **Config-driven bundle generation**: Map logical network names to wallet packages, protocol names to protocol packages, and HRPC-only generic-module names to package factories.
+- **HRPC and JSON-RPC transports**: Generate an HRPC JavaScript bundle by default or a length-prefixed JSON-RPC bundle for native hosts.
+- **Generated worklet artifacts**: Produce a Bare bundle, a stable `./.wdk` host import, and generated TypeScript types.
+- **Native addon outputs**: Link iOS, macOS, and Android addons and generate `addons.yml` for JSON-RPC/native integrations.
 - **Dependency validation helpers**: Validate configured modules, detect the active package manager, and generate install or uninstall commands when dependencies are missing.
 - **CLI workflow**: Use `init`, `validate`, `generate`, `list-modules`, and `clean` without building your own wrapper.
-- **Bare suspend and resume handling**: `beta.3` generated entrypoints suspend and resume both the `bare-http1` and `bare-https` global agents when the Bare thread lifecycle changes.
+- **Bare suspend and resume handling**: Generated HRPC entrypoints suspend and resume both the `bare-http1` and `bare-https` global agents when the Bare thread lifecycle changes.
+
+<Callout type="info">
+`v1.0.0-beta.5` is the first published artifact that contains the built CLI and API files for the JSON-RPC, generic-module, and addon-linking surface introduced in beta.4. It also links `bare-posix` automatically for supported native platforms.
+</Callout>
 
 ## Why this matters
 
 - Bundle generation keeps wallet and protocol code in a separate Bare worklet instead of the UI thread.
 - The generated type output gives the host app a stable import for the bundle surface.
-- The `beta.3` runtime fix reduces the chance that HTTPS-backed worklet fetches keep running after a Bare thread suspension.
+- Transport-specific defaults produce a JavaScript HRPC bundle for React Native Core or native addon artifacts for JSON-RPC hosts.
+
+<Callout type="warn">
+Generic `modules` are generated only for HRPC in beta.5. A JSON-RPC config can currently accept a `modules` field but silently omits those modules from the generated entrypoint.
+</Callout>
 
 <Cards>
 <Card title="Worklet Bundler Configuration" href="/tools/worklet-bundler/configuration">

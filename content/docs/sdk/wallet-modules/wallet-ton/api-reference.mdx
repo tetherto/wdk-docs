@@ -33,9 +33,9 @@ new WalletManagerTon(seed, config)
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (object): Configuration object
   - `tonClient` (object | TonClient): TON client configuration or instance
-    - `url` (string): TON Center API URL (e.g., 'https://toncenter.com/api/v3')
+    - `url` (string): TON Center v2 JSON-RPC URL (e.g., 'https://toncenter.com/api/v2/jsonRPC')
     - `secretKey` (string, optional): API key for TON Center
-  - `transferMaxFee` (number, optional): Maximum fee amount for transfer operations (in nanotons)
+  - `transferMaxFee` (number | bigint, optional): Maximum fee amount for transfer operations (in nanotons)
   - `transactionMaxFee` (number | bigint, optional): Maximum fee amount for native `sendTransaction()` and `signTransaction()` operations (in nanotons)
 
 
@@ -43,7 +43,7 @@ new WalletManagerTon(seed, config)
 ```javascript
 const wallet = new WalletManagerTon(seedPhrase, {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key'
   },
   transferMaxFee: 1000000000, // Maximum Jetton transfer fee in nanotons
@@ -58,8 +58,8 @@ const wallet = new WalletManagerTon(seedPhrase, {
 |--------|-------------|---------|
 | `getAccount(index)` | Returns a wallet account at the specified index | `Promise\<WalletAccountTon\>` |
 | `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise\<WalletAccountTon\>` |
-| `getFeeRates()` | Returns current fee rates for transactions | `Promise\<{normal: number, fast: number}\>` |
-| `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
+| `getFeeRates()` | Returns fee rates from the mainnet TON API configuration | `Promise\<{normal: bigint, fast: bigint}\>` |
+| `dispose()` | Disposes cached accounts and signers; the manager seed remains in memory | `void` |
 
 
 ##### `getAccount(index)`
@@ -89,7 +89,7 @@ const account = await wallet.getAccountByPath("0'/0/1")
 ```
 
 ##### `getFeeRates()`
-Returns current fee rates for normal and fast transactions.
+Returns normal and fast fee rates from the mainnet TON API configuration. In `1.0.0-beta.10`, this method always requests `https://tonapi.io/v2`, does not follow the configured `tonClient` network, and returns the same calculated value for both fields.
 
 **Returns:** `Promise\<FeeRates\>` - Object containing normal and fast fee rates
 
@@ -101,7 +101,7 @@ console.log('Fast fee rate:', feeRates.fast, 'nanotons')
 ```
 
 ##### `dispose()`
-Disposes all wallet accounts, clearing private keys from memory.
+Disposes cached wallet accounts and signers, clearing their derived private keys. In the current beta, this method does not zero or unset the wallet manager's seed bytes.
 
 **Example:**
 ```javascript
@@ -111,14 +111,13 @@ wallet.dispose()
 #### Properties
 
 ##### `seed`
-The wallet's seed phrase.
+The wallet manager's sensitive raw seed bytes. A manager created with a seed phrase converts it to bytes before storing it; a signer-backed manager returns `undefined`.
 
-**Type:** `string | Uint8Array`
+**Type:** `Uint8Array | undefined`
 
-**Example:**
-```javascript
-console.log('Seed phrase:', wallet.seed)
-```
+<Callout type="warning">
+Do not log, serialize, or expose this property. In the current beta, [`wallet.dispose()`](#dispose) does not zero or unset these bytes; release all manager references and manage the original seed lifecycle separately.
+</Callout>
 
 ### WalletAccountTon
 
@@ -136,9 +135,9 @@ new WalletAccountTon(seed, path, config)
 - `path` (string): BIP-44 derivation path (e.g., "0'/0/0")
 - `config` (object): Configuration object
   - `tonClient` (object | TonClient): TON client configuration or instance
-    - `url` (string): TON Center API URL
+    - `url` (string): TON Center v2 JSON-RPC URL
     - `secretKey` (string, optional): API key for TON Center
-  - `transferMaxFee` (number, optional): Maximum fee amount for transfer operations
+  - `transferMaxFee` (number | bigint, optional): Maximum fee amount for transfer operations
   - `transactionMaxFee` (number | bigint, optional): Maximum fee amount for native `sendTransaction()` and `signTransaction()` operations
 
 
@@ -146,7 +145,7 @@ new WalletAccountTon(seed, path, config)
 ```javascript
 const account = new WalletAccountTon(seedPhrase, "0'/0/0", {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key'
   },
   transferMaxFee: 10000000, // Maximum Jetton transfer fee in nanotons
@@ -161,11 +160,11 @@ const account = new WalletAccountTon(seedPhrase, "0'/0/0", {
 | `getAddress()` | Returns the account's TON address | `Promise\<string\>` |
 | `sign(message)` | Signs a message using the account's private key | `Promise\<string\>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` |
-| `signTransaction(tx)` | Signs a transaction offline without broadcasting it | `Promise\<Cell\>` |
-| `sendTransaction(tx)` | Sends a TON transaction | `Promise\<{hash: string, fee: number}\>` |
-| `quoteSendTransaction(tx)` | Estimates the fee for a TON transaction | `Promise\<{fee: number}\>` |
-| `transfer(options)` | Transfers Jetton tokens to another address | `Promise\<{hash: string, fee: number}\>` |
-| `quoteTransfer(options)` | Estimates the fee for a Jetton transfer | `Promise\<{fee: number}\>` |
+| `signTransaction(tx)` | Builds a signed external-message body using current chain state, without broadcasting it | `Promise\<Cell\>` |
+| `sendTransaction(tx)` | Sends a TON transaction | `Promise\<{hash: string, fee: bigint}\>` |
+| `quoteSendTransaction(tx)` | Estimates the fee for a TON transaction | `Promise\<{fee: bigint}\>` |
+| `transfer(options)` | Transfers Jetton tokens to another address | `Promise\<{hash: string, fee: bigint}\>` |
+| `quoteTransfer(options)` | Estimates the fee for a Jetton transfer | `Promise\<{fee: bigint}\>` |
 | `getBalance()` | Returns the native TON balance (in nanotons) | `Promise\<bigint\>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific Jetton token | `Promise\<bigint\>` |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise\<TonTransactionReceipt \| null\>` |
@@ -214,7 +213,7 @@ console.log('Signature:', signature)
 ```
 
 ##### `signTransaction(tx)`
-Signs a transaction offline and returns the signed external-message body without broadcasting it. Use this to build a transaction on a signing device and broadcast it elsewhere. Added in v1.0.0-beta.8.
+Builds and signs an external-message body without broadcasting it. This is not an offline operation: it requires a configured TON client to read the wallet's current sequence number and, when `transactionMaxFee` is set, to estimate the fee. Added in v1.0.0-beta.8.
 
 **Parameters:**
 - `tx` (object): The transaction object (same shape as `sendTransaction`)
@@ -223,7 +222,7 @@ Signs a transaction offline and returns the signed external-message body without
   - `bounceable` (boolean, optional): Whether the destination address is bounceable
   - `body` (string | Cell, optional): Optional message body
 
-**Returns:** `Promise\<Cell\>` - The signed external-message body as a TON `Cell`. Call `cell.toBoc().toString('base64')` to obtain a wire-format payload ready for broadcast.
+**Returns:** `Promise\<Cell\>` - The signed body as a TON `Cell`. It is the body accepted by the matching opened `WalletContractV5R1.send()` call, not a complete external-message BOC that can be posted directly to TON Center.
 
 **Throws:** Error if the estimated transaction fee exceeds `transactionMaxFee` when configured.
 
@@ -233,21 +232,20 @@ const cell = await account.signTransaction({
   to: 'EQ...', // TON address
   value: 1000000000 // 1 TON in nanotons
 });
-const boc = cell.toBoc().toString('base64');
-console.log('Signed payload:', boc);
+// `cell` is not broadcast by signTransaction().
 ```
 
 ##### `sendTransaction(tx)`
-Sends a TON transaction and returns the result with hash and fee.
+Sends a TON transaction and returns its signed transfer body hash and fee.
 
 **Parameters:**
 - `tx` (object): The transaction object
   - `to` (string): Recipient TON address (e.g., 'EQ...')
-  - `value` (number): Amount in nanotons (1 TON = 1,000,000,000 nanotons)
+  - `value` (number | bigint): Amount in nanotons (1 TON = 1,000,000,000 nanotons)
   - `bounceable` (boolean, optional): Whether the address is bounceable (TON-specific, optional)
 
 
-**Returns:** `Promise\<{hash: string, fee: number}\>` - Object containing hash and fee (in nanotons)
+**Returns:** `Promise\<{hash: string, fee: bigint}\>` - Object containing the signed transfer body hash as lowercase hex and the fee in nanotons
 
 **Throws:** Error if the estimated transaction fee exceeds `transactionMaxFee` when configured.
 
@@ -257,7 +255,7 @@ const result = await account.sendTransaction({
   to: 'EQ...', // TON address
   value: 1000000000 // 1 TON in nanotons
 });
-console.log('Transaction hash:', result.hash);
+console.log('Signed transfer body hash:', result.hash);
 console.log('Transaction fee:', result.fee, 'nanotons');
 ```
 
@@ -267,10 +265,10 @@ Estimates the fee for a transaction.
 **Parameters:**
 - `tx` (object): The transaction object (same as sendTransaction)
   - `to` (string): Recipient TON address (e.g., 'EQ...')
-  - `value` (number): Amount in nanotons (1 TON = 1,000,000,000 nanotons)
+  - `value` (number | bigint): Amount in nanotons (1 TON = 1,000,000,000 nanotons)
   - `bounceable` (boolean, optional): Whether the address is bounceable (TON-specific, optional)
 
-**Returns:** `Promise\<{fee: number}\>` - Object containing fee estimate (in nanotons)
+**Returns:** `Promise\<{fee: bigint}\>` - Object containing fee estimate (in nanotons)
 
 **Example:**
 ```javascript
@@ -288,9 +286,9 @@ Transfers Jettons (TON tokens) to another address.
 - `options` (object): Transfer options
   - `token` (string): Jetton master contract address (TON format, e.g., 'EQ...')
   - `recipient` (string): Recipient TON address (e.g., 'EQ...')
-  - `amount` (number): Amount in Jetton's base units
+  - `amount` (number | bigint): Amount in Jetton's base units
 
-**Returns:** `Promise\<{hash: string, fee: number}\>` - Object containing hash and fee (in nanotons)
+**Returns:** `Promise\<{hash: string, fee: bigint}\>` - Object containing the signed transfer body hash as lowercase hex and the fee in nanotons
 
 **Example:**
 ```javascript
@@ -299,7 +297,7 @@ const result = await account.transfer({
   recipient: 'EQ...',  // Recipient's TON address
   amount: 1000000000    // Amount in Jetton's base units
 });
-console.log('Transfer hash:', result.hash);
+console.log('Signed transfer body hash:', result.hash);
 console.log('Transfer fee:', result.fee, 'nanotons');
 ```
 
@@ -310,9 +308,9 @@ Estimates the fee for a Jetton (TON token) transfer.
 - `options` (object): Transfer options (same as transfer)
   - `token` (string): Jetton master contract address (TON format, e.g., 'EQ...')
   - `recipient` (string): Recipient TON address (e.g., 'EQ...')
-  - `amount` (number): Amount in Jetton's base units
+  - `amount` (number | bigint): Amount in Jetton's base units
 
-**Returns:** `Promise\<{fee: number}\>` - Object containing fee estimate (in nanotons)
+**Returns:** `Promise\<{fee: bigint}\>` - Object containing fee estimate (in nanotons)
 
 **Example:**
 ```javascript
@@ -346,21 +344,32 @@ Returns the balance of a specific Jetton (TON token).
 **Example:**
 ```javascript
 const tokenBalance = await account.getTokenBalance('EQ...');
-console.log('Token balance:', tokenBalance, 'nanotons');
+console.log('Token balance:', tokenBalance, 'Jetton base units');
 ```
 
 ##### `getTransactionReceipt(hash)`
 Returns a transaction's receipt if it has been mined.
 
+In `1.0.0-beta.10`, the initial receipt lookup always queries mainnet TON Center v3. Do not rely on this method for testnet receipts; see [Network Selection](/sdk/wallet-modules/wallet-ton/configuration#network-selection).
+
 **Parameters:**
-- `hash` (string): The transaction hash
+- `hash` (string): The signed transfer body hash returned by `sendTransaction()` or `transfer()`
 
 **Returns:** `Promise\<TonTransactionReceipt | null\>` - Transaction receipt or null if not yet mined
 
 **Example:**
 ```javascript
-const receipt = await account.getTransactionReceipt('EQ...')
-console.log('Transaction confirmed:', receipt.success)
+const result = await account.sendTransaction({
+  to: 'EQ...',
+  value: 1000000000n
+})
+const receipt = await account.getTransactionReceipt(result.hash)
+
+if (receipt) {
+  console.log('Transaction receipt:', receipt)
+} else {
+  console.log('Transaction not yet included in a block')
+}
 ```
 
 ##### `toReadOnlyAccount()`
@@ -410,7 +419,7 @@ new WalletAccountReadOnlyTon(publicKey, config)
 ```
 
 **Parameters:**
-- `publicKey` (string): The account's public key (hex or base64)
+- `publicKey` (string | Uint8Array): The account's public key. String values must be hex encoded.
 - `config` (object): TON client and retry configuration without send-only fee caps
 
 #### Methods
@@ -459,15 +468,24 @@ console.log('Signature valid:', isValid)
 ##### `getTransactionReceipt(hash)`
 Returns a transaction's receipt if it has been mined.
 
+In `1.0.0-beta.10`, the initial receipt lookup always queries mainnet TON Center v3. Do not rely on this method for testnet receipts; see [Network Selection](/sdk/wallet-modules/wallet-ton/configuration#network-selection).
+
 **Parameters:**
-- `hash` (string): The transaction hash
+- `hash` (string): The signed transfer body hash returned by `sendTransaction()` or `transfer()`
 
 **Returns:** `Promise\<TonTransactionReceipt | null\>` - Transaction receipt or null if not yet mined
 
 **Example:**
 ```javascript
-const receipt = await readOnlyAccount.getTransactionReceipt('EQ...')
-console.log('Transaction confirmed:', receipt.success)
+async function logTransactionReceipt(readOnlyAccount, transactionHash) {
+  const receipt = await readOnlyAccount.getTransactionReceipt(transactionHash)
+
+  if (receipt) {
+    console.log('Transaction receipt:', receipt)
+  } else {
+    console.log('Transaction not yet included in a block')
+  }
+}
 ```
 
 ## Types
@@ -520,7 +538,7 @@ interface TransferOptions {
    * Amount in Jetton's base units
    * @example 1000000000 // Amount depends on token decimals
    */
-  amount: number;
+  amount: number | bigint;
 }
 ```
 
@@ -529,16 +547,16 @@ interface TransferOptions {
 ```typescript
 interface TransactionResult {
   /**
-   * Transaction hash in base64 format
-   * @example 'EQD4FPq...'
+   * Signed transfer body hash as a lowercase hex string; pass it to getTransactionReceipt()
+   * @example '7f83b1657ff1fc53b92dc18148a1d65dfa13501404a55e63ddfde593f4f5f9d8'
    */
   hash: string;
 
   /**
    * Transaction fee in nanotons
-   * @example 100000 // 0.0001 TON
+   * @example 100000n // 0.0001 TON
    */
-  fee: number;
+  fee: bigint;
 }
 ```
 
@@ -547,16 +565,16 @@ interface TransactionResult {
 ```typescript
 interface FeeRates {
   /**
-   * Fee rate for normal priority transactions (in nanotons)
-   * @example 100000000 // 0.1 TON
+   * Mainnet-derived fee rate in nanotons
+   * @example 100000000n // 0.1 TON
    */
-  normal: number;
+  normal: bigint;
 
   /**
-   * Fee rate for high priority transactions (in nanotons)
-   * @example 200000000 // 0.2 TON
+   * Same mainnet-derived fee rate as `normal` in v1.0.0-beta.10
+   * @example 100000000n // 0.1 TON
    */
-  fast: number;
+  fast: bigint;
 }
 ```
 
@@ -583,8 +601,8 @@ interface KeyPair {
 interface TonWalletConfig {
   /**
    * TON Center client configuration, a TonClient instance, or an array of
-   * either. When an array is provided, connection errors cause the wallet to
-   * fail over to the next client in the list.
+   * either. When an array is provided, any thrown Error causes the wallet to
+   * retry on the next client by default.
    */
   tonClient?: TonClientConfig | TonClient | Array<TonClientConfig | TonClient>;
 
@@ -611,7 +629,7 @@ interface TonWalletConfig {
 interface TonClientConfig {
   /**
    * TON Center API endpoint
-   * @example 'https://toncenter.com/api/v3'
+   * @example 'https://toncenter.com/api/v2/jsonRPC'
    */
   url: string;
 

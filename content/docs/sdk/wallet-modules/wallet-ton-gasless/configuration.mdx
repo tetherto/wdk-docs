@@ -14,11 +14,11 @@ import WalletManagerTonGasless from '@tetherto/wdk-wallet-ton-gasless'
 const config = {
   // Required parameters
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key' // Optional
   },
   tonApiClient: {
-    url: 'https://tonapi.io/v2',
+    url: 'https://tonapi.io',
     secretKey: 'your-ton-api-key' // Optional
   },
   paymasterToken: {
@@ -33,6 +33,10 @@ const config = {
 const wallet = new WalletManagerTonGasless(seedPhrase, config)
 ```
 
+<Callout type="info">
+`tonClient.url` must be a TON Center v2 JSON-RPC endpoint because the module passes it to `@ton/ton`'s `TonClient`. Set `tonApiClient.url` to the TON API base URL without `/v2`; the generated TON API client appends `/v2/gasless/...` to the base URL.
+</Callout>
+
 ## Account Configuration
 
 ```javascript
@@ -41,11 +45,11 @@ import { WalletAccountTonGasless } from '@tetherto/wdk-wallet-ton-gasless'
 const accountConfig = {
   // Required parameters
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key' // Optional
   },
   tonApiClient: {
-    url: 'https://tonapi.io/v2',
+    url: 'https://tonapi.io',
     secretKey: 'your-ton-api-key' // Optional
   },
   paymasterToken: {
@@ -64,14 +68,14 @@ const account = new WalletAccountTonGasless(seedPhrase, "0'", accountConfig)
 
 ### tonClient
 
-The `tonClient` option configures the TON Center API client for blockchain interactions. You can pass a single configuration object, a `TonClient` instance, or an array of configurations or instances to enable failover.
+The `tonClient` option configures the TON Center v2 JSON-RPC client for blockchain interactions. You can pass a single configuration object, a `TonClient` instance, or an array of configurations or instances to enable failover.
 
 **Type:**
 ```typescript
 type TonClientConfig = {
   /**
-   * TON Center API endpoint URL
-   * @example 'https://toncenter.com/api/v3'
+   * TON Center v2 JSON-RPC endpoint URL
+   * @example 'https://toncenter.com/api/v2/jsonRPC'
    */
   url: string;
 
@@ -88,18 +92,18 @@ type TonClient = TonClientConfig | TonClientInstance | Array<TonClientConfig | T
 
 **Required:** Yes
 
-When you provide an array, the wallet automatically falls back to the next client in the list if a connection error occurs. See [retries](#retries) for the retry count.
+When you provide an array, the wallet automatically retries on the next client when a call throws an `Error`. By default, this includes application errors as well as connection errors. See [retries](#retries) for the retry count.
 
 ### tonApiClient
 
-The `tonApiClient` option configures the TON API client used to build and relay gasless transfers. Like `tonClient`, it accepts a single configuration object, a `TonApiClient` instance, or an array of configurations or instances for failover.
+The `tonApiClient` option configures the TON API client used to build and relay gasless transfers. Its URL is the API base URL, not a versioned endpoint. Like `tonClient`, it accepts a single configuration object, a `TonApiClient` instance, or an array of configurations or instances for failover.
 
 **Type:**
 ```typescript
 type TonApiClientConfig = {
   /**
-   * TON API endpoint URL
-   * @example 'https://tonapi.io/v2'
+   * TON API base URL
+   * @example 'https://tonapi.io'
    */
   url: string;
 
@@ -112,9 +116,13 @@ type TonApiClientConfig = {
 
 **Required:** Yes
 
+<Callout type="warning">
+Do not include `/v2` in `tonApiClient.url`. Use `https://tonapi.io`, not `https://tonapi.io/v2`; otherwise the generated client requests `/v2/v2/gasless/...`.
+</Callout>
+
 ### paymasterToken
 
-The `paymasterToken` option specifies the Jetton used to pay gasless transfer fees instead of native TON.
+The `paymasterToken` option specifies the Jetton used to pay gasless transfer fees instead of native TON. Its address must match a `gas_jettons[].master_id` value returned by the configured TON API service's raw `/v2/gasless/config` endpoint. The generated `@ton-api/client` exposes the same values as `gasJettons[].masterId`.
 
 **Type:**
 ```typescript
@@ -128,6 +136,10 @@ type PaymasterToken = {
 ```
 
 **Required:** Yes
+
+<Callout type="warning">
+`paymasterToken` must be an object with an `address` field, not a raw address string.
+</Callout>
 
 **Example:**
 ```javascript
@@ -150,12 +162,12 @@ The `retries` option sets the number of additional failover attempts after the i
 ```javascript
 const config = {
   tonClient: [
-    { url: 'https://toncenter.com/api/v3' },
-    { url: 'https://backup.toncenter.com/api/v3', secretKey: 'your-api-key' }
+    { url: 'https://toncenter.com/api/v2/jsonRPC' },
+    { url: 'https://your-secondary-toncenter.example/api/v2/jsonRPC', secretKey: 'your-secondary-api-key' } // Replace with a real independent provider
   ],
   tonApiClient: [
-    { url: 'https://tonapi.io/v2' },
-    { url: 'https://backup.tonapi.io/v2' }
+    { url: 'https://tonapi.io' },
+    { url: 'https://your-secondary-tonapi.example' } // Replace with a real independent provider
   ],
   retries: 3
 }
@@ -192,14 +204,14 @@ Here's a complete configuration example with required clients, failover, and gas
 const config = {
   // TON Client (Required) - array enables failover
   tonClient: [
-    { url: 'https://toncenter.com/api/v3', secretKey: 'your-api-key' },
-    { url: 'https://backup.toncenter.com/api/v3' }
+    { url: 'https://toncenter.com/api/v2/jsonRPC', secretKey: 'your-api-key' },
+    { url: 'https://your-secondary-toncenter.example/api/v2/jsonRPC' } // Replace with a real independent provider
   ],
 
   // TON API Client (Required) - array enables failover
   tonApiClient: [
-    { url: 'https://tonapi.io/v2', secretKey: 'your-ton-api-key' },
-    { url: 'https://backup.tonapi.io/v2' }
+    { url: 'https://tonapi.io', secretKey: 'your-ton-api-key' },
+    { url: 'https://your-secondary-tonapi.example' } // Replace with a real independent provider
   ],
 
   // Paymaster Token (Required)
@@ -214,6 +226,19 @@ const config = {
   transferMaxFee: 10000000 // Maximum gasless transfer fee in paymaster Jetton base units
 }
 ```
+
+## Network Selection
+
+Use TON Center and TON API endpoints for the same network:
+
+- Mainnet: `https://toncenter.com/api/v2/jsonRPC` and `https://tonapi.io`
+- Testnet: `https://testnet.toncenter.com/api/v2/jsonRPC` and `https://testnet.tonapi.io`
+
+Do not mix mainnet and testnet clients in one wallet configuration or failover list.
+
+<Callout type="warning">
+In `@tetherto/wdk-wallet-ton-gasless` `1.0.0-beta.7`, the inherited `getTransactionReceipt()` implementation starts its lookup against a hard-coded mainnet TON Center v3 endpoint. `getFeeRates()` likewise always reads mainnet TON API configuration. Do not rely on these methods for testnet-specific receipts or fee rates.
+</Callout>
 
 <Callout type="warning">
 The default derivation path changed in `1.0.0-beta.5`. Accounts now derive at `m/44'/607'/{index}'` to align with `@tetherto/wdk-wallet-ton`. Wallets created with `1.0.0-beta.4` or earlier derived `getAccount(index)` at `m/44'/607'/0'/0/{index}`, so the same seed produces different addresses after upgrading. Migrate existing accounts using [`getAccountByPath()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#getaccountbypathpath) with the old path if you need to keep prior addresses.

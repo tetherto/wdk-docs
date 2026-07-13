@@ -15,7 +15,7 @@ import WalletManagerTon from '@tetherto/wdk-wallet-ton'
 
 const config = {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key' // Optional
   },
   transferMaxFee: 1000000000, // Optional: Maximum Jetton transfer fee in nanotons
@@ -32,7 +32,7 @@ import { WalletAccountTon } from '@tetherto/wdk-wallet-ton'
 
 const accountConfig = {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key' // Optional
   },
   transferMaxFee: 1000000000, // Optional: Maximum Jetton transfer fee in nanotons
@@ -46,13 +46,13 @@ const account = new WalletAccountTon(seedPhrase, "0'/0/0", accountConfig)
 
 ### tonClient
 
-The `tonClient` option configures the TON Center API client for blockchain interactions. It accepts a single client configuration, a `TonClient` instance, or an array of either for endpoint failover.
+The `tonClient` option configures the TON Center v2 JSON-RPC client for blockchain interactions. It accepts a single client configuration, a `TonClient` instance, or an array of either for endpoint failover.
 
 **Type:**
 ```typescript
 interface TonClientConfig {
   /**
-   * TON Center API endpoint URL
+   * TON Center v2 JSON-RPC endpoint URL
    */
   url: string;
 
@@ -75,22 +75,26 @@ type TonClientOption =
 // Basic configuration
 const config = {
   tonClient: { 
-    url: 'https://toncenter.com/api/v3'
+    url: 'https://toncenter.com/api/v2/jsonRPC'
   }
 }
 
 // With API key for higher rate limits
 const config = {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key'
   }
 }
 ```
 
+<Callout type="info">
+Provide the full v2 JSON-RPC endpoint. The module passes this URL to `@ton/ton`'s `TonClient`, which posts JSON-RPC requests directly to it.
+</Callout>
+
 ### tonClient (array) and retries
 
-Since v1.0.0-beta.8, `tonClient` also accepts an array of configurations or instances. When a connection error occurs, the wallet automatically fails over to the next client in the list. The `retries` option sets the number of additional retry attempts after the initial call fails.
+Since v1.0.0-beta.8, `tonClient` also accepts an array of configurations or instances. When a client call throws an `Error`, the wallet automatically retries on the next client. By default, this includes application errors as well as connection errors. The `retries` option sets the number of additional attempts after the initial call fails.
 
 **Type:** `retries` is `number` (optional)
 
@@ -101,8 +105,8 @@ The total number of attempts is `1 + retries`. For example, `retries: 3` with fo
 ```javascript
 const config = {
   tonClient: [
-    { url: 'https://toncenter.com/api/v3', secretKey: 'your-api-key' },
-    { url: 'https://toncenter.com/api/v3' }
+    { url: 'https://toncenter.com/api/v2/jsonRPC', secretKey: 'your-api-key' },
+    { url: 'https://your-secondary-toncenter.example/api/v2/jsonRPC' } // Replace with a real independent provider
   ],
   retries: 3 // Optional: additional retry attempts after the first failure
 }
@@ -112,7 +116,7 @@ const config = {
 
 The `transferMaxFee` option sets the maximum allowed fee, in nanotons, for Jetton `transfer()` operations.
 
-**Type:** `number` (nanotons)
+**Type:** `number | bigint` (nanotons)
 
 **Default:** No maximum (undefined)
 
@@ -125,7 +129,7 @@ const config = {
 // Example with both options
 const config = {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key'
   },
   transferMaxFee: 1000000000
@@ -144,7 +148,7 @@ The `transactionMaxFee` option sets the maximum allowed fee, in nanotons, for na
 ```javascript
 const config = {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key'
   },
   transactionMaxFee: 1000000000 // 1 TON in nanotons
@@ -160,7 +164,7 @@ import { WalletAccountReadOnlyTon } from '@tetherto/wdk-wallet-ton'
 
 const readOnlyConfig = {
   tonClient: {
-    url: 'https://toncenter.com/api/v3',
+    url: 'https://toncenter.com/api/v2/jsonRPC',
     secretKey: 'your-api-key' // Optional
   }
 }
@@ -170,10 +174,14 @@ const readOnlyAccount = new WalletAccountReadOnlyTon(publicKey, readOnlyConfig)
 
 ## Network Selection
 
-The TON network (mainnet or testnet) is determined by the TON Center API endpoint URL:
+For client-backed balance and transaction operations, the TON network is determined by the TON Center API endpoint URL:
 
-- Mainnet: `https://toncenter.com/api/v3`
-- Testnet: `https://testnet.toncenter.com/api/v3`
+- Mainnet: `https://toncenter.com/api/v2/jsonRPC`
+- Testnet: `https://testnet.toncenter.com/api/v2/jsonRPC`
+
+<Callout type="warning">
+In `@tetherto/wdk-wallet-ton` `1.0.0-beta.10`, `getTransactionReceipt()` starts its lookup against a hard-coded mainnet TON Center v3 endpoint, even when `tonClient` points to testnet. `getFeeRates()` likewise always reads mainnet TON API configuration. Do not rely on these methods for testnet-specific receipts or fee rates.
+</Callout>
 
 ## Derivation Paths
 

@@ -1,6 +1,6 @@
 ---
 title: WDK Utils Configuration
-description: Install and import validation, encryption, BIP-21, BOLT11, and EIP-681 helpers from @tetherto/wdk-utils
+description: Install and import validation, encryption, key-derivation, and payment-request helpers from @tetherto/wdk-utils
 ---
 
 This package does not have constructor options or runtime configuration. This page shows how to install `@tetherto/wdk-utils`, import the helpers you need, and understand the published runtime surface.
@@ -68,6 +68,17 @@ import {
 } from '@tetherto/wdk-utils'
 ```
 
+## Import seed key derivation helpers
+
+Derive domain-separated byte keys or deterministic Ed25519 keypairs from high-entropy seed bytes:
+
+```javascript title="Import Seed Key Derivation Helpers"
+import {
+  deriveSeedKey,
+  deriveSeedKeyPair
+} from '@tetherto/wdk-utils'
+```
+
 ## Import BOLT11 helpers
 
 You can validate, decode, sign, and encode BOLT11 Lightning invoices from the package entrypoint:
@@ -91,6 +102,9 @@ import {
 - `encrypt()` returns a versioned payload with hex-encoded `salt`, `iv`, `tag`, and `ciphertext` fields plus the scrypt cost parameters used for key derivation.
 - `decrypt()` reads the scrypt cost parameters from the encrypted payload when they are present.
 - `deriveKey()` returns a 32-byte `Uint8Array` key, and `decryptWithKey()` can reuse that key for decrypting a payload.
+- `deriveSeedKey()` uses HKDF-SHA256 and defaults to a 32-byte output. Both `salt` and `info` are required and are chosen by the caller; the package provides no built-in domain labels.
+- Pass high-entropy BIP-39 seed bytes to the seed key derivation helpers, not a mnemonic phrase. Accepted string inputs are consumed literally as UTF-8 and are not converted from mnemonic words into seed bytes.
+- `deriveSeedKeyPair()` always derives a 32-byte Ed25519 seed and returns a 32-byte `publicKey` plus a sensitive 64-byte `secretKey`, regardless of an `options.length` value.
 - BIP-21 amounts are decimal BTC strings with up to eight decimal places and a maximum value of `21000000`.
 - BOLT11 helpers support invoices for `bitcoin`, `testnet`, `regtest`, and `signet` networks.
 - `decode()` returns user-provided invoice descriptions when they are present. Sanitize descriptions before rendering them in HTML or storing them.
@@ -159,6 +173,26 @@ import { decrypt, encrypt } from '@tetherto/wdk-utils'
 
 const encrypted = encrypt(seedPhrase, passphrase)
 const restoredSeedPhrase = decrypt(encrypted, passphrase)
+```
+
+You can derive independent keys for application-specific purposes by using distinct domain labels:
+
+```javascript title="Derive Domain-Separated Keys"
+import { deriveSeedKey, deriveSeedKeyPair } from '@tetherto/wdk-utils'
+
+const syncKey = deriveSeedKey(seedBytes, {
+  salt: 'com.example.wallet/v1',
+  info: 'sync-encryption'
+})
+
+const signingKeyPair = deriveSeedKeyPair(seedBytes, {
+  salt: 'com.example.wallet/v1',
+  info: 'device-signing'
+})
+
+// Clear sensitive outputs after their final use.
+syncKey.fill(0)
+signingKeyPair.secretKey.fill(0)
 ```
 
 ***

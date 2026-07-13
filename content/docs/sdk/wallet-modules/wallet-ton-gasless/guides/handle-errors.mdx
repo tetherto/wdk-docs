@@ -1,11 +1,11 @@
 ---
 title: Handle Errors
-description: Handle errors, manage fees, and dispose of sensitive data in gasless TON wallets.
+description: Handle errors, manage fees, and clean up derived account keys in gasless TON wallets.
 docType: how-to
 schemaType: TechArticle
 ---
 
-This guide covers how to [handle gasless transfer errors](#handle-gasless-transfer-errors) and [handle unsupported method errors](#handle-unsupported-method-errors), plus [best practices](#best-practices) for fee management and memory cleanup.
+This guide covers how to [handle gasless transfer errors](#handle-gasless-transfer-errors) and [handle unsupported method errors](#handle-unsupported-method-errors), plus [best practices](#best-practices) for fee management and derived key cleanup.
 
 ## Handle Gasless Transfer Errors
 
@@ -18,7 +18,7 @@ try {
     recipient: 'EQ...',
     amount: 1000000000
   })
-  console.log('Transfer hash:', result.hash)
+  console.log('Signed transfer body hash:', result.hash)
 } catch (error) {
   if (error.message.includes('insufficient jetton balance')) {
     console.error('Please add more Jetton tokens to your wallet')
@@ -26,7 +26,7 @@ try {
     console.error('Please add more paymaster tokens for gas fees')
   } else if (error.message.includes('invalid address')) {
     console.error('The recipient address is invalid')
-  } else if (error.message.toLowerCase().includes('fee')) {
+  } else if (error.message === 'The transfer operation exceeds the transfer max fee.') {
     console.error('The transfer fee exceeds your configured maximum')
   } else {
     console.error('Transfer failed:', error.message)
@@ -54,7 +54,7 @@ try {
 
 ### Manage Fee Limits
 
-Set `transferMaxFee` when creating the wallet to prevent gasless transfers from exceeding a maximum cost. Fee caps reject estimates greater than the configured limit, so an estimate equal to the cap is allowed. Native `sendTransaction()`, `quoteSendTransaction()`, and `signTransaction()` are unsupported on this module, so `transactionMaxFee` does not cap gasless transfers. You can retrieve current network rates using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#getfeerates):
+Set `transferMaxFee` when creating the wallet to prevent gasless transfers from exceeding a maximum cost. Fee caps reject estimates greater than the configured limit, so an estimate equal to the cap is allowed. Native `sendTransaction()`, `quoteSendTransaction()`, and `signTransaction()` are unsupported on this module, so `transactionMaxFee` does not cap gasless transfers. You can retrieve mainnet TON API rates using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#getfeerates). In `1.0.0-beta.7`, this method does not follow configured testnet clients and returns the same calculated value for `normal` and `fast`:
 
 ```javascript title="Fee Management"
 const feeRates = await wallet.getFeeRates()
@@ -62,9 +62,9 @@ console.log('Normal fee rate:', feeRates.normal, 'nanotons')
 console.log('Fast fee rate:', feeRates.fast, 'nanotons')
 ```
 
-### Dispose of Sensitive Data
+### Dispose Derived Account Keys
 
-Call [`dispose()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#dispose-1) on accounts and wallet managers to clear private keys and sensitive data from memory when they are no longer needed:
+Call [`dispose()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#dispose-1) on accounts and wallet managers to clear cached accounts' derived private keys when they are no longer needed:
 
 ```javascript title="Memory Cleanup"
 account.dispose()
@@ -73,5 +73,5 @@ wallet.dispose()
 ```
 
 <Callout type="warn">
-Always call [`dispose()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#dispose-1) in a `finally` block or cleanup handler to ensure sensitive data is cleared even if an error occurs.
+Call [`dispose()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#dispose-1) in a `finally` block or cleanup handler so derived account keys are cleared even if an error occurs. In the current beta, `wallet.dispose()` does not zero or unset `wallet.seed`; manage the seed lifecycle separately and release all manager references when finished.
 </Callout>
