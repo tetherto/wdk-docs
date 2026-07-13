@@ -1,6 +1,6 @@
 ---
 name: wdk
-description: Tether Wallet Development Kit (WDK) for building non-custodial multi-chain wallets. Use when working with @tetherto/wdk-core, wallet modules (wdk-wallet-btc, wdk-wallet-evm, wdk-wallet-evm-erc-4337, wdk-wallet-solana, wdk-wallet-spark, wdk-wallet-ton, wdk-wallet-tron, ton-gasless, tron-gasfree), and protocol modules including swidge, swap (wdk-protocol-swap-velora-evm), bridge (wdk-protocol-bridge-usdt0-evm), lending (wdk-protocol-lending-aave-evm), and fiat (wdk-protocol-fiat-moonpay). Covers wallet creation, transactions, token transfers, swidge asset routes, DEX swaps, cross-chain bridges, DeFi lending/borrowing, and fiat on/off ramps.
+description: Tether Wallet Development Kit (WDK) for building non-custodial multi-chain wallets. Use when working with @tetherto/wdk, wallet modules (wdk-wallet-btc, wdk-wallet-evm, wdk-wallet-evm-erc-4337, wdk-wallet-solana, wdk-wallet-spark, wdk-wallet-ton, wdk-wallet-tron, ton-gasless, tron-gasfree), and protocol modules including swidge, swap (wdk-protocol-swap-velora-evm), bridge (wdk-protocol-bridge-usdt0-evm), lending (wdk-protocol-lending-aave-evm), and fiat (wdk-protocol-fiat-moonpay). Covers wallet creation, transactions, token transfers, swidge asset routes, DEX swaps, cross-chain bridges, DeFi lending/borrowing, and fiat on/off ramps.
 ---
 
 # Tether WDK
@@ -63,8 +63,6 @@ When a task targets a specific chain or protocol, read the relevant reference fi
         ├── wdk-protocol-lending-aave-evm  # Aave V3 lending
         └── wdk-protocol-fiat-moonpay      # Fiat on/off ramp
 ```
-
-> **Note:** `@tetherto/wdk-core` appears in the architecture tree but the npm package is `@tetherto/wdk` — import as `import WDK from '@tetherto/wdk'`.
 
 ## npm Packages
 

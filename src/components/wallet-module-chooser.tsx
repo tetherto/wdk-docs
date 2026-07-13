@@ -82,7 +82,7 @@ const walletModules: WalletModule[] = [
     label: "Smart accounts (ERC-4337)",
     chain: "evm",
     goals: ["gasless"],
-    packageName: "@tetherto/wdk-wallet-evm-erc4337",
+    packageName: "@tetherto/wdk-wallet-evm-erc-4337",
     docsHref: "/sdk/wallet-modules/wallet-evm-erc-4337",
     apiHref: "/sdk/wallet-modules/wallet-evm-erc-4337/api-reference",
     bestFor: "Account abstraction flows that submit UserOperations through a bundler.",
