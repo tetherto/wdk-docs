@@ -127,9 +127,9 @@ new WalletAccountBtc(seed, path, config)
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's Bitcoin address | `Promise<string>` |
 | `getBalance()` | Returns the total account balance in satoshis, including unconfirmed funds when present | `Promise<bigint>` |
-| `sendTransaction(options, timeoutMs?)` | Sends a Bitcoin transaction and optionally polls until spent inputs disappear from unspent outputs | `Promise<{hash: string, fee: bigint}>` |
+| `sendTransaction(tx, timeoutMs?)` | Signs and sends transaction options, or broadcasts signed raw transaction hex, then optionally polls spent inputs | `Promise<{hash: string, fee: bigint}>` |
 | `signTransaction(options)` | Signs a Bitcoin transaction without broadcasting it | `Promise<string>` |
-| `quoteSendTransaction(options)` | Estimates the fee for a transaction | `Promise<{fee: bigint}>` |
+| `quoteSendTransaction(tx)` | Estimates an unsigned transaction fee or calculates the fee of signed raw transaction hex | `Promise<{fee: bigint}>` |
 | `getTransfers(options?)` | Returns the account's transfer history | `Promise<BtcTransfer[]>` |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<BtcTransactionReceipt \| null>` |
 | `getMaxSpendable()` | Returns the maximum spendable amount | `Promise<BtcMaxSpendableResult>` |
@@ -160,10 +160,10 @@ console.log('Balance:', balance, 'satoshis')
 ```
 
 ##### `sendTransaction(options, timeoutMs?)`
-Sends a Bitcoin transaction to a single recipient and optionally polls after broadcast until spent inputs disappear from the unspent-output set.
+Accepts either transaction options or signed raw Bitcoin transaction hex. With transaction options, the wallet builds, signs, and broadcasts a single-recipient transaction. With signed hex, it broadcasts the exact supplied transaction without rebuilding or signing it. Both paths can poll after broadcast until spent inputs disappear from the unspent-output set.
 
 **Parameters:**
-- `options` (BtcTransaction): Transaction options
+- `options` (`BtcTransaction | string`): Transaction options or signed raw transaction hex
   - `to` (string): Recipient's Bitcoin address
   - `value` (number | bigint): Amount in satoshis
   - `feeRate` (number | bigint, optional): Fee rate in sat/vB. If provided, overrides the fee rate estimated from the blockchain.
@@ -174,7 +174,7 @@ Sends a Bitcoin transaction to a single recipient and optionally polls after bro
 - `hash`: Transaction hash
 - `fee`: Transaction fee in satoshis
 
-**Throws:** Error if the estimated transaction fee exceeds `transactionMaxFee` when configured.
+**Throws:** Error if the transaction fee exceeds `transactionMaxFee` when configured. Invalid raw transaction data, unavailable previous transactions, and broadcast rejection errors propagate from the configured client.
 
 **Example:**
 ```javascript
@@ -212,10 +212,10 @@ console.log('Signed transaction:', signedTransaction)
 ```
 
 ##### `quoteSendTransaction(options)`
-Estimates the fee for a transaction without broadcasting it.
+Estimates the fee for transaction options or calculates the fee encoded by signed raw transaction hex, without broadcasting it.
 
 **Parameters:**
-- `options` (BtcTransaction): Same as sendTransaction options
+- `options` (`BtcTransaction | string`): Transaction options or signed raw transaction hex
   - `to` (string): Recipient's Bitcoin address
   - `value` (number | bigint): Amount in satoshis
   - `feeRate` (number | bigint, optional): Fee rate in sat/vB. If provided, overrides the fee rate estimated from the blockchain.
@@ -232,6 +232,8 @@ const quote = await account.quoteSendTransaction({
 })
 console.log('Estimated fee:', quote.fee, 'satoshis')
 ```
+
+For signed hex, the wallet parses the transaction and fetches every referenced previous transaction through the configured client to calculate input value minus output value. This path requires network access, does not validate signatures before broadcast, does not broadcast, and does not apply `transactionMaxFee`.
 
 ##### `getTransfers(options?)`
 Returns the account's transfer history with detailed transaction information.

@@ -12,6 +12,8 @@ schemaType: APIReference
 | [`useWalletManager`](#usewalletmanager) | Hook | Wallet lifecycle (create, restore, lock, unlock) |
 | [`useAccount`](#useaccount) | Hook | Account operations (send, sign, verify, estimateFee) |
 | [`useProtocol`](#useprotocol) | Hook | Protocol method calls through the active worklet account |
+| [`useModule`](#usemodule) | Hook | Named generic-module calls and event subscriptions |
+| [`ModuleService`](#moduleservice) | Class | Low-level static gateway for generic-module calls and events |
 | [`useAddresses`](#useaddresses) | Hook | Load and query wallet addresses |
 | [`useBalance`](#usebalance) | Hook | Single asset balance with TanStack Query |
 | [`useBalancesForWallet`](#usebalancesforwallet) | Hook | Bulk balance fetch for multiple assets |
@@ -25,6 +27,8 @@ schemaType: APIReference
 | `UseAccountParams` | Type | Parameters for `useAccount` |
 | `UseAccountReturn` | Type | Return type of `useAccount` |
 | `UseProtocolParams` | Type | Parameters for `useProtocol` |
+| `UseModuleProxy` | Type | Typed asynchronous module proxy returned by `useModule` |
+| `ModuleEventListener` | Type | Listener for parsed module-event payloads |
 | `UseAddressesReturn` | Type | Return type of `useAddresses` |
 | `UseWalletManagerResult` | Type | Return type of `useWalletManager` |
 
@@ -381,6 +385,76 @@ function SwapQuoteScreen() {
 
 ---
 
+## useModule
+
+Hook that creates a typed proxy for one named generic module in the active HRPC worklet. Every method access is forwarded through `ModuleService.callModule()`. The proxy also exposes `on(event, listener)` for module events.
+
+<Callout type="warn">
+React Native Core `v1.0.0-beta.13` exposes this API but pins Pear Worklet `v1.0.0-beta.8`, which does not contain the required module HRPC methods. The default dependency graph therefore cannot run these calls. Installing Pear Worklet beta.9 separately does not replace the nested beta.8 dependency; wait for a dependency-aligned React Native Core release before adopting this API.
+</Callout>
+
+### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `moduleName` | `string` | Name shared by the bundler's build-time `modules` map and runtime `wdkConfigs.modules` map |
+
+### Returns
+
+Returns `UseModuleProxy<T>`. Define module methods as asynchronous in `T` because every proxy call crosses the worklet boundary and returns a promise.
+
+```typescript title="UseModuleProxy"
+type UseModuleProxy<T extends object> = T & {
+  on: (event: string, listener: ModuleEventListener) => () => void
+}
+
+type ModuleEventListener = (payload: unknown) => void
+```
+
+### Example
+
+```tsx title="Call A Named Module"
+import { useEffect } from 'react'
+import { useModule } from '@tetherto/wdk-react-native-core'
+
+type PreferencesModule = {
+  getTheme: () => Promise<'light' | 'dark'>
+  setTheme: (theme: 'light' | 'dark') => Promise<void>
+}
+
+function PreferencesScreen() {
+  const preferences = useModule<PreferencesModule>('preferences')
+
+  useEffect(() => {
+    return preferences.on('changed', payload => {
+      console.log('Preferences changed:', payload)
+    })
+  }, [preferences])
+
+  // Module calls are asynchronous.
+  // const theme = await preferences.getTheme()
+}
+```
+
+Subscriptions are removed automatically on unmount or when `moduleName` changes. Calling the returned unsubscribe function removes a subscription earlier.
+
+---
+
+## ModuleService
+
+Low-level static service used by `useModule()`. Use it when a hook is not appropriate but the React Native worklet has already initialized.
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `callModule()` | `callModule(moduleName: string, method: string, ...args: unknown[]): Promise<unknown>` | Serialize positional arguments, call the named module method, and parse the JSON response |
+| `onModuleEvent()` | `onModuleEvent(moduleName: string, event: string, listener: ModuleEventListener): () => void` | Subscribe to one named event and return an unsubscribe function |
+
+`callModule()` requires non-empty module and method names plus an initialized worklet. It returns `undefined` when the worklet response is absent or empty. Arguments and results must be safely JSON-serializable; `bigint` arguments are serialized as strings, while circular and non-standard-prototype objects are rejected.
+
+`onModuleEvent()` parses JSON event payloads when possible and otherwise delivers the raw string. Listener failures do not stop delivery to other listeners.
+
+---
+
 ## useAddresses
 
 Hook to load and query wallet addresses across all networks.
@@ -732,8 +806,13 @@ interface WdkConfigs<TNetwork = Record<string, unknown>, TProtocol = Record<stri
   protocols?: {
     [protocolName: string]: WdkProtocolConfig<TProtocol>
   }
+  modules?: {
+    [moduleName: string]: Record<string, unknown>
+  }
 }
 ```
+
+`modules` contains runtime configuration for generic modules. It is distinct from the Worklet Bundler's build-time `modules` map, which selects package names, factories, and forwarded events. Use the same module name in both maps.
 
 #### WdkNetworkConfig
 

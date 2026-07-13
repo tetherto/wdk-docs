@@ -20,10 +20,12 @@ schemaType: APIReference
 | `generateEntropyAndEncrypt()` | `generateEntropyAndEncrypt(args: WdkGenerateEntropyParams): Promise\<WdkEntropyResult\>` | Generates encrypted seed and entropy buffers inside the worklet. |
 | `getMnemonicFromEntropy()` | `getMnemonicFromEntropy(args: WdkGetMnemonicParams): Promise\<{ mnemonic: string }\>` | Decrypts an encrypted entropy payload and returns the mnemonic. |
 | `getSeedAndEntropyFromMnemonic()` | `getSeedAndEntropyFromMnemonic(args: { mnemonic: string }): Promise\<WdkEntropyResult\>` | Converts a mnemonic into encrypted seed and entropy buffers. |
-| `dispose()` | `dispose(args: DisposeRequest): void` | Disposes the worklet WDK instance. |
+| `dispose()` | `dispose(args: DisposeRequest): void` | Disposes the full worklet WDK instance or only selected blockchains. |
 | `callMethod()` | `callMethod(args: CallMethodRequest): Promise\<CallMethodResponse\>` | Looks up the target account and invokes one wallet or protocol method by name. |
 | `registerWallet()` | `registerWallet(args: { config: string }): Promise\<{ status: string, blockchains: string }\>` | Dynamically registers additional wallets from a JSON config string. |
 | `registerProtocol()` | `registerProtocol(args: { config: string }): Promise\<{ status: string }\>` | Dynamically registers additional protocols from a JSON config string. |
+| `callModule()` | `callModule(args: CallModuleRequest): Promise\<CallModuleResponse\>` | Calls a method on a configured generic module over HRPC. |
+| `moduleEvent()` | `moduleEvent(args: ModuleEventRequest): void` | Sends a generic-module event from the worklet to the HRPC host. |
 
 #### Handler Registration Methods
 
@@ -40,6 +42,8 @@ schemaType: APIReference
 | `onCallMethod()` | `onCallMethod(responseFn): void` | Registers the server-side handler for `callMethod()`. |
 | `onRegisterWallet()` | `onRegisterWallet(responseFn): void` | Registers the server-side handler for `registerWallet()`. |
 | `onRegisterProtocol()` | `onRegisterProtocol(responseFn): void` | Registers the server-side handler for `registerProtocol()`. |
+| `onCallModule()` | `onCallModule(responseFn): void` | Registers the worklet-side handler for generic-module calls. |
+| `onModuleEvent()` | `onModuleEvent(responseFn): void` | Registers the host-side handler for generic-module events. |
 
 #### `log`
 
@@ -65,13 +69,15 @@ Returns:
 - `encryptedSeed?` (`string`): Base64-encoded encrypted seed buffer.
 - `config` (`string`): JSON stringified `WdkWorkletConfig`.
 
-The handler requires `encryptionKey` and `encryptedSeed` to be passed together or omitted together. When a seeded WDK instance already exists, the runtime disposes it before re-registering the wallets and optional protocols in `config`.
+The handler requires `encryptionKey` and `encryptedSeed` to be passed together or omitted together. When a seeded WDK instance already exists, the runtime disposes it and closes its generic modules before re-registering the wallets and optional protocols in `config`.
+
+In beta.9, HRPC generic modules are constructed from `context.moduleManagers` and `config.modules` only when that request includes the encrypted seed pair. A seedless reinitialization closes existing module instances without reconstructing them. Supply both seed fields on every initialization that must construct or reconstruct modules.
 
 #### `resetWdkWallets`
 
 - `config` (`string`): JSON stringified object containing a `networks` map.
 
-The runtime validates `config.networks`, extracts each target `blockchain`, calls `wdk.dispose(targetChains)`, and re-registers only those wallet managers. This method does not re-register protocols.
+The runtime validates `config.networks`, extracts each target `blockchain`, calls `wdk.dispose(targetChains)`, and re-registers only those wallet managers. This method does not re-register protocols or close generic modules; existing module instances keep running.
 
 #### `generateEntropyAndEncrypt`
 
@@ -104,7 +110,9 @@ Returns:
 
 #### `dispose`
 
-- `args` (`DisposeRequest`): Empty request object.
+- `args` (`DisposeRequest`): Optional `blockchains` array. Omit it or pass an empty array for a full disposal.
+
+A full disposal closes all generic modules and clears the WDK instance. A non-empty `blockchains` array disposes only those wallets and leaves generic modules running.
 
 #### `callMethod`
 
@@ -132,6 +140,24 @@ Returns:
 Returns:
 
 - `status` (`string`)
+
+#### `callModule`
+
+Call one method on a configured generic module. This command is available on HRPC only.
+
+- `module` (`string`): Module name shared by `RpcContext.moduleManagers` and `WdkWorkletConfig.modules`.
+- `method` (`string`): Non-empty method name on the constructed module instance.
+- `args?` (`string`): Optional JSON string of arguments. Arrays are spread as positional arguments; a non-array value is passed as one argument.
+
+Returns `CallModuleResponse` with optional `result`, a JSON string. The runtime awaits promises, materializes values with `.toArray()`, and recursively converts `Uint8Array` values to hex before serialization.
+
+#### `moduleEvent`
+
+Send an HRPC module event to the host.
+
+- `module` (`string`): Module name.
+- `event` (`string`): Event name.
+- `payload?` (`string | null`): Optional JSON string payload.
 
 #### `onLog`
 
@@ -177,12 +203,20 @@ Registers the server-side handler used to service `registerWallet()` requests.
 
 Registers the server-side handler used to service `registerProtocol()` requests.
 
+#### `onCallModule`
+
+Registers the worklet-side handler used to service `callModule()` requests.
+
+#### `onModuleEvent`
+
+Registers the host-side handler used to receive `moduleEvent()` messages.
+
 ### Export: `registerRpcHandlers(rpc, context)`
 
 Registers the package's server-side handlers on the provided RPC instance.
 
 - `rpc` (`any`): RPC server instance that supports the generated handler registration methods.
-- `context` (`RpcContext`): Runtime context containing `wdk`, `WDK`, `walletManagers`, `protocolManagers`, and `wdkLoadError`.
+- `context` (`RpcContext`): Runtime context containing `wdk`, `WDK`, `walletManagers`, `protocolManagers`, and `wdkLoadError`. HRPC generic modules can additionally supply `moduleManagers` and `capabilities`; the runtime manages `moduleRuntime` and `moduleInstances`.
 
 ### Types
 
@@ -203,6 +237,47 @@ interface WdkWorkletConfig {
       config: unknown
     }
   }
+  modules?: {
+    [moduleName: string]: Record<string, unknown>
+  }
+}
+```
+
+The `modules` map contains runtime module configuration. Its names must match the module managers generated by Worklet Bundler or supplied manually in `RpcContext`.
+
+#### `WdkModuleManager`
+
+```ts
+interface WdkModuleManager {
+  events?: string[]
+  createModule: (context: {
+    seed: any
+    config: any
+    capabilities: Record<string, any>
+    emit: (event: string, payload?: any) => void
+  }) => any | Promise<any>
+}
+```
+
+The factory must consume `seed` synchronously rather than retain it. Module instances can optionally implement `close()`, `suspend()`, and `resume()`. The runtime calls `close()` during full disposal or reinitialization; targeted blockchain disposal and `resetWdkWallets()` leave generic modules running. Worklet Bundler-generated HRPC entrypoints forward Bare lifecycle events to `suspend()` and `resume()`; manual Pear integrations must wire those events themselves. Declared `events` are forwarded from the instance, and the injected `emit()` function can emit events directly.
+
+#### Module request types
+
+```ts
+interface CallModuleRequest {
+  module: string
+  method: string
+  args?: string
+}
+
+interface CallModuleResponse {
+  result?: string | null
+}
+
+interface ModuleEventRequest {
+  module: string
+  event: string
+  payload?: string | null
 }
 ```
 
@@ -224,6 +299,38 @@ interface CallMethodOptions {
   protocolName: string
 }
 ```
+
+## JSON-RPC Transport
+
+Import `registerJsonRpcHandlers()` from the separate JSON-RPC entrypoint:
+
+```javascript
+const { registerJsonRpcHandlers } = require('@tetherto/pear-wrk-wdk/jsonrpc')
+
+registerJsonRpcHandlers(ipc, context)
+```
+
+The server reads UTF-8 JSON-RPC 2.0 messages framed with a four-byte unsigned big-endian payload length. Every request requires an ID, and an ID cannot be reused while its earlier request is still in flight. Malformed frames are dropped without a response. The package does not export a JSON-RPC client or native-host helper.
+
+Beta.9 supports these JSON-RPC method names:
+
+- `workletStart`
+- `generateEntropyAndEncrypt`
+- `getMnemonicFromEntropy`
+- `getSeedAndEntropyFromMnemonic`
+- `initializeWDK`
+- `callMethod`
+- `registerWallet`
+- `registerProtocol`
+- `dispose`
+
+JSON-RPC does not support `resetWdkWallets`, generic-module calls, or module events in this release. Use HRPC for those operations.
+
+<Callout type="warn">
+INFO-level logging can include wallet-call arguments and JSON-RPC parameters or results. Production defaults to ERROR logging; do not enable more verbose logging for requests that may contain seeds, mnemonics, keys, or other sensitive values.
+</Callout>
+
+Mnemonic strings, encryption-key strings, and encrypted payload strings cannot be zeroed in JavaScript. Discard references promptly and never log them. The runtime validates imported mnemonics for 12 or 24 English BIP-39 words and clears temporary byte buffers where possible.
 
 ***
 

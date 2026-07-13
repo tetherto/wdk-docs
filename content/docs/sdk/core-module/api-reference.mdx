@@ -12,7 +12,8 @@ icon: Code
 |-------|-------------|---------|
 | [WDK](#wdk) | Main class for managing wallets across multiple blockchains. Orchestrates wallet managers, protocols, middleware, and local transaction policies. | [Constructor](#constructor), [Methods](#methods) |
 | [IWalletAccount](#iwalletaccount) | Base writable wallet account interface from `@tetherto/wdk-wallet`. | [Methods](#methods-1) |
-| [IWalletAccountWithProtocols](#iwalletaccountwithprotocols) | Extended wallet account interface that supports protocol registration and access. Extends `IWalletAccount`. | [Methods](#methods-2) |
+| [IWalletAccountWithProtocols](#iwalletaccountwithprotocols) | Protocol registration and access surface added to a wallet account. | [Methods](#methods-2) |
+| [WdkAccount](#wdkaccount) | Consumer-facing account type returned by `getAccount()` and `getAccountByPath()`. | Type alias |
 
 ## WDK
 
@@ -47,8 +48,8 @@ const wdk2 = new WDK(seedBytes)
 | `registerProtocol(blockchain, label, protocol, config)` | Registers a protocol globally for a blockchain | `WDK` | - |
 | `registerMiddleware(blockchain, middleware)` | Registers middleware for account decoration | `WDK` | - |
 | `registerPolicy(policies, options?)` | Registers local transaction policies for wallet account and protocol write methods | `WDK` | If policy configuration is invalid |
-| `getAccount(blockchain, index?)` | Returns a wallet account for a blockchain and index | `Promise<IWalletAccountWithProtocols>` | If wallet not registered |
-| `getAccountByPath(blockchain, path)` | Returns a wallet account for a blockchain and derivation path | `Promise<IWalletAccountWithProtocols>` | If wallet not registered |
+| `getAccount(blockchain, index?)` | Returns a wallet account for a blockchain and index | `Promise<WdkAccount>` | If wallet not registered |
+| `getAccountByPath(blockchain, path)` | Returns a wallet account for a blockchain and derivation path | `Promise<WdkAccount>` | If wallet not registered |
 | `getFeeRates(blockchain)` | Returns current fee rates for a registered blockchain | `Promise<FeeRates>` | If wallet not registered |
 | `dispose(blockchains?)` | Disposes all registered wallets, or only the named blockchains, and clears keys and account state managed by WDK | `void` | - |
 
@@ -259,7 +260,7 @@ Returns a wallet account for a specific blockchain and index using BIP-44 deriva
 - `blockchain` (string): The name of the blockchain (e.g., "ethereum")
 - `index` (number, optional): The index of the account to get (default: 0)
 
-**Returns:** `Promise<IWalletAccountWithProtocols>` - The wallet account with protocol support. When a registered policy targets the account, the returned runtime account is policy-enforced and exposes matching `simulate` helpers.
+**Returns:** `Promise<WdkAccount>` - The writable wallet account with protocol support. When a registered policy targets the account, the returned runtime account is policy-enforced and exposes matching `simulate` helpers.
 
 **Throws:** Error if no wallet has been registered for the given blockchain. Throws `PolicyConfigurationError` if a registered policy applies but the wallet account does not expose a read-only account view.
 
@@ -289,7 +290,7 @@ Returns a wallet account for a specific blockchain and BIP-44 derivation path.
 - `blockchain` (string): The name of the blockchain (e.g., "ethereum")
 - `path` (string): The derivation path (e.g., "0'/0/0")
 
-**Returns:** `Promise<IWalletAccountWithProtocols>` - The wallet account with protocol support. When a registered policy targets the account, the returned runtime account is policy-enforced and exposes matching `simulate` helpers.
+**Returns:** `Promise<WdkAccount>` - The writable wallet account with protocol support. When a registered policy targets the account, the returned runtime account is policy-enforced and exposes matching `simulate` helpers.
 
 **Throws:** Error if no wallet has been registered for the given blockchain. Throws `PolicyConfigurationError` if a registered policy applies but the wallet account does not expose a read-only account view.
 
@@ -419,7 +420,7 @@ console.log('Signed transaction:', signedTransaction)
 
 ## IWalletAccountWithProtocols
 
-Extended wallet account interface that supports protocol registration and access. Extends `IWalletAccount` from `@tetherto/wdk-wallet`.
+Protocol registration and access surface that WDK adds to a wallet account. The consumer-facing [`WdkAccount`](#wdkaccount) type combines this interface with `IWalletAccount` from `@tetherto/wdk-wallet`.
 
 ### Methods
 
@@ -666,6 +667,20 @@ wdk.dispose()
 
 ## Types
 
+### WdkAccount
+
+`WdkAccount` is the exported type returned by `getAccount()` and `getAccountByPath()`. It combines the writable wallet methods with the protocol registration and lookup surface. This is a type-only export; there is no runtime `WdkAccount` value.
+
+```typescript title="Use WdkAccount"
+import WDK, { type WdkAccount } from '@tetherto/wdk'
+
+async function getBitcoinAccount(wdk: WDK): Promise<WdkAccount> {
+  return wdk.getAccount('bitcoin')
+}
+```
+
+The published definition is `IWalletAccount & IWalletAccountWithProtocols`. Concrete wallet packages can expose additional methods beyond this shared shape. The declared return type of `IWalletAccountWithProtocols.registerProtocol()` remains `IWalletAccountWithProtocols`, so assigning the result of that chained call can narrow away the writable-account methods in TypeScript.
+
 ### FeeRates
 
 ```typescript title="Type: FeeRates"
@@ -832,6 +847,7 @@ type SwidgeOptions = {
   recipient?: string;
   refundAddress?: string;
   slippage?: number;             // decimal, e.g. 0.01 for 1%
+  minAmountOut?: number | bigint; // destination-token base units; provider-defined enforcement
 } & (
   | { fromTokenAmount: number | bigint }  // exact-in
   | { toTokenAmount: number | bigint }    // exact-out

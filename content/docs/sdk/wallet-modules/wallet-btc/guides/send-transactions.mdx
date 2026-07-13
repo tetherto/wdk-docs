@@ -3,7 +3,7 @@ title: Send Transactions
 description: Send BTC and estimate transaction fees.
 ---
 
-This guide explains how to [send BTC](#send-btc), [extend post-broadcast polling](#extend-post-broadcast-polling), [sign without broadcasting](#sign-without-broadcasting), [estimate fees before sending](#estimate-fees), [cap transaction fees](#cap-transaction-fees), [use a custom fee rate](#send-with-custom-fee-rate), and [target a specific confirmation time](#send-with-confirmation-target).
+This guide explains how to [send BTC](#send-btc), [extend post-broadcast polling](#extend-post-broadcast-polling), [sign without broadcasting](#sign-without-broadcasting), [quote and broadcast signed hex](#quote-and-broadcast-signed-hex), [estimate fees before sending](#estimate-fees), [cap transaction fees](#cap-transaction-fees), [use a custom fee rate](#send-with-custom-fee-rate), and [target a specific confirmation time](#send-with-confirmation-target).
 
 ## Send BTC
 
@@ -59,6 +59,26 @@ console.log('Signed transaction:', signedTransaction)
 <Callout type="info">
 `signTransaction()` returns the signed transaction hex. Use `sendTransaction()` when WDK should sign, broadcast, and return the transaction hash.
 </Callout>
+
+## Quote and Broadcast Signed Hex
+
+A writable Bitcoin account can quote and broadcast a previously signed raw transaction. The wallet broadcasts the supplied hex without rebuilding or signing it again.
+
+```javascript title="Quote And Broadcast Signed BTC"
+const signedTransaction = await account.signTransaction({
+  to: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+  value: 100000n,
+  feeRate: 10n
+})
+
+const quote = await account.quoteSendTransaction(signedTransaction)
+console.log('Signed transaction fee:', quote.fee, 'satoshis')
+
+const result = await account.sendTransaction(signedTransaction)
+console.log('Transaction hash:', result.hash)
+```
+
+Signed-hex quoting parses the transaction and fetches its referenced previous transactions through the configured client. It requires network access and does not broadcast. Broadcasting applies `transactionMaxFee` when configured, but signature validity is ultimately checked by the Bitcoin network rather than pre-validated by this method.
 
 ## Estimate Fees
 

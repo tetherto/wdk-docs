@@ -361,6 +361,61 @@ import { decryptWithKey } from '@tetherto/wdk-utils'
 const plaintext = decryptWithKey(encrypted, key)
 ```
 
+### Seed Key Derivation Helpers
+
+Derive deterministic, domain-separated key material from high-entropy seed bytes.
+
+| Function | Description | Returns |
+| --- | --- | --- |
+| `deriveSeedKey(seed, options)` | Derive a byte key with HKDF-SHA256. | `Uint8Array` |
+| `deriveSeedKeyPair(seed, options)` | Derive a deterministic Ed25519 keypair. | `KeyPair` |
+
+```typescript title="Seed Key Derivation Types"
+type SeedKeyOptions = {
+  salt: string | Uint8Array
+  info: string | Uint8Array
+  length?: number
+}
+
+type KeyPair = {
+  publicKey: Uint8Array
+  secretKey: Uint8Array
+}
+```
+
+#### `deriveSeedKey(seed, options)`
+
+Derive a key using HKDF-SHA256. `salt` and `info` are required caller-controlled domain-separation values, and `length` defaults to 32 bytes.
+
+```javascript title="Derive A Seed Key"
+import { deriveSeedKey } from '@tetherto/wdk-utils'
+
+const key = deriveSeedKey(seedBytes, {
+  salt: 'com.example.wallet/v1',
+  info: 'local-encryption',
+  length: 32
+})
+```
+
+The function throws `salt is required` or `info is required` when either field is absent. String inputs are consumed as raw UTF-8 bytes; a mnemonic string is not converted into BIP-39 seed bytes.
+
+#### `deriveSeedKeyPair(seed, options)`
+
+Derive a deterministic Ed25519 keypair from the same seed, salt, and info inputs. The function always uses a 32-byte derived seed, even if `options.length` is supplied, and returns a 32-byte public key plus a 64-byte secret key laid out as the derived seed followed by the public key.
+
+```javascript title="Derive An Ed25519 Keypair"
+import { deriveSeedKeyPair } from '@tetherto/wdk-utils'
+
+const keyPair = deriveSeedKeyPair(seedBytes, {
+  salt: 'com.example.wallet/v1',
+  info: 'device-signing'
+})
+```
+
+<Callout type="warn">
+Treat the returned `secretKey` as sensitive and clear it after its final use. The implementation clears its intermediate derived seed, but the returned secret key remains in caller-managed memory.
+</Callout>
+
 ### BIP-21 Bitcoin Payment URI Helpers
 
 | Function | Description | Returns |

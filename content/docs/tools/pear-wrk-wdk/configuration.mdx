@@ -1,33 +1,69 @@
 ---
 title: Pear Worklet WDK Configuration
-description: Configure the Bare worklet context and the JSON payloads passed to initializeWDK and resetWdkWallets
+description: Configure Pear Worklet HRPC and JSON-RPC contexts, WDK payloads, and generic modules
 ---
 
-This page explains how to [build the worklet context](#worklet-context), [shape the worklet config payload](#worklet-config-payload), [initialize-wdk](#initialize-wdk), and [reset-selected-wallets](#reset-selected-wallets).
+This page explains how to [build the worklet context](#worklet-context), [shape the worklet config payload](#worklet-config-payload), [initialize WDK](#initialize-wdk), [call generic modules](#call-generic-module-methods), and [choose a transport](#json-rpc-transport).
 
 ## Worklet Context
 
 You can bind the shipped RPC handlers to your Bare worklet using `registerRpcHandlers()`:
 
 ```javascript title="Register RPC Handlers"
+require('bare-node-runtime/global')
+
 const { registerRpcHandlers } = require('@tetherto/pear-wrk-wdk/worklet')
-const { WDK } = require('@tetherto/wdk')
-const EvmWalletManager = require('@tetherto/wdk-wallet-evm')
-const SparkWalletManager = require('@tetherto/wdk-wallet-spark')
+const wdkModule = require('@tetherto/wdk', { with: { imports: 'bare-node-runtime/imports' } })
+const { createModule: createPreferencesModule } = require('@your-org/wdk-module-preferences')
+
+const WDK = wdkModule.default || wdkModule.WDK || wdkModule
+const walletCache = {}
+
+function loadWalletManager(network) {
+  if (walletCache[network]) return walletCache[network]
+
+  let walletModule
+  if (network === 'ethereum') {
+    walletModule = require('@tetherto/wdk-wallet-evm', { with: { imports: 'bare-node-runtime/imports' } })
+  }
+  if (network === 'spark') {
+    walletModule = require('@tetherto/wdk-wallet-spark', { with: { imports: 'bare-node-runtime/imports' } })
+  }
+
+  if (walletModule) walletCache[network] = walletModule.default || walletModule
+  return walletCache[network] || null
+}
+
+const walletManagers = new Proxy({}, {
+  get: (_, network) => loadWalletManager(network),
+  has: (_, network) => ['ethereum', 'spark'].includes(network)
+})
 
 const context = {
   wdk: null,
   WDK,
-  walletManagers: {
-    ethereum: EvmWalletManager,
-    spark: SparkWalletManager
-  },
+  walletManagers,
   protocolManagers: {},
+  moduleManagers: {
+    preferences: {
+      createModule: createPreferencesModule,
+      events: ['changed']
+    }
+  },
+  capabilities: {},
   wdkLoadError: null
 }
 
 module.exports = (rpc) => {
   registerRpcHandlers(rpc, context)
+
+  Bare.on('suspend', async () => {
+    await context.moduleRuntime?.suspendAll()
+  })
+
+  Bare.on('resume', async () => {
+    await context.moduleRuntime?.resumeAll()
+  })
 }
 ```
 
@@ -39,11 +75,13 @@ module.exports = (rpc) => {
 - `protocolManagers`: A map from protocol name to protocol manager implementation.
 - `wdkLoadError`: Any startup error captured while loading WDK. Use `null` when there is no load failure.
 
+For HRPC generic modules, `moduleManagers` optionally maps module names to `{ createModule, events? }`. The factory receives `{ seed, config, capabilities, emit }` and can return an instance or a promise. `capabilities` is an optional host-supplied object and is empty by default. The runtime manages `moduleRuntime` and `moduleInstances`; do not initialize those fields yourself. Manual integrations must forward Bare `suspend` and `resume` events as shown if module instances should receive those lifecycle calls. Worklet Bundler-generated HRPC entrypoints wire them automatically.
+
 ## Worklet Config Payload
 
 Both [`initializeWDK()`](/tools/pear-wrk-wdk/api-reference) and [`resetWdkWallets()`](/tools/pear-wrk-wdk/api-reference) expect `config` to be a JSON string. The decoded object must contain at least one entry under `networks`.
 
-```javascript title="Minimal Worklet Config JSON"
+```javascript title="Worklet Config JSON"
 const workletConfig = {
   networks: {
     ethereum: {
@@ -61,6 +99,11 @@ const workletConfig = {
         environment: 'sandbox'
       }
     }
+  },
+  modules: {
+    preferences: {
+      storagePath: '/app-data/preferences'
+    }
   }
 }
 ```
@@ -70,7 +113,12 @@ const workletConfig = {
 - `networks` is required and must contain at least one network entry.
 - Each network entry must include `blockchain` and an object `config`.
 - `protocols` is optional during initialization.
+- `modules` is optional and contains runtime config for named generic modules. Each key must match a `moduleManagers` key in the HRPC context and the corresponding build-time Worklet Bundler module name.
 - `resetWdkWallets()` reads only the `networks` portion of the decoded config.
+
+<Callout type="warn">
+Generic modules are HRPC-only in beta.9. The JSON-RPC handler does not construct modules or expose module calls and events.
+</Callout>
 
 ## Initialize WDK
 
@@ -92,7 +140,9 @@ await hrpc.initializeWDK({
 
 - Pass both `encryptionKey` and `encryptedSeed`, or omit both together.
 - On first initialization, the worklet must receive an encrypted seed pair so it can create `context.wdk`.
-- If `context.wdk` already exists, a later `initializeWDK()` call disposes the existing instance before re-registering wallets and protocols from the new config.
+- If `context.wdk` already exists, a later `initializeWDK()` call disposes the existing instance and closes its generic modules before re-registering wallets and protocols from the new config.
+- In beta.9, generic modules are constructed only when that `initializeWDK()` request includes both `encryptionKey` and `encryptedSeed`. A seedless reinitialization closes existing module instances but does not rebuild them, even when `config.modules` is present. Supply the seed pair on every initialization that must construct or reconstruct modules.
+- Module `close()` is called during full disposal or reinitialization. Targeted blockchain disposal leaves generic modules running. Optional `suspend()` and `resume()` methods run only when the host forwards Bare lifecycle events; the manual context above and Worklet Bundler-generated HRPC entrypoints do so.
 
 ## Reset Selected Wallets
 
@@ -119,6 +169,7 @@ await hrpc.resetWdkWallets({
 - The handler calls `wdk.dispose(targetChains)` with the blockchains extracted from `config.networks`.
 - Only wallets listed in the request `networks` object are re-registered.
 - The reset flow does not re-register protocols.
+- The reset flow does not close or reconstruct generic modules; existing module instances keep running.
 
 ## Call Wallet Methods
 
@@ -138,6 +189,53 @@ const result = await hrpc.callMethod({
 - `options` is optional and must be a JSON string when provided.
 - When `args` decodes to an array, the handler spreads the values as positional method arguments.
 - When `args` decodes to an object or primitive, the handler passes it as a single argument.
+
+## Call Generic Module Methods
+
+On an HRPC worklet configured with matching `moduleManagers` and runtime `modules`, call a module method by name:
+
+```javascript title="Call A Generic Module"
+const response = await hrpc.callModule({
+  module: 'preferences',
+  method: 'getTheme',
+  args: JSON.stringify([])
+})
+
+const theme = response.result ? JSON.parse(response.result) : undefined
+```
+
+`args` is an optional JSON string. Arrays are spread into positional arguments; a non-array value is passed as one argument. Promise results are awaited, `.toArray()` results are materialized, and `Uint8Array` values are normalized to hex before the response is serialized.
+
+Subscribe to events declared by the module manager:
+
+```javascript title="Receive A Module Event"
+hrpc.onModuleEvent(({ module, event, payload }) => {
+  if (module === 'preferences' && event === 'changed') {
+    const value = payload ? JSON.parse(payload) : undefined
+    console.log('Preferences changed:', value)
+  }
+})
+```
+
+## JSON-RPC Transport
+
+Native hosts can register the separate framed JSON-RPC server entrypoint:
+
+```javascript title="Register JSON-RPC Handlers"
+const { registerJsonRpcHandlers } = require('@tetherto/pear-wrk-wdk/jsonrpc')
+
+module.exports = (ipc) => {
+  registerJsonRpcHandlers(ipc, context)
+}
+```
+
+Messages are UTF-8 JSON-RPC 2.0 objects prefixed by a four-byte unsigned big-endian payload length. Requests require an ID, and IDs must be unique while a request is in flight. The package exports no JSON-RPC host/client helper; the native host must implement framing and correlation.
+
+JSON-RPC beta.9 supports WDK initialization and disposal, secret/mnemonic operations, wallet-account calls, and dynamic wallet/protocol registration. It does not support `resetWdkWallets`, `callModule`, or module events. See the [API reference](/tools/pear-wrk-wdk/api-reference#json-rpc-transport) for the exact method list.
+
+<Callout type="warn">
+INFO-level logs can contain wallet-call arguments and JSON-RPC parameters or results. Keep production logging at its default ERROR level when requests may contain sensitive values.
+</Callout>
 
 ***
 

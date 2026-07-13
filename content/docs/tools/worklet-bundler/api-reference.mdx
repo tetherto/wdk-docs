@@ -18,19 +18,41 @@ schemaType: APIReference
 ```typescript title="WdkBundleConfig Shape"
 interface WdkBundleConfig {
   networks: Record<string, { package: string }>
-  protocols?: Record<string, { package: string; [key: string]: any }>
+  protocols?: Record<string, { package: string; [key: string]: unknown }>
+  modules?: Record<string, {
+    package: string
+    factory?: string
+    events?: string[]
+  }>
   preloadModules?: string[]
+  transport?: 'hrpc' | 'jsonrpc'
   output?: {
     bundle?: string
     types?: string
+    addons?: {
+      ios?: string
+      macos?: string
+      android?: string
+    }
+    addonsYml?: string
   }
   options?: {
     minify?: boolean
     sourceMaps?: boolean
     targets?: string[]
+    linkAddons?: boolean
+    platforms?: Array<'ios' | 'macos' | 'android'>
+    swiftTarget?: string
+    convertEsmToCjs?: boolean
   }
 }
 ```
+
+`modules` is generated only for HRPC in beta.5. JSON-RPC entry generation ignores that map. JSON-RPC otherwise defaults addon linking and ESM-to-CJS conversion to `true`; HRPC defaults both to `false`.
+
+<Callout type="warn">
+Beta.5 declares `output.types`, `options.minify`, and `options.sourceMaps`, but its bundle generator does not honor those fields. Declarations are always written to `./.wdk/index.d.ts`; `minify` and `sourceMaps` do not control `bare-pack` output. JSON-RPC ESM-to-CJS conversion minifies independently.
+</Callout>
 
 #### `ResolvedConfig`
 
@@ -43,6 +65,12 @@ interface ResolvedConfig extends WdkBundleConfig {
   resolvedOutput: {
     bundle: string
     types: string
+    addons: {
+      ios: string
+      macos: string
+      android: string
+    }
+    addonsYml: string
   }
 }
 ```
@@ -119,7 +147,10 @@ Run the uninstall flow from code and receive a structured `UninstallResult`.
 | `loadConfig(configPath?)` | Load, validate, and resolve a `wdk.config.js` file into absolute paths. | `Promise\<ResolvedConfig\>` |
 | `generateBundle(config, options?)` | Generate the entrypoint, imports, bundle, and optional type output. | `Promise\<GenerateBundleResult\>` |
 | `generateSourceFiles(config, options?)` | Generate the source entrypoint and related artifacts without bundling. | `Promise\<{ entryPath: string }\>` |
-| `generateEntryPoint(config, outputDir)` | Generate only the Bare worklet entrypoint file. | `Promise\<string\>` |
+| `generateEntryPoint(config, outputDir)` | Generate an HRPC Bare worklet entrypoint file. | `Promise\<string\>` |
+| `generateJsonRpcEntryPoint(config, outputDir)` | Generate a JSON-RPC Bare worklet entrypoint file. | `Promise\<string\>` |
+| `linkAddons(config, options?)` | Link native addons for selected platforms with `bare-link`. | `Promise\<LinkAddonsResult\>` |
+| `generateAddonsYml(iosAddonsDir, swiftTarget, outputPath)` | Generate the BareKit Swift addon dependency file. | `void` |
 | `generateWalletModulesCode(config)` | Generate the wallet-module section inserted into the entrypoint. | `string` |
 
 #### `loadConfig(configPath?)`
@@ -154,6 +185,8 @@ Use `generateBundle()` when you want the same bundle workflow that powers the CL
 - `error?`
 - `missingModule?`
 
+In beta.5, `typesPath` can reflect a configured `output.types` path even though the declaration file is still written to `./.wdk/index.d.ts`.
+
 ```typescript title="Generate A Bundle Programmatically"
 import { generateBundle, loadConfig } from '@tetherto/wdk-worklet-bundler'
 
@@ -167,9 +200,23 @@ Use `generateSourceFiles()` when you want the generated entrypoint without the f
 
 #### `generateEntryPoint(config, outputDir)`
 
-Use `generateEntryPoint()` when you need the exact generated Bare entrypoint string written to a chosen output directory.
+Use `generateEntryPoint()` when you need the generated HRPC Bare entrypoint written to a chosen output directory. This path includes configured generic modules and their lifecycle/event wiring.
 
 In `beta.3`, the generated entrypoint suspends and resumes both the `bare-http1` and `bare-https` global agents when the Bare runtime emits `suspend` and `resume`.
+
+#### `generateJsonRpcEntryPoint(config, outputDir)`
+
+Generate the framed JSON-RPC entrypoint used by native hosts. In beta.5 this path includes wallet and protocol managers but not generic `modules`.
+
+#### `linkAddons(config, options?)`
+
+Link required Bare addons for iOS, macOS, Android, or a selected subset. `LinkAddonsOptions` supports `platforms`, `verbose`, and `silent`. The result contains `success`, `duration`, `platforms`, and optional `error`.
+
+When iOS is selected, addon linking also calls `generateAddonsYml()` with `config.options.swiftTarget` or the default target name `app`.
+
+#### `generateAddonsYml(iosAddonsDir, swiftTarget, outputPath)`
+
+Generate the `addons.yml` dependency list expected by BareKit Swift from linked iOS XCFrameworks.
 
 #### `generateWalletModulesCode(config)`
 
@@ -181,13 +228,17 @@ The published CLI exposes these commands through `wdk-worklet-bundler`:
 
 | Command | Description | Key Options |
 | --- | --- | --- |
-| `generate` | Generate a WDK bundle from configuration. | `--config`, `--install`, `--keep-artifacts`, `--dry-run`, `--no-types`, `--source-only`, `--skip-generation`, `--verbose` |
+| `generate` | Generate a WDK bundle from configuration. | `--config`, `--install`, `--keep-artifacts`, `--dry-run`, `--no-types`, `--source-only`, `--skip-generation`, `--transport`, `--link-addons`, `--skip-link-addons`, `--platforms`, `--no-esm-to-cjs`, `--verbose` |
 | `init` | Create a new `wdk.config.js` file. | `--yes` |
 | `validate` | Validate configuration without building. | `--config` |
 | `list-modules` | List available WDK modules. | `--json` |
 | `clean` | Remove the generated `.wdk` folder. | `--yes` |
 
-For the end-to-end config workflow, see the Worklet Bundler configuration guide when it is available.
+For the end-to-end config workflow and transport defaults, see the [Worklet Bundler configuration guide](/tools/worklet-bundler/configuration).
+
+<Callout type="warn">
+Beta.5 applies `--transport` after `loadConfig()` resolves output paths. The flag changes entrypoint generation but does not recompute the default bundle filename. Set `transport` in `wdk.config.js`, or configure `output.bundle` explicitly when using the flag.
+</Callout>
 
 ***
 

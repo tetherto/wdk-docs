@@ -8,12 +8,21 @@ description: Hooks-based React Native library for building multi-chain wallet ap
 ## Features
 
 - **Hooks-based architecture** - `useWdkApp`, `useWalletManager`, `useAccount`, `useProtocol`, `useBalance`, `useBalancesForWallets`, and more
+- **Generic module API** - `useModule` and `ModuleService` expose named worklet-module calls and events
 - **TanStack Query caching** - automatic balance fetching across one or many account indices, per-token fallback for modules without batch balance support, cache invalidation, and optimistic updates
 - **Zustand state management** - persisted wallet state with MMKV storage
 - **Worklet runtime** - runs WDK in an isolated Bare worklet
 - **Biometric authentication** - secure storage with device biometrics
 - **Multi-wallet support** - create, restore, switch, lock, unlock, and delete wallets
-- **TypeScript-first** - full type safety with exported types and interfaces
+- **Typed React Native source API** - exported hook and service types are available through the package's React Native source condition
+
+<Callout type="warn">
+In `v1.0.0-beta.13`, the generic module API is not runnable through the default dependency graph: React Native Core pins Pear Worklet `v1.0.0-beta.8`, while module calls and events require the HRPC methods added in Pear Worklet `v1.0.0-beta.9`. Installing beta.9 separately does not replace the nested beta.8 dependency. Wait for a dependency-aligned React Native Core release before using `useModule()` or `ModuleService` in an end-to-end integration.
+</Callout>
+
+<Callout type="info">
+The beta.13 npm artifact ships its `react-native` source entry but omits the declared default JavaScript and declaration outputs under `dist/`. Consume this release through React Native/Metro; the tag does not provide a working default Node entrypoint.
+</Callout>
 
 ## Quick Start
 
@@ -67,9 +76,7 @@ For a full integration guide, see the [React Native Quickstart](/start-building/
 
 ## Bundle Configuration
 
-The WDK engine runs inside a Bare worklet. You need to provide a bundle - there are two approaches:
-
-### Custom Bundle (Recommended)
+The WDK engine runs inside a Bare worklet. Generate an HRPC bundle with `@tetherto/wdk-worklet-bundler` and import it from the generated `./.wdk` entrypoint.
 
 Use the `@tetherto/wdk-worklet-bundler` CLI to generate a bundle with only the blockchain modules you need:
 
@@ -93,26 +100,19 @@ Example `wdk.config.js`:
 
 ```javascript
 module.exports = {
-  modules: {
-    core: '@tetherto/wdk',
-    erc4337: '@tetherto/wdk-wallet-evm-erc-4337',
-  },
   networks: {
     ethereum: {
-      module: 'erc4337',
-      chainId: 1,
-      blockchain: 'ethereum',
-      provider: 'https://eth.drpc.org',
+      package: '@tetherto/wdk-wallet-evm-erc-4337'
     },
     polygon: {
-      module: 'erc4337',
-      chainId: 137,
-      blockchain: 'polygon',
-      provider: 'https://polygon.drpc.org',
-    },
+      package: '@tetherto/wdk-wallet-evm-erc-4337'
+    }
   },
+  transport: 'hrpc'
 }
 ```
+
+This file selects packages at build time. Pass chain IDs, providers, protocol settings, and any per-module runtime config through `wdkConfigs` on `WdkAppProvider`. The optional build-time `modules` map in the bundler is distinct from runtime `wdkConfigs.modules`; their names must match when generic-module support is available.
 
 After running `wdk-worklet-bundler generate`, import and use the bundle:
 
@@ -124,23 +124,7 @@ import { bundle } from './.wdk'
 </WdkAppProvider>
 ```
 
-For full bundler documentation, see [wdk-worklet-bundler](https://github.com/tetherto/wdk-worklet-bundler).
-
-### Pre-built Bundle
-
-For quick prototyping, use the pre-built bundle from `@tetherto/pear-wrk-wdk` which includes all blockchain modules:
-
-```typescript
-import { bundle } from '@tetherto/pear-wrk-wdk'
-
-<WdkAppProvider bundle={{ bundle }} wdkConfigs={configs}>
-  <App />
-</WdkAppProvider>
-```
-
-<Callout type="info">
-The pre-built bundle includes all blockchain modules, resulting in a larger bundle size. For production apps, generate a custom bundle with only the modules you need.
-</Callout>
+For the complete config and transport rules, see the [Worklet Bundler configuration guide](/tools/worklet-bundler/configuration). `@tetherto/pear-wrk-wdk` provides the worklet transport/runtime layer; it does not export a pre-built WDK bundle.
 
 ## Architecture
 
@@ -157,6 +141,7 @@ WdkAppProvider
     +-- useWalletManager()  - create, restore, lock, unlock, delete wallets
     +-- useAccount()        - address, send, sign, verify, estimateFee
     +-- useProtocol()       - call bridge, swap, lending, and fiat protocol methods
+    +-- useModule()         - call named generic modules and subscribe to events (dependency-aligned HRPC builds only)
     +-- useAddresses()      - load and query addresses
     +-- useBalance()            - single balance with TanStack Query
     +-- useBalancesForWallet()  - bulk balance fetch for one account index
