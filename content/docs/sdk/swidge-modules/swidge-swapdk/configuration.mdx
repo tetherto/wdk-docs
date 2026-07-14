@@ -1,0 +1,129 @@
+---
+title: SwapDK Swidge Configuration
+description: Configure @swapdk/wdk-protocol-swidge-swapdk — API authentication, source-chain defaults, slippage, per-family wallet options.
+docType: reference
+schemaType: TechArticle
+---
+
+## Constructor
+
+```ts
+new SwapDKSwidge(account, config)
+```
+
+- `account` — a WDK wallet account for the source chain, or `undefined` for a read-only instance. Discovery, quote, and status methods work without an account; only `swidge()` requires one.
+- `config` — a `SwapDKSwidgeConfig` object; fields below.
+
+## Required fields
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `apiUrl` | `string` | SwapDK swap-engine base URL. For production: `https://api.swapdk.com`. |
+| `apiKey` | `string` | SwapDK API key. Sent as the `x-api-key` header on every request. Request access at [swapdk.com](https://swapdk.com). |
+
+## Optional — shared
+
+| Field | Type | Default | Notes |
+|-------|------|---------|-------|
+| `defaultFromChain` | `string` | — | Falls back for options that omit `fromChain`. Useful when an instance is bound to a specific source (e.g. an app that always originates on Ethereum). |
+| `defaultSlippage` | `number` | `0.03` (3%) | Decimal slippage used when options don't specify `slippage`. |
+| `timeoutMs` | `number` | `10_000` | HTTP request timeout. |
+| `retries` | `number` | `2` | Retry count on network errors and 5xx responses (idempotent endpoints only). |
+
+## Optional — Bitcoin adapter
+
+Only consumed on Bitcoin sources; ignored elsewhere.
+
+| Field | Type | Default | Notes |
+|-------|------|---------|-------|
+| `feeRate` | `number \| bigint` | — (auto-estimate) | Miner-fee rate in sats/vB. When omitted, the paired BTC wallet estimates the fee from its connected Electrum backend. |
+| `chainflip` | `object` | — | Broker-channel defaults for BTC → Chainflip routes. See below. |
+
+### `chainflip` sub-config
+
+| Field | Type | Default | Notes |
+|-------|------|---------|-------|
+| `refundMinPrice` | `string` | `"0x0"` | Refund min-price floor (hex). `"0x0"` disables the floor. |
+| `refundRetryDuration` | `number` | `100` | Blocks the broker will retry the refund tx before giving up. |
+| `dcaChunks` | `number` | `1` | Dollar-Cost-Averaging chunk count. `1` disables DCA. |
+| `dcaChunkInterval` | `number` | — | Interval in blocks between DCA chunks. **Required when `dcaChunks > 1`**. |
+| `maxBoostFeeBps` | `number` | `0` | Chainflip boost fee in basis points. `0` disables boost. |
+
+## Optional — TRON adapter
+
+Only consumed on TRON sources; ignored elsewhere.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `tronWeb` | `TronWebLike` | **Required for TRON sources.** Pass the same tronweb instance the paired `WalletManagerTron` was constructed with. Structurally typed — any object satisfying `TronWebLike` (`address.toHex`, `transactionBuilder.{triggerSmartContract,sendTrx,addUpdateData}`) works. |
+
+## Base — `SwidgeProtocolConfig`
+
+The module also accepts the fields the WDK base [`SwidgeProtocolConfig`](/sdk/swidge-modules) defines:
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `maxNetworkFeeBps` | `number \| bigint` | Accepted but **currently no-op**. Fee data is surfaced on `SwidgeResult.fees` — enforce client-side until server-side caps land. |
+| `maxProtocolFeeBps` | `number \| bigint` | Accepted but currently no-op. Same as above. |
+
+## Environment / auth
+
+The module makes authenticated HTTP calls to the SwapDK swap-engine. Every request carries:
+
+- `x-api-key: <config.apiKey>`
+- `content-type: application/json` (on POSTs)
+
+No cookies, no OAuth, no signature schemes. Rotate the key server-side; the module reads it once per instance.
+
+## Example configurations
+
+**Production, Ethereum source, TRON destination**:
+
+```ts
+new SwapDKSwidge(evmAccount, {
+  apiUrl: "https://api.swapdk.com",
+  apiKey: process.env.SWAPDK_API_KEY!,
+  defaultFromChain: "ethereum",
+  defaultSlippage: 0.01,
+  timeoutMs: 15_000,
+});
+```
+
+**Bitcoin source, custom fee rate**:
+
+```ts
+new SwapDKSwidge(btcAccount, {
+  apiUrl: "https://api.swapdk.com",
+  apiKey: process.env.SWAPDK_API_KEY!,
+  defaultFromChain: "bitcoin",
+  feeRate: 20,
+  chainflip: {
+    refundRetryDuration: 200,
+    maxBoostFeeBps: 10,
+  },
+});
+```
+
+**TRON source with prebuilt tronweb**:
+
+```ts
+import { TronWeb } from "tronweb";
+
+const tronWeb = new TronWeb({ fullHost: "https://api.trongrid.io" });
+
+new SwapDKSwidge(tronAccount, {
+  apiUrl: "https://api.swapdk.com",
+  apiKey: process.env.SWAPDK_API_KEY!,
+  defaultFromChain: "tron",
+  tronWeb,
+});
+```
+
+**Read-only (discovery + quote only, no wallet)**:
+
+```ts
+new SwapDKSwidge(undefined, {
+  apiUrl: "https://api.swapdk.com",
+  apiKey: process.env.SWAPDK_API_KEY!,
+});
+```
