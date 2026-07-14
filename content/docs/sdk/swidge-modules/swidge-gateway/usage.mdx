@@ -1,0 +1,216 @@
+---
+title: BOB Gateway Swidge Usage
+description: Install, register, quote, approve, execute, and track native BTC swidge routes with BOB Gateway.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide shows how to [install the package](#install-the-package), [register the module](#register-the-module), [quote a route](#quote-a-route), [swap BTC for a token](#onramp-btc-to-a-token), [swap a token for BTC](#offramp-a-token-to-btc), and [track status](#track-status).
+
+## Install the package
+
+Install the module and the WDK wallet base package. `@tetherto/wdk-wallet` is a **peer** dependency: the module must extend the same `SwidgeProtocol` base class your WDK core resolves, or registration will not take effect.
+
+```bash title="Install BOB Gateway Swidge"
+npm install @gobob/wdk-protocol-swidge-gateway @tetherto/wdk-wallet
+```
+
+Install WDK core and the wallet modules for the chains you support:
+
+```bash title="Install WDK wallet modules"
+npm install @tetherto/wdk @tetherto/wdk-wallet-btc @tetherto/wdk-wallet-evm
+```
+
+## Register the module
+
+Register a wallet for each chain you support, then register `GatewaySwidge` against the **source** chain. The module signs on the source chain, so register it once per source you offer.
+
+```javascript title="Register BOB Gateway on Bitcoin and Base"
+import WDK from '@tetherto/wdk'
+import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import { GatewaySwidge } from '@gobob/wdk-protocol-swidge-gateway'
+
+const wdk = new WDK(seedPhrase)
+  .registerWallet('bitcoin', WalletManagerBtc, {
+    network: 'bitcoin',
+    client: {
+      type: 'electrum',
+      clientConfig: {
+        host: 'electrum.blockstream.info',
+        port: 50001
+      }
+    }
+  })
+  .registerWallet('base', WalletManagerEvm, {
+    chainId: 8453,
+    provider: process.env.BASE_RPC_URL
+  })
+  .registerProtocol('bitcoin', 'gateway', GatewaySwidge, { fromChain: 'bitcoin' })
+  .registerProtocol('base', 'gateway', GatewaySwidge, { fromChain: 'base' })
+
+const btcAccount = await wdk.getAccount('bitcoin', 0)
+const baseAccount = await wdk.getAccount('base', 0)
+
+const fromBtc = btcAccount.getSwidgeProtocol('gateway')
+const fromBase = baseAccount.getSwidgeProtocol('gateway')
+```
+
+You can also construct the module directly, without WDK core:
+
+```javascript title="Direct instantiation"
+import { GatewaySwidge } from '@gobob/wdk-protocol-swidge-gateway'
+
+const fromBtc = new GatewaySwidge(btcAccount, { fromChain: 'bitcoin' })
+```
+
+## Discover supported routes
+
+BOB Gateway controls the live route set. Query it at runtime rather than hardcoding chains and tokens.
+
+```javascript title="Discover chains and tokens"
+const chains = await fromBtc.getSupportedChains()
+const tokens = await fromBtc.getSupportedTokens({ toChain: 'base' })
+```
+
+## Quote a route
+
+Quote before executing so the user can review the destination amount and the fee breakdown. Pass `'BTC'` (or the exported `BTC` constant) as the token identifier for native Bitcoin; use the contract address for ERC-20 and TRC-20 tokens.
+
+```javascript title="Quote BTC to USDT on Base"
+import { BTC } from '@gobob/wdk-protocol-swidge-gateway'
+
+const options = {
+  fromToken: BTC,
+  toToken: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2', // USDT on Base
+  toChain: 'base',
+  recipient: '0xRecipient...',
+  fromTokenAmount: 100000n // satoshis
+}
+
+const quote = await fromBtc.quoteSwidge(options)
+
+console.log('Expected output:', quote.toTokenAmount)
+console.log('Minimum output:', quote.toTokenAmountMin)
+console.log('Fees:', quote.fees)
+```
+
+Amounts are always in the token's smallest unit — satoshis for BTC, and the token's own decimals for ERC-20 and TRC-20 tokens.
+
+## Onramp: BTC to a token
+
+Show the quote, get explicit confirmation, then execute with the same route options. The module signs a Bitcoin transaction through the WDK BTC account; **the gateway broadcasts it**.
+
+```javascript title="Swap native BTC for USDT on Base"
+const quote = await fromBtc.quoteSwidge(options)
+// Display the quote and ask the user to confirm before continuing.
+
+const result = await fromBtc.swidge(options)
+
+console.log('Order ID:', result.id)
+console.log('Bitcoin transaction:', result.hash)
+```
+
+No approval is needed on this route: BTC is a native asset.
+
+## Offramp: a token to BTC
+
+An ERC-20 source needs an allowance before execution. Ask the module what approval the route requires, grant it through the WDK account, then execute.
+
+```javascript title="Swap USDT on Base for native BTC"
+const options = {
+  fromToken: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2', // USDT on Base
+  toToken: BTC,
+  toChain: 'bitcoin',
+  recipient: 'bc1qRecipient...',
+  fromTokenAmount: 10000000n // 10 USDT (6 decimals)
+}
+
+const approval = await fromBase.getRequiredApproval(options)
+
+if (approval) {
+  await baseAccount.approve(approval.token, approval.spender, approval.amount)
+}
+
+const result = await fromBase.swidge(options)
+
+console.log('Order ID:', result.id)
+console.log('Source transaction:', result.hash)
+```
+
+<Callout type="warn">
+`getRequiredApproval()` creates a gateway order internally on a cache miss to discover the spender address, and caches the result per route on the instance. Call it once per route and reuse the result — do not call it before every swap.
+</Callout>
+
+<Callout type="warn">
+**USDT on Ethereum** rejects an allowance change from one non-zero value to another. If the account already holds a non-zero allowance for the spender, reset it to `0n` first, then approve the required amount.
+
+```javascript
+await evmAccount.approve(approval.token, approval.spender, 0n)
+await evmAccount.approve(approval.token, approval.spender, approval.amount)
+```
+</Callout>
+
+## EVM to EVM
+
+Same-chain swaps and cross-chain bridges use the inherited `swap()` and `bridge()` methods. Affiliate fees do not apply to these routes.
+
+```javascript title="Swap USDC for USDT on Base"
+const result = await fromBase.swap({
+  tokenIn: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC on Base
+  tokenOut: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2', // USDT on Base
+  tokenInAmount: 1000000n
+})
+```
+
+## Track status
+
+Bitcoin settlement is asynchronous in both directions. Poll with the order ID returned by `swidge()`.
+
+```javascript title="Poll a swidge to completion"
+const status = await fromBtc.getSwidgeStatus(result.id)
+
+if (status.status === 'completed') {
+  console.log('Settled:', status.transactions)
+}
+```
+
+Gateway order states map onto the canonical WDK `SwidgeStatus` values:
+
+| Gateway state | WDK status |
+|---------------|------------|
+| In progress, or awaiting the Bitcoin payment | `pending` |
+| Success | `completed` |
+| Failed | `failed` |
+| Refunded | `refunded` |
+
+## Handle errors
+
+Failures throw a `GatewaySwidgeError` carrying a stable `code` from `ERR`, plus the HTTP `status` where one applies.
+
+```javascript title="Handle module errors"
+import { GatewaySwidgeError, ERR } from '@gobob/wdk-protocol-swidge-gateway'
+
+try {
+  await fromBtc.swidge(options)
+} catch (err) {
+  if (err instanceof GatewaySwidgeError) {
+    switch (err.code) {
+      case ERR.UNSUPPORTED_ROUTE:
+        // The requested token or chain pair has no gateway route.
+        break
+      case ERR.APPROVAL_REQUIRED:
+        // Grant the approval from getRequiredApproval() first.
+        break
+      case ERR.VALIDATION:
+        // The route options are incomplete or inconsistent.
+        break
+      case ERR.HTTP:
+        // Transport or API failure. Inspect err.status.
+        break
+    }
+  }
+}
+```
+
+A `403` on `ERR.HTTP` usually means the request came from a blocked country. See [Configuration](/sdk/swidge-modules/swidge-gateway/configuration#api-access).
