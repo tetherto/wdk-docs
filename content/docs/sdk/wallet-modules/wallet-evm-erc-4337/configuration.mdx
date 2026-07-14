@@ -155,6 +155,21 @@ const config = {
 }
 ```
 
+### Bundler Headers
+
+The `bundlerHeaders` option sets HTTP headers sent on every request to the bundler. Use it for bundlers that authenticate with a header (e.g. `Authorization: Bearer <key>`). When omitted, no extra headers are sent, so bundlers that authenticate via the URL keep working unchanged.
+
+**Type:** `Record<string, string>`
+**Required:** No (optional)
+
+**Example:**
+```javascript
+const config = {
+  bundlerUrl: 'https://bundler.example.com/rpc',
+  bundlerHeaders: { Authorization: 'Bearer YOUR_KEY' }
+}
+```
+
 ### Paymaster URL
 
 The `paymasterUrl` option specifies the URL of the paymaster service that sponsors transaction fees using ERC-20 tokens or sponsorship policies.
@@ -166,6 +181,21 @@ The `paymasterUrl` option specifies the URL of the paymaster service that sponso
 ```javascript
 const config = {
   paymasterUrl: 'https://api.candide.dev/public/v3/1'
+}
+```
+
+### Paymaster Headers
+
+The `paymasterHeaders` option sets HTTP headers sent on every request to the paymaster. Use it for paymasters that authenticate with a header (e.g. `Authorization: Bearer <key>`). When omitted, no extra headers are sent, so paymasters that authenticate via the URL keep working unchanged.
+
+**Type:** `Record<string, string>`
+**Required:** No (optional)
+
+**Example:**
+```javascript
+const config = {
+  paymasterUrl: 'https://paymaster.example.com/rpc',
+  paymasterHeaders: { Authorization: 'Bearer YOUR_KEY' }
 }
 ```
 
@@ -348,6 +378,37 @@ try {
   }
 }
 ```
+
+## Authenticated Bundlers and Paymasters
+
+Some providers authenticate requests with an HTTP header instead of an API key in the URL. Use `bundlerHeaders` and `paymasterHeaders` to attach the required headers.
+
+### Openfort
+
+[Openfort](https://www.openfort.io) serves an ERC-4337 bundler and an ERC-7677 paymaster from a single RPC endpoint per chain, authenticated with your project's publishable key as a bearer token. The same URL and header serve as both `bundlerUrl` and `paymasterUrl`, and gas is sponsored through an Openfort gas policy passed as `sponsorshipPolicyId`.
+
+```javascript
+const OPENFORT_RPC = 'https://api.openfort.io/rpc/11155111' // Sepolia
+const OPENFORT_HEADERS = { Authorization: 'Bearer pk_test_your_publishable_key' }
+
+const config = {
+  chainId: 11155111,
+  provider: 'https://sepolia.drpc.org',
+  safeModulesVersion: '0.3.0',
+
+  bundlerUrl: OPENFORT_RPC,
+  bundlerHeaders: OPENFORT_HEADERS,
+
+  isSponsored: true,
+  paymasterUrl: OPENFORT_RPC,
+  paymasterHeaders: OPENFORT_HEADERS,
+  sponsorshipPolicyId: 'pol_your_policy_id'
+}
+```
+
+<Callout type="warn">
+The account's EntryPoint version must match the version the provider's bundler serves. This module currently creates accounts on EntryPoint v0.7; a provider that only serves other versions (e.g. v0.6/v0.8/v0.9) rejects the operation with `-32602 Unsupported EntryPoint`. Confirm your provider serves v0.7, or track [making the EntryPoint version configurable](https://github.com/tetherto/wdk-wallet-evm-erc-4337/issues/112).
+</Callout>
 
 ## Network-Specific Configurations
 
