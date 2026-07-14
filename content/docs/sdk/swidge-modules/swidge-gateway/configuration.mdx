@@ -1,0 +1,124 @@
+---
+title: BOB Gateway Swidge Configuration
+description: Configuration options for @gobob/wdk-protocol-swidge-gateway.
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+`GatewaySwidge` works with no configuration beyond a source chain. The module ships a default API endpoint and a default attribution token, so a minimal setup is enough to quote and execute.
+
+```javascript
+import { GatewaySwidge } from '@gobob/wdk-protocol-swidge-gateway'
+
+const gateway = new GatewaySwidge(account, {
+  fromChain: 'bitcoin'
+})
+```
+
+## Constructor
+
+```typescript
+new GatewaySwidge(account?, config?)
+```
+
+| Parameter | Description |
+|-----------|-------------|
+| `account` | WDK wallet account for the source chain — a `@tetherto/wdk-wallet-btc` account for BTC sources, or a `@tetherto/wdk-wallet-evm` (or ERC-4337) account for token sources. Quoting and discovery work without a writable account. |
+| `config` | Optional `GatewaySwidgeConfig`. Set `fromChain` here unless you pass it per call. |
+
+## Configuration Options
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `fromChain` | `string` | Source chain identifier, for example `'bitcoin'`, `'ethereum'`, or `'base'`. Required unless supplied in the route options. |
+| `slippage` | `number` | Default slippage tolerance as a decimal. Defaults to `0.03` (3%). Override per call in the route options. |
+| `affiliates` | `Array<{ address: string, bps: number }>` | Affiliate fee entries, in basis points, credited to each address. Applies to BTC to EVM and EVM to BTC routes only. |
+| `feeRate` | `number` | Bitcoin fee rate in sat/vByte for onramp transactions. Defaults to a gateway-supplied estimate. |
+| `paymasterToken` | `string` | ERC-20 token used to pay gas on ERC-4337 accounts. |
+| `bearerToken` | `string` | Gateway API bearer token. Defaults to BOB's shared attribution key — see [API access](#api-access). |
+| `apiUrl` | `string` | Gateway API base URL override. |
+| `http` | `object` | Injectable HTTP transport. Useful for tests and custom runtimes. |
+| `client` | `GatewayClient` | A pre-built client instance. Overrides `apiUrl`, `bearerToken`, and `http`. |
+
+## Source Chain
+
+The module signs on the source chain, so `fromChain` decides which WDK account it needs. Create one `GatewaySwidge` instance per source chain.
+
+```javascript
+// BTC as the source: pass a WDK Bitcoin account.
+const fromBtc = new GatewaySwidge(btcAccount, { fromChain: 'bitcoin' })
+
+// A token as the source: pass a WDK EVM account.
+const fromBase = new GatewaySwidge(evmAccount, { fromChain: 'base' })
+```
+
+## Slippage
+
+Set a default in the constructor and override it for a single route when needed.
+
+```javascript
+const gateway = new GatewaySwidge(account, {
+  fromChain: 'bitcoin',
+  slippage: 0.01 // 1%
+})
+
+const quote = await gateway.quoteSwidge({
+  ...options,
+  slippage: 0.005 // 0.5% for this route only
+})
+```
+
+## Affiliate Fees
+
+Charge a fee on BTC to EVM and EVM to BTC routes by crediting one or more addresses in basis points of the input amount. Affiliate fees are not supported on EVM-to-EVM routes.
+
+```javascript
+const gateway = new GatewaySwidge(account, {
+  fromChain: 'bitcoin',
+  affiliates: [{ address: '0xYourFeeRecipient...', bps: 25 }] // 0.25%
+})
+```
+
+Affiliate fees appear in the quote's itemized `fees` array with type `affiliate`, so a UI can display them before the user confirms.
+
+## API Access
+
+Every request carries a bearer token. If you do not set one, the module sends BOB's shared `gateway-wdk` attribution key, which costs nothing extra and attributes the volume to BOB.
+
+```javascript
+// Uses BOB's default attribution key.
+const gateway = new GatewaySwidge(account, { fromChain: 'bitcoin' })
+
+// Uses your own key. Set this only if you have a direct API agreement with BOB.
+const gateway = new GatewaySwidge(account, {
+  fromChain: 'bitcoin',
+  bearerToken: process.env.GATEWAY_API_KEY
+})
+```
+
+<Callout type="info">
+The Gateway API applies a **country blocklist** that includes the United States and the United Kingdom alongside sanctioned jurisdictions. Requests from a blocked country receive a `403`. See the [Gateway FAQ](https://docs.gobob.xyz/gateway/faq#are-any-regions-blocked-from-using-gateway) for the current list. CI that exercises live quotes must run from a non-blocked region.
+</Callout>
+
+## Bitcoin Fee Rate
+
+Onramp transactions use a gateway-supplied fee estimate by default. Override it when your app already tracks mempool conditions.
+
+```javascript
+const gateway = new GatewaySwidge(btcAccount, {
+  fromChain: 'bitcoin',
+  feeRate: 12 // sat/vByte
+})
+```
+
+## ERC-4337 Accounts
+
+Pass `paymasterToken` to pay gas in an ERC-20 when the source account is an ERC-4337 smart account from `@tetherto/wdk-wallet-evm-erc-4337`.
+
+```javascript
+const gateway = new GatewaySwidge(smartAccount, {
+  fromChain: 'base',
+  paymasterToken: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2' // USDT on Base
+})
+```

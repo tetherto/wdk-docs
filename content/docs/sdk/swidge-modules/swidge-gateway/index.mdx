@@ -1,0 +1,72 @@
+---
+title: BOB Gateway Swidge Overview
+description: Overview of the @gobob/wdk-protocol-swidge-gateway module for native BTC swap and bridge routes.
+docType: explanation
+schemaType: TechArticle
+---
+
+The BOB Gateway Swidge module lets WDK accounts quote and execute **native Bitcoin** swap and bridge routes through [BOB Gateway](https://gobob.xyz) using the shared `SwidgeProtocol` interface.
+
+Use this module when an app needs to move real BTC in or out of tokens on EVM chains and Tron. Bitcoin is spent and received on Bitcoin L1 — there is no wrapped-BTC intermediary and no custodian, and keys never leave the WDK account.
+
+## Features
+
+- **Unified route interface**: Implements `quoteSwidge()`, `swidge()`, `getSwidgeStatus()`, `getSupportedChains()`, and `getSupportedTokens()`.
+- **Native BTC routes**: Swaps native BTC to and from USDT, USDC, ETH, wBTC, cbBTC, and XAUT across Ethereum, Base, Arbitrum, and BSC.
+- **BTC to Tron**: Sends BTC and receives USDT (or other supported tokens) on Tron.
+- **EVM to EVM**: Same-chain swaps and cross-chain bridges through the inherited `swap()` and `bridge()` methods.
+- **Non-custodial**: Signing is delegated to the WDK account. The module never touches private keys.
+- **Affiliate fees**: Optional per-address basis-point fees on BTC to EVM and EVM to BTC routes.
+- **Approval pre-flight**: `getRequiredApproval()` reports the exact ERC-20 approval an offramp needs before execution.
+- **Multi-runtime**: Runs on Node.js, Bare (`bare.js`), and React Native.
+- **Typed errors**: Exposes `GatewaySwidgeError` with stable `ERR` codes for HTTP, validation, unsupported route, and approval failures.
+
+## Supported Routes
+
+Call `getSupportedChains()` and `getSupportedTokens()` at runtime — BOB Gateway controls the live route set and adds chains and tokens over time.
+
+| Route | Source support | Notes |
+|-------|----------------|-------|
+| BTC to EVM (onramp) | Supported | Spends native BTC from a `@tetherto/wdk-wallet-btc` account. Supports affiliate fees. |
+| EVM to BTC (offramp) | Supported | Spends an ERC-20 from a `@tetherto/wdk-wallet-evm` account. Requires an approval first. Supports affiliate fees. |
+| BTC to Tron | Supported | Tron is a **destination only**. Tron as a source is not supported; see the [Tron source tracking issue](https://github.com/tetherto/wdk-wallet-tron/issues/48). |
+| EVM to EVM | Supported | Use the inherited `swap()` and `bridge()` methods. Affiliate fees do not apply to this route. |
+| Solana | Not yet available | Planned. |
+
+## Execution Model
+
+The route direction determines which chain the module signs on.
+
+**Onramp (BTC to a token).** `swidge()` builds and signs a Bitcoin transaction through the WDK BTC account, then hands it to the gateway. **The gateway broadcasts the Bitcoin transaction — the module does not.** The call resolves once the transaction is registered; the destination tokens settle asynchronously.
+
+**Offramp (a token to BTC).** `swidge()` submits the source-chain EVM transaction after the required ERC-20 approval is in place. It resolves once that transaction is broadcast, and BTC settles on Bitcoin L1 asynchronously.
+
+In both directions, use `getSwidgeStatus(result.id)` to track the route to completion.
+
+<Callout type="warn">
+`swidge()` spends real funds and can submit a Bitcoin or EVM transaction. Show the quote, fee breakdown, recipient, source token, destination token, and destination chain, and ask for explicit user confirmation before calling it.
+</Callout>
+
+<Callout type="info">
+The Gateway API applies a **country blocklist** that includes the United States and the United Kingdom alongside sanctioned jurisdictions. Requests from a blocked country receive a `403`. See the [Gateway FAQ](https://docs.gobob.xyz/gateway/faq#are-any-regions-blocked-from-using-gateway) for the current list, and account for it in both production deployments and CI.
+</Callout>
+
+## Next Steps
+
+<Cards>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-gateway/configuration">
+Configure the source chain, slippage, affiliate fees, BTC fee rate, and API access.
+</Card>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-gateway/usage">
+Install the package, register the module, quote a route, approve, execute, and poll status.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-gateway/api-reference">
+Review constructor options, methods, route options, status mapping, and error codes.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
