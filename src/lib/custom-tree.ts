@@ -363,6 +363,7 @@ export const customTree: Node[] = [
     configuration('/tools/secret-manager/configuration'),
     apiReference('/tools/secret-manager/api-reference'),
   ]),
+  page('Sync wallet contacts across devices', '/tools/p2p-address-book', 'BookUser'),
   folder('Fetch token prices', '/tools/price-rates', 'TrendingUp', [
     configuration('/tools/price-rates/configuration'),
     apiReference('/tools/price-rates/api-reference'),

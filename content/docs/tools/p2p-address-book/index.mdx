@@ -1,0 +1,307 @@
+---
+title: P2P Address Book
+description: Store and synchronize wallet contacts across a user's devices with encrypted peer-to-peer replication
+docType: explanation
+schemaType: TechArticle
+icon: BookUser
+---
+
+`@tetherto/wdk-p2p-address-book` gives a wallet application a user-specific directory for named contacts and payment destinations. It is an optional WDK utility, not a wallet implementation or a required part of every WDK application.
+
+Devices that use the same wallet seed and application namespace can open the same logical address book and enroll their own writers. Updates replicate between those devices through Holepunch networking. This is same-user device synchronization—not a public contact directory or a protocol for sharing contacts with other users.
+
+The recommended `fromSeed()` workflow encrypts replicated address-book blocks before they leave the device. A blind peer can retain those blocks for recovery without receiving the content key, but the wallet operator must still plan for peer availability, local storage protection, and key recovery.
+
+## When to use it
+
+Use the P2P Address Book when:
+
+- A wallet needs named recipients instead of repeated address entry.
+- The same user needs contacts on multiple devices.
+- The product wants cross-device sync without a central plaintext contacts database.
+- The team can operate or depend on the P2P availability needed for recovery.
+
+Choose a conventional contacts service when the product requires server-side plaintext search, moderation, analytics, or account-based recovery. This package is also a poor fit when its beta status, native dependencies, or eventual-synchronization model do not meet the product's requirements.
+
+The package stores destinations; it does not validate chain syntax, resolve identifiers, prove address ownership, or send payments. Validate a selected destination before using it in a wallet flow. See [WDK Utils](/tools/wdk-utils/) for available validators and parsers.
+
+## How it works
+
+1. The wallet opens a persistent Corestore and calls `AddressBook.fromSeed()` with wallet seed bytes and a stable namespace.
+2. The first device calls `create()` to enroll its device-specific writer.
+3. The wallet can register a blind-peer public key with `addMirror()` for offline availability.
+4. Another device uses the same seed and namespace, but its own Corestore, and calls `addMirror()` to restore the existing history and enroll its writer.
+5. Authorized writers append operations. Autobase produces the shared operation order and HyperDB exposes the current contacts and addresses.
+
+<Mermaid
+  chart={`flowchart TB
+  I["Same wallet seed + namespace<br/>derived on each device"]
+  A["Device A<br/>Corestore + writer"]
+  B["Device B<br/>Corestore + writer"]
+  M["Blind peer<br/>encrypted replicated blocks<br/>no content key"]
+  U["Unrelated wallet<br/>different identity"]
+
+  I --> A
+  I --> B
+  A <-->|"Direct Hyperswarm replication"| B
+  A -->|"Mirror blocks"| M
+  M -->|"Restore history"| B
+  U -. "Cannot derive this book or content key" .-> M`}
+/>
+
+Random peers do not automatically store every address book. The blind peer is an explicitly configured availability peer.
+
+### Identity and permissions
+
+The seed and namespace derive the book identity, content key, and bootstrap signing key. Each device keeps a separate writer key in its Corestore. Writer permissions are flat: every enrolled writer can change contacts and addresses, and the direct API allows writers to add or remove other writers. There is no administrator role, read-only role, or invitation protocol.
+
+Use `create()` only when the book is known to be new. Use `addMirror()` when joining an existing book; it waits until the existing genesis is visible before enrolling the device and does not create a fallback book on timeout.
+
+<Callout type="warn">
+`removeWriter()` removes current write membership only. It does not rotate the seed-derived authority or content key, revoke read access, erase the removed device's data, or prevent a device holding the seed from enrolling again. Autobase also rejects removal of the final writer. Do not use this method as a complete compromised-device control.
+</Callout>
+
+<Accordions>
+<Accordion title="Holepunch components used by the package">
+
+| Component | Responsibility |
+| --- | --- |
+| [Corestore](https://github.com/holepunchto/corestore) | Persists device writers, replicated cores, the current view, and networking keys. |
+| [Hypercore](https://github.com/holepunchto/hypercore) | Provides signed append-only feeds for replicated operations. |
+| [Autobase](https://github.com/holepunchto/autobase) | Orders operations from authorized writers and encrypts replicated blocks when given the derived content key. |
+| [HyperDB](https://github.com/holepunchto/hyperdb) | Materializes contacts, addresses, writers, and mirror configuration for queries. |
+| [Hyperswarm](https://github.com/holepunchto/hyperswarm) | Discovers peers for the book and carries direct replication connections. |
+| [`blind-peering`](https://github.com/holepunchto/blind-peering) | Requests background replication from configured blind peers. |
+
+Replication encryption is not local encryption at rest. Protect the Corestore directory as sensitive wallet data.
+
+</Accordion>
+</Accordions>
+
+## Install
+
+You need:
+
+- Wallet seed bytes as a `Uint8Array`, not mnemonic text.
+- A stable application namespace.
+- A persistent writable Corestore directory dedicated to that wallet seed and device.
+- A Node.js ESM or tested Bare environment with native-module support.
+- Network access when replication is enabled.
+
+Install the Address Book and declare Corestore because application code constructs it directly:
+
+```bash title="Install P2P Address Book"
+npm install @tetherto/wdk-p2p-address-book corestore
+```
+
+## Create a local address book
+
+This example disables networking and creates a new book. It expects a caller-validated destination, reads the current records, and closes both package-owned and caller-owned resources.
+
+```javascript title="local-address-book.js"
+import Corestore from 'corestore'
+import AddressBook, {
+  ADDRESS_TYPES
+} from '@tetherto/wdk-p2p-address-book'
+
+export async function createLocalBook(seed, storagePath, recipientAddress) {
+  const store = new Corestore(storagePath)
+  let book
+
+  try {
+    book = await AddressBook.fromSeed(seed, store, {
+      namespace: 'example-wallet',
+      replicate: false
+    })
+    await book.create()
+
+    const contact = await book.addContact({
+      name: 'Alice',
+      username: 'alice'
+    })
+
+    await book.addAddress(contact.id, {
+      address: recipientAddress,
+      type: ADDRESS_TYPES.EVM,
+      network: 'ethereum',
+      label: 'Primary wallet'
+    })
+
+    return {
+      contact: await book.getContact(contact.id),
+      addresses: await book.listAddresses(contact.id)
+    }
+  } finally {
+    try {
+      if (book) await book.close()
+    } finally {
+      await store.close()
+    }
+  }
+}
+```
+
+`fromSeed()` opens the book before resolving. `book.close()` closes the book's networking and replication resources, but the direct API does not close the root Corestore supplied by the application.
+
+## Synchronize another device
+
+A blind peer is optional while two enrolled devices can reach each other directly. It becomes important when a new device must restore while every existing user device is offline.
+
+On the first device, create the new book before registering the mirror:
+
+```javascript
+const first = await AddressBook.fromSeed(seed, firstDeviceStore, {
+  namespace: 'example-wallet'
+})
+
+await first.create()
+await first.addMirror(mirrorKey)
+```
+
+On another device, use the same seed and namespace with a different persistent Corestore. Do not call `create()`:
+
+```javascript
+const restored = await AddressBook.fromSeed(seed, secondDeviceStore, {
+  namespace: 'example-wallet',
+  timeout: 20_000
+})
+
+await restored.addMirror(mirrorKey)
+
+const refresh = () => restored
+  .listContacts()
+  .then(renderContacts)
+  .catch(reportError)
+
+restored.on('update', refresh)
+await refresh()
+```
+
+The `mirrors` constructor option configures peering but does not enroll a restored writer by itself. Call `addMirror()`. Its resolution confirms that existing genesis was observed and the local writer enrolled; it does not confirm that every record is restored or retained remotely. Refetch on payload-free `update` events, unregister listeners during cleanup, and close the book and root Corestore.
+
+The seed and namespace can reproduce the book identity and keys, but not missing history. If all devices and retained replicas are unavailable, the contacts cannot be rebuilt from the seed alone.
+
+## Data and operations
+
+| Record | Required input | Optional input | Generated fields |
+| --- | --- | --- | --- |
+| Contact | `name` | `username` | `id`, `createdAt`, `updatedAt` |
+| Address | `address`, `type`, `network` | `label` | `id`, `contactId`, `createdAt`, `updatedAt` |
+
+Contact names and usernames do not need to be unique. The schema has no first-class email or custom-field support. Supported address types are `bitcoin`, `evm`, `tron`, `uma`, `lightning-address`, `lnurl`, and `spark`.
+
+The package trims text fields and lowercases `network`, but does not validate destination syntax. An address and normalized network pair must be unique; UMA values must also be unique across UMA records. Address comparisons are case-sensitive.
+
+- `listContacts()` sorts by name. `listAddresses()` does not promise an order.
+- `search()` matches contact names, addresses, and address labels without case sensitivity. It does not search usernames, networks, or types.
+- Deleting a contact removes it and its currently visible addresses from the materialized view.
+- Refetch after an `update` event rather than treating a locally returned record as the converged state.
+
+<Callout type="warn">
+Conflicts follow Autobase's accepted operation order, not `updatedAt`. A later accepted contact update can recreate a deleted contact, and a delayed address operation can appear after its parent contact was deleted. The beta release has no tombstone or revision mechanism for preventing these outcomes.
+</Callout>
+
+## P2P Address Book or CRUD backend?
+
+| Area | P2P Address Book | Conventional CRUD backend |
+| --- | --- | --- |
+| Primary storage | User devices and configured replicas | Application database |
+| Cross-device sync | Peer replication | Server API |
+| Blind-peer plaintext access | Blind-peer process is not given the content key; wallet process can read records | Usually available to the server unless separately encrypted |
+| Offline writes | Enrolled devices can append locally | Requires an application-specific offline queue |
+| Recovery | Correct keys plus an available history | Account authentication plus retained server data |
+| Server-side processing | Plaintext indexing is unavailable to a blind peer | Straightforward |
+| Operations | Peer availability, keys, local storage, and recovery | API, database, authentication, and backups |
+
+P2P reduces central readable data custody; it does not eliminate infrastructure. It exchanges a conventional contacts database for device storage, key management, replication availability, and recovery responsibilities.
+
+## Prepare for production
+
+### Blind peers and availability
+
+The package includes the blind-peer client integration, not the server. Deploy the separate [`blind-peer`](https://github.com/holepunchto/blind-peer) package and distribute its public key to clients through trusted application configuration.
+
+- One blind-peer server can accept multiple cryptographically distinct address books, but they share its storage and garbage-collection capacity. The release tests recovery through one peer.
+- `addMirror(pool, n)` registers selected keys, but the underlying client contacts at most two configured peers for an Autobase request by default. Neither `n` nor `listMirrors()` is a confirmed replica count.
+- Pin and configure the server version you operate. In `blind-peer@3.12.1`, the GC-managed store defaults to 100 GB; address-book cores use priority 2 but can still be collected under storage pressure.
+- Monitor its storage, garbage collection, request, database, and transport metrics. These do not prove per-book durability or recovery completion.
+
+In `1.0.0-beta.1`, `removeMirror()` deletes the persisted mirror record but leaves the key active in the current in-memory instance. Close and reopen the book without that key before treating peering as stopped. The method also does not delete blocks already held by the server.
+
+### Privacy and deletion boundaries
+
+`fromSeed()` supplies Autobase with a seed-derived content key before replication starts. Blind peers receive encrypted blocks, not that key. The wallet process and any device retaining the key can decrypt the book.
+
+A blind peer can withhold blocks or become unavailable, but signed Hypercore feeds prevent it from forging writer-authenticated history that clients accept.
+
+Blind-peer operators can still observe connection public keys and IP addresses, feed identifiers, timing, requested lengths, and approximate data volume. Logs, analytics, crash reports, screenshots, and backups can expose contact data independently of replication.
+
+Contact deletion changes the current view; it does not erase append-only history or copies already held by devices and blind peers. The address-book API has no cross-replica physical-erasure or cryptographic-erasure workflow. Legal and privacy obligations depend on the complete product and deployment, not this package alone.
+
+### Operational checklist
+
+Before production:
+
+- Persist and protect each device's Corestore and wallet seed.
+- Pin compatible Address Book, Holepunch, and blind-peer versions.
+- Supervise blind-peer processes and monitor storage pressure, garbage collection, errors, and reachability.
+- Define replica count, retention, deletion, and backup procedures outside this package.
+- Test restoration with all original devices offline.
+- Test concurrent offline edits and upgrades against existing histories.
+
+The beta release publishes no package-level migration, downgrade, or cross-version replication guarantee.
+
+<Accordions>
+<Accordion title="Public API and configuration">
+
+| Area | Public surface |
+| --- | --- |
+| Construction | `AddressBook.fromSeed()`, advanced `new AddressBook()`, `AddressBook.createWorkletModule()` |
+| Lifecycle | `ready()`, `create()`, `close()`, `suspend()`, `resume()` |
+| Contacts | `addContact()`, `editContact()`, `deleteContact()`, `getContact()`, `listContacts()` |
+| Addresses | `addAddress()`, `editAddress()`, `deleteAddress()`, `listAddresses()` |
+| Query and events | `search()`, `on('update')`, `off('update')`, `getInfo()` |
+| Writers | `addWriter()`, `removeWriter()`, `listWriters()`, `getWriter()` |
+| Mirrors | `addMirror()`, `removeMirror()`, `listMirrors()`, `AddressBook.selectMirrors()` |
+| Identifiers | `writerKey`, `key`, `discoveryKey`, `writable`; treat `encryptionKey` as secret |
+
+The main `fromSeed()` options are:
+
+| Option | Required | Purpose |
+| --- | --- | --- |
+| `namespace` | Yes | Stable application scope for book identity, encryption, and Corestore isolation. |
+| `replicate` | No | Defaults to `true`; set `false` for local-only use. |
+| `mirrors` | No | Blind-peer keys used for peering; does not replace `addMirror()` during restoration. |
+| `timeout` | No | Bootstrap and enrollment wait, defaulting to 20 seconds. |
+| `name` | No | Label stored for the enrolling device writer. |
+| `bootstrap`, `swarm`, `relayThrough` | No | Advanced networking hooks whose concrete types are not declared as stable. `close()` destroys a supplied swarm. |
+
+The low-level constructor does not require an encryption key while replication defaults to enabled. Prefer `fromSeed()`. Advanced callers must supply `encryptionKey` before `ready()` or disable replication. The declared `optimistic` constructor option is ignored in `1.0.0-beta.1`; Autobase optimistic mode is always enabled.
+
+Writer-management methods are not included in the exported worklet bridge interface.
+
+</Accordion>
+</Accordions>
+
+## Related resources
+
+<Cards>
+<Card title="Package source" href="https://github.com/tetherto/wdk-p2p-address-book/tree/v1.0.0-beta.1">
+Review the released implementation, declarations, and tests.
+</Card>
+<Card title="WDK Utils" href="/tools/wdk-utils/">
+Validate supported destinations before storing or using them.
+</Card>
+<Card title="Worklet Bundler" href="/tools/worklet-bundler/">
+Build advanced Bare worklet integrations for supported host applications.
+</Card>
+<Card title="Node.js and Bare quickstart" href="/start-building/nodejs-bare-quickstart/">
+Set up the wider WDK runtime before adding optional tools.
+</Card>
+</Cards>
+
+***
+
+## Need Help?
+
+<SupportCards />
