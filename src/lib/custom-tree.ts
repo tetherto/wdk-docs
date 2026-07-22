@@ -325,6 +325,16 @@ export const customTree: Node[] = [
     configuration('/sdk/fiat-modules/fiat-moonpay/configuration'),
     apiReference('/sdk/fiat-modules/fiat-moonpay/api-reference'),
   ]),
+  folder('Transak', '/sdk/fiat-modules/fiat-transak', 'CreditCard', [
+    usage('/sdk/fiat-modules/fiat-transak/usage'),
+    guides([
+      page('Get Started', '/sdk/fiat-modules/fiat-transak/guides/get-started'),
+      page('Buy and Sell', '/sdk/fiat-modules/fiat-transak/guides/buy-and-sell'),
+      page('Manage Transactions', '/sdk/fiat-modules/fiat-transak/guides/manage-transactions'),
+    ]),
+    configuration('/sdk/fiat-modules/fiat-transak/configuration'),
+    apiReference('/sdk/fiat-modules/fiat-transak/api-reference'),
+  ]),
 
   separator('AI'),
   page('Build with AI', '/start-building/build-with-ai', 'Bot'),

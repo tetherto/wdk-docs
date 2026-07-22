@@ -1,0 +1,69 @@
+---
+title: Get Started
+description: Install the package and initialize TransakProtocol with your wallet, API key, and backend callbacks.
+---
+
+This guide covers [installation](#installation) and [initializing the protocol](#initialize-transakprotocol). You need [Node.js](https://nodejs.org/), [npm](https://www.npmjs.com/), and Transak partner credentials from your [Transak Partner Dashboard](https://dashboard.transak.com/).
+
+## Installation
+
+Run the following to install [@tetherto/wdk-protocol-fiat-transak](https://www.npmjs.com/package/@tetherto/wdk-protocol-fiat-transak):
+
+```bash title="Install with npm"
+npm install @tetherto/wdk-protocol-fiat-transak
+```
+
+## Initialize TransakProtocol
+
+You can create a fiat ramp client with [`new TransakProtocol(account, config)`](/sdk/fiat-modules/fiat-transak/api-reference):
+
+```typescript title="Construct TransakProtocol"
+import TransakProtocol from '@tetherto/wdk-protocol-fiat-transak'
+
+const transak = new TransakProtocol(walletAccount, {
+  apiKey: partnerApiKey,
+  widgetUrl,   // required for buy()/sell(), see below
+  getOrder,    // required for getTransactionDetail(), see below
+  environment: 'STAGING' // 'PRODUCTION' (default) | 'STAGING'
+})
+```
+
+`widgetUrl` and `getOrder` are callbacks that run on **your backend**, where your Transak API secret is safe:
+
+```typescript title="Backend callbacks (frontend side)"
+const widgetUrl = async (widgetParams) => {
+  const res = await fetch('https://your-backend.example.com/transak/widget-url', {
+    method: 'POST',
+    headers: {
+      'x-api-key': transakApiKey,
+      'x-user-ip': userIp
+    },
+    body: JSON.stringify({ widgetParams })
+  })
+  if (!res.ok) throw new Error(`Failed to create Transak widget URL: ${res.status}`)
+  const { widgetUrl } = await res.json()
+  return widgetUrl
+}
+
+const getOrder = async (txId) => {
+  const res = await fetch(`https://your-backend.example.com/transak/order/${txId}`, {
+    headers: {
+      'x-api-key': transakApiKey
+    }
+  })
+  if (!res.ok) throw new Error(`Failed to fetch Transak order: ${res.status}`)
+  const { order } = await res.json()
+  return order
+}
+```
+
+<Callout type="warn">
+Never ship your Transak API secret to browsers. `widgetUrl` and `getOrder` must call your backend, which mints a partner access-token from the secret. See [Configuration](/sdk/fiat-modules/fiat-transak/configuration#implementing-the-backend-callbacks) for the full backend implementation.
+</Callout>
+
+See [Configuration](/sdk/fiat-modules/fiat-transak/configuration) for `cacheTime` and other options.
+
+## Next Steps
+
+- [Buy and sell](/sdk/fiat-modules/fiat-transak/guides/buy-and-sell/)
+- [Manage transactions](/sdk/fiat-modules/fiat-transak/guides/manage-transactions/)

@@ -1,0 +1,48 @@
+---
+title: Manage Transactions
+description: Fetch Transak order status and inspect returned details.
+---
+
+This guide shows how to [check transaction status](#check-transaction-status) and [read transaction details](#read-transaction-details) with [`getTransactionDetail()`](/sdk/fiat-modules/fiat-transak/api-reference). Pass the order id Transak returns after checkout (for example from your redirect URL or webhook payload). The same order id works for both buy and sell orders, since there's no separate direction argument.
+
+<Callout type="info">
+`getTransactionDetail` delegates the authenticated lookup to your `getOrder` callback. It throws `A 'getOrder' callback is required to fetch a Transak order` if one wasn't configured. See [Configuration](/sdk/fiat-modules/fiat-transak/configuration#getorder-backend) for the backend implementation.
+</Callout>
+
+## Check transaction status
+
+You can read the high-level state of an order with [`getTransactionDetail()`](/sdk/fiat-modules/fiat-transak/api-reference):
+
+```typescript title="Transaction status"
+const tx = await transak.getTransactionDetail(transakOrderId)
+
+console.log('Status:', tx.status)
+```
+
+`status` is one of `completed`, `failed`, or `in_progress`, normalised from Transak's raw order status:
+
+| WDK status | Transak status |
+|------------|-----------------|
+| `completed` | `COMPLETED` |
+| `failed` | `CANCELLED`, `FAILED`, `REFUNDED`, `EXPIRED` |
+| `in_progress` | `AWAITING_PAYMENT_FROM_USER`, `PAYMENT_DONE_MARKED_BY_USER`, `PROCESSING`, `PENDING_DELIVERY_FROM_TRANSAK`, `ON_HOLD_PENDING_DELIVERY_FROM_TRANSAK`, and any unrecognised status |
+
+## Read transaction details
+
+You can load the same record to inspect assets and currencies using [`getTransactionDetail()`](/sdk/fiat-modules/fiat-transak/api-reference):
+
+```typescript title="Transaction fields"
+const tx = await transak.getTransactionDetail(transakOrderId)
+
+console.log('Crypto asset:', tx.cryptoAsset)   // e.g. 'ETH'
+console.log('Fiat currency:', tx.fiatCurrency) // e.g. 'EUR'
+console.log('Metadata:', tx.metadata)          // the full raw Transak order
+```
+
+The raw order under `metadata` includes fields like `id`, `isBuyOrSell`, `walletAddress`, `transactionHash`, `amountPaid`, `createdAt`, and `completedAt`. See [`TransakOrder`](/sdk/fiat-modules/fiat-transak/api-reference#transakorder) in the API reference.
+
+## Next Steps
+
+- [Buy and sell](/sdk/fiat-modules/fiat-transak/guides/buy-and-sell/)
+- [Get started](/sdk/fiat-modules/fiat-transak/guides/get-started/)
+- [Configuration](/sdk/fiat-modules/fiat-transak/configuration)
