@@ -1,0 +1,108 @@
+---
+title: Symbiosis Swidge Overview
+description: Use the Symbiosis community Swidge module for same-chain and cross-chain asset routes.
+docType: explanation
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Use [`@symbiosis-finance/wdk-protocol-swidge-symbiosis@1.1.1`](https://www.npmjs.com/package/@symbiosis-finance/wdk-protocol-swidge-symbiosis/v/1.1.1) when your wallet needs a WDK `SwidgeProtocol` provider for routes served by Symbiosis. The module uses the public Symbiosis REST API for discovery, quotes, execution payloads, and cross-chain status.
+
+The released source is tagged [`v1.1.1`](https://github.com/symbiosis-finance/wdk-protocol-swidge-symbiosis/tree/v1.1.1) and maintained by [Symbiosis](https://symbiosis.finance/).
+
+## When to use it
+
+Use this module when your application needs:
+
+- same-chain swaps, cross-chain bridges, or combined swap-and-bridge routes;
+- runtime chain and token discovery;
+- exact-input quotes;
+- EVM, TON, or Bitcoin source execution through a compatible WDK wallet account;
+- cross-chain settlement status mapped to WDK status values.
+
+The module can quote Tron and Solana source routes, but it cannot execute those source transaction formats through WDK wallet accounts in this release.
+
+## Responsibility model
+
+| Area | Owner |
+|---|---|
+| Wallet keys, source address, approval, signing, and transaction broadcast | WDK wallet account |
+| Chain and token catalogs, route payloads, deposit addresses, and settlement status | Symbiosis API |
+| Input validation, quote review, user confirmation, fee policy, retries, and status polling | Host application |
+
+## Discovery is not a route guarantee
+
+`getSupportedChains()` and `getSupportedTokens(options?)` read provider-maintained catalogs. `getSupportedTokens()` filters the token catalog by `toChain` when present, otherwise by `fromChain`. It does not prove that a specific token pair currently has liquidity.
+
+Call `quoteSwidge()` for the requested pair before presenting a route. Treat the returned quote as indicative because execution obtains a fresh response.
+
+## Quote and execution model
+
+`quoteSwidge()` calls the Symbiosis quote endpoint and does not write to the wallet.
+
+`swidge()` calls the Symbiosis swap endpoint again. The execution amounts, fees, spender, transaction payload, or Bitcoin deposit address can differ from the earlier quote. The method checks configured fee caps on this fresh response and then proceeds to the route-specific wallet writes.
+
+<Callout type="warn">
+`swidge()` does not expose the fresh execution response for a separate confirmation step. Show the indicative quote, recipient, destination chain, refund address, and selected slippage before calling it. Configure the applicable fee caps, and do not treat the earlier quote as reserved or bound to execution.
+</Callout>
+
+For a non-native EVM input token, `swidge()` can:
+
+1. Read the current allowance.
+2. Approve the spender returned by Symbiosis when the allowance is insufficient.
+3. Wait for the approval receipt when the wallet exposes receipt lookup.
+4. Broadcast the route transaction.
+
+The method returns after the source transaction is broadcast. Use `getSwidgeStatus(result.id)` to track destination settlement or a refund.
+
+## Source execution support
+
+| Source route type | Execution behavior |
+|---|---|
+| `evm` | Optionally approves the input ERC-20, then sends the API-provided calldata transaction. |
+| `ton` | Sends the messages returned by Symbiosis in order. |
+| `btc` | Transfers the input amount to the generated deposit address. Configure a suitable refund address. |
+| `tron` | Quote only; `swidge()` throws `UnsupportedRouteError`. |
+| `solana` | Quote only; `swidge()` throws `UnsupportedRouteError`. |
+
+Destination support is provider-controlled. Use runtime discovery and a successful quote instead of maintaining a static route list.
+
+## Integrator limitations
+
+- Only exact-input routes are supported. Passing `toTokenAmount` throws `ExactOutNotSupportedError`.
+- The module does not validate slippage ranges or the formats of recipient, refund, and partner addresses. Validate application input before calling the provider.
+- Discovery responses are cached for ten minutes per protocol instance. The cache duration is not configurable.
+- A status lookup returning HTTP `404` is mapped to `pending`. A newly submitted operation and a genuinely unknown ID are therefore indistinguishable through this method.
+- The module does not implement request timeout, cancellation, retry, or backoff controls.
+- The package documents `/v2/swap` as rate-limited to one request per second. Bitcoin execution also uses that endpoint to generate a deposit address.
+- If allowance lookup fails, the module falls back to sending an approval. Set `skipApproval: true` only when the application manages allowance separately.
+- If the wallet does not expose transaction-receipt lookup, the module cannot wait for approval confirmation before submitting the route transaction.
+- Symbiosis fees map to `protocol` or `affiliate`, not `network`. `maxNetworkFeeBps` does not constrain a separately reported network cost, and `maxProtocolFeeBps` does not constrain `affiliate` fees.
+- For TON routes with multiple messages, the result records only the last sent message hash as the source transaction.
+- Quote-only construction without an account uses `recipient` as both the source sender and destination recipient.
+- The package exposes ESM and Bare entrypoints but does not declare a Node.js `engines` range.
+
+## Next steps
+
+<Cards>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-symbiosis/usage">
+Install the released package, discover provider catalogs, quote a route, execute it, and track status.
+</Card>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-symbiosis/configuration">
+Configure source-chain identity, slippage, refund handling, approval behavior, and fee caps.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-symbiosis/api-reference">
+Review the exported class, methods, options, result shapes, statuses, and typed errors.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

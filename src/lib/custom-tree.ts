@@ -266,6 +266,11 @@ export const customTree: Node[] = [
     configuration('/sdk/swidge-modules/swidge-rhinofi/configuration'),
     apiReference('/sdk/swidge-modules/swidge-rhinofi/api-reference'),
   ]),
+  folder('Symbiosis', '/sdk/swidge-modules/swidge-symbiosis', 'Waypoints', [
+    usage('/sdk/swidge-modules/swidge-symbiosis/usage'),
+    configuration('/sdk/swidge-modules/swidge-symbiosis/configuration'),
+    apiReference('/sdk/swidge-modules/swidge-symbiosis/api-reference'),
+  ]),
   folder('Velora', '/sdk/swap-modules/swap-velora-evm', 'ArrowLeftRight', [
     usage('/sdk/swap-modules/swap-velora-evm/usage'),
     guides([
