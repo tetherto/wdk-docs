@@ -1,0 +1,109 @@
+---
+title: Quote and Execute Symbiosis Routes
+description: Quote an exact-input Symbiosis route, review it with the user, and execute it from an EVM source account.
+docType: how-to
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+This guide covers [route options](#build-exact-input-route-options), [quotes](#quote-the-route), [user review](#review-before-execution), [EVM execution](#execute-an-evm-route), and [fee caps](#cap-provider-fees).
+
+## Prerequisites
+
+Complete [Get Started](/sdk/swidge-modules/swidge-symbiosis/guides/get-started): a signing account bound to a `SymbiosisProtocol` instance whose `chain` matches the account's network.
+
+## Build exact-input route options
+
+The same options object drives both the quote and the execution:
+
+```javascript title="Route options"
+const options = {
+  fromToken: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  toToken: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+  toChain: 'Arbitrum One',
+  recipient: '0xRecipient...',
+  fromTokenAmount: 100_000_000n,
+  slippage: 0.02
+}
+```
+
+- `fromTokenAmount` is the exact input in source-token base units. `100_000_000n` is 100 USDT with 6 decimals. Missing, zero, negative, and non-integer values throw `ValidationError` before an API request.
+- `slippage` is a decimal; `0.02` means 2% and is converted to 200 basis points for the provider. When omitted, `defaultSlippage` applies.
+- `toChain` defaults to the configured source chain, which produces a same-chain swap.
+- `recipient` defaults to the bound account's address.
+
+Only exact-input routes are supported. Passing `toTokenAmount` throws `ExactOutNotSupportedError`; there is no way to request an exact destination amount.
+
+## Quote the route
+
+[`quoteSwidge()`](/sdk/swidge-modules/swidge-symbiosis/api-reference#quoteswidgeoptions) performs no wallet write and returns an indicative result:
+
+```javascript title="Quote exact input"
+const quote = await symbiosis.quoteSwidge(options)
+
+console.log('Expected output:', quote.toTokenAmount)
+console.log('Minimum output:', quote.toTokenAmountMin)
+console.log('Estimated seconds:', quote.estimatedDuration)
+console.log('Fees:', quote.fees)
+```
+
+Quoted fees are already reflected in `toTokenAmount`; do not subtract them again. The provider does not return a quote expiry, so treat the numbers as a snapshot rather than a reservation.
+
+## Review before execution
+
+Show the user the source token and amount, the destination token and chain, the recipient, the expected and minimum output, the itemized fees, and the selected slippage.
+
+<Callout type="warn">
+`swidge()` does not consume the earlier quote. It requests a fresh execution response and proceeds internally to fee checks, approvals, and the source broadcast without exposing that response for a second confirmation. Fee caps limit only the mapped provider fees in that fresh response; they do not bind its output amount, spender, payload, deposit address, or wallet chain fee.
+</Callout>
+
+## Execute an EVM route
+
+Call [`swidge()`](/sdk/swidge-modules/swidge-symbiosis/api-reference#swidgeoptions-config) only after the user confirms:
+
+```javascript title="Execute with a fee cap"
+const result = await symbiosis.swidge(options, {
+  maxProtocolFeeBps: 100
+})
+
+console.log('Operation ID:', result.id)
+console.log('Source transaction:', result.hash)
+console.log('Recorded transactions:', result.transactions)
+```
+
+For a non-native EVM input token the method:
+
+1. Reads the current allowance for the spender returned by the fresh execution response.
+2. Resets a non-zero insufficient allowance to zero first, as required by tokens such as USDT on Ethereum.
+3. Approves the exact input amount.
+4. Waits for each approval to mine (when the account supports receipt lookup) before broadcasting the route transaction.
+
+If the allowance lookup fails, the module falls back to a direct approval without the reset; see [Approval behavior](/sdk/swidge-modules/swidge-symbiosis/configuration#approval-behavior) for the full decision table.
+
+Approval hashes are appended to `result.transactions` with type `approval`, followed by the source transaction with type `source`. The method returns after the source broadcast; destination settlement continues asynchronously. Track it with the returned `result.id` as described in [Track Settlement](/sdk/swidge-modules/swidge-symbiosis/guides/track-settlement).
+
+Set `skipApproval: true` in the constructor config only when the host application manages allowance itself; the module then broadcasts the route transaction without checking allowance, and an insufficient allowance surfaces as an on-chain failure.
+
+## Cap provider fees
+
+`maxProtocolFeeBps` bounds the fees mapped as `protocol` in basis points of the input amount, checked against the fresh execution response before any wallet write:
+
+```javascript title="Instance-level and per-call caps"
+const symbiosis = new SymbiosisProtocol(account, {
+  chain: 'Ethereum',
+  maxProtocolFeeBps: 100
+})
+
+await symbiosis.swidge(options, { maxProtocolFeeBps: 75 })
+```
+
+A fee whose description is exactly `Partner fee` maps to `affiliate` and is not constrained by either cap. No fee maps to `network` in this release, so `maxNetworkFeeBps` does not bound the wallet transaction's own chain fee. When the cap is exceeded, `swidge()` throws `FeeLimitExceededError` before touching the wallet.
+
+## Next steps
+
+Poll the operation in [Track Settlement](/sdk/swidge-modules/swidge-symbiosis/guides/track-settlement), or branch on the typed error family in [Handle Errors](/sdk/swidge-modules/swidge-symbiosis/guides/handle-errors).

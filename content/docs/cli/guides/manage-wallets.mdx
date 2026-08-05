@@ -1,0 +1,232 @@
+---
+title: Manage Wallets
+description: Create, import, select, unlock, lock, export, rename, and delete WDK CLI wallets safely.
+docType: how-to
+schemaType: TechArticle
+icon: WalletCards
+---
+
+WDK CLI stores independent named wallets and keeps only explicitly unlocked wallets in the daemon. This guide covers the complete wallet lifecycle.
+
+<Callout type="warn">
+Wallet create, import, and export handle a BIP-39 seed phrase. Use a private terminal with logging, screen sharing, and AI assistants disabled. Anyone who obtains the phrase can control the wallet.
+</Callout>
+
+## Wallet names
+
+Wallet names may contain letters, numbers, hyphens, and underscores. Other characters are rejected.
+
+Examples in this guide use a wallet named `dev`:
+
+```bash title="Terminal"
+wdk wallet list
+```
+
+## Create a wallet
+
+Create a 12-word wallet:
+
+```bash title="Terminal"
+wdk wallet create --name dev
+```
+
+Create a 24-word wallet:
+
+```bash title="Terminal"
+wdk wallet create --name dev --words 24
+```
+
+The CLI asks for a passphrase twice, writes the encrypted mnemonic to `wallets/dev/seed.enc`, and displays the generated phrase once. Record both the mnemonic and passphrase in separate recoverable locations before continuing.
+
+The first wallet becomes the default automatically. You do not need to run `wdk wallet default` after creating the first wallet.
+
+<Callout type="warn">
+The current CLI permits an empty passphrase. Although `seed.enc` remains AES-GCM ciphertext, an empty passphrase provides no meaningful confidentiality. Use a strong, unique passphrase.
+</Callout>
+
+## Import a wallet
+
+Import an existing 12- or 24-word BIP-39 phrase:
+
+```bash title="Terminal"
+wdk wallet import --name recovered
+```
+
+The CLI prompts for the phrase and then for a new local encryption passphrase. The seed-phrase input is interactive but is not masked, so import only in a private terminal.
+
+Import creates another encrypted local copy. It does not remove or change the source wallet or any existing backup.
+
+## List wallets and sessions
+
+Show stored wallets, the default wallet, lock status, and TTL remaining:
+
+```bash title="Terminal"
+wdk wallet list
+```
+
+When a wallet is unlocked, the table reports either the approximate remaining time or `unlimited` for a `--ttl 0` session.
+
+In JSON mode, an unlocked entry includes `ttlMs` and `ttlRemaining` in milliseconds:
+
+```bash title="Terminal"
+wdk --json wallet list
+```
+
+## Select the default wallet
+
+Commands use the default wallet when their `--wallet` option is omitted.
+
+```bash title="Terminal"
+wdk wallet default --name dev
+```
+
+If a default wallet already exists, changing it requires that wallet's passphrase. This prevents an unconfirmed configuration change, but it does not unlock either wallet.
+
+To target another wallet for one supported operation without changing the default, pass its command-level option:
+
+```bash title="Terminal"
+wdk get balance --network ethereum --wallet recovered
+```
+
+## Unlock a wallet
+
+Unlock with the default five-minute TTL:
+
+```bash title="Terminal"
+wdk wallet unlock --name dev
+```
+
+Specify an absolute TTL in minutes:
+
+```bash title="Terminal"
+wdk wallet unlock --name dev --ttl 15
+```
+
+Unlock starts the daemon if needed. The CLI verifies the passphrase, then the daemon decrypts the wallet, creates its WDK instance, and starts the timer.
+
+<Callout type="warn">
+After unlock, any process running as the same operating-system user that can connect to the daemon endpoint can request signing or sending without entering the passphrase. Use a short TTL, avoid running untrusted code, and lock immediately after use.
+</Callout>
+
+### Control the unlock lifetime
+
+TTL is per wallet and starts at unlock:
+
+| Command or event | Result |
+| --- | --- |
+| Omit `--ttl` | Wallet locks after five minutes |
+| `--ttl 15` | Wallet locks 15 minutes after unlock |
+| Use the wallet | Timer continues; activity does not restart it |
+| Unlock the wallet again | Timer resets to the newly requested TTL |
+| `--ttl 0` | No automatic expiry |
+| TTL expires | That wallet is disposed and locked |
+| Last wallet locks | Daemon exits |
+
+`--ttl 0` accepts the risk of a session that remains unlocked until explicit lock, daemon shutdown, process failure, or machine restart:
+
+```bash title="Terminal"
+wdk wallet unlock --name dev --ttl 0
+```
+
+Use it only for a controlled local workflow. Normal wallet operations do not refresh any TTL, so a finite session can expire during a long task.
+
+## Lock wallets
+
+Lock one wallet:
+
+```bash title="Terminal"
+wdk wallet lock --name dev
+```
+
+Lock every wallet:
+
+```bash title="Terminal"
+wdk wallet lock --all
+```
+
+Locking disposes the wallet's WDK instance and removes the session from the daemon. The daemon exits after the last wallet locks.
+
+Verify the result:
+
+```bash title="Terminal"
+wdk wallet list
+```
+
+Cleanup is best effort. The CLI zeroes retained mutable key and seed buffers on normal disposal, but JavaScript strings, dependency-internal copies, swap, core dumps, and abrupt termination cannot be guaranteed to be erased. See the [security model](/cli/reference/security-model#seed-and-passphrase-lifetime).
+
+## Export a seed phrase
+
+<Callout type="warn">
+Export prints the decrypted mnemonic. Do not run this command in CI, a recorded terminal, an agent session, or any environment that captures stdout.
+</Callout>
+
+Export a wallet:
+
+```bash title="Terminal"
+wdk wallet export --name dev
+```
+
+The CLI asks for the wallet passphrase and prints the phrase. `--json` also includes the phrase in stdout; JSON does not make secret output safe to log.
+
+Use export to create or verify an offline recovery backup. If WDK CLI itself is unavailable, use the standalone [version 1 manual-recovery procedure](/cli/reference/storage-format#recover-without-wdk-cli).
+
+## Rename a wallet
+
+Rename a stored wallet:
+
+```bash title="Terminal"
+wdk wallet rename --name dev --new-name development
+```
+
+The command verifies the old wallet's passphrase, locks that wallet if it is unlocked, and moves its storage directory. If it was the default, the new name becomes the default. Unlock it again under the new name before using it:
+
+```bash title="Terminal"
+wdk wallet unlock --name development
+```
+
+Renaming does not decrypt or re-encrypt `seed.enc`.
+
+## Delete a wallet
+
+<Callout type="warn">
+Deletion is irreversible through WDK CLI. Confirm that you have tested the mnemonic and passphrase backup before deleting the only local copy.
+</Callout>
+
+Delete a wallet:
+
+```bash title="Terminal"
+wdk wallet delete --name development
+```
+
+The command:
+
+1. verifies the wallet passphrase
+2. attempts to lock an active session
+3. recursively removes the wallet directory
+4. chooses another stored wallet as the default when necessary
+
+Deletion is ordinary filesystem removal, not secure erase. Copies can remain in backups, snapshots, journals, swap, or recoverable storage blocks.
+
+## Passphrases in automation
+
+Commands that prompt for a passphrase read a non-empty `WDK_PASSPHRASE` value when it is set:
+
+```bash title="Terminal"
+WDK_PASSPHRASE='YOUR_PASSPHRASE' wdk --json wallet unlock --name dev --ttl 5
+```
+
+Environment variables can leak through process inspection, child-process inheritance, command tracing, crash reports, or automation logs. Prefer the hidden interactive prompt. If automation is necessary:
+
+- inject the value from a secret manager for one process
+- disable command tracing and output capture
+- do not commit the value to a script or configuration file
+- lock the wallet and remove the environment variable immediately after use
+
+Never pass the passphrase or mnemonic as a CLI argument.
+
+## Related pages
+
+- [API reference](/cli/api-reference#wallet-commands)
+- [Architecture](/cli/reference/architecture)
+- [Storage format and manual recovery](/cli/reference/storage-format)
+- [Security model](/cli/reference/security-model)

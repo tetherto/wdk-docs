@@ -1,0 +1,138 @@
+---
+title: Manage Tokens
+description: Inspect, add, override, and remove WDK CLI token registry entries
+docType: how-to
+schemaType: TechArticle
+---
+
+WDK CLI resolves token names such as `usdt` through a local registry. Each entry defines how the CLI formats amounts, selects a native or contract transfer, and connects the token to optional indexer, MoonPay, and price-provider features.
+
+The effective registry combines built-in entries with your custom entries. A custom entry with the same network and token key replaces the built-in entry until you remove the override.
+
+## Inspect The Registry
+
+List tokens across every network:
+
+```bash title="Terminal"
+wdk token list
+```
+
+Filter the list to one network or inspect one entry:
+
+```bash title="Terminal"
+wdk token list --network ethereum
+wdk token info --network ethereum --token usdt
+```
+
+Use the lowercase registry key shown by these commands with `--token` on `get balance`, `send`, `buy`, and `sell`.
+
+`get history --token` is different: pass the exact `metadata.indexerSlug` value, which may differ from the registry key.
+
+## Token Spec
+
+`wdk token add <data>` accepts either an inline JSON object or the path to a JSON file.
+
+| Field | Required | Rules and effect |
+| --- | --- | --- |
+| `network` | Yes | Must name an existing built-in or custom network. |
+| `token` | Yes | Registry key. Use lowercase letters, numbers, and hyphens; the first character must be a letter or number. |
+| `symbol` | Yes | Non-empty display symbol, such as `DAI`. |
+| `decimals` | Yes | Integer from `0` through `24`; used to convert decimal amounts to base units. |
+| `isNative` | Yes | `true` uses the network's native transfer path; `false` uses a token contract or mint. |
+| `address` | For non-native tokens | Non-empty contract or mint address. Optional for a native token. |
+| `metadata` | No | Object containing supported provider mappings. |
+
+A network can have at most one effective entry with `isNative: true`.
+
+### Provider Metadata
+
+| Field | Used by | Effect when omitted |
+| --- | --- | --- |
+| `metadata.indexerSlug` | `wdk get history` | Pass this exact value to `--token`. Without it, a token-specific history request cannot use the token and an all-token history request skips it. The network also needs its own `indexerSlug`. |
+| `metadata.moonpaySlug` | `wdk buy` and `wdk sell` | MoonPay operations do not support that token. |
+| `metadata.bitfinexSlug` | USD price conversion | Balance and preview operations can continue without that provider's USD estimate. |
+
+Only `indexerSlug`, `moonpaySlug`, and `bitfinexSlug` are retained inside `metadata`.
+
+## Add A Custom Token
+
+Create a file named `dai-on-ethereum.json`:
+
+```json title="dai-on-ethereum.json"
+{
+  "network": "ethereum",
+  "token": "dai",
+  "symbol": "DAI",
+  "decimals": 18,
+  "isNative": false,
+  "address": "0x6B175474E89094C44Da98b954EedeAC495271d0F"
+}
+```
+
+Add the entry:
+
+```bash title="Terminal"
+wdk token add ./dai-on-ethereum.json
+```
+
+You can also pass the JSON inline:
+
+```bash title="Terminal"
+wdk token add '{"network":"ethereum","token":"dai","symbol":"DAI","decimals":18,"isNative":false,"address":"0x6B175474E89094C44Da98b954EedeAC495271d0F"}'
+```
+
+Verify the stored entry:
+
+```bash title="Terminal"
+wdk token info --network ethereum --token dai
+```
+
+<Callout type="info">
+Adding a registry entry does not transfer tokens or interact with the blockchain. Verify contract addresses, decimals, and provider identifiers independently before using the entry to query or send assets.
+</Callout>
+
+## Understand Mutation Confirmation
+
+`token add` and `token delete` protect registry changes with passphrase confirmation:
+
+- If at least one wallet exists, the CLI prompts for the current default wallet's passphrase.
+- If no wallet exists, the registry command does not prompt for a passphrase.
+- Confirmation does not unlock, extend, or lock an existing daemon wallet session.
+
+Set a valid default wallet before changing the registry if wallets already exist.
+
+## Override A Built-In Entry
+
+Adding a custom entry with the same `network` and `token` as a built-in entry replaces the complete effective entry; it does not merge individual fields. The CLI reports that the custom entry overrides the built-in entry.
+
+Use overrides carefully. An incorrect address, decimal count, or native-token flag can route later balance or send operations incorrectly.
+
+Remove the custom override to restore the built-in entry:
+
+```bash title="Terminal"
+wdk token delete --network ethereum --token usdt
+```
+
+## Delete A Custom Entry
+
+Delete the DAI entry created above:
+
+```bash title="Terminal"
+wdk token delete --network ethereum --token dai
+```
+
+`token delete` removes only custom entries. It rejects deletion of a built-in entry when no custom override exists. Deleting a custom network also removes every custom token stored under that network.
+
+`wdk config reset --all` preserves custom token entries.
+
+## Next Steps
+
+- [Custom Networks](/cli/guides/custom-networks/) - Create a network and its initial token entries together
+- [Configuration](/cli/configuration/) - Configure provider and indexer access
+- [API Reference](/cli/api-reference/) - Review token command flags and JSON results
+
+***
+
+## Need Help?
+
+<SupportCards />

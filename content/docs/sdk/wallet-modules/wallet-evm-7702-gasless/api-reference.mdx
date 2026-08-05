@@ -92,7 +92,7 @@ Treat the arrays returned through `keyPair` as read-only. Call `dispose()` when 
 | `verify(message, signature)` | `message: string`, `signature: string` | `Promise\<boolean\>` | Verifies a plain message signature. |
 | `verifyTypedData(typedData, signature)` | `TypedData`, `signature: string` | `Promise\<boolean\>` | Verifies EIP-712 typed data. |
 | `approve(options)` | `ApproveOptions` | `Promise\<TransactionResult\>` | Sends an ERC-20 approval as a UserOperation. |
-| `quoteSendTransaction(tx, config?)` | `EvmTransaction \| EvmTransaction[]`, partial fee-mode config | `Promise\<Omit\<TransactionResult, 'hash'\>\>` | Returns `{ fee }`; owned accounts cache paymaster-token quotes for up to 2 minutes. |
+| `quoteSendTransaction(tx, config?)` | `EvmTransaction \| EvmTransaction[]`, partial fee-mode config | `Promise\<Omit\<TransactionResult, 'hash'\>\>` | Returns `{ fee }`; owned accounts cache paymaster-token quotes for up to 2 minutes and validate the nonce before reuse. |
 | `sendTransaction(tx, config?)` | `EvmTransaction \| EvmTransaction[]`, partial fee-mode config | `Promise\<TransactionResult\>` | Returns a UserOperation hash and fee. |
 | `quoteTransfer(options, config?)` | `EvmTransferOptions`, partial fee-mode config | `Promise\<Omit\<TransferResult, 'hash'\>\>` | Quotes an ERC-20 transfer. |
 | `transfer(options, config?)` | `EvmTransferOptions`, partial fee-mode config | `Promise\<TransferResult\>` | Sends an ERC-20 transfer as a UserOperation. |
@@ -106,9 +106,10 @@ Treat the arrays returned through `keyPair` as read-only. Call `dispose()` when 
 
 - Sponsored mode returns `fee: 0n` from quote methods.
 - Paymaster-token mode returns fees in the configured paymaster token's base units.
-- Owned account quotes are cached for up to 2 minutes for the same serialized transaction.
+- Owned account paymaster-token quotes are cached for up to 2 minutes for the same serialized transaction. Before reusing a cached UserOperation, the account reads the current EntryPoint nonce and re-quotes if it has moved.
+- The cache key contains the transaction but not the per-call fee-mode configuration. Use the same fee-mode and paymaster settings for a quote and its matching `sendTransaction()` or `transfer()` call.
 - `sendTransaction()` signs the UserOperation typed data before submitting it to the bundler.
-- If the account is already delegated to `delegationAddress`, the send path does not include a new EIP-7702 authorization.
+- If the account is already delegated to `delegationAddress`, the send path does not include a new EIP-7702 authorization. A send that needs a fresh authorization rebuilds the UserOperation instead of reusing the cached one.
 
 ### Transfer Fee Cap
 

@@ -6,10 +6,10 @@
 |----------|-----|
 | **npm** | https://www.npmjs.com/package/@tetherto/wdk-wallet-solana |
 | **GitHub** | https://github.com/tetherto/wdk-wallet-solana |
-| **Docs — Overview** | https://docs.wallet.tether.io/sdk/wallet-modules/wallet-solana |
-| **Docs — Usage** | https://docs.wallet.tether.io/sdk/wallet-modules/wallet-solana/usage |
-| **Docs — Configuration** | https://docs.wallet.tether.io/sdk/wallet-modules/wallet-solana/configuration |
-| **Docs — API Reference** | https://docs.wallet.tether.io/sdk/wallet-modules/wallet-solana/api-reference |
+| **Docs — Overview** | https://docs.wdk.tether.io/sdk/wallet-modules/wallet-solana |
+| **Docs — Usage** | https://docs.wdk.tether.io/sdk/wallet-modules/wallet-solana/usage |
+| **Docs — Configuration** | https://docs.wdk.tether.io/sdk/wallet-modules/wallet-solana/configuration |
+| **Docs — API Reference** | https://docs.wdk.tether.io/sdk/wallet-modules/wallet-solana/api-reference |
 
 ## Package
 
@@ -29,13 +29,17 @@ import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 - **Token standard**: SPL tokens via `transfer()`
 - **Rent-exempt minimum**: ~890,880 lamports for new accounts
 - **USDT mint**: `Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB`
+- `signTransaction()` returns a `FullySignedTransaction` from `@solana/transactions`; WDK does not re-export that type.
+- `quoteSendTransaction()` and `sendTransaction()` accept that signed value. Send broadcasts the exact wire bytes and rechecks `transactionMaxFee`.
+- ⚠️ Signing seals the recent blockhash or durable nonce. WDK does not refresh or re-sign a supplied signed transaction; submit it before its lifetime becomes invalid.
 
 ## Configuration
 
 ```javascript
 const wallet = new WalletManagerSolana(seedPhrase, {
-  rpcUrl: 'https://api.mainnet-beta.solana.com',
-  transferMaxFee: 10000000  // Optional max fee in lamports
+  provider: 'https://api.mainnet-beta.solana.com',
+  transferMaxFee: 10000000n,   // Optional max SPL transfer fee in lamports
+  transactionMaxFee: 10000000n // Optional max send/sign fee in lamports
 })
 ```
 

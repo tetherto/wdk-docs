@@ -1,114 +1,282 @@
 ---
 title: Cosmos wallet API reference
-description: API reference for the independently maintained @base58-io/wdk-wallet-cosmos module.
+description: Public API reference for @base58-io/wdk-wallet-cosmos version 1.0.0-beta.4.
 docType: reference
-schemaType: TechArticle
+schemaType: APIReference
+icon: Code
 ---
 
-This page summarizes the public API exposed by `@base58-io/wdk-wallet-cosmos` based on the package README, `package.json`, generated TypeScript declarations, and source files from commit `b924dba`.
+This reference covers the public package surface published in [`@base58-io/wdk-wallet-cosmos@1.0.0-beta.4`](https://www.npmjs.com/package/@base58-io/wdk-wallet-cosmos).
 
 <Callout type="warn">
-This module is developed and maintained independently by a third-party contributor. Tether and the WDK team do not endorse or assume responsibility for its code, security, or maintenance. Review the package and use your own judgment before using it with real funds.
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
 </Callout>
+
+Repository `main` contains APIs that are not part of this release. Use the [`v1.0.0-beta.4` source tag](https://github.com/base58-io/wdk-wallet-cosmos/tree/v1.0.0-beta.4) when comparing this reference with code.
 
 ## Package
 
 | Field | Value |
 |---|---|
 | Package | `@base58-io/wdk-wallet-cosmos` |
-| Repository | [base58-io/wdk-wallet-cosmos](https://github.com/base58-io/wdk-wallet-cosmos) |
-| Main entry | `index.js` |
-| Bare entry | `bare.js` |
-| Types | `types/index.d.ts` |
+| Version | `1.0.0-beta.4` |
+| Module format | ESM |
+| Default entry | `index.js` |
+| Bare conditional entry | `bare.js` |
+| Type declarations | `types/index.d.ts` |
+| Runtime engines | Not declared in `package.json` |
+| Peer dependencies | None |
+| WDK wallet dependency | `@tetherto/wdk-wallet@1.0.0-beta.8` |
 
-## Exports
+The package export map exposes the root module and a `./package` subpath for `package.json`. Internal files are not supported public entrypoints.
 
-| Export | Description |
-|---|---|
-| `default` | `WalletManagerCosmos` |
-| `WalletAccountCosmos` | Cosmos wallet account implementation |
-| `CosmosWalletConfig` | Wallet configuration type |
-| `ResolvedChainConfig` | Resolved chain configuration type |
-| `resolveChainConfig(config)` | Resolves chain config from chain-registry or custom fields |
-| `getAvailableChains()` | Returns chain names available through the bundled chain-registry data |
-| `isKnownChain(chainName)` | Returns whether a chain name exists in the registry data |
+## Root exports
 
-## `CosmosWalletConfig`
-
-| Field | Required | Description |
-|---|---:|---|
-| `chainName` | No | Chain name from chain-registry, such as `cosmoshub`, `osmosis`, or `juno`. |
-| `rpcEndpoints` | No | RPC endpoint URLs. If provided, they override registry endpoints. |
-| `retryCount` | No | Maximum retry rounds for RPC fallback. Default is `3`. |
-| `retryDelay` | No | Base retry delay in milliseconds. Default is `150`. |
-| `addressPrefix` | No | Bech32 address prefix. Defaults to `cosmos` when not resolved from registry. |
-| `nativeDenom` | No | Native token denomination. Defaults to `uatom` when not resolved from registry. |
-| `coinType` | No | BIP-44 coin type. Defaults to `118` when not resolved from registry. |
-| `gasPrice` | No | Gas price with denomination, such as `0.025uatom`. |
-| `transferMaxFee` | No | Maximum fee amount for transfer operations. |
-| `ibcChannels` | No | IBC channel map keyed by destination Bech32 prefix. |
+| Export | Kind | Description |
+|---|---|---|
+| `default` | Runtime | `WalletManagerCosmos` |
+| `WalletAccountCosmos` | Runtime | Seed-backed Cosmos account implementation |
+| `resolveChainConfig(config)` | Runtime | Resolves registry or custom chain configuration |
+| `getAvailableChains()` | Runtime | Returns bundled registry names whose chain type is `cosmos` |
+| `isKnownChain(chainName)` | Runtime | Checks whether a name exists in the bundled registry |
+| `FeeRates` | Type only | Normal and fast fee amounts |
+| `KeyPair` | Type only | Public key and sensitive private-key fields |
+| `TransactionResult` | Type only | Transaction hash and fee |
+| `TransferOptions` | Type only | Denomination, recipient, and amount |
+| `TransferResult` | Type only | Transfer hash and fee |
+| `CosmosWalletConfig` | Type only | Input wallet configuration |
+| `ResolvedChainConfig` | Type only | Resolved chain configuration |
 
 ## `WalletManagerCosmos`
 
-```js
-import WalletManagerCosmos from '@base58-io/wdk-wallet-cosmos'
+### Constructor
 
-const manager = new WalletManagerCosmos(seed, config)
+```js
+new WalletManagerCosmos(seed, config?)
 ```
 
-| Method or property | Description |
-|---|---|
-| `constructor(seed, config)` | Creates a manager from a BIP-39 seed phrase or seed bytes. |
-| `getAccount(index = 0)` | Returns the Cosmos account at a BIP-44 index. |
-| `getAccountByPath(path)` | Returns the Cosmos account for a specific BIP-44 derivation suffix. |
-| `getFeeRates()` | Returns normal and fast fee rates from chain-registry fee tiers or configured gas price. Requires RPC configuration. |
-| `isDisposed` | Returns whether the manager has been disposed. |
-| `dispose()` | Disposes cached wallet accounts and clears manager state. |
+| Parameter | Type | Required | Description |
+|---|---|---:|---|
+| `seed` | `string \| Uint8Array` | Yes | BIP-39 mnemonic or seed bytes |
+| `config` | `CosmosWalletConfig` | No | Chain, RPC, fee, retry, and IBC configuration |
+
+The released constructor does not accept an external signer. Named signer overloads visible on repository `main` are not published in `1.0.0-beta.4`.
+
+### Inherited static methods
+
+| Method | Returns | Description |
+|---|---|---|
+| `WalletManagerCosmos.getRandomSeedPhrase(wordCount = 12)` | `string` | Generates a 12- or 24-word BIP-39 mnemonic |
+| `WalletManagerCosmos.isValidSeedPhrase(seedPhrase)` | `boolean` | Validates a BIP-39 mnemonic |
+
+### Methods
+
+| Method | Returns | Behavior |
+|---|---|---|
+| `getAccount(index = 0)` | `Promise<WalletAccountCosmos>` | Derives and caches `0'/0/{index}` below the chain coin type |
+| `getAccountByPath(path)` | `Promise<WalletAccountCosmos>` | Derives and caches a relative suffix such as `0'/0/5` |
+| `getFeeRates()` | `Promise<FeeRates>` | Calculates normal and fast amounts for the fixed gas limit |
+| `dispose()` | `void` | Disposes cached accounts, zeros the manager seed bytes, and marks the manager unusable |
+
+### Properties
+
+| Property | Type | Description |
+|---|---|---|
+| `seed` | `Uint8Array` | Inherited sensitive seed bytes; do not log or retain |
+| `isDisposed` | `boolean` | Whether `dispose()` has been called |
+
+`getAccount()` caches by relative derivation path. Disposing a cached account directly does not evict it from the manager; prefer disposing the manager at the end of its lifecycle.
+
+### `getFeeRates()`
+
+```js
+const { normal, fast } = await manager.getFeeRates()
+```
+
+The returned values are deterministic fee amounts in the selected fee denomination:
+
+- registry configuration uses average and high gas-price tiers;
+- explicit gas-price configuration returns the same amount for both priorities;
+- final fallback uses `0.025` and `0.04`;
+- all calculations use a gas limit of `200000`.
+
+The method requires at least one configured RPC endpoint but does not make an RPC request.
 
 ## `WalletAccountCosmos`
 
-| Method or property | Description |
+Create accounts through `WalletManagerCosmos`. The exported static factory is also public:
+
+```js
+const account = await WalletAccountCosmos.create(seed, "0'/0/0", config)
+```
+
+Do not call the class constructor directly. Its parameters are implementation details.
+
+### Account methods
+
+| Method | Returns | Behavior |
+|---|---|---|
+| `getAddress()` | `Promise<string>` | Returns the locally derived Bech32 address |
+| `getBalance(denom?)` | `Promise<bigint>` | Reads one denomination; defaults to `nativeDenom` |
+| `getTokenBalance(denom)` | `Promise<bigint>` | Alias behavior for a denomination-specific balance |
+| `getTokenBalances(denoms)` | `Promise<Record<string, bigint>>` | Reads all balances and returns requested denominations that are present |
+| `quoteTransfer(options)` | `Promise<{ fee: bigint }>` | Calculates a fixed-gas transfer fee without broadcasting |
+| `transfer(options)` | `Promise<TransferResult>` | Sends a bank transfer or configured IBC transfer |
+| `sign(message)` | `Promise<string>` | Returns a JSON-encoded ADR-36 `StdSignature` |
+| `verify(message, signature)` | `Promise<boolean>` | Verifies ADR-36 data against this account |
+| `signTransaction(transaction)` | `Promise<unknown>` | Returns a CosmJS signed `TxRaw` without broadcasting |
+| `quoteSendTransaction(transaction)` | `Promise<{ fee: bigint }>` | Calculates a fixed-gas native-send fee |
+| `sendTransaction(transaction)` | `Promise<TransactionResult>` | Signs and broadcasts a native bank send |
+| `getTransactionReceipt(hash)` | `Promise<object>` | Returns the indexed transaction or throws when it is not found |
+| `toReadOnlyAccount()` | Never succeeds | Throws because read-only accounts are not implemented |
+| `dispose()` | `void` | Zeros the module-owned private-key buffer and marks the account unusable |
+
+### Account properties
+
+| Property | Type | Description |
+|---|---|---|
+| `index` | `number` | Last component of the full derivation path |
+| `path` | `string` | Full path such as `m/44'/118'/0'/0/0` |
+| `keyPair` | `KeyPair` | Public key and the underlying sensitive private-key buffer |
+| `isDisposed` | `boolean` | Whether `dispose()` has been called |
+
+<Callout type="warn">
+`keyPair.privateKey` exposes the account's underlying private-key bytes. Avoid using this property unless an integration requires it. Never log, serialize, or retain the value, and do not assume `dispose()` can erase copies held elsewhere.
+</Callout>
+
+### Balance behavior
+
+`getBalance()`, `getTokenBalance()`, and `getTokenBalances()` require RPC endpoints. Values are returned in base units.
+
+`getTokenBalances(denoms)` calls the RPC all-balances query and filters it. A requested denomination with no returned balance is omitted rather than included with `0n`.
+
+### Message signing
+
+`sign(message)` signs UTF-8 text with ADR-36 and returns a JSON string containing the public key and base64 signature. `verify()`:
+
+- binds the signature public key to this account's Bech32 address;
+- returns `false` for a different message or account;
+- returns `false`, rather than throwing, for malformed signature input.
+
+### Transaction input
+
+`signTransaction()`, `quoteSendTransaction()`, and `sendTransaction()` consume the shared WDK transaction shape:
+
+```ts
+type Transaction = {
+  to: string
+  value: number | bigint
+}
+```
+
+The account converts this input to one `/cosmos.bank.v1beta1.MsgSend`:
+
+- denomination is always the configured `nativeDenom`;
+- amount is `value` converted to a string;
+- memo is fixed to `Transfer via WDK`;
+- gas is fixed at `200000`.
+
+`signTransaction()` needs RPC to obtain signing context and returns a signed CosmJS `TxRaw`. Its generated beta declaration types the result as `unknown`.
+
+<Callout type="warn">
+`sendTransaction()` in `1.0.0-beta.4` accepts only the unsigned WDK transaction shape. It does not accept or broadcast the signed value returned by `signTransaction()`.
+</Callout>
+
+`quoteSendTransaction()` ignores the transaction contents after receiving them. It checks for configured endpoints, calculates the fixed-gas fee, and applies `transferMaxFee`; it does not simulate or validate the transaction through RPC.
+
+### Transfer input
+
+```ts
+type TransferOptions = {
+  token: string
+  recipient: string
+  amount: number | bigint
+}
+```
+
+| Field | Meaning |
 |---|---|
-| `static create(seed, path, config)` | Creates an account for a BIP-44 path. |
-| `getAddress()` | Returns the Bech32 account address. |
-| `getBalance(denom?)` | Returns a token balance in base units. Defaults to the configured native denomination. |
-| `getTokenBalance(denom)` | Returns a single token balance in base units. |
-| `getTokenBalances(denoms)` | Returns balances for multiple denominations. |
-| `transfer(options)` | Sends a token transfer and returns the transaction hash and fee. |
-| `quoteTransfer(options)` | Quotes a transfer fee without sending. |
-| `keyPair` | Returns the account key pair. |
-| `sign(message)` | Signs an arbitrary message using ADR-36. |
-| `verify(message, signature)` | Verifies an ADR-36 signature. |
-| `signTransaction(transaction)` | Signs a Cosmos transaction without broadcasting it. |
-| `sendTransaction(transaction)` | Signs and broadcasts a Cosmos transaction. |
-| `quoteSendTransaction(transaction)` | Quotes a Cosmos transaction fee. |
-| `getTransactionReceipt(hash)` | Looks up a transaction by hash through RPC. |
-| `index` | Account index parsed from the derivation path. |
-| `path` | Full account derivation path. |
-| `isDisposed` | Returns whether the account has been disposed. |
-| `dispose()` | Erases sensitive account data from memory and prevents further use. |
+| `token` | Cosmos denomination such as `uatom` or an IBC denomination |
+| `recipient` | Destination Bech32 address |
+| `amount` | Integer amount in base units |
 
-## Transfer options
+For matching Bech32 prefixes, `transfer()` calls a bank send. For a different prefix, it selects `ibcChannels[recipientPrefix]` and broadcasts IBC `MsgTransfer` with a fixed 600-second timestamp timeout.
 
-The module uses WDK `TransferOptions` for token transfers.
+<Callout type="warn">
+`transfer()` checks `transferMaxFee` only after the bank or IBC operation has been signed and broadcast. A transfer can succeed on-chain and then throw the fee-limit error. Call `quoteTransfer()`, enforce an application limit, and validate the operation before `transfer()`.
+</Callout>
 
-| Field | Required | Description |
-|---|---:|---|
-| `token` | Yes | Cosmos denomination, such as `uatom`. |
-| `recipient` | Yes | Destination Bech32 address. |
-| `amount` | Yes | Amount in base units. |
+`quoteTransfer()` checks that an IBC channel mapping exists for a different prefix. It does not query RPC, simulate gas, validate the sender balance, or prove that the channel is active.
+
+### Transaction receipts
+
+`getTransactionReceipt(hash)` performs one `StargateClient.getTx()` lookup. It returns the raw indexed transaction object when found. When the transaction is not yet indexed or does not exist, it throws:
+
+```text
+Transaction not found: <hash>
+```
+
+The method does not poll.
+
+## `CosmosWalletConfig`
+
+| Field | Type | Required | Resolved behavior |
+|---|---|---:|---|
+| `chainName` | `string` | No | Selects bundled registry metadata; unknown names throw |
+| `rpcEndpoints` | `string[]` | No | Replaces registry endpoints when non-empty |
+| `retryCount` | `number` | No | Defaults to `3` retry rounds |
+| `retryDelay` | `number` | No | Defaults to `150` milliseconds |
+| `addressPrefix` | `string` | No | Registry prefix or `cosmos` |
+| `nativeDenom` | `string` | No | First registry fee denomination or `uatom` |
+| `coinType` | `number` | No | Registry SLIP-44 value or `118` |
+| `gasPrice` | `string` | No | Compact amount and denomination such as `0.025uatom` |
+| `transferMaxFee` | `number \| bigint` | No | Quote limit and post-broadcast `transfer()` check |
+| `ibcChannels` | `Record<string, { sourceChannel: string }>` | No | IBC source channels keyed by destination prefix |
+
+See [Configuration](/sdk/community-modules/wdk-wallet-cosmos/configuration) for precedence and safety details.
+
+## `ResolvedChainConfig`
+
+`resolveChainConfig()` returns:
+
+| Field | Type |
+|---|---|
+| `rpcEndpoints` | `string[]` |
+| `retryCount` | `number` |
+| `retryDelay` | `number` |
+| `addressPrefix` | `string` |
+| `nativeDenom` | `string` |
+| `coinType` | `number` |
+| `gasPrice` | `string \| undefined` |
+| `gasPriceStep` | `{ low: number, average: number, high: number, denom: string } \| undefined` |
+| `transferMaxFee` | `number \| bigint \| undefined` |
+| `chainId` | `string \| undefined` |
+| `prettyName` | `string \| undefined` |
+| `ibcChannels` | `Record<string, { sourceChannel: string }> \| undefined` |
 
 ## Helper functions
 
-| Function | Description |
-|---|---|
-| `resolveChainConfig(config)` | Resolves a chain config from `chainName`, custom config, and chain-registry metadata. Throws if `chainName` is unknown. |
-| `getAvailableChains()` | Returns known chain names from chain-registry. |
-| `isKnownChain(chainName)` | Returns `true` when `chainName` is available in chain-registry. |
+### `resolveChainConfig(config?)`
 
-## Limitations
+Returns registry-backed or custom resolved configuration. An unknown `chainName` throws and instructs the caller to use custom configuration.
 
-- RPC endpoints are required for balance reads, fee quotes, transfers, and receipt lookup.
-- `toReadOnlyAccount()` is present on the account class but throws because read-only accounts are not implemented.
-- `transferMaxFee` rejects transfer or send quotes when the estimated fee is greater than or equal to the configured limit.
-- IBC transfer support depends on `ibcChannels` configuration for the destination Bech32 prefix.
+### `getAvailableChains()`
+
+Returns chain names whose bundled registry entry has `chainType === 'cosmos'`.
+
+### `isKnownChain(chainName)`
+
+Returns whether any bundled registry entry has the supplied name. It does not test RPC reachability.
+
+## Error and lifecycle behavior
+
+- Invalid mnemonic and derivation paths reject account creation.
+- RPC-backed methods throw when the endpoint list is empty.
+- Most Cosmos ABCI, JSON-RPC validation, funds, gas, sequence, and signing errors are not retried.
+- Network-shaped errors can fall back or retry. A write error can therefore have an ambiguous on-chain outcome.
+- Every account operation except `toReadOnlyAccount()` checks disposal state; the read-only method always throws its unsupported error.
+- `dispose()` makes manager and account methods unusable, but it cannot revoke seed or key copies held by application code.
+
+See [Handle errors](/sdk/community-modules/wdk-wallet-cosmos/guides/handle-errors) for safe write and recovery guidance.

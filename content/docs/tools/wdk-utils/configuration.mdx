@@ -1,6 +1,6 @@
 ---
 title: WDK Utils Configuration
-description: Install and import validation, encryption, BIP-21, BOLT11, and EIP-681 helpers from @tetherto/wdk-utils
+description: Install and import validation, encryption, mnemonic-sharing, key-derivation, and payment-request helpers from @tetherto/wdk-utils
 ---
 
 This package does not have constructor options or runtime configuration. This page shows how to install `@tetherto/wdk-utils`, import the helpers you need, and understand the published runtime surface.
@@ -13,22 +13,43 @@ You can install `@tetherto/wdk-utils` from npm:
 npm install @tetherto/wdk-utils
 ```
 
+React Native runtimes without `globalThis.crypto.getRandomValues` also need a secure random-values polyfill:
+
+```bash title="Install React Native Random Values"
+npm install react-native-get-random-values
+```
+
+Load the polyfill before importing WDK Utils in the application entrypoint.
+
 ## Import address validation helpers
 
 You can import only the validators your flow needs from the package entrypoint:
 
 ```javascript title="Import Address Validators"
 import {
+  validateAddress,
   validateBitcoinAddress,
   validateEVMAddress,
   validateLightningInvoice,
   validateLnurl,
   decodeLnurl,
   validateLightningAddress,
+  validateSolanaAddress,
   validateSparkAddress,
   validateTronAddress,
   validateUmaAddress,
   resolveUmaUsername
+} from '@tetherto/wdk-utils'
+```
+
+## Import mnemonic sharing helpers
+
+Split a valid English BIP-39 mnemonic into threshold shares and reconstruct it from enough shares:
+
+```javascript title="Import Mnemonic Sharing Helpers"
+import {
+  combineMnemonic,
+  splitMnemonic
 } from '@tetherto/wdk-utils'
 ```
 
@@ -68,6 +89,17 @@ import {
 } from '@tetherto/wdk-utils'
 ```
 
+## Import seed key derivation helpers
+
+Derive domain-separated byte keys or deterministic Ed25519 keypairs from high-entropy seed bytes:
+
+```javascript title="Import Seed Key Derivation Helpers"
+import {
+  deriveSeedKey,
+  deriveSeedKeyPair
+} from '@tetherto/wdk-utils'
+```
+
 ## Import BOLT11 helpers
 
 You can validate, decode, sign, and encode BOLT11 Lightning invoices from the package entrypoint:
@@ -86,11 +118,21 @@ import {
 
 - `@tetherto/wdk-utils` exports plain functions. There is no client object to initialize.
 - The package publishes a default module entrypoint through `index.js` and a bare runtime entrypoint through `bare.js`.
+- `validateAddress()` dispatches the CAIP-2 namespaces `bip122`, `eip155`, `solana`, `spark`, and `tron` to their chain validators. Unsupported namespaces return `UNSUPPORTED_CHAIN`, and malformed chain IDs return `INVALID_CHAIN_ID`.
+- For `bip122` and `spark`, the chain reference selects the expected network. A missing, unknown, or incompatible reference returns `NETWORK_MISMATCH`. Other supported namespaces validate the address format but do not enforce the reference value.
+- Successful Bitcoin and Spark validators return `compatibleNetworks`, because some address formats are valid on more than one network. WDK Utils validates structure and network compatibility, not account existence, ownership, or recipient intent.
+- `validateSolanaAddress()` accepts base58-encoded 32-byte public keys, including off-curve program-derived addresses. Solana has no address checksum, so the helper cannot detect every mistyped address.
+- `splitMnemonic()` accepts valid 12-, 15-, 18-, 21-, or 24-word English BIP-39 phrases. It returns hex-encoded Shamir shares and supports threshold schemes from 2-of-2 through 255-of-255.
+- `combineMnemonic()` verifies an embedded integrity checksum before returning the reconstructed phrase. The checksum detects corruption but does not authenticate shares.
+- `encrypt()` and `splitMnemonic()` require `globalThis.crypto.getRandomValues`. In React Native, load `react-native-get-random-values` before importing `@tetherto/wdk-utils` when the runtime does not provide secure random bytes.
 - `parseBip21Request()` accepts `bitcoin:` URIs with a validated Bitcoin address and optional `amount`, `label`, and `message` parameters.
 - `encodeBip21Request()` validates the Bitcoin address and amount before returning a `bitcoin:` URI.
 - `encrypt()` returns a versioned payload with hex-encoded `salt`, `iv`, `tag`, and `ciphertext` fields plus the scrypt cost parameters used for key derivation.
 - `decrypt()` reads the scrypt cost parameters from the encrypted payload when they are present.
 - `deriveKey()` returns a 32-byte `Uint8Array` key, and `decryptWithKey()` can reuse that key for decrypting a payload.
+- `deriveSeedKey()` uses HKDF-SHA256 and defaults to a 32-byte output. Both `salt` and `info` are required and are chosen by the caller; the package provides no built-in domain labels.
+- Pass high-entropy BIP-39 seed bytes to the seed key derivation helpers, not a mnemonic phrase. Accepted string inputs are consumed literally as UTF-8 and are not converted from mnemonic words into seed bytes.
+- `deriveSeedKeyPair()` always derives a 32-byte Ed25519 seed and returns a 32-byte `publicKey` plus a sensitive 64-byte `secretKey`, regardless of an `options.length` value.
 - BIP-21 amounts are decimal BTC strings with up to eight decimal places and a maximum value of `21000000`.
 - BOLT11 helpers support invoices for `bitcoin`, `testnet`, `regtest`, and `signet` networks.
 - `decode()` returns user-provided invoice descriptions when they are present. Sanitize descriptions before rendering them in HTML or storing them.
@@ -104,14 +146,21 @@ You can validate common wallet inputs before handing them to a module:
 
 ```javascript title="Validate Common Inputs"
 import {
+  validateAddress,
   validateBitcoinAddress,
   validateLightningAddress,
+  validateSolanaAddress,
   validateTronAddress,
   validateUmaAddress
 } from '@tetherto/wdk-utils'
 
+const chainAware = validateAddress(
+  'bip122:000000000019d6689c085ae165831e93',
+  '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'
+)
 const btc = validateBitcoinAddress('bc1qu9yqnhc6wjj6s62s9x0shnl5l2r7gq5cudm94r7mvwv0uw4s7acq0hn9g6')
 const lightning = validateLightningAddress('sprycomfort92@waletofsatoshi.com')
+const solana = validateSolanaAddress('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v')
 const tron = validateTronAddress('TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH')
 const uma = validateUmaAddress('$you@uma.money')
 ```
@@ -159,6 +208,46 @@ import { decrypt, encrypt } from '@tetherto/wdk-utils'
 
 const encrypted = encrypt(seedPhrase, passphrase)
 const restoredSeedPhrase = decrypt(encrypted, passphrase)
+```
+
+You can split a BIP-39 mnemonic into shares that require a threshold to recover:
+
+```javascript title="Split And Recover A Mnemonic"
+import 'react-native-get-random-values' // React Native only; load before WDK Utils
+import { combineMnemonic, splitMnemonic } from '@tetherto/wdk-utils'
+
+const shares = await splitMnemonic(seedPhrase, {
+  shares: 5,
+  threshold: 3
+})
+
+const restored = await combineMnemonic([
+  shares[0],
+  shares[2],
+  shares[4]
+])
+```
+
+Treat every unencrypted share as sensitive recovery material. Store shares separately and do not send them to logs, analytics, or untrusted services.
+
+You can derive independent keys for application-specific purposes by using distinct domain labels:
+
+```javascript title="Derive Domain-Separated Keys"
+import { deriveSeedKey, deriveSeedKeyPair } from '@tetherto/wdk-utils'
+
+const syncKey = deriveSeedKey(seedBytes, {
+  salt: 'com.example.wallet/v1',
+  info: 'sync-encryption'
+})
+
+const signingKeyPair = deriveSeedKeyPair(seedBytes, {
+  salt: 'com.example.wallet/v1',
+  info: 'device-signing'
+})
+
+// Clear sensitive outputs after their final use.
+syncKey.fill(0)
+signingKeyPair.secretKey.fill(0)
 ```
 
 ***

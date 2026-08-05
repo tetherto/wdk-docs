@@ -3,7 +3,7 @@ title: Send Transactions
 description: Send gasless transactions and estimate fees.
 ---
 
-This guide explains how to [send a gasless transaction](#send-a-gasless-transaction), [estimate fees](#estimate-fees), [cap transaction fees](#cap-transaction-fees), [reuse a recent quote](#reuse-a-recent-quote), and [use a custom paymaster token](#send-with-custom-paymaster-token).
+This guide explains how to [send a gasless transaction](#send-a-gasless-transaction), [estimate fees](#estimate-fees), [sign, quote, and submit a UserOperation](#sign-quote-and-submit-a-useroperation), [cap transaction fees](#cap-transaction-fees), [reuse a recent quote](#reuse-a-recent-quote), [use parallel nonce lanes](#use-parallel-nonce-lanes), and [use a custom paymaster token](#send-with-custom-paymaster-token).
 
 ## Send a Gasless Transaction
 
@@ -14,7 +14,7 @@ const result = await account.sendTransaction({
   to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
   value: 1000000000000000n // 0.001 ETH in wei
 })
-console.log('Transaction hash:', result.hash)
+console.log('UserOperation hash:', result.hash)
 console.log('Fee paid in paymaster token:', result.fee)
 ```
 
@@ -34,9 +34,33 @@ const quote = await account.quoteSendTransaction({
 console.log('Estimated fee:', quote.fee)
 ```
 
+## Sign, Quote, and Submit a UserOperation
+
+Use `signTransaction()` when a separate review or relay step needs a signed ERC-4337 v0.7 UserOperation. The method accepts one transaction, not a batch.
+
+```javascript title="Sign, Quote, and Submit"
+const tx = {
+  to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+  value: 1000000000000000n
+}
+
+const signedUserOperation = await account.signTransaction(tx)
+const quote = await account.quoteSendTransaction(signedUserOperation)
+console.log('Signed operation fee ceiling:', quote.fee)
+
+const result = await account.sendTransaction(signedUserOperation)
+console.log('UserOperation hash:', result.hash)
+```
+
+<Callout type="warning">
+Only submit an operation produced by the same account with the intended fee-mode configuration. WDK preserves the signed nonce and configuration, does not rebuild or re-sign the operation, and does not reapply `transactionMaxFee` during signed submission. Do not mutate the operation, and submit it before its nonce becomes stale.
+</Callout>
+
+For signed UserOperations, sponsored mode quotes `0n`. Other modes quote a 20% buffered native-gas ceiling in wei. In paymaster-token mode, that signed-operation quote is not a token-denominated paymaster charge.
+
 ## Cap Transaction Fees
 
-Set `transactionMaxFee` to reject non-sponsored `sendTransaction()` and `signTransaction()` operations when the estimated UserOperation fee is above your cap. Use `transferMaxFee` separately for token transfers.
+Set `transactionMaxFee` to reject non-sponsored operations newly built by `sendTransaction()` or `signTransaction()` when the estimated UserOperation fee is above your cap. A signed UserOperation passed to `sendTransaction()` is not checked against the cap again. Use `transferMaxFee` separately for token transfers.
 
 ```javascript title="Cap sendTransaction fees"
 const result = await account.sendTransaction({
@@ -53,7 +77,13 @@ const result = await account.sendTransaction({
 
 ## Reuse a Recent Quote
 
-Quotes are cached for up to 2 minutes. If you call `sendTransaction()` with the same transaction during that window, the account checks the current on-chain nonce before reusing the cached UserOperation. If the nonce has moved, it builds a fresh quote before sending.
+Default-lane, non-sponsored UserOperations built while quoting can be cached for up to 2 minutes. If you call `sendTransaction()` with the same transaction during that window, the account checks the current on-chain nonce before reusing a cached UserOperation. If the nonce has moved, it rebuilds before sending. Sponsored quotes do not cache a built UserOperation.
+
+Quote methods do not resolve or reserve a nonce lane. A later send or sign using `parallel` or `nonceKey` rebuilds in that selected lane instead of reusing the quoted UserOperation.
+
+<Callout type="warning">
+Cache identity does not include per-call fee-mode configuration. Use the same fee-mode and paymaster settings for `quoteSendTransaction()` and the matching `sendTransaction()` or `signTransaction()`. Do not quote with one mode, paymaster token, or sponsorship policy and execute the same transaction with another while the quote is cached.
+</Callout>
 
 ```javascript title="Quote Then Send"
 const tx = {
@@ -65,20 +95,44 @@ const quote = await account.quoteSendTransaction(tx)
 console.log('Estimated fee:', quote.fee)
 
 const result = await account.sendTransaction(tx)
-console.log('Transaction hash:', result.hash)
+console.log('UserOperation hash:', result.hash)
 ```
 
-## Send Rapid Transactions
+## Use Parallel Nonce Lanes
 
-When you call `sendTransaction()` or `transfer()` rapidly from the same account instance, the wallet reserves local nonces so concurrent UserOperations use sequential nonces. If submission fails before bundler acceptance, the reserved nonce is released. If the failure is ambiguous, such as a transport error after submission, the wallet keeps the nonce reserved to avoid accidental reuse.
+Beta.14 no longer reserves sequential nonces locally. By default, operations use ERC-4337 nonce key `0`; two default-lane sends started before the first is included can select the same sequence and collide.
 
-<Callout type="info">
-The wallet reads the on-chain nonce before reserving locally. If that read does not complete within 30 seconds, the operation fails instead of guessing the next nonce.
+Before using nonzero lanes, deploy the Safe with one operation and wait for its UserOperation receipt. Your bundler must support parallel nonce keys, and its per-sender mempool limits still apply.
+
+Use `parallel: true` to give each independent operation a fresh random lane:
+
+```javascript title="Send Independent Operations Concurrently"
+const [first, second] = await Promise.all([
+  account.sendTransaction({ to: recipientA, value: 0n }, { parallel: true }),
+  account.sendTransaction({ to: recipientB, value: 0n }, { parallel: true })
+])
+
+console.log(first.hash, second.hash) // UserOperation hashes
+```
+
+Use distinct named lanes for stable independent work streams. Strings are hashed as labels; they are not parsed as numeric keys.
+
+```javascript title="Use Named Nonce Lanes"
+const payroll = await account.sendTransaction(txA, { nonceKey: 'payroll' })
+const refunds = await account.sendTransaction(txB, { nonceKey: 'refunds' })
+```
+
+`nonceKey` takes precedence over `parallel`. A raw numeric key must fit uint192; use a `bigint` above `Number.MAX_SAFE_INTEGER`.
+
+<Callout type="warning">
+One lane is still sequential. Two concurrent sends using the same named or default lane can return UserOperation hashes even though one never receives a receipt. Wait for inclusion before reusing a lane. If calls depend on one another, batch them with `sendTransaction([tx1, tx2])` so they execute in order under one nonce. Different lanes are independent and can be included in either order.
 </Callout>
+
+`signTransaction()` preserves the lane chosen by the same configuration rules. In beta.14, per-call `parallel` and `nonceKey` work at runtime but are missing from the published per-call TypeScript declarations; construction-level lane configuration is typed.
 
 ## Send with Custom Paymaster Token
 
-You can override the default paymaster token for a specific transaction by passing a config object to [`account.sendTransaction()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference):
+You can override the default paymaster token for a specific transaction by passing a config object to [`account.sendTransaction()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference). This example assumes the account is already in paymaster-token mode:
 
 ```javascript title="Custom Paymaster Token"
 const result = await account.sendTransaction({
@@ -90,6 +144,8 @@ const result = await account.sendTransaction({
   }
 })
 ```
+
+When switching from sponsored or native-coin mode, also set `isSponsored: false` and `useNativeCoins: false`, and provide any paymaster fields absent from the account configuration.
 
 ## Next Steps
 

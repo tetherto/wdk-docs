@@ -1,0 +1,83 @@
+---
+title: Get started with the RGB wallet
+description: Install @utexo/wdk-wallet-rgb 2.0.3 and create its single on-chain RGB account.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide installs the documented release, creates a durable local wallet, and reads its first address.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## 1. Check the target runtime
+
+The v2.0.3 dependency set publishes native artifacts for Linux x64, Linux arm64, and macOS arm64. It does not publish a verified Windows or Intel macOS artifact, and the package does not declare a Node.js engine range.
+
+Test installation and native loading on the exact deployment target before integrating wallet state.
+
+## 2. Install the released package
+
+```bash
+npm install @utexo/wdk-wallet-rgb@2.0.3
+```
+
+## 3. Choose durable state and services
+
+Create an app-private, persistent directory. Configure an indexer and transport endpoint for the same network.
+
+```js
+import WalletManagerRgb from '@utexo/wdk-wallet-rgb'
+
+const seedPhrase = await loadSeedFromSecretStorage()
+
+const manager = new WalletManagerRgb(seedPhrase, {
+  network: 'regtest',
+  dataDir: '/app-private/wdk/rgb-onchain',
+  indexerUrl: 'tcp://127.0.0.1:50001',
+  transportEndpoint: 'rpc://127.0.0.1:3000/json-rpc',
+})
+```
+
+`loadSeedFromSecretStorage()` represents your application's secret-management boundary. Do not embed a mnemonic in source, logs, telemetry, or crash reports.
+
+## 4. Get the account
+
+RGB supports only account index `0`.
+
+```js
+try {
+  const account = await manager.getAccount(0)
+  const address = account.getAddress()
+
+  console.log('RGB-aware Bitcoin address:', address)
+} finally {
+  manager.dispose()
+}
+```
+
+`getAddress()` is synchronous in the released runtime. Using `await` on its value is harmless, but it is not required.
+
+## 5. Verify recovery before funding
+
+Before using real funds:
+
+1. Register and synchronize the wallet against trusted services.
+2. Create an encrypted backup.
+3. Restore into an empty test directory with the same seed.
+4. Confirm addresses, assets, balances, transfers, and UTXOs.
+5. Repeat on the exact deployment runtime.
+
+<Callout type="warn">
+Do not assume the seed alone restores RGB state. Preserve and test recovery of `dataDir` and encrypted backups.
+</Callout>
+
+## Next steps
+
+- [Manage account storage](/sdk/community-modules/wdk-wallet-rgb/guides/manage-account-storage)
+- [Issue and receive assets](/sdk/community-modules/wdk-wallet-rgb/guides/issue-receive-assets)
+- [Back up, restore, and migrate](/sdk/community-modules/wdk-wallet-rgb/guides/backup-restore-migrate)
+- [Configuration](/sdk/community-modules/wdk-wallet-rgb/configuration)

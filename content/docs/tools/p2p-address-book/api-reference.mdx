@@ -1,0 +1,132 @@
+---
+title: P2P Address Book API Reference
+description: Public API, records, configuration, and data semantics for @tetherto/wdk-p2p-address-book.
+docType: reference
+schemaType: APIReference
+icon: Code
+---
+
+## Exports
+
+```javascript
+import AddressBook, {
+  AddressBook as NamedAddressBook,
+  ADDRESS_TYPES
+} from '@tetherto/wdk-p2p-address-book'
+```
+
+The default and named `AddressBook` exports refer to the same class.
+
+## Construction
+
+| API | Description |
+|---|---|
+| `AddressBook.fromSeed(seed, corestore, options)` | Derives the book identity and encryption material from seed bytes and a namespace, then opens the local book. |
+| `new AddressBook(corestore, options?)` | Low-level constructor for advanced integrations. |
+| `AddressBook.createWorkletModule({ seed, config })` | Creates a worklet-compatible module with seed-isolated storage. |
+| `AddressBook.deriveAutobaseKey(keyPair, options?)` | Derives the public Autobase key from a bootstrap public key or key pair. |
+| `AddressBook.selectMirrors(autobaseKey, pool, n?)` | Deterministically selects up to `n` mirror keys from a pool. |
+
+Prefer `fromSeed()`. The low-level constructor permits replication without an encryption key; advanced callers must supply `encryptionKey` before opening or set `replicate: false`.
+
+### `fromSeed()` options
+
+| Option | Required | Behavior |
+|---|---|---|
+| `namespace` | Yes | Stable application scope for book identity, encryption derivation, and Corestore isolation. |
+| `replicate` | No | Defaults to `true`; set `false` for local-only use. |
+| `mirrors` | No | Blind-peer keys used for peering. Does not replace `addMirror()` during restoration. |
+| `timeout` | No | Bootstrap and enrollment wait. Defaults to 20 seconds. |
+| `name` | No | Label stored for the enrolling device writer. |
+| `bootstrap`, `swarm`, `relayThrough` | No | Advanced networking hooks whose concrete types are not declared stable. `close()` destroys a supplied swarm. |
+
+The declared low-level `optimistic` option is ignored in `1.0.0-beta.2`; Autobase optimistic mode is always enabled.
+
+## Lifecycle and identity
+
+| Surface | Description |
+|---|---|
+| `ready()` | Opens the local book. In beta.2, initial swarm flush and peering continue in the background. |
+| `create()` | Enrolls the local writer for a new book without attempting restoration. |
+| `close()` | Closes book-owned Autobase, peering, and swarm resources. |
+| `suspend()` / `resume()` | Suspends or resumes networking resources. |
+| `getInfo()` | Returns `{ autobaseKey, writable }`. |
+| `writerKey` | Current device writer key. |
+| `key` | Public Autobase key. |
+| `discoveryKey` | Discovery key used for replication. |
+| `writable` | Whether the current device writer is enrolled. |
+| `encryptionKey` | Content-encryption key. Treat it as secret. |
+
+## Contact and address records
+
+| Record | Required input | Optional input | Generated fields |
+|---|---|---|---|
+| Contact | `name` | `username` | `id`, `createdAt`, `updatedAt` |
+| Address | `address`, `type`, `network` | `label` | `id`, `contactId`, `createdAt`, `updatedAt` |
+
+Supported address types are:
+
+```javascript
+ADDRESS_TYPES.BITCOIN
+ADDRESS_TYPES.EVM
+ADDRESS_TYPES.TRON
+ADDRESS_TYPES.UMA
+ADDRESS_TYPES.LIGHTNING_ADDRESS
+ADDRESS_TYPES.LNURL
+ADDRESS_TYPES.SPARK
+```
+
+The package trims text fields and lowercases `network`, but it does not validate destination syntax. An address and normalized network pair must be unique; UMA values must also be unique across UMA records. Address comparisons are case-sensitive.
+
+Contact names and usernames do not need to be unique. The schema has no first-class email or custom-field support.
+
+## Contact and address methods
+
+| Area | Methods |
+|---|---|
+| Contacts | `addContact()`, `editContact()`, `deleteContact()`, `getContact()`, `listContacts()` |
+| Addresses | `addAddress()`, `editAddress()`, `deleteAddress()`, `listAddresses()` |
+| Query and events | `search()`, `on('update')`, `off('update')` |
+
+- `listContacts()` sorts by name. `listAddresses()` does not promise an order.
+- `search()` matches contact names, addresses, and address labels without case sensitivity. It does not search usernames, networks, or types.
+- Deleting a contact removes it and its currently visible addresses from the materialized view.
+- `update` events have no record payload. Refetch the required view.
+
+<Callout type="warn">
+Conflicts follow Autobase's accepted operation order, not `updatedAt`. A later accepted contact update can recreate a deleted contact, and a delayed address operation can appear after its parent contact was deleted. The beta release has no tombstone or revision mechanism for preventing these outcomes.
+</Callout>
+
+## Writer methods
+
+| Method | Description |
+|---|---|
+| `addWriter(data)` | Adds a writer key or writer record. |
+| `removeWriter(key)` | Removes current write membership. |
+| `listWriters(query?)` | Returns a HyperDB query for writer records. |
+| `getWriter(key)` | Returns a matching writer or `null`. |
+
+Writer-management methods are not included in the exported worklet bridge interface.
+
+## Mirror methods
+
+| Method | Description |
+|---|---|
+| `addMirror(key)` | Registers one mirror, peers with it, and enrolls a deferred local writer. Returns the selected key in an array. |
+| `addMirror(pool, n?)` | Selects up to `n` entries, then registers and peers with them. |
+| `listMirrors()` | Returns persisted mirror records. |
+| `removeMirror(key)` | Removes a persisted mirror record. See the beta limitation below. |
+
+<Callout type="warn">
+In `1.0.0-beta.2`, `removeMirror()` leaves the key active in the current in-memory peering instance. Close and reopen the book without that key before treating peering as stopped. The method does not delete blocks already held by the server.
+</Callout>
+
+## Worklet API
+
+The worklet bridge exposes `getInfo()`, `create()`, contact and address CRUD, `search()`, and mirror methods. Byte-array mirror keys are normalized to strings by the bridge. Writer-management methods and raw key properties are direct-API surfaces only.
+
+## Related guides
+
+- [Get Started](/tools/p2p-address-book/get-started)
+- [Sync and Recovery](/tools/p2p-address-book/sync-and-recovery)
+- [Production and Privacy](/tools/p2p-address-book/production-and-privacy)

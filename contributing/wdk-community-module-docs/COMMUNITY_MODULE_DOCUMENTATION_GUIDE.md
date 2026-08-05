@@ -722,15 +722,17 @@ state such as `Prerelease`, a documentation state such as `Reference only`, or a
 capability statement. Do not use `Ready` when readers could infer package
 stability, release maturity, runtime interoperability, or production suitability.
 
-Use this title and navigation policy:
+Use this title and navigation policy. Within a family, order applicable sections
+as Usage, Guides, Configuration, API Reference, then supplemental Reference.
+Omit missing sections without changing the relative order.
 
 | Page | Rendered `title` | Description | Sidebar/card label |
 |---|---|---|---|
 | Partner/community overview | Module or provider-qualified, such as `<Module> Overview` when adjacent pages use that form | Name the package and primary reader outcome | Approved module/provider label. |
 | Usage | `<Module> Usage` for independently maintained modules; preserve an established generic first-party title when editing in place | Name the workflow map or complete task | Usually `Usage`. |
+| Task guide | Imperative or outcome-based, such as `Quote and execute a route` | State the completed result | Short outcome label matching the tree. |
 | Configuration | `<Module> Configuration` for independently maintained modules; generic `Configuration` only when the adjacent merged family deliberately uses it | Name the setup decisions and runtime | Usually `Configuration`. |
 | API reference | `<Module> API Reference` for independently maintained modules; generic `API Reference` only when the adjacent merged family deliberately uses it | Name the public package/API surface | Usually `API Reference`. |
-| Task guide | Imperative or outcome-based, such as `Quote and execute a route` | State the completed result | Short outcome label matching the tree. |
 
 Rendered titles must make sense in search and direct entry. Sidebar and card
 labels may stay compact because their parent group supplies context. Keep card
@@ -745,33 +747,26 @@ review frontmatter directly.
 
 ## Overview Page Template
 
-Use this section order for most module overview pages:
+Place the canonical responsibility callout near the top of every independently
+maintained page, before or after the opening content to match adjacent merged
+family pages. Use this order for the remaining overview content:
 
 1. One paragraph naming the package, maintainer/provider, module family, and
    primary user outcome.
 2. Short source or provider attribution when useful.
-3. Third-party responsibility callout for independently maintained modules.
-4. "When to use it" table mapping use cases to this module and alternatives.
-5. "Requirements" or "Prerequisites" for accounts, RPC, provider keys,
+3. "When to use it" table mapping use cases to this module and alternatives.
+4. "Requirements" or "Prerequisites" for accounts, RPC, provider keys,
    storage, approvals, route support, or network requirements.
-6. "Key capabilities" or "Features" with exact method and behavior names.
-7. "Limitations" when any unsupported method, runtime caveat, route limit,
+5. "Key capabilities" or "Features" with exact method and behavior names.
+6. "Limitations" when any unsupported method, runtime caveat, route limit,
    package status, or provider dependency matters.
-8. "Next Steps" cards in the same order as sidebar/pages.
+7. "Next Steps" cards in the same order as sidebar/pages.
 
 Compact page mode is the exception: use the dedicated compact scaffold below so
 the overview contains prerequisites, installation, minimal construction or
 first read, limitations, cleanup when applicable, and only applicable exits.
 
-Per-page independently maintained module callout:
-
-```mdx
-<Callout type="warn">
-This module is developed and maintained independently by a third-party contributor. Tether and the WDK team do not endorse or assume responsibility for its code, security, or maintenance. Review the package and use your own judgment before using it with real funds.
-</Callout>
-```
-
-Community catalog/listing callout:
+Canonical community page or dedicated community listing callout:
 
 ```mdx
 <Callout type="warn">
@@ -781,21 +776,31 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 </Callout>
 ```
 
-Verify this wording against `content/docs/sdk/community-modules/index.mdx` and
-the merged module pages before publishing; do not paraphrase it. Apply it by
-surface, without hidden policy:
+Mixed functional listing callout:
+
+```mdx
+<Callout type="warn">
+Rows marked Community are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+```
+
+Verify these exact variants against `content/docs/sdk/community-modules/index.mdx`,
+the merged module pages, and mixed functional indexes before publishing; do not
+paraphrase them. Apply them by surface, without hidden policy:
 
 | Surface | Required responsibility treatment |
 |---|---|
-| Every page owned by an independently maintained module | Singular per-page callout immediately after the opening paragraph and any short provider/source attribution. |
-| Community Modules catalog | Plural catalog callout once before the community listing. |
-| Functional index or `all-modules.mdx` section that lists community packages | Plural catalog callout once before the affected table/cards, or link to the immediately adjacent catalog callout when both surfaces render as one section. Mark each community row's ownership/status explicitly. |
+| Every page owned by an independently maintained module | Community page callout near the top, before or after the opening purpose/attribution to preserve the placement used by adjacent merged family pages. |
+| Community Modules catalog or dedicated community section in an aggregate | Community page/listing callout once before the community listing. |
+| Mixed functional index or table with WDK-maintained and community packages | Mixed functional listing callout once before the affected rows. Mark each community row's ownership/status explicitly. |
 | Chooser/card outside a community listing | Label the option `Community` or `Independently maintained` and link to the module overview; do not squeeze the full callout into a compact control. |
 | Changelog or incidental cross-link | No repeated callout; keep ownership factual and link to the overview or catalog. |
 
-Do not treat broader placement proposed only in an open PR as merged policy. If
-maintainers change the canonical wording or placement, update this matrix and
-the affected page sets together.
+Do not generalize one family's placement into a repository-wide rule. An open PR
+does not change canonical wording or adjacent-family placement. If maintainers
+standardize either, update this matrix and the affected page sets together.
 
 Put an operational limitation at the first decision point when it changes
 whether a reader should use the default setup. Examples include a provider
@@ -1471,6 +1476,8 @@ Navigation checklist:
 - Add files only under the canonical path.
 - Preserve existing URLs when updating an existing module.
 - Update `src/lib/custom-tree.ts` when the page should appear in the rendered sidebar.
+- Order applicable family sections as Usage, Guides, Configuration, API Reference,
+  then supplemental Reference; omit missing sections without changing this order.
 - Do not update `src/lib/custom-tree.ts` for files under
   `contributing/wdk-community-module-docs/`, skill files, or other non-rendered
   authoring artifacts.
@@ -1496,7 +1503,7 @@ overview must contain any omitted setup/first-use journey itself.
 
 | Current page | Required exits |
 |---|---|
-| Overview | Compact: API reference and relevant source/provider destination. Standard/high-risk: getting started or usage, configuration, API reference, and focused guides in reader order. |
+| Overview | Compact: API reference and relevant source/provider destination. Standard/high-risk: getting started or usage, focused guides, configuration, and API reference in reader order. |
 | Usage hub | Getting started when separate, task guides in workflow order, configuration, API reference, limitations/cleanup. |
 | Complete-flow usage | Configuration, API reference, recovery/error guidance, and overview. |
 | Configuration | Getting started or usage, API reference, and the task most affected by configuration. |
@@ -1838,6 +1845,7 @@ rendered pages changed, run:
 
 ```bash
 export LINK_CHECK_EXTERNAL=false
+npm run test:link-routing
 npm run check:meta
 npm run check:redirects
 LINK_CHECK_EXTERNAL=false npm run check:links
@@ -1994,9 +2002,9 @@ docType: explanation
 schemaType: TechArticle
 ---
 
+<ORDER_THE_NEXT_TWO_BLOCKS_TO_MATCH_ADJACENT_MERGED_FAMILY_PAGES>
+<CANONICAL_COMMUNITY_CALLOUT_WHEN_APPLICABLE>
 <ONE_PARAGRAPH_PURPOSE_OWNERSHIP_AND_OPTIONAL_SOURCE_ATTRIBUTION>
-
-<CANONICAL_COMMUNITY_CALLOUT_WHEN_APPLICABLE_AFTER_THE_OPENING>
 
 ## When to use it
 <USE_CASE_AND_ALTERNATIVE_TABLE>
@@ -2028,9 +2036,9 @@ docType: explanation
 schemaType: TechArticle
 ---
 
+<ORDER_THE_NEXT_TWO_BLOCKS_TO_MATCH_ADJACENT_MERGED_FAMILY_PAGES>
+<CANONICAL_COMMUNITY_CALLOUT_WHEN_APPLICABLE>
 <ONE_PARAGRAPH_PURPOSE_OWNERSHIP_AND_OPTIONAL_SOURCE_ATTRIBUTION>
-
-<CANONICAL_COMMUNITY_CALLOUT_WHEN_APPLICABLE_AFTER_THE_OPENING>
 
 ## When to use it
 <USE_CASE_AND_ALTERNATIVE_TABLE>
@@ -2072,9 +2080,9 @@ schemaType: TechArticle
 icon: BookOpen
 ---
 
+<ORDER_THE_NEXT_TWO_BLOCKS_TO_MATCH_ADJACENT_MERGED_FAMILY_PAGES>
+<CANONICAL_COMMUNITY_CALLOUT_WHEN_APPLICABLE>
 <ONE_PARAGRAPH_PURPOSE_OWNERSHIP_AND_OPTIONAL_SOURCE_ATTRIBUTION>
-
-<CANONICAL_COMMUNITY_CALLOUT_WHEN_APPLICABLE_AFTER_THE_OPENING>
 
 ## Requirements
 <SHARED_RUNTIME_ACCOUNT_PROVIDER_AND_RELEASE_REQUIREMENTS>
@@ -2113,9 +2121,9 @@ schemaType: TechArticle
 icon: BookOpen
 ---
 
+<ORDER_THE_NEXT_TWO_BLOCKS_TO_MATCH_ADJACENT_MERGED_FAMILY_PAGES>
+<CANONICAL_COMMUNITY_CALLOUT_WHEN_APPLICABLE>
 <ONE_PARAGRAPH_PURPOSE_OWNERSHIP_AND_OPTIONAL_SOURCE_ATTRIBUTION>
-
-<CANONICAL_COMMUNITY_CALLOUT_WHEN_APPLICABLE_AFTER_THE_OPENING>
 
 ## Prerequisites
 <STATIC_RUNTIME_ACCOUNT_CREDENTIAL_FUNDING_AND_RELEASE_REQUIREMENTS>
@@ -2167,9 +2175,9 @@ schemaType: TechArticle
 icon: Settings
 ---
 
+<ORDER_THE_NEXT_TWO_BLOCKS_TO_MATCH_ADJACENT_MERGED_FAMILY_PAGES>
+<CANONICAL_COMMUNITY_CALLOUT_WHEN_APPLICABLE>
 <ONE_PARAGRAPH_PURPOSE_OWNERSHIP_AND_OPTIONAL_SOURCE_ATTRIBUTION>
-
-<CANONICAL_COMMUNITY_CALLOUT_WHEN_APPLICABLE_AFTER_THE_OPENING>
 
 ## Installation and runtime
 <PACKAGE_PEERS_ENGINES_AND_ENVIRONMENT>
@@ -2202,9 +2210,9 @@ schemaType: APIReference
 icon: Code
 ---
 
+<ORDER_THE_NEXT_TWO_BLOCKS_TO_MATCH_ADJACENT_MERGED_FAMILY_PAGES>
+<CANONICAL_COMMUNITY_CALLOUT_WHEN_APPLICABLE>
 <ONE_PARAGRAPH_PURPOSE_OWNERSHIP_AND_OPTIONAL_SOURCE_ATTRIBUTION>
-
-<CANONICAL_COMMUNITY_CALLOUT_WHEN_APPLICABLE_AFTER_THE_OPENING>
 
 ## Package and exports
 <EXACT_PACKAGE_IMPORTS_EXPORTS_AND_DEFAULT_EXPORT>
@@ -2242,9 +2250,9 @@ docType: how-to
 schemaType: TechArticle
 ---
 
+<ORDER_THE_NEXT_TWO_BLOCKS_TO_MATCH_ADJACENT_MERGED_FAMILY_PAGES>
+<CANONICAL_COMMUNITY_CALLOUT_WHEN_APPLICABLE>
 <ONE_PARAGRAPH_PURPOSE_OWNERSHIP_AND_OPTIONAL_SOURCE_ATTRIBUTION>
-
-<CANONICAL_COMMUNITY_CALLOUT_WHEN_APPLICABLE_AFTER_THE_OPENING>
 
 ## Prerequisites
 <STATE_REQUIRED_BEFORE_STARTING>

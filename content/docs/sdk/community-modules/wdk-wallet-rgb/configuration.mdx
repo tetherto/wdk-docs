@@ -1,0 +1,115 @@
+---
+title: RGB wallet configuration
+description: Configure network, durable state, indexing, transport, and fee controls for @utexo/wdk-wallet-rgb 2.0.3.
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+`WalletManagerRgb` accepts a BIP-39 mnemonic or seed bytes and an RGB wallet configuration.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Recommended configuration
+
+```js
+import WalletManagerRgb from '@utexo/wdk-wallet-rgb'
+
+const manager = new WalletManagerRgb(seedPhrase, {
+  network: 'regtest',
+  dataDir: '/app-private/wdk/rgb-onchain',
+  indexerUrl: 'tcp://127.0.0.1:50001',
+  transportEndpoint: 'rpc://127.0.0.1:3000/json-rpc',
+})
+```
+
+Replace the paths and endpoints with values for your environment. Do not use a public example endpoint without evaluating its availability, privacy, and trust model.
+
+## Options
+
+| Field | Type | Runtime default | Guidance |
+|---|---|---|---|
+| `network` | `'mainnet' \| 'testnet' \| 'regtest'` | None | Required by the manager. |
+| `dataDir` | `string` | Temporary directory | Use a durable, app-private path and include it in backup and restore testing. |
+| `indexerUrl` | `string` | RGB SDK default | Use a trusted Electrs-compatible endpoint for the selected network. |
+| `transportEndpoint` | `string` | RGB SDK default | Used for RGB consignment exchange. Validate its scheme, network, and availability. |
+| `keys` | RGB SDK generated keys | Derived by the manager | Internal account-construction field; do not replace manager derivation in normal use. |
+| `transferMaxFee` | `number \| bigint` | None | Not forwarded by `WalletManagerRgb.getAccount()` in v2.0.3; do not rely on it through the manager path. |
+
+<Callout type="warn">
+The generated v2.0.3 TypeScript alias omits `dataDir`, `indexerUrl`, `transportEndpoint`, and `transferMaxFee`, although the released runtime and source JSDoc accept them. Keep any local type augmentation pinned to this package version and remove it when upstream declarations converge.
+</Callout>
+
+## Network
+
+Only these values are supported by the released declarations and account path logic:
+
+| Network | Vanilla path | Colored path |
+|---|---|---|
+| `mainnet` | `m/86'/0'/0'` | `m/86'/827166'/0'` |
+| `testnet` | `m/86'/1'/0'` | `m/86'/827167'/0'` |
+| `regtest` | `m/86'/1'/0'` | `m/86'/827167'/0'` |
+
+Do not configure `signet`, `testnet4`, or a custom network for this release even if a transitive RGB dependency recognizes additional names.
+
+## Local state
+
+The wallet stores RGB records under `dataDir`. Use a path that is:
+
+- persistent across restarts and upgrades;
+- private to the application and OS user;
+- unavailable to concurrent wallet instances;
+- covered by encrypted backup and tested restoration;
+- distinct from [`@utexo/wdk-rgb-lightning`](https://www.npmjs.com/package/@utexo/wdk-rgb-lightning).
+
+<Callout type="warn">
+The seed derives wallet keys, but it does not replace the local RGB database. Do not delete `dataDir` or treat a mnemonic-only recovery drill as proof that RGB state is recoverable.
+</Callout>
+
+## Indexer and transport
+
+`indexerUrl` supplies Bitcoin chain data. `transportEndpoint` carries RGB consignments. Both services can observe request metadata and can be unavailable, stale, or malicious.
+
+Before production use:
+
+1. Bind each endpoint to the configured Bitcoin network.
+2. Apply TLS or an authenticated private network where supported.
+3. Set application-level timeouts and operational monitoring.
+4. Reconcile transfer state before retrying a timed-out write.
+5. Test failover without assuming a failed response means a failed broadcast.
+
+## Fee policy
+
+`manager.getFeeRates()` reads `https://mempool.space/api/v1/fees/recommended` and returns `normal` and `fast` as `bigint`. The request does not select `testnet` or `regtest`, so use it only as a mainnet-oriented display hint.
+
+`quoteSendTransaction()` and `quoteTransfer()` create and sign PSBTs to estimate a fee. Apply an application-owned limit before sending:
+
+```js
+const maximumFee = 2_000n
+const quote = await account.quoteTransfer(transfer)
+
+if (quote.fee > maximumFee) {
+  throw new Error('Quoted RGB transfer fee exceeds the application limit')
+}
+
+const result = await account.transfer(transfer)
+```
+
+Do not use `transferMaxFee` as the sole guard. The manager omits that field when it constructs the released account.
+
+## Runtime artifacts
+
+The released dependency graph provides native artifacts for Linux x64, Linux arm64, and macOS arm64. It does not provide a verified Windows or Intel macOS artifact for this version. The package does not declare a Node.js engine range.
+
+Validate installation, native loading, backup/restore, and real network calls on the exact deployment target.
+
+## Next steps
+
+- [Get started](/sdk/community-modules/wdk-wallet-rgb/guides/get-started)
+- [Manage account storage](/sdk/community-modules/wdk-wallet-rgb/guides/manage-account-storage)
+- [Handle errors](/sdk/community-modules/wdk-wallet-rgb/guides/handle-errors)
+- [API reference](/sdk/community-modules/wdk-wallet-rgb/api-reference)

@@ -1,0 +1,89 @@
+---
+title: Send Bitcoin and manage RGB UTXOs
+description: Quote and send Bitcoin, inspect unspents, and create UTXOs with @utexo/wdk-wallet-rgb 2.0.3.
+docType: how-to
+schemaType: TechArticle
+---
+
+RGB transfers require suitable Bitcoin UTXOs. The account exposes both WDK Bitcoin sends and RGB SDK UTXO helpers.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Inspect unspents
+
+```js
+account.syncWallet()
+
+const unspents = account.listUnspents()
+console.log(unspents)
+```
+
+Check native status fields and confirmation requirements before selecting an output for a consequential flow.
+
+## Create RGB-compatible UTXOs
+
+Use the combined method when the wallet can construct and sign the whole operation:
+
+```js
+const created = await account.createUtxos({
+  upTo: true,
+  num: 5,
+  size: 1_000,
+  feeRate: 2,
+})
+
+console.log('UTXOs created:', created)
+```
+
+`size` is satoshis and `feeRate` is sat/vbyte. Confirm appropriate values for the current network and RGB workflow.
+
+The release also exposes `createUtxosBegin()`, `signPsbt()`, and `createUtxosEnd()` for a lower-level PSBT flow. Use the exact v2.0.3 declaration and pinned RGB SDK shape when integrating those methods.
+
+## Quote a Bitcoin send
+
+```js
+const transaction = {
+  to: recipientAddress,
+  value: 50_000n,
+  feeRate: 2,
+}
+
+const quote = await account.quoteSendTransaction(transaction)
+console.log('Estimated fee:', quote.fee.toString())
+```
+
+<Callout type="warn">
+In v2.0.3, `quoteSendTransaction()` ignores the supplied `feeRate`, obtains its own one-block estimate, and constructs and signs a PSBT. `sendTransaction()` then uses the supplied `feeRate` or defaults to `1`. The quoted fee can therefore differ from the send path. Recheck policy and resulting state instead of treating the quote as a binding guarantee.
+</Callout>
+
+## Send Bitcoin
+
+```js
+const maximumQuotedFee = 2_000n
+const quote = await account.quoteSendTransaction(transaction)
+
+if (quote.fee > maximumQuotedFee) {
+  throw new Error('Quoted Bitcoin fee exceeds the application limit')
+}
+
+const result = await account.sendTransaction(transaction)
+console.log('Transaction ID:', result.hash)
+```
+
+`sendTransaction()` runs `sendBtcBegin → signPsbt → sendBtcEnd` and returns `{hash, fee}`.
+
+<Callout type="warn">
+Bitcoin-send failures are wrapped with the message prefix `RGB transfer failed` in this release. Classify the operation from your call context, not that text. A timeout also does not prove that broadcast failed; reconcile by transaction ID, UTXOs, and history before retrying.
+</Callout>
+
+`manager.getFeeRates()` reads main mempool.space recommendations without selecting the wallet network. Do not treat it as authoritative for `testnet` or `regtest`.
+
+## Next steps
+
+- [Issue and receive assets](/sdk/community-modules/wdk-wallet-rgb/guides/issue-receive-assets)
+- [Transfer assets](/sdk/community-modules/wdk-wallet-rgb/guides/transfer-assets)
+- [API reference](/sdk/community-modules/wdk-wallet-rgb/api-reference)

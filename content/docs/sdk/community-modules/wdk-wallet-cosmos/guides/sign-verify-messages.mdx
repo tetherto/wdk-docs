@@ -1,0 +1,86 @@
+---
+title: Sign and verify messages
+description: Create and verify ADR-36 arbitrary-data signatures with a Cosmos account.
+docType: how-to
+schemaType: TechArticle
+---
+
+The released module signs UTF-8 messages using the Cosmos ADR-36 arbitrary-data convention.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Sign a message
+
+Bind the message to your application's domain, purpose, audience, and nonce before signing:
+
+```js
+import WalletManagerCosmos from '@base58-io/wdk-wallet-cosmos'
+
+const seedPhrase = process.env.WDK_SEED_PHRASE
+if (!seedPhrase) throw new Error('WDK_SEED_PHRASE is required')
+
+const manager = new WalletManagerCosmos(seedPhrase, {
+  chainName: 'cosmoshub',
+})
+
+try {
+  const account = await manager.getAccount(0)
+  const message = [
+    'example.com authentication',
+    'audience: example-api',
+    'nonce: <single-use-nonce>',
+  ].join('\n')
+
+  const signature = await account.sign(message)
+  const verified = await account.verify(message, signature)
+
+  console.log('Signature verified:', verified)
+} finally {
+  manager.dispose()
+}
+```
+
+`sign()` returns a JSON string containing an ADR-36 `StdSignature`, including the public key and base64 signature.
+
+## Verify expected failures
+
+`verify()` binds the signature public key to the current account address. It returns `false` when:
+
+- the message differs;
+- the signature belongs to another account;
+- the signature input is malformed.
+
+```js
+const verified = await account.verify(
+  'a different message',
+  signature,
+)
+
+console.log(verified) // false
+```
+
+## Apply application-level context
+
+ADR-36 signs the text you provide. It does not add an application domain, expiry, audience, nonce policy, or replay protection for you.
+
+Before accepting a signature:
+
+1. Construct a canonical message format.
+2. Include the intended domain and action.
+3. Include a single-use nonce and an expiry when appropriate.
+4. Compare the expected account and authorization context.
+5. Mark the nonce as consumed after successful verification.
+
+<Callout type="warn">
+An ADR-36 message signature is not a signed Cosmos transaction. Do not treat it as authorization to broadcast a bank or IBC transfer unless your application defines and enforces that authorization protocol.
+</Callout>
+
+## Released account limitation
+
+`toReadOnlyAccount()` is not implemented in `1.0.0-beta.4`. The package API therefore requires a seed-backed `WalletAccountCosmos` even when your immediate task is verification. Keep that account's lifecycle short, call `manager.dispose()` in `finally`, and avoid accessing the public `keyPair.privateKey` field.
+
+See the [API reference](/sdk/community-modules/wdk-wallet-cosmos/api-reference#message-signing) for return and failure behavior.

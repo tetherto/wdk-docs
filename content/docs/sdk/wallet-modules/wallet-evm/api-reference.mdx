@@ -281,8 +281,8 @@ const signerAccount = new WalletAccountEvm(
 | `signTransaction(tx)` | Signs an EVM transaction without broadcasting it | `Promise<string>` | If transaction signing fails |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies a typed data signature (EIP-712) | `Promise<boolean>` | - |
-| `sendTransaction(tx)` | Sends an EVM transaction | `Promise<{hash: string, fee: bigint}>` | If no provider |
-| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction | `Promise<{fee: bigint}>` | If no provider |
+| `sendTransaction(tx)` | Sends an EVM transaction object | `Promise<{hash: string, fee: bigint}>` | If no provider |
+| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction object or serialized transaction | `Promise<{fee: bigint}>` | If no provider |
 | `transfer(options)` | Transfers ERC20 tokens to another address | `Promise<{hash: string, fee: bigint}>` | If no provider or fee exceeds max |
 | `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | If no provider |
 | `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | If no provider |
@@ -443,8 +443,12 @@ console.log('Typed data signature valid:', isValid) // true
 #### `sendTransaction(tx)`
 Sends an EVM transaction and returns the result with hash and fee.
 
+<Callout type="warning">
+In `1.0.0-beta.16`, the TypeScript declaration also accepts a serialized transaction string, but the send path does not broadcast those supplied bytes. It repopulates a transaction from the value passed to the method and can therefore broadcast a different transaction. Pass an `EvmTransaction` object here. Submit signed raw transactions through a separate relay or provider until this runtime mismatch is resolved.
+</Callout>
+
 **Parameters:**
-- `tx` (EvmTransaction): The transaction object
+- `tx` (EvmTransaction | string): The declared input type. Use the `EvmTransaction` object form for sending in `1.0.0-beta.16`.
   - `to` (string | null, optional): Recipient address; omit or pass `null` for contract creation
   - `value` (number | bigint): Amount in wei
   - `data` (string, optional): Transaction data in hex format
@@ -489,7 +493,9 @@ console.log('Transaction fee:', result.fee, 'wei')
 Estimates the fee for an EVM transaction without sending it.
 
 **Parameters:**
-- `tx` (EvmTransaction): The transaction object (same format as sendTransaction)
+- `tx` (EvmTransaction | string): A transaction object or serialized transaction string
+
+For a serialized transaction, the method parses the transaction fields for gas estimation but uses the provider's current fee data to calculate the quote. The result is a current network estimate and does not necessarily reproduce the fee settings embedded in the serialized transaction.
 
 **Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 

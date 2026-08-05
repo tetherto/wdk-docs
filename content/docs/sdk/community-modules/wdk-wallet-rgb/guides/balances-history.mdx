@@ -1,0 +1,105 @@
+---
+title: Read RGB balances and history
+description: Read settled Bitcoin and RGB balances, transactions, transfers, and receipts from the on-chain RGB wallet.
+docType: how-to
+schemaType: TechArticle
+---
+
+Use the account's read methods after synchronizing Bitcoin and RGB transfer state.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Synchronize first
+
+```js
+account.syncWallet()
+account.refreshWallet()
+```
+
+The freshness of every result depends on the selected indexer, transport endpoint, and local `dataDir`.
+
+## Read balances
+
+```js
+const bitcoinSats = await account.getBalance()
+const assetUnits = await account.getTokenBalance(assetId)
+
+console.log({
+  bitcoinSats: bitcoinSats.toString(),
+  assetUnits: assetUnits.toString(),
+})
+```
+
+Both WDK balance methods return settled values as `bigint`. RGB values are asset base units; apply the asset's precision only when formatting for display.
+
+To inspect the native asset records:
+
+```js
+const assets = account.listAssets()
+```
+
+Native result objects come from the pinned `@utexo/rgb-sdk`. Validate the fields your application consumes instead of assuming an unreleased repository shape.
+
+## Read Bitcoin history and UTXOs
+
+```js
+const transactions = account.listTransactions()
+const unspents = account.listUnspents()
+```
+
+These methods are synchronous wrappers over local/native state. A returned record is not, by itself, proof of finality; inspect its status and confirmations.
+
+## Read RGB transfer history
+
+Use `listTransfers()` when an error must remain observable:
+
+```js
+const allTransfers = account.listTransfers()
+const oneAssetTransfers = account.listTransfers(assetId)
+```
+
+Use `getTransfers()` for local filtering and pagination:
+
+```js
+const page = account.getTransfers({
+  assetId,
+  limit: 20,
+  skip: 0,
+})
+```
+
+<Callout type="warn">
+`getTransfers()` catches every underlying error and returns `[]`. An empty array therefore means either “no matching transfers” or “the native query failed.” Do not use it alone for reconciliation, audit, or retry decisions.
+</Callout>
+
+## Read receipts
+
+```js
+const bitcoinReceipt = await account.getTransactionReceipt(txid)
+const rgbReceipt = await account.getTransferReceipt(transferHash)
+```
+
+Each method returns a receipt or `null`. Treat `null` as pending, absent, or not yet indexed—not proof that a previous write failed.
+
+## Read-only access
+
+```js
+const readOnly = await account.toReadOnlyAccount()
+
+const [btcBalance, rgbBalance] = await Promise.all([
+  readOnly.getBalance(),
+  readOnly.getTokenBalance(assetId),
+])
+```
+
+Keep the originating wallet state and endpoints available for the lifetime of the read-only view.
+
+## Next steps
+
+- [Manage Bitcoin and UTXOs](/sdk/community-modules/wdk-wallet-rgb/guides/btc-utxos)
+- [Transfer RGB assets](/sdk/community-modules/wdk-wallet-rgb/guides/transfer-assets)
+- [Handle errors](/sdk/community-modules/wdk-wallet-rgb/guides/handle-errors)

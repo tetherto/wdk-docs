@@ -23,55 +23,98 @@ npm install @tetherto/wdk-protocol-bridge-usdt0-evm
 import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
 ```
 
-## Quick Reference
+## Choose the account flow
+
+| Account | Approval behavior | Submission |
+|---|---|---|
+| Standard `WalletAccountEvm` | Call `account.approve()` for the source-chain OFT or bridge spender before `bridge()`. | Approval and bridge are separate EVM transactions. |
+| `WalletAccountEvmErc4337` | Do not call `account.approve()` separately. The protocol builds an approval to the transaction-value helper. | Approval and helper bridge call are submitted in one UserOperation. |
+
+ERC-4337 helper bridging is available from Ethereum, Arbitrum, Plasma, and Polygon. Other supported EVM source chains require a standard account.
+
+## Standard account quick reference
 
 ```javascript
 const bridge = new Usdt0ProtocolEvm(evmAccount, {
-  bridgeMaxFee: 1000000000000000n  // Optional max fee in wei
+  bridgeMaxFee: 1000000000000000n
 })
 
-// Quote first
-const quote = await bridge.quoteBridge({
-  targetChain: 'arbitrum',
-  recipient: '0x...',
-  token: '0x...',      // USDT0 token address on source chain
-  amount: 1000000n     // 1 USDT0 (6 decimals)
-})
-
-// Then bridge (requires human confirmation)
-await evmAccount.approve({
-  token: '0x...',      // USDT0 token address on source chain
-  spender: '0x...',    // OFT or bridge spender address
-  amount: 1000000n
-})
-
-await bridge.bridge({
+const options = {
   targetChain: 'arbitrum',
   recipient: '0x...',
   token: '0x...',
   amount: 1000000n,
-  oftContractAddress: '0x...' // Same address used as approval spender
+  oftContractAddress: process.env.USDT0_OFT_ADDRESS
+}
+
+const quote = await bridge.quoteBridge(options)
+
+await evmAccount.approve({
+  token: options.token,
+  spender: options.oftContractAddress,
+  amount: options.amount
 })
+
+const result = await bridge.bridge(options)
 ```
 
-## Supported Routes
+For a standard account, `fee` and `bridgeFee` are in source-chain native base units. `bridge()` rejects when `fee + bridgeFee` is equal to or greater than `bridgeMaxFee`.
 
-**Source chains** (EVM only): ethereum, arbitrum, polygon, berachain, ink
-**Destination chains**: ethereum, arbitrum, polygon, berachain, ink, ton, tron
+## ERC-4337 quick reference
 
-Works with both wallet-evm and wallet-evm-erc-4337 accounts.
+```javascript
+const bridge = new Usdt0ProtocolEvm(erc4337Account)
 
-## How It Works
+const result = await bridge.bridge(
+  {
+    targetChain: 'polygon',
+    recipient: '0x...',
+    token: process.env.USDT_SOURCE_TOKEN_ADDRESS,
+    amount: 1000000n,
+    oftContractAddress: process.env.USDT0_OFT_ADDRESS
+  },
+  {
+    paymasterToken: {
+      address: process.env.PAYMASTER_TOKEN_ADDRESS
+    }
+  }
+)
+```
 
-- Uses **LayerZero OFT** (Omnichain Fungible Token) protocol for cross-chain messaging
-- Requires prior token approval for the source-chain OFT or bridge spender
-- Bridge fees include LayerZero messaging fees (paid in native token of source chain)
-- Token addresses differ per chain — see `references/deployments.md` for the full table
+The returned hash identifies the single UserOperation containing the approval and helper bridge call.
 
-## Common Interface
+### ERC-4337 fee-unit limitation
+
+In `1.0.0-beta.7`:
+
+- `bridgeFee` is in bridged-token base units.
+- `fee` is in source-native base units for native gas, paymaster-token base units for token-paid gas, or zero for sponsored gas.
+- The protocol numerically adds `fee + bridgeFee` when enforcing `bridgeMaxFee`.
+
+Do not interpret that sum as one currency or configure an ERC-4337 cap until the selected payment mode is known to produce compatible units. Equality with the cap is rejected.
+
+## Supported routes
+
+**EVM source and destination keys:** `ethereum`, `arbitrum`, `optimism`, `polygon`, `berachain`, `ink`, `plasma`, `conflux`, `corn`, `avalanche`, `celo`, `flare`, `hyperevm`, `mantle`, `megaeth`, `monad`, `morph`, `rootstock`, `sei`, `stable`, `unichain`, `xlayer`
+
+**Additional destination keys:** `solana`, `ton`, `tron`
+
+For Solana, TON, and TRON targets, beta.7 skips a source chain's ordinary `oftContract` during auto-resolution. The bundled source-side candidates are:
+
+- USD₮0 legacy mesh: Ethereum, Arbitrum, Celo.
+- XAU₮0 OFT: Ethereum, Arbitrum, Avalanche, Celo, HyperEVM, Ink, Monad, Plasma, Polygon, Stable.
+
+These are candidate source contracts, not a Cartesian route guarantee. A contract must have the selected destination peer configured on-chain. `getSupportedChains()` and `getSupportedTokens()` expose static configuration and do not prove a source-token-destination pair. Verify the exact route with `quoteBridge()`, or supply a verified route-specific `oftContractAddress` and optional `dstEid`.
+
+Route availability also depends on a matching USD₮0 or XAU₮0 deployment. Verify current contract addresses against the USDT0 deployment documentation.
+
+## Common interface
 
 | Method | Description |
 |--------|-------------|
-| `bridge({targetChain, recipient, token, amount})` | Execute bridge (⚠️ write method) |
-| `quoteBridge({targetChain, recipient, token, amount})` | Get bridge fee estimate |
-| `getConfig()` | Get protocol configuration |
+| `bridge({ targetChain, recipient, token, amount, oftContractAddress?, dstEid? }, config?)` | Execute a bridge operation. Requires human confirmation before the write. |
+| `quoteBridge({ targetChain, recipient, token, amount, oftContractAddress?, dstEid? }, config?)` | Estimate account and bridge fee fields without submitting. |
+| `getSupportedChains()` | Return the configured chain descriptors. |
+| `getSupportedTokens(options?)` | Return configured USD₮0 or XAU₮0 token descriptors, optionally filtered by chain or token symbol. |
+
+Validate the destination address for its target ecosystem, verify route contracts and endpoint overrides, and keep approvals bounded to the intended standard-account transfer.

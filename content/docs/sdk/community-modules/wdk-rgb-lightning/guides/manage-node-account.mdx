@@ -1,0 +1,92 @@
+---
+title: Manage the RGB Lightning node account
+description: Manage node identity, lock state, addresses, read-only access, seed derivation, and lifecycle cleanup.
+docType: how-to
+schemaType: TechArticle
+---
+
+One manager owns one RLN/LDK node, one account at index `0`, and one persistent state directory.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Use the fixed account identity
+
+```js
+const account = await manager.getAccount(0)
+
+console.log(account.index) // 0
+console.log(account.path)  // m
+```
+
+`getAccountByPath('m')` returns the same account. Other paths and nonzero indexes are rejected. The manager's signer-name overload does not enable registered WDK signers; this module requires its attached VLS signer.
+
+`account.keyPair.publicKey` is the compressed Lightning node public key. `account.keyPair.privateKey` is always `null`.
+
+## Handle locked state explicitly
+
+```js
+const state = await account.getAddressState()
+
+if (state.status === 'locked') {
+  showUnlockRequired()
+} else {
+  showAddress(state.address)
+}
+```
+
+`getAddress()` throws `AccountLockedError` before unlock. `getBalance()` instead returns `0n`, so never infer readiness from balance alone.
+
+## Keep or rotate the address deliberately
+
+```js
+const current = await account.getAddress()
+const next = await account.rotateAddress()
+```
+
+The binding enables address reuse, so repeated `getAddress()` calls return the stable current address. `rotateAddress()` is an explicit state-changing operation; update deposit records and UI only after it succeeds.
+
+## Create a read-only adapter
+
+```js
+const readOnly = await account.toReadOnlyAccount()
+
+const [channels, peers, assets] = await Promise.all([
+  readOnly.listChannels(),
+  readOnly.listPeers(),
+  readOnly.listAssets(),
+])
+```
+
+The adapter can query node, channel, payment, RGB, Bitcoin, fee, receipt, signature-verification, and diagnostic state. It cannot sign, broadcast, mutate channels, recover VSS, or expose LSP credentials.
+
+Do not retain it after `manager.dispose()`, because it uses the manager-owned native query transport.
+
+## Preserve node identity across upgrades
+
+The default `nodeSeedDerivation: 'auto'` uses corrected seed derivation for new nodes and retries legacy beta derivation only on an exact persisted identity mismatch.
+
+Pin `legacy-v1` only for a verified pre-beta.15 node that requires it. Pin `wdk-seed-v2` only after proving the persisted node uses the corrected identity. Changing identity against funded channel state can make the node unusable.
+
+## Shut down safely
+
+`account.shutdown()` is idempotent and stops the binding. `manager.dispose()` is the terminal owner-level cleanup and should still be your application shutdown boundary.
+
+```js
+try {
+  await runNode(account)
+} finally {
+  manager.dispose()
+}
+```
+
+Cleanup can throw. Preserve the primary operation error and report cleanup failure separately.
+
+## Next steps
+
+- [Read balances and history](/sdk/community-modules/wdk-rgb-lightning/guides/balances-history)
+- [Back up with VSS](/sdk/community-modules/wdk-rgb-lightning/guides/vss-backup-recovery)
+- [Handle errors and cleanup](/sdk/community-modules/wdk-rgb-lightning/guides/handle-errors-cleanup)

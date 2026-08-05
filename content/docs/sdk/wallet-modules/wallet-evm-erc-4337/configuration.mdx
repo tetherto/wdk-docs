@@ -17,7 +17,7 @@ const config = {
   // Required parameters
   chainId: 1,
   provider: 'https://rpc.mevblocker.io/fast',
-  safeModulesVersion: '0.3.0', // '0.2.0' and '0.3.0' are valid
+  safeModulesVersion: '0.3.0',
   bundlerUrl: `https://api.pimlico.io/v1/ethereum/rpc?apikey=${PIMLICO_API_KEY}`,
   paymasterUrl: `https://api.pimlico.io/v2/ethereum/rpc?apikey=${PIMLICO_API_KEY}`,
   paymasterAddress: '0x777777777777AeC03fd955926DbF81597e66834C',
@@ -47,7 +47,7 @@ const account = new WalletAccountEvmErc4337(
 
 // Read-only account (fee caps for sending are not needed)
 const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337(
-  '0x...', // Smart contract wallet address
+  '0x...', // Owner EOA address; the module predicts the Safe address
   {
     chainId: 1,
     provider: 'https://rpc.mevblocker.io/fast',
@@ -213,9 +213,37 @@ const config = {
 }
 ```
 
+### Parallel Nonce Lanes
+
+ERC-4337 supports two-dimensional nonces: a 192-bit key selects a lane, and each lane has its own sequence. By default this module uses key `0`, so do not fire another default-lane operation until the previous one has been included.
+
+Use these optional common configuration fields when the account needs independent lanes:
+
+- `parallel` (`boolean`, default `false`): Give each send, sign, or transfer operation a fresh random lane at sequence `0`. Ordering across those lanes is not guaranteed. Each successfully included UserOperation in a fresh lane creates or advances a distinct EntryPoint nonce slot; signing alone and unincluded submissions do not advance on-chain nonce state.
+- `nonceKey` (`number | bigint | string`): Reuse an explicit lane. A string is hashed into a deterministic named lane. A number or `bigint` is used as the raw uint192 key and must be in `0..2^192-1`; use `bigint` for raw keys above `Number.MAX_SAFE_INTEGER`.
+
+`nonceKey` takes precedence over `parallel`; when neither is set, the module uses the default key-0 lane.
+
+Before enabling either option, configure the account without a lane, submit one default-lane operation, and wait for its receipt so the Safe is deployed. Confirm that the configured bundler accepts nonzero nonce keys, then create the account with the lane setting.
+
+```javascript title="Configure A Named Lane After Safe Deployment"
+const config = {
+  // ...required network and gas-payment fields
+  nonceKey: 'scheduled-payments'
+}
+
+const wallet = new WalletManagerEvmErc4337(seedPhrase, config)
+```
+
+Reusing one named lane remains sequential: wait for inclusion before submitting its next operation, or batch dependent calls into one UserOperation.
+
+<Callout type="warning">
+The beta.14 runtime also honors `parallel` and `nonceKey` in the per-call config for `signTransaction()`, `sendTransaction()`, and `transfer()`, but the published per-call TypeScript declarations omit both fields. Construction-level configuration is typed; JavaScript per-call usage works at runtime.
+</Callout>
+
 ### Safe Modules Version
 
-The `safeModulesVersion` option specifies the Safe modules version for smart contract wallet implementation. **Required** for smart account initialization.
+The `safeModulesVersion` option specifies the Safe modules version for smart contract wallet implementation. Beta.14 supports only `0.3.0`; other values, including `0.2.0`, throw `ConfigurationError`. **Required** for smart account initialization.
 
 **Type:** `string`
 **Required:** Yes

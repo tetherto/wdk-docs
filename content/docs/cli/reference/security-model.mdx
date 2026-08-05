@@ -1,0 +1,168 @@
+---
+title: Security Model
+description: Understand seed protection, daemon trust boundaries, memory lifetime, TTL auto-locking, and operational trade-offs.
+docType: explanation
+schemaType: TechArticle
+icon: Shield
+---
+
+WDK CLI protects a locked wallet's mnemonic with passphrase-based encryption and restricts security-critical local artifacts to the owning operating-system user on macOS and Linux. After unlock, it deliberately trusts processes running as that user.
+
+<Callout type="warn">
+Treat an unlocked WDK CLI wallet as a local hot wallet. Use a dedicated wallet with limited funds, keep the unlock TTL short, and lock it before running untrusted code.
+</Callout>
+
+## Security boundaries
+
+| Boundary | Current protection | Not protected |
+| --- | --- | --- |
+| Locked seed at rest | AES-256-GCM with a scrypt-derived key; `seed.enc` mode `0600` on macOS and Linux | Weak or empty passphrases, compromised owner account, root/administrator, backups, or storage capture while unlocked |
+| Daemon endpoint | Unix socket mode `0700` under an owner-only umask | Another process running as the same owner; there is no per-program daemon credential |
+| PID file | Mode `0600` on macOS and Linux | Process discovery through other operating-system interfaces |
+| Wallet session | Per-wallet absolute TTL and explicit lock | Activity does not shorten or refresh exposure; `--ttl 0` has no automatic expiry |
+| In-memory cleanup | WDK disposal plus best-effort zeroing of retained mutable buffers | Immutable JavaScript strings, copies inside dependencies, swap, core dumps, crashes, or abrupt termination |
+| CLI and MCP sends | Dry-run support and caller-level guidance | The daemon does not enforce a second confirmation or passphrase check for an unlocked wallet |
+| General configuration | Separate from `seed.enc` | `config.json` has no owner-only guarantee and may contain user-added credentials |
+
+These controls reduce accidental exposure and cross-user access. They do not make a general-purpose computer a hardware wallet or isolate an unlocked wallet from malware running under the same account.
+
+## Seed encryption at rest
+
+Each named wallet stores its BIP-39 mnemonic in `wallets/NAME/seed.enc`. Version 1 uses:
+
+- AES-256-GCM authenticated encryption
+- scrypt with `N=65536`, `r=8`, and `p=1`
+- a random 32-byte salt and 12-byte IV
+- a 16-byte authentication tag
+- an owner read/write `0600` file mode on macOS and Linux
+
+See [Storage format](/cli/reference/storage-format#seedenc-version-1) for field encodings and the manual-recovery contract.
+
+A wrong passphrase or modified encrypted payload fails GCM authentication. Encryption does not protect a mnemonic after a process has decrypted it.
+
+### Passphrase handling
+
+The interactive passphrase prompt hides input. For automation, `WDK_PASSPHRASE` overrides the prompt when it contains a non-empty value.
+
+Environment variables can be inherited by child processes and may be visible through process inspection, crash reports, shell tooling, or automation logs. Prefer the interactive prompt for manual use. If automation requires `WDK_PASSPHRASE`, scope it to one trusted process, prevent command tracing, and remove it immediately after use.
+
+The current CLI accepts an empty passphrase. The file is still AES-GCM ciphertext, but an empty passphrase provides no meaningful confidentiality because anyone who obtains the file knows the value required to derive its key.
+
+## Same-user daemon access
+
+On macOS and Linux, `daemon.sock` is available only to the owning operating-system user. This stops a different local user from connecting through the socket. It does not identify or authorize individual programs owned by that user.
+
+Once a wallet is unlocked:
+
+- a same-user process that can connect to `daemon.sock` can derive addresses, read balances, estimate fees, and request signed transactions
+- it does not need to know or re-enter the wallet passphrase
+- it can speak directly to the internal daemon endpoint instead of using the normal CLI or MCP user flow
+- CLI dry runs and MCP instructions to preview and confirm are caller behavior, not daemon authorization controls
+
+This same-user signing capability is an accepted design trade-off: the daemon provides a reusable local wallet session, and the operating-system user is the session's trust boundary.
+
+<Callout type="warn">
+Do not run downloaded scripts, unreviewed packages, browser automation, plugins, or AI agents under the wallet owner's account while a valuable wallet is unlocked. Owner-only socket permissions do not protect against code that you run as the owner.
+</Callout>
+
+For stronger practical separation, run WDK CLI under a dedicated non-administrator operating-system account and do not run unrelated tools under that account. This does not protect against root/administrator compromise, but it narrows which processes can reach the owner-only endpoint.
+
+## Session lifecycle
+
+Each wallet has its own absolute unlock timer:
+
+| Action | Timer effect |
+| --- | --- |
+| `wdk wallet unlock --name NAME` | Starts the requested TTL; default is five minutes |
+| Normal address, balance, history, fee, or send request | Does not refresh the TTL |
+| Explicitly unlock an already unlocked wallet | Resets its timer to the new TTL |
+| `wdk wallet unlock --name NAME --ttl 0` | Disables automatic expiry for that wallet |
+| `wdk wallet lock --name NAME` | Immediately disposes that wallet session |
+| `wdk wallet lock --all` | Disposes all wallet sessions |
+| TTL expires | Disposes that wallet session |
+| Last wallet locks or expires | Shuts down the daemon |
+
+An absolute timer limits the maximum duration from unlock without silently extending the session on every operation. It can also expire during a longer workflow because activity does not refresh it. Re-unlock explicitly when more time is needed.
+
+Use `--ttl 0` only in a controlled environment where you accept an unlocked session that lasts until explicit lock, daemon shutdown, process failure, or machine restart. It is not appropriate as a convenience default.
+
+## Seed and passphrase lifetime
+
+Normal unlock handles sensitive values in more than one place:
+
+1. The `wdk` command process receives the passphrase as a JavaScript string.
+2. It decrypts `seed.enc` and receives the mnemonic as a JavaScript string to verify the passphrase.
+3. It sends the passphrase through owner-restricted local IPC to the daemon.
+4. The daemon decrypts the mnemonic as a JavaScript string.
+5. The daemon derives a mutable BIP-39 master-seed `Buffer` and retains it with the WDK instance until lock.
+
+The encryption key buffers are zeroed after encryption or decryption. On normal lock or graceful daemon shutdown, the CLI disposes the WDK instance and zeroes the retained master-seed buffer.
+
+These are best-effort language-level controls, not a guarantee that every copy is erased:
+
+- JavaScript strings are immutable and garbage-collected
+- WDK or wallet modules may hold internal copies while in use
+- operating-system swap, hibernation, crash dumps, and debugger access can capture process memory
+- `SIGKILL`, a power loss, or a runtime crash can bypass normal cleanup
+
+Use full-disk encryption, restrict crash dumps and debugger access, and keep the host patched and free of untrusted software. Locking promptly reduces exposure but cannot retroactively erase copies outside the CLI's control.
+
+## Wallet export, logs, and automation
+
+`wdk wallet create` displays the generated mnemonic, and `wdk wallet export` displays the decrypted mnemonic. With `--json`, that secret appears in structured stdout.
+
+Do not:
+
+- run create or export in CI
+- capture their output in logs or agent transcripts
+- paste output into tickets, chat, or AI tools
+- include `WDK_PASSPHRASE` in a committed script
+- pass a mnemonic or passphrase as a shell argument
+
+Use a private terminal, create an offline backup, and clear terminal scrollback after handling a mnemonic.
+
+## Configuration is not secret storage
+
+`config.json` is a normal plaintext file. It primarily contains public WDK-style configuration, but user-supplied values can include indexer keys or credentials embedded in provider and signing URLs.
+
+- Prefer `WDK_INDEXER_API_KEY` over storing the indexer key when your environment can protect it.
+- Protect any credentials embedded in custom provider URLs separately.
+- Review `wdk config get --all` before copying its output.
+- Do not assume `config.json` has the same `0600` mode as `seed.enc`.
+
+See [Configuration](/cli/configuration) for supported settings and precedence.
+
+## Deletion and recovery
+
+Wallet deletion performs ordinary recursive filesystem removal after passphrase verification. It is not secure erase, and it cannot remove copies from backups, snapshots, swap, journals, or previously copied files.
+
+Maintain an independently tested backup and the passphrase. The documented [`seed.enc` version 1 recovery procedure](/cli/reference/storage-format#recover-without-wdk-cli) remains available even if a future format does not provide automated migration.
+
+## Operational checklist
+
+Before unlock:
+
+- use a dedicated wallet with only the funds needed for the task
+- stop untrusted same-user processes
+- confirm the wallet name and requested TTL
+- prefer a hidden interactive passphrase prompt
+
+While unlocked:
+
+- preview recipient, amount, network, token, and fees
+- remember that normal use does not refresh the timer
+- do not install packages or run unreviewed scripts under the same user
+- treat MCP clients and agents as capable of requesting real sends
+
+After use:
+
+- run `wdk wallet lock --name NAME` or `wdk wallet lock --all`
+- verify `wdk wallet list` reports the wallet as locked
+- clear terminals or files that displayed the mnemonic
+
+## Related pages
+
+- [Architecture](/cli/reference/architecture)
+- [Storage format and manual recovery](/cli/reference/storage-format)
+- [Manage wallets](/cli/guides/manage-wallets)
+- [Use the MCP server](/cli/guides/use-mcp-server)

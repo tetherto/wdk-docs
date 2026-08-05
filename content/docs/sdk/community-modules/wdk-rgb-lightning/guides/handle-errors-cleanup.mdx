@@ -1,0 +1,130 @@
+---
+title: Handle errors and clean up the node
+description: Handle typed RGB Lightning boundaries, raw RLN failures, ambiguous writes, and terminal manager cleanup.
+docType: how-to
+schemaType: TechArticle
+---
+
+Beta.15 wraps selected lifecycle boundaries in typed errors, while many native calls still return raw `Rln(<Variant>): <message>` failures.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Branch on typed boundaries
+
+```js
+import {
+  AccountLockedError,
+  ApayError,
+  UnlockError,
+  VssError,
+  VssNotConfiguredError,
+} from '@utexo/wdk-rgb-lightning'
+
+try {
+  await account.unlock(unlockRequest)
+} catch (error) {
+  if (error instanceof UnlockError) {
+    reportUnlockFailure(error.code, error.cause)
+  }
+  throw error
+}
+```
+
+Typed `RgbLightningError` subclasses preserve the original error as `cause` and expose `code` plus `toJSON()`.
+
+| Error | Handle |
+|---|---|
+| `UnlockError` | RPC credentials, host reachability, indexer, proxy, VSS initialization, or persisted identity mismatch. |
+| `AccountLockedError` | Prompt for unlock or use `getAddressState()` before address/signature operations. |
+| `VssNotConfiguredError` | Disable the VSS action or construct with `vssUrl`. |
+| `VssError` | Preserve the fence/snapshot state and investigate before retrying. |
+| `ApayError` | Inspect peer visibility, LSP auth, virtual-channel config, and partial bootstrap state. |
+| `NotImplementedError` | Route to an operation-specific send method. |
+
+`LspError`, `LnurlPayError`, and the composed LSP timeout/settlement errors are separate hierarchies.
+
+## Preserve raw native errors
+
+Many node, channel, payment, Bitcoin, and RGB methods still throw version-specific `Rln(...)` strings.
+
+```js
+try {
+  await account.openChannel(openRequest)
+} catch (error) {
+  reportWalletFailure({
+    operation: 'open_channel',
+    message: error instanceof Error ? error.message : String(error),
+  })
+  throw error
+}
+```
+
+Do not branch on raw message text unless the behavior is pinned and covered by tests. Never log the mnemonic, unlock credentials, LSP token, VSS fence password, complete private invoice context, or native requests containing secrets.
+
+## Reconcile writes before retrying
+
+A timeout does not prove failure. After a channel, payment, Bitcoin, RGB, or APay write:
+
+1. Preserve returned IDs and the original error.
+2. Query the relevant channel, payment, transaction, transfer, peer, or APay state.
+3. Synchronize when appropriate.
+4. Retry only after an explicit idempotency rule proves it safe.
+
+`bootstrapLsp()` can leave the LSP peer connected when later APay registration fails. Inspect `listPeers()` before retrying.
+
+## Distinguish lock from zero balance
+
+Before unlock, `getBalance()` returns `0n`:
+
+```js
+const state = await account.getAddressState()
+
+if (state.status === 'locked') {
+  showUnlockRequired()
+} else {
+  showBalance(await account.getBalance())
+}
+```
+
+## Preserve the primary failure during cleanup
+
+```js
+let operationError
+
+try {
+  await runWalletFlow(account)
+} catch (error) {
+  operationError = error
+  throw error
+} finally {
+  try {
+    manager.dispose()
+  } catch (cleanupError) {
+    reportCleanupFailure(cleanupError, { operationError })
+  }
+}
+```
+
+`account.shutdown()` is idempotent, but `manager.dispose()` is terminal for the RGB Lightning node session. It shuts down the binding, destroys the VLS signer, and wipes seed buffers retained by the RGB Lightning binding. Do not reuse the manager, account, read-only adapter, or LSP object after disposal. `account.dispose()` is a no-op.
+
+## Investigate common failures
+
+| Symptom | Evidence to collect |
+|---|---|
+| Native binding fails to load | Host OS/architecture, installed peer version, downloaded artifact, Node/Bare entry selected. |
+| Persisted identity mismatch | `nodeSeedDerivation`, prior beta version, node public key, isolated backup of `dataDir`. |
+| Locked address | `getAddressState()`, unlock request and service reachability without secret values. |
+| Channel/payment failure | Peer and channel state, route amount units, RGB 3,000,000-msat minimum, native error cause. |
+| VSS fence held | Previous owner lifecycle, VSS namespace, last checkpoint, proof no other live writer exists. |
+| LSP/APay failure | HTTPS/auth, peer visibility, virtual-channel flags, trusted LSP node ID, partial bootstrap state. |
+
+## Next steps
+
+- [Configuration](/sdk/community-modules/wdk-rgb-lightning/configuration)
+- [VSS backup and recovery](/sdk/community-modules/wdk-rgb-lightning/guides/vss-backup-recovery)
+- [LSP, Lightning Address, and APay](/sdk/community-modules/wdk-rgb-lightning/guides/lsp-lightning-address-apay)
+- [API reference](/sdk/community-modules/wdk-rgb-lightning/api-reference)

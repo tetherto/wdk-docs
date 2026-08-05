@@ -91,7 +91,7 @@ const byOneOfMany = registry.getAsset([
 ])
 ```
 
-String comparisons are case-insensitive by default. Pass `{ caseSensitive: true }` to require exact casing.
+String comparisons in `getAsset()` are case-insensitive by default. Pass `{ caseSensitive: true }` to require exact casing.
 
 ## Class: `WdkTokenAssetRegistry`
 
@@ -110,15 +110,21 @@ const registry = new WdkTokenAssetRegistry(commonTokens)
 | --- | --- | --- |
 | `getTokens()` | Return all registered token assets | `TokenAsset[]` |
 | `getTokenById(id)` | Return one token by exact ID | `TokenAsset \| null` |
-| `getTokenByAddress(address, options?)` | Return all tokens matching an address | `TokenAsset[]` |
+| `getTokenByAddress(address, options?)` | Return all tokens matching an address; exact casing is required by default | `TokenAsset[]` |
 | `getTokenBySymbol(symbol, options?)` | Return all tokens matching a symbol | `TokenAsset[]` |
 | `getTokenByChain(chainId, options?)` | Return all tokens matching a chain ID | `TokenAsset[]` |
 
 ```javascript title="Token Lookups"
 const usdtTokens = registry.getTokenBySymbol('USDT')
 const tokensByAddress = registry.getTokenByAddress('0xdAC17F958D2ee523a2206206994597C13D831ec7')
+const tokensByAddressIgnoringCase = registry.getTokenByAddress(
+  '0xdac17f958d2ee523a2206206994597c13d831ec7',
+  { caseSensitive: false }
+)
 const chainTokens = registry.getTokenByChain('eip155:1')
 ```
+
+`getTokenByAddress()` is case-sensitive by default. Pass `{ caseSensitive: false }` when the registry and lookup input may use different casing. Symbol and chain lookups remain case-insensitive by default.
 
 ## Helper Functions
 
@@ -179,6 +185,8 @@ type BaseAssetOptions = {
 }
 ```
 
+The address helper accepts the same `{ caseSensitive?: boolean }` shape at runtime. The `TokenAddressLookupOptions` declaration is not re-exported from the package's top-level type entrypoint in `v1.0.0-beta.2`, so use an inline object when importing from the package root.
+
 ### `BaseAssetFilter<TSchema>`
 
 ```typescript
@@ -187,7 +195,7 @@ type BaseAssetFilter<TSchema extends object> = Partial<TSchema>
 
 ## Bundled Assets
 
-`@tetherto/wdk-asset-registry/assets/common-tokens` exports bundled token metadata. In `v1.0.0-beta.1`, the published list contains USDT, USDT0, and XAUt token records across supported chains.
+`@tetherto/wdk-asset-registry/assets/common-tokens` exports bundled token metadata. In `v1.0.0-beta.2`, the published list contains USDT, USDT0, and XAUt token records across supported chains.
 
 ## Errors
 

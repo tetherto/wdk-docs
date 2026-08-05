@@ -1,0 +1,100 @@
+---
+title: Read RGB Lightning balances and history
+description: Query Bitcoin, RGB, Lightning payment, transaction, and terminal receipt state.
+docType: how-to
+schemaType: TechArticle
+---
+
+Use the account or its read-only adapter to query state owned by the RGB Lightning node.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Confirm the account is unlocked
+
+```js
+const state = await account.getAddressState()
+if (state.status !== 'ready') {
+  throw new Error('Unlock the account before interpreting balances')
+}
+
+await account.sync()
+```
+
+Before unlock, `getBalance()` returns `0n`; that value is not distinguishable from a real zero without `getAddressState()`.
+
+## Read Bitcoin balances
+
+```js
+const spendableSats = await account.getBalance()
+const balanceDetails = await account.getBalanceDetails()
+
+console.log({
+  spendableSats: spendableSats.toString(),
+  balanceDetails,
+})
+```
+
+`getBalance()` returns spendable vanilla Bitcoin satoshis. `getBalanceDetails()` returns the native breakdown as an opaque object.
+
+## Read RGB balances and assets
+
+```js
+const assets = await account.listAssets()
+const balance = await account.getAssetBalance(assetId)
+const spendableUnits = await account.getTokenBalance(assetId)
+const metadata = await account.getAssetMetadata(assetId)
+```
+
+`getTokenBalance()` returns spendable asset base units and falls back to settled units when needed. Format values using validated asset metadata.
+
+The Lightning node and on-chain RGB wallet do not share records. Query the module that actually received or holds the asset.
+
+## Read Bitcoin and RGB history
+
+```js
+const [transactions, unspents, rgbTransfers] = await Promise.all([
+  account.getTransactions(),
+  account.listUnspents(),
+  account.listTransfers(assetId),
+])
+```
+
+You can narrow Bitcoin records with `getTransactionsByTxid(txid)` and RGB records with `listTransfersByTxid(txid)`.
+
+## Read Lightning payments
+
+```js
+const payments = await account.listPayments()
+const outbound = await account.getPayment(paymentHash, 'Outbound')
+```
+
+The accepted payment discriminants are `Outbound`, `InboundAutoClaim`, and `InboundHodl`. Pre-1.0 HTTP names such as `sent` and `received` are not accepted.
+
+## Read a terminal receipt
+
+```js
+const receipt = await account.getTransactionReceipt(hash)
+```
+
+The method returns:
+
+- a confirmed Bitcoin record;
+- a settled RGB transfer;
+- a non-pending Lightning payment;
+- or `null`.
+
+Treat `null` as pending, unknown, or not yet indexed—not proof that a write failed.
+
+## Validate native payloads
+
+Many responses are intentionally declared as `object` because RLN owns their shape. Validate the fields your application consumes at runtime and pin them to beta.15. Do not copy response fields from an unreleased branch or different RLN beta.
+
+## Next steps
+
+- [Send Bitcoin and manage UTXOs](/sdk/community-modules/wdk-rgb-lightning/guides/send-btc-utxos)
+- [Use Lightning payments](/sdk/community-modules/wdk-rgb-lightning/guides/lightning-payments)
+- [Use RGB assets](/sdk/community-modules/wdk-rgb-lightning/guides/rgb-assets)

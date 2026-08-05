@@ -43,7 +43,7 @@ npm test
 
 ## Module Types
 
-The CLI supports all six WDK module categories. The generated package name follows WDK naming conventions automatically.
+The CLI supports seven WDK module categories. The generated package name follows WDK naming conventions automatically.
 
 | Type | Description | Generated Package Example |
 |------|-------------|---------------------------|
@@ -53,6 +53,7 @@ The CLI supports all six WDK module categories. The generated package name follo
 | `lending` | DeFi lending protocol | `wdk-protocol-lending-compound-evm` |
 | `fiat` | Fiat on/off-ramp provider | `wdk-protocol-fiat-moonpay` |
 | `swidge` | Cross-chain swap (swap + bridge combined) | `wdk-protocol-swidge-lifi` |
+| `sda` | Smart Deposit Address provider | `wdk-protocol-sda-rhino` |
 
 ---
 
@@ -60,15 +61,19 @@ The CLI supports all six WDK module categories. The generated package name follo
 
 | Option | Alias | Description | Default |
 |--------|-------|-------------|---------|
-| `[type]` | | Module type (wallet, swap, bridge, lending, fiat, swidge) | (interactive prompt) |
+| `[type]` | | Module type (wallet, swap, bridge, lending, fiat, swidge, sda) | (interactive prompt) |
 | `[name]` | | Module or protocol name | (interactive prompt) |
 | `[blockchain]` | | Target blockchain | (interactive prompt) |
 | `--scope \<scope\>` | `-s` | npm scope (e.g., `@myorg`) | none |
 | `--git` | | Initialize a git repository | `true` |
 | `--no-git` | | Skip git initialization | |
 | `--yes` | `-y` | Skip prompts, use defaults | `false` |
-| `--version` | `-v` | Show version | |
+| `--version` | `-V` | Show version | |
 | `--help` | `-h` | Show help | |
+
+<Callout type="warn">
+In `1.0.0-beta.3`, `--version` still prints the hard-coded beta.1 value. Use npm or the installed package metadata when you need the actual installed version.
+</Callout>
 
 ### Examples
 
@@ -78,6 +83,9 @@ npx @tetherto/create-wdk-module@latest wallet stellar --scope @myorg
 
 # Create a swap protocol module
 npx @tetherto/create-wdk-module@latest swap jupiter solana
+
+# Create an SDA provider module (provider name only; no blockchain argument)
+npx @tetherto/create-wdk-module@latest sda rhino
 
 # Create with all defaults, no prompts
 npx @tetherto/create-wdk-module@latest wallet stellar --yes
@@ -101,6 +109,7 @@ $ npx @tetherto/create-wdk-module@latest
     Lending Module (DeFi lending protocol)
     Fiat Module (fiat on/off-ramp)
     Swidge Module (cross-chain swap (swidge = swap + bridge))
+    SDA Module (smart deposit address)
 
 ? What is the blockchain name? (e.g., "stellar", "solana")
   > stellar
@@ -179,7 +188,7 @@ Wallet modules generate three core files that correspond to the WDK wallet archi
 </Accordions>
 
 <Accordions>
-<Accordion title="Protocol Module structure (swap, bridge, lending, fiat, swidge)">
+<Accordion title="Protocol Module structure (swap, bridge, lending, fiat, swidge, sda)">
 
 ```text title="Protocol module project tree"
 wdk-protocol-swap-jupiter-solana/
@@ -209,7 +218,11 @@ wdk-protocol-swap-jupiter-solana/
 └── tsconfig.json
 ```
 
-Protocol modules (swap, bridge, lending, fiat, swidge) generate a single provider file rather than the three-file wallet pattern, since protocols interact with external services through a unified interface.
+Protocol modules (swap, bridge, lending, fiat, swidge, sda) generate a single provider file rather than the three-file wallet pattern, since protocols interact with external services through a unified interface. An SDA invocation such as `sda rhino` generates `wdk-protocol-sda-rhino` with `src/rhino-protocol.js`; it asks for a provider name rather than a blockchain.
+
+<Callout type="warn">
+The beta.3 SDA scaffold is a starting point, not an operational provider. Implement the required `getSupportedRoutes()` and `createDepositAddress()` methods, replace the generated `test.todo` cases, and either implement or delete every optional method stub before publishing. Empty optional stubs override the base class and return `undefined`; deleting an unsupported optional override restores the base `UnsupportedOperationError` behavior. The generated `apiUrl` and `apiKey` fields are placeholders, so replace them with the provider's actual configuration and document custody, authentication, routes, output assets, expiry, and recovery behavior.
+</Callout>
 
 </Accordion>
 </Accordions>

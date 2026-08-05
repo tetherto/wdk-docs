@@ -3,7 +3,7 @@ title: Handle Errors
 description: Handle errors, manage fees, and dispose of sensitive data.
 ---
 
-This guide explains how to [handle transaction errors](#transaction-errors), [handle transfer errors](#transfer-errors), and follow [best practices](#best-practices) for fee management and memory cleanup.
+This guide explains how to [handle transaction errors](#transaction-errors), [handle transfer errors](#transfer-errors), [diagnose nonce-lane failures](#nonce-lane-failures), and follow [best practices](#best-practices) for fee management and memory cleanup.
 
 ## Transaction Errors
 
@@ -15,7 +15,7 @@ try {
     to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
     value: 1000000000000000n
   })
-  console.log('Transaction hash:', result.hash)
+  console.log('UserOperation hash:', result.hash)
 } catch (error) {
   if (error.message.includes('not enough funds')) {
     console.error('Insufficient paymaster token balance')
@@ -27,7 +27,7 @@ try {
 
 ## Transfer Errors
 
-Token transfers via [`account.transfer()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference) can fail due to insufficient balance or exceeding the maximum fee limit:
+Token transfers via [`account.transfer()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference) can fail due to insufficient balance or a fee at or above the maximum limit:
 
 ```javascript title="Handle Transfer Errors"
 try {
@@ -36,10 +36,10 @@ try {
     recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
     amount: 1000000
   })
-  console.log('Transfer hash:', result.hash)
+  console.log('Transfer UserOperation hash:', result.hash)
 } catch (error) {
   if (error.message.includes('Exceeded maximum fee')) {
-    console.error('Transfer cancelled: fee exceeds the configured limit')
+    console.error('Transfer cancelled: fee meets or exceeds the configured limit')
   } else if (error.message.includes('not enough funds')) {
     console.error('Insufficient paymaster token balance')
   } else {
@@ -47,6 +47,16 @@ try {
   }
 }
 ```
+
+## Nonce-Lane Failures
+
+Lane configuration and bundler behavior can fail in several ways:
+
+- A raw `nonceKey` below `0` or above `2^192 - 1` throws `nonceKey must be within the uint192 range (0 to 2^192 - 1).`
+- Parallel sends from an undeployed Safe or a bundler that does not support nonzero keys can be rejected by the RPC or bundler. Deploy the account with one completed operation first and verify bundler support.
+- Two operations submitted concurrently in the same named or default lane can select the same sequence. Both calls can return a UserOperation hash even though one never receives a receipt.
+
+Treat a returned hash as submission evidence, not inclusion. Poll `getUserOperationReceipt(hash)` with an application timeout. If one same-lane hash never resolves, inspect the bundler response and on-chain lane sequence before retrying; use a fresh lane for independent work or batch dependent calls rather than blindly resubmitting the same operation.
 
 ## Best Practices
 
@@ -70,7 +80,7 @@ try {
     to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
     value: 1000000000000000n
   })
-  console.log('Transaction hash:', result.hash)
+  console.log('UserOperation hash:', result.hash)
 } finally {
   account.dispose()
   wallet.dispose()

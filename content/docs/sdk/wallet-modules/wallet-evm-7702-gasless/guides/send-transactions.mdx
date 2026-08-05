@@ -62,7 +62,11 @@ For paymaster-token mode, the fee is returned in the paymaster token's base unit
 
 ## Quote Reuse
 
-Owned accounts cache a recently quoted transaction for up to 2 minutes. If `sendTransaction()` receives the same transaction during that window, the account can reuse the built UserOperation. If the account must include a fresh EIP-7702 authorization, it rebuilds the UserOperation before sending.
+Owned accounts cache a recently quoted paymaster-token transaction for up to 2 minutes. If `sendTransaction()` receives the same transaction during that window, the account first reads the current EntryPoint nonce. It reuses the built UserOperation only when the nonce still matches; if the nonce moved, it quotes again. A send that needs a fresh EIP-7702 authorization also rebuilds the UserOperation before submission.
+
+<Callout type="warning">
+Cache identity does not include per-call fee-mode configuration. Use the same fee-mode and paymaster settings for `quoteSendTransaction()` and the matching `sendTransaction()`. Do not quote with one paymaster token or mode and send the same transaction with another while the quote is cached.
+</Callout>
 
 ## Override Fee Mode for One Send
 

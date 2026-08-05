@@ -1,0 +1,87 @@
+---
+title: RGB Lightning wallet
+description: Run a community-maintained RGB-over-Lightning wallet with LDK channels, invoices, payments, VSS, and LSP flows.
+docType: explanation
+schemaType: TechArticle
+---
+
+`@utexo/wdk-rgb-lightning` is a community-maintained WDK wallet module that runs an LDK and `rgb-lib` node behind the WDK manager/account interface.
+
+These pages describe the released [`@utexo/wdk-rgb-lightning@0.1.0-beta.15`](https://github.com/UTEXO-Protocol/wdk-rgb-lightning/releases/tag/v0.1.0-beta.15).
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+<Callout type="warn">
+This is a pre-1.0 beta. Its native payloads, peer compatibility, LSP behavior, and operational recovery model can change between beta releases. Pin exact versions and test the full lifecycle on the target host.
+</Callout>
+
+## Choose the correct RGB module
+
+| Requirement | Module |
+|---|---|
+| Channels, BOLT11 payments, RGB invoices and transfers, Lightning Address, APay, or VSS | `@utexo/wdk-rgb-lightning` |
+| On-chain NIA issuance and an independent on-chain RGB wallet | [`@utexo/wdk-wallet-rgb`](/sdk/community-modules/wdk-wallet-rgb) |
+| Bitcoin without RGB or Lightning node state | [`@tetherto/wdk-wallet-btc`](/sdk/wallet-modules/wallet-btc) |
+
+The two UTEXO RGB modules derive different wallet identities and own different `rgb-lib` databases. They do not share asset records. Give each a separate persistent `dataDir`.
+
+## Runtime architecture
+
+The package uses conditional exports:
+
+| Host | Required optional peer | Released native artifacts verified for the peer |
+|---|---|---|
+| Node.js 18 or newer | `@utexo/rgb-lightning-node-nodejs` in `>=0.1.0-beta.10 <0.2.0` | macOS arm64/x64; Linux arm64 GNU; Linux x64 GNU/musl |
+| Bare / mobile worklet | `@utexo/rgb-lightning-node-bare` in `>=0.1.0-beta.14 <0.2.0` | Android arm/arm64/x64; macOS arm64; iOS arm64 and arm64/x64 simulators |
+
+The verified Node peer release was `0.1.0-beta.11`; the verified Bare peer release was `0.1.0-beta.15`. No Windows native artifact was published in this release set.
+
+Each native peer downloads a prebuilt artifact during installation. Validate artifact provenance, platform selection, and native loading in the deployment pipeline.
+
+## Security and state model
+
+- The WDK manager retains the BIP-39 secret boundary.
+- An in-process VLS external signer handles channel-state cryptography.
+- `keyPair.privateKey` is always `null`; the account does not expose signer private bytes.
+- RLN persists public node identity plus LDK and RGB state under `dataDir`.
+- Optional VSS payloads are encrypted client-side and still require the original seed for recovery.
+- `manager.dispose()` shuts down the binding, destroys the VLS signer, and wipes seed buffers retained by the RGB Lightning binding. Treat disposal as terminal for the node session, and do not reuse the manager, account, read-only adapter, or LSP object afterward.
+
+The account is single-node and single-account: index `0`, path `m`.
+
+## Capabilities and boundaries
+
+- Explicit unlock against Bitcoin RPC, indexer, and RGB proxy services.
+- Peer connections, channels, BOLT11 invoices, HODL invoices, payments, and keysend.
+- Bitcoin balances, transactions, UTXOs, sends, and fee estimates.
+- RGB balances, invoices, transfers, media, and channel-aware payments.
+- LSP client, Lightning Address/LNURL-pay helpers, composed UTEXO LSP flows, and APay.
+- Optional VSS backup and recovery fencing.
+- Message signing and verification through the Lightning node identity.
+- Query-only account adapter for least-authority reads.
+
+Runtime JavaScript contains RGB issuance forwarders, but beta.15's public declarations omit them. These docs do not present them as supported public account APIs. Use the on-chain RGB module for issuance. Atomic-swap methods remain native-binding-only and are also outside the WDK account surface.
+
+## Start building
+
+<Cards>
+<Card title="Get started" href="/sdk/community-modules/wdk-rgb-lightning/guides/get-started">
+Install the matching native peer, construct the node, and unlock the account.
+</Card>
+<Card title="Usage guides" href="/sdk/community-modules/wdk-rgb-lightning/usage">
+Open the task-focused guide catalog.
+</Card>
+<Card title="Configuration" href="/sdk/community-modules/wdk-rgb-lightning/configuration">
+Configure persistent state, signer policy, VSS, LSP, and native unlock services.
+</Card>
+<Card title="API reference" href="/sdk/community-modules/wdk-rgb-lightning/api-reference">
+Review the released beta.15 manager, account, error, and LSP surface.
+</Card>
+<Card title="beta.15 source" href="https://github.com/UTEXO-Protocol/wdk-rgb-lightning/tree/v0.1.0-beta.15">
+Inspect the exact released declarations and implementation.
+</Card>
+</Cards>

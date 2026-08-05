@@ -3,7 +3,7 @@ title: Transfer Tokens
 description: Transfer ERC-20 tokens with gasless transactions.
 ---
 
-This guide explains how to [transfer ERC-20 tokens](#transfer-erc-20-tokens), [estimate transfer fees](#estimate-transfer-fees), [set a maximum fee limit](#transfer-with-maximum-fee-limit), and [apply UserOperation gas overrides](#transfer-with-useroperation-gas-overrides).
+This guide explains how to [transfer ERC-20 tokens](#transfer-erc-20-tokens), [estimate transfer fees](#estimate-transfer-fees), [set a maximum fee limit](#transfer-with-maximum-fee-limit), [select a nonce lane](#transfer-in-a-nonce-lane), and [apply UserOperation gas overrides](#transfer-with-useroperation-gas-overrides).
 
 ## Transfer ERC-20 Tokens
 
@@ -15,7 +15,7 @@ const result = await account.transfer({
   recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
   amount: 1000000 // 1 USDT (6 decimals)
 })
-console.log('Transfer hash:', result.hash)
+console.log('Transfer UserOperation hash:', result.hash)
 console.log('Transfer fee:', result.fee)
 ```
 
@@ -47,8 +47,24 @@ const result = await account.transfer({
 ```
 
 <Callout type="warn">
-If the estimated fee exceeds `transferMaxFee`, the transfer is cancelled with an "Exceeded maximum fee" error.
+If the estimated fee meets or exceeds `transferMaxFee`, the transfer is cancelled with an "Exceeded maximum fee" error.
 </Callout>
+
+## Transfer in a Nonce Lane
+
+`transfer()` follows the same beta.14 nonce-lane rules as sends. Use a stable named lane for an independent transfer stream, and wait for inclusion before reusing that lane:
+
+```javascript title="Transfer In A Named Lane"
+const result = await account.transfer({
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+  amount: 1000000
+}, {
+  nonceKey: 'token-payouts'
+})
+```
+
+`quoteTransfer()` estimates the transfer but does not select or reserve a lane. A lane transfer rebuilds its UserOperation. The beta.14 runtime accepts lane fields per call, while the published per-call TypeScript declaration omits them; see [Use Parallel Nonce Lanes](/sdk/wallet-modules/wallet-evm-erc-4337/guides/send-transactions#use-parallel-nonce-lanes).
 
 ## Transfer with UserOperation Gas Overrides
 

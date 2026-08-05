@@ -1,0 +1,116 @@
+---
+title: Connect peers and manage channels
+description: Connect Lightning peers and open, inspect, or close standard, RGB, and trusted virtual channels.
+docType: how-to
+schemaType: TechArticle
+---
+
+Unlock and synchronize the node before changing peer or channel state.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Connect a peer
+
+```js
+const peerUri = `${peerNodeId}@${peerHost}:${peerPort}`
+
+await account.connectPeer(peerUri)
+const peers = await account.listPeers()
+```
+
+Validate the node ID, host, port, network, and intended counterparty out of band. A successful connection does not prove channel readiness.
+
+## Open a standard channel
+
+```js
+const opened = await account.openChannel({
+  peer_pubkey_and_opt_addr: peerUri,
+  capacity_sat: 1_000_000,
+  push_msat: 0,
+  public: true,
+  with_anchors: true,
+})
+```
+
+Values are forwarded to RLN. Confirm funding, reserves, feerate, public/private policy, anchor support, and counterparty compatibility before opening.
+
+## Open an RGB channel
+
+The released `OpenChannelRequest` also declares `asset_id` and `asset_amount`:
+
+```js
+const opened = await account.openChannel({
+  peer_pubkey_and_opt_addr: peerUri,
+  capacity_sat: 1_000_000,
+  asset_id: assetId,
+  asset_amount: 10_000,
+  public: false,
+  with_anchors: true,
+})
+```
+
+`asset_amount` is in RGB asset base units. The asset must already exist in this Lightning node's independent wallet state.
+
+<Callout type="warn">
+An RGB-routed HTLC has a hard minimum of 3,000,000 millisatoshis in this release. Smaller RGB-channel invoices or payments fail to route.
+</Callout>
+
+## Inspect channel state
+
+```js
+const channels = await account.listChannels()
+const permanentId = await account.getChannelId(temporaryChannelIdHex)
+```
+
+Responses are native objects. Validate status, confirmations, channel IDs, balances, and counterparty before enabling payments.
+
+## Close or disconnect
+
+```js
+await account.closeChannel(validatedNativeCloseRequest)
+await account.disconnectPeer(validatedNativeDisconnectRequest)
+```
+
+The public declaration leaves both request shapes as `object`. Use the exact matching beta.15/RLN schema and validate it at the application boundary.
+
+Do not treat peer disconnection as channel closure. Confirm final channel and on-chain state.
+
+## Trusted virtual channels
+
+Production APay uses non-broadcast trusted channels. Construct the manager with:
+
+```js
+import WalletManagerRgbLightning from '@utexo/wdk-rgb-lightning'
+
+const manager = new WalletManagerRgbLightning(seedPhrase, {
+  network: 'mainnet',
+  dataDir: '/app-private/wdk/rgb-lightning',
+  enableVirtualChannelsV0: true,
+  virtualPeerPubkeys: [lspNodeId],
+})
+```
+
+Then the native open request can use:
+
+```js
+const virtualChannelRequest = {
+  peer_pubkey_and_opt_addr: peerUri,
+  capacity_sat: 1_000_000,
+  virtual_open_mode: 'trusted_no_broadcast',
+  // Other validated OpenChannelRequest fields.
+}
+
+const opened = await account.openChannel(virtualChannelRequest)
+```
+
+Only trust an authenticated LSP node ID. Both sides must configure mutual trust; virtual channels change the normal broadcast and counterparty assumptions.
+
+## Next steps
+
+- [Use Lightning payments](/sdk/community-modules/wdk-rgb-lightning/guides/lightning-payments)
+- [Use LSP and APay](/sdk/community-modules/wdk-rgb-lightning/guides/lsp-lightning-address-apay)
+- [Handle errors and cleanup](/sdk/community-modules/wdk-rgb-lightning/guides/handle-errors-cleanup)

@@ -1,0 +1,155 @@
+---
+title: Custom Networks
+description: Add and remove blockchain networks in WDK CLI
+docType: how-to
+schemaType: TechArticle
+---
+
+Use a custom network when WDK CLI already supports the network's wallet-module type but does not include the specific chain in its built-in registry.
+
+`wdk network create` cannot introduce a new wallet-module implementation. Its `module` field must match a wallet-module type already used by a built-in network.
+
+## Inspect Available Networks
+
+List built-in and custom networks:
+
+```bash title="Terminal"
+wdk network list
+```
+
+Use JSON output to inspect both the versioned `module` and its unversioned `type`:
+
+```bash title="Terminal"
+wdk --json network list
+```
+
+Use a returned `type`, such as `@tetherto/wdk-wallet-evm`, as the `module` value in a custom network spec.
+
+Inspect the effective metadata and SDK configuration for one network:
+
+```bash title="Terminal"
+wdk network info --network ethereum
+```
+
+## Network Spec
+
+`wdk network create <data>` accepts either an inline JSON object or the path to a JSON file.
+
+| Field | Required | Rules and effect |
+| --- | --- | --- |
+| `network` | Yes | Unique identifier containing lowercase letters, numbers, and hyphens. The first character must be a letter or number. |
+| `module` | Yes | Unversioned wallet-module type already used by a built-in network. |
+| `displayName` | No | Non-empty display label. Defaults to the `network` value. |
+| `testnet` | No | Boolean. Defaults to `false`. |
+| `indexerSlug` | No | Non-empty WDK Indexer chain identifier. Without it, `get history` is unavailable for the custom network. |
+| `config` | No | Object passed to the selected wallet module, such as a provider URL and chain ID. The wallet module validates these values when used. |
+| `tokens` | No | Array of token specs to store with the network. Token keys must be unique, and at most one entry can be native. |
+
+Each item in `tokens` uses the fields documented in [Manage Tokens](/cli/guides/manage-tokens/#token-spec), with `network` omitted because the parent network supplies it.
+
+## Create A Custom Network
+
+Create `optimism.json`:
+
+```json title="optimism.json"
+{
+  "network": "optimism",
+  "module": "@tetherto/wdk-wallet-evm",
+  "displayName": "Optimism",
+  "testnet": false,
+  "config": {
+    "provider": "https://mainnet.optimism.io",
+    "chainId": 10
+  },
+  "tokens": [
+    {
+      "token": "eth",
+      "symbol": "ETH",
+      "decimals": 18,
+      "isNative": true
+    }
+  ]
+}
+```
+
+Create the network and its native-token entry:
+
+```bash title="Terminal"
+wdk network create ./optimism.json
+```
+
+Verify the result:
+
+```bash title="Terminal"
+wdk network info --network optimism
+wdk token list --network optimism
+```
+
+<Callout type="warn">
+The example uses a public mainnet RPC endpoint. Verify the chain ID, provider, token addresses, and provider-specific limits before using a custom network with funds. Omit `indexerSlug` unless you know the WDK Indexer identifier for that chain.
+</Callout>
+
+## Creation Side Effects
+
+The CLI validates the complete network and token spec before storing it. On success, it writes:
+
+- The custom network metadata
+- The network's SDK `config`
+- Every entry in `tokens`
+
+If storing a token fails, the command rolls back the custom network, its SDK config, and token entries already written by that command.
+
+If at least one wallet exists, `network create` prompts for the current default wallet's passphrase. It does not require the wallet to be unlocked. With no wallets, it does not prompt.
+
+`network create` and `network delete` do not unlock, extend, or lock an existing daemon wallet session. `wdk config reset --all` preserves custom network entries.
+
+## Update Network Configuration
+
+Use `config set` to replace the complete SDK config object:
+
+```bash title="Terminal"
+wdk config set \
+  --network optimism \
+  --value '{"provider":"https://mainnet.optimism.io","chainId":10}'
+```
+
+Or change one nested key:
+
+```bash title="Terminal"
+wdk config set \
+  --network optimism \
+  --key provider \
+  --value https://mainnet.optimism.io
+```
+
+<Callout type="info">
+Changing `networks.*` configuration locks every unlocked wallet so the daemon drops cached wallet managers. Unlock the wallet again before reading balances or sending.
+</Callout>
+
+## Delete A Custom Network
+
+<Callout type="warn">
+Deleting a custom network also deletes its SDK configuration and every custom token under that network. Export or record the spec first if you may need to recreate it.
+</Callout>
+
+Delete the network:
+
+```bash title="Terminal"
+wdk network delete --name optimism
+```
+
+Deletion prompts for the default wallet's passphrase when wallets exist. Built-in networks cannot be deleted.
+
+Deleting registry configuration does not move blockchain assets or delete a wallet seed, but the CLI can no longer access that network until you recreate the registry entry.
+
+## Next Steps
+
+- [Manage Tokens](/cli/guides/manage-tokens/) - Add token contracts and provider mappings
+- [Configuration](/cli/configuration/) - Review paths, environment variables, and precedence
+- [API Reference](/cli/api-reference/) - Review all network command flags
+
+***
+
+## Need Help?
+
+<SupportCards />

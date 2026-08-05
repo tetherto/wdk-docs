@@ -1,0 +1,185 @@
+---
+title: Use the MCP Server
+description: Connect WDK CLI to an MCP-compatible AI client
+docType: how-to
+schemaType: TechArticle
+icon: Wand
+---
+
+WDK CLI includes the `wdk-mcp` Model Context Protocol server. It exposes wallet operations as structured tools over stdio and routes wallet-dependent operations to the same local daemon used by the CLI.
+
+<Callout type="warn">
+Use a dedicated development wallet with limited funds. On Unix-like systems, while a wallet is unlocked, any process running as the same OS user that can connect to the owner-only daemon socket can request signing or sending without another passphrase.
+</Callout>
+
+## Prepare A Wallet
+
+Install WDK CLI with the command in [Install](/cli/#install). This guide deliberately uses a dedicated development wallet and Sepolia test funds; the general Get Started guide uses Ethereum mainnet.
+
+If `agent-dev` is your first wallet, it becomes the default automatically:
+
+```bash title="Terminal"
+wdk wallet create --name agent-dev --words 12
+wdk wallet unlock --name agent-dev --ttl 5
+```
+
+Enter and confirm a strong, non-empty passphrase when the create command prompts, then record the generated seed phrase offline.
+
+If another wallet is already the default, select `agent-dev` explicitly:
+
+```bash title="Terminal"
+wdk wallet default --name agent-dev
+```
+
+Wallet-dependent MCP tools use the default wallet unless the request includes `wallet`. The wallet must be unlocked before those tools run.
+
+The TTL is absolute from unlock; MCP activity does not extend it. Use a short TTL during development and lock the wallet when the session ends.
+
+## Configure An MCP Client
+
+Choose one setup target:
+
+```bash title="Claude Desktop"
+wdk mcp setup --ai-tool claude-desktop
+```
+
+```bash title="Claude Code"
+wdk mcp setup --ai-tool claude-code
+```
+
+```bash title="OpenClaw"
+wdk mcp setup --ai-tool openclaw
+```
+
+| Target | Setup behavior |
+| --- | --- |
+| Claude Desktop | Adds `wdk-wallet` under `mcpServers` in the platform-specific Claude Desktop JSON config. |
+| Claude Code | Runs `claude mcp add -s user wdk-wallet -- ...` with the current Node.js executable and installed MCP script. |
+| OpenClaw | Runs `openclaw mcp set wdk-wallet ...` with the current Node.js executable and installed MCP script. |
+
+Setup checks whether the target appears to be installed, tests the MCP server when possible, and reports the restart action required by that client.
+
+Verify one target:
+
+```bash title="Terminal"
+wdk mcp verify-setup --ai-tool claude-desktop
+```
+
+List the configuration status of all three targets:
+
+```bash title="Terminal"
+wdk mcp list
+```
+
+Remove a target configuration with:
+
+```bash title="Terminal"
+wdk mcp remove --ai-tool claude-desktop
+```
+
+Replace `claude-desktop` with `claude-code` or `openclaw` as needed.
+
+### Other MCP Clients
+
+`wdk-mcp` is a standard stdio MCP server. For clients that accept the common `mcpServers` JSON shape, add:
+
+```json
+{
+  "mcpServers": {
+    "wdk-wallet": {
+      "command": "wdk-mcp"
+    }
+  }
+}
+```
+
+This configuration requires the client process to find `wdk-mcp` on its `PATH`. If the client uses a different configuration shape or does not inherit your shell `PATH`, configure a stdio server named `wdk-wallet` and point its command to the installed `wdk-mcp` executable.
+
+## Available MCP Tools
+
+| Tool | Wallet required | Purpose |
+| --- | --- | --- |
+| `get_networks` | No | List networks, optionally filtered to mainnets or testnets. |
+| `list_tokens` | No | List every registered token or filter by network. |
+| `get_token` | No | Read one network and token registry entry. |
+| `get_address` | Yes | Derive one address or addresses across networks. |
+| `get_balance` | Yes | Read one balance or aggregate native balances with USD estimates. |
+| `get_history` | Yes | Query indexer-backed token-transfer history for one network. |
+| `send_token` | Yes | Preview or execute a native or registered-token transfer. |
+| `buy_crypto` | Yes | Create a signed MoonPay buy URL. |
+| `sell_crypto` | Yes | Create a signed MoonPay sell URL. |
+
+`get_history` needs indexer configuration. `buy_crypto` and `sell_crypto` need MoonPay configuration. See [Configuration](/cli/configuration/).
+
+## CLI Capabilities Not Exposed Over MCP
+
+`wdk-mcp` registers only the nine tools listed above. Through this server, an agent can operate a wallet that a person has already unlocked, but it cannot call the CLI's wallet administration or persistent-configuration commands.
+
+- Wallet administration: `wdk wallet create`, `import`, `export`, `unlock`, `lock`, `delete`, `rename`, and `default`. These commands create, import, or reveal seed material; confirm wallet ownership; change wallet identity or default selection; or control an unlock session. `wdk wallet unlock` is deliberately the human authorization moment, and `wdk wallet lock` ends that session.
+- Persistent configuration: `wdk config set` and `reset`, `wdk network create` and `delete`, and `wdk token add` and `delete`. These commands change durable local configuration and remain user-driven decisions.
+
+This is a boundary of the MCP tool surface, not an operating-system sandbox. An AI client with separate shell access is outside this boundary and may be able to invoke `wdk` directly.
+
+## Preview And Confirm Transfers
+
+`send_token` defaults to `dryRun: true`. The recommended client workflow is:
+
+1. Call `send_token` without `dryRun`, or with `dryRun: true`.
+2. Show the network, token, recipient, amount, and estimated fee to the user.
+3. Ask the user to confirm those exact values.
+4. Call `send_token` with `dryRun: false` only after confirmation.
+
+Example preview request:
+
+```json
+{
+  "network": "sepolia",
+  "to": "<recipient-address>",
+  "amount": "0.0001",
+  "wallet": "agent-dev"
+}
+```
+
+Example execution request after confirmation:
+
+```json
+{
+  "network": "sepolia",
+  "to": "<recipient-address>",
+  "amount": "0.0001",
+  "wallet": "agent-dev",
+  "dryRun": false
+}
+```
+
+<Callout type="error">
+The preview-and-confirm sequence is guidance for the AI client; the daemon does not enforce it. A direct `send_token` call with `dryRun: false` broadcasts when the selected wallet is unlocked and the request is otherwise valid.
+</Callout>
+
+## Security And Session Boundaries
+
+- The AI client sends tool parameters to `wdk-mcp`; it does not send the wallet seed or passphrase as tool input.
+- Wallet operations cross the local daemon endpoint. On Unix-like systems, owner-only socket permissions block other OS users, not other processes running as the wallet owner.
+- An unlocked wallet behaves like a local hot wallet for the session. Read, signing, and send operations do not ask for the passphrase again.
+- `--ttl 0` disables automatic expiry for that wallet. Prefer a finite TTL.
+- Prompts or client-side confirmation dialogs are not daemon authorization controls.
+
+Read [Security Model](/cli/reference/security-model/) before exposing an unlocked wallet to an AI client or local automation.
+
+Lock the wallet when the session is finished:
+
+```bash title="Terminal"
+wdk wallet lock --name agent-dev
+```
+
+## When To Use The MCP Toolkit
+
+Use [MCP Toolkit](/ai/mcp-toolkit/) when you need to build and control an MCP server in application code, select individual WDK tools, or add custom tools.
+
+Use the WDK CLI MCP server when you want the bundled tool set and local wallet daemon, with automated setup for Claude Desktop, Claude Code, and OpenClaw or manual stdio configuration for another MCP-compatible client.
+
+***
+
+## Need Help?
+
+<SupportCards />

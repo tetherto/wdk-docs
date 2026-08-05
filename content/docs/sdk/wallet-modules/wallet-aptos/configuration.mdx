@@ -1,0 +1,129 @@
+---
+title: Wallet Aptos Configuration
+description: Configuration options for @tetherto/wdk-wallet-aptos.
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+Configure the Aptos wallet module with an Aptos fullnode REST endpoint. A provider is required for balance reads, fee quotes, transaction submission, and receipt polling.
+
+```javascript
+import WalletManagerAptos from '@tetherto/wdk-wallet-aptos'
+
+const wallet = new WalletManagerAptos(seedPhrase, {
+  provider: [
+    'https://fullnode.mainnet.aptoslabs.com/v1',
+    process.env.APTOS_FAILOVER_FULLNODE_URL
+  ].filter(Boolean),
+  retries: 3,
+  txnExpirationSecs: 60,
+  transferMaxFee: 100000n
+})
+```
+
+## Wallet Configuration
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `provider` | `string \| string[]` | Aptos fullnode REST API URL, or an ordered list for failover. Required for chain operations. |
+| `chainId` | `number` | Optional chain ID. If omitted, the module fetches it from ledger info on first use. |
+| `retries` | `number` | Failover attempts when `provider` is an array. Defaults to `3`. |
+| `txnExpirationSecs` | `number` | Transaction expiration window measured from the current time. Defaults to `60`. |
+| `transferMaxFee` | `number \| bigint` | Optional maximum estimated fee in octas for fungible asset `transfer()` calls. |
+
+An empty provider array behaves like no provider. Balance reads, quotes, receipt lookup, transaction signing, and transaction submission then throw a provider-required error.
+
+## Account Configuration
+
+You can construct accounts directly when you need a specific derivation path.
+
+```javascript
+import { WalletAccountAptos } from '@tetherto/wdk-wallet-aptos'
+
+const account = new WalletAccountAptos(seedPhrase, "0'/0'/0'", {
+  provider: 'https://fullnode.mainnet.aptoslabs.com/v1',
+  transferMaxFee: 100000n
+})
+```
+
+An address and provider are enough for balance and receipt reads:
+
+```javascript
+import { WalletAccountReadOnlyAptos } from '@tetherto/wdk-wallet-aptos'
+
+const readOnlyAccount = new WalletAccountReadOnlyAptos('0x...', {
+  provider: 'https://fullnode.mainnet.aptoslabs.com/v1'
+})
+```
+
+Fee quotes simulate a transaction and message verification uses Ed25519, so those operations also require the matching 32-byte public key:
+
+```javascript
+const readOnlyWithPublicKey = new WalletAccountReadOnlyAptos(
+  '0x...',
+  { provider: 'https://fullnode.mainnet.aptoslabs.com/v1' },
+  publicKey
+)
+```
+
+The constructor rejects a public key that does not derive the supplied address. Prefer `account.toReadOnlyAccount()` when you already have a writable account; it carries the matching public key forward.
+
+## Network Selection
+
+Network selection is controlled by the fullnode URL and the transaction chain ID. If you provide `chainId`, it must match the configured fullnode. The module does not compare a supplied chain ID with ledger info before signing.
+
+| Network | Provider URL |
+|---------|--------------|
+| Mainnet | `https://fullnode.mainnet.aptoslabs.com/v1` |
+| Testnet | `https://fullnode.testnet.aptoslabs.com/v1` |
+
+## Derivation Paths
+
+The module uses SLIP-0010 Ed25519 derivation. `getAccount(index)` derives:
+
+```text
+m/44'/637'/index'/0'/0'
+```
+
+Use `getAccountByPath(path)` to provide a relative path after `m/44'/637'/`.
+
+```javascript
+const account = await wallet.getAccountByPath("5'/0'/0'")
+```
+
+<Callout type="warn">
+Every Aptos path segment must be hardened. A path segment without an apostrophe is invalid for this module's Ed25519 derivation.
+</Callout>
+
+The relative path must contain exactly three hardened indexes without leading zeros, such as `"5'/0'/0'"`.
+
+## Fee Limit
+
+`transferMaxFee` caps the simulated fee for fungible asset `transfer()` calls. The transfer is rejected when the estimated fee is equal to or greater than the cap.
+
+```javascript
+const wallet = new WalletManagerAptos(seedPhrase, {
+  provider: 'https://fullnode.mainnet.aptoslabs.com/v1',
+  transferMaxFee: 100000n
+})
+```
+
+The cap does not apply to native APT `sendTransaction()` or `signTransaction()`. Use `quoteSendTransaction()` and enforce a separate application limit for native transfers when needed.
+
+## Security Notes
+
+- Keep seed phrases and seed bytes outside logs and client-visible error reporting.
+- Use trusted fullnode endpoints for production wallets.
+- Keep a supplied `chainId` consistent with every configured fullnode.
+- Set a fee cap for user-facing fungible asset transfers and check native APT quotes separately.
+- Call `dispose()` on accounts and managers when secret material is no longer needed.
+
+<Cards>
+<Card title="Usage" href="/sdk/wallet-modules/wallet-aptos/usage">
+Create accounts, read balances, send transactions, and transfer fungible assets.
+</Card>
+<Card title="API Reference" href="/sdk/wallet-modules/wallet-aptos/api-reference">
+Detailed class, method, config, and type reference.
+</Card>
+</Cards>

@@ -1,0 +1,79 @@
+---
+title: P2P Address Book Production and Privacy
+description: Plan blind-peer availability, storage, privacy, deletion, and upgrades for the P2P Address Book.
+docType: explanation
+schemaType: TechArticle
+icon: ShieldCheck
+---
+
+P2P replication reduces central readable data custody. It does not eliminate infrastructure, operational responsibilities, or privacy risk.
+
+## Compare it with a CRUD backend
+
+| Area | P2P Address Book | Conventional CRUD backend |
+|---|---|---|
+| Primary storage | User devices and configured replicas | Application database |
+| Cross-device sync | Peer replication | Server API |
+| Blind-peer plaintext access | Blind-peer process is not given the content key; wallet process can read records | Usually available to the server unless separately encrypted |
+| Offline writes | Enrolled devices can append locally | Requires an application-specific offline queue |
+| Recovery | Correct keys plus an available history | Account authentication plus retained server data |
+| Server-side processing | Plaintext indexing is unavailable to a blind peer | Straightforward |
+| Operations | Peer availability, keys, local storage, and recovery | API, database, authentication, and backups |
+
+## Operate blind peers
+
+The package includes the blind-peer client integration, not the server. Deploy the separate [`blind-peer`](https://github.com/holepunchto/blind-peer) package and distribute its public key through trusted application configuration.
+
+- One blind-peer server can accept multiple cryptographically distinct address books, but they share its storage and garbage-collection capacity. The release tests recovery through one peer.
+- `addMirror(pool, n)` registers selected keys, but the underlying client contacts at most two configured peers for an Autobase request by default. Neither `n` nor `listMirrors()` is a confirmed replica count.
+- Pin and configure the server version you operate. In `blind-peer@3.12.1`, the GC-managed store defaults to 100 GB; address-book cores use priority 2 but can still be collected under storage pressure.
+- Monitor storage, garbage collection, requests, database health, and transports. These signals do not prove per-book durability or recovery completion.
+
+<Callout type="warn">
+In `1.0.0-beta.2`, `removeMirror()` removes the persisted record but leaves the key active in the current in-memory instance. Close and reopen the book without that key before treating peering as stopped. The method also does not erase blocks already held by the blind peer.
+</Callout>
+
+## Understand encryption boundaries
+
+`fromSeed()` supplies Autobase with a seed-derived content key before replication starts. Blind peers receive encrypted blocks, not that key. The wallet process and any device retaining the key can decrypt the book.
+
+Replication encryption is not local encryption at rest. Protect the Corestore directory as sensitive wallet data.
+
+A blind peer can withhold blocks or become unavailable, but signed Hypercore feeds prevent it from forging writer-authenticated history that clients accept.
+
+Blind-peer operators can still observe connection public keys and IP addresses, feed identifiers, timing, requested lengths, and approximate data volume. Logs, analytics, crash reports, screenshots, and backups can expose contact data independently of replication.
+
+## Plan deletion and recovery
+
+Contact deletion changes the current view; it does not erase append-only history or copies already held by devices and blind peers. The address-book API has no cross-replica physical-erasure or cryptographic-erasure workflow. Legal and privacy obligations depend on the complete product and deployment, not this package alone.
+
+The seed and namespace reproduce the book identity and keys, not the history. If every device and retained replica becomes unavailable, the contacts cannot be recovered from the seed.
+
+## Production checklist
+
+Before production:
+
+- Persist and protect each device's Corestore and wallet seed.
+- Pin compatible Address Book, Holepunch, and blind-peer versions.
+- Supervise blind-peer processes and monitor storage pressure, garbage collection, errors, and reachability.
+- Define replica count, retention, deletion, and backup procedures outside this package.
+- Test restoration with all original devices offline.
+- Test concurrent offline edits and upgrades against existing histories.
+- Validate destinations before using them in payment flows.
+
+The beta release publishes no package-level migration, downgrade, or cross-version replication guarantee.
+
+## Holepunch components
+
+| Component | Responsibility |
+|---|---|
+| [Corestore](https://github.com/holepunchto/corestore) | Persists device writers, replicated cores, the current view, and networking keys. |
+| [Hypercore](https://github.com/holepunchto/hypercore) | Provides signed append-only feeds for replicated operations. |
+| [Autobase](https://github.com/holepunchto/autobase) | Orders operations from authorized writers and encrypts replicated blocks when given the content key. |
+| [HyperDB](https://github.com/holepunchto/hyperdb) | Materializes contacts, addresses, writers, and mirror configuration for queries. |
+| [Hyperswarm](https://github.com/holepunchto/hyperswarm) | Discovers peers and carries direct replication connections. |
+| [`blind-peering`](https://github.com/holepunchto/blind-peering) | Requests background replication from configured blind peers. |
+
+## Next steps
+
+Return to [Sync and Recovery](/tools/p2p-address-book/sync-and-recovery) for device enrollment, or use the [API Reference](/tools/p2p-address-book/api-reference) while implementing lifecycle and storage handling.

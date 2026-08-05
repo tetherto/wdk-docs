@@ -27,13 +27,8 @@ const config = {
   chainId: 728126428, // Blockchain ID
   provider: 'https://api.trongrid.io', // Tron RPC endpoint
   gasFreeProvider: 'https://open.gasfree.io/tron/', // Gas-free service URL
-  serviceProvider: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH', // Service provider address
-  verifyingContract: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH', // Verifying contract address
-
-  // Optional parameters
-  gasFreeApiKey: 'your-api-key', // Required only for signed GasFree API requests
-  gasFreeApiSecret: 'your-api-secret', // Provide together with gasFreeApiKey
-  transferMaxFee: 10000000 // Maximum fee in token base units
+  serviceProvider: 'REPLACE_WITH_PROVIDER_ADDRESS',
+  verifyingContract: 'TFFAMQLZybALaLb4uxHA9RBE7pxhUAjF3U'
 }
 
 const wallet = new WalletManagerTronGasfree(seedPhrase, config)
@@ -44,14 +39,22 @@ const config2 = {
   chainId: 728126428,
   provider: tronWeb,
   gasFreeProvider: 'https://open.gasfree.io/tron/',
-  serviceProvider: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
-  verifyingContract: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
-  gasFreeApiKey: 'your-api-key',
-  gasFreeApiSecret: 'your-api-secret'
+  serviceProvider: 'REPLACE_WITH_PROVIDER_ADDRESS',
+  verifyingContract: 'TFFAMQLZybALaLb4uxHA9RBE7pxhUAjF3U'
 }
 ```
 
 `gasFreeApiKey` and `gasFreeApiSecret` are optional. Omit both when your GasFree provider accepts unsigned requests. If you configure signed GasFree API requests, provide both values together; the constructor rejects partial credentials.
+
+<Callout type="warn">
+The module performs HMAC request signing in the application process. Never embed `gasFreeApiSecret` in browser, mobile, or distributed desktop code. For client applications, use unsigned access only when the selected provider explicitly permits it, or route GasFree API requests through an authenticated backend that stores the secret.
+</Callout>
+
+Retrieve the current service-provider address from the provider's [`GET /api/v1/config/provider/all`](https://docs.gasfree.io/#get-apiv1configproviderall) response. Do not substitute the verifying-contract address for `serviceProvider`.
+
+<Callout type="info">
+`TronGasfreeWalletConfig` includes `transferMaxFee` and `transactionMaxFee` for shared wallet type compatibility. The current GasFree runtime does not use either constructor field as a fee cap. Pass `transferMaxFee` in the second argument to `account.transfer()`; native transaction methods are unsupported, so `transactionMaxFee` has no effect.
+</Callout>
 
 ## Account Configuration
 
@@ -68,25 +71,20 @@ const account = new WalletAccountTronGasfree(
     chainId: 728126428,
     provider: 'https://api.trongrid.io',
     gasFreeProvider: 'https://open.gasfree.io/tron/',
-    serviceProvider: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
-    verifyingContract: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
-    gasFreeApiKey: 'your-api-key', // Optional: provide with gasFreeApiSecret
-    gasFreeApiSecret: 'your-api-secret',
-    transferMaxFee: 10000000 // Optional
+    serviceProvider: 'REPLACE_WITH_PROVIDER_ADDRESS',
+    verifyingContract: 'TFFAMQLZybALaLb4uxHA9RBE7pxhUAjF3U'
   }
 )
 
-// Read-only account (transferMaxFee not needed)
+// Read-only account (fee-cap fields are omitted)
 const readOnlyAccount = new WalletAccountReadOnlyTronGasfree(
   'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH', // Tron address
   {
     chainId: 728126428,
     provider: 'https://api.trongrid.io',
     gasFreeProvider: 'https://open.gasfree.io/tron/',
-    serviceProvider: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
-    verifyingContract: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
-    gasFreeApiKey: 'your-api-key', // Optional: provide with gasFreeApiSecret
-    gasFreeApiSecret: 'your-api-secret'
+    serviceProvider: 'REPLACE_WITH_PROVIDER_ADDRESS',
+    verifyingContract: 'TFFAMQLZybALaLb4uxHA9RBE7pxhUAjF3U'
   }
 )
 
@@ -163,14 +161,15 @@ The `gasFreeApiKey` option is your API key for signed requests to the gas-free s
 **Example:**
 
 ```javascript
+// Trusted server runtime only
 const config = {
-  gasFreeApiKey: 'your-api-key',
-  gasFreeApiSecret: 'your-api-secret'
+  gasFreeApiKey: process.env.GASFREE_API_KEY,
+  gasFreeApiSecret: process.env.GASFREE_API_SECRET
 }
 
 ```
 
-Provide `gasFreeApiKey` and `gasFreeApiSecret` together. Passing only one of them throws during account construction.
+Provide `gasFreeApiKey` and `gasFreeApiSecret` together. Passing only one of them throws during account construction. Because the module uses the secret to sign requests locally, configure these fields only in a trusted server runtime.
 
 ### Gas-Free API Secret
 
@@ -183,14 +182,15 @@ The `gasFreeApiSecret` option is your API secret for signed requests to the gas-
 **Example:**
 
 ```javascript
+// Trusted server runtime only
 const config = {
-  gasFreeApiKey: 'your-api-key',
-  gasFreeApiSecret: 'your-api-secret'
+  gasFreeApiKey: process.env.GASFREE_API_KEY,
+  gasFreeApiSecret: process.env.GASFREE_API_SECRET
 }
 
 ```
 
-Provide `gasFreeApiSecret` and `gasFreeApiKey` together. Passing only one of them throws during account construction.
+Provide `gasFreeApiSecret` and `gasFreeApiKey` together. Passing only one of them throws during account construction. Never ship the secret in a browser, mobile, or desktop application bundle.
 
 ### Service Provider
 
@@ -204,10 +204,12 @@ The `serviceProvider` option is the Tron address of the gas-free service provide
 
 ```javascript
 const config = {
-  serviceProvider: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH'
+  serviceProvider: 'REPLACE_WITH_PROVIDER_ADDRESS'
 }
 
 ```
+
+Retrieve the current address from the provider's [`GET /api/v1/config/provider/all`](https://docs.gasfree.io/#get-apiv1configproviderall) response.
 
 ### Verifying Contract
 
@@ -221,14 +223,14 @@ The `verifyingContract` option is the Tron address of the contract that verifies
 
 ```javascript
 const config = {
-  verifyingContract: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH'
+  verifyingContract: 'TFFAMQLZybALaLb4uxHA9RBE7pxhUAjF3U'
 }
 
 ```
 
 ### Transfer Max Fee
 
-The `transferMaxFee` option sets a maximum limit for transaction fees to prevent unexpectedly high costs.
+Pass `transferMaxFee` in the optional second argument to `account.transfer()` to cap one GasFree TRC20 transfer. The constructor-level field exists in `TronGasfreeWalletConfig` but is not used as a default by the current runtime.
 
 **Type:** `number | bigint`
 
@@ -240,25 +242,28 @@ The `transferMaxFee` option sets a maximum limit for transaction fees to prevent
 
 ```javascript
 const config = {
-  transferMaxFee: 10000000 // Maximum fee in token base units
+  transferMaxFee: 5000n
 }
 
-// Usage with error handling
-try {
-  const result = await account.transfer({
-    token: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
-    recipient: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
-    amount: 1000000
-  }, {
-    transferMaxFee: 5000 // Override default max fee
-  })
-} catch (error) {
-  if (error.message.includes('exceeds the transfer max fee')) {
-    console.error('Transfer cancelled: Fee too high')
-  }
-}
+const result = await account.transfer({
+  token: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
+  recipient: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
+  amount: 1000000n
+}, config)
 
 ```
+
+The transfer is rejected only when the quoted total fee is greater than the cap. A fee equal to `transferMaxFee` is allowed. Use an integer or `bigint` value because the runtime converts the cap with `BigInt()`.
+
+### Transaction Max Fee
+
+`transactionMaxFee` is present in the public config type for base-wallet compatibility.
+
+**Type:** `number | bigint`
+
+**Required:** No (optional)
+
+The GasFree module does not support `quoteSendTransaction()`, `signTransaction()`, or `sendTransaction()`. Those methods always throw, so this field does not control a runtime operation in the current release. Use the base `@tetherto/wdk-wallet-tron` package for native TRX transactions.
 
 ## Network-Specific Configurations
 
@@ -269,10 +274,8 @@ const mainnetConfig = {
   chainId: 728126428,
   provider: 'https://api.trongrid.io',
   gasFreeProvider: 'https://open.gasfree.io/tron/',
-  serviceProvider: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
-  verifyingContract: 'TFFAMLQZybALab4uxHA9RBE7pxhUAjfF3U', // Official Mainnet Contract
-  gasFreeApiKey: 'your-api-key', // Optional: provide with gasFreeApiSecret
-  gasFreeApiSecret: 'your-api-secret'
+  serviceProvider: 'REPLACE_WITH_PROVIDER_ADDRESS',
+  verifyingContract: 'TFFAMQLZybALaLb4uxHA9RBE7pxhUAjF3U' // Official mainnet contract
 }
 
 ```
@@ -284,10 +287,8 @@ const nileConfig = {
   chainId: 3448148188, // Nile Testnet (Specific ID required for GasFree)
   provider: 'https://nile.trongrid.io',
   gasFreeProvider: 'https://open-test.gasfree.io/nile/',
-  serviceProvider: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
-  verifyingContract: 'THQGuFzL87ZqhxkgqYEryRAd7gqFqL5rdc', // Official Testnet Contract
-  gasFreeApiKey: 'your-testnet-api-key', // Optional: provide with gasFreeApiSecret
-  gasFreeApiSecret: 'your-testnet-api-secret'
+  serviceProvider: 'REPLACE_WITH_PROVIDER_ADDRESS',
+  verifyingContract: 'THQGuFzL87ZqhxkgqYEryRAd7gqFqL5rdc' // Official Nile testnet contract
 }
 ```
 

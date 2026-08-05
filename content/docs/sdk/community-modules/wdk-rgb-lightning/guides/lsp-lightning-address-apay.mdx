@@ -1,0 +1,143 @@
+---
+title: Use an LSP, Lightning Address, and APay
+description: Use the beta.15 LSP client, composed RGB flows, LNURL-pay helpers, Lightning Address, and asynchronous payments.
+docType: how-to
+schemaType: TechArticle
+---
+
+The package exposes a standalone HTTP client, account-bound helpers, and a composed `UtexoLsp` flow object.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Configure a secure LSP endpoint
+
+```js
+const manager = new WalletManagerRgbLightning(seedPhrase, {
+  network: 'mainnet',
+  dataDir: '/app-private/wdk/rgb-lightning',
+  lspBaseUrl: 'https://lsp.example.com',
+  lspBearerToken: await loadLspToken(),
+})
+```
+
+Treat the bearer token as a secret. Public HTTP is rejected by default. Enable HTTP only for an explicitly accepted loopback/development environment.
+
+## Use the standalone client
+
+```js
+import { LspClient } from '@utexo/wdk-rgb-lightning'
+
+const client = new LspClient({
+  baseUrl: 'https://lsp.example.com',
+})
+
+const [health, info] = await Promise.all([
+  client.health(),
+  client.getInfo(),
+])
+```
+
+The client also exposes LNURL discovery/callback, Lightning Address resolution, RGB on-chain send bridging, and Lightning receive bridging. Validate native response objects.
+
+## Use composed RGB flows
+
+With `lspBaseUrl` configured, the no-argument form discovers the peer:
+
+```js
+const lsp = await account.createLsp()
+
+await lsp.connect()
+
+const receive = await lsp.receiveAsset({
+  assetId,
+  amountRgb: 100,
+})
+
+const settlement = await lsp.awaitReceiveSettlement(receive.lnInvoice)
+```
+
+`UtexoLsp` also exposes `waitForChannel()`, `waitForOutboundLiquidity()`, `sendAsset()`, `payAddress()`, `enableLightningAddress()`, and `claimPendingPayments()`.
+
+<Callout type="warn">
+In beta.15, `sendAsset()` requires `ln.amtMsat` and `ln.expirySec` at runtime even though the public declaration marks `ln` and those fields optional.
+</Callout>
+
+```js
+const sent = await lsp.sendAsset({
+  rgbInvoice,
+  ln: {
+    amtMsat: 5_000_000,
+    expirySec: 3_600,
+  },
+})
+```
+
+Bound every wait with a timeout or `AbortSignal`. Handle `LspChannelTimeoutError`, `LspLiquidityTimeoutError`, and `LspSettlementError` separately.
+
+## Pay a Lightning Address
+
+```js
+const paid = await lsp.payAddress({
+  address: 'alice@example.com',
+  amtMsat: 5_000_000,
+})
+```
+
+The lower-level `payLightningAddress()` and LNURL helpers are also exported from the package root.
+
+LNURL callbacks must remain on the discovery host by default. Set `allowCrossHostCallback: true` only after reviewing the delegated host and redirect threat model.
+
+Inputs such as `$alice@example.com` are normalized as UMA-style address syntax. This release does not implement UMA signing, compliance, currency negotiation, or exchange-rate semantics.
+
+## Enable a Lightning Address
+
+```js
+const address = await lsp.enableLightningAddress()
+console.log(address.address)
+```
+
+The LSP owns availability and name assignment. Do not present the address as durable until the LSP confirms it and your application stores the returned mapping.
+
+## Configure production APay
+
+APay receives payments while the wallet is offline. Construct the manager with:
+
+```js
+const manager = new WalletManagerRgbLightning(seedPhrase, {
+  network: 'mainnet',
+  dataDir: '/app-private/wdk/rgb-lightning',
+  lspBaseUrl: 'https://lsp.example.com',
+  lspBearerToken,
+  enableVirtualChannelsV0: true,
+  virtualPeerPubkeys: [lspNodeId],
+})
+```
+
+Then bootstrap the authenticated LSP peer:
+
+```js
+const result = await account.bootstrapLsp({
+  peerPubkeyAndAddr: `${lspNodeId}@${lspHost}:${lspPort}`,
+  hostNodeId: lspNodeId,
+  waitForPeerMs: 15_000,
+  pollIntervalMs: 250,
+})
+```
+
+`bootstrapLsp()` connects the peer, waits for visibility, then calls `apayNew()` when `hostNodeId` is supplied.
+
+<Callout type="warn">
+A failed bootstrap can leave a connected peer even when APay registration did not finish. Inspect `listPeers()` and APay state before retrying; do not assume rollback.
+</Callout>
+
+Production APay requires mutual trust for `trusted_no_broadcast` virtual channels. Authenticate the LSP node ID independently.
+
+## Next steps
+
+- [Connect peers and channels](/sdk/community-modules/wdk-rgb-lightning/guides/peers-channels)
+- [Use RGB assets](/sdk/community-modules/wdk-rgb-lightning/guides/rgb-assets)
+- [Handle errors and cleanup](/sdk/community-modules/wdk-rgb-lightning/guides/handle-errors-cleanup)

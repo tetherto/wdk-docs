@@ -1,0 +1,66 @@
+---
+title: Sign and verify messages with the RGB wallet
+description: Sign and verify application messages with the full on-chain RGB account.
+docType: how-to
+schemaType: TechArticle
+---
+
+The full v2.0.3 account exposes Bitcoin message signing and verification through the underlying RGB wallet.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Sign a domain-separated message
+
+```js
+const message = [
+  'example-wallet-auth',
+  'version=1',
+  `origin=${expectedOrigin}`,
+  `nonce=${serverNonce}`,
+  `expires=${expiresAt}`,
+].join('\n')
+
+const signature = await account.sign(message)
+```
+
+Include an application name, purpose, origin, nonce, expiry, and version. Do not ask users to sign opaque or transaction-like data.
+
+## Verify with the full account
+
+```js
+const valid = await account.verify(message, signature)
+
+if (!valid) {
+  throw new Error('Invalid RGB wallet message signature')
+}
+```
+
+Verify the exact bytes and application context that were presented to the signer. Reject reused nonces and expired challenges at the application boundary.
+
+## Read-only limitation
+
+```js
+const readOnly = await account.toReadOnlyAccount()
+```
+
+The released `WalletAccountReadOnlyRgb` does not implement `verify()`. Do not copy an API claim from a later commit or another wallet module. If verification must run without the live full account, use a separately reviewed verifier with the correct public key, signature format, and domain rules.
+
+## Protect key material
+
+- Do not log `account.keyPair`, signatures attached to sensitive challenges, or seed material.
+- Keep challenge generation server-side when using signatures for authentication.
+- Bind signatures to one origin and one intended action.
+- Call `manager.dispose()` when the wallet session ends.
+- Remember that disposal cannot erase key copies retained by application code.
+
+Message signing does not authorize a Bitcoin or RGB transfer unless your application explicitly gives the signed message that meaning. Keep authentication and transaction approval domains separate.
+
+## Next steps
+
+- [Manage account storage](/sdk/community-modules/wdk-wallet-rgb/guides/manage-account-storage)
+- [Handle errors](/sdk/community-modules/wdk-wallet-rgb/guides/handle-errors)
+- [API reference](/sdk/community-modules/wdk-wallet-rgb/api-reference)

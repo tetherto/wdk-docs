@@ -5,7 +5,7 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-This guide explains how to send native SOL, sign without broadcasting, quote paymaster fees, and use prebuilt transaction messages.
+This guide explains how to send native SOL, sign without broadcasting, quote paymaster fees, send an already signed transaction, and use prebuilt transaction messages.
 
 <Callout type="warn">
 Use `BigInt` values for token and lamport amounts to avoid precision loss.
@@ -53,7 +53,7 @@ const result = await account.sendTransaction({
 })
 ```
 
-`quoteSendTransaction()` returns the estimated fee without enforcing `transactionMaxFee`.
+`quoteSendTransaction()` returns the estimated fee without enforcing `transactionMaxFee`. `sendTransaction()` and `signTransaction()` reject only when the fee is greater than the cap, so a fee equal to the cap is allowed.
 
 ## Sign Without Broadcasting
 
@@ -70,7 +70,36 @@ const signedTransaction = await account.signTransaction({
 console.log('Signed transaction:', signedTransaction)
 ```
 
-The module signs with the owner account, asks the paymaster to sign, and returns a fully signed Solana transaction. It does not broadcast from `signTransaction()`.
+The module adds the payment instruction, checks `transactionMaxFee`, signs with the owner account, asks the paymaster to sign, and returns a `FullySignedTransaction`. It does not broadcast from `signTransaction()`.
+
+## Quote and Send a Signed Transaction
+
+In `1.0.0-beta.2`, owned accounts accept the `FullySignedTransaction` returned by `signTransaction()` in both `quoteSendTransaction()` and `sendTransaction()`:
+
+```javascript title="Inspect then broadcast a signed transaction"
+const signedTransaction = await account.signTransaction({
+  to: 'Recipient1111111111111111111111111111111',
+  value: 1000000n
+}, {
+  transactionMaxFee: 500000n
+})
+
+const { fee } = await account.quoteSendTransaction(signedTransaction)
+console.log('Embedded paymaster fee:', fee)
+
+const result = await account.sendTransaction(signedTransaction, {
+  transactionMaxFee: 500000n
+})
+console.log('Transaction hash:', result.hash)
+```
+
+For a signed input, `quoteSendTransaction()` does not request a new paymaster quote or broadcast anything. It decodes the payment amount from the signed message's SPL token payment instruction; the result is a `bigint` in the configured paymaster token's base units.
+
+`sendTransaction(signedTransaction)` decodes that same fee, enforces `transactionMaxFee`, base64-encodes the fully signed wire transaction, and submits it through the configured Solana RPC with `encoding: 'base64'`. It does not call the paymaster's `signAndSendTransaction()` again.
+
+<Callout type="warn">
+A signed transaction is immutable. This flow does not obtain a fresh blockhash, durable nonce, payment instruction, or paymaster signature. Submit the exact signed payload while its existing lifetime is valid, and check its original signature before retrying after an uncertain RPC result.
+</Callout>
 
 ## Use a TransactionMessage
 
@@ -84,7 +113,7 @@ const result = await account.sendTransaction(transactionMessage)
 console.log('Transaction hash:', result.hash)
 ```
 
-If the message already includes a recent blockhash or durable nonce lifetime, the module preserves it. If it does not, the module fetches the latest blockhash.
+If the message already includes a recent blockhash or durable nonce lifetime, the module preserves it. If it does not, the module adds a blockhash lifetime before it requests payment instructions and signatures. A signed result keeps that lifetime; `sendTransaction(signedTransaction)` does not refresh it.
 
 <Callout type="warn">
 If a prebuilt message sets `feePayer`, it must equal `paymasterAddress`. The module sets the fee payer to the paymaster address before asking the paymaster for fee instructions.
@@ -120,6 +149,8 @@ const result = await account.sendTransaction({
   }
 })
 ```
+
+For an already signed transaction, the payment token is already embedded in the signed message. Do not use `paymasterToken` as an override to try to change it; only `transactionMaxFee` is applied before direct broadcast.
 
 ## Next Steps
 

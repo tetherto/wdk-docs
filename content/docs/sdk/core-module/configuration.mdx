@@ -127,15 +127,17 @@ const wdk = new WDK(process.env.SEED_PHRASE)
 
 ## Configuration Validation
 
-The WDK Manager will validate configurations when wallets and protocols are registered:
+Registration does not validate every downstream module configuration:
 
-- **Wallet Registration**: Ensures the wallet class extends the required base class
-- **Protocol Registration**: Validates that protocol labels are unique per blockchain and protocol type
-- **Middleware Registration**: Validates that middleware functions have the correct signature
+- **Wallet Registration**: WDK constructs the wallet manager during registration, so wallet-constructor validation errors surface immediately. Registering a second wallet under the same blockchain throws.
+- **Protocol Registration**: Global registration stores a supported protocol class and config for later construction. Reusing the same blockchain, protocol type, and label replaces the previous global registration. Provider-constructor and config errors surface when an account retrieves the protocol.
+- **Middleware Registration**: WDK stores the middleware for later account decoration. Errors thrown by the middleware surface when an account is retrieved.
+
+In JavaScript, a protocol class that does not extend a supported WDK protocol base class is ignored rather than rejected. Keep protocol classes typed, use distinct labels, and test retrieval during application startup. A global registration shadows an account-scoped provider with the same type and label.
 
 ## Error Handling
 
-Configuration errors will be thrown during registration:
+Handle wallet registration errors at registration time and protocol errors at retrieval time:
 
 ```javascript title="Configuration errors"
 try {
@@ -146,8 +148,10 @@ try {
 
 try {
   wdk.registerProtocol('ethereum', 'velora', veloraProtocolEvm, invalidConfig)
+  const account = await wdk.getAccount('ethereum', 0)
+  account.getSwapProtocol('velora')
 } catch (error) {
-  console.error('Protocol registration failed:', error.message)
+  console.error('Protocol construction or retrieval failed:', error.message)
 }
 ```
 

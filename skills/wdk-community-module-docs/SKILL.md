@@ -126,14 +126,13 @@ existing slug; a new slug requires explicit approval.
   module route or sidebar node.
 
 Update `src/lib/custom-tree.ts` only when the page should render in the sidebar.
-For files under `contributing/wdk-community-module-docs/` or skill artifacts, do
-not touch the tree.
+Order applicable family sections as Usage, Guides, Configuration, API Reference, then supplemental Reference; omit missing sections without changing this order.
+Do not touch the tree for contributor guides or skill artifacts.
 
-Every independently maintained page opens with purpose/ownership and any short
-source attribution, then uses the current singular responsibility callout.
-Community and affected functional/aggregate listings use one plural callout
-before their rows; compact chooser/card entries label `Community` and link to
-the overview. Changelogs/incidental links do not repeat it.
+Every independently maintained page uses the canonical plural responsibility callout near the top, preserving adjacent merged-family placement. Dedicated community
+listings use that callout once; mixed functional listings use the current `Rows
+marked Community...` variant before rows. Compact cards label `Community` and
+link to the overview. Changelogs/incidental links do not repeat either callout.
 
 Classify an unfamiliar module on independent axes before selecting a family:
 
@@ -214,10 +213,10 @@ When the repo manual is unavailable, retain this minimum contract:
   `docType`, and `schemaType`. API references normally use `APIReference`, but
   preserve a verified nearby `TechArticle` convention when that route requires
   it. The layout renders the title, so do not add a duplicate body H1.
-- Standard overview order is purpose/attribution, responsibility callout, when
-  to use, requirements, capabilities, limitations, and next steps. Compact mode
-  inserts verified install and minimal first read and links only applicable
-  destinations.
+- Standard overviews place purpose/attribution and the responsibility callout
+  near the top in adjacent-family order, then when to use, requirements,
+  capabilities, limitations, and next steps. Compact mode inserts verified
+  install and minimal first read and links only applicable destinations.
 - Usage is either a hub linking focused guides or one complete flow, never both.
   Configuration covers fields/defaults/units/security; API reference covers only
   public exports, signatures, options, returns, errors, statuses, and limits.
@@ -257,8 +256,8 @@ When the repo manual is unavailable, retain this minimum contract:
 
 ## Drafting Rules
 
-- Apply the explicit per-page/listing responsibility placement contract above;
-  an open PR does not change canonical wording or placement.
+- Apply the explicit responsibility wording and adjacent-family placement contract
+  above; an open PR does not change canonical wording or placement.
 - Lead with what the reader can do, then prerequisites, then safe usage.
 - Keep provider route support tied to runtime discovery or official provider docs.
 - Put provider-owned operational limits that change the default setup at first
@@ -456,6 +455,7 @@ If docs-site content or navigation changed, run:
 
 ```bash
 export LINK_CHECK_EXTERNAL=false
+npm run test:link-routing
 npm run check:meta
 npm run check:redirects
 LINK_CHECK_EXTERNAL=false npm run check:links
@@ -466,8 +466,8 @@ npm run quality
 Verify every new/changed external destination and final redirect in a browser or provider-appropriate
 client. Keep deterministic/live lanes separate. Treat blocked automation as unverified, not dead; npm CLI evidence outranks bot-blocked web pages.
 
-If a local build fails under a newer Node runtime because of repo runtime drift,
-retry with Node `22.22.2` before treating the docs change as broken.
+If a local build fails under a newer Node runtime because of repo runtime drift, retry
+with Node `22.22.2` before treating the docs change as broken.
 
 Do not claim validation passed unless the exact command passed. `check:meta`
 validates `meta.json`, not MDX frontmatter; report its actual scope. For read-only

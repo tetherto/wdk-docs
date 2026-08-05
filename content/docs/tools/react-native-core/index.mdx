@@ -8,20 +8,31 @@ description: Hooks-based React Native library for building multi-chain wallet ap
 ## Features
 
 - **Hooks-based architecture** - `useWdkApp`, `useWalletManager`, `useAccount`, `useProtocol`, `useBalance`, `useBalancesForWallets`, and more
+- **Generic module API** - `useModule` and `ModuleService` expose named worklet-module calls and events
 - **TanStack Query caching** - automatic balance fetching across one or many account indices, per-token fallback for modules without batch balance support, cache invalidation, and optimistic updates
 - **Zustand state management** - persisted wallet state with MMKV storage
 - **Worklet runtime** - runs WDK in an isolated Bare worklet
 - **Biometric authentication** - secure storage with device biometrics
 - **Multi-wallet support** - create, restore, switch, lock, unlock, and delete wallets
-- **TypeScript-first** - full type safety with exported types and interfaces
+- **Typed React Native source API** - exported hook and service types are available through the package's React Native source condition
+
+<Callout type="info">
+Starting in `v1.0.0-beta.14`, React Native Core pins a Pear Worklet version with the HRPC methods required by `useModule()` and `ModuleService`. Beta.15 pins Pear Worklet beta.10.
+</Callout>
+
+<Callout type="warn">
+The `v1.0.0-beta.15` npm artifact includes the React Native source entry at `src/index.ts`, but it does not include the declared default JavaScript or type declaration files under `dist/`. Use a React Native resolver that selects the package's `react-native` condition. Resolvers that select `default` or `types` target files that are not present in this artifact.
+</Callout>
 
 ## Quick Start
 
 ### 1. Install
 
 ```bash
-npm install @tetherto/wdk-react-native-core
+npm install @tetherto/wdk-react-native-core react-native-bare-kit
 ```
+
+Starting in beta.14, `react-native-bare-kit` is a peer dependency with a supported range of `>=0.14.5`, so the app must install it explicitly.
 
 ### 2. Wrap Your App
 
@@ -67,9 +78,7 @@ For a full integration guide, see the [React Native Quickstart](/start-building/
 
 ## Bundle Configuration
 
-The WDK engine runs inside a Bare worklet. You need to provide a bundle - there are two approaches:
-
-### Custom Bundle (Recommended)
+The WDK engine runs inside a Bare worklet. Generate an HRPC bundle with `@tetherto/wdk-worklet-bundler` and import it from the generated `./.wdk` entrypoint.
 
 Use the `@tetherto/wdk-worklet-bundler` CLI to generate a bundle with only the blockchain modules you need:
 
@@ -93,26 +102,19 @@ Example `wdk.config.js`:
 
 ```javascript
 module.exports = {
-  modules: {
-    core: '@tetherto/wdk',
-    erc4337: '@tetherto/wdk-wallet-evm-erc-4337',
-  },
   networks: {
     ethereum: {
-      module: 'erc4337',
-      chainId: 1,
-      blockchain: 'ethereum',
-      provider: 'https://eth.drpc.org',
+      package: '@tetherto/wdk-wallet-evm-erc-4337'
     },
     polygon: {
-      module: 'erc4337',
-      chainId: 137,
-      blockchain: 'polygon',
-      provider: 'https://polygon.drpc.org',
-    },
+      package: '@tetherto/wdk-wallet-evm-erc-4337'
+    }
   },
+  transport: 'hrpc'
 }
 ```
+
+This file selects packages at build time. Pass chain IDs, providers, protocol settings, and any per-module runtime config through `wdkConfigs` on `WdkAppProvider`. The optional build-time `modules` map in the bundler is distinct from runtime `wdkConfigs.modules`; their names must match when generic-module support is available.
 
 After running `wdk-worklet-bundler generate`, import and use the bundle:
 
@@ -124,23 +126,7 @@ import { bundle } from './.wdk'
 </WdkAppProvider>
 ```
 
-For full bundler documentation, see [wdk-worklet-bundler](https://github.com/tetherto/wdk-worklet-bundler).
-
-### Pre-built Bundle
-
-For quick prototyping, use the pre-built bundle from `@tetherto/pear-wrk-wdk` which includes all blockchain modules:
-
-```typescript
-import { bundle } from '@tetherto/pear-wrk-wdk'
-
-<WdkAppProvider bundle={{ bundle }} wdkConfigs={configs}>
-  <App />
-</WdkAppProvider>
-```
-
-<Callout type="info">
-The pre-built bundle includes all blockchain modules, resulting in a larger bundle size. For production apps, generate a custom bundle with only the modules you need.
-</Callout>
+For the complete config and transport rules, see the [Worklet Bundler configuration guide](/tools/worklet-bundler/configuration). `@tetherto/pear-wrk-wdk` provides the worklet transport/runtime layer; it does not export a pre-built WDK bundle.
 
 ## Architecture
 
@@ -156,7 +142,8 @@ WdkAppProvider
     +-- useWdkApp()         - app state (INITIALIZING, NO_WALLET, LOCKED, READY, ERROR)
     +-- useWalletManager()  - create, restore, lock, unlock, delete wallets
     +-- useAccount()        - address, send, sign, verify, estimateFee
-    +-- useProtocol()       - call bridge, swap, lending, and fiat protocol methods
+    +-- useProtocol()       - call bridge, swap, Swidge, lending, and fiat protocol methods
+    +-- useModule()         - call named generic modules and subscribe to events
     +-- useAddresses()      - load and query addresses
     +-- useBalance()            - single balance with TanStack Query
     +-- useBalancesForWallet()  - bulk balance fetch for one account index

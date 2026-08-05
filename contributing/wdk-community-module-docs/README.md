@@ -249,6 +249,7 @@ When docs-site content or navigation changes, run exactly:
 
 ```bash
 export LINK_CHECK_EXTERNAL=false
+npm run test:link-routing
 npm run check:meta
 npm run check:redirects
 LINK_CHECK_EXTERNAL=false npm run check:links
@@ -1138,12 +1139,13 @@ run_logged 00-pr-ready \
   node skills/wdk-community-module-docs/scripts/validate-artifacts.mjs \
   --pr-ready --api-reference-policy="$HARNESS_DIR/api-reference-policy.txt"
 run_logged 00-diff-check git diff --check
-run_logged 01-check-meta npm run check:meta
-run_logged 02-check-redirects npm run check:redirects
+run_logged 01-link-routing npm run test:link-routing
+run_logged 02-check-meta npm run check:meta
+run_logged 03-check-redirects npm run check:redirects
 export LINK_CHECK_EXTERNAL=false
-run_logged 03-check-links npm run check:links
-run_logged 04-build npm run build
-run_logged 05-quality npm run quality
+run_logged 04-check-links npm run check:links
+run_logged 05-build npm run build
+run_logged 06-quality npm run quality
 ```
 
 The wrapper preserves the real exit code. Report a pass only when the wrapper

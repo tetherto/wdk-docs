@@ -169,9 +169,9 @@ const account = new WalletAccountTron(seedPhrase, "0'/0/0", {
 | `getAddress()` | Returns the account's Tron address | `Promise\<string\>` | - |
 | `sign(message)` | Signs a message using the account's private key | `Promise\<string\>` | - |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` | - |
-| `signTransaction(tx)` | Signs a Tron transaction without broadcasting it | `Promise\<SignedTransaction\>` | If no provider, fee exceeds `transactionMaxFee`, or a pre-built transaction owner does not match the account |
-| `sendTransaction(tx)` | Sends a Tron transaction | `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` | If no provider, fee exceeds `transactionMaxFee`, or a pre-built transaction owner does not match the account |
-| `quoteSendTransaction(tx)` | Estimates the fee for a Tron transaction | `Promise\<{fee: bigint, activationFee: bigint}\>` | If no provider |
+| `signTransaction(tx)` | Signs a Tron transaction without broadcasting it | `Promise\<TronSignedTransaction\>` | If no provider, fee exceeds `transactionMaxFee`, or an unsigned pre-built transaction owner does not match the account |
+| `sendTransaction(tx)` | Builds and sends a transaction, or broadcasts a signed transaction | `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` | If no provider or fee exceeds `transactionMaxFee`; unsigned pre-built inputs also require a matching owner |
+| `quoteSendTransaction(tx)` | Estimates the fee for an unsigned or signed Tron transaction | `Promise\<{fee: bigint, activationFee: bigint}\>` | If no provider |
 | `transfer(options)` | Transfers TRC20 tokens to another address | `Promise\<{hash: string, fee: bigint}\>` | If no provider or fee exceeds `transferMaxFee` |
 | `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: bigint}\>` | If no provider |
 | `getBalance()` | Returns the native TRX balance (in sun) | `Promise\<bigint\>` | If no provider |
@@ -227,7 +227,7 @@ Signs a Tron transaction and returns the signed transaction object. This method 
 **Parameters:**
 - `tx` (TronTransaction): Native TRX transfer, smart-contract call descriptor, or pre-built TronWeb transaction
 
-**Returns:** `Promise\<SignedTransaction\>` - Signed Tron transaction object with a `signature` array
+**Returns:** `Promise\<TronSignedTransaction\>` - Signed Tron transaction object with a `signature` array
 
 **Throws:**
 - Error if no TronWeb provider is configured
@@ -248,14 +248,16 @@ console.log('Signed transaction:', signedTransaction)
 Sends a Tron transaction and returns the result with hash, fee, and activation fee details.
 
 **Parameters:**
-- `tx` (TronTransaction): Native TRX transfer, smart-contract call descriptor, or pre-built TronWeb transaction
+- `tx` (TronTransaction | TronSignedTransaction): Native TRX transfer, smart-contract call descriptor, pre-built unsigned TronWeb transaction, or signed transaction
+
+When `tx` has a signature, WDK quotes it again, enforces `transactionMaxFee`, and forwards the exact object to `tronWeb.trx.sendRawTransaction()`. It does not rebuild the transaction, refresh its reference block or expiration, re-sign it, or repeat the unsigned pre-built owner check.
 
 **Returns:** `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` - Transaction hash, total fee in sun, and the portion used for account activation
 
 **Throws:** 
 - Error if no TronWeb provider is configured
 - Error if fee exceeds `transactionMaxFee` when configured
-- Error if a pre-built transaction is owned by a different account
+- Error if an unsigned pre-built transaction is owned by a different account
 
 **Example:**
 ```javascript
@@ -272,7 +274,7 @@ console.log('Activation fee:', result.activationFee, 'sun')
 Estimates the cost for a Tron transaction. Quotes include bandwidth for every transaction, energy for smart-contract execution, and activation fee for native transfers to inactive recipients.
 
 **Parameters:**
-- `tx` (TronTransaction): The transaction object (same as sendTransaction)
+- `tx` (TronTransaction | TronSignedTransaction): An unsigned transaction input or signed transaction
 
 **Returns:** `Promise\<{fee: bigint, activationFee: bigint}\>` - Fee estimate in sun and the portion used for account activation
 
@@ -583,15 +585,13 @@ interface TransactionResult {
 }
 ```
 
-### SignedTransaction
+### TronSignedTransaction
 
 ```typescript
-interface SignedTransaction {
-  txID: string;                       // Tron transaction ID
-  signature: string[];                // Serialized secp256k1 signature
-  [key: string]: unknown;             // Other fields from the unsigned Tron transaction
-}
+type TronSignedTransaction = import('tronweb').Types.SignedTransaction
 ```
+
+The WDK package re-exports this TronWeb type under the exact name `TronSignedTransaction`.
 
 ### TronActivationFee
 

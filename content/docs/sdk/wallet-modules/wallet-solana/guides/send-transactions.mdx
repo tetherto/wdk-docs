@@ -5,7 +5,7 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-This guide explains how to [send native SOL](#send-native-sol), [sign a transaction without broadcasting](#sign-a-transaction-without-broadcasting), [estimate transaction fees](#estimate-transaction-fees), [cap native transaction fees](#cap-native-transaction-fees), [quote or send a TransactionMessage](#quote-or-send-a-transactionmessage), [use dynamic fee rates](#use-dynamic-fee-rates), and [run a complete SOL transfer flow](#complete-example).
+This guide explains how to [send native SOL](#send-native-sol), [sign a transaction without broadcasting](#sign-a-transaction-without-broadcasting), [quote and send a signed transaction](#quote-and-send-a-signed-transaction), [estimate transaction fees](#estimate-transaction-fees), [cap native transaction fees](#cap-native-transaction-fees), [quote or send a TransactionMessage](#quote-or-send-a-transactionmessage), [use dynamic fee rates](#use-dynamic-fee-rates), and [run a complete SOL transfer flow](#complete-example).
 
 <Callout type="warn">
 **BigInt Usage:** Always use `BigInt` (the `n` suffix) for monetary values to avoid precision loss with large numbers.
@@ -39,6 +39,27 @@ const signedTransaction = await account.signTransaction({
 })
 console.log('Signed transaction:', signedTransaction)
 ```
+
+## Quote and Send a Signed Transaction
+
+Pass the `FullySignedTransaction` returned by `signTransaction()` to the quote and send methods when review and submission are separate steps.
+
+```javascript title="Quote and Send Signed Bytes"
+const signedTransaction = await account.signTransaction({
+  to: '11111111111111111111111111111112',
+  value: 1000000000n
+})
+
+const quote = await account.quoteSendTransaction(signedTransaction)
+console.log('Estimated fee:', quote.fee, 'lamports')
+
+const result = await account.sendTransaction(signedTransaction)
+console.log('Transaction signature:', result.hash)
+```
+
+<Callout type="warning">
+Signing seals the recent blockhash or durable nonce into the message. WDK broadcasts the signed bytes unchanged and does not refresh the transaction lifetime or re-sign it. Submit the transaction before that lifetime becomes invalid. `sendTransaction()` quotes it again and enforces `transactionMaxFee`.
+</Callout>
 
 ## Estimate Transaction Fees
 

@@ -189,6 +189,7 @@ Use these operation names in `PolicyRule.operation`:
 | `supply`, `withdraw`, `borrow`, `repay` | Lending protocol writes |
 | `buy`, `sell` | Fiat protocol writes |
 | `swidge` | Combined swap and bridge route execution |
+| `createDepositAddress`, `renewDepositAddress`, `recoverDepositAddress`, `disableDepositAddress` | Smart Deposit Address writes |
 | `*` | Wildcard rule for all wrapped write operations |
 
 Use `sign` for message-style signing in this release. `signMessage` and `signHash` are not valid `PolicyOperation` values.
@@ -351,7 +352,7 @@ const result = await (account as any).simulate.sendTransaction({
 console.log(result.decision, result.reason, result.trace)
 ```
 
-Simulation results include `decision`, `policy_id`, `matched_rule`, `reason`, and `trace`. Protocol write methods are also mirrored, for example `account.simulate.getSwapProtocol(label).swap(...)`.
+Simulation results include `decision`, `policy_id`, `matched_rule`, `reason`, and `trace`. Protocol write methods are also mirrored, for example `account.simulate.getSwapProtocol(label).swap(...)` or `account.simulate.getSdaProtocol(label).createDepositAddress(...)`.
 
 <Callout type="info">
 In this beta, `simulate` is added at runtime but is not typed on the account return type. Use a local helper interface or a narrow `as any` cast at the call site.
@@ -365,8 +366,9 @@ In this beta, `simulate` is added at runtime but is not typed on the account ret
 
 ## Runtime Caveats
 
-- Policies wrap the WDK account/protocol proxy surface. Private fields, underscore methods, protocol internals, or nested calls made inside a module can bypass local policy evaluation.
-- Quote and read methods are not wrapped. Policies apply to write methods such as sends, signs, swaps, bridges, lending writes, fiat writes, and swidge execution.
+- Policies wrap the WDK account/protocol proxy surface. On governed proxies, beta.15 treats `keyPair` and string members beginning with `_` as absent from direct property access, membership checks, own-property descriptors, and own-key enumeration. The proxy also refuses `Object.preventExtensions()` and `Object.freeze()` with `TypeError` so those hiding rules remain valid.
+- This is not a complete sandbox. Prototype inspection, separately retained raw account or protocol references, and nested calls made inside a module remain outside the proxy interception path.
+- Quote and read methods are not wrapped. Policies apply to write methods such as sends, signs, swaps, bridges, lending writes, fiat writes, swidge execution, and SDA address creation, renewal, recovery, or disablement.
 - Policy conditions receive local method arguments. WDK does not decode calldata, fetch prices, validate token metadata, or calculate fiat value unless your condition function does that work.
 - Wallet accounts must expose a read-only account view when a policy applies, otherwise `getAccount()` fails with `PolicyConfigurationError`.
 - Governed write-call arguments must be structured-cloneable, such as primitives, plain objects, arrays, `bigint`, and typed arrays. Functions, live class instances, and other non-cloneable values fail closed with `PolicyConfigurationError` instead of being forwarded unsafely.
@@ -376,7 +378,7 @@ In this beta, `simulate` is added at runtime but is not typed on the account ret
 
 - Review [`registerPolicy()`](/sdk/core-module/api-reference#registerpolicypolicies-options) in the API reference.
 - Use [Send Transactions](/sdk/core-module/guides/transactions) for base account send flows.
-- Use [Protocol Integration](/sdk/core-module/guides/protocol-integration) for swap, bridge, lending, fiat, and swidge method setup.
+- Use [Protocol Integration](/sdk/core-module/guides/protocol-integration) for protocol registration and method setup.
 
 ***
 

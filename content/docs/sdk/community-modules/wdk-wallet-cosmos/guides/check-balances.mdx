@@ -1,0 +1,79 @@
+---
+title: Check balances
+description: Read native and denomination-specific Cosmos balances through RPC.
+docType: how-to
+schemaType: TechArticle
+---
+
+Balance methods return integer base-unit amounts as `bigint`.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Read the native balance
+
+`getBalance()` uses the configured `nativeDenom`. Pass a denomination to query a different balance.
+
+```js
+import WalletManagerCosmos from '@base58-io/wdk-wallet-cosmos'
+
+const seedPhrase = process.env.WDK_SEED_PHRASE
+if (!seedPhrase) throw new Error('WDK_SEED_PHRASE is required')
+
+const manager = new WalletManagerCosmos(seedPhrase, {
+  chainName: 'cosmoshub',
+})
+
+try {
+  const account = await manager.getAccount(0)
+
+  const nativeBalance = await account.getBalance()
+  const atomBalance = await account.getBalance('uatom')
+
+  console.log({
+    nativeBaseUnits: nativeBalance.toString(),
+    atomBaseUnits: atomBalance.toString(),
+  })
+} finally {
+  manager.dispose()
+}
+```
+
+Do not treat base units as display units. Apply denomination metadata and decimal formatting in your application.
+
+## Read token balances
+
+Use `getTokenBalance(denom)` for one denomination or `getTokenBalances(denoms)` to filter the account's full balance response:
+
+```js
+const atomBalance = await account.getTokenBalance('uatom')
+
+const balances = await account.getTokenBalances([
+  'uatom',
+  'ibc/<denomination-hash>',
+])
+
+console.log(atomBalance.toString())
+console.log(balances)
+```
+
+Replace the IBC placeholder with a trusted denomination trace hash for the configured chain.
+
+`getTokenBalances()` omits a requested denomination when the RPC response has no entry for it. If your application wants an explicit zero, apply that policy after the call:
+
+```js
+const atom = balances.uatom ?? 0n
+```
+
+## RPC and account requirements
+
+- Balance calls require at least one configured RPC endpoint.
+- Registry endpoints can become stale or rate limited; configure trusted alternatives when needed.
+- The module retries network-shaped failures according to `retryCount` and `retryDelay`.
+- Chain and query errors fail immediately.
+- `toReadOnlyAccount()` is not implemented in `1.0.0-beta.4`, so a seed-backed account is required even for reads.
+
+See [Configuration](/sdk/community-modules/wdk-wallet-cosmos/configuration) for endpoint precedence and [Handle errors](/sdk/community-modules/wdk-wallet-cosmos/guides/handle-errors) for retry guidance.
