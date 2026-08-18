@@ -1,0 +1,223 @@
+---
+title: BOB Gateway Swidge API Reference
+description: API reference for @gobob/wdk-protocol-swidge-gateway.
+docType: reference
+schemaType: APIReference
+icon: Code
+---
+
+<Callout type="info">
+Tron **source** support — `buildTronApproval`, the `tronWeb` / `tronProvider` / `tronConfirmTimeoutMs` options, and the `tron` simulation arm — shipped in `0.3.0`. On `0.2.0` a Tron source throws `NOT_SUPPORTED`.
+</Callout>
+
+## Exports
+
+```javascript
+import GatewaySwidge, {
+  GatewayClient,
+  GatewaySwidgeError,
+  ERR,
+  BTC,
+  buildTronApproval
+} from '@gobob/wdk-protocol-swidge-gateway'
+```
+
+`GatewaySwidge` is exported both as the default and as a named export; the named form is `import { GatewaySwidge } from '@gobob/wdk-protocol-swidge-gateway'`.
+
+TypeScript consumers also get the `TronApprovalCall`, `SwidgeSimulation`, `BtcSimulateResult`, `EvmSimulateResult`, and `TronSimulateResult` types.
+
+`BTC` is the string constant `'BTC'`. Use it as `fromToken` or `toToken` for Bitcoin; the module normalises it to the gateway's native-token zero address. ERC-20 and TRC-20 tokens are passed as their contract address.
+
+## `GatewaySwidge`
+
+`GatewaySwidge` extends `SwidgeProtocol` from `@tetherto/wdk-wallet` and implements the shared WDK swidge methods.
+
+### Constructor
+
+```typescript
+new GatewaySwidge(account, config?)
+```
+
+| Account | Source routes |
+|---------|---------------|
+| `WalletAccountBtc` | BTC onramps to tokens on EVM chains and Tron. |
+| `WalletAccountEvm` | EVM offramps to BTC and EVM-to-EVM swaps and bridges. |
+| `WalletAccountEvmErc4337` | The same EVM routes through a smart account, with an optional ERC-20 paymaster. |
+| `WalletAccountTron` | Tron offramps and token swaps. Needs `@tetherto/wdk-wallet-tron` `1.0.0-beta.8` or newer, and this module at `0.3.0` or newer. |
+| `undefined` | Discovery and quotes only. The parameter is positional and not optional — pass `undefined` explicitly. A quote still needs an owner address, so an accountless quote works only on an onramp (where the owner defaults to `recipient`) or with `config.ownerAddress` set. |
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `fromChain` | `string` | — | Source chain id. Required when it is not passed in the route options. |
+| `slippage` | `number` | `0.03` | Default slippage fraction (3%). |
+| `affiliates` | `Array<{ address: string, bps: number }>` | — | Affiliate fee entries. See [Affiliate fees](#affiliate-fees). |
+| `feeRate` | `number` | account's choice | Bitcoin fee rate in sat/vByte, forwarded to the WDK Bitcoin account when signing an onramp. Nothing is sent when unset. |
+| `ownerAddress` | `string` | derived | EVM address recorded as the order's owner. See [Order owner](#order-owner). |
+| `paymasterToken` | `string` | — | ERC-20 paymaster token for ERC-4337 accounts. |
+| `tronWeb` | `object` | account's provider | Tron source routes only. tronweb instance used to build the order call and read TRC-20 allowances. |
+| `tronProvider` | `string` | — | Tron source routes only. Full-node URL to build a tronweb client from. |
+| `tronConfirmTimeoutMs` | `number` | `20000` | Tron source routes only. How long a broadcast Tron transaction is given to appear on the node. Must be finite and `>= 0`. |
+| `apiUrl` | `string` | BOB Gateway V3 | Gateway API base URL. |
+| `bearerToken` | `string` | BOB attribution key | Gateway API bearer token. |
+| `http` | `object` | — | Injectable HTTP transport. |
+| `client` | `GatewayClient` | — | Pre-built client. Overrides `apiUrl`, `bearerToken`, and `http`. |
+
+Both Tron options only select the node that builds the order call and reads allowances. Broadcasting always goes through the account, and the post-broadcast read-back prefers the account's own provider, falling back to `tronWeb` or `tronProvider` only when that provider exposes no usable `trx.getTransaction`. If neither exposes one, the send is refused with `NOT_SUPPORTED` before anything is signed.
+
+### Order owner
+
+The gateway requires an owner on every order and validates it as an Ethereum address. The module derives one: `recipient` on an onramp, the account's own address on every other route. A Tron address is Base58Check over the same 20 bytes an EVM address holds, so a Tron owner goes on the wire in `0x` form while `sender` and `recipient` keep their native encoding. Set `ownerAddress` to record a different EVM owner.
+
+### `SwidgeOptions`
+
+Passed to `quoteSwidge()`, `swidge()`, `simulateSwidge()`, and `getRequiredApproval()`.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `fromToken` | `string` | Yes | Source token. `'BTC'` (or the `BTC` constant) for Bitcoin, otherwise a contract address. |
+| `toToken` | `string` | Yes | Destination token, same encoding as `fromToken`. |
+| `toChain` | `string` | In practice | Destination chain id, for example `'base'`, `'bitcoin'`, or `'tron'`. Omitted, it falls back to the source chain, which only makes sense for a same-chain swap. |
+| `recipient` | `string` | Yes | Recipient address on the destination chain. |
+| `fromTokenAmount` | `bigint \| string \| number` | Yes | Amount in the token's smallest unit — satoshis for BTC. `bigint` is the safe form. |
+| `refundAddress` | `string` | No | Bitcoin refund address for an onramp. Forwarded on the quote request only, and inert today — see the callout below. |
+| `slippage` | `number` | No | Per-call slippage override. |
+
+The WDK `SwidgeOptions` type also allows an exact-output request (`toTokenAmount` instead of `fromTokenAmount`). This module is exact-input only: a missing `fromTokenAmount` is sent to the gateway as `0` rather than being solved for, so always pass the input amount.
+
+<Callout type="warn">
+`refundAddress` does not choose where a failed order is refunded, on any route. The module forwards it on the quote request and nowhere else: no quote field carries it back, and `swidge()` reposts the quote verbatim to create the order, so it cannot reach one. The module's own [API reference](https://github.com/bob-collective/wdk-protocol-swidge-gateway/blob/main/docs/api-reference.md) goes further and records that the Gateway V3 API does not read the field either (`refund_address` is dead code in its quote params), and that the refund targets the gateway derives server-side are the order owner on an onramp (`ownerAddress`, defaulting to `recipient`) and the source-chain sender on an offramp or token swap. Pass `refundAddress` on a BTC onramp if you want it honoured the day the gateway wires it up; treat it as inert everywhere else.
+</Callout>
+
+### Methods
+
+| Method | Description |
+|--------|-------------|
+| `quoteSwidge(options)` | Returns a non-binding quote with the expected output and an itemized fee breakdown. |
+| `swidge(options)` | Executes a route: quote, create order, send the source transaction, register the hash (best effort). |
+| `simulateSwidge(options)` | Validates the source transaction without broadcasting. |
+| `getSwidgeStatus(id)` | Maps gateway order state to a WDK `SwidgeStatus`. |
+| `getRequiredApproval(options)` | Returns the token approval an offramp or token swap needs, or `null`. |
+| `getSupportedChains()` | Returns supported source and destination chains, each with its native token. |
+| `getSupportedTokens(options?)` | Returns supported tokens, optionally filtered by `fromChain`. Entries carry `token`, `chain`, and `address` only. |
+
+#### `swidge(options)`
+
+```typescript
+swidge(options: SwidgeOptions): Promise<SwidgeResult>
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Gateway order ID. Pass it to `getSwidgeStatus()`. |
+| `hash` | `string` | Source-chain transaction hash: an EVM hash, a bare Tron txid, or a Bitcoin TXID. |
+| `fees` | `Array<{ type: string, amount: bigint }>` | Fee breakdown from the quote — `network`, `protocol`, and `affiliate` entries, each present only when its amount is greater than zero. |
+| `fromTokenAmount` | `bigint` | Actual input amount. |
+| `toTokenAmount` | `bigint` | Expected output at the quoted rate. |
+
+On an onramp the gateway broadcasts the Bitcoin transaction, which reaches it through the same registration call. On an offramp or token swap the module registers the source hash as soon as the account reports it broadcast, without waiting for confirmations. Registration is best effort on every route: the call is wrapped and its failure swallowed, so a resolved `swidge()` is not proof the gateway received the transaction — poll `getSwidgeStatus(id)`. On a Tron source route the hash must equal the signed transaction's own ID, and the module reads that ID back from the node — waiting for acceptance, never for mining — before registering it.
+
+#### `simulateSwidge(options)`
+
+```typescript
+simulateSwidge(options: SwidgeOptions): Promise<SwidgeSimulation>
+```
+
+Returns `variant` (`'onramp' | 'offramp' | 'tokenSwap'`), the gateway `orderId`, the mapped `quote`, `broadcast: false`, and exactly one source-family arm: `onramp`, `evm`, or `tron`. The order it creates is never used, and the gateway reconciles it.
+
+On the `tron` arm, `valid` means the full node accepted and pre-executed the call while building it — not that fees or account resources were checked. `valid: false` covers every failure the simulation catches — an allowance read, provider resolution, the node build, or the fee quote — with that failure's message in `reason`. Unlike the EVM leg, an account without `quoteSendTransaction` is not an error; the fee is reported as `feeEstimate: null`.
+
+#### `getSwidgeStatus(id)`
+
+```typescript
+getSwidgeStatus(id: string): Promise<{ status: string, transactions: object[] }>
+```
+
+| Gateway state | WDK status |
+|---------------|------------|
+| In progress, or awaiting the Bitcoin payment | `pending` |
+| In progress or failed, with a `refund_tx` present | `refund-pending` |
+| Success | `completed` |
+| Failed, with no `refund_tx` | `failed` |
+| Refunded | `refunded` |
+
+While a Bitcoin payment is pending, `transactions` carries that payment's txid as a `source` entry. The other states return an empty `transactions` array.
+
+#### `getRequiredApproval(options)`
+
+```typescript
+getRequiredApproval(
+  options: SwidgeOptions
+): Promise<{ token: string, spender: string, amount: bigint } | null>
+```
+
+Returns the ERC-20 or TRC-20 approval that must be granted before `swidge()` on an offramp or token swap, and `null` for onramps, where the source asset is native BTC. The first call for a route creates a gateway order to discover the spender and caches **the spender** on the instance; the allowance and the required amount are read fresh on every call, so the result is safe to re-read per swap and must not be reused across different amounts.
+
+On Tron the allowance is read with a constant-contract call through the resolved provider, because `WalletAccountTron` exposes no allowance getter. Feed the result to `buildTronApproval()`.
+
+#### `getSupportedChains()`
+
+Entries are derived from the route list the gateway returns, so a chain appears only while it has a live route. Each entry carries `id`, `name`, `type` (`utxo`, `evm`, or `svm` — Tron reports `evm`), and `nativeToken`. Native tokens are mapped per family: `BTC` for Bitcoin, `TRX` for Tron, `SOL` for Solana, `ETH` for everything else.
+
+#### Inherited methods (EVM to EVM)
+
+| Method | Description |
+|--------|-------------|
+| `swap(options)` | Same-chain EVM token swap. |
+| `bridge(options)` | Cross-chain EVM bridge. |
+| `quoteSwap(options)` | Quote a same-chain swap. |
+| `quoteBridge(options)` | Quote a cross-chain bridge. |
+
+Affiliate fees are dropped on token-to-token swaps — any route with BTC on neither side, EVM to EVM and Tron to EVM included. Every route with BTC on one side carries them, Tron included. Dropped entries fail nothing; the quote reports `affiliateApplied: false`.
+
+## Helpers
+
+### `buildTronApproval(approval, options?)`
+
+```typescript
+buildTronApproval(
+  approval: { token: string, spender: string, amount: bigint | string | number },
+  options?: { feeLimit?: number }
+): TronApprovalCall
+```
+
+Turns a `getRequiredApproval()` result into a call descriptor that `WalletAccountTron.sendTransaction()` accepts, because `WalletAccountTron` has no `approve()` method. `options.feeLimit` caps the sun burned on the approve call and defaults to `100_000_000` sun (100 TRX). The helper validates nothing — it copies `token` and `spender` through and stringifies `amount` — so hand it `getRequiredApproval()` output unchanged, and a positive safe integer if you override `feeLimit`.
+
+## `GatewayClient`
+
+Low-level HTTP client for the BOB Gateway V3 API. `GatewaySwidge` instantiates one automatically; pass your own through `config.client` only when you need raw API access.
+
+## `GatewaySwidgeError` and `ERR`
+
+```javascript
+import { GatewaySwidgeError, ERR } from '@gobob/wdk-protocol-swidge-gateway'
+```
+
+| Code | Value | Raised when |
+|------|-------|-------------|
+| `ERR.HTTP` | `'GATEWAY_HTTP_ERROR'` | Gateway API failure (`err.status` carries the HTTP status), a malformed allowance read, or a Tron broadcast the node never confirmed. |
+| `ERR.VALIDATION` | `'VALIDATION_ERROR'` | Affiliate entries, an owner or sender address whose Tron Base58Check form fails to convert (an EVM-shaped address is passed through unchecked), a Tron option, a Tron order transaction field, or a create-order payload whose family does not match the route. Route options themselves are not validated locally — the gateway rejects those, which surfaces as `ERR.HTTP`. |
+| `ERR.NOT_SUPPORTED` | `'NOT_SUPPORTED'` | The module cannot execute the route — no adapter for the source family, a Bitcoin account with no `signTransaction` or a Tron account with no `sendTransaction` (the EVM leg has no such guard and fails inside the account instead), a Tron provider with no `trx.getTransaction`, or an order payload whose transaction type it does not recognise. |
+| `ERR.UNSUPPORTED_ROUTE` | `'UNSUPPORTED_ROUTE'` | Declared for forward compatibility. The current module never raises it: the gateway answers an unroutable pair with an HTTP error, which surfaces as `ERR.HTTP`. |
+| `ERR.APPROVAL_REQUIRED` | `'APPROVAL_REQUIRED'` | Declared for forward compatibility. The current module never raises it: a missing or short allowance fails on chain instead. |
+
+Two internal invariants throw a plain `Error` rather than a `GatewaySwidgeError`: a route with no source chain (`config.fromChain` unset and none in the options), and an approval check whose create-order payload comes back as a BTC deposit. Errors raised below the module — inside an injected `http` transport, or by the WDK account while signing or broadcasting — are not wrapped and reach the caller as they are.
+
+## Affiliate fees
+
+```javascript
+const gateway = new GatewaySwidge(account, {
+  fromChain: 'bitcoin',
+  affiliates: [
+    { address: '0xPartner1', bps: 30 }, // 0.30%
+    { address: '0xPartner2', bps: 20 }, // 0.20%
+  ]
+})
+```
+
+The module validates the entries before the request and throws `ERR.VALIDATION` on a bad one:
+
+- At most 5 entries.
+- A total of no more than 1000 bps (10%).
+- Every `bps` greater than zero.
+- A non-empty address, and no address repeated (compared case-insensitively).
+- Token-to-token swaps — any route with BTC on neither side — ignore affiliates and report `affiliateApplied: false`.

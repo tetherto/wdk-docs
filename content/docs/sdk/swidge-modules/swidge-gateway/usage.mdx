@@ -5,15 +5,21 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-This guide shows how to [install the package](#install-the-package), [register the module](#register-the-module), [quote a route](#quote-a-route), [swap BTC for a token](#onramp-btc-to-a-token), [swap a token for BTC](#offramp-a-token-to-btc), and [track status](#track-status).
+<Callout type="info">
+Tron as a **source** chain — the [USDT-TRC20 to BTC](#tron-source-usdt-trc20-to-btc) flow, and the Tron install and registration steps below — needs `@gobob/wdk-protocol-swidge-gateway` `0.3.0` or newer. On `0.2.0` a Tron source throws `NOT_SUPPORTED`. Every other route on this page works from `0.2.0`.
+</Callout>
+
+This guide shows how to [install the package](#install-the-package), [register the module](#register-the-module), [quote a route](#quote-a-route), [swap BTC for a token](#onramp-btc-to-a-token), [swap an EVM token for BTC](#offramp-an-evm-token-to-btc), [swap USDT-TRC20 for BTC](#tron-source-usdt-trc20-to-btc), and [track status](#track-status).
 
 ## Install the package
 
-Install the module and the WDK wallet base package. `@tetherto/wdk-wallet` is a **peer** dependency: the module must extend the same `SwidgeProtocol` base class your WDK core resolves, or registration will not take effect.
+Install the module and the WDK wallet base package. `@tetherto/wdk-wallet` is a **peer** dependency, pinned to `>=1.0.0-beta.13 <2.0.0`: the module must extend the same `SwidgeProtocol` base class your WDK core resolves, or registration will not take effect.
 
 ```bash title="Install BOB Gateway Swidge"
 npm install @gobob/wdk-protocol-swidge-gateway @tetherto/wdk-wallet
 ```
+
+Tron source routes need `0.3.0` or newer — the release that added them.
 
 Install WDK core and the wallet modules for the chains you support:
 
@@ -21,14 +27,21 @@ Install WDK core and the wallet modules for the chains you support:
 npm install @tetherto/wdk @tetherto/wdk-wallet-btc @tetherto/wdk-wallet-evm
 ```
 
+Add `@tetherto/wdk-wallet-tron` when Tron is a source chain. Version `1.0.0-beta.8` or newer is required — earlier versions cannot sign the arbitrary contract call a Tron offramp needs.
+
+```bash title="Install the Tron wallet module"
+npm install @tetherto/wdk-wallet-tron
+```
+
 ## Register the module
 
 Register a wallet for each chain you support, then register `GatewaySwidge` against the **source** chain. The module signs on the source chain, so register it once per source you offer.
 
-```javascript title="Register BOB Gateway on Bitcoin and Base"
+```javascript title="Register BOB Gateway on Bitcoin, Base, and Tron"
 import WDK from '@tetherto/wdk'
 import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import WalletManagerTron from '@tetherto/wdk-wallet-tron'
 import { GatewaySwidge } from '@gobob/wdk-protocol-swidge-gateway'
 
 const wdk = new WDK(seedPhrase)
@@ -46,14 +59,20 @@ const wdk = new WDK(seedPhrase)
     chainId: 8453,
     provider: process.env.BASE_RPC_URL
   })
+  .registerWallet('tron', WalletManagerTron, {
+    provider: process.env.TRON_RPC_URL
+  })
   .registerProtocol('bitcoin', 'gateway', GatewaySwidge, { fromChain: 'bitcoin' })
   .registerProtocol('base', 'gateway', GatewaySwidge, { fromChain: 'base' })
+  .registerProtocol('tron', 'gateway', GatewaySwidge, { fromChain: 'tron' })
 
 const btcAccount = await wdk.getAccount('bitcoin', 0)
 const baseAccount = await wdk.getAccount('base', 0)
+const tronAccount = await wdk.getAccount('tron', 0)
 
 const fromBtc = btcAccount.getSwidgeProtocol('gateway')
 const fromBase = baseAccount.getSwidgeProtocol('gateway')
+const fromTron = tronAccount.getSwidgeProtocol('gateway')
 ```
 
 You can also construct the module directly, without WDK core:
@@ -66,11 +85,11 @@ const fromBtc = new GatewaySwidge(btcAccount, { fromChain: 'bitcoin' })
 
 ## Discover supported routes
 
-BOB Gateway controls the live route set. Query it at runtime rather than hardcoding chains and tokens.
+BOB Gateway controls the live route set. Query it at runtime rather than hardcoding chains and tokens. `getSupportedChains()` returns one entry per chain that currently has a route, each with its native token — `BTC` for Bitcoin, `TRX` for Tron, `SOL` for Solana, `ETH` for EVM chains. `getSupportedTokens()` accepts only a `fromChain` filter, and its entries carry `token`, `chain`, and `address` — the gateway route list has no symbols or decimals, so fetch that metadata separately.
 
 ```javascript title="Discover chains and tokens"
 const chains = await fromBtc.getSupportedChains()
-const tokens = await fromBtc.getSupportedTokens({ toChain: 'base' })
+const tokens = await fromBtc.getSupportedTokens({ fromChain: 'base' })
 ```
 
 ## Quote a route
@@ -113,7 +132,7 @@ console.log('Bitcoin transaction:', result.hash)
 
 No approval is needed on this route: BTC is a native asset.
 
-## Offramp: a token to BTC
+## Offramp: an EVM token to BTC
 
 An ERC-20 source needs an allowance before execution. Ask the module what approval the route requires, grant it through the WDK account, then execute.
 
@@ -139,7 +158,7 @@ console.log('Source transaction:', result.hash)
 ```
 
 <Callout type="warn">
-`getRequiredApproval()` creates a gateway order internally on a cache miss to discover the spender address, and caches the result per route on the instance. Call it once per route and reuse the result — do not call it before every swap.
+`getRequiredApproval()` creates a gateway order internally to discover the spender address, then caches **the spender** per route on the instance — the allowance and the required amount are re-read on every call. So calling it again before each swap is correct and cheap after the first call; what it is not is free the first time, since that call leaves an unused gateway order behind. Do not cache and reuse the returned amount yourself: a different `fromTokenAmount` needs a different approval.
 </Callout>
 
 <Callout type="warn">
@@ -150,6 +169,62 @@ await evmAccount.approve(approval.token, approval.spender, 0n)
 await evmAccount.approve(approval.token, approval.spender, approval.amount)
 ```
 </Callout>
+
+## Tron source: USDT-TRC20 to BTC
+
+<Callout type="info">
+This route needs `@gobob/wdk-protocol-swidge-gateway` `0.3.0` or newer. On `0.2.0` a Tron source throws `GatewaySwidgeError` with code `NOT_SUPPORTED`.
+</Callout>
+
+A Tron offramp works like the EVM one with a different approval path: `WalletAccountTron` has no `approve()` method — its `transfer()` is a fixed `transfer(address,uint256)` — so `buildTronApproval()` turns the approval into a call descriptor the account's `sendTransaction()` accepts.
+
+```javascript title="Swap USDT-TRC20 for native BTC"
+import { GatewaySwidge, buildTronApproval, BTC } from '@gobob/wdk-protocol-swidge-gateway'
+
+const fromTron = new GatewaySwidge(tronAccount, { fromChain: 'tron' })
+
+const options = {
+  fromToken: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', // USDT on Tron
+  toToken: BTC,
+  toChain: 'bitcoin',
+  recipient: 'bc1qRecipient...',
+  fromTokenAmount: 50000000n // 50 USDT (6 decimals)
+}
+
+const approval = await fromTron.getRequiredApproval(options)
+
+if (approval) {
+  await tronAccount.sendTransaction(buildTronApproval(approval))
+  // Poll the allowance until it reflects the approval before continuing.
+}
+
+const result = await fromTron.swidge(options)
+
+console.log('Order ID:', result.id)
+console.log('Tron transaction:', result.hash)
+```
+
+Two things to plan for on this route:
+
+- **The sender needs TRX.** The call is built with the `feeLimit` the gateway returns (100 TRX by default), which is a ceiling rather than a charge, but energy and bandwidth are still paid from the account. An unactivated Tron address pays for neither and the send fails.
+- **`swidge()` reads the transaction back before it resolves.** A Tron transaction ID is a hash of the transaction's own bytes, and a node echoes that same ID when it *rejects* a broadcast, so the module confirms the transaction is on the node before registering the hash with the gateway. The read-back waits for acceptance, not for mining, and gives up after `tronConfirmTimeoutMs` (20 seconds by default). If it throws, the error message names the transaction ID — look it up on chain rather than re-sending.
+
+## Simulate before executing
+
+`simulateSwidge()` runs the same route through quote and order creation and validates the source transaction without broadcasting anything. `broadcast` is always `false`, and the result carries one arm per source family: `onramp` for BTC, `evm`, or `tron`.
+
+```javascript title="Simulate a route"
+const simulation = await fromTron.simulateSwidge(options)
+
+console.log(simulation.variant) // 'onramp' | 'offramp' | 'tokenSwap'
+console.log(simulation.tron.valid, simulation.tron.feeEstimate)
+
+if (!simulation.tron.valid) {
+  console.log('Simulation failed:', simulation.tron.reason)
+}
+```
+
+On the Tron arm, `valid` means the full node accepted and pre-executed the contract call while building it — not that fees or account resources were checked. An account without `quoteSendTransaction` is not an error there; the fee comes back as `feeEstimate: null`. `reason` carries whatever failed first — an allowance read, provider resolution, the node build, or the fee quote — not only a node rejection. Simulation leaves an unused gateway order behind, which the gateway reconciles on its own.
 
 ## EVM to EVM
 
@@ -180,13 +255,14 @@ Gateway order states map onto the canonical WDK `SwidgeStatus` values:
 | Gateway state | WDK status |
 |---------------|------------|
 | In progress, or awaiting the Bitcoin payment | `pending` |
+| In progress or failed, with a refund transaction present | `refund-pending` |
 | Success | `completed` |
-| Failed | `failed` |
+| Failed, with no refund transaction | `failed` |
 | Refunded | `refunded` |
 
 ## Handle errors
 
-Failures throw a `GatewaySwidgeError` carrying a stable `code` from `ERR`, plus the HTTP `status` where one applies.
+Most module-level failures throw a `GatewaySwidgeError` carrying a stable `code` from `ERR`, plus the HTTP `status` where one applies. Two internal invariants throw a plain `Error` instead — a missing source chain, and a create-order payload that is BTC where a contract call was expected. Errors raised below the module — a transport failure inside your `http` implementation, or a rejection from the WDK account while signing — can propagate unwrapped, so keep a fallback branch.
 
 ```javascript title="Handle module errors"
 import { GatewaySwidgeError, ERR } from '@gobob/wdk-protocol-swidge-gateway'
@@ -196,19 +272,30 @@ try {
 } catch (err) {
   if (err instanceof GatewaySwidgeError) {
     switch (err.code) {
-      case ERR.UNSUPPORTED_ROUTE:
-        // The requested token or chain pair has no gateway route.
-        break
-      case ERR.APPROVAL_REQUIRED:
-        // Grant the approval from getRequiredApproval() first.
+      case ERR.NOT_SUPPORTED:
+        // This module version cannot execute the route, or the order payload
+        // carries a transaction type it does not know — for example a Tron
+        // source before 0.3.0, or an account that cannot sign.
         break
       case ERR.VALIDATION:
-        // The route options are incomplete or inconsistent.
+        // Affiliate entries, a Tron owner address, Tron options, or the
+        // order transaction the gateway returned. Route options are not
+        // validated locally — the gateway rejects those as ERR.HTTP.
         break
       case ERR.HTTP:
-        // Transport or API failure. Inspect err.status.
+        // Gateway API, allowance read, or Tron broadcast confirmation
+        // failure. Inspect err.status where the call was HTTP.
+        break
+      case ERR.UNSUPPORTED_ROUTE:
+      case ERR.APPROVAL_REQUIRED:
+        // Declared for forward compatibility. The current module raises
+        // neither: an unroutable pair comes back as ERR.HTTP from the
+        // gateway, and a short allowance fails on chain.
         break
     }
+  } else {
+    // Not a GatewaySwidgeError — a transport or account-level failure.
+    throw err
   }
 }
 ```

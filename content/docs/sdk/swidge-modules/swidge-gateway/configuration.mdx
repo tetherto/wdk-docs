@@ -6,6 +6,10 @@ schemaType: TechArticle
 icon: Settings
 ---
 
+<Callout type="info">
+Tron **source** routes, and the `tronWeb`, `tronProvider`, and `tronConfirmTimeoutMs` options below, need `@gobob/wdk-protocol-swidge-gateway` `0.3.0` or newer. On `0.2.0` a Tron source throws `NOT_SUPPORTED`.
+</Callout>
+
 `GatewaySwidge` works with no configuration beyond a source chain. The module ships a default API endpoint and a default attribution token, so a minimal setup is enough to quote and execute.
 
 ```javascript
@@ -19,23 +23,27 @@ const gateway = new GatewaySwidge(account, {
 ## Constructor
 
 ```typescript
-new GatewaySwidge(account?, config?)
+new GatewaySwidge(account, config?)
 ```
 
 | Parameter | Description |
 |-----------|-------------|
-| `account` | WDK wallet account for the source chain — a `@tetherto/wdk-wallet-btc` account for BTC sources, or a `@tetherto/wdk-wallet-evm` (or ERC-4337) account for token sources. Quoting and discovery work without a writable account. |
+| `account` | WDK wallet account for the source chain — a `@tetherto/wdk-wallet-btc` account for BTC sources, a `@tetherto/wdk-wallet-evm` (or ERC-4337) account for EVM token sources, or a `@tetherto/wdk-wallet-tron` account for Tron token sources. The parameter is positional and not optional: pass `undefined` explicitly for discovery-only use. |
 | `config` | Optional `GatewaySwidgeConfig`. Set `fromChain` here unless you pass it per call. |
 
 ## Configuration Options
 
 | Option | Type | Description |
 |--------|------|-------------|
-| `fromChain` | `string` | Source chain identifier, for example `'bitcoin'`, `'ethereum'`, or `'base'`. Required unless supplied in the route options. |
+| `fromChain` | `string` | Source chain identifier, for example `'bitcoin'`, `'ethereum'`, `'base'`, or `'tron'`. Required unless supplied in the route options. |
 | `slippage` | `number` | Default slippage tolerance as a decimal. Defaults to `0.03` (3%). Override per call in the route options. |
-| `affiliates` | `Array<{ address: string, bps: number }>` | Affiliate fee entries, in basis points, credited to each address. Applies to BTC to EVM and EVM to BTC routes only. |
-| `feeRate` | `number` | Bitcoin fee rate in sat/vByte for onramp transactions. Defaults to a gateway-supplied estimate. |
+| `affiliates` | `Array<{ address: string, bps: number }>` | Affiliate fee entries, in basis points, credited to each address. Forwarded on every route with BTC on one side, Tron included; token-to-token swaps drop them. |
+| `feeRate` | `number` | Bitcoin fee rate in sat/vByte, forwarded to the WDK Bitcoin account when signing an onramp. Left unset, the account picks the rate. |
+| `ownerAddress` | `string` | EVM address recorded as the order's owner. Defaults to `recipient` on an onramp and to the account's own address on every other route — see [Order owner](#order-owner). |
 | `paymasterToken` | `string` | ERC-20 token used to pay gas on ERC-4337 accounts. |
+| `tronWeb` | `object` | Tron source routes only. tronweb instance used to build the order call and read TRC-20 allowances. Defaults to the account's own provider. |
+| `tronProvider` | `string` | Tron source routes only. Full-node URL to build a tronweb client from. |
+| `tronConfirmTimeoutMs` | `number` | Tron source routes only. How long a broadcast Tron transaction is given to appear on the node. Must be finite and `>= 0`. Defaults to `20000`. |
 | `bearerToken` | `string` | Gateway API bearer token. Defaults to BOB's shared attribution key — see [API access](#api-access). |
 | `apiUrl` | `string` | Gateway API base URL override. |
 | `http` | `object` | Injectable HTTP transport. Useful for tests and custom runtimes. |
@@ -51,6 +59,9 @@ const fromBtc = new GatewaySwidge(btcAccount, { fromChain: 'bitcoin' })
 
 // A token as the source: pass a WDK EVM account.
 const fromBase = new GatewaySwidge(evmAccount, { fromChain: 'base' })
+
+// USDT-TRC20 as the source: pass a WDK Tron account.
+const fromTron = new GatewaySwidge(tronAccount, { fromChain: 'tron' })
 ```
 
 ## Slippage
@@ -60,27 +71,44 @@ Set a default in the constructor and override it for a single route when needed.
 ```javascript
 const gateway = new GatewaySwidge(account, {
   fromChain: 'bitcoin',
-  slippage: 0.01 // 1%
+  slippage: 0.01, // 1%
 })
 
 const quote = await gateway.quoteSwidge({
   ...options,
-  slippage: 0.005 // 0.5% for this route only
+  slippage: 0.005, // 0.5% for this route only
 })
 ```
 
 ## Affiliate Fees
 
-Charge a fee on BTC to EVM and EVM to BTC routes by crediting one or more addresses in basis points of the input amount. Affiliate fees are not supported on EVM-to-EVM routes.
+Charge a fee on any route with BTC on one side — BTC onramps and token-to-BTC offramps, Tron included — by crediting one or more addresses in basis points of the input amount. Affiliate fees are not supported on EVM-to-EVM routes.
 
 ```javascript
 const gateway = new GatewaySwidge(account, {
   fromChain: 'bitcoin',
-  affiliates: [{ address: '0xYourFeeRecipient...', bps: 25 }] // 0.25%
+  affiliates: [{ address: '0xYourFeeRecipient...', bps: 25 }], // 0.25%
 })
 ```
 
 Affiliate fees appear in the quote's itemized `fees` array with type `affiliate`, so a UI can display them before the user confirms.
+
+The module validates the list before the request and throws `GatewaySwidgeError` with code `VALIDATION` on a bad entry: at most 5 entries, a total of no more than 1000 bps (10%), every `bps` greater than zero, a non-empty address, and no duplicate address (compared case-insensitively). On token-to-token swaps — any route with BTC on neither side, EVM to EVM and Tron to EVM included — the entries are dropped gracefully and the quote comes back with `affiliateApplied: false`.
+
+## Order Owner
+
+Every gateway order records an owner, and the API validates that field as an **Ethereum** address on every route. The module derives it: `recipient` on an onramp (the source side is a bare BTC payment), the account's own address everywhere else. On a Tron source route the account's Base58Check address is re-encoded to its `0x` 20-byte form for this field only — the same account, a different spelling — while `sender` and `recipient` on the same request keep their native encoding.
+
+Set `ownerAddress` when the order should be owned by some other EVM account:
+
+```javascript
+const gateway = new GatewaySwidge(account, {
+  fromChain: 'tron',
+  ownerAddress: '0xYourOrderOwner...'
+})
+```
+
+The owner also matters for refunds: on an onramp it is the address the gateway refunds to. See the [API reference](/sdk/swidge-modules/swidge-gateway/api-reference#swidgeoptions) for why the `refundAddress` route option does not decide that.
 
 ## API Access
 
@@ -103,14 +131,34 @@ The Gateway API applies a **country blocklist** that includes the United States 
 
 ## Bitcoin Fee Rate
 
-Onramp transactions use a gateway-supplied fee estimate by default. Override it when your app already tracks mempool conditions.
+The module passes `feeRate` straight to the WDK Bitcoin account when it signs an onramp, and passes nothing when the option is unset — the account decides in that case. Set it when your app already tracks mempool conditions.
 
 ```javascript
 const gateway = new GatewaySwidge(btcAccount, {
   fromChain: 'bitcoin',
-  feeRate: 12 // sat/vByte
+  feeRate: 12, // sat/vByte
 })
 ```
+
+## Tron Provider
+
+Tron source routes need a tronweb client to build the gateway's pre-encoded call and to read TRC-20 allowances, because `WalletAccountTron` exposes neither an arbitrary-calldata builder nor an allowance getter. `tronweb` ships as a dependency of the module and is imported lazily, so apps that never touch Tron never load it and no separate install is needed. The module uses the account's own provider by default; `tronWeb` and `tronProvider` override that choice. Build-time precedence is `tronWeb`, then `tronProvider`, then the account's provider.
+
+```javascript
+const fromTron = new GatewaySwidge(tronAccount, {
+  fromChain: 'tron',
+  tronProvider: process.env.TRON_RPC_URL, // or: tronWeb: myTronWebInstance
+  tronConfirmTimeoutMs: 30000
+})
+```
+
+Neither option replaces the account's provider. Broadcasting always goes through the account, so a `WalletAccountTron` still needs a provider of its own, and the post-broadcast read-back prefers that same provider — polling the build node for a transaction it never saw would fail a broadcast the broadcasting node had accepted. The configured `tronWeb` or `tronProvider` is used for the read-back only when the account's own provider exposes no usable `trx.getTransaction`.
+
+<Callout type="warn">
+Pass a real tronweb instance to `tronWeb`, not a hand-rolled object. `WalletAccountTron` signs the transaction ID a node hands back and checks only that the owner is the account, so the module re-verifies the built transaction itself — contract type and count, owner, target, calldata, call value, fee limit, the `raw_data`-to-`txID` binding, that nothing is already signed, and a bounded expiration window — and it relies on tronweb re-deriving that ID from the call that was actually requested. A stub provider does none of that re-derivation. If neither the account's provider nor the configured one exposes `trx.getTransaction`, the send is refused with `NOT_SUPPORTED` before anything is signed. A `tronConfirmTimeoutMs` that is not a finite, non-negative number of milliseconds is refused at the same point, with `VALIDATION`.
+</Callout>
+
+Tron fees are energy and bandwidth, capped by the `feeLimit` the gateway returns (100 TRX by default). That cap is a ceiling, not a charge, but the sender still needs TRX or staked energy to cover the actual burn. `simulateSwidge()` reports the quoted fee as `tron.feeEstimate`.
 
 ## ERC-4337 Accounts
 
@@ -119,6 +167,6 @@ Pass `paymasterToken` to pay gas in an ERC-20 when the source account is an ERC-
 ```javascript
 const gateway = new GatewaySwidge(smartAccount, {
   fromChain: 'base',
-  paymasterToken: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2' // USDT on Base
+  paymasterToken: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2', // USDT on Base
 })
 ```
