@@ -1,0 +1,224 @@
+---
+title: Symbiosis Swidge Configuration
+description: Configure source-chain identity, slippage, refunds, approval behavior, and fee caps for the Symbiosis community provider.
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Constructor
+
+```typescript
+new SymbiosisProtocol(account?, config?)
+```
+
+```javascript
+import SymbiosisProtocol from '@symbiosis-finance/wdk-protocol-swidge-symbiosis'
+
+const symbiosis = new SymbiosisProtocol(account, {
+  chain: 'Ethereum',
+  timeoutMs: 30_000,
+  partnerId: 'my-app',
+  defaultSlippage: 0.02,
+  refundAddress: 'bc1qRefund...',
+  maxProtocolFeeBps: 100
+})
+```
+
+| Parameter | Description |
+|---|---|
+| `account` | Optional WDK wallet account. Discovery and quote-only use can run without one; execution requires the capabilities used by the returned route. |
+| `config` | Optional `SymbiosisProtocolConfig`. `chain` becomes required before quoting or execution. |
+
+## Configuration fields
+
+| Field | Type | Default | Behavior |
+|---|---|---|---|
+| `chain` | `string \| number` | None | Symbiosis chain name or numeric ID for the bound source account. Required by `quoteSwidge()` and `swidge()`. |
+| `apiUrl` | `string` | `https://api.symbiosis.finance/crosschain` | Overrides the REST API base URL. Trailing slashes are removed. |
+| `timeoutMs` | `number` | `30000` | Aborts a Symbiosis API request after this many milliseconds. Timeout failures become `ApiError` instances with `status: 0`. |
+| `partnerId` | `string` | `'wdk'` | Sends the value in the `X-Partner-Id` header on every API request. Registered partners can receive higher API rate limits; pass `''` to omit the header. |
+| `defaultSlippage` | `number` | `0.02` | Decimal slippage tolerance used when `options.slippage` is absent. `0.02` means 2%. |
+| `partnerAddress` | `string` | None | Registered Symbiosis partner EVM address sent with quote and execution requests. |
+| `refundAddress` | `string` | None | Default refund address for deposit-address routes. `options.refundAddress` overrides it. |
+| `skipApproval` | `boolean` | `false` | Suppresses the module's automatic ERC-20 or TRC-20 approval step. |
+| `maxNetworkFeeBps` | `number \| bigint` | None | Shared network-fee cap. This release maps no provider fee to `network`, so the cap does not constrain a separate network cost. |
+| `maxProtocolFeeBps` | `number \| bigint` | None | Rejects execution when fees mapped as `protocol` exceed this many basis points of the input amount. It does not constrain fees mapped as `affiliate`. |
+
+`partnerId` identifies the integrating application in an HTTP header. `partnerAddress` is a separate fee-share address included in quote and execution request bodies.
+
+## Source chain
+
+Use a numeric ID or the exact name returned by `getSupportedChains()`:
+
+```javascript
+const byName = new SymbiosisProtocol(account, {
+  chain: 'Ethereum'
+})
+
+const byId = new SymbiosisProtocol(account, {
+  chain: 1
+})
+```
+
+The configured chain must identify the bound account's source chain. The module does not derive or verify it from the wallet account.
+
+## Chain and token identifiers
+
+Chain identifiers can be numeric Symbiosis IDs or case-insensitive names from `getSupportedChains()`.
+
+Token identifiers can be:
+
+- a provider-listed contract or asset address;
+- a token symbol on the selected chain;
+- `''`, `'native'`, or the zero address for a native token.
+
+For TON and Solana assets, token discovery returns the provider's native-format address when available.
+
+Token symbols can be ambiguous. Prefer the exact address returned by `getSupportedTokens()` and confirm route availability with `quoteSwidge()`.
+
+## Slippage and amounts
+
+The per-call `slippage` option overrides `defaultSlippage`:
+
+```javascript
+const quote = await symbiosis.quoteSwidge({
+  fromToken,
+  toToken,
+  toChain,
+  recipient,
+  fromTokenAmount: 100_000_000n,
+  slippage: 0.01
+})
+```
+
+The module converts the decimal slippage value to basis points with `Math.round(slippage * 10000)`. It does not validate the range of either slippage setting.
+
+Pass `fromTokenAmount` as a positive base-unit integer. Missing values, values that cannot be converted with `BigInt`, zero, and negative amounts throw `ValidationError` before the API request.
+
+## Recipient, partner, and refund addresses
+
+For a bound account, the source sender comes from `account.getAddress()`. `recipient` defaults to that address when omitted.
+
+Without an account, `recipient` supplies both the source sender and destination recipient:
+
+```javascript
+const quoteOnly = new SymbiosisProtocol(undefined, {
+  chain: 'Ethereum'
+})
+
+const quote = await quoteOnly.quoteSwidge({
+  fromToken: 'USDT',
+  toToken: 'USDC',
+  toChain: 'Arbitrum One',
+  recipient: '0xRecipient...',
+  fromTokenAmount: 100_000_000n
+})
+```
+
+Set a refund address suitable for a deposit-address route:
+
+```javascript
+const symbiosis = new SymbiosisProtocol(bitcoinAccount, {
+  chain: 'Bitcoin',
+  refundAddress: 'bc1qRefund...'
+})
+```
+
+Override it for one request with `options.refundAddress`.
+
+<Callout type="warn">
+The module forwards `recipient`, `partnerAddress`, and `refundAddress` without validating their address formats or intended chains. Validate them in the host application.
+</Callout>
+
+## Approval behavior
+
+For a non-native EVM or Tron input token, the module uses the spender returned by the fresh execution response.
+
+By default it:
+
+1. calls `getAllowance(token, spender)` when available;
+2. skips approval when allowance covers the input amount;
+3. resets a non-zero insufficient allowance to zero and waits for its receipt when the account supports receipt lookup;
+4. approves the exact input amount and waits for its receipt when supported;
+5. approves without a reset when allowance lookup fails.
+
+When allowance lookup succeeds and the account returns transaction hashes, both approval hashes are included in `result.transactions` when a reset is required. This supports tokens such as USDT on Ethereum that reject a direct non-zero-to-non-zero allowance change. If allowance lookup fails while such a token already has a non-zero allowance, the fallback direct approval can still fail.
+
+For Tron token routes, the module converts the provider's EVM-style token address to Tron hex form, requires the wallet's smart-contract-call and approval capabilities, and checks each returned approval receipt before broadcasting the route transaction. A Tron account without the required capability throws `UnsupportedRouteError`; a writable EVM account that cannot approve throws `ReadOnlyAccountError`.
+
+Disable the automatic step only when the host application manages allowance:
+
+```javascript
+const symbiosis = new SymbiosisProtocol(account, {
+  chain: 'Ethereum',
+  skipApproval: true
+})
+```
+
+`skipApproval` does not verify ERC-20 or TRC-20 allowance. Insufficient allowance can cause the subsequent transaction to fail.
+
+## Fee caps
+
+Set protocol-level defaults on the instance:
+
+```javascript
+const symbiosis = new SymbiosisProtocol(account, {
+  chain: 'Ethereum',
+  maxProtocolFeeBps: 100
+})
+```
+
+Override shared fee caps for one execution:
+
+```javascript
+await symbiosis.swidge(options, {
+  maxProtocolFeeBps: 75
+})
+```
+
+The module checks the fresh `/v2/swap` response before calling a wallet write method.
+
+When both the input token and fee token have positive USD price data, the module compares USD values. Otherwise it compares decimal-normalized token amounts. That fallback is approximate when the fee token and input token have different unit values.
+
+| Symbiosis fee rule | Mapped type | Constrained by |
+|---|---|---|
+| `description` is exactly `Partner fee` | `affiliate` | Neither available cap |
+| Every other fee entry | `protocol` | `maxProtocolFeeBps` |
+
+No returned fee maps to `network`, so `maxNetworkFeeBps` remains at zero in this provider's current fee calculation. The module does not estimate the wallet transaction's chain fee.
+
+## Discovery caching
+
+The provider caches chain and token discovery promises for ten minutes per instance. A failed request is removed from the cache and can be retried by a later call.
+
+The cache duration has no public configuration field. Construct a new provider instance when the application must bypass cached discovery.
+
+Monero and Zcash are filtered from chain discovery, token discovery, and chain resolution because their routes use third-party custodial integrations outside this module's scope.
+
+## API and runtime behavior
+
+- The default entrypoint is ESM.
+- The `bare` export initializes `bare-node-runtime` globals before loading the provider.
+- The package declares no Node.js `engines` range.
+- Requests use the runtime's global `fetch`.
+- Requests use an internal `AbortController` and time out after `timeoutMs`; network failures and timeouts throw `ApiError` with `status: 0`.
+- The provider does not retry or back off automatically.
+- `apiUrl` is normalized only by removing trailing slashes.
+
+Use a trusted `https://` endpoint for `apiUrl`. Choose a timeout appropriate for the runtime and retry cautiously, especially around execution and status polling.
+
+<Cards>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-symbiosis/usage">
+Discover, quote, confirm, execute, and track Symbiosis routes.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-symbiosis/api-reference">
+Review exported methods, option and result fields, statuses, fees, and errors.
+</Card>
+</Cards>

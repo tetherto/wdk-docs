@@ -1,0 +1,294 @@
+---
+title: Configuration
+description: Configure WDK CLI paths, defaults, indexer access, wallet modules, and fiat ramps
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+WDK CLI stores its configuration and wallet data under one local configuration directory. Use `wdk config` for supported changes instead of editing `config.json` directly.
+
+## Local Paths
+
+The default configuration directory is `~/.config/wdk-cli`. If `XDG_CONFIG_HOME` is a non-empty environment variable, WDK CLI uses `$XDG_CONFIG_HOME/wdk-cli` instead.
+
+| Data | Path |
+| --- | --- |
+| User configuration | `CONFIG_DIR/config.json` |
+| Wallet seed | `CONFIG_DIR/wallets/NAME/seed.enc` |
+| Daemon PID | `CONFIG_DIR/daemon.pid` |
+| Daemon socket on Unix-like systems | `CONFIG_DIR/daemon.sock` |
+| Daemon endpoint on Windows | `\\.\pipe\wdk-cli-daemon` |
+
+Print the resolved `config.json` path:
+
+```bash title="Terminal"
+wdk config path
+```
+
+With JSON output:
+
+```bash title="Terminal"
+wdk config path --json
+```
+
+```json
+{"path":"/home/user/.config/wdk-cli/config.json"}
+```
+
+See [Storage Format](/cli/reference/storage-format) for seed-file and daemon-file permissions.
+
+## Configuration Precedence
+
+WDK CLI resolves runtime values in this order:
+
+| Value | Highest to lowest precedence |
+| --- | --- |
+| Configuration directory | Non-empty `XDG_CONFIG_HOME`, then `~/.config` |
+| Wallet | Command `--wallet`, then `defaultWallet` |
+| Account index | Command `--index`, then `defaultIndex`, then `0` |
+| Indexer API key | Non-empty `WDK_INDEXER_API_KEY`, then stored `indexer.apiKey`, then an empty value |
+| Wallet passphrase | Non-empty `WDK_PASSPHRASE`, then a hidden interactive prompt |
+
+`--wallet` and `--index` are options on wallet-dependent commands; they are not root flags.
+
+An empty `WDK_PASSPHRASE` value does not override the prompt. To use an empty passphrase, enter it interactively. See [Manage Wallets](/cli/guides/manage-wallets) before choosing an empty passphrase.
+
+## Environment Variables
+
+| Variable | Effect |
+| --- | --- |
+| `XDG_CONFIG_HOME` | Changes the parent directory used for WDK CLI data |
+| `WDK_INDEXER_API_KEY` | Overrides `indexer.apiKey` for the current process |
+| `WDK_PASSPHRASE` | Supplies a non-empty passphrase instead of opening a prompt |
+
+There are no beta.2 environment-variable mappings for `indexer.baseUrl`, wallet defaults, account defaults, network configuration, or MoonPay configuration.
+
+<Callout type="warn">
+Environment variables can be inherited by child processes and may be visible to other processes running as the same OS user. Limit their lifetime and do not print them in shell history, CI logs, or agent transcripts.
+</Callout>
+
+## Supported Keys
+
+| Key | Expected value | Default or behavior |
+| --- | --- | --- |
+| `defaultWallet` | Wallet name | The first created or imported wallet becomes the default; use `wdk wallet default` to change it |
+| `defaultIndex` | Non-negative integer | `0` |
+| `indexer.baseUrl` | Indexer base URL | `https://wdk-api.tether.io` |
+| `indexer.apiKey` | Indexer API key | Empty; `WDK_INDEXER_API_KEY` overrides it |
+| `ramp.moonpay.apiKey` | MoonPay publishable key (`pk_test_...` or `pk_live_...`) | Empty; do not use a MoonPay secret key |
+| `ramp.moonpay.signUrl` | URL of an HTTP service that signs MoonPay widget URLs | Empty; the service must return a `signedUrl` |
+| `ramp.moonpay.environment` | `sandbox` or `production` | Empty; required by `wdk buy` and `wdk sell` |
+| `networks.NETWORK` | Wallet-module configuration object | Defaults come from the installed `wdk.config.json` |
+| `networks.NETWORK.KEY` | One wallet-module configuration value | Depends on the selected wallet module |
+
+Custom-network records and custom-token records also live in `config.json`. Manage them with `wdk network` and `wdk token` so the CLI can validate their shape and related state.
+
+## Read Configuration
+
+Read one global key:
+
+```bash title="Terminal"
+wdk config get --key defaultIndex
+```
+
+Read one network configuration:
+
+```bash title="Terminal"
+wdk config get --network ethereum
+```
+
+Read a key inside one network configuration:
+
+```bash title="Terminal"
+wdk config get --network ethereum --key provider
+```
+
+Read the full configuration view:
+
+```bash title="Terminal"
+wdk config get --all
+```
+
+`config get --all` excludes the custom-token registry. Use `wdk token list` to read tokens.
+
+<Callout type="warn">
+`config.json` is plaintext. The CLI does not request an owner-only mode for this file, so its effective permissions follow the operating system and runtime defaults and may be `0644`. `config get --all` can reveal stored API keys, signing URLs, and credentials embedded in provider URLs. Do not publish the file or command output.
+</Callout>
+
+Prefer `WDK_INDEXER_API_KEY` when you do not want to persist the indexer key. No environment override is available for MoonPay configuration in beta.2.
+
+## Set Configuration
+
+Set a string:
+
+```bash title="Terminal"
+wdk config set --key indexer.baseUrl --value https://indexer.example.com
+```
+
+Set a number:
+
+```bash title="Terminal"
+wdk config set --key defaultIndex --value 1
+```
+
+Set a JSON object:
+
+```bash title="Terminal"
+wdk config set \
+  --key ramp.moonpay \
+  --value '{"apiKey":"pk_test_...","signUrl":"https://example.com/sign","environment":"sandbox"}'
+```
+
+`config set` parses a valid JSON value into its JSON type. If parsing fails, it stores the value as a string. Quote objects and arrays so the shell passes them as one argument.
+
+Set a network-specific key:
+
+```bash title="Terminal"
+wdk config set \
+  --network ethereum \
+  --key provider \
+  --value https://ethereum-rpc.publicnode.com
+```
+
+Replace a network's complete wallet-module configuration:
+
+```bash title="Terminal"
+wdk config set \
+  --network ethereum \
+  --value '{"chainId":1,"provider":"https://ethereum-rpc.publicnode.com","transferMaxFee":5000000000000000}'
+```
+
+Network configuration is passed to the selected WDK wallet module. Use only keys supported by that module.
+
+## Reset Configuration
+
+Reset one global key:
+
+```bash title="Terminal"
+wdk config reset --key indexer.baseUrl
+```
+
+Reset one network key:
+
+```bash title="Terminal"
+wdk config reset --network ethereum --key provider
+```
+
+Reset configuration defaults:
+
+```bash title="Terminal"
+wdk config reset --all
+```
+
+`config reset --all` preserves the default-wallet selection, custom networks, and custom tokens. It resets the remaining values to their installed defaults.
+
+## Authorization and Wallet Locking
+
+When at least one wallet exists, these configuration mutations verify the current default wallet's passphrase:
+
+- `wdk config set`
+- `wdk config reset`
+- `wdk network create`
+- `wdk network delete`
+- `wdk token add`
+- `wdk token delete`
+
+Set `WDK_PASSPHRASE` for non-interactive local automation or enter the passphrase at the prompt.
+
+Changing or resetting a key under `networks` locks all wallets so the next unlock initializes WDK with the new wallet-module configuration. `config reset --all` also locks all wallets.
+
+## Indexer
+
+Within the CLI command set, only `wdk get history` uses the WDK Indexer API. The MCP `get_history` tool uses the same history path. [Request an Indexer API key](/tools/indexer-api/get-started) before connecting directly.
+
+### Connect Directly
+
+The default `indexer.baseUrl` is `https://wdk-api.tether.io`. Store your API key:
+
+```bash title="Terminal"
+wdk config set --key indexer.apiKey --value YOUR_INDEXER_API_KEY
+```
+
+Alternatively, supply it to the current process without writing it to `config.json`:
+
+```bash title="Terminal"
+WDK_INDEXER_API_KEY=YOUR_INDEXER_API_KEY \
+  wdk get history --network ethereum --wallet dev
+```
+
+### Use an Indexer Proxy
+
+Point the CLI at your own endpoint when you do not want Indexer API keys on developer machines:
+
+```bash title="Terminal"
+wdk config reset --key indexer.apiKey
+wdk config set --key indexer.baseUrl --value https://indexer-proxy.example.com
+```
+
+Also ensure `WDK_INDEXER_API_KEY` is not set in the CLI process. A non-empty environment value overrides the stored empty value and causes the CLI to send an `x-api-key` header.
+
+The proxy must accept both history request forms:
+
+| Request | Used when |
+| --- | --- |
+| `GET /api/v1/{blockchain}/{token}/{address}/token-transfers` with optional `limit`, `fromTs`, and `toTs` query parameters | `wdk get history` includes `--token` |
+| `POST /api/v1/batch/token-transfers` | The command queries all Indexer-supported tokens |
+
+Forward the query parameters or JSON request body and the Indexer response unchanged. Add the Indexer `x-api-key` header when forwarding the request upstream.
+
+`WDK_INDEXER_BASE_URL` is not read by beta.2.
+
+## MoonPay
+
+`wdk buy` and `wdk sell` derive the selected wallet address and build a signed MoonPay widget URL. The CLI prints the URL, or returns it in JSON output; it does not open the browser or execute the fiat transaction. Open the URL to continue on MoonPay, which processes the transaction through the integration associated with your MoonPay account.
+
+Get a publishable key from **Developers → API Keys** in the [MoonPay dashboard](https://dashboard.moonpay.com/). Use a `pk_test_...` or `pk_live_...` publishable key here, never the `sk_test_...` or `sk_live_...` secret key.
+
+The commands require all three MoonPay values:
+
+```bash title="Terminal"
+wdk config set --key ramp.moonpay.apiKey --value pk_test_...
+wdk config set --key ramp.moonpay.signUrl --value https://example.com/moonpay/sign
+wdk config set --key ramp.moonpay.environment --value sandbox
+```
+
+### Sign Widget URLs
+
+Because the CLI includes a wallet address in the MoonPay widget URL, it sends the unsigned URL to your signing service. That service signs the URL with your MoonPay secret key and returns the complete signed URL. See MoonPay's [on-ramp URL signing](https://dev.moonpay.com/widget/on-ramp/customization/url-signing) and [off-ramp URL signing](https://dev.moonpay.com/widget/off-ramp/customization/url-signing) guides.
+
+The CLI sends this request to `ramp.moonpay.signUrl`:
+
+```http
+POST /moonpay/sign HTTP/1.1
+Content-Type: application/json
+
+{"urlForSignature":"https://..."}
+```
+
+Return a successful JSON response with the complete signed URL:
+
+```json
+{"signedUrl":"https://...&signature=..."}
+```
+
+Returning only the signature is not supported.
+
+<Callout type="warn">
+Keep the MoonPay secret key in the signing service. Beta.2 does not send configurable authentication headers to `signUrl`, so bind the service locally, keep it on a private network, or restrict access with network-level controls. Do not expose an unauthenticated public signing endpoint.
+</Callout>
+
+### Select an Environment
+
+| Environment | Publishable key | Network |
+| --- | --- | --- |
+| `sandbox` | `pk_test_...` | Testnet |
+| `production` | `pk_live_...` | Mainnet |
+
+The CLI rejects a sandbox/mainnet or production/testnet mismatch. It does not validate the publishable-key prefix, so configure the matching key yourself.
+
+***
+
+## Need Help?
+
+<SupportCards />

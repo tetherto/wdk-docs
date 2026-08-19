@@ -1,6 +1,6 @@
 ---
 name: wdk
-description: Tether Wallet Development Kit (WDK) for building non-custodial multi-chain wallets. Use when working with @tetherto/wdk-core, wallet modules (wdk-wallet-btc, wdk-wallet-evm, wdk-wallet-evm-erc-4337, wdk-wallet-solana, wdk-wallet-spark, wdk-wallet-ton, wdk-wallet-tron, ton-gasless, tron-gasfree), and protocol modules including swidge, swap (wdk-protocol-swap-velora-evm), bridge (wdk-protocol-bridge-usdt0-evm), lending (wdk-protocol-lending-aave-evm), and fiat (wdk-protocol-fiat-moonpay). Covers wallet creation, transactions, token transfers, swidge asset routes, DEX swaps, cross-chain bridges, DeFi lending/borrowing, and fiat on/off ramps.
+description: Tether Wallet Development Kit (WDK) for building non-custodial multi-chain wallets. Use when working with @tetherto/wdk, wallet modules (wdk-wallet-aptos, wdk-wallet-btc, wdk-wallet-evm, wdk-wallet-evm-erc-4337, wdk-wallet-solana, wdk-wallet-spark, wdk-wallet-ton, wdk-wallet-tron, ton-gasless, tron-gasfree), and protocol modules including swidge, swap (wdk-protocol-swap-velora-evm), bridge (wdk-protocol-bridge-usdt0-evm), lending (wdk-protocol-lending-aave-evm), and fiat (wdk-protocol-fiat-moonpay). Covers wallet creation, transactions, token transfers, swidge asset routes, DEX swaps, cross-chain bridges, DeFi lending/borrowing, and fiat on/off ramps.
 ---
 
 # Tether WDK
@@ -28,6 +28,7 @@ This skill is organized into reference files for chain-specific and protocol-spe
 |------|---------|
 | `references/chains.md` | Chain IDs, native tokens, units, decimals, public RPC endpoints, dust thresholds, address formats, EIP-3009 support, bridge routes |
 | `references/deployments.md` | USDT native addresses, USDT0 omnichain addresses |
+| `references/wallet-aptos.md` | Aptos: SLIP-0010 Ed25519, APT, fungible assets, octas, fullnode REST |
 | `references/wallet-btc.md` | Bitcoin wallet: BIP-84, Electrum, PSBT, fee rates |
 | `references/wallet-evm.md` | EVM + ERC-4337: BIP-44, EIP-1559, ERC20, batch txs, paymaster |
 | `references/wallet-solana.md` | Solana: Ed25519, SPL tokens, lamports |
@@ -47,6 +48,7 @@ When a task targets a specific chain or protocol, read the relevant reference fi
 ```
 @tetherto/wdk               # Orchestrator - registers wallets + protocols
     ├── @tetherto/wdk-wallet    # Base classes (WalletManager, IWalletAccount)
+    │   ├── wdk-wallet-aptos    # Aptos (SLIP-0010 Ed25519)
     │   ├── wdk-wallet-btc      # Bitcoin (BIP-84, SegWit)
     │   ├── wdk-wallet-evm      # Ethereum & EVM chains
     │   ├── wdk-wallet-evm-erc-4337  # EVM with Account Abstraction
@@ -55,16 +57,14 @@ When a task targets a specific chain or protocol, read the relevant reference fi
     │   ├── wdk-wallet-ton      # TON
     │   ├── wdk-wallet-ton-gasless   # TON gasless
     │   ├── wdk-wallet-tron     # TRON
-    │   └── wdk-wallet-tron-gasfree  # TRON gas-free
+    │   ├── wdk-wallet-tron-gasfree  # TRON gas-free
     └── Protocol Modules
-        ├── swidge protocol interface             # Preferred route interface for new swap, bridge, or combined providers
+        ├── swidge provider modules               # Provider implementations for swap, bridge, or combined routes
         ├── wdk-protocol-swap-velora-evm   # DEX swaps on EVM
         ├── wdk-protocol-bridge-usdt0-evm  # Cross-chain USDT0 bridge
         ├── wdk-protocol-lending-aave-evm  # Aave V3 lending
         └── wdk-protocol-fiat-moonpay      # Fiat on/off ramp
 ```
-
-> **Note:** `@tetherto/wdk-core` appears in the architecture tree but the npm package is `@tetherto/wdk` — import as `import WDK from '@tetherto/wdk'`.
 
 ## npm Packages
 
@@ -81,6 +81,7 @@ All packages are under the `@tetherto` scope. **Always** `npm view <pkg> version
 
 | Package | npm |
 |---------|-----|
+| `@tetherto/wdk-wallet-aptos` | [npmjs.com/package/@tetherto/wdk-wallet-aptos](https://www.npmjs.com/package/@tetherto/wdk-wallet-aptos) |
 | `@tetherto/wdk-wallet-btc` | [npmjs.com/package/@tetherto/wdk-wallet-btc](https://www.npmjs.com/package/@tetherto/wdk-wallet-btc) |
 | `@tetherto/wdk-wallet-evm` | [npmjs.com/package/@tetherto/wdk-wallet-evm](https://www.npmjs.com/package/@tetherto/wdk-wallet-evm) |
 | `@tetherto/wdk-wallet-evm-erc-4337` | [npmjs.com/package/@tetherto/wdk-wallet-evm-erc-4337](https://www.npmjs.com/package/@tetherto/wdk-wallet-evm-erc-4337) |
@@ -172,12 +173,13 @@ Before making any transaction, first use the corresponding quote method to estim
 
 #### Common wallet write methods (deduplicated)
 
-- **`sendTransaction`** — Sends native tokens. Present on: btc, evm, evm-erc-4337, solana, spark, ton, tron. **Throws** on ton-gasless and tron-gasfree.
-- **`transfer`** — Transfers tokens (ERC20/SPL/Jetton/TRC20). Present on: evm, evm-erc-4337, solana, spark, ton, ton-gasless, tron, tron-gasfree. **Throws** on btc.
+- **`sendTransaction`** — Sends native tokens. Present on: aptos, btc, evm, evm-erc-4337, solana, spark, ton, tron. **Throws** on ton-gasless and tron-gasfree.
+- **`transfer`** — Transfers tokens (Aptos fungible assets/ERC20/SPL/Jetton/TRC20). Present on: aptos, evm, evm-erc-4337, solana, spark, ton, ton-gasless, tron, tron-gasfree. **Throws** on btc.
 - **`sign`** — Signs an arbitrary message with the private key. Present on **all** wallet modules. Can authorize off-chain actions — treat as dangerous.
 
 #### Module-specific warnings
 
+- **wallet-aptos**: `signTransaction()` is provider-backed and signs native APT transfers only; it is not an offline operation. `transferMaxFee` protects fungible-asset `transfer()` only, so enforce a separate application limit for native sends and signing.
 - **wallet-evm**: `sendTransaction` accepts a `data` field (arbitrary hex calldata). Can execute **any** contract function — `approve()`, `transferFrom()`, `setApprovalForAll()`, etc. Extra scrutiny for non-empty `data`.
 - **wallet-evm-erc-4337**: Same `data` risk. Also accepts an **array** of transactions for batch execution — multiple operations in one call.
 - **wallet-ton**: `sendTransaction` accepts a `payload` field for arbitrary contract calls.
@@ -190,10 +192,9 @@ All require human confirmation: `claimDeposit`, `claimStaticDeposit`, `refundSta
 
 - **Swidge**: `getSupportedChains` and `getSupportedTokens` discover available routes; `swidge` executes a swap-only, bridge-only, or combined route. Quote first with `quoteSwidge` and require human confirmation before execution.
 - **Swap**: `swap` (velora-evm) — quote first and require human confirmation. May internally approve + reset allowance.
-- **Bridge**: `bridge` (usdt0-evm) — quote first and require human confirmation. Requires prior token approval for the source-chain OFT or bridge spender.
+- **Bridge**: `bridge` (usdt0-evm) — quote first and require human confirmation. Standard EVM accounts require prior token approval for the source-chain spender; supported ERC-4337 helper routes bundle approval and bridging into one UserOperation.
 - **Lending (Aave)**: `supply`, `withdraw`, `borrow`, `repay`, `setUseReserveAsCollateral`, `setUserEMode`
-- **Fiat (MoonPay)**: `buy`, `sell` (generate signed widget URLs)
-
+- **Fiat (MoonPay)**: `buy`, `sell` (generate widget URLs; signed only when `signUrl` is configured)
 ### Pre-Transaction Validation
 
 **Before EVERY write method, verify:**

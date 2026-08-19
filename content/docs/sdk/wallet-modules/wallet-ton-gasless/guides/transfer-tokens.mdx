@@ -5,7 +5,7 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-This guide explains how to [transfer Jetton tokens gaslessly](#transfer-tokens-gasless), [override paymaster configuration](#override-paymaster-configuration), [estimate transfer fees](#estimate-transfer-fees), and [validate inputs before executing](#transfer-with-validation).
+This guide explains how to [transfer Jetton tokens gaslessly](#transfer-tokens-gasless), [override paymaster configuration](#override-paymaster-configuration), [estimate transfer fees](#estimate-transfer-fees), and [run preflight checks](#preflight-transfer-checks).
 
 ## Transfer Tokens (Gasless)
 
@@ -17,7 +17,7 @@ const result = await account.transfer({
   recipient: 'EQ...',  // Recipient's TON address
   amount: 1000000000   // Amount in Jetton's base units
 })
-console.log('Transfer hash:', result.hash)
+console.log('Signed transfer body hash:', result.hash)
 console.log('Transfer fee:', result.fee, 'paymaster token units')
 ```
 
@@ -36,7 +36,7 @@ const result = await account.transfer({
   },
   transferMaxFee: 2000000000 // Override maximum allowed fee
 })
-console.log('Transfer hash:', result.hash)
+console.log('Signed transfer body hash:', result.hash)
 console.log('Transfer fee:', result.fee, 'paymaster token units')
 ```
 
@@ -44,7 +44,7 @@ console.log('Transfer fee:', result.fee, 'paymaster token units')
 
 ## Estimate Transfer Fees
 
-You can get a fee estimate before executing the transfer using [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#quotetransferoptions):
+You can get a fee estimate before executing the transfer using [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#quotetransferoptions-config):
 
 ```javascript title="Quote Gasless Transfer"
 const quote = await account.quoteTransfer({
@@ -55,46 +55,70 @@ const quote = await account.quoteTransfer({
 console.log('Transfer fee estimate:', quote.fee, 'paymaster token units')
 ```
 
-## Transfer with Validation
+## Preflight Transfer Checks
 
-Validate balances before transferring:
+Inspect balances and fees before transferring:
 
 1. Use [`account.getTokenBalance()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#gettokenbalancetokenaddress) to check Jetton balance.
-2. Use [`account.getPaymasterTokenBalance()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#getpaymastertokenbalance) to verify sufficient paymaster funds.
-3. Use [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#quotetransferoptions) to estimate fees.
-4. Execute the transfer with [`account.transfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#transferoptions-config):
+2. Use [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#quotetransferoptions-config) with the intended paymaster to estimate the fee.
+3. Query that paymaster Jetton explicitly with `getTokenBalance(paymasterJettonAddress)`. `getPaymasterTokenBalance()` always reads the wallet-level paymaster, so do not use it to preflight a per-call override.
+4. If the transferred Jetton is also the paymaster Jetton, require one balance to cover the transfer amount plus the fee. Compare parsed TON addresses because different string encodings can identify the same Jetton master.
+5. Reject a quote above your application's fee policy, then execute [`account.transfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#transferoptions-config) with `transferMaxFee` set to that quote. The method obtains a fresh estimate and aborts before relay if it has risen. This explicit policy check matters because a per-call configuration replaces, rather than merges with, the wallet-level transfer configuration:
 
-```javascript title="Validated Gasless Transfer"
-async function transferWithValidation(account, jettonAddress, recipient, amount) {
+This example imports `Address` from `@ton/ton` for canonical address comparison. Add `@ton/ton` as a direct dependency in your application before using it.
+
+```javascript title="Gasless Transfer with Preflight Checks"
+import { Address } from '@ton/ton'
+
+async function transferWithChecks(account, jettonAddress, paymasterJettonAddress, recipient, amount, maxFee) {
   if (typeof jettonAddress !== 'string' || jettonAddress.length === 0) {
     throw new Error('Invalid Jetton address format')
+  }
+
+  if (typeof paymasterJettonAddress !== 'string' || paymasterJettonAddress.length === 0) {
+    throw new Error('Invalid paymaster Jetton address format')
   }
 
   if (typeof recipient !== 'string' || recipient.length === 0) {
     throw new Error('Invalid recipient address format')
   }
 
-  const balance = await account.getTokenBalance(jettonAddress)
-  if (balance < amount) {
+  const amountBaseUnits = BigInt(amount)
+  const maxFeeBaseUnits = BigInt(maxFee)
+  const transferOptions = {
+    token: jettonAddress,
+    recipient,
+    amount: amountBaseUnits
+  }
+  const paymasterToken = { address: paymasterJettonAddress }
+
+  const transferBalance = await account.getTokenBalance(jettonAddress)
+  if (transferBalance < amountBaseUnits) {
     throw new Error('Insufficient Jetton balance')
   }
 
-  const paymasterBalance = await account.getPaymasterTokenBalance()
-  console.log('Paymaster token balance:', paymasterBalance)
-
-  const quote = await account.quoteTransfer({
-    token: jettonAddress,
-    recipient,
-    amount
-  })
+  const quote = await account.quoteTransfer(transferOptions, { paymasterToken })
   console.log('Estimated fee (paymaster token):', quote.fee)
 
-  const result = await account.transfer({
-    token: jettonAddress,
-    recipient,
-    amount
+  if (quote.fee > maxFeeBaseUnits) {
+    throw new Error('Quoted fee exceeds application policy')
+  }
+
+  const paymasterBalance = await account.getTokenBalance(paymasterJettonAddress)
+  const sameJetton = Address.parse(jettonAddress).equals(Address.parse(paymasterJettonAddress))
+  const requiredPaymasterBalance = sameJetton
+    ? amountBaseUnits + quote.fee
+    : quote.fee
+
+  if (paymasterBalance < requiredPaymasterBalance) {
+    throw new Error('Insufficient paymaster Jetton balance')
+  }
+
+  const result = await account.transfer(transferOptions, {
+    paymasterToken,
+    transferMaxFee: quote.fee
   })
-  console.log('Transfer hash:', result.hash)
+  console.log('Signed transfer body hash:', result.hash)
   console.log('Actual fee (paymaster token):', result.fee)
 
   return result

@@ -91,9 +91,10 @@ Treat the arrays returned through `keyPair` as read-only. Call `dispose()` when 
 | `signTypedData(typedData)` | `TypedData` | `Promise\<string\>` | Signs EIP-712 typed data. |
 | `verify(message, signature)` | `message: string`, `signature: string` | `Promise\<boolean\>` | Verifies a plain message signature. |
 | `verifyTypedData(typedData, signature)` | `TypedData`, `signature: string` | `Promise\<boolean\>` | Verifies EIP-712 typed data. |
+| `signTransaction(tx, config?)` | `EvmTransaction \| EvmTransaction[]`, partial fee-mode config | `Promise\<UserOperationV8\>` | Signs a self-contained UserOperation without broadcasting it. |
 | `approve(options)` | `ApproveOptions` | `Promise\<TransactionResult\>` | Sends an ERC-20 approval as a UserOperation. |
-| `quoteSendTransaction(tx, config?)` | `EvmTransaction \| EvmTransaction[]`, partial fee-mode config | `Promise\<Omit\<TransactionResult, 'hash'\>\>` | Returns `{ fee }`; owned accounts cache paymaster-token quotes for up to 2 minutes. |
-| `sendTransaction(tx, config?)` | `EvmTransaction \| EvmTransaction[]`, partial fee-mode config | `Promise\<TransactionResult\>` | Returns a UserOperation hash and fee. |
+| `quoteSendTransaction(tx, config?)` | `EvmTransaction \| EvmTransaction[] \| UserOperationV8`, partial fee-mode config | `Promise\<Omit\<TransactionResult, 'hash'\>\>` | Returns `{ fee }`; owned accounts cache paymaster-token quotes for up to 2 minutes and validate the nonce before reuse. |
+| `sendTransaction(tx, config?)` | `EvmTransaction \| EvmTransaction[] \| UserOperationV8`, partial fee-mode config | `Promise\<TransactionResult\>` | Builds and signs an operation, or broadcasts an already-signed UserOperation. |
 | `quoteTransfer(options, config?)` | `EvmTransferOptions`, partial fee-mode config | `Promise\<Omit\<TransferResult, 'hash'\>\>` | Quotes an ERC-20 transfer. |
 | `transfer(options, config?)` | `EvmTransferOptions`, partial fee-mode config | `Promise\<TransferResult\>` | Sends an ERC-20 transfer as a UserOperation. |
 | `getAllowance(token, spender)` | `token: string`, `spender: string` | `Promise\<bigint\>` | Reads ERC-20 allowance. |
@@ -106,9 +107,21 @@ Treat the arrays returned through `keyPair` as read-only. Call `dispose()` when 
 
 - Sponsored mode returns `fee: 0n` from quote methods.
 - Paymaster-token mode returns fees in the configured paymaster token's base units.
-- Owned account quotes are cached for up to 2 minutes for the same serialized transaction.
-- `sendTransaction()` signs the UserOperation typed data before submitting it to the bundler.
-- If the account is already delegated to `delegationAddress`, the send path does not include a new EIP-7702 authorization.
+- `signTransaction()` returns a signed `UserOperationV8` without broadcasting it. The type comes from `abstractionkit` and is not re-exported from this package's root.
+- Quoting a signed UserOperation avoids paymaster calls. Sponsorship mode returns `fee: 0n`; paymaster-token mode derives a native-gas ceiling in wei from its existing gas fields rather than returning the token amount established by the paymaster.
+- Sending a signed UserOperation broadcasts its supplied nonce, authorization, gas fields, and signature unchanged, without rebuilding or signing it.
+- Owned account paymaster-token quotes are cached for up to 2 minutes for the same serialized transaction. Before reusing a cached UserOperation, the account reads the current EntryPoint nonce and re-quotes if it has moved.
+- The cache key contains the transaction but not the per-call fee-mode configuration. Use the same fee-mode and paymaster settings for a quote and its matching `sendTransaction()` or `transfer()` call.
+- Unsigned transaction inputs are built and signed before submission. A `UserOperationV8` input is broadcast with its supplied signature unchanged.
+- If the account is already delegated to `delegationAddress`, the send path does not include a new EIP-7702 authorization. A send that needs a fresh authorization rebuilds the UserOperation instead of reusing the cached one.
+
+### Nonce Lane Behavior
+
+- The default EntryPoint lane uses key `0`. `nonceKey` takes precedence over `parallel`, and different keys have no ordering relationship.
+- A string `nonceKey` is hashed to a deterministic 192-bit key. Numeric keys must be within the uint192 range; use bigint or string form above JavaScript's safe integer range.
+- Let the first delegation reach the chain before using concurrent lanes. Overlapping operations on the same lane can return hashes even when one can never receive a receipt.
+- A fresh `parallel` lane creates a permanent EntryPoint nonce slot. Reuse a bounded set of named lanes for sustained workloads.
+- The runtime accepts lane fields in per-call overrides for signing, sending, and transfers, but the beta.3 second-argument declarations omit them. Constructor-level lane fields are correctly typed.
 
 ### Transfer Fee Cap
 
@@ -184,6 +197,8 @@ Known configuration errors include:
 | `bundlerUrl` | `string` | Yes | ERC-4337 bundler endpoint. |
 | `paymasterUrl` | `string` | No | Paymaster endpoint when different from `bundlerUrl`. |
 | `delegationAddress` | `string` | Yes | Smart-account implementation address used for EIP-7702 delegation. |
+| `parallel` | `boolean` | No | Uses a fresh random nonce lane for each sign, send, or transfer operation unless `nonceKey` is set. |
+| `nonceKey` | `number \| bigint \| string` | No | Uses a reusable explicit uint192 nonce lane; strings are hashed deterministically. |
 
 ### Evm7702GaslessSponsorshipPolicyConfig
 
@@ -213,4 +228,4 @@ type Evm7702GaslessWalletConfig =
 
 The package also re-exports EVM wallet types from `@tetherto/wdk-wallet-evm`, including `FeeRates`, `KeyPair`, `EvmTransaction`, `TransactionResult`, `EvmTransferOptions`, `TransferResult`, `EvmTransactionReceipt`, `ApproveOptions`, `TypedData`, `TypedDataDomain`, and `TypedDataField`.
 
-Module-specific exported types include `UserOperationReceipt`, `Eip7702AuthorizationOverride`, `BuildSponsoredUserOperationOverrides`, and `SponsoredUserOperation`.
+Module-specific exported types include `UserOperationReceipt`, `Eip7702AuthorizationOverride`, `BuildSponsoredUserOperationOverrides`, and `SponsoredUserOperation`. In beta.3, `BuildSponsoredUserOperationOverrides` adds optional `nonce?: bigint` for explicitly selecting the EntryPoint nonce in lower-level builder typing; it does not expose the protected builder as a public method.

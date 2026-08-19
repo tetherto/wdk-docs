@@ -55,6 +55,8 @@ Account constructors and per-call config overrides throw `ConfigurationError` if
 |-------|------|---------|-------------|
 | `paymasterUrl` | `string` | `bundlerUrl` | Paymaster endpoint when it differs from the bundler endpoint. |
 | `retries` | `number` | `3` | Additional retry attempts when `provider` is an array. Total attempts are `1 + retries`. |
+| `parallel` | `boolean` | `false` | Use a fresh random EntryPoint nonce lane for each sign, send, or transfer operation. Ignored when `nonceKey` is set. |
+| `nonceKey` | `number \| bigint \| string` | - | Use a reusable explicit nonce lane. Strings are hashed to a deterministic key; numeric keys must fit the uint192 range. |
 
 ### Provider Failover
 
@@ -76,6 +78,24 @@ const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
 <Callout type="warn">
 An empty provider array throws `ConfigurationError`. Include at least one RPC URL or EIP-1193 provider.
 </Callout>
+
+### Nonce Lanes
+
+The default lane uses key `0` and is sequential. Use `parallel: true` for independent one-off operations, or configure `nonceKey` for a reusable lane:
+
+```javascript title="Configure a named nonce lane"
+const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
+  provider: 'https://rpc.mevblocker.io/fast',
+  delegationAddress: '<VERIFIED_DELEGATION_ADDRESS>',
+  bundlerUrl: 'https://api.pimlico.io/v2/1/rpc?apikey=YOUR_KEY',
+  isSponsored: true,
+  nonceKey: 'payments'
+})
+```
+
+`nonceKey` takes precedence over `parallel`. A string produces a deterministic 192-bit key that can resume the lane across sessions. A number or bigint is treated as the raw uint192 key; values outside `0` through `2^192 - 1` throw, and values above `2^53` should use bigint or string form.
+
+Wait for the account's first delegation before sending on multiple lanes. Reuse one lane sequentially, because overlapping same-lane operations can return hashes even when one cannot be included. Fresh random lanes also create permanent EntryPoint nonce slots, so prefer a small set of named lanes for recurring workloads.
 
 ## Fee Mode Configuration
 
@@ -148,7 +168,7 @@ If a provider serves its paymaster from a different URL than the bundler, set `p
 
 ## Per-call Overrides
 
-`quoteSendTransaction()`, `sendTransaction()`, `quoteTransfer()`, and `transfer()` accept a partial fee-mode config override. Overrides are shallow-merged with the account config. Include `isSponsored: false` when switching a sponsored account to paymaster-token mode for one operation:
+`quoteSendTransaction()`, `signTransaction()`, `sendTransaction()`, `quoteTransfer()`, and `transfer()` accept a partial fee-mode config override. Overrides are shallow-merged with the account config. Include `isSponsored: false` when switching a sponsored account to paymaster-token mode for one operation:
 
 ```javascript title="Override the paymaster token"
 const result = await account.sendTransaction({
@@ -164,3 +184,9 @@ const result = await account.sendTransaction({
 ```
 
 When an override is provided, the merged config is validated before the operation runs.
+
+The beta.3 JavaScript runtime also reads `parallel` and `nonceKey` from per-call overrides for `signTransaction()`, `sendTransaction()`, and `transfer()`. The published second-argument TypeScript declarations include only fee-mode fields, so constructor-level lane configuration is the typed path in this release.
+
+<Callout type="warning">
+The two-minute quote cache is keyed by the transaction, not by this override. Pass the same fee-mode and paymaster settings to a quote and its matching send or transfer. If those settings must change, do not execute the same transaction from that account until its earlier cached quote has expired.
+</Callout>

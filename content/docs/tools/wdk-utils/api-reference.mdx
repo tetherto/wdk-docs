@@ -1,6 +1,6 @@
 ---
 title: WDK Utils API Reference
-description: Validation, encryption, BIP-21, BOLT11, and EIP-681 APIs for @tetherto/wdk-utils
+description: Validation, encryption, mnemonic sharing, BIP-21, BOLT11, and EIP-681 APIs for @tetherto/wdk-utils
 docType: reference
 schemaType: APIReference
 ---
@@ -11,11 +11,13 @@ schemaType: APIReference
 
 | Function | Description | Returns |
 | --- | --- | --- |
+| `validateAddress(chainId, address)` | Dispatch address validation by CAIP-2 chain ID; Bitcoin and Spark references also enforce network compatibility. | Chain-specific result or a validation failure. |
 | `validateBase58(address)` | Validate a Base58Check Bitcoin address payload and version byte. | See details below. |
 | `validateBech32(address)` | Validate a SegWit v0 Bitcoin address. | `BtcAddressValidationResult` |
 | `validateBech32m(address)` | Validate a SegWit v1+ Bitcoin address. | `BtcAddressValidationResult` |
 | `validateBitcoinAddress(address)` | Validate a Bitcoin address across Base58Check, Bech32, and Bech32m formats. | `BtcAddressValidationResult` |
 | `validateEVMAddress(address)` | Validate an EVM address, including EIP-55 checksum rules for mixed-case inputs. | `EvmAddressValidationResult` |
+| `validateSolanaAddress(address)` | Validate a base58-encoded 32-byte Solana public key, including off-curve program-derived addresses. | `SolanaAddressValidationResult` |
 | `stripLightningPrefix(input)` | Remove a leading `lightning:` prefix before other Lightning validation steps. | `string` |
 | `validateLightningInvoice(address)` | Validate a Lightning invoice string. | `LightningInvoiceValidationResult` |
 | `decode(invoice)` | Decode a BOLT11 Lightning invoice into structured invoice data. | `LightningInvoiceDecodingResult` |
@@ -30,11 +32,33 @@ schemaType: APIReference
 | `validateUmaAddress(address)` | Validate a Universal Money Address. | `UmaAddressValidationResult` |
 | `resolveUmaUsername(uma)` | Split a valid UMA string into `localPart`, `domain`, and `lightningAddress`. | Parsed UMA details or `null`. |
 
+#### `validateAddress(chainId, address)`
+
+Validate an address with the chain-specific validator selected by a CAIP-2 chain ID or a bare namespace accepted by WDK Utils. The supported namespaces are `bip122`, `eip155`, `solana`, `spark`, and `tron`.
+
+```javascript title="Validate An Address For A CAIP-2 Chain"
+import { validateAddress } from '@tetherto/wdk-utils'
+
+const result = validateAddress(
+  'bip122:000000000019d6689c085ae165831e93',
+  '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'
+)
+// { success: true, type: 'p2pkh', compatibleNetworks: ['bitcoin'] }
+```
+
+The function returns the selected chain validator's result. Failures specific to dispatch are:
+
+- `INVALID_CHAIN_ID`: `chainId` is not a string or does not match the accepted input shape: a 3–8 character lowercase namespace, optionally followed by a 1–32 character reference. A bare namespace is a WDK Utils extension; standard CAIP-2 identifiers require `<namespace>:<reference>`.
+- `UNSUPPORTED_CHAIN`: the namespace has no validator.
+- `NETWORK_MISMATCH`: a `bip122` or `spark` reference is missing, unknown, or incompatible with the address.
+
+For `bip122` and `spark`, the reference selects the expected network. Other supported namespaces validate the address but do not enforce their reference value. This is structural validation; it does not confirm that an account exists, belongs to the intended recipient, or can receive a particular asset.
+
 #### `validateBase58(address)`
 
 Validate a Base58Check Bitcoin address and identify whether it matches a supported P2PKH or P2SH network version byte.
 
-The published `beta.2` type declaration currently includes an internal `{ decoded: Uint8Array }` branch in this return type. The shipped runtime returns validation results rather than exposing that intermediate decode object.
+The current beta.11 type declaration includes an internal `{ decoded: Uint8Array }` branch in this return type. The shipped runtime returns validation results rather than exposing that intermediate decode object.
 
 ```javascript title="Validate A Base58 Bitcoin Address"
 import { validateBase58 } from '@tetherto/wdk-utils'
@@ -72,10 +96,12 @@ import { validateBitcoinAddress } from '@tetherto/wdk-utils'
 const result = validateBitcoinAddress('tb1pu9yqnhc6wjj6s62s9x0shnl5l2r7gq5cudm94r7mvwv0uw4s7acqjg9r2f')
 ```
 
-`BtcAddressValidationResult` is one of these shapes:
+`BtcAddressValidationResult` is one of these shapes. Beta.11 replaces the earlier singular `network` field with `compatibleNetworks` and names mainnet `bitcoin`:
 
-- `{ success: true, type: 'p2pkh' | 'p2sh' | 'bech32' | 'bech32m', network: 'mainnet' | 'testnet' | 'regtest' }`
+- `{ success: true, type: 'p2pkh' | 'p2sh' | 'bech32' | 'bech32m', compatibleNetworks: Array<'bitcoin' | 'testnet' | 'regtest'> }`
 - `{ success: false, reason: string }`
+
+Legacy Base58 testnet formats are also valid on regtest, so those results contain both `testnet` and `regtest`.
 
 #### `validateEVMAddress(address)`
 
@@ -91,6 +117,25 @@ const result = validateEVMAddress('0x742d35Cc6634C0532925a3b844Bc454e4438f44e')
 
 - `{ success: true, type: 'evm' }`
 - `{ success: false, reason: string }`
+
+#### `validateSolanaAddress(address)`
+
+Validate a Solana address as a base58-encoded 32-byte public key. The validator trims surrounding whitespace and accepts off-curve program-derived addresses because they can be valid recipients.
+
+```javascript title="Validate A Solana Address"
+import { validateSolanaAddress } from '@tetherto/wdk-utils'
+
+const result = validateSolanaAddress(
+  'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+)
+```
+
+`SolanaAddressValidationResult` is one of these shapes:
+
+- `{ success: true, type: 'solana' }`
+- `{ success: false, reason: 'EMPTY_ADDRESS' | 'INVALID_FORMAT' | 'INVALID_LENGTH' }`
+
+Solana addresses do not include a checksum. This helper verifies structure and decoded length, not whether an account exists, is on curve, or belongs to the intended recipient.
 
 #### `stripLightningPrefix(input)`
 
@@ -253,8 +298,10 @@ const l1Deposit = validateSparkAddress(
 
 `SparkAddressValidationResult` is one of these shapes:
 
-- `{ success: true, type: 'spark' | 'btc' }`
+- `{ success: true, type: 'spark' | 'btc', compatibleNetworks: Array<'mainnet' | 'testnet' | 'regtest' | 'signet' | 'local'> }`
 - `{ success: false, reason: string }`
+
+Bitcoin L1 deposit-address formats can be shared by Spark testnet/signet or regtest/local, so the compatibility array can contain two networks.
 
 #### `validateTronAddress(address)`
 
@@ -360,6 +407,112 @@ import { decryptWithKey } from '@tetherto/wdk-utils'
 
 const plaintext = decryptWithKey(encrypted, key)
 ```
+
+### Seed Key Derivation Helpers
+
+Derive deterministic, domain-separated key material from high-entropy seed bytes.
+
+| Function | Description | Returns |
+| --- | --- | --- |
+| `deriveSeedKey(seed, options)` | Derive a byte key with HKDF-SHA256. | `Uint8Array` |
+| `deriveSeedKeyPair(seed, options)` | Derive a deterministic Ed25519 keypair. | `KeyPair` |
+
+```typescript title="Seed Key Derivation Types"
+type SeedKeyOptions = {
+  salt: string | Uint8Array
+  info: string | Uint8Array
+  length?: number
+}
+
+type KeyPair = {
+  publicKey: Uint8Array
+  secretKey: Uint8Array
+}
+```
+
+#### `deriveSeedKey(seed, options)`
+
+Derive a key using HKDF-SHA256. `salt` and `info` are required caller-controlled domain-separation values, and `length` defaults to 32 bytes.
+
+```javascript title="Derive A Seed Key"
+import { deriveSeedKey } from '@tetherto/wdk-utils'
+
+const key = deriveSeedKey(seedBytes, {
+  salt: 'com.example.wallet/v1',
+  info: 'local-encryption',
+  length: 32
+})
+```
+
+The function throws `salt is required` or `info is required` when either field is absent. String inputs are consumed as raw UTF-8 bytes; a mnemonic string is not converted into BIP-39 seed bytes.
+
+#### `deriveSeedKeyPair(seed, options)`
+
+Derive a deterministic Ed25519 keypair from the same seed, salt, and info inputs. The function always uses a 32-byte derived seed, even if `options.length` is supplied, and returns a 32-byte public key plus a 64-byte secret key laid out as the derived seed followed by the public key.
+
+```javascript title="Derive An Ed25519 Keypair"
+import { deriveSeedKeyPair } from '@tetherto/wdk-utils'
+
+const keyPair = deriveSeedKeyPair(seedBytes, {
+  salt: 'com.example.wallet/v1',
+  info: 'device-signing'
+})
+```
+
+<Callout type="warn">
+Treat the returned `secretKey` as sensitive and clear it after its final use. The implementation clears its intermediate derived seed, but the returned secret key remains in caller-managed memory.
+</Callout>
+
+### BIP-39 Mnemonic Sharing Helpers
+
+See [Shamir Secret Sharing](/tools/wdk-utils/guides/shamir-secret-sharing) for the complete split, storage, verification, and recovery journey.
+
+| Function | Description | Returns |
+| --- | --- | --- |
+| `splitMnemonic(mnemonic, options)` | Split valid BIP-39 mnemonic entropy into hex-encoded Shamir shares. | `Promise<string[]>` |
+| `combineMnemonic(shares)` | Reconstruct and validate a BIP-39 mnemonic from a threshold-or-larger share set. | `Promise<string>` |
+
+#### `splitMnemonic(mnemonic, options)`
+
+Normalize and decode a valid 12-, 15-, 18-, 21-, or 24-word English BIP-39 mnemonic to entropy and split it into Shamir shares. The helper receives only the mnemonic words; it does not include an optional BIP-39 passphrase or wallet-specific recovery metadata.
+
+```javascript title="Split A Mnemonic"
+import { splitMnemonic } from '@tetherto/wdk-utils'
+
+const shares = await splitMnemonic(seedPhrase, {
+  shares: 5,
+  threshold: 3
+})
+```
+
+- `shares` must be an integer from `2` through `255`.
+- `threshold` must be an integer from `2` through `shares`.
+- The returned shares are unencrypted lowercase hex strings.
+- The package-specific share strings are not SLIP-39 mnemonic shares. They do not include the recovery threshold or a format-version marker, so retain that metadata separately.
+- Invalid BIP-39 words, word counts, and checksums are rejected.
+- Node.js uses the dependency's `node:crypto` implementation. Browser and React Native paths must provide secure `crypto.getRandomValues`; React Native apps may need to load `react-native-get-random-values` before importing WDK Utils. In Bare, import from the package root so the Bare entrypoint provides the Node-compatible crypto path; do not load the React Native polyfill. The dependency versions currently resolved for a fresh beta.11 installation require Bare `1.28.0` or later.
+
+#### `combineMnemonic(shares)`
+
+Reconstruct a mnemonic from enough shares produced by the same `splitMnemonic()` call.
+
+```javascript title="Reconstruct A Mnemonic"
+import { combineMnemonic } from '@tetherto/wdk-utils'
+
+const restored = await combineMnemonic([
+  shares[0],
+  shares[2],
+  shares[4]
+])
+```
+
+The helper accepts 2 through 255 case-insensitive hex shares and returns the normalized English BIP-39 mnemonic. Shares must have the same length and unique coordinates. `combineMnemonic()` does not receive or recover the original threshold, so the application must retain and enforce it.
+
+Both helpers return Promises that reject with `Error` objects. For `combineMnemonic()`, non-array input, fewer than two shares, non-string entries, and malformed hex retain specific messages. Duplicate coordinates, mixed lengths, more than 255 shares, reconstruction failures, and checksum failures collapse to `Invalid shares: could not reconstruct a valid mnemonic`.
+
+<Callout type="warn">
+Each share is sensitive recovery material. Store shares in separate trusted locations and never log or transmit them through analytics. The embedded 32-bit checksum normally detects accidental corruption, but it can collide and does not authenticate shares or protect against maliciously crafted input. Authenticate the exact share bytes against a tamper-evident record before combining them, then verify the recovered wallet against an independently protected, collision-resistant public identifier.
+</Callout>
 
 ### BIP-21 Bitcoin Payment URI Helpers
 

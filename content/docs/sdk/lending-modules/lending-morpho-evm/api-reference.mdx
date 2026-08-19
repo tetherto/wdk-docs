@@ -6,6 +6,12 @@ schemaType: APIReference
 icon: Code
 ---
 
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
 # API Reference
 
 ## Class: MorphoProtocolEvm
@@ -47,7 +53,7 @@ const morpho = new MorphoProtocolEvm(account, {
 | `getSupplyCollateralRequirements(options, requirementOptions?)` | Return approval or signature requirements for collateral supply | `Promise<ApprovalOrSignatureRequirement[]>` |
 | `quoteSupplyCollateral(options, config?)` | Quote collateral supply | `Promise<Omit<SupplyResult, "hash">>` |
 | `borrow(options, config?)` | Borrow from the configured market | `Promise<BorrowResult>` |
-| `getBorrowRequirements(options)` | Return Morpho authorization requirements for borrow | `Promise<RequirementAuthorization[]>` |
+| `getBorrowRequirements(options)` | Return a Morpho authorization transaction or signable authorization request for borrow | `Promise<(RequirementAuthorization \| RequirementSignatureRequest)[]>` |
 | `quoteBorrow(options, config?)` | Quote borrow | `Promise<Omit<BorrowResult, "hash">>` |
 | `repay(options, config?)` | Repay the configured market | `Promise<RepayResult>` |
 | `getRepayRequirements(options, requirementOptions?)` | Return approval or signature requirements for repay | `Promise<ApprovalOrSignatureRequirement[]>` |
@@ -65,8 +71,9 @@ const morpho = new MorphoProtocolEvm(account, {
 ## Requirements and Results
 
 - `ApprovalOrSignatureRequirement`: returned by supply, collateral supply, and repay requirement helpers. Each item is either a Morpho SDK approval transaction with `to`, `value`, and `data`, or a signature requirement with `sign(client, userAddress)`.
-- `RequirementAuthorization`: returned by `getBorrowRequirements()`. These are Morpho authorization transactions with `to`, `value`, and `data`.
-- `RequirementSignature`: returned by a signature requirement's `sign(client, userAddress)` helper. Pass it to `supply()`, `supplyCollateral()`, or `repay()` as `requirementSignature`.
+- `RequirementAuthorization`: a Morpho authorization transaction with `to`, `value`, and `data`. Send it before `borrow()`.
+- `RequirementSignatureRequest`: a signable Morpho authorization request returned by `getBorrowRequirements()` when `supportSignature: true` is enabled.
+- `RequirementSignature`: returned by a signature request's `sign(client, userAddress)` helper. Pass it to `supply()`, `supplyCollateral()`, `borrow()`, or `repay()` as `requirementSignature`.
 - Write methods return the WDK wallet transaction result, including `hash` and `fee`. Quote methods return the same protocol result without `hash`.
 
 ---
@@ -198,6 +205,7 @@ Options:
 - `amount` (`number | bigint`): amount in base units
 - `onBehalfOf` (`string`, optional): must equal the connected wallet address when set
 - `reallocations` (`readonly VaultReallocation[]`, optional): Morpho Vault V2 reallocations
+- `requirementSignature` (`RequirementSignature`, optional): signed authorization returned by `getBorrowRequirements()` when `supportSignature: true` is enabled; the adapter includes it as `setAuthorizationWithSig` in the borrow bundle
 - `slippageTolerance` (`bigint`, optional): per-call Morpho SDK slippage tolerance
 
 ```javascript
@@ -209,7 +217,7 @@ const tx = await morpho.borrow({
 
 ### `getBorrowRequirements(options)`
 
-Return Morpho authorization requirements for borrow flows.
+Return Morpho authorization requirements for borrow flows. The result is an array of authorization transactions, unless `supportSignature: true` is enabled and Morpho returns a signable `RequirementSignatureRequest` instead. Send transaction requirements before `borrow()`; sign a signature request and pass the resulting `requirementSignature` to `borrow()`.
 
 ```javascript
 const requirements = await morpho.getBorrowRequirements({

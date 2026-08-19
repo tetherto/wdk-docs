@@ -1,0 +1,120 @@
+---
+title: Transfer tokens and use IBC
+description: Send Cosmos denominations on one chain or through a configured IBC channel.
+docType: how-to
+schemaType: TechArticle
+---
+
+`transfer()` sends a selected Cosmos denomination with a bank send or an IBC transfer.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+<Callout type="error">
+Broadcast transfers are irreversible. Quote and enforce your own fee limit before `transfer()`. In `1.0.0-beta.4`, the configured `transferMaxFee` check happens only after the transaction has already been signed and broadcast.
+</Callout>
+
+## Send on the same chain
+
+When the recipient prefix matches the configured `addressPrefix`, the module broadcasts a Cosmos bank send:
+
+```js
+import WalletManagerCosmos from '@base58-io/wdk-wallet-cosmos'
+
+const seedPhrase = process.env.WDK_SEED_PHRASE
+if (!seedPhrase) throw new Error('WDK_SEED_PHRASE is required')
+
+const manager = new WalletManagerCosmos(seedPhrase, {
+  chainName: 'cosmoshub',
+})
+
+try {
+  const account = await manager.getAccount(0)
+  const transfer = {
+    token: 'uatom',
+    recipient: 'cosmos1<recipient>',
+    amount: 1_000n,
+  }
+
+  const applicationMaxFee = 5_000n
+  const { fee } = await account.quoteTransfer(transfer)
+  if (fee >= applicationMaxFee) {
+    throw new Error('Quoted fee meets or exceeds the application limit')
+  }
+
+  const result = await account.transfer(transfer)
+  console.log({
+    hash: result.hash,
+    fee: result.fee.toString(),
+  })
+} finally {
+  manager.dispose()
+}
+```
+
+Amounts are integer base units. Replace all address, denomination, and fee-limit examples with values validated for the configured chain.
+
+A matching Bech32 prefix is only the module's routing heuristic; it does not prove that the recipient belongs to the same chain.
+
+## Configure an IBC transfer
+
+When the recipient prefix differs, map that prefix to a source channel on the configured source chain:
+
+```js
+const config = {
+  chainName: 'cosmoshub',
+  ibcChannels: {
+    osmo: {
+      sourceChannel: '<source-channel-on-cosmoshub>',
+    },
+  },
+}
+```
+
+Then quote and transfer to the destination-prefix address:
+
+```js
+const transfer = {
+  token: 'uatom',
+  recipient: 'osmo1<recipient>',
+  amount: 1_000n,
+}
+
+const { fee } = await account.quoteTransfer(transfer)
+if (fee >= applicationMaxFee) {
+  throw new Error('Quoted fee meets or exceeds the application limit')
+}
+
+const result = await account.transfer(transfer)
+```
+
+Keep the manager inside a `try`/`finally` lifecycle and call `manager.dispose()` as shown in the same-chain example.
+
+The released IBC flow:
+
+- keys `ibcChannels` by destination Bech32 prefix;
+- uses the configured mapping as the source channel;
+- uses source port `transfer`;
+- uses a fixed 600-second timestamp timeout;
+- does not discover routes, validate channel topology, or track packet acknowledgement.
+
+## Understand quote limits
+
+`quoteTransfer()` checks that a channel mapping exists when the prefixes differ. It then calculates a fee from configured gas metadata and the fixed gas limit of `200000`.
+
+The quote does not:
+
+- call RPC or simulate gas;
+- check the sender balance;
+- validate that the channel is open;
+- prove that the destination chain or relayer is available;
+- validate the complete transfer against current chain state.
+
+<Callout type="warn">
+An over-limit `transfer()` can succeed on-chain and then throw the module's fee-limit error because the check occurs after broadcast. Treat the pre-write quote and application limit as required controls, and reconcile chain state before retrying any failed call.
+</Callout>
+
+See [Configuration](/sdk/community-modules/wdk-wallet-cosmos/configuration#ibc-channels) for channel configuration and [Handle errors](/sdk/community-modules/wdk-wallet-cosmos/guides/handle-errors) for ambiguous-write guidance.

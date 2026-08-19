@@ -1,0 +1,82 @@
+---
+title: P2P Address Book Sync and Recovery
+description: Enroll devices, configure blind peers, and recover an existing P2P Address Book.
+docType: how-to
+schemaType: TechArticle
+icon: RefreshCw
+---
+
+Devices that use the same seed and namespace derive the same book identity, content key, and bootstrap signing key. Each device stores a separate writer key in its own Corestore.
+
+## Choose the correct enrollment flow
+
+- Call `create()` only for a book that is known to be new.
+- Call `addMirror()` when an existing book may need to be restored.
+
+`addMirror()` waits for existing genesis before enrolling the local writer and does not create a fallback book on timeout. This avoids silently forking a missing book.
+
+## Register availability on the first device
+
+A blind peer is optional while two enrolled devices can reach each other directly. It becomes important when a new device must restore while every existing user device is offline.
+
+Create the new book before registering the mirror:
+
+```javascript
+const first = await AddressBook.fromSeed(seed, firstDeviceStore, {
+  namespace: 'example-wallet'
+})
+
+await first.create()
+await first.addMirror(mirrorKey)
+```
+
+The package contains the blind-peer client integration, not the server. See [Production and Privacy](/tools/p2p-address-book/production-and-privacy) before relying on a blind peer for recovery.
+
+## Restore another device
+
+Use the same seed and namespace with a different persistent Corestore. Do not call `create()`:
+
+```javascript
+const restored = await AddressBook.fromSeed(seed, secondDeviceStore, {
+  namespace: 'example-wallet',
+  timeout: 20_000
+})
+
+await restored.addMirror(mirrorKey)
+
+const refresh = () => restored
+  .listContacts()
+  .then(renderContacts)
+  .catch(reportError)
+
+restored.on('update', refresh)
+await refresh()
+```
+
+The `mirrors` constructor option configures peering but does not enroll a restored writer by itself. Call `addMirror()`.
+
+When `addMirror()` resolves, the device has observed existing genesis and enrolled its writer. Resolution does not confirm that every record has arrived or that the blind peer will retain the history. Refetch on payload-free `update` events, unregister listeners during cleanup, and close both the book and root Corestore.
+
+<Callout type="warn">
+`ready()` and `fromSeed()` are not connectivity signals in `1.0.0-beta.3`. Initial swarm flush and blind-peer setup run in the background. Use the explicit `addMirror()` restore path and application-level recovery checks rather than assuming that local readiness means synchronization is complete.
+</Callout>
+
+The seed and namespace can reproduce the book identity and keys, but not missing history. If all devices and retained replicas are unavailable, the contacts cannot be rebuilt from the seed alone.
+
+## Understand writer permissions
+
+Writer permissions are flat. Every enrolled writer can change contacts and addresses, and the direct API allows writers to add or remove other writers. There is no administrator role, read-only role, or invitation protocol.
+
+<Callout type="warn">
+`removeWriter()` removes current write membership only. It does not rotate the seed-derived authority or content key, revoke read access, erase the removed device's data, or prevent a device holding the seed from enrolling again. Autobase also rejects removal of the final writer. Do not use this method as a complete compromised-device control.
+</Callout>
+
+## Select mirrors from a pool
+
+`AddressBook.selectMirrors(autobaseKey, pool, n)` deterministically ranks mirror keys for a book. Passing the same pool to `addMirror(pool, n)` selects and registers the top entries.
+
+The returned selection is not proof of storage or availability. Test restoration with the original devices offline.
+
+## Next steps
+
+Review mirror and writer methods in the [API Reference](/tools/p2p-address-book/api-reference), then plan deployment and retention in [Production and Privacy](/tools/p2p-address-book/production-and-privacy).

@@ -4,7 +4,7 @@
 
 | Resource | URL |
 |----------|-----|
-| **Docs — Swidge Interface** | https://docs.wallet.tether.io/sdk/swidge-modules |
+| **Docs — Swidge Modules** | https://docs.wallet.tether.io/sdk/swidge-modules |
 | **Base package** | https://www.npmjs.com/package/@tetherto/wdk-wallet |
 
 ## Interface

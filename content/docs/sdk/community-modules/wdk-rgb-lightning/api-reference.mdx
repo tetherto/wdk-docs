@@ -1,0 +1,214 @@
+---
+title: RGB Lightning wallet API reference
+description: Public API reference for @utexo/wdk-rgb-lightning 0.1.0-beta.15.
+docType: reference
+schemaType: TechArticle
+---
+
+This page covers the package-root declarations and released runtime behavior of [`@utexo/wdk-rgb-lightning@0.1.0-beta.15`](https://github.com/UTEXO-Protocol/wdk-rgb-lightning/releases/tag/v0.1.0-beta.15).
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Package
+
+| Field | Value |
+|---|---|
+| Package | `@utexo/wdk-rgb-lightning@0.1.0-beta.15` |
+| Repository | [UTEXO-Protocol/wdk-rgb-lightning](https://github.com/UTEXO-Protocol/wdk-rgb-lightning) |
+| Module format | ESM |
+| Node/default entry | `index.js` → `index-node.js` |
+| Bare entry | `bare.js` → `index-bare.js` |
+| Declarations | `index.d.ts` |
+
+Install the matching optional native peer. The manager, account, error, and LSP surfaces are shared across runtimes; the package root exports only the binding class selected for the active runtime.
+
+## Root exports
+
+| Group | Exports |
+|---|---|
+| Manager and accounts | Default `WalletManagerRgbLightning`, `WalletAccountRgbLightning`, `WalletAccountReadOnlyRgbLightning` |
+| Low-level binding (runtime-selected) | Node: `NodeRgbLightningBinding`; Bare: `BareRgbLightningBinding`; `IRgbLightningBinding` type. The declarations name both classes, but each runtime root exports only its selected class. |
+| Wallet errors | `RgbLightningError`, `UnlockError`, `AccountLockedError`, `VssError`, `VssNotConfiguredError`, `ApayError`, `NotImplementedError` |
+| LSP | `LspClient`, `LspError`, `UtexoLsp`, LSP result/config types, timeout and settlement errors |
+| LNURL / address | `isUmaAddress`, `normalizeLightningAddress`, `parseLightningAddress`, `fetchDiscovery`, `resolveAddressToInvoice`, `LnurlPayError` |
+| Account-bound helpers | `payLightningAddress`, `requestLspRgbDeposit`, `payRgbViaLsp` |
+
+Low-level binding classes are advanced escape hatches. Prefer the manager because it owns external-signer attachment, fallback identity handling, shutdown, and cleanup of secrets retained by the RGB Lightning binding.
+
+## `WalletManagerRgbLightning`
+
+| Member | Returns | Behavior |
+|---|---|---|
+| `constructor(seed, config)` | Manager | Requires BIP-39 mnemonic or seed bytes, `network`, and persistent `dataDir`. |
+| `getAccount(index = 0)` | `Promise<WalletAccountRgbLightning>` | Returns the only account. Nonzero indexes and registered WDK signer names are rejected. |
+| `getAccountByPath(path)` | `Promise<WalletAccountRgbLightning>` | Accepts only `m`. |
+| `getFeeRates()` | `Promise<FeeRates>` | Fetches mempool.space recommendations without selecting the configured network. |
+| `dispose()` | `void` | Terminal for the RGB Lightning node session: shuts down the binding, destroys the VLS signer, and wipes seed buffers retained by the RGB Lightning binding. Do not reuse manager-derived objects after disposal. |
+| `static Binding` | Binding constructor | Runtime-selected Node or Bare binding. |
+
+## `WalletAccountReadOnlyRgbLightning`
+
+The read-only adapter exposes queries without signing, broadcasting, channel mutation, VSS recovery, or LSP credentials.
+
+| Group | Methods |
+|---|---|
+| Bootstrap and node | `getBootstrap()`, `getNodeInfo()`, `getNetworkInfo()` |
+| Address | `getAddress()`, `getAddressState()` |
+| Channels and peers | `listChannels()`, `getChannelId(tempId)`, `listPeers()` |
+| Lightning | `decodeInvoice()`, `getInvoiceStatus()`, `listPayments()`, `getPayment(hash, type)` |
+| RGB | `listAssets(filter?)`, `getAssetBalance()`, `getAssetMetadata()`, `listTransfers()`, `listTransfersByTxid()`, `decodeRgbInvoice()`, `getAssetMedia()` |
+| Bitcoin | `getBalance(skipSync?)`, `getBalanceDetails(skipSync?)`, `getTransactions(skipSync?)`, `getTransactionsByTxid(txid, skipSync?)`, `listUnspents()`, `estimateFee()` |
+| WDK | `getTokenBalance()`, `verify()`, `quoteTransfer()`, `quoteSendTransaction()`, `getTransactionReceipt()` |
+| Diagnostics | `checkIndexerUrl()`, `checkProxyEndpoint()`, `vssStatus()` |
+
+`getAddress()` throws `AccountLockedError` before unlock. `getAddressState()` returns `{status:'locked', address:null}` without throwing.
+
+<Callout type="warn">
+Before unlock, `getBalance()` returns `0n`. Use `getAddressState()` to distinguish a locked account from a ready account with a real zero balance.
+</Callout>
+
+`getTransactionReceipt()` returns only terminal confirmed Bitcoin, settled RGB, or non-pending Lightning records; otherwise it returns `null`.
+
+## `WalletAccountRgbLightning`
+
+The full account has fixed identity fields:
+
+| Member | Value |
+|---|---|
+| `index` | `0` |
+| `path` | `m` |
+| `keyPair.publicKey` | 33-byte compressed Lightning node public key |
+| `keyPair.privateKey` | Always `null`; VLS holds signing material |
+
+### Lifecycle and node
+
+| Method | Behavior |
+|---|---|
+| `unlock(nativeRequest)` | Unlocks the node with native snake_case RPC, indexer, proxy, and announce fields; wraps failures as `UnlockError`. |
+| `getBootstrap()` | Returns public signer/bootstrap metadata. |
+| `getNodeInfo()` / `getNetworkInfo()` | Query node and chain information. |
+| `sync()` | Synchronizes node state. |
+| `getAddress()` / `getAddressState()` | Read current stable address or lock state. |
+| `rotateAddress()` | Explicitly advances the Bitcoin address. |
+| `shutdown()` | Idempotently shuts down the account binding. |
+| `dispose()` | Account no-op; the manager owns terminal cleanup. |
+
+### Peers, channels, and onion messages
+
+| Method | Behavior |
+|---|---|
+| `connectPeer(pubkeyAndAddress)` | Connects a `pubkey@host:port` peer. |
+| `disconnectPeer(request)` | Forwards the native disconnect request. |
+| `listPeers()` | Returns native peer records. |
+| `openChannel(request)` | Accepts `OpenChannelRequest` or a native object. |
+| `closeChannel(request)` | Forwards the native close request. |
+| `listChannels()` | Returns native channel records. |
+| `getChannelId(temporaryId)` | Resolves a temporary channel ID. |
+| `sendOnionMessage(request)` | Forwards the caller-supplied native `JsonSendOnionMessageRequest` unchanged and returns `{ok: true}`. Validate the exact beta.15 request shape before calling; the declaration types it as `object`. |
+
+### Invoices and payments
+
+| Method | Behavior |
+|---|---|
+| `createInvoice(request)` | Native BOLT11 invoice request. |
+| `createLightningInvoice(request)` | Accepts native snake_case or released camelCase convenience fields. |
+| `decodeInvoice(invoice)` / `getInvoiceStatus(invoice)` | Query invoice data and status. |
+| `createHodlInvoice(params)` | Creates a HODL invoice for a caller-supplied payment hash. |
+| `cancelHodlInvoice(request)` / `claimHodlInvoice(request)` | Native HODL lifecycle calls. |
+| `sendPayment(request)` / `keysend(request)` | Native Lightning payment calls. |
+| `listPayments()` / `getPayment(hash, type)` | Payment history. `type` is `Outbound`, `InboundAutoClaim`, or `InboundHodl`. |
+
+### RGB assets
+
+| Method | Behavior |
+|---|---|
+| `listAssets(filter?)`, `getAssetBalance()`, `getAssetMetadata()` | Query held RGB assets. |
+| `listTransfers(assetId)`, `listTransfersByTxid(txid)` | Query transfer records. |
+| `refreshTransfers(request)`, `failTransfers(request)` | Native transfer-state mutation. |
+| `createRgbInvoice(request)`, `decodeRgbInvoice(invoice)` | Create or decode an RGB receive invoice. |
+| `sendRgbAsset(request)` | Sends native grouped RGB recipients. |
+| `getAssetMedia(digest)`, `postAssetMedia(request)` | Reads or uploads asset media. |
+
+Runtime JavaScript includes issuance forwarders that beta.15's public declaration omits. They are intentionally excluded here. Use [`@utexo/wdk-wallet-rgb`](/sdk/community-modules/wdk-wallet-rgb) for released, documented issuance.
+
+### Bitcoin and WDK operations
+
+| Method | Behavior |
+|---|---|
+| `sendTransaction({to, value, feeRate?, confirmationTarget?})` | WDK Bitcoin send; VLS signs internally and returns `{hash, fee}`. |
+| `sendBtc(request)` | Low-level native Bitcoin send. |
+| `createUtxos(request)` | Native UTXO-creation request. |
+| `quoteSendTransaction(tx)` | Approximate standard-send quote based on 141 vbytes. |
+| `transfer(options)` | Routes BOLT11, node ID, Bitcoin address, or RGB invoice recipients. |
+| `quoteTransfer(options)` | Routes to an approximate flow-specific quote. |
+| `sign(message)` / `verify(message, signature)` | Lightning message signing and verification. |
+| `signTransaction()` | Always throws `NotImplementedError`; use operation-specific send methods. |
+| `toReadOnlyAccount()` | Returns the cached query-only adapter. |
+
+## Transfer routing and units
+
+`transfer(options)` classifies `recipient`:
+
+| Recipient | Route | `amount` unit | Returned `fee` unit |
+|---|---|---|---|
+| BOLT11 invoice | `sendPayment` | millisatoshis | millisatoshis |
+| 66-character hex node ID | `keysend` | millisatoshis | millisatoshis |
+| `rgb:` or `utxob:` invoice | RGB send | RGB asset base units | `0n` because the native fee is not exposed |
+| Other valid recipient | Bitcoin send | satoshis | satoshis |
+
+For RGB routing, `token` is the asset ID. The generic router assumes `Fungible`, `donation: false`, and one confirmation. Use `sendRgbAsset()` with the exact native request for other assignment kinds or grouped recipients.
+
+<Callout type="warn">
+An RGB transfer result of `fee: 0n` does not prove the operation was fee-free. It means beta.15 does not expose the native fee through the WDK result.
+</Callout>
+
+The Lightning quote uses a 50-basis-point allowance, not a live route fee. An RGB-routed HTLC has a hard minimum of 3,000,000 msat.
+
+## LSP, Lightning Address, and VSS
+
+| Surface | Key methods |
+|---|---|
+| `LspClient` | `health`, `getInfo`, LNURL discovery/callback, address resolution, on-chain send bridge, Lightning receive bridge |
+| `UtexoLsp` | `connect`, `waitForChannel`, `receiveAsset`, settlement/liquidity waits, `sendAsset`, `payAddress`, `enableLightningAddress`, `claimPendingPayments` |
+| APay | `apayNew`, `bootstrapLsp`, `getLspConfig`, `createLsp` |
+| VSS | `vssStatus`, `vssBackup`, `clearVssFence` |
+
+<Callout type="warn">
+In beta.15, `UtexoLsp.sendAsset({rgbInvoice, ln})` requires `ln.amtMsat` and `ln.expirySec` at runtime even though the public declaration marks `ln` and those fields optional. Pass the complete shape until the declaration is corrected.
+</Callout>
+
+Public HTTP is rejected for LSP and VSS by default, except loopback where supported. LNURL callbacks remain on the discovery host unless `allowCrossHostCallback` is explicitly enabled. `$user@host` is normalized as UMA-style address syntax only; the package does not implement UMA signing, compliance, or currency negotiation.
+
+## Errors
+
+Selected boundaries use typed errors:
+
+| Error | Boundary |
+|---|---|
+| `UnlockError` | Node unlock |
+| `AccountLockedError` | Locked address/signature operations |
+| `VssError`, `VssNotConfiguredError` | VSS operations |
+| `ApayError` | APay/bootstrap |
+| `NotImplementedError` | Unsupported transaction signing |
+| `LspError`, `LnurlPayError` | HTTP LSP and LNURL helpers |
+| `LspChannelTimeoutError`, `LspLiquidityTimeoutError`, `LspSettlementError` | Composed LSP waits |
+
+Many native methods still throw raw `Rln(<Variant>): <message>` errors. Preserve the original error and operation context.
+
+## Declaration boundary
+
+Many native requests and responses are deliberately typed as `object` or `Record<string, unknown>` because RLN owns their shape. Do not invent stable fields from demos, another beta, or an unreleased branch. Validate the exact beta.15 payloads your application consumes.
+
+Atomic swap methods are available only on the native binding, not on the released WDK account. They are outside this reference.
+
+## Guides
+
+- [Configure the node](/sdk/community-modules/wdk-rgb-lightning/configuration)
+- [Manage the node account](/sdk/community-modules/wdk-rgb-lightning/guides/manage-node-account)
+- [Use peers and channels](/sdk/community-modules/wdk-rgb-lightning/guides/peers-channels)
+- [Use RGB assets](/sdk/community-modules/wdk-rgb-lightning/guides/rgb-assets)
+- [Handle errors and cleanup](/sdk/community-modules/wdk-rgb-lightning/guides/handle-errors-cleanup)

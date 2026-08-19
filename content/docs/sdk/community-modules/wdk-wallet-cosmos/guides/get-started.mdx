@@ -1,0 +1,84 @@
+---
+title: Get started
+description: Install the released Base58 Cosmos wallet module and derive a Cosmos account.
+docType: getting-started
+schemaType: TechArticle
+---
+
+This guide uses the published `1.0.0-beta.4` package. The repository's default branch can contain unreleased APIs that are not available in this version.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## 1. Install the package
+
+Install the exact version documented by this guide:
+
+```bash
+npm install @base58-io/wdk-wallet-cosmos@1.0.0-beta.4
+```
+
+The package is ESM and does not declare a Node.js engine requirement. It also provides a Bare conditional entry through the same package specifier.
+
+## 2. Configure the chain
+
+`chainName` loads bundled chain metadata, including the Bech32 prefix, native denomination, coin type, and RPC endpoints.
+
+```js
+const config = {
+  chainName: 'cosmoshub',
+}
+```
+
+Bundled registry data is packaged metadata, not live chain discovery. Verify the resolved endpoints and chain parameters before production use. See [Configuration](/sdk/community-modules/wdk-wallet-cosmos/configuration) for custom endpoints and fee behavior.
+
+## 3. Derive an account
+
+Load the mnemonic from secure storage and dispose the manager even when an operation fails:
+
+```js
+import WalletManagerCosmos from '@base58-io/wdk-wallet-cosmos'
+
+const seedPhrase = process.env.WDK_SEED_PHRASE
+
+if (
+  !seedPhrase ||
+  !WalletManagerCosmos.isValidSeedPhrase(seedPhrase)
+) {
+  throw new Error('A valid WDK_SEED_PHRASE is required')
+}
+
+const manager = new WalletManagerCosmos(seedPhrase, {
+  chainName: 'cosmoshub',
+})
+
+try {
+  const account = await manager.getAccount(0)
+  const address = await account.getAddress()
+
+  console.log('Cosmos address:', address)
+} finally {
+  manager.dispose()
+}
+```
+
+Address derivation is local. Balance, signing-context, broadcast, and receipt methods require at least one configured RPC endpoint.
+
+<Callout type="error">
+Never hardcode, log, or commit a mnemonic, seed, or `keyPair.privateKey`. `dispose()` clears buffers owned by the module, but it cannot erase the environment string or copies retained by your application or its dependencies.
+</Callout>
+
+## Released limitations
+
+In `1.0.0-beta.4`:
+
+- accounts are derived from the manager seed; named and external signers are not supported;
+- `toReadOnlyAccount()` is not implemented;
+- fee quotes use fixed gas and do not simulate through RPC;
+- `signTransaction()` cannot be handed to `sendTransaction()` for broadcast;
+- `transferMaxFee` is not a reliable pre-broadcast guard for every write.
+
+Continue with [Manage accounts](/sdk/community-modules/wdk-wallet-cosmos/guides/manage-accounts) or review the [API reference](/sdk/community-modules/wdk-wallet-cosmos/api-reference).

@@ -21,7 +21,7 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 
 // Create bridge protocol with configuration
 const bridgeProtocol = new Usdt0ProtocolEvm(account, {
-  bridgeMaxFee: 1000000000000000n // Optional: Maximum bridge fee in wei
+  bridgeMaxFee: 1000000000000000n // Optional standard-account cap in source native base units
 })
 ```
 
@@ -60,16 +60,21 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 
 ### Bridge Max Fee
 
-The `bridgeMaxFee` option sets a maximum limit for total bridge costs to prevent unexpectedly high fees.
+The `bridgeMaxFee` option rejects `bridge()` when the implementation's `fee + bridgeFee` value is equal to or greater than the cap.
 
 **Type:** `number | bigint` (optional)
-**Unit:** Wei (1 ETH = 1000000000000000000 Wei)
+
+For a standard EVM account, both fields use the source chain's native base unit. For example, Ethereum and Arbitrum report the values in wei.
+
+<Callout type="warn">
+For an ERC-4337 helper flow, `bridgeFee` is in bridged-token base units. The account's `fee` uses native base units for native gas, paymaster-token base units for token-paid gas, or zero for sponsored gas. In `1.0.0-beta.7`, the protocol numerically adds these values when enforcing `bridgeMaxFee`. Do not treat that sum as one currency or set a cap until your payment mode uses compatible units.
+</Callout>
 
 **Examples:**
 
 ```javascript
 const config = {
-  // Set maximum bridge fee to 0.001 ETH
+  // Standard Ethereum account: reject fee + bridgeFee at or above 0.001 ETH
   bridgeMaxFee: 1000000000000000n,
 }
 
@@ -114,12 +119,9 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
   provider: window.ethereum
 })
 
-// Option 3: Using custom JsonRpcProvider
-import { JsonRpcProvider } from 'ethers'
-const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
-  provider: new JsonRpcProvider('https://eth.drpc.org')
-})
 ```
+
+Pass either an RPC URL string or a genuine EIP-1193 provider. An ethers `JsonRpcProvider` is not an EIP-1193 provider and is not accepted by this wallet release.
 
 ## ERC-4337 Configuration
 
@@ -127,23 +129,29 @@ When using ERC-4337 accounts, you can override configuration options during brid
 
 ```javascript
 // Bridge with ERC-4337 account
-await account.approve({
-  token: '0x...', // USDT contract address
-  spender: '0x...', // OFT or bridge spender address
-  amount: 1000000n
-})
-
 const result = await bridgeProtocol.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...', // Recipient address
   token: '0x...', // USDT contract address
   amount: 1000000n,
-  oftContractAddress: '0x...' // Same address used as approval spender
+  oftContractAddress: '0x...' // Optional custom OFT contract
 }, {
-  paymasterToken: { address: '0x...' }, // Paymaster token for gasless transactions
-  bridgeMaxFee: 1000000000000000n // Override maximum bridge fee
+  paymasterToken: { address: '0x...' } // Paymaster token for gasless transactions
 })
 ```
+
+The protocol builds the token approval and transaction-value-helper call and submits them as one UserOperation. Do not call `account.approve()` separately for this flow.
+
+ERC-4337 helper bridging is configured for these source chains:
+
+| Source chain | Chain ID |
+|---|---:|
+| Ethereum | 1 |
+| Arbitrum | 42161 |
+| Plasma | 9745 |
+| Polygon | 137 |
+
+Other supported EVM source chains require a standard EVM account.
 
 ### Paymaster Token
 
@@ -155,18 +163,12 @@ The `paymasterToken` option specifies which token to use for paying gas fees in 
 **Example:**
 
 ```javascript
-await account.approve({
-  token: '0x...', // USDT contract address
-  spender: '0x...', // OFT or bridge spender address
-  amount: 1000000n
-})
-
 const result = await bridgeProtocol.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...', // Recipient address
   token: '0x...', // USDT contract address
   amount: 1000000n,
-  oftContractAddress: '0x...' // Same address used as approval spender
+  oftContractAddress: '0x...' // Optional custom OFT contract
 }, {
   paymasterToken: {
     address: '0x...' // Paymaster token address
@@ -197,7 +199,7 @@ const polygonAccount = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 
 ## Bridge Options
 
-When calling the bridge method, you need to provide bridge options:
+When calling the bridge method, you need to provide bridge options. The following allowance step applies to a standard EVM account:
 
 ```javascript
 const bridgeOptions = {
@@ -261,7 +263,7 @@ The optional `dstEid` option lets you override the default LayerZero destination
 
 ## Error Handling
 
-The bridge protocol will throw errors for invalid configurations:
+The bridge protocol will throw errors for invalid configurations. This example uses a standard EVM account, so it approves the bridge spender first:
 
 ```javascript
 try {

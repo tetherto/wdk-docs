@@ -1,0 +1,109 @@
+---
+title: Handle RGB wallet errors
+description: Handle native failures, ambiguous transfer history, fee-policy gaps, and secure cleanup in @utexo/wdk-wallet-rgb 2.0.3.
+docType: how-to
+schemaType: TechArticle
+---
+
+The v2.0.3 package does not expose a typed public error hierarchy. Handle failures by operation, preserve the original cause, and reconcile state before retrying writes.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Preserve operation context
+
+```js
+async function transferRgb(account, transfer) {
+  try {
+    return await account.transfer(transfer)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+
+    reportWalletFailure({
+      operation: 'rgb_transfer',
+      message,
+    })
+
+    throw error
+  }
+}
+```
+
+Do not log the seed, keys, backup password, complete invoice, or user-identifying endpoint credentials.
+
+## Account for misleading and suppressed errors
+
+Two release-specific behaviors require explicit handling:
+
+- `sendTransaction()` wraps Bitcoin-send failures with `RGB transfer failed: ...`. The prefix is misleading; classify it as the Bitcoin operation you invoked.
+- `getTransfers()` catches every native error and returns `[]`. Use `listTransfers()` plus synchronization when failure visibility matters.
+
+```js
+try {
+  account.syncWallet()
+  account.refreshWallet()
+  const transfers = account.listTransfers(assetId)
+  renderTransfers(transfers)
+} catch (error) {
+  renderTransferStateUnavailable()
+  throw error
+}
+```
+
+## Reconcile before retrying
+
+Indexer, transport, or broadcast calls can succeed remotely and fail locally. After a timeout or connection loss:
+
+1. Preserve any returned transaction or transfer identifier.
+2. Synchronize Bitcoin and refresh RGB state.
+3. Inspect transactions, transfers, receipts, and UTXOs.
+4. Retry only when an idempotency or reconciliation rule proves it safe.
+
+Never regenerate and resend against a single-use invoice merely because the first response timed out.
+
+## Enforce fees in application code
+
+The normal manager path drops `transferMaxFee`. Quote, compare with an application limit, and then send.
+
+For Bitcoin sends, remember that v2.0.3 quote logic uses its own estimated fee rate while the send uses the supplied `feeRate` or `1`. Treat the quote as advisory and reconcile the actual result.
+
+## Handle common setup failures
+
+| Failure area | Check |
+|---|---|
+| Manager construction | `network` is exactly `mainnet`, `testnet`, or `regtest`. |
+| Account creation | Seed is present and native artifact supports the host. |
+| Empty or stale state | Correct persistent `dataDir`, network, indexer, and transport endpoint. |
+| Transfer rejection | Complete `rgb:` invoice, matching asset ID, base-unit amount, UTXOs, confirmations, and fee rate. |
+| Restore rejection | Backup path, password, empty destination, matching seed, and call order before opening the account. |
+
+## Clean up without hiding the primary failure
+
+```js
+let operationError
+
+try {
+  await runWalletFlow(manager)
+} catch (error) {
+  operationError = error
+  throw error
+} finally {
+  try {
+    manager.dispose()
+  } catch (cleanupError) {
+    reportCleanupFailure(cleanupError, { operationError })
+  }
+}
+```
+
+The account zeroes its wrapper-owned derived private-key bytes during disposal, and the manager clears its derived-key fields. Cleanup cannot erase external copies or compensate for logged secrets.
+
+## Next steps
+
+- [Configuration](/sdk/community-modules/wdk-wallet-rgb/configuration)
+- [Transfer assets](/sdk/community-modules/wdk-wallet-rgb/guides/transfer-assets)
+- [Back up, restore, and migrate](/sdk/community-modules/wdk-wallet-rgb/guides/backup-restore-migrate)
+- [API reference](/sdk/community-modules/wdk-wallet-rgb/api-reference)

@@ -5,6 +5,7 @@ import path from 'node:path';
 
 const repoRoot = process.cwd();
 const docsRoot = path.join(repoRoot, 'content', 'docs');
+const supplementalMarkdownFiles = [path.join(repoRoot, 'content', 'feeds', 'all-modules.md')];
 const publicRoot = path.join(repoRoot, 'public');
 const linkcheckIgnorePath = path.join(repoRoot, '.linkcheckignore');
 
@@ -876,6 +877,7 @@ async function run() {
 
     const record = {
       relativeFile,
+      displayFile: path.join('content', 'docs', relativeFile),
       absoluteFile,
       content,
       route,
@@ -888,8 +890,24 @@ async function run() {
     routeToRecord.set(normalizeRoute(`${route}/index`), record);
   }
 
+  for (const absoluteFile of supplementalMarkdownFiles) {
+    if (!fs.existsSync(absoluteFile)) continue;
+
+    const displayFile = toPosix(path.relative(repoRoot, absoluteFile));
+    const content = await fs.promises.readFile(absoluteFile, 'utf8');
+    records.set(`supplemental:${displayFile}`, {
+      relativeFile: displayFile,
+      displayFile,
+      absoluteFile,
+      content,
+      route: '/',
+      baseRoute: '/',
+      anchors: extractHeadings(content),
+    });
+  }
+
   const stats = {
-    files: files.length,
+    files: records.size,
     totalLinks: 0,
     internal: { checked: 0, broken: 0 },
     anchors: { checked: 0, broken: 0 },
@@ -924,7 +942,7 @@ async function run() {
         findings.push(
           createFinding({
             severity: 'error',
-            file: path.join('content', 'docs', record.relativeFile),
+            file: record.displayFile,
             line: link.line,
             link: rawTarget,
             type: 'scheme',
@@ -944,7 +962,7 @@ async function run() {
         findings.push(
           createFinding({
             severity: 'error',
-            file: path.join('content', 'docs', record.relativeFile),
+            file: record.displayFile,
             line: link.line,
             link: rawTarget,
             type: 'internal',
@@ -962,7 +980,7 @@ async function run() {
 
         if (!externalUsage.has(externalUrl)) externalUsage.set(externalUrl, []);
         externalUsage.get(externalUrl).push({
-          file: path.join('content', 'docs', record.relativeFile),
+          file: record.displayFile,
           line: link.line,
           link: rawTarget,
         });
@@ -982,7 +1000,7 @@ async function run() {
           findings.push(
             createFinding({
               severity: 'error',
-              file: path.join('content', 'docs', record.relativeFile),
+              file: record.displayFile,
               line: link.line,
               link: rawTarget,
               type: 'anchor',
@@ -1003,7 +1021,7 @@ async function run() {
         findings.push(
           createFinding({
             severity: 'error',
-            file: path.join('content', 'docs', record.relativeFile),
+            file: record.displayFile,
             line: link.line,
             link: rawTarget,
             type: 'internal',
@@ -1024,7 +1042,7 @@ async function run() {
           findings.push(
             createFinding({
               severity: 'error',
-              file: path.join('content', 'docs', record.relativeFile),
+              file: record.displayFile,
               line: link.line,
               link: rawTarget,
               type: 'asset',
@@ -1046,7 +1064,7 @@ async function run() {
         findings.push(
           createFinding({
             severity: 'warn',
-            file: path.join('content', 'docs', record.relativeFile),
+            file: record.displayFile,
             line: link.line,
             link: rawTarget,
             type: 'internal-style',
@@ -1063,7 +1081,7 @@ async function run() {
         findings.push(
           createFinding({
             severity: 'error',
-            file: path.join('content', 'docs', record.relativeFile),
+            file: record.displayFile,
             line: link.line,
             link: rawTarget,
             type: hasFragment ? 'internal + anchor' : 'internal',
@@ -1080,7 +1098,7 @@ async function run() {
           findings.push(
             createFinding({
               severity: 'error',
-              file: path.join('content', 'docs', record.relativeFile),
+              file: record.displayFile,
               line: link.line,
               link: rawTarget,
               type: 'internal + anchor',
@@ -1188,7 +1206,7 @@ async function run() {
   }
 
   if (outputFormat !== 'json') {
-    console.log(`\n✅ check-links: scanned ${stats.files} MDX files, no broken links found.`);
+    console.log(`\n✅ check-links: scanned ${stats.files} documentation source files, no broken links found.`);
   }
 }
 

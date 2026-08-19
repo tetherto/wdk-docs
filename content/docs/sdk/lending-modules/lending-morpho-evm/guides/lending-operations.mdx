@@ -5,6 +5,12 @@ docType: how-to
 schemaType: TechArticle
 ---
 
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
 This guide walks through [vault supply](#vault-supply), [vault withdraw](#vault-withdraw), [collateral](#collateral), [borrow](#borrow), [repay](#repay), [requirements](#requirements), [quotes](#quotes-before-sending), [ERC-4337 usage](#erc-4337-smart-accounts), and [position reads](#reading-positions). It assumes a [`MorphoProtocolEvm`](/sdk/lending-modules/lending-morpho-evm/api-reference) instance named `morpho`.
 
 ## Vault supply
@@ -189,7 +195,7 @@ const tx = await morpho.supply({
 })
 ```
 
-Create `walletClient` with `viem` using the same signer and address as the WDK EVM account. Borrow requirements are authorization transactions, so send them before `borrow()`:
+Create `walletClient` with `viem` using the same signer and address as the WDK EVM account. Borrow requirements can be authorization transactions or, when `supportSignature: true` is enabled, signable authorization requests. Send only transaction requirements; sign a request and pass the resulting signature to `borrow()`:
 
 ```javascript title="Resolve borrow authorization requirements"
 const requirements = await morpho.getBorrowRequirements({
@@ -197,7 +203,14 @@ const requirements = await morpho.getBorrowRequirements({
   amount: 1000000n
 })
 
+let requirementSignature
+
 for (const requirement of requirements) {
+  if (typeof requirement.sign === 'function') {
+    requirementSignature = await requirement.sign(walletClient, userAddress)
+    continue
+  }
+
   await account.sendTransaction({
     to: requirement.to,
     value: requirement.value,
@@ -207,7 +220,8 @@ for (const requirement of requirements) {
 
 await morpho.borrow({
   token: USDT,
-  amount: 1000000n
+  amount: 1000000n,
+  requirementSignature
 })
 ```
 

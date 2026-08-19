@@ -7,15 +7,21 @@ This guide explains how to check [native BTC balances](#native-btc-balance), [ma
 
 ## Native BTC Balance
 
-You can retrieve the confirmed balance in satoshis using [`account.getBalance()`](/sdk/wallet-modules/wallet-btc/api-reference):
+You can retrieve the provider-adjusted balance in satoshis using [`account.getBalance()`](/sdk/wallet-modules/wallet-btc/api-reference):
 
 ```javascript title="Get Native BTC Balance"
 const balance = await account.getBalance()
 console.log('Total balance:', balance, 'satoshis')
 ```
 
-<Callout type="info">
-On Bitcoin, balances are expressed in satoshis (1 BTC = 100,000,000 satoshis). The [`getBalance()`](/sdk/wallet-modules/wallet-btc/api-reference) method returns the total balance, including unconfirmed funds when present.
+On Bitcoin, balances are expressed in satoshis (1 BTC = 100,000,000 satoshis). Pending transactions are handled differently by the selected client:
+
+- The built-in Blockbook client starts with confirmed funds and subtracts address-owned confirmed inputs spent by pending transactions. It credits pending change only when every input is address-owned and confirmed or descends from a trusted pending transaction. Other unconfirmed incoming funds are not added. An untrusted mixed-input transaction can therefore reduce the displayed balance without crediting its pending change.
+- The built-in Electrum clients do not calculate `unconfirmedOutgoing`. They return the confirmed balance plus the Electrum server's raw net unconfirmed delta, which can include pending incoming funds.
+- A custom client can return optional `BtcBalance.unconfirmedOutgoing` to select the Blockbook-style calculation. When that field is present, `getBalance()` ignores the raw `unconfirmed` value.
+
+<Callout type="warning">
+Balances from Blockbook and Electrum can differ while transactions are unconfirmed. Choose one provider policy for user-visible balances, and wait for confirmation before treating incoming funds as final.
 </Callout>
 
 ## Maximum Spendable Amount
@@ -58,7 +64,7 @@ console.log('Read-only account balance:', balance, 'satoshis')
 ```
 
 <Callout type="info">
-Read-only accounts follow the same balance behavior as owned accounts: [`getBalance()`](/sdk/wallet-modules/wallet-btc/api-reference) includes unconfirmed funds when present.
+Read-only accounts use the same provider-specific pending-transaction policy as owned accounts.
 </Callout>
 
 <Callout type="info">

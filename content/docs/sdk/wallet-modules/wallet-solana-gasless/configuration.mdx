@@ -160,7 +160,7 @@ const result = await account.transfer({
 
 ### transactionMaxFee
 
-Maximum allowed paymaster fee for `sendTransaction()` and `signTransaction()` calls, in the configured paymaster token's base units. These methods throw when the quoted fee is greater than this cap.
+Maximum allowed paymaster fee for `sendTransaction()` and `signTransaction()` calls, in the configured paymaster token's base units. For unsigned inputs, the module obtains the payment instruction and checks this cap before either the account or paymaster signs. For a `FullySignedTransaction` passed to `sendTransaction()`, it decodes the embedded payment amount and checks this cap before broadcasting through Solana RPC. A fee equal to the cap is allowed; only a greater fee is rejected.
 
 **Type:** `number | bigint`
 
@@ -194,7 +194,9 @@ const quote = await account.quoteTransfer({
 })
 ```
 
-In `1.0.0-beta.1`, overrides support `paymasterToken`, `transferMaxFee`, and `transactionMaxFee`. Use `transferMaxFee` for `transfer()` fee protection and `transactionMaxFee` for `sendTransaction()` or `signTransaction()` fee protection. `quoteTransfer()` and `quoteSendTransaction()` return estimates without enforcing either cap.
+In `1.0.0-beta.2`, overrides support `paymasterToken`, `transferMaxFee`, and `transactionMaxFee`. Use `transferMaxFee` for `transfer()` fee protection and `transactionMaxFee` for `sendTransaction()` or `signTransaction()` fee protection. `quoteTransfer()` and `quoteSendTransaction()` return estimates without enforcing either cap.
+
+For an already signed transaction, its payment token and amount are fixed in the signed message. `quoteSendTransaction(signedTransaction)` decodes that embedded payment and does not use the per-call override. On `sendTransaction(signedTransaction, { transactionMaxFee })`, only the fee cap is relevant before direct RPC broadcast; an override cannot replace the signed payment token.
 
 ## Security Considerations
 

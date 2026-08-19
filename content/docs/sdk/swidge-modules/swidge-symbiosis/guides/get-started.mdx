@@ -1,0 +1,108 @@
+---
+title: Get Started with Symbiosis Swidge
+description: Install the Symbiosis community Swidge package, bind a WDK wallet account, and discover chains and tokens.
+docType: how-to
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+This guide shows how to [install the package](#install-the-package), [create a source wallet account](#create-a-source-wallet-account), [instantiate the provider](#instantiate-the-provider), and [discover chains and tokens](#discover-chains-and-tokens).
+
+## Install the package
+
+### Prerequisites
+
+- **[Node.js](https://nodejs.org/)**: version 18 or higher for a global `fetch`. The package is ESM-only and also ships a `bare` entrypoint for the Bare runtime.
+- **[npm](https://www.npmjs.com/)**: usually bundled with Node.js.
+
+Install the released package together with the WDK wallet module for the source chain you execute from. The EVM example uses the wallet version installed by the release's tests:
+
+```bash title="Install @symbiosis-finance/wdk-protocol-swidge-symbiosis"
+npm install @symbiosis-finance/wdk-protocol-swidge-symbiosis@1.3.0 @tetherto/wdk-wallet-evm@1.0.0-beta.14
+```
+
+## Create a source wallet account
+
+You can construct a signing account using [`new WalletAccountEvm(seed, path, config?)`](/sdk/wallet-modules/wallet-evm/api-reference) from `@tetherto/wdk-wallet-evm` with an RPC `provider`:
+
+```javascript title="Create WalletAccountEvm"
+import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
+
+const seedPhrase = process.env.WDK_SEED_PHRASE
+if (!seedPhrase) throw new Error('WDK_SEED_PHRASE is required')
+
+const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
+  provider: 'https://eth.drpc.org',
+  transactionMaxFee: 100_000_000_000_000n
+})
+```
+
+<Callout type="error">
+**Seed phrase:** Load the mnemonic from secure storage; never hard-code or log it. Anyone with the phrase controls the funds on derived accounts.
+</Callout>
+
+`transactionMaxFee` caps the EVM wallet transaction fee in wei. Choose a limit appropriate for the source network and your application; Symbiosis provider fee caps do not constrain this chain fee.
+
+Dispose the account in a `finally` block when the flow ends so key material is cleared from memory.
+
+## Instantiate the provider
+
+WDK wallet accounts do not expose their chain, so `chain` identifies the bound account's source chain and is required before quoting or execution. Use a Symbiosis numeric ID or a case-insensitive name from [`getSupportedChains()`](/sdk/swidge-modules/swidge-symbiosis/api-reference#getsupportedchains):
+
+```javascript title="Construct SymbiosisProtocol"
+import SymbiosisProtocol from '@symbiosis-finance/wdk-protocol-swidge-symbiosis'
+
+const symbiosis = new SymbiosisProtocol(account, {
+  chain: 'Ethereum',
+  partnerId: 'my-app'
+})
+```
+
+`partnerId` is sent as an `X-Partner-Id` header on every API request; registered partners can receive higher rate limits. See [Configuration](/sdk/swidge-modules/swidge-symbiosis/configuration) for the remaining fields, including `timeoutMs`, `defaultSlippage`, `refundAddress`, and the fee caps.
+
+<Callout type="info">
+The module does not verify that the configured `chain` matches the bound account. A mismatch produces route payloads for the wrong network, so derive both from the same application setting.
+</Callout>
+
+## Discover chains and tokens
+
+```javascript title="Discover provider catalogs"
+const chains = await symbiosis.getSupportedChains()
+
+const tokens = await symbiosis.getSupportedTokens({
+  fromChain: 'Ethereum'
+})
+```
+
+Discovery reads provider-maintained catalogs and caches them for ten minutes per instance. A listed pair is not proof of a live route; request a quote to confirm availability. Monero and Zcash are excluded because their provider routes use third-party custodial integrations outside this module's scope.
+
+Prefer the exact address returned by `getSupportedTokens()` over a symbol when identifying tokens: symbols can be ambiguous on a chain.
+
+## Quote without a wallet account
+
+You can run discovery and quotes before any wallet exists, for example to render prices in an onboarding flow:
+
+```javascript title="Quote-only provider"
+const quoteOnly = new SymbiosisProtocol(undefined, {
+  chain: 'Ethereum'
+})
+
+const quote = await quoteOnly.quoteSwidge({
+  fromToken: 'USDT',
+  toToken: 'USDC',
+  toChain: 'Arbitrum One',
+  recipient: '0xRecipient...',
+  fromTokenAmount: 100_000_000n
+})
+```
+
+Without an account, `recipient` supplies both the source sender and the destination recipient in the request. Bind an account when those addresses differ.
+
+## Next steps
+
+Quote and execute a route in [Quote and Execute](/sdk/swidge-modules/swidge-symbiosis/guides/quote-and-execute), or start from a Bitcoin source in [Bridge from Bitcoin](/sdk/swidge-modules/swidge-symbiosis/guides/bridge-from-bitcoin).

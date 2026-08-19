@@ -1,0 +1,105 @@
+---
+title: Create and send Lightning payments
+description: Create BOLT11 and HODL invoices, send payments or keysend, and inspect Lightning payment state.
+docType: how-to
+schemaType: TechArticle
+---
+
+Use the released invoice and payment methods after the node is unlocked and has a ready channel.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Create an invoice
+
+The convenience method accepts released camelCase fields:
+
+```js
+const created = await account.createLightningInvoice({
+  amountMsat: 5_000_000,
+  expirySec: 3_600,
+})
+```
+
+It also accepts native snake_case objects. The return is intentionally typed as `object`; validate and extract the BOLT11 field according to the pinned beta.15 response.
+
+For an RGB-routed invoice, include `assetId` and `assetAmount`. Such an HTLC must be at least 3,000,000 msat.
+
+## Decode and inspect an invoice
+
+```js
+const decoded = await account.decodeInvoice(bolt11)
+const status = await account.getInvoiceStatus(bolt11)
+```
+
+Before paying, validate network, destination, amount, expiry, description or description hash, asset fields, and any application-specific approval.
+
+## Send a BOLT11 payment
+
+```js
+const sent = await account.sendPayment({ invoice: bolt11 })
+```
+
+`sendPayment()` forwards the native request and returns a native object. Reconcile with `getPayment()` or `listPayments()` after ambiguous failure.
+
+The generic WDK router also recognizes a BOLT11 recipient:
+
+```js
+const result = await account.transfer({
+  recipient: bolt11,
+  amount: 5_000_000n,
+})
+```
+
+Lightning amounts and returned fees are millisatoshis.
+
+## Keysend
+
+`keysend(request)` accepts a native request object. The generic router treats a 66-character hexadecimal recipient as a node public key:
+
+```js
+const result = await account.transfer({
+  recipient: destinationNodeId,
+  amount: 5_000_000n,
+})
+```
+
+Validate that the recipient is exactly the intended compressed node ID. A malformed recipient can fall through to a different transfer route and fail later.
+
+## Quote limitations
+
+`quoteTransfer()` uses a 50-basis-point Lightning allowance. It is not a live route probe and does not guarantee the route, liquidity, final fee, or success.
+
+Apply an application policy, then inspect the actual payment record rather than presenting the quote as final.
+
+## HODL invoices
+
+```js
+const hodl = await account.createHodlInvoice({
+  paymentHash,
+  amtMsat: 5_000_000,
+  expirySec: 3_600,
+})
+```
+
+The caller owns preimage generation and custody. Use `claimHodlInvoice(validatedNativeClaimRequest)` only after the intended condition is satisfied, or `cancelHodlInvoice(validatedNativeCancelRequest)` according to a documented timeout policy.
+
+Losing, disclosing, or reusing a preimage can violate the payment contract.
+
+## Inspect payment history
+
+```js
+const payments = await account.listPayments()
+const payment = await account.getPayment(paymentHash, 'Outbound')
+```
+
+Valid payment types are `Outbound`, `InboundAutoClaim`, and `InboundHodl`.
+
+## Next steps
+
+- [Connect peers and channels](/sdk/community-modules/wdk-rgb-lightning/guides/peers-channels)
+- [Use RGB assets](/sdk/community-modules/wdk-rgb-lightning/guides/rgb-assets)
+- [Use Lightning Address and APay](/sdk/community-modules/wdk-rgb-lightning/guides/lsp-lightning-address-apay)

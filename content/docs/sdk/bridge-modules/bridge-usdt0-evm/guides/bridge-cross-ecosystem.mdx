@@ -7,9 +7,20 @@ This guide covers [prerequisites](#prerequisites) and how to [bridge to Solana](
 
 ## Prerequisites
 
-A [`Usdt0ProtocolEvm`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#usdt0protocolevm) backed by a non-read-only EVM account, with enough USD₮ (and native gas for non-4337 accounts) on the source chain. Approve the source-chain bridge spender before calling [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config). Recipient strings must match each network’s address encoding.
+A [`Usdt0ProtocolEvm`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#usdt0protocolevm) backed by a non-read-only EVM account, with enough source tokens and native gas where required. Standard EVM accounts must approve the source-chain bridge spender before calling [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config). Supported ERC-4337 accounts bundle approval into the bridge UserOperation. Recipient strings must match each network’s address encoding.
 
-For `USDT_BRIDGE_SPENDER_ADDRESS`, use the source-chain OFT or bridge contract for the route. See [Bridge Tokens](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens#prerequisites) for address sources.
+The examples below use a standard EVM account. For `USDT_BRIDGE_SPENDER_ADDRESS`, use a verified source-chain OFT or bridge contract that supports the selected destination. See [Bridge Tokens](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens#prerequisites) for address sources.
+
+## Verify the route
+
+For Solana, TON, and TRON targets, beta.7 does not auto-resolve the source chain's ordinary USD₮0 OFT. Its bundled auto-resolution candidates are:
+
+| Source token contract family | EVM source chains with a bundled candidate |
+|---|---|
+| USD₮0 legacy mesh | Ethereum, Arbitrum, Celo |
+| XAU₮0 OFT | Ethereum, Arbitrum, Avalanche, Celo, HyperEVM, Ink, Monad, Plasma, Polygon, Stable |
+
+A listed source contract can still lack an on-chain peer for a particular destination. `getSupportedChains()` and `getSupportedTokens()` expose static configuration, not a verified route matrix. After any required standard-account approval, call `quoteBridge()` for the exact source token and destination before calling `bridge()`. For another verified deployment, pass its route-specific `oftContractAddress` and, when needed, `dstEid`.
 
 ## Bridge to Solana
 

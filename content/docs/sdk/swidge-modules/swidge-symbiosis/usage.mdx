@@ -1,0 +1,258 @@
+---
+title: Symbiosis Swidge Usage
+description: Install and use the released Symbiosis community Swidge provider with WDK wallet accounts.
+docType: how-to
+schemaType: TechArticle
+icon: BookOpen
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Install
+
+The released Symbiosis package is `1.3.0`. The EVM example uses the WDK wallet version installed by that release's tests:
+
+```bash
+npm install @symbiosis-finance/wdk-protocol-swidge-symbiosis@1.3.0 @tetherto/wdk-wallet-evm@1.0.0-beta.14
+```
+
+The provider package includes `@tetherto/wdk-wallet` as a runtime dependency. Install the matching WDK wallet module separately for the source chain you intend to execute from.
+
+A runnable end-to-end example that quotes, executes, and tracks a route is available at [`examples/swidge.js`](https://github.com/symbiosis-finance/wdk-protocol-swidge-symbiosis/blob/v1.3.0/examples/swidge.js) in the source repository.
+
+## Create the provider
+
+Configure `chain` as the Symbiosis ID or name for the bound source account.
+
+```javascript
+import SymbiosisProtocol from '@symbiosis-finance/wdk-protocol-swidge-symbiosis'
+import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
+
+const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
+  provider: 'https://eth.drpc.org'
+})
+
+const symbiosis = new SymbiosisProtocol(account, {
+  chain: 'Ethereum',
+  timeoutMs: 30_000,
+  partnerId: 'my-app',
+  maxProtocolFeeBps: 100
+})
+```
+
+Keep the account alive through quote review, execution, and source broadcast. Dispose it in a `finally` block when the flow ends:
+
+```javascript
+try {
+  // Discover, quote, and execute while the account is active.
+} finally {
+  account.dispose()
+}
+```
+
+## Discover chains and tokens
+
+```javascript
+const chains = await symbiosis.getSupportedChains()
+
+const ethereumTokens = await symbiosis.getSupportedTokens({
+  fromChain: 'Ethereum'
+})
+
+const arbitrumTokens = await symbiosis.getSupportedTokens({
+  fromChain: 'Ethereum',
+  toChain: 'Arbitrum One'
+})
+```
+
+When both filters are present, `toChain` takes precedence. The method returns known tokens on the selected chain; it does not check whether a particular source and destination pair has a live route.
+
+Use the returned chain IDs, names, and token identifiers to build selectors, then request a quote to test the requested pair. Monero and Zcash do not appear because this release excludes their third-party custodial routes from the module.
+
+## Quote an exact-input route
+
+```javascript
+const options = {
+  fromToken: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  toToken: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+  toChain: 'Arbitrum One',
+  recipient: '0xRecipient...',
+  fromTokenAmount: 100_000_000n,
+  slippage: 0.02
+}
+
+const quote = await symbiosis.quoteSwidge(options)
+
+console.log('Expected output:', quote.toTokenAmount)
+console.log('Minimum output:', quote.toTokenAmountMin)
+console.log('Estimated seconds:', quote.estimatedDuration)
+console.log('Fees:', quote.fees)
+```
+
+`quoteSwidge()` performs no wallet write. It calls `/v2/quote` and returns an indicative result.
+
+Only exact-input operations are supported. Pass `fromTokenAmount`; passing `toTokenAmount` throws `ExactOutNotSupportedError`.
+
+## Review before execution
+
+Before calling `swidge()`, show the user:
+
+- source token and amount;
+- destination token and chain;
+- recipient and refund address, when applicable;
+- expected and minimum output from the indicative quote;
+- itemized quote fees;
+- the selected slippage tolerance.
+
+<Callout type="warn">
+`swidge()` calls `/v2/swap` and then proceeds internally to fee checks, approval, and source broadcast. It does not expose that fresh response for a second application-level confirmation. Its amounts, fees, spender, transaction payload, or deposit address can differ from the preceding quote.
+</Callout>
+
+The provider rejects a missing, non-integer, zero, or negative `fromTokenAmount` with `ValidationError`. The host application must still validate its allowed slippage range and confirm that each user-supplied address belongs to the intended chain.
+
+## Execute an EVM route
+
+Call `swidge()` only after the user confirms the indicative quote and route inputs:
+
+```javascript
+const result = await symbiosis.swidge(options, {
+  maxProtocolFeeBps: 100
+})
+
+console.log('Operation ID:', result.id)
+console.log('Source transaction:', result.hash)
+console.log('Recorded transactions:', result.transactions)
+```
+
+The method uses this order:
+
+1. Resolve the source and destination chains and tokens.
+2. Request a fresh response from `/v2/swap`.
+3. Check applicable fee caps before a wallet write.
+4. For a non-native EVM token, read allowance and reset a non-zero insufficient allowance to zero.
+5. Approve the returned spender for the input amount.
+6. Wait for each approval receipt when the account supports receipt lookup.
+7. Broadcast the API-provided route transaction.
+8. Return the source hash and operation ID without waiting for destination settlement.
+
+If allowance lookup fails, the module falls back to approval without a reset; that direct approval can still fail for a token with an existing non-zero allowance. When a reset is required and the account returns transaction hashes, both approval hashes are recorded in `result.transactions`. If the account cannot read receipts, it proceeds without waiting for approval confirmation.
+
+Set `skipApproval: true` only when the host application has already verified and managed allowance:
+
+```javascript
+const symbiosis = new SymbiosisProtocol(account, {
+  chain: 'Ethereum',
+  skipApproval: true
+})
+```
+
+`maxProtocolFeeBps` constrains fees mapped as `protocol`; it does not constrain a fee whose description is exactly `Partner fee`, which maps as `affiliate`. This release maps no fee entry as `network`, so `maxNetworkFeeBps` does not constrain the wallet transaction's chain fee.
+
+## Execute a Bitcoin source route
+
+For Bitcoin, configure a refund address before requesting execution:
+
+```javascript
+const symbiosis = new SymbiosisProtocol(bitcoinAccount, {
+  chain: 'Bitcoin',
+  refundAddress: 'bc1qRefund...'
+})
+
+const result = await symbiosis.swidge({
+  fromToken: 'BTC',
+  toToken: 'USDC',
+  toChain: 'Arbitrum One',
+  recipient: '0xRecipient...',
+  fromTokenAmount: 50_000n
+})
+```
+
+`swidge()` requests a deposit address and sends the input amount to it without returning the deposit address for a separate confirmation. Confirm the refund address, recipient, amount, selected slippage, and indicative quote before calling the method.
+
+## Execute TON, Tron, and Solana source routes
+
+TON, Tron, and Solana source routes execute in `1.3.0` when the bound wallet account supports the transaction format the route requires: raw BoC message bodies for TON (single-message routes only), smart contract calls plus TRC-20 approvals for Tron, and base64-serialized transactions for Solana. The module probes the account at execution time and throws `UnsupportedRouteError` when the capability is missing, so older wallet versions keep the previous quote-only behavior. Tron approval receipts are checked for on-chain failure before the swap is sent.
+
+## Track settlement
+
+The returned ID has the form `'<sourceChainId>:<sourceTransactionHash>'`:
+
+```javascript
+const status = await symbiosis.getSwidgeStatus(result.id)
+
+console.log('Status:', status.status)
+console.log('Transactions:', status.transactions)
+```
+
+Poll until the operation reaches the state your application handles as terminal. Symbiosis status code `2` is reported as `pending` because the provider resolves that state without a separate user action.
+
+The module also maps an HTTP `404` to `pending`. A newly submitted operation and a genuinely unknown ID produce the same result, so enforce a polling deadline and retain the source transaction hash.
+
+## Quote without a wallet account
+
+You can construct the provider without an account for a quote:
+
+```javascript
+const symbiosis = new SymbiosisProtocol(undefined, {
+  chain: 'Ethereum'
+})
+
+const quote = await symbiosis.quoteSwidge({
+  fromToken: 'USDT',
+  toToken: 'USDC',
+  toChain: 'Arbitrum One',
+  recipient: '0xRecipient...',
+  fromTokenAmount: 100_000_000n
+})
+```
+
+Without an account, the module sends `recipient` to Symbiosis as both the source sender and destination recipient. Bind an account when those addresses differ or use different address formats.
+
+## Handle errors
+
+```javascript
+import {
+  ApiError,
+  ExactOutNotSupportedError,
+  FeeLimitExceededError,
+  ReadOnlyAccountError,
+  SymbiosisError,
+  UnsupportedRouteError
+} from '@symbiosis-finance/wdk-protocol-swidge-symbiosis'
+
+try {
+  await symbiosis.swidge(options, { maxProtocolFeeBps: 100 })
+} catch (error) {
+  if (error instanceof FeeLimitExceededError) {
+    // Stop before wallet execution and review the fresh mapped fees.
+  } else if (error instanceof ExactOutNotSupportedError) {
+    // Rebuild the request with fromTokenAmount.
+  } else if (error instanceof ReadOnlyAccountError) {
+    // Bind an account that supports the required write capabilities.
+  } else if (error instanceof UnsupportedRouteError) {
+    // Keep the route quote-only or choose an executable source chain.
+  } else if (error instanceof ApiError) {
+    // Handle a non-2xx response, timeout, or network failure.
+    // status is 0 when no HTTP response was received.
+  } else if (error instanceof SymbiosisError) {
+    // Handle another package-specific error.
+  } else {
+    // Handle errors propagated by the wallet account.
+  }
+}
+```
+
+API requests time out after 30 seconds by default; set `timeoutMs` on the provider to change that limit. The package does not retry automatically. Avoid retrying `swidge()` blindly after an uncertain API or wallet failure; first inspect wallet history and retained transaction state.
+
+<Cards>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-symbiosis/configuration">
+Review constructor fields, per-call fee caps, identifiers, caching, and runtime behavior.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-symbiosis/api-reference">
+Review exact methods, result fields, statuses, fee mapping, and typed errors.
+</Card>
+</Cards>

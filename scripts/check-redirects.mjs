@@ -29,6 +29,36 @@ const moduleRedirects = [
 
 const expectedRedirects = [
   {
+    source: '/sdk/all-modules',
+    target: 'https://wdk.tether.io/developers/blocks',
+    status: '301',
+  },
+  {
+    source: '/sdk/all-modules/',
+    target: 'https://wdk.tether.io/developers/blocks',
+    status: '301',
+  },
+  {
+    source: '/sdk/all-modules.md',
+    target: 'https://wdk.tether.io/developers/blocks',
+    status: '301',
+  },
+  {
+    source: '/sdk/community-modules',
+    target: 'https://wdk.tether.io/developers/blocks',
+    status: '301',
+  },
+  {
+    source: '/sdk/community-modules/',
+    target: 'https://wdk.tether.io/developers/blocks',
+    status: '301',
+  },
+  {
+    source: '/sdk/community-modules.md',
+    target: 'https://wdk.tether.io/developers/blocks',
+    status: '301',
+  },
+  {
     source: '/examples-and-starters/tools/indexer-api/get-started',
     target: '/tools/indexer-api/get-started',
     status: '301',

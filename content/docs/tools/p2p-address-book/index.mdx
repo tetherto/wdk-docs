@@ -1,0 +1,92 @@
+---
+title: P2P Address Book
+description: Store and synchronize wallet contacts across a user's devices with encrypted peer-to-peer replication
+docType: explanation
+schemaType: TechArticle
+icon: BookUser
+---
+
+`@tetherto/wdk-p2p-address-book` gives a wallet application a user-specific directory for named contacts and payment destinations. It is an optional WDK utility, not a wallet implementation or a required part of every WDK application.
+
+Devices that use the same wallet seed and application namespace can open the same logical address book and enroll their own writers. Updates replicate between those devices through Holepunch networking. This is same-user device synchronization—not a public contact directory or a protocol for sharing contacts with other users.
+
+The recommended `fromSeed()` workflow encrypts replicated address-book blocks before they leave the device. A blind peer can retain those blocks for recovery without receiving the content key, but the wallet operator must still plan for peer availability, local storage protection, and key recovery.
+
+## When to use it
+
+Use the P2P Address Book when:
+
+- A wallet needs named recipients instead of repeated address entry.
+- The same user needs contacts on multiple devices.
+- The product wants cross-device sync without a central plaintext contacts database.
+- The team can operate or depend on the P2P availability needed for recovery.
+
+Choose a conventional contacts service when the product requires server-side plaintext search, moderation, analytics, or account-based recovery. This package is also a poor fit when its beta status, native dependencies, or eventual-synchronization model do not meet the product's requirements.
+
+The package stores destinations; it does not validate chain syntax, resolve identifiers, prove address ownership, or send payments. Validate a selected destination before using it in a wallet flow. See [WDK Utils](/tools/wdk-utils/) for available validators and parsers.
+
+## How it works
+
+1. The wallet opens a persistent Corestore and calls `AddressBook.fromSeed()` with wallet seed bytes and a stable namespace.
+2. The first device calls `create()` to enroll its device-specific writer.
+3. The wallet can register a blind-peer public key with `addMirror()` for offline availability.
+4. Another device uses the same seed and namespace, but its own Corestore, and calls `addMirror()` to restore the existing history and enroll its writer.
+5. Authorized writers append operations. Autobase produces the shared operation order and HyperDB exposes the current contacts and addresses.
+
+<Mermaid
+  chart={`flowchart TB
+  I["Same wallet seed + namespace<br/>derived on each device"]
+  A["Device A<br/>Corestore + writer"]
+  B["Device B<br/>Corestore + writer"]
+  M["Blind peer<br/>encrypted replicated blocks<br/>no content key"]
+  U["Unrelated wallet<br/>different identity"]
+
+  I --> A
+  I --> B
+  A <-->|"Direct Hyperswarm replication"| B
+  A -->|"Mirror blocks"| M
+  M -->|"Restore history"| B
+  U -. "Cannot derive this book or content key" .-> M`}
+/>
+
+Random peers do not automatically store every address book. A blind peer is an explicitly configured availability peer.
+
+## Builder path
+
+<Cards>
+<Card title="Get Started" href="/tools/p2p-address-book/get-started">
+Install the package and create a local address book with explicit resource cleanup.
+</Card>
+<Card title="Sync and Recovery" href="/tools/p2p-address-book/sync-and-recovery">
+Enroll devices, configure blind peers, and understand recovery guarantees.
+</Card>
+<Card title="API Reference" href="/tools/p2p-address-book/api-reference">
+Review public methods, record shapes, configuration, and data semantics.
+</Card>
+<Card title="Production and Privacy" href="/tools/p2p-address-book/production-and-privacy">
+Plan availability, storage, privacy, deletion, and beta-version operations.
+</Card>
+</Cards>
+
+## Related resources
+
+<Cards>
+<Card title="Package source" href="https://github.com/tetherto/wdk-p2p-address-book/tree/v1.0.0-beta.3">
+Review the released implementation, declarations, and tests.
+</Card>
+<Card title="WDK Utils" href="/tools/wdk-utils/">
+Validate supported destinations before storing or using them.
+</Card>
+<Card title="Worklet Bundler" href="/tools/worklet-bundler/">
+Build advanced Bare worklet integrations for supported host applications.
+</Card>
+<Card title="Node.js and Bare quickstart" href="/start-building/nodejs-bare-quickstart/">
+Set up the wider WDK runtime before adding optional tools.
+</Card>
+</Cards>
+
+***
+
+## Need Help?
+
+<SupportCards />

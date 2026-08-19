@@ -1,0 +1,380 @@
+---
+title: API Reference
+description: Complete WDK CLI beta.2 command and option reference
+docType: reference
+schemaType: TechArticle
+icon: ListChecks
+---
+
+This page documents the 32 leaf commands in `@tetherto/wdk-cli@1.0.0-beta.2`. Run `wdk COMMAND --help` to inspect the installed command surface.
+
+## Root Options
+
+| Option | Behavior |
+| --- | --- |
+| `--json` | Requests machine-readable output from the selected command; see [JSON and exit behavior](#json-and-exit-behavior) for exceptions |
+| `--verbose` | Adds a stack trace to handled errors; it does not enable general debug logging |
+| `-V`, `--version` | Prints the CLI version followed by the installed WDK dependency versions |
+| `-h`, `--help` | Prints help for the selected command |
+
+The WDK-specific global flags are `--json` and `--verbose`; version and help are also root options. Options such as `--wallet` and `--index` belong to individual commands.
+
+## Shared Wallet Selection
+
+Wallet-dependent read, send, buy, and sell commands use:
+
+| Option | Behavior |
+| --- | --- |
+| `--wallet <name>` | Uses the named wallet; otherwise uses `defaultWallet` |
+| `--index <n>` | Uses a non-negative account index; otherwise uses `defaultIndex`, initially `0` |
+
+The selected wallet must be unlocked before daemon-backed operations. See [Manage Wallets](/cli/guides/manage-wallets).
+
+## Wallet Commands
+
+### `wdk wallet create`
+
+Creates a named wallet from a newly generated BIP-39 seed phrase.
+
+| Option | Required | Default | Description |
+| --- | --- | --- | --- |
+| `--name <name>` | Yes | — | Wallet name |
+| `--words <count>` | No | `12` | Seed length; accepts `12` or `24` |
+
+The first created wallet becomes the default. The command prompts for a passphrase and prints the seed phrase. With `--json`, the success object also contains `seedPhrase`.
+
+### `wdk wallet import`
+
+Imports an existing 12-word or 24-word BIP-39 seed phrase.
+
+| Option | Required | Description |
+| --- | --- | --- |
+| `--name <name>` | Yes | Wallet name |
+| `--seed-stdin` | No | Read one trimmed seed-phrase line from standard input instead of prompting |
+
+Without `--seed-stdin`, the command prompts for the seed phrase and a new storage passphrase. With `--seed-stdin`, a piped run must also set `WDK_PASSPHRASE`, because the same input stream cannot answer the passphrase prompt. The seed is never accepted as a command-line argument.
+
+### `wdk wallet export`
+
+Decrypts and prints a wallet's seed phrase.
+
+| Option | Required | Description |
+| --- | --- | --- |
+| `--name <name>` | Yes | Wallet name |
+
+With `--json`, the success object contains `seedPhrase`.
+
+<Callout type="warn">
+The output from `wallet create` and `wallet export` is secret material in both text and JSON modes. Do not log it, paste it into an agent transcript, or store it in CI output.
+</Callout>
+
+### `wdk wallet list`
+
+Lists local wallets with their default, lock, and TTL state. This command has no command-specific options.
+
+### `wdk wallet delete`
+
+Deletes a named wallet after verifying its passphrase.
+
+| Option | Required | Description |
+| --- | --- | --- |
+| `--name <name>` | Yes | Wallet name |
+
+If the deleted wallet was the default, the CLI selects the first remaining wallet as the new default. See [Manage Wallets](/cli/guides/manage-wallets) for the deletion and backup implications.
+
+### `wdk wallet unlock`
+
+Unlocks a wallet and starts the daemon when needed.
+
+| Option | Required | Default | Description |
+| --- | --- | --- | --- |
+| `--name <name>` | Yes | — | Wallet name |
+| `--ttl <minutes>` | No | `5` | Non-negative session duration in minutes; `0` disables automatic expiry |
+
+Unlocking an already unlocked wallet resets that wallet's timer. The timer is absolute from unlock or reset; wallet activity does not extend it.
+
+### `wdk wallet lock`
+
+Locks one wallet or every wallet.
+
+| Option | Required | Description |
+| --- | --- | --- |
+| `--name <name>` | One selector required | Wallet to lock |
+| `--all` | One selector required | Lock every wallet |
+
+If both selectors are present, beta.2 applies `--all`.
+
+### `wdk wallet default`
+
+Sets the default wallet after passphrase confirmation.
+
+| Option | Required | Description |
+| --- | --- | --- |
+| `--name <name>` | Yes | Existing wallet name |
+
+### `wdk wallet rename`
+
+Renames a wallet after verifying its passphrase. An unlocked source wallet is locked first.
+
+| Option | Required | Description |
+| --- | --- | --- |
+| `--name <name>` | Yes | Current wallet name |
+| `--new-name <name>` | Yes | New wallet name |
+
+### `wdk wallet change-passphrase`
+
+Decrypts a wallet with its current passphrase, rewrites `seed.enc` with a new passphrase, and then attempts to lock that wallet's daemon session.
+
+| Option | Required | Description |
+| --- | --- | --- |
+| `--name <name>` | Yes | Existing wallet name |
+| `--new-passphrase-stdin` | No | Read one trimmed new-passphrase line from standard input instead of prompting and confirmation |
+
+Interactive use prompts for the current passphrase, then asks for and confirms the new passphrase. `WDK_PASSPHRASE` may supply only the current passphrase; it is deliberately ignored for the new passphrase. A piped `--new-passphrase-stdin` run must set `WDK_PASSPHRASE` and rejects an empty new passphrase.
+
+## Read Commands
+
+### `wdk get address`
+
+Derives an address for one network or for a network group.
+
+| Option | Required | Default | Description |
+| --- | --- | --- | --- |
+| `--network <network>` | One selector required | — | Derive one network address |
+| `--all` | One selector required | — | Derive addresses for all mainnets by default |
+| `--wallet <name>` | No | Default wallet | Wallet selection |
+| `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
+| `--testnet` | No | Off | With `--all`, select testnets instead of mainnets |
+
+When both `--network` and `--all` are supplied, beta.2 runs the single-network path. In aggregate mode, networks that fail address derivation are omitted from the result.
+
+### `wdk get balance`
+
+Reads one registered asset balance or native balances across a network group.
+
+| Option | Required | Default | Description |
+| --- | --- | --- | --- |
+| `--network <network>` | One selector required | — | Query one network |
+| `--all` | One selector required | — | Query native balances on all mainnets by default |
+| `--token <token>` | No | Native asset | Registered ticker for a single-network query |
+| `--wallet <name>` | No | Default wallet | Wallet selection |
+| `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
+| `--testnet` | No | Off | With `--all`, select testnets instead of mainnets |
+
+`--token` is ignored by the aggregate path, which queries native assets. Networks that fail in aggregate mode are omitted. A missing price produces a USD value of `0` rather than failing the balance lookup.
+
+### `wdk get history`
+
+Reads token-transfer history through the configured indexer.
+
+| Option | Required | Default | Description |
+| --- | --- | --- | --- |
+| `--network <network>` | Yes | — | Network to query |
+| `--token <token>` | No | All indexer-supported tokens | Exact `metadata.indexerSlug` code; the installed registry yields `btc`, `usdt`, and `xaut`, while custom entries can add other codes |
+| `--limit <n>` | No | `30` | Positive maximum number of transfers |
+| `--from-date <date>` | No | — | ISO 8601 start date |
+| `--to-date <date>` | No | — | ISO 8601 end date |
+| `--wallet <name>` | No | Default wallet | Wallet selection |
+| `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
+
+When `--token` is omitted, beta.2 batches the network's supported token requests, ignores failed batch items, merges successful transfers by timestamp, and then applies `--limit`.
+
+## Send Command
+
+### `wdk send`
+
+Previews or broadcasts a native or registered-token transfer.
+
+| Option | Required | Default | Description |
+| --- | --- | --- | --- |
+| `--network <network>` | Yes | — | Network to send on |
+| `--to <address>` | Yes | — | Recipient address |
+| `--amount <value>` | Yes | — | Positive decimal amount, or an integer when `--base-units` is set |
+| `--token <token>` | No | Native asset | Registered token ticker |
+| `--wallet <name>` | No | Default wallet | Wallet selection |
+| `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
+| `--base-units` | No | Off | Treat `--amount` as raw base units |
+| `--dry-run` | No | Off | Estimate fees and return a preview without broadcasting |
+
+Use `--dry-run` before broadcasting:
+
+```bash title="Terminal"
+wdk send \
+  --network ethereum \
+  --to 0x000000000000000000000000000000000000dEaD \
+  --amount 0.001 \
+  --dry-run
+```
+
+Without `--dry-run`, the command broadcasts immediately. There is no additional interactive confirmation.
+
+Before either fee estimation or broadcast, beta.2 validates the recipient against the selected built-in network's CAIP-2 address rules. A format or mainnet/testnet mismatch fails with `INVALID_ADDRESS` after the unlocked-wallet check but before the estimate or send request. A custom network without a supported CAIP-2 validator is left to its wallet module for final validation.
+
+## Fiat Ramp Commands
+
+`wdk buy` and `wdk sell` derive the selected wallet address and print a signed provider URL to open in a browser. Both require an unlocked wallet and valid [MoonPay configuration](/cli/configuration#moonpay).
+
+### `wdk buy`
+
+| Option | Required | Default | Description |
+| --- | --- | --- | --- |
+| `--network <network>` | Yes | — | Network to receive the asset on |
+| `--token <token>` | Yes | — | Registered asset code |
+| `--fiat-amount <value>` | One amount required | — | Fiat amount to spend |
+| `--crypto-amount <value>` | One amount required | — | Crypto amount to buy |
+| `--fiat-currency <currency>` | No | `usd` | Fiat currency code |
+| `--module <module>` | No | `moonpay` | Fiat provider module |
+| `--wallet <name>` | No | Default wallet | Wallet selection |
+| `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
+
+### `wdk sell`
+
+| Option | Required | Default | Description |
+| --- | --- | --- | --- |
+| `--network <network>` | Yes | — | Network holding the asset |
+| `--token <token>` | Yes | — | Registered asset code |
+| `--fiat-amount <value>` | One amount required | — | Target fiat amount |
+| `--crypto-amount <value>` | One amount required | — | Crypto amount to sell |
+| `--fiat-currency <currency>` | No | `usd` | Fiat currency code |
+| `--module <module>` | No | `moonpay` | Fiat provider module |
+| `--wallet <name>` | No | Default wallet | Wallet selection |
+| `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
+
+For each command, provide exactly one of `--fiat-amount` and `--crypto-amount`. Beta.2 supports only the `moonpay` module.
+
+## Configuration Commands
+
+See [Configuration](/cli/configuration) for keys, types, precedence, and storage considerations.
+
+### `wdk config get`
+
+| Option | Required | Description |
+| --- | --- | --- |
+| `--key <key>` | One selector required | Read one dot-separated key |
+| `--network <network>` | One selector required | Read a network object, or scope `--key` to a network |
+| `--all` | One selector required | Read the configuration view |
+
+`--all` cannot be combined with `--key` or `--network`. `--network` and `--key` can be combined.
+
+### `wdk config set`
+
+| Option | Required | Description |
+| --- | --- | --- |
+| `--value <value>` | Yes | JSON value when parseable; otherwise a string |
+| `--key <key>` | Without `--network` | Dot-separated key |
+| `--network <network>` | No | Scope `--key`, or replace the network's entire configuration object |
+
+### `wdk config reset`
+
+| Option | Required | Description |
+| --- | --- | --- |
+| `--key <key>` | One selector required | Reset or remove one key |
+| `--network <network>` | No | Scope `--key` to a network |
+| `--all` | One selector required | Reset configuration while preserving the default wallet and custom network/token records |
+
+`--key` and `--all` are mutually exclusive. `--network` can be combined only with `--key`.
+
+### `wdk config path`
+
+Prints the resolved `config.json` path. This command has no command-specific options.
+
+## Network Commands
+
+### `wdk network list`
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `--testnet` | Off | Show only testnets |
+| `--mainnet` | Off | Show only mainnets |
+
+With neither option, the command shows every registered network. If both are provided, beta.2 applies `--testnet`.
+
+### `wdk network create <data>`
+
+Creates a custom network from an inline JSON object or a JSON file path. The `<data>` positional argument is required.
+
+See [Custom Networks](/cli/guides/custom-networks) for the network schema and validation rules.
+
+### `wdk network delete`
+
+| Option | Required | Description |
+| --- | --- | --- |
+| `--name <name>` | Yes | Custom network to delete |
+
+Built-in networks cannot be deleted. Deleting a custom network also removes its network configuration and custom token entries.
+
+### `wdk network info`
+
+| Option | Required | Description |
+| --- | --- | --- |
+| `--network <network>` | Yes | Registered network to inspect |
+
+## Token Commands
+
+### `wdk token list`
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `--network <network>` | All networks | Filter to one registered network |
+
+### `wdk token info`
+
+| Option | Required | Description |
+| --- | --- | --- |
+| `--network <network>` | Yes | Registered network |
+| `--token <token>` | Yes | Registered token ticker |
+
+### `wdk token add <data>`
+
+Adds or overrides a token from an inline JSON object or a JSON file path. The `<data>` positional argument is required.
+
+See [Manage Tokens](/cli/guides/manage-tokens) for the token schema and built-in override behavior.
+
+### `wdk token delete`
+
+| Option | Required | Description |
+| --- | --- | --- |
+| `--network <network>` | Yes | Registered network |
+| `--token <token>` | Yes | Custom token ticker to delete |
+
+The command removes only a custom entry. If that entry overrides a built-in token, the built-in entry becomes effective again.
+
+## MCP Setup Commands
+
+The accepted `--ai-tool` values are `claude-desktop`, `claude-code`, and `openclaw`.
+
+### `wdk mcp setup`
+
+Adds the bundled MCP server to the selected client. `--ai-tool <name>` is required.
+
+### `wdk mcp remove`
+
+Removes the bundled MCP server from the selected client. `--ai-tool <name>` is required.
+
+### `wdk mcp verify-setup`
+
+Checks the selected client's configuration and tests the MCP server. `--ai-tool <name>` is required.
+
+### `wdk mcp list`
+
+Shows setup status for all supported clients. This command has no command-specific options.
+
+See [Use the MCP Server](/cli/guides/use-mcp-server) for client-specific setup and the exposed tool surface.
+
+## JSON and Exit Behavior
+
+Most command handlers print one JSON value to stdout when `--json` is set. The current contract has exceptions:
+
+- `wdk mcp setup`, `remove`, `verify-setup`, and `list` print human-readable success output even with `--json`.
+- Help and version output remains human-readable text. With `--json`, unknown commands, unknown options, missing required options, and invalid option values return an `INVALID_ARGUMENT` JSON envelope on stdout with status `1`.
+- Interactive wallet prompts render on stdout. If a wallet command opens a prompt, prompt text and terminal-control bytes can precede any JSON result. Use `wallet import --seed-stdin` with `WDK_PASSPHRASE` for a non-interactive import.
+- `wdk send --json` suppresses its progress spinner and completion text; command errors and results remain on stdout as JSON.
+- A non-empty `WDK_PASSPHRASE` produces a notice on stderr.
+
+Parse stdout separately from stderr and always check the exit status. See [Handle Errors](/cli/guides/handle-errors) for the error envelope and exit-status contract.
+
+***
+
+## Need Help?
+
+<SupportCards />

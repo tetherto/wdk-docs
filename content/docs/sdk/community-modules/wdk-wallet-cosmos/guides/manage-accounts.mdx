@@ -1,0 +1,82 @@
+---
+title: Manage accounts
+description: Derive, cache, and dispose Cosmos accounts by index or BIP-44 path.
+docType: how-to
+schemaType: TechArticle
+---
+
+`WalletManagerCosmos` derives secp256k1 accounts below the configured Cosmos coin type.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Derive accounts by index
+
+`getAccount(index)` derives the relative path `0'/0/{index}`. With the Cosmos Hub coin type `118`, index `5` resolves to `m/44'/118'/0'/0/5`.
+
+```js
+import WalletManagerCosmos from '@base58-io/wdk-wallet-cosmos'
+
+const seedPhrase = process.env.WDK_SEED_PHRASE
+if (!seedPhrase) throw new Error('WDK_SEED_PHRASE is required')
+
+const manager = new WalletManagerCosmos(seedPhrase, {
+  chainName: 'cosmoshub',
+})
+
+try {
+  const firstAccount = await manager.getAccount(0)
+  const sixthAccount = await manager.getAccount(5)
+
+  console.log({
+    firstAddress: await firstAccount.getAddress(),
+    sixthAddress: await sixthAccount.getAddress(),
+    sixthPath: sixthAccount.path,
+  })
+} finally {
+  manager.dispose()
+}
+```
+
+`getAccount()` defaults to index `0`.
+
+## Derive an account by path
+
+Pass the relative suffix below `m/44'/<coinType>'/`:
+
+```js
+const account = await manager.getAccountByPath("0'/0/5")
+
+console.log(account.path)
+// m/44'/118'/0'/0/5 when coinType is 118
+```
+
+Use the same `try`/`finally` manager lifecycle shown above. Invalid derivation paths reject account creation.
+
+## Understand caching
+
+The manager caches accounts by relative derivation path. Repeating either lookup for the same path returns the cached account instance:
+
+```js
+const byIndex = await manager.getAccount(5)
+const byPath = await manager.getAccountByPath("0'/0/5")
+
+console.log(byIndex === byPath) // true
+```
+
+Prefer `manager.dispose()` when the wallet lifecycle ends. Disposing one cached account directly does not evict it; a later lookup for the same path returns that disposed instance.
+
+## Signer and read-only limits
+
+The released manager derives accounts only from its mnemonic or seed bytes. Named signers and externally supplied signer implementations shown on the repository's default branch are not part of `1.0.0-beta.4`.
+
+`account.toReadOnlyAccount()` always throws in this release. Even balance-only flows must create a seed-backed account, so keep the manager lifecycle as short as possible and dispose it after use.
+
+<Callout type="error">
+The public `account.keyPair` property exposes the underlying private-key bytes. Avoid accessing it. Never log, serialize, or retain those bytes, and do not assume disposal can erase copies made by application code.
+</Callout>
+
+Next, [check balances](/sdk/community-modules/wdk-wallet-cosmos/guides/check-balances) or [sign and verify messages](/sdk/community-modules/wdk-wallet-cosmos/guides/sign-verify-messages).

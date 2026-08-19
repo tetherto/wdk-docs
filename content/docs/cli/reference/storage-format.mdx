@@ -1,0 +1,317 @@
+---
+title: Storage Format
+description: Inspect WDK CLI storage, seed.enc version 1, file permissions, and the standalone manual-recovery procedure.
+docType: reference
+schemaType: TechArticle
+icon: Database
+---
+
+WDK CLI stores each named wallet as an encrypted `seed.enc` file. This page defines the current version 1 format and provides a recovery path that uses only Node.js built-in modules if the CLI is unavailable.
+
+<Callout type="warn">
+Possession of a recovered seed phrase gives control of the wallet. Perform recovery on a trusted, offline computer. Do not upload `seed.enc` to a website, paste it into an AI assistant, or use an online decryption tool.
+</Callout>
+
+## Storage layout
+
+The default storage root is `~/.config/wdk-cli`. If `XDG_CONFIG_HOME` is non-empty, the root is `$XDG_CONFIG_HOME/wdk-cli`.
+
+```text
+wdk-cli/
+├── config.json
+├── daemon.pid
+├── daemon.sock                 # macOS and Linux only
+└── wallets/
+    └── WALLET_NAME/
+        └── seed.enc
+```
+
+Windows uses the named pipe `\\.\pipe\wdk-cli-daemon` instead of `daemon.sock`.
+
+Run the following command to print the exact `config.json` path:
+
+```bash title="Terminal"
+wdk config path
+```
+
+## Current file permissions
+
+The current permissions are intentional and protect the artifacts that enforce seed-at-rest and daemon access controls.
+
+| Artifact | macOS and Linux | Purpose |
+| --- | --- | --- |
+| `wallets/NAME/seed.enc` | `0600` | Owner read and write only |
+| `daemon.pid` | `0600` | Owner read and write only |
+| `daemon.sock` | `0700` | Owner-only daemon endpoint |
+| `config.json` | No owner-only mode is set by WDK CLI | Ordinary plaintext configuration; its resulting mode follows the config library and process environment and may be `0644` |
+| Storage and wallet directories | No explicit mode is set by WDK CLI | Resulting modes depend on the process umask |
+
+POSIX modes do not apply on Windows. The CLI uses a named pipe for daemon IPC and relies on Windows access controls.
+
+`config.json` is not seed storage. However, values that you add can still be sensitive, including API keys and provider URLs containing credentials. Do not treat the absence of seed material as permission to publish the file. Prefer supported environment-variable overrides for secrets, and review output from `wdk config get --all` before sharing it.
+
+The Unix socket's owner-only mode excludes other operating-system users. It does not distinguish between programs running as the owner. See the [same-user trust boundary](/cli/reference/security-model#same-user-daemon-access).
+
+## `seed.enc` version 1
+
+`seed.enc` is a UTF-8 JSON object. Beta.2 writes eight fields:
+
+```json title="seed.enc shape"
+{
+  "version": 1,
+  "salt": "64 hexadecimal characters",
+  "iv": "24 hexadecimal characters",
+  "tag": "32 hexadecimal characters",
+  "ciphertext": "variable-length hexadecimal ciphertext",
+  "scryptN": 65536,
+  "scryptR": 8,
+  "scryptP": 1
+}
+```
+
+All binary fields use hexadecimal encoding, not Base64.
+
+| Property | Version 1 value |
+| --- | --- |
+| Cipher | AES-256-GCM |
+| Password KDF | scrypt |
+| scrypt `N` | `65536` (`2^16`) |
+| scrypt `r` | `8` |
+| scrypt `p` | `1` |
+| scrypt maximum memory | `134217728` bytes (128 MiB) |
+| Derived key | 32 bytes |
+| Salt | 32 random bytes |
+| IV | 12 random bytes |
+| Authentication tag | 16 bytes |
+| Ciphertext encoding | Hexadecimal |
+| Additional authenticated data | None |
+| Plaintext | UTF-8 BIP-39 mnemonic |
+
+Beta.2 stores the three scrypt parameters with every newly encrypted file. Beta.1 files omit them; beta.2 treats an omitted value as the same default shown above, so existing version 1 files remain readable. The algorithm is still implicit in `version: 1`.
+
+Each write generates a new random salt and IV. AES-GCM authenticates the ciphertext: a wrong passphrase or a modified salt, IV, tag, or ciphertext causes decryption to fail.
+
+Wallet writes use a sibling `seed.enc.tmp` file with mode `0600` and then rename it over `seed.enc`. If writing fails, the CLI attempts to remove the temporary file. This prevents a partial write from replacing the existing encrypted wallet during normal filesystem operation.
+
+<Callout type="info">
+Users can rely on the documented version 1 recovery procedure. If a future format is introduced, an automated migration is not guaranteed, but the version 1 recovery procedure will remain documented so existing files can be recovered.
+</Callout>
+
+## Empty passphrases
+
+The current CLI accepts an empty passphrase. It still runs scrypt and writes AES-256-GCM ciphertext, so the mnemonic is not stored as plaintext. An empty passphrase is nevertheless known to any reader of the file and provides no meaningful confidentiality. File permissions become the only practical at-rest barrier.
+
+Use a strong, unique passphrase and keep a recoverable record separate from `seed.enc`.
+
+## Recover without WDK CLI
+
+This procedure requires Node.js `22.18.0` or later but does not import WDK CLI or any third-party package.
+
+Before recovery:
+
+1. Copy `seed.enc` and its backup to a trusted, offline computer.
+2. Preserve the original file; do not edit it in place.
+3. Close screen-sharing, logging, terminal recording, clipboard managers, and AI assistants.
+4. Use a private terminal. The recovered mnemonic will appear in terminal output and may remain in scrollback.
+5. Do not put the passphrase in a command argument or exported environment variable.
+
+Save the following as `recover-wdk-seed.mjs`:
+
+```javascript title="recover-wdk-seed.mjs"
+import { createDecipheriv, scryptSync } from 'node:crypto'
+import { readFile } from 'node:fs/promises'
+import { emitKeypressEvents } from 'node:readline'
+import process from 'node:process'
+
+const SCRYPT = {
+  N: 2 ** 16,
+  r: 8,
+  p: 1,
+  maxmem: 128 * 1024 * 1024
+}
+
+function decodeHex(field, value, expectedBytes) {
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new Error(`${field} must be a non-empty hexadecimal string`)
+  }
+  if (value.length % 2 !== 0 || !/^[0-9a-f]+$/i.test(value)) {
+    throw new Error(`${field} is not valid hexadecimal`)
+  }
+
+  const decoded = Buffer.from(value, 'hex')
+  if (decoded.length * 2 !== value.length) {
+    throw new Error(`${field} is not valid hexadecimal`)
+  }
+  if (expectedBytes !== undefined && decoded.length !== expectedBytes) {
+    throw new Error(`${field} must decode to ${expectedBytes} bytes`)
+  }
+  return decoded
+}
+
+function validatePayload(payload) {
+  if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) {
+    throw new Error('seed.enc must contain a JSON object')
+  }
+  if (payload.version !== 1) {
+    throw new Error(`unsupported seed.enc version: ${String(payload.version)}`)
+  }
+
+  const scryptParams = {
+    N: payload.scryptN ?? SCRYPT.N,
+    r: payload.scryptR ?? SCRYPT.r,
+    p: payload.scryptP ?? SCRYPT.p
+  }
+  for (const key of ['N', 'r', 'p']) {
+    if (scryptParams[key] !== SCRYPT[key]) {
+      throw new Error(
+        `unsupported scrypt ${key}: ${String(scryptParams[key])}; expected ${SCRYPT[key]}`
+      )
+    }
+  }
+
+  return {
+    salt: decodeHex('salt', payload.salt, 32),
+    iv: decodeHex('iv', payload.iv, 12),
+    tag: decodeHex('tag', payload.tag, 16),
+    ciphertext: decodeHex('ciphertext', payload.ciphertext),
+    scryptParams
+  }
+}
+
+function promptHidden(message) {
+  if (!process.stdin.isTTY || !process.stdout.isTTY ||
+      typeof process.stdin.setRawMode !== 'function') {
+    throw new Error('run this script directly in a private interactive terminal')
+  }
+
+  emitKeypressEvents(process.stdin)
+  const wasRaw = process.stdin.isRaw
+  let secret = ''
+
+  process.stdin.setRawMode(true)
+  process.stdin.resume()
+
+  return new Promise((resolve, reject) => {
+    function finish(error) {
+      process.stdin.removeListener('keypress', onKeypress)
+      process.stdin.setRawMode(Boolean(wasRaw))
+      if (!wasRaw) process.stdin.pause()
+      process.stdout.write('\n')
+
+      if (error) reject(error)
+      else resolve(secret)
+    }
+
+    function onKeypress(text, key = {}) {
+      if (key.ctrl && key.name === 'c') {
+        finish(new Error('recovery cancelled'))
+        return
+      }
+      if (key.name === 'return' || key.name === 'enter') {
+        finish()
+        return
+      }
+      if (key.name === 'backspace') {
+        secret = secret.slice(0, -1)
+        return
+      }
+      if (typeof text === 'string' && !key.ctrl && !key.meta &&
+          !/[\u0000-\u001f\u007f]/.test(text)) {
+        secret += text
+      }
+    }
+
+    process.stdin.on('keypress', onKeypress)
+    process.stdout.write(message)
+  })
+}
+
+function writeOutput(chunk) {
+  return new Promise((resolve, reject) => {
+    process.stdout.write(chunk, (error) => {
+      if (error) reject(error)
+      else resolve()
+    })
+  })
+}
+
+async function main() {
+  const args = process.argv.slice(2)
+  if (args.length !== 1) {
+    throw new Error('usage: node recover-wdk-seed.mjs /path/to/seed.enc')
+  }
+
+  const file = await readFile(args[0], 'utf8')
+  let payload
+  try {
+    payload = JSON.parse(file)
+  } catch {
+    throw new Error('seed.enc is not valid JSON')
+  }
+
+  const { salt, iv, tag, ciphertext, scryptParams } = validatePayload(payload)
+  const passphrase = await promptHidden('Passphrase: ')
+  const key = scryptSync(passphrase, salt, 32, {
+    ...scryptParams,
+    maxmem: SCRYPT.maxmem
+  })
+  let decryptedChunk
+  let authenticatedTail
+  let plaintext
+
+  try {
+    const decipher = createDecipheriv('aes-256-gcm', key, iv)
+    decipher.setAuthTag(tag)
+    decryptedChunk = decipher.update(ciphertext)
+    authenticatedTail = decipher.final()
+    plaintext = Buffer.concat([decryptedChunk, authenticatedTail])
+
+    await writeOutput('Recovered seed phrase:\n')
+    await writeOutput(plaintext)
+    await writeOutput('\n')
+  } finally {
+    key.fill(0)
+    decryptedChunk?.fill(0)
+    authenticatedTail?.fill(0)
+    plaintext?.fill(0)
+  }
+}
+
+main().catch((error) => {
+  console.error(`Recovery failed: ${error.message}`)
+  process.exitCode = 1
+})
+```
+
+Run it with only the `seed.enc` path as an argument:
+
+```bash title="Terminal"
+chmod 700 recover-wdk-seed.mjs
+node recover-wdk-seed.mjs "$HOME/.config/wdk-cli/wallets/WALLET_NAME/seed.enc"
+```
+
+Enter the passphrase at the hidden prompt. The script intentionally refuses non-interactive input so the passphrase is not supplied through a pipe, argument, or environment variable.
+
+The script validates the version, field encodings, fixed field lengths, and beta.2 scrypt parameters before deriving the key. Missing scrypt fields use the beta.1 defaults; unexpected parameter values fail closed instead of requesting unbounded work from an edited file. The script makes a best-effort attempt to clear the derived key, decrypted chunks, and concatenated plaintext buffer after success or failure. The passphrase and displayed mnemonic still pass through JavaScript, OpenSSL internals, and terminal-managed memory, where reliable zeroization is not possible.
+
+After recovery:
+
+1. Verify the phrase by importing it into trusted wallet software while still offline.
+2. Clear the terminal and close it to reduce scrollback exposure.
+3. If the original computer or passphrase may be compromised, move funds to a newly generated seed.
+4. Securely remove any temporary copies according to the storage medium and backup system you used.
+
+## Rename and deletion behavior
+
+Renaming a wallet moves its directory; it does not decrypt or re-encrypt `seed.enc`. `wdk wallet change-passphrase` does decrypt and re-encrypt the mnemonic, generating a new salt and IV and replacing the file through the temporary-file write described above.
+
+Deleting a wallet removes its wallet directory after passphrase verification and attempts to lock its active daemon session first. This is ordinary filesystem deletion, not cryptographic erasure. Copies may remain in backups, snapshots, filesystem journals, swap, or recoverable storage blocks.
+
+Always keep an independently tested recovery backup before deleting or changing the only working copy.
+
+## Related pages
+
+- [Manage wallets](/cli/guides/manage-wallets)
+- [Architecture](/cli/reference/architecture)
+- [Security model](/cli/reference/security-model)
+- [Configuration](/cli/configuration)

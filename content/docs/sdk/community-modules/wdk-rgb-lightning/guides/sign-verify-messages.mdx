@@ -1,0 +1,74 @@
+---
+title: Sign and verify Lightning messages
+description: Sign domain-separated messages through VLS and verify them with full or read-only RGB Lightning accounts.
+docType: how-to
+schemaType: TechArticle
+---
+
+The account signs with its Lightning node identity through the in-process VLS signer. It never exposes a private key through `keyPair`.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Build a domain-separated challenge
+
+```js
+const message = [
+  'example-node-auth',
+  'version=1',
+  `origin=${expectedOrigin}`,
+  `nonce=${serverNonce}`,
+  `expires=${expiresAt}`,
+].join('\n')
+```
+
+Include purpose, origin, nonce, expiry, and version. Never ask a user to sign opaque bytes or content that could be interpreted as another action.
+
+## Sign after unlock
+
+```js
+const state = await account.getAddressState()
+if (state.status !== 'ready') {
+  throw new Error('Unlock the node before signing')
+}
+
+const signature = await account.sign(message)
+```
+
+`account.keyPair.privateKey` remains `null`; VLS owns signing material and policy checks.
+
+## Verify
+
+The full account can verify:
+
+```js
+const valid = await account.verify(message, signature)
+```
+
+The read-only adapter can also verify while its originating manager and node transport remain available:
+
+```js
+const readOnly = await account.toReadOnlyAccount()
+const valid = await readOnly.verify(message, signature)
+```
+
+Reject changed messages, reused nonces, expired challenges, unexpected origins, and signatures tied to the wrong node identity.
+
+## Do not confuse message and transaction signing
+
+`sign()` signs a Lightning message. It does not produce a Bitcoin PSBT signature, channel commitment, BOLT11 payment, or RGB consignment authorization.
+
+`signTransaction()` intentionally throws `NotImplementedError`. Use the operation-specific send methods so VLS can apply the correct policy.
+
+## Cleanup
+
+Call `manager.dispose()` when the node session ends. It destroys the attached signer and zeroes retained seed buffers where owned by the module. Disposal cannot erase secrets copied by application code or recover information written to logs.
+
+## Next steps
+
+- [Manage the node account](/sdk/community-modules/wdk-rgb-lightning/guides/manage-node-account)
+- [Handle errors and cleanup](/sdk/community-modules/wdk-rgb-lightning/guides/handle-errors-cleanup)
+- [API reference](/sdk/community-modules/wdk-rgb-lightning/api-reference)

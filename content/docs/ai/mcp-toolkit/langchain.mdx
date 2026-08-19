@@ -54,7 +54,7 @@ The command has built-in definitions for 13 chains and 4 protocol modules. When 
 | [`@tetherto/wdk-protocol-swap-velora-evm`](/sdk/swap-modules/swap-velora-evm) | Swap tools (Ethereum, Arbitrum) | -- |
 | [`@tetherto/wdk-protocol-bridge-usdt0-evm`](/sdk/bridge-modules/bridge-usdt0-evm) | Bridge tools (Ethereum, Arbitrum) | -- |
 | [`@tetherto/wdk-protocol-lending-aave-evm`](/sdk/lending-modules/lending-aave-evm) | Lending tools (Ethereum) | -- |
-| [`@tetherto/wdk-protocol-fiat-moonpay`](/sdk/fiat-modules/fiat-moonpay) | Fiat tools (Ethereum) | Requires `MOONPAY_*` env vars |
+| [`@tetherto/wdk-protocol-fiat-moonpay`](/sdk/fiat-modules/fiat-moonpay) | Fiat tools (Ethereum) | Requires `MOONPAY_API_KEY` plus a non-sensitive `MOONPAY_SECRET_KEY=unused` sentinel in the released CLI; URLs remain unsigned |
 
 <Callout type="info">
 Missing packages are silently skipped. Install only the modules you need and `serve` will pick them up. For chains or protocols **not** in the built-in registry, use a [custom config file](#custom-config-file).
@@ -184,8 +184,12 @@ Control `serve` behavior through environment variables:
 | `WDK_RPC_\<CHAIN\>` | No | Built-in defaults | Override the RPC endpoint for a chain (e.g. `WDK_RPC_ETHEREUM=https://my-rpc.com`) |
 | `WDK_CONFIG` | No | -- | Path to a `wdk.config.json` file for custom chains and protocols |
 | `WDK_INDEXER_API_KEY` | No | -- | Enables indexer tools for balance and transfer history queries |
-| `MOONPAY_API_KEY` | No | -- | Enables fiat on/off-ramp tools |
-| `MOONPAY_SECRET_KEY` | No | -- | Required with `MOONPAY_API_KEY` |
+| `MOONPAY_API_KEY` | No | -- | With the sentinel below, passes the released `serve` CLI's MoonPay registration gate |
+| `MOONPAY_SECRET_KEY` | No | -- | Set to a non-sensitive sentinel such as `unused` only to satisfy the released CLI gate; never provide the real MoonPay signing secret |
+
+<Callout type="warn">
+The released `serve` CLI checks for both MoonPay variables but passes a configuration field that MoonPay beta.3 does not use. Its generated widget URLs therefore remain unsigned. Never give `serve` the real signing secret. For signed MoonPay flows, use programmatic registration with the [`signUrl` configuration](/sdk/fiat-modules/fiat-moonpay/configuration#basic-configuration) and keep the signing secret in an authenticated backend.
+</Callout>
 
 ### Custom Config File
 

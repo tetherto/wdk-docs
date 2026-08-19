@@ -12,6 +12,7 @@ type ChainFilter =
   | "ton"
   | "tron"
   | "solana"
+  | "aptos"
   | "rgb"
   | "cosmos";
 
@@ -27,6 +28,7 @@ type WalletModule = {
   id: string;
   label: string;
   chain: ChainFilter;
+  additionalChains?: ChainFilter[];
   goals: GoalFilter[];
   packageName: string;
   docsHref: string;
@@ -34,7 +36,6 @@ type WalletModule = {
   bestFor: string;
   chooseWhen: string[];
   note?: string;
-  maintainer?: string;
 };
 
 const chainOptions: Array<{ value: ChainFilter; label: string }> = [
@@ -45,6 +46,7 @@ const chainOptions: Array<{ value: ChainFilter; label: string }> = [
   { value: "ton", label: "TON" },
   { value: "tron", label: "TRON" },
   { value: "solana", label: "Solana" },
+  { value: "aptos", label: "Aptos" },
   { value: "rgb", label: "RGB" },
   { value: "cosmos", label: "Cosmos" },
 ];
@@ -82,7 +84,7 @@ const walletModules: WalletModule[] = [
     label: "Smart accounts (ERC-4337)",
     chain: "evm",
     goals: ["gasless"],
-    packageName: "@tetherto/wdk-wallet-evm-erc4337",
+    packageName: "@tetherto/wdk-wallet-evm-erc-4337",
     docsHref: "/sdk/wallet-modules/wallet-evm-erc-4337",
     apiHref: "/sdk/wallet-modules/wallet-evm-erc-4337/api-reference",
     bestFor: "Account abstraction flows that submit UserOperations through a bundler.",
@@ -228,6 +230,21 @@ const walletModules: WalletModule[] = [
     ],
   },
   {
+    id: "aptos",
+    label: "Aptos",
+    chain: "aptos",
+    goals: ["standard"],
+    packageName: "@tetherto/wdk-wallet-aptos",
+    docsHref: "/sdk/wallet-modules/wallet-aptos",
+    apiHref: "/sdk/wallet-modules/wallet-aptos/api-reference",
+    bestFor: "Aptos wallets with native APT and fungible asset support.",
+    chooseWhen: [
+      "You need Aptos accounts derived with SLIP-0010 Ed25519 paths.",
+      "You need APT balances, transfers, transaction signing, or receipts.",
+      "You need Aptos fungible asset balances and transfers.",
+    ],
+  },
+  {
     id: "rgb",
     label: "RGB",
     chain: "rgb",
@@ -239,9 +256,7 @@ const walletModules: WalletModule[] = [
     chooseWhen: [
       "You need RGB asset issuance, balances, or transfers.",
       "Your app can persist RGB state in an app-private data directory.",
-      "You are comfortable using an independently maintained module.",
     ],
-    maintainer: "UTEXO",
   },
   {
     id: "cosmos",
@@ -255,9 +270,7 @@ const walletModules: WalletModule[] = [
     chooseWhen: [
       "You need a Cosmos-compatible wallet module.",
       "You want chain-registry or custom RPC endpoint configuration.",
-      "You are comfortable using an independently maintained module.",
     ],
-    maintainer: "Base58",
   },
 ];
 
@@ -292,11 +305,13 @@ export function WalletModuleChooser() {
   const [goal, setGoal] = React.useState<GoalFilter>(defaultGoalFilter);
 
   const results = walletModules.filter((module) => {
-    const chainMatch = chain === "all" || module.chain === chain;
+    const chainMatch =
+      chain === "all" ||
+      module.chain === chain ||
+      module.additionalChains?.includes(chain) === true;
     const goalMatch = goal === "all" || module.goals.includes(goal);
     return chainMatch && goalMatch;
   });
-
   return (
     <div className="not-prose my-6 rounded-lg border border-fd-border bg-fd-card">
       <div className="border-b border-fd-border p-4 sm:p-5">
@@ -386,11 +401,6 @@ export function WalletModuleChooser() {
                       {module.bestFor}
                     </p>
                   </div>
-                  {module.maintainer ? (
-                    <span className="w-fit rounded-md border border-fd-border px-2 py-1 text-xs text-fd-muted-foreground">
-                      Maintainer: {module.maintainer}
-                    </span>
-                  ) : null}
                 </div>
 
                 <p className="mt-3 rounded-md bg-fd-muted px-3 py-2 font-mono text-xs text-fd-muted-foreground">

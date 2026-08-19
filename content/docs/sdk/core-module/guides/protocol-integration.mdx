@@ -1,11 +1,11 @@
 ---
 title: Integrate Protocols
-description: Learn how to use Swidge, Swap, Bridge, and Lending protocols.
+description: Register and access WDK protocol providers from wallet accounts.
 docType: how-to
 schemaType: TechArticle
 ---
 
-The WDK Core module supports registering external protocols. This allows you to extend the basic wallet functionality with advanced features like [swidge routes](/sdk/swidge-modules), [token swapping](#swapping-tokens), [cross-chain bridging](#bridging-assets), and lending.
+The WDK Core module supports registering external protocol providers. This lets you extend wallet accounts with protocol-specific discovery, quote, and write operations.
 
 ## Register Protocols
 
@@ -54,7 +54,27 @@ const wdk = new WDK(seedPhrase)
 
 ## Use Protocols
 
-Once [registered](#register-protocols), you can access the protocol instance using the specific getter methods, such as [`getSwidgeProtocol()`](/sdk/core-module/api-reference#getswidgeprotocollabel), `getSwapProtocol`, `getBridgeProtocol`, `getLendingProtocol`, or `getFiatProtocol`.
+Once [registered](#register-protocols), access the protocol instance with its typed getter, such as `getSwapProtocol()`, `getBridgeProtocol()`, `getLendingProtocol()`, `getFiatProtocol()`, [`getSwidgeProtocol()`](/sdk/core-module/api-reference#getswidgeprotocollabel), or [`getSdaProtocol()`](/sdk/core-module/api-reference#getsdaprotocollabel).
+
+### Smart Deposit Addresses
+
+WDK Core beta.15 registers and retrieves SDA providers through the same account protocol surface. The concrete provider must extend `SdaProtocol`; `MySdaProtocol` below is illustrative.
+
+```typescript title="Register And Access An SDA Provider"
+const wdk = new WDK(seedPhrase)
+  .registerWallet('ethereum', WalletManagerEvm, ethConfig)
+  .registerProtocol('ethereum', 'deposits', MySdaProtocol, sdaProtocolConfig)
+
+const account = await wdk.getAccount('ethereum', 0)
+const deposits = account.getSdaProtocol('deposits')
+
+const routes = await deposits.getSupportedRoutes({
+  sourceChain: 'ethereum',
+  outputAsset: 'USDT'
+})
+```
+
+Every SDA provider implements route discovery and deposit-address creation. Quote, derivation, renewal, lookup, history, recovery, and disable operations are optional. Check the concrete provider's contract before calling them; the base implementations throw `UnsupportedOperationError`. Output assets are route-specific, with USDT shown only as an example.
 
 ### Swidge Routes
 
@@ -94,7 +114,7 @@ const status = await swidge.getSwidgeStatus(result.id, {
 Use discovery results to build token and chain selectors, but continue to show the quote details before execution. `swidge()` is the write step in the shared swidge flow.
 
 <Callout type="info">
-Existing swap and bridge modules keep their current accessors for released modules. Prefer the [swidge protocol interface](/sdk/swidge-modules) for new protocol integrations because the standalone swap and bridge interfaces are expected to be deprecated after swidge provider coverage is available.
+Existing swap and bridge modules keep their current accessors for released modules. Choose a released [Swidge provider module](/sdk/swidge-modules) for new protocol integrations because the standalone swap and bridge interfaces are expected to be deprecated after Swidge provider coverage is available.
 </Callout>
 
 ### Swapping Tokens

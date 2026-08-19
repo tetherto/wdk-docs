@@ -1,0 +1,140 @@
+---
+title: Handle Errors
+description: Handle WDK CLI exit statuses, JSON output, stderr, and error codes
+docType: how-to
+schemaType: TechArticle
+icon: CircleQuestionMark
+---
+
+Use a command's exit status as the primary success signal. When you request `--json`, parse stdout separately from stderr and allow for commands that still produce text.
+
+This page describes `@tetherto/wdk-cli@1.0.0-beta.2`.
+
+## Handled Error Envelope
+
+Errors that reach the WDK CLI command handler use this JSON shape:
+
+```json
+{
+  "error": "Wallet 'dev' is not unlocked.",
+  "code": "WALLET_NOT_UNLOCKED",
+  "suggestion": "Run: wdk wallet unlock --name dev"
+}
+```
+
+| Field | Present | Description |
+| --- | --- | --- |
+| `error` | Always | Human-readable message |
+| `code` | Always | Machine-readable code |
+| `suggestion` | Sometimes | Recovery guidance |
+| `stack` | Only with `--verbose` when available | JavaScript stack trace |
+
+`--verbose` adds error stacks. It does not enable general debug logging.
+
+## Exit Statuses
+
+| Status | Meaning in beta.2 |
+| --- | --- |
+| `0` | Command, help, or version output completed |
+| `1` | A handled CLI/runtime error or a command-line parsing error occurred |
+| `2` | An unexpected non-`Error` value or an error outside the normal command handler reached the top level |
+
+Do not treat the presence of stdout as success. Some handled failures emit a JSON object to stdout and exit with status `1`.
+
+## JSON Output Contract
+
+For most successful commands, `--json` emits one JSON value followed by a newline on stdout. Handled WDK CLI errors also emit one JSON object on stdout.
+
+The current exceptions are:
+
+| Case | Stdout | Stderr | Status |
+| --- | --- | --- | --- |
+| Most successful commands with `--json` | JSON | Usually empty | `0` |
+| Handled command error with `--json` | JSON error envelope | Usually empty | `1`, or `2` for a non-`Error` value |
+| Argument-parsing error with `--json` | JSON `INVALID_ARGUMENT` envelope | Empty | `1` |
+| Argument-parsing error without `--json` | Empty | Human-readable Commander error and help | `1` |
+| Help or version, even with `--json` | Human-readable text | Empty | `0` |
+| Successful `wdk mcp setup`, `remove`, `verify-setup`, or `list` with `--json` | Human-readable text | Empty | `0` |
+| Wallet command that opens an interactive prompt with `--json` | Prompt text and terminal-control bytes, followed by JSON if the command completes | Normal notices or errors can still appear | Depends on result |
+| `wdk send --json` | JSON on completion or a handled error | Empty unless another feature writes a notice | Depends on result |
+| A command using non-empty `WDK_PASSPHRASE` | Normal command output | Includes a passphrase-source notice | Depends on result |
+
+<Callout type="warn">
+Do not combine stdout and stderr before parsing JSON. Spinner output and notices can make a combined stream invalid JSON.
+</Callout>
+
+`--json` changes output formatting; it does not make every command non-interactive or guarantee JSON-only stdout when a prompt opens. Wallet create, import, export, unlock, delete, default, rename, and change-passphrase flows can still request secret input. Set a non-empty `WDK_PASSPHRASE` only when you accept the environment-variable exposure described in [Configuration](/cli/configuration#environment-variables). For a non-interactive import, combine `wallet import --seed-stdin --json` with `WDK_PASSPHRASE`; for passphrase rotation, `--new-passphrase-stdin` reads only the new value and `WDK_PASSPHRASE` supplies the current one.
+
+## Handle Output in a Shell Script
+
+Capture the streams separately and inspect the exit status before parsing. This example requires `jq`:
+
+```bash title="check-balance.sh"
+#!/usr/bin/env bash
+set -euo pipefail
+
+stdout_file=$(mktemp)
+stderr_file=$(mktemp)
+trap 'rm -f "$stdout_file" "$stderr_file"' EXIT
+
+if wdk get balance \
+  --network ethereum \
+  --wallet dev \
+  --json >"$stdout_file" 2>"$stderr_file"; then
+  jq . "$stdout_file"
+elif jq -e 'type == "object" and has("code")' "$stdout_file" >/dev/null 2>&1; then
+  jq . "$stdout_file" >&2
+  exit 1
+else
+  cat "$stderr_file" >&2
+  exit 1
+fi
+```
+
+This pattern handles JSON command and argument errors while retaining a text fallback for output that is not part of the JSON contract.
+
+## Error Codes
+
+The following names are defined by beta.2. A code can appear only on commands that reach the corresponding behavior.
+
+| Area | Codes |
+| --- | --- |
+| Wallet and key state | `KEY_NOT_FOUND`, `INVALID_SEED_PHRASE`, `WRONG_PASSPHRASE`, `WALLET_NOT_UNLOCKED`, `WALLET_EXISTS`, `WALLET_LOCKED`, `PASSPHRASE_MISMATCH` |
+| Arguments and configuration | `INVALID_ARGUMENT`, `INVALID_INDEX`, `INVALID_CONFIG`, `MISSING_CONFIG`, `INVALID_AMOUNT`, `INVALID_ADDRESS`, `INVALID_TOKEN` |
+| Networks and tokens | `NETWORK_NOT_SUPPORTED`, `TOKEN_NOT_SUPPORTED`, `NETWORK_ERROR` |
+| Transactions and providers | `INSUFFICIENT_BALANCE`, `TRANSACTION_FAILED`, `UNSUPPORTED_MODULE`, `ENVIRONMENT_MISMATCH`, `SIGN_FAILED`, `PROVIDER_UNAVAILABLE`, `QUOTE_REJECTED` |
+| Fallbacks | `UNKNOWN_ERROR`, `UNEXPECTED_ERROR` |
+
+The code set is not a closed protocol enum. The daemon and WDK dependencies can pass through additional codes. Beta.2 also recognizes and formats several dependency codes, including `INSUFFICIENT_FUNDS`, `SERVER_ERROR`, and `TIMEOUT`. Consumers should preserve unknown code strings instead of rejecting the response.
+
+## Common Recovery Paths
+
+| Code or symptom | Check |
+| --- | --- |
+| `WALLET_NOT_UNLOCKED` | Run `wdk wallet unlock --name NAME`; confirm that its TTL has not expired |
+| `KEY_NOT_FOUND` | Run `wdk wallet list`; verify the wallet name or default wallet |
+| `WRONG_PASSPHRASE` | Retry through the hidden prompt; do not print or log the passphrase |
+| `NETWORK_NOT_SUPPORTED` | Run `wdk network list`; check spelling and custom-network state |
+| `TOKEN_NOT_SUPPORTED` | Run `wdk token list --network NETWORK`; use the registered ticker |
+| `INVALID_ADDRESS` | Confirm the recipient format and selected mainnet or testnet; beta.2 rejects recognized mismatches after the unlock check but before fee estimation or broadcast |
+| `MISSING_CONFIG` for history | Configure `indexer.baseUrl` and, when required, `WDK_INDEXER_API_KEY` |
+| `MISSING_CONFIG` for buy or sell | Configure all `ramp.moonpay` values |
+| `ENVIRONMENT_MISMATCH` | Use MoonPay `sandbox` with a testnet or `production` with a mainnet |
+| `NETWORK_ERROR`, `TIMEOUT`, or `SERVER_ERROR` | Check the RPC/indexer endpoint and retry only when repeating the operation is safe |
+| Text error with empty stdout | Without `--json`, treat it as an argument/help parsing failure and inspect stderr |
+
+## Partial Results
+
+Some successful aggregate operations omit failed items:
+
+- `wdk get address --all` skips networks that fail address derivation.
+- `wdk get balance --all` skips networks that fail address or balance lookup.
+- `wdk get history` without `--token` ignores failed token batch items and returns successful transfers.
+
+These commands can exit `0` with an incomplete aggregate result. If completeness matters, query each required network or token separately and track failures in your application.
+
+***
+
+## Need Help?
+
+<SupportCards />

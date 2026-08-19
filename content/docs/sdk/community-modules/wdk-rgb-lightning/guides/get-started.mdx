@@ -1,0 +1,105 @@
+---
+title: Get started with RGB Lightning
+description: Install @utexo/wdk-rgb-lightning beta.15 with a matching native peer and unlock the node.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide creates the single RGB Lightning node account and unlocks it against development services.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## 1. Install the module and one native peer
+
+For a Node.js 18-or-newer host:
+
+```bash
+npm install @utexo/wdk-rgb-lightning@0.1.0-beta.15 @utexo/rgb-lightning-node-nodejs@0.1.0-beta.11
+```
+
+For a Bare/mobile host:
+
+```bash
+npm install @utexo/wdk-rgb-lightning@0.1.0-beta.15 @utexo/rgb-lightning-node-bare@0.1.0-beta.15
+```
+
+Install only the peer for the target runtime. No Windows native artifact was published in this release set.
+
+## 2. Construct the manager
+
+```js
+import WalletManagerRgbLightning from '@utexo/wdk-rgb-lightning'
+
+const seedPhrase = await loadSeedFromSecretStorage()
+
+const manager = new WalletManagerRgbLightning(seedPhrase, {
+  network: 'regtest',
+  dataDir: '/app-private/wdk/rgb-lightning',
+  nodeSeedDerivation: 'auto',
+})
+```
+
+Use a persistent directory that is not shared with the on-chain RGB wallet or another live node instance.
+
+## 3. Get and unlock account 0
+
+```js
+const account = await manager.getAccount(0)
+
+await account.unlock({
+  bitcoind_rpc_username: 'rpc-user',
+  bitcoind_rpc_password: await loadRpcPassword(),
+  bitcoind_rpc_host: '127.0.0.1',
+  bitcoind_rpc_port: 18443,
+  indexer_url: 'tcp://127.0.0.1:50001',
+  proxy_endpoint: 'rpc://127.0.0.1:3000/json-rpc',
+  announce_addresses: [],
+  announce_alias: 'example-node',
+})
+```
+
+Constructor camelCase RPC, indexer, proxy, and announce fields are not consumed in beta.15. Pass native snake_case fields to `unlock()`.
+
+## 4. Confirm readiness
+
+```js
+const addressState = await account.getAddressState()
+if (addressState.status !== 'ready') {
+  throw new Error('RGB Lightning account is still locked')
+}
+
+const [nodeInfo, networkInfo] = await Promise.all([
+  account.getNodeInfo(),
+  account.getNetworkInfo(),
+])
+
+console.log({
+  address: addressState.address,
+  nodeInfo,
+  networkInfo,
+})
+```
+
+The current address remains stable until `rotateAddress()` is called.
+
+## 5. Dispose at shutdown
+
+```js
+try {
+  await runNodeFlows(account)
+} finally {
+  manager.dispose()
+}
+```
+
+`manager.dispose()` is terminal for the RGB Lightning node session. It shuts down the binding, destroys the VLS signer, and wipes seed buffers retained by the RGB Lightning binding. Do not reuse the manager, account, read-only adapter, or LSP object after disposal. `account.dispose()` is a no-op in this release.
+
+## Next steps
+
+- [Manage the node account](/sdk/community-modules/wdk-rgb-lightning/guides/manage-node-account)
+- [Connect peers and open channels](/sdk/community-modules/wdk-rgb-lightning/guides/peers-channels)
+- [Configuration](/sdk/community-modules/wdk-rgb-lightning/configuration)

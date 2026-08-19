@@ -7,7 +7,7 @@ icon: Code
 ---
 
 <Callout type="info">
-This page documents the published `@tetherto/wdk-wallet-solana-gasless@1.0.0-beta.1` type declarations.
+This page documents the published `@tetherto/wdk-wallet-solana-gasless@1.0.0-beta.2` type declarations and runtime behavior.
 </Callout>
 
 ## Imports
@@ -131,9 +131,9 @@ new WalletAccountSolanaGasless(
 | `getTokenBalance(tokenAddress)` | Returns one SPL token balance in base units. | `Promise<bigint>` |
 | `getTokenBalances(tokenAddresses)` | Returns multiple SPL token balances in base units. | `Promise<Record<string, bigint>>` |
 | `getPaymasterTokenBalance()` | Returns the configured paymaster token balance in base units. | `Promise<bigint>` |
-| `quoteSendTransaction(tx, config?)` | Quotes the paymaster fee for a native send or transaction message. | `Promise<Omit<TransactionResult, 'hash'>>` |
+| `quoteSendTransaction(tx, config?)` | Quotes an unsigned send, or decodes the embedded payment fee from a fully signed transaction. | `Promise<Omit<TransactionResult, 'hash'>>` |
 | `signTransaction(tx, config?)` | Returns a fully signed paymaster-funded transaction without broadcasting it. | `Promise<FullySignedTransaction>` |
-| `sendTransaction(tx, config?)` | Sends a paymaster-funded native transfer or transaction message. | `Promise<TransactionResult>` |
+| `sendTransaction(tx, config?)` | Sends an unsigned paymaster-funded transaction, or directly broadcasts a fully signed transaction through Solana RPC. | `Promise<TransactionResult>` |
 | `quoteTransfer(options, config?)` | Quotes the paymaster fee for an SPL transfer. | `Promise<Omit<TransferResult, 'hash'>>` |
 | `transfer(options, config?)` | Transfers SPL tokens through the configured paymaster. | `Promise<TransferResult>` |
 | `getTransactionReceipt(hash)` | Reads a Solana transaction receipt by signature. | `Promise<SolanaTransactionReceipt \| null>` |
@@ -165,7 +165,7 @@ signTransaction(
 ): Promise<FullySignedTransaction>
 ```
 
-Signs a paymaster-funded transaction without broadcasting it. The module adds paymaster payment instructions, signs with the account owner, asks the paymaster to sign, and returns the fully signed transaction.
+Signs a paymaster-funded transaction without broadcasting it. The module adds the paymaster payment instruction, checks the quoted payment against `transactionMaxFee`, signs with the account owner, asks the paymaster to sign, and returns the fully signed transaction.
 
 The method throws when the quoted paymaster fee is greater than `transactionMaxFee`.
 
@@ -173,12 +173,12 @@ The method throws when the quoted paymaster fee is greater than `transactionMaxF
 
 ```typescript
 sendTransaction(
-  tx: SolanaTransaction,
+  tx: SolanaTransaction | FullySignedTransaction,
   config?: SolanaGaslessWalletPaymasterConfigOverrides
 ): Promise<TransactionResult>
 ```
 
-Sends a paymaster-funded native transfer or prebuilt transaction message.
+For an unsigned input, sends a paymaster-funded native transfer or prebuilt transaction message. For a `FullySignedTransaction` returned by `signTransaction()`, the module does not contact the paymaster: it decodes the embedded payment fee, applies `transactionMaxFee`, base64-encodes the signed wire transaction, and sends it through the configured Solana RPC with `encoding: 'base64'`.
 
 ```javascript title="Send native SOL"
 const result = await account.sendTransaction({
@@ -192,7 +192,7 @@ console.log(result.hash)
 console.log(result.fee)
 ```
 
-The method throws when the quoted paymaster fee is greater than `transactionMaxFee`.
+The method throws when the payment fee is greater than `transactionMaxFee`; a fee equal to the cap is allowed. A signed transaction retains its existing blockhash or durable nonce lifetime, payment instruction, and signatures. The method does not refresh or re-sign it.
 
 #### transfer
 
@@ -221,12 +221,12 @@ The method throws when the quoted paymaster fee is greater than `transferMaxFee`
 
 ```typescript
 quoteSendTransaction(
-  tx: SolanaTransaction,
+  tx: SolanaTransaction | FullySignedTransaction,
   config?: SolanaGaslessWalletPaymasterConfigOverrides
 ): Promise<Omit<TransactionResult, 'hash'>>
 ```
 
-Quotes the paymaster fee for `sendTransaction()` or `signTransaction()` inputs. Quote methods return estimates and do not enforce `transactionMaxFee`.
+For an unsigned input, requests a paymaster fee quote for `sendTransaction()` or `signTransaction()` inputs. For a `FullySignedTransaction`, it does not call the paymaster or broadcast: it locates the signed SPL token payment to the configured paymaster token account and decodes its `u64` amount. Both forms return a `bigint` fee in the configured paymaster token's base units and do not enforce `transactionMaxFee`.
 
 #### quoteTransfer
 
@@ -346,7 +346,7 @@ Pass overrides as the second argument to quote, sign, send, or transfer methods.
 
 ## ConfigurationError
 
-The beta.1 TypeScript declarations include `ConfigurationError`, and the runtime uses that error name for missing required paymaster fields. The beta.1 JavaScript root entrypoint does not re-export the class, so JavaScript code should not import `ConfigurationError` from `@tetherto/wdk-wallet-solana-gasless`.
+The beta.2 TypeScript declarations include `ConfigurationError`, and the runtime uses that error name for missing required paymaster fields. The JavaScript root entrypoint does not re-export the runtime class, so JavaScript code should not import `ConfigurationError` from `@tetherto/wdk-wallet-solana-gasless`.
 
 ```typescript
 class ConfigurationError extends Error {

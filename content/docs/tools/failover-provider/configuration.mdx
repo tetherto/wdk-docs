@@ -36,7 +36,8 @@ const secondary = {
 
 const provider = new FailoverProvider({
   retries: 1,
-  shouldRetryOn: (error) => error.message.includes('temporary')
+  shouldRetryOn: (error) =>
+    error instanceof Error && error.message.includes('temporary')
 })
   .addProvider(primary)
   .addProvider(secondary)
@@ -58,7 +59,8 @@ Use a narrow predicate when you only want to retry transient failures:
 ```javascript title="Retry Only On Transient Errors"
 const provider = new FailoverProvider({
   retries: 2,
-  shouldRetryOn: (error) => /timeout|temporary|429/.test(error.message)
+  shouldRetryOn: (error) =>
+    error instanceof Error && /timeout|temporary|429/.test(error.message)
 })
 ```
 
@@ -97,9 +99,15 @@ factory.initialize()
 ## Runtime notes
 
 - Non-function properties are read from the currently active provider.
+- Property getters and methods run with the underlying provider as `this`, including providers that use private fields or instance state.
 - When a synchronous method throws and `shouldRetryOn(error)` returns `true`, the proxy switches to the next provider and retries.
 - When an asynchronous method rejects and `shouldRetryOn(error)` returns `true`, the proxy switches to the next provider and retries.
+- A method result is treated as asynchronous only when its `then` property is a function. Other values, including objects with a non-function `then` property, are returned synchronously.
 - Provider selection advances in round-robin order. If `retries` is larger than the number of providers, the runtime loops back through the list.
+
+<Callout type="info">
+Use the initialized proxy for property reads and method calls. Writes, enumeration, and property-descriptor operations apply to the proxy target rather than the active provider.
+</Callout>
 
 ***
 

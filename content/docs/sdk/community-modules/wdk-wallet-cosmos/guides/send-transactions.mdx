@@ -1,0 +1,124 @@
+---
+title: Send transactions
+description: Quote, sign, broadcast, and look up native Cosmos bank-send transactions.
+docType: how-to
+schemaType: TechArticle
+---
+
+The native transaction methods create one Cosmos bank send using the configured `nativeDenom`.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+<Callout type="error">
+Broadcast transactions are irreversible. Validate the chain, recipient, amount, account balance, sequence, and fee policy before calling `sendTransaction()`. A timeout does not prove that the chain rejected the transaction.
+</Callout>
+
+## Build the transaction
+
+`quoteSendTransaction()`, `signTransaction()`, and `sendTransaction()` accept the shared WDK transaction shape:
+
+```js
+const transaction = {
+  to: 'cosmos1<recipient>',
+  value: 1_000n,
+}
+```
+
+Replace the recipient placeholder with a validated address. The module:
+
+- sends only the configured `nativeDenom`;
+- converts `value` to an integer string;
+- uses one `/cosmos.bank.v1beta1.MsgSend`;
+- uses the fixed memo `Transfer via WDK`;
+- uses a fixed gas limit of `200000`.
+
+Use [`transfer()`](/sdk/community-modules/wdk-wallet-cosmos/guides/transfer-tokens) when you need to choose a denomination.
+
+## Quote before broadcast
+
+Apply an application-controlled fee limit before the write:
+
+```js
+const applicationMaxFee = 5_000n
+const quote = await account.quoteSendTransaction(transaction)
+
+if (quote.fee >= applicationMaxFee) {
+  throw new Error('Quoted fee meets or exceeds the application limit')
+}
+```
+
+Choose a limit that is appropriate for the chain and fee denomination. The quote is a deterministic calculation from configured metadata and the fixed gas limit. It ignores the recipient and amount; it does not query RPC, simulate the transaction, inspect the balance, or validate the recipient.
+
+`sendTransaction()` does not enforce `transferMaxFee` in `1.0.0-beta.4`, and the package does not expose `transactionMaxFee`. Keep the application check immediately before the write.
+
+## Broadcast a native send
+
+```js
+import WalletManagerCosmos from '@base58-io/wdk-wallet-cosmos'
+
+const seedPhrase = process.env.WDK_SEED_PHRASE
+if (!seedPhrase) throw new Error('WDK_SEED_PHRASE is required')
+
+const manager = new WalletManagerCosmos(seedPhrase, {
+  chainName: 'cosmoshub',
+})
+
+try {
+  const account = await manager.getAccount(0)
+  const transaction = {
+    to: 'cosmos1<recipient>',
+    value: 1_000n,
+  }
+
+  const applicationMaxFee = 5_000n
+  const { fee } = await account.quoteSendTransaction(transaction)
+  if (fee >= applicationMaxFee) {
+    throw new Error('Quoted fee meets or exceeds the application limit')
+  }
+
+  const result = await account.sendTransaction(transaction)
+  console.log({
+    hash: result.hash,
+    fee: result.fee.toString(),
+  })
+} finally {
+  manager.dispose()
+}
+```
+
+## Sign without broadcasting
+
+`signTransaction()` obtains the account number, sequence, and chain ID through RPC, then returns a signed CosmJS `TxRaw`:
+
+```js
+const signedTransaction = await account.signTransaction(transaction)
+```
+
+<Callout type="warn">
+`sendTransaction()` accepts only the unsigned `{ to, value }` shape in this release. It cannot accept or broadcast the signed value returned by `signTransaction()`. The generated declaration also types the signed return value as `unknown`.
+</Callout>
+
+## Look up a receipt
+
+After a successful broadcast, query the returned hash:
+
+```js
+const receipt = await account.getTransactionReceipt(result.hash)
+```
+
+The method performs one indexed-transaction lookup. It does not poll. If the transaction has not been indexed yet or does not exist, it throws `Transaction not found: <hash>`.
+
+## Avoid duplicate writes
+
+RPC endpoints are tried in order, and network-shaped failures can be retried. If a connection fails after submission, the write may have reached the chain even though the call throws. Before submitting again:
+
+1. Check the known transaction hash when one is available.
+2. Inspect the sender's sequence, balance, and trusted chain index.
+3. Reconcile the intended payment in application state.
+4. Repeat only after establishing that the first write was not accepted.
+
+See [Handle errors](/sdk/community-modules/wdk-wallet-cosmos/guides/handle-errors) for a recovery pattern.

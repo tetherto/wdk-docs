@@ -13,7 +13,7 @@ icon: Code
 | [WalletManagerEvmErc4337](#walletmanagerevmerc4337) | Main class for managing ERC-4337 EVM wallets. Extends `WalletManager` from `@tetherto/wdk-wallet`. | [Constructor](#constructor), [Methods](#methods) |
 | [WalletAccountEvmErc4337](#walletaccountevmerc4337) | Individual ERC-4337 wallet account implementation. Extends `WalletAccountReadOnlyEvmErc4337` and implements `IWalletAccount`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties) |
 | [WalletAccountReadOnlyEvmErc4337](#walletaccountreadonlyevmerc4337) | Read-only ERC-4337 wallet account. Extends `WalletAccountReadOnly` from `@tetherto/wdk-wallet`. | [Constructor](#constructor-2), [Methods](#methods-2) |
-| [ConfigurationError](#configurationerror) | Error thrown when the wallet configuration is invalid or has missing required fields. | - |
+| [ConfigurationError](#configurationerror) | Error thrown for invalid or incomplete wallet configuration, including an unexpected token paymaster address returned by the RPC. | - |
 
 ## WalletManagerEvmErc4337
 
@@ -42,7 +42,11 @@ new WalletManagerEvmErc4337(seed, config)
   - `chainId` (number): The blockchain's ID (e.g., 1 for Ethereum mainnet)
   - `provider` (string | Eip1193Provider | Array\<string | Eip1193Provider\>): RPC endpoint URL, EIP-1193 provider instance, or ordered failover list
   - `bundlerUrl` (string): The URL of the bundler service
-  - `safeModulesVersion` (string): The Safe modules version (e.g., `'0.3.0'`)
+  - `safeModulesVersion` (string): Must be `'0.3.0'`, the only Safe modules version supported by beta.15
+
+**Optional common config fields:**
+  - `parallel` (boolean): Put each send, sign, or transfer in a fresh random 192-bit nonce-key lane
+  - `nonceKey` (number | bigint | string): Reuse a raw uint192 key or a deterministic named lane; takes precedence over `parallel`
 
 **Gas payment mode** (one of the following):
 
@@ -267,11 +271,12 @@ const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 | `getAddress()` | Returns the Safe account's address | `Promise\<string\>` | - |
 | `sign(message)` | Signs a message using the account's private key | `Promise\<string\>` | - |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` | - |
-| `sendTransaction(tx, config?)` | Sends a transaction via UserOperation | `Promise\<{hash: string, fee: bigint}\>` | If fee exceeds max |
-| `quoteSendTransaction(tx, config?)` | Estimates the fee for a UserOperation | `Promise\<{fee: bigint}\>` | - |
-| `transfer(options, config?, txOverrides?)` | Transfers ERC20 tokens via UserOperation | `Promise\<{hash: string, fee: bigint}\>` | If fee exceeds max |
-| `quoteTransfer(options, config?, txOverrides?)` | Estimates the fee for an ERC20 transfer | `Promise\<{fee: bigint}\>` | - |
-| `approve(options, txOverrides?)` | Approves a spender to spend ERC20 tokens | `Promise\<{hash: string, fee: bigint}\>` | - |
+| `signTransaction(tx, config?)` | Builds and signs one UserOperation without submitting it | `Promise\<UserOperationV7\>` | If a non-sponsored fee exceeds max or the token paymaster address mismatches |
+| `sendTransaction(tx, config?)` | Builds and sends transactions, or submits a signed UserOperation | `Promise\<{hash: string, fee: bigint}\>` | If a newly built operation exceeds max or the token paymaster address mismatches |
+| `quoteSendTransaction(tx, config?)` | Estimates the fee for transactions or a signed UserOperation | `Promise\<{fee: bigint}\>` | If a newly built operation's token paymaster address mismatches |
+| `transfer(options, config?, txOverrides?)` | Transfers ERC20 tokens via UserOperation | `Promise\<{hash: string, fee: bigint}\>` | If fee meets or exceeds max, or the token paymaster address mismatches |
+| `quoteTransfer(options, config?, txOverrides?)` | Estimates the fee for an ERC20 transfer | `Promise\<{fee: bigint}\>` | If the token paymaster address mismatches |
+| `approve(options, txOverrides?)` | Approves a spender to spend ERC20 tokens | `Promise\<{hash: string, fee: bigint}\>` | If a token paymaster address mismatches |
 | `getBalance()` | Returns the native token balance (in wei) | `Promise\<bigint\>` | - |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise\<bigint\>` | - |
 | `getPaymasterTokenBalance()` | Returns the paymaster token balance | `Promise\<bigint\>` | - |
@@ -325,21 +330,45 @@ const isValid = await account.verify(message, signature)
 console.log('Signature valid:', isValid)
 ```
 
+##### `signTransaction(tx, config?)`
+Builds and signs one ERC-4337 v0.7 UserOperation without submitting it to the bundler.
+
+**Parameters:**
+- `tx` (EvmErc4337Transaction): One transaction. Batch arrays are not accepted by this method.
+- `config` (optional): Per-call configuration override (see [Config Override](#config-override)).
+
+**Returns:** `Promise\<UserOperationV7\>` - A signed UserOperation that can be quoted or submitted later
+
+**Throws:** Error if a non-sponsored operation exceeds `transactionMaxFee`, a raw `nonceKey` is outside `0..2^192-1`, or the token paymaster address returned by the RPC mismatches the configured address
+
+```javascript title="Sign a UserOperation"
+const signedUserOperation = await account.signTransaction({
+  to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+  value: 1000000000000000n
+})
+```
+
+<Callout type="warning">
+The returned operation contains the selected nonce lane and fee-mode configuration used while building it. Submit it promptly through the same account and do not mutate it.
+</Callout>
+
 ##### `sendTransaction(tx, config?)`
 Sends a transaction via UserOperation through the bundler.
 
 **Parameters:**
-- `tx` (EvmErc4337Transaction | EvmErc4337Transaction[]): Transaction object or array for batch transactions
+- `tx` (EvmErc4337Transaction | EvmErc4337Transaction[] | UserOperationV7): Transaction object, array for batch transactions, or a signed UserOperation
   - `to` (string): Recipient address
   - `value` (number | bigint): Amount in wei
   - `data` (string, optional): Transaction data in hex format
   - `callGasLimit`, `verificationGasLimit`, `preVerificationGas` (number | bigint, optional): Per-call overrides for the UserOperation gas limits
   - `maxFeePerGas`, `maxPriorityFeePerGas` (number | bigint, optional): Per-call overrides for the EIP-1559 fee pair; set both together. In a batch, only the first transaction's gas overrides apply (see [EvmErc4337Transaction](#evmerc4337transaction))
-- `config` (optional): Per-call configuration override. Accepts a partial version of the gas payment mode fields (see [Config Override](#config-override)).
+- `config` (optional): Per-call configuration override. Beta.15 runtime also reads `parallel` and `nonceKey`, subject to the [published typing limitation](#config-override).
 
 **Returns:** `Promise\<{hash: string, fee: bigint}\>` - UserOperation hash and fee
 
-**Throws:** Error if fee exceeds `transactionMaxFee`
+**Throws:** Error if a non-sponsored, newly built operation exceeds `transactionMaxFee`, a raw `nonceKey` is outside `0..2^192-1`, or the token paymaster address returned while building mismatches the configured address
+
+When `tx` is a signed `UserOperationV7`, WDK forwards that exact operation to the bundler. It does not rebuild or re-sign it, reapply the current `transactionMaxFee`, call the paymaster RPC, or rerun the paymaster-address check. Only submit an operation produced by the same account after verifying the intended fee-mode and paymaster configuration, and submit it before its nonce becomes stale.
 
 **Example:**
 ```javascript
@@ -375,18 +404,28 @@ const fastResult = await account.sendTransaction({
 })
 ```
 
-The account reserves a local nonce for each pending `sendTransaction()` or `transfer()` from the same account instance. Pre-acceptance failures release the reserved nonce; ambiguous transport failures keep it reserved to avoid nonce reuse.
+Beta.15 does not reserve sequential nonces locally. With no lane option, sends use the default key-0 lane and must not overlap. `parallel: true` creates a new random lane; `nonceKey` selects a reusable named or raw lane and takes precedence. Operations sharing a lane remain sequential, so wait for inclusion before reusing it. Distinct lanes are unordered; batch dependent transactions into one UserOperation.
 
 ##### `quoteSendTransaction(tx, config?)`
 Estimates the fee for a UserOperation without sending it.
 
-Quoted UserOperations are cached internally for up to 2 minutes. When a later `sendTransaction()` matches the quoted transaction, the account performs a lightweight on-chain nonce check before reuse and re-quotes if the nonce has moved.
+Default-lane, non-sponsored UserOperations built while quoting transaction inputs can be cached internally for up to 2 minutes. When a later default-lane `sendTransaction()` or `signTransaction()` matches, the account performs a lightweight on-chain nonce check before reuse and rebuilds if the nonce has moved. Sponsored quotes do not cache a built operation. A supplied signed UserOperation is evaluated directly rather than rebuilt.
+
+This quote method does not resolve or reserve a nonce lane. A later send or sign using `parallel` or `nonceKey` rebuilds in that lane instead of reusing the quote.
+
+<Callout type="warning">
+The cache key contains the transaction but not the per-call fee-mode configuration. Use the same fee-mode and paymaster settings for a quote and its matching send, sign, or transfer. Do not quote under one mode, token, paymaster, or sponsorship policy and execute the same transaction under another while the quote is cached.
+</Callout>
 
 **Parameters:**
-- `tx` (EvmErc4337Transaction | EvmErc4337Transaction[]): Transaction object or array (same as sendTransaction)
+- `tx` (EvmErc4337Transaction | EvmErc4337Transaction[] | UserOperationV7): Transaction object, array, or signed UserOperation
 - `config` (optional): Per-call configuration override (see [Config Override](#config-override))
 
 **Returns:** `Promise\<{fee: bigint}\>` - Fee estimate
+
+**Throws:** `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison).
+
+For a signed UserOperation, sponsored mode returns `0n`. Other modes return a 20% buffered native-gas ceiling in wei. In paymaster-token mode, this signed-operation quote is not a token-denominated paymaster charge.
 
 **Example:**
 ```javascript
@@ -411,8 +450,10 @@ Transfers ERC20 tokens via UserOperation.
 **Returns:** `Promise\<{hash: string, fee: bigint}\>` - UserOperation hash and fee
 
 **Throws:** 
-- Error if fee exceeds `transferMaxFee`
+- Error if fee meets or exceeds `transferMaxFee`
 - Error if insufficient token balance
+- Error if a raw `nonceKey` is outside `0..2^192-1`
+- `ConfigurationError` if the token paymaster address returned by the RPC mismatches the configured address
 
 **Example:**
 ```javascript
@@ -426,12 +467,14 @@ const result = await account.transfer({
   maxFeePerGas: 30000000000n,
   maxPriorityFeePerGas: 2000000000n
 })
-console.log('Transfer hash:', result.hash)
+console.log('Transfer UserOperation hash:', result.hash)
 console.log('Transfer fee:', result.fee)
 ```
 
 ##### `quoteTransfer(options, config?, txOverrides?)`
 Estimates the fee for an ERC20 token transfer.
+
+This method does not resolve or reserve a nonce lane. A later transfer using `parallel` or `nonceKey` rebuilds in that lane.
 
 **Parameters:**
 - `options` (TransferOptions): Transfer options (same as transfer)
@@ -439,6 +482,8 @@ Estimates the fee for an ERC20 token transfer.
 - `txOverrides` (optional): UserOperation gas and fee overrides (see [EvmErc4337GasOverrides](#evmerc4337gasoverrides))
 
 **Returns:** `Promise\<{fee: bigint}\>` - Fee estimate
+
+**Throws:** `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison).
 
 **Example:**
 ```javascript
@@ -502,6 +547,8 @@ Approves a spender to spend ERC20 tokens on behalf of the Safe account.
 - `txOverrides` (optional): UserOperation gas and fee overrides (see [EvmErc4337GasOverrides](#evmerc4337gasoverrides))
 
 **Returns:** `Promise\<{hash: string, fee: bigint}\>` - Transaction result
+
+**Throws:** `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison).
 
 **Example:**
 ```javascript
@@ -758,8 +805,8 @@ const sameAddress = WalletAccountEvmErc4337.predictSafeAddress(
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise\<bigint\>` | - |
 | `getPaymasterTokenBalance()` | Returns the paymaster token balance | `Promise\<bigint\>` | - |
 | `getAllowance(token, spender)` | Returns current token allowance for a spender | `Promise\<bigint\>` | - |
-| `quoteSendTransaction(tx, config?)` | Estimates the fee for a UserOperation | `Promise\<{fee: bigint}\>` | If simulation fails |
-| `quoteTransfer(options, config?, txOverrides?)` | Estimates the fee for an ERC20 transfer | `Promise\<{fee: bigint}\>` | If simulation fails |
+| `quoteSendTransaction(tx, config?)` | Estimates the fee for a UserOperation | `Promise\<{fee: bigint}\>` | If simulation fails or the token paymaster address mismatches |
+| `quoteTransfer(options, config?, txOverrides?)` | Estimates the fee for an ERC20 transfer | `Promise\<{fee: bigint}\>` | If simulation fails or the token paymaster address mismatches |
 | `getTransactionReceipt(hash)` | Returns a transaction receipt | `Promise\<EvmTransactionReceipt \| null\>` | - |
 | `getUserOperationReceipt(hash)` | Returns a UserOperation receipt | `Promise\<UserOperationReceipt \| null\>` | - |
 | `signTypedData(typedData)` | Signs EIP-712 typed structured data | `Promise\<string\>` | - |
@@ -855,7 +902,9 @@ Estimates the fee for a UserOperation.
 
 **Returns:** `Promise\<{fee: bigint}\>` - Fee estimate
 
-**Throws:** Error if simulation fails
+**Throws:**
+- Error if simulation fails
+- `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison)
 
 **Example:**
 ```javascript
@@ -881,6 +930,8 @@ Estimates the fee for an ERC20 token transfer.
 - `txOverrides` (optional): UserOperation gas and fee overrides (see [EvmErc4337GasOverrides](#evmerc4337gasoverrides))
 
 **Returns:** `Promise\<{fee: bigint}\>` - Fee estimate
+
+**Throws:** `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison).
 
 **Example:**
 ```javascript
@@ -1007,7 +1058,9 @@ interface EvmErc4337WalletCommonConfig {
   chainId: number;                          // Blockchain ID
   provider: string | Eip1193Provider | Array<string | Eip1193Provider>; // RPC provider or failover list
   bundlerUrl: string;                       // Bundler service URL
-  safeModulesVersion: string;               // Safe modules version (e.g., '0.3.0')
+  safeModulesVersion: string;               // Must be '0.3.0' in beta.15
+  parallel?: boolean;                       // Fresh random nonce-key lane per operation
+  nonceKey?: number | bigint | string;      // Reusable raw or named uint192 lane key
 }
 
 // Mode 1: Paymaster Token
@@ -1046,7 +1099,7 @@ type EvmErc4337WalletConfig = EvmErc4337WalletCommonConfig &
 
 ### Config Override
 
-The `config` parameter on `sendTransaction`, `signTransaction`, `quoteSendTransaction`, `transfer`, and `quoteTransfer` allows per-call overrides of gas payment settings:
+The published beta.15 `config` parameter type on `sendTransaction`, `signTransaction`, `quoteSendTransaction`, `transfer`, and `quoteTransfer` allows per-call overrides of gas payment settings:
 
 ```typescript
 type ConfigOverride = Partial<
@@ -1057,14 +1110,22 @@ type ConfigOverride = Partial<
 ```
 
 **Available override fields:**
-- `isSponsored` (boolean): Switch to sponsorship mode
-- `useNativeCoins` (boolean): Switch to native coin mode
+- `isSponsored` (boolean): Enable or disable sponsorship mode
+- `useNativeCoins` (boolean): Enable or disable native-coin mode
 - `paymasterUrl` (string): Override paymaster URL
 - `paymasterAddress` (string): Override paymaster contract
 - `paymasterToken` (\{address: string\}): Override paymaster token
 - `sponsorshipPolicyId` (string): Set sponsorship policy
 - `transactionMaxFee` (number | bigint): Override maximum fee for `sendTransaction()` and `signTransaction()`
 - `transferMaxFee` (number | bigint): Override maximum fee
+
+Overrides are shallow-merged with the account configuration, then validated. When switching modes, explicitly clear an inherited opposing flag: sponsorship requires `isSponsored: true` and `useNativeCoins: false`; native-coin mode requires `isSponsored: false` and `useNativeCoins: true`; paymaster-token mode requires both flags to be `false`. The merged configuration must also contain the URL, address, token, or policy fields required by the selected mode.
+
+At runtime, beta.15 additionally honors `parallel` and `nonceKey` per call for `signTransaction()`, `sendTransaction()`, and `transfer()`. Those two fields are missing from the published per-call declarations, so object literals containing them fail TypeScript excess-property checks even though JavaScript calls work. Construction-level `EvmErc4337WalletCommonConfig` includes both fields and is the typed path in this release. `quoteSendTransaction()` and `quoteTransfer()` do not select a lane.
+
+In token-paymaster mode, every path that builds a UserOperation validates a non-empty paymaster address returned by the RPC against `paymasterAddress`. A case-insensitive mismatch throws `ConfigurationError` before the operation is returned or submitted.
+
+The quote cache does not include fee-mode override fields in its key. Pass the same fee-mode and paymaster settings to a quote and its matching send, sign, or transfer. Lane sends, signs, and transfers bypass cached UserOperations and rebuild in the selected lane.
 
 ### EvmErc4337Transaction
 
@@ -1084,6 +1145,16 @@ interface EvmErc4337Transaction {
 ```
 
 The gas-override fields are optional. When omitted, the gas limits fall back to AbstractionKit's estimation and the fee pair (`maxFeePerGas` / `maxPriorityFeePerGas`) falls back to the bundler-fetched gas price. Setting either fee field disables the bundler-fetched fee fallback for both, so set them together. In a batched call (`tx` passed as an array), only the gas overrides on the first transaction are honored — a UserOperation carries a single set of gas fields regardless of how many calls it batches.
+
+### UserOperationV7
+
+`UserOperationV7` is the ERC-4337 v0.7 operation type re-exported by `@tetherto/wdk-wallet-evm-erc-4337` from AbstractionKit.
+
+```typescript
+import type { UserOperationV7 } from '@tetherto/wdk-wallet-evm-erc-4337'
+```
+
+`signTransaction()` returns this type with its `signature` populated. Passing that signed value to `quoteSendTransaction()` estimates its submitted cost; passing it to `sendTransaction()` submits the same operation without rebuilding it.
 
 ### EvmErc4337GasOverrides
 
@@ -1187,8 +1258,8 @@ interface UserOperationReceipt {
 
 ```typescript
 class ConfigurationError extends Error {
-  // Thrown when the wallet configuration is invalid
-  // e.g., missing required fields for the selected gas payment mode
+  // Thrown when the wallet configuration is invalid, including missing
+  // gas-payment fields or an unexpected token paymaster address from the RPC
 }
 ```
 

@@ -1,0 +1,86 @@
+---
+title: Track Symbiosis Settlement
+description: Persist the Symbiosis operation ID, poll cross-chain status, and recognize completion and refunds.
+docType: how-to
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+This guide covers [the operation ID](#persist-the-operation-id), [polling](#poll-until-terminal), [status meanings](#status-mapping), and [refunds](#recognize-refunds).
+
+## Persist the operation ID
+
+`swidge()` returns after the source transaction is broadcast. Destination settlement continues on the provider side, identified by the returned ID:
+
+```text
+<sourceChainId>:<sourceTransactionHash>
+```
+
+Persist the ID (or at least the source transaction hash) in durable storage before treating the operation as submitted. The ID is self-contained: a fresh `SymbiosisProtocol` instance in a new process can resolve it without any other state, so tracking survives an application restart.
+
+```javascript title="Status from a stored ID"
+const status = await symbiosis.getSwidgeStatus(storedId)
+```
+
+For a bare transaction hash, pass `options.fromChain` or rely on the instance's configured source `chain`.
+
+## Poll until terminal
+
+Poll [`getSwidgeStatus()`](/sdk/swidge-modules/swidge-symbiosis/api-reference#getswidgestatusid-options) until the status leaves `pending`, and bound the loop with a deadline:
+
+```javascript title="Poll with a deadline"
+const deadline = Date.now() + 60 * 60 * 1000
+
+for (;;) {
+  const { status, transactions } = await symbiosis.getSwidgeStatus(storedId)
+
+  if (status !== 'pending') {
+    console.log('Final status:', status)
+    for (const tx of transactions) {
+      console.log(`${tx.type} transaction on chain ${tx.chain}:`, tx.hash)
+    }
+    break
+  }
+
+  if (Date.now() > deadline) {
+    // Surface the stored ID and source hash for manual follow-up.
+    break
+  }
+
+  await new Promise(resolve => setTimeout(resolve, 10_000))
+}
+```
+
+Use `quote.estimatedDuration` (seconds) as a hint when choosing the polling deadline; cross-chain routes normally settle in minutes.
+
+<Callout type="warn">
+A status lookup that returns HTTP `404` is reported as `pending`, so a newly submitted operation and a genuinely unknown ID are indistinguishable through this method. The deadline is what turns a typo or an unindexed transaction into an actionable state instead of an infinite loop.
+</Callout>
+
+## Status mapping
+
+| Symbiosis state | WDK status | Meaning |
+|---|---|---|
+| `0` (success) | `completed` | Destination transaction settled. |
+| `1` (pending) | `pending` | Route is in flight. |
+| `2` (stuck) | `pending` | The provider resolves this state automatically by completing or refunding; no user action is required. |
+| `3` (reverted) | `refunded` | Funds were returned on the source side. |
+| `-1` (not found) | `pending` | The source transaction may not be indexed yet. |
+| HTTP `404` | `pending` | Operation unknown to the provider; see the callout above. |
+
+The status result also returns the provider's transaction list: the source transaction plus, once settled, a `destination` or `refund` transaction.
+
+## Recognize refunds
+
+When the status is `refunded`, the settlement transaction in the list is labeled `refund` and points at the transaction that returned the funds — on the source chain, at the refund address for deposit-address routes. Reconcile the refunded amount against the original input; provider costs already incurred are not necessarily returned in full.
+
+Treat `completed` and `refunded` as the two terminal states. Do not resubmit a route while its ID still reports `pending`; a stuck route resolves on the provider side without a new source transaction.
+
+## Next steps
+
+Branch on the typed error family in [Handle Errors](/sdk/swidge-modules/swidge-symbiosis/guides/handle-errors), or return to [Quote and Execute](/sdk/swidge-modules/swidge-symbiosis/guides/quote-and-execute).

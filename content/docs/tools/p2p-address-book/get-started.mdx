@@ -1,0 +1,94 @@
+---
+title: P2P Address Book Get Started
+description: Install @tetherto/wdk-p2p-address-book and create a local wallet contact directory.
+docType: how-to
+schemaType: TechArticle
+icon: Rocket
+---
+
+This guide creates a local address book without peer replication. Start here before enrolling other devices or configuring blind peers.
+
+## Prerequisites
+
+You need:
+
+- Wallet seed bytes as a `Uint8Array`, not mnemonic text.
+- A stable application namespace.
+- A persistent writable Corestore directory dedicated to that wallet seed and device.
+- A Node.js ESM or tested Bare environment with native-module support.
+- Network access when replication is enabled.
+
+Install the Address Book and declare Corestore because application code constructs it directly:
+
+```bash title="Install P2P Address Book"
+npm install @tetherto/wdk-p2p-address-book corestore
+```
+
+## Create a local address book
+
+The following example disables networking, creates a new book, stores a caller-validated destination, reads the records, and closes both package-owned and caller-owned resources:
+
+```javascript title="local-address-book.js"
+import Corestore from 'corestore'
+import AddressBook, {
+  ADDRESS_TYPES
+} from '@tetherto/wdk-p2p-address-book'
+
+export async function createLocalBook(seed, storagePath, recipientAddress) {
+  const store = new Corestore(storagePath)
+  let book
+
+  try {
+    book = await AddressBook.fromSeed(seed, store, {
+      namespace: 'example-wallet',
+      replicate: false
+    })
+    await book.create()
+
+    const contact = await book.addContact({
+      name: 'Alice',
+      username: 'alice'
+    })
+
+    await book.addAddress(contact.id, {
+      address: recipientAddress,
+      type: ADDRESS_TYPES.EVM,
+      network: 'ethereum',
+      label: 'Primary wallet'
+    })
+
+    return {
+      contact: await book.getContact(contact.id),
+      addresses: await book.listAddresses(contact.id)
+    }
+  } finally {
+    try {
+      if (book) await book.close()
+    } finally {
+      await store.close()
+    }
+  }
+}
+```
+
+Use `create()` only when the book is known to be new. To join an existing book, follow [Sync and Recovery](/tools/p2p-address-book/sync-and-recovery) and call `addMirror()` instead.
+
+## Understand readiness
+
+`fromSeed()` opens the local Autobase before resolving. With replication enabled, it also joins the Hyperswarm discovery topic.
+
+<Callout type="warn">
+In `1.0.0-beta.3`, the initial swarm flush and blind-peer setup continue in the background after `ready()` and `fromSeed()` resolve. Errors from that background startup are not surfaced to the caller. Do not treat either promise as proof that a peer is reachable or that replication has completed.
+</Callout>
+
+`addMirror()` has stronger semantics for a device joining an existing book: it awaits peering, waits for existing genesis, and enrolls the local writer. It still does not prove that every record has been restored or retained remotely.
+
+## Close resources
+
+`book.close()` closes the book's networking and replication resources. The direct API does not close the root Corestore supplied by the application, so close that store separately as shown above.
+
+If you supply a custom swarm through configuration, `book.close()` destroys it. Do not share that swarm with another owner that expects to keep using it.
+
+## Next steps
+
+Continue with [Sync and Recovery](/tools/p2p-address-book/sync-and-recovery), or review exact record and method behavior in the [API Reference](/tools/p2p-address-book/api-reference).

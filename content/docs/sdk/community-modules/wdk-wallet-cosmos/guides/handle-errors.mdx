@@ -1,0 +1,135 @@
+---
+title: Handle errors
+description: Handle Cosmos wallet validation, RPC, fee, receipt, retry, and lifecycle failures safely.
+docType: how-to
+schemaType: TechArticle
+---
+
+Classify an error before deciding whether an operation is safe to repeat.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Common failures
+
+| Failure | Likely cause | Safe response |
+|---|---|---|
+| Invalid mnemonic or derivation path | Seed or account path is invalid | Reject the input before creating an account |
+| Unknown chain name | `chainName` is absent from bundled registry data | Use a supported name or provide a complete custom configuration |
+| No RPC endpoints | An RPC-backed method resolved an empty endpoint list | Configure at least one trusted endpoint |
+| Invalid Bech32 address or prefix | Recipient format does not match the intended flow | Validate the address, checksum, and expected source or destination prefix |
+| Missing IBC channel mapping | Destination prefix has no `ibcChannels` entry | Configure and independently verify the source channel |
+| Fee-limit error | The deterministic quote met or exceeded `transferMaxFee` | Apply an application fee policy before the write |
+| `Transaction not found: <hash>` | The one-shot receipt lookup found no indexed result | Wait according to application policy and query again |
+| Disposed manager or account | A method was called after `dispose()` | Create a new manager lifecycle; do not reuse the disposed cached account |
+| Read-only conversion error | `toReadOnlyAccount()` is unsupported in this release | Use a short-lived seed-backed account or a different integration |
+
+<Callout type="error">
+For `transfer()`, a fee-limit error can occur after the transaction was broadcast. Do not interpret that error as proof that the transfer failed.
+</Callout>
+
+## Validate before a write
+
+Accept only positive integer base-unit amounts and validate chain-specific identifiers before constructing an operation:
+
+```js
+function assertBaseUnitAmount(amount) {
+  const isValidBigInt = (
+    typeof amount === 'bigint' &&
+    amount > 0n
+  )
+  const isValidNumber = (
+    typeof amount === 'number' &&
+    Number.isSafeInteger(amount) &&
+    amount > 0
+  )
+
+  if (!isValidBigInt && !isValidNumber) {
+    throw new TypeError('Amount must be a positive safe integer')
+  }
+}
+
+assertBaseUnitAmount(transfer.amount)
+```
+
+Also verify:
+
+- the intended chain ID and trusted RPC endpoints;
+- the recipient's Bech32 checksum and expected prefix;
+- the denomination against an application allowlist;
+- the sender balance and application spending policy;
+- the IBC source channel, destination chain, and route status;
+- the quote against an application-owned maximum fee.
+
+Quotes use configured metadata and fixed gas. They do not prove the operation will pass current chain validation.
+
+## Distinguish retryable failures
+
+The module can fall back or retry network-shaped failures such as timeouts, connection resets, DNS failures, HTTP `429`, and HTTP `5xx` responses. Cosmos ABCI and JSON-RPC transaction failures such as insufficient funds, invalid sequence, invalid address, out of gas, or invalid chain ID fail immediately.
+
+```js
+function getErrorMessage(error) {
+  return error instanceof Error ? error.message : String(error)
+}
+
+try {
+  const result = await account.sendTransaction(transaction)
+  console.log('Broadcast hash:', result.hash)
+} catch (error) {
+  console.error('Broadcast status is unresolved:', getErrorMessage(error))
+  throw error
+}
+```
+
+Do not build application retry logic from message matching alone. Preserve the original error and use it for diagnostics, but make retry decisions from the operation type and verified chain state.
+
+## Resolve ambiguous writes
+
+A network failure can happen after a node accepts the transaction but before your application receives the response. Blindly repeating `sendTransaction()` or `transfer()` can create a second valid payment.
+
+When a write throws:
+
+1. Treat its outcome as unknown.
+2. Query a known hash when one is available.
+3. Check the sender sequence, balances, and a trusted chain index.
+4. Reconcile the intended payment in your application ledger.
+5. Retry only after establishing that the first transaction was not accepted.
+
+`getTransactionReceipt()` performs one lookup and throws while a valid transaction is still waiting to be indexed. Poll with a bounded application policy rather than treating the first miss as final.
+
+## Quote before every write
+
+```js
+const applicationMaxFee = 5_000n
+const { fee } = await account.quoteSendTransaction(transaction)
+
+if (fee >= applicationMaxFee) {
+  throw new Error('Quoted fee meets or exceeds the application limit')
+}
+
+const result = await account.sendTransaction(transaction)
+```
+
+`sendTransaction()` does not enforce `transferMaxFee`. `transfer()` checks that option only after broadcast. The published package does not expose `transactionMaxFee`.
+
+## Always dispose sensitive state
+
+```js
+const manager = new WalletManagerCosmos(seedPhrase, config)
+
+try {
+  const account = await manager.getAccount(0)
+  // Perform the minimum required work.
+} finally {
+  manager.dispose()
+}
+```
+
+Disposal zeros the manager's module-owned seed buffer and cached accounts' module-owned private-key buffers. It cannot erase copies held in environment strings, application variables, logs, or dependencies.
+
+Avoid `account.keyPair` unless an integration strictly requires it. Its `privateKey` field exposes the underlying sensitive buffer; retaining a reference can defeat cleanup assumptions.
+
+See [Configuration](/sdk/community-modules/wdk-wallet-cosmos/configuration#rpc-fallback) for retry precedence and the [API reference](/sdk/community-modules/wdk-wallet-cosmos/api-reference#error-and-lifecycle-behavior) for exact released behavior.

@@ -1,0 +1,90 @@
+---
+title: Issue and receive RGB assets
+description: Issue NIA assets and create blind or witness receive invoices with the on-chain RGB wallet.
+docType: how-to
+schemaType: TechArticle
+---
+
+The v2.0.3 account declares Non-Inflatable Asset issuance and blind or witness receive invoices.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Prepare the wallet
+
+Register, synchronize, and confirm that the wallet has suitable Bitcoin UTXOs:
+
+```js
+await account.registerWallet()
+account.syncWallet()
+
+const unspents = account.listUnspents()
+if (unspents.length === 0) {
+  throw new Error('Fund or create RGB-compatible UTXOs before continuing')
+}
+```
+
+## Issue an NIA
+
+```js
+const issued = account.issueAssetNia({
+  ticker: 'DEMO',
+  name: 'Demo Asset',
+  amounts: [1_000],
+  precision: 0,
+})
+
+console.log(issued)
+```
+
+`amounts` contains issued allocations in asset base units. Validate ticker, name, precision, supply, and destination policy before issuance because issuance is a consequential state change.
+
+<Callout type="info">
+The released WDK account declares only `issueAssetNia()`. Do not infer UDA, CFA, IFA, inflation, or atomic-swap support from another RGB repository or unreleased branch.
+</Callout>
+
+## Create a blind receive invoice
+
+```js
+const receive = account.receiveAsset({
+  assetId,
+  amount: 100,
+  witness: false,
+})
+
+console.log(receive.invoice)
+```
+
+A blind receive normally consumes an available allocation-capable UTXO.
+
+## Create a witness receive invoice
+
+```js
+const receive = account.receiveAsset({
+  assetId,
+  amount: 100,
+  witness: true,
+})
+```
+
+Witness receive uses an on-chain witness flow. Select the mode according to the recipient's wallet state, privacy model, and fee requirements.
+
+## Handle invoices safely
+
+- Generate the invoice on the receiving wallet.
+- Transmit the complete invoice over an authenticated channel.
+- Verify the asset ID and amount in your application.
+- Treat the invoice as single-use.
+- Do not log invoices with user-identifying metadata.
+- Refresh transfer state before deciding whether an expired or timed-out receive failed.
+
+The sender needs the invoice string beginning with `rgb:`. An ordinary Bitcoin address is not an RGB transfer recipient.
+
+## Next steps
+
+- [Create and inspect UTXOs](/sdk/community-modules/wdk-wallet-rgb/guides/btc-utxos)
+- [Transfer an asset](/sdk/community-modules/wdk-wallet-rgb/guides/transfer-assets)
+- [Read balances and history](/sdk/community-modules/wdk-wallet-rgb/guides/balances-history)

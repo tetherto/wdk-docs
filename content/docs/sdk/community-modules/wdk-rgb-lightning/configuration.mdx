@@ -1,0 +1,150 @@
+---
+title: RGB Lightning wallet configuration
+description: Configure the beta.15 node, persistent state, native unlock services, VSS, LSP, and signer policy.
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+RGB Lightning has two configuration phases: construct the node with stable local settings, then unlock it with live Bitcoin and RGB service settings.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Constructor configuration
+
+```js
+import WalletManagerRgbLightning from '@utexo/wdk-rgb-lightning'
+
+const manager = new WalletManagerRgbLightning(seedPhrase, {
+  network: 'regtest',
+  dataDir: '/app-private/wdk/rgb-lightning',
+  daemonListeningPort: 0,
+  ldkPeerListeningPort: 0,
+  maxMediaUploadSizeMb: 5,
+  permissiveSignerPolicy: true,
+  nodeSeedDerivation: 'auto',
+})
+```
+
+## Consumed constructor fields
+
+| Field | Type | Default | Behavior |
+|---|---|---|---|
+| `network` | `'mainnet' \| 'testnet' \| 'regtest' \| 'signet'` | None | Required. |
+| `dataDir` | `string` | None | Required persistent, app-private RLN/LDK/RGB state path. |
+| `daemonListeningPort` | `number` | `0` | RLN daemon port; `0` selects an ephemeral port. |
+| `ldkPeerListeningPort` | `number` | `0` | LDK peer port; `0` selects an ephemeral port. |
+| `maxMediaUploadSizeMb` | `number` | `5` | Maximum RGB media upload size. |
+| `enableVirtualChannelsV0` | `boolean` | `false` | Enables trusted non-broadcast virtual channels; required for production APay. |
+| `virtualPeerPubkeys` | `string[]` | None | Node-ID allowlist for virtual channel peers. |
+| `permissiveSignerPolicy` | `boolean` | `true` | Relaxes VLS policy checks for the in-process single-user integration. |
+| `nodeSeedDerivation` | `'auto' \| 'wdk-seed-v2' \| 'legacy-v1'` | `'auto'` | Selects corrected or legacy beta node-identity derivation. |
+| `vssUrl` | `string` | None | Enables remote encrypted VSS snapshots. |
+| `vssAllowHttp` | `boolean` | `false` | Allows non-HTTPS VSS; use only for explicitly accepted development risk. |
+| `vssAllowEmptyRestore` | `boolean` | `false` | Allows startup without remote state when the VSS store is empty. |
+| `lspBaseUrl` | `string` | None | LSP base URL used by APay and no-argument `createLsp()`. |
+| `lspBearerToken` | `string` | None | Optional bearer credential for internal LSP endpoints. |
+
+Assess `permissiveSignerPolicy: true` against your threat model. Tightening it can reject operations the integration expects, so test policy changes with real channel lifecycle flows.
+
+## Native unlock request
+
+After `getAccount(0)`, pass live services to `unlock()` in native snake_case:
+
+```js
+const account = await manager.getAccount(0)
+
+await account.unlock({
+  bitcoind_rpc_username: 'rpc-user',
+  bitcoind_rpc_password: await loadRpcPassword(),
+  bitcoind_rpc_host: '127.0.0.1',
+  bitcoind_rpc_port: 18443,
+  indexer_url: 'tcp://127.0.0.1:50001',
+  proxy_endpoint: 'rpc://127.0.0.1:3000/json-rpc',
+  announce_addresses: [],
+  announce_alias: 'example-node',
+})
+```
+
+Do not log the unlock request. It can contain RPC credentials and network-identifying values.
+
+<Callout type="warn">
+The beta.15 `RgbLightningWalletConfig` declaration also lists camelCase Bitcoin RPC, indexer, proxy, and announce fields. `WalletManagerRgbLightning` does not consume or forward those constructor fields. Pass the corresponding native snake_case values to `account.unlock()` instead.
+</Callout>
+
+`proxyEndpoint` in constructor config is also not forwarded to native binding configuration. Well-formed RGB invoices carry consignment transport endpoints; explicit native operations should use their released request shapes.
+
+## Persistent state and wallet identity
+
+Use a different `dataDir` from [`@utexo/wdk-wallet-rgb`](/sdk/community-modules/wdk-wallet-rgb):
+
+```text
+/app-private/wdk/rgb-onchain
+/app-private/wdk/rgb-lightning
+```
+
+The two modules derive different wallet fingerprints and do not share RGB records. A shared seed and matching asset ID do not create a shared balance.
+
+Only one live owner should use a Lightning `dataDir` or VSS namespace. LDK state has strict consistency and anti-rollback requirements.
+
+## Node seed derivation
+
+| Value | Use |
+|---|---|
+| `auto` | Corrected WDK seed derivation for new nodes; retries the beta.14-and-earlier legacy identity only on an exact persisted signer-identity mismatch. |
+| `wdk-seed-v2` | Always use corrected derivation. |
+| `legacy-v1` | Always use legacy beta derivation for an already-persisted compatible node. |
+
+Do not switch derivation modes casually. A changed node identity can make persisted channel state unusable. Back up and test the exact upgrade path before changing a funded node.
+
+## VSS
+
+```js
+const manager = new WalletManagerRgbLightning(seedPhrase, {
+  network: 'mainnet',
+  dataDir: '/app-private/wdk/rgb-lightning',
+  vssUrl: 'https://vss.example.com',
+})
+```
+
+Non-loopback HTTP is rejected unless `vssAllowHttp` is true. The original seed is required to decrypt recovery state. `vssStatus()` is a local configuration view, not a VSS server health check.
+
+## LSP and APay
+
+```js
+const manager = new WalletManagerRgbLightning(seedPhrase, {
+  network: 'mainnet',
+  dataDir: '/app-private/wdk/rgb-lightning',
+  lspBaseUrl: 'https://lsp.example.com',
+  lspBearerToken: await loadLspToken(),
+  enableVirtualChannelsV0: true,
+  virtualPeerPubkeys: [lspNodeId],
+})
+```
+
+Production APay requires both virtual-channel fields and an LSP that trusts the wallet node. Treat `lspBearerToken` as a secret. The standalone `LspClient` rejects public HTTP by default.
+
+## Runtime binding
+
+Install exactly one optional native peer for the host:
+
+```bash
+# Node host
+npm install @utexo/rgb-lightning-node-nodejs@0.1.0-beta.11
+
+# Bare/mobile host
+npm install @utexo/rgb-lightning-node-bare@0.1.0-beta.15
+```
+
+The declared compatible ranges are wider than these verified versions. Pin and validate a known pair rather than allowing an unreviewed beta upgrade.
+
+## Next steps
+
+- [Get started](/sdk/community-modules/wdk-rgb-lightning/guides/get-started)
+- [Manage the node account](/sdk/community-modules/wdk-rgb-lightning/guides/manage-node-account)
+- [VSS backup and recovery](/sdk/community-modules/wdk-rgb-lightning/guides/vss-backup-recovery)
+- [API reference](/sdk/community-modules/wdk-rgb-lightning/api-reference)

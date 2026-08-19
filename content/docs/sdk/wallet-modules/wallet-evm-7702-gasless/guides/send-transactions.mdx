@@ -1,14 +1,14 @@
 ---
 title: Send Transactions
-description: Quote and send EVM transactions through EIP-7702 gasless UserOperations.
+description: Sign, quote, and send EVM transactions through EIP-7702 gasless UserOperations.
 docType: how-to
 ---
 
-This guide explains how to quote and send EVM transactions through ERC-4337 UserOperations.
+This guide explains how to sign, quote, and send EVM transactions through ERC-4337 UserOperations, including concurrent sends with independent nonce lanes. Use it to [send one transaction](#send-a-transaction), [send a batch](#send-a-batch), [sign without broadcasting](#sign-without-broadcasting), [quote and send a signed operation](#quote-and-send-a-signed-useroperation), [quote before sending](#quote-before-sending), [understand quote reuse](#quote-reuse), [override the fee mode](#override-fee-mode-for-one-send), [send concurrently](#send-concurrently-with-nonce-lanes), or [read receipts](#read-receipts).
 
 ## Send a Transaction
 
-Use `sendTransaction(tx)` with a single transaction object or an array of transaction objects.
+Use [`sendTransaction(tx)`](/sdk/wallet-modules/wallet-evm-7702-gasless/api-reference#walletaccountevm7702gasless) with a single transaction object or an array of transaction objects.
 
 ```javascript title="Send a transaction"
 const result = await account.sendTransaction({
@@ -21,7 +21,7 @@ console.log('UserOperation hash:', result.hash)
 console.log('Fee:', result.fee)
 ```
 
-The returned `hash` is a UserOperation hash. Use `getUserOperationReceipt(hash)` or `getTransactionReceipt(hash)` to check inclusion.
+The returned `hash` is a UserOperation hash. Use [`getUserOperationReceipt(hash)` or `getTransactionReceipt(hash)`](/sdk/wallet-modules/wallet-evm-7702-gasless/api-reference#walletaccountevm7702gasless) to check inclusion.
 
 ## Send a Batch
 
@@ -40,9 +40,44 @@ const result = await account.sendTransaction([
 ])
 ```
 
+## Sign Without Broadcasting
+
+Use [`signTransaction(tx)`](/sdk/wallet-modules/wallet-evm-7702-gasless/api-reference#quote-and-send-behavior) to build and sign a self-contained `UserOperationV8` without submitting it to the bundler. A transaction array produces one atomic, ordered UserOperation.
+
+```javascript title="Sign a UserOperation"
+const signedUserOperation = await account.signTransaction({
+  to: '0x742C4265F5Ba4F8E0842e2b9EfE66302F7a13B6F',
+  value: 0n,
+  data: '0x'
+})
+```
+
+<Callout type="warning">
+A signed UserOperation seals its EntryPoint nonce and, for a fresh account, its EIP-7702 authorization. Submit it before that nonce changes, and accept signed operations only from a trusted source prepared for the same account, chain, EntryPoint, delegation, and paymaster configuration.
+</Callout>
+
+## Quote and Send a Signed UserOperation
+
+Pass a signed operation to [`quoteSendTransaction()`](/sdk/wallet-modules/wallet-evm-7702-gasless/api-reference#quote-and-send-behavior) to inspect its fee without submitting it. Call [`sendTransaction()`](/sdk/wallet-modules/wallet-evm-7702-gasless/api-reference#quote-and-send-behavior) separately when you intend to broadcast the exact signed operation.
+
+1. Inspect the signed operation's fee:
+
+```javascript title="Quote a signed UserOperation"
+const quote = await account.quoteSendTransaction(signedUserOperation)
+console.log('Signed operation fee:', quote.fee)
+```
+
+2. After deciding to submit, broadcast the signed operation:
+
+```javascript title="Broadcast a signed UserOperation"
+const result = await account.sendTransaction(signedUserOperation)
+```
+
+Quoting a signed UserOperation avoids paymaster calls. Sponsorship mode returns `fee: 0n`; paymaster-token mode derives a native-gas ceiling in wei from the operation's existing gas fields rather than returning the token amount fixed when the operation was built. Sending broadcasts the supplied nonce, authorization, gas fields, and signature without rebuilding the operation or requesting another signature.
+
 ## Quote Before Sending
 
-Use `quoteSendTransaction(tx)` to estimate the fee without submitting the UserOperation.
+Use [`quoteSendTransaction(tx)`](/sdk/wallet-modules/wallet-evm-7702-gasless/api-reference#quote-and-send-behavior) to estimate the fee without submitting the UserOperation.
 
 ```javascript title="Quote then send"
 const tx = {
@@ -62,7 +97,13 @@ For paymaster-token mode, the fee is returned in the paymaster token's base unit
 
 ## Quote Reuse
 
-Owned accounts cache a recently quoted transaction for up to 2 minutes. If `sendTransaction()` receives the same transaction during that window, the account can reuse the built UserOperation. If the account must include a fresh EIP-7702 authorization, it rebuilds the UserOperation before sending.
+Owned accounts cache a recently quoted paymaster-token transaction for up to 2 minutes. If `sendTransaction()` receives the same transaction during that window, the account first reads the current EntryPoint nonce. It reuses the built UserOperation only when the nonce still matches; if the nonce moved, it quotes again. A send that needs a fresh EIP-7702 authorization also rebuilds the UserOperation before submission.
+
+Sends that set `parallel` or `nonceKey` build against that explicit lane and do not reuse the default-lane quote cache.
+
+<Callout type="warning">
+Cache identity does not include per-call fee-mode configuration. Use the same fee-mode and paymaster settings for `quoteSendTransaction()` and the matching `sendTransaction()`. Do not quote with one paymaster token or mode and send the same transaction with another while the quote is cached.
+</Callout>
 
 ## Override Fee Mode for One Send
 
@@ -76,6 +117,50 @@ const result = await account.sendTransaction({
   sponsorshipPolicyId: 'sp_special_case'
 })
 ```
+
+## Send Concurrently with Nonce Lanes
+
+The default EntryPoint nonce lane is sequential. Set `parallel: true` to create a fresh random lane for an operation, or set `nonceKey` to reuse a named or numeric lane:
+
+```javascript title="Use independent nonce lanes"
+const firstTx = {
+  to: '0x1111111111111111111111111111111111111111',
+  value: 1n,
+  data: '0x'
+}
+const secondTx = {
+  to: '0x2222222222222222222222222222222222222222',
+  value: 1n,
+  data: '0x'
+}
+
+await Promise.all([
+  account.sendTransaction(firstTx, { parallel: true }),
+  account.sendTransaction(secondTx, { parallel: true })
+])
+
+const scheduledPayment = {
+  to: '0x3333333333333333333333333333333333333333',
+  value: 1n,
+  data: '0x'
+}
+await account.sendTransaction(scheduledPayment, { nonceKey: 'scheduled-payments' })
+```
+
+`nonceKey` takes precedence over `parallel`. String keys are hashed into deterministic 192-bit lane keys. A number or bigint is used as the raw key and must be between `0` and `2^192 - 1`; use a bigint or string above JavaScript's safe integer range.
+
+<Callout type="warning">
+The beta.3 runtime accepts per-call `parallel` and `nonceKey`, but the published second-argument declarations omit those common fields. TypeScript object literals using the per-call form fail type checking. Configure lanes on the wallet or account constructor for typed code, or isolate an explicit local type workaround until the package declarations are corrected.
+</Callout>
+
+Use nonce lanes with these constraints:
+
+- Let one operation delegate a fresh EOA before starting concurrent lanes. Otherwise the EIP-7702 authorizations can race on the EOA nonce.
+- Different lanes have no ordering guarantee. Two overlapping sends on the same lane can both return hashes even though the later operation can never be included and never receives a receipt. Await inclusion before reusing a lane, or batch ordered calls into one UserOperation.
+- `parallel: true` creates a new EntryPoint nonce slot with a one-time on-chain state cost. Reuse a small set of named lanes for sustained parallel workloads.
+- Bundlers may enforce an [ERC-7562](https://eips.ethereum.org/EIPS/eip-7562) per-sender in-flight limit, commonly four UserOperations. The exact cap is bundler-specific, and additional lanes can be rejected until earlier operations are included.
+
+The same lane configuration applies to [`signTransaction()` and `transfer()`](/sdk/wallet-modules/wallet-evm-7702-gasless/api-reference#nonce-lane-behavior).
 
 ## Read Receipts
 

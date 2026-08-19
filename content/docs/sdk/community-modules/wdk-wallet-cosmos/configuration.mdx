@@ -1,0 +1,157 @@
+---
+title: Configuration
+description: Configure chain metadata, RPC fallback, fees, and IBC channels for the Base58 Cosmos wallet module.
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+`WalletManagerCosmos` accepts an optional `CosmosWalletConfig` object. The same configuration is resolved for every account created by that manager.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Configuration options
+
+| Field | Type | Default | Behavior |
+|---|---|---|---|
+| `chainName` | `string` | None | Looks up bundled `chain-registry` metadata. An unknown name throws. |
+| `rpcEndpoints` | `string[]` | Registry endpoints or `[]` | Replaces registry endpoints when the array is non-empty. |
+| `retryCount` | `number` | `3` | Maximum retry rounds after the first round. |
+| `retryDelay` | `number` | `150` | Base delay in milliseconds for exponential backoff. |
+| `addressPrefix` | `string` | Registry prefix or `cosmos` | Bech32 prefix used to derive the account address. |
+| `nativeDenom` | `string` | First registry fee denomination or `uatom` | Denomination used by `getBalance()` and native transaction methods. |
+| `coinType` | `number` | Registry SLIP-44 value or `118` | Coin type inserted into the BIP-44 derivation path. |
+| `gasPrice` | `string` | Registry average tier or none | Gas price in compact `amount+denom` form, such as `0.025uatom`. |
+| `transferMaxFee` | `number \| bigint` | None | Limit consulted by quote methods and, after broadcast, by `transfer()`. |
+| `ibcChannels` | `Record<string, { sourceChannel: string }>` | None | Source-channel map keyed by destination Bech32 prefix. |
+
+The published package does not expose `transactionMaxFee`. That option exists only in unreleased repository code and must not be used with `1.0.0-beta.4`.
+
+## Choose a configuration mode
+
+### Registry-backed configuration
+
+Use a chain name to resolve the Bech32 prefix, native denomination, coin type, RPC endpoints, chain ID, and fee metadata from the bundled `chain-registry@2.0.197` data.
+
+```js
+const cosmosHubConfig = {
+  chainName: 'cosmoshub',
+}
+```
+
+Registry data is packaged data, not a runtime discovery service. Verify endpoints and chain parameters before production use.
+
+### Custom chain configuration
+
+Omit `chainName` when you need to control every chain-specific field.
+
+```js
+const customChainConfig = {
+  rpcEndpoints: [
+    'https://rpc-1.example.invalid',
+    'https://rpc-2.example.invalid',
+  ],
+  addressPrefix: 'cosmos',
+  nativeDenom: 'uatom',
+  coinType: 118,
+  gasPrice: '0.025uatom',
+  retryCount: 3,
+  retryDelay: 150,
+}
+```
+
+Replace the example endpoints with trusted endpoints for the intended chain.
+
+### Registry metadata with custom endpoints
+
+Providing both values keeps registry metadata but replaces the registry endpoint list.
+
+```js
+const hybridConfig = {
+  chainName: 'cosmoshub',
+  rpcEndpoints: [
+    'https://rpc-1.example.invalid',
+    'https://rpc-2.example.invalid',
+  ],
+}
+```
+
+The custom endpoints are not appended to the registry list.
+
+## Fee and gas behavior
+
+The release uses a fixed gas limit of `200000` for bank sends and transfers. It calculates the fee as:
+
+```text
+ceil(gas price amount × 200000)
+```
+
+The account selects a gas price in this order:
+
+1. The average `gasPriceStep` from registry fee metadata.
+2. The explicit `gasPrice` string.
+3. The fallback average gas price `0.025` in `nativeDenom`.
+
+<Callout type="warn">
+When `chainName` resolves a registry `gasPriceStep`, that registry tier takes precedence over an explicit `gasPrice`. To use only an explicit gas price, use a complete custom configuration without `chainName`.
+</Callout>
+
+`getFeeRates()` returns deterministic fee amounts for the same fixed gas limit. With registry tiers, `normal` uses the average tier and `fast` uses the high tier. With only an explicit gas price, both values are the same. The method requires a non-empty RPC endpoint configuration but does not query RPC.
+
+Fee quotes also use this deterministic calculation. They do not simulate the transaction, check the sender's balance, or validate that the fee is currently accepted by the chain.
+
+### Fee limits
+
+`quoteTransfer()` and `quoteSendTransaction()` throw when the calculated fee is greater than or equal to `transferMaxFee`.
+
+<Callout type="warn">
+In `1.0.0-beta.4`, `transfer()` checks `transferMaxFee` after signing and broadcasting, and `sendTransaction()` does not enforce it. Always quote and enforce an application-level fee limit before either write. Do not treat `transferMaxFee` alone as a pre-broadcast guard.
+</Callout>
+
+## RPC fallback
+
+RPC-backed operations try endpoints in array order. A default `retryCount` of `3` permits the initial round plus three retry rounds. The delay between rounds grows exponentially from `retryDelay`.
+
+Network-shaped failures such as timeouts, connection resets, DNS failures, HTTP `429`, and HTTP `5xx` responses can move to another endpoint or retry. Chain and transaction failures such as insufficient funds, invalid sequence, invalid address, out of gas, or invalid chain ID fail immediately.
+
+<Callout type="warn">
+A timeout or connection failure during a write does not prove that the transaction was not accepted. Check the transaction hash, account sequence, and chain state before attempting the write again.
+</Callout>
+
+## IBC channels
+
+`transfer()` compares the recipient's Bech32 prefix with `addressPrefix`:
+
+- matching prefixes use a Cosmos bank send;
+- different prefixes require a matching entry in `ibcChannels` and use IBC `MsgTransfer`.
+
+```js
+const ibcConfig = {
+  chainName: 'cosmoshub',
+  ibcChannels: {
+    osmo: {
+      sourceChannel: '<source-channel-on-cosmoshub>',
+    },
+  },
+}
+```
+
+Replace the placeholder with the source channel on the configured source chain. The module does not discover or validate channel topology. It uses source port `transfer` and a fixed 600-second timestamp timeout.
+
+## Security and cleanup
+
+- Use RPC endpoints you trust for balances, account metadata, transaction signing context, broadcast results, and receipts.
+- Do not log mnemonic, seed, or `keyPair.privateKey` values.
+- Call `manager.dispose()` in `finally`; it disposes cached accounts and zeros module-owned seed and private-key buffers.
+- Disposal cannot erase copies retained by application code or guarantee cleanup inside every dependency.
+
+## Next steps
+
+- [Get started](/sdk/community-modules/wdk-wallet-cosmos/guides/get-started)
+- [Transfer tokens and use IBC](/sdk/community-modules/wdk-wallet-cosmos/guides/transfer-tokens)
+- [Handle errors](/sdk/community-modules/wdk-wallet-cosmos/guides/handle-errors)
+- [API reference](/sdk/community-modules/wdk-wallet-cosmos/api-reference)

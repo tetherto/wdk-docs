@@ -1,0 +1,167 @@
+---
+title: Get Started
+description: Install WDK CLI and complete an Ethereum mainnet wallet flow
+docType: getting-started
+schemaType: TechArticle
+icon: Rocket
+---
+
+Install WDK CLI globally:
+
+```bash title="Terminal"
+npm install -g --allow-scripts=@tetherto/wdk-cli @tetherto/wdk-cli@1.0.0-beta.2
+```
+
+The current release is `1.0.0-beta.2`. Beta releases can change before the stable release.
+
+<Callout type="warn">
+This guide uses Ethereum mainnet and can spend real funds. Create a dedicated wallet, fund it with only enough ETH for this example and network fees, and verify the network, address, and amount before sending funds.
+</Callout>
+
+## Prerequisites
+
+- Node.js `22.18.0` or later
+- npm
+- Enough ETH on Ethereum mainnet to fund the new wallet and pay the example transaction fee
+- A second Ethereum mainnet address you control to receive the example transfer
+
+Verify the installation:
+
+```bash title="Terminal"
+wdk --version
+wdk --help
+```
+
+The package installs the `wdk`, `wdk-mcp`, and `wdk-daemon` binaries. Use `wdk` for the steps below.
+
+## 1. Create A Wallet
+
+Create a named 12-word wallet:
+
+```bash title="Terminal"
+wdk wallet create --name quickstart --words 12
+```
+
+The CLI then asks for the wallet-encryption passphrase:
+
+1. At `Passphrase (empty for none):`, enter a strong, unique passphrase. The input is hidden.
+2. At `Confirm passphrase:`, enter the same passphrase again.
+3. After the wallet is stored, the CLI displays the generated seed phrase once. Record it offline before continuing.
+
+Store the seed phrase and passphrase separately. Do not put either value in a terminal command, source file, screenshot, agent transcript, or online note. The current CLI permits an empty passphrase, but an empty value provides no meaningful protection for the encrypted seed file.
+
+If this is your first wallet, it becomes the default automatically. You do not need to change an existing default wallet because the wallet-dependent commands below select `quickstart` explicitly.
+
+## 2. Unlock The Wallet
+
+Unlock the wallet for five minutes:
+
+```bash title="Terminal"
+wdk wallet unlock --name quickstart --ttl 5
+```
+
+At `Enter passphrase of 'quickstart' wallet to unlock:`, enter the wallet passphrase. The input is hidden.
+
+The TTL starts at unlock and does not restart when you use the wallet. Unlock it again if the session expires while you complete this guide.
+
+Set `--ttl 0` to disable automatic expiry:
+
+```bash title="Terminal"
+wdk wallet unlock --name quickstart --ttl 0
+```
+
+An unlimited session remains unlocked until you explicitly lock it, the daemon stops, its process fails, or the machine restarts. Any process running as the same operating-system user that can connect to the daemon can use an unlocked wallet without entering the passphrase again. Prefer a finite TTL and use `--ttl 0` only in a controlled local environment.
+
+## 3. Get The Ethereum Address
+
+Derive the wallet's Ethereum mainnet address:
+
+```bash title="Terminal"
+wdk get address --network ethereum --wallet quickstart
+```
+
+Copy the returned address and verify every character before using it as the funding destination.
+
+## 4. Fund The Wallet
+
+From another wallet or exchange you trust:
+
+1. Select Ethereum mainnet.
+2. Paste the address from step 3 as the destination.
+3. Send more than `0.0001 ETH` so the new wallet can send `0.0001 ETH` and pay the Ethereum gas fee in step 6.
+4. Account for any separate withdrawal or network fee charged by the sending wallet or exchange.
+5. Verify the network, destination, and amount, then submit the transfer.
+
+<Callout type="info">
+Receiving funds is an on-chain operation outside WDK CLI. The wallet does not need to remain unlocked while you wait for the transfer to confirm.
+</Callout>
+
+Wait for the funding transaction to confirm before checking the balance. The five-minute session may expire while you wait.
+
+## 5. Check The Balance
+
+Read the wallet's native Ethereum balance:
+
+```bash title="Terminal"
+wdk get balance --network ethereum --wallet quickstart
+```
+
+If the command reports that the wallet is locked, unlock it again and repeat the balance check.
+
+## 6. Send ETH
+
+Use an Ethereum address you control as the recipient.
+
+<Callout type="warn">
+The next command broadcasts an irreversible Ethereum mainnet transaction and spends real ETH. WDK CLI does not ask for another confirmation after the wallet is unlocked. Replace the placeholder, then review the network, recipient, amount, and available balance before running it.
+</Callout>
+
+```bash title="Terminal"
+wdk send \
+  --network ethereum \
+  --to YOUR_ETHEREUM_ADDRESS \
+  --amount 0.0001 \
+  --wallet quickstart
+```
+
+The command broadcasts immediately and prints the resulting transaction identifier.
+
+### Optional: Estimate Without Broadcasting
+
+Add `--dry-run` to estimate the fee and return a transaction summary without broadcasting:
+
+```bash title="Terminal"
+wdk send \
+  --network ethereum \
+  --to YOUR_ETHEREUM_ADDRESS \
+  --amount 0.0001 \
+  --wallet quickstart \
+  --dry-run
+```
+
+## 7. Lock The Wallet
+
+End the wallet session when you finish:
+
+```bash title="Terminal"
+wdk wallet lock --name quickstart
+```
+
+Lock every unlocked wallet with:
+
+```bash title="Terminal"
+wdk wallet lock --all
+```
+
+## Next Steps
+
+- [Manage Wallets](/cli/guides/manage-wallets/) - Import, export, rename, unlock, and delete wallets
+- [Manage Tokens](/cli/guides/manage-tokens/) - Inspect and extend the token registry
+- [Use the MCP Server](/cli/guides/use-mcp-server/) - Connect an MCP-compatible AI client
+- [Security Model](/cli/reference/security-model/) - Understand the daemon trust boundary and session trade-offs
+
+***
+
+## Need Help?
+
+<SupportCards />

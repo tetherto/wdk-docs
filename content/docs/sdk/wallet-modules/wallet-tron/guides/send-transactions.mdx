@@ -5,7 +5,7 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-This guide explains how to [send native TRX](#send-native-trx), [send smart-contract calls](#send-smart-contract-calls), [send pre-built TronWeb transactions](#send-pre-built-tronweb-transactions), [estimate transaction fees](#estimate-transaction-fees), [cap transaction fees](#cap-transaction-fees), [sign without broadcasting](#sign-without-broadcasting), and [use dynamic fee rates](#use-dynamic-fee-rates).
+This guide explains how to [send native TRX](#send-native-trx), [send smart-contract calls](#send-smart-contract-calls), [send pre-built TronWeb transactions](#send-pre-built-tronweb-transactions), [estimate transaction fees](#estimate-transaction-fees), [cap transaction fees](#cap-transaction-fees), [sign without broadcasting](#sign-without-broadcasting), [quote and send a signed transaction](#quote-and-send-a-signed-transaction), and [use dynamic fee rates](#use-dynamic-fee-rates).
 
 <Callout type="info">
 On Tron, values are expressed in sun (1 TRX = 1,000,000 sun).
@@ -65,7 +65,7 @@ const result = await account.sendTransaction(transaction)
 console.log('Transaction hash:', result.hash)
 ```
 
-Before signing or sending a pre-built transaction, WDK checks that the transaction owner address matches the wallet account address.
+Before signing or sending an unsigned pre-built transaction, WDK checks that the transaction owner address matches the wallet account address.
 
 ## Estimate Transaction Fees
 
@@ -103,6 +103,27 @@ const signedTransaction = await account.signTransaction({
 
 console.log('Signed transaction:', signedTransaction)
 ```
+
+## Quote and Send a Signed Transaction
+
+Pass the `TronSignedTransaction` returned by `signTransaction()` to the quote and send methods when review and submission are separate steps.
+
+```javascript title="Quote and Send a Signed Transaction"
+const signedTransaction = await account.signTransaction({
+  to: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
+  value: 1000000
+})
+
+const quote = await account.quoteSendTransaction(signedTransaction)
+console.log('Estimated fee:', quote.fee, 'sun')
+
+const result = await account.sendTransaction(signedTransaction)
+console.log('Transaction hash:', result.hash)
+```
+
+<Callout type="warning">
+WDK forwards a signed object unchanged and does not refresh its reference block or expiration, re-sign it, or repeat the unsigned owner-address check. Validate that the signed transaction belongs to the intended account and submit it while it remains valid. `sendTransaction()` quotes it again and enforces `transactionMaxFee`.
+</Callout>
 
 ## Use Dynamic Fee Rates
 

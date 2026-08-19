@@ -74,8 +74,6 @@ export const customTree: Node[] = [
     configuration('/sdk/core-module/configuration'),
     apiReference('/sdk/core-module/api-reference'),
   ]),
-  page('All modules reference', '/sdk/all-modules', 'LayoutGrid'),
-
   separator('Wallets'),
   page('Which wallet module do I need?', '/sdk/wallet-modules/which-wallet-module', 'ListChecks'),
   page('Wallet module reference', '/sdk/wallet-modules', 'WalletCards'),
@@ -241,15 +239,63 @@ export const customTree: Node[] = [
       apiReference('/sdk/wallet-modules/wallet-solana-gasless/api-reference'),
     ]),
   ]),
+  folder('Aptos', '/sdk/wallet-modules/wallet-aptos', 'Wallet', [
+    usage('/sdk/wallet-modules/wallet-aptos/usage'),
+    configuration('/sdk/wallet-modules/wallet-aptos/configuration'),
+    apiReference('/sdk/wallet-modules/wallet-aptos/api-reference'),
+  ]),
+
   folder('RGB', '/sdk/community-modules/wdk-wallet-rgb', 'Palette', [
+    usage('/sdk/community-modules/wdk-wallet-rgb/usage'),
+    guides([
+      page('Get Started', '/sdk/community-modules/wdk-wallet-rgb/guides/get-started'),
+      page('Manage Account and Storage', '/sdk/community-modules/wdk-wallet-rgb/guides/manage-account-storage'),
+      page('Balances and History', '/sdk/community-modules/wdk-wallet-rgb/guides/balances-history'),
+      page('BTC and UTXOs', '/sdk/community-modules/wdk-wallet-rgb/guides/btc-utxos'),
+      page('Issue and Receive Assets', '/sdk/community-modules/wdk-wallet-rgb/guides/issue-receive-assets'),
+      page('Transfer Assets', '/sdk/community-modules/wdk-wallet-rgb/guides/transfer-assets'),
+      page('Backup, Restore, and Migrate', '/sdk/community-modules/wdk-wallet-rgb/guides/backup-restore-migrate'),
+      page('Sign and Verify Messages', '/sdk/community-modules/wdk-wallet-rgb/guides/sign-verify-messages'),
+      page('Handle Errors', '/sdk/community-modules/wdk-wallet-rgb/guides/handle-errors'),
+    ]),
+    configuration('/sdk/community-modules/wdk-wallet-rgb/configuration'),
     apiReference('/sdk/community-modules/wdk-wallet-rgb/api-reference'),
   ]),
+  folder('RGB Lightning', '/sdk/community-modules/wdk-rgb-lightning', 'Zap', [
+    usage('/sdk/community-modules/wdk-rgb-lightning/usage'),
+    guides([
+      page('Get Started', '/sdk/community-modules/wdk-rgb-lightning/guides/get-started'),
+      page('Manage Node and Account', '/sdk/community-modules/wdk-rgb-lightning/guides/manage-node-account'),
+      page('Balances and History', '/sdk/community-modules/wdk-rgb-lightning/guides/balances-history'),
+      page('BTC and UTXOs', '/sdk/community-modules/wdk-rgb-lightning/guides/send-btc-utxos'),
+      page('Peers and Channels', '/sdk/community-modules/wdk-rgb-lightning/guides/peers-channels'),
+      page('Lightning Payments', '/sdk/community-modules/wdk-rgb-lightning/guides/lightning-payments'),
+      page('RGB Assets', '/sdk/community-modules/wdk-rgb-lightning/guides/rgb-assets'),
+      page('LSP, Lightning Address, and APay', '/sdk/community-modules/wdk-rgb-lightning/guides/lsp-lightning-address-apay'),
+      page('VSS Backup and Recovery', '/sdk/community-modules/wdk-rgb-lightning/guides/vss-backup-recovery'),
+      page('Sign and Verify Messages', '/sdk/community-modules/wdk-rgb-lightning/guides/sign-verify-messages'),
+      page('Handle Errors and Cleanup', '/sdk/community-modules/wdk-rgb-lightning/guides/handle-errors-cleanup'),
+    ]),
+    configuration('/sdk/community-modules/wdk-rgb-lightning/configuration'),
+    apiReference('/sdk/community-modules/wdk-rgb-lightning/api-reference'),
+  ]),
   folder('Cosmos', '/sdk/community-modules/wdk-wallet-cosmos', 'Orbit', [
+    usage('/sdk/community-modules/wdk-wallet-cosmos/usage'),
+    guides([
+      page('Get Started', '/sdk/community-modules/wdk-wallet-cosmos/guides/get-started'),
+      page('Manage Accounts', '/sdk/community-modules/wdk-wallet-cosmos/guides/manage-accounts'),
+      page('Check Balances', '/sdk/community-modules/wdk-wallet-cosmos/guides/check-balances'),
+      page('Send Transactions', '/sdk/community-modules/wdk-wallet-cosmos/guides/send-transactions'),
+      page('Transfer Tokens', '/sdk/community-modules/wdk-wallet-cosmos/guides/transfer-tokens'),
+      page('Sign and Verify Messages', '/sdk/community-modules/wdk-wallet-cosmos/guides/sign-verify-messages'),
+      page('Handle Errors', '/sdk/community-modules/wdk-wallet-cosmos/guides/handle-errors'),
+    ]),
+    configuration('/sdk/community-modules/wdk-wallet-cosmos/configuration'),
     apiReference('/sdk/community-modules/wdk-wallet-cosmos/api-reference'),
   ]),
 
   separator('Swap and Bridge'),
-  page('Swidge protocol interface', '/sdk/swidge-modules', 'Route'),
+  page('Swap and bridge modules', '/sdk/swidge-modules', 'Route'),
   folder('Orchestra', '/sdk/swidge-modules/swidge-orchestra', 'Waypoints', [
     usage('/sdk/swidge-modules/swidge-orchestra/usage'),
     guides([
@@ -265,6 +311,28 @@ export const customTree: Node[] = [
     usage('/sdk/swidge-modules/swidge-rhinofi/usage'),
     configuration('/sdk/swidge-modules/swidge-rhinofi/configuration'),
     apiReference('/sdk/swidge-modules/swidge-rhinofi/api-reference'),
+  ]),
+  folder('Symbiosis', '/sdk/swidge-modules/swidge-symbiosis', 'Waypoints', [
+    usage('/sdk/swidge-modules/swidge-symbiosis/usage'),
+    guides([
+      page('Get Started', '/sdk/swidge-modules/swidge-symbiosis/guides/get-started'),
+      page('Quote and Execute', '/sdk/swidge-modules/swidge-symbiosis/guides/quote-and-execute'),
+      page('Bridge from Bitcoin', '/sdk/swidge-modules/swidge-symbiosis/guides/bridge-from-bitcoin'),
+      page('Track Settlement', '/sdk/swidge-modules/swidge-symbiosis/guides/track-settlement'),
+      page('Handle Errors', '/sdk/swidge-modules/swidge-symbiosis/guides/handle-errors'),
+    ]),
+    configuration('/sdk/swidge-modules/swidge-symbiosis/configuration'),
+    apiReference('/sdk/swidge-modules/swidge-symbiosis/api-reference'),
+  ]),
+  folder('LI.FI', '/sdk/swidge-modules/swidge-lifi', 'Waypoints', [
+    usage('/sdk/swidge-modules/swidge-lifi/usage'),
+    configuration('/sdk/swidge-modules/swidge-lifi/configuration'),
+    apiReference('/sdk/swidge-modules/swidge-lifi/api-reference'),
+  ]),
+  folder('0x', '/sdk/swidge-modules/swidge-0x', 'Waypoints', [
+    usage('/sdk/swidge-modules/swidge-0x/usage'),
+    configuration('/sdk/swidge-modules/swidge-0x/configuration'),
+    apiReference('/sdk/swidge-modules/swidge-0x/api-reference'),
   ]),
   folder('BOB Gateway', '/sdk/swidge-modules/swidge-gateway', 'Waypoints', [
     usage('/sdk/swidge-modules/swidge-gateway/usage'),
@@ -296,7 +364,7 @@ export const customTree: Node[] = [
   ]),
 
   separator('Lending'),
-  page('Lending module reference', '/sdk/lending-modules', 'Banknote'),
+  page('Lending modules', '/sdk/lending-modules', 'Banknote'),
   folder('Aave', '/sdk/lending-modules/lending-aave-evm', 'Landmark', [
     usage('/sdk/lending-modules/lending-aave-evm/usage'),
     guides([
@@ -329,6 +397,25 @@ export const customTree: Node[] = [
     ]),
     configuration('/sdk/fiat-modules/fiat-moonpay/configuration'),
     apiReference('/sdk/fiat-modules/fiat-moonpay/api-reference'),
+  ]),
+
+  separator('CLI'),
+  folder('WDK CLI', '/cli', 'Terminal', [
+    guides([
+      page('Get Started', '/cli/guides/get-started', 'Rocket'),
+      page('Manage Wallets', '/cli/guides/manage-wallets', 'WalletCards'),
+      page('Manage Tokens', '/cli/guides/manage-tokens', 'Coins'),
+      page('Custom Networks', '/cli/guides/custom-networks', 'Network'),
+      page('Use the MCP Server', '/cli/guides/use-mcp-server', 'Wand'),
+      page('Handle Errors', '/cli/guides/handle-errors', 'CircleAlert'),
+    ]),
+    configuration('/cli/configuration'),
+    apiReference('/cli/api-reference'),
+    group('Reference', 'BookOpen', [
+      page('Architecture', '/cli/reference/architecture', 'Network'),
+      page('Storage Format', '/cli/reference/storage-format', 'Database'),
+      page('Security Model', '/cli/reference/security-model', 'ShieldCheck'),
+    ]),
   ]),
 
   separator('AI'),
@@ -368,6 +455,12 @@ export const customTree: Node[] = [
     configuration('/tools/secret-manager/configuration'),
     apiReference('/tools/secret-manager/api-reference'),
   ]),
+  folder('P2P Address Book', '/tools/p2p-address-book', 'BookUser', [
+    page('Get Started', '/tools/p2p-address-book/get-started', 'Rocket'),
+    page('Sync and Recovery', '/tools/p2p-address-book/sync-and-recovery', 'RefreshCw'),
+    apiReference('/tools/p2p-address-book/api-reference'),
+    page('Production and Privacy', '/tools/p2p-address-book/production-and-privacy', 'ShieldCheck'),
+  ]),
   folder('Fetch token prices', '/tools/price-rates', 'TrendingUp', [
     configuration('/tools/price-rates/configuration'),
     apiReference('/tools/price-rates/api-reference'),
@@ -396,10 +489,13 @@ export const customTree: Node[] = [
     configuration('/tools/pear-wrk-wdk/configuration'),
     apiReference('/tools/pear-wrk-wdk/api-reference'),
   ]),
-  folder('Validate addresses and parse payment links', '/tools/wdk-utils', 'Wrench', [
+  folder('Validate inputs and manage key material', '/tools/wdk-utils', 'Wrench', [
+    guides([
+      page('Split and Recover a Mnemonic', '/tools/wdk-utils/guides/shamir-secret-sharing', 'Share2'),
+    ]),
     configuration('/tools/wdk-utils/configuration'),
     apiReference('/tools/wdk-utils/api-reference'),
-  ]),
+  ], 'WDK Utils'),
   folder('Bundle WDK for a Bare worklet', '/tools/worklet-bundler', 'Package', [
     configuration('/tools/worklet-bundler/configuration'),
     apiReference('/tools/worklet-bundler/api-reference'),

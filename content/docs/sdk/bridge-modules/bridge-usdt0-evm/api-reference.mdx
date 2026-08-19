@@ -26,7 +26,7 @@ new Usdt0ProtocolEvm(account, config?)
 **Parameters:**
 - `account` (WalletAccountEvm | WalletAccountEvmErc4337 | WalletAccountReadOnlyEvm | WalletAccountReadOnlyEvmErc4337): The wallet account to use for bridge operations
 - `config` (BridgeProtocolConfig, optional): Configuration object
-  - `bridgeMaxFee` (number | bigint, optional): Maximum total bridge cost in wei
+  - `bridgeMaxFee` (number | bigint, optional): Rejects `bridge()` when the implementation's combined fee value is at or above this cap
 
 **Example:**
 ```javascript
@@ -38,7 +38,7 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 })
 
 const bridgeProtocol = new Usdt0ProtocolEvm(account, {
-  bridgeMaxFee: 1000000000000000n // Maximum bridge fee in wei
+  bridgeMaxFee: 1000000000000000n // Standard Ethereum account: source native base units
 })
 ```
 
@@ -46,13 +46,15 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
-| `bridge(options, config?)` | Bridges tokens to another blockchain | `Promise<BridgeResult>` | If no provider or fee exceeds max |
+| `bridge(options, config?)` | Bridges tokens to another blockchain | `Promise<BridgeResult>` | If no provider or the combined fee is at or above the cap |
 | `quoteBridge(options, config?)` | Estimates the cost of a bridge operation | `Promise<Omit<BridgeResult, 'hash'>>` | If no provider |
+| `getSupportedChains()` | Returns chain descriptors from bundled configuration | `Promise<SwidgeSupportedChain[]>` | — |
+| `getSupportedTokens(options?)` | Returns configured USD₮0 or XAU₮0 descriptors, with optional filters | `Promise<SwidgeSupportedToken[]>` | — |
 
 #### `bridge(options, config?)`
 Bridges tokens to a different blockchain using the USD₮0 protocol.
 
-Before calling `bridge()`, approve the token allowance for the source-chain bridge spender. If you pass `oftContractAddress`, use the same address as the approval `spender`.
+With a standard EVM account, approve the source-chain bridge spender before calling `bridge()`. If you pass `oftContractAddress`, use the same address as the approval `spender`. Supported ERC-4337 accounts do not need a separate approval call; the protocol bundles an approval and helper call into one UserOperation.
 
 **Parameters:**
 - `options` (BridgeOptions): Bridge operation options
@@ -62,8 +64,7 @@ Before calling `bridge()`, approve the token allowance for the source-chain brid
   - `amount` (number | bigint): Amount to bridge in token base units
   - `oftContractAddress` (string, optional): Custom OFT contract address to use instead of auto-resolving from the source chain
   - `dstEid` (number, optional): Custom LayerZero destination endpoint ID override
-- `config` (`Pick<EvmErc4337WalletConfig, 'paymasterToken'> & Pick<BridgeProtocolConfig, 'bridgeMaxFee'>`, optional): Override configuration for ERC-4337 accounts
-  - `paymasterToken` (`{ address: string }`, optional): Paymaster token configuration for gas fees
+- `config` (`Erc4337BridgeConfig`, optional): ERC-4337 gas-payment overrides plus optional `bridgeMaxFee`
   - `bridgeMaxFee` (number | bigint, optional): Override maximum bridge fee
 
 **Returns:** `Promise<BridgeResult>` - Bridge operation result
@@ -71,18 +72,20 @@ Before calling `bridge()`, approve the token allowance for the source-chain brid
 **Throws:**
 - Error if account is read-only
 - Error if no provider is configured
-- Error if bridge fee exceeds maximum allowed
+- Error if the combined fee value is equal to or greater than `bridgeMaxFee`
 
 **Example:**
 ```javascript
 // Standard EVM account
-await account.approve({
+const standardBridgeProtocol = new Usdt0ProtocolEvm(standardAccount)
+
+await standardAccount.approve({
   token: '0x...', // USDT contract address
   spender: '0x...', // OFT or bridge spender address
   amount: 1000000n
 })
 
-const result = await bridgeProtocol.bridge({
+const result = await standardBridgeProtocol.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...', // Recipient address
   token: '0x...', // ₮ contract address
@@ -91,47 +94,41 @@ const result = await bridgeProtocol.bridge({
 })
 
 console.log('Bridge hash:', result.hash)
-console.log('Total fee:', result.fee)
+console.log('Account transaction fee:', result.fee)
 console.log('Bridge fee:', result.bridgeFee)
 
-// ERC-4337 account
-await account.approve({
-  token: '0x...', // USDT contract address
-  spender: '0x...', // OFT or bridge spender address
-  amount: 1000000n
-})
+// ERC-4337 account: approval is bundled automatically
+const erc4337BridgeProtocol = new Usdt0ProtocolEvm(erc4337Account)
 
-const result2 = await bridgeProtocol.bridge({
+const result2 = await erc4337BridgeProtocol.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...', // Recipient address
   token: '0x...', // USDT contract address
   amount: 1000000n,
-  oftContractAddress: '0x...' // Same address used as approval spender
+  oftContractAddress: '0x...' // Optional custom OFT contract
 }, {
-  paymasterToken: { address: '0x...' }, // Paymaster token configuration
-  bridgeMaxFee: 1000000000000000n
+  paymasterToken: { address: '0x...' } // Paymaster token configuration
 })
 
 console.log('Bridge hash:', result2.hash) // Single hash for bundled operations
-console.log('Total fee:', result2.fee)
+console.log('Account fee:', result2.fee)
 console.log('Bridge fee:', result2.bridgeFee)
 ```
 
 #### `quoteBridge(options, config?)`
 Estimates the cost of a bridge operation without executing it.
 
-Some providers estimate the same bridge transaction that `bridge()` sends. If that estimate fails because token allowance is missing, approve the source-chain bridge spender before calling `quoteBridge()`.
+For standard EVM accounts, some providers estimate the same bridge transaction that `bridge()` sends. If that estimate fails because token allowance is missing, approve the source-chain bridge spender before calling `quoteBridge()`. ERC-4337 quotes include the bundled approval transaction.
 
 **Parameters:**
 - `options` (BridgeOptions): Bridge operation options (same as bridge method)
-- `config` (`Pick<EvmErc4337WalletConfig, 'paymasterToken'>`, optional): Override configuration for ERC-4337 accounts
-  - `paymasterToken` (`{ address: string }`, optional): Paymaster token configuration for gas fees
+- `config` (`Erc4337QuoteConfig`, optional): ERC-4337 gas-payment overrides
 
 **Returns:** `Promise<Omit<BridgeResult, 'hash'>>` - Bridge cost estimate
 
 **Throws:** Error if no provider is configured
 
-**Example:**
+**Standard-account example:**
 ```javascript
 const quote = await bridgeProtocol.quoteBridge({
   targetChain: 'polygon',
@@ -140,11 +137,11 @@ const quote = await bridgeProtocol.quoteBridge({
   amount: 1000000n
 })
 
-console.log('Estimated fee:', quote.fee, 'wei')
-console.log('Bridge fee:', quote.bridgeFee, 'wei')
+console.log('Estimated transaction fee:', quote.fee)
+console.log('Bridge fee:', quote.bridgeFee)
 
 // Check if fees are acceptable
-if (quote.fee + quote.bridgeFee > 1000000000000000n) {
+if (quote.fee + quote.bridgeFee >= 1000000000000000n) {
   console.log('Bridge fees too high')
 } else {
   // Proceed with bridge
@@ -163,6 +160,35 @@ if (quote.fee + quote.bridgeFee > 1000000000000000n) {
   })
 }
 ```
+
+#### `getSupportedChains()`
+
+Returns the chain descriptors from the package's bundled configuration. This method does not make a network request.
+
+```javascript
+const chains = await bridgeProtocol.getSupportedChains()
+// [{ id: 'ethereum', name: 'Ethereum', type: 'evm', nativeToken: 'ETH' }, ...]
+```
+
+#### `getSupportedTokens(options?)`
+
+Returns USD₮0 and XAU₮0 descriptors for chains that have a matching bridge contract in bundled configuration. Optional `fromChain` or `toChain` filters accept a chain key, chain ID, or endpoint ID. `fromToken` filters by token symbol.
+
+```javascript
+const allTokens = await bridgeProtocol.getSupportedTokens()
+const ethereumTokens = await bridgeProtocol.getSupportedTokens({
+  fromChain: 'ethereum'
+})
+const xaut0Tokens = await bridgeProtocol.getSupportedTokens({
+  fromToken: 'XAUT0'
+})
+```
+
+The returned descriptors omit on-chain token addresses because this discovery method does not resolve them. Solana, TON, and TRON are destination-only entries and are not returned by `getSupportedTokens()`.
+
+<Callout type="warn">
+These discovery methods expose separate static chain and token lists. They do not prove that a source token has an on-chain peer for a destination. Confirm the exact pair with `quoteBridge()` before execution.
+</Callout>
 
 ## Types
 
@@ -184,8 +210,8 @@ interface BridgeOptions {
 ```typescript
 interface BridgeResult {
   hash: string;                     // Main bridge transaction hash
-  fee: bigint;                      // Total gas cost in wei
-  bridgeFee: bigint;                // Bridge protocol fee in wei
+  fee: bigint;                      // Account quote fee; unit depends on account gas-payment mode
+  bridgeFee: bigint;                // Standard: source native unit; ERC-4337 helper: bridged-token base units
 }
 ```
 
@@ -193,17 +219,60 @@ interface BridgeResult {
 
 ```typescript
 interface BridgeProtocolConfig {
-  bridgeMaxFee?: number | bigint;    // Maximum total bridge cost in wei
+  bridgeMaxFee?: number | bigint;    // Reject when the implementation's fee + bridgeFee is at or above this value
 }
 ```
 
-### EvmErc4337WalletConfig
+```typescript
+type Erc4337QuoteConfig = Partial<
+  | EvmErc4337WalletPaymasterTokenConfig
+  | EvmErc4337WalletSponsorshipPolicyConfig
+  | EvmErc4337WalletNativeCoinsConfig
+>
+
+type Erc4337BridgeConfig = Erc4337QuoteConfig & {
+  bridgeMaxFee?: number | bigint
+}
+```
+
+### Fee units and `bridgeMaxFee`
+
+| Account flow | `fee` | `bridgeFee` |
+|---|---|---|
+| Standard EVM | Source-chain native base units | Source-chain native base units |
+| ERC-4337 with native gas | Source-chain native base units | Bridged-token base units |
+| ERC-4337 with token-paid gas | Paymaster-token base units | Bridged-token base units |
+| ERC-4337 with sponsored gas | `0` | Bridged-token base units |
+
+<Callout type="warn">
+In `1.0.0-beta.7`, the ERC-4337 path numerically adds `fee + bridgeFee` when checking `bridgeMaxFee`, even when the fields have different denominations. Do not interpret that sum as a total monetary cost. Set an ERC-4337 cap only after confirming that the selected account payment mode produces compatible units. The equality boundary is rejected.
+</Callout>
+
+`Erc4337QuoteConfig` is a partial operation-level override of the wallet's token-paid, sponsored, or native-gas configuration. Sponsored gas uses `isSponsored: true` and can include `sponsorshipPolicyId`; native gas uses `useNativeCoins: true`. See the [ERC-4337 wallet configuration](/sdk/wallet-modules/wallet-evm-erc-4337/configuration) for the complete account requirements.
+
+### Discovery types
 
 ```typescript
-interface EvmErc4337WalletConfig {
-  paymasterToken?: {                // Token to use for paying gas fees
-    address: string;
-  };
+type SwidgeSupportedChain = {
+  id: string | number
+  name: string
+  type: string
+  nativeToken: string
+}
+
+type SwidgeSupportedToken = {
+  token: string
+  chain: string | number
+  symbol: string
+  decimals: number
+  address?: string
+  name?: string
+}
+
+type SwidgeSupportedTokensOptions = {
+  fromChain?: string | number
+  fromToken?: string
+  toChain?: string | number
 }
 ```
 
@@ -212,13 +281,13 @@ interface EvmErc4337WalletConfig {
 The bridge protocol supports the following chains:
 
 **Source Chains (EVM):**
-- `'ethereum'` (Chain ID: 1)
-- `'arbitrum'` (Chain ID: 42161) - ERC-4337 support
+- `'ethereum'` (Chain ID: 1) - ERC-4337 helper support
+- `'arbitrum'` (Chain ID: 42161) - ERC-4337 helper support
 - `'optimism'` (Chain ID: 10)
-- `'polygon'` (Chain ID: 137)
+- `'polygon'` (Chain ID: 137) - ERC-4337 helper support
 - `'berachain'` (Chain ID: 80094)
 - `'ink'` (Chain ID: 57073)
-- `'plasma'` (Chain ID: 9745)
+- `'plasma'` (Chain ID: 9745) - ERC-4337 helper support
 - `'conflux'` (Chain ID: 1030)
 - `'corn'` (Chain ID: 21000000)
 - `'avalanche'` (Chain ID: 43114)
@@ -235,11 +304,13 @@ The bridge protocol supports the following chains:
 - `'unichain'` (Chain ID: 130)
 - `'xlayer'` (Chain ID: 196)
 
-**Destination Chains:**
+**Configured destination keys:**
 - **EVM destinations**: same as source-chain set above
 - `'solana'` (EID: 30168)
 - `'ton'` (EID: 30343)
 - `'tron'` (EID: 30420)
+
+The configured keys are not a Cartesian route matrix. Route execution still requires a matching source contract and a destination peer configured on-chain.
 
 ## Error Handling
 
@@ -294,9 +365,7 @@ async function bridgeTokens() {
   })
 
   // Create bridge protocol
-  const bridgeProtocol = new Usdt0ProtocolEvm(account, {
-    bridgeMaxFee: 1000000000000000n
-  })
+  const bridgeProtocol = new Usdt0ProtocolEvm(account)
 
   // Get quote first
   const quote = await bridgeProtocol.quoteBridge({
@@ -320,7 +389,7 @@ async function bridgeTokens() {
     recipient: '0x...', // Recipient address
     token: '0x...', // USDT contract address
     amount: 1000000n,
-    oftContractAddress: '0x...' // Same address used as approval spender
+    oftContractAddress: '0x...' // Optional custom OFT contract
   })
 
   console.log('Bridge result:', result)
@@ -397,28 +466,20 @@ async function gaslessBridge() {
   })
 
   // Create bridge protocol
-  const bridgeProtocol = new Usdt0ProtocolEvm(account, {
-    bridgeMaxFee: 1000000000000000n
-  })
+  const bridgeProtocol = new Usdt0ProtocolEvm(account)
 
-  // Bridge with gasless transactions
-  await account.approve({
-    token: '0x...', // USDT contract address
-    spender: '0x...', // OFT or bridge spender address
-    amount: 1000000n
-  })
-
+  // The protocol bundles approval and the helper call in one UserOperation.
   const result = await bridgeProtocol.bridge({
     targetChain: 'polygon',
     recipient: '0x...', // Recipient address
     token: '0x...', // USDT contract address
     amount: 1000000n,
-    oftContractAddress: '0x...' // Same address used as approval spender
+    oftContractAddress: '0x...' // Optional custom OFT contract
   }, {
     paymasterToken: { address: '0x...' } // Paymaster token configuration
   })
 
-  console.log('Gasless bridge result:', result)
+  console.log('ERC-4337 bridge result:', result)
   return result
 }
 ```

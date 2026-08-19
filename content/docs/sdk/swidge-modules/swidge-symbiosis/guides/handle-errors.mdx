@@ -1,0 +1,98 @@
+---
+title: Handle Symbiosis Errors
+description: Branch on the typed Symbiosis error family, distinguish pre-write from post-write failures, and retry safely.
+docType: how-to
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+This guide covers [the typed error family](#the-typed-error-family), [branching with instanceof](#branch-with-instanceof), [pre-write versus post-write failures](#pre-write-versus-post-write-failures), and [cleanup](#dispose-signing-accounts).
+
+## The typed error family
+
+Every package-specific error extends `SymbiosisError`, so one `instanceof` check separates provider errors from wallet errors. The classes most flows branch on are:
+
+| Error | Thrown when | Useful fields |
+|---|---|---|
+| `ValidationError` | A locally checked option is invalid, for example a missing or non-positive `fromTokenAmount`. | — |
+| `ExactOutNotSupportedError` | `toTokenAmount` requests exact output. | — |
+| `UnsupportedChainError`, `UnsupportedTokenError` | An identifier is not in provider discovery. | `identifier` |
+| `UnsupportedRouteError` | The bound account lacks a capability the source route requires (TON, Tron, and Solana routes are probed at execution time), or a TON route needs more than one message. | `type` |
+| `FeeLimitExceededError` | A mapped fee total exceeds its configured cap, before any wallet write. | `feeType`, `bps`, `cap` |
+| `TransactionError` | Approval receipt polling detects a revert or times out. | `hash` |
+| `ApiError` | The REST API returns a non-2xx response, times out, or fails before a response. | `status`, `response`; `cause` for failures before a response |
+
+The full list, including `ConfigurationError` and `ReadOnlyAccountError`, is in the [API reference](/sdk/swidge-modules/swidge-symbiosis/api-reference#error-classes).
+
+## Branch with instanceof
+
+```javascript title="Handle execution errors"
+import {
+  ApiError,
+  FeeLimitExceededError,
+  SymbiosisError,
+  UnsupportedRouteError,
+  ValidationError
+} from '@symbiosis-finance/wdk-protocol-swidge-symbiosis'
+
+try {
+  const result = await symbiosis.swidge(options, { maxProtocolFeeBps: 100 })
+  await persistOperation(result.id, result.hash)
+} catch (error) {
+  if (error instanceof FeeLimitExceededError) {
+    // No wallet write happened. Show the fresh fee level and let the user re-confirm.
+    console.error(`Fee ${error.bps} bps exceeds cap ${error.cap} bps`)
+  } else if (error instanceof UnsupportedRouteError) {
+    // Keep this route quote-only or bind a wallet account that supports it.
+    console.error(`Source route type not executable: ${error.type}`)
+  } else if (error instanceof ValidationError) {
+    // Fix the request options; nothing was sent.
+  } else if (error instanceof ApiError) {
+    // status is 0 for a timeout or network failure without an HTTP response.
+    console.error(`Provider API failure (status ${error.status})`)
+  } else if (error instanceof SymbiosisError) {
+    // Another package-defined error; see the API reference.
+  } else {
+    // Propagated wallet account error: RPC failures, insufficient gas, signing issues.
+  }
+}
+```
+
+`persistOperation` is your app code. Store the ID before reporting success so a crash right after broadcast does not lose the handle to the funds in flight.
+
+## Pre-write versus post-write failures
+
+Which side of the wallet write an error occurs on determines whether a retry is safe:
+
+- **Before any wallet write** — `ValidationError`, `ConfigurationError`, discovery errors, `ExactOutNotSupportedError`, `FeeLimitExceededError`, and an `ApiError` from the quote or swap request. No funds moved; calling `swidge()` again is safe.
+- **After a wallet write started** — a `TransactionError` from approval polling, or a wallet error thrown by the route broadcast. An approval or the source transaction may already be on-chain.
+
+<Callout type="warn">
+Do not retry `swidge()` blindly after an uncertain failure. First check the wallet's transaction history and, when you hold a source hash, query [`getSwidgeStatus()`](/sdk/swidge-modules/swidge-symbiosis/api-reference#getswidgestatusid-options) with `'<sourceChainId>:<sourceTransactionHash>'`. A duplicate call builds a second, independent route and spends the input twice.
+</Callout>
+
+API requests time out after 30 seconds by default (`timeoutMs`), and the module does not retry or back off automatically. Put retry policy for reads — quotes, discovery, status — in the application, and keep executions single-flight.
+
+## Dispose signing accounts
+
+Clear key material when the flow ends, including on the error paths:
+
+```javascript title="Dispose in finally"
+try {
+  const result = await symbiosis.swidge(options)
+  await persistOperation(result.id, result.hash)
+} finally {
+  account.dispose()
+}
+```
+
+Dispose only when no further signing is needed from that instance; status polling needs no account and works after disposal.
+
+## Next steps
+
+Return to [Quote and Execute](/sdk/swidge-modules/swidge-symbiosis/guides/quote-and-execute), or review provider-behavior boundaries in [Configuration](/sdk/swidge-modules/swidge-symbiosis/configuration).

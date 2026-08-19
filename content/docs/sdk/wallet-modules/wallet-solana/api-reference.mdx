@@ -129,8 +129,8 @@ In v1.0.0-beta.9 the constructor was made public. The static factory method `Wal
 | `sign(message)` | Signs a message using the account's private key | `Promise<string>` |
 | `signTransaction(tx)` | Signs a Solana transaction without broadcasting it | `Promise<FullySignedTransaction>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
-| `sendTransaction(tx)` | Sends a Solana transaction | `Promise<{hash: string, fee: bigint}>` |
-| `quoteSendTransaction(tx)` | Estimates the fee for a transaction | `Promise<{fee: bigint}>` |
+| `sendTransaction(tx)` | Builds and sends a transaction, or broadcasts a fully signed transaction | `Promise<{hash: string, fee: bigint}>` |
+| `quoteSendTransaction(tx)` | Estimates the fee for a transaction or fully signed transaction | `Promise<{fee: bigint}>` |
 | `transfer(options)` | Transfers SPL tokens to another address | `Promise<{hash: string, fee: bigint}>` |
 | `quoteTransfer(options)` | Estimates the fee for an SPL token transfer | `Promise<{fee: bigint}>` |
 | `getBalance()` | Returns the native SOL balance (in lamports) | `Promise<bigint>` |
@@ -205,11 +205,13 @@ console.log('Signature valid:', isValid)
 Sends a Solana transaction.
 
 **Parameters:**
-- `tx` (SolanaTransaction): A simple transfer object or a prebuilt `TransactionMessage`
+- `tx` (SolanaTransaction | FullySignedTransaction): A simple transfer object, prebuilt `TransactionMessage`, or fully signed transaction
   - `to` (string): Recipient's Solana address (base58-encoded)
   - `value` (number | bigint): Amount in lamports
 
 When `tx` is a `TransactionMessage`, WDK preserves an existing recent blockhash or durable nonce lifetime. If no lifetime is present, WDK fetches the latest blockhash before quoting or sending. If you set an explicit `feePayer`, it must match the wallet address.
+
+When `tx` is a `FullySignedTransaction`, WDK quotes it again, enforces `transactionMaxFee`, and broadcasts its exact wire bytes. It does not refresh the recent blockhash or durable nonce and does not re-sign the transaction.
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Object containing transaction hash and fee (in lamports)
 
@@ -228,7 +230,7 @@ console.log('Transaction fee:', result.fee, 'lamports')
 Estimates the fee for a Solana transaction.
 
 **Parameters:**
-- `tx` (SolanaTransaction): The transaction object (same as `sendTransaction`)
+- `tx` (SolanaTransaction | FullySignedTransaction): A transaction input or fully signed transaction (same forms as `sendTransaction`)
 
 **Returns:** `Promise<{fee: bigint}>` - Object containing fee estimate (in lamports)
 
@@ -514,6 +516,16 @@ interface SolanaWalletConfig {
   transactionMaxFee?: number | bigint;
 }
 ```
+
+### FullySignedTransaction
+
+`signTransaction()` returns the `FullySignedTransaction` type defined by `@solana/transactions`. The WDK package does not re-export this type; import it from the Solana package when an explicit annotation is needed.
+
+```typescript
+import type { FullySignedTransaction } from '@solana/transactions'
+```
+
+The signed value contains the compiled message bytes and all required signatures. Its transaction lifetime is sealed at signing time.
 
 ### TransferOptions
 

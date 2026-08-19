@@ -1,0 +1,223 @@
+---
+title: 0x Swidge Usage
+description: Install @0x/wdk-protocol-swidge-0x 0.1.0, then quote, execute, and track same-chain EVM swaps.
+docType: how-to
+schemaType: TechArticle
+icon: BookOpen
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+These examples use [`@0x/wdk-protocol-swidge-0x@0.1.0`](https://www.npmjs.com/package/@0x/wdk-protocol-swidge-0x/v/0.1.0).
+
+## Install
+
+```bash
+npm install @0x/wdk-protocol-swidge-0x@0.1.0
+```
+
+For execution, also install the EVM wallet implementation used to create the writable `account` in the examples:
+
+```bash
+npm install @tetherto/wdk-wallet-evm@1.0.0-beta.16
+```
+
+Follow [Getting Started with the EVM wallet](/sdk/wallet-modules/wallet-evm/guides/getting-started) to create a `WalletManagerEvm` and retrieve a writable `account`. The execution examples below assume that account is already available and configured for the same chain.
+
+## Prerequisites
+
+Before using the module, prepare:
+
+- A [0x API key](https://dashboard.0x.org/create-account).
+- A chain id returned by `getSupportedChains()`.
+- Verified token identifiers and decimal precision for both assets: chain-specific contract addresses for ERC-20 tokens, or a documented [native-token alias](/sdk/swidge-modules/swidge-0x/api-reference#native-token-aliases).
+- A writable WDK EVM account on the same chain for execution.
+- An RPC provider that supports transaction and receipt lookups if your application tracks approvals and swap status.
+- A runtime with global `fetch`. Node.js 18 and later provide it; the package's `bare` export initializes `bare-node-runtime/global` for Bare applications.
+
+<Callout type="info">
+The package does not declare a minimum Bare engine version. Check the engine requirements in your resolved dependency tree; a fresh 0.1.0 installation currently requires Bare 1.29.4 or later.
+</Callout>
+
+Keep the API key in secret-managed configuration. Do not commit it or include it in logs.
+
+## Quote without a wallet
+
+Construct `ZeroExProtocol` with `undefined` when you only need an indicative quote. `apiKey` and `chainId` are still required.
+
+```javascript title="Quote USDC to WETH on Ethereum"
+import ZeroExProtocol from '@0x/wdk-protocol-swidge-0x'
+
+const USDC = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
+const WETH = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
+
+const zeroEx = new ZeroExProtocol(undefined, {
+  chainId: 1,
+  apiKey: process.env.ZERO_EX_API_KEY,
+  defaultSlippage: 0.005
+})
+
+const quote = await zeroEx.quoteSwidge({
+  fromToken: USDC,
+  toToken: WETH,
+  fromTokenAmount: 100_000_000n
+})
+
+console.log(quote.fromTokenAmount)
+console.log(quote.toTokenAmount)
+console.log(quote.toTokenAmountMin)
+console.log(quote.fees)
+```
+
+Amounts use the token's smallest unit. The example sells 100 USDC because USDC uses six decimals on Ethereum.
+
+Pass token amounts as positive `bigint` values. Although the interface also accepts `number`, values above `Number.MAX_SAFE_INTEGER` can lose precision before conversion, and the module does not reject zero or negative amounts before calling 0x.
+
+For an exact-output quote, provide `toTokenAmount` instead of `fromTokenAmount`. Passing both amounts or neither amount throws `ZeroExValidationError`.
+
+## Execute after confirmation
+
+Bind the protocol to a writable WDK EVM account configured for the same `chainId`. Pass the output recipient explicitly.
+
+`showConfirmation()` below is an application-defined function. It must display the available indicative quote details together with the intended recipient and slippage, and resolve only after the user explicitly approves the swap.
+
+```javascript title="Confirm and submit the swap"
+const recipient = await account.getAddress()
+
+const zeroEx = new ZeroExProtocol(account, {
+  chainId: 1,
+  apiKey: process.env.ZERO_EX_API_KEY,
+  defaultSlippage: 0.005,
+  maxNetworkFeeBps: 50,
+  maxProtocolFeeBps: 30
+})
+
+const options = {
+  fromToken: USDC,
+  toToken: WETH,
+  fromTokenAmount: 100_000_000n,
+  recipient
+}
+
+const indicativeQuote = await zeroEx.quoteSwidge(options)
+await showConfirmation(indicativeQuote, options)
+
+const result = await zeroEx.swidge(options)
+
+console.log(result.id)
+console.log(result.hash)
+console.log(result.transactions)
+```
+
+<Callout type="warn">
+`swidge()` obtains a new firm quote after the confirmation shown above. The firm quote can differ from the indicative quote. The current module does not expose the firm quote as a separate confirmation step.
+
+For an ERC-20 sell, `swidge()` can also submit an approval for the firm quote's spender and sell amount without a separate approval-confirmation callback. Tell the user before execution that this approval transaction may be submitted first.
+</Callout>
+
+Validate user-provided slippage before passing it to the module. Version 0.1.0 converts the decimal value to basis points but does not enforce a range.
+
+## Handle ERC-20 approval
+
+When the firm quote reports an allowance issue, `swidge()` calls the bound account's `approve()` method for the quoted sell amount. When `approve()` returns a hash and the account implements `getTransactionReceipt()`, the module waits up to three minutes for the approval receipt before sending the swap.
+
+<Callout type="warn">
+Confirm that the bound account returns an approval transaction hash and implements receipt lookup before using automatic approval with real funds. If either capability is absent, version 0.1.0 does not establish that the approval was mined before it submits the swap.
+</Callout>
+
+Set `skipApproval: true` only when your application has already established and verified a sufficient allowance:
+
+```javascript title="Use a pre-existing allowance"
+const zeroEx = new ZeroExProtocol(account, {
+  chainId: 1,
+  apiKey: process.env.ZERO_EX_API_KEY,
+  skipApproval: true
+})
+```
+
+Skipping a required approval can cause the swap transaction to fail.
+
+## Track transaction status
+
+Use the `id` returned by `swidge()` with the same bound account:
+
+```javascript title="Check swap status"
+const status = await zeroEx.getSwidgeStatus(result.id)
+
+if (status.status === 'completed') {
+  console.log('Swap transaction confirmed')
+} else if (status.status === 'failed') {
+  console.log('Swap transaction reverted')
+}
+```
+
+Status is derived from on-chain transaction lookups:
+
+| Observation | Result |
+|---|---|
+| Transaction exists, but no receipt is available | `pending` |
+| Receipt reports success | `completed` |
+| Receipt reports failure | `failed` |
+| Transaction lookup or receipt lookup throws | `pending` |
+| `getTransactionByHash()` returns `null` | Throws `ZeroExUnknownTransactionError` |
+| Account has no transaction lookup methods | `pending` |
+
+The 0.1.0 package entrypoint does not export `ZeroExUnknownTransactionError`, although `getSwidgeStatus()` can throw it.
+
+## Handle public errors
+
+The 0.1.0 package entrypoint exports these error classes:
+
+```javascript title="Handle exported 0x module errors"
+import {
+  ZeroExApiError,
+  ZeroExFeeLimitExceededError,
+  ZeroExInsufficientLiquidityError,
+  ZeroExReadOnlyError,
+  ZeroExTimeoutError,
+  ZeroExTransactionRevertedError,
+  ZeroExUnsupportedOperationError,
+  ZeroExValidationError
+} from '@0x/wdk-protocol-swidge-0x'
+
+try {
+  await zeroEx.swidge(options)
+} catch (error) {
+  if (error instanceof ZeroExInsufficientLiquidityError) {
+    // Ask the user to choose another pair or amount.
+  } else if (error instanceof ZeroExFeeLimitExceededError) {
+    // Do not submit; a fee exceeded its cap or could not be evaluated.
+  } else if (error instanceof ZeroExReadOnlyError) {
+    // Bind a writable WDK EVM account.
+  } else if (error instanceof ZeroExUnsupportedOperationError) {
+    // Keep the route on the configured source chain.
+  } else if (error instanceof ZeroExValidationError) {
+    // Correct the route options or protocol configuration.
+  } else if (error instanceof ZeroExTransactionRevertedError) {
+    // The approval transaction reverted.
+  } else if (error instanceof ZeroExTimeoutError) {
+    // Check error.hash and current allowance before retrying; approval may still mine.
+  } else if (error instanceof ZeroExApiError && error.status === 429) {
+    // Back off before requesting another quote or retrying execution.
+  } else if (error instanceof ZeroExApiError) {
+    // Handle the provider response without logging credentials.
+  } else {
+    throw error
+  }
+}
+```
+
+`ZeroExTimeoutError` exposes the broadcast approval transaction hash as `error.hash`. The approval may still be mined after polling stops, so check its receipt and the current allowance before retrying `swidge()`.
+
+<Cards>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-0x/configuration">
+Review constructor settings and fee-limit behavior.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-0x/api-reference">
+Review exact methods, options, results, and errors.
+</Card>
+</Cards>

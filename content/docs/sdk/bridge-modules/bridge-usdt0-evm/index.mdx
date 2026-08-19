@@ -11,8 +11,8 @@ Use the USD₮0 bridge module to move USD₮0 and XAU₮0 across supported chain
 
 - **Cross-Chain Bridge**: Move USD₮0 tokens between supported blockchains
 - **LayerZero Integration**: Uses LayerZero protocol for secure cross-chain transfers
-- **Expanded Multi-Chain Support**: Bridge across 25+ networks including all major EVM chains
-- **Non-EVM Destinations**: Bridge to Solana, TON, and TRON from any supported EVM chain
+- **Expanded Multi-Chain Support**: Discover 25 configured EVM and non-EVM network keys
+- **Non-EVM Destinations**: Bridge toward Solana, TON, and TRON when the source token has a compatible route contract
 - **Account Abstraction**: Works with both standard EVM wallets and ERC-4337 smart accounts
 - **Fee Management**: Built-in fee calculation and bridge cost estimation
 - **Token Support**: Supports USD₮0 and XAU₮0 ecosystem tokens
@@ -60,8 +60,31 @@ All source chains above, plus:
 | TON | 30343 |
 | TRON | 30420 |
 
+### Non-EVM route candidates
+
+For auto-resolved routes toward Solana, TON, or TRON, beta.7 skips the source chain's ordinary `oftContract`. The bundled configuration can instead consider these source contracts:
+
+| Source token contract family | EVM source chains with a bundled candidate |
+|---|---|
+| USD₮0 legacy mesh | Ethereum, Arbitrum, Celo |
+| XAU₮0 OFT | Ethereum, Arbitrum, Avalanche, Celo, HyperEVM, Ink, Monad, Plasma, Polygon, Stable |
+
+This table shows source-side contract availability, not a guarantee that every listed source reaches every non-EVM destination. The selected contract must support the destination endpoint on-chain. Confirm the exact source-token-destination route with `quoteBridge()` before execution, or provide a verified route-specific `oftContractAddress` and optional `dstEid`.
+
+<Callout type="warn">
+`getSupportedChains()` and `getSupportedTokens()` read the static chain and token configuration. They do not validate a source-to-destination pair or prove that its LayerZero peer is configured.
+</Callout>
+
 <Callout type="info">
 Token support is determined by the contracts deployed on each chain. The protocol checks for `oftContract`, `legacyMeshContract`, and `xautOftContract` to determine available tokens.
+</Callout>
+
+<Callout type="info">
+Standard EVM accounts can use every supported EVM source route with a matching token deployment. ERC-4337 helper bridging is available from Ethereum, Arbitrum, Plasma, and Polygon. The ERC-4337 flow bundles token approval and the helper call into one UserOperation.
+</Callout>
+
+<Callout type="warn">
+ERC-4337 `fee` and `bridgeFee` values can use different denominations in `1.0.0-beta.7`. Review the [fee-unit limitation](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#fee-units-and-bridgemaxfee) before configuring `bridgeMaxFee`.
 </Callout>
 
 ## Next Steps

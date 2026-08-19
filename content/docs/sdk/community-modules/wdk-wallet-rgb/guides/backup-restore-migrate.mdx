@@ -1,0 +1,111 @@
+---
+title: Back up, restore, and migrate the RGB wallet
+description: Protect local RGB state, restore encrypted backups, and choose a privacy-aware v1-to-v2 migration.
+docType: how-to
+schemaType: TechArticle
+---
+
+The seed and local RGB database are separate recovery inputs. Test both before funding the wallet.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Create an encrypted backup
+
+```js
+const backup = account.createBackup({
+  password: backupPassword,
+  backupPath: '/secure-backups/rgb-wallet.backup',
+})
+
+console.log(backup.message)
+```
+
+Store the backup and password as sensitive recovery material, with access controls and separation appropriate to your threat model. Test readability and retention; a successful method return is not a completed recovery drill.
+
+## Restore into an empty directory
+
+Create a fresh manager with the same seed and network. Call `restoreAccountFromBackup()` before opening a normal account in the destination directory.
+
+```js
+import WalletManagerRgb from '@utexo/wdk-wallet-rgb'
+
+const restoredManager = new WalletManagerRgb(seedPhrase, {
+  network: 'testnet',
+  indexerUrl: trustedIndexerUrl,
+  transportEndpoint: trustedTransportEndpoint,
+})
+
+try {
+  const restored = await restoredManager.restoreAccountFromBackup({
+    backupFilePath: '/secure-backups/rgb-wallet.backup',
+    password: backupPassword,
+    dataDir: '/app-private/wdk/rgb-restored',
+  })
+
+  await restored.registerWallet()
+  restored.syncWallet()
+  restored.refreshWallet()
+
+  console.log({
+    address: restored.getAddress(),
+    assets: restored.listAssets(),
+    transactions: restored.listTransactions(),
+  })
+} finally {
+  restoredManager.dispose()
+}
+```
+
+Use an empty, private destination and do not run the original and restored wallet concurrently against the same state.
+
+## Validate the restore
+
+Compare more than the address:
+
+- vanilla and colored derivation paths;
+- asset IDs, precision, and settled balances;
+- RGB transfer history and status;
+- Bitcoin transactions and unspents;
+- ability to create a new backup;
+- a low-value receive and transfer on a test network.
+
+## Migrate from v1
+
+Version 1 relied on a remote RGB Node. The maintainer migration guide warns that the node operator may have learned wallet xpubs and transaction-graph metadata.
+
+Choose one of two paths:
+
+### Privacy-preserving reset
+
+1. Create a v2 wallet with a new seed and new persistent `dataDir`.
+2. Generate recipient invoices on the new wallet.
+3. Transfer assets from the old wallet.
+4. Verify settlement and back up the new state.
+5. Retire the old seed according to your incident and retention policy.
+
+This is the maintainer-recommended path when historical metadata exposure matters.
+
+### Same-seed state migration
+
+1. In a separate environment pinned to the v1 package, create and securely download the v1 backup.
+2. Stop and dispose the v1 wallet.
+3. Install v2 and restore the backup into a new local directory.
+4. Open v2 with the same seed, network, and restored `dataDir`.
+5. Verify all state before retiring the remote-node setup.
+
+<Callout type="warn">
+A same-seed restore preserves identity and state but cannot undo information already disclosed to a legacy remote node. An upgrade is not a privacy reset.
+</Callout>
+
+Use normal package imports in each pinned environment. A package version suffix inside an ESM import specifier, such as `import x from 'package@version'`, is not valid npm package import syntax.
+
+## Next steps
+
+- [Manage account storage](/sdk/community-modules/wdk-wallet-rgb/guides/manage-account-storage)
+- [Read balances and history](/sdk/community-modules/wdk-wallet-rgb/guides/balances-history)
+- [Handle errors](/sdk/community-modules/wdk-wallet-rgb/guides/handle-errors)
+- [Maintainer migration guide](https://github.com/UTEXO-Protocol/wdk-wallet-rgb/blob/v2.0.3/MIGRATION.md)

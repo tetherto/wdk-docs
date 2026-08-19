@@ -18,19 +18,50 @@ schemaType: APIReference
 ```typescript title="WdkBundleConfig Shape"
 interface WdkBundleConfig {
   networks: Record<string, { package: string }>
-  protocols?: Record<string, { package: string; [key: string]: any }>
+  protocols?: Record<string, { package: string; [key: string]: unknown }>
+  modules?: Record<string, {
+    package: string
+    factory?: string
+    events?: string[]
+  }>
+  allowedMethods?: Record<string, {
+    methods?: string[]
+    protocols?: Record<string, Record<string, { methods?: string[] }>>
+  }>
+  allowedModuleMethods?: Record<string, { methods?: string[] }>
   preloadModules?: string[]
+  transport?: 'hrpc' | 'jsonrpc'
   output?: {
     bundle?: string
     types?: string
+    addons?: {
+      ios?: string
+      macos?: string
+      android?: string
+    }
+    addonsYml?: string
   }
   options?: {
     minify?: boolean
     sourceMaps?: boolean
     targets?: string[]
+    linkAddons?: boolean
+    platforms?: Array<'ios' | 'macos' | 'android'>
+    swiftTarget?: string
+    convertEsmToCjs?: boolean
   }
 }
 ```
+
+`allowedMethods` is keyed by network. Its direct `methods` array restricts account calls, while `protocols` nests restrictions by protocol type and protocol name. `allowedModuleMethods` is keyed by generic-module name and applies to HRPC only. These inline helper shapes are present in the config declaration but are not named exports from the beta.10 npm entrypoint.
+
+Every omitted map, level, or `methods` field remains unrestricted. An explicit `methods: []` denies every method on that exact surface. Generated HRPC contexts receive both maps; generated JSON-RPC contexts receive only `allowedMethods`.
+
+`modules` is generated only for HRPC through beta.10. JSON-RPC entry generation ignores that map. JSON-RPC defaults addon linking to `true`; HRPC defaults it to `false`. `options.convertEsmToCjs` defaults to `false` for both transports and must be enabled explicitly for targets whose Bare engine cannot load ESM.
+
+<Callout type="warn">
+Beta.10 declares `output.types`, `options.minify`, and `options.sourceMaps`, but its bundle generator does not honor those fields. Declarations are always written to `./.wdk/index.d.ts`; `minify` and `sourceMaps` do not control `bare-pack` output. ESM-to-CJS conversion minifies independently.
+</Callout>
 
 #### `ResolvedConfig`
 
@@ -43,6 +74,12 @@ interface ResolvedConfig extends WdkBundleConfig {
   resolvedOutput: {
     bundle: string
     types: string
+    addons: {
+      ios: string
+      macos: string
+      android: string
+    }
+    addonsYml: string
   }
 }
 ```
@@ -119,8 +156,13 @@ Run the uninstall flow from code and receive a structured `UninstallResult`.
 | `loadConfig(configPath?)` | Load, validate, and resolve a `wdk.config.js` file into absolute paths. | `Promise\<ResolvedConfig\>` |
 | `generateBundle(config, options?)` | Generate the entrypoint, imports, bundle, and optional type output. | `Promise\<GenerateBundleResult\>` |
 | `generateSourceFiles(config, options?)` | Generate the source entrypoint and related artifacts without bundling. | `Promise\<{ entryPath: string }\>` |
-| `generateEntryPoint(config, outputDir)` | Generate only the Bare worklet entrypoint file. | `Promise\<string\>` |
+| `generateEntryPoint(config, outputDir)` | Generate an HRPC Bare worklet entrypoint file. | `Promise\<string\>` |
+| `generateJsonRpcEntryPoint(config, outputDir)` | Generate a JSON-RPC Bare worklet entrypoint file. | `Promise\<string\>` |
+| `linkAddons(config, options?)` | Link native addons for selected platforms with `bare-link`. | `Promise\<LinkAddonsResult\>` |
+| `generateAddonsYml(iosAddonsDir, swiftTarget, outputPath)` | Generate the BareKit Swift addon dependency file. | `void` |
 | `generateWalletModulesCode(config)` | Generate the wallet-module section inserted into the entrypoint. | `string` |
+| `convertBundleEsmToCjs(bundlePath, options?)` | Rewrite a raw or default UTF-8-wrapped bare-pack bundle to CommonJS and validate the result. | `void` |
+| `validateBundle(bundlePath)` | Validate a converted raw or default UTF-8-wrapped bundle without rewriting it. | `void` |
 
 #### `loadConfig(configPath?)`
 
@@ -142,7 +184,10 @@ Use `generateBundle()` when you want the same bundle workflow that powers the CL
 - `verbose`
 - `silent`
 - `skipTypes`
-- `skipGeneration`
+- `skipGeneration`: Reuse an existing generated entrypoint. If `config.options.convertEsmToCjs` changed, regenerate the entrypoint first so its `.mjs` loader behavior matches the bundle conversion.
+- `deferOptionalPeers?` (`boolean`): When omitted or `true`, pass missing peers marked optional through `bare-pack --defer`. Beta.10 checks root, nested, scoped, and symlinked package trees before treating an optional peer as missing. Set this option to `false` to require absent optional imports at build time.
+
+`deferOptionalPeers` is a per-run API option. It is not a `WdkBundleConfig` field and cannot be set in `wdk.config.js`.
 
 `GenerateBundleResult` contains:
 
@@ -153,6 +198,8 @@ Use `generateBundle()` when you want the same bundle workflow that powers the CL
 - `duration`
 - `error?`
 - `missingModule?`
+
+In beta.10, `typesPath` can reflect a configured `output.types` path even though the declaration file is still written to `./.wdk/index.d.ts`.
 
 ```typescript title="Generate A Bundle Programmatically"
 import { generateBundle, loadConfig } from '@tetherto/wdk-worklet-bundler'
@@ -165,15 +212,62 @@ const result = await generateBundle(config, { verbose: true })
 
 Use `generateSourceFiles()` when you want the generated entrypoint without the final `bare-pack` step.
 
+`options.convertEsmToCjs: true` adds the runtime `.mjs` CommonJS-loader patch to that entrypoint, but this function does not pack or convert a bundle. If you run `bare-pack` yourself, call `convertBundleEsmToCjs()` on its output and keep the same conversion setting used to generate the entrypoint.
+
 #### `generateEntryPoint(config, outputDir)`
 
-Use `generateEntryPoint()` when you need the exact generated Bare entrypoint string written to a chosen output directory.
+Use `generateEntryPoint()` when you need the generated HRPC Bare entrypoint written to a chosen output directory. This path includes configured generic modules, both method-allowlist maps, and module lifecycle/event wiring.
 
-In `beta.3`, the generated entrypoint suspends and resumes both the `bare-http1` and `bare-https` global agents when the Bare runtime emits `suspend` and `resume`.
+Starting in beta.3, the generated entrypoint suspends and resumes both the `bare-http1` and `bare-https` global agents when the Bare runtime emits `suspend` and `resume`. Beta.10 also logs the generated worklet's Bare `suspend`, `resume`, and `idle` events. When `options.convertEsmToCjs` is enabled, beta.10 also emits the matching runtime `.mjs`-as-CommonJS loader patch.
+
+#### `generateJsonRpcEntryPoint(config, outputDir)`
+
+Generate the framed JSON-RPC entrypoint used by native hosts. Through beta.10 this path includes wallet and protocol managers plus `allowedMethods`, but not generic `modules` or `allowedModuleMethods`. When `options.convertEsmToCjs` is enabled, it emits the same `.mjs` loader patch as the HRPC generator.
+
+#### `linkAddons(config, options?)`
+
+Link required Bare addons for iOS, macOS, Android, or a selected subset. `LinkAddonsOptions` supports `platforms`, `verbose`, and `silent`. The result contains `success`, `duration`, `platforms`, and optional `error`.
+
+When iOS is selected, addon linking also calls `generateAddonsYml()` with `config.options.swiftTarget` or the default target name `app`.
+
+#### `generateAddonsYml(iosAddonsDir, swiftTarget, outputPath)`
+
+Generate the `addons.yml` dependency list expected by BareKit Swift from linked iOS XCFrameworks.
 
 #### `generateWalletModulesCode(config)`
 
 Use `generateWalletModulesCode()` when you only need the generated wallet-module section for inspection or custom generator flows.
+
+#### `convertBundleEsmToCjs(bundlePath, options?)`
+
+Rewrites a bare-pack bundle in place for a CommonJS-only engine:
+
+```typescript title="Convert And Validate A Bundle"
+import { convertBundleEsmToCjs } from '@tetherto/wdk-worklet-bundler'
+
+convertBundleEsmToCjs('./.wdk-bundle/wdk-worklet.bundle.js', {
+  minify: true,
+  verbose: false
+})
+```
+
+The beta.10 converter accepts raw `.bundle` data and the default UTF-8 CommonJS, ESM, or JSON string wrappers produced by bare-pack. Wrappers created with a non-UTF-8 `--encoding`, such as Base64, are not supported. The converter transforms `.js`, `.mjs`, and `.cjs` files, lowers dynamic imports, removes `"type": "module"` from bundled package manifests, recomputes offsets with `bare-bundle`, restores the original wrapper, and calls `validateBundle()` before returning. It throws if any source transformation or final validation fails.
+
+This helper rewrites only the packed bundle. For `.mjs` files to load as CommonJS at runtime, generate the HRPC or JSON-RPC entrypoint with `options.convertEsmToCjs: true` before packing, or provide equivalent loader behavior yourself. Do not convert a bundle while reusing an entrypoint generated with conversion disabled.
+
+The inline `options` shape has `minify?: boolean` and `verbose?: boolean`. `ConvertOptions` appears in the generated declaration as the parameter shape but is not a named export from the beta.10 package entrypoint.
+
+#### `validateBundle(bundlePath)`
+
+Validates a converted bundle without changing it:
+
+```typescript title="Validate A Converted Bundle"
+import { validateBundle } from '@tetherto/wdk-worklet-bundler'
+
+validateBundle('./.wdk-bundle/wdk-worklet.bundle.js')
+```
+
+The function checks wrapper and header parsing, file offsets and lengths, the entrypoint, CommonJS syntax, remaining dynamic imports, and package manifests that still declare ESM. It returns `void` on success and throws an aggregated error on failure. Because the syntax checks expect CommonJS, use it for converted artifacts rather than an intentionally ESM bundle.
 
 ### CLI Commands
 
@@ -181,13 +275,17 @@ The published CLI exposes these commands through `wdk-worklet-bundler`:
 
 | Command | Description | Key Options |
 | --- | --- | --- |
-| `generate` | Generate a WDK bundle from configuration. | `--config`, `--install`, `--keep-artifacts`, `--dry-run`, `--no-types`, `--source-only`, `--skip-generation`, `--verbose` |
+| `generate` | Generate a WDK bundle from configuration. | `--config`, `--install`, `--keep-artifacts`, `--dry-run`, `--no-types`, `--source-only`, `--skip-generation`, `--transport`, `--link-addons`, `--skip-link-addons`, `--platforms`, `--no-defer-optional-peers`, `--verbose` |
 | `init` | Create a new `wdk.config.js` file. | `--yes` |
 | `validate` | Validate configuration without building. | `--config` |
 | `list-modules` | List available WDK modules. | `--json` |
 | `clean` | Remove the generated `.wdk` folder. | `--yes` |
 
-For the end-to-end config workflow, see the Worklet Bundler configuration guide when it is available.
+For the end-to-end config workflow and transport defaults, see the [Worklet Bundler configuration guide](/tools/worklet-bundler/configuration).
+
+<Callout type="warn">
+Beta.10 applies `--transport` after `loadConfig()` resolves output paths. The flag changes entrypoint generation but does not recompute the default bundle filename. Set `transport` in `wdk.config.js`, or configure `output.bundle` explicitly when using the flag.
+</Callout>
 
 ***
 

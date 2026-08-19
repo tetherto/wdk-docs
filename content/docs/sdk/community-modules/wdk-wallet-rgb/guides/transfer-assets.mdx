@@ -1,0 +1,100 @@
+---
+title: Transfer RGB assets
+description: Quote and send an on-chain RGB asset to a recipient-generated invoice.
+docType: how-to
+schemaType: TechArticle
+---
+
+An RGB transfer is invoice-driven: the recipient generates an invoice and the sender funds, signs, and broadcasts the transfer.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## 1. Obtain a recipient invoice
+
+On the receiving wallet:
+
+```js
+const receive = recipientAccount.receiveAsset({
+  assetId,
+  amount: 100,
+  witness: false,
+})
+
+const rgbInvoice = receive.invoice
+```
+
+Transfer the invoice over an authenticated channel. The sender should validate that it begins with `rgb:` and that the intended asset and amount match the user-confirmed action.
+
+## 2. Build the transfer
+
+```js
+const transfer = {
+  recipient: rgbInvoice,
+  token: assetId,
+  amount: 100n,
+  feeRate: 2,
+  minConfirmations: 1,
+}
+```
+
+`amount` is in asset base units. `feeRate` is the Bitcoin fee rate in sat/vbyte.
+
+## 3. Quote and enforce policy
+
+```js
+const maximumFee = 2_000n
+const quote = await senderAccount.quoteTransfer(transfer)
+
+if (quote.fee > maximumFee) {
+  throw new Error('Quoted RGB transfer fee exceeds the application limit')
+}
+```
+
+`quoteTransfer()` creates and signs a transfer PSBT to estimate its fee. It is not a pure arithmetic call, and changing wallet state or fee inputs after the quote can invalidate the result.
+
+<Callout type="warn">
+Although `transferMaxFee` exists in the v2.0.3 config source, `WalletManagerRgb.getAccount()` does not forward it to the account. Enforce an application-owned limit on every transfer instead of relying on that option.
+</Callout>
+
+## 4. Send once
+
+```js
+const result = await senderAccount.transfer(transfer)
+
+console.log({
+  txid: result.hash,
+  estimatedFee: result.fee.toString(),
+})
+```
+
+The high-level method runs `sendBegin → signPsbt → sendEnd`. The release also exposes those primitives for advanced PSBT orchestration; keep their exact argument naming pinned to v2.0.3 and the included `@utexo/rgb-sdk`.
+
+## 5. Reconcile state
+
+```js
+senderAccount.refreshWallet()
+
+const transfers = senderAccount.listTransfers(assetId)
+const receipt = await senderAccount.getTransferReceipt(result.hash)
+```
+
+Do not resend automatically after a timeout. The write may have reached the transport endpoint or Bitcoin network even when the caller did not receive a success response.
+
+## Operational cautions
+
+- Treat each recipient invoice as single-use.
+- Do not substitute a Bitcoin address for the `rgb:` invoice.
+- Confirm the asset ID, asset precision, base-unit amount, and network.
+- Ensure suitable RGB allocations and Bitcoin UTXOs exist before quoting.
+- Preserve the sender and recipient `dataDir` state until settlement is reconciled.
+- `getTransfers()` hides native errors as `[]`; use `listTransfers()` when failure visibility matters.
+
+## Next steps
+
+- [Read balances and history](/sdk/community-modules/wdk-wallet-rgb/guides/balances-history)
+- [Back up and restore](/sdk/community-modules/wdk-wallet-rgb/guides/backup-restore-migrate)
+- [Handle errors](/sdk/community-modules/wdk-wallet-rgb/guides/handle-errors)

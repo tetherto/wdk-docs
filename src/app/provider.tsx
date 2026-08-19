@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
+import { shouldUseNativeDocumentNavigation } from "@/lib/link-routing";
 
 const hasInkeepApiKey = Boolean(process.env.NEXT_PUBLIC_INKEEP_API_KEY?.trim());
 const SearchDialog = hasInkeepApiKey
@@ -55,9 +56,13 @@ function NoPrefetchLink({ prefetch: _prefetch, href, onClick, ...props }: NoPref
   };
 
   // Work around static-export navigation edge cases by disabling prefetch globally.
-  // We still use Next's <Link> so navigation stays client-side and preserves sidebar behavior.
+  // Raw text artifacts are not application routes and must use a browser document request.
   if (!href) return <a onClick={handleClick} {...props} />;
+  if (shouldUseNativeDocumentNavigation(href)) {
+    return <a href={href} onClick={handleClick} {...props} />;
+  }
 
+  // Keep ordinary documentation routes client-side so sidebar state is preserved.
   return <NextLink href={href} onClick={handleClick} prefetch={false} {...props} />;
 }
 

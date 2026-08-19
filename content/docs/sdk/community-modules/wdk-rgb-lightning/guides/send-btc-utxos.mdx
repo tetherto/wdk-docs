@@ -1,0 +1,86 @@
+---
+title: Send Bitcoin and manage UTXOs
+description: Quote and send Bitcoin, inspect history, and use native UTXO operations through the RGB Lightning account.
+docType: how-to
+schemaType: TechArticle
+---
+
+The RGB Lightning account exposes a WDK-shaped Bitcoin send and lower-level RLN Bitcoin/UTXO methods.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Check readiness and balance
+
+```js
+const state = await account.getAddressState()
+if (state.status !== 'ready') {
+  throw new Error('Unlock the account before sending Bitcoin')
+}
+
+await account.sync()
+const balance = await account.getBalance()
+const unspents = await account.listUnspents()
+```
+
+Validate spendable balance, UTXO status, confirmations, and any channel reserve requirements.
+
+## Quote a standard send
+
+```js
+const transaction = {
+  to: bitcoinAddress,
+  value: 50_000n,
+  feeRate: 2,
+  confirmationTarget: 6,
+}
+
+const quote = await account.quoteSendTransaction(transaction)
+```
+
+The beta.15 quote approximates a standard transaction as 141 vbytes multiplied by a fee rate. It does not construct the final transaction or guarantee its exact size or fee.
+
+`manager.getFeeRates()` reads main mempool.space recommendations without selecting `testnet`, `signet`, or `regtest`. Use a network-appropriate estimator for policy decisions.
+
+## Send through the WDK shape
+
+```js
+const maximumFee = 2_000n
+if (quote.fee > maximumFee) {
+  throw new Error('Quoted Bitcoin fee exceeds the application limit')
+}
+
+const result = await account.sendTransaction(transaction)
+console.log({ txid: result.hash, feeSats: result.fee.toString() })
+```
+
+VLS signs internally. The result fee is in satoshis.
+
+## Use native methods only with pinned shapes
+
+`sendBtc(request)` and `createUtxos(request)` forward native RLN request objects. Their public beta.15 declarations intentionally use `object`; inspect and validate the exact matching RLN payload rather than inventing fields.
+
+```js
+const result = await account.sendBtc(validatedNativeSendRequest)
+await account.createUtxos(validatedNativeCreateUtxosRequest)
+```
+
+`signTransaction()` always throws `NotImplementedError`. Use `sendTransaction()`, `sendBtc()`, `sendPayment()`, or `sendRgbAsset()` so VLS can enforce operation-specific policy.
+
+## Reconcile ambiguous sends
+
+After a timeout:
+
+1. Keep any returned transaction ID.
+2. Call `sync()`.
+3. Query `getTransactionsByTxid()` and `listUnspents()`.
+4. Retry only after proving the first send was not accepted.
+
+## Next steps
+
+- [Read balances and history](/sdk/community-modules/wdk-rgb-lightning/guides/balances-history)
+- [Connect peers and channels](/sdk/community-modules/wdk-rgb-lightning/guides/peers-channels)
+- [Handle errors and cleanup](/sdk/community-modules/wdk-rgb-lightning/guides/handle-errors-cleanup)

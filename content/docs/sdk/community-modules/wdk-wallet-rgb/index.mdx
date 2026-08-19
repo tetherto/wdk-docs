@@ -1,72 +1,85 @@
 ---
 title: RGB wallet
-description: Use the UTEXO RGB wallet module for RGB assets on Bitcoin.
+description: Use the community-maintained UTEXO wallet for on-chain RGB assets, Bitcoin UTXOs, and local RGB state.
 docType: explanation
 schemaType: TechArticle
 ---
 
-`@utexo/wdk-wallet-rgb` is a WDK wallet module for RGB assets on Bitcoin. It wraps the UTEXO RGB runtime behind WDK wallet manager and account classes.
+`@utexo/wdk-wallet-rgb` is a community-maintained WDK wallet module for on-chain RGB assets on Bitcoin. It wraps `@utexo/rgb-sdk` behind WDK wallet manager and account classes.
 
-Powered by [`@utexo/wdk-wallet-rgb`](https://github.com/UTEXO-Protocol/wdk-wallet-rgb).
+These pages describe the released [`@utexo/wdk-wallet-rgb@2.0.3`](https://github.com/UTEXO-Protocol/wdk-wallet-rgb/releases/tag/v2.0.3).
 
 <Callout type="warn">
-This module is developed and maintained independently by a third-party contributor. Tether and the WDK team do not endorse or assume responsibility for its code, security, or maintenance. Review the package and use your own judgment before using it with real funds.
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
 </Callout>
 
-## When to use it
+## Choose the correct RGB module
 
-Use this module when your application needs RGB asset support on Bitcoin and can persist local RGB wallet state.
+The on-chain wallet and RGB Lightning wallet are separate wallets. They derive different wallet identities, own separate `rgb-lib` state, and do not share asset records.
 
-| Use case | Module |
+| Requirement | Module |
 |---|---|
-| RGB asset issuance, balances, and transfers | `@utexo/wdk-wallet-rgb` |
-| Base-layer Bitcoin wallet flows without RGB assets | [`@tetherto/wdk-wallet-btc`](/sdk/wallet-modules/wallet-btc) |
-| Lightning payments through Spark | [`@tetherto/wdk-wallet-spark`](/sdk/wallet-modules/wallet-spark) |
+| Issue NIA assets, receive or send on-chain RGB assets, and manage RGB-aware Bitcoin UTXOs | `@utexo/wdk-wallet-rgb` |
+| Hold and transfer RGB assets through LDK channels, BOLT11 invoices, or an LSP | [`@utexo/wdk-rgb-lightning`](https://www.npmjs.com/package/@utexo/wdk-rgb-lightning) |
+| Manage Bitcoin without RGB state | [`@tetherto/wdk-wallet-btc`](/sdk/wallet-modules/wallet-btc) |
+
+Give the on-chain and Lightning modules different persistent `dataDir` values. Copying an asset ID between them does not copy its wallet records or balance.
 
 ## Requirements
 
-The module requires:
+For durable use, provide:
 
-- a BIP-39 seed phrase or seed bytes;
-- a supported RGB network;
-- a persistent app-private `dataDir` for RGB wallet state;
-- access to a Bitcoin indexer;
-- access to an RGB transport endpoint.
+- a BIP-39 mnemonic or seed bytes;
+- `mainnet`, `testnet`, or `regtest`;
+- a persistent, app-private `dataDir`;
+- a trusted Electrs-compatible indexer;
+- an RGB transport endpoint for consignment exchange.
 
-The package README warns that losing `dataDir` invalidates RGB asset balances even though seed-derived BTC addresses still exist. Pick a durable app-private path and include it in your backup strategy.
+The runtime allows `dataDir` to be omitted and then uses temporary storage. Do not rely on that behavior for a persistent wallet. A seed recreates key material, but it is not a substitute for preserving and backing up the local RGB state.
 
-## Install
+## Released runtime support
 
-```bash
-npm install @utexo/wdk-wallet-rgb
-```
+The package is ESM and exposes a conditional Bare entry. Its pinned native RGB dependencies publish artifacts for:
 
-## Minimal setup
+- Linux x64 and arm64;
+- macOS arm64.
 
-```js
-import WalletManagerRgb from '@utexo/wdk-wallet-rgb'
+No Windows or Intel macOS artifact was published for this release. The package does not declare a Node.js engine range; verify the exact host and native artifact before deployment.
 
-const manager = new WalletManagerRgb(seedPhrase, {
-  network: 'regtest',
-  dataDir: './wallet-data'
-})
+<Callout type="warn">
+The maintainer README labels the package beta despite the `2.0.3` version. Test backup, restore, fee, indexer, transport, and failure paths on the target runtime before handling real funds.
+</Callout>
 
-const account = await manager.getAccount()
-const address = await account.getAddress()
+## Capabilities and boundaries
 
-console.log(address)
-```
+- One account at index `0`, with BIP-86 vanilla and colored derivation paths.
+- Settled Bitcoin and RGB balance queries, transaction and transfer history, and receipts.
+- NIA issuance and blind or witness receive invoices.
+- High-level RGB transfers and lower-level PSBT transfer steps.
+- Bitcoin sends and RGB-compatible UTXO creation.
+- Encrypted local-state backup and restore.
+- Full-account message signing and verification.
 
-## Reference
+This release does not expose multiple accounts, arbitrary derivation paths, or UDA/CFA issuance through its declared WDK account API.
+
+## Start building
 
 <Cards>
+<Card title="Get started" href="/sdk/community-modules/wdk-wallet-rgb/guides/get-started">
+Install the released package and create the single RGB account.
+</Card>
+<Card title="Usage guides" href="/sdk/community-modules/wdk-wallet-rgb/usage">
+Follow task-focused guides for assets, UTXOs, storage, migration, and errors.
+</Card>
+<Card title="Configuration" href="/sdk/community-modules/wdk-wallet-rgb/configuration">
+Choose a network, durable storage, indexer, and transport endpoint.
+</Card>
 <Card title="API reference" href="/sdk/community-modules/wdk-wallet-rgb/api-reference">
-Review exports, configuration, wallet manager methods, and account methods.
+Review the public v2.0.3 manager and account surface.
 </Card>
-<Card title="Source repository" href="https://github.com/UTEXO-Protocol/wdk-wallet-rgb">
-Open the package source and README on GitHub.
-</Card>
-<Card title="Community modules" href="/sdk/community-modules">
-Review the community module disclaimer and submission flow.
+<Card title="v2.0.3 source" href="https://github.com/UTEXO-Protocol/wdk-wallet-rgb/tree/v2.0.3">
+Inspect the exact released source and security guidance.
 </Card>
 </Cards>

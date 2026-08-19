@@ -48,7 +48,7 @@ Useful smoke-test routes:
 
 - [http://localhost:3001/](http://localhost:3001/)
 - [http://localhost:3001/overview/changelog/](http://localhost:3001/overview/changelog/)
-- [http://localhost:3001/sdk/all-modules/](http://localhost:3001/sdk/all-modules/)
+- [http://localhost:3001/sdk/get-started/](http://localhost:3001/sdk/get-started/)
 - [http://localhost:3001/sdk/swidge-modules/](http://localhost:3001/sdk/swidge-modules/)
 - [http://localhost:3001/sdk/core-module/guides/protocol-integration/](http://localhost:3001/sdk/core-module/guides/protocol-integration/)
 

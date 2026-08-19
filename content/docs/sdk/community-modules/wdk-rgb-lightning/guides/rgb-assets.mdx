@@ -1,0 +1,116 @@
+---
+title: Receive and send RGB assets
+description: Query existing RGB assets, create receive invoices, and transfer assets through the RGB Lightning node.
+docType: how-to
+schemaType: TechArticle
+---
+
+The Lightning node holds and transfers its own RGB asset records. It does not share balances with the on-chain RGB wallet.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Inspect an existing asset
+
+```js
+const assets = await account.listAssets()
+const balance = await account.getAssetBalance(assetId)
+const metadata = await account.getAssetMetadata(assetId)
+```
+
+`getTokenBalance(assetId)` returns spendable base units and falls back to settled units when needed.
+
+<Callout type="info">
+Use [`@utexo/wdk-wallet-rgb`](/sdk/community-modules/wdk-wallet-rgb) for released, documented NIA issuance. The beta.15 runtime contains issuance forwarders, but its public TypeScript declarations omit them; they are not documented here as supported WDK account APIs.
+</Callout>
+
+## Create an RGB invoice
+
+```js
+const created = await account.createRgbInvoice({
+  min_confirmations: 1,
+  witness: false,
+  asset_id: assetId,
+  assignment_kind: 'Fungible',
+  assignment_amount: 100,
+  duration_seconds: 3_600,
+})
+```
+
+`min_confirmations` and `witness` are required. The result is a native object; validate and extract the complete invoice using the pinned beta.15 response shape.
+
+Treat the invoice as single-use and send it over an authenticated channel.
+
+## Send with the WDK router
+
+```js
+const transfer = await account.transfer({
+  recipient: rgbInvoice,
+  token: assetId,
+  amount: 100n,
+  feeRate: 2,
+})
+
+console.log(transfer.hash)
+```
+
+The router recognizes `rgb:` and `utxob:` invoices. It decodes the invoice and sends one `Fungible` recipient with `donation: false` and `min_confirmations: 1`.
+
+<Callout type="warn">
+The WDK result returns `fee: 0n` for RGB because beta.15 does not expose the native fee through this route. It does not mean the transfer was fee-free.
+</Callout>
+
+## Use the native grouped send
+
+For non-fungible assignment kinds, donation behavior, witness data, multiple recipients, or explicit confirmation policy, use `sendRgbAsset()` with a validated `SendRgbAssetRequest`:
+
+```js
+const result = await account.sendRgbAsset({
+  donation: false,
+  fee_rate: 2,
+  min_confirmations: 1,
+  recipient_groups: validatedRecipientGroups,
+})
+```
+
+Each recipient group contains an `asset_id` and recipients with a decoded `recipient_id`, assignment kind and amount, transport endpoints, and optional witness data. Do not construct those fields from unvalidated display text.
+
+## Refresh and inspect transfer state
+
+```js
+await account.refreshTransfers(validatedNativeRefreshRequest)
+
+const transfers = await account.listTransfers(assetId)
+const byTransaction = await account.listTransfersByTxid(txid)
+```
+
+`failTransfers(request)` mutates transfer state. Call it only with the exact matching native request after proving the transfer should be failed.
+
+## Media
+
+```js
+const media = await account.getAssetMedia(digest)
+const posted = await account.postAssetMedia(validatedNativeMediaRequest)
+```
+
+Media is untrusted content. Validate digest, size, MIME type, storage, and rendering. `maxMediaUploadSizeMb` defaults to `5`.
+
+## State boundary
+
+Use separate persistent paths:
+
+```text
+rgb-onchain/    # @utexo/wdk-wallet-rgb
+rgb-lightning/  # @utexo/wdk-rgb-lightning
+```
+
+Moving an asset between them requires a real receive/send flow. Copying files or reusing one path is not a migration.
+
+## Next steps
+
+- [Read balances and history](/sdk/community-modules/wdk-rgb-lightning/guides/balances-history)
+- [Use peers and channels](/sdk/community-modules/wdk-rgb-lightning/guides/peers-channels)
+- [Use LSP flows](/sdk/community-modules/wdk-rgb-lightning/guides/lsp-lightning-address-apay)

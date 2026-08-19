@@ -12,11 +12,11 @@ test('maps a top-level docs page to a sibling markdown file', () => {
 });
 
 test('maps a nested docs page to <path>.md', () => {
-  assert.equal(urlToMarkdownRelativePath('/sdk/all-modules'), 'sdk/all-modules.md');
+  assert.equal(urlToMarkdownRelativePath('/sdk/get-started'), 'sdk/get-started.md');
 });
 
 test('tolerates duplicate leading slashes and trailing slashes', () => {
-  assert.equal(urlToMarkdownRelativePath('//sdk/all-modules/'), 'sdk/all-modules.md');
+  assert.equal(urlToMarkdownRelativePath('//sdk/get-started/'), 'sdk/get-started.md');
 });
 
 test('rejects empty and non-string URLs', () => {
@@ -26,7 +26,7 @@ test('rejects empty and non-string URLs', () => {
 
 test('rejects unsafe URL paths', () => {
   assert.throws(() => urlToMarkdownRelativePath('/sdk/../outside'), /Invalid manifest entry url path/);
-  assert.throws(() => urlToMarkdownRelativePath('/sdk//all-modules'), /Invalid manifest entry url path/);
-  assert.throws(() => urlToMarkdownRelativePath('/sdk/all-modules?raw=1'), /Invalid manifest entry url/);
-  assert.throws(() => urlToMarkdownRelativePath('/sdk/all-modules#section'), /Invalid manifest entry url/);
+  assert.throws(() => urlToMarkdownRelativePath('/sdk//get-started'), /Invalid manifest entry url path/);
+  assert.throws(() => urlToMarkdownRelativePath('/sdk/get-started?raw=1'), /Invalid manifest entry url/);
+  assert.throws(() => urlToMarkdownRelativePath('/sdk/get-started#section'), /Invalid manifest entry url/);
 });

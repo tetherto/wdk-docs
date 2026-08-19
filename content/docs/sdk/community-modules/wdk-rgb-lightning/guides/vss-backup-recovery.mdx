@@ -1,0 +1,110 @@
+---
+title: Back up and recover with VSS
+description: Configure encrypted VSS snapshots, force checkpoints, recover with the original seed, and handle ownership fences safely.
+docType: how-to
+schemaType: TechArticle
+---
+
+VSS can mirror LDK channel state and RGB wallet data to a remote key-value service. It complements—not replaces—seed custody and local operational recovery.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Enable VSS at construction
+
+```js
+const manager = new WalletManagerRgbLightning(seedPhrase, {
+  network: 'mainnet',
+  dataDir: '/app-private/wdk/rgb-lightning',
+  vssUrl: 'https://vss.example.com',
+  vssAllowHttp: false,
+  vssAllowEmptyRestore: false,
+})
+```
+
+Non-loopback HTTP is rejected unless `vssAllowHttp` is explicitly enabled. Keep production VSS on an authenticated, monitored HTTPS service.
+
+VSS payloads are encrypted client-side. Recovery still requires the original BIP-39 seed; VSS ciphertext alone is insufficient.
+
+## Inspect local configuration state
+
+```js
+const status = await account.vssStatus()
+
+console.log({
+  configured: status.configured,
+  url: status.url,
+  lastBackupVersion: status.lastBackupVersion,
+})
+```
+
+<Callout type="warn">
+`vssStatus()` is a local view. It does not contact the server or prove that the latest remote snapshot exists, is readable, or can be decrypted.
+</Callout>
+
+## Force a checkpoint
+
+```js
+const { version } = await account.vssBackup()
+recordCheckpointVersion(version)
+```
+
+Use forced checkpoints at controlled lifecycle boundaries such as before app suspension or a planned upgrade. A returned version proves only that this call completed; recovery testing remains necessary.
+
+Calls without `vssUrl` throw `VssNotConfiguredError`. Server and encryption failures throw `VssError` at the wrapped boundaries.
+
+## Plan recovery
+
+The released account has no separate `restoreFromVss()` method. Recovery belongs to native node initialization with:
+
+- the original seed;
+- the intended network;
+- the same VSS namespace and configuration;
+- a safe local `dataDir`;
+- compatible beta.15 module and native binding versions.
+
+Follow the matching RLN/VSS recovery runbook and validate node identity, channels, payments, RGB state, Bitcoin state, and the latest checkpoint before resuming writes.
+
+`vssAllowEmptyRestore: true` permits an empty remote store. Use it only when creating a deliberately new node; otherwise it can turn missing recovery state into a fresh start.
+
+## Clear a stale ownership fence only when proven safe
+
+```js
+await account.clearVssFence(vssFencePassword)
+```
+
+The fence prevents two live writers from using one VSS store.
+
+<Callout type="warn">
+Call `clearVssFence()` only when you are certain the previous owner is permanently stopped. Two live nodes writing the same channel state can corrupt or roll back state and put funds at risk.
+</Callout>
+
+Before clearing:
+
+1. Stop and isolate the previous host.
+2. Confirm no background service, mobile worklet, or failover instance can restart.
+3. Preserve local logs and state for incident analysis.
+4. Verify the VSS namespace, seed identity, and expected checkpoint.
+5. Start exactly one replacement owner.
+
+## Recovery testing
+
+Test on the exact runtime and native peer:
+
+- seed retrieval and decryption;
+- native artifact loading;
+- VSS authentication and snapshot retrieval;
+- node public key stability;
+- channel and payment reconciliation;
+- RGB asset and transfer state;
+- Bitcoin address, balance, and UTXOs;
+- a new forced backup after recovery.
+
+## Next steps
+
+- [Manage the node account](/sdk/community-modules/wdk-rgb-lightning/guides/manage-node-account)
+- [Handle errors and cleanup](/sdk/community-modules/wdk-rgb-lightning/guides/handle-errors-cleanup)
+- [Configuration](/sdk/community-modules/wdk-rgb-lightning/configuration)

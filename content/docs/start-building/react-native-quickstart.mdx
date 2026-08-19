@@ -125,8 +125,14 @@ Integrate WDK into your existing React Native or Expo project using `@tetherto/w
 ### Step 1: Install
 
 ```bash
-npm install @tetherto/wdk-react-native-core
+npm install @tetherto/wdk-react-native-core react-native-bare-kit
 ```
+
+<Callout type="warn">
+The `v1.0.0-beta.16` npm artifact includes the React Native source entry at `src/index.ts`, but it does not include the declared default JavaScript or type declaration files under `dist/`. Use a React Native resolver that selects the package's `react-native` condition. Resolvers that select `default` or `types` target files that are not present in this artifact.
+</Callout>
+
+Starting in beta.14, `react-native-bare-kit` is a peer dependency of React Native Core and must be installed explicitly.
 
 ### Step 2: Configure Android minSdkVersion
 
@@ -175,11 +181,7 @@ buildscript {
 
 ### Step 3: Configure the Bundle
 
-The WDK engine runs inside a Bare worklet. You need to provide a bundle - choose one of two approaches:
-
-<Tabs items={["Custom Bundle (Recommended)", "Pre-built Bundle"]}>
-<Tab value="Custom Bundle (Recommended)">
-Use the `@tetherto/wdk-worklet-bundler` CLI to generate a bundle with only the modules you need:
+The WDK engine runs inside a Bare worklet. Use the `@tetherto/wdk-worklet-bundler` CLI to generate an HRPC bundle with only the modules you need:
 
 ```bash
 # 1. Install the bundler CLI
@@ -206,23 +208,8 @@ import { bundle } from './.wdk'
 <Callout type="info">
 **Which WDK modules do I need?** Each blockchain requires its own wallet module (e.g., `wdk-wallet-evm-erc-4337` for Ethereum/Polygon, `wdk-wallet-btc` for Bitcoin). See the full list of available modules in the [wdk-worklet-bundler documentation](https://github.com/tetherto/wdk-worklet-bundler).
 </Callout>
-</Tab>
-<Tab value="Pre-built Bundle">
-For quick prototyping, install and import the ready-made bundle from `@tetherto/pear-wrk-wdk`:
 
-```bash
-npm install @tetherto/pear-wrk-wdk
-```
-
-```typescript
-import { bundle } from '@tetherto/pear-wrk-wdk'
-```
-
-<Callout type="info">
-The pre-built bundle includes all blockchain modules, resulting in a larger bundle size. For production apps, generate a custom bundle with only the modules you need.
-</Callout>
-</Tab>
-</Tabs>
+`@tetherto/pear-wrk-wdk` provides worklet transport and runtime handlers; it does not export a pre-built WDK bundle.
 
 ### Step 4: Configure WDK Settings
 
@@ -501,7 +488,7 @@ Some native dependencies may lack type definitions. Add to your `tsconfig.json`:
 
 **For Expo projects:**
 
-- Install `@tetherto/wdk-react-native-core`
+- Install `@tetherto/wdk-react-native-core` and its `react-native-bare-kit` peer dependency
 - Configure Android minSdkVersion to 29 in `app.json`
 - Set up bundle (custom or pre-built)
 - Create `WdkConfigs` configuration
@@ -511,7 +498,7 @@ Some native dependencies may lack type definitions. Add to your `tsconfig.json`:
 
 **For bare React Native:**
 
-- Install package
+- Install `@tetherto/wdk-react-native-core` and its `react-native-bare-kit` peer dependency
 - Set minSdkVersion to 29 in `android/build.gradle`
 - Set up bundle (custom or pre-built)
 - Create `WdkConfigs` configuration

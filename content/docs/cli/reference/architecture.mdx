@@ -1,0 +1,131 @@
+---
+title: Architecture
+description: Understand how the WDK CLI, MCP server, daemon, wallet store, and WDK modules work together.
+docType: explanation
+schemaType: TechArticle
+icon: Network
+---
+
+WDK CLI separates short-lived command and MCP processes from a background wallet daemon. The daemon owns unlocked WDK instances; the command and MCP processes ask it to derive addresses, read balances, estimate fees, and sign transactions over local inter-process communication (IPC).
+
+```text
+wdk command ─┐
+             ├─ local IPC ─> wdk-daemon ─> WDK wallet modules ─> RPC provider
+wdk-mcp ─────┘                    │
+                                 └─ in-memory unlocked wallets
+
+wdk command ─> WDK Indexer API (history, after deriving the address through the daemon)
+```
+
+## Components
+
+| Component | Lifetime | Responsibility |
+| --- | --- | --- |
+| `wdk` | One command | Parses arguments, prompts for secrets, reads and writes local configuration, formats output, and calls the daemon |
+| `wdk-mcp` | MCP client session | Exposes structured wallet tools and calls the same command actions and daemon used by `wdk` |
+| `wdk-daemon` | While at least one wallet is unlocked | Holds unlocked WDK instances, derives accounts, estimates fees, signs and sends transactions, and enforces wallet TTLs |
+| `seed.enc` | Until the wallet is deleted | Stores one encrypted BIP-39 mnemonic for each named wallet |
+| `config.json` | Until configuration is reset or removed | Stores non-seed CLI configuration, including the default wallet, networks, tokens, and provider settings |
+
+The CLI and MCP server share the same wallet store, configuration, and daemon. A wallet unlocked with `wdk wallet unlock` is therefore also available to `wdk-mcp` running as the same operating-system user.
+
+## Wallet creation and import
+
+Creating or importing a wallet does not require the daemon:
+
+```text
+generated or entered mnemonic
+          │
+          ├─ scrypt(passphrase, random salt) ─> AES-256-GCM
+          │
+          └─> wallets/NAME/seed.enc
+```
+
+The command process validates that the mnemonic is a 12- or 24-word BIP-39 phrase. It then encrypts the phrase, writes a mode-`0600` temporary file, and renames that file to [`seed.enc`](/cli/reference/storage-format). The first wallet becomes the default wallet automatically.
+
+The generated or imported mnemonic and passphrase are JavaScript strings in the command process during this flow. JavaScript strings cannot be reliably overwritten after use. See the [security model](/cli/reference/security-model#seed-and-passphrase-lifetime) for the resulting memory limitations.
+
+## Wallet unlock
+
+Unlocking crosses both the command and daemon processes:
+
+1. `wdk` reads the passphrase from a hidden prompt or `WDK_PASSPHRASE`.
+2. The command process decrypts `seed.enc` to verify the passphrase.
+3. The command process starts `wdk-daemon` if it is not already running.
+4. It sends the wallet name, passphrase, and TTL to the daemon over local IPC.
+5. The daemon decrypts `seed.enc`, derives the BIP-39 master-seed buffer, creates a WDK instance, and starts that wallet's TTL.
+
+The passphrase and mnemonic therefore do not exist only inside the daemon. They are briefly present in the command process during normal unlock, and the daemon decrypts the mnemonic again to create the long-lived wallet session.
+
+<Callout type="warn">
+An unlocked wallet is a local hot wallet for the operating-system user that owns the daemon. Any process running as that user that can connect to the daemon endpoint can request wallet operations without entering the passphrase again. Socket permissions separate operating-system users; they do not authenticate individual programs running as the same user.
+</Callout>
+
+## Requests while unlocked
+
+The daemon creates wallet accounts lazily. The first request for a network loads the configured wallet module and obtains the requested account index; later requests reuse cached accounts for that wallet session.
+
+| Operation | Where it runs |
+| --- | --- |
+| Address derivation | Daemon |
+| Native and token balance reads | Daemon, followed by optional price lookup in the caller |
+| Fee estimation | Daemon |
+| Transaction signing and broadcast | Daemon |
+| Transaction history | Caller queries the Indexer API after obtaining the address from the daemon |
+| Wallet file creation, import, export, rename, passphrase change, and deletion | `wdk` command process |
+| Network, token, and general configuration | `wdk` command process |
+
+CLI and MCP callers use the same signing path. A dry run estimates fees through the daemon but does not broadcast. A later request that executes a send goes directly to the daemon; the daemon does not implement a second confirmation or passphrase challenge.
+
+## IPC and operating systems
+
+On macOS and Linux, the daemon listens on a Unix domain socket:
+
+```text
+~/.config/wdk-cli/daemon.sock
+```
+
+If `XDG_CONFIG_HOME` is set, the socket is under `$XDG_CONFIG_HOME/wdk-cli`. The daemon creates it under an owner-only `0077` umask; the current socket mode is `0700`.
+
+On Windows, the daemon uses the named pipe:
+
+```text
+\\.\pipe\wdk-cli-daemon
+```
+
+POSIX file modes do not apply to the Windows named pipe. The current implementation relies on the platform's default named-pipe access control rather than creating an explicit security descriptor.
+
+IPC messages are newline-delimited JSON and are limited to 64 KiB. The protocol is internal to the CLI package and is not a versioned public API. Use `wdk` or `wdk-mcp` instead of building another client against it.
+
+## Session and shutdown lifecycle
+
+Each unlocked wallet has an independent TTL. The default is five minutes.
+
+```text
+unlock or explicit re-unlock ─> start absolute TTL
+                                      │
+                         normal wallet use does not refresh it
+                                      │
+                           TTL expires or wallet is locked
+                                      │
+                         dispose wallet and remove its session
+                                      │
+                         last wallet locked ─> daemon exits
+```
+
+An explicit `wdk wallet unlock` for an already unlocked wallet resets that wallet's timer to the requested value. `--ttl 0` creates a session without automatic expiry. See [Manage wallets](/cli/guides/manage-wallets#control-the-unlock-lifetime) for commands and [Security model](/cli/reference/security-model#session-lifecycle) for the accepted trade-offs.
+
+On a normal lock, TTL expiry, `SIGINT`, or `SIGTERM`, the daemon disposes the affected WDK instances. When the last wallet is locked, it closes the IPC server, removes the socket and PID file, and exits. Abrupt process termination, system crashes, swap, and core dumps are outside this graceful-cleanup path.
+
+## Configuration changes
+
+Network configuration is captured by WDK instances when they are created. `wdk config set` and `wdk config reset` changes under `networks.*` lock the current wallet sessions so the next unlock creates fresh instances with the new settings. `wdk network create` and `wdk network delete` change the registry without automatically locking current sessions.
+
+Configuration and storage locations are covered in [Configuration](/cli/configuration) and [Storage format](/cli/reference/storage-format).
+
+## Next steps
+
+- [Manage wallets](/cli/guides/manage-wallets)
+- [Storage format and manual recovery](/cli/reference/storage-format)
+- [Security model](/cli/reference/security-model)
+- [API reference](/cli/api-reference)

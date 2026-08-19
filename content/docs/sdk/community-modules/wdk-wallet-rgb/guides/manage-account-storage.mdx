@@ -1,0 +1,97 @@
+---
+title: Manage the RGB account and storage
+description: Manage the single RGB account, derivation paths, durable local state, and read-only access.
+docType: how-to
+schemaType: TechArticle
+---
+
+The on-chain RGB module owns one account and a local RGB database. Treat both limits as part of the wallet identity.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Use account index 0
+
+```js
+const account = await manager.getAccount(0)
+
+console.log(account.index)       // 0
+console.log(account.path)        // BIP-86 vanilla path
+console.log(account.coloredPath) // RGB colored path
+```
+
+`manager.getAccount(1)` throws. `manager.getAccountByPath()` always throws.
+
+| Network | `path` | `coloredPath` |
+|---|---|---|
+| `mainnet` | `m/86'/0'/0'` | `m/86'/827166'/0'` |
+| `testnet` or `regtest` | `m/86'/1'/0'` | `m/86'/827167'/0'` |
+
+## Persist the local state
+
+Use a durable, app-private `dataDir`:
+
+```js
+const manager = new WalletManagerRgb(seedPhrase, {
+  network: 'mainnet',
+  dataDir: '/app-private/wdk/rgb-onchain',
+})
+```
+
+The runtime falls back to temporary storage if the field is omitted. That fallback is unsuitable for a durable wallet.
+
+Protect the directory from:
+
+- deletion by cache or temporary-file cleanup;
+- concurrent access by multiple wallet instances;
+- unencrypted device or cloud backups;
+- reuse by [`@utexo/wdk-rgb-lightning`](https://www.npmjs.com/package/@utexo/wdk-rgb-lightning);
+- accidental cross-network reuse.
+
+The on-chain and Lightning RGB modules have different identities and databases. Give them separate paths even when they use the same BIP-39 mnemonic.
+
+## Register and synchronize
+
+```js
+const { address, btcBalance } = await account.registerWallet()
+
+account.syncWallet()
+account.refreshWallet()
+
+console.log({ address, btcBalance })
+```
+
+`syncWallet()` synchronizes Bitcoin state. `refreshWallet()` refreshes RGB transfer state. The released runtime exposes both synchronously; failures can still propagate from native code.
+
+## Create a read-only view
+
+```js
+const readOnly = await account.toReadOnlyAccount()
+
+const btc = await readOnly.getBalance()
+const rgb = await readOnly.getTokenBalance(assetId)
+```
+
+The read-only account can query balances and receipts. It cannot quote transactions or transfers, and v2.0.3 does not implement message verification on the read-only class.
+
+## Dispose at the owner boundary
+
+```js
+try {
+  const account = await manager.getAccount(0)
+  // Use the account.
+} finally {
+  manager.dispose()
+}
+```
+
+The manager disposes cached accounts and clears manager-owned derived-key fields. Disposal cannot erase mnemonic or key copies retained by application code or dependencies.
+
+## Next steps
+
+- [Read balances and history](/sdk/community-modules/wdk-wallet-rgb/guides/balances-history)
+- [Back up and restore](/sdk/community-modules/wdk-wallet-rgb/guides/backup-restore-migrate)
+- [Handle errors](/sdk/community-modules/wdk-wallet-rgb/guides/handle-errors)
