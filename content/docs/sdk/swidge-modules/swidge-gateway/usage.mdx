@@ -122,8 +122,13 @@ Show the quote, get explicit confirmation, then execute with the same route opti
 
 ```javascript title="Swap native BTC for USDT on Base"
 const quote = await fromBtc.quoteSwidge(options)
-// Display the quote and ask the user to confirm before continuing.
 
+// Display the quote, then ask the user to confirm.
+console.log('Expected output:', quote.toTokenAmount)
+console.log('Minimum output:', quote.toTokenAmountMin)
+console.log('Fees:', quote.fees)
+
+// Only past this point, after explicit user confirmation:
 const result = await fromBtc.swidge(options)
 
 console.log('Order ID:', result.id)
@@ -134,7 +139,7 @@ No approval is needed on this route: BTC is a native asset.
 
 ## Offramp: an EVM token to BTC
 
-An ERC-20 source needs an allowance before execution. Ask the module what approval the route requires, grant it through the WDK account, then execute.
+An ERC-20 source needs an allowance before execution. Quote the route first, ask the module what approval it requires, show the user the quote and the approval together, and only then send the two transactions — `approve()` and `swidge()` both spend from the account.
 
 ```javascript title="Swap USDT on Base for native BTC"
 const options = {
@@ -145,8 +150,20 @@ const options = {
   fromTokenAmount: 10000000n // 10 USDT (6 decimals)
 }
 
+const quote = await fromBase.quoteSwidge(options)
 const approval = await fromBase.getRequiredApproval(options)
 
+// Display the quote and the approval, then ask the user to confirm both.
+console.log('Expected output:', quote.toTokenAmount)
+console.log('Minimum output:', quote.toTokenAmountMin)
+console.log('Fees:', quote.fees)
+
+if (approval) {
+  console.log('Approval spender:', approval.spender)
+  console.log('Approval amount:', approval.amount)
+}
+
+// Only past this point, after explicit user confirmation:
 if (approval) {
   await baseAccount.approve(approval.token, approval.spender, approval.amount)
 }
@@ -191,8 +208,20 @@ const options = {
   fromTokenAmount: 50000000n // 50 USDT (6 decimals)
 }
 
+const quote = await fromTron.quoteSwidge(options)
 const approval = await fromTron.getRequiredApproval(options)
 
+// Display the quote and the approval, then ask the user to confirm both.
+console.log('Expected output:', quote.toTokenAmount)
+console.log('Minimum output:', quote.toTokenAmountMin)
+console.log('Fees:', quote.fees)
+
+if (approval) {
+  console.log('Approval spender:', approval.spender)
+  console.log('Approval amount:', approval.amount)
+}
+
+// Only past this point, after explicit user confirmation:
 if (approval) {
   await tronAccount.sendTransaction(buildTronApproval(approval))
   // Poll the allowance until it reflects the approval before continuing.
@@ -228,14 +257,22 @@ On the Tron arm, `valid` means the full node accepted and pre-executed the contr
 
 ## EVM to EVM
 
-Same-chain swaps and cross-chain bridges use the inherited `swap()` and `bridge()` methods. Affiliate fees do not apply to these routes.
+Same-chain swaps and cross-chain bridges use the inherited `swap()` and `bridge()` methods. Affiliate fees do not apply to these routes. Quote with `quoteSwap()` (or `quoteBridge()`) and get explicit confirmation before the write call.
 
 ```javascript title="Swap USDC for USDT on Base"
-const result = await fromBase.swap({
+const swapOptions = {
   tokenIn: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC on Base
   tokenOut: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2', // USDT on Base
   tokenInAmount: 1000000n
-})
+}
+
+const quote = await fromBase.quoteSwap(swapOptions)
+
+console.log('Expected output:', quote.tokenOutAmount)
+console.log('Fee:', quote.fee)
+// Display the quote and ask the user to confirm before continuing.
+
+const result = await fromBase.swap(swapOptions)
 ```
 
 ## Track status
