@@ -1,17 +1,15 @@
 ---
 name: wdk-community-module-docs
-description: Author, review, test, or update source-grounded WDK module documentation for external partners and community maintainers. Use for wallet, gasless/gasfree, swidge, swap, bridge, lending, fiat, pricing/data, provider-suite, catalog, release-state, sidebar, changelog, API-reference, snippet-safety, docs-PR, or isolated regeneration work where current WDK IA, package truth, public wording, and adversarial validation must be enforced. Do not use for unrelated marketing, design-system, or general site copy.
+description: Author, review, test, or update source-grounded WDK module documentation for external partners and community maintainers. Use for wallet, gasless/gasfree, swidge, swap, bridge, lending, fiat, pricing/data, provider-suite, catalog, package-publication, sidebar, changelog, API-reference, snippet-safety, docs-PR, or isolated regeneration work where WDK code-review approval, current IA, package truth, public wording, and adversarial validation must be enforced. Do not use for unrelated marketing, design-system, or general site copy.
 ---
 
 # WDK Community Module Docs
-Use this skill to create or review WDK module docs that external partners can ship
-without drifting from current docs IA, style, safety rules, or API truth.
-Resolve the repo root with `git rev-parse --show-toplevel` and work from it. When
+Use this skill to create or review WDK module docs without drifting from current
+IA, style, safety rules, or API truth. Resolve the repo root with
+`git rev-parse --show-toplevel`. When the repository manual at
 `contributing/wdk-community-module-docs/COMMUNITY_MODULE_DOCUMENTATION_GUIDE.md`
-exists, load its shared evidence, classification, IA, safety, compatibility, and
-validation sections plus only relevant family/template sections. Load
-`contributing/wdk-community-module-docs/README.md` only in test-mode. If guides
-are absent, use this standalone kernel and report the degraded contract. When installed, run
+exists, load its shared rules plus only relevant family/template sections. If it
+is absent, use this standalone kernel and report the degraded contract. Run
 `node skills/wdk-community-module-docs/scripts/validate-artifacts.mjs --skill-only`.
 
 ## Required Starting Checks
@@ -27,16 +25,17 @@ are absent, use this standalone kernel and report the degraded contract. When in
    `src/lib/custom-tree.ts`, functional indexes, `content/feeds/all-modules.md`,
    the applicable wallet chooser, `skills/wdk/**`, source configuration, and
    validation scripts.
-5. Inspect relevant open PRs with `gh pr list --repo <approved-owner/repo>` and
-   `gh pr view --repo <approved-owner/repo>`; use them as in-flight evidence, not
-   merged truth. If repo identity, CLI, auth, or network is unavailable, report
-   blocked evidence rather than guessing. Test-mode overrides this step.
+5. Inspect relevant open PRs with `gh pr list` and `gh pr view` for the approved
+   repository; treat them as in-flight evidence. Report unavailable evidence
+   rather than guessing. Test-mode overrides this step.
+6. Require recorded WDK development-team code-review approval for the exact source
+   revision. If missing, or material code changed afterward, stop and request review.
 
-Honor explicit user mode and publication limits over workflow defaults. In
-read-only mode, do not edit, fetch, install dependencies, or generate build
-output unless current external truth is explicitly required. In edit mode, do
-not stage, commit, push, or open a PR unless the user explicitly requests that
-specific action.
+Honor explicit user mode and publication limits. In read-only mode, do not edit,
+fetch, install dependencies, or generate output unless current external truth is
+required. In edit mode, do not stage, commit, push, or open a PR unless requested.
+After code approval, docs and npm publication may proceed in parallel; keep the docs
+PR in draft until the exact package/version is published and reverified.
 
 In disposable test-mode, stay inside the supplied isolated root. Never recover
 deleted target docs from history, caches, other worktrees, prior output, memory,
@@ -55,15 +54,16 @@ remove scratch, freeze all output, then close the role. `CLASSIFICATION_ONLY`,
 `CATALOG_ONLY`, and `NO_APPROVED_ROUTE` are distinct policies; only the last has
 an empty approved output and predetermined no-route decision.
 
-## Source And Release Truth
-Before writing public package text, classify release state as `released`, `placeholder`,
-`unpublished`, `deprecated`, `source PR only`, `renaming/in-flight`, or `unverified/blocked`.
+## Source And Publication Truth
+Classify the intended package/version as `published` or `unpublished`; placeholders,
+implementations available only in source, and pending rename targets are unpublished
+until the exact identity resolves. Deprecation is metadata; blocked evidence is not a state.
 
 Classify documentation readiness separately as `runnable`, `reference-only`, or `draft-only`. `Runnable` is language/symbol/flow scoped: require an exact graph,
 entry point/declarations, peers, and secret-free checks of every executable fence, including creation/interoperability. Prove a public install command from an empty
 disposable consumer; a pre-provisioned graph proves only that graph. Freeze transcript, lockfile, graph, tarball, and transitive evidence hashes. Never run community
 code in a credential-bearing host. Failure makes affected paths `reference-only`: use labeled `text` for runtime/setup fences and exact non-runnable declarations
-only. Other paths need independent evidence; missing/conflicting release or entry-point evidence is `draft-only`.
+only. Other paths need independent evidence; missing/conflicting publication or entry-point evidence is `draft-only`.
 Use npm with explicit registry overrides when scoped registry config can hide
 public npm state:
 
@@ -88,7 +88,7 @@ compatibility requires a fixed version. Never substitute a moving prerelease
 dist-tag for the selected version. If the published tarball lacks entry points
 or type declarations, keep install/API docs draft-only.
 
-For released APIs, use exact tarball entry points for reachability, declarations
+For published APIs, use exact tarball entry points for reachability, declarations
 for compile-time shape, published JavaScript and version-matched tests/source for
 runtime behavior, and provider docs for provider-owned live facts. A same-version
 mismatch blocks the affected claim; narrow it only under the scoped evidence
@@ -229,7 +229,7 @@ When the repo manual is unavailable, retain this minimum contract:
   parser validity.
 - A JavaScript/TypeScript fence must be syntactically valid code or declarations.
   Partial control flow, signature notation, and pseudocode use labeled `text`.
-- Source-only or unverified packages get no released install claim. Unknown
+- Unpublished or unverified packages get no published-package install claim. Unknown
   authority/custody models get no invented family or route.
 
 ## Wallet Contract
@@ -369,13 +369,13 @@ Before finalizing, run these passes:
 1. Underclaiming: missing module family, page type, prerequisites, limitations,
    safety warning, source evidence, or sidebar/listing update.
 2. Overclaiming: unsupported capability, unsupported chain/token, stale package
-   version, unreleased package called released, private helper documented as
+   version, unpublished package called published, private helper documented as
    public, or provider-owned support presented as WDK-owned.
 3. API exactness: imports, methods, config keys, and compile-time shapes trace to
    public exports or declarations; runtime fields, semantics, errors, and statuses
    trace through exact-version implementation, dependencies, catch/wrap boundaries,
    and tests; every executable fence passes its exact consumer check.
-4. Installability: release state and documentation readiness are separate; every
+4. Installability: publication state and documentation readiness are separate; every
    runnable setup has clean install-command, graph, declaration, import, and smoke
    proof. Pre-provisioned graphs do not prove install commands.
 5. Write-flow ordering: quotes, requirements, fee caps, slippage, approvals,
@@ -485,11 +485,11 @@ For edit and test work, final reports must include:
 
 - Files changed.
 - Source surfaces used.
-- Source lock, release state, readiness ledger by language/entry point/symbol or
+- WDK code-review approval, source lock, publication state, and readiness ledger by language/entry point/symbol or
   flow, IA/page-set decision, confidence, and blocked claims.
 - Exact validation commands and results.
 - Remaining risks and assumptions.
-- Maintainer questions, especially package release state, placement, provider
+- Maintainer questions, especially package publication, placement, provider
   support, or source/API uncertainty.
 - Base, history-free generation, and clean evaluation roots; candidate hashes;
   families; verdict; isolation grade; manifest/allowlist/transcript locations;

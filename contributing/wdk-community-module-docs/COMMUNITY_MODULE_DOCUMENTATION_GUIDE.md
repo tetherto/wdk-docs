@@ -16,11 +16,12 @@ and do not add it to `src/lib/custom-tree.ts`.
 ## Contents
 
 - [Before You Start](#before-you-start)
+- [Contributor Module Approval Gate](#contributor-module-approval-gate)
 - [Human Authoring Workflow](#human-authoring-workflow)
 - [Non-Negotiables](#non-negotiables)
 - [Current Source Surfaces](#current-source-surfaces)
 - [IA Orientation Matrix](#ia-orientation-matrix)
-- [Release-State Classification](#release-state-classification)
+- [Package Publication State](#package-publication-state)
 - [Evidence and Source Precedence](#evidence-and-source-precedence)
 - [Future Module Classification](#future-module-classification)
 - [Page Set Matrix](#page-set-matrix)
@@ -68,7 +69,7 @@ gh auth status
 If no `upstream` remote exists, do not guess its URL. Ask for the canonical
 remote or use a maintainer-provided base ref. If `gh`, registry, package-token,
 or network access is unavailable, report the exact blocked check; do not turn an
-access failure into an absence or release-state claim.
+access failure into an absence or publication-state claim.
 
 Install site dependencies only when edit-mode validation needs them. Do not
 source `.env.local` or export its contents into a dependency-install shell. The
@@ -133,48 +134,74 @@ host credential is reachable.
 Do not install dependencies, fetch refs, or generate output for a read-only
 artifact review unless the review explicitly requires current external truth.
 
+## Contributor Module Approval Gate
+
+Do not begin authoring a contributor module's documentation until all of these
+conditions are met:
+
+- [ ] The WDK development team has completed and approved the module code review.
+- [ ] The approval applies to the exact source revision used for the docs.
+- [ ] The intended npm package name and version are known.
+- [ ] The contributor and WDK maintainer agree on the documentation family and
+      intended route, or have recorded the placement question that must be resolved.
+- [ ] The documentation PR will remain a draft until that package and version are
+      published on npm and verified again.
+
+An open source PR or a contributor's readiness statement is not code-review
+approval. If material code changes after approval, pause authoring until the WDK
+development team confirms the revised source. Once approval is recorded, the
+documentation PR and npm publication may proceed in parallel. Publication can
+finish after the draft docs PR opens, but it must finish before that PR is marked
+ready for review.
+
 ## Human Authoring Workflow
 
-1. Confirm review-only, edit, or disposable test mode and publication limits.
-2. Inspect worktree status and refresh the approved base only when the mode
+1. Confirm WDK development-team code-review approval for the exact source revision.
+2. Confirm review-only, edit, or disposable test mode and publication limits.
+3. Inspect worktree status and refresh the approved base only when the mode
    permits it. Use a clean worktree for edits when the checkout is dirty.
-3. Inspect current rendered docs, `custom-tree.ts`, functional indexes, the
+4. Inspect current rendered docs, `custom-tree.ts`, functional indexes, the
    aggregate feed, collection configuration, validation scripts, and relevant
    open PRs.
-4. Identify the exact package/source version and build a private claim ledger
+5. Identify the exact package/source version and build a private claim ledger
    from exports, declarations, implementation, tests, examples, metadata, and
    useful official provider sources.
-5. Classify release state. Stop public release/install claims when evidence is
-   conflicting or blocked.
-6. Classify authority, custody, account ownership, operation surface,
+6. Classify the exact intended package/version as published or unpublished.
+   Stop public release/install claims when evidence is conflicting or blocked.
+7. Classify authority, custody, account ownership, operation surface,
    settlement, trust boundaries, package topology, and reader journeys. Choose
    a family only when those axes satisfy its contract; otherwise stop for IA
    approval.
-7. Record release state and documentation readiness separately. A published
+8. Record publication state and documentation readiness separately. A published
    package is not automatically ready for a runnable quickstart.
-8. Write an IA/page-set decision, a flow inventory, and a baseline
+9. Write an IA/page-set decision, a flow inventory, and a baseline
    route-and-fragment compatibility ledger before rewriting existing pages.
-9. Plan frontmatter, section order, page-to-page links, sidebar/listing updates,
+10. Plan frontmatter, section order, page-to-page links, sidebar/listing updates,
    prerequisites, limitations, safety, and cleanup before drafting snippets.
-10. Draft from evidence. Keep pseudocode non-executable and verify every runnable
+11. Draft from evidence. Keep pseudocode non-executable and verify every runnable
    import, field, return, error, status, amount unit, and write-order claim.
-11. Run the underclaiming, overclaiming, API, write-order, IA, security, render,
+12. Run the underclaiming, overclaiming, API, write-order, IA, security, render,
    partner-journey, and future-fit reviews.
-12. Run required validation, distinguish command failures from environment
-    blockers, and report only exact commands that passed.
-13. Handoff files, sources, results, risks, assumptions, and maintainer questions.
-    Do not stage, commit, push, or open a PR unless explicitly requested.
+13. Run required validation, distinguish command failures from environment
+   blockers, and report only exact commands that passed.
+14. If the package remains unpublished, keep the docs PR in draft. After npm
+    publication, recheck registry metadata, tarball contents, imports, declarations,
+    install commands, and runnable snippets before marking it ready for review.
+15. Handoff files, sources, results, risks, assumptions, and maintainer questions.
+   Do not stage, commit, push, or open a PR unless explicitly requested.
 
 ## Non-Negotiables
 
 - Start from current repository truth, not stale plans or old PR bodies.
+- Do not author contributor-module docs before WDK development-team code-review
+  approval for the exact source revision.
 - Treat `src/lib/custom-tree.ts` as the rendered sidebar source of truth.
-- Do not claim a package is released until the exact package name and version
+- Do not claim a package is published until the exact package name and version
   are verified from npm or another maintainer-approved release surface.
 - Do not present a runnable install or quickstart until a clean consumer project
   resolves the documented dependency graph and the selected entry points,
   declarations, imports, and minimal construction path pass the secret-free
-  isolated runtime gate. A released package with an unresolved graph remains
+  isolated runtime gate. A published package with an unresolved graph remains
   reference-only for setup purposes.
 - Pin prerelease packages to the exact verified prerelease version. For stable
   packages, follow the current docs convention and omit a version unless a
@@ -250,7 +277,7 @@ collection configuration changes.
 ## IA Orientation Matrix
 
 Use this matrix only to recognize family shapes. Refresh the files and sidebar
-before every task; examples are not release-state or open-PR truth.
+before every task; examples are not publication-state or open-PR truth.
 
 | Family | Orientation examples | Typical sidebar placement |
 |---|---|---|
@@ -264,19 +291,21 @@ before every task; examples are not release-state or open-PR truth.
 | Provider suites | Multiple independently installable source-chain or role packages | Functional area with explicit package-to-role mapping. |
 | Catalog-only integrations | Public package/source entry without a local page set | All Modules feed only; do not invent a local route. |
 
-## Release-State Classification
+## Package Publication State
 
-Classify the package before writing public release language.
+For contributor modules, classify the exact intended package and version as one
+of two publication states:
 
-| State | Evidence | Public wording |
+| State | Evidence | Documentation PR treatment |
 |---|---|---|
-| Released | Exact package name and version resolves on the intended registry, and source/release notes match docs claims. | State the package name and version only where needed. |
-| Placeholder | Package resolves to `0.0.0` or another maintainer-marked placeholder. | Keep docs draft-only. Do not add changelog release claims. |
-| Unpublished | Package is absent from the expected registry and no approved release exists. | Do not present install commands as released. Use source-only or draft language. |
-| Deprecated | Registry metadata or an approved release notice marks the exact package/version deprecated. | State the exact deprecation and replacement only when the public source does. Do not infer end-of-life. |
-| Renaming or scope change in flight | PR, maintainer comment, or package metadata shows pending package rename/scope/version change. | Mark as draft or awaiting release-state confirmation. |
-| Source PR only | Source exists in an open PR but no package release exists. | Document as pending review only if maintainers asked for draft docs. |
-| Unverified or blocked | Registry, source, or release evidence could not be reached or authenticated. | Make no release or install claim. Report the failed check privately and request maintainer evidence. |
+| Published | The exact package name and version resolve on the intended registry, and the tarball matches the approved source and documentation claims. | Re-run package and snippet verification. The PR may leave draft only after those checks pass. |
+| Unpublished | The exact package and version do not resolve on the intended registry. This includes placeholders, implementations available only in source, and pending rename or scope targets. | Author against the approved source, do not present the package as published, and keep the PR in draft while npm publication proceeds. |
+
+Deprecation is metadata on a published package, not a separate publication
+state. State the exact deprecation and replacement only when registry metadata
+or an approved public notice does. `Unverified/blocked` describes missing
+evidence, not a publication state: a 401, 403, timeout, DNS failure, missing CLI,
+or inaccessible registry does not prove that a package is unpublished.
 
 Use explicit registry overrides when local npm config points scoped packages to a
 private registry:
@@ -296,24 +325,24 @@ every `view` and `pack` command for a scoped package; a generic `--registry`
 flag may not override a scope-specific local registry setting.
 
 For prereleases, do not trust `npm view <package> version` alone. Inspect
-`dist-tags`, `versions`, publish times, release notes, and the PR target
+`dist-tags`, `versions`, publish times, release notes, and the intended package
 version. If the tarball does not contain a real entry point and type
 declarations, block copy-pasteable install/API docs or keep the page draft-only.
 
 Community packages may be provider-scoped, contributor-scoped, unscoped, or
 under a WDK organization. Treat every scope as evidence to verify, not a naming
 pattern to extrapolate. A package resolving as `0.0.0` or another placeholder
-also needs the placeholder policy above even when its name looks final.
+follows the unpublished policy above even when its name looks final.
 
-Classify documentation readiness independently from release state:
+Classify documentation readiness independently from publication state:
 
 | Readiness | Required evidence | Allowed output |
 |---|---|---|
 | Runnable | A clean consumer install resolves the exact documented graph; public entry points and declarations load; directly imported peers are installed; identity-sensitive construction passes in the secret-free isolated runtime gate below. | Copy-pasteable install, construction, and task snippets for the verified path. |
 | Reference-only | Public API evidence is exact, but dependency resolution, declarations, runtime construction, or interoperability is unresolved or fails. | Source-backed overview, configuration constraints, API declarations, and an explicit blocked setup note. No runnable first-use command. |
-| Draft-only | Release state, entry points, declarations, or selected source version is absent, conflicting, or blocked. | Private draft or maintainer decision record only; no public release/install claim. |
+| Draft-only | Publication state, entry points, declarations, or selected source version is absent, conflicting, or blocked. | Private draft or maintainer decision record only; no public release/install claim. |
 
-A package can be `released` and still be `reference-only`. Do not hide a graph
+A package can be `published` and still be `reference-only`. Do not hide a graph
 or declaration failure below a runnable install command. Record the exact
 failure and the evidence needed to promote the docs to `runnable`.
 
@@ -525,7 +554,7 @@ Every public claim needs one or more of these sources:
 - Current docs in `content/docs/sdk/**` for repo style and IA patterns.
 - Open PRs only as in-flight evidence, never as merged truth.
 
-For released-package API claims, use claim-specific authority:
+For published-package API claims, use claim-specific authority:
 
 1. The exact tarball's `package.json`, entry points, and re-exports establish
    package identity and public reachability.
@@ -662,7 +691,7 @@ do not recreate either retired local catalog page.
 | Lending provider | `index.mdx`, `usage.mdx`, `configuration.mdx`, `api-reference.mdx`; operations and error guides when write flows have requirements. | Separate requirement, quote, position-read, or market/vault guides. | `lending-modules/index.mdx`, the functional and Community Modules feed rows, `custom-tree.ts`. |
 | Fiat provider | `index.mdx`, `usage.mdx`, `configuration.mdx`, `api-reference.mdx`; transaction/status guide if provider has async transaction lifecycle. | Regional availability or widget customization guide. | `fiat-modules/index.mdx` when it enumerates the module, the Community Modules feed row, any separately approved functional feed row, and `custom-tree.ts`. |
 | Pricing or read-only data provider | `index.mdx`, `usage.mdx`, `configuration.mdx`, `api-reference.mdx` when credentials, mapping, caching, or errors matter; compact modules may combine usage into overview. | Current/historical data guides, rate-limit or error guide. | `pricing-modules/index.mdx` when it enumerates the module, the Community Modules feed row, any separately approved functional feed row, the relevant tooling workflow, and `custom-tree.ts`. |
-| Provider suite | One suite overview plus per-package sections when packages share one user journey. Split pages if package behavior diverges. | Per-role or source-chain pages when setup, methods, limits, release state, or readiness differ substantially. | Same-family suites stay in that functional family; multi-family suites require approved canonical mapping. Catalog row per independently installable community package. |
+| Provider suite | One suite overview plus per-package sections when packages share one user journey. Split pages if package behavior diverges. | Per-role or source-chain pages when setup, methods, limits, publication state, or readiness differ substantially. | Same-family suites stay in that functional family; multi-family suites require approved canonical mapping. Catalog row per independently installable community package. |
 | Catalog-only integration | No local page set. Require the Community Modules feed fields plus verified maintainer evidence in the coordination record. | Promote to local docs only when a reader journey justifies it. | Community Modules row in the aggregate feed and separate external catalog coordination; no sidebar entry. |
 | New-family candidate | Page set derived from the complexity overlay after maintainer IA approval. | Family index or chooser only when more than one module or a distinct decision journey exists. | Approved canonical path, relevant functional indexes and aggregate feed rows, and `custom-tree.ts` only for rendered discoverability. |
 
@@ -676,7 +705,7 @@ reference.
 Changelog treatment is cross-cutting, not family-specific. Update the changelog
 when the task introduces or changes public docs for a verified release and the
 current repository release policy calls for an entry. Do not add a release entry
-for placeholders, unpublished packages, source-only work, or unverified state.
+for unpublished packages or unverified publication evidence.
 
 An output allowlist is a maximum write scope. It does not require every listed
 page and is not evidence of API ownership, release, IA approval, or factual
@@ -1539,7 +1568,7 @@ and duplicate full workflows across a hub and its guides.
 Use external links when they help the reader verify package/source/provider
 context:
 
-- npm package page for released packages.
+- npm package page for published packages.
 - Public source repository or monorepo package path.
 - Official provider docs for API keys, supported chains, route availability,
   rate limits, status values, or provider-specific setup.
@@ -1916,11 +1945,16 @@ run.
 
 ## PR Readiness Checklist
 
-Before asking for review, verify:
+Before marking the documentation PR ready for review, verify:
 
+- WDK development-team code review is approved for the exact documented source
+  revision; material subsequent changes have been re-approved.
 - Target branch is correct.
 - Worktree contains only intended files.
-- Package release state is classified.
+- The exact package/version is classified as published or unpublished.
+- If unpublished, the documentation PR is still a draft and npm publication is
+  proceeding in parallel. If published, post-publication package and snippet
+  verification passed before the PR left draft.
 - Documentation readiness is classified independently; runnable setup has a
   verified clean dependency graph and secret-free isolated smoke path.
 - Mixed readiness names the affected language/symbol/flow, has independent
@@ -1934,7 +1968,7 @@ Before asking for review, verify:
 - Catalog/chooser status labels distinguish release maturity, documentation
   readiness, and runtime compatibility; ambiguous `Ready` labels are absent.
 - Community modules have responsibility disclaimers.
-- Changelog treatment follows verified release state rather than module family.
+- Changelog treatment follows verified publication state rather than module family.
 - API reference is source-backed and excludes private helpers.
 - API-reference policy is `IN_SCOPE` or `NOT_APPLICABLE` for final readiness;
   `QUARANTINED` is reported incomplete and never treated as near-actual.
@@ -1973,7 +2007,9 @@ Before asking for review, verify:
 
 Ask maintainers before publishing when:
 
-- Package release state is placeholder, unpublished, or renaming.
+- WDK development-team code-review approval is missing, unclear, or applies to
+  an older source revision.
+- The intended package/version remains unpublished or its identity is changing.
 - Source and npm metadata disagree.
 - Provider docs and source disagree on supported chains or tokens.
 - A module could fit both a functional section and Community Modules.
@@ -1981,7 +2017,7 @@ Ask maintainers before publishing when:
 - Authority, custody, settlement, or package topology only partially resembles
   an existing family, including signing-only, MPC, custodial, accountless, or
   asynchronous intent/order behavior.
-- A released package fails clean install, declaration, or interoperability
+- A published package fails clean install, declaration, or interoperability
   checks and maintainers must choose a supported dependency resolution.
 - A page would expose a private helper or private validation detail.
 - The docs need to claim production readiness, deprecation, support level, or ownership.
@@ -1999,7 +2035,8 @@ Keep this record private to the authoring handoff:
 
 ```text
 Source lock: <PACKAGE VERSION, TARBALL, MATCHING SOURCE, PROVIDER SOURCES>
-Release state: <RELEASED, PLACEHOLDER, UNPUBLISHED, DEPRECATED, SOURCE ONLY, OR BLOCKED>
+WDK code-review approval: <APPROVAL REFERENCE AND APPROVED SOURCE REVISION>
+Package publication state: <PUBLISHED OR UNPUBLISHED>
 Documentation readiness: <RUNNABLE, REFERENCE-ONLY, OR DRAFT-ONLY>
 Readiness ledger: <ONE ROW PER LANGUAGE, ENTRY POINT, SYMBOL/FLOW, EVIDENCE, STATUS, BLOCKER, AND PUBLIC LOCATION>
 Authority/custody: <LOCAL, SUPPLIED SIGNER, REMOTE, MPC/MULTISIG, OR NONE>
@@ -2364,7 +2401,7 @@ A generated page set is near-actual only when all of these are true:
 - Page count, canonical path, frontmatter, section order, and sidebar/listing
   decisions satisfy current IA and this guide.
 - An independent source review reports zero Blocker or High findings for API,
-  package, release-state, security, write ordering, or unsupported claims.
+  package, publication-state, security, write ordering, or unsupported claims.
 - Capability-triggered decision-output controls pass independently: authority,
   reason and unknown semantics, policy/model version and time bounds, human
   review or override, audit/retention, privacy, fallback, and revalidation are
@@ -2377,12 +2414,12 @@ A generated page set is near-actual only when all of these are true:
 - Differences from the original are editorial or equally accurate alternatives,
   not missing behavior, invented behavior, or copied wording.
 - The tested artifact hashes match the final candidate. Any later manual,
-  skill, operator-guide, or validator change invalidates affected test results
+  skill, README, or validator change invalidates affected test results
   until they are rerun.
-- The skill also passes manual-absent classification tests. A source-only
-  package stays draft-only unless separate release evidence exists. An
+- The skill also passes manual-absent classification tests. An unpublished
+  package stays draft-only until exact publication evidence exists. An
   unfamiliar authority/custody model yields a new-family or explicit
-  maintainer-decision result. Neither case invents routes or release claims.
+  maintainer-decision result. Neither case invents routes or publication claims.
 - Manual-absent tests exercise `IN_SCOPE`, `NOT_APPLICABLE`, and fail-closed
   `QUARANTINED` PR policy; same-package mixed-readiness tests use independent
   ledger rows; and a non-pricing steering output plus an observational negative
