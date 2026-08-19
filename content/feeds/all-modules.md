@@ -48,6 +48,7 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 | [`@symbiosis-finance/wdk-protocol-swidge-symbiosis`](https://www.npmjs.com/package/@symbiosis-finance/wdk-protocol-swidge-symbiosis) | Symbiosis | Community | Runtime-discovered exact-input quotes with EVM, Bitcoin, and capability-gated TON, Tron, and Solana source execution through the Symbiosis API | [Docs](/sdk/swidge-modules/swidge-symbiosis/) |
 | [`@lifi/wdk-protocol-swidge-lifi`](https://www.npmjs.com/package/@lifi/wdk-protocol-swidge-lifi) | LI.FI | Community | Swidge routes for LI.FI swap, bridge, and combined swap-plus-bridge operations | [Docs](/sdk/swidge-modules/swidge-lifi/) |
 | [`@0x/wdk-protocol-swidge-0x`](https://www.npmjs.com/package/@0x/wdk-protocol-swidge-0x) | 0x | Community | Same-chain EVM token swaps through the 0x Swap API v2 | [Docs](/sdk/swidge-modules/swidge-0x/) |
+| [`@gobob/wdk-protocol-swidge-gateway`](https://www.npmjs.com/package/@gobob/wdk-protocol-swidge-gateway) | BOB Gateway | Community | Native BTC routes to and from tokens on EVM chains and Tron, settled on Bitcoin L1 with no wrapped-BTC intermediary | [Docs](/sdk/swidge-modules/swidge-gateway/) |
 
 ## Pricing Modules
 
@@ -121,4 +122,4 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 | [`@0x/wdk-protocol-swidge-0x`](https://www.npmjs.com/package/@0x/wdk-protocol-swidge-0x) | Swidge | 0x same-chain EVM route integration | [Docs](/sdk/swidge-modules/swidge-0x/) |
 | [`@moonpay/wdk-protocol-swidge-moonpay-trade`](https://www.npmjs.com/package/@moonpay/wdk-protocol-swidge-moonpay-trade) | Swidge | Routes through MoonPay Trade | [README](https://www.npmjs.com/package/@moonpay/wdk-protocol-swidge-moonpay-trade#readme) |
 | [`@swapdk/wdk-protocol-swidge-swapdk`](https://www.npmjs.com/package/@swapdk/wdk-protocol-swidge-swapdk) | Swidge | Routes through SwapDK | [README](https://github.com/Swap-DK/wdk-protocol-bridges-swapdk#readme) |
-| [`@gobob/wdk-protocol-swidge-gateway`](https://www.npmjs.com/package/@gobob/wdk-protocol-swidge-gateway) | Swidge | Routes through the BOB Gateway | [README](https://github.com/bob-collective/wdk-protocol-swidge-gateway#readme) |
+| [`@gobob/wdk-protocol-swidge-gateway`](https://www.npmjs.com/package/@gobob/wdk-protocol-swidge-gateway) | Swidge | Routes through the BOB Gateway | [Docs](/sdk/swidge-modules/swidge-gateway/) |

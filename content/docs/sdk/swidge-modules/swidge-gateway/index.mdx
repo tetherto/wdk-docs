@@ -1,0 +1,85 @@
+---
+title: BOB Gateway Swidge Overview
+description: Overview of the @gobob/wdk-protocol-swidge-gateway module for native BTC swap and bridge routes.
+docType: explanation
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+The BOB Gateway Swidge module lets WDK accounts quote and execute **native Bitcoin** swap and bridge routes through [BOB Gateway](https://gobob.xyz) using the shared `SwidgeProtocol` interface.
+
+Use this module when an app needs to move native BTC in or out of tokens on EVM chains and Tron. Bitcoin is spent and received on Bitcoin L1, with no wrapped-BTC intermediary. Source transactions are signed through the WDK account, and settlement is handled by Gateway.
+
+<Callout type="info">
+Tron as a **source** chain (for example USDT-TRC20 to native BTC) shipped in `0.3.0`. Everything on this page marked "Tron source" needs `@gobob/wdk-protocol-swidge-gateway` `0.3.0` or newer; on `0.2.0` a Tron source throws `NOT_SUPPORTED`. Tron as a **destination** works from `0.2.0`.
+</Callout>
+
+## Features
+
+- **Unified route interface**: Implements `quoteSwidge()`, `swidge()`, `simulateSwidge()`, `getSwidgeStatus()`, `getRequiredApproval()`, `getSupportedChains()`, and `getSupportedTokens()`.
+- **Native BTC routes**: Swaps native BTC to and from USDT, USDC, ETH, wBTC, cbBTC, and XAUT across Ethereum, Base, Arbitrum, and BSC.
+- **BTC and Tron**: Sends BTC and receives USDT (or another supported token) on Tron, and spends USDT-TRC20 from a Tron account to receive native BTC.
+- **EVM to EVM**: Same-chain swaps and cross-chain bridges through the inherited `swap()` and `bridge()` methods.
+- **Delegated signing**: Source transactions are signed through the WDK account. The module holds no key material.
+- **Affiliate fees**: Optional per-address basis-point fees on every route with BTC on one side, Tron included. Token-to-token swaps drop them.
+- **Approval pre-flight**: `getRequiredApproval()` reports the exact ERC-20 or TRC-20 approval an offramp or token swap needs before execution.
+- **Multi-runtime**: Runs on Node.js, Bare (`bare.js`), and React Native.
+- **Typed errors**: Exposes `GatewaySwidgeError` with stable `ERR` codes — `HTTP`, `VALIDATION`, `UNSUPPORTED_ROUTE`, `NOT_SUPPORTED`, and `APPROVAL_REQUIRED`.
+
+## Supported Routes
+
+Call `getSupportedChains()` and `getSupportedTokens()` at runtime — BOB Gateway controls the live route set and adds chains and tokens over time. `getSupportedChains()` derives its entries from the gateway's live routes and reports each chain's native token: `BTC` for Bitcoin, `TRX` for Tron, `SOL` for Solana, `ETH` for EVM chains.
+
+| Route | Source support | Notes |
+|-------|----------------|-------|
+| BTC to EVM (onramp) | Supported | Spends native BTC from a `@tetherto/wdk-wallet-btc` account. Supports affiliate fees. |
+| EVM to BTC (offramp) | Supported | Spends an ERC-20 from a `@tetherto/wdk-wallet-evm` account. Requires an approval first. Supports affiliate fees. |
+| BTC to Tron | Supported | Receives USDT or another supported token on Tron. No Tron account needed — Tron is the destination. Supports affiliate fees. |
+| Tron to BTC (offramp) | Supported | Spends USDT-TRC20 from a `@tetherto/wdk-wallet-tron` account (`1.0.0-beta.8` or newer) and requires a TRC-20 approval. Supports affiliate fees. Needs module `0.3.0` or newer. See [Tron as a source chain](/sdk/swidge-modules/swidge-gateway/usage#tron-source-usdt-trc20-to-btc). |
+| EVM to EVM | Supported | Use the inherited `swap()` and `bridge()` methods. Affiliate fees do not apply to this route. |
+| Solana | Not yet available | Planned. The module already maps Solana chains to a `SOL` native token, so they will show up in discovery as soon as the gateway returns a route. |
+
+## Execution Model
+
+The route direction determines which chain the module signs on.
+
+**Onramp (BTC to a token).** `swidge()` builds and signs a Bitcoin transaction through the WDK BTC account, then hands it to the gateway. **The gateway broadcasts the Bitcoin transaction — the module does not.** It receives the signed transaction through a best-effort registration call whose failures the module swallows, so `swidge()` can resolve without the gateway having taken delivery. Confirm with `getSwidgeStatus(result.id)` rather than treating a resolved call as proof; the destination tokens settle asynchronously.
+
+**Offramp (a token to BTC).** `swidge()` submits the source-chain transaction after the required token approval is in place. It resolves once that transaction is broadcast. Registering the hash with the gateway is best effort here too — a failure is swallowed and the gateway reconciles the order from chain state — so confirm with `getSwidgeStatus(result.id)`. BTC settles on Bitcoin L1 asynchronously.
+
+**Tron source routes** add one step, because a Tron transaction ID is a hash of the transaction's own bytes and therefore exists before the transaction does — a Tron node returns that same ID in its *rejection* body, so a well-formed hash is not proof of acceptance. The module builds the gateway's pre-encoded call itself, re-checks the built transaction before the account signs it, and then reads the broadcast transaction back from the node before registering the hash with the gateway. The read-back waits for **acceptance, not for mining**, and gives up after `tronConfirmTimeoutMs` (20 seconds by default). A node too slow to answer inside that window turns a real broadcast into a thrown error whose message names the transaction ID: look that ID up on chain, do not re-send.
+
+In every direction, use `getSwidgeStatus(result.id)` to track the route to completion.
+
+<Callout type="warn">
+`swidge()` spends real funds and can submit a Bitcoin, EVM, or Tron transaction. Show the quote, fee breakdown, recipient, source token, destination token, and destination chain, and ask for explicit user confirmation before calling it.
+</Callout>
+
+<Callout type="info">
+The Gateway API applies a **country blocklist** that includes the United States and the United Kingdom alongside sanctioned jurisdictions. Requests from a blocked country receive a `403`. See the [Gateway FAQ](https://docs.gobob.xyz/gateway/faq#are-any-regions-blocked-from-using-gateway) for the current list, and account for it in both production deployments and CI.
+</Callout>
+
+## Next Steps
+
+<Cards>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-gateway/configuration">
+Configure the source chain, slippage, affiliate fees, BTC fee rate, Tron provider, and API access.
+</Card>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-gateway/usage">
+Install the package, register the module, quote a route, approve, execute, and poll status.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-gateway/api-reference">
+Review constructor options, methods, route options, status mapping, and error codes.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
