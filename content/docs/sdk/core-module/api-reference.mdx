@@ -23,11 +23,14 @@ The main class for managing wallets across multiple blockchains. This class serv
 ### Constructor
 
 ```javascript title="Constructor"
-new WDK(seed)
+new WDK(seed, options?)
 ```
 
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
+- `options` (`WdkOptions`, optional): Instance settings. `maxConditionTimeoutMs` is a finite positive number that caps every policy condition timeout on this WDK instance and defaults to `30000` milliseconds.
+
+**Throws:** `Error` if the seed is invalid. Throws `PolicyConfigurationError` if `options` fails the published options schema, such as an array or primitive value, or if `maxConditionTimeoutMs` is not a finite positive number.
 
 **Example:**
 ```javascript title="Initialize WDK"
@@ -39,6 +42,11 @@ const wdk = new WDK('abandon abandon abandon abandon abandon abandon abandon aba
 // With seed bytes
 const seedBytes = new Uint8Array([...])
 const wdk2 = new WDK(seedBytes)
+
+// Cap every policy condition at five seconds
+const policyWdk = new WDK(seedBytes, {
+  maxConditionTimeoutMs: 5000
+})
 ```
 
 ### Methods
@@ -190,7 +198,9 @@ For policy scoping, default-deny behavior, account-level overrides, and protocol
 
 **Parameters:**
 - `policies` (`Policy | Policy[]`): A single policy or an array of policies to register.
-- `options` (`RegisterPolicyOptions`, optional): Engine-level settings. `conditionTimeoutMs` defaults to `30000` milliseconds; the most recent value wins.
+- `options` (`RegisterPolicyOptions`, optional): Settings applied only to the policies registered by this call. `conditionTimeoutMs` is a finite positive number and defaults to `30000` milliseconds. Values above the instance's `maxConditionTimeoutMs` ceiling are capped.
+
+Distinct policy IDs keep their original per-registration timeouts. A repeated ID replaces the stored policy within its registry bucket and takes the timeout from the new registration call. All project-scoped policies share one bucket; account-scoped policies are bucketed by wallet.
 
 **Returns:** `WDK` - The WDK instance (supports method chaining)
 
@@ -221,8 +231,9 @@ const wdk = new WDK(seedPhrase)
         action: 'DENY',
         reason: 'Transaction value exceeds local policy',
         conditions: [
-          ({ params }) => {
-            const value = (params as { value?: bigint } | null)?.value
+          ({ args }) => {
+            const tx = args[0] as { value?: bigint } | undefined
+            const value = tx?.value
             return typeof value === 'bigint' && value > 1000000000000000000n
           }
         ]
@@ -399,6 +410,8 @@ Base single-signer writable wallet account interface exposed by `@tetherto/wdk-w
 | `sign(message)` | Signs a message with the account private key | `Promise<string>` | - |
 | `signTransaction(tx)` | Signs a transaction without broadcasting it | `Promise<unknown>` | If the transaction is invalid for the module |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
+| `getTransaction(hash)` | Returns a normalized transaction receipt | `Promise<TransactionReceipt>` | `ValueError`, `NoSuchElementError`, `ProviderRequiredError`, or `ProviderError` |
+| `waitForTransaction(hash, options?)` | Polls until the requested finality or a stable dropped state | `Promise<TransactionReceipt>` | Transaction lookup errors or `TimeoutError` |
 | `sendTransaction(tx)` | Signs, broadcasts, and returns the transaction result | `Promise<TransactionResult>` | If provider access or broadcast fails |
 | `transfer(options)` | Transfers a token where supported by the module | `Promise<TransferResult>` | If the module does not support token transfers |
 | `toReadOnlyAccount()` | Returns a read-only account copy | `Promise<IWalletAccountReadOnly>` | - |
@@ -424,6 +437,66 @@ const signedTransaction = await account.signTransaction({
 console.log('Signed transaction:', signedTransaction)
 ```
 
+##### `getTransaction(hash)`
+
+Returns one normalized lookup for a transaction. The common receipt includes `hash`, `finality`, and optional `success`, `block`, and `fee` fields; a concrete wallet module can add chain-native fields.
+
+**Parameters:**
+- `hash` (string): The chain-specific transaction identifier, such as a hash, signature, or `lt:hash` value.
+
+**Returns:** `Promise<TransactionReceipt>` - The current normalized receipt.
+
+**Throws:** `NoSuchElementError` when the transaction has not been found. Invalid identifiers and provider failures use the corresponding base-wallet error classes.
+
+`getTransactionReceipt()` is marked deprecated in the base package. Migrate after the concrete wallet module documents a `getTransaction()` implementation, and use that module's extended `TransactionReceipt` when you also need native receipt fields.
+
+<Callout type="info">
+`getTransaction()` is a base-wallet contract, not a guarantee that current chain modules implement it. The base implementation throws `NotImplementedError`; for example, the currently released `@tetherto/wdk-wallet-evm` v1.0.0-beta.16 still exposes its legacy receipt lookup instead. Check the concrete module's release documentation before using either normalized transaction-tracking method.
+</Callout>
+
+##### `waitForTransaction(hash, options?)`
+
+Calls `getTransaction()` until the receipt reaches the requested `confirmed` or `final` target, is reported as `dropped` on two consecutive polls, or times out. It returns reverted receipts too; inspect `success` instead of treating resolution as proof of successful execution.
+
+**Parameters:**
+- `hash` (string): The transaction identifier.
+- `options` (`WaitForTransactionOptions`, optional): Polling and finality settings.
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `target` | `'confirmed'` | Finality level to wait for: `'confirmed'` or `'final'` |
+| `timeout` | Module default | Polling deadline checked between completed polls; the base account default is `60000` milliseconds |
+| `interval` | Module default | Poll cadence in milliseconds; the base account default is `4000` |
+| `maxPollErrors` | `3` | Consecutive `ProviderError` results tolerated before the next one is rethrown |
+
+**Returns:** `Promise<TransactionReceipt>` - A receipt at the target finality, or a stable `dropped` receipt.
+
+**Throws:** `TimeoutError` when the polling loop regains control and observes that the deadline has elapsed. `NoSuchElementError` is treated as a transient not-found while polling; other non-provider errors are rethrown immediately.
+
+`timeout` is not a hard wall-clock bound and does not cancel `getTransaction()`. The helper awaits each provider lookup, does not shorten the final sleep to the remaining time, and checks a returned target receipt before checking the deadline again. A slow or hung lookup can therefore exceed the configured timeout, and a target receipt can resolve after it. Configure provider-level request timeouts or cancellation separately.
+
+```typescript title="Wait For Confirmation"
+// `account` must come from a concrete module that implements getTransaction().
+const receipt = await account.waitForTransaction(transactionHash, {
+  target: 'confirmed',
+  timeout: 120000
+})
+
+if (receipt.finality === 'dropped') {
+  console.error('Transaction dropped')
+} else if (receipt.success === false) {
+  console.error('Transaction reverted')
+}
+```
+
+### Base Wallet Error Exports
+
+The root `@tetherto/wdk-wallet` entrypoint exports `WdkError` and these specialized subclasses: `AssertionError`, `InvalidSignerError`, `InvalidTokenError`, `MaximumFeeExceededError`, `NoSuchElementError`, `NotImplementedError`, `ProviderError`, `ProviderRequiredError`, `TimeoutError`, `TransactionError`, `TransferError`, `UnsupportedOperationError`, and `ValueError`.
+
+`ProviderError`, `TransactionError`, and `TransferError` expose a `reason` field. Compare it with `ProviderErrorReason`, `TransactionErrorReason`, or `TransferErrorReason` rather than parsing the message. See [Error Handling](/sdk/core-module/guides/error-handling#base-wallet-errors) for the reason values and migration notes.
+
+These exports do not retroactively normalize errors in a concrete wallet package built against an older base version. Check that package's release and documented error behavior before relying on `instanceof WdkError`.
+
 ## Multisig Account Contracts
 
 `@tetherto/wdk-wallet/multisig` exports contracts for chain-specific multisig wallet implementations. The package does not include a concrete multisig account or add these methods to [`WdkAccount`](#wdkaccount). The `Transaction` and `TransactionResult` types remain type exports of the root `@tetherto/wdk-wallet` package.
@@ -432,7 +505,9 @@ console.log('Signed transaction:', signedTransaction)
 import {
   IWalletAccountReadOnlyMultisig,
   IWalletAccountMultisig,
-  IMultisigOwnerManagement
+  IMultisigOwnerManagement,
+  IMultisigMessageSigningReadOnly,
+  IMultisigMessageSigning
 } from '@tetherto/wdk-wallet/multisig'
 ```
 
@@ -440,20 +515,18 @@ These runtime exports are interface base classes. Their methods throw `NotImplem
 
 ### `IWalletAccountReadOnlyMultisig`
 
-The read-only contract shares the base address, signature-verification, balance, token-balance, and receipt methods, then adds multisig state and proposal reads:
+The read-only contract shares the base address, signature-verification, balance, token-balance, and transaction-tracking methods, then adds multisig state and transaction-proposal reads:
 
 ```typescript title="Read-only Multisig Contract"
 interface IWalletAccountReadOnlyMultisig {
   getMultisigInfo(): Promise<MultisigInfo>
   getProposals(ids: string[]): Promise<Record<string, MultisigProposal | null>>
   getProposal(id: string): Promise<MultisigProposal | null>
-  getMessageProposals(ids: string[]): Promise<Record<string, MultisigMessageProposal | null>>
-  getMessageProposal(id: string): Promise<MultisigMessageProposal | null>
   quoteExecuteProposal(id: string): Promise<Omit<TransactionResult, 'hash'>>
 }
 ```
 
-Missing proposal and message IDs return `null`. `quoteExecuteProposal()` throws `NoSuchElementError` when the proposal does not exist.
+Missing proposal IDs return `null`. `quoteExecuteProposal()` throws `NoSuchElementError` when the proposal does not exist.
 
 ### `IWalletAccountMultisig`
 
@@ -469,18 +542,34 @@ interface IWalletAccountMultisig extends IWalletAccountReadOnlyMultisig {
   propose(
     tx: Transaction,
     options?: MultisigTransactionOptions
-  ): Promise<MultisigProposal & MultisigAutoExecuteResult>
-  proposeMessage(message: string): Promise<MultisigMessageProposal & MultisigSignature>
-  approveMessageProposal(id: string): Promise<MultisigMessageProposal & MultisigSignature>
-  approveProposal(id: string): Promise<MultisigProposal & MultisigAutoExecuteResult>
+  ): Promise<MultisigProposal>
+  approveProposal(id: string): Promise<MultisigProposal>
   rejectProposal(id: string): Promise<MultisigProposal>
   executeProposal(id: string): Promise<TransactionResult>
 }
 ```
 
-`propose()` creates a proposal rather than executing the transaction directly. `executeProposal()` requires the approval threshold and throws `ValueError` when the proposal is not ready. Proposal quote, mutation, and execution methods can throw `NoSuchElementError` for an unknown ID; getter methods return `null`.
+`propose()` creates a proposal rather than executing the transaction directly. `executeProposal()` requires the approval threshold and throws `ThresholdNotMetError` when the proposal is not ready. Proposal quote, mutation, and execution methods can throw `NoSuchElementError` for an unknown ID; getter methods return `null`.
 
-When `autoExecute: true` makes the current `propose()` or `approveProposal()` call supply the final required approval, the returned intersection can include `transaction` with the execution hash and fee. Otherwise `transaction` is absent.
+When `autoExecute: true` makes the current `propose()` call supply the final required approval, the returned proposal can have `status: 'executed'`. The current base method declarations return `MultisigProposal`; they do not include the transaction result.
+
+### Optional Message-Signing Contracts
+
+Message proposals are optional capabilities in v1.0.0-beta.17. They are no longer members of `IWalletAccountReadOnlyMultisig` or `IWalletAccountMultisig`. A chain-specific module that supports them can expose these separate contracts:
+
+```typescript title="Optional Multisig Message Signing"
+interface IMultisigMessageSigningReadOnly {
+  getMessageProposals(ids: string[]): Promise<Record<string, MultisigMessageProposal | null>>
+  getMessageProposal(id: string): Promise<MultisigMessageProposal | null>
+}
+
+interface IMultisigMessageSigning extends IMultisigMessageSigningReadOnly {
+  proposeMessage(message: string): Promise<MultisigMessageProposal & MultisigSignature>
+  approveMessageProposal(id: string): Promise<MultisigMessageProposal & MultisigSignature>
+}
+```
+
+Check the concrete multisig wallet module before calling these methods. Missing message proposal IDs return `null`; `approveMessageProposal()` can throw `NoSuchElementError` for an unknown ID.
 
 ### `IMultisigOwnerManagement`
 
@@ -523,10 +612,6 @@ interface MultisigTransactionOptions {
   autoExecute?: boolean
 }
 
-interface MultisigAutoExecuteResult {
-  transaction?: TransactionResult
-}
-
 interface MultisigSignature {
   signature: string
 }
@@ -536,7 +621,7 @@ interface MultisigOptions {
 }
 ```
 
-The subpath also re-exports the base wallet `KeyPair` type.
+The subpath also re-exports the base wallet `KeyPair` type. `MultisigAutoExecuteResult` remains exported, but the current `IWalletAccountMultisig` methods do not use it in their return declarations.
 
 ## IWalletAccountWithProtocols
 
@@ -826,6 +911,30 @@ async function getBitcoinAccount(wdk: WDK): Promise<WdkAccount> {
 
 The published definition is `IWalletAccount & IWalletAccountWithProtocols`. Concrete wallet packages can expose additional methods beyond this shared shape. The declared return type of `IWalletAccountWithProtocols.registerProtocol()` remains `IWalletAccountWithProtocols`, so assigning the result of that chained call can narrow away the writable-account methods in TypeScript.
 
+### Transaction Tracking Types
+
+```typescript title="Normalized Transaction Tracking"
+type Finality = 'pending' | 'confirmed' | 'final' | 'dropped'
+type WaitForTransactionTarget = 'confirmed' | 'final'
+
+interface TransactionReceipt {
+  hash: string
+  finality: Finality
+  success?: boolean
+  block?: number
+  fee?: bigint
+}
+
+interface WaitForTransactionOptions {
+  target?: WaitForTransactionTarget
+  timeout?: number
+  interval?: number
+  maxPollErrors?: number
+}
+```
+
+Concrete wallet modules can extend `TransactionReceipt` with native chain fields. `success` is absent while a transaction is pending or dropped; a resolved wait can still have `success: false` when execution reverted.
+
 ### FeeRates
 
 ```typescript title="Type: FeeRates"
@@ -848,6 +957,10 @@ type MiddlewareFunction = <A extends IWalletAccount>(
 ### Policy Types
 
 ```typescript title="Types: Policy Engine"
+interface WdkOptions {
+  maxConditionTimeoutMs?: number
+}
+
 type PolicyAction = 'ALLOW' | 'DENY'
 type PolicyScope = 'project' | 'account'
 
@@ -882,7 +995,6 @@ interface PolicyContext {
   operation: PolicyOperation
   wallet: string
   account: IWalletAccountReadOnly
-  params: unknown
   args: readonly unknown[]
 }
 
@@ -933,6 +1045,10 @@ interface SimulationResult {
 `override_broader_scope` is valid only on account-scoped `ALLOW` rules. When that rule matches, WDK allows the call without evaluating project-scoped policies.
 
 `state` and `onSuccess` are reserved for future engine-managed state and are ignored at runtime in this beta. Conditions can use app-owned state through closures or external stores, but keep that state outside `rule.state`; WDK does not persist or update `state`, run `onSuccess`, or provide built-in counters or cumulative spend accounting.
+
+`PolicyContext.args` is a frozen array containing a snapshot of each argument in method-signature order. `params` was removed in v1.0.0-beta.16; use `args[0]` for the first argument and check optional positions before reading them.
+
+`conditionTimeoutMs` belongs to the policies registered by one `registerPolicy()` call. Distinct policy IDs retain their earlier timeouts, while a repeated ID replaces the policy within its registry bucket and takes the new registration's timeout. All project-scoped policies share one bucket; account-scoped policies are bucketed by wallet. `maxConditionTimeoutMs` is the instance-wide ceiling set by `new WDK(seed, options)`. Both timeout settings default to `30000` milliseconds, and a per-policy request above the ceiling is capped.
 
 Simulation results returned by the runtime `account.simulate.<method>(...)` mirrors include `decision`, `policy_id`, `matched_rule`, `reason`, and a `trace` array that records evaluated rules. `reason` can include a rule reason or one of the engine outcomes: `matched`, `override`, `no-applicable-rule`, or `governed-but-unmatched`.
 

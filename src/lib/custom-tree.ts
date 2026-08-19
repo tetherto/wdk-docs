@@ -329,6 +329,11 @@ export const customTree: Node[] = [
     configuration('/sdk/swidge-modules/swidge-lifi/configuration'),
     apiReference('/sdk/swidge-modules/swidge-lifi/api-reference'),
   ]),
+  folder('0x', '/sdk/swidge-modules/swidge-0x', 'Waypoints', [
+    usage('/sdk/swidge-modules/swidge-0x/usage'),
+    configuration('/sdk/swidge-modules/swidge-0x/configuration'),
+    apiReference('/sdk/swidge-modules/swidge-0x/api-reference'),
+  ]),
   folder('Velora', '/sdk/swap-modules/swap-velora-evm', 'ArrowLeftRight', [
     usage('/sdk/swap-modules/swap-velora-evm/usage'),
     guides([

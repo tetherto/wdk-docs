@@ -1,0 +1,75 @@
+---
+title: 0x Swidge Overview
+description: Overview of @0x/wdk-protocol-swidge-0x 0.1.0 for same-chain EVM token swaps.
+docType: explanation
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+The 0x Swidge module connects a WDK EVM wallet account to the [0x Swap API v2](https://docs.0x.org/docs/introduction/quickstart/swap-tokens-with-0x-swap-api) for same-chain token swaps through the AllowanceHolder flow.
+
+Use [`@0x/wdk-protocol-swidge-0x@0.1.0`](https://www.npmjs.com/package/@0x/wdk-protocol-swidge-0x/v/0.1.0). The released source is maintained by 0x Labs and tagged [`v0.1.0`](https://github.com/0xProject/wdk-protocol-swidge-0x/releases/tag/v0.1.0).
+
+## When to use it
+
+Use this module when your application needs:
+
+- Indicative exact-input or exact-output quotes for same-chain EVM swaps.
+- Firm 0x quotes and transaction submission through a writable WDK EVM account.
+- Automatic ERC-20 approval through the WDK account when the 0x quote reports insufficient allowance.
+- On-chain status checks for submitted swap transactions.
+- Optional network-fee and protocol-fee limits before execution.
+
+Do not use this module for cross-chain routes. A `toChain` value that differs from the configured `chainId` causes `quoteSwidge()` and `swidge()` to reject the request.
+
+## Responsibility model
+
+| Area | Owner |
+|---|---|
+| Wallet account, key material, transaction signing, RPC access, and ERC-20 approval | WDK wallet module and host application |
+| Route calculation, indicative prices, firm quotes, and transaction calldata | 0x Swap API |
+| User confirmation, token allowlists, API-key handling, fee policy, retries, and status polling | Host application |
+
+## Execution model
+
+`quoteSwidge()` calls the 0x AllowanceHolder `/price` endpoint and returns an indicative `SwidgeQuote`. It does not submit an approval or swap transaction.
+
+`swidge()` requests a new firm quote. For an ERC-20 sell token, it can submit an approval transaction and wait for its receipt before submitting the swap transaction. It then returns a WDK `SwidgeResult` containing a source transaction hash and a tracking id in the form `'<chainId>:<transactionHash>'`.
+
+<Callout type="warn">
+The indicative result from `quoteSwidge()` is not the firm quote executed by `swidge()`. The 0.1.0 API obtains that firm quote inside `swidge()`, so treat the indicative quote as a preview rather than a locked execution result. Apply fee limits and show the token pair, recipient, available amounts, slippage, and disclosed fees before requesting confirmation.
+</Callout>
+
+## Version 0.1.0 limitations
+
+- The module supports same-chain EVM swaps only.
+- `getSupportedTokens()` is not implemented. Pass a chain-specific ERC-20 contract address or a documented [native-token alias](/sdk/swidge-modules/swidge-0x/api-reference#native-token-aliases) directly.
+- `getSupportedChains()` returns a static list from the package source; it does not verify live liquidity for a token pair.
+- `refundAddress` and `minAmountOut` are not consumed by `quoteSwidge()` or `swidge()`. Route execution always uses the configured `chainId`.
+- `fromChain` is a status-only option. `getSwidgeStatus()` reads it when resolving a bare transaction hash.
+- `quoteSwidge()` does not expose an expiry.
+- Fallback minimum-output and fee-limit calculations convert token-sized values to JavaScript `number`; large base-unit values can lose precision.
+- API requests have no module-level retry, timeout, or cancellation configuration.
+- Status is derived from the bound account's transaction and receipt methods, not from a 0x status endpoint.
+
+## Next steps
+
+<Cards>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-0x/usage">
+Review the quote, confirmation, execution, approval, and status flows.
+</Card>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-0x/configuration">
+Review required API, chain, slippage, approval, and fee-limit settings.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-0x/api-reference">
+Review the 0.1.0 constructor, methods, options, results, chains, and errors.
+</Card>
+<Card title="Version 0.1.0 Source" href="https://github.com/0xProject/wdk-protocol-swidge-0x/releases/tag/v0.1.0">
+Inspect the released source and release notes maintained by 0x Labs.
+</Card>
+</Cards>

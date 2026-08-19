@@ -1,0 +1,249 @@
+---
+title: 0x Swidge API Reference
+description: API reference for @0x/wdk-protocol-swidge-0x 0.1.0.
+docType: reference
+schemaType: APIReference
+icon: Code
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Version 0.1.0 declares `ZeroExProtocol` as the default and named export of `@0x/wdk-protocol-swidge-0x`.
+
+```javascript
+import ZeroExProtocol, {
+  ZeroExFeeLimitExceededError,
+  ZeroExValidationError
+} from '@0x/wdk-protocol-swidge-0x'
+```
+
+The import specifier above resolves from [`@0x/wdk-protocol-swidge-0x@0.1.0`](https://www.npmjs.com/package/@0x/wdk-protocol-swidge-0x/v/0.1.0).
+
+## Class: `ZeroExProtocol`
+
+`ZeroExProtocol` extends `SwidgeProtocol` from `@tetherto/wdk-wallet/protocols`.
+
+### Constructor
+
+```typescript
+new ZeroExProtocol(
+  account: IWalletAccount | IWalletAccountReadOnly | undefined,
+  config: ZeroExProtocolConfig
+)
+```
+
+`apiKey` and `chainId` are required. A writable account implementing `sendTransaction()` is required for `swidge()`.
+
+The generated declaration currently marks `config` optional even though construction without both required fields throws at runtime. Pass `config` explicitly.
+
+### `quoteSwidge(options)`
+
+```typescript
+quoteSwidge(options: SwidgeOptions): Promise<SwidgeQuote>
+```
+
+Calls the 0x AllowanceHolder `/price` endpoint and returns an indicative quote. It accepts exact-input and exact-output requests.
+
+The method can run without an account. When a bound account's address resolves, it is sent as the 0x taker. If no account address is available, `options.recipient` is used as the taker when provided.
+
+### `swidge(options, config?)`
+
+```typescript
+swidge(
+  options: SwidgeOptions,
+  config?: SwidgeProtocolConfig
+): Promise<SwidgeResult>
+```
+
+Calls the 0x AllowanceHolder `/quote` endpoint, evaluates configured fee limits, performs an ERC-20 approval when required, and submits the transaction returned by 0x.
+
+`config` supports per-call `maxNetworkFeeBps` and `maxProtocolFeeBps` overrides.
+
+### `getSwidgeStatus(id, options?)`
+
+```typescript
+getSwidgeStatus(
+  id: string,
+  options?: SwidgeStatusOptions
+): Promise<SwidgeStatusResult>
+```
+
+Accepts:
+
+- The `'<chainId>:<transactionHash>'` id returned by `swidge()`.
+- A bare transaction hash with `options.fromChain`.
+- A bare transaction hash without `options.fromChain`, which falls back to the configured `chainId`.
+
+The method maps a successful receipt to `completed`, a reverted receipt to `failed`, and an unresolved lookup to `pending`. If `getTransactionByHash()` exists and returns `null`, it throws `ZeroExUnknownTransactionError`.
+
+### `getSupportedChains()`
+
+```typescript
+getSupportedChains(): Promise<SwidgeSupportedChain[]>
+```
+
+Returns a static list defined by the 0.1.0 package source:
+
+| Chain | Chain id | Native token |
+|---|---:|---|
+| Abstract | `2741` | ETH |
+| Arbitrum One | `42161` | ETH |
+| Avalanche C-Chain | `43114` | AVAX |
+| Base | `8453` | ETH |
+| Berachain | `80094` | BERA |
+| BNB Smart Chain | `56` | BNB |
+| Ethereum | `1` | ETH |
+| HyperEVM | `999` | HYPE |
+| Ink | `57073` | ETH |
+| Linea | `59144` | ETH |
+| Mantle | `5000` | MNT |
+| Monad | `143` | MON |
+| OP Mainnet | `10` | ETH |
+| Plasma | `9745` | ETH |
+| Polygon | `137` | POL |
+| Scroll | `534352` | ETH |
+| Sonic | `146` | S |
+| Tempo | `4217` | ETH |
+| Unichain | `130` | ETH |
+| World Chain | `480` | ETH |
+
+This method does not call 0x or prove that a requested token pair has live liquidity.
+
+### `getSupportedTokens()`
+
+```typescript
+getSupportedTokens(): Promise<never>
+```
+
+Throws `NotImplementedError`. Pass chain-specific ERC-20 contract addresses or a documented [native-token alias](#native-token-aliases) to `quoteSwidge()` and `swidge()`.
+
+## `SwidgeOptions` behavior
+
+| Field | Type | Version 0.1.0 behavior |
+|---|---|---|
+| `fromToken` | `string` | Required. Sell-token contract address, or a [native-token alias](#native-token-aliases) if selling the chain's native token. |
+| `toToken` | `string` | Required. Buy-token contract address, or a [native-token alias](#native-token-aliases) if buying the chain's native token. |
+| `fromTokenAmount` | `number \| bigint` | Exact sell amount. Pass either this field or `toTokenAmount`. |
+| `toTokenAmount` | `number \| bigint` | Exact buy amount. Pass either this field or `fromTokenAmount`. |
+| `toChain` | `string \| number` | Optional. When provided, it must numerically equal configured `chainId`. |
+| `recipient` | `string` | Optional output recipient for execution. For an account-free indicative quote, it is also used as the taker. |
+| `slippage` | `number` | Optional decimal slippage. Overrides `defaultSlippage`. |
+| `refundAddress` | `string` | Not consumed in version 0.1.0. |
+| `minAmountOut` | `number \| bigint` | Not consumed in version 0.1.0. |
+
+Use token amounts in the token's smallest unit. Pass positive `bigint` values when possible. Although the interface also accepts `number`, values above `Number.MAX_SAFE_INTEGER` can lose precision before conversion, and the module does not reject zero or negative amounts before calling 0x.
+
+### Native-token aliases
+
+Five identifiers resolve to the chain's native token in the [v0.1.0 source](https://github.com/0xProject/wdk-protocol-swidge-0x/blob/a0615159c116fd827533dfd3ab71adfc663d3312/src/0x-protocol.js#L49-L61):
+
+- `native`
+- `eth`
+- `''` (an empty string)
+- `0x0000000000000000000000000000000000000000`
+- `0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE`
+
+The module matches these identifiers case-insensitively and rewrites each one to the 0x sentinel address before sending the request. `eth` and `''` identify the native token on every supported chain; for example, `eth` means POL on Polygon, not ether.
+
+Any other token string is forwarded to 0x unchanged. The module does not trim, validate, or checksum non-native token addresses.
+
+## `ZeroExProtocolConfig`
+
+```typescript
+type ZeroExProtocolConfig = {
+  chainId: number | string
+  apiKey: string
+  baseUrl?: string
+  defaultSlippage?: number
+  skipApproval?: boolean
+  maxNetworkFeeBps?: number | bigint
+  maxProtocolFeeBps?: number | bigint
+}
+```
+
+See [Configuration](/sdk/swidge-modules/swidge-0x/configuration) for validation, approval, and fee-limit caveats.
+
+## Quote and result fields
+
+`quoteSwidge()` returns:
+
+| Field | Type | Description |
+|---|---|---|
+| `fromTokenAmount` | `bigint` | Sell amount returned by 0x. |
+| `toTokenAmount` | `bigint` | Buy amount returned by 0x for exact-input, or the requested amount for exact-output. |
+| `toTokenAmountMin` | `bigint` | `minBuyAmount` returned by 0x, or the module's fallback calculation. |
+| `fees` | `SwidgeFee[]` | Network, 0x protocol, and integrator fees present in the response. |
+| `priceImpact` | `number \| undefined` | 0x percentage value converted to a decimal. |
+| `expiry` | `undefined` | The indicative `/price` response does not expose expiry through this module. |
+
+When 0x omits `minBuyAmount` for an exact-input quote, the fallback converts the buy amount to `number` before applying slippage. Large base-unit values can therefore lose precision.
+
+`swidge()` returns:
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | `string` | `'<chainId>:<sourceTransactionHash>'`. |
+| `hash` | `string` | Submitted swap transaction hash. |
+| `transactions` | `SwidgeTransaction[]` | Optional approval transaction followed by the source swap transaction. |
+| `fromTokenAmount` | `bigint` | Firm quote sell amount. |
+| `toTokenAmount` | `bigint` | Firm quote buy amount. |
+| `toTokenAmountMin` | `bigint \| undefined` | Firm quote `minBuyAmount` when present. |
+| `fees` | `SwidgeFee[]` | Fees mapped from the firm quote. |
+
+## Fee mapping
+
+| 0x response field | WDK fee type | Denomination |
+|---|---|---|
+| `totalNetworkFee` | `network` | Native token symbol from the package's chain list |
+| `fees.zeroExFee` | `protocol` | `feeToken` returned by 0x |
+| `fees.integratorFee` | `affiliate` | `feeToken` returned by 0x |
+
+## Runtime exports
+
+The 0.1.0 package entrypoint exports:
+
+- `ZeroExProtocol` as the default and a named export.
+- `ISwidgeProtocol`.
+- `ZeroExApiError`.
+- `ZeroExInsufficientLiquidityError`.
+- `ZeroExFeeLimitExceededError`.
+- `ZeroExReadOnlyError`.
+- `ZeroExValidationError`.
+- `ZeroExUnsupportedOperationError`.
+- `ZeroExTransactionRevertedError`.
+- `ZeroExTimeoutError`.
+
+The package also ships TypeScript declarations for `ZeroExProtocolConfig` and the inherited Swap, Bridge, and Swidge type aliases exposed by its entrypoint.
+
+The package also declares a `bare` export condition that initializes `bare-node-runtime/global` before re-exporting the main entrypoint.
+
+## Errors
+
+| Error | When thrown |
+|---|---|
+| `ZeroExApiError` | The 0x API returns a non-success HTTP status. Exposes `status` and parsed `body`. |
+| `ZeroExInsufficientLiquidityError` | The 0x response reports `liquidityAvailable: false`. |
+| `ZeroExFeeLimitExceededError` | A present fee exceeds a configured limit, or a present fee cannot be evaluated against that limit. |
+| `ZeroExReadOnlyError` | `swidge()` is called without a writable account. |
+| `ZeroExValidationError` | Required configuration is absent; both or neither amount field is supplied; a status identifier is malformed; or a required approval cannot be performed. |
+| `ZeroExUnsupportedOperationError` | A cross-chain `toChain` is requested. |
+| `ZeroExTransactionRevertedError` | The automatic approval transaction receipt reports failure. |
+| `ZeroExTimeoutError` | Automatic approval receipt polling exceeds three minutes. Exposes the broadcast approval transaction hash as `hash`. |
+| `ZeroExUnknownTransactionError` | `getTransactionByHash()` returns `null` during status lookup. This class is not exported by the 0.1.0 package entrypoint. |
+| `NotImplementedError` | `getSupportedTokens()` is called. Exported by `@tetherto/wdk-wallet`, not by this package. |
+
+<Cards>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-0x/usage">
+Review the main quote, execution, approval, and status flows.
+</Card>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-0x/configuration">
+Review required config and safety-sensitive behavior.
+</Card>
+<Card title="Version 0.1.0 Source" href="https://github.com/0xProject/wdk-protocol-swidge-0x/releases/tag/v0.1.0">
+Inspect the released source and release notes.
+</Card>
+</Cards>

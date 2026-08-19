@@ -1,12 +1,12 @@
 ---
 title: API Reference
-description: Complete WDK CLI beta.1 command and option reference
+description: Complete WDK CLI beta.2 command and option reference
 docType: reference
 schemaType: TechArticle
 icon: ListChecks
 ---
 
-This page documents the 31 leaf commands in `@tetherto/wdk-cli@1.0.0-beta.1`. Run `wdk COMMAND --help` to inspect the installed command surface.
+This page documents the 32 leaf commands in `@tetherto/wdk-cli@1.0.0-beta.2`. Run `wdk COMMAND --help` to inspect the installed command surface.
 
 ## Root Options
 
@@ -50,8 +50,9 @@ Imports an existing 12-word or 24-word BIP-39 seed phrase.
 | Option | Required | Description |
 | --- | --- | --- |
 | `--name <name>` | Yes | Wallet name |
+| `--seed-stdin` | No | Read one trimmed seed-phrase line from standard input instead of prompting |
 
-The command prompts for the seed phrase and a new storage passphrase. `WDK_PASSPHRASE` supplies only the passphrase; it does not supply the seed phrase.
+Without `--seed-stdin`, the command prompts for the seed phrase and a new storage passphrase. With `--seed-stdin`, a piped run must also set `WDK_PASSPHRASE`, because the same input stream cannot answer the passphrase prompt. The seed is never accepted as a command-line argument.
 
 ### `wdk wallet export`
 
@@ -101,7 +102,7 @@ Locks one wallet or every wallet.
 | `--name <name>` | One selector required | Wallet to lock |
 | `--all` | One selector required | Lock every wallet |
 
-If both selectors are present, beta.1 applies `--all`.
+If both selectors are present, beta.2 applies `--all`.
 
 ### `wdk wallet default`
 
@@ -120,6 +121,17 @@ Renames a wallet after verifying its passphrase. An unlocked source wallet is lo
 | `--name <name>` | Yes | Current wallet name |
 | `--new-name <name>` | Yes | New wallet name |
 
+### `wdk wallet change-passphrase`
+
+Decrypts a wallet with its current passphrase, rewrites `seed.enc` with a new passphrase, and then attempts to lock that wallet's daemon session.
+
+| Option | Required | Description |
+| --- | --- | --- |
+| `--name <name>` | Yes | Existing wallet name |
+| `--new-passphrase-stdin` | No | Read one trimmed new-passphrase line from standard input instead of prompting and confirmation |
+
+Interactive use prompts for the current passphrase, then asks for and confirms the new passphrase. `WDK_PASSPHRASE` may supply only the current passphrase; it is deliberately ignored for the new passphrase. A piped `--new-passphrase-stdin` run must set `WDK_PASSPHRASE` and rejects an empty new passphrase.
+
 ## Read Commands
 
 ### `wdk get address`
@@ -134,7 +146,7 @@ Derives an address for one network or for a network group.
 | `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
 | `--testnet` | No | Off | With `--all`, select testnets instead of mainnets |
 
-When both `--network` and `--all` are supplied, beta.1 runs the single-network path. In aggregate mode, networks that fail address derivation are omitted from the result.
+When both `--network` and `--all` are supplied, beta.2 runs the single-network path. In aggregate mode, networks that fail address derivation are omitted from the result.
 
 ### `wdk get balance`
 
@@ -165,7 +177,7 @@ Reads token-transfer history through the configured indexer.
 | `--wallet <name>` | No | Default wallet | Wallet selection |
 | `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
 
-When `--token` is omitted, beta.1 batches the network's supported token requests, ignores failed batch items, merges successful transfers by timestamp, and then applies `--limit`.
+When `--token` is omitted, beta.2 batches the network's supported token requests, ignores failed batch items, merges successful transfers by timestamp, and then applies `--limit`.
 
 ## Send Command
 
@@ -195,6 +207,8 @@ wdk send \
 ```
 
 Without `--dry-run`, the command broadcasts immediately. There is no additional interactive confirmation.
+
+Before either fee estimation or broadcast, beta.2 validates the recipient against the selected built-in network's CAIP-2 address rules. A format or mainnet/testnet mismatch fails with `INVALID_ADDRESS` after the unlocked-wallet check but before the estimate or send request. A custom network without a supported CAIP-2 validator is left to its wallet module for final validation.
 
 ## Fiat Ramp Commands
 
@@ -226,7 +240,7 @@ Without `--dry-run`, the command broadcasts immediately. There is no additional 
 | `--wallet <name>` | No | Default wallet | Wallet selection |
 | `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
 
-For each command, provide exactly one of `--fiat-amount` and `--crypto-amount`. Beta.1 supports only the `moonpay` module.
+For each command, provide exactly one of `--fiat-amount` and `--crypto-amount`. Beta.2 supports only the `moonpay` module.
 
 ## Configuration Commands
 
@@ -273,7 +287,7 @@ Prints the resolved `config.json` path. This command has no command-specific opt
 | `--testnet` | Off | Show only testnets |
 | `--mainnet` | Off | Show only mainnets |
 
-With neither option, the command shows every registered network. If both are provided, beta.1 applies `--testnet`.
+With neither option, the command shows every registered network. If both are provided, beta.2 applies `--testnet`.
 
 ### `wdk network create <data>`
 
@@ -352,9 +366,9 @@ See [Use the MCP Server](/cli/guides/use-mcp-server) for client-specific setup a
 Most command handlers print one JSON value to stdout when `--json` is set. The current contract has exceptions:
 
 - `wdk mcp setup`, `remove`, `verify-setup`, and `list` print human-readable success output even with `--json`.
-- Help, version, unknown-command, unknown-option, and missing-required-option output remains text.
-- Interactive wallet prompts render on stdout. If a wallet command opens a prompt, prompt text and terminal-control bytes can precede any JSON result; `wallet import` always prompts for the seed phrase.
-- `wdk send` can write spinner or completion text to stderr while emitting JSON on stdout.
+- Help and version output remains human-readable text. With `--json`, unknown commands, unknown options, missing required options, and invalid option values return an `INVALID_ARGUMENT` JSON envelope on stdout with status `1`.
+- Interactive wallet prompts render on stdout. If a wallet command opens a prompt, prompt text and terminal-control bytes can precede any JSON result. Use `wallet import --seed-stdin` with `WDK_PASSPHRASE` for a non-interactive import.
+- `wdk send --json` suppresses its progress spinner and completion text; command errors and results remain on stdout as JSON.
 - A non-empty `WDK_PASSPHRASE` produces a notice on stderr.
 
 Parse stdout separately from stderr and always check the exit status. See [Handle Errors](/cli/guides/handle-errors) for the error envelope and exit-status contract.

@@ -6,8 +6,10 @@ import path from 'node:path';
 
 import {
   validateAllModulesFeed,
+  validateDocsHtmlSourceOrder,
   validateFileSystemOutput,
   validateHttpOutput,
+  validateLlmsTxt,
 } from '../check-llm-md-output.mjs';
 
 async function createDistFixture(files) {
@@ -21,6 +23,211 @@ async function createDistFixture(files) {
 
   return distDir;
 }
+
+function htmlPathForMarkdown(relativePath) {
+  if (relativePath === 'index.md') return 'index.html';
+  return `${relativePath.slice(0, -'.md'.length)}/index.html`;
+}
+
+async function createLlmsFixture({ llms, markdownFiles, htmlFiles = markdownFiles }) {
+  const root = await mkdtemp(path.join(tmpdir(), 'wdk-llms-txt-'));
+  const llmsPath = path.join(root, 'llms.txt');
+  const distDir = path.join(root, 'dist');
+
+  await mkdir(distDir, { recursive: true });
+  await writeFile(llmsPath, llms, 'utf8');
+
+  for (const relativePath of markdownFiles) {
+    const target = path.join(distDir, relativePath);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, '# Fixture\n', 'utf8');
+  }
+
+  for (const relativePath of htmlFiles) {
+    const target = path.join(distDir, htmlPathForMarkdown(relativePath));
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, '<!DOCTYPE html><article id="nd-page">Fixture</article>', 'utf8');
+  }
+
+  return { llmsPath, distDir };
+}
+
+const validLlmsLines = [
+    '# WDK Documentation',
+    '',
+    '> Complete WDK documentation index.',
+    '',
+    '## Documentation',
+    '',
+    '- [Welcome to WDK](https://docs.wdk.tether.io/index.md)',
+    '- [Core](https://docs.wdk.tether.io/sdk/core-module.md)',
+    '- [Get Started](https://docs.wdk.tether.io/sdk/get-started.md)',
+    '',
+];
+const fixtureMarkdownFiles = ['index.md', 'sdk/core-module.md', 'sdk/get-started.md'];
+
+test('accepts a structured llms.txt with exact exported HTML and Markdown coverage', async () => {
+  const llms = validLlmsLines.join('\n');
+  const fixture = await createLlmsFixture({
+    llms,
+    markdownFiles: fixtureMarkdownFiles,
+  });
+
+  const errors = await validateLlmsTxt(fixture);
+
+  assert.deepEqual(errors, []);
+});
+
+const invalidLlmsCases = [
+  {
+    name: 'a missing H1',
+    mutate: (lines) => lines.with(0, 'WDK Documentation'),
+    expected: 'must start with exactly one',
+  },
+  {
+    name: 'a missing blockquote summary',
+    mutate: (lines) => lines.filter((line) => !line.startsWith('> ')),
+    expected: 'blockquote summary',
+  },
+  {
+    name: 'a missing Documentation H2',
+    mutate: (lines) => lines.filter((line) => line !== '## Documentation'),
+    expected: 'blockquote summary',
+  },
+  {
+    name: 'a legacy bare URL entry',
+    mutate: (lines) => lines.with(6, '- Welcome to WDK: https://docs.wdk.tether.io/'),
+    expected: 'Invalid llms.txt documentation entry',
+  },
+  {
+    name: 'a same-origin HTML target',
+    mutate: (lines) => lines.with(6, '- [Welcome to WDK](https://docs.wdk.tether.io/)'),
+    expected: 'Invalid llms.txt documentation entry',
+  },
+  {
+    name: 'a foreign-origin Markdown target',
+    mutate: (lines) => lines.with(6, '- [Welcome to WDK](https://example.com/index.md)'),
+    expected: 'Invalid llms.txt documentation entry',
+  },
+  {
+    name: 'multiple Markdown links in one entry',
+    mutate: (lines) => lines.with(
+      6,
+      '- [Injected](https://example.com/off-origin.md) [Welcome](https://docs.wdk.tether.io/index.md)',
+    ),
+    expected: 'Invalid llms.txt documentation entry',
+  },
+  {
+    name: 'a query-bearing Markdown target',
+    mutate: (lines) => lines.with(6, '- [Welcome to WDK](https://docs.wdk.tether.io/index.md?raw=1)'),
+    expected: 'Invalid llms.txt documentation entry',
+  },
+  {
+    name: 'a duplicate route',
+    mutate: (lines) => [...lines.slice(0, -1), lines[6], ''],
+    expected: 'must be unique',
+  },
+  {
+    name: 'an oversized artifact',
+    mutate: (lines) => lines.with(2, `> ${'x'.repeat(50_001)}`),
+    expected: 'exceeds 50000 characters',
+  },
+  {
+    name: 'a missing exported route',
+    mutate: (lines) => lines.filter((line) => !line.includes('/sdk/get-started.md')),
+    expected: 'missing 1 exported documentation route',
+  },
+  {
+    name: 'an extra retired route',
+    mutate: (lines) => [...lines.slice(0, -1), '- [Retired](https://docs.wdk.tether.io/sdk/all-modules.md)', ''],
+    expected: 'unknown Markdown route',
+  },
+  {
+    name: 'the invalid root /.md route',
+    mutate: (lines) => lines.with(6, '- [Welcome to WDK](https://docs.wdk.tether.io/.md)'),
+    expected: 'Invalid llms.txt documentation entry',
+  },
+];
+
+for (const { name, mutate, expected } of invalidLlmsCases) {
+  test(`rejects llms.txt with ${name}`, async () => {
+    const fixture = await createLlmsFixture({
+      llms: mutate(validLlmsLines).join('\n'),
+      markdownFiles: fixtureMarkdownFiles,
+    });
+
+    const errors = await validateLlmsTxt(fixture);
+
+    assert(errors.some((error) => error.includes(expected)), errors.join('\n'));
+  });
+}
+
+test('rejects generated Markdown without matching exported HTML', async () => {
+  const fixture = await createLlmsFixture({
+    llms: validLlmsLines.join('\n'),
+    markdownFiles: [...fixtureMarkdownFiles, 'sdk/all-modules.md'],
+    htmlFiles: fixtureMarkdownFiles,
+  });
+
+  const errors = await validateLlmsTxt(fixture);
+
+  assert(errors.some((error) => error.includes('without exported HTML')));
+});
+
+test('accepts docs HTML that serializes the article before one sidebar', async () => {
+  const distDir = await createDistFixture({
+    'index.md': '# Welcome to WDK (/)',
+    'index.html': '<div id="nd-page">Article</div><div data-sidebar-placeholder><aside id="nd-sidebar">Navigation</aside></div>',
+  });
+
+  const errors = await validateDocsHtmlSourceOrder({ distDir });
+
+  assert.deepEqual(errors, []);
+});
+
+test('rejects docs HTML with navigation first or duplicated sidebars', async () => {
+  const distDir = await createDistFixture({
+    'nested/page/index.html': '<div data-sidebar-placeholder><aside id="nd-sidebar">Navigation</aside></div><div id="nd-page">Article</div><aside id="nd-sidebar">Duplicate</aside>',
+  });
+
+  const errors = await validateDocsHtmlSourceOrder({ distDir });
+
+  assert(errors.some((error) => error.includes('exactly one docs sidebar')));
+  assert(errors.some((error) => error.includes('repeated navigation before the docs article')));
+});
+
+for (const [name, html, expected] of [
+  ['missing article', '<div data-sidebar-placeholder><aside id="nd-sidebar">Navigation</aside></div>', 'exactly one docs article; found 0'],
+  ['duplicate article', '<article id="nd-page"></article><article id="nd-page"></article><div data-sidebar-placeholder><aside id="nd-sidebar"></aside></div>', 'exactly one docs article; found 2'],
+  ['missing sidebar', '<article id="nd-page"></article><div data-sidebar-placeholder></div>', 'found 0 sidebar(s)'],
+  ['missing placeholder', '<article id="nd-page"></article><aside id="nd-sidebar"></aside>', '0 placeholder(s)'],
+]) {
+  test(`rejects docs HTML with a ${name}`, async () => {
+    const distDir = await createDistFixture({ 'nested/page/index.html': html });
+
+    const errors = await validateDocsHtmlSourceOrder({ distDir });
+
+    assert(errors.some((error) => error.includes(expected)), errors.join('\n'));
+  });
+}
+
+test('ignores framework not-found HTML in the source-order gate', async () => {
+  const distDir = await createDistFixture({
+    'index.html': '<article id="nd-page"></article><div data-sidebar-placeholder><aside id="nd-sidebar"></aside></div>',
+    '404/index.html': '<h1>Not found</h1>',
+    '_not-found/index.html': '<h1>Not found</h1>',
+  });
+
+  const errors = await validateDocsHtmlSourceOrder({ distDir });
+
+  assert.deepEqual(errors, []);
+});
+
+test('keeps the repository llms.txt artifact valid', async () => {
+  const errors = await validateLlmsTxt();
+
+  assert.deepEqual(errors, []);
+});
 
 test('accepts markdown output for required files without the manifest', async () => {
   const distDir = await createDistFixture({

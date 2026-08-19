@@ -11,10 +11,10 @@ Install the bundler as a development dependency and Pear Worklet as a runtime de
 
 ```bash title="Install The Bundler And Runtime"
 npm install @tetherto/pear-wrk-wdk@1.0.0-beta.11
-npm install --save-dev @tetherto/wdk-worklet-bundler@1.0.0-beta.9
+npm install --save-dev @tetherto/wdk-worklet-bundler@1.0.0-beta.10
 ```
 
-Worklet Bundler beta.9 generates entrypoints that import Pear Worklet, but `generate --install` does not add that package. Pear Worklet beta.11 enforces the wallet, protocol, and generic-module method allowlists documented here. The GitHub beta.8 release introduced the configuration but has no public npm artifact.
+Worklet Bundler beta.10 generates entrypoints that import Pear Worklet, but `generate --install` does not add that package. Pear Worklet beta.11 enforces the wallet, protocol, and generic-module method allowlists documented here. The GitHub beta.8 release introduced the configuration but has no public npm artifact.
 
 ## Create `wdk.config.js`
 
@@ -79,10 +79,13 @@ module.exports = {
   },
 
   options: {
-    targets: ['ios-arm64', 'android-arm64']
+    targets: ['ios-arm64', 'android-arm64'],
+    convertEsmToCjs: true
   }
 }
 ```
+
+This example enables ESM-to-CJS conversion because its targets include iOS. Leave conversion disabled only when every target engine can load ES modules, such as an Android V8-only build.
 
 ## Required fields
 
@@ -176,12 +179,12 @@ Use `modules` for named generic packages that expose a module factory. Each entr
 The factory receives `{ seed, config, capabilities, emit }` and can return the module instance or a promise for it. A module that needs the seed must consume it synchronously rather than retain it. The build-time name, such as `preferences`, must match the key in the host's runtime module config.
 
 <Callout type="warn">
-Through beta.9, generic modules are included only in generated HRPC entrypoints. Do not configure `modules` with `transport: 'jsonrpc'`; the current schema accepts the field, but JSON-RPC generation ignores it.
+Through beta.10, generic modules are included only in generated HRPC entrypoints. Do not configure `modules` with `transport: 'jsonrpc'`; the current schema accepts the field, but JSON-RPC generation ignores it.
 </Callout>
 
 ### `transport` (optional)
 
-Choose `hrpc` or `jsonrpc`. HRPC is the default and is the transport used by React Native Core. JSON-RPC produces a length-prefixed bundle for a native host and enables addon linking and ESM-to-CJS conversion by default.
+Choose `hrpc` or `jsonrpc`. HRPC is the default and is the transport used by React Native Core. JSON-RPC produces a length-prefixed bundle for a native host and enables addon linking by default. In beta.10, ESM-to-CJS conversion is an independent, explicit option for both transports.
 
 ### `preloadModules` (optional)
 
@@ -192,7 +195,7 @@ Use `preloadModules` for native addons or other modules that must be required be
 Supported output fields are:
 
 - `bundle`: Bundle path. Defaults to `./.wdk-bundle/wdk-worklet.bundle.js` for HRPC and `./.wdk-bundle/wdk-worklet.bundle` for JSON-RPC.
-- `types`: Declared in the beta.9 config type, but the generator does not honor a custom value and always writes declarations to `./.wdk/index.d.ts`.
+- `types`: Declared in the beta.10 config type, but the generator does not honor a custom value and always writes declarations to `./.wdk/index.d.ts`.
 - `addons.ios`, `addons.macos`, `addons.android`: Platform addon directories. Defaults are `./ios-addons`, `./mac-addons`, and `./android-addons`.
 - `addonsYml`: BareKit Swift dependency file. Defaults to `./ios-addons/addons.yml` and is generated when iOS addons are linked.
 
@@ -200,13 +203,37 @@ Supported output fields are:
 
 The published config type supports these build options:
 
-- `minify` (`boolean`): Declared in the beta.9 config type but not read by the bundle path. JSON-RPC ESM-to-CJS conversion minifies independently of this field.
-- `sourceMaps` (`boolean`): Declared in the beta.9 config type but not read by the bundle path, so it does not produce source maps.
+- `minify` (`boolean`): Declared in the beta.10 config type but not read by the bundle path. ESM-to-CJS conversion minifies independently of this field.
+- `sourceMaps` (`boolean`): Declared in the beta.10 config type but not read by the bundle path, so it does not produce source maps.
 - `targets` (`string[]`): Override the default Bare build hosts. The shipped defaults cover iOS arm64 and simulator targets plus Android arm, arm64, ia32, and x64 hosts.
 - `linkAddons` (`boolean`): Link native addons with `bare-link`. Defaults to `true` for JSON-RPC and `false` for HRPC.
 - `platforms` (`('ios' | 'macos' | 'android')[]`): Addon platforms. Defaults to all three when addon linking is active.
 - `swiftTarget` (`string`): Xcode target written to `addons.yml`. Defaults to `app`.
-- `convertEsmToCjs` (`boolean`): Convert the bundle for JSC runtimes. Defaults to `true` for JSON-RPC and `false` for HRPC. Android uses V8, so Android-only JSON-RPC builds can set this to `false`.
+- `convertEsmToCjs` (`boolean`): Convert the bundle for a Bare port whose JavaScript engine cannot load ES modules, such as JSC or QuickJS. Defaults to `false` for both transports. Leave it off only when every target uses an ESM-capable engine such as V8.
+
+### Configure ESM-to-CJS conversion
+
+Enable conversion in `wdk.config.js` when any target engine cannot load ESM:
+
+```javascript title="Enable ESM-to-CJS Conversion"
+module.exports = {
+  networks: {
+    ethereum: { package: '@tetherto/wdk-wallet-evm' }
+  },
+  options: {
+    convertEsmToCjs: true
+  }
+}
+```
+
+In the normal `generate` or `generateBundle()` path, beta.10 uses one flag for both build-time conversion and the generated runtime loader:
+
+- After `bare-pack`, it converts `.js`, `.mjs`, and `.cjs` files to CommonJS, lowers dynamic `import()`, removes `"type": "module"` from bundled package manifests, and rebuilds bundle offsets with `bare-bundle`.
+- It preserves raw bundles and the default UTF-8 CommonJS, ESM, or JSON string wrappers produced by supported `bare-pack` output suffixes. Wrappers created with a non-UTF-8 `--encoding`, such as Base64, are not supported.
+- It validates the rewritten file map, offsets, lengths, CommonJS syntax, entrypoint, package manifests, and absence of dynamic imports before generation succeeds.
+- The generated HRPC or JSON-RPC entrypoint routes `.mjs` files through the CommonJS loader only when conversion is enabled.
+
+There is no beta.10 CLI flag that overrides this setting. Set `options.convertEsmToCjs` in the config used for the build.
 
 ## Configure JSON-RPC and native addons
 
@@ -230,12 +257,13 @@ module.exports = {
   },
   options: {
     platforms: ['ios', 'android'],
-    swiftTarget: 'app'
+    swiftTarget: 'app',
+    convertEsmToCjs: true
   }
 }
 ```
 
-JSON-RPC generation defaults to a bundle without a `.js` suffix, ESM-to-CJS conversion, and addon linking. It links `bare-posix` with the other required Bare modules automatically. See the [Pear Worklet API reference](/tools/pear-wrk-wdk/api-reference#json-rpc-transport) for framing and supported methods.
+JSON-RPC generation defaults to a bundle without a `.js` suffix and enables addon linking. The example opts into ESM-to-CJS conversion because its targets include iOS; omit that option only when every target engine can load ESM. Addon linking includes `bare-posix` with the other required Bare modules. See the [Pear Worklet API reference](/tools/pear-wrk-wdk/api-reference#json-rpc-transport) for framing and supported methods.
 
 ## Validate dependencies
 
@@ -247,11 +275,11 @@ npx wdk-worklet-bundler validate
 
 ## Handle peer dependencies
 
-Worklet Bundler beta.9 separates required peers from peers explicitly marked optional through `peerDependenciesMeta`:
+Worklet Bundler beta.10 separates required peers from peers explicitly marked optional through `peerDependenciesMeta`:
 
 - During bundle generation, missing required peers are offered for installation. In a non-interactive environment without `--install`, the CLI prints the exact manual install command and continues; `bare-pack` can still fail if the bundle needs that peer. The peer scan is skipped by `--source-only`.
 - Missing optional peers are not prompted for or installed. By default, the bundler passes each one to `bare-pack --defer`, so an unused optional feature does not block the build.
-- Optional peers detected anywhere in the scanned package tree are not deferred. Beta.9 matches package names across root, nested, scoped, and symlinked package trees; install a peer in an ancestor `node_modules` visible to the package that imports it, because the same package name elsewhere in the tree can suppress deferral without making that import resolvable. A peer that is required anywhere else in the scanned dependency tree is treated as required and is not deferred.
+- Optional peers detected anywhere in the scanned package tree are not deferred. Beta.10 matches package names across root, nested, scoped, and symlinked package trees; install a peer in an ancestor `node_modules` visible to the package that imports it, because the same package name elsewhere in the tree can suppress deferral without making that import resolvable. A peer that is required anywhere else in the scanned dependency tree is treated as required and is not deferred.
 
 Use `--no-defer-optional-peers` when the app uses an optional feature and you want a missing peer to fail during the build:
 
@@ -273,13 +301,17 @@ Use `generate` to build the worklet artifact:
 npx wdk-worklet-bundler generate --install
 ```
 
-`generate --install` can auto-install missing configured wallet, protocol, generic, and preload modules after the package manager is detected from the project root. In beta.9 it does not install the Pear Worklet runtime imported by generated entrypoints; install Pear explicitly as shown above. Use `--source-only` when you want the generated `.wdk/wdk-worklet.generated.js` entrypoint and related artifacts without running `bare-pack`.
+`generate --install` can auto-install missing configured wallet, protocol, generic, and preload modules after the package manager is detected from the project root. In beta.10 it does not install the Pear Worklet runtime imported by generated entrypoints; install Pear explicitly as shown above.
 
-The `generate` command also accepts `--transport hrpc|jsonrpc`, `--link-addons`, `--skip-link-addons`, `--platforms ios,macos,android`, `--no-esm-to-cjs`, and `--no-defer-optional-peers`. Set `transport` in `wdk.config.js` when you rely on its transport-specific default bundle path. In beta.9, `--transport` changes the generated transport after output paths have already been resolved, so it does not switch `.js` HRPC output to the extensionless JSON-RPC default, or vice versa. If you use the flag, set `output.bundle` explicitly to the intended path.
+Use `--source-only` when you want the generated `.wdk/wdk-worklet.generated.js` entrypoint and related artifacts without running `bare-pack`. This mode also skips bundle conversion. If `options.convertEsmToCjs` is `true` and you run `bare-pack` yourself, convert the packed bundle with `convertBundleEsmToCjs()` before deployment; the source-only entrypoint already contains the matching `.mjs` loader patch. Keep the same conversion setting when generating the entrypoint and converting the bundle.
+
+The `generate` command also accepts `--transport hrpc|jsonrpc`, `--link-addons`, `--skip-link-addons`, `--platforms ios,macos,android`, and `--no-defer-optional-peers`. Set `transport` in `wdk.config.js` when you rely on its transport-specific default bundle path. In beta.10, `--transport` changes the generated transport after output paths have already been resolved, so it does not switch `.js` HRPC output to the extensionless JSON-RPC default, or vice versa. If you use the flag, set `output.bundle` explicitly to the intended path.
+
+`--skip-generation` reuses an existing generated entrypoint. If `options.convertEsmToCjs` changed since that entrypoint was created, regenerate without `--skip-generation` before building so the runtime `.mjs` loader matches the bundle conversion setting.
 
 ## Suspend and resume behavior
 
-Generated HRPC worklet entrypoints register Bare lifecycle handlers for `suspend` and `resume`, then apply those handlers to both the `bare-http1` and `bare-https` global agents. No config flag is required for this behavior. Beta.9 also logs the generated worklet's Bare `suspend`, `resume`, and `idle` events.
+Generated HRPC worklet entrypoints register Bare lifecycle handlers for `suspend` and `resume`, then apply those handlers to both the `bare-http1` and `bare-https` global agents. No config flag is required for this behavior. Beta.10 also logs the generated worklet's Bare `suspend`, `resume`, and `idle` events.
 
 This matters when a generated HRPC worklet performs HTTPS-backed fetches. Starting in beta.3, those generated entrypoints suspend and resume both agents together.
 
@@ -287,7 +319,7 @@ This matters when a generated HRPC worklet performs HTTPS-backed fetches. Starti
 
 - If `loadConfig()` cannot find a config file, run `npx wdk-worklet-bundler init` or pass `--config \<path\>`.
 - If `validate` or `generate` reports missing modules, use `generate --install` or inspect the install command from the exported helper APIs in the [API Reference](/tools/worklet-bundler/api-reference).
-- If you need to inspect generated source before bundling, use `generate --source-only` and review the files in `.wdk/`.
+- If you need to inspect generated source before bundling, use `generate --source-only` and review the files in `.wdk/`. For a CommonJS-only target, pack and convert that source as described above before running it.
 
 ***
 

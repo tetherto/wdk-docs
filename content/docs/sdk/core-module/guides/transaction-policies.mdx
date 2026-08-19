@@ -62,8 +62,9 @@ const wdk = new WDK(seedPhrase)
         action: 'DENY',
         reason: 'Amount exceeds the local approval limit',
         conditions: [
-          ({ params }) => {
-            const value = (params as { value?: bigint } | null)?.value
+          ({ args }) => {
+            const tx = args[0] as { value?: bigint } | undefined
+            const value = tx?.value
             return typeof value === 'bigint' && value > 1000000000000000000n
           }
         ]
@@ -134,8 +135,9 @@ wdk.registerPolicy([
         action: 'DENY',
         reason: 'Project send limit exceeded',
         conditions: [
-          ({ params }) => {
-            const value = (params as { value?: bigint } | null)?.value
+          ({ args }) => {
+            const tx = args[0] as { value?: bigint } | undefined
+            const value = tx?.value
             return typeof value === 'bigint' && value > 1000000000000000n
           }
         ]
@@ -156,8 +158,9 @@ wdk.registerPolicy([
         override_broader_scope: true,
         reason: 'Treasury account has a higher local approval limit',
         conditions: [
-          ({ params }) => {
-            const value = (params as { value?: bigint } | null)?.value
+          ({ args }) => {
+            const tx = args[0] as { value?: bigint } | undefined
+            const value = tx?.value
             return typeof value === 'bigint' && value <= 10000000000000000n
           }
         ]
@@ -196,7 +199,7 @@ Use `sign` for message-style signing in this release. `signMessage` and `signHas
 
 ## Common Policy Patterns
 
-WDK policies use JavaScript condition functions. Inspect the `params` and `args` passed by the wallet or protocol method you are governing, then return `true` only when that rule should match.
+WDK policies use JavaScript condition functions. Inspect the positional `args` array passed by the wallet or protocol method you are governing, then return `true` only when that rule should match. `args[0]` is the first argument, `args[1]` is the second, and so on.
 
 <Callout type="info">
 WDK does not fetch prices, decode calldata, maintain address lists, or manage durable policy state for you. Keep app-owned inputs current, and handle persistence and concurrency when a condition depends on counters or cumulative limits.
@@ -220,8 +223,9 @@ wdk.registerPolicy({
       operation: 'sendTransaction',
       action: 'ALLOW',
       conditions: [
-        ({ params }) => {
-          const to = (params as { to?: string } | null)?.to
+        ({ args }) => {
+          const tx = args[0] as { to?: string } | undefined
+          const to = tx?.to
           return typeof to === 'string' && allowedRecipients.has(to.toLowerCase())
         }
       ]
@@ -244,8 +248,8 @@ wdk.registerPolicy({
       operation: 'sendTransaction',
       action: 'ALLOW',
       conditions: [
-        ({ params }) => {
-          const tx = params as { chainId?: number | string; value?: bigint } | null
+        ({ args }) => {
+          const tx = args[0] as { chainId?: number | string; value?: bigint } | undefined
           const value = tx?.value
 
           return String(tx?.chainId) === '8453' &&
@@ -276,10 +280,10 @@ wdk.registerPolicy({
       operation: 'signTypedData',
       action: 'ALLOW',
       conditions: [
-        ({ params }) => {
-          const typedData = params as {
+        ({ args }) => {
+          const typedData = args[0] as {
             domain?: { chainId?: number | string; verifyingContract?: string }
-          } | null
+          } | undefined
           const verifyingContract = typedData?.domain?.verifyingContract
           const domainKey = `${typedData?.domain?.chainId}:${verifyingContract}`.toLowerCase()
 
@@ -306,8 +310,8 @@ wdk.registerPolicy({
       operation: 'swap',
       action: 'ALLOW',
       conditions: [
-        ({ params }) => {
-          const swap = params as { tokenInAmount?: bigint } | null
+        ({ args }) => {
+          const swap = args[0] as { tokenInAmount?: bigint } | undefined
           const tokenInAmount = swap?.tokenInAmount
 
           return typeof tokenInAmount === 'bigint' &&
@@ -328,12 +332,17 @@ Conditions receive a frozen `PolicyContext`:
 | `operation` | The operation being evaluated |
 | `wallet` | The wallet identifier bound to the account |
 | `account` | Read-only account view exposed by the wallet module |
-| `params` | The first argument passed to the wrapped method |
-| `args` | All arguments passed to the wrapped method |
+| `args` | Frozen array containing a snapshot of every argument passed to the wrapped method, in signature order |
 
 For governed write calls, WDK snapshots the method arguments once before policy evaluation. Conditions see that snapshot, and WDK forwards the same approved values to the underlying wallet method. This prevents a caller from mutating a transaction object while an asynchronous policy condition is running.
 
-Conditions can be synchronous or asynchronous. `conditionTimeoutMs` defaults to `30000` milliseconds and can be set through `registerPolicy(policies, options)`. If a `DENY` condition throws or times out, WDK blocks the call. If an `ALLOW` condition throws or times out, WDK treats that allow rule as unmatched.
+<Callout type="warn">
+`PolicyContext.params` was removed in `@tetherto/wdk` v1.0.0-beta.16. Replace `params` with `args[0]`. For multi-argument methods, use the actual signature position and check optional arguments before reading their fields. For example, a `swidge(options, config?)` condition reads `options` from `args[0]` and `config` from `args[1]`.
+</Callout>
+
+Conditions can be synchronous or asynchronous. `conditionTimeoutMs` defaults to `30000` milliseconds and applies only to the policies registered by that `registerPolicy(policies, options)` call. Later registrations of distinct policy IDs do not change them. Registering the same policy ID again replaces the stored policy within its registry bucket and adopts the new registration's timeout. All project-scoped policies share one bucket; account-scoped policies are bucketed by wallet.
+
+Set `maxConditionTimeoutMs` in the WDK constructor to cap every per-policy timeout for that instance. The ceiling also defaults to `30000` milliseconds; a larger requested `conditionTimeoutMs` is capped rather than rejected. Both timeout values must be finite positive numbers. If a `DENY` condition throws or times out, WDK blocks the call. If an `ALLOW` condition throws or times out, WDK treats that allow rule as unmatched.
 
 ## Simulate Before Execution
 
@@ -366,7 +375,7 @@ In this beta, `simulate` is added at runtime but is not typed on the account ret
 
 ## Runtime Caveats
 
-- Policies wrap the WDK account/protocol proxy surface. On governed proxies, beta.15 treats `keyPair` and string members beginning with `_` as absent from direct property access, membership checks, own-property descriptors, and own-key enumeration. The proxy also refuses `Object.preventExtensions()` and `Object.freeze()` with `TypeError` so those hiding rules remain valid.
+- Policies wrap the WDK account/protocol proxy surface. On governed proxies, `keyPair` and string members beginning with `_` are absent from direct property access, membership checks, own-property descriptors, and own-key enumeration. The proxy also refuses `Object.preventExtensions()` and `Object.freeze()` with `TypeError` so those hiding rules remain valid.
 - This is not a complete sandbox. Prototype inspection, separately retained raw account or protocol references, and nested calls made inside a module remain outside the proxy interception path.
 - Quote and read methods are not wrapped. Policies apply to write methods such as sends, signs, swaps, bridges, lending writes, fiat writes, swidge execution, and SDA address creation, renewal, recovery, or disablement.
 - Policy conditions receive local method arguments. WDK does not decode calldata, fetch prices, validate token metadata, or calculate fiat value unless your condition function does that work.
