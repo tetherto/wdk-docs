@@ -66,6 +66,16 @@ const config = {
 | `electrum-ws` | Creates a WebSocket Electrum client from `clientConfig`. |
 | `blockbook-http` | Creates a stateless Blockbook HTTP client from `clientConfig`. |
 
+#### Unconfirmed Balance Handling
+
+The selected client affects [`getBalance()`](/sdk/wallet-modules/wallet-btc/guides/check-balances) while transactions are pending:
+
+- `blockbook-http` reports `unconfirmedOutgoing`. It subtracts address-owned confirmed inputs spent by pending transactions, credits pending change only when every input is address-owned and confirmed or descends from a trusted pending transaction, and excludes other unconfirmed incoming outputs.
+- The built-in Electrum clients return only the server's raw `unconfirmed` delta, so the wallet adds that value to the confirmed balance.
+- A custom `IBtcClient` can return optional `BtcBalance.unconfirmedOutgoing`. When present, the wallet subtracts it from `confirmed` and does not use `unconfirmed`.
+
+Use the same client policy anywhere balances are compared or displayed. Blockbook and Electrum results can differ until pending transactions confirm.
+
 #### Built-in Transport Clients
 
 The package still exports built-in transport clients when you want to instantiate the client yourself:

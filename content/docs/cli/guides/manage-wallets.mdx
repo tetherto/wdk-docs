@@ -1,6 +1,6 @@
 ---
 title: Manage Wallets
-description: Create, import, select, unlock, lock, export, rename, and delete WDK CLI wallets safely.
+description: Create, import, select, unlock, lock, export, rename, change passphrases, and delete WDK CLI wallets safely.
 docType: how-to
 schemaType: TechArticle
 icon: WalletCards
@@ -55,6 +55,15 @@ wdk wallet import --name recovered
 The CLI prompts for the phrase and then for a new local encryption passphrase. The seed-phrase input is interactive but is not masked, so import only in a private terminal.
 
 Import creates another encrypted local copy. It does not remove or change the source wallet or any existing backup.
+
+For a human-operated provisioning script, beta.2 can read the mnemonic as one trimmed line from standard input:
+
+```bash title="Terminal"
+WDK_PASSPHRASE="$WALLET_PASSPHRASE" \
+  wdk wallet import --name recovered --seed-stdin --json < /path/to/seed-phrase-file
+```
+
+When standard input is piped or redirected, `WDK_PASSPHRASE` must supply the new storage passphrase because the CLI cannot use the same stream for an interactive passphrase prompt. The seed and passphrase still enter process memory; keep the input file and environment variable out of logs, shell tracing, and untrusted processes.
 
 ## List wallets and sessions
 
@@ -186,6 +195,37 @@ wdk wallet unlock --name development
 
 Renaming does not decrypt or re-encrypt `seed.enc`.
 
+## Change a wallet passphrase
+
+Rotate the encryption passphrase in a private interactive terminal:
+
+```bash title="Terminal"
+wdk wallet change-passphrase --name development
+```
+
+The command verifies the current passphrase, decrypts the mnemonic, asks for and confirms the new passphrase, and replaces `seed.enc` with a newly encrypted payload. `WDK_PASSPHRASE` can supply the current passphrase, but beta.2 deliberately ignores it when reading the new passphrase.
+
+For a human-operated script, read the new passphrase as one trimmed line from standard input:
+
+```bash title="Terminal"
+WDK_PASSPHRASE="$CURRENT_WALLET_PASSPHRASE" \
+  wdk wallet change-passphrase \
+  --name development \
+  --new-passphrase-stdin \
+  --json < /path/to/new-passphrase-file
+```
+
+`--new-passphrase-stdin` rejects an empty new passphrase. Interactive use still permits an empty value, which provides no meaningful at-rest confidentiality.
+
+After rewriting the file, the command attempts to lock the wallet's active daemon session. That cleanup is best effort, so verify the state and lock it explicitly if necessary:
+
+```bash title="Terminal"
+wdk wallet list
+wdk wallet lock --name development
+```
+
+Test the new passphrase and keep the old backup until the newly encrypted file and independent mnemonic backup have both been verified.
+
 ## Delete a wallet
 
 <Callout type="warn">
@@ -222,7 +262,7 @@ Environment variables can leak through process inspection, child-process inherit
 - do not commit the value to a script or configuration file
 - lock the wallet and remove the environment variable immediately after use
 
-Never pass the passphrase or mnemonic as a CLI argument.
+`wallet import --seed-stdin` and `wallet change-passphrase --new-passphrase-stdin` are the only beta.2 wallet-secret stdin paths. Both read the first line and trim surrounding whitespace. Never pass a passphrase or mnemonic as a CLI argument.
 
 ## Related pages
 

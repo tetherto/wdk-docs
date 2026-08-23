@@ -30,6 +30,82 @@ try {
 Always use `try/catch` blocks when initializing sessions or accessing dynamic features.
 </Callout>
 
+### Base Wallet Errors
+
+`@tetherto/wdk-wallet` v1.0.0-beta.17 exports a shared `WdkError` hierarchy so applications can distinguish invalid input, provider failures, transaction outcomes, and unsupported capabilities without matching message strings.
+
+Install the base wallet as a direct dependency before importing these contracts; do not rely on a transitive copy supplied by Core or a concrete wallet module:
+
+```bash title="Install Base Wallet Error Contracts"
+npm install @tetherto/wdk-wallet@1.0.0-beta.17
+```
+
+<Callout type="info">
+These classes define the beta.17 base contract; they do not change a concrete wallet package that still pins an older base version. For example, `@tetherto/wdk-wallet-evm` v1.0.0-beta.16 pins Base Wallet beta.13 and can still throw plain `Error` from provider-required paths. Use normalized branching only after the concrete module's release documentation confirms compatible errors, and keep a fallback for unknown errors.
+</Callout>
+
+| Error | Meaning |
+| --- | --- |
+| `ValueError` | A method argument is invalid |
+| `NoSuchElementError` | A requested signer, transaction, proposal, or other identifier was not found |
+| `InvalidSignerError` | A signer is incompatible with the requested operation |
+| `InvalidTokenError` | An address does not resolve to a supported token |
+| `ProviderRequiredError` | The operation needs a configured provider |
+| `ProviderError` | The configured provider failed; inspect `reason` |
+| `TransactionError` | A native transaction failed; inspect `reason` |
+| `TransferError` | A token transfer failed; inspect `reason` |
+| `MaximumFeeExceededError` | The operation exceeds its configured fee ceiling |
+| `TimeoutError` | A polling loop, including `waitForTransaction()`, observed its deadline after a completed lookup or sleep |
+| `UnsupportedOperationError` | The concrete module does not support an optional method |
+| `AssertionError` | Required account state is missing |
+| `NotImplementedError` | An interface/base-class method was not implemented by the concrete module |
+
+The package exports reason constants for branching:
+
+| Error | Reason constants |
+| --- | --- |
+| `ProviderError` | `NETWORK_ERROR`, `UNAUTHORIZED`, `FORBIDDEN`, `REQUEST_TIMEOUT`, `INTERNAL_SERVER_ERROR` |
+| `TransactionError` | `INSUFFICIENT_BALANCE` |
+| `TransferError` | `INSUFFICIENT_BALANCE`, `INSUFFICIENT_TOKEN_BALANCE` |
+
+```typescript title="Handle A Provider Failure"
+import {
+  ProviderError,
+  ProviderErrorReason,
+  WdkError
+} from '@tetherto/wdk-wallet'
+
+try {
+  await account.getBalance()
+} catch (error) {
+  if (error instanceof ProviderError &&
+      error.reason === ProviderErrorReason.REQUEST_TIMEOUT) {
+    // Retry according to your application's provider policy.
+  } else if (error instanceof WdkError) {
+    // Handle another normalized wallet error.
+  } else {
+    throw error
+  }
+}
+```
+
+<Callout type="warn">
+`SignerError` is no longer exported in v1.0.0-beta.17. Use `InvalidSignerError` for an incompatible signer and `NoSuchElementError` when a default or named signer is missing.
+</Callout>
+
+Protocol-specific classes and reason enums are exported from `@tetherto/wdk-wallet/protocols`:
+
+| Error class | Exported reason values |
+| --- | --- |
+| `SwapError` | `INSUFFICIENT_BALANCE`, `INSUFFICIENT_TOKEN_BALANCE`, `COULD_NOT_MET_THRESHOLD` |
+| `BridgeError` | `INSUFFICIENT_BALANCE`, `INSUFFICIENT_TOKEN_BALANCE` |
+| `SupplyError`, `WithdrawError`, `BorrowError`, `RepayError` | `INSUFFICIENT_BALANCE`, `INSUFFICIENT_TOKEN_BALANCE` |
+| `BuyError`, `SellError` | `INSUFFICIENT_FUNDS` |
+| `SwidgeError` | `INSUFFICIENT_BALANCE`, `INSUFFICIENT_TOKEN_BALANCE`, `COULD_NOT_MET_THRESHOLD`, `SLIPPAGE_TOO_HIGH` |
+| `SdaError` | `ROUTE_NOT_SUPPORTED` |
+
+The protocols subpath also exports `AccountRequiredError` and `ReadOnlyAccountRequiredError`. Multisig integrations import `AccountNotOwnerError` and `ThresholdNotMetError` from `@tetherto/wdk-wallet/multisig`. Concrete provider and wallet modules can expose more specific errors in addition to these base contracts.
+
 ## Memory Management
 
 For security, clear wallet state from memory when a session is complete. The WDK provides [`dispose()`](/sdk/core-module/api-reference) for this purpose.

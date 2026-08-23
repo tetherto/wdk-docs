@@ -74,8 +74,6 @@ export const customTree: Node[] = [
     configuration('/sdk/core-module/configuration'),
     apiReference('/sdk/core-module/api-reference'),
   ]),
-  page('All modules reference', '/sdk/all-modules', 'LayoutGrid'),
-
   separator('Wallets'),
   page('Which wallet module do I need?', '/sdk/wallet-modules/which-wallet-module', 'ListChecks'),
   page('Wallet module reference', '/sdk/wallet-modules', 'WalletCards'),
@@ -330,6 +328,11 @@ export const customTree: Node[] = [
     usage('/sdk/swidge-modules/swidge-lifi/usage'),
     configuration('/sdk/swidge-modules/swidge-lifi/configuration'),
     apiReference('/sdk/swidge-modules/swidge-lifi/api-reference'),
+  ]),
+  folder('0x', '/sdk/swidge-modules/swidge-0x', 'Waypoints', [
+    usage('/sdk/swidge-modules/swidge-0x/usage'),
+    configuration('/sdk/swidge-modules/swidge-0x/configuration'),
+    apiReference('/sdk/swidge-modules/swidge-0x/api-reference'),
   ]),
   folder('Velora', '/sdk/swap-modules/swap-velora-evm', 'ArrowLeftRight', [
     usage('/sdk/swap-modules/swap-velora-evm/usage'),

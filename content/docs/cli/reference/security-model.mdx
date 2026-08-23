@@ -34,6 +34,7 @@ Each named wallet stores its BIP-39 mnemonic in `wallets/NAME/seed.enc`. Version
 - scrypt with `N=65536`, `r=8`, and `p=1`
 - a random 32-byte salt and 12-byte IV
 - a 16-byte authentication tag
+- the selected scrypt `N`, `r`, and `p` values in beta.2 files; legacy files use the same defaults when those fields are absent
 - an owner read/write `0600` file mode on macOS and Linux
 
 See [Storage format](/cli/reference/storage-format#seedenc-version-1) for field encodings and the manual-recovery contract.
@@ -42,9 +43,11 @@ A wrong passphrase or modified encrypted payload fails GCM authentication. Encry
 
 ### Passphrase handling
 
-The interactive passphrase prompt hides input. For automation, `WDK_PASSPHRASE` overrides the prompt when it contains a non-empty value.
+The interactive passphrase prompt hides input. For automation, `WDK_PASSPHRASE` overrides the prompt when it contains a non-empty value. During `wallet change-passphrase`, it can supply only the current passphrase; the CLI deliberately ignores it for the new value.
 
 Environment variables can be inherited by child processes and may be visible through process inspection, crash reports, shell tooling, or automation logs. Prefer the interactive prompt for manual use. If automation requires `WDK_PASSPHRASE`, scope it to one trusted process, prevent command tracing, and remove it immediately after use.
+
+Beta.2 also provides `wallet import --seed-stdin` and `wallet change-passphrase --new-passphrase-stdin` for human-operated scripts. Standard input avoids command-line arguments, but it is not a secure enclave: the secret still enters JavaScript process memory and can leak through an input file, pipeline, parent process, or automation environment. Do not expose these flags to an agent or untrusted script.
 
 The current CLI accepts an empty passphrase. The file is still AES-GCM ciphertext, but an empty passphrase provides no meaningful confidentiality because anyone who obtains the file knows the value required to derive its key.
 
@@ -135,6 +138,8 @@ See [Configuration](/cli/configuration) for supported settings and precedence.
 ## Deletion and recovery
 
 Wallet deletion performs ordinary recursive filesystem removal after passphrase verification. It is not secure erase, and it cannot remove copies from backups, snapshots, swap, journals, or previously copied files.
+
+Passphrase rotation writes a mode-`0600` temporary file and renames it over the existing encrypted file, so a partial write does not normally destroy the old copy. The command's subsequent attempt to lock an active daemon wallet is best effort; verify the lock state after rotation. Backups retain the passphrase that encrypted their own copy.
 
 Maintain an independently tested backup and the passphrase. The documented [`seed.enc` version 1 recovery procedure](/cli/reference/storage-format#recover-without-wdk-cli) remains available even if a future format does not provide automated migration.
 

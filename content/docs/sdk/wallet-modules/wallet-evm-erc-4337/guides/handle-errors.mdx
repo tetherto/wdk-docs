@@ -3,7 +3,7 @@ title: Handle Errors
 description: Handle errors, manage fees, and dispose of sensitive data.
 ---
 
-This guide explains how to [handle transaction errors](#transaction-errors), [handle transfer errors](#transfer-errors), [diagnose nonce-lane failures](#nonce-lane-failures), and follow [best practices](#best-practices) for fee management and memory cleanup.
+This guide explains how to [handle transaction errors](#transaction-errors), [handle transfer errors](#transfer-errors), [verify paymaster address mismatches](#paymaster-address-mismatches), [diagnose nonce-lane failures](#nonce-lane-failures), and follow [best practices](#best-practices) for fee management and memory cleanup.
 
 ## Transaction Errors
 
@@ -47,6 +47,33 @@ try {
   }
 }
 ```
+
+## Paymaster Address Mismatches
+
+Starting in `v1.0.0-beta.15`, the shared UserOperation builder checks the configured `paymasterAddress` against a non-empty paymaster address returned by the RPC in token-paymaster mode. A case-insensitive mismatch throws the exported `ConfigurationError` before that newly built operation is returned or submitted. The error message identifies the configured address, the `paymasterUrl`, and the returned address.
+
+```javascript title="Handle a Paymaster Address Mismatch"
+import { ConfigurationError } from '@tetherto/wdk-wallet-evm-erc-4337'
+
+try {
+  await account.quoteSendTransaction({
+    to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+    value: 1000000000000000n
+  })
+} catch (error) {
+  if (error instanceof ConfigurationError && error.message.startsWith('paymasterAddress mismatch:')) {
+    console.error('The paymaster RPC returned an unexpected contract address')
+  } else {
+    throw error
+  }
+}
+```
+
+Confirm the configured contract with your paymaster provider before updating the address. Do not retry by automatically accepting the address returned by the RPC.
+
+A matching quote can be cached for up to two minutes by transaction data. Its cache key does not include per-call fee-mode or paymaster settings, so a matching sign or send can reuse the cached UserOperation without calling the paymaster RPC or rerunning this address check. Pass the same fee-mode and paymaster configuration to the quote and the matching operation.
+
+A caller-supplied signed UserOperation is not rebuilt either. Quoting it does not call the paymaster RPC, and `sendTransaction(signedUserOperation)` forwards it directly to the bundler without rerunning this address check or the current fee cap. Do not use a cached or signed operation to bypass a mismatch; submit only an operation built after you verified the intended paymaster URL and contract address.
 
 ## Nonce-Lane Failures
 

@@ -126,7 +126,7 @@ new WalletAccountBtc(seed, path, config)
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's Bitcoin address | `Promise<string>` |
-| `getBalance()` | Returns the total account balance in satoshis, including unconfirmed funds when present | `Promise<bigint>` |
+| `getBalance()` | Returns the provider-adjusted account balance in satoshis | `Promise<bigint>` |
 | `sendTransaction(tx, timeoutMs?)` | Signs and sends transaction options, or broadcasts signed raw transaction hex, then optionally polls spent inputs | `Promise<{hash: string, fee: bigint}>` |
 | `signTransaction(options)` | Signs a Bitcoin transaction without broadcasting it | `Promise<string>` |
 | `quoteSendTransaction(tx)` | Estimates an unsigned transaction fee or calculates the fee of signed raw transaction hex | `Promise<{fee: bigint}>` |
@@ -149,7 +149,7 @@ const address = await account.getAddress()
 console.log('Address:', address) // bc1q... (BIP-84) or 1... (BIP-44)
 ```
 ##### `getBalance()`
-Returns the account's total balance in satoshis, including unconfirmed funds when present.
+Returns the account balance in satoshis. The built-in Blockbook client subtracts address-owned confirmed inputs spent by pending transactions, credits pending change only when every input is address-owned and confirmed or descends from a trusted pending transaction, and excludes other unconfirmed incoming funds. The built-in Electrum clients add their server's raw net unconfirmed delta instead. Custom clients select the Blockbook-style formula by returning `BtcBalance.unconfirmedOutgoing`.
 
 **Returns:** `Promise<bigint>` - Balance in satoshis
 
@@ -379,7 +379,7 @@ new WalletAccountReadOnlyBtc(address, config)
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's Bitcoin address | `Promise<string>` |
-| `getBalance()` | Returns the total account balance in satoshis, including unconfirmed funds when present | `Promise<bigint>` |
+| `getBalance()` | Returns the provider-adjusted account balance in satoshis | `Promise<bigint>` |
 | `quoteSendTransaction(options)` | Estimates the fee for a transaction | `Promise<{fee: bigint}>` |
 | `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<BtcTransactionReceipt \| null>` |
 | `getMaxSpendable()` | Returns the maximum spendable amount | `Promise<BtcMaxSpendableResult>` |
@@ -398,7 +398,7 @@ console.log('Address:', address)
 ```
 
 ##### `getBalance()`
-Returns the account's confirmed balance in satoshis.
+Returns the provider-adjusted account balance in satoshis. Read-only and owned accounts use the same [pending-transaction policy](/sdk/wallet-modules/wallet-btc/guides/check-balances#native-btc-balance).
 
 **Returns:** `Promise<bigint>` - Balance in satoshis
 
@@ -554,9 +554,9 @@ new ElectrumWs(config)
 | `connect()` | Establishes connection to Electrum server | `Promise<void>` |
 | `close()` | Closes the connection | `Promise<void>` |
 | `reconnect()` | Recreates the underlying socket and reinitializes the session | `Promise<void>` |
-| `getBalance(scripthash)` | Returns balance for a script hash | `Promise<ElectrumBalance>` |
-| `listUnspent(scripthash)` | Returns UTXOs for a script hash | `Promise<ElectrumUtxo[]>` |
-| `getHistory(scripthash)` | Returns transaction history | `Promise<ElectrumHistoryItem[]>` |
+| `getBalance(address)` | Returns balance data for a Bitcoin address | `Promise<BtcBalance>` |
+| `listUnspent(address)` | Returns UTXOs for a Bitcoin address | `Promise<BtcUtxo[]>` |
+| `getHistory(address)` | Returns transaction history for a Bitcoin address | `Promise<BtcHistoryItem[]>` |
 | `getTransaction(txHash)` | Returns raw transaction hex | `Promise<string>` |
 | `broadcast(rawTx)` | Broadcasts raw transaction | `Promise<string>` |
 | `estimateFee(blocks)` | Returns estimated fee rate | `Promise<number>` |
@@ -666,26 +666,29 @@ interface IBtcClient {
   connect(): Promise<void>
   close(): Promise<void>
   reconnect(): Promise<void>
-  getBalance(scripthash: string): Promise<ElectrumBalance>
-  listUnspent(scripthash: string): Promise<ElectrumUtxo[]>
-  getHistory(scripthash: string): Promise<ElectrumHistoryItem[]>
+  getBalance(address: string): Promise<BtcBalance>
+  listUnspent(address: string): Promise<BtcUtxo[]>
+  getHistory(address: string): Promise<BtcHistoryItem[]>
   getTransaction(txHash: string): Promise<string>
   broadcast(rawTx: string): Promise<string>
   estimateFee(blocks: number): Promise<number>
 }
 ```
 
-### ElectrumBalance
+### BtcBalance
 ```typescript
-interface ElectrumBalance {
-  confirmed: number    // Confirmed balance in satoshis
-  unconfirmed?: number // Unconfirmed balance in satoshis
+interface BtcBalance {
+  confirmed: number             // Confirmed balance in satoshis
+  unconfirmed?: number          // Raw net unconfirmed balance in satoshis
+  unconfirmedOutgoing?: number  // Trusted pending outgoing amount in satoshis
 }
 ```
 
-### ElectrumUtxo
+When `unconfirmedOutgoing` is present, `WalletAccountReadOnlyBtc.getBalance()` returns `confirmed - unconfirmedOutgoing` and ignores `unconfirmed`. Otherwise it returns `confirmed + (unconfirmed || 0)`.
+
+### BtcUtxo
 ```typescript
-interface ElectrumUtxo {
+interface BtcUtxo {
   tx_hash: string  // The transaction hash containing this UTXO
   tx_pos: number   // The output index within the transaction
   value: number    // The UTXO value in satoshis
@@ -693,9 +696,9 @@ interface ElectrumUtxo {
 }
 ```
 
-### ElectrumHistoryItem
+### BtcHistoryItem
 ```typescript
-interface ElectrumHistoryItem {
+interface BtcHistoryItem {
   tx_hash: string // The transaction hash
   height: number  // The block height (0 or negative if unconfirmed)
 }
