@@ -1,0 +1,89 @@
+---
+title: Cloud Backup
+description: Store caller-encrypted wallet key material in Google Drive or CloudKit
+docType: explanation
+schemaType: TechArticle
+icon: CloudUpload
+---
+
+`@tetherto/wdk-backup-cloud` stores an encrypted wallet master key in either Google Drive's hidden `appDataFolder` or the user's CloudKit private database. It provides one facade, two provider implementations, and a shared error model for Node.js, React Native, and Bare wallet applications.
+
+<Callout type="warn">
+This documentation describes `@tetherto/wdk-backup-cloud@1.0.0-beta.1`. The package is beta software. Test backup, download, decryption, wallet-identity validation, migration, and deletion on every target runtime before relying on it for recovery.
+</Callout>
+
+<Callout type="error">
+The package does not encrypt, decrypt, derive, or validate wallet key material. `uploadEncryptedKey()` sends the string it receives to the selected cloud provider. Supply only authenticated ciphertext produced by your application, and never pass a seed phrase, raw private key, plaintext master key, or encryption password.
+</Callout>
+
+## Choose A Provider
+
+| Provider | Storage | Authentication owned by your app |
+| --- | --- | --- |
+| `GoogleDriveProvider` | One JSON file in Google Drive `appDataFolder` | OAuth 2 access token with the `drive.appdata` scope, supplied directly or through a refresh callback |
+| `CloudKitProvider` | One record in the user's CloudKit private database | CloudKit Web Services API token and user web-auth token, returned by a callback before each request |
+
+The SDK performs no OAuth, Google sign-in, Apple sign-in, token refresh, or account-selection flow. The application must obtain credentials, keep them current, bind them to the intended cloud account, and handle sign-out or account changes.
+
+## Behavior Model
+
+Each configured provider manages one logical backup identified by its file or record name:
+
+1. `uploadEncryptedKey()` builds a payload with the encrypted string, the current timestamp, and configured cloud email.
+2. The provider creates or overwrites the configured file or record.
+3. The provider verifies only that the item exists after the write.
+4. `downloadEncryptedKey()` returns the parsed payload or `null` when no item exists.
+5. `deleteBackup()` permanently removes the item and treats an already-missing item as success.
+
+There is no version history, append mode, conflict resolution, automatic rotation, recovery drill, or read-back content comparison. Serialize writes in the application and download, compare, decrypt, and validate the restored wallet identity before treating a write as a usable recovery point.
+
+## Stored Payload
+
+Both providers store the same JSON shape:
+
+```typescript
+type CloudEncryptionKeyFile = {
+  encryptionKey: string
+  savedAt: string
+  cloudEmail: string
+}
+```
+
+`cloudEmail` defaults to an empty string. If you set it, treat the resulting cloud record, downloads, logs, and support artifacts as user-identifying data. The payload has no schema-version or encryption-algorithm field, so the application must version its ciphertext envelope when future migration matters.
+
+## Runtime Boundary
+
+The package README declares support for Node.js 18+, React Native with Hermes, and Bare. Provider code requires global `fetch`, `Headers`, `AbortController`, and timers. The Bare conditional export loads `bare-node-runtime` globals.
+
+The published package does not declare a Node `engines` range, and its repository test suite runs under Jest rather than on every advertised runtime. Validate the exact runtime, bundler, network stack, background-execution model, and credential bridge used by the application.
+
+## What This Package Does Not Protect
+
+- Cloud storage receives ciphertext but can still expose account identifiers, timestamps, sizes, access patterns, and `cloudEmail`.
+- A compromised app process can access credentials and the encrypted string while a request is in progress.
+- Availability probes do not distinguish a missing item from authentication, network, quota, or service failures.
+- A successful upload does not prove that the ciphertext decrypts or restores the intended wallet.
+- Deleting the cloud item does not erase copies in application logs, caches, provider retention systems, exports, or other backups.
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/tools/backup-cloud/usage">
+Install the package and verify Google Drive or CloudKit backup and restore flows.
+</Card>
+<Card title="Configuration" href="/tools/backup-cloud/configuration">
+Configure credentials, storage identifiers, CloudKit schema, retries, and timeouts.
+</Card>
+<Card title="Migrate From React Native" href="/tools/backup-cloud/guides/migrate-from-react-native">
+Move from the legacy iCloud Drive backend without deleting the only recovery copy.
+</Card>
+<Card title="API Reference" href="/tools/backup-cloud/api-reference">
+Review the facade, providers, payload, custom-provider contract, and typed errors.
+</Card>
+</Cards>
+
+***
+
+## Need Help?
+
+<SupportCards />

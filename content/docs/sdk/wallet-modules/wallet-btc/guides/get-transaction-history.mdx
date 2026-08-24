@@ -3,7 +3,7 @@ title: Transaction History
 description: Retrieve and filter Bitcoin transfer history.
 ---
 
-This guide explains how to [retrieve all transfers](#retrieve-all-transfers), [filter by direction](#filter-by-direction), [paginate results](#paginate-results), and [check transaction receipts](#check-transaction-receipts).
+This guide explains how to [retrieve all transfers](#retrieve-all-transfers), [filter by direction](#filter-by-direction), [paginate results](#paginate-results), and [track transaction finality](#track-transaction-finality).
 
 ## Retrieve All Transfers
 
@@ -50,16 +50,33 @@ const page = await account.getTransfers({
 console.log('Transfers 11-30:', page)
 ```
 
-## Check Transaction Receipts
+## Track Transaction Finality
 
-You can check whether a specific transaction has been confirmed using [`account.getTransactionReceipt()`](/sdk/wallet-modules/wallet-btc/api-reference):
+Use [`account.getTransaction()`](/sdk/wallet-modules/wallet-btc/api-reference) to read normalized status for a transaction that appears in this account address's history:
 
-```javascript title="Get Transaction Receipt"
-const receipt = await account.getTransactionReceipt('abc123...')
-if (receipt) {
-  console.log('Transaction confirmed')
-}
+```javascript title="Get Transaction Status"
+const receipt = await account.getTransaction(transactionHash)
+console.log(receipt.finality)      // pending, confirmed, or final
+console.log(receipt.confirmations) // 0, a positive number, or null
 ```
+
+An included transaction becomes `final` after six confirmations. If a custom client cannot provide the current block height, `confirmations` is `null` and finality remains `confirmed`.
+
+Wait for a required finality level with `waitForTransaction()`:
+
+```javascript title="Wait for Six-confirmation Finality"
+const receipt = await account.waitForTransaction(transactionHash, {
+  target: 'final'
+})
+
+console.log('Final at height:', receipt.block)
+```
+
+The Bitcoin defaults are a 30-second polling interval and one-hour timeout. The module cannot reliably classify mempool eviction as `dropped`; an unseen or evicted transaction eventually times out. Invalid transaction IDs throw `ValueError`, while valid IDs absent from this account's history throw `NoSuchElementError`.
+
+<Callout type="info">
+`getTransactionReceipt()` remains available for the native transaction object but is deprecated. Use `getTransaction()` for finality-aware code.
+</Callout>
 
 ## Next Steps
 

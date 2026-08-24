@@ -17,6 +17,7 @@ Use this module when an app needs Aptos account derivation, APT balances, fungib
 - **Native APT support**: Sends native APT through `0x1::aptos_account::transfer`.
 - **Fungible asset support**: Reads and transfers Aptos fungible assets by metadata address.
 - **Fee estimation**: Simulates transactions to estimate gas before signing and submitting.
+- **Normalized transaction tracking**: Look up or wait for transaction finality with `getTransaction()` and `waitForTransaction()` while retaining the raw Aptos transaction.
 - **Message signing**: Signs and verifies messages with Ed25519 keys.
 - **Read-only accounts**: Address-only accounts read balances and receipts. Accounts created with the matching public key can also quote fees and verify signatures.
 - **Bare runtime compatibility**: Uses the Aptos fullnode REST API over `fetch` instead of the Aptos SDK at runtime.
@@ -38,6 +39,7 @@ Use this module when an app needs Aptos account derivation, APT balances, fungib
 | APT units | APT balances and fees are returned in octas. |
 | Token transfers | `transfer()` builds and submits `0x1::primary_fungible_store::transfer`. |
 | Signing without broadcast | `signTransaction()` simulates and signs a native APT transfer without submitting it. It still requires a provider. |
+| Transaction finality | Mempool transactions are `pending`; committed transactions are `final`. A final receipt can still report `success: false`. |
 | Fungible asset fee cap | `transferMaxFee` applies to `transfer()` only and rejects an estimated fee at or above the cap. |
 
 <Callout type="info">
@@ -45,7 +47,7 @@ All Aptos derivation path segments are hardened because the module uses Ed25519 
 </Callout>
 
 <Callout type="warn">
-Native `sendTransaction()` and `signTransaction()` do not apply `transferMaxFee`. Quote native transfers and enforce an application-level limit before sending or signing when your product requires one.
+Native `sendTransaction()` and `signTransaction()` do not apply `transferMaxFee`. A prior quote is advisory because those operations simulate again and expose no native maximum-fee argument. Beta.2 cannot enforce a hard application cap for native APT operations.
 </Callout>
 
 ## Next Steps

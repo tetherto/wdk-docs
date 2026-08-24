@@ -400,7 +400,9 @@ export const customTree: Node[] = [
       page('Get Started', '/cli/guides/get-started', 'Rocket'),
       page('Manage Wallets', '/cli/guides/manage-wallets', 'WalletCards'),
       page('Manage Tokens', '/cli/guides/manage-tokens', 'Coins'),
+      page('Manage Modules', '/cli/guides/manage-modules', 'Package'),
       page('Custom Networks', '/cli/guides/custom-networks', 'Network'),
+      page('Call Module Methods', '/cli/guides/call-module-methods', 'Braces'),
       page('Use the MCP Server', '/cli/guides/use-mcp-server', 'Wand'),
       page('Handle Errors', '/cli/guides/handle-errors', 'CircleAlert'),
     ]),
@@ -450,6 +452,14 @@ export const customTree: Node[] = [
     configuration('/tools/secret-manager/configuration'),
     apiReference('/tools/secret-manager/api-reference'),
   ]),
+  folder('Back up encrypted wallet keys', '/tools/backup-cloud', 'CloudUpload', [
+    usage('/tools/backup-cloud/usage'),
+    guides([
+      page('Migrate From React Native', '/tools/backup-cloud/guides/migrate-from-react-native', 'RefreshCw'),
+    ]),
+    configuration('/tools/backup-cloud/configuration'),
+    apiReference('/tools/backup-cloud/api-reference'),
+  ], 'Cloud Backup'),
   folder('P2P Address Book', '/tools/p2p-address-book', 'BookUser', [
     page('Get Started', '/tools/p2p-address-book/get-started', 'Rocket'),
     page('Sync and Recovery', '/tools/p2p-address-book/sync-and-recovery', 'RefreshCw'),

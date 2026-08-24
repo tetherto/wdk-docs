@@ -10,18 +10,18 @@ description: Hooks-based React Native library for building multi-chain wallet ap
 - **Hooks-based architecture** - `useWdkApp`, `useWalletManager`, `useAccount`, `useProtocol`, `useBalance`, `useBalancesForWallets`, and more
 - **Generic module API** - `useModule` and `ModuleService` expose named worklet-module calls and events
 - **TanStack Query caching** - automatic balance fetching across one or many account indices, per-token fallback for modules without batch balance support, cache invalidation, and optimistic updates
-- **Zustand state management** - persisted wallet state with MMKV storage
+- **Zustand state management** - persisted wallet inventory with MMKV storage; the active identity is cleared on rehydration
 - **Worklet runtime** - runs WDK in an isolated Bare worklet
-- **Biometric authentication** - secure storage with device biometrics
-- **Multi-wallet support** - create, restore, switch, lock, unlock, and delete wallets
+- **Explicit wallet identity** - your app chooses which wallet ID to create, restore, unlock, or switch to
+- **Multi-wallet support** - create, restore, lock, unlock, switch, and delete wallets; guarded lifecycle operations use a fail-fast mutex
 - **Typed React Native source API** - exported hook and service types are available through the package's React Native source condition
 
 <Callout type="info">
-Starting in `v1.0.0-beta.14`, React Native Core pins a Pear Worklet version with the HRPC methods required by `useModule()` and `ModuleService`. Beta.16 continues to pin Pear Worklet beta.10.
+Starting in `v1.0.0-beta.17`, wallet identity is caller-owned and the library no longer auto-unlocks a persisted wallet. The current release does not enforce biometrics or another authentication policy. Pass an explicit wallet ID to `unlock()`, and perform your app's authentication check before calling lifecycle or key-access methods.
 </Callout>
 
 <Callout type="warn">
-The `v1.0.0-beta.16` npm artifact includes the React Native source entry at `src/index.ts`, but it does not include the declared default JavaScript or type declaration files under `dist/`. Use a React Native resolver that selects the package's `react-native` condition. Resolvers that select `default` or `types` target files that are not present in this artifact.
+The `v1.0.0-beta.18` npm artifact includes the React Native source entry at `src/index.ts`, but it does not include the declared default JavaScript or type declaration files under `dist/`. TypeScript must use `moduleResolution: "bundler"` with `customConditions: ["react-native"]`, and Metro must retain the `react-native` export condition. Resolvers that select `default` or `types` target files that are not present in this artifact.
 </Callout>
 
 ## Quick Start
@@ -29,10 +29,11 @@ The `v1.0.0-beta.16` npm artifact includes the React Native source entry at `src
 ### 1. Install
 
 ```bash
-npm install @tetherto/wdk-react-native-core react-native-bare-kit
+npm install @tetherto/wdk-react-native-core@1.0.0-beta.18 react-native-bare-kit
+npx expo install expo-crypto
 ```
 
-Starting in beta.14, `react-native-bare-kit` is a peer dependency with a supported range of `>=0.14.5`, so the app must install it explicitly.
+Beta.18 requires `expo-crypto` `>=55.0.0 <57.0.0` and `react-native-bare-kit` `>=0.14.5` as peer dependencies. Confirm that the version selected by `npx expo install` is inside the package range and matches the app's Expo SDK. If the SDK requires a version outside the range, do not force the peer installation; use compatible releases instead. In a bare React Native app, [install and configure Expo modules](https://docs.expo.dev/bare/installing-expo-modules/) before installing `expo-crypto`.
 
 ### 2. Wrap Your App
 
@@ -54,18 +55,33 @@ export default function App() {
 ```tsx
 import { useWdkApp, useWalletManager, useAccount } from '@tetherto/wdk-react-native-core'
 
-function WalletScreen() {
+function WalletScreen({
+  walletId,
+  authenticate,
+}: {
+  walletId: string
+  authenticate: () => Promise<boolean>
+}) {
   const { state } = useWdkApp()
   const { createWallet, unlock } = useWalletManager()
   const { address, isLoading } = useAccount({ network: 'ethereum', accountIndex: 0 })
 
+  const create = async () => {
+    if (await authenticate()) await createWallet(walletId)
+  }
+
+  const open = async () => {
+    if (await authenticate()) await unlock(walletId)
+  }
+
   switch (state.status) {
     case 'INITIALIZING':
+    case 'REINITIALIZING':
       return <Text>Loading...</Text>
     case 'NO_WALLET':
-      return <Button title="Create Wallet" onPress={() => createWallet('my-wallet')} />
+      return <Button title="Create Wallet" onPress={create} />
     case 'LOCKED':
-      return <Button title="Unlock" onPress={() => unlock()} />
+      return <Button title="Unlock" onPress={open} />
     case 'READY':
       return <Text>Address: {address}</Text>
     case 'ERROR':
@@ -139,8 +155,8 @@ WdkAppProvider
 |   +-- workletStore - worklet lifecycle, initialization state
 |   +-- walletStore - addresses, balances, wallet list (persisted to MMKV)
 +-- Hooks (public API)
-    +-- useWdkApp()         - app state (INITIALIZING, NO_WALLET, LOCKED, READY, ERROR)
-    +-- useWalletManager()  - create, restore, lock, unlock, delete wallets
+    +-- useWdkApp()         - app state and manual worklet reinitialization
+    +-- useWalletManager()  - create, restore, switch, lock, unlock, delete wallets
     +-- useAccount()        - address, send, sign, verify, estimateFee
     +-- useProtocol()       - call bridge, swap, Swidge, lending, and fiat protocol methods
     +-- useModule()         - call named generic modules and subscribe to events

@@ -5,7 +5,7 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-This guide explains how to [send native SOL](#send-native-sol), [sign a transaction without broadcasting](#sign-a-transaction-without-broadcasting), [quote and send a signed transaction](#quote-and-send-a-signed-transaction), [estimate transaction fees](#estimate-transaction-fees), [cap native transaction fees](#cap-native-transaction-fees), [quote or send a TransactionMessage](#quote-or-send-a-transactionmessage), [use dynamic fee rates](#use-dynamic-fee-rates), and [run a complete SOL transfer flow](#complete-example).
+This guide explains how to [send native SOL](#send-native-sol), [wait for finality](#wait-for-finality), [sign a transaction without broadcasting](#sign-a-transaction-without-broadcasting), [quote and send a signed transaction](#quote-and-send-a-signed-transaction), [estimate transaction fees](#estimate-transaction-fees), [cap native transaction fees](#cap-native-transaction-fees), [quote or send a TransactionMessage](#quote-or-send-a-transactionmessage), [use dynamic fee rates](#use-dynamic-fee-rates), and [run a complete SOL transfer flow](#complete-example).
 
 <Callout type="warn">
 **BigInt Usage:** Always use `BigInt` (the `n` suffix) for monetary values to avoid precision loss with large numbers.
@@ -27,6 +27,25 @@ const result = await account.sendTransaction({
 console.log('Transaction hash:', result.hash)
 console.log('Transaction fee:', result.fee, 'lamports')
 ```
+
+## Wait for Finality
+
+Pass the transaction signature returned in `result.hash` to `waitForTransaction()`:
+
+```javascript title="Wait for Finalized Status"
+const receipt = await account.waitForTransaction(result.hash, {
+  target: 'final'
+})
+
+console.log('Finalized in slot:', receipt.block)
+if (receipt.success === false) {
+  console.log('The transaction was finalized but execution failed')
+}
+```
+
+Solana `processed`, `confirmed`, and `finalized` status map to WDK `pending`, `confirmed`, and `final`. The default wait interval is four seconds and timeout is 60 seconds. The module does not classify evicted or never-landed signatures as `dropped`; they time out. Always inspect `success` after settlement.
+
+`getTransactionReceipt()` remains available for native transaction data but is deprecated in favor of `getTransaction()`.
 
 ## Sign a Transaction Without Broadcasting
 
