@@ -1,0 +1,331 @@
+---
+title: Fiat Transak Configuration
+description: Configuration options for the @transak/wdk-protocol-fiat-transak module
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+# Configuration
+
+This page covers the server-side configuration for the Transak fiat module, including authenticated callbacks and environment selection.
+
+## Prerequisites
+
+Before using this module, you need:
+
+1. A Transak partner account - [Create an account on the Transak Partner Dashboard](https://dashboard.transak.com/)
+2. A partner API key from your dashboard
+3. A backend with a static egress IP that Transak has allow-listed for staging and production
+4. For widget or order flows, the matching API secret from your dashboard
+5. For `buy()` and `sell()`, a trusted way to derive the end user's IP from the incoming request or your CDN
+
+<Callout type="warn">
+Run `TransakProtocol` and every Transak-facing request on your backend. The module sends your partner API key when it calls Transak's country, currency, and quote APIs directly, and Transak requires those calls to originate from an allow-listed backend. Never expose the API secret, partner access token, or trusted `x-user-ip` value to the browser, and do not let browser code call Transak APIs directly. The session-based widget URL may contain the public integration identifiers that Transak requires to load the widget.
+</Callout>
+
+## Installation
+
+```bash
+npm install @transak/wdk-protocol-fiat-transak
+```
+
+## Basic Configuration
+
+```typescript
+import TransakProtocol from '@transak/wdk-protocol-fiat-transak';
+
+function requiredEnvironmentVariable(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} is required`);
+  return value;
+}
+
+const partnerApiKey = requiredEnvironmentVariable('TRANSAK_API_KEY');
+const partnerApiSecret = requiredEnvironmentVariable('TRANSAK_API_SECRET');
+const environment = process.env.TRANSAK_ENVIRONMENT === 'PRODUCTION'
+  ? 'PRODUCTION'
+  : 'STAGING';
+
+const transakApiOrigin = environment === 'STAGING'
+  ? 'https://api-stg.transak.com'
+  : 'https://api.transak.com';
+const transakGatewayOrigin = environment === 'STAGING'
+  ? 'https://api-gateway-stg.transak.com'
+  : 'https://api-gateway.transak.com';
+
+// Call this inside your authenticated backend handler. `userIp` must come from
+// trusted request or CDN context, never a browser-provided request body/header.
+function createTransakProtocol(userIp: string) {
+  return new TransakProtocol(undefined, {
+    apiKey: partnerApiKey,
+    widgetUrl: (widgetParams) => createWidgetUrl(widgetParams, userIp),
+    getOrder,
+    environment,
+  });
+}
+```
+
+## Configuration Options
+
+| Option | Type | Required | Default | Description |
+|--------|------|----------|---------|-------------|
+| `apiKey` | string | Yes | - | Your Transak partner API key. Configure it on your backend; the generated widget URL may include it as a provider integration identifier. |
+| `widgetUrl` | function | For `buy`/`sell` | - | Server-side callback that receives the assembled `widgetParams` object and returns a widget URL. `buy`/`sell` throw without it. |
+| `getOrder` | function | For `getTransactionDetail` | - | Server-side callback `(txId) => Promise<TransakOrder>` that fetches a Transak order. `getTransactionDetail` throws without it. |
+| `cacheTime` | number | No | `600000` (10 min) | Duration in milliseconds to cache supported currencies |
+| `environment` | `'PRODUCTION' \| 'STAGING'` | No | `PRODUCTION` | Selects the Transak API host. Use `STAGING` for testing with non-real funds. |
+
+## Constructor Overloads
+
+The `TransakProtocol` class supports three constructor patterns:
+
+```typescript
+// Recommended backend default. Pass `recipient` to buy(), or let the widget ask.
+const transak = new TransakProtocol(undefined, config);
+
+// Optional read-only account, used only as the fallback buy recipient.
+const transak = new TransakProtocol(readOnlyAccount, config);
+
+// Accepted, but TransakProtocol only reads its address and never signs with it.
+const transak = new TransakProtocol(walletAccount, config);
+```
+
+Prefer `undefined` or a read-only account. Do not move a browser-held signing account or private-key context to your backend for this integration.
+
+## Implementing the backend callbacks
+
+The module calls Transak's public country, currency, and quote APIs from the runtime where you construct it. Keep that runtime on your backend. Its `widgetUrl` and `getOrder` callbacks also run there and call authenticated Transak APIs using a partner `access-token` minted from your API secret. The widget URL request additionally requires the end user's IP in `x-user-ip`.
+
+### Getting an access token (backend)
+
+Both `widgetUrl` and `getOrder` need a partner `access-token`. It's valid for **7 days** - cache it and only call `refresh-token` after the cached token expires, rather than on every request:
+
+```typescript
+type CachedAccessToken = { token: string; exp: number };
+
+let cached: CachedAccessToken | undefined;
+let refreshInFlight: Promise<CachedAccessToken> | undefined;
+
+async function refreshAccessToken(): Promise<CachedAccessToken> {
+  const res = await fetch(`${transakApiOrigin}/partners/api/v2/refresh-token`, {
+    method: 'POST',
+    headers: {
+      'x-api-key': partnerApiKey,
+      'api-secret': partnerApiSecret,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({ apiKey: partnerApiKey }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to refresh Transak access token: ${res.status}`);
+  }
+
+  const body = await res.json();
+  const token = body?.data?.accessToken;
+  const expiresAt = body?.data?.expiresAt;
+  if (typeof token !== 'string' || typeof expiresAt !== 'number') {
+    throw new Error('Transak refresh-token response is missing accessToken or expiresAt');
+  }
+
+  cached = { token, exp: expiresAt };
+  return cached;
+}
+
+async function accessToken() {
+  const now = Math.floor(Date.now() / 1000);
+  if (cached && cached.exp > now) return cached.token;
+
+  const refresh = refreshInFlight ??= refreshAccessToken();
+  try {
+    return (await refresh).token;
+  } finally {
+    if (refreshInFlight === refresh) refreshInFlight = undefined;
+  }
+}
+```
+
+The in-flight promise prevents concurrent requests in one process from minting tokens that invalidate each other. This in-memory cache is suitable for a single backend process. When requests can reach multiple instances, use a shared cache plus distributed coordination so only one instance refreshes at expiry.
+
+### `widgetUrl` (backend)
+
+Turns the assembled `widgetParams` into a session-based widget URL, using [Transak's APIs](https://docs.transak.com/guides/migration-to-api-based-transak-widget-url):
+
+```typescript
+// Runs on your backend. Never ship the API secret to the client.
+// `userIp` is the end user's IP derived from trusted request or CDN context.
+async function createWidgetUrl(widgetParams, userIp) {
+  const token = await accessToken();
+
+  const sessionRes = await fetch(`${transakGatewayOrigin}/api/v2/auth/session`, {
+    method: 'POST',
+    headers: {
+      'x-api-key': partnerApiKey,
+      'access-token': token,
+      'content-type': 'application/json',
+      'x-user-ip': userIp,
+    },
+    body: JSON.stringify({ widgetParams }),
+  });
+
+  if (!sessionRes.ok) {
+    throw new Error(`Failed to create Transak widget URL: ${sessionRes.status}`);
+  }
+
+  const body = await sessionRes.json();
+  const widgetUrl = body?.data?.widgetUrl;
+  if (typeof widgetUrl !== 'string') {
+    throw new Error('Transak widget response is missing widgetUrl');
+  }
+
+  return widgetUrl; // valid for 5 minutes, single use
+}
+```
+
+### `getOrder` (backend)
+
+Fetches an order via Transak's [Get Order API](https://docs.transak.com/api/public/get-order-by-order-id), reusing the same access token:
+
+```typescript
+async function getOrder(txId) {
+  const token = await accessToken(); // reuse the same one as the widget URL flow
+  const res = await fetch(`${transakApiOrigin}/partners/api/v2/order/${encodeURIComponent(txId)}`, {
+    headers: { 'x-api-key': partnerApiKey, 'access-token': token },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch Transak order: ${res.status}`);
+  }
+
+  const body = await res.json();
+  const order = body?.data;
+  if (
+    !order ||
+    typeof order !== 'object' ||
+    Array.isArray(order) ||
+    typeof order.status !== 'string' ||
+    typeof order.cryptoCurrency !== 'string' ||
+    typeof order.fiatCurrency !== 'string' ||
+    !['BUY', 'SELL'].includes(order.isBuyOrSell)
+  ) {
+    throw new Error('Transak order response is missing required order fields');
+  }
+
+  return order; // Get Order responses are wrapped in { data }
+}
+```
+
+Call `createTransakProtocol(userIp)` inside an authenticated backend route and return only the widget URL, quote, availability data, or serialized transaction result that the client needs. Restrict browser-facing routes to your own origins, rate-limit them, authorize order ids against your own user/order records, and never accept or forward partner credentials or `x-user-ip` from the browser.
+
+`cacheTime` applies to one `TransakProtocol` instance. The request-scoped factory above binds the correct `userIp` safely, but its supported-currency cache does not carry across requests. Account for those coverage calls in your traffic and rate-limit design. Do not share a mutable request IP across concurrent requests to reuse an instance.
+
+## Environment Configuration
+
+### STAGING (Testing)
+
+Use `STAGING` for development and testing against non-real funds:
+
+```bash
+TRANSAK_ENVIRONMENT=STAGING
+```
+
+The Basic Configuration example uses this same `environment` value for the module and both callback origins. It defaults to `STAGING`. The module's own requests (`getSupportedCryptoAssets`, `getSupportedFiatCurrencies`, `getSupportedCountries`, `quoteBuy`, `quoteSell`) use `api-stg.transak.com`.
+
+Refer to the table below for the host to use in each callback request:
+
+| Callback | Path | Host |
+|---|---|---|
+| `widgetUrl` | `POST /partners/api/v2/refresh-token` | `https://api-stg.transak.com` |
+| `widgetUrl` | `POST /api/v2/auth/session` | `https://api-gateway-stg.transak.com` |
+| `getOrder` | `GET /partners/api/v2/order/{txId}` | `https://api-stg.transak.com` |
+
+### PRODUCTION
+
+`PRODUCTION` is the package default when its `environment` option is omitted. The Basic Configuration example defaults to `STAGING` for safety; set this value explicitly for live transactions:
+
+```bash
+TRANSAK_ENVIRONMENT=PRODUCTION
+```
+
+The Basic Configuration example uses this same value for the module and both callback origins. The module's own requests use `api.transak.com`.
+
+Refer to the table below for the host to use in each callback request:
+
+| Callback | Path | Host |
+|---|---|---|
+| `widgetUrl` | `POST /partners/api/v2/refresh-token` | `https://api.transak.com` |
+| `widgetUrl` | `POST /api/v2/auth/session` | `https://api-gateway.transak.com` |
+| `getOrder` | `GET /partners/api/v2/order/{txId}` | `https://api.transak.com` |
+
+## Widget Customization
+
+When calling `buy()` or `sell()`, pass provider-specific extras, including the widget's UI options, under `config`. Refer [here](https://docs.transak.com/customization/query-parameters) for all supported Transak's query parameters
+
+```typescript
+const result = await transak.buy({
+  cryptoAsset: 'ETH',
+  fiatCurrency: 'EUR',
+  fiatAmount: 10_000n, // €100.00 in cents
+  config: {
+    network: 'ethereum',
+    paymentMethod: 'credit_debit_card',
+    referrerDomain: 'yourdomain.com', // required, see below
+    colorMode: 'DARK',
+    themeColor: '3B82F6',
+  },
+});
+```
+
+### Transak Widget UI Parameters (Shared)
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `themeColor` | string | Primary color of the widget, as a hex code without the leading `#` |
+| `colorMode` | `'DARK' \| 'LIGHT'` | Default appearance for the widget |
+| `hideMenu` | boolean | If `true`, hides the widget navigation menu |
+| `redirectURL` | string | URL to redirect to after the flow completes (must use `https://`) |
+| `referrerDomain` | string | Your domain URL (web) or app package name (mobile) - required for `buy`/`sell`. |
+
+### Transak Widget UI Buy Parameters
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `walletAddress` | string | Destination wallet address. If valid, the customer isn't prompted for one |
+| `walletAddressesData` | object | Wallet addresses keyed by network/coin. Skipped if `walletAddress` is passed |
+| `disableWalletAddressForm` | boolean | If `true`, the customer can't edit the destination address |
+| `exchangeScreenTitle` | string | Custom title for the exchange screen |
+| `hideExchangeScreen` | boolean | If `true`, skips straight to the payment screen |
+| `isFeeCalculationHidden` | boolean | If `true`, hides the fee breakdown |
+| `defaultPaymentMethod` | string | Pre-selected payment method |
+| `paymentMethod` | string | Restricts the customer to a single payment method |
+| `disablePaymentMethods` | array | Payment methods to hide from the customer |
+| `email` | string | Pre-filled customer email |
+| `userData` | object | Prefills customer name, address, and date of birth to streamline or skip the KYC form |
+| `isAutoFillUserData` | boolean | If `true`, autofills the `email` field without skipping the KYC screen. Ignored if `email`/`userData` aren't set |
+| `partnerOrderId` | string | Your identifier for the order, returned in webhooks and order data |
+| `partnerCustomerId` | string | Your identifier for the customer, returned in webhooks and order data |
+| `network` | string | Restricts the customer to a single network for the selected crypto currency |
+
+### Transak Widget UI Sell Parameters
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `walletRedirection` | boolean | Enables wallet redirection for the off-ramp (sell) flow |
+| `exchangeScreenTitle` | string | Custom title for the exchange screen |
+| `hideExchangeScreen` | boolean | If `true`, skips straight to the payout screen |
+| `isFeeCalculationHidden` | boolean | If `true`, hides the fee breakdown |
+| `defaultPaymentMethod` | string | Pre-selected payout method |
+| `paymentMethod` | string | Restricts the customer to a single payout method |
+| `disablePaymentMethods` | array | Payout methods to hide from the customer |
+| `email` | string | Pre-filled customer email |
+| `userData` | object | Prefills customer name, address, and date of birth to streamline or skip the KYC form |
+| `isAutoFillUserData` | boolean | If `true`, autofills the `email` field without skipping the KYC screen. Ignored if `email`/`userData` aren't set |
+| `partnerOrderId` | string | Your identifier for the order, returned in webhooks and order data |
+| `partnerCustomerId` | string | Your identifier for the customer, returned in webhooks and order data |
+| `network` | string | Restricts the customer to a single network for the selected crypto currency |
+
+## Next Steps
+
+- [Usage Guide](/sdk/fiat-modules/fiat-transak/usage) - Learn how to integrate Transak
+- [API Reference](/sdk/fiat-modules/fiat-transak/api-reference) - Complete API documentation

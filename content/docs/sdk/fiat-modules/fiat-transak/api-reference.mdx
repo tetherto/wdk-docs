@@ -1,0 +1,393 @@
+---
+title: Fiat Transak API Reference
+description: API Reference for the @transak/wdk-protocol-fiat-transak module
+docType: reference
+schemaType: APIReference
+icon: Code
+---
+
+# API Reference
+
+Complete API documentation for the `@transak/wdk-protocol-fiat-transak` module.
+
+## Constructor
+
+### `new TransakProtocol(account, config)`
+
+Creates a new TransakProtocol instance. Construct it on your backend because its country, currency, and quote methods call Transak directly with your partner API key.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `account` | `IWalletAccount` \| `IWalletAccountReadOnly` \| `undefined` | Optional account used only as the fallback recipient address for `buy()`. Prefer `undefined` or a read-only account on the backend. |
+| `config` | `TransakProtocolConfig` | Configuration object |
+
+**Config Options:**
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `apiKey` | string | Yes | - | Your Transak partner API key. Configure it on your backend; the generated widget URL may include it as a provider integration identifier. |
+| `widgetUrl` | function | For `buy`/`sell` | - | Server-side callback `(widgetParams) => Promise<string>` that returns a session-based widget URL. `buy`/`sell` throw without it. |
+| `getOrder` | function | For `getTransactionDetail` | - | Server-side callback `(txId) => Promise<TransakOrder>` that fetches a Transak order. `getTransactionDetail` throws without it. |
+| `cacheTime` | number | No | `600000` | Cache duration for supported currencies (ms) |
+| `environment` | `'PRODUCTION' \| 'STAGING'` | No | `PRODUCTION` | Selects the Transak API host |
+
+**Example:**
+
+```typescript
+import TransakProtocol from '@transak/wdk-protocol-fiat-transak';
+
+function createTransakProtocol(userIp) {
+  return new TransakProtocol(undefined, {
+    apiKey: partnerApiKey,
+    widgetUrl: (widgetParams) => createWidgetUrl(widgetParams, userIp),
+    getOrder,
+    environment,
+  });
+}
+```
+
+See [Configuration](/sdk/fiat-modules/fiat-transak/configuration#implementing-the-backend-callbacks) for the shared environment selection and validated implementations of `createWidgetUrl` and `getOrder`.
+
+---
+
+## Methods
+
+### `buy(options)`
+
+Generates a Transak widget URL for purchasing cryptocurrency via the configured `widgetUrl` callback.
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `options.cryptoAsset` | string | Yes | Crypto asset code, upper-case (e.g. `'ETH'`) |
+| `options.fiatCurrency` | string | Yes | Fiat currency code, upper-case (e.g. `'EUR'`) |
+| `options.cryptoAmount` | number \| bigint | No* | Amount in crypto base units (e.g. wei) |
+| `options.fiatAmount` | number \| bigint | No* | Amount in fiat base units (e.g. cents) |
+| `options.recipient` | string | No | Destination wallet address (falls back to the account address) |
+| `options.config` | `TransakBuyParams` | No | Widget parameters, including `network` and the required `referrerDomain` |
+
+*Either `cryptoAmount` or `fiatAmount` must be provided, but not both.
+
+**Returns:** `Promise<{ buyUrl: string }>`
+
+---
+
+### `sell(options)`
+
+Generates a Transak widget URL for selling cryptocurrency via the configured `widgetUrl` callback.
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `options.cryptoAsset` | string | Yes | Crypto asset code, upper-case |
+| `options.fiatCurrency` | string | Yes | Fiat currency code, upper-case |
+| `options.cryptoAmount` | number \| bigint | No* | Amount in crypto base units |
+| `options.fiatAmount` | number \| bigint | No* | Amount in fiat base units |
+| `options.config` | `TransakSellParams` | No | Widget parameters, including `network` and the required `referrerDomain` |
+
+*Either `cryptoAmount` or `fiatAmount` must be provided, but not both.
+
+**Returns:** `Promise<{ sellUrl: string }>`
+
+<Callout type="warn">
+The published `1.0.1` types make `options.config` and `referrerDomain` optional, but Transak's Create Widget URL API requires `referrerDomain` for both `buy()` and `sell()`. Include it at runtime even though TypeScript does not enforce it.
+</Callout>
+
+---
+
+### `quoteBuy(options)`
+
+Gets a price quote for a cryptocurrency purchase.
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `options.cryptoAsset` | string | Yes | Crypto asset code, upper-case |
+| `options.fiatCurrency` | string | Yes | Fiat currency code, upper-case |
+| `options.cryptoAmount` | number \| bigint | No* | Amount in crypto base units |
+| `options.fiatAmount` | number \| bigint | No* | Amount in fiat base units |
+| `options.config` | `TransakQuoteBuyParams` | No | `paymentMethod` and `network` (resolved from the supported list when omitted) |
+
+*Either `cryptoAmount` or `fiatAmount` must be provided, but not both.
+
+**Returns:** `Promise<TransakBuyQuote>`
+
+```typescript
+{
+  cryptoAmount: bigint,  // Crypto amount you'll receive, in base units
+  fiatAmount: bigint,    // Fiat amount to pay, in base units
+  fee: bigint,           // Total fee, in fiat base units
+  rate: string,          // Exchange rate, as a decimal string
+  metadata: TransakQuote // The full raw Transak quote
+}
+```
+
+---
+
+### `quoteSell(options)`
+
+Gets a price quote for selling cryptocurrency.
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `options.cryptoAsset` | string | Yes | Crypto asset code, upper-case |
+| `options.fiatCurrency` | string | Yes | Fiat currency code, upper-case |
+| `options.cryptoAmount` | number \| bigint | Yes | Amount in crypto base units |
+| `options.config` | `TransakQuoteSellParams` | No | `paymentMethod` and `network` (resolved from the supported list when omitted) |
+
+**Returns:** `Promise<TransakSellQuote>`
+
+```typescript
+{
+  cryptoAmount: bigint,  // Crypto amount to sell, in base units
+  fiatAmount: bigint,    // Fiat amount you'll receive, in base units
+  fee: bigint,           // Total fee, in fiat base units
+  rate: string,          // Exchange rate, as a decimal string
+  metadata: TransakQuote // The full raw Transak quote
+}
+```
+
+---
+
+### `getSupportedCryptoAssets()`
+
+Fetches the list of supported cryptocurrencies. Results are cached per `cacheTime`.
+
+**Returns:** `Promise<TransakSupportedCryptoAsset[]>`
+
+```typescript
+{
+  code: string,          // Crypto asset code (e.g. 'ETH')
+  decimals: number,      // On-chain base-unit decimal places
+  networkCode: string,   // Network identifier (e.g. 'ethereum')
+  name: string,          // Display name
+  metadata: TransakCryptoCurrencyDetails
+}
+```
+
+---
+
+### `getSupportedFiatCurrencies()`
+
+Fetches the list of supported fiat currencies. Results are cached per `cacheTime`.
+
+**Returns:** `Promise<TransakSupportedFiatCurrency[]>`
+
+```typescript
+{
+  code: string,          // Fiat currency code (e.g. 'EUR')
+  decimals: number,      // ISO 4217 decimal places for the smallest unit
+  name: string,          // Display name
+  metadata: TransakFiatCurrencyDetails
+}
+```
+
+---
+
+### `getSupportedCountries()`
+
+Fetches the list of supported countries.
+
+**Returns:** `Promise<TransakSupportedCountry[]>`
+
+```typescript
+{
+  code: string,           // ISO 3166-1 alpha-2 (or alpha-3 fallback) country code
+  isBuyAllowed: boolean,  // Transak country-level KYC signal
+  isSellAllowed: boolean, // Mirrors the same country-level KYC signal
+  name: string,           // Country name
+  metadata: TransakCountryDetail
+}
+```
+
+Both directional flags map from Transak's country-level `isAllowed` value. They do not establish availability for a particular asset, fiat currency, network, or payment method.
+
+---
+
+### `getTransactionDetail(txId)`
+
+Retrieves the details of a specific order via the configured `getOrder` callback.
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `txId` | string | Yes | The Transak order id |
+
+**Returns:** `Promise<TransakTransactionDetail>`
+
+```typescript
+{
+  status: 'completed' | 'failed' | 'in_progress',
+  cryptoAsset: string,
+  fiatCurrency: string,
+  metadata: TransakOrder // The full raw Transak order
+}
+```
+
+---
+
+## Types
+
+### `TransakProtocolConfig`
+
+```typescript
+interface TransakProtocolConfig {
+  apiKey: string;
+  widgetUrl?: (widgetParams: TransakWidgetParams) => Promise<string>;
+  getOrder?: (txId: string) => Promise<TransakOrder>;
+  cacheTime?: number;
+  environment?: 'PRODUCTION' | 'STAGING';
+}
+```
+
+### `TransakWidgetParams`
+
+The parameters your `widgetUrl` callback receives. Send this object as `widgetParams` to Transak's Create Widget URL API. At runtime, the module also spreads supported fields from `TransakBuyParams` or `TransakSellParams` into this object.
+
+```typescript
+interface TransakWidgetParams {
+  apiKey: string;
+  productsAvailed: 'BUY' | 'SELL';
+  cryptoCurrencyCode: string;
+  network: string;
+  fiatCurrency: string;
+  fiatAmount?: number;
+  cryptoAmount?: number;
+  walletAddress?: string;
+}
+```
+
+### `TransakBuyParams`
+
+Widget configuration options for `buy()` operations. Refer [here](https://docs.transak.com/customization/query-parameters) for all supported Transak's query parameters.
+
+```typescript
+interface TransakBuyParams {
+  // Shared UI options
+  themeColor?: string;
+  colorMode?: 'DARK' | 'LIGHT';
+  redirectURL?: string;
+  referrerDomain?: string; // required by buy()/sell()
+  hideMenu?: boolean;
+
+  // Buy-specific options
+  walletAddress?: string;
+  walletAddressesData?: object;
+  disableWalletAddressForm?: boolean;
+  exchangeScreenTitle?: string;
+  hideExchangeScreen?: boolean;
+  isFeeCalculationHidden?: boolean;
+  defaultPaymentMethod?: string;
+  paymentMethod?: string;
+  disablePaymentMethods?: string[];
+  email?: string;
+  userData?: object;
+  isAutoFillUserData?: boolean;
+  partnerOrderId?: string;
+  partnerCustomerId?: string;
+  network?: string;
+}
+```
+
+### `TransakSellParams`
+
+Widget configuration options for `sell()` operations. Refer [here](https://docs.transak.com/customization/query-parameters) for all supported Transak's query parameters.
+
+```typescript
+interface TransakSellParams {
+  // Shared UI options
+  themeColor?: string;
+  colorMode?: 'DARK' | 'LIGHT';
+  redirectURL?: string;
+  referrerDomain?: string; // required by buy()/sell()
+  hideMenu?: boolean;
+
+  // Sell-specific options
+  walletRedirection?: boolean;
+  exchangeScreenTitle?: string;
+  hideExchangeScreen?: boolean;
+  isFeeCalculationHidden?: boolean;
+  defaultPaymentMethod?: string;
+  paymentMethod?: string;
+  disablePaymentMethods?: string[];
+  email?: string;
+  userData?: object;
+  isAutoFillUserData?: boolean;
+  partnerOrderId?: string;
+  partnerCustomerId?: string;
+  network?: string;
+}
+```
+
+### `TransakQuoteBuyParams`
+
+```typescript
+interface TransakQuoteBuyParams {
+  paymentMethod?: string;
+  network?: string; // resolved from the supported assets list when omitted
+}
+```
+
+### `TransakQuoteSellParams`
+
+```typescript
+interface TransakQuoteSellParams {
+  paymentMethod?: string;
+  network?: string; // resolved from the supported assets list when omitted
+}
+```
+
+### `TransakOrder`
+
+The raw order object returned by your `getOrder` callback, and exposed as `metadata` on `TransakTransactionDetail`:
+
+```typescript
+interface TransakOrder {
+  id: string; // Published 1.0.1 type; current provider examples return `_id`
+  status: TransakOrderStatus;
+  cryptoCurrency: string;
+  fiatCurrency: string;
+  fiatAmount: number;
+  cryptoAmount?: number;
+  isBuyOrSell: 'BUY' | 'SELL';
+  network: string;
+  walletAddress?: string;
+  transactionHash?: string;
+  amountPaid?: number;
+  createdAt?: string;  // ISO 8601
+  completedAt?: string; // ISO 8601
+}
+```
+
+The published `1.0.1` declaration names the order identifier `id`, while Transak's current Get Order response documentation uses `_id`. Until that package/provider mismatch is reconciled, persist the `txId` passed to `getTransactionDetail()` and do not depend on `metadata.id` at runtime.
+
+### `TransakOrderStatus`
+
+```typescript
+type TransakOrderStatus =
+  | 'AWAITING_PAYMENT_FROM_USER'
+  | 'PAYMENT_DONE_MARKED_BY_USER'
+  | 'PROCESSING'
+  | 'PENDING_DELIVERY_FROM_TRANSAK'
+  | 'ON_HOLD_PENDING_DELIVERY_FROM_TRANSAK'
+  | 'COMPLETED'
+  | 'CANCELLED'
+  | 'FAILED'
+  | 'REFUNDED'
+  | 'EXPIRED';
+```
+
+`getTransactionDetail` normalises these into `'completed'`, `'failed'`, or `'in_progress'`
+
+## Next Steps
+
+- [Configuration](/sdk/fiat-modules/fiat-transak/configuration) - Setup and configuration options
+- [Usage Guide](/sdk/fiat-modules/fiat-transak/usage) - Common usage patterns
