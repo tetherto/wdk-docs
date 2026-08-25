@@ -70,7 +70,7 @@ const VERBATIM_OUTPUT_LANGUAGES = new Set([
 const SHELL_LANGUAGES = new Set(['bash', 'sh', 'shell', 'zsh'])
 const YAML_LANGUAGES = new Set(['yaml', 'yml'])
 
-const DISPLAY_NAME = /(?:UPPERCASE_SEGMENTS|accessibilityHint|accessibility-hint|accessibilityLabel|accessibility-label|alt|ariaLabel|aria-label|caption|children|copy|description|displayName|heading|headings|label|labels|message|name|placeholder|text|title|toast|toastMessage)$/i
+const DISPLAY_NAME = /(?:UPPERCASE_SEGMENTS|accessibilityHint|accessibility-hint|accessibilityLabel|accessibility-label|alt|ariaLabel|aria-label|caption|children|copy|description|displayName|heading|headings|label|labels|message|name|note|placeholder|text|title|toast|toastMessage)$/i
 const DISPLAY_SUFFIX = /(?:Alt|Caption|Copy|Description|Heading|Hint|Labels?|Message|Name|Placeholder|Text|Title|Toast|ToastMessage)$/
 const MACHINE_NAME = /(?:asset|fromToken|paymasterToken|symbol|toToken|token|tokenSymbol)$/i
 const MACHINE_SUFFIX = /(?:Asset|Symbol|Token)$/
@@ -78,22 +78,108 @@ const HUMAN_CALL = /(?:^|\.)(?:alert|debug|error|info|log|print|printf|warn|(?:s
 const MACHINE_CALL = /(?:^|\.)(?:findToken|getToken|hasToken|registerAsset|registerToken|resolveToken|setSymbol)$/i
 const DISPLAY_CALL = /(?:^|\.)(?:folder|page)$/i
 
-const ASCII_CANDIDATE = /\b[uU][sS][dD][tT](?:\d+)?[sS]?\b/g
-const GLYPH_CANDIDATE = /(?<![A-Za-z0-9_])[uU][sS][dD]₮(?:\d+)?[sS]?(?![A-Za-z0-9_])/g
-const STROKE_LOOKALIKE = /(?<![A-Za-z0-9_])[uU][sS][dD][Ŧŧ](?:\d+)?[sS]?(?![A-Za-z0-9_])/g
+const TOKEN_SYMBOL_POLICIES = [
+  {
+    root: 'USD',
+    candidateRoots: ['USD'],
+    reader: ['USD₮', 'USD₮0'],
+    codeHuman: ['USDt', 'USDt0'],
+    machine: ['USDT', 'USDT0', 'usdt', 'usdt0']
+  },
+  {
+    root: 'USA',
+    candidateRoots: ['USA'],
+    reader: ['USA₮'],
+    codeHuman: ['USAt'],
+    machine: ['USAT', 'usat']
+  },
+  {
+    root: 'XAU',
+    candidateRoots: ['XAU'],
+    reader: ['XAU₮', 'XAU₮0'],
+    codeHuman: ['XAUt', 'XAUt0'],
+    machine: ['XAUT', 'XAUT0', 'xaut', 'xaut0', 'XAUt']
+  },
+  {
+    root: 'MXN',
+    candidateRoots: ['MXN'],
+    reader: ['MXN₮'],
+    codeHuman: ['MXNt'],
+    machine: ['MXNT', 'mxnt']
+  },
+  {
+    root: 'CNH',
+    candidateRoots: ['CNH', 'CHN'],
+    reader: ['CNH₮', 'CNH₮0'],
+    codeHuman: ['CNHt', 'CNHt0'],
+    machine: ['CNHT', 'CNHT0', 'cnht', 'cnht0']
+  },
+  {
+    root: 'EUR',
+    candidateRoots: ['EUR'],
+    reader: ['EUR₮'],
+    codeHuman: ['EURt'],
+    machine: ['EURT', 'eurt']
+  }
+]
+// Alloy (aUSD₮) stays outside this gate until WDK approves a human-code fallback.
+
+const TOKEN_POLICY_BY_CANDIDATE_ROOT = new Map(TOKEN_SYMBOL_POLICIES.flatMap((policy) => (
+  policy.candidateRoots.map((root) => [root, policy])
+)))
+const TOKEN_ROOT_SOURCE = `(?:${[...TOKEN_POLICY_BY_CANDIDATE_ROOT.keys()].join('|')})`
+const TOKEN_CANDIDATE_SOURCE = `${TOKEN_ROOT_SOURCE}(?:[tT]|₮|[Ŧŧ])(?:\\d+)?[sS]?`
+const MACHINE_VALUES = [...new Set(TOKEN_SYMBOL_POLICIES.flatMap((policy) => policy.machine))]
+const MACHINE_VALUE_SOURCE = MACHINE_VALUES
+  .sort((left, right) => right.length - left.length)
+  .map(escapeRegExp)
+  .join('|')
+const UPPERCASE_MACHINE_VALUE_SOURCE = MACHINE_VALUES
+  .filter((value) => value === value.toUpperCase())
+  .sort((left, right) => right.length - left.length)
+  .map(escapeRegExp)
+  .join('|')
+const LOWERCASE_MACHINE_VALUE_SOURCE = MACHINE_VALUES
+  .filter((value) => value === value.toLowerCase())
+  .sort((left, right) => right.length - left.length)
+  .map(escapeRegExp)
+  .join('|')
+
+const ASCII_CANDIDATE = new RegExp(`\\b${TOKEN_ROOT_SOURCE}[tT](?:\\d+)?[sS]?\\b`, 'gi')
+const GLYPH_CANDIDATE = new RegExp(`(?<![A-Za-z0-9_])${TOKEN_ROOT_SOURCE}₮(?:\\d+)?[sS]?(?![A-Za-z0-9_])`, 'gi')
+const STROKE_LOOKALIKE = new RegExp(`(?<![A-Za-z0-9_])${TOKEN_ROOT_SOURCE}[Ŧŧ](?:\\d+)?[sS]?(?![A-Za-z0-9_])`, 'gi')
+const MISPLACED_SUFFIX_CANDIDATE = new RegExp(`\\b${TOKEN_ROOT_SOURCE}\\d+(?:[tT]|₮|[Ŧŧ])[sS]?(?![A-Za-z0-9_])`, 'gi')
 const AMBIGUOUS_USDC_STYLE = /\b[uU][sS][dD]c\b/g
 const URL_OR_MAILTO = /\b(?:https?:\/\/|mailto:)[^\s<>'")]+/g
 const BARE_PATH = /(?:^|[\s(=:,;])\/(?!\/)[^\s<>'")]+/g
 const SCOPED_PACKAGE = /@[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+/g
 const HOSTNAME = /\b(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,}\b/g
-const NAMESPACED_MACHINE = /\b[a-z][a-z0-9-]*:USDT0?\b/g
-const COMPOSITE_MACHINE = /\b[A-Z][A-Z0-9]*(?:\/[A-Z][A-Z0-9]*)+\b/g
-const QUOTED_MACHINE = /(['"])(?:USDT0?|usdt0?|[a-z][a-z0-9-]*:USDT0?|[A-Z][A-Z0-9]*(?:\/[A-Z][A-Z0-9]*)+)\1/g
-const KNOWN_SOURCE_NAME = /\b(?:x402-usdt0|wdk-[a-z0-9.-]*usdt0?[a-z0-9.-]*|(?:[a-z0-9.]+-)+usdt0?(?:-[a-z0-9.]+)+)\b/g
+const NAMESPACED_MACHINE = new RegExp(`\\b[a-z][a-z0-9-]*:(?:${MACHINE_VALUE_SOURCE})\\b`, 'g')
+const COMPOSITE_MACHINE = /\b[A-Za-z0-9]+(?:\/[A-Za-z0-9]+)+\b/g
+const QUOTED_MACHINE = new RegExp(`(['"])(?:${MACHINE_VALUE_SOURCE}|[a-z][a-z0-9-]*:(?:${MACHINE_VALUE_SOURCE}))\\1`, 'g')
+const KNOWN_SOURCE_NAME_SOURCE = `(?:x402-usdt0|wdk-[a-z0-9.-]*(?:${LOWERCASE_MACHINE_VALUE_SOURCE})[a-z0-9.-]*|(?:[a-z0-9.]+-)+(?:${LOWERCASE_MACHINE_VALUE_SOURCE})(?:-[a-z0-9.]+)+)`
+const KNOWN_SOURCE_NAME = new RegExp(`\\b${KNOWN_SOURCE_NAME_SOURCE}\\b`, 'g')
+const EXACT_MACHINE_VALUE = new RegExp(`^(?:${MACHINE_VALUE_SOURCE})$`)
+const EXACT_NAMESPACED_MACHINE_VALUE = new RegExp(`^[a-z][a-z0-9-]*:(?:${MACHINE_VALUE_SOURCE})$`)
+const EXACT_QUOTED_MACHINE_VALUE = new RegExp(`^(['"])(?:${MACHINE_VALUE_SOURCE}|[a-z][a-z0-9-]*:(?:${MACHINE_VALUE_SOURCE}))\\1$`)
+const EXACT_KNOWN_SOURCE_NAME = new RegExp(`^${KNOWN_SOURCE_NAME_SOURCE}$`)
+const EXACT_HYPHENATED_SOURCE_NAME = new RegExp(`^(?=[a-z0-9.-]*-)[a-z0-9.-]*(?:${LOWERCASE_MACHINE_VALUE_SOURCE})[a-z0-9.-]*$`)
+const UPPERCASE_MACHINE_IDENTIFIER = new RegExp(`^[A-Z][A-Z0-9_]*(?:${UPPERCASE_MACHINE_VALUE_SOURCE})[A-Z0-9_]*$`)
 const SHELL_VARIABLE = /\$(?:\{[A-Za-z_][A-Za-z0-9_]*\}|[A-Za-z_][A-Za-z0-9_]*)/g
+const GENERIC_MACHINE_NAME_SOURCE = '(?:asset|fromToken|paymasterToken|symbol|toToken|token|tokenSymbol)'
+const GENERIC_MACHINE_CONTAINER_SOURCE = '[A-Za-z0-9₮Ŧŧ:/._-]+'
+const GENERIC_MACHINE_VALUE = new RegExp(`(?:^\\s*(?:-\\s*)?(?:export\\s+)?|[{,(]\\s*)["']?${GENERIC_MACHINE_NAME_SOURCE}["']?\\s*[:=]\\s*(?:(["'])(${GENERIC_MACHINE_CONTAINER_SOURCE})\\1|(${GENERIC_MACHINE_CONTAINER_SOURCE}))`, 'gi')
+const GENERIC_MULTILINE_MACHINE_VALUE = new RegExp(`(?:^[ \\t]*(?:-[ \\t]*)?(?:export[ \\t]+)?|[{,(][ \\t]*)["']?${GENERIC_MACHINE_NAME_SOURCE}["']?[ \\t]*[:=][ \\t]*(?:#[^\\r\\n]*)?\\r?\\n[ \\t]+(["']?)(${GENERIC_MACHINE_CONTAINER_SOURCE})\\1[ \\t]*,?[ \\t]*(?:#[^\\r\\n]*)?$`, 'gim')
+const YAML_MACHINE_BLOCK_HEADER = new RegExp(`^(\\s*)(?:-\\s*)?["']?${GENERIC_MACHINE_NAME_SOURCE}["']?\\s*:\\s*[|>][-+0-9]*\\s*(?:#.*)?$`, 'i')
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
 
 function addIssue(issues, file, line, value, reason) {
-  issues.push({ file, line, value, reason })
+  const issue = { file, line, value, reason }
+  issues.push(issue)
+  return issue
 }
 
 function findRanges(value, expression, capture = 0) {
@@ -127,6 +213,36 @@ function isInsideRange(index, ranges) {
   return ranges.some(([start, end]) => index >= start && index < end)
 }
 
+function policyForValue(value) {
+  return TOKEN_POLICY_BY_CANDIDATE_ROOT.get(value.slice(0, 3).toUpperCase())
+}
+
+function acceptsValue(policy, target, value) {
+  if (!policy) return false
+  if (target === 'code-human') return policy.codeHuman.includes(value)
+  if (target === 'machine') return policy.machine.includes(value)
+  if (target === 'prose' || target === 'source-human') return policy.reader.includes(value)
+  return false
+}
+
+function exactMachineTokenRangesInside(value, containerExpression) {
+  const ranges = []
+  containerExpression.lastIndex = 0
+
+  for (const container of value.matchAll(containerExpression)) {
+    ASCII_CANDIDATE.lastIndex = 0
+    for (const candidate of container[0].matchAll(ASCII_CANDIDATE)) {
+      const policy = policyForValue(candidate[0])
+      if (acceptsValue(policy, 'machine', candidate[0])) {
+        const start = container.index + candidate.index
+        ranges.push([start, start + candidate[0].length])
+      }
+    }
+  }
+
+  return ranges
+}
+
 function preservedRanges(value, { quotedMachine = false } = {}) {
   const ranges = [
     ...findRanges(value, URL_OR_MAILTO),
@@ -134,7 +250,7 @@ function preservedRanges(value, { quotedMachine = false } = {}) {
     ...findRanges(value, SCOPED_PACKAGE),
     ...findRanges(value, HOSTNAME),
     ...findRanges(value, NAMESPACED_MACHINE),
-    ...findRanges(value, COMPOSITE_MACHINE),
+    ...exactMachineTokenRangesInside(value, COMPOSITE_MACHINE),
     ...findRanges(value, KNOWN_SOURCE_NAME),
     ...findRanges(value, SHELL_VARIABLE)
   ]
@@ -146,45 +262,42 @@ function preservedRanges(value, { quotedMachine = false } = {}) {
 function collectStyleMatches(value, target, ignoredRanges = []) {
   const matches = []
 
-  function collect(expression, accepted) {
+  function collect(expression) {
     expression.lastIndex = 0
     for (const match of value.matchAll(expression)) {
-      if (!isInsideRange(match.index, ignoredRanges) && !accepted.has(match[0])) {
-        matches.push({ index: match.index, value: match[0] })
+      const policy = policyForValue(match[0])
+      if (
+        !isInsideRange(match.index, ignoredRanges)
+        && !acceptsValue(policy, target, match[0])
+      ) {
+        matches.push({ index: match.index, value: match[0], policy })
       }
     }
   }
 
-  const acceptedAscii = target === 'code-human'
-    ? new Set(['USDt', 'USDt0'])
-    : target === 'machine'
-      ? new Set(['USDT', 'USDT0', 'usdt', 'usdt0'])
-      : new Set()
-  const acceptedGlyph = target === 'prose' || target === 'source-human'
-    ? new Set(['USD₮', 'USD₮0'])
-    : new Set()
-
-  collect(ASCII_CANDIDATE, acceptedAscii)
-  collect(GLYPH_CANDIDATE, acceptedGlyph)
-  collect(STROKE_LOOKALIKE, new Set())
-  collect(AMBIGUOUS_USDC_STYLE, new Set())
+  collect(ASCII_CANDIDATE)
+  collect(GLYPH_CANDIDATE)
+  collect(STROKE_LOOKALIKE)
+  collect(MISPLACED_SUFFIX_CANDIDATE)
+  collect(AMBIGUOUS_USDC_STYLE)
 
   const unique = new Map()
   for (const match of matches) unique.set(`${match.index}:${match.value}`, match)
   return [...unique.values()].sort((left, right) => left.index - right.index)
 }
 
-function reasonForTarget(target, value) {
+function reasonForTarget(target, value, policy) {
   if (/^[uU][sS][dD]c$/.test(value)) {
     return 'USDC is a distinct token. Use USDC for Circle or the context-appropriate Tether spelling.'
   }
+  if (!policy) return 'Use the context-appropriate canonical token spelling.'
   if (target === 'code-human') {
-    return 'Use USDt or USDt0 for human-readable text inside code snippets.'
+    return `Use ${policy.codeHuman.join(' or ')} for human-readable text inside code snippets.`
   }
   if (target === 'machine') {
-    return 'Preserve the exact machine symbol, such as USDT, USDT0, usdt, or usdt0.'
+    return `Preserve an exact ${policy.root} machine value, such as ${policy.machine.join(', ')}.`
   }
-  return 'Use USD₮ or USD₮0 in reader-facing text.'
+  return `Use ${policy.reader.join(' or ')} in reader-facing text.`
 }
 
 function scanStyledText(issues, value, {
@@ -192,7 +305,9 @@ function scanStyledText(issues, value, {
   line,
   target,
   preserve = true,
-  quotedMachine = false
+  quotedMachine = false,
+  sourceOffset = 0,
+  onIssue
 }) {
   const ignoredRanges = preserve
     ? preservedRanges(value, { quotedMachine })
@@ -200,7 +315,14 @@ function scanStyledText(issues, value, {
 
   for (const match of collectStyleMatches(value, target, ignoredRanges)) {
     const matchLine = line + value.slice(0, match.index).split('\n').length - 1
-    addIssue(issues, file, matchLine, match.value, reasonForTarget(target, match.value))
+    const issue = addIssue(
+      issues,
+      file,
+      matchLine,
+      match.value,
+      reasonForTarget(target, match.value, match.policy)
+    )
+    onIssue?.(issue, sourceOffset + match.index)
   }
 }
 
@@ -340,12 +462,13 @@ function isLiteralNode(node) {
 function isSourceDefinedValue(value) {
   if (/^(?:https?:\/\/|mailto:|\/)/.test(value)) return true
   if (/^@[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(value)) return true
-  if (/^(?:x402-usdt0|wdk-[a-z0-9.-]*usdt0?[a-z0-9.-]*)$/.test(value)) return true
-  if (/^(?=[a-z0-9.-]*-)[a-z0-9.-]*usdt0?[a-z0-9.-]*$/.test(value)) return true
+  if (EXACT_KNOWN_SOURCE_NAME.test(value)) return true
+  if (EXACT_HYPHENATED_SOURCE_NAME.test(value)) return true
   if (value === 'sky.money USDT Savings V2') return true
-  if (/^(['"])(?:USDT0?|usdt0?|[a-z][a-z0-9-]*:USDT0?|[A-Z][A-Z0-9]*(?:\/[A-Z][A-Z0-9]*)+)\1$/.test(value)) return true
-  if (/^(?:USDT0?|usdt0?|[a-z][a-z0-9-]*:USDT0?|[A-Z][A-Z0-9]*(?:\/[A-Z][A-Z0-9]*)+)$/.test(value)) return true
-  if (/^[A-Z][A-Z0-9_]*USDT0?[A-Z0-9_]*$/.test(value)) return true
+  if (EXACT_QUOTED_MACHINE_VALUE.test(value)) return true
+  if (EXACT_MACHINE_VALUE.test(value)) return true
+  if (EXACT_NAMESPACED_MACHINE_VALUE.test(value)) return true
+  if (UPPERCASE_MACHINE_IDENTIFIER.test(value)) return true
   return false
 }
 
@@ -452,7 +575,7 @@ function scanLiteral(issues, node, {
     }
 
     if (isSourceDefinedValue(part.value)) continue
-    if (mode === 'source' && /^(?:USDT0?|usdt0?)$/.test(part.value)) continue
+    if (mode === 'source' && EXACT_MACHINE_VALUE.test(part.value)) continue
 
     scanStyledText(issues, part.value, {
       file,
@@ -548,30 +671,80 @@ function isHashCommentStart(line, cursor, language) {
   return true
 }
 
-function scanHashComments(issues, code, { file, language, baseLine }) {
+function hashCommentIndex(line, language) {
+  let quote = null
+  let escaped = false
+
+  for (let cursor = 0; cursor < line.length; cursor += 1) {
+    const character = line[cursor]
+    if (quote) {
+      if (escaped) escaped = false
+      else if (character === '\\') escaped = true
+      else if (character === quote) quote = null
+    } else if (character === '"' || character === "'") quote = character
+    else if (character === '#' && isHashCommentStart(line, cursor, language)) return cursor
+  }
+
+  return -1
+}
+
+function scanHashComments(issues, code, {
+  file,
+  language,
+  baseLine,
+  ignoredLines = new Set(),
+  onIssue
+}) {
   const lines = code.split(/\r?\n/)
+  const lineStarts = [0]
+  for (const match of code.matchAll(/\n/g)) lineStarts.push(match.index + 1)
   for (let index = 0; index < lines.length; index += 1) {
+    if (ignoredLines.has(index)) continue
     const line = lines[index]
-    let quote = null
-    let escaped = false
-    for (let cursor = 0; cursor < line.length; cursor += 1) {
-      const character = line[cursor]
-      if (quote) {
-        if (escaped) escaped = false
-        else if (character === '\\') escaped = true
-        else if (character === quote) quote = null
-      } else if (character === '"' || character === "'") quote = character
-      else if (character === '#' && isHashCommentStart(line, cursor, language)) {
-        scanStyledText(issues, line.slice(cursor + 1), {
-          file,
-          line: baseLine + index,
-          target: 'code-human',
-          quotedMachine: true
-        })
-        break
+    const cursor = hashCommentIndex(line, language)
+    if (cursor === -1) continue
+    scanStyledText(issues, line.slice(cursor + 1), {
+      file,
+      line: baseLine + index,
+      target: 'code-human',
+      quotedMachine: true,
+      sourceOffset: lineStarts[index] + cursor + 1,
+      onIssue
+    })
+  }
+}
+
+function outputValueForLine(line, language) {
+  const commandStarts = [0]
+  let quote = null
+  let escaped = false
+
+  for (let cursor = 0; cursor < line.length; cursor += 1) {
+    const character = line[cursor]
+    if (escaped) {
+      escaped = false
+    } else if (character === '\\' && quote !== "'") {
+      escaped = true
+    } else if (quote) {
+      if (character === quote) quote = null
+    } else if (character === '"' || character === "'") {
+      quote = character
+    } else if (character === ';' || (SHELL_LANGUAGES.has(language) && /[|&]/.test(character))) {
+      commandStarts.push(cursor + 1)
+    }
+  }
+
+  for (const start of commandStarts) {
+    const match = line.slice(start).match(/^\s*(?:echo|printf|print)\b[\s(]*(.*)$/i)
+    const value = match?.[1]
+    if (value) {
+      return {
+        value,
+        start: start + match[0].lastIndexOf(value)
       }
     }
   }
+  return null
 }
 
 function scanGenericCode(issues, code, {
@@ -579,12 +752,29 @@ function scanGenericCode(issues, code, {
   language,
   baseLine
 }) {
+  const genericIssues = []
+  const issueOffsets = new WeakMap()
+  const trackIssueOffset = (issue, offset) => issueOffsets.set(issue, offset)
   const lines = code.split(/\r?\n/)
+  const lineStarts = [0]
+  for (const match of code.matchAll(/\n/g)) lineStarts.push(match.index + 1)
+  const blockScalarLines = new Set()
   const handledStringLines = new Set()
+  const machineValueRanges = []
+  const multilineMachineValues = []
+
+  GENERIC_MULTILINE_MACHINE_VALUE.lastIndex = 0
+  for (const match of code.matchAll(GENERIC_MULTILINE_MACHINE_VALUE)) {
+    const machineValue = match[2]
+    const start = match.index + match[0].lastIndexOf(machineValue)
+    const lineIndex = code.slice(0, start).split('\n').length - 1
+    machineValueRanges.push([start, start + machineValue.length])
+    multilineMachineValues.push({ lineIndex, machineValue, sourceOffset: start })
+  }
 
   if (YAML_LANGUAGES.has(language)) {
     for (let index = 0; index < lines.length; index += 1) {
-      const header = lines[index].match(/^(\s*)(?:-\s*)?(?:accessibilityHint|accessibilityLabel|alt|ariaLabel|caption|children|description|heading|label|message|placeholder|text|title)\s*:\s*[|>][-+0-9]*\s*(?:#.*)?$/i)
+      const header = lines[index].match(/^(\s*)(?:-\s*)?["']?(?:accessibilityHint|accessibilityLabel|alt|ariaLabel|caption|children|description|heading|label|message|note|placeholder|text|title)["']?\s*:\s*[|>][-+0-9]*\s*(?:#.*)?$/i)
       if (!header) continue
       const headerIndent = header[1].length
 
@@ -593,45 +783,112 @@ function scanGenericCode(issues, code, {
         if (!valueLine.trim()) continue
         const valueIndent = valueLine.match(/^\s*/)[0].length
         if (valueIndent <= headerIndent) break
-        scanStyledText(issues, valueLine, {
+        blockScalarLines.add(cursor)
+        scanStyledText(genericIssues, valueLine, {
           file,
           line: baseLine + cursor,
-          target: 'code-human'
+          target: 'code-human',
+          sourceOffset: lineStarts[cursor],
+          onIssue: trackIssueOffset
+        })
+      }
+    }
+
+    for (let index = 0; index < lines.length; index += 1) {
+      const header = lines[index].match(YAML_MACHINE_BLOCK_HEADER)
+      if (!header) continue
+      const headerIndent = header[1].length
+
+      for (let cursor = index + 1; cursor < lines.length; cursor += 1) {
+        const valueLine = lines[cursor]
+        if (!valueLine.trim()) continue
+        const valueIndent = valueLine.match(/^\s*/)[0].length
+        if (valueIndent <= headerIndent) break
+        blockScalarLines.add(cursor)
+        machineValueRanges.push([
+          lineStarts[cursor],
+          lineStarts[cursor] + valueLine.length
+        ])
+        multilineMachineValues.push({
+          lineIndex: cursor,
+          machineValue: valueLine,
+          sourceOffset: lineStarts[cursor]
         })
       }
     }
   }
 
-  for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index]
-    const lineNumber = baseLine + index
-    const displayValue = line.match(/(?:^\s*(?:-\s*)?(?:export\s+)?|[{,(]\s*)["']?(?:accessibilityHint|accessibilityLabel|alt|ariaLabel|caption|children|description|heading|label|message|placeholder|text|title)["']?\s*[:=]\s*(.*)$/i)?.[1]
-    const outputValue = line.match(/^\s*(?:echo|printf|print)\b[\s(]*(.*)$/i)?.[1]
-    const machineValue = line.match(/(?:^\s*(?:-\s*)?(?:export\s+)?|[{,(]\s*)["']?(?:asset|fromToken|paymasterToken|symbol|toToken|token|tokenSymbol)["']?\s*[:=]\s*(.*)$/i)?.[1]
+  for (const { lineIndex, machineValue, sourceOffset } of multilineMachineValues.sort((left, right) => (
+    left.lineIndex - right.lineIndex
+  ))) {
+    scanStyledText(genericIssues, machineValue, {
+      file,
+      line: baseLine + lineIndex,
+      target: 'machine',
+      preserve: false,
+      sourceOffset,
+      onIssue: trackIssueOffset
+    })
+  }
 
-    if (displayValue && !/^\s*(?:'''|""")\s*$/.test(displayValue)) {
-      handledStringLines.add(index)
-      scanStyledText(issues, displayValue, {
-        file,
-        line: lineNumber,
-        target: 'code-human'
-      })
-    }
-    if (outputValue) {
-      handledStringLines.add(index)
-      scanStyledText(issues, outputValue, {
-        file,
-        line: lineNumber,
-        target: 'code-human'
-      })
-    }
-    if (machineValue) {
-      handledStringLines.add(index)
-      scanStyledText(issues, machineValue, {
+  for (let index = 0; index < lines.length; index += 1) {
+    if (blockScalarLines.has(index)) continue
+    const originalLine = lines[index]
+    const lineNumber = baseLine + index
+    const commentStart = HASH_COMMENT_LANGUAGES.has(language)
+      ? hashCommentIndex(originalLine, language)
+      : -1
+    const line = commentStart === -1 ? originalLine : originalLine.slice(0, commentStart)
+    const machineRanges = []
+
+    GENERIC_MACHINE_VALUE.lastIndex = 0
+    for (const match of line.matchAll(GENERIC_MACHINE_VALUE)) {
+      const machineValue = match[2] ?? match[3]
+      const start = match.index + match[0].lastIndexOf(machineValue)
+      machineRanges.push([start, start + machineValue.length])
+      machineValueRanges.push([
+        lineStarts[index] + start,
+        lineStarts[index] + start + machineValue.length
+      ])
+      scanStyledText(genericIssues, machineValue, {
         file,
         line: lineNumber,
         target: 'machine',
-        preserve: false
+        preserve: false,
+        sourceOffset: lineStarts[index] + start,
+        onIssue: trackIssueOffset
+      })
+    }
+
+    const masked = line.split('')
+    for (const [start, end] of mergeRanges(machineRanges)) {
+      for (let cursor = start; cursor < end; cursor += 1) masked[cursor] = ' '
+    }
+    const visibleLine = masked.join('')
+    const displayMatch = visibleLine.match(/(?:^\s*(?:-\s*)?(?:export\s+)?|[{,(]\s*)["']?(?:accessibilityHint|accessibilityLabel|alt|ariaLabel|caption|children|description|heading|label|message|note|placeholder|text|title)["']?\s*[:=]\s*(.*)$/i)
+    const displayValue = displayMatch?.[1]
+    const displayStart = displayValue
+      ? displayMatch.index + displayMatch[0].lastIndexOf(displayValue)
+      : -1
+    const output = outputValueForLine(visibleLine, language)
+
+    if (output) {
+      handledStringLines.add(index)
+      scanStyledText(genericIssues, output.value, {
+        file,
+        line: lineNumber,
+        target: 'code-human',
+        sourceOffset: lineStarts[index] + output.start,
+        onIssue: trackIssueOffset
+      })
+    } else if (displayValue && !/^\s*(?:'''|""")\s*$/.test(displayValue)) {
+      handledStringLines.add(index)
+      scanStyledText(genericIssues, displayValue, {
+        file,
+        line: lineNumber,
+        target: 'code-human',
+        sourceOffset: lineStarts[index] + displayStart,
+        onIssue: trackIssueOffset
       })
     }
   }
@@ -641,18 +898,42 @@ function scanGenericCode(issues, code, {
     const value = match[1] ?? match[2] ?? match[4] ?? ''
     if (!value || isSourceDefinedValue(value)) continue
     const lineOffset = code.slice(0, match.index).split('\n').length - 1
-    if (handledStringLines.has(lineOffset)) continue
+    if (handledStringLines.has(lineOffset) || blockScalarLines.has(lineOffset)) continue
+    const valueStart = match.index + (match[1] !== undefined || match[2] !== undefined ? 3 : 1)
+    const maskedValue = value.split('')
+    for (const [start, end] of machineValueRanges) {
+      const overlapStart = Math.max(start, valueStart)
+      const overlapEnd = Math.min(end, valueStart + value.length)
+      for (let cursor = overlapStart; cursor < overlapEnd; cursor += 1) {
+        maskedValue[cursor - valueStart] = ' '
+      }
+    }
     const line = baseLine + lineOffset
-    scanStyledText(issues, value, {
+    scanStyledText(genericIssues, maskedValue.join(''), {
       file,
       line,
-      target: 'code-human'
+      target: 'code-human',
+      sourceOffset: valueStart,
+      onIssue: trackIssueOffset
     })
   }
 
   if (HASH_COMMENT_LANGUAGES.has(language)) {
-    scanHashComments(issues, code, { file, language, baseLine })
+    scanHashComments(genericIssues, code, {
+      file,
+      language,
+      baseLine,
+      ignoredLines: blockScalarLines,
+      onIssue: trackIssueOffset
+    })
   }
+
+  genericIssues.sort((left, right) => {
+    if (left.line !== right.line) return left.line - right.line
+    return (issueOffsets.get(left) ?? Number.MAX_SAFE_INTEGER)
+      - (issueOffsets.get(right) ?? Number.MAX_SAFE_INTEGER)
+  })
+  issues.push(...genericIssues)
 }
 
 function scanCodeBlock(issues, node, file) {
@@ -749,15 +1030,15 @@ function scanMdxTextExpression(issues, node, file) {
 
 const INLINE_MACHINE_PATTERNS = [
   {
-    expression: /\b(?:findToken|getToken|hasToken|registerAsset|registerToken|resolveToken|setSymbol)\s*\(\s*(["'])([uU][sS][dD](?:[tT]|₮|[Ŧŧ])(?:\d+)?[sS]?)\1/g,
+    expression: new RegExp(`\\b(?:findToken|getToken|hasToken|registerAsset|registerToken|resolveToken|setSymbol)\\s*\\(\\s*(["'])(${TOKEN_CANDIDATE_SOURCE})\\1`, 'gi'),
     capture: 2
   },
   {
-    expression: /\b(?:asset|fromToken|paymasterToken|symbol|toToken|token|tokenSymbol)\s*[:=]\s*(["']?)([uU][sS][dD](?:[tT]|₮|[Ŧŧ])(?:\d+)?[sS]?)\1/g,
+    expression: new RegExp(`\\b(?:asset|fromToken|paymasterToken|symbol|toToken|token|tokenSymbol)\\s*[:=]\\s*(["']?)(${TOKEN_CANDIDATE_SOURCE})\\1`, 'gi'),
     capture: 2
   },
   {
-    expression: /--(?:asset|from-token|paymaster-token|symbol|to-token|token|token-symbol)(?:=|\s+)(["']?)([uU][sS][dD](?:[tT]|₮|[Ŧŧ])(?:\d+)?[sS]?)\1/g,
+    expression: new RegExp(`--(?:asset|from-token|paymaster-token|symbol|to-token|token|token-symbol)(?:=|\\s+)(["']?)(${TOKEN_CANDIDATE_SOURCE})\\1`, 'gi'),
     capture: 2
   }
 ]
@@ -891,6 +1172,19 @@ export async function validateTokenSymbolFiles({
   generatedMarkdownFiles = DEFAULT_GENERATED_MARKDOWN_FILES,
   buildOutputDirectories = []
 } = {}) {
+  let rootStats
+  try {
+    rootStats = await fs.promises.stat(root)
+  } catch (error) {
+    if (error && typeof error === 'object' && error.code === 'ENOENT') {
+      throw new Error(`Token-symbol root does not exist: ${root}`)
+    }
+    throw error
+  }
+  if (!rootStats.isDirectory()) {
+    throw new Error(`Token-symbol root is not a directory: ${root}`)
+  }
+
   const files = new Set()
 
   for (const relativeDirectory of sourceDirectories) {
@@ -931,9 +1225,35 @@ export async function validateTokenSymbolFiles({
   return { files: sortedFiles, issues }
 }
 
-async function run() {
-  const includeBuildOutput = process.argv.includes('--include-build-output')
+function parseArguments(arguments_) {
+  let includeBuildOutput = false
+  let root = process.cwd()
+
+  for (let index = 0; index < arguments_.length; index += 1) {
+    const argument = arguments_[index]
+    if (argument === '--include-build-output') {
+      includeBuildOutput = true
+    } else if (argument === '--root') {
+      const value = arguments_[index + 1]
+      if (!value || value.startsWith('--')) throw new Error('--root requires a directory path.')
+      root = path.resolve(value)
+      index += 1
+    } else if (argument.startsWith('--root=')) {
+      const value = argument.slice('--root='.length)
+      if (!value) throw new Error('--root requires a directory path.')
+      root = path.resolve(value)
+    } else {
+      throw new Error(`Unknown argument: ${argument}`)
+    }
+  }
+
+  return { includeBuildOutput, root }
+}
+
+async function run(arguments_ = process.argv.slice(2)) {
+  const { includeBuildOutput, root } = parseArguments(arguments_)
   const { files, issues } = await validateTokenSymbolFiles({
+    root,
     buildOutputDirectories: includeBuildOutput ? DEFAULT_BUILD_OUTPUT_DIRECTORIES : []
   })
 
