@@ -345,7 +345,7 @@ export const customTree: Node[] = [
     configuration('/sdk/swap-modules/swap-velora-evm/configuration'),
     apiReference('/sdk/swap-modules/swap-velora-evm/api-reference'),
   ]),
-  folder('USDT0 bridge', '/sdk/bridge-modules/bridge-usdt0-evm', 'Waypoints', [
+  folder('USD₮0 bridge', '/sdk/bridge-modules/bridge-usdt0-evm', 'Waypoints', [
     usage('/sdk/bridge-modules/bridge-usdt0-evm/usage'),
     guides([
       page('Get Started', '/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started'),

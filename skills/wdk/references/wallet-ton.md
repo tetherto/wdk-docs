@@ -41,7 +41,7 @@ import WalletManagerTonGasless from '@tetherto/wdk-wallet-ton-gasless'
 - **Wallet contract**: V5R1
 - **Fee unit**: nanotons (1 TON = 1,000,000,000 nanotons)
 - **Token standard**: Jettons via `transfer()`
-- **USDT Jetton master**: `EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs`
+- **USD₮ Jetton master**: `EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs`
 - `sendTransaction` accepts a `body` field for arbitrary contract calls — treat with caution.
 - `signTransaction()` returns a signed transfer-body `Cell` from `@ton/core`, not a complete external-message BOC.
 - `quoteSendTransaction()` and `sendTransaction()` accept that `Cell`; send passes the exact body to the matching `WalletContractV5R1.send()` call and rechecks `transactionMaxFee`.

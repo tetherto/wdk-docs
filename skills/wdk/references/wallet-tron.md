@@ -40,8 +40,8 @@ import WalletManagerTronGasfree from '@tetherto/wdk-wallet-tron-gasfree'
 - **Key type**: secp256k1
 - **Fee unit**: sun (1 TRX = 1,000,000 sun)
 - **Token standard**: TRC20 via `transfer()`
-- **USDT address**: `TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t`
-- ⚠️ TRON USDT has the same non-standard `transfer()` as Ethereum USDT (no bool return)
+- **USD₮ address**: `TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t`
+- ⚠️ TRON USD₮ has the same non-standard `transfer()` as Ethereum USD₮ (no bool return)
 - **Fee model**: Energy + Bandwidth costs (not simple gas like EVM)
 - `signTransaction()` returns the exported `TronSignedTransaction` type.
 - `quoteSendTransaction()` and `sendTransaction()` accept that signed object; send forwards it unchanged to `tronWeb.trx.sendRawTransaction()` and rechecks `transactionMaxFee`.
