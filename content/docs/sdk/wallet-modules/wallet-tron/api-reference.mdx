@@ -169,14 +169,16 @@ const account = new WalletAccountTron(seedPhrase, "0'/0/0", {
 | `getAddress()` | Returns the account's Tron address | `Promise\<string\>` | - |
 | `sign(message)` | Signs a message using the account's private key | `Promise\<string\>` | - |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` | - |
-| `signTransaction(tx)` | Signs a Tron transaction without broadcasting it | `Promise\<TronSignedTransaction\>` | If no provider, fee exceeds `transactionMaxFee`, or an unsigned pre-built transaction owner does not match the account |
-| `sendTransaction(tx)` | Builds and sends a transaction, or broadcasts a signed transaction | `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` | If no provider or fee exceeds `transactionMaxFee`; unsigned pre-built inputs also require a matching owner |
+| `signTransaction(tx)` | Signs a Tron transaction without broadcasting it | `Promise\<TronSignedTransaction\>` | If no provider, fee exceeds `transactionMaxFee`, or an unsigned pre-built transaction has inconsistent raw data or the wrong owner |
+| `sendTransaction(tx)` | Builds and sends a transaction, or broadcasts a signed transaction | `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` | If no provider or fee exceeds `transactionMaxFee`; unsigned pre-built inputs also require consistent raw data and a matching owner |
 | `quoteSendTransaction(tx)` | Estimates the fee for an unsigned or signed Tron transaction | `Promise\<{fee: bigint, activationFee: bigint}\>` | If no provider |
 | `transfer(options)` | Transfers TRC20 tokens to another address | `Promise\<{hash: string, fee: bigint}\>` | If no provider or fee exceeds `transferMaxFee` |
 | `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: bigint}\>` | If no provider |
 | `getBalance()` | Returns the native TRX balance (in sun) | `Promise\<bigint\>` | If no provider |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise\<bigint\>` | If no provider |
-| `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise\<TronTransactionReceipt \| null\>` | If no provider |
+| `getTransaction(hash)` | Returns a normalized receipt for a TRON transaction ID | `Promise\<TransactionReceipt & TronTransactionDetails\>` | If no provider, invalid ID, or transaction not found |
+| `waitForTransaction(hash, options?)` | Waits for the requested TRON finality | `Promise\<TransactionReceipt & TronTransactionDetails\>` | If no provider, invalid ID, or timeout |
+| `getTransactionReceipt(hash)` | Deprecated: returns the native TRON receipt | `Promise\<TronTransactionReceipt \| null\>` | If no provider |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise\<WalletAccountReadOnlyTron\>` | - |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` | - |
 
@@ -232,6 +234,7 @@ Signs a Tron transaction and returns the signed transaction object. This method 
 **Throws:**
 - Error if no TronWeb provider is configured
 - Error if fee exceeds `transactionMaxFee` when configured
+- Error if an unsigned pre-built transaction's `txID` does not match its serialized raw data
 - Error if a pre-built transaction is owned by a different account
 
 **Example:**
@@ -250,13 +253,14 @@ Sends a Tron transaction and returns the result with hash, fee, and activation f
 **Parameters:**
 - `tx` (TronTransaction | TronSignedTransaction): Native TRX transfer, smart-contract call descriptor, pre-built unsigned TronWeb transaction, or signed transaction
 
-When `tx` has a signature, WDK quotes it again, enforces `transactionMaxFee`, and forwards the exact object to `tronWeb.trx.sendRawTransaction()`. It does not rebuild the transaction, refresh its reference block or expiration, re-sign it, or repeat the unsigned pre-built owner check.
+When `tx` has a signature, WDK quotes it again, enforces `transactionMaxFee`, and forwards the exact object to `tronWeb.trx.sendRawTransaction()`. It does not rebuild the transaction, refresh its reference block or expiration, re-sign it, or repeat the unsigned pre-built raw-data and owner checks.
 
 **Returns:** `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` - Transaction hash, total fee in sun, and the portion used for account activation
 
 **Throws:** 
 - Error if no TronWeb provider is configured
 - Error if fee exceeds `transactionMaxFee` when configured
+- Error if an unsigned pre-built transaction's `txID` does not match its serialized raw data
 - Error if an unsigned pre-built transaction is owned by a different account
 
 **Example:**
@@ -308,9 +312,9 @@ Transfers TRC20 tokens using smart contract call.
 **Example:**
 ```javascript
 const result = await account.transfer({
-  token: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', // USDT TRC20
+  token: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', // USDt TRC20
   recipient: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
-  amount: 1000000 // 1 USDT (6 decimals)
+  amount: 1000000 // 1 USDt (6 decimals)
 })
 console.log('Transfer hash:', result.hash)
 console.log('Transfer fee:', result.fee, 'sun')
@@ -362,11 +366,11 @@ Returns the balance of a specific TRC20 token.
 **Example:**
 ```javascript
 const tokenBalance = await account.getTokenBalance('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')
-console.log('USDT balance:', tokenBalance) // In 6 decimal units
+console.log('USDt balance:', tokenBalance) // In 6 decimal units
 ```
 
 ##### `getTransactionReceipt(hash)`
-Returns a transaction's receipt if it has been processed.
+Returns a native TRON receipt if it has been processed. This method is deprecated; use [`getTransaction()`](#gettransactionhash) for normalized finality and read its `receipt` field when you need the native object.
 
 **Parameters:**
 - `hash` (string): The transaction hash
@@ -379,6 +383,29 @@ Returns a transaction's receipt if it has been processed.
 ```javascript
 const receipt = await account.getTransactionReceipt('0x...')
 console.log('Transaction confirmed:', receipt.success)
+```
+
+##### `getTransaction(hash)`
+Returns a normalized receipt for a trimmed 64-hex-character TRON transaction ID; an optional `0x` prefix is accepted. A provider result without `blockNumber` is `pending`. A block-included transaction is `confirmed`, becoming `final` when its block is at or below the latest solidified block.
+
+Included receipts expose `success`, `block`, `fee`, `confirmations`, and the native `receipt`. If the solidified block cannot be resolved, the transaction remains `confirmed` and `confirmations` is `null`. `success` is false when the top-level result is `FAILED` or the contract result is not `SUCCESS`.
+
+**Throws:** `ValueError` for an invalid transaction ID and `NoSuchElementError` when the provider returns no transaction.
+
+```javascript
+const transaction = await account.getTransaction(result.hash)
+console.log(transaction.finality)     // 'pending', 'confirmed', or 'final'
+console.log(transaction.confirmations) // number or null
+```
+
+##### `waitForTransaction(hash, options?)`
+Polls until the requested finality is reached or the wait times out. Defaults are `target: 'confirmed'`, `interval: 4000`, `timeout: 90000`, and `maxPollErrors: 3`. An unknown transaction is retried until timeout; this implementation does not currently emit `dropped` receipts.
+
+```javascript
+const transaction = await account.waitForTransaction(result.hash, {
+  target: 'final',
+  timeout: 180000
+})
 ```
 
 ##### `toReadOnlyAccount()`
@@ -454,7 +481,9 @@ const readOnlyAccount = new WalletAccountReadOnlyTron('TLyqzVGLV1srkB7dToTAEqgDS
 | `quoteSendTransaction(tx)` | Estimates the fee for a Tron transaction | `Promise\<{fee: bigint, activationFee: bigint}\>` | If no provider |
 | `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: bigint}\>` | If no provider |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` | - |
-| `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise\<TronTransactionReceipt \| null\>` | If no provider |
+| `getTransaction(hash)` | Returns a normalized receipt for a TRON transaction ID | `Promise\<TransactionReceipt & TronTransactionDetails\>` | If no provider, invalid ID, or transaction not found |
+| `waitForTransaction(hash, options?)` | Waits for the requested TRON finality | `Promise\<TransactionReceipt & TronTransactionDetails\>` | If no provider, invalid ID, or timeout |
+| `getTransactionReceipt(hash)` | Deprecated: returns the native TRON receipt | `Promise\<TronTransactionReceipt \| null\>` | If no provider |
 
 ##### `getBalance()`
 Returns the native TRX balance.
@@ -482,7 +511,7 @@ Returns the balance of a specific TRC20 token.
 **Example:**
 ```javascript
 const tokenBalance = await readOnlyAccount.getTokenBalance('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')
-console.log('USDT balance:', tokenBalance)
+console.log('USDt balance:', tokenBalance)
 ```
 
 ##### `quoteSendTransaction(tx)`
@@ -522,7 +551,7 @@ console.log('Signature valid:', isValid)
 ```
 
 ##### `getTransactionReceipt(hash)`
-Returns a transaction's receipt if it has been processed.
+Returns a native TRON receipt if it has been processed. This method is deprecated in favor of `getTransaction()`. The read-only account's `getTransaction()` and `waitForTransaction()` use the same ID validation, pending/confirmed/final, 90-second default timeout, confirmation depth, and native `receipt` semantics documented above.
 
 **Parameters:**
 - `hash` (string): The transaction hash

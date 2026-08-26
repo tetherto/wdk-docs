@@ -372,14 +372,14 @@ Returns a random BIP-39 seed phrase. Supports both 12-word (128-bit entropy) and
 ```javascript title="Generate Random Seed"
 // Generate 12-word seed phrase (default)
 const seedPhrase12 = WDK.getRandomSeedPhrase()
-console.log('Generated 12-word seed:', seedPhrase12)
-// Output: "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+await presentSeedPhraseForSecureBackup(seedPhrase12)
 
 // Generate 24-word seed phrase (higher security)
 const seedPhrase24 = WDK.getRandomSeedPhrase(24)
-console.log('Generated 24-word seed:', seedPhrase24)
-// Output: "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon art"
+await presentSeedPhraseForSecureBackup(seedPhrase24)
 ```
+
+`presentSeedPhraseForSecureBackup()` represents an application-owned, non-logging backup flow. Never send a generated seed phrase to console output, telemetry, crash reports, or a remote service.
 
 ##### `isValidSeed(seed)`
 Checks if a seed phrase or seed bytes value is valid.
@@ -433,9 +433,9 @@ const signedTransaction = await account.signTransaction({
   to: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
   value: 1000000000000000n
 })
-
-console.log('Signed transaction:', signedTransaction)
 ```
+
+Treat `signedTransaction` as a sensitive, potentially broadcastable authorization payload. Do not log it; pass it only to the reviewed storage, transport, or submission path that needs it.
 
 ##### `getTransaction(hash)`
 
@@ -448,10 +448,10 @@ Returns one normalized lookup for a transaction. The common receipt includes `ha
 
 **Throws:** `NoSuchElementError` when the transaction has not been found. Invalid identifiers and provider failures use the corresponding base-wallet error classes.
 
-`getTransactionReceipt()` is marked deprecated in the base package. Migrate after the concrete wallet module documents a `getTransaction()` implementation, and use that module's extended `TransactionReceipt` when you also need native receipt fields.
+`getTransactionReceipt()` is marked deprecated in the base package. Current first-party Bitcoin, standard EVM, ERC-4337, EIP-7702, Solana, Solana Gasless, Spark, TON, TON Gasless, TRON, TRON Gasfree, and Aptos wallet releases implement `getTransaction()` and inherit `waitForTransaction()`. Use the concrete module's extended `TransactionReceipt` when you also need chain-native receipt fields.
 
 <Callout type="info">
-`getTransaction()` is a base-wallet contract, not a guarantee that current chain modules implement it. The base implementation throws `NotImplementedError`; for example, the currently released `@tetherto/wdk-wallet-evm` v1.0.0-beta.16 still exposes its legacy receipt lookup instead. Check the concrete module's release documentation before using either normalized transaction-tracking method.
+The base class still throws `NotImplementedError` when a third-party or older wallet module does not override `getTransaction()`. Confirm support in the concrete module before relying on normalized transaction tracking.
 </Callout>
 
 ##### `waitForTransaction(hash, options?)`
@@ -1098,7 +1098,7 @@ interface ISdaProtocol {
 }
 ```
 
-`SdaProtocol` requires provider subclasses to implement `getSupportedRoutes()` and `createDepositAddress()`. The remaining methods are optional in the base class and throw `UnsupportedOperationError` unless the provider implements them. Output assets are provider- and route-specific; USDT is a common example, not a base-interface guarantee.
+`SdaProtocol` requires provider subclasses to implement `getSupportedRoutes()` and `createDepositAddress()`. The remaining methods are optional in the base class and throw `UnsupportedOperationError` unless the provider implements them. Output assets are provider- and route-specific; USD₮ is a common example, not a base-interface guarantee.
 
 ### Swidge Protocol
 

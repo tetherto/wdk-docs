@@ -125,14 +125,15 @@ Integrate WDK into your existing React Native or Expo project using `@tetherto/w
 ### Step 1: Install
 
 ```bash
-npm install @tetherto/wdk-react-native-core react-native-bare-kit
+npm install @tetherto/wdk-react-native-core@1.0.0-beta.18 react-native-bare-kit
+npx expo install expo-crypto
 ```
 
 <Callout type="warn">
-The `v1.0.0-beta.16` npm artifact includes the React Native source entry at `src/index.ts`, but it does not include the declared default JavaScript or type declaration files under `dist/`. Use a React Native resolver that selects the package's `react-native` condition. Resolvers that select `default` or `types` target files that are not present in this artifact.
+The `v1.0.0-beta.18` npm artifact includes the React Native source entry at `src/index.ts`, but it does not include the declared default JavaScript or type declaration files under `dist/`. TypeScript must use `moduleResolution: "bundler"` with `customConditions: ["react-native"]`, and Metro must retain the `react-native` export condition. Resolvers that select `default` or `types` target files that are not present in this artifact.
 </Callout>
 
-Starting in beta.14, `react-native-bare-kit` is a peer dependency of React Native Core and must be installed explicitly.
+Beta.18 requires `expo-crypto` `>=55.0.0 <57.0.0` and `react-native-bare-kit` `>=0.14.5` as peer dependencies. Confirm that the version selected by `npx expo install` is both inside the package range and compatible with the app's Expo SDK. If the SDK requires a version outside that range, do not force the peer installation; use compatible releases instead. Bare React Native apps must [install and configure Expo modules](https://docs.expo.dev/bare/installing-expo-modules/) before installing `expo-crypto`.
 
 ### Step 2: Configure Android minSdkVersion
 
@@ -231,7 +232,7 @@ export const wdkConfigs: WdkConfigs = {
         paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
         transferMaxFee: 5000000,
         paymasterToken: {
-          address: '0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0', // USDT on Sepolia
+          address: '0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0', // USDt on Sepolia
         },
       },
     },
@@ -255,9 +256,9 @@ Add to your `app/_layout.tsx`:
 ```tsx
 // app/_layout.tsx
 import { WdkAppProvider } from '@tetherto/wdk-react-native-core'
-import { bundle } from './.wdk'
+import { bundle } from '../.wdk'
 import { Stack } from 'expo-router'
-import { wdkConfigs } from '../config/wdk'
+import { wdkConfigs } from '../src/config/wdk'
 
 export default function RootLayout() {
   return (
@@ -297,21 +298,38 @@ export default function App() {
 
 Now you can use the WDK hooks in any component inside `WdkAppProvider`:
 
+React Native Core beta.17 and later never guesses which wallet to unlock. Keep the selected wallet ID in your authenticated application state and pass it explicitly. `LOCKED.walletId` is only an optional hint while a specific wallet is already being targeted.
+
 ```tsx
 import { useWdkApp, useWalletManager, useAccount } from '@tetherto/wdk-react-native-core'
 
-function WalletScreen() {
+function WalletScreen({
+  walletId,
+  authenticate,
+}: {
+  walletId: string
+  authenticate: () => Promise<boolean>
+}) {
   const { state } = useWdkApp()
   const { createWallet, unlock } = useWalletManager()
   const { address } = useAccount({ network: 'ethereum', accountIndex: 0 })
 
+  const create = async () => {
+    if (await authenticate()) await createWallet(walletId)
+  }
+
+  const open = async () => {
+    if (await authenticate()) await unlock(state.walletId ?? walletId)
+  }
+
   switch (state.status) {
     case 'INITIALIZING':
+    case 'REINITIALIZING':
       return <Text>Loading...</Text>
     case 'NO_WALLET':
-      return <Button title="Create Wallet" onPress={() => createWallet('my-wallet')} />
+      return <Button title="Create Wallet" onPress={create} />
     case 'LOCKED':
-      return <Button title="Unlock" onPress={() => unlock()} />
+      return <Button title="Unlock" onPress={open} />
     case 'READY':
       return <Text>Address: {address}</Text>
     case 'ERROR':
@@ -368,19 +386,19 @@ const usdt = new BaseAsset({
   name: 'Tether USD',
   decimals: 6,
   isNative: false,
-  address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  address: '0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0', // USDt on Sepolia
 })
 
-function SendScreen() {
+function SendScreen({ recipient }: { recipient: string }) {
   const { address, send } = useAccount({ network: 'ethereum', accountIndex: 0 })
 
   const handleSend = async () => {
     if (!address) return
 
     const result = await send({
-      to: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+      to: recipient,
       asset: usdt,
-      amount: '1000000', // 1 USDT (6 decimals)
+      amount: '1000000', // 1 USDt (6 decimals)
     })
 
     if (result.success) {
@@ -390,20 +408,30 @@ function SendScreen() {
     }
   }
 
-  return <Button title="Send 1 USDT" onPress={handleSend} />
+  return <Button title="Send 1 USDt" onPress={handleSend} />
 }
 ```
 
+This token configuration is for Sepolia. Validate the recipient for the configured chain and require the user to review the recipient, asset, amount, and fee before calling `send()`.
+
 ### Lock the Wallet
 
-Use `lock()` to clear sensitive data from memory:
+Use `lock()` to clear the active wallet identity and local address state:
 
 ```tsx
-const { lock } = useWalletManager()
+function LockButton() {
+  const { lock } = useWalletManager()
 
-// Lock wallet and clear all sensitive data
-lock()
+  const handleLock = async () => {
+    // This does not stop or prove zeroization of the running worklet.
+    await lock()
+  }
+
+  return <Button title="Lock" onPress={handleLock} />
+}
 ```
+
+`lock()` resets local lifecycle flags but leaves the Bare worklet and IPC connection running. Treat it as an application access boundary, not evidence that seeds or keys were erased from worklet memory.
 
 ### Refresh Balances
 
@@ -458,9 +486,11 @@ Ensure your component is rendered inside `WdkAppProvider`. The provider must be 
 </WdkAppProvider>
 ```
 
-**Biometric prompt not appearing on simulator**
+**No biometric prompt appears before a wallet operation**
 
-Biometric authentication is required by default. On iOS Simulator, enable Face ID via `Features \> Face ID \> Enrolled`. On Android Emulator, set up a fingerprint in `Settings \> Security`. To disable biometrics during development, pass `requireBiometrics={false}` to `WdkAppProvider`.
+React Native Core beta.18 does not enforce biometrics and does not accept a `requireBiometrics` provider prop. Run your app's biometric, passcode, or other authentication flow before calling `createWallet()`, `restoreWallet()`, `unlock()`, `switchWallet()`, or key-access methods.
+
+For background locking, revoke the app's authenticated UI state synchronously, then call and catch `lock()`. The lifecycle mutex rejects instead of queuing when another guarded operation is running, so track a pending lock and retry it after the in-flight guarded operation settles. Require authentication again on foreground and do not treat the SDK session as locked until a retry succeeds.
 
 **Metro cache issues**
 
@@ -472,23 +502,26 @@ npx expo start --clear
 npx react-native start --reset-cache
 ```
 
-**TypeScript errors about missing types**
+**TypeScript cannot resolve React Native Core**
 
-Some native dependencies may lack type definitions. Add to your `tsconfig.json`:
+Beta.18's published `default` and `types` export targets are absent. Configure TypeScript to select the included React Native source export:
 
 ```json
 {
   "compilerOptions": {
-    "skipLibCheck": true
+    "moduleResolution": "bundler",
+    "customConditions": ["react-native"]
   }
 }
 ```
+
+Use a current React Native or Expo Metro configuration that honors package exports and retains the `react-native` condition. `skipLibCheck` can suppress checks inside declarations after resolution; it cannot repair the missing beta.18 export targets.
 
 ### Complete Setup Checklist
 
 **For Expo projects:**
 
-- Install `@tetherto/wdk-react-native-core` and its `react-native-bare-kit` peer dependency
+- Install `@tetherto/wdk-react-native-core` plus its `expo-crypto` and `react-native-bare-kit` peer dependencies
 - Configure Android minSdkVersion to 29 in `app.json`
 - Set up bundle (custom or pre-built)
 - Create `WdkConfigs` configuration
@@ -498,7 +531,8 @@ Some native dependencies may lack type definitions. Add to your `tsconfig.json`:
 
 **For bare React Native:**
 
-- Install `@tetherto/wdk-react-native-core` and its `react-native-bare-kit` peer dependency
+- Install `@tetherto/wdk-react-native-core` plus its `expo-crypto` and `react-native-bare-kit` peer dependencies
+- Install and configure Expo modules before adding `expo-crypto`
 - Set minSdkVersion to 29 in `android/build.gradle`
 - Set up bundle (custom or pre-built)
 - Create `WdkConfigs` configuration

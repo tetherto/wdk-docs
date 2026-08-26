@@ -24,7 +24,7 @@ try {
 Required paymaster fields are `paymasterUrl`, `paymasterAddress`, and `paymasterToken`.
 
 <Callout type="info">
-In `1.0.0-beta.2`, the published TypeScript declarations name `ConfigurationError`, but the JavaScript root entrypoint does not re-export the runtime class. Check `error.name` or `error.message` instead of importing the class from the package root.
+In `1.0.0-beta.4`, the published TypeScript declarations name `ConfigurationError`, but the JavaScript root entrypoint does not re-export the runtime class. Check `error.name` or `error.message` instead of importing the class from the package root.
 </Callout>
 
 ## Handle Transaction Fee Caps
@@ -100,9 +100,31 @@ try {
 
 Use ordered `paymasterUrl` arrays and `retries` when you need endpoint failover.
 
+## Handle Invalid Payment Instructions
+
+For unsigned flows, the module does not trust the paymaster's separate `payment_amount` metadata. It derives the configured paymaster's associated token account, requires the returned instruction to be an SPL Token `Transfer` or `TransferChecked` to that account, and decodes the fee from the instruction before applying fee caps or requesting signatures. Keep trusted paymaster fees at or below `Number.MAX_SAFE_INTEGER`; beta.4 converts that decoded amount through `Number` before the owned account compares it.
+
+```javascript title="Reject an invalid paymaster payment"
+try {
+  await account.signTransaction(transaction)
+} catch (error) {
+  if (error.message === 'Invalid payment instruction from paymaster.') {
+    console.error('The paymaster returned an unexpected token payment instruction')
+  } else {
+    throw error
+  }
+}
+```
+
+Do not retry by accepting the returned destination or by disabling fee caps. Verify `paymasterAddress`, `paymasterToken`, and the endpoint before trying again.
+
+## Handle Transaction Status Errors
+
+`getTransaction()` throws `ValueError` for an invalid base58 signature and `NoSuchElementError` for a well-formed signature absent from transaction history. `waitForTransaction()` throws `TimeoutError` when the target is not reached. A confirmed or final receipt can still have `success: false`, and the Solana implementation does not currently classify a transaction as `dropped`.
+
 ## Handle Signed-Transaction Broadcasts
 
-`sendTransaction(signedTransaction)` bypasses the paymaster and sends the existing signed wire transaction directly through the configured Solana RPC. It still decodes the embedded payment fee and enforces `transactionMaxFee` before broadcast. Keep the original signed payload so that a timeout can be investigated without creating a second transaction:
+`sendTransaction(signedTransaction)` bypasses the paymaster and sends the existing signed wire transaction directly through the configured Solana RPC. For the exact output from this account's `signTransaction()`, it finds the embedded payment fee and enforces `transactionMaxFee` before broadcast. Keep the original signed payload so that a timeout can be investigated without creating a second transaction:
 
 ```javascript title="Broadcast one signed transaction safely"
 const signedTransaction = await account.signTransaction(transactionMessage, {
@@ -123,6 +145,10 @@ try {
 
 <Callout type="warn">
 The package does not refresh a signed transaction's blockhash, durable nonce, payment instruction, or signatures. Broadcast it while its existing transaction lifetime is valid, and avoid concurrent retries of the same signed payload. If the RPC outcome is uncertain, determine whether the existing transaction reached the network before deciding whether to rebuild and re-sign.
+</Callout>
+
+<Callout type="error">
+Do not pass an arbitrary signed payload to this method. Beta.4 returns `0n` when it cannot find a matching payment instruction, so a cap can pass before the payload is sent to RPC. Independently validate every intended instruction, the payment token and destination, fee payer, lifetime, and signatures if the payload did not come directly from the same account and configuration.
 </Callout>
 
 ## Dispose of Sensitive Data

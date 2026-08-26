@@ -53,7 +53,7 @@ import WalletManagerEvm7702Gasless from '@tetherto/wdk-wallet-evm-7702-gasless'
 - **Fee model**: EIP-1559 (baseFee + priorityFee)
 - **Fee rates**: `normal` = base×1.1, `fast` = base×2.0
 - **Supports**: ERC20 via `transfer()`, arbitrary calldata via `sendTransaction({data})`
-- ⚠️ **Ethereum USDT** uses non-standard ERC20 (no bool return on `transfer()`). Use SafeERC20 in custom contracts.
+- ⚠️ **Ethereum USD₮** uses non-standard ERC20 (no bool return on `transfer()`). Use SafeERC20 in custom contracts.
 - ⚠️ `sendTransaction` accepts a `data` field (arbitrary hex calldata) — can execute **any** contract function. Extra scrutiny for non-empty `data`.
 - ⚠️ In wallet-evm `1.0.0-beta.16`, do not pass a serialized signed transaction to `sendTransaction()`. The declared string input is not broadcast as supplied and can produce a different populated transaction. Use a separate relay or provider for signed raw bytes.
 - `quoteSendTransaction(serializedTx)` is non-broadcasting, but calculates with current provider fee data rather than reproducing the serialized fee settings.
@@ -71,7 +71,7 @@ const wallet = new WalletManagerEvm(seedPhrase, {
 ## Key Details — wallet-evm-erc-4337
 
 - **Gasless** via UserOperations + Paymaster
-- Fees paid in **paymaster token** (e.g., USDT) instead of native ETH
+- Fees paid in **paymaster token** (e.g., USD₮) instead of native ETH
 - `getPaymasterTokenBalance()` for fee balance
 - **Batch transactions**: `sendTransaction([tx1, tx2])` — multiple operations in one call
 - `signTransaction(tx)` signs one `UserOperationV7`; the signed result can be quoted and submitted through `sendTransaction()`.
@@ -90,7 +90,7 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
   paymasterUrl: 'https://api.candide.dev/public/v3/42161',
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
   paymasterToken: {
-    address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9' // USDT on Arbitrum
+    address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9' // USDt on Arbitrum
   },
   transferMaxFee: 5000000       // in paymaster token units
 })

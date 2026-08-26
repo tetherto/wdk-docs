@@ -136,7 +136,9 @@ In v1.0.0-beta.9 the constructor was made public. The static factory method `Wal
 | `getBalance()` | Returns the native SOL balance (in lamports) | `Promise<bigint>` |
 | `getTokenBalance(tokenMint)` | Returns the balance of a specific SPL token | `Promise<bigint>` |
 | `getTokenBalances(tokenAddresses)` | Returns balances for multiple SPL tokens | `Promise<Record<string, bigint>>` |
-| `getTransactionReceipt(hash)` | Gets the transaction receipt for a given transaction hash | `Promise<SolanaTransactionReceipt \| null>` |
+| `getTransactionReceipt(hash)` | Gets a native transaction object; deprecated in favor of `getTransaction()` | `Promise<SolanaTransactionReceipt \| null>` |
+| `getTransaction(hash)` | Returns normalized finality for a Solana signature | `Promise<TransactionReceipt & SolanaTransactionDetails>` |
+| `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final` finality | `Promise<TransactionReceipt & SolanaTransactionDetails>` |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlySolana>` |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
 
@@ -259,9 +261,9 @@ Transfers SPL tokens to another address.
 **Example:**
 ```javascript
 const result = await account.transfer({
-  token: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT mint
+  token: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDt mint
   recipient: '11111111111111111111111111111112',
-  amount: 1000000 // 1 USDT (6 decimals)
+  amount: 1000000 // 1 USDt (6 decimals)
 })
 console.log('Transfer hash:', result.hash)
 console.log('Transfer fee:', result.fee, 'lamports')
@@ -306,7 +308,7 @@ Returns the balance of a specific SPL token.
 **Example:**
 ```javascript
 const tokenBalance = await account.getTokenBalance('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB')
-console.log('USDT balance:', tokenBalance)
+console.log('USDt balance:', tokenBalance)
 ```
 
 ##### `getTokenBalances(tokenAddresses)`
@@ -327,7 +329,7 @@ console.log('Token balances:', tokenBalances)
 ```
 
 ##### `getTransactionReceipt(hash)`
-Gets the transaction receipt for a given transaction hash.
+Gets the native transaction object for a signature. This method is deprecated; use `getTransaction()` and read its `transaction` field when native data is needed.
 
 **Parameters:**
 - `hash` (string): Transaction hash
@@ -339,6 +341,38 @@ Gets the transaction receipt for a given transaction hash.
 const receipt = await account.getTransactionReceipt('5....')
 console.log('Transaction receipt:', receipt)
 ```
+
+##### `getTransaction(hash)`
+
+Returns normalized status for a valid base58 Solana transaction signature. The method queries signature status with transaction-history search enabled.
+
+```javascript
+const receipt = await account.getTransaction(signature)
+
+console.log(receipt.finality)      // pending, confirmed, or final
+console.log(receipt.success)       // Set after confirmed or finalized processing
+console.log(receipt.confirmations) // Number, or null after finalization
+console.log(receipt.transaction)   // Native transaction object, or null
+```
+
+Solana `processed` maps to `pending`, `confirmed` maps to `confirmed`, and `finalized` maps to `final`. The `block` field is the slot and `fee` is the native transaction fee when available. A settled transaction reports `success: false` when its status contains an error. The native `transaction` can still be `null` when the RPC does not return it at the configured commitment.
+
+An invalid signature throws `ValueError`; a well-formed signature absent from status history throws `NoSuchElementError`.
+
+##### `waitForTransaction(hash, options?)`
+
+Polls until the target is reached. The default target is `confirmed`, interval is four seconds, and timeout is 60 seconds.
+
+```javascript
+const receipt = await account.waitForTransaction(signature, {
+  target: 'final',
+  timeout: 60000,
+  interval: 4000,
+  maxPollErrors: 3
+})
+```
+
+The Solana implementation does not currently classify an evicted or never-landed signature as `dropped`; that case eventually throws `TimeoutError`. Reaching a finality target does not guarantee execution success, so inspect `success`.
 
 ##### `toReadOnlyAccount()`
 Returns a read-only copy of the account. After the first call, subsequent calls reuse the same read-only account instance.
@@ -393,6 +427,9 @@ new WalletAccountReadOnlySolana(publicKey, config)
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `quoteSendTransaction(tx)` | Estimates the fee for a transaction | `Promise<{fee: bigint}>` |
 | `quoteTransfer(options)` | Estimates the fee for an SPL token transfer | `Promise<{fee: bigint}>` |
+| `getTransactionReceipt(hash)` | Gets a native transaction object; deprecated in favor of `getTransaction()` | `Promise<SolanaTransactionReceipt \| null>` |
+| `getTransaction(hash)` | Returns normalized finality for a Solana signature | `Promise<TransactionReceipt & SolanaTransactionDetails>` |
+| `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final` finality | `Promise<TransactionReceipt & SolanaTransactionDetails>` |
 
 ##### `getAddress()`
 Returns the account's Solana address.
@@ -427,7 +464,7 @@ Returns the balance of a specific SPL token.
 **Example:**
 ```javascript
 const tokenBalance = await readOnlyAccount.getTokenBalance('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB')
-console.log('USDT balance:', tokenBalance)
+console.log('USDt balance:', tokenBalance)
 ```
 
 ##### `getTokenBalances(tokenAddresses)`
@@ -501,7 +538,40 @@ const quote = await readOnlyAccount.quoteTransfer({
 console.log('Transfer fee estimate:', quote.fee, 'lamports')
 ```
 
+##### `getTransaction(hash)` and `waitForTransaction(hash, options?)`
+
+Read-only accounts expose the same normalized signature-status methods as owned accounts. `getTransaction()` maps `processed`, `confirmed`, and `finalized` to `pending`, `confirmed`, and `final`; `waitForTransaction()` defaults to a four-second interval and 60-second timeout. Inspect `success` after settlement. `getTransactionReceipt()` remains available for the native object but is deprecated.
+
 ## Types
+
+### Normalized Transaction Types
+
+```typescript
+type Finality = 'pending' | 'confirmed' | 'final' | 'dropped'
+type WaitForTransactionTarget = 'confirmed' | 'final'
+
+interface TransactionReceipt {
+  hash: string
+  finality: Finality
+  success?: boolean
+  block?: number
+  fee?: bigint
+}
+
+interface WaitForTransactionOptions {
+  target?: WaitForTransactionTarget // Default: 'confirmed'
+  timeout?: number                  // Milliseconds; Solana default: 60,000
+  interval?: number                 // Milliseconds; default: 4,000
+  maxPollErrors?: number            // Default: 3
+}
+
+interface SolanaTransactionDetails {
+  confirmations: number | null
+  transaction: SolanaTransactionReceipt | null
+}
+```
+
+The package re-exports these types. `dropped` is part of the shared union, but the Solana implementation does not currently emit it.
 
 ### SolanaWalletConfig
 

@@ -20,7 +20,7 @@ const UPPERCASE_SEGMENTS = new Map([
   ['ton', 'TON'],
   ['tron', 'TRON'],
   ['ui', 'UI'],
-  ['usdt0', 'USDT0'],
+  ['usdt0', 'USD₮0'],
   ['wdk', 'WDK'],
   ['x402', 'x402'],
 ]);

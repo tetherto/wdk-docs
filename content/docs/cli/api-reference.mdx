@@ -1,12 +1,12 @@
 ---
 title: API Reference
-description: Complete WDK CLI beta.2 command and option reference
+description: Complete WDK CLI beta.3 command and option reference
 docType: reference
 schemaType: TechArticle
 icon: ListChecks
 ---
 
-This page documents the 32 leaf commands in `@tetherto/wdk-cli@1.0.0-beta.2`. Run `wdk COMMAND --help` to inspect the installed command surface.
+This page documents the 37 leaf commands in `@tetherto/wdk-cli@1.0.0-beta.3`. Run `wdk COMMAND --help` to inspect the installed command surface.
 
 ## Root Options
 
@@ -102,7 +102,7 @@ Locks one wallet or every wallet.
 | `--name <name>` | One selector required | Wallet to lock |
 | `--all` | One selector required | Lock every wallet |
 
-If both selectors are present, beta.2 applies `--all`.
+If both selectors are present, beta.3 applies `--all`.
 
 ### `wdk wallet default`
 
@@ -146,7 +146,7 @@ Derives an address for one network or for a network group.
 | `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
 | `--testnet` | No | Off | With `--all`, select testnets instead of mainnets |
 
-When both `--network` and `--all` are supplied, beta.2 runs the single-network path. In aggregate mode, networks that fail address derivation are omitted from the result.
+When both `--network` and `--all` are supplied, beta.3 runs the single-network path. In aggregate mode, networks that fail address derivation are omitted from the result.
 
 ### `wdk get balance`
 
@@ -177,7 +177,7 @@ Reads token-transfer history through the configured indexer.
 | `--wallet <name>` | No | Default wallet | Wallet selection |
 | `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
 
-When `--token` is omitted, beta.2 batches the network's supported token requests, ignores failed batch items, merges successful transfers by timestamp, and then applies `--limit`.
+When `--token` is omitted, beta.3 batches the network's supported token requests, ignores failed batch items, merges successful transfers by timestamp, and then applies `--limit`.
 
 ## Send Command
 
@@ -208,7 +208,7 @@ wdk send \
 
 Without `--dry-run`, the command broadcasts immediately. There is no additional interactive confirmation.
 
-Before either fee estimation or broadcast, beta.2 validates the recipient against the selected built-in network's CAIP-2 address rules. A format or mainnet/testnet mismatch fails with `INVALID_ADDRESS` after the unlocked-wallet check but before the estimate or send request. A custom network without a supported CAIP-2 validator is left to its wallet module for final validation.
+Before either fee estimation or broadcast, beta.3 validates the recipient against the selected built-in network's CAIP-2 address rules. A format or mainnet/testnet mismatch fails with `INVALID_ADDRESS` after the unlocked-wallet check but before the estimate or send request. A custom network without a supported CAIP-2 validator is left to its wallet module for final validation.
 
 ## Fiat Ramp Commands
 
@@ -240,7 +240,7 @@ Before either fee estimation or broadcast, beta.2 validates the recipient agains
 | `--wallet <name>` | No | Default wallet | Wallet selection |
 | `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
 
-For each command, provide exactly one of `--fiat-amount` and `--crypto-amount`. Beta.2 supports only the `moonpay` module.
+For each command, provide exactly one of `--fiat-amount` and `--crypto-amount`. Beta.3 supports only the `moonpay` module.
 
 ## Configuration Commands
 
@@ -287,7 +287,7 @@ Prints the resolved `config.json` path. This command has no command-specific opt
 | `--testnet` | Off | Show only testnets |
 | `--mainnet` | Off | Show only mainnets |
 
-With neither option, the command shows every registered network. If both are provided, beta.2 applies `--testnet`.
+With neither option, the command shows every registered network. If both are provided, beta.3 applies `--testnet`.
 
 ### `wdk network create <data>`
 
@@ -338,6 +338,73 @@ See [Manage Tokens](/cli/guides/manage-tokens) for the token schema and built-in
 | `--token <token>` | Yes | Custom token ticker to delete |
 
 The command removes only a custom entry. If that entry overrides a built-in token, the built-in entry becomes effective again.
+
+## Wallet Module Method Commands
+
+These commands expose chain-specific methods declared in the built-in module catalog. They do not discover arbitrary methods from a custom package at runtime.
+
+### `wdk method list`
+
+Provide exactly one selector:
+
+| Option | Required | Description |
+| --- | --- | --- |
+| `--network <network>` | One of the two selectors | List the methods declared for the registered network's wallet module |
+| `--all` | One of the two selectors | List every built-in module that declares methods |
+
+Each method entry reports its name, `read` or `write` kind, and required and optional parameters. Listing methods does not require an unlocked wallet.
+
+### `wdk method call`
+
+| Option | Required | Default or behavior |
+| --- | --- | --- |
+| `--network <network>` | Yes | Registered network whose wallet module declares the method |
+| `--name <name>` | Yes | Exact method name returned by `wdk method list` |
+| `--wallet <name>` | No | Default wallet |
+| `--index <n>` | No | Configured `defaultIndex`, then `0` |
+| `--PARAM <value>` | As declared | One flag for each declared method parameter; camel-case names become kebab-case flags |
+
+Scalar parameters accept `string`, `number`, `boolean`, or non-negative decimal `bigint` values. Pass scalar arrays as comma-separated values and structured parameters as JSON strings. Represent every `bigint` inside JSON as a quoted decimal string. Unknown, missing, or malformed parameters fail before the method reaches the daemon. Returned `bigint` values are serialized as decimal strings.
+
+<Callout type="error">
+A method marked `write` can move funds or mutate state. `wdk method call` has no dry-run or confirmation prompt. Review the exact method and arguments, then call it only after explicit approval while the intended wallet is unlocked.
+</Callout>
+
+See [Call Module Methods](/cli/guides/call-module-methods) for examples and the write-method safety boundary.
+
+## Module Package Commands
+
+### `wdk module list`
+
+Lists built-in and custom modules with their pinned version, installed version, status, and source. This command has no command-specific options and does not require an unlocked wallet.
+
+### `wdk module add`
+
+| Option | Required | Description |
+| --- | --- | --- |
+| `--name <package>` | Yes | npm package name, optionally followed by a version string; use a reviewed literal version, not a tag or range |
+
+When no version is supplied, the command resolves npm's current version once and stores that exact pin. When a suffix is supplied, beta.3 stores it verbatim and does not require exact semver, so tags and ranges are accepted even though they are unsafe for artifact pinning. It refuses to replace a built-in module or change an existing custom value in place. Remove the custom module before selecting a different literal version.
+
+The command verifies the default wallet passphrase when a wallet exists, locks a running daemon, runs `npm install --no-save PACKAGE@VERSION` inside the CLI installation, and records the pin under `customModules` in `config.json`. A package registered but missing or mismatched on disk can be repaired by running `module add` again without changing its pin.
+
+### `wdk module remove`
+
+| Option | Required | Description |
+| --- | --- | --- |
+| `--name <package>` | Yes | Previously added custom package name |
+
+The command verifies the default wallet passphrase when a wallet exists, locks a running daemon, removes the custom-module record, and runs `npm uninstall --no-save`. Built-in modules cannot be removed.
+
+<Callout type="warn">
+Adding or removing a package runs npm and can execute package lifecycle scripts; an added default export can later run inside the wallet daemon with access to unlocked accounts. Audit the exact package and version before adding it. Beta.3 only warns about a configured/installed version mismatch and still loads the installed package. Delete custom networks that depend on a module before removing that module.
+</Callout>
+
+<Callout type="error">
+Unset `WDK_PASSPHRASE` before `module add` or `module remove` and use the hidden interactive prompt. Beta.3 passes its environment to npm, so install or uninstall lifecycle scripts can otherwise inherit the wallet passphrase.
+</Callout>
+
+See [Manage Modules](/cli/guides/manage-modules) for the trust boundary, repair behavior, and custom-network workflow.
 
 ## MCP Setup Commands
 

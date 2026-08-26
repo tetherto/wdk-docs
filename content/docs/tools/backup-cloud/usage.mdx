@@ -1,0 +1,196 @@
+---
+title: Cloud Backup Usage
+description: Upload, verify, restore, and delete caller-encrypted wallet key material
+docType: how-to
+schemaType: TechArticle
+icon: Play
+---
+
+## Install
+
+Pin the beta release you tested:
+
+```bash title="Terminal"
+npm install @tetherto/wdk-backup-cloud@1.0.0-beta.1
+```
+
+The examples below assume `encryptedMasterKey` is an authenticated ciphertext string produced by application-owned encryption code. It must not be a seed phrase, plaintext private key, plaintext master key, or password.
+
+## Back Up To Google Drive
+
+Obtain a Google OAuth 2 access token with the `drive.appdata` scope. Prefer a callback that can return a fresh token for every Drive API request:
+
+```javascript
+import {
+  CloudBackup,
+  GoogleDriveProvider
+} from '@tetherto/wdk-backup-cloud'
+
+const provider = new GoogleDriveProvider({
+  getAccessToken: async () => googleAuth.getAccessToken(),
+  cloudEmail: signedInGoogleAccount.email
+})
+
+const backup = new CloudBackup(provider)
+```
+
+`googleAuth` and account selection belong to the application; they are not exported by this package.
+
+<Callout type="error">
+`uploadEncryptedKey()` is an unconditional create-or-overwrite operation; neither provider retains a prior version or offers an atomic create-if-absent check. Before replacing an item, download and authenticate the current recovery payload, preserve another verified recovery copy, obtain an explicit replacement decision, and coordinate every writer for that cloud account.
+</Callout>
+
+Under an application-owned per-account write coordinator, inspect any existing payload before uploading, then perform an explicit read-back comparison:
+
+```javascript
+await withExclusiveBackupWrite(async () => {
+  const existing = await backup.downloadEncryptedKey()
+  if (existing !== null) {
+    await verifyRecoveryPayload(existing.encryptionKey, expectedWalletId)
+    if (!(await confirmReplaceBackup())) return
+  }
+
+  const written = await backup.uploadEncryptedKey(encryptedMasterKey)
+  const downloaded = await backup.downloadEncryptedKey()
+
+  if (downloaded === null || downloaded.encryptionKey !== encryptedMasterKey) {
+    throw new Error('Cloud backup read-back verification failed')
+  }
+
+  console.info('Backup verified at', written.savedAt)
+})
+```
+
+`withExclusiveBackupWrite()`, `verifyRecoveryPayload()`, and `confirmReplaceBackup()` are application-owned. The coordinator must cover every writer for the same account and logical backup; a local mutex alone does not coordinate another device. The default file name is `wallet_backup_key.json`. It is stored in Google Drive `appDataFolder`, not the user's visible Drive hierarchy. Upload overwrites the first matching item rather than creating a versioned history.
+
+## Back Up To CloudKit
+
+Before using CloudKit, provision the container and schema described in [Configuration](/tools/backup-cloud/configuration#cloudkit-setup). Your application must return fresh CloudKit Web Services credentials:
+
+```javascript
+import {
+  CloudBackup,
+  CloudKitProvider
+} from '@tetherto/wdk-backup-cloud'
+
+const provider = new CloudKitProvider({
+  containerIdentifier: 'iCloud.com.example.wallet',
+  environment: 'production',
+  getCloudKitAuth: async () => ({
+    apiToken: await cloudKitAuth.getApiToken(),
+    webAuthToken: await cloudKitAuth.getUserWebAuthToken()
+  }),
+  cloudEmail: signedInAppleAccount.email
+})
+
+const backup = new CloudBackup(provider)
+
+await withExclusiveBackupWrite(async () => {
+  const existing = await backup.downloadEncryptedKey()
+  if (existing !== null) {
+    await verifyRecoveryPayload(existing.encryptionKey, expectedWalletId)
+    if (!(await confirmReplaceBackup())) return
+  }
+
+  await backup.uploadEncryptedKey(encryptedMasterKey)
+  const downloaded = await backup.downloadEncryptedKey()
+
+  if (downloaded === null || downloaded.encryptionKey !== encryptedMasterKey) {
+    throw new Error('CloudKit backup read-back verification failed')
+  }
+})
+```
+
+The provider writes a stable record in the private database using `forceUpdate`. The read-before-write check is not atomic, so every CloudKit writer must honor the same cross-device coordinator; otherwise another device can be overwritten between the check and upload. Development and production CloudKit environments are separate; a record written in one is invisible in the other.
+
+## Restore Wallet Material
+
+Download the payload and hand only its encrypted string to the application's authenticated-decryption path:
+
+```javascript
+const stored = await backup.downloadEncryptedKey()
+
+if (stored === null) {
+  throw new Error('No cloud backup exists for this account')
+}
+
+const restoredMasterKey = await walletKeyEncryption.decryptAndAuthenticate(
+  stored.encryptionKey
+)
+
+const restoredWalletId = await derivePublicWalletId(restoredMasterKey)
+if (restoredWalletId !== expectedWalletId) {
+  throw new Error('Restored key does not match the expected wallet')
+}
+```
+
+`walletKeyEncryption`, `derivePublicWalletId`, and `expectedWalletId` are application-owned. Keep the expected public identity and encryption-envelope version independently of this package. Do not log the ciphertext, decrypted key, credentials, or full error causes.
+
+Run a recovery drill in an isolated environment before declaring the backup usable. A string equality check detects a changed cloud payload; only authenticated decryption plus wallet-identity validation proves that the intended application recovery path works.
+
+## Interpret Availability Probes
+
+```javascript
+const serviceReachable = await backup.isAvailable()
+const itemMayExist = await backup.exists()
+```
+
+Both methods return `false` on any provider error. `exists() === false` can mean no backup, expired credentials, no network, timeout, quota or service failure, or a malformed provider response. Do not use either boolean as proof that deletion succeeded or that it is safe to replace another recovery copy. Use `downloadEncryptedKey()` when the distinction matters; it returns `null` for the provider's not-found path and throws on operational failures. Handle both the exported error classes and unexpected runtime errors.
+
+## Handle Errors
+
+```javascript
+import {
+  CloudAuthError,
+  CloudStorageError,
+  CloudUnavailableError,
+  CloudValidationError
+} from '@tetherto/wdk-backup-cloud'
+
+try {
+  await backup.uploadEncryptedKey(encryptedMasterKey)
+} catch (error) {
+  if (error instanceof CloudAuthError) {
+    await requestCloudSignIn()
+  } else if (error instanceof CloudUnavailableError) {
+    scheduleRetryWithBackoff()
+  } else if (error instanceof CloudValidationError) {
+    throw error
+  } else if (error instanceof CloudStorageError) {
+    reportStorageFailureWithoutSensitiveValues(error.code)
+  } else {
+    throw error
+  }
+}
+```
+
+Every public error has a machine-readable `code`. Error causes can contain provider response details. Keep them out of user-visible messages, analytics, and untrusted logs.
+
+## Delete A Backup
+
+<Callout type="error">
+`deleteBackup()` permanently removes the configured cloud item and does not keep a version or undo record. Require an explicit user decision and a successful independent recovery drill before deleting the only cloud copy.
+</Callout>
+
+```javascript
+await backup.deleteBackup()
+
+const afterDelete = await backup.downloadEncryptedKey()
+if (afterDelete !== null) {
+  throw new Error('Cloud backup still exists after delete')
+}
+```
+
+Deletion is idempotent when the item is already missing. A successful delete cannot erase exports, logs, older provider-retained data, or backups held elsewhere.
+
+## Next Steps
+
+- [Configuration](/tools/backup-cloud/configuration)
+- [Migrate from the React Native package](/tools/backup-cloud/guides/migrate-from-react-native)
+- [API Reference](/tools/backup-cloud/api-reference)
+
+***
+
+## Need Help?
+
+<SupportCards />

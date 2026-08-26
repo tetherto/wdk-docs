@@ -7,7 +7,7 @@ icon: Code
 ---
 
 <Callout type="info">
-This page documents the published `@tetherto/wdk-wallet-solana-gasless@1.0.0-beta.2` type declarations and runtime behavior.
+This page documents the published `@tetherto/wdk-wallet-solana-gasless@1.0.0-beta.4` type declarations and runtime behavior.
 </Callout>
 
 ## Imports
@@ -37,10 +37,14 @@ import {
 | `PaymasterTokenConfig` | Type | Paymaster fee token configuration. |
 | `SolanaTransaction` | Type | Simple Solana transaction input or transaction message input inherited from the Solana wallet module. |
 | `SolanaTransactionReceipt` | Type | Return type for `getTransactionReceipt()`. |
+| `SolanaTransactionDetails` | Type | Solana-specific fields on normalized transaction receipts. |
+| `Finality`, `TransactionReceipt` | Types | Shared normalized transaction status types. |
+| `WaitForTransactionTarget`, `WaitForTransactionOptions` | Types | Shared finality wait options. |
 | `FullySignedTransaction` | Type | Fully signed Solana transaction returned by `signTransaction()`. |
 | `TransactionResult` | Type | Result shape for send operations. |
 | `TransferOptions` | Type | SPL transfer input options. |
 | `TransferResult` | Type | Result shape for SPL token transfers. |
+| `ConfigurationError` | Type declaration only at the package root | The runtime uses this class internally but the beta.4 JavaScript root does not re-export it. |
 
 ## WalletManagerSolanaGasless
 
@@ -131,12 +135,14 @@ new WalletAccountSolanaGasless(
 | `getTokenBalance(tokenAddress)` | Returns one SPL token balance in base units. | `Promise<bigint>` |
 | `getTokenBalances(tokenAddresses)` | Returns multiple SPL token balances in base units. | `Promise<Record<string, bigint>>` |
 | `getPaymasterTokenBalance()` | Returns the configured paymaster token balance in base units. | `Promise<bigint>` |
-| `quoteSendTransaction(tx, config?)` | Quotes an unsigned send, or decodes the embedded payment fee from a fully signed transaction. | `Promise<Omit<TransactionResult, 'hash'>>` |
+| `quoteSendTransaction(tx, config?)` | Quotes an unsigned send, or searches a fully signed transaction for a matching embedded payment fee. | `Promise<Omit<TransactionResult, 'hash'>>` |
 | `signTransaction(tx, config?)` | Returns a fully signed paymaster-funded transaction without broadcasting it. | `Promise<FullySignedTransaction>` |
 | `sendTransaction(tx, config?)` | Sends an unsigned paymaster-funded transaction, or directly broadcasts a fully signed transaction through Solana RPC. | `Promise<TransactionResult>` |
 | `quoteTransfer(options, config?)` | Quotes the paymaster fee for an SPL transfer. | `Promise<Omit<TransferResult, 'hash'>>` |
 | `transfer(options, config?)` | Transfers SPL tokens through the configured paymaster. | `Promise<TransferResult>` |
-| `getTransactionReceipt(hash)` | Reads a Solana transaction receipt by signature. | `Promise<SolanaTransactionReceipt \| null>` |
+| `getTransactionReceipt(hash)` | Reads a native Solana transaction; deprecated in favor of `getTransaction()`. | `Promise<SolanaTransactionReceipt \| null>` |
+| `getTransaction(hash)` | Returns normalized finality for a Solana signature. | `Promise<TransactionReceipt & SolanaTransactionDetails>` |
+| `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final` finality. | `Promise<TransactionReceipt & SolanaTransactionDetails>` |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account. | `Promise<WalletAccountReadOnlySolanaGasless>` |
 | `dispose()` | Clears private key material held by the account. | `void` |
 
@@ -178,7 +184,7 @@ sendTransaction(
 ): Promise<TransactionResult>
 ```
 
-For an unsigned input, sends a paymaster-funded native transfer or prebuilt transaction message. For a `FullySignedTransaction` returned by `signTransaction()`, the module does not contact the paymaster: it decodes the embedded payment fee, applies `transactionMaxFee`, base64-encodes the signed wire transaction, and sends it through the configured Solana RPC with `encoding: 'base64'`.
+For an unsigned input, sends a paymaster-funded native transfer or prebuilt transaction message. For the exact `FullySignedTransaction` returned by `signTransaction()`, the module does not contact the paymaster: it searches for the embedded payment fee, applies `transactionMaxFee`, base64-encodes the signed wire transaction, and sends it through the configured Solana RPC with `encoding: 'base64'`.
 
 ```javascript title="Send native SOL"
 const result = await account.sendTransaction({
@@ -192,7 +198,11 @@ console.log(result.hash)
 console.log(result.fee)
 ```
 
-The method throws when the payment fee is greater than `transactionMaxFee`; a fee equal to the cap is allowed. A signed transaction retains its existing blockhash or durable nonce lifetime, payment instruction, and signatures. The method does not refresh or re-sign it.
+The method throws when the payment fee is greater than `transactionMaxFee`; a fee equal to the cap is allowed. An unsigned-flow payment above `Number.MAX_SAFE_INTEGER` can be rounded internally before this comparison. A signed transaction retains its existing blockhash or durable nonce lifetime, payment instruction, and signatures. The method does not refresh or re-sign it.
+
+<Callout type="error">
+For arbitrary signed input, beta.4 returns `fee: 0n` when no matching payment instruction exists and can broadcast after that value passes the cap check. Restrict this path to exact output from the same account's `signTransaction()`, or independently validate the full signed message, payment, fee payer, lifetime, and signatures first.
+</Callout>
 
 #### transfer
 
@@ -226,7 +236,7 @@ quoteSendTransaction(
 ): Promise<Omit<TransactionResult, 'hash'>>
 ```
 
-For an unsigned input, requests a paymaster fee quote for `sendTransaction()` or `signTransaction()` inputs. For a `FullySignedTransaction`, it does not call the paymaster or broadcast: it locates the signed SPL token payment to the configured paymaster token account and decodes its `u64` amount. Both forms return a `bigint` fee in the configured paymaster token's base units and do not enforce `transactionMaxFee`.
+For an unsigned input, requests a paymaster fee quote for `sendTransaction()` or `signTransaction()` inputs. Beta.4 validates the returned SPL payment instruction but converts its `u64` amount through `Number`; values above `Number.MAX_SAFE_INTEGER` can round before being returned as `bigint`. For a `FullySignedTransaction`, it does not call the paymaster or broadcast: it searches for a signed SPL token payment to the configured paymaster token account and decodes a matching `u64` exactly. If there is no match, beta.4 returns `0n` rather than rejecting. Neither form enforces `transactionMaxFee` during the quote.
 
 #### quoteTransfer
 
@@ -245,7 +255,28 @@ Quotes the paymaster fee for `transfer()` inputs. Quote methods return estimates
 getTransactionReceipt(hash: string): Promise<SolanaTransactionReceipt | null>
 ```
 
-Returns the Solana transaction receipt for a submitted signature, or `null` if the transaction has not been included in a block yet.
+Returns the native Solana transaction for a submitted signature, or `null` if it has not been included yet. This method is deprecated; use `getTransaction()` and read its `transaction` field for native data.
+
+#### getTransaction
+
+```typescript
+getTransaction(hash: string): Promise<TransactionReceipt & SolanaTransactionDetails>
+```
+
+Returns normalized status for a valid base58 Solana signature. `processed` maps to `pending`, `confirmed` maps to `confirmed`, and `finalized` maps to `final`. Settled receipts expose `success`, the slot in `block`, the fee when available, confirmation count, and the native transaction when returned by the configured RPC commitment.
+
+An invalid signature throws `ValueError`; a well-formed signature absent from transaction history throws `NoSuchElementError`.
+
+#### waitForTransaction
+
+```typescript
+waitForTransaction(
+  hash: string,
+  options?: WaitForTransactionOptions
+): Promise<TransactionReceipt & SolanaTransactionDetails>
+```
+
+Waits for the default `confirmed` target or for `final` when requested. The default polling interval is four seconds and timeout is 60 seconds. The Solana implementation does not currently emit `dropped`; a never-landed or evicted signature times out. Reaching the target does not prove successful execution, so inspect `success`.
 
 #### toReadOnlyAccount
 
@@ -283,10 +314,35 @@ new WalletAccountReadOnlySolanaGasless(
 | `getPaymasterTokenBalance()` | Returns the configured paymaster token balance in base units. | `Promise<bigint>` |
 | `quoteSendTransaction(tx, config?)` | Quotes the paymaster fee for a native send or transaction message. | `Promise<Omit<TransactionResult, 'hash'>>` |
 | `quoteTransfer(options, config?)` | Quotes the paymaster fee for an SPL transfer. | `Promise<Omit<TransferResult, 'hash'>>` |
-| `getTransactionReceipt(hash)` | Reads a Solana transaction receipt by signature. | `Promise<SolanaTransactionReceipt \| null>` |
+| `getTransactionReceipt(hash)` | Reads a native Solana transaction; deprecated in favor of `getTransaction()`. | `Promise<SolanaTransactionReceipt \| null>` |
+| `getTransaction(hash)` | Returns normalized finality for a Solana signature. | `Promise<TransactionReceipt & SolanaTransactionDetails>` |
+| `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final` finality. | `Promise<TransactionReceipt & SolanaTransactionDetails>` |
 | `verify(message, signature)` | Verifies a message signature against the account address. | `Promise<boolean>` |
 
+Read-only and owned accounts have the same normalized transaction semantics. The package delegates these calls to the wrapped standard Solana read-only account.
+
 ## Configuration Types
+
+### Normalized Transaction Types
+
+```typescript
+type Finality = 'pending' | 'confirmed' | 'final' | 'dropped'
+type WaitForTransactionTarget = 'confirmed' | 'final'
+
+interface WaitForTransactionOptions {
+  target?: WaitForTransactionTarget
+  timeout?: number
+  interval?: number
+  maxPollErrors?: number
+}
+
+interface SolanaTransactionDetails {
+  confirmations: number | null
+  transaction: SolanaTransactionReceipt | null
+}
+```
+
+`TransactionReceipt` adds `hash`, `finality`, and optional `success`, `block`, and `fee` fields. These types are re-exported from the package root.
 
 ### SolanaGaslessWalletConfig
 
@@ -346,7 +402,7 @@ Pass overrides as the second argument to quote, sign, send, or transfer methods.
 
 ## ConfigurationError
 
-The beta.2 TypeScript declarations include `ConfigurationError`, and the runtime uses that error name for missing required paymaster fields. The JavaScript root entrypoint does not re-export the runtime class, so JavaScript code should not import `ConfigurationError` from `@tetherto/wdk-wallet-solana-gasless`.
+The beta.4 TypeScript declarations include `ConfigurationError`, and the runtime uses that error name for missing required paymaster fields. The JavaScript root entrypoint does not re-export the runtime class, so JavaScript code should not import `ConfigurationError` from `@tetherto/wdk-wallet-solana-gasless`.
 
 ```typescript
 class ConfigurationError extends Error {

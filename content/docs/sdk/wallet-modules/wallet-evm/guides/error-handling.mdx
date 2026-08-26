@@ -17,7 +17,7 @@ try {
     to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
     value: 1000000000000000000n
   })
-  console.log('Transaction successful:', result.hash)
+  console.log('Transaction submitted:', result.hash)
 } catch (error) {
   console.error('Transaction failed:', error.message)
   if (error.message.includes('insufficient funds')) {
@@ -36,11 +36,11 @@ Token transfers can fail for additional reasons such as invalid addresses or ins
 ```javascript title="Token Transfer Error Handling"
 try {
   const result = await account.transfer({
-    token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
+    token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt
     recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
     amount: 1000000000000000000n
   })
-  console.log('Transfer completed:', result.hash)
+  console.log('Transfer submitted:', result.hash)
 } catch (error) {
   console.error('Transfer failed:', error.message)
   if (error.message.includes('Exceeded maximum fee')) {
@@ -48,6 +48,8 @@ try {
   }
 }
 ```
+
+Resolution means the provider accepted the broadcast; it does not prove inclusion or successful EVM execution. Pass the returned hash to `waitForTransaction()`, then inspect `finality` and `success` before releasing goods or updating durable application state.
 
 ## Manage Fee Limits
 
@@ -57,6 +59,30 @@ Set `transactionMaxFee` to cap native `sendTransaction()` costs and provider-bac
 const feeRates = await wallet.getFeeRates()
 console.log('Normal fee rate:', feeRates.normal, 'wei')
 console.log('Fast fee rate:', feeRates.fast, 'wei')
+```
+
+## Handle Transaction Status Errors
+
+`getTransaction()` throws `ValueError` for a malformed 32-byte hash and `NoSuchElementError` when neither a transaction nor receipt can be found. `waitForTransaction()` throws `TimeoutError` if it does not reach the requested finality within the configured time. A returned `dropped` receipt is not an exception; it means the sender's mined nonce advanced beyond the pending transaction's nonce.
+
+Do not treat finality as execution success. A mined EVM transaction can be `confirmed` or `final` with `success: false` when it reverted.
+
+## Handle Non-derivable Signers
+
+In `1.0.0-beta.17`, `PrivateKeySignerEvm.derive()` throws `InvalidSignerError` from `@tetherto/wdk-wallet`. Code that previously caught `SignerError` for this path must update its error-class check.
+
+```javascript title="Handle a Non-derivable Signer"
+import { InvalidSignerError } from '@tetherto/wdk-wallet'
+
+try {
+  await privateKeySigner.derive("0'/0/1")
+} catch (error) {
+  if (error instanceof InvalidSignerError) {
+    console.error('Register this private-key signer by name instead of deriving it')
+  } else {
+    throw error
+  }
+}
 ```
 
 ## Dispose of Sensitive Data

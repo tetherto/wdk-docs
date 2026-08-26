@@ -14,7 +14,7 @@
 ## Package
 
 ```bash
-npm install @tetherto/wdk-wallet-aptos
+npm install @tetherto/wdk-wallet-aptos@1.0.0-beta.2
 ```
 
 ```javascript
@@ -30,7 +30,9 @@ import WalletManagerAptos from '@tetherto/wdk-wallet-aptos'
 - **Fungible-asset transfers**: `quoteTransfer()` and `transfer()` accept `{ token, recipient, amount }`.
 - `signTransaction()` simulates and signs a native APT transfer without broadcasting. It still needs a configured fullnode and is not an offline operation.
 - `transferMaxFee` applies only to fungible-asset `transfer()` and rejects a fee equal to or greater than the cap. It does not protect native send or sign operations.
-- The package root does not export `AptosTransactionReceipt`. Receipt `type` is declared as `string`; observed values include `pending_transaction` and `user_transaction`.
+- `getTransaction()` returns the exported `AptosTransactionInfo`; `waitForTransaction()` polls the same normalized receipt contract. Both accept a trimmed `0x` plus 64-hex-character hash.
+- Aptos mempool transactions are `pending`; any committed transaction is `final`. Finality does not imply execution success, so inspect `success` and the raw `transaction.vm_status`.
+- `getTransactionReceipt()` remains as a deprecated raw lookup. The package root does not export `AptosTransactionReceipt`; its `type` is declared as `string`, with observed `pending_transaction` and `user_transaction` values.
 
 ## Configuration
 
@@ -49,12 +51,12 @@ const wallet = new WalletManagerAptos(seedPhrase, {
 
 ## Read-Only Accounts
 
-An address-only `WalletAccountReadOnlyAptos` can read balances and receipts. Fee quotes and Ed25519 message verification also require the matching 32-byte public key. Prefer `account.toReadOnlyAccount()` when starting from a writable account because it carries that public key forward.
+An address-only `WalletAccountReadOnlyAptos` can read balances and track transactions. Its constructor stores the supplied address verbatim without validation or normalization, so validate external input first. Fee quotes and Ed25519 message verification also require the matching 32-byte public key. Prefer `account.toReadOnlyAccount()` when starting from a writable account because it carries that public key forward.
 
 ## Transaction Safety
 
 - Require explicit human confirmation before `sendTransaction()`, `transfer()`, or `signTransaction()`.
-- Quote native APT transfers and enforce an application-level fee limit before sending or signing because `transferMaxFee` does not apply.
+- Quote native APT transfers for user review, but do not present the quote as an enforced cap. Send and sign simulate again, expose no native maximum-fee argument, and do not apply `transferMaxFee`.
 - Validate the destination as an Aptos address and treat the fungible-asset metadata address as a separate trust boundary.
-- A non-null receipt can still be pending. Wait for an observed `type === 'user_transaction'`, then inspect `success` and `vm_status`.
-- Treat `keyPair` and seed material as sensitive, never log signed transactions, and call `dispose()` when secret material is no longer needed.
+- `waitForTransaction()` treats a valid-but-unknown hash as transient, polls every 4 seconds by default, and times out after 60 seconds unless overridden.
+- Treat `keyPair` and seed material as sensitive and never log signed transactions. Account disposal clears its private key, but manager disposal only disposes cached accounts and signers; beta.2 retains the manager's `seed` buffer, so release all seed and manager references and use process isolation when stronger memory reclamation is required.

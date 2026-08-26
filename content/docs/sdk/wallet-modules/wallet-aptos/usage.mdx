@@ -9,7 +9,7 @@ icon: BookOpen
 ## Install
 
 ```bash
-npm install @tetherto/wdk-wallet-aptos
+npm install @tetherto/wdk-wallet-aptos@1.0.0-beta.2
 ```
 
 ## Create a Wallet Manager
@@ -51,7 +51,7 @@ const usdtMetadataAddress =
   '0x357b0b74bc833e95a115ad22604854d6b0fca151cecd94111770e5d6ffc9dc2b'
 
 const usdtBalance = await account.getTokenBalance(usdtMetadataAddress)
-console.log('USDT balance:', usdtBalance)
+console.log('USDt balance:', usdtBalance)
 ```
 
 Read-only accounts support the same balance reads without a seed phrase.
@@ -66,12 +66,12 @@ const readOnlyAccount = new WalletAccountReadOnlyAptos('0x...', {
 const balance = await readOnlyAccount.getBalance()
 ```
 
-An address-only account can read balances and receipts. Fee quotes and message verification also need the matching Ed25519 public key. Use `account.toReadOnlyAccount()` when possible; the returned account includes it.
+An address-only account can read balances and track transactions. Fee quotes and message verification also need the matching Ed25519 public key. Use `account.toReadOnlyAccount()` when possible; the returned account includes it.
 
 ## Send Native APT
 
 ```javascript
-const nativeFeeLimit = 100000n
+const nativeFeeReviewThreshold = 100000n
 
 const quote = await account.quoteSendTransaction({
   to: '0x...',
@@ -80,8 +80,8 @@ const quote = await account.quoteSendTransaction({
 
 console.log('Estimated fee in octas:', quote.fee)
 
-if (quote.fee >= nativeFeeLimit) {
-  throw new Error('Native APT fee is at or above the application limit')
+if (quote.fee >= nativeFeeReviewThreshold) {
+  throw new Error('Native APT fee needs additional user review')
 }
 
 const result = await account.sendTransaction({
@@ -94,6 +94,10 @@ console.log('Fee in octas:', result.fee)
 ```
 
 `sendTransaction()` submits a native APT transfer through `0x1::aptos_account::transfer`.
+
+<Callout type="warn">
+This quote is an advisory preflight, not an enforced fee cap. `sendTransaction()` builds and simulates the transfer again and exposes no native maximum-fee argument, so its gas inputs can differ from the earlier quote. Beta.2 cannot enforce a hard application limit for native APT sends.
+</Callout>
 
 ## Transfer Fungible Assets
 
@@ -143,44 +147,59 @@ const signed = await account.signTransaction({
   to: '0x...',
   value: 100000000n
 })
-
-console.log('Signed Aptos transaction:', signed)
 ```
+
+Treat the signed transaction as a sensitive authorization payload. Do not write it to logs, analytics, or client-visible errors.
 
 <Callout type="info">
 This is not an offline operation. A failed simulation prevents signing. Fungible asset transfers are built and submitted through `transfer()`.
 </Callout>
 
-`transferMaxFee` does not apply to native APT signing or sending. Quote the transfer and enforce your own native-fee limit before signing or submitting:
+`transferMaxFee` does not apply to native APT signing or sending. You can quote a native transfer for user review before signing or submitting:
 
 ```javascript
-const nativeFeeLimit = 100000n
+const nativeFeeReviewThreshold = 100000n
 
 const quote = await account.quoteSendTransaction({
   to: '0x...',
   value: 100000000n
 })
 
-if (quote.fee >= nativeFeeLimit) {
-  throw new Error('Native APT fee is at or above the application limit')
+if (quote.fee >= nativeFeeReviewThreshold) {
+  throw new Error('Native APT fee needs additional user review')
 }
 ```
+
+`signTransaction()` also performs its own later simulation and exposes no native maximum-fee argument. If a product requires a hard fee cap rather than an advisory review threshold, beta.2 does not provide that control for native APT operations.
 
 ## Check Transaction Status
 
 ```javascript
-const receipt = await account.getTransactionReceipt(result.hash)
+const receipt = await account.getTransaction(result.hash)
 
-if (!receipt) {
-  console.log('Transaction is not known to this fullnode')
-} else if (receipt.type === 'pending_transaction') {
+if (receipt.finality === 'pending') {
   console.log('Transaction is pending')
-} else if (!receipt.success) {
-  console.error('Transaction failed:', receipt.vm_status)
+} else if (receipt.success === false) {
+  console.error('Transaction failed:', receipt.transaction.vm_status)
 }
 ```
 
-A non-null receipt is not necessarily final. Wait for `type === 'user_transaction'`, then inspect `success`.
+`getTransaction()` accepts `0x` plus 64 hexadecimal characters, trims surrounding whitespace, and throws `NoSuchElementError` while the fullnode does not know a valid hash. Pending transactions use `finality: 'pending'`; any committed Aptos transaction uses `finality: 'final'`.
+
+Wait for commitment when your next step depends on the result:
+
+```javascript
+const receipt = await account.waitForTransaction(result.hash, {
+  target: 'final',
+  timeout: 120000
+})
+
+if (receipt.success === false) {
+  throw new Error(`Aptos execution failed: ${receipt.transaction.vm_status}`)
+}
+```
+
+Resolution proves the requested finality, not successful execution. Always inspect `success`. `getTransactionReceipt()` remains available as a deprecated raw lookup for migrations; prefer the normalized methods in new code.
 
 ## Dispose Secret Material
 
@@ -188,6 +207,8 @@ A non-null receipt is not necessarily final. Wait for `type === 'user_transactio
 account.dispose()
 wallet.dispose()
 ```
+
+`account.dispose()` clears the writable account's private-key material. `wallet.dispose()` disposes cached accounts and signers, but beta.2 leaves the manager's original `seed` buffer allocated and readable. For stronger cleanup, drop every reference to the manager and its input seed; keep seed-handling work isolated in a short-lived process or equivalent boundary when your threat model requires memory reclamation.
 
 <Cards>
 <Card title="Configuration" href="/sdk/wallet-modules/wallet-aptos/configuration">

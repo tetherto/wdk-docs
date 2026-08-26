@@ -38,7 +38,7 @@ const result = await ethAccount.sendTransaction({
   value: 1000000000000000n // 0.001 ETH (in Wei)
 })
 
-console.log('Transaction sent! Hash:', result.hash)
+console.log('Transaction submitted:', result.hash)
 ```
 
 ### TON Example
@@ -59,7 +59,7 @@ const tonResult = await tonAccount.sendTransaction({
   to: 'UQCz5ON7jjK32HnqPushubsHxgsXgeSZDZPvh8P__oqol90r',
   value: 1000000000n // 1 TON (in nanotons)
 })
-console.log('TON transaction:', tonResult.hash)
+console.log('Signed TON transfer body hash:', tonResult.hash)
 ```
 
 ## Sign Without Broadcasting
@@ -73,12 +73,12 @@ const signedTransaction = await ethAccount.signTransaction({
   to: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
   value: 1000000000000000n
 })
-
-console.log('Signed transaction:', signedTransaction)
 ```
 
+Treat a signed transaction as a sensitive, potentially broadcastable authorization payload. Do not log it.
+
 <Callout type="info">
-`signTransaction()` only signs. Use `sendTransaction()` when you want WDK to sign, broadcast, and return the transaction hash.
+`signTransaction()` only signs. Use `sendTransaction()` when you want WDK to sign and submit the transaction. The returned identifier and settlement semantics depend on the concrete module.
 </Callout>
 
 ## Apply Local Transaction Policies
@@ -91,14 +91,16 @@ See [Transaction Policies](/sdk/core-module/guides/transaction-policies) for pol
 
 ## Handling Responses
 
-The `sendTransaction` method returns a [transaction result object](/sdk/core-module/api-reference). The most important field is typically `hash`, which represents the transaction ID on the blockchain. You can use this hash to track the status of your payment on a block explorer.
+The `sendTransaction` method returns a [transaction result object](/sdk/core-module/api-reference). Its `hash` is a module-specific tracking identifier: it can be an on-chain transaction hash or Solana signature, an ERC-4337 UserOperation hash, a provider relay ID, a signed TON message-body hash, or a Spark transfer ID. Use the concrete module's `getTransaction()` or `waitForTransaction()` implementation; do not assume every value is immediately searchable as a native blockchain transaction ID.
+
+Returning from send or transfer proves submission to that module's provider or relay, not inclusion or successful execution. Wait for the required finality and inspect `success` before releasing goods or committing dependent state.
 
 ## Track Transaction Finality
 
 Base Wallet v1.0.0-beta.17 defines `getTransaction(hash)` for one normalized lookup and `waitForTransaction(hash, options)` for polling until the requested finality. The common receipt reports `pending`, `confirmed`, `final`, or `dropped`; concrete wallet modules can add native chain fields.
 
 <Callout type="info">
-These are base contracts, not universally available chain APIs yet. The default `getTransaction()` throws `NotImplementedError`; for example, the currently released `@tetherto/wdk-wallet-evm` v1.0.0-beta.16 still exposes its legacy receipt lookup instead. Use the following pattern only after the concrete module's release documentation confirms a normalized `getTransaction()` implementation.
+Current first-party Bitcoin, standard EVM, ERC-4337, EIP-7702, Solana, Solana Gasless, Spark, TON, TON Gasless, TRON, TRON Gasfree, and Aptos releases implement these methods. Older and third-party implementations can still inherit the base `getTransaction()` method that throws `NotImplementedError`; confirm support in the concrete module before relying on it.
 </Callout>
 
 ```typescript title="Wait For A Transaction"
@@ -129,16 +131,13 @@ The timeout is checked only after awaited lookups and between polls. It does not
 A resolved wait does not guarantee successful execution. It also resolves for reverted transactions and stable dropped receipts, so always inspect `finality` and `success` before updating application state.
 </Callout>
 
-`getTransactionReceipt()` is deprecated in `@tetherto/wdk-wallet` v1.0.0-beta.17. Migrate to `getTransaction()` only when the concrete module implements it; until then, keep using that module's documented receipt lookup without assuming the normalized finality shape.
+`getTransactionReceipt()` is deprecated in `@tetherto/wdk-wallet` v1.0.0-beta.17. Current first-party wallet releases implement `getTransaction()`; for an older or third-party module, migrate only after confirming that its concrete release implements the normalized finality shape.
 
 ## Multi-Chain Transactions
 
 You can orchestrate payments across different chains in a single function by acting on multiple account objects sequentially.
 
-The following example will:
-1. Retrieve an ETH and ton account using the `getAccount()` method.
-2. Send ETH and `await` the transaction.
-3. Send TON and `await` the transaction.
+The following example retrieves ETH and TON accounts, submits each transfer in sequence, and waits for successful finality before starting the next payment.
 
 ```typescript title="Multi-Chain Payment"
 async function sendCrossChainPayments(wdk) {
@@ -146,16 +145,28 @@ async function sendCrossChainPayments(wdk) {
   const tonAccount = await wdk.getAccount('ton', 0)
 
   // 1. Send ETH
-  await ethAccount.sendTransaction({
+  const ethResult = await ethAccount.sendTransaction({
     to: '0x...',
     value: 1000000000000000000n
   })
+  const ethReceipt = await ethAccount.waitForTransaction(ethResult.hash, {
+    target: 'final'
+  })
+  if (ethReceipt.finality === 'dropped' || ethReceipt.success === false) {
+    throw new Error('ETH payment did not complete successfully')
+  }
 
   // 2. Send TON
-  await tonAccount.sendTransaction({
+  const tonResult = await tonAccount.sendTransaction({
     to: 'EQ...',
     value: 1000000000n
   })
+  const tonReceipt = await tonAccount.waitForTransaction(tonResult.hash, {
+    target: 'final'
+  })
+  if (tonReceipt.finality === 'dropped' || tonReceipt.success === false) {
+    throw new Error('TON payment did not complete successfully')
+  }
 }
 ```
 

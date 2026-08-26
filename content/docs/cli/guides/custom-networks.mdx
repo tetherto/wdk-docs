@@ -5,9 +5,9 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-Use a custom network when WDK CLI already supports the network's wallet-module type but does not include the specific chain in its built-in registry.
+Use a custom network when WDK CLI has a compatible wallet-module package but does not include the specific chain in its built-in registry.
 
-`wdk network create` cannot introduce a new wallet-module implementation. Its `module` field must match a wallet-module type already used by a built-in network.
+The `module` field can name a wallet-module type used by a built-in network or a custom package already registered with `wdk module add`. Adding a package and creating a network are separate, passphrase-protected operations.
 
 ## Inspect Available Networks
 
@@ -17,13 +17,17 @@ List built-in and custom networks:
 wdk network list
 ```
 
-Use JSON output to inspect both the versioned `module` and its unversioned `type`:
+Use JSON output to inspect the unversioned `module` and `type` package names:
 
 ```bash title="Terminal"
 wdk --json network list
 ```
 
-Use a returned `type`, such as `@tetherto/wdk-wallet-evm`, as the `module` value in a custom network spec.
+For a built-in wallet type, use a returned name such as `@tetherto/wdk-wallet-evm` as the `module` value in a custom network spec. Inspect exact built-in and custom package pins separately:
+
+```bash title="Terminal"
+wdk module list
+```
 
 Inspect the effective metadata and SDK configuration for one network:
 
@@ -38,7 +42,7 @@ wdk network info --network ethereum
 | Field | Required | Rules and effect |
 | --- | --- | --- |
 | `network` | Yes | Unique identifier containing lowercase letters, numbers, and hyphens. The first character must be a letter or number. |
-| `module` | Yes | Unversioned wallet-module type already used by a built-in network. |
+| `module` | Yes | Unversioned wallet-module package used by a built-in network or already registered with `wdk module add`. |
 | `displayName` | No | Non-empty display label. Defaults to the `network` value. |
 | `testnet` | No | Boolean. Defaults to `false`. |
 | `indexerSlug` | No | Non-empty WDK Indexer chain identifier. Without it, `get history` is unavailable for the custom network. |
@@ -46,6 +50,10 @@ wdk network info --network ethereum
 | `tokens` | No | Array of token specs to store with the network. Token keys must be unique, and at most one entry can be native. |
 
 Each item in `tokens` uses the fields documented in [Manage Tokens](/cli/guides/manage-tokens/#token-spec), with `network` omitted because the parent network supplies it.
+
+<Callout type="warn">
+Registering a custom package makes its name eligible for a network spec; it does not prove that the package exports a compatible wallet manager. Audit and test the exact package version before using it. Methods exposed by `wdk method` come from the built-in catalog and are not discovered from custom packages.
+</Callout>
 
 ## Create A Custom Network
 
@@ -103,6 +111,8 @@ If at least one wallet exists, `network create` prompts for the current default 
 
 `network create` and `network delete` do not unlock, extend, or lock an existing daemon wallet session. `wdk config reset --all` preserves custom network entries.
 
+When the spec uses a custom module, install and register that module before creating the network. Do not remove the module while a custom network still references it; the network record remains, but wallet operations fail when the daemon cannot load the package.
+
 ## Update Network Configuration
 
 Use `config set` to replace the complete SDK config object:
@@ -145,6 +155,7 @@ Deleting registry configuration does not move blockchain assets or delete a wall
 ## Next Steps
 
 - [Manage Tokens](/cli/guides/manage-tokens/) - Add token contracts and provider mappings
+- [Manage Modules](/cli/guides/manage-modules/) - Audit, pin, install, repair, and remove custom wallet modules
 - [Configuration](/cli/configuration/) - Review paths, environment variables, and precedence
 - [API Reference](/cli/api-reference/) - Review all network command flags
 

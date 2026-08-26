@@ -1,6 +1,6 @@
 ## All Modules
 URL: https://wdk.tether.io/developers/blocks
-Description: Complete list of available WDK wallet, pricing, swidge, swap, bridge, lending, and fiat interfaces and modules.
+Description: Complete list of available WDK wallet, backup, pricing, swidge, swap, bridge, lending, and fiat interfaces and modules.
 
 A comprehensive list of all available WDK modules. Each module is designed to be modular and can be used independently or combined with others.
 
@@ -11,6 +11,14 @@ The orchestrator that manages all WDK modules.
 | Module | Description | Documentation |
 |--------|-------------|---------------|
 | [`@tetherto/wdk`](https://github.com/tetherto/wdk) | Central orchestrator for all WDK modules | [Docs](/sdk/core-module/) |
+
+## Backup and Recovery Tools
+
+Tools for storing and recovering caller-protected wallet material.
+
+| Package | Storage | Description | Documentation |
+|--------|---------|-------------|---------------|
+| [`@tetherto/wdk-backup-cloud`](https://github.com/tetherto/wdk-backup-cloud) | Google Drive `appDataFolder` or CloudKit private database | Stores an application-encrypted wallet master key through caller-supplied cloud credentials; it does not perform encryption or OAuth | [Docs](/tools/backup-cloud/) |
 
 ## Wallet Modules
 

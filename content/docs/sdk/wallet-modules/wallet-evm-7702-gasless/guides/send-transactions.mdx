@@ -21,7 +21,7 @@ console.log('UserOperation hash:', result.hash)
 console.log('Fee:', result.fee)
 ```
 
-The returned `hash` is a UserOperation hash. Use [`getUserOperationReceipt(hash)` or `getTransactionReceipt(hash)`](/sdk/wallet-modules/wallet-evm-7702-gasless/api-reference#walletaccountevm7702gasless) to check inclusion.
+The returned `hash` is a UserOperation hash, not the later EVM bundling-transaction hash. Use [`getTransaction(hash)` or `waitForTransaction(hash)`](/sdk/wallet-modules/wallet-evm-7702-gasless/api-reference#walletaccountevm7702gasless) to track normalized finality.
 
 ## Send a Batch
 
@@ -56,6 +56,8 @@ const signedUserOperation = await account.signTransaction({
 A signed UserOperation seals its EntryPoint nonce and, for a fresh account, its EIP-7702 authorization. Submit it before that nonce changes, and accept signed operations only from a trusted source prepared for the same account, chain, EntryPoint, delegation, and paymaster configuration.
 </Callout>
 
+When `transactionMaxFee` is configured in paymaster-token mode, `signTransaction()` checks the fee of the same prepared UserOperation that it signs. A fee equal to the cap is allowed.
+
 ## Quote and Send a Signed UserOperation
 
 Pass a signed operation to [`quoteSendTransaction()`](/sdk/wallet-modules/wallet-evm-7702-gasless/api-reference#quote-and-send-behavior) to inspect its fee without submitting it. Call [`sendTransaction()`](/sdk/wallet-modules/wallet-evm-7702-gasless/api-reference#quote-and-send-behavior) separately when you intend to broadcast the exact signed operation.
@@ -75,6 +77,10 @@ const result = await account.sendTransaction(signedUserOperation)
 
 Quoting a signed UserOperation avoids paymaster calls. Sponsorship mode returns `fee: 0n`; paymaster-token mode derives a native-gas ceiling in wei from the operation's existing gas fields rather than returning the token amount fixed when the operation was built. Sending broadcasts the supplied nonce, authorization, gas fields, and signature without rebuilding the operation or requesting another signature.
 
+<Callout type="warn">
+`sendTransaction(signedUserOperation)` does not enforce `transactionMaxFee`: the module cannot reconstruct the token-denominated paymaster fee from an already-signed operation. Apply the cap while this wallet builds or signs the operation, and independently review signed operations received from elsewhere.
+</Callout>
+
 ## Quote Before Sending
 
 Use [`quoteSendTransaction(tx)`](/sdk/wallet-modules/wallet-evm-7702-gasless/api-reference#quote-and-send-behavior) to estimate the fee without submitting the UserOperation.
@@ -93,7 +99,7 @@ const result = await account.sendTransaction(tx)
 console.log('UserOperation hash:', result.hash)
 ```
 
-For paymaster-token mode, the fee is returned in the paymaster token's base units. For sponsorship mode, the quote returns `fee: 0n`.
+For paymaster-token mode, the fee is returned in the paymaster token's base units. For an undelegated owned EOA, this quote includes the signed EIP-7702 authorization that the later sign or send uses. For sponsorship mode, the quote returns `fee: 0n` without estimating that authorization.
 
 ## Quote Reuse
 
@@ -101,8 +107,8 @@ Owned accounts cache a recently quoted paymaster-token transaction for up to 2 m
 
 Sends that set `parallel` or `nonceKey` build against that explicit lane and do not reuse the default-lane quote cache.
 
-<Callout type="warning">
-Cache identity does not include per-call fee-mode configuration. Use the same fee-mode and paymaster settings for `quoteSendTransaction()` and the matching `sendTransaction()`. Do not quote with one paymaster token or mode and send the same transaction with another while the quote is cached.
+<Callout type="info">
+Cache identity includes sponsorship mode, paymaster token, expected paymaster address, and sponsorship policy ID as well as the transaction. Changing any of those fields creates a separate quote. The account also checks the current EntryPoint nonce before reuse.
 </Callout>
 
 ## Override Fee Mode for One Send
@@ -150,7 +156,7 @@ await account.sendTransaction(scheduledPayment, { nonceKey: 'scheduled-payments'
 `nonceKey` takes precedence over `parallel`. String keys are hashed into deterministic 192-bit lane keys. A number or bigint is used as the raw key and must be between `0` and `2^192 - 1`; use a bigint or string above JavaScript's safe integer range.
 
 <Callout type="warning">
-The beta.3 runtime accepts per-call `parallel` and `nonceKey`, but the published second-argument declarations omit those common fields. TypeScript object literals using the per-call form fail type checking. Configure lanes on the wallet or account constructor for typed code, or isolate an explicit local type workaround until the package declarations are corrected.
+The beta.4 runtime accepts per-call `parallel` and `nonceKey`, but the published second-argument declarations omit those common fields. TypeScript object literals using the per-call form fail type checking. Configure lanes on the wallet or account constructor for typed code, or isolate an explicit local type workaround until the package declarations are corrected.
 </Callout>
 
 Use nonce lanes with these constraints:
@@ -166,7 +172,12 @@ The same lane configuration applies to [`signTransaction()` and `transfer()`](/s
 
 ```javascript title="Read receipts"
 const userOpReceipt = await account.getUserOperationReceipt(result.hash)
-const txReceipt = await account.getTransactionReceipt(result.hash)
+const status = await account.getTransaction(result.hash)
+const settled = await account.waitForTransaction(result.hash, {
+  target: 'final'
+})
 ```
 
-`getTransactionReceipt()` returns `null` until the bundler receipt includes an EVM transaction hash.
+`getTransaction()` and `waitForTransaction()` expect the UserOperation hash. Before the bundler assigns an EVM transaction hash, status is `pending`. After inclusion, finality and confirmations come from the bundling transaction, while `success` and `fee` use the UserOperation receipt when available. The default wait interval is four seconds and timeout is 180 seconds. Inspect `success` because confirmed or final inclusion can still represent a failed UserOperation.
+
+`getTransactionReceipt()` remains available for the native EVM receipt but is deprecated.

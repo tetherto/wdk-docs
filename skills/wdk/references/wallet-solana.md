@@ -28,7 +28,7 @@ import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 - **Fee unit**: lamports (1 SOL = 1,000,000,000 lamports)
 - **Token standard**: SPL tokens via `transfer()`
 - **Rent-exempt minimum**: ~890,880 lamports for new accounts
-- **USDT mint**: `Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB`
+- **USD₮ mint**: `Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB`
 - `signTransaction()` returns a `FullySignedTransaction` from `@solana/transactions`; WDK does not re-export that type.
 - `quoteSendTransaction()` and `sendTransaction()` accept that signed value. Send broadcasts the exact wire bytes and rechecks `transactionMaxFee`.
 - ⚠️ Signing seals the recent blockhash or durable nonce. WDK does not refresh or re-sign a supplied signed transaction; submit it before its lifetime becomes invalid.

@@ -83,7 +83,9 @@ Lane configuration and bundler behavior can fail in several ways:
 - Parallel sends from an undeployed Safe or a bundler that does not support nonzero keys can be rejected by the RPC or bundler. Deploy the account with one completed operation first and verify bundler support.
 - Two operations submitted concurrently in the same named or default lane can select the same sequence. Both calls can return a UserOperation hash even though one never receives a receipt.
 
-Treat a returned hash as submission evidence, not inclusion. Poll `getUserOperationReceipt(hash)` with an application timeout. If one same-lane hash never resolves, inspect the bundler response and on-chain lane sequence before retrying; use a fresh lane for independent work or batch dependent calls rather than blindly resubmitting the same operation.
+Treat a returned hash as submission evidence, not inclusion. Pass the UserOperation hash to `waitForTransaction(hash, { timeout })` for a bounded wait, or use `getUserOperationReceipt(hash)` when you specifically need the raw bundler receipt. If one same-lane hash never resolves, inspect the bundler response and on-chain lane sequence before retrying; use a fresh lane for independent work or batch dependent calls rather than blindly resubmitting the same operation.
+
+`getTransaction()` throws `ValueError` for a malformed UserOperation hash and `NoSuchElementError` when the bundler does not know a well-formed hash. During `waitForTransaction()`, an unknown hash is treated as transient while the operation propagates. A `TimeoutError` means the requested finality was not reached in time; a returned `dropped` receipt means the underlying EVM transaction's nonce was replaced or otherwise consumed. A `confirmed` or `final` receipt can still have `success: false`.
 
 ## Best Practices
 

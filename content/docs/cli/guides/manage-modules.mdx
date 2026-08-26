@@ -1,0 +1,135 @@
+---
+title: Manage Modules
+description: Inspect built-in wallet modules and install or remove trusted custom module packages
+docType: how-to
+schemaType: TechArticle
+icon: Package
+---
+
+WDK CLI beta.3 installs its built-in wallet modules as normal dependencies and records their exact versions in its bundled catalog. Use `wdk module` to inspect those pins or to manage a custom package that a custom network needs.
+
+<Callout type="error">
+A custom module is executable npm code. Install and uninstall lifecycle scripts can run during `wdk module add` and `wdk module remove`, and its wallet manager can later run inside `wdk-daemon` with access to unlocked accounts. Audit the exact package, publisher, source, version, dependencies, and published artifact before installing it.
+</Callout>
+
+<Callout type="error">
+Do not run either mutation with `WDK_PASSPHRASE` set. Beta.3 uses that variable for wallet confirmation and then launches npm with the inherited environment, so a package lifecycle script can read the wallet passphrase. Unset it and use the hidden interactive confirmation prompt. The CLI should be run from a shell that does not contain other wallet secrets needed by neither npm nor the package.
+</Callout>
+
+## Inspect Module Status
+
+```bash title="Terminal"
+wdk module list
+```
+
+The output compares each catalog or user-configured pin with the package installed under the CLI:
+
+| Status | Meaning |
+| --- | --- |
+| `ok` | The installed concrete version string exactly equals the configured value. |
+| `not installed` | The module is registered but its package is missing. |
+| `version mismatch` | The installed package version differs from the pin. |
+
+Use JSON output for automation:
+
+```bash title="Terminal"
+wdk --json module list
+```
+
+Built-in modules ship with the CLI and cannot be added, removed, or repinned independently. Upgrade the CLI to change them.
+
+## Add A Custom Module
+
+Pass a literal version that you have already reviewed:
+
+```bash title="Terminal"
+wdk module add --name @example/wdk-wallet-example@1.2.3
+```
+
+If you omit the version, beta.3 resolves npm's current version and pins the resolved value once:
+
+```bash title="Terminal"
+wdk module add --name @example/wdk-wallet-example
+```
+
+The command shows the package and version, verifies the current default wallet's passphrase when a wallet exists, locks a running daemon, installs the package with npm, and then stores the supplied version string under `customModules` in `config.json`.
+
+<Callout type="warn">
+An exact literal is caller discipline, not a beta.3 validation rule. The parser also accepts npm tags and ranges such as `latest` or `^1.2.3` and stores them verbatim. Status uses literal equality, so an installed concrete version then reports `version mismatch`; the daemon prints a warning but still imports and executes that installed package. Do not use a tag or range, and do not treat a warning as a load block.
+</Callout>
+
+<Callout type="warn">
+The CLI checks installation state and the configured version. It does not certify that a package is a compatible WDK wallet module or that its code is safe. A package used by a custom network must expose a compatible wallet-manager default export; incompatibility fails when the daemon tries to load that network.
+</Callout>
+
+## Bind The Module To A Network
+
+Adding a package does not create a network. Reference its unversioned package name in a custom-network spec:
+
+```json title="example-network.json"
+{
+  "network": "example-chain",
+  "module": "@example/wdk-wallet-example",
+  "displayName": "Example Chain",
+  "testnet": true,
+  "config": {
+    "provider": "https://rpc.example.invalid"
+  }
+}
+```
+
+```bash title="Terminal"
+wdk network create ./example-network.json
+wdk network info --network example-chain
+```
+
+Review the provider, chain identifier, native-token metadata, and module-specific configuration before unlocking a wallet. See [Custom Networks](/cli/guides/custom-networks) for the complete schema.
+
+## Repair A Missing Module
+
+A later npm operation against the global CLI installation can prune a custom package because beta.3 installs custom modules with `--no-save`. If `wdk module list` reports `not installed` or `version mismatch`, run:
+
+```bash title="Terminal"
+wdk module add --name @example/wdk-wallet-example
+```
+
+For an already registered module, the command reuses its stored version string. Supplying a different version is rejected. To change versions, remove the package, review the replacement artifact, and add the new exact literal version. If the stored value is a tag or range, remove and re-add it with a literal version instead of repeatedly attempting repair.
+
+## Remove A Custom Module
+
+First delete or migrate every custom network that references the module. `module remove` does not remove those network records for you.
+
+```bash title="Terminal"
+wdk network delete --name example-chain
+wdk module remove --name @example/wdk-wallet-example
+```
+
+Removal verifies the default wallet's passphrase when a wallet exists, locks a running daemon, deletes the custom-module registration, and uninstalls the package. It cannot remove a built-in module.
+
+<Callout type="warn">
+`wdk config reset --all` preserves custom networks and tokens but does not preserve `customModules`. The npm package can remain on disk while its registration disappears, so a preserved network may keep loading untracked code until another npm operation prunes it. Record custom module pins and network specs before a full reset, then re-register and verify each trusted package.
+</Callout>
+
+## Operational Checklist
+
+- Pin and review an exact version before installation.
+- Unset `WDK_PASSPHRASE` and unrelated wallet-secret environment variables before add or remove; use the hidden prompt.
+- Lock valuable wallets and stop unrelated same-user processes.
+- Treat npm install and uninstall lifecycle output as part of the review.
+- Confirm `wdk module list` reports the expected installed version.
+- Stop if status reports a mismatch; beta.3 still loads mismatched code after warning.
+- Test the module and network with a dedicated wallet and limited funds.
+- Delete dependent custom networks before removing their module.
+
+## Next Steps
+
+- [Custom Networks](/cli/guides/custom-networks)
+- [Call Module Methods](/cli/guides/call-module-methods)
+- [Security Model](/cli/reference/security-model)
+- [API Reference](/cli/api-reference)
+
+***
+
+## Need Help?
+
+<SupportCards />

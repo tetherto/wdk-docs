@@ -1,0 +1,167 @@
+---
+title: Migrate From React Native Cloud Backup
+description: Move Google Drive or iCloud backups from the legacy React Native package without losing recovery data
+docType: how-to
+schemaType: TechArticle
+icon: RefreshCw
+---
+
+This guide migrates from `@tetherto/wdk-backup-cloud-react-native` to `@tetherto/wdk-backup-cloud@1.0.0-beta.1`.
+
+<Callout type="error">
+Do not remove the legacy package, iCloud Drive file, or another working recovery copy until the new provider's payload has been downloaded, compared, decrypted, and validated against the expected wallet in a separate recovery drill.
+</Callout>
+
+## Identify The Backend
+
+| Existing provider | New provider | Data migration |
+| --- | --- | --- |
+| Google Drive `appDataFolder` | `GoogleDriveProvider` using Drive REST API v3 | Normally no copy only when both clients use the same Google OAuth application/project, account, `drive.appdata` authorization, and basename, and the new client can read and validate the item. |
+| `ICloudProvider` using an iCloud Drive file | `CloudKitProvider` using a private-database record | Required per user. iCloud Drive and CloudKit are separate stores. |
+
+The new package removes the React Native cloud-storage dependency and uses global `fetch`. It also removes the optional metadata argument from `uploadEncryptedKey()` and stores only `encryptionKey`, `savedAt`, and `cloudEmail`.
+
+## Migrate Google Drive
+
+Both packages use `appDataFolder` and the default `wallet_backup_key.json` basename. Drive's application-data folder is private to the OAuth application, so the same Google user and basename are not sufficient if the OAuth client or project changes. The beta.1 parser requires the three current fields and ignores the legacy payload's extra `platform` and `version` fields.
+
+Update the import and remove the upload metadata argument:
+
+```diff
+- import { CloudBackup, GoogleDriveProvider } from '@tetherto/wdk-backup-cloud-react-native'
++ import { CloudBackup, GoogleDriveProvider } from '@tetherto/wdk-backup-cloud'
+
+  const backup = new CloudBackup(
+    new GoogleDriveProvider({ accessToken })
+  )
+
+- await backup.uploadEncryptedKey(encryptedKey, { version: 1 })
++ await backup.uploadEncryptedKey(encryptedKey)
+```
+
+Before rollout, confirm that the old app did not customize its filename and that the new client uses the same Google OAuth application/project with `drive.appdata` authorization. Sign in to the same Google account, download the existing payload with the new package, and complete the application's decryption and wallet-identity checks. A successful authenticated read is the no-copy gate; do not assume account and basename compatibility proves access or recovery compatibility. See Google's [application data folder documentation](https://developers.google.com/workspace/drive/api/guides/appdata).
+
+## Prepare CloudKit
+
+An iCloud Drive file is invisible to CloudKit Web Services. Before migrating Apple users:
+
+1. Enable CloudKit and Web Services for the application container.
+2. Create the `WalletBackup` record type, or the configured replacement.
+3. Add String fields `encryptionKey`, `savedAt`, and `cloudEmail`.
+4. Deploy the schema to the environment the released app will use.
+5. Implement sign-in that returns fresh `apiToken` and `webAuthToken` values.
+6. Keep the legacy package or its native storage dependency available during the transition window.
+
+The new SDK cannot read the legacy iCloud Drive file. Migration must run in the client for each signed-in user; there is no server-side or in-place copy path in this package.
+
+## Use Lazy Write-Through Migration
+
+On the first eligible launch, check CloudKit, fall back to the legacy iCloud Drive provider, copy the ciphertext, and verify the new record:
+
+```javascript
+import {
+  CloudBackup,
+  CloudKitProvider
+} from '@tetherto/wdk-backup-cloud'
+import {
+  CloudBackup as LegacyBackup,
+  ICloudProvider
+} from '@tetherto/wdk-backup-cloud-react-native'
+
+async function migrateAppleBackup ({
+  containerIdentifier,
+  getCloudKitAuth,
+  withExclusiveMigration
+}) {
+  return withExclusiveMigration(async () => {
+    const current = new CloudBackup(new CloudKitProvider({
+      containerIdentifier,
+      environment: 'production',
+      getCloudKitAuth
+    }))
+
+    const currentPayload = await current.downloadEncryptedKey()
+    if (currentPayload !== null) {
+      return {
+        migrated: false,
+        reason: 'already-in-cloudkit',
+        encryptedKey: currentPayload.encryptionKey
+      }
+    }
+
+    const legacy = new LegacyBackup(new ICloudProvider())
+    const legacyPayload = await legacy.downloadEncryptedKey()
+    if (legacyPayload === null) {
+      return { migrated: false, reason: 'no-legacy-backup' }
+    }
+
+    // Re-read immediately before writing to catch an old or non-cooperating
+    // client that created a record after the first check.
+    const beforeWrite = await current.downloadEncryptedKey()
+    if (beforeWrite !== null) {
+      return {
+        migrated: false,
+        reason: 'cloudkit-created-during-migration',
+        encryptedKey: beforeWrite.encryptionKey
+      }
+    }
+
+    await current.uploadEncryptedKey(legacyPayload.encryptionKey)
+
+    const verified = await current.downloadEncryptedKey()
+    if (
+      verified === null ||
+      verified.encryptionKey !== legacyPayload.encryptionKey
+    ) {
+      throw new Error('CloudKit migration read-back verification failed')
+    }
+
+    return {
+      migrated: true,
+      encryptedKey: verified.encryptionKey
+    }
+  })
+}
+```
+
+`withExclusiveMigration()` is an application-owned, per-account coordination boundary. It must cover every CloudKit backup writer on every cooperating device, preferably through a server-backed lease. Beta.1 uses `forceUpdate` and has no atomic create-if-absent or conditional-write API; the second read narrows but cannot eliminate a race with an old or non-cooperating client. If you cannot coordinate writers, do not automate this migration.
+
+Whenever this function returns `encryptedKey`, the application must decrypt and authenticate it, derive the restored public wallet identity, and compare it with an independently recorded expected identity. An existing record is not proof that migration succeeded. Treat an authentication or identity mismatch as a conflict, keep the legacy recovery path, and investigate. Keep these application-specific steps outside logs and analytics.
+
+The new record's `savedAt` is the migration time and `cloudEmail` comes from the new provider configuration. The legacy timestamp, platform, version, and email are not copied by `uploadEncryptedKey()`.
+
+## Plan The Transition
+
+- Make migration idempotent by checking CloudKit inside the shared per-account coordination boundary and validating every existing record.
+- Keep the legacy read path during a measured grace period for users who upgrade late.
+- Expect old and new app versions on different devices at the same time.
+- Use the same CloudKit environment throughout testing and production rollout.
+- Retain the legacy iCloud Drive file for rollback until recovery metrics and user support evidence justify cleanup.
+- Remove the legacy native dependency only after the supported migration window closes; React Native removal can require a pod reinstall and native rebuild.
+
+`forceUpdate` makes repeated CloudKit writes overwrite the same record. It does not preserve versions or resolve concurrent application-level migrations. Coordinate all writers per account and treat a different existing ciphertext as a conflict requiring authenticated recovery and identity validation, not an invitation to overwrite.
+
+## Verify Before Cleanup
+
+For a representative set of real deployment targets:
+
+1. Download the new cloud payload.
+2. Decrypt and authenticate the application envelope.
+3. Derive and compare the expected public wallet identity.
+4. Exercise the full wallet restoration flow in an isolated destination.
+5. Upload and read back a new test backup from the restored wallet.
+6. Test rollback while the legacy file is still present.
+
+Only then plan a separately confirmed cleanup release. Cloud deletion is permanent through this SDK and cannot erase copies outside the selected provider item.
+
+## Next Steps
+
+- [Usage](/tools/backup-cloud/usage)
+- [Configuration](/tools/backup-cloud/configuration)
+- [API Reference](/tools/backup-cloud/api-reference)
+
+***
+
+## Need Help?
+
+<SupportCards />
