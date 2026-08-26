@@ -65,6 +65,7 @@ Run these checks before opening or updating a PR:
 ```bash
 git diff --check
 npm run check:meta
+npm run check:tokens
 LINK_CHECK_EXTERNAL=false npm run check:links
 npm run build
 ```

@@ -88,7 +88,7 @@ Default public RPCs for chains listed above. All are rate-limited — use a prov
 
 | Token | Decimals | Note |
 |-------|----------|------|
-| USDT / USDT0 | 6 | All chains |
+| USD₮ / USD₮0 | 6 | All chains |
 | USDC | 6 | All chains |
 | DAI | 18 | EVM chains |
 | WETH | 18 | EVM chains |
@@ -101,10 +101,10 @@ EIP-3009 allows `transferWithAuthorization` / `receiveWithAuthorization` — the
 
 | Token | Chain | EIP-3009 Support |
 |-------|-------|-----------------|
-| USDT (native) | Ethereum | ❌ Not supported |
-| USDT (native) | TRON | ❌ Not supported |
-| USDT0 | Arbitrum | ✅ Supported |
-| USDT0 | Plasma | ✅ Supported — Plasma Relayer API provides free gas. Min 1 USDT0 (1,000,000 base units). |
+| USD₮ (native) | Ethereum | ❌ Not supported |
+| USD₮ (native) | TRON | ❌ Not supported |
+| USD₮0 | Arbitrum | ✅ Supported |
+| USD₮0 | Plasma | ✅ Supported — Plasma Relayer API provides free gas. Min 1 USD₮0 (1,000,000 base units). |
 
 Spec: https://eips.ethereum.org/EIPS/eip-3009
 
@@ -128,7 +128,7 @@ Minimum meaningful amounts below which transactions will fail or be rejected by 
 |-------|---------------|-------|
 | **Bitcoin** | 546 sats (P2PKH), 294 sats (P2WPKH) | Network enforced |
 | **Solana** | ~890,880 lamports | Rent-exempt minimum for accounts |
-| **Plasma (gasless)** | 1,000,000 (1 USDT0) | Relayer minimum |
+| **Plasma (gasless)** | 1,000,000 (1 USD₮0) | Relayer minimum |
 | **TRON** | Varies | Energy/bandwidth cost may exceed value for tiny amounts |
 
 

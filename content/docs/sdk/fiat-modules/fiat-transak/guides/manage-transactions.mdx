@@ -1,0 +1,59 @@
+---
+title: Manage Transactions
+description: Fetch Transak order status and inspect returned details.
+docType: how-to
+schemaType: TechArticle
+---
+
+This server-side guide assumes the `transak` instance from [Get Started](/sdk/fiat-modules/fiat-transak/guides/get-started). It shows how to [check transaction status](#check-transaction-status) and [read transaction details](#read-transaction-details) with [`getTransactionDetail()`](/sdk/fiat-modules/fiat-transak/api-reference). Pass the order id Transak returns after checkout (for example from your redirect URL or webhook payload). The same order id works for both buy and sell orders, since there's no separate direction argument.
+
+<Callout type="info">
+`getTransactionDetail` delegates the authenticated lookup to your server-side `getOrder` callback. It throws `A 'getOrder' callback is required to fetch a Transak order` if one wasn't configured. See [Configuration](/sdk/fiat-modules/fiat-transak/configuration#getorder-backend) for the backend implementation.
+</Callout>
+
+<Callout type="warn">
+Treat any order id received from a client as untrusted. Before calling Transak or returning order data, verify that it belongs to the authenticated user using your own order records.
+</Callout>
+
+## Check transaction status
+
+You can read the high-level state of an order with [`getTransactionDetail()`](/sdk/fiat-modules/fiat-transak/api-reference):
+
+```typescript title="Transaction status"
+const tx = await transak.getTransactionDetail(transakOrderId)
+
+console.log('Status:', tx.status)
+```
+
+`status` is one of `completed`, `failed`, or `in_progress`, normalised from Transak's raw order status:
+
+| WDK status | Transak status |
+|------------|-----------------|
+| `completed` | `COMPLETED` |
+| `failed` | `CANCELLED`, `FAILED`, `REFUNDED`, `EXPIRED` |
+| `in_progress` | `AWAITING_PAYMENT_FROM_USER`, `PAYMENT_DONE_MARKED_BY_USER`, `PROCESSING`, `PENDING_DELIVERY_FROM_TRANSAK`, `ON_HOLD_PENDING_DELIVERY_FROM_TRANSAK`, and any unrecognised status |
+
+## Read transaction details
+
+You can load the same record to inspect assets and currencies using [`getTransactionDetail()`](/sdk/fiat-modules/fiat-transak/api-reference):
+
+```typescript title="Transaction fields"
+const tx = await transak.getTransactionDetail(transakOrderId)
+
+console.log('Crypto asset:', tx.cryptoAsset)     // e.g. 'ETH'
+console.log('Fiat currency:', tx.fiatCurrency)   // e.g. 'EUR'
+console.log('Order ID:', transakOrderId)                // Persist the id used for this lookup
+console.log('Buy or sell:', tx.metadata.isBuyOrSell)   // 'BUY' or 'SELL'
+```
+
+<Callout type="warn">
+The provider metadata can contain customer, payment, or transaction details. Minimize retention and do not write the raw object to application logs or analytics.
+</Callout>
+
+The raw order under `metadata` includes provider-defined fields such as `isBuyOrSell`, `walletAddress`, `transactionHash`, `amountPaid`, `createdAt`, and `completedAt`. Persist the order id used for the lookup in your own records instead of depending on a metadata identifier alias. See [`TransakOrder`](/sdk/fiat-modules/fiat-transak/api-reference#transakorder) in the API reference.
+
+## Next Steps
+
+- [Buy and sell](/sdk/fiat-modules/fiat-transak/guides/buy-and-sell/)
+- [Get started](/sdk/fiat-modules/fiat-transak/guides/get-started/)
+- [Configuration](/sdk/fiat-modules/fiat-transak/configuration)

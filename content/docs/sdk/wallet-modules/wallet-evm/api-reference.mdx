@@ -290,7 +290,9 @@ const signerAccount = new WalletAccountEvm(
 | `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise<Record<string, bigint>>` | If no provider |
 | `approve(options)` | Approves a spender to spend tokens | `Promise<{hash: string, fee: bigint}>` | If no provider |
 | `getAllowance(token, spender)` | Returns current allowance for a spender | `Promise<bigint>` | If no provider |
-| `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<EvmTransactionReceipt \| null>` | If no provider |
+| `getTransactionReceipt(hash)` | Returns a native receipt; deprecated in favor of `getTransaction()` | `Promise<EvmTransactionReceipt \| null>` | If no provider |
+| `getTransaction(hash)` | Returns normalized finality and the native receipt | `Promise<TransactionReceipt & EvmTransactionDetails>` | If no provider, the hash is invalid, or no transaction is found |
+| `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final`, or returns `dropped` | `Promise<TransactionReceipt & EvmTransactionDetails>` | If the wait times out |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlyEvm>` | - |
 | `signAuthorization(auth)` | Signs an ERC-7702 authorization tuple | `Promise<Authorization>` | If signing fails |
 | `delegate(delegateAddress)` | Delegates the EOA to a contract through an ERC-7702 type 4 transaction | `Promise<{hash: string, fee: bigint}>` | If no provider |
@@ -444,11 +446,11 @@ console.log('Typed data signature valid:', isValid) // true
 Sends an EVM transaction and returns the result with hash and fee.
 
 <Callout type="warning">
-In `1.0.0-beta.16`, the TypeScript declaration also accepts a serialized transaction string, but the send path does not broadcast those supplied bytes. It repopulates a transaction from the value passed to the method and can therefore broadcast a different transaction. Pass an `EvmTransaction` object here. Submit signed raw transactions through a separate relay or provider until this runtime mismatch is resolved.
+In `1.0.0-beta.17`, the TypeScript declaration also accepts a serialized transaction string, but the send path does not broadcast those supplied bytes. It repopulates a transaction from the value passed to the method and can therefore broadcast a different transaction. Pass an `EvmTransaction` object here. Submit signed raw transactions through a separate relay or provider until this runtime mismatch is resolved.
 </Callout>
 
 **Parameters:**
-- `tx` (EvmTransaction | string): The declared input type. Use the `EvmTransaction` object form for sending in `1.0.0-beta.16`.
+- `tx` (EvmTransaction | string): The declared input type. Use the `EvmTransaction` object form for sending in `1.0.0-beta.17`.
   - `to` (string | null, optional): Recipient address; omit or pass `null` for contract creation
   - `value` (number | bigint): Amount in wei
   - `data` (string, optional): Transaction data in hex format
@@ -528,9 +530,9 @@ Transfers ERC20 tokens to another address using the standard transfer function.
 **Example:**
 ```javascript
 const result = await account.transfer({
-  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt
   recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-  amount: 1000000 // 1 USDT (6 decimals)
+  amount: 1000000 // 1 USDt (6 decimals)
 })
 console.log('Transfer hash:', result.hash)
 console.log('Transfer fee:', result.fee, 'wei')
@@ -582,10 +584,10 @@ Returns the balance of a specific ERC20 token using the balanceOf function.
 
 **Example:**
 ```javascript
-// Get USDT balance
+// Get USDt balance
 const usdtBalance = await account.getTokenBalance('0xdAC17F958D2ee523a2206206994597C13D831ec7')
-console.log('USDT balance:', usdtBalance) // In 6 decimal places
-console.log('USDT balance formatted:', usdtBalance / 1000000, 'USDT')
+console.log('USDt balance:', usdtBalance) // In 6 decimal places
+console.log('USDt balance formatted:', usdtBalance / 1000000, 'USDt')
 ```
 
 #### `getTokenBalances(tokenAddresses)`
@@ -601,12 +603,12 @@ Returns balances for multiple ERC20 tokens in one call.
 **Example:**
 ```javascript
 const balances = await account.getTokenBalances([
-  '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
-  '0x68749665FF8D2d112Fa859AA293F07A622782F38'  // XAUT
+  '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt
+  '0x68749665FF8D2d112Fa859AA293F07A622782F38'  // XAUt
 ])
 
-console.log('USDT:', balances['0xdAC17F958D2ee523a2206206994597C13D831ec7'])
-console.log('XAUT:', balances['0x68749665FF8D2d112Fa859AA293F07A622782F38'])
+console.log('USDt:', balances['0xdAC17F958D2ee523a2206206994597C13D831ec7'])
+console.log('XAUt:', balances['0x68749665FF8D2d112Fa859AA293F07A622782F38'])
 ```
 
 #### `approve(options)`
@@ -622,12 +624,12 @@ Approves a specific amount of tokens to a spender.
 
 **Throws:**
 - Error if no provider is configured
-- Error if trying to re-approve USDT on Ethereum without resetting to 0 first
+- Error if trying to re-approve USD₮ on Ethereum without resetting to 0 first
 
 **Example:**
 ```javascript
 const result = await account.approve({
-  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt
   spender: '0xSpenderAddress...',
   amount: 1000000n
 })
@@ -655,7 +657,7 @@ console.log('Current allowance:', allowance)
 ```
 
 #### `getTransactionReceipt(hash)`
-Returns a transaction receipt by hash.
+Returns a native transaction receipt by hash. This method is deprecated; use `getTransaction()` and read its `receipt` property when native ethers fields are needed.
 
 **Parameters:**
 - `hash` (string): The transaction hash
@@ -670,6 +672,42 @@ const receipt = await account.getTransactionReceipt('0x...')
 if (receipt) {
   console.log('Confirmed in block:', receipt.blockNumber)
   console.log('Status:', receipt.status) // 1 = success, 0 = failed
+}
+```
+
+#### `getTransaction(hash)`
+
+Returns normalized transaction finality for an exact 32-byte hexadecimal hash.
+
+```javascript
+const receipt = await account.getTransaction(transactionHash)
+
+console.log(receipt.finality)      // pending, confirmed, final, or dropped
+console.log(receipt.success)       // true or false after execution
+console.log(receipt.confirmations)
+console.log(receipt.receipt)       // Native ethers receipt, or null
+```
+
+An unmined transaction is `pending`. It becomes `dropped` when the sender's latest mined nonce has advanced beyond that transaction's nonce, which indicates that nonce was replaced or otherwise consumed. A mined transaction is `confirmed`; it becomes `final` when its block is at or below the RPC's `finalized` block. Nodes that do not support the `finalized` tag leave mined transactions at `confirmed`.
+
+`success: false` represents a mined transaction whose receipt status is `0`. Reaching `confirmed` or `final` does not prove successful execution. Invalid hashes throw `ValueError`; unknown hashes throw `NoSuchElementError`.
+
+#### `waitForTransaction(hash, options?)`
+
+Polls `getTransaction()` until the target is reached or the transaction is classified as `dropped`. The default target is `confirmed`, the default interval is four seconds, and the EVM timeout is 120 seconds.
+
+```javascript
+const receipt = await account.waitForTransaction(transactionHash, {
+  target: 'final',
+  timeout: 180000,
+  interval: 4000,
+  maxPollErrors: 3
+})
+
+if (receipt.finality === 'dropped') {
+  console.log('The nonce was consumed by another transaction')
+} else if (!receipt.success) {
+  console.log('The transaction was included but reverted')
 }
 ```
 
@@ -793,7 +831,9 @@ const readOnlyAccount = new WalletAccountReadOnlyEvm('0x742d35Cc6634C0532925a3b8
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies a typed data signature (EIP-712) | `Promise<boolean>` | - |
 | `getDelegation()` | Checks active ERC-7702 delegation status | `Promise<DelegationInfo>` | If no provider |
-| `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<EvmTransactionReceipt \| null>` | If no provider |
+| `getTransactionReceipt(hash)` | Returns a native receipt; deprecated in favor of `getTransaction()` | `Promise<EvmTransactionReceipt \| null>` | If no provider |
+| `getTransaction(hash)` | Returns normalized finality and the native receipt | `Promise<TransactionReceipt & EvmTransactionDetails>` | If no provider, the hash is invalid, or no transaction is found |
+| `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final`, or returns `dropped` | `Promise<TransactionReceipt & EvmTransactionDetails>` | If the wait times out |
 | `getAllowance(token, spender)` | Returns current allowance for a spender | `Promise<bigint>` | If no provider |
 
 #### `getAddress()`
@@ -833,7 +873,7 @@ Returns the balance of a specific ERC20 token.
 **Example:**
 ```javascript
 const tokenBalance = await readOnlyAccount.getTokenBalance('0xdAC17F958D2ee523a2206206994597C13D831ec7')
-console.log('USDT balance:', tokenBalance)
+console.log('USDt balance:', tokenBalance)
 ```
 
 #### `getTokenBalances(tokenAddresses)`
@@ -849,8 +889,8 @@ Returns balances for multiple ERC20 tokens.
 **Example:**
 ```javascript
 const balances = await readOnlyAccount.getTokenBalances([
-  '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
-  '0x68749665FF8D2d112Fa859AA293F07A622782F38'  // XAUT
+  '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt
+  '0x68749665FF8D2d112Fa859AA293F07A622782F38'  // XAUt
 ])
 console.log('Balances:', balances)
 ```
@@ -941,7 +981,7 @@ console.log('Delegate:', delegation.delegateAddress)
 ```
 
 #### `getTransactionReceipt(hash)`
-Returns a transaction's receipt if it has been mined.
+Returns a native receipt if the transaction has been mined. This method is deprecated; use `getTransaction()` for normalized finality.
 
 **Parameters:**
 - `hash` (string): The transaction hash
@@ -962,6 +1002,10 @@ if (receipt) {
 }
 ```
 
+#### `getTransaction(hash)` and `waitForTransaction(hash, options?)`
+
+Read-only accounts expose the same normalized transaction methods as owned accounts. `getTransaction()` returns `TransactionReceipt & EvmTransactionDetails`; `waitForTransaction()` uses a four-second interval and 120-second timeout by default. A `dropped` receipt means the sender's mined nonce advanced past the pending transaction's nonce. Always inspect `success` after inclusion because a confirmed or final transaction can have reverted.
+
 #### `getAllowance(token, spender)`
 Returns the current allowance for the given token and spender.
 
@@ -981,6 +1025,35 @@ console.log('Allowance:', allowance)
 ```
 
 ## Types
+
+### Normalized Transaction Types
+
+```typescript
+type Finality = 'pending' | 'confirmed' | 'final' | 'dropped'
+type WaitForTransactionTarget = 'confirmed' | 'final'
+
+interface TransactionReceipt {
+  hash: string
+  finality: Finality
+  success?: boolean
+  block?: number
+  fee?: bigint
+}
+
+interface WaitForTransactionOptions {
+  target?: WaitForTransactionTarget // Default: 'confirmed'
+  timeout?: number                  // Milliseconds; EVM default: 120,000
+  interval?: number                 // Milliseconds; default: 4,000
+  maxPollErrors?: number            // Default: 3
+}
+
+interface EvmTransactionDetails {
+  confirmations: number
+  receipt: EvmTransactionReceipt | null
+}
+```
+
+The package re-exports these types.
 
 ### EvmTransaction
 

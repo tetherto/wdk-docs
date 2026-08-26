@@ -35,7 +35,8 @@ const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
   paymasterToken: {
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
   },
-  transferMaxFee: 100000n // 0.1 USDT when the token has 6 decimals
+  transactionMaxFee: 100000n,
+  transferMaxFee: 100000n // 0.1 USDt when the token has 6 decimals
 })
 ```
 
@@ -129,6 +130,7 @@ Use paymaster-token mode when the account pays UserOperation fees with an ERC-20
 | `isSponsored` | `false` | No | Omit this field or set it to `false`. |
 | `paymasterToken.address` | `string` | Yes | ERC-20 token address used for fee payment. |
 | `paymasterAddress` | `string` | No | Pins the expected paymaster contract address. |
+| `transactionMaxFee` | `number \| bigint` | No | Maximum fee for wallet-built `sendTransaction()`, `signTransaction()`, and `approve()` operations, in paymaster-token base units. |
 | `transferMaxFee` | `number \| bigint` | No | Maximum fee for `transfer()` operations, in paymaster-token base units. Choose the value using the token's decimals. |
 
 If `isSponsored` is omitted or `false`, `paymasterToken` is required.
@@ -141,9 +143,16 @@ const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
   paymasterToken: {
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
   },
-  transferMaxFee: 100000n // 0.1 USDT when the token has 6 decimals
+  transactionMaxFee: 100000n,
+  transferMaxFee: 100000n // 0.1 USDt when the token has 6 decimals
 })
 ```
+
+For wallet-built sends, signing, and approvals, the operation is rejected only when the estimated fee is greater than `transactionMaxFee`; a fee equal to the cap is allowed. `transfer()` keeps its stricter `transferMaxFee` rule and rejects a fee equal to the cap. Both caps are ignored in sponsored mode.
+
+<Callout type="warn">
+Passing an already-signed `UserOperationV8` to `sendTransaction()` bypasses `transactionMaxFee`. Its gas fields can yield a native-wei ceiling, but the module cannot reconstruct the token-denominated paymaster fee needed for comparison. Apply your fee policy before signing, and accept signed operations only from a trusted, reviewed source.
+</Callout>
 
 When `paymasterAddress` is set, the account checks the paymaster address returned by the RPC response and throws `ConfigurationError` if it does not match.
 
@@ -171,22 +180,30 @@ If a provider serves its paymaster from a different URL than the bundler, set `p
 `quoteSendTransaction()`, `signTransaction()`, `sendTransaction()`, `quoteTransfer()`, and `transfer()` accept a partial fee-mode config override. Overrides are shallow-merged with the account config. Include `isSponsored: false` when switching a sponsored account to paymaster-token mode for one operation:
 
 ```javascript title="Override the paymaster token"
-const result = await account.sendTransaction({
+const tx = {
   to: '0x742C4265F5Ba4F8E0842e2b9EfE66302F7a13B6F',
   value: 0n,
   data: '0x'
-}, {
+}
+const feeConfig = {
   isSponsored: false,
   paymasterToken: {
     address: '0x68749665FF8D2d112Fa859AA293F07A622782F38'
-  }
-})
+  },
+  transactionMaxFee: 100000n
+}
+
+const quote = await account.quoteSendTransaction(tx, feeConfig)
+await confirmFeeTokenAndAmount(feeConfig.paymasterToken.address, quote.fee)
+const result = await account.sendTransaction(tx, feeConfig)
 ```
 
-When an override is provided, the merged config is validated before the operation runs.
+When an override is provided, the merged config is validated before the operation runs. `confirmFeeTokenAndAmount()` represents the application's explicit review of the changed fee token and quoted amount; the quote itself does not enforce `transactionMaxFee`, while the wallet-built send does.
 
-The beta.3 JavaScript runtime also reads `parallel` and `nonceKey` from per-call overrides for `signTransaction()`, `sendTransaction()`, and `transfer()`. The published second-argument TypeScript declarations include only fee-mode fields, so constructor-level lane configuration is the typed path in this release.
+The beta.4 JavaScript runtime also reads `parallel` and `nonceKey` from per-call overrides for `signTransaction()`, `sendTransaction()`, and `transfer()`. The published second-argument TypeScript declarations include only fee-mode fields, so constructor-level lane configuration is the typed path in this release.
 
-<Callout type="warning">
-The two-minute quote cache is keyed by the transaction, not by this override. Pass the same fee-mode and paymaster settings to a quote and its matching send or transfer. If those settings must change, do not execute the same transaction from that account until its earlier cached quote has expired.
+<Callout type="info">
+The two-minute quote cache key includes the transaction, sponsorship mode, paymaster token, expected paymaster address, and sponsorship policy ID. A matching operation also rechecks the current EntryPoint nonce before reuse. Changing any keyed fee-mode field causes a fresh quote.
 </Callout>
+
+For an undelegated owned EOA in paymaster-token mode, `quoteSendTransaction()` includes the signed EIP-7702 authorization that the later sign or send path uses. Read-only accounts cannot create that authorization, so do not use a read-only quote as proof of the complete undelegated owned-account cost. Sponsored quotes return `0n` without estimating this authorization.

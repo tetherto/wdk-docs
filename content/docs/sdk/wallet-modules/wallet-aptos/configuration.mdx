@@ -6,7 +6,7 @@ schemaType: TechArticle
 icon: Settings
 ---
 
-Configure the Aptos wallet module with an Aptos fullnode REST endpoint. A provider is required for balance reads, fee quotes, transaction submission, and receipt polling.
+Configure the Aptos wallet module with an Aptos fullnode REST endpoint. A provider is required for balance reads, fee quotes, transaction submission, normalized transaction lookup and waiting, and legacy receipt polling.
 
 ```javascript
 import WalletManagerAptos from '@tetherto/wdk-wallet-aptos'
@@ -32,7 +32,7 @@ const wallet = new WalletManagerAptos(seedPhrase, {
 | `txnExpirationSecs` | `number` | Transaction expiration window measured from the current time. Defaults to `60`. |
 | `transferMaxFee` | `number \| bigint` | Optional maximum estimated fee in octas for fungible asset `transfer()` calls. |
 
-An empty provider array behaves like no provider. Balance reads, quotes, receipt lookup, transaction signing, and transaction submission then throw a provider-required error.
+An empty provider array behaves like no provider. Balance reads, quotes, transaction lookup and waiting, transaction signing, and transaction submission then fail because no fullnode is available.
 
 ## Account Configuration
 
@@ -47,7 +47,7 @@ const account = new WalletAccountAptos(seedPhrase, "0'/0'/0'", {
 })
 ```
 
-An address and provider are enough for balance and receipt reads:
+An address and provider are enough for balance reads and transaction tracking:
 
 ```javascript
 import { WalletAccountReadOnlyAptos } from '@tetherto/wdk-wallet-aptos'
@@ -56,6 +56,8 @@ const readOnlyAccount = new WalletAccountReadOnlyAptos('0x...', {
   provider: 'https://fullnode.mainnet.aptoslabs.com/v1'
 })
 ```
+
+Validate externally supplied addresses before construction. The read-only constructor stores the address verbatim and does not reject or normalize an invalid value.
 
 Fee quotes simulate a transaction and message verification uses Ed25519, so those operations also require the matching 32-byte public key:
 
@@ -109,15 +111,15 @@ const wallet = new WalletManagerAptos(seedPhrase, {
 })
 ```
 
-The cap does not apply to native APT `sendTransaction()` or `signTransaction()`. Use `quoteSendTransaction()` and enforce a separate application limit for native transfers when needed.
+The cap does not apply to native APT `sendTransaction()` or `signTransaction()`. `quoteSendTransaction()` is useful for user review, but send and sign simulate again and expose no native maximum-fee argument. Beta.2 therefore cannot enforce a hard application cap for native APT operations.
 
 ## Security Notes
 
 - Keep seed phrases and seed bytes outside logs and client-visible error reporting.
 - Use trusted fullnode endpoints for production wallets.
 - Keep a supplied `chainId` consistent with every configured fullnode.
-- Set a fee cap for user-facing fungible asset transfers and check native APT quotes separately.
-- Call `dispose()` on accounts and managers when secret material is no longer needed.
+- Set a fee cap for user-facing fungible asset transfers and treat native APT quotes as advisory preflight values.
+- Call `dispose()` on accounts and managers when they are no longer needed, but do not treat manager disposal as seed zeroization. Beta.2 clears cached accounts and signers while retaining the manager's original `seed` buffer; release every manager and seed reference, and use a stronger isolation boundary when memory reclamation is required.
 
 <Cards>
 <Card title="Usage" href="/sdk/wallet-modules/wallet-aptos/usage">

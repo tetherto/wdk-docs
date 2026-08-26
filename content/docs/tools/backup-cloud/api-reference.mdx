@@ -1,0 +1,186 @@
+---
+title: Cloud Backup API Reference
+description: API reference for CloudBackup, GoogleDriveProvider, CloudKitProvider, payload types, and cloud errors
+docType: reference
+schemaType: APIReference
+icon: Code
+---
+
+This reference describes `@tetherto/wdk-backup-cloud@1.0.0-beta.1`. The package uses named exports and has no default export.
+
+## Exports
+
+```typescript
+import {
+  CloudBackup,
+  GoogleDriveProvider,
+  CloudKitProvider,
+  CloudAuthError,
+  CloudStorageError,
+  CloudUnavailableError,
+  CloudValidationError,
+  type CloudEncryptionKeyFile,
+  type CloudProvider,
+  type GoogleDriveConfig,
+  type CloudKitConfig,
+  type CloudKitAuthContext,
+  type CloudErrorCode
+} from '@tetherto/wdk-backup-cloud'
+```
+
+The package root exposes the default runtime entry to Node.js and React Native and a conditional Bare entry that loads `bare-node-runtime` globals before re-exporting the same surface.
+
+## `CloudBackup`
+
+```typescript
+new CloudBackup(provider: CloudProvider)
+```
+
+The facade validates only that an uploaded string is not empty or whitespace-only, then delegates to the provider. It does not validate encryption, ciphertext format, wallet identity, provider shape, or cloud-account ownership.
+
+| Method | Returns | Behavior |
+| --- | --- | --- |
+| `uploadEncryptedKey(key)` | `Promise<CloudEncryptionKeyFile>` | Validates a non-blank string and asks the provider to create or overwrite its configured item. |
+| `downloadEncryptedKey()` | `Promise<CloudEncryptionKeyFile \| null>` | Returns the parsed payload, or `null` for the provider's not-found path. |
+| `deleteBackup()` | `Promise<void>` | Permanently deletes the item; current providers treat a missing item as success. |
+| `isAvailable()` | `Promise<boolean>` | Delegates to a non-throwing provider probe. |
+| `exists()` | `Promise<boolean>` | Delegates to a non-throwing provider existence check. |
+
+<Callout type="error">
+`uploadEncryptedKey()` does not encrypt its argument. Pass only application-produced authenticated ciphertext. Upload replaces the configured item and verifies existence, not read-back content or recoverability.
+</Callout>
+
+## `CloudProvider`
+
+Applications can implement another provider against the exported type:
+
+```typescript
+type CloudProvider = {
+  upload: (encryptedKey: string) => Promise<CloudEncryptionKeyFile>
+  download: () => Promise<CloudEncryptionKeyFile | null>
+  delete: () => Promise<void>
+  isAvailable: () => Promise<boolean>
+  exists: () => Promise<boolean>
+}
+```
+
+`upload` must overwrite an existing logical backup. `download` returns `null` when none exists. `delete` must be idempotent. The facade does not normalize a custom provider's errors or validate its returned payload.
+
+## `CloudEncryptionKeyFile`
+
+```typescript
+type CloudEncryptionKeyFile = {
+  encryptionKey: string
+  savedAt: string
+  cloudEmail: string
+}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `encryptionKey` | Opaque string supplied by the caller. The SDK does not inspect or transform it. |
+| `savedAt` | ISO-8601 timestamp created immediately before upload. |
+| `cloudEmail` | Provider configuration value, or an empty string. |
+
+There is no package-level schema-version or cryptographic metadata field.
+
+## `GoogleDriveProvider`
+
+```typescript
+new GoogleDriveProvider(config: GoogleDriveConfig)
+```
+
+```typescript
+type GoogleDriveConfig = {
+  accessToken?: string
+  getAccessToken?: () => Promise<string>
+  filePath?: string
+  cloudEmail?: string
+  timeout?: number
+}
+```
+
+Provide `accessToken` or `getAccessToken`; the callback wins when both are set and is called before each Drive request. The access token needs the `drive.appdata` scope.
+
+| Method | Provider-specific behavior |
+| --- | --- |
+| `upload()` | Lists by basename in `appDataFolder`, creates or updates the first match, then lists again to verify existence. |
+| `download()` | Finds the first matching item, downloads its JSON, and requires string `encryptionKey`, `savedAt`, and `cloudEmail` fields. |
+| `delete()` | Finds and deletes the first matching item; a missing item is success. |
+| `isAvailable()` | Calls the Drive `about` endpoint and returns `false` for a non-success response or exception. |
+| `exists()` | Lists for the item and returns `false` for absence or any exception. |
+
+The default basename is `wallet_backup_key.json` and the default request timeout is 30 seconds. `filePath` directory segments are discarded.
+
+## `CloudKitProvider`
+
+```typescript
+new CloudKitProvider(config: CloudKitConfig)
+```
+
+```typescript
+type CloudKitAuthContext = {
+  apiToken: string
+  webAuthToken: string
+}
+
+type CloudKitConfig = {
+  containerIdentifier: string
+  environment: 'development' | 'production'
+  zoneName?: string
+  recordName?: string
+  recordType?: string
+  cloudEmail?: string
+  getCloudKitAuth: () => Promise<CloudKitAuthContext>
+  maxSyncRetries?: number
+  syncRetryDelayMs?: number
+  timeout?: number
+}
+```
+
+| Method | Provider-specific behavior |
+| --- | --- |
+| `upload()` | Probes CloudKit, writes three String fields with `forceUpdate`, then looks up the record to verify existence. |
+| `download()` | Probes, checks existence, and retries record lookup up to `maxSyncRetries`; malformed fields fail. |
+| `delete()` | Probes, looks up the record and its change tag, then deletes it; not found is success. |
+| `isAvailable()` | Probes a private-database record lookup and returns `false` for any exception. |
+| `exists()` | Probes and looks up the record, returning `false` for absence or any exception. |
+
+Defaults are `_defaultZone`, `wallet_backup_key`, `WalletBackup`, 10 download attempts, a one-second retry delay, and a 30-second per-request timeout. The provider always uses the private database in the configured development or production environment.
+
+`getCloudKitAuth()` is called before each request. The package does not implement CloudKit sign-in, generate a web-auth token, provision the container, or deploy the record schema.
+
+## Errors
+
+| Class | Code | Intended condition |
+| --- | --- | --- |
+| `CloudValidationError` | `CLOUD_VALIDATION_ERROR` | Blank key or invalid numeric provider configuration; Google Drive also rejects missing token configuration. |
+| `CloudAuthError` | `CLOUD_AUTH_ERROR` | Provider reports invalid or expired credentials. |
+| `CloudUnavailableError` | `CLOUD_UNAVAILABLE` | Timeout, network failure, throttling, or selected transient provider failures. |
+| `CloudStorageError` | `CLOUD_STORAGE_ERROR` | Malformed payload, rejected storage operation, quota failure, failed verification, or another non-transient provider failure. |
+
+```typescript
+type CloudErrorCode =
+  | 'CLOUD_UNAVAILABLE'
+  | 'CLOUD_AUTH_ERROR'
+  | 'CLOUD_STORAGE_ERROR'
+  | 'CLOUD_VALIDATION_ERROR'
+```
+
+Each exported error extends an internal base error and carries `name`, `message`, `code`, and `cause`. The base class is not exported. Provider response details can be retained in the cause; do not expose complete errors to users or telemetry.
+
+<Callout type="warn">
+`isAvailable()` and `exists()` intentionally suppress all provider exceptions and return `false`. A false value does not identify the cause. Operations normally use the typed hierarchy, but callers should still handle unexpected runtime errors from credential callbacks, globals, malformed JavaScript inputs, or provider edge cases.
+</Callout>
+
+## Related Pages
+
+- [Usage](/tools/backup-cloud/usage)
+- [Configuration](/tools/backup-cloud/configuration)
+- [Migrate from the React Native package](/tools/backup-cloud/guides/migrate-from-react-native)
+
+***
+
+## Need Help?
+
+<SupportCards />

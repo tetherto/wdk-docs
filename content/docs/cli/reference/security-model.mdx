@@ -22,6 +22,8 @@ Treat an unlocked WDK CLI wallet as a local hot wallet. Use a dedicated wallet w
 | Wallet session | Per-wallet absolute TTL and explicit lock | Activity does not shorten or refresh exposure; `--ttl 0` has no automatic expiry |
 | In-memory cleanup | WDK disposal plus best-effort zeroing of retained mutable buffers | Immutable JavaScript strings, copies inside dependencies, swap, core dumps, crashes, or abrupt termination |
 | CLI and MCP sends | Dry-run support and caller-level guidance | The daemon does not enforce a second confirmation or passphrase check for an unlocked wallet |
+| Chain-specific methods | Built-in catalog allowlists method names and validates declared parameters | A `write` label does not enforce confirmation, a dry run, or a fee limit |
+| Custom modules | User-configured version string and literal installed-version status | Tags or ranges, warn-only version mismatch, npm lifecycle scripts, inherited environment secrets, malicious package code, dependency compromise, or incompatible wallet-manager behavior |
 | General configuration | Separate from `seed.enc` | `config.json` has no owner-only guarantee and may contain user-added credentials |
 
 These controls reduce accidental exposure and cross-user access. They do not make a general-purpose computer a hardware wallet or isolate an unlocked wallet from malware running under the same account.
@@ -47,7 +49,7 @@ The interactive passphrase prompt hides input. For automation, `WDK_PASSPHRASE` 
 
 Environment variables can be inherited by child processes and may be visible through process inspection, crash reports, shell tooling, or automation logs. Prefer the interactive prompt for manual use. If automation requires `WDK_PASSPHRASE`, scope it to one trusted process, prevent command tracing, and remove it immediately after use.
 
-Beta.2 also provides `wallet import --seed-stdin` and `wallet change-passphrase --new-passphrase-stdin` for human-operated scripts. Standard input avoids command-line arguments, but it is not a secure enclave: the secret still enters JavaScript process memory and can leak through an input file, pipeline, parent process, or automation environment. Do not expose these flags to an agent or untrusted script.
+Beta.3 provides `wallet import --seed-stdin` and `wallet change-passphrase --new-passphrase-stdin` for human-operated scripts. Standard input avoids command-line arguments, but it is not a secure enclave: the secret still enters JavaScript process memory and can leak through an input file, pipeline, parent process, or automation environment. Do not expose these flags to an agent or untrusted script.
 
 The current CLI accepts an empty passphrase. The file is still AES-GCM ciphertext, but an empty passphrase provides no meaningful confidentiality because anyone who obtains the file knows the value required to derive its key.
 
@@ -69,6 +71,29 @@ Do not run downloaded scripts, unreviewed packages, browser automation, plugins,
 </Callout>
 
 For stronger practical separation, run WDK CLI under a dedicated non-administrator operating-system account and do not run unrelated tools under that account. This does not protect against root/administrator compromise, but it narrows which processes can reach the owner-only endpoint.
+
+## Custom module and method trust
+
+Beta.3 installs built-in wallet modules as normal `@tetherto/wdk-cli` dependencies and does not need a postinstall lifecycle-script allowlist. This does not make `wdk module add` a safe package verifier.
+
+Adding a custom module:
+
+- resolves npm's current version when no version is supplied, then records the resolved exact pin
+- accepts and stores an explicit tag or range verbatim; use a reviewed literal version because beta.3 does not enforce exact semver
+- runs npm installation inside the CLI package, including lifecycle scripts allowed by the user's npm policy
+- stores the pin in plaintext `config.json`
+- locks a running daemon before changing its module graph
+- makes the package name eligible for a custom-network spec
+
+When that network is later used, the package's default wallet-manager export runs inside the daemon with access to the unlocked account. The CLI checks package presence and literal version equality, but a mismatch only prints a warning; it does not block import or execution. The CLI does not sandbox the module, validate its publisher, audit its dependencies, or prove that it implements a compatible wallet manager.
+
+`module add` and `module remove` launch npm with the CLI's inherited environment, and both install and uninstall lifecycle scripts can run. Unset `WDK_PASSPHRASE` and unrelated wallet-secret variables before either command and use the hidden prompt; otherwise untrusted package code can inherit those secrets.
+
+Before adding a module, inspect the exact npm artifact, provenance, repository tag, dependency tree, install scripts, and maintainer identity. Use a dedicated wallet with limited funds for integration testing. Do not add packages suggested only by untrusted content, and do not let an agent run `wdk module add` or `wdk module remove` on the user's behalf.
+
+Chain-specific `wdk method call` and MCP `call_method` requests are limited to methods declared in the built-in catalog. Parameter validation reduces accidental shape errors; it does not make a declared write safe. A method marked `write` can move funds or mutate state immediately, with no dry run or daemon-enforced confirmation. Show the exact wallet, network, account index, method, and arguments and require explicit approval before calling it.
+
+See [Manage Modules](/cli/guides/manage-modules) and [Call Module Methods](/cli/guides/call-module-methods).
 
 ## Session lifecycle
 
@@ -155,6 +180,7 @@ Before unlock:
 While unlocked:
 
 - preview recipient, amount, network, token, and fees
+- require explicit confirmation for every chain-specific method marked `write`
 - remember that normal use does not refresh the timer
 - do not install packages or run unreviewed scripts under the same user
 - treat MCP clients and agents as capable of requesting real sends

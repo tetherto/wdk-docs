@@ -8,10 +8,12 @@ icon: Code
 
 ## Exports
 
-```javascript
+```typescript
 import WalletManagerAptos, {
   WalletAccountAptos,
-  WalletAccountReadOnlyAptos
+  WalletAccountReadOnlyAptos,
+  type AptosTransactionInfo,
+  type WaitForTransactionOptions
 } from '@tetherto/wdk-wallet-aptos'
 ```
 
@@ -33,7 +35,7 @@ new WalletManagerAptos(
 | `getAccount(index?)` | Returns the account at `m/44'/637'/index'/0'/0'`. | `Promise<WalletAccountAptos>` |
 | `getAccountByPath(path)` | Returns an account at a relative hardened path. | `Promise<WalletAccountAptos>` |
 | `getFeeRates()` | Returns Aptos fee rates in octas per gas unit. | `Promise<FeeRates>` |
-| `dispose()` | Clears managed account secret material. | `void` |
+| `dispose()` | Disposes cached accounts and signers and clears their manager caches. It does not erase the manager's `seed` buffer. | `void` |
 
 ## WalletAccountAptos
 
@@ -67,7 +69,9 @@ new WalletAccountAptos(
 | `signTransaction(tx)` | Simulates and signs a native APT transfer without broadcasting. Requires a provider. | `Promise<SignedTransaction>` |
 | `quoteTransfer(options)` | Estimates fee for a fungible asset transfer. | `Promise<{ fee: bigint }>` |
 | `transfer(options)` | Signs and submits a fungible asset transfer. | `Promise<TransferResult>` |
-| `getTransactionReceipt(hash)` | Looks up a pending or committed Aptos transaction. | `Promise<{ type: string; hash: string; success?: boolean; vm_status?: string } \| null>` |
+| `getTransaction(hash)` | Returns a normalized receipt plus the raw Aptos transaction. | `Promise<AptosTransactionInfo>` |
+| `waitForTransaction(hash, options?)` | Polls until the requested finality or timeout. | `Promise<AptosTransactionInfo>` |
+| `getTransactionReceipt(hash)` | Deprecated raw lookup for a pending or committed Aptos transaction. | `Promise<{ type: string; hash: string; success?: boolean; vm_status?: string } \| null>` |
 | `sign(message)` | Signs a message with the account key. | `Promise<string>` |
 | `verify(message, signature)` | Verifies a message signature. | `Promise<boolean>` |
 | `toReadOnlyAccount()` | Returns a read-only account for the same address. | `Promise<WalletAccountReadOnlyAptos>` |
@@ -85,16 +89,22 @@ new WalletAccountReadOnlyAptos(
 )
 ```
 
-An address-only instance supports balance reads and receipt lookup. `quoteSendTransaction()`, `quoteTransfer()`, and `verify()` require the matching public key because an Aptos address cannot be reversed into an Ed25519 public key. `toReadOnlyAccount()` supplies that key automatically.
+An address-only instance supports balance reads and transaction tracking. `quoteSendTransaction()`, `quoteTransfer()`, and `verify()` require the matching public key because an Aptos address cannot be reversed into an Ed25519 public key. `toReadOnlyAccount()` supplies that key automatically.
+
+<Callout type="warn">
+The read-only constructor stores the supplied address as-is; it does not validate or normalize it. Validate an externally supplied address before constructing the account.
+</Callout>
 
 | Method | Description | Returns |
 |--------|-------------|---------|
-| `getAddress()` | Returns the normalized Aptos address. | `Promise<string>` |
+| `getAddress()` | Returns the constructor-supplied address verbatim. | `Promise<string>` |
 | `getBalance()` | Returns the native APT balance in octas. | `Promise<bigint>` |
 | `getTokenBalance(tokenAddress)` | Returns a fungible asset balance by metadata address. | `Promise<bigint>` |
 | `quoteSendTransaction(tx)` | Estimates fee for a native APT transfer. | `Promise<{ fee: bigint }>` |
 | `quoteTransfer(options)` | Estimates fee for a fungible asset transfer. | `Promise<{ fee: bigint }>` |
-| `getTransactionReceipt(hash)` | Looks up a pending or committed Aptos transaction. | `Promise<{ type: string; hash: string; success?: boolean; vm_status?: string } \| null>` |
+| `getTransaction(hash)` | Returns a normalized receipt plus the raw Aptos transaction. | `Promise<AptosTransactionInfo>` |
+| `waitForTransaction(hash, options?)` | Polls until the requested finality or timeout. | `Promise<AptosTransactionInfo>` |
+| `getTransactionReceipt(hash)` | Deprecated raw lookup for a pending or committed Aptos transaction. | `Promise<{ type: string; hash: string; success?: boolean; vm_status?: string } \| null>` |
 | `verify(message, signature)` | Verifies a message signature. Requires the matching public key. | `Promise<boolean>` |
 
 ## Config Type
@@ -148,7 +158,40 @@ type TransferResult = {
 }
 ```
 
-`getTransactionReceipt()` has three observable states. The package root does not export an `AptosTransactionReceipt` type; the released declaration uses `type: string`. The following is the portable declared shape:
+## Transaction Tracking
+
+Use `getTransaction()` for one normalized lookup or `waitForTransaction()` to poll. Both methods accept a transaction hash after trimming whitespace; the remaining value must be `0x` followed by 64 hexadecimal characters.
+
+```typescript
+type AptosTransactionInfo = TransactionReceipt & {
+  transaction: AptosReceiptShape
+}
+
+type TransactionReceipt = {
+  hash: string
+  finality: 'pending' | 'confirmed' | 'final' | 'dropped'
+  success?: boolean
+  block?: number
+  fee?: bigint
+}
+```
+
+A mempool transaction returns `finality: 'pending'`. Any committed Aptos transaction returns `finality: 'final'`; this module does not emit an intermediate `confirmed` state or `dropped`. For committed transactions, `block` is the numeric transaction version, `fee` is `gas_used * gas_unit_price`, and `success` reports VM execution outcome. A final receipt can therefore still have `success: false`.
+
+An invalid hash throws `ValueError`; a valid but unknown hash throws `NoSuchElementError`. `waitForTransaction()` treats not-found as transient, polls every 4 seconds by default, and times out after 60 seconds unless overridden. Its default `confirmed` target is satisfied when Aptos reports the transaction as final.
+
+```javascript
+const receipt = await account.waitForTransaction(result.hash, {
+  target: 'final',
+  timeout: 120000
+})
+
+if (receipt.success === false) {
+  console.error('Transaction failed:', receipt.transaction.vm_status)
+}
+```
+
+`getTransactionReceipt()` is retained as a deprecated raw lookup with three observable states. The package root does not export an `AptosTransactionReceipt` type; the released declaration uses `type: string`. The following is the portable declared shape:
 
 ```typescript
 type AptosReceiptShape = {
@@ -156,6 +199,9 @@ type AptosReceiptShape = {
   hash: string
   success?: boolean
   vm_status?: string
+  version?: string
+  gas_used?: string
+  gas_unit_price?: string
 }
 ```
 
@@ -172,7 +218,7 @@ type AptosReceiptShape = {
 </Callout>
 
 <Callout type="warn">
-`transferMaxFee` does not protect native `sendTransaction()` or `signTransaction()` calls. Quote native transfers and enforce an application-level limit when required.
+`transferMaxFee` does not protect native `sendTransaction()` or `signTransaction()` calls. A native quote can support user review, but send and sign simulate again and expose no hard maximum-fee control in beta.2.
 </Callout>
 
 <Cards>

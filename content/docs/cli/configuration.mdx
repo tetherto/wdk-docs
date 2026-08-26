@@ -62,7 +62,7 @@ An empty `WDK_PASSPHRASE` value does not override the prompt. To use an empty pa
 | `WDK_INDEXER_API_KEY` | Overrides `indexer.apiKey` for the current process |
 | `WDK_PASSPHRASE` | Supplies a non-empty passphrase instead of opening a prompt |
 
-There are no beta.2 environment-variable mappings for `indexer.baseUrl`, wallet defaults, account defaults, network configuration, or MoonPay configuration.
+There are no beta.3 environment-variable mappings for `indexer.baseUrl`, wallet defaults, account defaults, network configuration, custom modules, or MoonPay configuration.
 
 <Callout type="warn">
 Environment variables can be inherited by child processes and may be visible to other processes running as the same OS user. Limit their lifetime and do not print them in shell history, CI logs, or agent transcripts.
@@ -81,8 +81,9 @@ Environment variables can be inherited by child processes and may be visible to 
 | `ramp.moonpay.environment` | `sandbox` or `production` | Empty; required by `wdk buy` and `wdk sell` |
 | `networks.NETWORK` | Wallet-module configuration object | Defaults come from the installed `wdk.config.json` |
 | `networks.NETWORK.KEY` | One wallet-module configuration value | Depends on the selected wallet module |
+| `customModules.PACKAGE.version` | Exact npm version | Created and removed by `wdk module`; do not manage it with `wdk config set` |
 
-Custom-network records and custom-token records also live in `config.json`. Manage them with `wdk network` and `wdk token` so the CLI can validate their shape and related state.
+Custom-module, custom-network, and custom-token records also live in `config.json`. Manage them with `wdk module`, `wdk network`, and `wdk token` so the CLI can coordinate package installation, validate record shapes, and update related state.
 
 ## Read Configuration
 
@@ -116,7 +117,7 @@ wdk config get --all
 `config.json` is plaintext. The CLI does not request an owner-only mode for this file, so its effective permissions follow the operating system and runtime defaults and may be `0644`. `config get --all` can reveal stored API keys, signing URLs, and credentials embedded in provider URLs. Do not publish the file or command output.
 </Callout>
 
-Prefer `WDK_INDEXER_API_KEY` when you do not want to persist the indexer key. No environment override is available for MoonPay configuration in beta.2.
+Prefer `WDK_INDEXER_API_KEY` when you do not want to persist the indexer key. No environment override is available for MoonPay configuration in beta.3.
 
 ## Set Configuration
 
@@ -181,7 +182,7 @@ Reset configuration defaults:
 wdk config reset --all
 ```
 
-`config reset --all` preserves the default-wallet selection, custom networks, and custom tokens. It resets the remaining values to their installed defaults.
+`config reset --all` preserves the default-wallet selection, custom networks, and custom tokens. It resets the remaining values to their installed defaults, including removing `customModules` registrations. It does not run npm uninstall, so a preserved custom network can keep using a residual package that `wdk module list` no longer tracks until another npm operation prunes it. Record module pins and network specs before a full reset.
 
 ## Authorization and Wallet Locking
 
@@ -193,10 +194,28 @@ When at least one wallet exists, these configuration mutations verify the curren
 - `wdk network delete`
 - `wdk token add`
 - `wdk token delete`
+- `wdk module add`
+- `wdk module remove`
 
 Set `WDK_PASSPHRASE` for non-interactive local automation or enter the passphrase at the prompt.
 
-Changing or resetting a key under `networks` locks all wallets so the next unlock initializes WDK with the new wallet-module configuration. `config reset --all` also locks all wallets.
+Changing or resetting a key under `networks` locks all wallets so the next unlock initializes WDK with the new wallet-module configuration. `config reset --all`, `module add`, and `module remove` also lock every running wallet session.
+
+## Module Packages
+
+Beta.3 records built-in module pins in the installed catalog and custom pins under `customModules` in `config.json`.
+
+```bash title="Terminal"
+wdk module list
+```
+
+Use `wdk module add` and `wdk module remove` instead of editing `customModules` directly. Those commands coordinate the stored pin with npm installation and lock the daemon before its module graph changes.
+
+<Callout type="error">
+Custom modules are executable code. Adding one runs npm installation in the CLI package and can run the package's lifecycle scripts. A configured wallet module later runs in the daemon with access to unlocked accounts. Audit and pin the exact artifact before adding it.
+</Callout>
+
+Custom packages are installed with npm's `--no-save` option. A later npm operation can prune them. Use `wdk module list` to detect a missing or mismatched package, then run `wdk module add --name PACKAGE` to repair the stored pin. See [Manage Modules](/cli/guides/manage-modules).
 
 ## Indexer
 
@@ -237,7 +256,7 @@ The proxy must accept both history request forms:
 
 Forward the query parameters or JSON request body and the Indexer response unchanged. Add the Indexer `x-api-key` header when forwarding the request upstream.
 
-`WDK_INDEXER_BASE_URL` is not read by beta.2.
+`WDK_INDEXER_BASE_URL` is not read by beta.3.
 
 ## MoonPay
 
@@ -275,7 +294,7 @@ Return a successful JSON response with the complete signed URL:
 Returning only the signature is not supported.
 
 <Callout type="warn">
-Keep the MoonPay secret key in the signing service. Beta.2 does not send configurable authentication headers to `signUrl`, so bind the service locally, keep it on a private network, or restrict access with network-level controls. Do not expose an unauthenticated public signing endpoint.
+Keep the MoonPay secret key in the signing service. Beta.3 does not send configurable authentication headers to `signUrl`, so bind the service locally, keep it on a private network, or restrict access with network-level controls. Do not expose an unauthenticated public signing endpoint.
 </Callout>
 
 ### Select an Environment

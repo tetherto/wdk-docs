@@ -145,6 +145,9 @@ new WalletAccountTonGasless(seed, path, config)
 | `getBalance()` | Returns the native TON balance (in nanotons) | `Promise\<bigint\>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific token | `Promise\<bigint\>` |
 | `getPaymasterTokenBalance()` | Returns the balance of the paymaster token | `Promise\<bigint\>` |
+| `getTransaction(hash)` | Returns a normalized receipt for a message-body hash | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
+| `waitForTransaction(hash, options?)` | Waits for the requested TON finality | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
+| `getTransactionReceipt(hash)` | Deprecated: returns the native TON transaction | `Promise\<TonTransactionReceipt \| null\>` |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise\<WalletAccountReadOnlyTonGasless\>` |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
 
@@ -233,6 +236,8 @@ console.log('Signature valid:', isValid)
 ##### `transfer(options, config?)`
 Transfers a Jetton using a gasless transaction, paying the fee with the configured paymaster token. This is the only way to move funds on the gasless module: `sendTransaction()`, `quoteSendTransaction()`, and `signTransaction()` are not supported and reject or throw.
 
+Before signing or submitting, the wallet validates the TON API estimate against the requested Jetton transfer. It rejects an altered transfer body, sender, relay, destination, amount, payload, state initialization, expiry, commission, message count, or paymaster commission transfer. Validation resolves the configured paymaster token's Jetton wallet through `tonClient`, so this flow includes an additional TON RPC lookup and can fail if that provider is unavailable.
+
 **Parameters:**
 - `options` (TransferOptions): Transfer options
   - `token` (string): Token contract address
@@ -259,6 +264,8 @@ const result = await account.transfer({
 
 ##### `quoteTransfer(options, config?)`
 Estimates the fee for a Jetton (TON token) transfer.
+
+The quote is returned only after the same relay-estimate validation used by `transfer()`. A rejected estimate is not signed or submitted.
 
 **Parameters:**
 - `options` (TransferOptions): Transfer options
@@ -318,6 +325,33 @@ Returns the balance of the paymaster Jetton (used for gasless fees).
 const paymasterBalance = await account.getPaymasterTokenBalance();
 console.log('Paymaster Jetton balance:', paymasterBalance);
 ```
+
+##### `getTransaction(hash)`
+Looks up the signed message-body hash returned by `transfer()` and returns the normalized TON receipt. Found transactions are `confirmed`, becoming `final` when TON Center supplies `mc_block_seqno`; TON Center does not expose `pending` or `dropped` messages. The receipt includes `success` when native execution details can determine it, the masterchain block and fee when available, and the native TON transaction on `transaction`.
+
+**Throws:** `NoSuchElementError` when TON Center has not indexed the hash. A configured `tonClient` is required for native transaction retrieval.
+
+```javascript
+const result = await account.transfer({
+  token: 'EQ...',
+  recipient: 'EQ...',
+  amount: 1000000n
+})
+const transaction = await account.getTransaction(result.hash)
+```
+
+##### `waitForTransaction(hash, options?)`
+Polls until TON Center indexes the message and the requested finality is reached. Defaults are `target: 'confirmed'`, `interval: 4000`, `timeout: 60000`, and `maxPollErrors: 3`. Because TON Center exposes neither the mempool nor dropped messages, an unseen or dropped transaction eventually throws `TimeoutError`.
+
+```javascript
+const transaction = await account.waitForTransaction(result.hash, {
+  target: 'final',
+  timeout: 120000
+})
+```
+
+##### `getTransactionReceipt(hash)`
+Returns the native TON transaction after inclusion. This method is deprecated; use `getTransaction()` and read its `transaction` field instead.
 
 ##### `toReadOnlyAccount()`
 Returns a read-only copy of the account. The same instance is reused on subsequent calls.
@@ -379,7 +413,9 @@ new WalletAccountReadOnlyTonGasless(publicKey, config)
 | `quoteSendTransaction(tx)` | Not supported on gasless; always rejects | `Promise\<Omit\<TransactionResult, 'hash'\>\>` |
 | `quoteTransfer(options, config?)` | Estimates the fee for a token transfer | `Promise\<{fee: bigint}\>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` |
-| `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise\<TonTransactionReceipt \| null\>` |
+| `getTransaction(hash)` | Returns a normalized receipt for a message-body hash | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
+| `waitForTransaction(hash, options?)` | Waits for the requested TON finality | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
+| `getTransactionReceipt(hash)` | Deprecated: returns the native TON transaction | `Promise\<TonTransactionReceipt \| null\>` |
 
 ##### `getAddress()`
 Returns the account's TON address.
@@ -484,9 +520,7 @@ console.log('Signature valid:', isValid)
 ```
 
 ##### `getTransactionReceipt(hash)`
-Returns a transaction's receipt.
-
-Through `1.0.0-beta.9`, the inherited initial receipt lookup always queries mainnet TON Center v3. Do not rely on this method for testnet receipts; see [Network Selection](/sdk/wallet-modules/wallet-ton-gasless/configuration#network-selection).
+Returns the native TON transaction after inclusion. This method is deprecated in favor of `getTransaction()`. The read-only account's `getTransaction()` and `waitForTransaction()` use the same message-body-hash, confirmed/final, timeout, and native `transaction` semantics documented above.
 
 **Parameters:**
 - `hash` (string): The signed transfer body hash returned by `transfer()`

@@ -89,17 +89,32 @@ try {
 }
 ```
 
-## Receipt Not Included Yet
+## Transaction Fee Cap
 
-Receipt methods return `null` before the UserOperation is included.
+In paymaster-token mode, `transactionMaxFee` applies when this wallet builds `sendTransaction()`, `signTransaction()`, or `approve()` operations. These paths reject only a fee greater than the cap, so an equal fee is allowed. Sponsored operations ignore the cap.
 
-```javascript title="Poll receipt"
-const txReceipt = await account.getTransactionReceipt(userOperationHash)
+<Callout type="warn">
+An already-signed `UserOperationV8` passed to `sendTransaction()` is broadcast without a `transactionMaxFee` check. The module cannot reconstruct its token-denominated paymaster fee. Enforce the cap before signing and reject untrusted signed operations.
+</Callout>
 
-if (txReceipt === null) {
-  console.log('UserOperation is not included yet')
+## Transaction Status
+
+Use the UserOperation hash with `getTransaction()` or `waitForTransaction()`. A one-shot `getTransaction()` call throws `ValueError` for a malformed hash and `NoSuchElementError` for a well-formed hash unknown to the bundler. `waitForTransaction()` treats an unknown hash as transient while it propagates and throws `TimeoutError` if the bounded wait does not reach its target.
+
+```javascript title="Wait for UserOperation status"
+const receipt = await account.waitForTransaction(userOperationHash, {
+  target: 'confirmed',
+  timeout: 180000
+})
+
+if (receipt.finality === 'dropped') {
+  console.log('The bundling transaction was replaced or otherwise dropped')
+} else if (receipt.success === false) {
+  console.log('The UserOperation was included but failed')
 }
 ```
+
+`getTransactionReceipt()` is deprecated and returns `null` before the UserOperation maps to an EVM transaction. `getTransaction()` instead returns normalized `pending` status during that phase.
 
 ## Dispose of Sensitive State
 

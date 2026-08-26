@@ -99,7 +99,9 @@ Treat the arrays returned through `keyPair` as read-only. Call `dispose()` when 
 | `transfer(options, config?)` | `EvmTransferOptions`, partial fee-mode config | `Promise\<TransferResult\>` | Sends an ERC-20 transfer as a UserOperation. |
 | `getAllowance(token, spender)` | `token: string`, `spender: string` | `Promise\<bigint\>` | Reads ERC-20 allowance. |
 | `getUserOperationReceipt(hash)` | `hash: string` | `Promise\<UserOperationReceipt \| null\>` | Reads the raw bundler receipt. |
-| `getTransactionReceipt(hash)` | `hash: string` | `Promise\<EvmTransactionReceipt \| null\>` | Maps a UserOperation hash to an EVM receipt when included. |
+| `getTransactionReceipt(hash)` | `hash: string` | `Promise\<EvmTransactionReceipt \| null\>` | Maps a UserOperation hash to an EVM receipt; deprecated in favor of `getTransaction()`. |
+| `getTransaction(hash)` | `hash: string` | `Promise\<TransactionReceipt & Evm7702GaslessTransactionDetails\>` | Returns normalized finality for a UserOperation hash. |
+| `waitForTransaction(hash, options?)` | UserOperation hash, `WaitForTransactionOptions` | `Promise\<TransactionReceipt & Evm7702GaslessTransactionDetails\>` | Waits for `confirmed` or `final`, or returns `dropped`. |
 | `toReadOnlyAccount()` | - | `Promise\<WalletAccountReadOnlyEvm7702Gasless\>` | Returns a cached read-only account. |
 | `dispose()` | - | `void` | Clears quote cache and disposes the wrapped EVM account. |
 
@@ -109,11 +111,12 @@ Treat the arrays returned through `keyPair` as read-only. Call `dispose()` when 
 - Paymaster-token mode returns fees in the configured paymaster token's base units.
 - `signTransaction()` returns a signed `UserOperationV8` without broadcasting it. The type comes from `abstractionkit` and is not re-exported from this package's root.
 - Quoting a signed UserOperation avoids paymaster calls. Sponsorship mode returns `fee: 0n`; paymaster-token mode derives a native-gas ceiling in wei from its existing gas fields rather than returning the token amount established by the paymaster.
-- Sending a signed UserOperation broadcasts its supplied nonce, authorization, gas fields, and signature unchanged, without rebuilding or signing it.
+- Sending a signed UserOperation broadcasts its supplied nonce, authorization, gas fields, and signature unchanged, without rebuilding or signing it. This path does not enforce `transactionMaxFee` because its token-paymaster fee cannot be reconstructed from the signed operation.
 - Owned account paymaster-token quotes are cached for up to 2 minutes for the same serialized transaction. Before reusing a cached UserOperation, the account reads the current EntryPoint nonce and re-quotes if it has moved.
-- The cache key contains the transaction but not the per-call fee-mode configuration. Use the same fee-mode and paymaster settings for a quote and its matching `sendTransaction()` or `transfer()` call.
+- The cache key includes transaction data, sponsorship mode, paymaster token, expected paymaster address, and sponsorship policy ID. Changing one of those fields produces a distinct quote.
 - Unsigned transaction inputs are built and signed before submission. A `UserOperationV8` input is broadcast with its supplied signature unchanged.
-- If the account is already delegated to `delegationAddress`, the send path does not include a new EIP-7702 authorization. A send that needs a fresh authorization rebuilds the UserOperation instead of reusing the cached one.
+- If the account is already delegated to `delegationAddress`, the send path does not include a new EIP-7702 authorization. For an undelegated owned EOA in paymaster-token mode, quoting includes the signed authorization used by the later sign or send path. Sponsored quotes return `0n` without estimating it. A send that needs a fresh authorization rebuilds the UserOperation instead of reusing the cached one.
+- In paymaster-token mode, `transactionMaxFee` applies to wallet-built send, sign, and approve operations. A fee equal to the cap is allowed; only a greater fee is rejected. Sponsored operations ignore this cap.
 
 ### Nonce Lane Behavior
 
@@ -121,15 +124,17 @@ Treat the arrays returned through `keyPair` as read-only. Call `dispose()` when 
 - A string `nonceKey` is hashed to a deterministic 192-bit key. Numeric keys must be within the uint192 range; use bigint or string form above JavaScript's safe integer range.
 - Let the first delegation reach the chain before using concurrent lanes. Overlapping operations on the same lane can return hashes even when one can never receive a receipt.
 - A fresh `parallel` lane creates a permanent EntryPoint nonce slot. Reuse a bounded set of named lanes for sustained workloads.
-- The runtime accepts lane fields in per-call overrides for signing, sending, and transfers, but the beta.3 second-argument declarations omit them. Constructor-level lane fields are correctly typed.
+- The runtime accepts lane fields in per-call overrides for signing, sending, and transfers, but the beta.4 second-argument declarations omit them. Constructor-level lane fields are correctly typed.
 
 ### Transfer Fee Cap
 
 `transfer()` checks `transferMaxFee` only in paymaster-token mode. It throws when the estimated fee is greater than or equal to the configured cap.
 
-### USDT Approval Rule
+This differs from `transactionMaxFee`, which allows an equal fee for wallet-built send, sign, and approve operations.
 
-On Ethereum mainnet, `approve()` checks the USDT allowance rule. If the current allowance is non-zero and the requested amount is non-zero, the method throws before sending. Send an approval with amount `0` first, then send the new non-zero approval.
+### USD₮ Approval Rule
+
+On Ethereum mainnet, `approve()` checks the USD₮ allowance rule. If the current allowance is non-zero and the requested amount is non-zero, the method throws before sending. Send an approval with amount `0` first, then send the new non-zero approval.
 
 ## WalletAccountReadOnlyEvm7702Gasless
 
@@ -148,7 +153,7 @@ new WalletAccountReadOnlyEvm7702Gasless(address, config)
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `address` | `string` | EOA address. |
-| `config` | `Omit\<Evm7702GaslessWalletConfig, 'transferMaxFee'\>` | Read-only configuration. |
+| `config` | `Omit\<Evm7702GaslessWalletConfig, 'transferMaxFee' \| 'transactionMaxFee'\>` | Read-only configuration. |
 
 ### Methods
 
@@ -163,11 +168,15 @@ new WalletAccountReadOnlyEvm7702Gasless(address, config)
 | `quoteTransfer(options, config?)` | `EvmTransferOptions`, partial fee-mode config | `Promise\<Omit\<TransferResult, 'hash'\>\>` | Quotes an ERC-20 transfer. |
 | `getAllowance(token, spender)` | `token: string`, `spender: string` | `Promise\<bigint\>` | Reads ERC-20 allowance. |
 | `getUserOperationReceipt(hash)` | `hash: string` | `Promise\<UserOperationReceipt \| null\>` | Reads the raw bundler receipt. |
-| `getTransactionReceipt(hash)` | `hash: string` | `Promise\<EvmTransactionReceipt \| null\>` | Returns `null` until the UserOperation maps to an EVM transaction. |
+| `getTransactionReceipt(hash)` | `hash: string` | `Promise\<EvmTransactionReceipt \| null\>` | Maps a UserOperation hash to an EVM receipt; deprecated in favor of `getTransaction()`. |
+| `getTransaction(hash)` | `hash: string` | `Promise\<TransactionReceipt & Evm7702GaslessTransactionDetails\>` | Returns normalized finality for a UserOperation hash. |
+| `waitForTransaction(hash, options?)` | UserOperation hash, `WaitForTransactionOptions` | `Promise\<TransactionReceipt & Evm7702GaslessTransactionDetails\>` | Waits for `confirmed` or `final`, or returns `dropped`. |
 | `verify(message, signature)` | `message: string`, `signature: string` | `Promise\<boolean\>` | Verifies a plain message signature. |
 | `verifyTypedData(typedData, signature)` | `TypedData`, `signature: string` | `Promise\<boolean\>` | Verifies EIP-712 typed data. |
 
 Read-only accounts cannot sign, approve, send, or transfer.
+
+Both account classes expect a UserOperation hash for receipt and normalized-status methods, not the EVM bundling-transaction hash. Before the bundler assigns a transaction hash, `getTransaction()` returns `pending`. After inclusion, finality and confirmations come from the bundling transaction; `success` and `fee` come from the UserOperation receipt when available. The default wait interval is four seconds and timeout is 180 seconds. Inspect `success` even after `confirmed` or `final`.
 
 ## ConfigurationError
 
@@ -214,6 +223,7 @@ Known configuration errors include:
 | `isSponsored` | `false` | No | Omit or set to `false` for paymaster-token mode. |
 | `paymasterAddress` | `string` | No | Expected paymaster contract address. |
 | `paymasterToken.address` | `string` | Yes | ERC-20 token used for fee payment. |
+| `transactionMaxFee` | `number \| bigint` | No | Maximum fee for wallet-built send, sign, and approve operations in token base units. |
 | `transferMaxFee` | `number \| bigint` | No | Maximum fee for `transfer()` in token base units. |
 
 ### Evm7702GaslessWalletConfig
@@ -226,6 +236,6 @@ type Evm7702GaslessWalletConfig =
 
 ### Exported Types
 
-The package also re-exports EVM wallet types from `@tetherto/wdk-wallet-evm`, including `FeeRates`, `KeyPair`, `EvmTransaction`, `TransactionResult`, `EvmTransferOptions`, `TransferResult`, `EvmTransactionReceipt`, `ApproveOptions`, `TypedData`, `TypedDataDomain`, and `TypedDataField`.
+The package also re-exports EVM wallet types from `@tetherto/wdk-wallet-evm`, including `FeeRates`, `KeyPair`, `EvmTransaction`, `TransactionResult`, `EvmTransferOptions`, `TransferResult`, `EvmTransactionReceipt`, `ApproveOptions`, `TypedData`, `TypedDataDomain`, and `TypedDataField`. It re-exports the shared `Finality`, `TransactionReceipt`, `WaitForTransactionTarget`, and `WaitForTransactionOptions` types from `@tetherto/wdk-wallet`.
 
-Module-specific exported types include `UserOperationReceipt`, `Eip7702AuthorizationOverride`, `BuildSponsoredUserOperationOverrides`, and `SponsoredUserOperation`. In beta.3, `BuildSponsoredUserOperationOverrides` adds optional `nonce?: bigint` for explicitly selecting the EntryPoint nonce in lower-level builder typing; it does not expose the protected builder as a public method.
+Module-specific exported types include `UserOperationReceipt`, `Evm7702GaslessTransactionDetails`, `Eip7702AuthorizationOverride`, `BuildSponsoredUserOperationOverrides`, and `SponsoredUserOperation`. `Evm7702GaslessTransactionDetails` adds `confirmations`, the native EVM `receipt`, and `userOperationReceipt` to the normalized receipt. In beta.4, `BuildSponsoredUserOperationOverrides` includes optional `nonce?: bigint` for explicitly selecting the EntryPoint nonce in lower-level builder typing; it does not expose the protected builder as a public method.

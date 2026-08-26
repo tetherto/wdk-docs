@@ -15,7 +15,7 @@ It handles EIP-7702 authorization, UserOperation construction, UserOperation sig
 - **Sponsored transactions**: Set `isSponsored: true` to use a sponsorship policy. Quotes return a zero fee in sponsored mode.
 - **Paymaster-token transactions**: Configure `paymasterToken` to pay UserOperation costs in an ERC-20 token.
 - **Provider failover**: Pass one provider or an ordered list of RPC URLs / EIP-1193 providers. Provider arrays support `retries`.
-- **UserOperation receipts**: Resolve a UserOperation hash through `getUserOperationReceipt()` or map it to an EVM transaction receipt with `getTransactionReceipt()`.
+- **UserOperation finality**: Track a UserOperation from bundler acceptance through its EVM transaction's confirmed or final state with `getTransaction()` and `waitForTransaction()`.
 - **Non-broadcasting UserOperation signing**: Build and sign a self-contained `UserOperationV8` without submitting it, then quote or send that operation separately. Construction still uses the configured provider, bundler, and paymaster services.
 - **Independent nonce lanes**: Use named or one-time EntryPoint lanes for concurrent operations that do not require ordering.
 - **Read-only and signing accounts**: Use `WalletAccountReadOnlyEvm7702Gasless` for balances, quotes, receipts, allowances, and verification. Use `WalletAccountEvm7702Gasless` when you need signing and sending.
@@ -40,7 +40,9 @@ The EOA delegates execution to the configured `delegationAddress`. Treat that ad
 | Mode | Required Fields | Quote Behavior |
 |------|-----------------|----------------|
 | Sponsorship policy | `isSponsored: true`, optional `sponsorshipPolicyId` | `quoteSendTransaction()` and `quoteTransfer()` return `fee: 0n`. |
-| Paymaster token | `paymasterToken.address`, optional `paymasterAddress`, optional `transferMaxFee` | Quotes return a fee in the paymaster token's base units. |
+| Paymaster token | `paymasterToken.address`, optional `paymasterAddress`, optional `transactionMaxFee` and `transferMaxFee` | Quotes return a fee in the paymaster token's base units. |
+
+`transactionMaxFee` applies when this wallet builds a non-sponsored send, signed UserOperation, or approval. It does not apply when `sendTransaction()` receives an already-signed UserOperation because that operation does not retain a reconstructible paymaster-token fee.
 
 ## Next Steps
 

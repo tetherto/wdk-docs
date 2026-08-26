@@ -136,6 +136,9 @@ new WalletAccountTronGasfree(seed, path, config)
 | `sendTransaction(tx)` | Unsupported on Tron GasFree; always throws | `Promise\<TransactionResult\>` |
 | `quoteSendTransaction(tx)` | Unsupported on Tron GasFree; always throws | `Promise\<Omit\<TransactionResult, 'hash'\>\>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` |
+| `getTransaction(hash)` | Resolves a GasFree transfer ID and returns normalized TRON status | `Promise\<TransactionReceipt & TronGasfreeTransactionDetails\>` |
+| `waitForTransaction(hash, options?)` | Waits for the GasFree transfer's requested TRON finality | `Promise\<TransactionReceipt & TronGasfreeTransactionDetails\>` |
+| `getTransactionReceipt(hash)` | Deprecated: resolves a GasFree transfer ID to its native TRON receipt | `Promise\<TronTransactionReceipt \| null\>` |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
 
 ##### `getAddress()`
@@ -185,7 +188,7 @@ Transfers TRC20 tokens to another address using the gas-free service.
 - `config` (object, optional): Per-call transfer configuration
   - `transferMaxFee` (number | bigint, optional): Reject when the quoted total fee is greater than this token-base-unit cap. A fee equal to the cap is allowed.
 
-**Returns:** `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` - Object containing transaction hash, total fee paid in token base units, and the activation-fee portion. `activationFee` is `0n` when no account activation fee applies.
+**Returns:** `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` - Object containing the GasFree transfer ID, total fee paid in token base units, and the activation-fee portion. `activationFee` is `0n` when no account activation fee applies.
 
 **Example:**
 ```javascript
@@ -196,7 +199,7 @@ const result = await account.transfer({
 }, {
   transferMaxFee: 5000n
 })
-console.log('Transaction hash:', result.hash)
+console.log('GasFree transfer ID:', result.hash)
 console.log('Fee paid:', result.fee, 'token base units')
 console.log('Activation fee:', result.activationFee, 'token base units')
 ```
@@ -273,6 +276,37 @@ const isValid = await account.verify('Hello, World!', signature)
 console.log('Signature valid:', isValid)
 ```
 
+##### `getTransaction(hash)`
+Accepts the GasFree transfer ID returned by `transfer()`, resolves it to the provider's on-chain TRON transaction ID, and returns TRON `pending`, `confirmed`, or solidified `final` status. The normalized receipt keeps the GasFree transfer ID in its top-level `hash`; the native chain transaction remains available through the raw `receipt`, including its provider transaction ID.
+
+Each lookup resolves the GasFree account address, queries the GasFree transfer, and then calls the TRON provider. It can therefore fail at either provider boundary.
+
+**Throws:** `NoSuchElementError` when a successful GasFree response has no on-chain transaction ID. Non-success HTTP or API responses from the GasFree provider throw their provider error directly.
+
+```javascript
+const result = await account.transfer({
+  token: 'T...',
+  recipient: 'T...',
+  amount: 1000000n
+})
+const transaction = await account.getTransaction(result.hash)
+
+console.log(transaction.hash)        // GasFree transfer ID
+console.log(transaction.receipt?.id) // On-chain TRON transaction ID when included
+```
+
+##### `waitForTransaction(hash, options?)`
+Polls by GasFree transfer ID until the requested TRON finality is reached. Defaults are `target: 'confirmed'`, `interval: 4000`, `timeout: 120000`, and `maxPollErrors: 3`. A successful provider response without an on-chain hash is retried, but a GasFree HTTP/API error is not converted to not-found and can reject the wait immediately.
+
+```javascript
+const transaction = await account.waitForTransaction(result.hash, {
+  target: 'final'
+})
+```
+
+##### `getTransactionReceipt(hash)`
+Resolves a GasFree transfer ID and returns its native TRON receipt, or `null` before an on-chain hash or receipt is available. This method is deprecated; use `getTransaction()` and its `receipt` field instead.
+
 ##### `dispose()`
 Disposes the wallet account, clearing private keys from memory.
 
@@ -312,6 +346,9 @@ new WalletAccountReadOnlyTronGasfree(address, config)
 | `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: bigint, activationFee: bigint}\>` |
 | `quoteSendTransaction(tx)` | Unsupported on Tron GasFree; always throws | `Promise\<Omit\<TransactionResult, 'hash'\>\>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` |
+| `getTransaction(hash)` | Resolves a GasFree transfer ID and returns normalized TRON status | `Promise\<TransactionReceipt & TronGasfreeTransactionDetails\>` |
+| `waitForTransaction(hash, options?)` | Waits for the GasFree transfer's requested TRON finality | `Promise\<TransactionReceipt & TronGasfreeTransactionDetails\>` |
+| `getTransactionReceipt(hash)` | Deprecated: resolves a GasFree transfer ID to its native TRON receipt | `Promise\<TronTransactionReceipt \| null\>` |
 
 ##### `getAddress()`
 Returns the account's gas-free Tron address.
@@ -388,6 +425,8 @@ Verifies a message signature.
 
 **Returns:** `Promise\<boolean\>` - True if the signature is valid
 
+The read-only account's `getTransaction()`, `waitForTransaction()`, and deprecated `getTransactionReceipt()` use the same GasFree transfer-ID mapping, TRON finality, 120-second default wait, raw `receipt`, and provider-error semantics documented above.
+
 **Example:**
 ```javascript
 const isValid = await readOnlyAccount.verify('Hello, World!', signature)
@@ -403,7 +442,7 @@ Configuration options for token transfers.
 interface TransferOptions {
   /**
    * The TRC20 token contract address
-   * @example 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t' // USDT contract
+   * @example 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t' // USDt contract
    */
   token: string;
 
@@ -415,7 +454,7 @@ interface TransferOptions {
 
   /**
    * Amount to transfer in token base units
-   * @example 1000000 // 1 USDT (6 decimals)
+   * @example 1000000 // 1 USDt (6 decimals)
    */
   amount: number | bigint;
 }

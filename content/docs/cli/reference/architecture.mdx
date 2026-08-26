@@ -25,7 +25,8 @@ wdk command ─> WDK Indexer API (history, after deriving the address through th
 | `wdk-mcp` | MCP client session | Exposes structured wallet tools and calls the same command actions and daemon used by `wdk` |
 | `wdk-daemon` | While at least one wallet is unlocked | Holds unlocked WDK instances, derives accounts, estimates fees, signs and sends transactions, and enforces wallet TTLs |
 | `seed.enc` | Until the wallet is deleted | Stores one encrypted BIP-39 mnemonic for each named wallet |
-| `config.json` | Until configuration is reset or removed | Stores non-seed CLI configuration, including the default wallet, networks, tokens, and provider settings |
+| `config.json` | Until configuration is reset or removed | Stores non-seed CLI configuration, including the default wallet, custom module pins, networks, tokens, and provider settings |
+| Module packages | Until the CLI is upgraded, npm prunes them, or a custom module is removed | Built-in dependencies and user-added wallet modules loaded by the daemon |
 
 The CLI and MCP server share the same wallet store, configuration, and daemon. A wallet unlocked with `wdk wallet unlock` is therefore also available to `wdk-mcp` running as the same operating-system user.
 
@@ -71,11 +72,24 @@ The daemon creates wallet accounts lazily. The first request for a network loads
 | Native and token balance reads | Daemon, followed by optional price lookup in the caller |
 | Fee estimation | Daemon |
 | Transaction signing and broadcast | Daemon |
+| Catalog-declared module method | Command or MCP process validates string arguments; daemon converts values and calls the account method |
 | Transaction history | Caller queries the Indexer API after obtaining the address from the daemon |
 | Wallet file creation, import, export, rename, passphrase change, and deletion | `wdk` command process |
 | Network, token, and general configuration | `wdk` command process |
 
 CLI and MCP callers use the same signing path. A dry run estimates fees through the daemon but does not broadcast. A later request that executes a send goes directly to the daemon; the daemon does not implement a second confirmation or passphrase challenge.
+
+## Module catalog and loading
+
+Beta.3's bundled `wdk.config.json` separates unversioned network-to-module mappings from exact built-in module pins and selected chain-specific method schemas. Built-in modules are normal dependencies of `@tetherto/wdk-cli`; the package no longer installs them through a postinstall script.
+
+`wdk module add` installs a custom package under the CLI installation and records its exact version in the user's `customModules` configuration. A custom network can then reference that unversioned package name. The daemon imports the wallet manager lazily the first time that network is used and caches the constructor for the session.
+
+<Callout type="warn">
+A custom module runs in the wallet daemon and can access unlocked wallet accounts. Package installation can also run npm lifecycle scripts. The CLI checks the stored and installed versions, but it does not sandbox or certify package behavior.
+</Callout>
+
+`wdk method list` and `list_methods` read the built-in method catalog without unlocking a wallet. A method call validates its declared parameters before crossing IPC, then the daemon invokes that exact account method. The `read` or `write` label is guidance for callers; it does not add a confirmation or authorization step.
 
 ## IPC and operating systems
 
@@ -119,13 +133,15 @@ On a normal lock, TTL expiry, `SIGINT`, or `SIGTERM`, the daemon disposes the af
 
 ## Configuration changes
 
-Network configuration is captured by WDK instances when they are created. `wdk config set` and `wdk config reset` changes under `networks.*` lock the current wallet sessions so the next unlock creates fresh instances with the new settings. `wdk network create` and `wdk network delete` change the registry without automatically locking current sessions.
+Network configuration is captured by WDK instances when they are created. `wdk config set` and `wdk config reset` changes under `networks.*` lock the current wallet sessions so the next unlock creates fresh instances with the new settings. `wdk module add` and `wdk module remove` also lock a running daemon before changing installed packages. `wdk network create` and `wdk network delete` change the registry without automatically locking current sessions.
 
 Configuration and storage locations are covered in [Configuration](/cli/configuration) and [Storage format](/cli/reference/storage-format).
 
 ## Next steps
 
 - [Manage wallets](/cli/guides/manage-wallets)
+- [Manage modules](/cli/guides/manage-modules)
+- [Call module methods](/cli/guides/call-module-methods)
 - [Storage format and manual recovery](/cli/reference/storage-format)
 - [Security model](/cli/reference/security-model)
 - [API reference](/cli/api-reference)

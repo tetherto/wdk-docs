@@ -5,10 +5,10 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-This guide explains how to send native SOL, sign without broadcasting, quote paymaster fees, send an already signed transaction, and use prebuilt transaction messages.
+This guide explains how to send native SOL, track transaction finality, sign without broadcasting, quote paymaster fees, send an already signed transaction, and use prebuilt transaction messages.
 
 <Callout type="warn">
-Use `BigInt` values for token and lamport amounts to avoid precision loss.
+Use `BigInt` values for token and lamport inputs. Separately, keep paymaster payment amounts at or below `Number.MAX_SAFE_INTEGER`: beta.4 internally converts the unsigned-flow `u64` payment through `Number`, so larger fee quotes, cap comparisons, and returned fees can round despite `bigint` inputs.
 </Callout>
 
 ## Send Native SOL
@@ -26,6 +26,23 @@ console.log('Paymaster fee:', result.fee)
 ```
 
 The returned `fee` is denominated in the configured paymaster token's base units, not lamports.
+
+## Wait for Finality
+
+Pass the returned Solana signature to `waitForTransaction()`:
+
+```javascript title="Wait for Finalized Status"
+const receipt = await account.waitForTransaction(result.hash, {
+  target: 'final'
+})
+
+console.log('Finalized in slot:', receipt.block)
+if (receipt.success === false) {
+  console.log('The transaction was finalized but execution failed')
+}
+```
+
+`processed`, `confirmed`, and `finalized` map to WDK `pending`, `confirmed`, and `final`. The default poll interval is four seconds and timeout is 60 seconds. The module does not currently emit `dropped`; a never-landed or evicted signature times out. Inspect `success` after settlement.
 
 ## Quote Before Sending
 
@@ -66,15 +83,15 @@ const signedTransaction = await account.signTransaction({
 }, {
   transactionMaxFee: 500000n
 })
-
-console.log('Signed transaction:', signedTransaction)
 ```
+
+Treat the fully signed transaction as a sensitive, broadcastable authorization payload. Do not log it.
 
 The module adds the payment instruction, checks `transactionMaxFee`, signs with the owner account, asks the paymaster to sign, and returns a `FullySignedTransaction`. It does not broadcast from `signTransaction()`.
 
 ## Quote and Send a Signed Transaction
 
-In `1.0.0-beta.2`, owned accounts accept the `FullySignedTransaction` returned by `signTransaction()` in both `quoteSendTransaction()` and `sendTransaction()`:
+In `1.0.0-beta.4`, owned accounts accept the `FullySignedTransaction` returned by `signTransaction()` in both `quoteSendTransaction()` and `sendTransaction()`:
 
 ```javascript title="Inspect then broadcast a signed transaction"
 const signedTransaction = await account.signTransaction({
@@ -93,9 +110,13 @@ const result = await account.sendTransaction(signedTransaction, {
 console.log('Transaction hash:', result.hash)
 ```
 
-For a signed input, `quoteSendTransaction()` does not request a new paymaster quote or broadcast anything. It decodes the payment amount from the signed message's SPL token payment instruction; the result is a `bigint` in the configured paymaster token's base units.
+For the exact signed output produced above, `quoteSendTransaction()` does not request a new paymaster quote or broadcast anything. It searches the signed message for an SPL token payment to the configured paymaster token account; when found, the result is an exact decoded `bigint` in the configured paymaster token's base units.
 
-`sendTransaction(signedTransaction)` decodes that same fee, enforces `transactionMaxFee`, base64-encodes the fully signed wire transaction, and submits it through the configured Solana RPC with `encoding: 'base64'`. It does not call the paymaster's `signAndSendTransaction()` again.
+`sendTransaction(signedTransaction)` searches for that same fee, enforces `transactionMaxFee`, base64-encodes the fully signed wire transaction, and submits it through the configured Solana RPC with `encoding: 'base64'`. It does not call the paymaster's `signAndSendTransaction()` again.
+
+<Callout type="error">
+This path is not a general signed-transaction validator in beta.4. If no matching payment instruction exists, quote/send returns `fee: 0n`; a configured cap can then pass before direct broadcast. Accept only the exact output of this account's `signTransaction()` for the same account and configuration. For any other source, independently decode and verify the intended instructions, configured payment token and destination, fee payer, transaction lifetime, and both account and paymaster signatures before calling `sendTransaction()`.
+</Callout>
 
 <Callout type="warn">
 A signed transaction is immutable. This flow does not obtain a fresh blockhash, durable nonce, payment instruction, or paymaster signature. Submit the exact signed payload while its existing lifetime is valid, and check its original signature before retrying after an uncertain RPC result.
@@ -119,38 +140,43 @@ If the message already includes a recent blockhash or durable nonce lifetime, th
 If a prebuilt message sets `feePayer`, it must equal `paymasterAddress`. The module sets the fee payer to the paymaster address before asking the paymaster for fee instructions.
 </Callout>
 
-## Read a Transaction Receipt
+## Read Transaction Status
 
-Use `getTransactionReceipt(hash)` to check whether a submitted transaction has been included in a block:
+Use `getTransaction(hash)` for normalized status without waiting:
 
-```javascript title="Read transaction receipt"
-const receipt = await account.getTransactionReceipt(result.hash)
+```javascript title="Read transaction status"
+const receipt = await account.getTransaction(result.hash)
 
-if (receipt === null) {
-  console.log('Transaction is not included in a block yet.')
-} else {
-  console.log('Transaction receipt:', receipt)
-}
+console.log('Finality:', receipt.finality)
+console.log('Confirmations:', receipt.confirmations)
 ```
 
-The method returns `null` while the transaction is still pending.
+`getTransactionReceipt()` remains available for the native transaction object but is deprecated.
 
 ## Override Paymaster Token
 
-You can override the paymaster token for one quote, sign, or send call:
+You can override the paymaster token for one quote, sign, or send call. Keep the token and cap in one reviewed override, quote first, and require explicit confirmation of the fee token and amount before sending:
 
 ```javascript title="Override fee token for one send"
-const result = await account.sendTransaction({
+const tx = {
   to: 'Recipient1111111111111111111111111111111',
   value: 1000000n
-}, {
+}
+const feeConfig = {
   paymasterToken: {
     address: 'AlternateFeeMint11111111111111111111111111'
-  }
-})
+  },
+  transactionMaxFee: 500000n
+}
+
+const quote = await account.quoteSendTransaction(tx, feeConfig)
+await confirmFeeTokenAndAmount(feeConfig.paymasterToken.address, quote.fee)
+const result = await account.sendTransaction(tx, feeConfig)
 ```
 
-For an already signed transaction, the payment token is already embedded in the signed message. Do not use `paymasterToken` as an override to try to change it; only `transactionMaxFee` is applied before direct broadcast.
+`confirmFeeTokenAndAmount()` represents an application-owned confirmation boundary. The quote itself does not enforce the cap; `sendTransaction()` does.
+
+For an already signed transaction, the payment token is already embedded in the signed message. Do not use `paymasterToken` as an override to try to change it; only `transactionMaxFee` is applied before direct broadcast, and the beta.4 missing-instruction `0n` caveat still applies.
 
 ## Next Steps
 

@@ -1,4 +1,4 @@
-# protocol-bridge — USDT0 Cross-Chain Bridge
+# protocol-bridge — USD₮0 Cross-Chain Bridge
 
 ## Links
 
@@ -10,8 +10,8 @@
 | **Docs — Usage** | https://docs.wallet.tether.io/sdk/bridge-modules/bridge-usdt0-evm/usage |
 | **Docs — Configuration** | https://docs.wallet.tether.io/sdk/bridge-modules/bridge-usdt0-evm/configuration |
 | **Docs — API Reference** | https://docs.wallet.tether.io/sdk/bridge-modules/bridge-usdt0-evm/api-reference |
-| **USDT0 Docs** | https://docs.usdt0.to |
-| **USDT0 Deployments** | https://docs.usdt0.to/technical-documentation/deployments |
+| **USD₮0 Docs** | https://docs.usdt0.to |
+| **USD₮0 Deployments** | https://docs.usdt0.to/technical-documentation/deployments |
 
 ## Package
 
@@ -106,7 +106,7 @@ For Solana, TON, and TRON targets, beta.7 skips a source chain's ordinary `oftCo
 
 These are candidate source contracts, not a Cartesian route guarantee. A contract must have the selected destination peer configured on-chain. `getSupportedChains()` and `getSupportedTokens()` expose static configuration and do not prove a source-token-destination pair. Verify the exact route with `quoteBridge()`, or supply a verified route-specific `oftContractAddress` and optional `dstEid`.
 
-Route availability also depends on a matching USD₮0 or XAU₮0 deployment. Verify current contract addresses against the USDT0 deployment documentation.
+Route availability also depends on a matching USD₮0 or XAU₮0 deployment. Verify current contract addresses against the USD₮0 deployment documentation.
 
 ## Common interface
 

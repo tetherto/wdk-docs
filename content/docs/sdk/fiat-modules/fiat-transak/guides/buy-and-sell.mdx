@@ -1,0 +1,177 @@
+---
+title: Buy and Sell
+description: On-ramp, off-ramp, quotes, supported assets, widget options, and custom recipients.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide explains [buying crypto (on-ramp)](#buy-crypto-on-ramp), [selling crypto (off-ramp)](#sell-crypto-off-ramp), [quotes](#get-price-quotes), [supported currencies](#supported-currencies-and-countries), [widget customization](#widget-customization), [multi-network assets](#multi-network-assets), and [custom recipients](#custom-recipient-addresses). It assumes a server-side [`TransakProtocol`](/sdk/fiat-modules/fiat-transak/api-reference) instance named `transak`, constructed with the recommended `undefined` account.
+
+<Callout type="warn">
+Run every `transak.*` call in this guide on your backend, then return only the result your authenticated client needs. For `buy()` and `sell()`, open the returned widget URL in the user's browser. Do not construct `TransakProtocol` in browser code.
+</Callout>
+
+<Callout type="info">
+Amounts use base units: fiat in minor units (cents), crypto in on-chain base units (for example wei for ETH). `cryptoAsset`/`fiatCurrency` are upper-case (`ETH`, `EUR`), while `network`/`paymentMethod` are lower-case (`ethereum`, `credit_debit_card`). Codes are matched exactly, with no normalisation, so fetch the exact values with [supported currencies](#supported-currencies-and-countries).
+</Callout>
+
+## Buy crypto (on-ramp)
+
+You can build a buy widget URL with [`buy()`](/sdk/fiat-modules/fiat-transak/api-reference) when you know the fiat spend:
+
+```typescript title="Buy with fiat amount"
+const result = await transak.buy({
+  cryptoAsset: 'ETH',
+  fiatCurrency: 'EUR',
+  fiatAmount: 10_000n, // €100.00 in cents
+  config: { referrerDomain: 'yourdomain.com' }
+})
+```
+
+You can request a fixed crypto amount instead by passing `cryptoAmount` to [`buy()`](/sdk/fiat-modules/fiat-transak/api-reference):
+
+```typescript title="Buy with crypto amount"
+const result = await transak.buy({
+  cryptoAsset: 'ETH',
+  fiatCurrency: 'EUR',
+  cryptoAmount: 500000000000000000n, // 0.5 ETH in wei
+  config: { referrerDomain: 'yourdomain.com' }
+})
+```
+
+<Callout type="warn">
+**`referrerDomain` is required for `buy`/`sell`.** Transak's Create Widget URL API rejects requests without `config.referrerDomain` (your web domain or app package name). It may need allow-listing in the Partner dashboard first. `quoteBuy`/`quoteSell` don't need it.
+</Callout>
+
+## Sell crypto (off-ramp)
+
+You can generate a sell widget URL with [`sell()`](/sdk/fiat-modules/fiat-transak/api-reference):
+
+```typescript title="Sell ETH for EUR"
+const result = await transak.sell({
+  cryptoAsset: 'ETH',
+  fiatCurrency: 'EUR',
+  cryptoAmount: 500000000000000000n, // 0.5 ETH in wei
+  config: { referrerDomain: 'yourdomain.com' }
+})
+```
+
+## Get price quotes
+
+You can preview economics before opening the widget using [`quoteBuy()`](/sdk/fiat-modules/fiat-transak/api-reference):
+
+```typescript title="Buy quote"
+const buyQuote = await transak.quoteBuy({
+  cryptoAsset: 'ETH',
+  fiatCurrency: 'EUR',
+  fiatAmount: 10_000n // €100.00 in cents
+})
+
+console.log('Crypto amount:', buyQuote.cryptoAmount)
+console.log('Fee:', buyQuote.fee)
+console.log('Exchange rate:', buyQuote.rate)
+```
+
+You can estimate proceeds for a sell with [`quoteSell()`](/sdk/fiat-modules/fiat-transak/api-reference). Note that `cryptoAmount` is required, since unlike `quoteBuy`, `quoteSell` doesn't accept a `fiatAmount`:
+
+```typescript title="Sell quote"
+const sellQuote = await transak.quoteSell({
+  cryptoAsset: 'ETH',
+  fiatCurrency: 'EUR',
+  cryptoAmount: 500000000000000000n // 0.5 ETH in wei
+})
+
+console.log('Fiat amount:', sellQuote.fiatAmount)
+```
+
+## Supported currencies and countries
+
+You can list tradable assets with [`getSupportedCryptoAssets()`](/sdk/fiat-modules/fiat-transak/api-reference)
+
+```typescript title="Supported crypto"
+const cryptoAssets = await transak.getSupportedCryptoAssets()
+console.log(cryptoAssets)
+```
+
+You can list fiat currencies with [`getSupportedFiatCurrencies()`](/sdk/fiat-modules/fiat-transak/api-reference)
+
+```typescript title="Supported fiat"
+const fiatCurrencies = await transak.getSupportedFiatCurrencies()
+console.log(fiatCurrencies)
+```
+
+You can check regional availability with [`getSupportedCountries()`](/sdk/fiat-modules/fiat-transak/api-reference):
+
+```typescript title="Supported countries"
+const countries = await transak.getSupportedCountries()
+console.log(countries)
+```
+
+Both directional flags mirror Transak's country-level KYC availability signal. They do not guarantee that a particular asset, fiat currency, network, or payment method is available, so check the corresponding supported lists and let the widget perform its final eligibility checks.
+
+## Widget customization
+
+You can pass UI options under `config` to [`buy()`](/sdk/fiat-modules/fiat-transak/api-reference) (see [`TransakBuyParams`](/sdk/fiat-modules/fiat-transak/api-reference)):
+
+```typescript title="Themed buy widget"
+const result = await transak.buy({
+  cryptoAsset: 'ETH',
+  fiatCurrency: 'EUR',
+  fiatAmount: 5_000n,
+  config: {
+    network: 'ethereum',
+    paymentMethod: 'credit_debit_card',
+    referrerDomain: 'yourdomain.com',
+    colorMode: 'DARK',
+    redirectURL: 'https://yourapp.com/payment-complete',
+    email: 'user@example.com',
+    partnerCustomerId: 'user_123'
+  }
+})
+```
+
+## Multi-network assets
+
+A symbol such as USD₮ can exist on several networks. Retrieve the provider's exact code and pass `config.network` to disambiguate. Otherwise, the module resolves the first match:
+
+```typescript title="Sell USDt on Tron specifically"
+const USDtAssetCode = 'USDt'
+const USDtOnTron = (await transak.getSupportedCryptoAssets()).find(
+  ({ code, networkCode }) => (
+    code.toLowerCase() === USDtAssetCode.toLowerCase() && networkCode === 'tron'
+  )
+)
+
+if (!USDtOnTron) throw new Error('USDt is not available on Tron')
+
+const result = await transak.sell({
+  cryptoAsset: USDtOnTron.code,
+  fiatCurrency: 'EUR',
+  cryptoAmount: 100_000_000n, // 100 USDt, 6 decimals
+  config: { network: 'tron', referrerDomain: 'yourdomain.com' }
+})
+```
+
+If the requested `cryptoAsset`/`fiatCurrency`/`network` combination can't be found in the supported lists, `buy`, `sell`, `quoteBuy`, and `quoteSell` all throw `Cannot find info for cryptoAsset and fiatCurrency`.
+
+## Custom recipient addresses
+
+Pass a validated destination address to [`buy()`](/sdk/fiat-modules/fiat-transak/api-reference) with `recipient` when you want to prefill the widget:
+
+```typescript title="Custom buy recipient"
+const result = await transak.buy({
+  cryptoAsset: 'ETH',
+  fiatCurrency: 'EUR',
+  fiatAmount: 10_000n,
+  recipient: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+  config: { referrerDomain: 'yourdomain.com' }
+})
+```
+
+If `recipient` isn't provided, the module falls back to a bound read-only account's address. With the recommended `undefined` account, the Transak widget prompts the user for one. Validate any client-supplied address for the selected network before passing it to your backend protocol instance.
+
+## Next Steps
+
+- [Manage transactions](/sdk/fiat-modules/fiat-transak/guides/manage-transactions/)
+- [Get started](/sdk/fiat-modules/fiat-transak/guides/get-started/)
+- [API reference](/sdk/fiat-modules/fiat-transak/api-reference)

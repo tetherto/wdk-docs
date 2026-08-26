@@ -131,7 +131,9 @@ new WalletAccountBtc(seed, path, config)
 | `signTransaction(options)` | Signs a Bitcoin transaction without broadcasting it | `Promise<string>` |
 | `quoteSendTransaction(tx)` | Estimates an unsigned transaction fee or calculates the fee of signed raw transaction hex | `Promise<{fee: bigint}>` |
 | `getTransfers(options?)` | Returns the account's transfer history | `Promise<BtcTransfer[]>` |
-| `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<BtcTransactionReceipt \| null>` |
+| `getTransactionReceipt(hash)` | Returns a native receipt; deprecated in favor of `getTransaction()` | `Promise<BtcTransactionReceipt \| null>` |
+| `getTransaction(hash)` | Returns normalized finality for a transaction in this account's address history | `Promise<TransactionReceipt & BtcTransactionDetails>` |
+| `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final` finality | `Promise<TransactionReceipt & BtcTransactionDetails>` |
 | `getMaxSpendable()` | Returns the maximum spendable amount | `Promise<BtcMaxSpendableResult>` |
 | `sign(message)` | Signs a message with the account's private key | `Promise<string>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
@@ -264,7 +266,7 @@ console.log('Recent incoming transfers:', transfers)
 ```
 
 ##### `getTransactionReceipt(hash)`
-Returns a transaction's receipt if it has been included in a block.
+Returns a transaction's native receipt if it has been included in a block. This method is deprecated; use `getTransaction()` for normalized status and read its `transaction` field when the native transaction is needed.
 
 **Parameters:**
 - `hash` (string): The transaction hash (64 hex characters)
@@ -278,6 +280,35 @@ if (receipt) {
   console.log('Transaction confirmed')
 }
 ```
+
+##### `getTransaction(hash)`
+
+Returns a normalized receipt for a 64-character hexadecimal transaction ID found in this account address's history. It does not perform an arbitrary network-wide transaction lookup.
+
+```javascript
+const receipt = await account.getTransaction(transactionHash)
+
+console.log(receipt.finality)      // 'pending', 'confirmed', or 'final'
+console.log(receipt.confirmations) // 0, a positive number, or null
+console.log(receipt.transaction)   // Native bitcoinjs transaction
+```
+
+An unconfirmed history entry is `pending`. An included transaction is `confirmed` and becomes `final` at six confirmations. Included Bitcoin transactions report `success: true`. When the client cannot resolve the chain tip, `confirmations` is `null` and finality remains `confirmed`. An invalid hash throws `ValueError`; a valid hash absent from this address's history throws `NoSuchElementError`.
+
+##### `waitForTransaction(hash, options?)`
+
+Polls `getTransaction()` until the target is reached. The default target is `confirmed`, the Bitcoin-specific default interval is 30 seconds, and the default timeout is one hour.
+
+```javascript
+const receipt = await account.waitForTransaction(transactionHash, {
+  target: 'final',
+  timeout: 60 * 60 * 1000,
+  interval: 30 * 1000,
+  maxPollErrors: 3
+})
+```
+
+Bitcoin history does not expose a reliable dropped state. A transaction that is never seen or is evicted remains indistinguishable from a transaction that has not propagated and eventually throws `TimeoutError`.
 
 ##### `getMaxSpendable()`
 Returns the maximum spendable amount that can be sent in a single transaction. The maximum spendable amount can differ from the wallet's total balance for several reasons:
@@ -381,7 +412,9 @@ new WalletAccountReadOnlyBtc(address, config)
 | `getAddress()` | Returns the account's Bitcoin address | `Promise<string>` |
 | `getBalance()` | Returns the provider-adjusted account balance in satoshis | `Promise<bigint>` |
 | `quoteSendTransaction(options)` | Estimates the fee for a transaction | `Promise<{fee: bigint}>` |
-| `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise<BtcTransactionReceipt \| null>` |
+| `getTransactionReceipt(hash)` | Returns a native receipt; deprecated in favor of `getTransaction()` | `Promise<BtcTransactionReceipt \| null>` |
+| `getTransaction(hash)` | Returns normalized finality for a transaction in this account's address history | `Promise<TransactionReceipt & BtcTransactionDetails>` |
+| `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final` finality | `Promise<TransactionReceipt & BtcTransactionDetails>` |
 | `getMaxSpendable()` | Returns the maximum spendable amount | `Promise<BtcMaxSpendableResult>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `dispose()` | Closes any internal Electrum connection | `void` |
@@ -430,7 +463,7 @@ console.log('Estimated fee:', quote.fee, 'satoshis')
 ```
 
 ##### `getTransactionReceipt(hash)`
-Returns a transaction's receipt if it has been included in a block.
+Returns a native transaction receipt if it has been included in a block. This method is deprecated; use `getTransaction()` for normalized finality.
 
 **Parameters:**
 - `hash` (string): The transaction hash
@@ -444,6 +477,10 @@ if (receipt) {
   console.log('Transaction confirmed')
 }
 ```
+
+##### `getTransaction(hash)` and `waitForTransaction(hash, options?)`
+
+Read-only accounts expose the same normalized transaction methods and address-history scope as owned accounts. `getTransaction()` returns `TransactionReceipt & BtcTransactionDetails`; `waitForTransaction()` uses a 30-second interval and one-hour timeout by default. A transaction becomes `final` at six confirmations. Inspect `finality` rather than treating a non-null native receipt as final.
 
 ##### `getMaxSpendable()`
 Returns the maximum spendable amount that can be sent in a single transaction.
@@ -557,11 +594,41 @@ new ElectrumWs(config)
 | `getBalance(address)` | Returns balance data for a Bitcoin address | `Promise<BtcBalance>` |
 | `listUnspent(address)` | Returns UTXOs for a Bitcoin address | `Promise<BtcUtxo[]>` |
 | `getHistory(address)` | Returns transaction history for a Bitcoin address | `Promise<BtcHistoryItem[]>` |
+| `getBlockHeight()` | Returns the current chain tip height | `Promise<number>` |
 | `getTransaction(txHash)` | Returns raw transaction hex | `Promise<string>` |
 | `broadcast(rawTx)` | Broadcasts raw transaction | `Promise<string>` |
 | `estimateFee(blocks)` | Returns estimated fee rate | `Promise<number>` |
 
 ## Types
+
+### Normalized Transaction Types
+
+```typescript
+type Finality = 'pending' | 'confirmed' | 'final' | 'dropped'
+type WaitForTransactionTarget = 'confirmed' | 'final'
+
+interface TransactionReceipt {
+  hash: string
+  finality: Finality
+  success?: boolean
+  block?: number
+  fee?: bigint
+}
+
+interface WaitForTransactionOptions {
+  target?: WaitForTransactionTarget // Default: 'confirmed'
+  timeout?: number                  // Milliseconds; Bitcoin default: 3,600,000
+  interval?: number                 // Milliseconds; Bitcoin default: 30,000
+  maxPollErrors?: number            // Default: 3
+}
+
+interface BtcTransactionDetails {
+  confirmations: number | null
+  transaction: BtcTransactionReceipt
+}
+```
+
+The package re-exports these types. `dropped` is part of the shared `Finality` union, but the Bitcoin implementation does not currently emit it.
 
 ### BtcWalletConfig
 
@@ -669,6 +736,7 @@ interface IBtcClient {
   getBalance(address: string): Promise<BtcBalance>
   listUnspent(address: string): Promise<BtcUtxo[]>
   getHistory(address: string): Promise<BtcHistoryItem[]>
+  getBlockHeight(): Promise<number>
   getTransaction(txHash: string): Promise<string>
   broadcast(rawTx: string): Promise<string>
   estimateFee(blocks: number): Promise<number>

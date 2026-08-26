@@ -50,6 +50,44 @@ try {
 }
 ```
 
+## Transaction Status Errors
+
+`getTransaction()` validates the transaction ID and searches this account address's history. Handle malformed and unknown transactions on that one-shot lookup:
+
+```javascript title="Handle a Transaction Lookup"
+try {
+  const receipt = await account.getTransaction(transactionHash)
+  console.log('Current finality:', receipt.finality)
+} catch (error) {
+  if (error.name === 'ValueError') {
+    console.error('Expected a 64-character hexadecimal transaction ID')
+  } else if (error.name === 'NoSuchElementError') {
+    console.error('Transaction is not in this account address history')
+  } else {
+    throw error
+  }
+}
+```
+
+Use `waitForTransaction()` when the hash may still be propagating. It consumes `NoSuchElementError` as a transient polling state, so the caller normally handles a timeout instead:
+
+```javascript title="Handle a Finality Timeout"
+try {
+  const receipt = await account.waitForTransaction(transactionHash, {
+    target: 'final'
+  })
+  console.log('Final transaction:', receipt.hash)
+} catch (error) {
+  if (error.name === 'TimeoutError') {
+    console.error('Transaction did not reach the requested finality in time')
+  } else {
+    throw error
+  }
+}
+```
+
+Polling also tolerates, by default, up to three consecutive provider errors. Bitcoin does not expose reliable dropped detection through this history flow, so a never-seen or evicted transaction ends in `TimeoutError`.
+
 ## Best Practices
 
 ### Fee Management

@@ -14,7 +14,7 @@ Wrap transactions in `try/catch` blocks to handle common failure scenarios such 
 ```javascript title="Transaction Error Handling"
 try {
   const result = await account.transfer({
-    token: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT mint address
+    token: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDt mint address
     recipient: '11111111111111111111111111111112',
     amount: 1000000n
   })
@@ -53,7 +53,7 @@ async function safeTransfer(account, wallet) {
       to: '11111111111111111111111111111112',
       value: transferAmount
     })
-    console.log('Transaction successful:', result.hash)
+    console.log('Transaction submitted:', result.hash)
 
     return result
   } catch (error) {
@@ -73,6 +73,8 @@ async function safeTransfer(account, wallet) {
   }
 }
 ```
+
+Both transfer and native-send results report submission, not successful execution. Wait for the returned signature with `waitForTransaction()` and inspect `success` after the requested commitment before treating the operation as complete.
 
 ## Handle Prebuilt TransactionMessage Errors
 
@@ -97,6 +99,12 @@ const walletWithCaps = new WalletManagerSolana(seedPhrase, {
   transferMaxFee: 10000000n
 })
 ```
+
+## Handle Transaction Status Errors
+
+`getTransaction()` throws `ValueError` for an invalid base58 signature and `NoSuchElementError` when a well-formed signature is absent from transaction history. `waitForTransaction()` treats an unknown signature as transient during propagation and throws `TimeoutError` if the target is not reached within the configured time.
+
+The Solana implementation does not currently return `dropped`; a never-landed or evicted signature times out. A confirmed or final receipt can still have `success: false`, so finality must not be used as an execution-success check.
 
 ## Dispose of Sensitive Data
 

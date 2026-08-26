@@ -42,7 +42,7 @@ new WalletManagerEvmErc4337(seed, config)
   - `chainId` (number): The blockchain's ID (e.g., 1 for Ethereum mainnet)
   - `provider` (string | Eip1193Provider | Array\<string | Eip1193Provider\>): RPC endpoint URL, EIP-1193 provider instance, or ordered failover list
   - `bundlerUrl` (string): The URL of the bundler service
-  - `safeModulesVersion` (string): Must be `'0.3.0'`, the only Safe modules version supported by beta.15
+  - `safeModulesVersion` (string): Must be `'0.3.0'`, the only Safe modules version supported by beta.16
 
 **Optional common config fields:**
   - `parallel` (boolean): Put each send, sign, or transfer in a fresh random 192-bit nonce-key lane
@@ -71,7 +71,7 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
   paymasterUrl: 'https://api.candide.dev/public/v3/1',
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
   paymasterToken: {
-    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USD₮
+    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USDt
   },
   transactionMaxFee: 100000, // Optional: max send/sign fee in token units
   transferMaxFee: 100000 // Optional: max fee in token units
@@ -281,7 +281,9 @@ const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise\<bigint\>` | - |
 | `getPaymasterTokenBalance()` | Returns the paymaster token balance | `Promise\<bigint\>` | - |
 | `getAllowance(token, spender)` | Returns current token allowance for a spender | `Promise\<bigint\>` | - |
-| `getTransactionReceipt(hash)` | Returns a transaction receipt | `Promise\<EvmTransactionReceipt \| null\>` | - |
+| `getTransactionReceipt(hash)` | Maps a UserOperation hash to a native EVM receipt; deprecated in favor of `getTransaction()` | `Promise\<EvmTransactionReceipt \| null\>` | - |
+| `getTransaction(hash)` | Returns normalized UserOperation finality using its bundling transaction | `Promise\<TransactionReceipt & EvmErc4337TransactionDetails\>` | If the hash is invalid or unknown |
+| `waitForTransaction(hash, options?)` | Waits for the UserOperation to reach `confirmed` or `final`, or returns `dropped` | `Promise\<TransactionReceipt & EvmErc4337TransactionDetails\>` | If the wait times out |
 | `getUserOperationReceipt(hash)` | Returns a UserOperation receipt | `Promise\<UserOperationReceipt \| null\>` | - |
 | `signTypedData(typedData)` | Signs EIP-712 typed structured data | `Promise\<string\>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies an EIP-712 typed data signature | `Promise\<boolean\>` | - |
@@ -458,9 +460,9 @@ Transfers ERC20 tokens via UserOperation.
 **Example:**
 ```javascript
 const result = await account.transfer({
-  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USD₮
+  token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt
   recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-  amount: 1000000 // 1 USD₮ (6 decimals)
+  amount: 1000000 // 1 USDt (6 decimals)
 }, {
   transferMaxFee: 50000 // Override max fee for this call
 }, {
@@ -517,7 +519,7 @@ Returns the balance of a specific ERC20 token in the Safe account.
 **Example:**
 ```javascript
 const tokenBalance = await account.getTokenBalance('0xdAC17F958D2ee523a2206206994597C13D831ec7')
-console.log('USDT balance:', tokenBalance) // In 6 decimal units
+console.log('USDt balance:', tokenBalance) // In 6 decimal units
 ```
 
 ##### `getPaymasterTokenBalance()`
@@ -555,7 +557,7 @@ Approves a spender to spend ERC20 tokens on behalf of the Safe account.
 const result = await account.approve({
   token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
   spender: '0xSpenderContract...',
-  amount: 1000000n // 1 USD₮
+  amount: 1000000n // 1 USDt
 }, {
   callGasLimit: 90000n,
   verificationGasLimit: 120000n
@@ -582,10 +584,10 @@ console.log('Current allowance:', allowance)
 ```
 
 ##### `getTransactionReceipt(hash)`
-Returns a transaction receipt by hash.
+Maps a UserOperation hash to its native EVM bundling-transaction receipt. This method is deprecated; use `getTransaction()` and read its `receipt` and `userOperationReceipt` fields.
 
 **Parameters:**
-- `hash` (string): The transaction hash
+- `hash` (string): The UserOperation hash, not the EVM bundling-transaction hash
 
 **Returns:** `Promise\<EvmTransactionReceipt | null\>` - Transaction receipt or null if not mined
 
@@ -594,6 +596,40 @@ Returns a transaction receipt by hash.
 const receipt = await account.getTransactionReceipt('0x...')
 if (receipt) {
   console.log('Confirmed in block:', receipt.blockNumber)
+}
+```
+
+##### `getTransaction(hash)`
+
+Returns normalized status for an exact 32-byte UserOperation hash. Before the bundler assigns an EVM transaction hash, the result is `pending` with zero confirmations and both native receipt fields set to `null`. After inclusion, finality and confirmations come from the EVM bundling transaction, while `success` and `fee` come from the UserOperation receipt when available.
+
+```javascript
+const receipt = await account.getTransaction(userOperationHash)
+
+console.log(receipt.hash)                 // The UserOperation hash
+console.log(receipt.finality)             // pending, confirmed, final, or dropped
+console.log(receipt.success)              // UserOperation execution result when known
+console.log(receipt.fee)                  // UserOperation actualGasCost when known
+console.log(receipt.receipt)              // Native EVM bundling-transaction receipt
+console.log(receipt.userOperationReceipt) // Raw bundler receipt
+```
+
+An invalid hash throws `ValueError`; a well-formed hash unknown to the bundler throws `NoSuchElementError`. A settled `confirmed` or `final` receipt can still have `success: false`, so always inspect execution success.
+
+##### `waitForTransaction(hash, options?)`
+
+Polls by UserOperation hash until the requested finality target is reached or the underlying EVM transaction is classified as `dropped`. The default target is `confirmed`, the interval is four seconds, and the ERC-4337 timeout is 180 seconds.
+
+```javascript
+const receipt = await account.waitForTransaction(userOperationHash, {
+  target: 'final',
+  timeout: 180000,
+  interval: 4000,
+  maxPollErrors: 3
+})
+
+if (receipt.finality !== 'dropped' && receipt.success === false) {
+  console.log('The UserOperation was included but failed')
 }
 ```
 
@@ -673,7 +709,7 @@ Returns balances for multiple ERC20 tokens in a single call.
 **Example:**
 ```javascript
 const balances = await account.getTokenBalances([
-  '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
+  '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt
   '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'  // USDC
 ])
 for (const [address, balance] of balances) {
@@ -807,7 +843,9 @@ const sameAddress = WalletAccountEvmErc4337.predictSafeAddress(
 | `getAllowance(token, spender)` | Returns current token allowance for a spender | `Promise\<bigint\>` | - |
 | `quoteSendTransaction(tx, config?)` | Estimates the fee for a UserOperation | `Promise\<{fee: bigint}\>` | If simulation fails or the token paymaster address mismatches |
 | `quoteTransfer(options, config?, txOverrides?)` | Estimates the fee for an ERC20 transfer | `Promise\<{fee: bigint}\>` | If simulation fails or the token paymaster address mismatches |
-| `getTransactionReceipt(hash)` | Returns a transaction receipt | `Promise\<EvmTransactionReceipt \| null\>` | - |
+| `getTransactionReceipt(hash)` | Maps a UserOperation hash to a native EVM receipt; deprecated in favor of `getTransaction()` | `Promise\<EvmTransactionReceipt \| null\>` | - |
+| `getTransaction(hash)` | Returns normalized UserOperation finality using its bundling transaction | `Promise\<TransactionReceipt & EvmErc4337TransactionDetails\>` | If the hash is invalid or unknown |
+| `waitForTransaction(hash, options?)` | Waits for the UserOperation to reach `confirmed` or `final`, or returns `dropped` | `Promise\<TransactionReceipt & EvmErc4337TransactionDetails\>` | If the wait times out |
 | `getUserOperationReceipt(hash)` | Returns a UserOperation receipt | `Promise\<UserOperationReceipt \| null\>` | - |
 | `signTypedData(typedData)` | Signs EIP-712 typed structured data | `Promise\<string\>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies an EIP-712 typed data signature | `Promise\<boolean\>` | - |
@@ -861,7 +899,7 @@ Returns the balance of a specific ERC20 token.
 **Example:**
 ```javascript
 const tokenBalance = await readOnlyAccount.getTokenBalance('0xdAC17F958D2ee523a2206206994597C13D831ec7')
-console.log('USDT balance:', tokenBalance)
+console.log('USDt balance:', tokenBalance)
 ```
 
 ##### `getPaymasterTokenBalance()`
@@ -944,10 +982,10 @@ console.log('Transfer fee estimate:', quote.fee)
 ```
 
 ##### `getTransactionReceipt(hash)`
-Returns a transaction receipt by hash.
+Maps a UserOperation hash to its native EVM bundling-transaction receipt. This method is deprecated; use `getTransaction()` for normalized finality.
 
 **Parameters:**
-- `hash` (string): The transaction hash
+- `hash` (string): The UserOperation hash, not the EVM bundling-transaction hash
 
 **Returns:** `Promise\<EvmTransactionReceipt | null\>` - Transaction receipt or null if not mined
 
@@ -961,6 +999,10 @@ if (receipt) {
   console.log('Transaction not yet mined')
 }
 ```
+
+##### `getTransaction(hash)` and `waitForTransaction(hash, options?)`
+
+Read-only accounts expose the same UserOperation-hash semantics as owned accounts. `getTransaction()` retains the UserOperation hash in `receipt.hash`, derives finality from the bundling transaction, and exposes both the EVM receipt and raw UserOperation receipt. `waitForTransaction()` defaults to a four-second interval and 180-second timeout. Inspect `success` after inclusion.
 
 ##### `getUserOperationReceipt(hash)`
 Returns a UserOperation receipt by hash.
@@ -1038,7 +1080,7 @@ Returns balances for multiple ERC20 tokens in a single call.
 **Example:**
 ```javascript
 const balances = await readOnlyAccount.getTokenBalances([
-  '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT
+  '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt
   '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'  // USDC
 ])
 for (const [address, balance] of balances) {
@@ -1047,6 +1089,36 @@ for (const [address, balance] of balances) {
 ```
 
 ## Types
+
+### Normalized Transaction Types
+
+```typescript
+type Finality = 'pending' | 'confirmed' | 'final' | 'dropped'
+type WaitForTransactionTarget = 'confirmed' | 'final'
+
+interface TransactionReceipt {
+  hash: string
+  finality: Finality
+  success?: boolean
+  block?: number
+  fee?: bigint
+}
+
+interface WaitForTransactionOptions {
+  target?: WaitForTransactionTarget // Default: 'confirmed'
+  timeout?: number                  // Milliseconds; ERC-4337 default: 180,000
+  interval?: number                 // Milliseconds; default: 4,000
+  maxPollErrors?: number            // Default: 3
+}
+
+interface EvmErc4337TransactionDetails {
+  confirmations: number
+  receipt: EvmTransactionReceipt | null
+  userOperationReceipt: UserOperationReceipt | null
+}
+```
+
+The package re-exports these types.
 
 ### EvmErc4337WalletConfig
 
@@ -1058,7 +1130,7 @@ interface EvmErc4337WalletCommonConfig {
   chainId: number;                          // Blockchain ID
   provider: string | Eip1193Provider | Array<string | Eip1193Provider>; // RPC provider or failover list
   bundlerUrl: string;                       // Bundler service URL
-  safeModulesVersion: string;               // Must be '0.3.0' in beta.15
+  safeModulesVersion: string;               // Must be '0.3.0' in beta.16
   parallel?: boolean;                       // Fresh random nonce-key lane per operation
   nonceKey?: number | bigint | string;      // Reusable raw or named uint192 lane key
 }
@@ -1099,7 +1171,7 @@ type EvmErc4337WalletConfig = EvmErc4337WalletCommonConfig &
 
 ### Config Override
 
-The published beta.15 `config` parameter type on `sendTransaction`, `signTransaction`, `quoteSendTransaction`, `transfer`, and `quoteTransfer` allows per-call overrides of gas payment settings:
+The published beta.16 `config` parameter type on `sendTransaction`, `signTransaction`, `quoteSendTransaction`, `transfer`, and `quoteTransfer` allows per-call overrides of gas payment settings:
 
 ```typescript
 type ConfigOverride = Partial<
@@ -1121,7 +1193,7 @@ type ConfigOverride = Partial<
 
 Overrides are shallow-merged with the account configuration, then validated. When switching modes, explicitly clear an inherited opposing flag: sponsorship requires `isSponsored: true` and `useNativeCoins: false`; native-coin mode requires `isSponsored: false` and `useNativeCoins: true`; paymaster-token mode requires both flags to be `false`. The merged configuration must also contain the URL, address, token, or policy fields required by the selected mode.
 
-At runtime, beta.15 additionally honors `parallel` and `nonceKey` per call for `signTransaction()`, `sendTransaction()`, and `transfer()`. Those two fields are missing from the published per-call declarations, so object literals containing them fail TypeScript excess-property checks even though JavaScript calls work. Construction-level `EvmErc4337WalletCommonConfig` includes both fields and is the typed path in this release. `quoteSendTransaction()` and `quoteTransfer()` do not select a lane.
+At runtime, beta.16 additionally honors `parallel` and `nonceKey` per call for `signTransaction()`, `sendTransaction()`, and `transfer()`. Those two fields are missing from the published per-call declarations, so object literals containing them fail TypeScript excess-property checks even though JavaScript calls work. Construction-level `EvmErc4337WalletCommonConfig` includes both fields and is the typed path in this release. `quoteSendTransaction()` and `quoteTransfer()` do not select a lane.
 
 In token-paymaster mode, every path that builds a UserOperation validates a non-empty paymaster address returned by the RPC against `paymasterAddress`. A case-insensitive mismatch throws `ConfigurationError` before the operation is returned or submitted.
 
