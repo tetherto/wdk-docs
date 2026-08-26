@@ -1,0 +1,148 @@
+---
+title: 0x Swidge Configuration
+description: Configure chain context, 0x API access, slippage, approvals, and fee limits for @0x/wdk-protocol-swidge-0x 0.1.0.
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+`ZeroExProtocol` requires a 0x API key and an EVM chain id even when no wallet account is bound.
+
+```javascript title="Configure the protocol"
+import ZeroExProtocol from '@0x/wdk-protocol-swidge-0x'
+
+const zeroEx = new ZeroExProtocol(account, {
+  chainId: 1,
+  apiKey: process.env.ZERO_EX_API_KEY,
+  defaultSlippage: 0.005,
+  maxNetworkFeeBps: 50,
+  maxProtocolFeeBps: 30
+})
+```
+
+The import specifier above resolves from [`@0x/wdk-protocol-swidge-0x@0.1.0`](https://www.npmjs.com/package/@0x/wdk-protocol-swidge-0x/v/0.1.0).
+
+## Constructor
+
+```typescript
+new ZeroExProtocol(account?, config)
+```
+
+| Parameter | Type | Description |
+|---|---|---|
+| `account` | `IWalletAccount \| IWalletAccountReadOnly \| undefined` | Optional for indicative quotes. A writable account with `sendTransaction()` is required for execution. |
+| `config` | `ZeroExProtocolConfig` | Required API, chain, slippage, approval, and fee policy. |
+
+## Configuration options
+
+| Option | Type | Required | Description |
+|---|---|---:|---|
+| `chainId` | `number \| string` | Yes | EVM chain id for the bound account and every 0x request made by this instance. |
+| `apiKey` | `string` | Yes | 0x API key sent in the `0x-api-key` request header. |
+| `baseUrl` | `string` | No | 0x API base URL. Defaults to `https://api.0x.org`. A custom value should omit the trailing slash. |
+| `defaultSlippage` | `number` | No | Default decimal slippage passed as basis points, such as `0.005` for 0.5%. When omitted, the module does not send `slippageBps`. |
+| `skipApproval` | `boolean` | No | Skips automatic ERC-20 approval. Defaults to `false`. |
+| `maxNetworkFeeBps` | `number \| bigint` | No | Maximum network fee in basis points of the sell amount when the quoted fee can be evaluated. |
+| `maxProtocolFeeBps` | `number \| bigint` | No | Maximum 0x protocol fee in basis points of the sell amount when the quoted fee can be evaluated. |
+
+The constructor checks only that `apiKey` is truthy and `chainId` is not nullish. Validate the chain id, API URL, slippage range, and fee-limit values at your application boundary.
+
+## Chain context
+
+Create one `ZeroExProtocol` instance per chain and bind it to an account on that chain:
+
+```javascript title="Configure Base"
+const zeroEx = new ZeroExProtocol(baseAccount, {
+  chainId: 8453,
+  apiKey: process.env.ZERO_EX_API_KEY
+})
+```
+
+Passing a different `toChain` to `quoteSwidge()` or `swidge()` throws `ZeroExUnsupportedOperationError`. Quote and execution requests use the configured `chainId`; `getSwidgeStatus()` reads `options.fromChain` only when resolving a bare transaction hash.
+
+## API-key handling
+
+The module sends the key directly to the configured API base URL. Keep it in secret-managed configuration and restrict custom base URLs to trusted endpoints. Do not log request headers or commit `.env` files.
+
+The 0.1.0 API client uses the runtime's global `fetch`. It does not expose request-timeout, cancellation, or custom-fetch options. The package's `bare` export initializes `bare-node-runtime/global`; other runtimes must provide `fetch`. Handle transient errors and `ZeroExApiError` in the host application.
+
+## Rate limits
+
+The [0x rate-limit documentation](https://docs.0x.org/docs/developer-resources/rate-limits) describes the free tier as approximately five requests per second across all endpoints, enforced in fixed one-second windows.
+
+The module does not throttle or retry requests. For its primary `/price` and `/quote` requests, an HTTP `429` response surfaces as `ZeroExApiError` with `status === 429`; back off before retrying.
+
+The additional `/price` request used to evaluate an ERC-20 network-fee limit is an exception. If that conversion request fails, including with HTTP `429`, execution fails closed as `ZeroExFeeLimitExceededError` because the fee cannot be evaluated.
+
+## Slippage
+
+Configure an instance default:
+
+```javascript title="Set 0.5 percent default slippage"
+const zeroEx = new ZeroExProtocol(account, {
+  chainId: 1,
+  apiKey: process.env.ZERO_EX_API_KEY,
+  defaultSlippage: 0.005
+})
+```
+
+Override it per route with `options.slippage`. The route value takes precedence over `defaultSlippage`.
+
+The source converts slippage with `Math.round(slippage * 10000)` and does not validate its range. Reject non-finite, negative, or application-disallowed values before calling the module.
+
+## Approval policy
+
+Automatic approval runs when all of these conditions are true:
+
+- The sell token is not treated as the chain's native token.
+- `skipApproval` is not `true`.
+- The firm quote contains `issues.allowance`.
+
+The module approves the quoted sell amount for the spender returned by 0x. When the approval result contains a transaction hash and the account supports `getTransactionReceipt()`, it polls every two seconds for up to three minutes.
+
+<Callout type="warn">
+Use `skipApproval: true` only after independently verifying sufficient allowance for the exact token and spender. The module does not perform that verification when approval is skipped.
+</Callout>
+
+## Fee limits
+
+Set limits on the instance or override them for one `swidge()` call:
+
+```javascript title="Override execution fee limits"
+await zeroEx.swidge(options, {
+  maxNetworkFeeBps: 40,
+  maxProtocolFeeBps: 25
+})
+```
+
+Per-call values take precedence over instance values.
+
+| Limit | Evaluation |
+|---|---|
+| `maxNetworkFeeBps` | If `totalNetworkFee` exists, native-token sells are compared directly. For ERC-20 sells, the module makes an additional indicative `/price` request to convert the network fee into sell-token units. A failed or unavailable conversion rejects execution. |
+| `maxProtocolFeeBps` | If `fees.zeroExFee.feeAmount` exists, a fee denominated in the sell token is compared directly. A fee denominated in another token rejects execution. |
+
+These limits evaluate fields in the 0x firm quote. The module does not independently estimate or cap the network fee charged by a separate ERC-20 approval transaction.
+
+Neither limit caps `fees.integratorFee`. Treat `maxNetworkFeeBps` and `maxProtocolFeeBps` as targeted checks, not as a cap on the total of every reported fee.
+
+Fee-ratio calculations convert quoted amounts and fees to JavaScript `number`. Large base-unit values can lose precision, especially when a calculated ratio is close to a configured cap.
+
+<Callout type="warn">
+The 0.1.0 implementation skips a fee-limit check when the corresponding fee field is absent from the firm quote, and skips both checks when the quoted sell amount is zero or non-numeric. Treat these settings as conditional checks, not proof that every possible fee was capped.
+</Callout>
+
+<Cards>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-0x/usage">
+Quote, confirm, execute, and track a same-chain swap.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-0x/api-reference">
+Review method signatures, results, chains, and errors.
+</Card>
+</Cards>

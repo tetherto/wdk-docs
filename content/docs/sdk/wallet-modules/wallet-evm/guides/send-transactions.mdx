@@ -5,7 +5,7 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-This guide explains how to [send EVM transactions with EIP-1559 gas parameters](#send-with-eip-1559-gas-parameters), [send legacy gas transactions](#send-with-legacy-gas-parameters), [deploy contracts](#deploy-a-contract), [sign without broadcasting](#sign-without-broadcasting), [estimate fees](#estimate-transaction-fees), [cap transaction fees](#cap-transaction-fees), and [use dynamic fee rates](#use-dynamic-fee-rates).
+This guide explains how to [send EVM transactions with EIP-1559 gas parameters](#send-with-eip-1559-gas-parameters), [send legacy gas transactions](#send-with-legacy-gas-parameters), [deploy contracts](#deploy-a-contract), [sign without broadcasting](#sign-without-broadcasting), [estimate fees](#estimate-transaction-fees), [cap transaction fees](#cap-transaction-fees), [use dynamic fee rates](#use-dynamic-fee-rates), and [wait for finality](#wait-for-finality).
 
 <Callout type="warn">
 **BigInt Usage:** Always use `BigInt` (the `n` suffix) for monetary values to avoid precision loss with large numbers.
@@ -73,7 +73,7 @@ console.log('Signed transaction:', signedTransaction)
 ```
 
 <Callout type="info">
-`signTransaction()` returns the signed transaction payload and does not broadcast it. In `1.0.0-beta.16`, do not pass that serialized payload back to `sendTransaction()`: the send path does not broadcast the supplied bytes and can populate a different transaction. Submit signed raw transactions through a separate relay or provider. Use `sendTransaction()` with an `EvmTransaction` object when WDK should populate, sign, broadcast, and return the transaction hash.
+`signTransaction()` returns the signed transaction payload and does not broadcast it. In `1.0.0-beta.17`, do not pass that serialized payload back to `sendTransaction()`: the send path does not broadcast the supplied bytes and can populate a different transaction. Submit signed raw transactions through a separate relay or provider. Use `sendTransaction()` with an `EvmTransaction` object when WDK should populate, sign, broadcast, and return the transaction hash.
 </Callout>
 
 ## Estimate Transaction Fees
@@ -123,6 +123,31 @@ console.log('Fee paid:', result.fee, 'wei')
 <Callout type="info">
 **Gas Estimation:** The `maxFeePerGas` and `maxPriorityFeePerGas` fields enable EIP-1559 transactions, ensuring more predictable gas fees and faster inclusion times.
 </Callout>
+
+## Wait for Finality
+
+Use the hash returned by `sendTransaction()` with `waitForTransaction()`:
+
+```javascript title="Wait for a Finalized Transaction"
+const result = await account.sendTransaction({
+  to: recipient,
+  value: 1000000000000000n
+})
+
+const receipt = await account.waitForTransaction(result.hash, {
+  target: 'final'
+})
+
+if (receipt.finality === 'dropped') {
+  console.log('The sender nonce was consumed by another transaction')
+} else if (receipt.success === false) {
+  console.log('The transaction was included but reverted')
+}
+```
+
+The EVM default timeout is 120 seconds and the polling interval is four seconds. A node that does not implement the `finalized` block tag can report `confirmed` but cannot advance the receipt to `final`; use a bounded timeout appropriate for that provider. A finality target indicates settlement level, not execution success, so inspect `success`.
+
+`getTransactionReceipt()` remains available for the native ethers receipt but is deprecated in favor of `getTransaction()`.
 
 ## Next Steps
 

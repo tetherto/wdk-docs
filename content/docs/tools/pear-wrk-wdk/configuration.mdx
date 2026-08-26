@@ -50,6 +50,16 @@ const context = {
       events: ['changed']
     }
   },
+  allowedMethods: {
+    ethereum: {
+      methods: ['getAddress', 'getBalance', 'sendTransaction']
+    }
+  },
+  allowedModuleMethods: {
+    preferences: {
+      methods: ['getTheme', 'setTheme']
+    }
+  },
   capabilities: {},
   wdkLoadError: null
 }
@@ -76,6 +86,60 @@ module.exports = (rpc) => {
 - `wdkLoadError`: Any startup error captured while loading WDK. Use `null` when there is no load failure.
 
 For HRPC generic modules, `moduleManagers` optionally maps module names to `{ createModule, events? }`. The factory receives `{ seed, config, capabilities, emit }` and can return an instance or a promise. `capabilities` is an optional host-supplied object and is empty by default. The runtime manages `moduleRuntime` and `moduleInstances`; do not initialize those fields yourself. Manual integrations must forward Bare `suspend` and `resume` events as shown if module instances should receive those lifecycle calls. Worklet Bundler-generated HRPC entrypoints wire them automatically.
+
+## Restrict Dynamic Methods
+
+`callMethod()` and `callModule()` dispatch method names supplied by the host. Add allowlists to `RpcContext` when that host should not reach every method on the resolved object.
+
+### Wallet and Protocol Methods
+
+`allowedMethods` is keyed by network. A network's direct `methods` array applies to its wallet account. Protocol restrictions are nested by protocol type and protocol name:
+
+```javascript title="Restrict Dynamic Wallet And Protocol Calls"
+const context = {
+  // Other required context fields...
+  allowedMethods: {
+    ethereum: {
+      methods: ['getAddress', 'getBalance', 'sendTransaction'],
+      protocols: {
+        lending: {
+          aave: {
+            methods: ['supply', 'withdraw']
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+This map applies to the shared HRPC and JSON-RPC `callMethod()` handler. Restrictions are opt-in per surface:
+
+- Omitting the map, a network, `protocols`, a protocol type, a protocol name, or `methods` leaves that exact surface unrestricted.
+- An explicit `methods: []` denies every call on that exact account or protocol surface.
+- Protocol calls use their nested list rather than falling back to the account list.
+- A denied method fails before account or protocol dispatch with `METHOD_NOT_ALLOWED`; `defaultValue` is not returned.
+
+### Generic Module Methods
+
+`allowedModuleMethods` is keyed by the `moduleManagers` name and applies to HRPC `callModule()` only:
+
+```javascript title="Restrict Dynamic Module Calls"
+const context = {
+  // Other required context fields...
+  allowedModuleMethods: {
+    preferences: {
+      methods: ['getTheme', 'setTheme']
+    }
+  }
+}
+```
+
+Omitting a module or its `methods` field leaves that module unrestricted. Set `methods: []` to deny every dynamic call on it.
+
+<Callout type="warn">
+These maps are not default-deny. List every dynamic surface exposed to an untrusted host. The beta.11 runtime reports denied calls with `METHOD_NOT_ALLOWED`, but the published error-code declaration omits that new member; handle the literal runtime code until the declaration is corrected.
+</Callout>
 
 ## Worklet Config Payload
 
@@ -117,7 +181,7 @@ const workletConfig = {
 - `resetWdkWallets()` reads only the `networks` portion of the decoded config.
 
 <Callout type="warn">
-Generic modules are HRPC-only in beta.10. The JSON-RPC handler does not construct modules or expose module calls and events.
+Generic modules are HRPC-only in beta.11. The JSON-RPC handler does not construct modules or expose module calls and events.
 </Callout>
 
 ## Initialize WDK
@@ -141,7 +205,7 @@ await hrpc.initializeWDK({
 - Pass both `encryptionKey` and `encryptedSeed`, or omit both together.
 - On first initialization, the worklet must receive an encrypted seed pair so it can create `context.wdk`.
 - If `context.wdk` already exists, a later `initializeWDK()` call disposes the existing instance and closes its generic modules before re-registering wallets and protocols from the new config.
-- In beta.10, generic modules are constructed only when that `initializeWDK()` request includes both `encryptionKey` and `encryptedSeed`. A seedless reinitialization closes existing module instances but does not rebuild them, even when `config.modules` is present. Supply the seed pair on every initialization that must construct or reconstruct modules.
+- In beta.11, generic modules are constructed only when that `initializeWDK()` request includes both `encryptionKey` and `encryptedSeed`. A seedless reinitialization closes existing module instances but does not rebuild them, even when `config.modules` is present. Supply the seed pair on every initialization that must construct or reconstruct modules.
 - Module `close()` is called during full disposal or reinitialization. Targeted blockchain disposal leaves generic modules running. Optional `suspend()` and `resume()` methods run only when the host forwards Bare lifecycle events; the manual context above and Worklet Bundler-generated HRPC entrypoints do so.
 
 ## Reset Selected Wallets
@@ -190,6 +254,7 @@ const result = await hrpc.callMethod({
 - When `args` decodes to an array, the handler spreads the values as positional method arguments.
 - When `args` decodes to an object or primitive, the handler passes it as a single argument.
 - Set `options.protocolType` to `swap`, `swidge`, `bridge`, `lending`, or `fiat` to call a protocol wrapper. Every protocol call requires a non-empty `options.protocolName`.
+- When `context.allowedMethods` contains the target account or protocol surface, `methodName` must appear in that exact surface's `methods` array.
 
 ## Call Generic Module Methods
 
@@ -206,6 +271,8 @@ const theme = response.result ? JSON.parse(response.result) : undefined
 ```
 
 `args` is an optional JSON string. Arrays are spread into positional arguments; a non-array value is passed as one argument. Promise results are awaited, `.toArray()` results are materialized, and `Uint8Array` values are normalized to hex before the response is serialized.
+
+When `context.allowedModuleMethods` contains the target module, `method` must appear in its `methods` array. A denied call returns `METHOD_NOT_ALLOWED` before module instance lookup or dispatch.
 
 Subscribe to events declared by the module manager:
 
@@ -232,7 +299,7 @@ module.exports = (ipc) => {
 
 Messages are UTF-8 JSON-RPC 2.0 objects prefixed by a four-byte unsigned big-endian payload length. Requests require an ID, and IDs must be unique while a request is in flight. The package exports no JSON-RPC host/client helper; the native host must implement framing and correlation.
 
-JSON-RPC beta.10 supports WDK initialization and disposal, secret/mnemonic operations, wallet and protocol calls, and dynamic wallet/protocol registration. Its shared `callMethod` handler supports the `swidge` protocol type. It does not support `resetWdkWallets`, `callModule`, or module events. See the [API reference](/tools/pear-wrk-wdk/api-reference#json-rpc-transport) for the exact method list.
+JSON-RPC beta.11 supports WDK initialization and disposal, secret/mnemonic operations, wallet and protocol calls, and dynamic wallet/protocol registration. Its shared `callMethod` handler supports the `swidge` protocol type and enforces `context.allowedMethods`. It does not support `resetWdkWallets`, `callModule`, `allowedModuleMethods`, or module events. See the [API reference](/tools/pear-wrk-wdk/api-reference#json-rpc-transport) for the exact method list.
 
 <Callout type="warn">
 INFO-level logs can contain wallet-call arguments and JSON-RPC parameters or results. Keep production logging at its default ERROR level when requests may contain sensitive values.

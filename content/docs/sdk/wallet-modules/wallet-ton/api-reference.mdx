@@ -167,7 +167,9 @@ const account = new WalletAccountTon(seedPhrase, "0'/0/0", {
 | `quoteTransfer(options)` | Estimates the fee for a Jetton transfer | `Promise\<{fee: bigint}\>` |
 | `getBalance()` | Returns the native TON balance (in nanotons) | `Promise\<bigint\>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific Jetton token | `Promise\<bigint\>` |
-| `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise\<TonTransactionReceipt \| null\>` |
+| `getTransaction(hash)` | Returns a normalized receipt for a message-body hash | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
+| `waitForTransaction(hash, options?)` | Waits for the requested TON finality | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
+| `getTransactionReceipt(hash)` | Deprecated: returns the native TON transaction | `Promise\<TonTransactionReceipt \| null\>` |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise\<WalletAccountReadOnlyTon\>` |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
 
@@ -349,9 +351,7 @@ console.log('Token balance:', tokenBalance, 'Jetton base units');
 ```
 
 ##### `getTransactionReceipt(hash)`
-Returns a transaction's receipt if it has been mined.
-
-Through `1.0.0-beta.12`, the initial receipt lookup always queries mainnet TON Center v3. Do not rely on this method for testnet receipts; see [Network Selection](/sdk/wallet-modules/wallet-ton/configuration#network-selection).
+Returns a transaction's native TON receipt if it has been included in a block. This method is deprecated; use [`getTransaction()`](#gettransactionhash) for normalized finality and read its `transaction` field when you need the native object.
 
 **Parameters:**
 - `hash` (string): The signed transfer body hash returned by `sendTransaction()` or `transfer()`
@@ -371,6 +371,37 @@ if (receipt) {
 } else {
   console.log('Transaction not yet included in a block')
 }
+```
+
+##### `getTransaction(hash)`
+Looks up the signed message-body hash returned by `sendTransaction()` or `transfer()` through TON Center v3, then retrieves the native TON transaction through the configured `tonClient`.
+
+TON Center indexes a transaction only after block inclusion. A found transaction is therefore `confirmed`, or `final` when TON Center supplies `mc_block_seqno`; this API does not expose a `pending` or `dropped` state. `success` is `false` for aborted or failed compute/action phases, `true` for a successful generic transaction, and `undefined` when the native result cannot determine execution success. The receipt also exposes the masterchain block, total fee when available, and native `transaction`.
+
+**Returns:** `Promise\<TransactionReceipt & TonTransactionDetails\>`
+
+**Throws:** `NoSuchElementError` when TON Center has not indexed the hash. A configured `tonClient` is required to retrieve the native transaction.
+
+```javascript
+const result = await account.transfer({
+  token: 'EQ...',
+  recipient: 'EQ...',
+  amount: 1000000n
+})
+const transaction = await account.getTransaction(result.hash)
+
+console.log(transaction.finality) // 'confirmed' or 'final'
+console.log(transaction.success)  // true, false, or undefined
+```
+
+##### `waitForTransaction(hash, options?)`
+Polls until TON Center indexes the message and the requested finality is reached. The defaults are `target: 'confirmed'`, `interval: 4000`, `timeout: 60000`, and `maxPollErrors: 3`. Because TON Center exposes neither the mempool nor dropped messages, an unseen or dropped transaction eventually throws `TimeoutError`.
+
+```javascript
+const transaction = await account.waitForTransaction(result.hash, {
+  target: 'final',
+  timeout: 120000
+})
 ```
 
 ##### `toReadOnlyAccount()`
@@ -431,7 +462,9 @@ new WalletAccountReadOnlyTon(publicKey, config)
 | `getBalance()` | Returns the native TON balance | `Promise\<bigint\>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific Jetton | `Promise\<bigint\>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` |
-| `getTransactionReceipt(hash)` | Returns a transaction's receipt | `Promise\<TonTransactionReceipt \| null\>` |
+| `getTransaction(hash)` | Returns a normalized receipt for a message-body hash | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
+| `waitForTransaction(hash, options?)` | Waits for the requested TON finality | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
+| `getTransactionReceipt(hash)` | Deprecated: returns the native TON transaction | `Promise\<TonTransactionReceipt \| null\>` |
 
 ##### `getAddress()`
 Returns the account's address.
@@ -467,9 +500,7 @@ console.log('Signature valid:', isValid)
 ```
 
 ##### `getTransactionReceipt(hash)`
-Returns a transaction's receipt if it has been mined.
-
-Through `1.0.0-beta.12`, the initial receipt lookup always queries mainnet TON Center v3. Do not rely on this method for testnet receipts; see [Network Selection](/sdk/wallet-modules/wallet-ton/configuration#network-selection).
+Returns a transaction's native TON receipt if it has been included in a block. This method is deprecated in favor of `getTransaction()`. The read-only account's `getTransaction()` and `waitForTransaction()` use the same message-body-hash, confirmed/final, timeout, and native `transaction` semantics documented above.
 
 **Parameters:**
 - `hash` (string): The signed transfer body hash returned by `sendTransaction()` or `transfer()`

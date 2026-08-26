@@ -54,7 +54,7 @@ The Unix socket's owner-only mode excludes other operating-system users. It does
 
 ## `seed.enc` version 1
 
-`seed.enc` is a UTF-8 JSON object with five fields:
+`seed.enc` is a UTF-8 JSON object. Beta.2 writes eight fields:
 
 ```json title="seed.enc shape"
 {
@@ -62,7 +62,10 @@ The Unix socket's owner-only mode excludes other operating-system users. It does
   "salt": "64 hexadecimal characters",
   "iv": "24 hexadecimal characters",
   "tag": "32 hexadecimal characters",
-  "ciphertext": "variable-length hexadecimal ciphertext"
+  "ciphertext": "variable-length hexadecimal ciphertext",
+  "scryptN": 65536,
+  "scryptR": 8,
+  "scryptP": 1
 }
 ```
 
@@ -84,9 +87,11 @@ All binary fields use hexadecimal encoding, not Base64.
 | Additional authenticated data | None |
 | Plaintext | UTF-8 BIP-39 mnemonic |
 
-Only `version` and the four binary fields are stored. The algorithm and scrypt parameters are implicit in version 1.
+Beta.2 stores the three scrypt parameters with every newly encrypted file. Beta.1 files omit them; beta.2 treats an omitted value as the same default shown above, so existing version 1 files remain readable. The algorithm is still implicit in `version: 1`.
 
 Each write generates a new random salt and IV. AES-GCM authenticates the ciphertext: a wrong passphrase or a modified salt, IV, tag, or ciphertext causes decryption to fail.
+
+Wallet writes use a sibling `seed.enc.tmp` file with mode `0600` and then rename it over `seed.enc`. If writing fails, the CLI attempts to remove the temporary file. This prevents a partial write from replacing the existing encrypted wallet during normal filesystem operation.
 
 <Callout type="info">
 Users can rely on the documented version 1 recovery procedure. If a future format is introduced, an automated migration is not guaranteed, but the version 1 recovery procedure will remain documented so existing files can be recovered.
@@ -151,11 +156,25 @@ function validatePayload(payload) {
     throw new Error(`unsupported seed.enc version: ${String(payload.version)}`)
   }
 
+  const scryptParams = {
+    N: payload.scryptN ?? SCRYPT.N,
+    r: payload.scryptR ?? SCRYPT.r,
+    p: payload.scryptP ?? SCRYPT.p
+  }
+  for (const key of ['N', 'r', 'p']) {
+    if (scryptParams[key] !== SCRYPT[key]) {
+      throw new Error(
+        `unsupported scrypt ${key}: ${String(scryptParams[key])}; expected ${SCRYPT[key]}`
+      )
+    }
+  }
+
   return {
     salt: decodeHex('salt', payload.salt, 32),
     iv: decodeHex('iv', payload.iv, 12),
     tag: decodeHex('tag', payload.tag, 16),
-    ciphertext: decodeHex('ciphertext', payload.ciphertext)
+    ciphertext: decodeHex('ciphertext', payload.ciphertext),
+    scryptParams
   }
 }
 
@@ -230,9 +249,12 @@ async function main() {
     throw new Error('seed.enc is not valid JSON')
   }
 
-  const { salt, iv, tag, ciphertext } = validatePayload(payload)
+  const { salt, iv, tag, ciphertext, scryptParams } = validatePayload(payload)
   const passphrase = await promptHidden('Passphrase: ')
-  const key = scryptSync(passphrase, salt, 32, SCRYPT)
+  const key = scryptSync(passphrase, salt, 32, {
+    ...scryptParams,
+    maxmem: SCRYPT.maxmem
+  })
   let decryptedChunk
   let authenticatedTail
   let plaintext
@@ -270,7 +292,7 @@ node recover-wdk-seed.mjs "$HOME/.config/wdk-cli/wallets/WALLET_NAME/seed.enc"
 
 Enter the passphrase at the hidden prompt. The script intentionally refuses non-interactive input so the passphrase is not supplied through a pipe, argument, or environment variable.
 
-The script validates the version, field encodings, and fixed field lengths before deriving the key. It makes a best-effort attempt to clear the derived key, decrypted chunks, and concatenated plaintext buffer after success or failure. The passphrase and displayed mnemonic still pass through JavaScript, OpenSSL internals, and terminal-managed memory, where reliable zeroization is not possible.
+The script validates the version, field encodings, fixed field lengths, and beta.2 scrypt parameters before deriving the key. Missing scrypt fields use the beta.1 defaults; unexpected parameter values fail closed instead of requesting unbounded work from an edited file. The script makes a best-effort attempt to clear the derived key, decrypted chunks, and concatenated plaintext buffer after success or failure. The passphrase and displayed mnemonic still pass through JavaScript, OpenSSL internals, and terminal-managed memory, where reliable zeroization is not possible.
 
 After recovery:
 
@@ -281,7 +303,7 @@ After recovery:
 
 ## Rename and deletion behavior
 
-Renaming a wallet moves its directory; it does not decrypt or re-encrypt `seed.enc`.
+Renaming a wallet moves its directory; it does not decrypt or re-encrypt `seed.enc`. `wdk wallet change-passphrase` does decrypt and re-encrypt the mnemonic, generating a new salt and IV and replacing the file through the temporary-file write described above.
 
 Deleting a wallet removes its wallet directory after passphrase verification and attempts to lock its active daemon session first. This is ordinary filesystem deletion, not cryptographic erasure. Copies may remain in backups, snapshots, filesystem journals, swap, or recoverable storage blocks.
 

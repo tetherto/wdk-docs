@@ -1,0 +1,128 @@
+---
+title: Cloud Backup Configuration
+description: Configure Google Drive, CloudKit, credentials, storage identifiers, retries, and timeouts
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+`@tetherto/wdk-backup-cloud` receives cloud credentials from the application and uses global web APIs to call Google Drive or CloudKit. It does not read environment variables or configuration files and does not implement sign-in or token refresh.
+
+## Google Drive
+
+```javascript
+import { GoogleDriveProvider } from '@tetherto/wdk-backup-cloud'
+
+const provider = new GoogleDriveProvider({
+  getAccessToken: async () => googleAuth.getAccessToken(),
+  filePath: 'wallet_backup_key.json',
+  cloudEmail: signedInGoogleAccount.email,
+  timeout: 30000
+})
+```
+
+| Field | Type | Default and behavior |
+| --- | --- | --- |
+| `accessToken` | `string` | Optional static OAuth 2 token. Use only when its lifetime is sufficient for the operation. |
+| `getAccessToken` | `() => Promise<string>` | Optional callback called before each Drive request. It wins when both token fields are set. |
+| `filePath` | `string` | `wallet_backup_key.json`. Only the basename is used in the Drive query and file metadata. |
+| `cloudEmail` | `string` | Empty string. Stored inside the backup payload. |
+| `timeout` | `number` | `30000` milliseconds. Must be finite and greater than zero. |
+
+Provide `accessToken` or `getAccessToken`; construction fails with `CloudValidationError` when neither is present. The token needs the Google Drive `drive.appdata` scope.
+
+The provider queries `appDataFolder` for the first non-trashed file with the configured basename. It creates the file when none is found or updates the first match. Directory segments in `filePath` do not create folders or namespaces. Choose an app-specific, stable basename and serialize writes to avoid duplicate files or last-writer-wins races.
+
+## CloudKit
+
+```javascript
+import { CloudKitProvider } from '@tetherto/wdk-backup-cloud'
+
+const provider = new CloudKitProvider({
+  containerIdentifier: 'iCloud.com.example.wallet',
+  environment: 'production',
+  zoneName: '_defaultZone',
+  recordName: 'wallet_backup_key',
+  recordType: 'WalletBackup',
+  cloudEmail: signedInAppleAccount.email,
+  getCloudKitAuth: async () => ({
+    apiToken: await cloudKitAuth.getApiToken(),
+    webAuthToken: await cloudKitAuth.getUserWebAuthToken()
+  }),
+  maxSyncRetries: 10,
+  syncRetryDelayMs: 1000,
+  timeout: 30000
+})
+```
+
+| Field | Type | Default and behavior |
+| --- | --- | --- |
+| `containerIdentifier` | `string` | Required CloudKit container identifier. |
+| `environment` | `'development' \| 'production'` | Required CloudKit environment. Records do not cross environments. |
+| `zoneName` | `string` | `_defaultZone`. |
+| `recordName` | `string` | `wallet_backup_key`. Stable identifier for the single logical backup. |
+| `recordType` | `string` | `WalletBackup`. |
+| `cloudEmail` | `string` | Empty string. Stored as a record field. |
+| `getCloudKitAuth` | `() => Promise<{ apiToken: string; webAuthToken: string }>` | Required callback invoked before each CloudKit request. |
+| `maxSyncRetries` | `number` | `10`. Integer of at least `1`; applies to record fetch attempts during download. |
+| `syncRetryDelayMs` | `number` | `1000`. Finite non-negative delay between download retries. |
+| `timeout` | `number` | `30000`. Finite positive network timeout for each request. |
+
+### CloudKit Setup
+
+1. Enable CloudKit for the application's Apple developer configuration.
+2. Select the intended container and enable CloudKit Web Services.
+3. Create the record type named by `recordType`.
+4. Add String fields named `encryptionKey`, `savedAt`, and `cloudEmail`.
+5. Deploy the schema to the production environment before shipping with `environment: 'production'`.
+6. Obtain the Web Services API token and implement user sign-in that produces a private-database web-auth token.
+7. Return fresh values from `getCloudKitAuth()` for every request.
+
+The provider always calls the CloudKit `private` database. It writes the stable record with `forceUpdate`, so a new upload overwrites the current fields without retaining an earlier version. The Web Services API token appears in the request URL and the user web-auth token appears in a header; prevent request URLs, headers, and network traces from entering logs or analytics.
+
+## Credentials And Account Binding
+
+- Keep Google and CloudKit acquisition and refresh logic outside this SDK.
+- Confirm the selected cloud account before writing or restoring wallet material.
+- Treat sign-out and cloud-account changes as recovery-sensitive state transitions.
+- Do not persist access tokens or web-auth tokens in the backup payload.
+- Do not send credentials, ciphertext, or complete provider error causes to telemetry.
+- Leave `cloudEmail` empty unless the recovery UX needs it; when populated, it becomes stored personal data.
+
+## Payload And Encryption Envelope
+
+The cloud payload contains only:
+
+```json
+{
+  "encryptionKey": "<caller-produced-ciphertext>",
+  "savedAt": "2026-08-18T00:00:00.000Z",
+  "cloudEmail": ""
+}
+```
+
+The package does not include an algorithm, key-derivation, salt, nonce, authentication-tag, wallet identifier, or schema-version field beyond whatever the application embeds inside `encryptionKey`. Use a self-describing authenticated envelope and keep enough independent metadata to migrate and validate it.
+
+## Timeouts, Retries, And Probes
+
+Each HTTP request has its own timeout. Google Drive does not add an application retry loop. CloudKit retries record lookup during `download()` up to `maxSyncRetries`, waiting `syncRetryDelayMs` between failed attempts; upload and delete do not use that loop.
+
+`isAvailable()` and `exists()` catch every provider error and return `false`. They are suitable for optional UI hints, not recovery decisions or health diagnostics. Use an operation that throws when you must distinguish authentication, availability, malformed storage, and not-found states.
+
+## Runtime Requirements
+
+Provider code uses `globalThis.fetch`, `Headers`, `AbortController`, `setTimeout`, and `clearTimeout`. The package README declares Node.js 18+, React Native with Hermes, and Bare. The Bare conditional entry imports `bare-node-runtime/global`; default Node and React Native imports do not.
+
+The package has no `engines` declaration and no platform-specific credential bridge. Validate globals, bundling, foreground and background network access, sign-in callbacks, and secure token storage on each deployment target.
+
+## Next Steps
+
+- [Usage](/tools/backup-cloud/usage)
+- [Migrate from the React Native package](/tools/backup-cloud/guides/migrate-from-react-native)
+- [API Reference](/tools/backup-cloud/api-reference)
+
+***
+
+## Need Help?
+
+<SupportCards />

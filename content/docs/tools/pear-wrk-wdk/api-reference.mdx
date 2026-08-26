@@ -71,7 +71,7 @@ Returns:
 
 The handler requires `encryptionKey` and `encryptedSeed` to be passed together or omitted together. When a seeded WDK instance already exists, the runtime disposes it and closes its generic modules before re-registering the wallets and optional protocols in `config`.
 
-In beta.10, HRPC generic modules are constructed from `context.moduleManagers` and `config.modules` only when that request includes the encrypted seed pair. A seedless reinitialization closes existing module instances without reconstructing them. Supply both seed fields on every initialization that must construct or reconstruct modules.
+In beta.11, HRPC generic modules are constructed from `context.moduleManagers` and `config.modules` only when that request includes the encrypted seed pair. A seedless reinitialization closes existing module instances without reconstructing them. Supply both seed fields on every initialization that must construct or reconstruct modules.
 
 #### `resetWdkWallets`
 
@@ -124,6 +124,8 @@ A full disposal closes all generic modules and clears the WDK instance. A non-em
 
 `options.protocolType` may be `swap`, `swidge`, `bridge`, `lending`, or `fiat`. When present, the runtime requires a non-empty `options.protocolName` and resolves the protocol-specific account wrapper before invoking `methodName`. Swidge calls resolve the wrapper with `account.getSwidgeProtocol(protocolName)`.
 
+When `RpcContext.allowedMethods` defines the target surface, `methodName` must appear in its `methods` array. Account restrictions are keyed by network; protocol restrictions are nested by network, protocol type, and protocol name. Omitted surfaces remain unrestricted, while `methods: []` denies every call on that exact surface. Denied calls fail before dispatch with the runtime code `METHOD_NOT_ALLOWED` and do not use `options.defaultValue`.
+
 #### `registerWallet`
 
 - `config` (`string`): JSON string of network config entries.
@@ -150,6 +152,8 @@ Call one method on a configured generic module. This command is available on HRP
 - `args?` (`string`): Optional JSON string of arguments. Arrays are spread as positional arguments; a non-array value is passed as one argument.
 
 Returns `CallModuleResponse` with optional `result`, a JSON string. The runtime awaits promises, materializes values with `.toArray()`, and recursively converts `Uint8Array` values to hex before serialization.
+
+When `RpcContext.allowedModuleMethods` defines the target module, `method` must appear in that module's `methods` array. Omitted modules remain unrestricted, while `methods: []` denies every method on that module. A denied call fails with `METHOD_NOT_ALLOWED` before instance lookup or dispatch.
 
 #### `moduleEvent`
 
@@ -216,9 +220,39 @@ Registers the host-side handler used to receive `moduleEvent()` messages.
 Import this helper from `@tetherto/pear-wrk-wdk/worklet`. It registers the package's server-side handlers on the provided RPC instance.
 
 - `rpc` (`any`): RPC server instance that supports the generated handler registration methods.
-- `context` (`RpcContext`): Runtime context containing `wdk`, `WDK`, `walletManagers`, `protocolManagers`, and `wdkLoadError`. HRPC generic modules can additionally supply `moduleManagers` and `capabilities`; the runtime manages `moduleRuntime` and `moduleInstances`.
+- `context` (`RpcContext`): Runtime context containing `wdk`, `WDK`, `walletManagers`, `protocolManagers`, and `wdkLoadError`. HRPC generic modules can additionally supply `moduleManagers` and `capabilities`; the runtime manages `moduleRuntime` and `moduleInstances`. Optional `allowedMethods` restricts wallet and protocol dispatch on HRPC and JSON-RPC, while `allowedModuleMethods` restricts HRPC generic-module dispatch.
 
 ### Types
+
+#### `RpcContext` Method Restrictions
+
+```ts
+interface ProtocolAllowedMethods {
+  methods?: string[]
+}
+
+interface ProtocolNameAllowedMethods {
+  [protocolName: string]: ProtocolAllowedMethods
+}
+
+interface ProtocolTypeAllowedMethods {
+  [protocolType: string]: ProtocolNameAllowedMethods
+}
+
+interface NetworkAllowedMethods extends ProtocolAllowedMethods {
+  protocols?: ProtocolTypeAllowedMethods
+}
+
+interface RpcContext {
+  // Other runtime fields...
+  allowedMethods?: Record<string, NetworkAllowedMethods>
+  allowedModuleMethods?: Record<string, ProtocolAllowedMethods>
+}
+```
+
+The four allowlist helper interfaces are exported types in beta.11. Every omitted level remains unrestricted. Use an explicit empty `methods` array to deny all dynamic calls on one exact surface.
+
+The runtime exposes `METHOD_NOT_ALLOWED` for denied calls, but the beta.11 published error-code declaration does not include that member. Treat the literal runtime code as authoritative for this release.
 
 #### `WdkWorkletConfig`
 
@@ -324,7 +358,7 @@ registerJsonRpcHandlers(ipc, context)
 
 The server reads UTF-8 JSON-RPC 2.0 messages framed with a four-byte unsigned big-endian payload length. Every request requires an ID, and an ID cannot be reused while its earlier request is still in flight. Malformed frames are dropped without a response. The package does not export a JSON-RPC client or native-host helper.
 
-Beta.10 supports these JSON-RPC method names:
+Beta.11 supports these JSON-RPC method names:
 
 - `workletStart`
 - `generateEntropyAndEncrypt`
@@ -338,7 +372,7 @@ Beta.10 supports these JSON-RPC method names:
 
 JSON-RPC does not support `resetWdkWallets`, generic-module calls, or module events in this release. Use HRPC for those operations.
 
-The HRPC and JSON-RPC transports share the `callMethod` handler, so both support the `swidge` protocol type in beta.10.
+The HRPC and JSON-RPC transports share the `callMethod` handler, so both support the `swidge` protocol type and enforce `RpcContext.allowedMethods` in beta.11. JSON-RPC has no `callModule` surface, so `allowedModuleMethods` is HRPC-only.
 
 <Callout type="warn">
 INFO-level logging can include wallet-call arguments and JSON-RPC parameters or results. Production defaults to ERROR logging; do not enable more verbose logging for requests that may contain seeds, mnemonics, keys, or other sensitive values.

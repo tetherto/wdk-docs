@@ -105,6 +105,8 @@ This configuration requires the client process to find `wdk-mcp` on its `PATH`. 
 | `get_address` | Yes | Derive one address or addresses across networks. |
 | `get_balance` | Yes | Read one balance or aggregate native balances with USD estimates. |
 | `get_history` | Yes | Query indexer-backed token-transfer history for one network. |
+| `list_methods` | No | List the chain-specific methods declared by one built-in wallet module or every module in the catalog. |
+| `call_method` | Yes | Invoke one catalog-declared chain-specific wallet method. |
 | `send_token` | Yes | Preview or execute a native or registered-token transfer. |
 | `buy_crypto` | Yes | Create a signed MoonPay buy URL. |
 | `sell_crypto` | Yes | Create a signed MoonPay sell URL. |
@@ -113,10 +115,10 @@ This configuration requires the client process to find `wdk-mcp` on its `PATH`. 
 
 ## CLI Capabilities Not Exposed Over MCP
 
-`wdk-mcp` registers only the nine tools listed above. Through this server, an agent can operate a wallet that a person has already unlocked, but it cannot call the CLI's wallet administration or persistent-configuration commands.
+`wdk-mcp` registers only the eleven tools listed above. Through this server, an agent can operate a wallet that a person has already unlocked, but it cannot call the CLI's wallet administration or persistent-configuration commands.
 
 - Wallet administration: `wdk wallet create`, `import`, `export`, `unlock`, `lock`, `delete`, `rename`, and `default`. These commands create, import, or reveal seed material; confirm wallet ownership; change wallet identity or default selection; or control an unlock session. `wdk wallet unlock` is deliberately the human authorization moment, and `wdk wallet lock` ends that session.
-- Persistent configuration: `wdk config set` and `reset`, `wdk network create` and `delete`, and `wdk token add` and `delete`. These commands change durable local configuration and remain user-driven decisions.
+- Persistent configuration: `wdk config set` and `reset`, `wdk network create` and `delete`, `wdk token add` and `delete`, and `wdk module add` and `remove`. These commands change durable local configuration or installed executable code and remain user-driven decisions.
 
 This is a boundary of the MCP tool surface, not an operating-system sandbox. An AI client with separate shell access is outside this boundary and may be able to invoke `wdk` directly.
 
@@ -155,6 +157,28 @@ Example execution request after confirmation:
 <Callout type="error">
 The preview-and-confirm sequence is guidance for the AI client; the daemon does not enforce it. A direct `send_token` call with `dryRun: false` broadcasts when the selected wallet is unlocked and the request is otherwise valid.
 </Callout>
+
+## Call Module Methods
+
+Use `list_methods` before `call_method`. Omit `network` from `list_methods` to inspect every built-in module with declared methods, or provide a registered network to get its exact method and parameter schema.
+
+`call_method` accepts:
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `network` | Yes | Registered network |
+| `name` | Yes | Exact method name returned by `list_methods` |
+| `args` | As declared | String-valued object keyed by the declared camel-case parameter names |
+| `index` | No | Account index; defaults to `0` |
+| `wallet` | No | Wallet name; defaults to the selected wallet |
+
+Use decimal integer strings for `bigint` parameters. Encode a structured parameter as a JSON string, including quoted decimal strings for nested `bigint` values.
+
+<Callout type="error">
+Methods marked `write` can move funds or mutate state. `call_method` has no dry-run or enforced confirmation. Show the exact wallet, network, method, and arguments to the user and call it only after explicit confirmation. The method's `kind` is catalog metadata for the client; the daemon does not use it as an authorization control.
+</Callout>
+
+The method allowlist comes from the built-in beta.3 catalog. The server does not reflect over arbitrary methods from custom module packages. See [Call Module Methods](/cli/guides/call-module-methods) for CLI examples and parameter formats.
 
 ## Security And Session Boundaries
 

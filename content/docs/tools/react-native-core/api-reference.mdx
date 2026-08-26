@@ -23,7 +23,8 @@ schemaType: APIReference
 | [`validateMnemonic`](#validatemnemonic) | Utility | Validate BIP39 mnemonic phrases |
 | [`balanceQueryKeys`](#balancequerykeys) | Utility | TanStack Query key factory |
 | `WdkAppProviderProps` | Type | Props for `WdkAppProvider` |
-| `WdkAppContextValue` | Type | Return type of `useWdkApp` |
+| `WdkAppContextValue` | Type | Provider context containing the lifecycle state |
+| `UseWdkAppResult` | Type | Return type of `useWdkApp`, including manual reset methods |
 | `UseAccountParams` | Type | Parameters for `useAccount` |
 | `UseAccountReturn` | Type | Return type of `useAccount` |
 | `UseProtocolParams` | Type | Parameters for `useProtocol` |
@@ -46,11 +47,11 @@ Must be placed at the root of your component tree. All hooks in this library req
 |------|------|---------|-------------|
 | `bundle` | [`BundleConfig`](#bundleconfig) | **required** | Worklet bundle configuration |
 | `wdkConfigs` | [`WdkConfigs`](#wdkconfigs) | **required** | Network and protocol configurations |
-| `enableAutoInitialization` | `boolean` | `true` | Enable automatic wallet initialization on app restart |
-| `requireBiometrics` | `boolean` | `true` | Require biometric authentication for wallet operations |
-| `currentUserId` | `string \| null` | `undefined` | Current user's identifier (typically email). Auto-initialization waits until this is set and matches the active wallet |
-| `clearSensitiveDataOnBackground` | `boolean` | `false` | Clear sensitive data when app goes to background. When enabled, biometric auth is required on every app foreground |
 | `children` | `React.ReactNode` | **required** | Child components |
+
+<Callout type="warn">
+Starting in `v1.0.0-beta.17`, `enableAutoInitialization`, `currentUserId`, and `clearSensitiveDataOnBackground` are no longer provider props. `requireBiometrics`, which was removed earlier, is also not accepted by beta.18. The app owns wallet identity, background-locking behavior, and biometric or other authentication checks.
+</Callout>
 
 ### Example
 
@@ -75,8 +76,6 @@ export default function App() {
     <WdkAppProvider
       bundle={{ bundle }}
       wdkConfigs={wdkConfigs}
-      currentUserId={user?.email}
-      clearSensitiveDataOnBackground={true}
     >
       <Navigation />
     </WdkAppProvider>
@@ -97,7 +96,12 @@ Must be used within `WdkAppProvider`.
 | Property | Type | Description |
 |----------|------|-------------|
 | `state` | [`WdkAppState`](#wdkappstate) | Current app state (discriminated union) |
-| `retry` | `() => void` | Retry initialization after an error |
+| `reinitializeWdk` | `() => Promise<void>` | Request reinitialization of an already started and initialized worklet |
+| `resetWallets` | `(networkKeys: string[]) => Promise<void>` | Reset wallet modules for exact keys from `wdkConfigs.networks` |
+
+Both methods can resolve without completing the requested reset. `reinitializeWdk()` returns early when lifecycle preconditions are not met and catches initialization failures. `resetWallets()` ignores an empty list or unknown network keys, returns early while loading, and catches underlying reset failures. Treat the resolved promise as request completion, not proof of a reset; observe the expected lifecycle transition and verify the resulting module state.
+
+For example, with `networks: { sepolia: { blockchain: 'ethereum', ... } }`, call `resetWallets(['sepolia'])`. Passing `['ethereum']` does nothing because `ethereum` is the blockchain field, not the configured network key.
 
 ### WdkAppState
 
@@ -105,32 +109,48 @@ The `state` property is a discriminated union on the `status` field:
 
 | Status | Additional Fields | Description |
 |--------|-------------------|-------------|
-| `'INITIALIZING'` | - | Worklet is starting or wallet is loading |
+| `'INITIALIZING'` | - | Worklet is starting, or the library does not yet know enough to select a more specific state |
+| `'REINITIALIZING'` | - | `reinitializeWdk()` is manually reinitializing the worklet |
 | `'NO_WALLET'` | - | Worklet is ready, no wallet has been created |
-| `'LOCKED'` | `walletId: string` | A wallet exists but is locked (requires biometric unlock) |
-| `'READY'` | `walletId: string` | Wallet is unlocked and ready for operations |
-| `'ERROR'` | `error: Error` | Initialization failed |
+| `'LOCKED'` | `walletId?: string` | No wallet is unlocked; the optional ID is a hint when a specific wallet is being targeted |
+| `'READY'` | `walletId: string` | The active wallet identity matches the wallet loaded in the worklet |
+| `'ERROR'` | `error: Error` | Worklet initialization or a wallet lifecycle operation failed |
 
 ### Example
 
 ```tsx
 import { useWdkApp, useWalletManager } from '@tetherto/wdk-react-native-core'
 
-function AppRouter() {
-  const { state, retry } = useWdkApp()
+function AppRouter({
+  walletId,
+  authenticate,
+}: {
+  walletId: string
+  authenticate: () => Promise<boolean>
+}) {
+  const { state } = useWdkApp()
   const { createWallet, unlock } = useWalletManager()
+
+  const create = async () => {
+    if (await authenticate()) await createWallet(walletId)
+  }
+
+  const open = async () => {
+    if (await authenticate()) await unlock(walletId)
+  }
 
   switch (state.status) {
     case 'INITIALIZING':
+    case 'REINITIALIZING':
       return <LoadingScreen />
     case 'NO_WALLET':
-      return <Button title="Create Wallet" onPress={() => createWallet('user@example.com')} />
+      return <Button title="Create Wallet" onPress={create} />
     case 'LOCKED':
-      return <Button title="Unlock" onPress={() => unlock(state.walletId)} />
+      return <Button title="Unlock" onPress={open} />
     case 'READY':
       return <MainApp walletId={state.walletId} />
     case 'ERROR':
-      return <ErrorScreen error={state.error} onRetry={retry} />
+      return <ErrorScreen error={state.error} />
   }
 }
 ```
@@ -148,17 +168,31 @@ Hook for wallet lifecycle operations: create, restore, lock, unlock, delete, and
 | `activeWalletId` | `string \| null` | Currently active wallet identifier |
 | `status` | `'LOCKED' \| 'UNLOCKED' \| 'NO_WALLET' \| 'LOADING' \| 'ERROR'` | Current wallet status |
 | `wallets` | [`WalletInfo[]`](#walletinfo) | List of wallets managed by the device |
-| `createWallet` | `(walletId: string) => Promise<void>` | Create a new wallet with biometric-protected storage |
+| `createWallet` | `(walletId: string) => Promise<void>` | Create and activate a new wallet with the supplied identity |
 | `restoreWallet` | `(mnemonic: string, walletId: string) => Promise<string>` | Restore a wallet from a seed phrase. Returns the wallet ID |
-| `deleteWallet` | `(walletId: string) => Promise<void>` | Delete a wallet and all associated data |
-| `lock` | `() => void` | Lock the wallet - clears sensitive data from memory and stops the worklet |
-| `unlock` | `(walletId?: string) => Promise<void>` | Unlock a wallet (triggers biometric prompt) |
+| `deleteWallet` | `(walletId: string) => Promise<void>` | Delete the selected wallet's stored data and reset local worklet lifecycle state; it does not stop or remotely clear the running worklet |
+| `lock` | `() => Promise<void>` | Clear the active identity, local addresses, and local initialization state; the worklet and its IPC connection keep running |
+| `unlock` | `(walletId: string) => Promise<void>` | Explicitly decrypt and load the selected wallet; the ID has no implicit fallback |
+| `switchWallet` | `(walletId: string) => Promise<void>` | Under one mutex, lock the current wallet and then unlock the selected wallet; a failed unlock leaves the prior wallet locked |
 | `generateMnemonic` | `(wordCount?: 12 \| 24) => Promise<string>` | Generate a new BIP39 mnemonic phrase |
-| `getMnemonic` | `(walletId: string) => Promise<string \| null>` | Get mnemonic from wallet (requires biometric auth) |
+| `getMnemonic` | `(walletId: string) => Promise<string \| null>` | Reconstruct the plaintext mnemonic from the selected wallet's stored encrypted entropy and encryption key; returns `null` when either is missing |
 | `createTemporaryWallet` | `(walletId: string, mnemonic?: string) => Promise<string>` | Create an in-memory wallet for previewing addresses. Returns the temporary wallet ID |
 | `clearTemporaryWallet` | `() => void` | Clear the temporary wallet session |
-| `setActiveWalletId` | `(walletId: string) => void` | Set the active wallet (triggers loading) |
 | `clearCache` | `() => void` | Clear cached balance data |
+
+Only one wallet can be active. Call and await `lock()` before creating or restoring a different identity. To select a wallet that is already stored, use `switchWallet()` or lock and then unlock that wallet explicitly. `createWallet()`, `restoreWallet()`, `lock()`, `unlock()`, `switchWallet()`, and `createTemporaryWallet()` use a fail-fast mutex, so an overlapping guarded call rejects instead of queuing. The mutex timeout does not cancel an already-running underlying operation. `switchWallet()` is serialized, but it is not transactional: it locks first and does not restore the previous wallet if the new unlock fails.
+
+<Callout type="error">
+`deleteWallet()` and `clearTemporaryWallet()` are not protected by that mutex in beta.18. Deleting even an inactive wallet resets shared local worklet lifecycle state, while the Bare worklet and IPC remain running; this is not remote key cleanup or memory zeroization. The underlying secure-storage deletion can also be partially completed if individual storage operations fail. Authenticate and explicitly confirm destructive deletion, verify another recovery path first, serialize it against every lifecycle operation in the app, call and await `lock()` before deleting the active wallet, and verify the stored wallet inventory afterward.
+</Callout>
+
+<Callout type="error">
+`lock()` is an application-state boundary, not a zeroization guarantee. Beta.18 clears the active ID, local addresses, and local initialization flags, but it does not terminate the Bare worklet or send a remote cleanup request. Do not claim that calling it proves seeds or keys were erased from worklet memory.
+</Callout>
+
+<Callout type="warn">
+React Native Core beta.18 does not enforce biometrics before wallet lifecycle or key-access methods. Authenticate in the app before invoking these methods. For app-background locking, close the authenticated UI boundary immediately and retry `lock()` after any in-flight guarded operation settles; a mutex rejection does not queue or cancel that operation.
+</Callout>
 
 #### Advanced Crypto Methods
 
@@ -166,7 +200,7 @@ These methods provide lower-level access to wallet cryptographic operations. Mos
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `getEncryptionKey` | `(walletId: string) => Promise<string \| null>` | Get encryption key (requires biometric auth) |
+| `getEncryptionKey` | `(walletId: string) => Promise<string \| null>` | Get the selected wallet's encryption key |
 | `getEncryptedSeed` | `(walletId: string) => Promise<string \| null>` | Get encrypted seed from storage |
 | `getEncryptedEntropy` | `(walletId: string) => Promise<string \| null>` | Get encrypted entropy from storage |
 | `generateEntropyAndEncrypt` | `(wordCount?: 12 \| 24) => Promise<{ encryptionKey, encryptedSeedBuffer, encryptedEntropyBuffer }>` | Generate and encrypt entropy for wallet creation |
@@ -178,20 +212,31 @@ These methods provide lower-level access to wallet cryptographic operations. Mos
 ```tsx
 import { useWalletManager } from '@tetherto/wdk-react-native-core'
 
-function OnboardingScreen() {
+function OnboardingScreen({
+  walletId,
+  authenticate,
+  presentMnemonicForBackup,
+}: {
+  walletId: string
+  authenticate: () => Promise<boolean>
+  presentMnemonicForBackup: (mnemonic: string) => Promise<void>
+}) {
   const { createWallet, restoreWallet, generateMnemonic } = useWalletManager()
 
   const handleCreate = async () => {
-    await createWallet('user@example.com')
+    if (!(await authenticate())) return
+    await createWallet(walletId)
   }
 
   const handleRestore = async (mnemonic: string) => {
-    await restoreWallet(mnemonic, 'user@example.com')
+    if (!(await authenticate())) return
+    await restoreWallet(mnemonic, walletId)
   }
 
   const handlePreview = async () => {
+    if (!(await authenticate())) return
     const mnemonic = await generateMnemonic(12)
-    console.log('Generated mnemonic:', mnemonic)
+    await presentMnemonicForBackup(mnemonic)
   }
 
   return (
@@ -286,7 +331,7 @@ function SendScreen() {
     const txParams = {
       to: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
       asset: usdt,
-      amount: '1000000', // 1 USDT (6 decimals)
+      amount: '1000000', // 1 USDt (6 decimals)
     }
 
     // Estimate fee first
@@ -305,7 +350,7 @@ function SendScreen() {
   return (
     <View>
       <Text>Address: {address}</Text>
-      <Button title="Send 1 USDT" onPress={handleSend} />
+      <Button title="Send 1 USDt" onPress={handleSend} />
     </View>
   )
 }

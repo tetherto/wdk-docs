@@ -1,0 +1,117 @@
+---
+title: Call Module Methods
+description: Discover and invoke chain-specific wallet-module methods through WDK CLI
+docType: how-to
+schemaType: TechArticle
+icon: Braces
+---
+
+WDK CLI beta.3 exposes selected chain-specific wallet methods that do not fit the generic address, balance, history, and send commands. The bundled catalog declares each allowed method, its `read` or `write` kind, and its parameter schema.
+
+## Discover Before Calling
+
+List one network's declared methods:
+
+```bash title="Terminal"
+wdk method list --network ethereum
+```
+
+Or inspect every built-in module that declares methods:
+
+```bash title="Terminal"
+wdk method list --all
+```
+
+Provide exactly one of `--network` and `--all`. Listing does not require an unlocked wallet.
+
+The method catalog is an allowlist. `wdk method call` rejects a method or parameter that is not declared; it does not reflect over arbitrary package exports. Beta.3's method catalog covers built-in modules only, even when a custom module backs a custom network.
+
+## Call A Read Method
+
+First inspect the exact schema:
+
+```bash title="Terminal"
+wdk method list --network ethereum
+```
+
+Then pass one flag for each required parameter:
+
+```bash title="Terminal"
+wdk method call \
+  --network ethereum \
+  --name getAllowance \
+  --token 0xTOKEN_ADDRESS \
+  --spender 0xSPENDER_ADDRESS
+```
+
+The selected wallet must be unlocked because method calls run against a wallet account in the daemon. Use `--wallet <name>` and `--index <n>` when the default selection is not the intended account.
+
+## Format Parameters
+
+| Declared type | CLI value |
+| --- | --- |
+| `string` | Non-empty string |
+| `number` | Finite numeric value |
+| `boolean` | Explicit `true` or `false` value |
+| `bigint` | Non-negative decimal integer string in base units |
+| Scalar array such as `string[]` | Comma-separated values |
+| Object or structured array | One JSON string; quote every nested `bigint` as a decimal string |
+
+Camel-case parameter names become kebab-case flags. For example, `maxFeeSats` becomes `--max-fee-sats`. Optional parameters may be omitted, but every flag you provide must have a value, including boolean flags.
+
+Returned `bigint` values become decimal strings in both normal object output and `--json` output.
+
+## Call A Write Method
+
+<Callout type="error">
+A method labeled `write` can move funds or mutate on-chain state. The label is discovery metadata, not an authorization control. `wdk method call` has no dry-run, fee-preview requirement, confirmation prompt, or second passphrase check after unlock.
+</Callout>
+
+Before calling a write method:
+
+1. Run `wdk method list --network NETWORK` and verify the method is marked `write`.
+2. Resolve and display the exact wallet, account index, network, method, and arguments.
+3. Use a module-specific quote or read method when the catalog provides one.
+4. Ask the user to confirm those exact values.
+5. Call the method once, then verify its returned identifier and resulting state.
+
+For example, an EVM approval is a write method and the amount is in token base units:
+
+```bash title="Terminal"
+wdk method call \
+  --network ethereum \
+  --name approve \
+  --token 0xTOKEN_ADDRESS \
+  --spender 0xSPENDER_ADDRESS \
+  --amount 1000000
+```
+
+Review the token, spender, allowance amount, network, and account before running this command. Avoid unlimited allowances unless the user explicitly requires and understands them.
+
+## Use JSON Output
+
+```bash title="Terminal"
+wdk --json method list --network spark
+wdk --json method call --network spark --name getStaticDepositAddress
+```
+
+A successful call returns the network, method name, and result. Unknown methods, unknown parameters, missing required parameters, and malformed values return structured CLI errors. Do not retry by guessing method names or parameter shapes; list the catalog again.
+
+## Use The Same Surface Over MCP
+
+The bundled MCP server exposes `list_methods` and `call_method`. MCP arguments use the declared camel-case keys inside an `args` object rather than CLI-style kebab-case flags.
+
+`call_method` has the same unlocked-wallet and write-method risks as the CLI command. See [Use the MCP Server](/cli/guides/use-mcp-server#call-module-methods) for the confirmation boundary.
+
+## Next Steps
+
+- [Manage Modules](/cli/guides/manage-modules)
+- [Use the MCP Server](/cli/guides/use-mcp-server)
+- [Security Model](/cli/reference/security-model)
+- [API Reference](/cli/api-reference)
+
+***
+
+## Need Help?
+
+<SupportCards />

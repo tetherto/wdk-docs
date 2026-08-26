@@ -1,0 +1,46 @@
+---
+title: Get Started
+description: Install the package and initialize TransakProtocol on your backend with your API key and authenticated callbacks.
+docType: getting-started
+schemaType: TechArticle
+---
+
+This guide covers [installation](#installation) and [initializing the protocol](#initialize-transakprotocol). You need [Node.js](https://nodejs.org/), [npm](https://www.npmjs.com/), and Transak partner credentials from your [Transak Partner Dashboard](https://dashboard.transak.com/).
+
+## Installation
+
+Run the following to install [@transak/wdk-protocol-fiat-transak](https://www.npmjs.com/package/@transak/wdk-protocol-fiat-transak):
+
+```bash title="Install with npm"
+npm install @transak/wdk-protocol-fiat-transak
+```
+
+## Initialize TransakProtocol
+
+Create the protocol inside an authenticated backend handler with [`new TransakProtocol(account, config)`](/sdk/fiat-modules/fiat-transak/api-reference). The `partnerApiKey`, `environment`, `createWidgetUrl`, and `getOrder` values below are the server-side helpers described in [Configuration](/sdk/fiat-modules/fiat-transak/configuration#implementing-the-backend-callbacks):
+
+```typescript title="Construct TransakProtocol"
+import TransakProtocol from '@transak/wdk-protocol-fiat-transak'
+
+function createTransakProtocol(userIp) {
+  return new TransakProtocol(undefined, {
+    apiKey: partnerApiKey,
+    widgetUrl: (widgetParams) => createWidgetUrl(widgetParams, userIp),
+    getOrder,
+    environment // use the same value as the callback origins
+  })
+}
+```
+
+<Callout type="warn">
+Run the protocol itself on your backend. In addition to the authenticated `widgetUrl` and `getOrder` callbacks, the module calls Transak's country, currency, and quote APIs directly with your partner API key. Transak requires those requests to originate from an allow-listed backend. Derive `userIp` from trusted request or CDN context, not a browser-provided value.
+</Callout>
+
+Expose narrowly scoped, authenticated routes to your client and return only the widget URL or data it needs. See [Configuration](/sdk/fiat-modules/fiat-transak/configuration) for the full backend implementation, response validation, `cacheTime`, and environment-specific hosts.
+
+The module does not need a signing-capable account. Pass a validated `recipient` to `buy()` when you want to prefill the user's destination address, or omit it to let the widget ask.
+
+## Next Steps
+
+- [Buy and sell](/sdk/fiat-modules/fiat-transak/guides/buy-and-sell/)
+- [Manage transactions](/sdk/fiat-modules/fiat-transak/guides/manage-transactions/)

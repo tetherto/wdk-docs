@@ -3,6 +3,7 @@ import { baseOptions } from '@/lib/layout.shared';
 import { customTree } from '@/lib/custom-tree';
 import type { LinkItemType } from 'fumadocs-ui/layouts/shared';
 import { FaGithub, FaDiscord } from 'react-icons/fa6';
+import { ContentFirstSidebar } from '@/components/content-first-sidebar';
 
 export default function Layout({ children }: LayoutProps<'/'>) {
 
@@ -28,6 +29,7 @@ export default function Layout({ children }: LayoutProps<'/'>) {
   return (
     <DocsLayout
       {...baseOptions()}
+      sidebar={{ enabled: false }}
       tree={{
           name: 'docs',
           children: customTree
@@ -35,6 +37,7 @@ export default function Layout({ children }: LayoutProps<'/'>) {
       links={linkItems}
       >
       {children}
+      <ContentFirstSidebar />
     </DocsLayout>
   );
 }

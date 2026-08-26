@@ -1,13 +1,13 @@
 # Deployments: Token Addresses & RPC Endpoints
 
-## USD₮ (USDT) — Native Deployments
+## USD₮ (`USDT`) — Native Deployments
 
-WDK-relevant chains only. All USDT are **6 decimals**.
+WDK-relevant chains only. All USD₮ are **6 decimals**.
 
 | Chain | Address | Notes |
 |-------|---------|-------|
 | **Ethereum** | `0xdAC17F958D2ee523a2206206994597C13D831ec7` | ⚠️ Non-standard ERC20: no bool return on `transfer()`. Use SafeERC20. Does NOT support EIP-3009. |
-| **TRON** | `TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t` | ⚠️ Same non-standard transfer as Ethereum USDT. |
+| **TRON** | `TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t` | ⚠️ Same non-standard transfer as Ethereum USD₮. |
 | **Solana** | `Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB` | SPL token mint address |
 | **TON** | `EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs` | Jetton master contract |
 | **Avalanche** | `0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7` | Standard ERC20 |
@@ -18,13 +18,13 @@ WDK-relevant chains only. All USDT are **6 decimals**.
 Full list: https://tether.to/en/supported-protocols/
 
 
-## USD₮0 (USDT0) — Omnichain Deployments via LayerZero
+## USD₮0 (`USDT0`) — Omnichain Deployments via LayerZero
 
 Token address = what users hold. OFT address = LayerZero cross-chain messaging. All **6 decimals**.
 
 | Chain | Chain ID | Token Address | OFT Address |
 |-------|----------|---------------|-------------|
-| **Ethereum** | 1 | (native USDT locked) | `0x6C96dE32CEa08842dcc4058c14d3aaAD7Fa41dee` (Adapter) |
+| **Ethereum** | 1 | (native USD₮ locked) | `0x6C96dE32CEa08842dcc4058c14d3aaAD7Fa41dee` (Adapter) |
 | **Arbitrum** | 42161 | `0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9` | `0x14E4A1B13bf7F943c8ff7C51fb60FA964A298D92` |
 | **Optimism** | 10 | `0x01bFF41798a0BcF287b996046Ca68b395DbC1071` | `0xF03b4d9AC1D5d1E7c4cEf54C2A313b9fe051A0aD` |
 | **Polygon** | 137 | `0xc2132D05D31c914a87C6611C10748AEb04B58e8F` | `0x6BA10300f0DC58B7a1e4c0e41f5daBb7D7829e13` |

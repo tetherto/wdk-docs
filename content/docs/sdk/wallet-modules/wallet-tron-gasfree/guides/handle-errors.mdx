@@ -5,7 +5,7 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-This guide covers how to [handle gas-free transfer errors](#handle-gas-free-transfer-errors) and [unsupported native transaction methods](#handle-unsupported-native-transaction-methods), plus [best practices](#best-practices) for fee management and memory cleanup.
+This guide covers how to [handle gas-free transfer errors](#handle-gas-free-transfer-errors), [unsupported native transaction methods](#handle-unsupported-native-transaction-methods), and [transaction lookup errors](#handle-transaction-lookup-errors), plus [best practices](#best-practices) for fee management and memory cleanup.
 
 ## Handle Gas-Free Transfer Errors
 
@@ -14,13 +14,13 @@ Gas-free transfers can fail for reasons including exceeded fee limits or insuffi
 ```javascript title="Gas-Free Transfer Error Handling"
 try {
   const result = await account.transfer({
-    token: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', // USDT
+    token: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', // USDt
     recipient: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
     amount: 1000000
   }, {
     transferMaxFee: 1000n
   })
-  console.log('Transfer successful:', result.hash)
+  console.log('GasFree relay accepted:', result.hash)
   console.log('Fee paid:', result.fee, 'token units')
 } catch (error) {
   console.error('Transfer failed:', error.message)
@@ -31,6 +31,8 @@ try {
   }
 }
 ```
+
+The returned hash is a GasFree relay ID, not proof of an included TRON transaction. Pass it to `waitForTransaction()`; the module resolves the native hash through the relay and then reports TRON finality and execution success.
 
 ## Handle Unsupported Native Transaction Methods
 
@@ -48,6 +50,10 @@ try {
   }
 }
 ```
+
+## Handle Transaction Lookup Errors
+
+`getTransaction()` and `waitForTransaction()` first resolve the GasFree transfer ID through the GasFree API, then query TRON. A successful GasFree response without an on-chain hash is treated as not found and can be retried by `waitForTransaction()`. An HTTP or API error from the GasFree provider is a provider failure and can reject immediately, so handle it separately from a normal relay delay.
 
 ## Best Practices
 

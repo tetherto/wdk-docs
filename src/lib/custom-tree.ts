@@ -74,8 +74,6 @@ export const customTree: Node[] = [
     configuration('/sdk/core-module/configuration'),
     apiReference('/sdk/core-module/api-reference'),
   ]),
-  page('All modules reference', '/sdk/all-modules', 'LayoutGrid'),
-
   separator('Wallets'),
   page('Which wallet module do I need?', '/sdk/wallet-modules/which-wallet-module', 'ListChecks'),
   page('Wallet module reference', '/sdk/wallet-modules', 'WalletCards'),
@@ -331,6 +329,11 @@ export const customTree: Node[] = [
     configuration('/sdk/swidge-modules/swidge-lifi/configuration'),
     apiReference('/sdk/swidge-modules/swidge-lifi/api-reference'),
   ]),
+  folder('0x', '/sdk/swidge-modules/swidge-0x', 'Waypoints', [
+    usage('/sdk/swidge-modules/swidge-0x/usage'),
+    configuration('/sdk/swidge-modules/swidge-0x/configuration'),
+    apiReference('/sdk/swidge-modules/swidge-0x/api-reference'),
+  ]),
   folder('Velora', '/sdk/swap-modules/swap-velora-evm', 'ArrowLeftRight', [
     usage('/sdk/swap-modules/swap-velora-evm/usage'),
     guides([
@@ -342,7 +345,7 @@ export const customTree: Node[] = [
     configuration('/sdk/swap-modules/swap-velora-evm/configuration'),
     apiReference('/sdk/swap-modules/swap-velora-evm/api-reference'),
   ]),
-  folder('USDT0 bridge', '/sdk/bridge-modules/bridge-usdt0-evm', 'Waypoints', [
+  folder('USD₮0 bridge', '/sdk/bridge-modules/bridge-usdt0-evm', 'Waypoints', [
     usage('/sdk/bridge-modules/bridge-usdt0-evm/usage'),
     guides([
       page('Get Started', '/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started'),
@@ -390,6 +393,16 @@ export const customTree: Node[] = [
     configuration('/sdk/fiat-modules/fiat-moonpay/configuration'),
     apiReference('/sdk/fiat-modules/fiat-moonpay/api-reference'),
   ]),
+  folder('Transak', '/sdk/fiat-modules/fiat-transak', 'CreditCard', [
+    usage('/sdk/fiat-modules/fiat-transak/usage'),
+    guides([
+      page('Get Started', '/sdk/fiat-modules/fiat-transak/guides/get-started'),
+      page('Buy and Sell', '/sdk/fiat-modules/fiat-transak/guides/buy-and-sell'),
+      page('Manage Transactions', '/sdk/fiat-modules/fiat-transak/guides/manage-transactions'),
+    ]),
+    configuration('/sdk/fiat-modules/fiat-transak/configuration'),
+    apiReference('/sdk/fiat-modules/fiat-transak/api-reference'),
+  ]),
 
   separator('CLI'),
   folder('WDK CLI', '/cli', 'Terminal', [
@@ -397,7 +410,9 @@ export const customTree: Node[] = [
       page('Get Started', '/cli/guides/get-started', 'Rocket'),
       page('Manage Wallets', '/cli/guides/manage-wallets', 'WalletCards'),
       page('Manage Tokens', '/cli/guides/manage-tokens', 'Coins'),
+      page('Manage Modules', '/cli/guides/manage-modules', 'Package'),
       page('Custom Networks', '/cli/guides/custom-networks', 'Network'),
+      page('Call Module Methods', '/cli/guides/call-module-methods', 'Braces'),
       page('Use the MCP Server', '/cli/guides/use-mcp-server', 'Wand'),
       page('Handle Errors', '/cli/guides/handle-errors', 'CircleAlert'),
     ]),
@@ -447,6 +462,14 @@ export const customTree: Node[] = [
     configuration('/tools/secret-manager/configuration'),
     apiReference('/tools/secret-manager/api-reference'),
   ]),
+  folder('Back up encrypted wallet keys', '/tools/backup-cloud', 'CloudUpload', [
+    usage('/tools/backup-cloud/usage'),
+    guides([
+      page('Migrate From React Native', '/tools/backup-cloud/guides/migrate-from-react-native', 'RefreshCw'),
+    ]),
+    configuration('/tools/backup-cloud/configuration'),
+    apiReference('/tools/backup-cloud/api-reference'),
+  ], 'Cloud Backup'),
   folder('P2P Address Book', '/tools/p2p-address-book', 'BookUser', [
     page('Get Started', '/tools/p2p-address-book/get-started', 'Rocket'),
     page('Sync and Recovery', '/tools/p2p-address-book/sync-and-recovery', 'RefreshCw'),
