@@ -365,7 +365,7 @@ server.registerToken(chain: string, symbol: string, token: TokenInfo): WdkMcpSer
 | Parameter | Type | Description |
 | --- | --- | --- |
 | `chain` | `string` | Chain name |
-| `symbol` | `string` | Token symbol (e.g., `'USDC'`) |
+| `symbol` | `string` | Token symbol (e.g., `'XAUT'`) |
 | `token.address` | `string` | Token contract address |
 | `token.decimals` | `number` | Token decimal places |
 
@@ -485,7 +485,7 @@ Get the native token balance for a blockchain (ETH, BTC, SOL, etc.). **Read-only
 
 ### `getTokenBalance`
 
-Get the balance of a registered token (USD₮, USDC, etc.). **Read-only.**
+Get the balance of a registered token, such as USD₮ or XAU₮. **Read-only.**
 
 **Input:**
 
@@ -801,7 +801,7 @@ Get a swap quote without executing. **Read-only.**
 | --- | --- | --- | --- |
 | `chain` | `enum` | Yes | Blockchain with swap protocol |
 | `tokenIn` | `string` | Yes | Token to sell (e.g., `"USDT"`) |
-| `tokenOut` | `string` | Yes | Token to buy (e.g., `"USDC"`) |
+| `tokenOut` | `string` | Yes | Token to buy (e.g., `"XAUT"` on Ethereum, when supported by the registered protocol) |
 | `amount` | `string` | Yes | Amount in human-readable units |
 | `side` | `enum` | Yes | `"sell"` or `"buy"` |
 
@@ -5870,6 +5870,43 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### August 30, 2026
+
+**What's New**
+- **swap-velora-evm** ([v1.0.0-beta.7](https://github.com/tetherto/wdk-protocol-swap-velora-evm/releases/tag/v1.0.0-beta.7)): Accept the shared writable and read-only wallet-account interfaces at construction and detect writable accounts by their `sendTransaction()` capability. The adapter still requires an EVM provider on the account, and its ERC-4337 batching and per-call configuration remain limited to the concrete ERC-4337 account classes.
+
+**Fixes**
+- **wallet-evm-erc-4337** ([v1.0.0-beta.17](https://github.com/tetherto/wdk-wallet-evm-erc-4337/releases/tag/v1.0.0-beta.17)): Allow a quoted or submitted fee equal to the configured maximum, classify AA50 prefund failures as insufficient-balance transaction errors, and add typed validation for configuration, providers, fee caps, and nonce ranges. The published per-call declarations still omit the runtime-supported `parallel` and `nonceKey` fields.
+- **lending-aave-evm** ([v1.0.0-beta.6](https://github.com/tetherto/wdk-protocol-lending-aave-evm/releases/tag/v1.0.0-beta.6)): Forward each operation's optional second `config` argument to the account's quote or send method. ERC-4337 accounts consume the gas-payment override; standard EVM accounts accept and silently ignore it.
+- **worklet-bundler** ([v1.0.0-beta.11](https://github.com/tetherto/wdk-worklet-bundler/releases/tag/v1.0.0-beta.11)): Include `@tetherto/pear-wrk-wdk` in dependency validation and `generate --install` for both transports. When `bare-pack` reports an unresolved package subpath, the CLI now suggests the installable package root with the detected npm, Yarn, or pnpm command; the package-root normalization helper is internal to the CLI bundle and is not a public export.
+
+**Changes**
+- **wdk-wallet** ([v1.0.0-beta.19](https://github.com/tetherto/wdk-wallet/releases/tag/v1.0.0-beta.19)): [Breaking] Rename `MultisigAutoExecuteResult` to `MultisigInteractionResult`. Its optional `transaction` can describe the proposal, approval, or execution transaction produced by the current call; only the proposal `status` establishes whether execution occurred.
+- **wallet-spark** ([v1.0.0-beta.25](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.25)): Update the Spark SDK from 0.8.8 to 0.10.0 and Bare from 0.0.76 to 0.0.78 to address Bare remaining active while idle. The package's runtime source and public declarations are unchanged.
+- **wallet-tron** ([v1.0.0-beta.13](https://github.com/tetherto/wdk-wallet-tron/releases/tag/v1.0.0-beta.13)): Update `tronweb` from 6.3.0 to 6.5.0 without changing the wallet module's runtime source or public declarations.
+- **pear-wrk-wdk** ([v1.0.0-beta.12](https://github.com/tetherto/pear-wrk-wdk/releases/tag/v1.0.0-beta.12)): Publish a version-only package update plus a development lockfile refresh from `js-yaml` 4.3.0 to 4.3.1. Runtime source, public declarations, and declared runtime dependencies are unchanged.
+
+---
+
+### August 27, 2026
+
+**What's New**
+- **wdk-wallet** ([v1.0.0-beta.18](https://github.com/tetherto/wdk-wallet/releases/tag/v1.0.0-beta.18)): Add `MultisigAutoExecuteResult` to the declared results of `propose()` and `approveProposal()` so an auto-executing call can return its transaction. Restore `SignerError` as a compatibility alias of `InvalidSignerError`.
+- **wallet-solana** ([v1.0.0-beta.14](https://github.com/tetherto/wdk-wallet-solana/releases/tag/v1.0.0-beta.14)): Accept a base64-encoded serialized wire transaction in quote, sign, and send flows. Quoting decodes without signing; signing and sending require this account to be the fee payer, preserve existing signatures, add the account signature, and reject a transaction that is not fully signed.
+- **wallet-ton** ([v1.0.0-beta.14](https://github.com/tetherto/wdk-wallet-ton/releases/tag/v1.0.0-beta.14)): Decode a base64 string whose bytes carry a TON bag-of-cells magic prefix as a raw `Cell` transaction body. Other strings remain text comments, and a malformed magic-prefixed body is rejected instead of being sent as text.
+- **wallet-tron** ([v1.0.0-beta.12](https://github.com/tetherto/wdk-wallet-tron/releases/tag/v1.0.0-beta.12)): Add `WalletAccountTron.approve()` for bounded TRC-20 allowances and `getAllowance()` on owned and read-only accounts. Approval returns the transaction hash, fee, and any account-activation fee.
+
+**Changes**
+- **wallet-btc** ([v1.0.0-beta.15](https://github.com/tetherto/wdk-wallet-btc/releases/tag/v1.0.0-beta.15)): Replace message-only failures with public WDK error classes for provider, validation, fee-cap, unsupported-token, missing-transaction, and insufficient-balance cases. Inspect the typed error and its structured reason rather than matching messages.
+- **wallet-evm** ([v1.0.0-beta.18](https://github.com/tetherto/wdk-wallet-evm/releases/tag/v1.0.0-beta.18)): Broadcast a supplied signed serialized transaction as-is instead of rebuilding and re-signing it. Provider, validation, fee-cap, unsupported-token, missing-transaction, signer, and insufficient-balance failures now use public WDK error classes.
+- **wallet-spark** ([v1.0.0-beta.24](https://github.com/tetherto/wdk-wallet-spark/releases/tag/v1.0.0-beta.24)): Add typed SparkScan provider errors with structured HTTP reason mapping, reject unsupported SparkScan networks with `ValueError`, and report unsupported path derivation and standalone signing with `UnsupportedOperationError`.
+
+**Fixes**
+- **bridge-usdt0-evm** ([v1.0.0-beta.8](https://github.com/tetherto/wdk-protocol-bridge-usdt0-evm/releases/tag/v1.0.0-beta.8)): For an ERC-4337 helper bridge from Ethereum mainnet's exact USD₮ token, prepend `approve(spender, 0)` when that helper spender already has a non-zero allowance and the new approval is non-zero. The reset, new approval, and bridge call are quoted or sent in one ordered account-abstraction batch; standard accounts and other chain or token paths are unchanged.
+- **WDK CLI** ([v1.0.0-beta.4](https://github.com/tetherto/wdk-cli/releases/tag/v1.0.0-beta.4)): Reject unsafe nested key segments when applying the fixed environment-variable override map to the full configuration view. Public commands, configuration keys, and stored-data behavior are otherwise unchanged.
+
+---
+
 ### August 21, 2026
 
 **What's New**
@@ -7399,7 +7436,7 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 #### `bridge(options, config?)`
 Bridges tokens to a different blockchain using the USD₮0 protocol.
 
-With a standard EVM account, approve the source-chain bridge spender before calling `bridge()`. If you pass `oftContractAddress`, use the same address as the approval `spender`. Supported ERC-4337 accounts do not need a separate approval call; the protocol bundles an approval and helper call into one UserOperation.
+With a standard EVM account, approve the source-chain bridge spender before calling `bridge()`. If you pass `oftContractAddress`, use the same address as the approval `spender`. Supported ERC-4337 accounts do not need a separate approval call; the protocol bundles an approval and helper call into one UserOperation. On Ethereum mainnet, when the resolved token is USD₮ at `0xdAC17F958D2ee523a2206206994597C13D831ec7`, the protocol queries that ERC-4337 account's allowance for the token and the transaction-value helper spender. If the current allowance and the computed `approveAmount` are both greater than zero, it prepends `approve(spender, 0)`, then `approve(spender, approveAmount)`, then the helper bridge call in the same batch. Standard EVM accounts and every other chain/token path are unchanged.
 
 **Parameters:**
 - `options` (BridgeOptions): Bridge operation options
@@ -7463,7 +7500,7 @@ console.log('Bridge fee:', result2.bridgeFee)
 #### `quoteBridge(options, config?)`
 Estimates the cost of a bridge operation without executing it.
 
-For standard EVM accounts, some providers estimate the same bridge transaction that `bridge()` sends. If that estimate fails because token allowance is missing, approve the source-chain bridge spender before calling `quoteBridge()`. ERC-4337 quotes include the bundled approval transaction.
+For standard EVM accounts, some providers estimate the same bridge transaction that `bridge()` sends. If that estimate fails because token allowance is missing, approve the source-chain bridge spender before calling `quoteBridge()`. ERC-4337 quotes include the bundled approval transaction. For `WalletAccountReadOnlyEvmErc4337`, `quoteBridge()` uses the same ordered batch as `bridge()`: on Ethereum mainnet for the resolved USD₮ token at `0xdAC17F958D2ee523a2206206994597C13D831ec7`, an existing non-zero allowance and non-zero `approveAmount` produce `approve(spender, 0)`, `approve(spender, approveAmount)`, then the helper bridge call; otherwise the batch is the approval followed by the helper call.
 
 **Parameters:**
 - `options` (BridgeOptions): Bridge operation options (same as bridge method)
@@ -8454,7 +8491,7 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account)
 
 ## Run a gasless bridge with paymaster options
 
-You can execute [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config) with a second argument that includes `paymasterToken` and an optional `bridgeMaxFee` override. Do not submit a separate `account.approve()` call for this flow. The protocol builds an ERC20 approval to the source-chain transaction-value helper and the helper bridge call, then submits both in one UserOperation.
+You can execute [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config) with a second argument that includes `paymasterToken` and an optional `bridgeMaxFee` override. Do not submit a separate `account.approve()` call for this flow. The normal ERC-4337 batch is an ERC20 approval to the source-chain transaction-value helper followed by the helper bridge call, submitted in one UserOperation. On Ethereum mainnet, when the resolved token is USD₮ at `0xdAC17F958D2ee523a2206206994597C13D831ec7`, the protocol queries the same ERC-4337 account's allowance for that token and helper spender. If the current allowance and computed `approveAmount` are both greater than zero, it prepends `approve(spender, 0)`, then `approve(spender, approveAmount)`, then the helper bridge call. `quoteBridge()` uses the same ordering for a `WalletAccountReadOnlyEvmErc4337`. Standard EVM accounts and every other chain/token path are unchanged.
 
 ```javascript title="Gasless bridge with paymasterToken"
 const USDT_TOKEN_ADDRESS = process.env.USDT_SOURCE_TOKEN_ADDRESS
@@ -8481,7 +8518,7 @@ console.log('Bridge fee:', result.bridgeFee)
 ```
 
 <Callout type="info">
-The bundled approval and helper call produce one UserOperation hash. The protocol approves enough source token for the amount plus its helper-calculated bridge fee and tolerance.
+The bundled approval sequence and helper call produce one UserOperation hash. For the Ethereum mainnet USD₮ reset case, the sequence is `approve(spender, 0)`, `approve(spender, approveAmount)`, then the helper call; otherwise it is `approve(spender, approveAmount)` followed by the helper call. The protocol approves enough source token for the amount plus its helper-calculated bridge fee and tolerance.
 </Callout>
 
 <Callout type="warn">
@@ -13470,7 +13507,7 @@ if (receipt.finality === 'dropped') {
 
 ### Base Wallet Error Exports
 
-The root `@tetherto/wdk-wallet` entrypoint exports `WdkError` and these specialized subclasses: `AssertionError`, `InvalidSignerError`, `InvalidTokenError`, `MaximumFeeExceededError`, `NoSuchElementError`, `NotImplementedError`, `ProviderError`, `ProviderRequiredError`, `TimeoutError`, `TransactionError`, `TransferError`, `UnsupportedOperationError`, and `ValueError`.
+The root `@tetherto/wdk-wallet` entrypoint exports `WdkError` and these specialized subclasses: `AssertionError`, `InvalidSignerError`, `InvalidTokenError`, `MaximumFeeExceededError`, `NoSuchElementError`, `NotImplementedError`, `ProviderError`, `ProviderRequiredError`, `TimeoutError`, `TransactionError`, `TransferError`, `UnsupportedOperationError`, and `ValueError`. It also exports `SignerError` as an alias of `InvalidSignerError`; both names refer to the same constructor.
 
 `ProviderError`, `TransactionError`, and `TransferError` expose a `reason` field. Compare it with `ProviderErrorReason`, `TransactionErrorReason`, or `TransferErrorReason` rather than parsing the message. See [Error Handling](/sdk/core-module/guides/error-handling#base-wallet-errors) for the reason values and migration notes.
 
@@ -13521,8 +13558,8 @@ interface IWalletAccountMultisig extends IWalletAccountReadOnlyMultisig {
   propose(
     tx: Transaction,
     options?: MultisigTransactionOptions
-  ): Promise<MultisigProposal>
-  approveProposal(id: string): Promise<MultisigProposal>
+  ): Promise<MultisigProposal & MultisigInteractionResult>
+  approveProposal(id: string): Promise<MultisigProposal & MultisigInteractionResult>
   rejectProposal(id: string): Promise<MultisigProposal>
   executeProposal(id: string): Promise<TransactionResult>
 }
@@ -13530,7 +13567,7 @@ interface IWalletAccountMultisig extends IWalletAccountReadOnlyMultisig {
 
 `propose()` creates a proposal rather than executing the transaction directly. `executeProposal()` requires the approval threshold and throws `ThresholdNotMetError` when the proposal is not ready. Proposal quote, mutation, and execution methods can throw `NoSuchElementError` for an unknown ID; getter methods return `null`.
 
-When `autoExecute: true` makes the current `propose()` call supply the final required approval, the returned proposal can have `status: 'executed'`. The current base method declarations return `MultisigProposal`; they do not include the transaction result.
+`propose()` and `approveProposal()` return the proposal together with an optional `transaction` field. The field contains the on-chain transaction produced by that call when the call itself settles on-chain: it can be the execution transaction when a call triggers execution, or the proposal/approval transaction when a backend represents those calls on-chain. It is `undefined` when the call only updates off-chain state. A `transaction` value does not prove that the proposal executed; inspect `status`, which is the sole execution indicator.
 
 ### Optional Message-Signing Contracts
 
@@ -13598,9 +13635,13 @@ interface MultisigSignature {
 interface MultisigOptions {
   threshold: number
 }
+
+interface MultisigInteractionResult {
+  transaction?: TransactionResult
+}
 ```
 
-The subpath also re-exports the base wallet `KeyPair` type. `MultisigAutoExecuteResult` remains exported, but the current `IWalletAccountMultisig` methods do not use it in their return declarations.
+The subpath also re-exports the base wallet `KeyPair` type. In v1.0.0-beta.19, a breaking rename replaces beta.18's `MultisigAutoExecuteResult` with `MultisigInteractionResult`; the old type name is not exported. The `propose()` and `approveProposal()` return types use `MultisigInteractionResult` as shown above.
 
 ## IWalletAccountWithProtocols
 
@@ -14452,16 +14493,16 @@ Always use `try/catch` blocks when initializing sessions or accessing dynamic fe
 
 ### Base Wallet Errors
 
-`@tetherto/wdk-wallet` v1.0.0-beta.17 exports a shared `WdkError` hierarchy so applications can distinguish invalid input, provider failures, transaction outcomes, and unsupported capabilities without matching message strings.
+`@tetherto/wdk-wallet` v1.0.0-beta.19 exports a shared `WdkError` hierarchy so applications can distinguish invalid input, provider failures, transaction outcomes, and unsupported capabilities without matching message strings.
 
 Install the base wallet as a direct dependency before importing these contracts; do not rely on a transitive copy supplied by Core or a concrete wallet module:
 
 ```bash title="Install Base Wallet Error Contracts"
-npm install @tetherto/wdk-wallet@1.0.0-beta.17
+npm install @tetherto/wdk-wallet@1.0.0-beta.19
 ```
 
 <Callout type="info">
-These classes define the beta.17 base contract. Current first-party Bitcoin, standard EVM, ERC-4337, EIP-7702, Solana, Solana Gasless, Spark, TON, TON Gasless, TRON, TRON Gasfree, and Aptos releases depend on that contract. Older and third-party modules can still use earlier error behavior, so confirm the concrete package version and keep a fallback for unknown errors.
+These classes define the beta.19 base contract. Concrete wallet modules can depend on a different base version, so confirm the concrete package version and keep a fallback for unknown errors.
 </Callout>
 
 | Error | Meaning |
@@ -14510,7 +14551,7 @@ try {
 ```
 
 <Callout type="warn">
-`SignerError` is no longer exported in v1.0.0-beta.17. Use `InvalidSignerError` for an incompatible signer and `NoSuchElementError` when a default or named signer is missing.
+`SignerError` is exported again in v1.0.0-beta.18 and later as an alias of `InvalidSignerError`; both names refer to the same class. Use `InvalidSignerError` in new code. In v1.0.0-beta.17, the root entrypoint did not export `SignerError`; use `InvalidSignerError` for an incompatible signer and `NoSuchElementError` when a default or named signer is missing.
 </Callout>
 
 Protocol-specific classes and reason enums are exported from `@tetherto/wdk-wallet/protocols`:
@@ -18073,6 +18114,8 @@ const aave = new AaveProtocolEvm(account)
 
 When `AaveProtocolEvm` is initialized with an ERC‑4337 smart account, the optional `config` argument on mutating and quote methods accepts the same gas-payment override families documented in [`@tetherto/wdk-wallet-evm-erc-4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference): paymaster token, sponsorship policy, and native coins.
 
+Standard (non‑ERC‑4337) accounts silently ignore this optional ERC‑4337 configuration and use their normal EVM transaction path.
+
 ### `supply(options, config?)`
 Add tokens to the pool.
 
@@ -18306,7 +18349,7 @@ const aave = new AaveProtocolEvm(account)
 
 ## ERC‑4337 (Account Abstraction)
 
-When using ERC‑4337 smart accounts, every mutating method and quote helper accepts an optional `config` override. In `v1.0.0-beta.5`, that override matches the three gas-payment families exposed by [`@tetherto/wdk-wallet-evm-erc-4337`](/sdk/wallet-modules/wallet-evm-erc-4337/configuration): paymaster token, sponsorship policy, or native coins.
+When using ERC‑4337 smart accounts, every mutating method and quote helper accepts an optional `config` override. In `v1.0.0-beta.6`, that override matches the three gas-payment families exposed by [`@tetherto/wdk-wallet-evm-erc-4337`](/sdk/wallet-modules/wallet-evm-erc-4337/configuration): paymaster token, sponsorship policy, or native coins. Standard (non‑ERC‑4337) accounts silently ignore this optional ERC‑4337 configuration.
 
 Use the fields that match the gas-payment mode you want for that call. For the full field-level definitions, see the [`@tetherto/wdk-wallet-evm-erc-4337` configuration docs](/sdk/wallet-modules/wallet-evm-erc-4337/configuration) and [`Config Override`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference) reference.
 
@@ -18608,7 +18651,7 @@ Health factor and collateralization limits still apply. A quote does not guarant
 
 ## ERC-4337 smart accounts
 
-You can run the same methods through [`WalletAccountEvmErc4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference) and pass a second `config` argument to override per-call gas payment settings. In `v1.0.0-beta.5`, the lending methods accept the same override families as the wallet module: paymaster token, sponsorship policy, and native coins. See the [ERC-4337 config override](/sdk/lending-modules/lending-aave-evm/api-reference) section for the full field list.
+You can run the same methods through [`WalletAccountEvmErc4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference) and pass a second `config` argument to override per-call gas payment settings. In `v1.0.0-beta.6`, the lending methods accept the same override families as the wallet module: paymaster token, sponsorship policy, and native coins. Standard (non‑ERC‑4337) accounts silently ignore this optional configuration. See the [ERC-4337 config override](/sdk/lending-modules/lending-aave-evm/api-reference) section for the full field list.
 
 ```javascript title="Supply with paymaster"
 import { WalletAccountEvmErc4337 } from '@tetherto/wdk-wallet-evm-erc-4337'
@@ -20736,9 +20779,11 @@ new VeloraProtocolEvm(account, config?)
 ```
 
 Parameters:
-- `account`: `WalletAccountEvm | WalletAccountReadOnlyEvm | WalletAccountEvmErc4337 | WalletAccountReadOnlyEvmErc4337`
+- `account`: `IWalletAccount | IWalletAccountReadOnly` from `@tetherto/wdk-wallet`
 - `config` (optional):
   - `swapMaxFee` (`bigint`): maximum total gas fee allowed (wei)
+
+The beta.7 declarations accept the generic wallet interfaces, but this package still requires an EVM-compatible account with a configured JSON-RPC URL or EIP-1193 provider. Use an EVM account from WDK's EVM wallet modules; the wider interfaces do not add support for arbitrary or non-EVM accounts.
 
 Example:
 
@@ -20772,12 +20817,14 @@ Config (ERC‑4337 only):
 - `useNativeCoins` (`true`, optional): Pay fees in the chain's native token
 - `swapMaxFee` (`bigint`, optional): Per‑swap fee cap (wei)
 
+These per-swap overrides are applied only when the protocol uses a concrete `WalletAccountEvmErc4337`. With another writable EVM account, `swap()` sends one EVM transaction and does not apply the ERC‑4337 config object.
+
 Returns:
 - Standard account: `{ hash, fee, tokenInAmount, tokenOutAmount }`
 - ERC‑4337 account: `{ hash, fee, tokenInAmount, tokenOutAmount }`
 
 Notes:
-- Approve the input token with the wallet account before swapping if the spender does not already have enough allowance.
+- Approve the input token with the account's `approve()` method before swapping if the spender does not already have enough allowance.
 - Requires a provider; requires a non read‑only account to send transactions.
 
 Example:
@@ -20804,6 +20851,8 @@ Config (ERC‑4337 only):
 - `isSponsored` (`true`, optional): Use sponsorship mode for fee estimation
 - `sponsorshipPolicyId` (`string`, optional): Sponsorship policy override
 - `useNativeCoins` (`true`, optional): Estimate fees in the chain's native token
+
+These per-call overrides are applied only when the protocol uses a concrete `WalletAccountReadOnlyEvmErc4337`. Other accounts use the ordinary single-transaction quote path and do not apply the ERC‑4337 config object.
 
 Works with read‑only accounts.
 
@@ -20880,7 +20929,7 @@ const swapProtocol = new VeloraProtocolEvm(account, {
 
 ## Account Configuration
 
-The swap service uses the wallet account configuration for network access and signing:
+The swap service uses the wallet account configuration for network access and signing. The account must expose an EVM-compatible JSON-RPC URL or EIP-1193 provider; a generic interface type does not make a non-EVM account compatible with this module:
 
 ```javascript
 import { WalletAccountEvm, WalletAccountReadOnlyEvm } from '@tetherto/wdk-wallet-evm'
@@ -20974,7 +21023,7 @@ const result = await swapAA.swap({
 
 ### Per-call ERC‑4337 Config
 
-The second argument to `swap()` and `quoteSwap()` accepts ERC‑4337 wallet config overrides. Use it to switch paymaster token, sponsorship policy, or native-coin fee behavior for a single call. `swap()` also accepts `swapMaxFee` as a per-swap fee cap.
+The second argument to `swap()` and `quoteSwap()` accepts ERC‑4337 wallet config overrides only when the protocol uses the concrete `WalletAccountEvmErc4337` or `WalletAccountReadOnlyEvmErc4337` class, respectively. Use it to switch paymaster token, sponsorship policy, or native-coin fee behavior for a single call. `swap()` also accepts `swapMaxFee` as a per-swap fee cap. Standard EVM accounts use one ordinary EVM transaction and do not apply these per-call ERC‑4337 overrides.
 
 **Type:** partial ERC‑4337 wallet config (optional)
 
@@ -22000,10 +22049,10 @@ Keep the API key in secret-managed configuration. Do not commit it or include it
 
 Construct `ZeroExProtocol` with `undefined` when you only need an indicative quote. `apiKey` and `chainId` are still required.
 
-```javascript title="Quote USDC to WETH on Ethereum"
+```javascript title="Quote WETH to USDt on Ethereum"
 import ZeroExProtocol from '@0x/wdk-protocol-swidge-0x'
 
-const USDC = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
+const USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
 const WETH = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
 
 const zeroEx = new ZeroExProtocol(undefined, {
@@ -22013,9 +22062,9 @@ const zeroEx = new ZeroExProtocol(undefined, {
 })
 
 const quote = await zeroEx.quoteSwidge({
-  fromToken: USDC,
-  toToken: WETH,
-  fromTokenAmount: 100_000_000n
+  fromToken: WETH,
+  toToken: USDT,
+  fromTokenAmount: 100_000_000_000_000_000n
 })
 
 console.log(quote.fromTokenAmount)
@@ -22024,7 +22073,7 @@ console.log(quote.toTokenAmountMin)
 console.log(quote.fees)
 ```
 
-Amounts use the token's smallest unit. The example sells 100 USDC because USDC uses six decimals on Ethereum.
+Amounts use the token's smallest unit. The example sells 0.1 WETH because WETH uses 18 decimals on Ethereum.
 
 Pass token amounts as positive `bigint` values. Although the interface also accepts `number`, values above `Number.MAX_SAFE_INTEGER` can lose precision before conversion, and the module does not reject zero or negative amounts before calling 0x.
 
@@ -22048,9 +22097,9 @@ const zeroEx = new ZeroExProtocol(account, {
 })
 
 const options = {
-  fromToken: USDC,
-  toToken: WETH,
-  fromTokenAmount: 100_000_000n,
+  fromToken: WETH,
+  toToken: USDT,
+  fromTokenAmount: 100_000_000_000_000_000n,
   recipient
 }
 
@@ -22648,7 +22697,7 @@ For same-chain swaps, omit `toChain` and provide the destination token on the so
 ```javascript
 const quote = await swidge.quoteSwidge({
   fromToken: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-  toToken: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+  toToken: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
   fromTokenAmount: 10_000_000n
 })
 ```
@@ -24293,7 +24342,7 @@ The module reads live Rhino.fi chain and token config. The source chain must be 
 ```javascript
 const quote = await rhinofi.quoteSwidge({
   fromToken: 'USDT',
-  toToken: 'USDC',
+  toToken: 'USDT',
   toChain: 'BASE',
   recipient: '0xRecipient...',
   fromTokenAmount: 1_000_000n
@@ -24313,7 +24362,7 @@ After the user confirms the quote, call `swidge()`.
 ```javascript
 const result = await rhinofi.swidge({
   fromToken: 'USDT',
-  toToken: 'USDC',
+  toToken: 'USDT',
   toChain: 'BASE',
   recipient: '0xRecipient...',
   fromTokenAmount: 1_000_000n
@@ -24895,7 +24944,7 @@ const quoteOnly = new SymbiosisProtocol(undefined, {
 
 const quote = await quoteOnly.quoteSwidge({
   fromToken: 'USDT',
-  toToken: 'USDC',
+  toToken: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
   toChain: 'Arbitrum One',
   recipient: '0xRecipient...',
   fromTokenAmount: 100_000_000n
@@ -25072,10 +25121,10 @@ const symbiosis = new SymbiosisProtocol(bitcoinAccount, {
 
 Use the token symbol `BTC` as the source token and a destination recipient in the destination chain's address format:
 
-```javascript title="Bitcoin to Arbitrum USDC"
+```javascript title="Bitcoin to Arbitrum WETH"
 const quote = await symbiosis.quoteSwidge({
   fromToken: 'BTC',
-  toToken: 'USDC',
+  toToken: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
   toChain: 'Arbitrum One',
   recipient: '0xRecipient...',
   fromTokenAmount: 50_000n
@@ -25086,7 +25135,7 @@ const quote = await symbiosis.quoteSwidge({
 try {
   const result = await symbiosis.swidge({
     fromToken: 'BTC',
-    toToken: 'USDC',
+    toToken: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
     toChain: 'Arbitrum One',
     recipient: '0xRecipient...',
     fromTokenAmount: 50_000n
@@ -25202,7 +25251,7 @@ const quoteOnly = new SymbiosisProtocol(undefined, {
 
 const quote = await quoteOnly.quoteSwidge({
   fromToken: 'USDT',
-  toToken: 'USDC',
+  toToken: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
   toChain: 'Arbitrum One',
   recipient: '0xRecipient...',
   fromTokenAmount: 100_000_000n
@@ -25338,7 +25387,7 @@ The same options object drives both the quote and the execution:
 ```javascript title="Route options"
 const options = {
   fromToken: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-  toToken: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+  toToken: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
   toChain: 'Arbitrum One',
   recipient: '0xRecipient...',
   fromTokenAmount: 100_000_000n,
@@ -25586,7 +25635,7 @@ Use the returned chain IDs, names, and token identifiers to build selectors, the
 ```javascript
 const options = {
   fromToken: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-  toToken: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+  toToken: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
   toChain: 'Arbitrum One',
   recipient: '0xRecipient...',
   fromTokenAmount: 100_000_000n,
@@ -25672,7 +25721,7 @@ const symbiosis = new SymbiosisProtocol(bitcoinAccount, {
 
 const result = await symbiosis.swidge({
   fromToken: 'BTC',
-  toToken: 'USDC',
+  toToken: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
   toChain: 'Arbitrum One',
   recipient: '0xRecipient...',
   fromTokenAmount: 50_000n
@@ -25711,7 +25760,7 @@ const symbiosis = new SymbiosisProtocol(undefined, {
 
 const quote = await symbiosis.quoteSwidge({
   fromToken: 'USDT',
-  toToken: 'USDC',
+  toToken: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
   toChain: 'Arbitrum One',
   recipient: '0xRecipient...',
   fromTokenAmount: 100_000_000n
@@ -26679,6 +26728,9 @@ Returns a wallet account at the specified derivation path.
 // For testnet or regtest: m/84'/1'/0'/0/1
 const account = await wallet.getAccountByPath("0'/0/1")
 ```
+
+Account creation through `getAccount()` or `getAccountByPath()` throws `ValueError` when the seed is an invalid BIP-39 mnemonic or `bip` is not `44` or `84`.
+
 ##### `getFeeRates()`
 Returns current fee rates from mempool.space API.
 
@@ -26722,6 +26774,8 @@ new WalletAccountBtc(seed, path, config)
   - `bip` (number, optional): BIP address type - 44 (legacy) or 84 (native SegWit) (default: 84)
   - `retries` (number, optional): Additional retry attempts when `client` is an array
   - `transactionMaxFee` (number | bigint, optional): Maximum fee amount for `sendTransaction()` and `signTransaction()` operations (in satoshis)
+
+**Throws:** `ValueError` if `seed` is an invalid BIP-39 mnemonic or `bip` is not `44` or `84`.
 
 ### Methods
 
@@ -26778,7 +26832,11 @@ Accepts either transaction options or signed raw Bitcoin transaction hex. With t
 - `hash`: Transaction hash
 - `fee`: Transaction fee in satoshis
 
-**Throws:** Error if the transaction fee exceeds `transactionMaxFee` when configured. Invalid raw transaction data, unavailable previous transactions, and broadcast rejection errors propagate from the configured client.
+**Throws:**
+- `MaximumFeeExceededError` if the transaction fee exceeds `transactionMaxFee` when configured.
+- `ValueError` if the amount does not clear the dust limit or the spend requires more than the allowed number of inputs.
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if no unspent outputs are available or the balance does not cover the amount and fees.
+- Errors from the configured client, including `NoSuchElementError` when a Blockbook response has no raw transaction data and `ProviderError` for provider or broadcast failures.
 
 **Example:**
 ```javascript
@@ -26802,7 +26860,11 @@ Signs a Bitcoin transaction and returns the signed raw transaction as a hex stri
 
 **Returns:** `Promise<string>` - Signed raw transaction hex string
 
-**Throws:** Error if the estimated transaction fee exceeds `transactionMaxFee` when configured.
+**Throws:**
+- `MaximumFeeExceededError` if the estimated transaction fee exceeds `transactionMaxFee` when configured.
+- `ValueError` if the amount does not clear the dust limit or the spend requires more than the allowed number of inputs.
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if no unspent outputs are available or the balance does not cover the amount and fees.
+- Errors from the configured client, including `NoSuchElementError` when a Blockbook response has no raw transaction data.
 
 **Example:**
 ```javascript
@@ -26827,6 +26889,10 @@ Estimates the fee for transaction options or calculates the fee encoded by signe
 
 **Returns:** `Promise<{fee: bigint}>`
 - `fee`: Estimated transaction fee in satoshis
+
+**Throws:**
+- `ValueError` if the amount does not clear the dust limit or the spend requires more than the allowed number of inputs.
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if no unspent outputs are available or the balance does not cover the amount and fees.
 
 **Example:**
 ```javascript
@@ -26874,6 +26940,8 @@ Returns a transaction's native receipt if it has been included in a block. This 
 - `hash` (string): The transaction hash (64 hex characters)
 
 **Returns:** `Promise<BtcTransactionReceipt | null>` - The receipt, or null if the transaction has not been included in a block yet.
+
+**Throws:** `ValueError` if `hash` is not a valid 64-character hexadecimal transaction hash.
 
 **Example:**
 ```javascript
@@ -27054,6 +27122,10 @@ Estimates the fee for a transaction without broadcasting it.
   - `confirmationTarget` (number, optional): Target blocks for confirmation (default: 1)
 
 **Returns:** `Promise<{fee: bigint}>` - Estimated fee in satoshis
+
+**Throws:**
+- `ValueError` if the amount does not clear the dust limit or the spend requires more than the allowed number of inputs.
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if no unspent outputs are available or the balance does not cover the amount and fees.
 
 **Example:**
 ```javascript
@@ -27344,6 +27416,8 @@ interface IBtcClient {
   estimateFee(blocks: number): Promise<number>
 }
 ```
+
+Built-in clients report provider failures as `ProviderError` with a `reason` from `ProviderErrorReason`. `BlockbookClient` maps HTTP 401 to `UNAUTHORIZED`, 403 to `FORBIDDEN`, 408 or 504 to `REQUEST_TIMEOUT`, other 5xx responses to `INTERNAL_SERVER_ERROR`, and other non-2xx responses to `NETWORK_ERROR`. Its `getTransaction(txHash)` throws `NoSuchElementError` when the response has no raw transaction data. `ElectrumWs` uses `NETWORK_ERROR` for connection failures and `INTERNAL_SERVER_ERROR` for server-response or fee-estimation failures.
 
 ### BtcBalance
 ```typescript
@@ -28142,9 +28216,16 @@ This guide explains how to [handle transaction errors](#transaction-errors), [ha
 
 ## Transaction Errors
 
-Transactions sent via [`account.sendTransaction()`](/sdk/wallet-modules/wallet-btc/api-reference) can fail for several reasons. Wrap transaction calls in a `try/catch` block to handle specific error types:
+Transactions sent via [`account.sendTransaction()`](/sdk/wallet-modules/wallet-btc/api-reference) can fail for several reasons. Catch the exported WDK error classes and compare `reason` constants where an error exposes them; do not match message text:
 
 ```javascript title="Handle Transaction Errors"
+import {
+  MaximumFeeExceededError,
+  TransactionError,
+  TransactionErrorReason,
+  ValueError
+} from '@tetherto/wdk-wallet'
+
 try {
   const result = await account.sendTransaction({
     to: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
@@ -28152,51 +28233,63 @@ try {
   })
   console.log('Transaction hash:', result.hash)
 } catch (error) {
-  if (error.message.includes('Insufficient balance')) {
+  if (error instanceof TransactionError &&
+      error.reason === TransactionErrorReason.INSUFFICIENT_BALANCE) {
     console.error('Not enough funds in wallet')
-  } else if (error.message.includes('Exceeded maximum fee')) {
+  } else if (error instanceof MaximumFeeExceededError) {
     console.error('Transaction fee exceeds transactionMaxFee')
-  } else if (error.message.includes('dust limit')) {
-    console.error('Amount is below the minimum dust limit')
-  } else if (error.message.includes('Invalid address')) {
-    console.error('Recipient address is invalid')
+  } else if (error instanceof ValueError) {
+    console.error('Transaction amount or input selection is invalid')
   } else {
-    console.error('Transaction failed:', error.message)
+    throw error
   }
 }
 ```
 
 ## Connection Errors
 
-Network issues with the Electrum server can cause failures across all operations. Handle connection errors at a higher level:
+Network and backend failures use `ProviderError`. Inspect `error.reason` instead of parsing a provider message. For `BlockbookClient`, HTTP 401 maps to `UNAUTHORIZED`, 403 to `FORBIDDEN`, 408 or 504 to `REQUEST_TIMEOUT`, other 5xx responses to `INTERNAL_SERVER_ERROR`, and other non-2xx responses to `NETWORK_ERROR`. WebSocket connection failures use `NETWORK_ERROR`; WebSocket server-response and fee-estimation failures use `INTERNAL_SERVER_ERROR`.
 
 ```javascript title="Handle Connection Errors"
+import { ProviderError, ProviderErrorReason } from '@tetherto/wdk-wallet'
+
 try {
   const balance = await account.getBalance()
   console.log('Balance:', balance, 'satoshis')
 } catch (error) {
-  if (error.message.includes('ECONNREFUSED') || error.message.includes('timeout')) {
-    console.error('Network error: check Electrum server connection')
-  } else if (error.message.includes('Invalid seed')) {
-    console.error('Invalid seed phrase provided')
+  if (error instanceof ProviderError &&
+      (error.reason === ProviderErrorReason.NETWORK_ERROR ||
+       error.reason === ProviderErrorReason.REQUEST_TIMEOUT)) {
+    console.error('Provider unavailable or timed out; retry according to your policy')
+  } else if (error instanceof ProviderError &&
+             (error.reason === ProviderErrorReason.UNAUTHORIZED ||
+              error.reason === ProviderErrorReason.FORBIDDEN)) {
+    console.error('Check provider credentials and permissions')
+  } else if (error instanceof ProviderError &&
+             error.reason === ProviderErrorReason.INTERNAL_SERVER_ERROR) {
+    console.error('Provider failed internally; retry or use another client')
   } else {
-    console.error('Operation failed:', error.message)
+    throw error
   }
 }
 ```
+
+Invalid mnemonic and unsupported `bip` values throw `ValueError` while an account is created. Bitcoin accounts do not support token operations: `getTokenBalance(tokenAddress)`, `quoteTransfer(options)`, and `transfer(options)` throw `UnsupportedOperationError`.
 
 ## Transaction Status Errors
 
 `getTransaction()` validates the transaction ID and searches this account address's history. Handle malformed and unknown transactions on that one-shot lookup:
 
 ```javascript title="Handle a Transaction Lookup"
+import { NoSuchElementError, ValueError } from '@tetherto/wdk-wallet'
+
 try {
   const receipt = await account.getTransaction(transactionHash)
   console.log('Current finality:', receipt.finality)
 } catch (error) {
-  if (error.name === 'ValueError') {
+  if (error instanceof ValueError) {
     console.error('Expected a 64-character hexadecimal transaction ID')
-  } else if (error.name === 'NoSuchElementError') {
+  } else if (error instanceof NoSuchElementError) {
     console.error('Transaction is not in this account address history')
   } else {
     throw error
@@ -28207,13 +28300,15 @@ try {
 Use `waitForTransaction()` when the hash may still be propagating. It consumes `NoSuchElementError` as a transient polling state, so the caller normally handles a timeout instead:
 
 ```javascript title="Handle a Finality Timeout"
+import { TimeoutError } from '@tetherto/wdk-wallet'
+
 try {
   const receipt = await account.waitForTransaction(transactionHash, {
     target: 'final'
   })
   console.log('Final transaction:', receipt.hash)
 } catch (error) {
-  if (error.name === 'TimeoutError') {
+  if (error instanceof TimeoutError) {
     console.error('Transaction did not reach the requested finality in time')
   } else {
     throw error
@@ -29163,7 +29258,7 @@ Use `getTokenBalances(tokenAddresses)` to read several token balances at once.
 ```javascript title="Get multiple token balances"
 const balances = await account.getTokenBalances([
   '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-  '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
+  '0x68749665FF8D2d112Fa859AA293F07A622782F38'
 ])
 
 console.log(balances)
@@ -29986,7 +30081,7 @@ new WalletManagerEvmErc4337(seed, config)
   - `chainId` (number): The blockchain's ID (e.g., 1 for Ethereum mainnet)
   - `provider` (string | Eip1193Provider | Array\<string | Eip1193Provider\>): RPC endpoint URL, EIP-1193 provider instance, or ordered failover list
   - `bundlerUrl` (string): The URL of the bundler service
-  - `safeModulesVersion` (string): Must be `'0.3.0'`, the only Safe modules version supported by beta.16
+  - `safeModulesVersion` (string): Must be `'0.3.0'`, the only Safe modules version supported by beta.17
 
 **Optional common config fields:**
   - `parallel` (boolean): Put each send, sign, or transfer in a fresh random 192-bit nonce-key lane
@@ -30064,6 +30159,8 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
 </Tab>
 </Tabs>
 
+**Throws:** `ValueError` if `provider` is an empty array.
+
 ### Methods
 
 | Method | Description | Returns | Throws |
@@ -30072,7 +30169,7 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
 | `isValidSeedPhrase(seedPhrase)` | (static) Checks if a seed phrase is valid | `boolean` | - |
 | `getAccount(index?)` | Returns a wallet account at the specified index | `Promise\<WalletAccountEvmErc4337\>` | - |
 | `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise\<WalletAccountEvmErc4337\>` | - |
-| `getFeeRates()` | Returns current fee rates for transactions | `Promise\<{normal: bigint, fast: bigint}\>` | If no provider |
+| `getFeeRates()` | Returns current fee rates for transactions | `Promise\<{normal: bigint, fast: bigint}\>` | `ProviderRequiredError` if no provider |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` | - |
 
 ### Properties
@@ -30148,7 +30245,7 @@ Returns current fee rates with ERC-4337 specific multipliers.
 
 **Returns:** `Promise\<{normal: bigint, fast: bigint}\>` - Fee rates in wei
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -30218,9 +30315,9 @@ const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 | `signTransaction(tx, config?)` | Builds and signs one UserOperation without submitting it | `Promise\<UserOperationV7\>` | If a non-sponsored fee exceeds max or the token paymaster address mismatches |
 | `sendTransaction(tx, config?)` | Builds and sends transactions, or submits a signed UserOperation | `Promise\<{hash: string, fee: bigint}\>` | If a newly built operation exceeds max or the token paymaster address mismatches |
 | `quoteSendTransaction(tx, config?)` | Estimates the fee for transactions or a signed UserOperation | `Promise\<{fee: bigint}\>` | If a newly built operation's token paymaster address mismatches |
-| `transfer(options, config?, txOverrides?)` | Transfers ERC20 tokens via UserOperation | `Promise\<{hash: string, fee: bigint}\>` | If fee meets or exceeds max, or the token paymaster address mismatches |
+| `transfer(options, config?, txOverrides?)` | Transfers ERC20 tokens via UserOperation | `Promise\<{hash: string, fee: bigint}\>` | If fee exceeds max, or the token paymaster address mismatches |
 | `quoteTransfer(options, config?, txOverrides?)` | Estimates the fee for an ERC20 transfer | `Promise\<{fee: bigint}\>` | If the token paymaster address mismatches |
-| `approve(options, txOverrides?)` | Approves a spender to spend ERC20 tokens | `Promise\<{hash: string, fee: bigint}\>` | If a token paymaster address mismatches |
+| `approve(options, txOverrides?)` | Approves a spender to spend ERC20 tokens | `Promise\<{hash: string, fee: bigint}\>` | `ProviderRequiredError`, or `ValueError` when Ethereum USD₮ allowance must be reset |
 | `getBalance()` | Returns the native token balance (in wei) | `Promise\<bigint\>` | - |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise\<bigint\>` | - |
 | `getPaymasterTokenBalance()` | Returns the paymaster token balance | `Promise\<bigint\>` | - |
@@ -30231,7 +30328,7 @@ const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 | `getUserOperationReceipt(hash)` | Returns a UserOperation receipt | `Promise\<UserOperationReceipt \| null\>` | - |
 | `signTypedData(typedData)` | Signs EIP-712 typed structured data | `Promise\<string\>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies an EIP-712 typed data signature | `Promise\<boolean\>` | - |
-| `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise\<Map\<string, bigint\>\>` | - |
+| `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise\<Record\<string, bigint\>\>` | - |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise\<WalletAccountReadOnlyEvmErc4337\>` | - |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` | - |
 
@@ -30285,7 +30382,11 @@ Builds and signs one ERC-4337 v0.7 UserOperation without submitting it to the bu
 
 **Returns:** `Promise\<UserOperationV7\>` - A signed UserOperation that can be quoted or submitted later
 
-**Throws:** Error if a non-sponsored operation exceeds `transactionMaxFee`, a raw `nonceKey` is outside `0..2^192-1`, or the token paymaster address returned by the RPC mismatches the configured address
+**Throws:**
+- `MaximumFeeExceededError` if a non-sponsored operation exceeds `transactionMaxFee`.
+- `ValueError` if a raw numeric `nonceKey` is outside `0..2^192-1`.
+- `ConfigurationError` if the override is invalid or the token paymaster address returned by the RPC mismatches the configured address.
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50.
 
 ```javascript title="Sign a UserOperation"
 const signedUserOperation = await account.signTransaction({
@@ -30312,7 +30413,11 @@ Sends a transaction via UserOperation through the bundler.
 
 **Returns:** `Promise\<{hash: string, fee: bigint}\>` - UserOperation hash and fee
 
-**Throws:** Error if a non-sponsored, newly built operation exceeds `transactionMaxFee`, a raw `nonceKey` is outside `0..2^192-1`, or the token paymaster address returned while building mismatches the configured address
+**Throws:**
+- `MaximumFeeExceededError` if a non-sponsored, newly built operation exceeds `transactionMaxFee`.
+- `ValueError` if a raw numeric `nonceKey` is outside `0..2^192-1`.
+- `ConfigurationError` if the override is invalid or the token paymaster address returned while building mismatches the configured address.
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50 while building or submitting the operation.
 
 When `tx` is a signed `UserOperationV7`, WDK forwards that exact operation to the bundler. It does not rebuild or re-sign it, reapply the current `transactionMaxFee`, call the paymaster RPC, or rerun the paymaster-address check. Only submit an operation produced by the same account after verifying the intended fee-mode and paymaster configuration, and submit it before its nonce becomes stale.
 
@@ -30350,7 +30455,7 @@ const fastResult = await account.sendTransaction({
 })
 ```
 
-Beta.15 does not reserve sequential nonces locally. With no lane option, sends use the default key-0 lane and must not overlap. `parallel: true` creates a new random lane; `nonceKey` selects a reusable named or raw lane and takes precedence. Operations sharing a lane remain sequential, so wait for inclusion before reusing it. Distinct lanes are unordered; batch dependent transactions into one UserOperation.
+Beta.17 does not reserve sequential nonces locally. With no lane option, sends use the default key-0 lane and must not overlap. `parallel: true` creates a new random lane; `nonceKey` selects a reusable named or raw lane and takes precedence. Operations sharing a lane remain sequential, so wait for inclusion before reusing it. Distinct lanes are unordered; batch dependent transactions into one UserOperation.
 
 ##### `quoteSendTransaction(tx, config?)`
 Estimates the fee for a UserOperation without sending it.
@@ -30369,7 +30474,9 @@ The cache key contains the transaction but not the per-call fee-mode configurati
 
 **Returns:** `Promise\<{fee: bigint}\>` - Fee estimate
 
-**Throws:** `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison).
+**Throws:**
+- `ConfigurationError` if the override is invalid or the token paymaster address returned by the RPC mismatches the configured address.
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50.
 
 For a signed UserOperation, sponsored mode returns `0n`. Other modes return a 20% buffered native-gas ceiling in wei. In paymaster-token mode, this signed-operation quote is not a token-denominated paymaster charge.
 
@@ -30396,9 +30503,10 @@ Transfers ERC20 tokens via UserOperation.
 **Returns:** `Promise\<{hash: string, fee: bigint}\>` - UserOperation hash and fee
 
 **Throws:**
-- Error if fee meets or exceeds `transferMaxFee`
+- `MaximumFeeExceededError` if a non-sponsored fee exceeds `transferMaxFee`; a fee equal to the cap is allowed.
 - Error if insufficient token balance
-- Error if a raw `nonceKey` is outside `0..2^192-1`
+- `ValueError` if a raw numeric `nonceKey` is outside `0..2^192-1`.
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50.
 - `ConfigurationError` if the token paymaster address returned by the RPC mismatches the configured address
 
 **Example:**
@@ -30429,7 +30537,9 @@ This method does not resolve or reserve a nonce lane. A later transfer using `pa
 
 **Returns:** `Promise\<{fee: bigint}\>` - Fee estimate
 
-**Throws:** `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison).
+**Throws:**
+- `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison).
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50.
 
 **Example:**
 ```javascript
@@ -30494,7 +30604,11 @@ Approves a spender to spend ERC20 tokens on behalf of the Safe account.
 
 **Returns:** `Promise\<{hash: string, fee: bigint}\>` - Transaction result
 
-**Throws:** `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison).
+**Throws:**
+- `ProviderRequiredError` if the account has no provider.
+- `ValueError` on Ethereum mainnet if USD₮ already has a nonzero allowance for the spender and `amount` is also nonzero. Submit an approval for `0` first.
+- `ConfigurationError` if the UserOperation configuration is invalid or the token paymaster address returned by the RPC mismatches the configured address.
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50.
 
 **Example:**
 ```javascript
@@ -30648,15 +30762,15 @@ Returns balances for multiple ERC20 tokens in a single call.
 **Parameters:**
 - `tokenAddresses` (string[]): Array of ERC20 token contract addresses
 
-**Returns:** `Promise\<Map\<string, bigint\>\>` - Map of token address to balance in base units
+**Returns:** `Promise\<Record\<string, bigint\>\>` - Record of token addresses to balances in base units
 
 **Example:**
 ```javascript
 const balances = await account.getTokenBalances([
   '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt
-  '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'  // USDC
+  '0x68749665FF8D2d112Fa859AA293F07A622782F38'  // XAUt
 ])
-for (const [address, balance] of balances) {
+for (const [address, balance] of Object.entries(balances)) {
   console.log(`Token ${address}: ${balance}`)
 }
 ```
@@ -30793,7 +30907,7 @@ const sameAddress = WalletAccountEvmErc4337.predictSafeAddress(
 | `getUserOperationReceipt(hash)` | Returns a UserOperation receipt | `Promise\<UserOperationReceipt \| null\>` | - |
 | `signTypedData(typedData)` | Signs EIP-712 typed structured data | `Promise\<string\>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies an EIP-712 typed data signature | `Promise\<boolean\>` | - |
-| `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise\<Map\<string, bigint\>\>` | - |
+| `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise\<Record\<string, bigint\>\>` | - |
 
 ##### `getAddress()`
 Returns the Safe smart contract wallet address.
@@ -30887,9 +31001,12 @@ Estimates the fee for a UserOperation.
 **Throws:**
 - Error if simulation fails
 - `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison)
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50
 
 **Example:**
 ```javascript
+import { TransactionError, TransactionErrorReason } from '@tetherto/wdk-wallet'
+
 try {
   const quote = await readOnlyAccount.quoteSendTransaction({
     to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
@@ -30897,8 +31014,11 @@ try {
   })
   console.log('Estimated fee:', quote.fee)
 } catch (error) {
-  if (error.message.includes('not enough funds')) {
-    console.error('Insufficient paymaster token balance')
+  if (error instanceof TransactionError &&
+      error.reason === TransactionErrorReason.INSUFFICIENT_BALANCE) {
+    console.error('The Safe cannot repay the paymaster')
+  } else {
+    throw error
   }
 }
 ```
@@ -30913,7 +31033,9 @@ Estimates the fee for an ERC20 token transfer.
 
 **Returns:** `Promise\<{fee: bigint}\>` - Fee estimate
 
-**Throws:** `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison).
+**Throws:**
+- `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison).
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50.
 
 **Example:**
 ```javascript
@@ -31019,15 +31141,15 @@ Returns balances for multiple ERC20 tokens in a single call.
 **Parameters:**
 - `tokenAddresses` (string[]): Array of ERC20 token contract addresses
 
-**Returns:** `Promise\<Map\<string, bigint\>\>` - Map of token address to balance in base units
+**Returns:** `Promise\<Record\<string, bigint\>\>` - Record of token addresses to balances in base units
 
 **Example:**
 ```javascript
 const balances = await readOnlyAccount.getTokenBalances([
   '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt
-  '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'  // USDC
+  '0x68749665FF8D2d112Fa859AA293F07A622782F38'  // XAUt
 ])
-for (const [address, balance] of balances) {
+for (const [address, balance] of Object.entries(balances)) {
   console.log(`Token ${address}: ${balance}`)
 }
 ```
@@ -31074,7 +31196,7 @@ interface EvmErc4337WalletCommonConfig {
   chainId: number;                          // Blockchain ID
   provider: string | Eip1193Provider | Array<string | Eip1193Provider>; // RPC provider or failover list
   bundlerUrl: string;                       // Bundler service URL
-  safeModulesVersion: string;               // Must be '0.3.0' in beta.16
+  safeModulesVersion: string;               // Must be '0.3.0' in beta.17
   parallel?: boolean;                       // Fresh random nonce-key lane per operation
   nonceKey?: number | bigint | string;      // Reusable raw or named uint192 lane key
 }
@@ -31115,7 +31237,7 @@ type EvmErc4337WalletConfig = EvmErc4337WalletCommonConfig &
 
 ### Config Override
 
-The published beta.16 `config` parameter type on `sendTransaction`, `signTransaction`, `quoteSendTransaction`, `transfer`, and `quoteTransfer` allows per-call overrides of gas payment settings:
+The published beta.17 `config` parameter type on `sendTransaction`, `signTransaction`, `quoteSendTransaction`, `transfer`, and `quoteTransfer` allows per-call overrides of gas payment settings:
 
 ```typescript
 type ConfigOverride = Partial<
@@ -31137,7 +31259,7 @@ type ConfigOverride = Partial<
 
 Overrides are shallow-merged with the account configuration, then validated. When switching modes, explicitly clear an inherited opposing flag: sponsorship requires `isSponsored: true` and `useNativeCoins: false`; native-coin mode requires `isSponsored: false` and `useNativeCoins: true`; paymaster-token mode requires both flags to be `false`. The merged configuration must also contain the URL, address, token, or policy fields required by the selected mode.
 
-At runtime, beta.16 additionally honors `parallel` and `nonceKey` per call for `signTransaction()`, `sendTransaction()`, and `transfer()`. Those two fields are missing from the published per-call declarations, so object literals containing them fail TypeScript excess-property checks even though JavaScript calls work. Construction-level `EvmErc4337WalletCommonConfig` includes both fields and is the typed path in this release. `quoteSendTransaction()` and `quoteTransfer()` do not select a lane.
+At runtime, beta.17 additionally honors `parallel` and `nonceKey` per call for `signTransaction()`, `sendTransaction()`, and `transfer()`. Those two fields are missing from the published per-call declarations, so object literals containing them fail TypeScript excess-property checks even though JavaScript calls work. Construction-level `EvmErc4337WalletCommonConfig` includes both fields and is the typed path in this release. `quoteSendTransaction()` and `quoteTransfer()` do not select a lane.
 
 In token-paymaster mode, every path that builds a UserOperation validates a non-empty paymaster address returned by the RPC against `paymasterAddress`. A case-insensitive mismatch throws `ConfigurationError` before the operation is returned or submitted.
 
@@ -31273,11 +31395,13 @@ interface UserOperationReceipt {
 ### ConfigurationError
 
 ```typescript
-class ConfigurationError extends Error {
+class ConfigurationError extends ValueError {
   // Thrown when the wallet configuration is invalid, including missing
   // gas-payment fields or an unexpected token paymaster address from the RPC
 }
 ```
+
+`ConfigurationError` is part of the shared WDK error taxonomy and can also be caught as `ValueError`.
 
 ### FeeRates
 
@@ -31577,12 +31701,12 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, config)
 Reusing one named lane remains sequential: wait for inclusion before submitting its next operation, or batch dependent calls into one UserOperation.
 
 <Callout type="warning">
-The beta.16 runtime also honors `parallel` and `nonceKey` in the per-call config for `signTransaction()`, `sendTransaction()`, and `transfer()`, but the published per-call TypeScript declarations omit both fields. Construction-level configuration is typed; JavaScript per-call usage works at runtime.
+The beta.17 runtime also honors `parallel` and `nonceKey` in the per-call config for `signTransaction()`, `sendTransaction()`, and `transfer()`, but the published per-call TypeScript declarations omit both fields. Construction-level configuration is typed; JavaScript per-call usage works at runtime.
 </Callout>
 
 ### Safe Modules Version
 
-The `safeModulesVersion` option specifies the Safe modules version for smart contract wallet implementation. Beta.15 supports only `0.3.0`; other values, including `0.2.0`, throw `ConfigurationError`. **Required** for smart account initialization.
+The `safeModulesVersion` option specifies the Safe modules version for smart contract wallet implementation. Beta.17 supports only `0.3.0`; other values, including `0.2.0`, throw `ConfigurationError`. **Required** for smart account initialization.
 
 **Type:** `string`
 **Required:** Yes
@@ -31671,6 +31795,8 @@ The `transactionMaxFee` option sets the maximum fee amount for non-sponsored `se
 
 **Example:**
 ```javascript
+import { MaximumFeeExceededError } from '@tetherto/wdk-wallet'
+
 const config = {
   transactionMaxFee: 100000, // 100,000 paymaster token units
   transferMaxFee: 100000
@@ -31682,8 +31808,10 @@ try {
     value: 1000000000000000n
   })
 } catch (error) {
-  if (error.message.includes('Exceeded maximum fee')) {
-    console.error('Transaction cancelled: Fee too high')
+  if (error instanceof MaximumFeeExceededError) {
+    console.error('Transaction canceled: Fee too high')
+  } else {
+    throw error
   }
 }
 ```
@@ -31698,6 +31826,8 @@ The `transferMaxFee` option sets the maximum fee amount for transfer operations.
 
 **Example:**
 ```javascript
+import { MaximumFeeExceededError } from '@tetherto/wdk-wallet'
+
 const config = {
   transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDt if 6 decimals)
 }
@@ -31710,8 +31840,10 @@ try {
     amount: 1000000
   })
 } catch (error) {
-  if (error.message.includes('Exceeded maximum fee')) {
-    console.error('Transfer cancelled: Fee too high')
+  if (error instanceof MaximumFeeExceededError) {
+    console.error('Transfer canceled: Fee too high')
+  } else {
+    throw error
   }
 }
 ```
@@ -32040,6 +32172,12 @@ This guide explains how to [handle transaction errors](#transaction-errors), [ha
 Transactions sent via [`account.sendTransaction()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference) can fail when the paymaster token balance is insufficient. Wrap calls in a `try/catch` block:
 
 ```javascript title="Handle Transaction Errors"
+import {
+  MaximumFeeExceededError,
+  TransactionError,
+  TransactionErrorReason
+} from '@tetherto/wdk-wallet'
+
 try {
   const result = await account.sendTransaction({
     to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
@@ -32047,19 +32185,28 @@ try {
   })
   console.log('UserOperation hash:', result.hash)
 } catch (error) {
-  if (error.message.includes('not enough funds')) {
-    console.error('Insufficient paymaster token balance')
+  if (error instanceof TransactionError &&
+      error.reason === TransactionErrorReason.INSUFFICIENT_BALANCE) {
+    console.error('The Safe cannot repay the paymaster')
+  } else if (error instanceof MaximumFeeExceededError) {
+    console.error('The UserOperation fee exceeds transactionMaxFee')
   } else {
-    console.error('Transaction failed:', error.message)
+    throw error
   }
 }
 ```
 
 ## Transfer Errors
 
-Token transfers via [`account.transfer()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference) can fail due to insufficient balance or a fee at or above the maximum limit:
+Token transfers via [`account.transfer()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference) can fail because the Safe cannot repay the paymaster or because the fee exceeds the configured maximum:
 
 ```javascript title="Handle Transfer Errors"
+import {
+  MaximumFeeExceededError,
+  TransactionError,
+  TransactionErrorReason
+} from '@tetherto/wdk-wallet'
+
 try {
   const result = await account.transfer({
     token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
@@ -32068,12 +32215,13 @@ try {
   })
   console.log('Transfer UserOperation hash:', result.hash)
 } catch (error) {
-  if (error.message.includes('Exceeded maximum fee')) {
-    console.error('Transfer cancelled: fee meets or exceeds the configured limit')
-  } else if (error.message.includes('not enough funds')) {
-    console.error('Insufficient paymaster token balance')
+  if (error instanceof MaximumFeeExceededError) {
+    console.error('Transfer canceled: fee exceeds transferMaxFee')
+  } else if (error instanceof TransactionError &&
+             error.reason === TransactionErrorReason.INSUFFICIENT_BALANCE) {
+    console.error('The Safe cannot repay the paymaster')
   } else {
-    console.error('Transfer failed:', error.message)
+    throw error
   }
 }
 ```
@@ -32081,6 +32229,8 @@ try {
 ## Paymaster Address Mismatches
 
 Starting in `v1.0.0-beta.15`, the shared UserOperation builder checks the configured `paymasterAddress` against a non-empty paymaster address returned by the RPC in token-paymaster mode. A case-insensitive mismatch throws the exported `ConfigurationError` before that newly built operation is returned or submitted. The error message identifies the configured address, the `paymasterUrl`, and the returned address.
+
+In beta.17, `ConfigurationError` extends `ValueError`, so a shared `ValueError` handler can catch it. Check `ConfigurationError` first when the application needs the package-specific recovery path below. Constructing a wallet with an empty provider list also throws `ValueError`; provider-required operations such as `getFeeRates()` use `ProviderRequiredError`.
 
 ```javascript title="Handle a Paymaster Address Mismatch"
 import { ConfigurationError } from '@tetherto/wdk-wallet-evm-erc-4337'
@@ -32109,7 +32259,7 @@ A caller-supplied signed UserOperation is not rebuilt either. Quoting it does no
 
 Lane configuration and bundler behavior can fail in several ways:
 
-- A raw `nonceKey` below `0` or above `2^192 - 1` throws `nonceKey must be within the uint192 range (0 to 2^192 - 1).`
+- A raw numeric `nonceKey` below `0` or above `2^192 - 1` throws `ValueError`.
 - Parallel sends from an undeployed Safe or a bundler that does not support nonzero keys can be rejected by the RPC or bundler. Deploy the account with one completed operation first and verify bundler support.
 - Two operations submitted concurrently in the same named or default lane can select the same sequence. Both calls can return a UserOperation hash even though one never receives a receipt.
 
@@ -32313,7 +32463,7 @@ console.log('UserOperation hash:', result.hash)
 
 ## Use Parallel Nonce Lanes
 
-Beta.16 does not reserve sequential nonces locally. By default, operations use ERC-4337 nonce key `0`; two default-lane sends started before the first is included can select the same sequence and collide.
+Beta.17 does not reserve sequential nonces locally. By default, operations use ERC-4337 nonce key `0`; two default-lane sends started before the first is included can select the same sequence and collide.
 
 Before using nonzero lanes, deploy the Safe with one operation and wait for its UserOperation receipt. Your bundler must support parallel nonce keys, and its per-sender mempool limits still apply.
 
@@ -32341,7 +32491,7 @@ const refunds = await account.sendTransaction(txB, { nonceKey: 'refunds' })
 One lane is still sequential. Two concurrent sends using the same named or default lane can return UserOperation hashes even though one never receives a receipt. Wait for inclusion before reusing a lane. If calls depend on one another, batch them with `sendTransaction([tx1, tx2])` so they execute in order under one nonce. Different lanes are independent and can be included in either order.
 </Callout>
 
-`signTransaction()` preserves the lane chosen by the same configuration rules. In beta.16, per-call `parallel` and `nonceKey` work at runtime but are missing from the published per-call TypeScript declarations; construction-level lane configuration is typed.
+`signTransaction()` preserves the lane chosen by the same configuration rules. In beta.17, per-call `parallel` and `nonceKey` work at runtime but are missing from the published per-call TypeScript declarations; construction-level lane configuration is typed.
 
 ## Send with Custom Paymaster Token
 
@@ -32489,12 +32639,12 @@ const result = await account.transfer({
 ```
 
 <Callout type="warn">
-If the estimated fee meets or exceeds `transferMaxFee`, the transfer is cancelled with an "Exceeded maximum fee" error.
+If the estimated fee exceeds `transferMaxFee`, the transfer throws `MaximumFeeExceededError`. A fee equal to the cap is allowed.
 </Callout>
 
 ## Transfer in a Nonce Lane
 
-`transfer()` follows the same beta.16 nonce-lane rules as sends. Use a stable named lane for an independent transfer stream, and wait for inclusion before reusing that lane:
+`transfer()` follows the same beta.17 nonce-lane rules as sends. Use a stable named lane for an independent transfer stream, and wait for inclusion before reusing that lane:
 
 ```javascript title="Transfer In A Named Lane"
 const result = await account.transfer({
@@ -32506,7 +32656,7 @@ const result = await account.transfer({
 })
 ```
 
-`quoteTransfer()` estimates the transfer but does not select or reserve a lane. A lane transfer rebuilds its UserOperation. The beta.16 runtime accepts lane fields per call, while the published per-call TypeScript declaration omits them; see [Use Parallel Nonce Lanes](/sdk/wallet-modules/wallet-evm-erc-4337/guides/send-transactions#use-parallel-nonce-lanes).
+`quoteTransfer()` estimates the transfer but does not select or reserve a lane. A lane transfer rebuilds its UserOperation. The beta.17 runtime accepts lane fields per call, while the published per-call TypeScript declaration omits them; see [Use Parallel Nonce Lanes](/sdk/wallet-modules/wallet-evm-erc-4337/guides/send-transactions#use-parallel-nonce-lanes).
 
 ## Transfer with UserOperation Gas Overrides
 
@@ -32630,6 +32780,10 @@ new WalletManagerEvm(seedOrSigner, config?)
 
 The default signer must support derivation. Register non-derivable signers, such as private-key signers, with `addSigner()` and retrieve them by name.
 
+**Throws:**
+- `ValueError` if a string seed phrase is not a valid BIP-39 mnemonic.
+- `InvalidSignerError` if the default signer does not support account derivation.
+
 **Example:**
 ```javascript
 const wallet = new WalletManagerEvm(seedPhrase, {
@@ -32658,7 +32812,7 @@ const signerWallet = new WalletManagerEvm(signer, {
 | `getAccount(index?, options?)` | Returns a wallet account at the specified index, optionally from a named signer | `Promise<WalletAccountEvm>` | If the requested signer is unavailable or cannot derive |
 | `getAccount(signerName)` | Returns the account associated with a registered signer | `Promise<WalletAccountEvm>` | If the named signer is unavailable |
 | `getAccountByPath(path, options?)` | Returns a wallet account at the specified BIP-44 derivation path, optionally from a named signer | `Promise<WalletAccountEvm>` | If the requested signer is unavailable or cannot derive |
-| `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` | If no provider is set |
+| `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` | `ProviderRequiredError` if no provider is set |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` | - |
 
 ### Properties
@@ -32793,7 +32947,7 @@ Returns current fee rates based on network conditions with predefined multiplier
 - `normal`: Base fee × 1.1 (10% above base)
 - `fast`: Base fee × 2.0 (100% above base)
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -32841,7 +32995,7 @@ new WalletAccountEvm(signer, config?)
   - `transactionMaxFee` (number | bigint, optional): Maximum fee amount for native `sendTransaction()` and `signTransaction()` operations (in wei)
 
 **Throws:**
-- Error if seed phrase is invalid (BIP-39 validation fails)
+- `ValueError` if a string seed phrase is not a valid BIP-39 mnemonic.
 
 **Example:**
 ```javascript
@@ -32872,25 +33026,25 @@ const signerAccount = new WalletAccountEvm(
 | `getAddress()` | Returns the account's address | `Promise<string>` | - |
 | `sign(message)` | Signs a message using the account's private key | `Promise<string>` | - |
 | `signTypedData(typedData)` | Signs typed data according to EIP-712 | `Promise<string>` | - |
-| `signTransaction(tx)` | Signs an EVM transaction without broadcasting it | `Promise<string>` | If transaction signing fails |
+| `signTransaction(tx)` | Signs an EVM transaction without broadcasting it | `Promise<string>` | `MaximumFeeExceededError` if the configured fee cap is exceeded |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies a typed data signature (EIP-712) | `Promise<boolean>` | - |
-| `sendTransaction(tx)` | Sends an EVM transaction object | `Promise<{hash: string, fee: bigint}>` | If no provider |
-| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction object or serialized transaction | `Promise<{fee: bigint}>` | If no provider |
-| `transfer(options)` | Transfers ERC20 tokens to another address | `Promise<{hash: string, fee: bigint}>` | If no provider or fee exceeds max |
-| `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | If no provider |
-| `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | If no provider |
-| `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<bigint>` | If no provider |
-| `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise<Record<string, bigint>>` | If no provider |
-| `approve(options)` | Approves a spender to spend tokens | `Promise<{hash: string, fee: bigint}>` | If no provider |
-| `getAllowance(token, spender)` | Returns current allowance for a spender | `Promise<bigint>` | If no provider |
-| `getTransactionReceipt(hash)` | Returns a native receipt; deprecated in favor of `getTransaction()` | `Promise<EvmTransactionReceipt \| null>` | If no provider |
-| `getTransaction(hash)` | Returns normalized finality and the native receipt | `Promise<TransactionReceipt & EvmTransactionDetails>` | If no provider, the hash is invalid, or no transaction is found |
-| `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final`, or returns `dropped` | `Promise<TransactionReceipt & EvmTransactionDetails>` | If the wait times out |
+| `sendTransaction(tx)` | Sends an EVM transaction object or signed raw transaction | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError`, `MaximumFeeExceededError`, or `ValueError` |
+| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction object or serialized transaction | `Promise<{fee: bigint}>` | `ProviderRequiredError` |
+| `transfer(options)` | Transfers ERC20 tokens to another address | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` or `MaximumFeeExceededError` |
+| `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | `ProviderRequiredError` |
+| `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | `ProviderRequiredError` |
+| `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<bigint>` | `ProviderRequiredError` |
+| `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise<Record<string, bigint>>` | `ProviderRequiredError` |
+| `approve(options)` | Approves a spender to spend tokens | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` or `ValueError` |
+| `getAllowance(token, spender)` | Returns current allowance for a spender | `Promise<bigint>` | `ProviderRequiredError` |
+| `getTransactionReceipt(hash)` | Returns a native receipt; deprecated in favor of `getTransaction()` | `Promise<EvmTransactionReceipt \| null>` | `ProviderRequiredError` |
+| `getTransaction(hash)` | Returns normalized finality and the native receipt | `Promise<TransactionReceipt & EvmTransactionDetails>` | `ProviderRequiredError`, `ValueError`, or `NoSuchElementError` |
+| `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final`, or returns `dropped` | `Promise<TransactionReceipt & EvmTransactionDetails>` | `TimeoutError` |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlyEvm>` | - |
 | `signAuthorization(auth)` | Signs an ERC-7702 authorization tuple | `Promise<Authorization>` | If signing fails |
-| `delegate(delegateAddress)` | Delegates the EOA to a contract through an ERC-7702 type 4 transaction | `Promise<{hash: string, fee: bigint}>` | If no provider |
-| `revokeDelegation()` | Revokes active ERC-7702 delegation by delegating to the zero address | `Promise<{hash: string, fee: bigint}>` | If no provider |
+| `delegate(delegateAddress)` | Delegates the EOA to a contract through an ERC-7702 type 4 transaction | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` |
+| `revokeDelegation()` | Revokes active ERC-7702 delegation by delegating to the zero address | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` | - |
 
 #### `fromPrivateKey(privateKey, config?)` (static)
@@ -32991,7 +33145,7 @@ Signs an EVM transaction and returns the signed raw transaction as a hex string.
 
 **Returns:** `Promise<string>` - Signed raw transaction hex string
 
-**Throws:** Error if a provider is configured and the estimated transaction fee exceeds `transactionMaxFee`.
+**Throws:** `MaximumFeeExceededError` if a provider is configured and the estimated transaction fee exceeds `transactionMaxFee`.
 
 **Example:**
 ```javascript
@@ -33037,14 +33191,10 @@ console.log('Typed data signature valid:', isValid) // true
 ```
 
 #### `sendTransaction(tx)`
-Sends an EVM transaction and returns the result with hash and fee.
-
-<Callout type="warning">
-In `1.0.0-beta.17`, the TypeScript declaration also accepts a serialized transaction string, but the send path does not broadcast those supplied bytes. It repopulates a transaction from the value passed to the method and can therefore broadcast a different transaction. Pass an `EvmTransaction` object here. Submit signed raw transactions through a separate relay or provider until this runtime mismatch is resolved.
-</Callout>
+Builds, signs, and sends an EVM transaction object, or broadcasts a signed raw transaction, then returns its hash and quoted fee.
 
 **Parameters:**
-- `tx` (EvmTransaction | string): The declared input type. Use the `EvmTransaction` object form for sending in `1.0.0-beta.17`.
+- `tx` (EvmTransaction | string): A transaction object or signed raw transaction hex.
   - `to` (string | null, optional): Recipient address; omit or pass `null` for contract creation
   - `value` (number | bigint): Amount in wei
   - `data` (string, optional): Transaction data in hex format
@@ -33057,11 +33207,14 @@ In `1.0.0-beta.17`, the TypeScript declaration also accepts a serialized transac
   - `chainId` (number | bigint, optional): Network chain ID
   - `authorizationList` (AuthorizationLike[], optional): ERC-7702 authorization list for type 4 transactions
 
+For a signed raw transaction string, WDK quotes the transaction, enforces `transactionMaxFee`, and passes the exact supplied hex to `eth_sendRawTransaction`. It does not repopulate or re-sign the transaction. Review the decoded recipient, value, data, chain ID, nonce, and fee fields before submitting externally supplied bytes.
+
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
 
 **Throws:**
-- Error if no provider is configured
-- Error if fee exceeds `transactionMaxFee` when configured
+- `ProviderRequiredError` if no provider is configured.
+- `MaximumFeeExceededError` if the quoted fee exceeds `transactionMaxFee` when configured.
+- `ValueError` if an object transaction mixes incompatible fee fields or a type 3 transaction omits `maxFeePerBlobGas`.
 
 **Example:**
 ```javascript
@@ -33095,7 +33248,7 @@ For a serialized transaction, the method parses the transaction fields for gas e
 
 **Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -33118,8 +33271,8 @@ Transfers ERC20 tokens to another address using the standard transfer function.
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Transfer result
 
 **Throws:**
-- Error if no provider is configured
-- Error if fee exceeds `transferMaxFee` (if configured)
+- `ProviderRequiredError` if no provider is configured.
+- `MaximumFeeExceededError` if the fee exceeds `transferMaxFee` when configured.
 
 **Example:**
 ```javascript
@@ -33140,7 +33293,7 @@ Estimates the fee for an ERC20 token transfer.
 
 **Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -33157,7 +33310,7 @@ Returns the native token balance (ETH, MATIC, BNB, etc.).
 
 **Returns:** `Promise<bigint>` - Balance in wei
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -33174,7 +33327,7 @@ Returns the balance of a specific ERC20 token using the balanceOf function.
 
 **Returns:** `Promise<bigint>` - Token balance in base units
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -33192,7 +33345,7 @@ Returns balances for multiple ERC20 tokens in one call.
 
 **Returns:** `Promise<Record<string, bigint>>` - Object mapping each token address to its balance in base units
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -33217,8 +33370,8 @@ Approves a specific amount of tokens to a spender.
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
 
 **Throws:**
-- Error if no provider is configured
-- Error if trying to re-approve USD₮ on Ethereum without resetting to 0 first
+- `ProviderRequiredError` if no provider is configured.
+- `ValueError` if an Ethereum mainnet USD₮ allowance is already nonzero and the requested amount is also nonzero. Approve `0` first.
 
 **Example:**
 ```javascript
@@ -33239,7 +33392,7 @@ Returns the current token allowance for the given spender.
 
 **Returns:** `Promise<bigint>` - The current allowance
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -33258,7 +33411,7 @@ Returns a native transaction receipt by hash. This method is deprecated; use `ge
 
 **Returns:** `Promise<EvmTransactionReceipt | null>` - Transaction receipt or null if not mined
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -33272,6 +33425,11 @@ if (receipt) {
 #### `getTransaction(hash)`
 
 Returns normalized transaction finality for an exact 32-byte hexadecimal hash.
+
+**Throws:**
+- `ProviderRequiredError` if no provider is configured.
+- `ValueError` if `hash` is not an exact 32-byte hexadecimal transaction hash.
+- `NoSuchElementError` if neither a transaction nor receipt is found for `hash`.
 
 ```javascript
 const receipt = await account.getTransaction(transactionHash)
@@ -33289,6 +33447,8 @@ An unmined transaction is `pending`. It becomes `dropped` when the sender's late
 #### `waitForTransaction(hash, options?)`
 
 Polls `getTransaction()` until the target is reached or the transaction is classified as `dropped`. The default target is `confirmed`, the default interval is four seconds, and the EVM timeout is 120 seconds.
+
+**Throws:** `TimeoutError` if the requested target is not reached before the timeout.
 
 ```javascript
 const receipt = await account.waitForTransaction(transactionHash, {
@@ -33344,10 +33504,14 @@ Delegates the EOA to a smart contract through an ERC-7702 type 4 transaction.
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
 
+**Throws:** `ProviderRequiredError` if no provider is configured.
+
 #### `revokeDelegation()`
 Revokes active ERC-7702 delegation by delegating to the zero address.
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
+
+**Throws:** `ProviderRequiredError` if no provider is configured.
 
 #### `dispose()`
 Disposes the wallet account, erasing the private key from memory.
@@ -33417,18 +33581,18 @@ const readOnlyAccount = new WalletAccountReadOnlyEvm('0x742d35Cc6634C0532925a3b8
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
 | `getAddress()` | Returns the account's address | `Promise<string>` | - |
-| `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | If no provider |
-| `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<bigint>` | If no provider |
-| `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise<Record<string, bigint>>` | If no provider |
-| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction | `Promise<{fee: bigint}>` | If no provider |
-| `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | If no provider |
+| `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | `ProviderRequiredError` |
+| `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<bigint>` | `ProviderRequiredError` |
+| `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise<Record<string, bigint>>` | `ProviderRequiredError` |
+| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction | `Promise<{fee: bigint}>` | `ProviderRequiredError` |
+| `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | `ProviderRequiredError` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies a typed data signature (EIP-712) | `Promise<boolean>` | - |
-| `getDelegation()` | Checks active ERC-7702 delegation status | `Promise<DelegationInfo>` | If no provider |
-| `getTransactionReceipt(hash)` | Returns a native receipt; deprecated in favor of `getTransaction()` | `Promise<EvmTransactionReceipt \| null>` | If no provider |
-| `getTransaction(hash)` | Returns normalized finality and the native receipt | `Promise<TransactionReceipt & EvmTransactionDetails>` | If no provider, the hash is invalid, or no transaction is found |
-| `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final`, or returns `dropped` | `Promise<TransactionReceipt & EvmTransactionDetails>` | If the wait times out |
-| `getAllowance(token, spender)` | Returns current allowance for a spender | `Promise<bigint>` | If no provider |
+| `getDelegation()` | Checks active ERC-7702 delegation status | `Promise<DelegationInfo>` | `ProviderRequiredError` |
+| `getTransactionReceipt(hash)` | Returns a native receipt; deprecated in favor of `getTransaction()` | `Promise<EvmTransactionReceipt \| null>` | `ProviderRequiredError` |
+| `getTransaction(hash)` | Returns normalized finality and the native receipt | `Promise<TransactionReceipt & EvmTransactionDetails>` | `ProviderRequiredError`, `ValueError`, or `NoSuchElementError` |
+| `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final`, or returns `dropped` | `Promise<TransactionReceipt & EvmTransactionDetails>` | `TimeoutError` |
+| `getAllowance(token, spender)` | Returns current allowance for a spender | `Promise<bigint>` | `ProviderRequiredError` |
 
 #### `getAddress()`
 Returns the account's Ethereum address.
@@ -33446,7 +33610,7 @@ Returns the account's native token balance.
 
 **Returns:** `Promise<bigint>` - Balance in wei
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -33462,7 +33626,7 @@ Returns the balance of a specific ERC20 token.
 
 **Returns:** `Promise<bigint>` - Token balance in base units
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -33478,7 +33642,7 @@ Returns balances for multiple ERC20 tokens.
 
 **Returns:** `Promise<Record<string, bigint>>` - Object mapping each token address to its balance in base units
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -33497,7 +33661,7 @@ Estimates the fee for an EVM transaction.
 
 **Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -33516,7 +33680,7 @@ Estimates the fee for an ERC20 token transfer.
 
 **Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -33567,6 +33731,8 @@ Checks whether the account currently has an active ERC-7702 delegation.
 
 **Returns:** `Promise<DelegationInfo>` - Delegation status and delegate address
 
+**Throws:** `ProviderRequiredError` if no provider is configured.
+
 **Example:**
 ```javascript
 const delegation = await readOnlyAccount.getDelegation()
@@ -33582,7 +33748,7 @@ Returns a native receipt if the transaction has been mined. This method is depre
 
 **Returns:** `Promise<EvmTransactionReceipt | null>` - Transaction receipt or null if not yet mined
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -33598,7 +33764,7 @@ if (receipt) {
 
 #### `getTransaction(hash)` and `waitForTransaction(hash, options?)`
 
-Read-only accounts expose the same normalized transaction methods as owned accounts. `getTransaction()` returns `TransactionReceipt & EvmTransactionDetails`; `waitForTransaction()` uses a four-second interval and 120-second timeout by default. A `dropped` receipt means the sender's mined nonce advanced past the pending transaction's nonce. Always inspect `success` after inclusion because a confirmed or final transaction can have reverted.
+Read-only accounts expose the same normalized transaction methods as owned accounts. `getTransaction()` returns `TransactionReceipt & EvmTransactionDetails`; it throws `ProviderRequiredError` without a provider, `ValueError` for an invalid hash, and `NoSuchElementError` for an unknown hash. `waitForTransaction()` uses a four-second interval and 120-second timeout by default and throws `TimeoutError` if the target is not reached. A `dropped` receipt means the sender's mined nonce advanced past the pending transaction's nonce. Always inspect `success` after inclusion because a confirmed or final transaction can have reverted.
 
 #### `getAllowance(token, spender)`
 Returns the current allowance for the given token and spender.
@@ -33608,6 +33774,8 @@ Returns the current allowance for the given token and spender.
 - `spender` (string): The spender's address
 
 **Returns:** `Promise<bigint>` - The allowance
+
+**Throws:** `ProviderRequiredError` if no provider is configured.
 
 **Example:**
 ```javascript
@@ -34065,6 +34233,8 @@ The `transferMaxFee` option sets a maximum fee limit for ERC-20 `transfer()` ope
 **Examples:**
 
 ```javascript
+import { MaximumFeeExceededError } from '@tetherto/wdk-wallet'
+
 const config = {
   // Set maximum fee to 0.0001 ETH
   transferMaxFee: 100000000000000n,
@@ -34078,8 +34248,10 @@ try {
     amount: 1000000n
   })
 } catch (error) {
-  if (error.message.includes('Exceeded maximum fee')) {
-    console.error('Transfer cancelled: Fee too high')
+  if (error instanceof MaximumFeeExceededError) {
+    console.error('Transfer canceled: Fee too high')
+  } else {
+    throw error
   }
 }
 ```
@@ -34282,6 +34454,12 @@ This guide covers best practices for handling transaction errors, managing fee l
 Wrap transactions in `try/catch` blocks to handle common failure scenarios such as insufficient funds or exceeded fee limits.
 
 ```javascript title="Transaction Error Handling"
+import {
+  MaximumFeeExceededError,
+  ProviderRequiredError,
+  ValueError
+} from '@tetherto/wdk-wallet'
+
 try {
   const result = await account.sendTransaction({
     to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
@@ -34289,12 +34467,14 @@ try {
   })
   console.log('Transaction submitted:', result.hash)
 } catch (error) {
-  console.error('Transaction failed:', error.message)
-  if (error.message.includes('insufficient funds')) {
-    console.log('Please add more funds to your wallet')
-  }
-  if (error.message.includes('Exceeded maximum fee')) {
+  if (error instanceof ProviderRequiredError) {
+    console.log('Connect the account to a provider before sending')
+  } else if (error instanceof MaximumFeeExceededError) {
     console.log('Transaction fee too high')
+  } else if (error instanceof ValueError) {
+    console.log('Review the transaction type and fee fields')
+  } else {
+    throw error
   }
 }
 ```
@@ -34304,6 +34484,11 @@ try {
 Token transfers can fail for additional reasons such as invalid addresses or insufficient token balances.
 
 ```javascript title="Token Transfer Error Handling"
+import {
+  MaximumFeeExceededError,
+  ProviderRequiredError
+} from '@tetherto/wdk-wallet'
+
 try {
   const result = await account.transfer({
     token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt
@@ -34312,9 +34497,12 @@ try {
   })
   console.log('Transfer submitted:', result.hash)
 } catch (error) {
-  console.error('Transfer failed:', error.message)
-  if (error.message.includes('Exceeded maximum fee')) {
+  if (error instanceof ProviderRequiredError) {
+    console.log('Connect the account to a provider before transferring')
+  } else if (error instanceof MaximumFeeExceededError) {
     console.log('Transfer fee too high')
+  } else {
+    throw error
   }
 }
 ```
@@ -34339,7 +34527,7 @@ Do not treat finality as execution success. A mined EVM transaction can be `conf
 
 ## Handle Non-derivable Signers
 
-In `1.0.0-beta.17`, `PrivateKeySignerEvm.derive()` throws `InvalidSignerError` from `@tetherto/wdk-wallet`. Code that previously caught `SignerError` for this path must update its error-class check.
+In `1.0.0-beta.18`, `PrivateKeySignerEvm.derive()` throws `InvalidSignerError` from `@tetherto/wdk-wallet`. The package also uses this error when a non-derivable signer is supplied as the wallet manager's default signer.
 
 ```javascript title="Handle a Non-derivable Signer"
 import { InvalidSignerError } from '@tetherto/wdk-wallet'
@@ -34602,20 +34790,28 @@ console.log('Deployment transaction:', result.hash)
 Use [`account.signTransaction()`](/sdk/wallet-modules/wallet-evm/api-reference#signtransactiontx) when you need a signed raw transaction but want to submit it through a separate relay, service, or review flow.
 
 ```javascript title="Sign EVM Transaction"
-const signedTransaction = await account.signTransaction({
-  to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-  value: 1000000000000000000n,
-  chainId: 1,
-  maxFeePerGas: 30000000000n,
-  maxPriorityFeePerGas: 2000000000n
-})
-
-console.log('Signed transaction:', signedTransaction)
+async function signReviewedTransaction(transaction) {
+  // Review the recipient, value, data, chain ID, nonce, and fee fields first.
+  return await account.signTransaction(transaction)
+}
 ```
 
 <Callout type="info">
-`signTransaction()` returns the signed transaction payload and does not broadcast it. In `1.0.0-beta.17`, do not pass that serialized payload back to `sendTransaction()`: the send path does not broadcast the supplied bytes and can populate a different transaction. Submit signed raw transactions through a separate relay or provider. Use `sendTransaction()` with an `EvmTransaction` object when WDK should populate, sign, broadcast, and return the transaction hash.
+`signTransaction()` returns signed raw transaction hex and does not broadcast it. In `1.0.0-beta.18`, `sendTransaction(signedTransaction)` quotes the signed transaction, enforces `transactionMaxFee`, and passes those exact bytes to `eth_sendRawTransaction`; it does not repopulate or re-sign them. Submit only after an independent review and explicit approval step. Use the object form of `sendTransaction()` when WDK should populate, sign, and broadcast the transaction.
 </Callout>
+
+```javascript title="Submit an Approved Signed Transaction"
+async function submitApprovedTransaction(signedTransaction, reviewSignedTransaction) {
+  const review = await reviewSignedTransaction(signedTransaction)
+  if (review?.approved !== true) {
+    throw new Error('Signed transaction was not approved')
+  }
+
+  return await account.sendTransaction(signedTransaction)
+}
+```
+
+`reviewSignedTransaction` is an application-supplied callback. It must decode the signed transaction, show or otherwise verify its recipient, value, data, chain ID, nonce, and fee fields, and return `{ approved: true }` only after explicit approval. Any other result fails closed without broadcasting.
 
 ## Estimate Transaction Fees
 
@@ -36553,10 +36749,10 @@ In v1.0.0-beta.9 the constructor was made public. The static factory method `Wal
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's Solana address | `Promise<string>` |
 | `sign(message)` | Signs a message using the account's private key | `Promise<string>` |
-| `signTransaction(tx)` | Signs a Solana transaction without broadcasting it | `Promise<FullySignedTransaction>` |
+| `signTransaction(tx)` | Signs a Solana transaction without broadcasting it, including a base64-encoded serialized transaction | `Promise<FullySignedTransaction>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
-| `sendTransaction(tx)` | Builds and sends a transaction, or broadcasts a fully signed transaction | `Promise<{hash: string, fee: bigint}>` |
-| `quoteSendTransaction(tx)` | Estimates the fee for a transaction or fully signed transaction | `Promise<{fee: bigint}>` |
+| `sendTransaction(tx)` | Builds and sends a transaction, signs and sends a base64-encoded serialized transaction, or broadcasts a fully signed transaction | `Promise<{hash: string, fee: bigint}>` |
+| `quoteSendTransaction(tx)` | Estimates the fee for a transaction, serialized transaction, or fully signed transaction | `Promise<{fee: bigint}>` |
 | `transfer(options)` | Transfers SPL tokens to another address | `Promise<{hash: string, fee: bigint}>` |
 | `quoteTransfer(options)` | Estimates the fee for an SPL token transfer | `Promise<{fee: bigint}>` |
 | `getBalance()` | Returns the native SOL balance (in lamports) | `Promise<bigint>` |
@@ -36597,9 +36793,13 @@ console.log('Signature:', signature)
 Signs a Solana transaction without broadcasting it. Use this method when a relay, review flow, or separate submission path needs a fully signed transaction.
 
 **Parameters:**
-- `tx` (SolanaTransaction): A simple transfer object or a prebuilt `TransactionMessage`
+- `tx` (SolanaTransaction): A simple transfer object, a prebuilt `TransactionMessage`, or a base64-encoded serialized transaction
 
 When `tx` is a `TransactionMessage`, WDK preserves an existing recent blockhash or durable nonce lifetime. If no lifetime is present, WDK fetches the latest blockhash before signing. If you set an explicit `feePayer`, it must match the wallet address.
+
+When `tx` is a base64-encoded serialized transaction, WDK decodes it, requires its fee payer to match the account address, and signs it. After this account adds its signature, the transaction must be fully signed; pre-existing signatures may be retained. This form is useful for serialized swap or bridge transactions produced by another service.
+
+Treat serialized transactions from another service as untrusted. Decode and independently review every instruction, account, amount, and transaction lifetime before signing. WDK's fee-payer and signature checks do not validate the transaction's intended effects.
 
 **Returns:** `Promise<FullySignedTransaction>` - The signed transaction
 
@@ -36633,13 +36833,15 @@ console.log('Signature valid:', isValid)
 Sends a Solana transaction.
 
 **Parameters:**
-- `tx` (SolanaTransaction | FullySignedTransaction): A simple transfer object, prebuilt `TransactionMessage`, or fully signed transaction
+- `tx` (SolanaTransaction | FullySignedTransaction): A simple transfer object, prebuilt `TransactionMessage`, base64-encoded serialized transaction, or fully signed transaction
   - `to` (string): Recipient's Solana address (base58-encoded)
   - `value` (number | bigint): Amount in lamports
 
 When `tx` is a `TransactionMessage`, WDK preserves an existing recent blockhash or durable nonce lifetime. If no lifetime is present, WDK fetches the latest blockhash before quoting or sending. If you set an explicit `feePayer`, it must match the wallet address.
 
 When `tx` is a `FullySignedTransaction`, WDK quotes it again, enforces `transactionMaxFee`, and broadcasts its exact wire bytes. It does not refresh the recent blockhash or durable nonce and does not re-sign the transaction.
+
+When `tx` is a base64-encoded serialized transaction, WDK signs it with this account and then broadcasts the resulting transaction. Its fee payer must match the account address. Before sending an externally supplied transaction, independently review its instructions, accounts, amounts, and lifetime; WDK does not validate its intended effects.
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Object containing transaction hash and fee (in lamports)
 
@@ -36659,6 +36861,8 @@ Estimates the fee for a Solana transaction.
 
 **Parameters:**
 - `tx` (SolanaTransaction | FullySignedTransaction): A transaction input or fully signed transaction (same forms as `sendTransaction`)
+
+For a base64-encoded serialized transaction, WDK decodes the transaction and quotes the compiled message without signing or broadcasting it.
 
 **Returns:** `Promise<{fee: bigint}>` - Object containing fee estimate (in lamports)
 
@@ -36851,7 +37055,7 @@ new WalletAccountReadOnlySolana(publicKey, config)
 | `getTokenBalance(tokenMint)` | Returns the balance of a specific SPL token | `Promise<bigint>` |
 | `getTokenBalances(tokenAddresses)` | Returns balances for multiple SPL tokens | `Promise<Record<string, bigint>>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
-| `quoteSendTransaction(tx)` | Estimates the fee for a transaction | `Promise<{fee: bigint}>` |
+| `quoteSendTransaction(tx)` | Estimates the fee for a transaction or base64-encoded serialized transaction | `Promise<{fee: bigint}>` |
 | `quoteTransfer(options)` | Estimates the fee for an SPL token transfer | `Promise<{fee: bigint}>` |
 | `getTransactionReceipt(hash)` | Gets a native transaction object; deprecated in favor of `getTransaction()` | `Promise<SolanaTransactionReceipt \| null>` |
 | `getTransaction(hash)` | Returns normalized finality for a Solana signature | `Promise<TransactionReceipt & SolanaTransactionDetails>` |
@@ -36929,7 +37133,7 @@ console.log('Signature valid:', isValid)
 Estimates the fee for a transaction.
 
 **Parameters:**
-- `tx` (SolanaTransaction): The transaction object
+- `tx` (SolanaTransaction): A simple transfer object, prebuilt `TransactionMessage`, or a base64-encoded serialized transaction
   - `to` (string): Recipient's Solana address (base58-encoded)
   - `value` (number): Amount in lamports
 
@@ -36943,6 +37147,9 @@ const quote = await readOnlyAccount.quoteSendTransaction({
 })
 console.log('Estimated fee:', quote.fee, 'lamports')
 ```
+
+Pass a base64-encoded serialized transaction to quote a message created by another service. The read-only account decodes the transaction and does not sign or broadcast it.
+
 ##### `quoteTransfer(options)`
 Estimates the fee for an SPL token transfer.
 
@@ -37022,6 +37229,14 @@ import type { FullySignedTransaction } from '@solana/transactions'
 ```
 
 The signed value contains the compiled message bytes and all required signatures. Its transaction lifetime is sealed at signing time.
+
+### SolanaTransaction
+
+```typescript
+type SolanaTransaction = SimpleSolanaTransaction | TransactionMessage | string
+```
+
+The `string` form is a base64-encoded serialized Solana transaction. Owned accounts can sign and send this form when its fee payer matches the account; read-only accounts can quote it.
 
 ### TransferOptions
 
@@ -37634,7 +37849,7 @@ With your wallet ready, learn how to [manage multiple accounts](/sdk/wallet-modu
 URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-solana/guides/send-transactions
 Description: Send native SOL and estimate transaction fees on Solana.
 
-This guide explains how to [send native SOL](#send-native-sol), [wait for finality](#wait-for-finality), [sign a transaction without broadcasting](#sign-a-transaction-without-broadcasting), [quote and send a signed transaction](#quote-and-send-a-signed-transaction), [estimate transaction fees](#estimate-transaction-fees), [cap native transaction fees](#cap-native-transaction-fees), [quote or send a TransactionMessage](#quote-or-send-a-transactionmessage), [use dynamic fee rates](#use-dynamic-fee-rates), and [run a complete SOL transfer flow](#complete-example).
+This guide explains how to [send native SOL](#send-native-sol), [wait for finality](#wait-for-finality), [sign a transaction without broadcasting](#sign-a-transaction-without-broadcasting), [quote and send a signed transaction](#quote-and-send-a-signed-transaction), [estimate transaction fees](#estimate-transaction-fees), [cap native transaction fees](#cap-native-transaction-fees), [quote or send a TransactionMessage](#quote-or-send-a-transactionmessage), [use a serialized transaction](#use-a-serialized-transaction), [use dynamic fee rates](#use-dynamic-fee-rates), and [run a complete SOL transfer flow](#complete-example).
 
 <Callout type="warn">
 **BigInt Usage:** Always use `BigInt` (the `n` suffix) for monetary values to avoid precision loss with large numbers.
@@ -37747,6 +37962,26 @@ console.log('Estimated fee:', quote.fee, 'lamports')
 const result = await account.sendTransaction(txMessage)
 console.log('Transaction hash:', result.hash)
 ```
+
+## Use a Serialized Transaction
+
+Pass a base64-encoded serialized Solana transaction when another service builds the transaction, such as a swap or bridge API. An owned account signs this form before sending it; the serialized transaction's fee payer must be the account address.
+
+<Callout type="warn">
+Treat serialized transactions from another service as untrusted. Before signing or broadcasting one, decode and independently review every instruction, account, amount, and transaction lifetime. WDK checks the fee payer and required signatures, but it does not validate the transaction's intended effects.
+</Callout>
+
+```javascript title="Quote and Sign a Reviewed Serialized Transaction"
+async function quoteAndSignReviewedTransaction(serializedTransaction) {
+  const quote = await account.quoteSendTransaction(serializedTransaction)
+  console.log('Estimated fee:', quote.fee, 'lamports')
+
+  const signedTransaction = await account.signTransaction(serializedTransaction)
+  return { quote, signedTransaction }
+}
+```
+
+A swap or bridge service normally supplies `serializedTransaction`. Call this helper only after your application completes the independent review above. `quoteSendTransaction(serializedTransaction)` only decodes and quotes the compiled message, and `signTransaction(serializedTransaction)` signs without broadcasting. After the same review and an explicit approval step, call `sendTransaction(serializedTransaction)` to sign and broadcast directly, or pass the returned `signedTransaction` to `sendTransaction()` to broadcast the reviewed signed transaction. After this account adds its signature, the transaction must be fully signed; pre-existing signatures may be retained. A malformed serialized transaction causes these operations to throw. `signTransaction()` and `sendTransaction()` also throw when the serialized transaction's fee payer does not match the account address; `quoteSendTransaction()` does not check the fee payer.
 
 ## Use Dynamic Fee Rates
 
@@ -38065,7 +38300,7 @@ new WalletManagerSpark(seed, config)
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (object, optional): Configuration object
   - `network` (string, optional): 'MAINNET', 'SIGNET', or 'REGTEST' (default: 'MAINNET')
-  - `sparkscan` (`SparkScanConfig`, optional): SparkScan configuration for balance polling
+  - `sparkscan` (`SparkScanConfig`, optional): SparkScan configuration for balance polling. SparkScan accepts `MAINNET` and `REGTEST`; an unsupported network raises `ValueError` when the account is created.
   - `syncAndRetry` (boolean, optional): When true, failed sends and Lightning payments sync wallet state and retry once
   - `enableLogging` (boolean, optional): When true, forwards logging to the underlying Spark SDK (default: false)
 
@@ -38074,7 +38309,7 @@ new WalletManagerSpark(seed, config)
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getAccount(index)` | Returns a wallet account at the specified index | `Promise<WalletAccountSpark>` |
-| `getAccountByPath(path)` | Returns a wallet account at a specific BIP-44 derivation path | `Promise<WalletAccountSpark>` |
+| `getAccountByPath(path)` | Always throws because Spark accounts are addressed by index | `Promise<WalletAccountSpark>` |
 | `getFeeRates()` | Returns current fee rates for transactions (always zero for Spark) | `Promise<{normal: bigint, fast: bigint}>` |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
 
@@ -38085,6 +38320,8 @@ Returns a wallet account at the specified index using BIP-44 derivation path.
 - `index` (number, optional): The index of the account to get (default: 0)
 
 **Returns:** `Promise<WalletAccountSpark>` - The wallet account
+
+**Throws:** `ValueError` if `sparkscan` is configured for a network that SparkScan does not support.
 
 **Example:**
 ```javascript
@@ -38117,23 +38354,34 @@ wallet.dispose()
 ```
 
 ##### `getAccountByPath(path)`
-Returns a wallet account at a specific BIP-44 derivation path.
+Spark accounts are addressed by index, so this method does not support caller-supplied BIP-44 paths and always throws.
 
 **Parameters:**
 - `path` (string): The derivation path segment (e.g. `"0'/0/0"`)
 
-**Returns:** `Promise<WalletAccountSpark>` - The wallet account
+**Returns:** `Promise<WalletAccountSpark>` - The account type in the base interface; this method always throws
+
+**Throws:** `UnsupportedOperationError` because Spark accounts are addressed by index, not by a caller-supplied derivation path.
 
 **Example:**
 ```javascript
-const account = await wallet.getAccountByPath("0'/0/0")
-const address = await account.getAddress()
-console.log('Account address:', address)
+import { UnsupportedOperationError } from '@tetherto/wdk-wallet'
+
+try {
+  await wallet.getAccountByPath("0'/0/0")
+} catch (error) {
+  if (error instanceof UnsupportedOperationError) {
+    console.log('Use wallet.getAccount(index) for Spark accounts')
+  } else {
+    throw error
+  }
+}
 ```
 
 **Important Notes:**
 - All Spark transactions have zero fees
-- Network configuration is limited to predefined values
+- Accounts are addressed by index; `getAccountByPath(path)` is not supported
+- SparkScan balance polling supports `MAINNET` and `REGTEST`
 
 ## WalletAccountSpark
 
@@ -38216,15 +38464,23 @@ Exposes the base `IWalletAccount.signTransaction(tx)` method, but standalone Spa
 
 **Returns:** `Promise<never>` - Always throws
 
+**Throws:** `UnsupportedOperationError` because Spark transfers are signed collaboratively with Spark operators and cannot be signed locally.
+
 **Example:**
 ```javascript
+import { UnsupportedOperationError } from '@tetherto/wdk-wallet'
+
 try {
   await account.signTransaction({
     to: 'spark1...',
     value: 1000000
   })
 } catch (error) {
-  console.error(error.message) // Method 'signTransaction(tx)' not supported on spark.
+  if (error instanceof UnsupportedOperationError) {
+    console.error('Spark does not support standalone transaction signing')
+  } else {
+    throw error
+  }
 }
 ```
 
@@ -38321,6 +38577,8 @@ console.log('Transfer fee:', Number(quote.fee))
 Returns the account's native token balance in satoshis. When `sparkscan` is configured, this uses SparkScan's `btcSoftBalanceSats` value.
 
 **Returns:** `Promise<bigint>` - Balance in satoshis
+
+**Throws:** `ProviderError` if SparkScan is configured and returns a non-success HTTP response.
 
 **Example:**
 ```javascript
@@ -38816,6 +39074,8 @@ new WalletAccountReadOnlySpark(address, config)
 - `address` (string): The account's Spark address
 - `config` (SparkWalletConfig, optional): Configuration object
 
+**Throws:** `ValueError` if `sparkscan` is configured for a network that SparkScan does not support.
+
 ### Methods
 
 | Method | Description | Returns |
@@ -38861,6 +39121,8 @@ console.log('Identity key:', identityKey) // 02eda8...
 Returns the account's native token balance in satoshis. When `sparkscan` is configured, this uses SparkScan's `btcSoftBalanceSats` value.
 
 **Returns:** `Promise<bigint>` - Balance in satoshis
+
+**Throws:** `ProviderError` if SparkScan is configured and returns a non-success HTTP response.
 
 **Example:**
 ```javascript
@@ -39023,6 +39285,8 @@ interface SparkScanConfig {
   apiKey?: string  // Optional API key for SparkScan requests
 }
 ```
+
+When SparkScan is used by `getBalance()`, a non-success HTTP response throws `ProviderError`. Inspect `error.reason` (`ProviderErrorReason`) for the response category: `UNAUTHORIZED` for HTTP 401, `FORBIDDEN` for 403, `REQUEST_TIMEOUT` for 408 or 504, `INTERNAL_SERVER_ERROR` for other 5xx responses, and `NETWORK_ERROR` for other non-2xx responses.
 
 ### SparkWalletConfig
 
@@ -39767,11 +40031,11 @@ With your wallet ready, learn how to [manage multiple accounts](/sdk/wallet-modu
 URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-spark/guides/handle-errors
 Description: Handle Spark transaction and connection failures, plus fees and disposal.
 
-This guide explains how to [handle transaction errors](#transaction-errors), [handle connection errors](#connection-errors), and apply [best practices](#best-practices) for fees and secure cleanup.
+This guide explains how to [handle transaction errors](#transaction-errors), [handle connection errors](#connection-errors), handle unsupported operations and missing transfers, and apply [best practices](#best-practices) for fees and secure cleanup.
 
 ## Transaction Errors
 
-Operations such as [`account.sendTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference), [`account.transfer()`](/sdk/wallet-modules/wallet-spark/api-reference), [`account.payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference), and [`account.withdraw()`](/sdk/wallet-modules/wallet-spark/api-reference) can throw. Wrap each call in `try/catch` and branch on `message` or error type when your runtime allows it:
+Operations such as [`account.sendTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference), [`account.transfer()`](/sdk/wallet-modules/wallet-spark/api-reference), [`account.payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference), and [`account.withdraw()`](/sdk/wallet-modules/wallet-spark/api-reference) can throw. Wrap each call in `try/catch` and use public WDK error classes (and `ProviderError.reason` for SparkScan failures) instead of matching message text:
 
 ```javascript title="Handle Transaction Errors"
 try {
@@ -39801,17 +40065,65 @@ try {
 
 ## Connection Errors
 
-Spark relies on network access through the Spark SDK. Failures may surface as timeouts, refused connections, or generic SDK errors. Handle them around any async wallet call:
+When SparkScan returns a non-success HTTP response, it throws `ProviderError`. Inspect `error.reason` instead of matching response messages. SparkScan maps HTTP 401 to `UNAUTHORIZED`, 403 to `FORBIDDEN`, 408 and 504 to `REQUEST_TIMEOUT`, other 5xx responses to `INTERNAL_SERVER_ERROR`, and other non-2xx responses to `NETWORK_ERROR`.
 
-```javascript title="Handle Connection Errors"
+```javascript title="Handle SparkScan Provider Errors"
+import { ProviderError, ProviderErrorReason } from '@tetherto/wdk-wallet'
+
 try {
   const balance = await account.getBalance()
   console.log('Balance:', balance, 'satoshis')
 } catch (error) {
-  if (error.message.includes('timeout') || error.message.includes('ECONNREFUSED')) {
-    console.error('Network error: check connectivity and Spark service status')
+  if (!(error instanceof ProviderError)) {
+    throw error
+  }
+
+  switch (error.reason) {
+    case ProviderErrorReason.REQUEST_TIMEOUT:
+      console.error('SparkScan request timed out')
+      break
+    case ProviderErrorReason.UNAUTHORIZED:
+    case ProviderErrorReason.FORBIDDEN:
+      console.error('Check SparkScan credentials and endpoint access')
+      break
+    case ProviderErrorReason.INTERNAL_SERVER_ERROR:
+    case ProviderErrorReason.NETWORK_ERROR:
+      console.error('Check SparkScan availability and connectivity')
+      break
+    default:
+      throw error
+  }
+}
+```
+
+## Unsupported Operations and Missing Transfers
+
+Spark cannot produce standalone signed transaction payloads, so [`account.signTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference) always throws `UnsupportedOperationError`. Spark accounts are addressed by index, so [`wallet.getAccountByPath()`](/sdk/wallet-modules/wallet-spark/api-reference) throws the same error. [`account.getTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference) throws `NoSuchElementError` when Spark returns no transfer for the requested ID. Use `instanceof` checks and rethrow unknown errors:
+
+```javascript title="Handle Unsupported Operations and Missing Transfers"
+import { NoSuchElementError, UnsupportedOperationError } from '@tetherto/wdk-wallet'
+
+try {
+  await account.signTransaction({
+    to: 'spark1...',
+    value: 1000000
+  })
+} catch (error) {
+  if (error instanceof UnsupportedOperationError) {
+    console.error('Use account.sendTransaction() for Spark transfers')
   } else {
-    console.error('Operation failed:', error.message)
+    throw error
+  }
+}
+
+try {
+  const transaction = await account.getTransaction('transfer-id')
+  console.log('Transfer status:', transaction.finality)
+} catch (error) {
+  if (error instanceof NoSuchElementError) {
+    console.error('No Spark transfer was found for this ID')
+  } else {
+    throw error
   }
 }
 ```
@@ -41913,7 +42225,7 @@ const account = await wallet.getAccountByPath("0'/0/1")
 ```
 
 ##### `getFeeRates()`
-Returns normal and fast fee rates from the mainnet TON API configuration. Through `1.0.0-beta.12`, this method always requests `https://tonapi.io/v2`, does not follow the configured `tonClient` network, and returns the same calculated value for both fields.
+Returns normal and fast fee rates from the mainnet TON API configuration. Through `1.0.0-beta.14`, this method always requests `https://tonapi.io/v2`, does not follow the configured `tonClient` network, and returns the same calculated value for both fields.
 
 **Returns:** `Promise\<FeeRates\>` - Object containing normal and fast fee rates
 
@@ -42046,7 +42358,7 @@ Builds and signs an external-message body without broadcasting it. This is not a
   - `to` (string): Recipient TON address (e.g., 'EQ...')
   - `value` (number | bigint): Amount in nanotons (1 TON = 1,000,000,000 nanotons)
   - `bounceable` (boolean, optional): Whether the destination address is bounceable
-  - `body` (string | Cell, optional): Optional message body
+  - `body` (string | Cell, optional): Optional message body. A string whose decoded first four bytes match a TON BoC magic is decoded as a base64-serialized `Cell`; any other string is sent as a text comment. A magic-prefixed string that is not a valid BoC throws.
 
 **Returns:** `Promise\<Cell\>` - The signed body as a TON `Cell`. It is the body accepted by the matching opened `WalletContractV5R1.send()` call, not a complete external-message BOC that can be posted directly to TON Center.
 
@@ -42069,8 +42381,9 @@ Sends a TON transaction and returns its signed transfer body hash and fee.
   - `to` (string): Recipient TON address (e.g., 'EQ...')
   - `value` (number | bigint): Amount in nanotons (1 TON = 1,000,000,000 nanotons)
   - `bounceable` (boolean, optional): Whether the address is bounceable (TON-specific, optional)
+  - `body` (string | Cell, optional, object input): A `Cell` is used as the message body. A string whose decoded first four bytes match a TON BoC magic is decoded as a base64-serialized `Cell`; any other string is sent as a text comment. A magic-prefixed string that is not a valid BoC throws.
 
-When `tx` is a `Cell`, WDK estimates its fee, enforces `transactionMaxFee`, and passes that exact body to the matching opened `WalletContractV5R1.send()` call. It does not rebuild the body, refresh its sequence number, or re-sign it.
+When `tx` is a top-level `Cell`, WDK estimates its fee, enforces `transactionMaxFee`, and passes that exact signed transfer body to the matching opened `WalletContractV5R1.send()` call. It does not rebuild the body, refresh its sequence number, or re-sign it. A base64 string in `TonTransaction.body` is an object-input message body, not a complete signed transaction.
 
 **Returns:** `Promise\<{hash: string, fee: bigint}\>` - Object containing the signed transfer body hash as lowercase hex and the fee in nanotons
 
@@ -42094,6 +42407,7 @@ Estimates the fee for a transaction.
   - `to` (string): Recipient TON address (e.g., 'EQ...')
   - `value` (number | bigint): Amount in nanotons (1 TON = 1,000,000,000 nanotons)
   - `bounceable` (boolean, optional): Whether the address is bounceable (TON-specific, optional)
+  - `body` (string | Cell, optional, object input): A `Cell` is used as the message body. A string whose decoded first four bytes match a TON BoC magic is decoded as a base64-serialized `Cell`; any other string is sent as a text comment. A magic-prefixed string that is not a valid BoC throws.
 
 **Returns:** `Promise\<{fee: bigint}\>` - Object containing fee estimate (in nanotons)
 
@@ -42285,6 +42599,7 @@ new WalletAccountReadOnlyTon(publicKey, config)
 | `getAddress()` | Returns the account's TON address | `Promise\<string\>` |
 | `getBalance()` | Returns the native TON balance | `Promise\<bigint\>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific Jetton | `Promise\<bigint\>` |
+| `quoteSendTransaction(tx)` | Estimates the fee for a TON transaction object, including a serialized BoC body | `Promise\<{fee: bigint}\>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` |
 | `getTransaction(hash)` | Returns a normalized receipt for a message-body hash | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
 | `waitForTransaction(hash, options?)` | Waits for the requested TON finality | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
@@ -42307,6 +42622,29 @@ Returns the balance of a specific Jetton.
 - `tokenAddress` (string): The Jetton master contract address
 
 **Returns:** `Promise\<bigint\>` - Token balance
+
+##### `quoteSendTransaction(tx)`
+Estimates the fee for a TON transaction without signing or broadcasting it. For object inputs, a `body` string whose decoded first four bytes match a TON BoC magic is decoded as a base64-serialized `Cell`; any other string remains a text comment. A magic-prefixed string that is not a valid BoC throws.
+
+**Parameters:**
+- `tx` (TonTransaction): The transaction object
+  - `to` (string): Recipient TON address
+  - `value` (number | bigint): Amount in nanotons
+  - `bounceable` (boolean, optional): Whether the destination address is bounceable
+  - `body` (string | Cell, optional): Reviewed message body
+
+**Returns:** `Promise\<{fee: bigint}\>` - Fee estimate in nanotons
+
+**Throws:** Error if no TON client is configured or a magic-prefixed body is not a valid serialized BoC.
+
+**Example:**
+```javascript
+async function quoteReviewedTransaction(readOnlyAccount, reviewedTransaction) {
+  const quote = await readOnlyAccount.quoteSendTransaction(reviewedTransaction)
+  console.log('Estimated fee:', quote.fee, 'nanotons')
+  return quote
+}
+```
 
 ##### `verify(message, signature)`
 Verifies a message signature.
@@ -42368,11 +42706,15 @@ interface TonTransaction {
   bounceable?: boolean;
 
   /**
-   * Optional message body
+   * Optional message body. A string whose decoded first four bytes match a TON BoC magic
+   * is decoded as a base64-serialized Cell; any other string is sent as a text comment.
+   * A magic-prefixed string that is not a valid BoC throws.
    */
   body?: string | Cell;
 }
 ```
+
+`body` is part of the transaction-object input. The separate top-level `Cell` accepted by `sendTransaction()` and `quoteSendTransaction()` is a signed transfer body, not a base64 string supplied as `TonTransaction.body`.
 
 ### Cell
 
@@ -42437,7 +42779,7 @@ interface FeeRates {
   normal: bigint;
 
   /**
-   * Same mainnet-derived fee rate as `normal` through v1.0.0-beta.12
+   * Same mainnet-derived fee rate as `normal` through v1.0.0-beta.14
    * @example 100000000n // 0.1 TON
    */
   fast: bigint;
@@ -42945,7 +43287,7 @@ try {
 
 ### Manage Fee Limits
 
-Set `transactionMaxFee` when creating the wallet to cap native `sendTransaction()` and `signTransaction()` costs. Set `transferMaxFee` separately for Jetton `transfer()` costs. You can retrieve mainnet TON API rates using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-ton/api-reference). In `1.0.0-beta.13`, this method still does not follow a configured testnet client and returns the same calculated value for `normal` and `fast`:
+Set `transactionMaxFee` when creating the wallet to cap native `sendTransaction()` and `signTransaction()` costs. Set `transferMaxFee` separately for Jetton `transfer()` costs. You can retrieve mainnet TON API rates using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-ton/api-reference). In `1.0.0-beta.14`, this method still does not follow a configured testnet client and returns the same calculated value for `normal` and `fast`:
 
 ```javascript title="Fee Management"
 const feeRates = await wallet.getFeeRates()
@@ -43029,7 +43371,7 @@ Now that you can access your accounts, learn how to [check balances](/sdk/wallet
 URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-ton/guides/send-transactions
 Description: Send native TON and estimate transaction fees.
 
-This guide explains how to [send native TON](#send-native-ton), [estimate transaction fees](#estimate-transaction-fees), [cap transaction fees](#cap-transaction-fees), [read mainnet fee rates](#read-mainnet-fee-rates), [prepare a signed transaction body](#prepare-a-signed-transaction-body), and [quote and send a signed transaction body](#quote-and-send-a-signed-transaction-body).
+This guide explains how to [send native TON](#send-native-ton), [estimate transaction fees](#estimate-transaction-fees), [quote and sign a reviewed base64 BoC body](#quote-and-sign-a-reviewed-base64-boc-body), [cap transaction fees](#cap-transaction-fees), [read mainnet fee rates](#read-mainnet-fee-rates), [prepare a signed transaction body](#prepare-a-signed-transaction-body), and [quote and send a signed transaction body](#quote-and-send-a-signed-transaction-body).
 
 <Callout type="info">
 On TON, values are expressed in nanotons (1 TON = 10^9 nanotons). Transactions support an optional `bounceable` parameter specific to the TON network.
@@ -43062,6 +43404,44 @@ const quote = await account.quoteSendTransaction({
 console.log('Estimated fee:', quote.fee, 'nanotons')
 ```
 
+## Quote and Sign a Reviewed Base64 BoC Body
+
+For object inputs, `TonTransaction.body` can carry a base64-encoded TON BoC. WDK decodes it as a `Cell` only when the decoded first four bytes match a TON BoC magic; an ordinary string remains a text comment. A magic-prefixed string that is not a valid BoC throws instead of being sent as a comment.
+
+<Callout type="warning">
+Treat a base64 BoC as untrusted instructions. Decode and review its cell content before signing, and verify the destination, value, and bounce behavior in the transaction object. The example below only quotes and signs the reviewed body; it does not broadcast an external payload.
+</Callout>
+
+```javascript title="Review, Quote, and Sign a BoC Body"
+async function quoteAndSignReviewedBody(account, candidate, reviewTransaction) {
+  const review = await reviewTransaction(candidate)
+  if (review?.approved !== true) {
+    throw new Error('TON transaction was not approved')
+  }
+
+  const {
+    body: reviewedBody,
+    bounceable: reviewedBounceable,
+    to: reviewedDestination,
+    value: reviewedValue
+  } = review.transaction
+
+  const transaction = {
+    to: reviewedDestination,
+    value: reviewedValue,
+    body: reviewedBody,
+    bounceable: reviewedBounceable
+  }
+
+  const quote = await account.quoteSendTransaction(transaction)
+  const signedBody = await account.signTransaction(transaction)
+
+  return { quote, signedBody }
+}
+```
+
+`reviewTransaction` is an application-supplied callback. It must decode the candidate body, verify the destination, value, and optional `bounceable` flag, and return `{ approved: true, transaction }` only after explicit approval. Any other result fails closed. The helper returns a quote and signed transfer-body `Cell`; it does not call `sendTransaction()`.
+
 ## Cap Transaction Fees
 
 Set [`transactionMaxFee`](/sdk/wallet-modules/wallet-ton/configuration#transaction-max-fee) when you create the wallet to stop native `sendTransaction()` and `signTransaction()` calls if the estimated fee exceeds your limit.
@@ -43075,7 +43455,7 @@ const wallet = new WalletManagerTon(seedPhrase, {
 
 ## Read Mainnet Fee Rates
 
-You can retrieve mainnet TON API fee rates from the wallet manager using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-ton/api-reference#getfeerates). In `1.0.0-beta.13`, this method still does not follow a configured testnet client and returns the same calculated value for `normal` and `fast`:
+You can retrieve mainnet TON API fee rates from the wallet manager using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-ton/api-reference#getfeerates). In `1.0.0-beta.14`, this method still does not follow a configured testnet client and returns the same calculated value for `normal` and `fast`:
 
 ```javascript title="Get Fee Rates"
 const feeRates = await wallet.getFeeRates()
@@ -45091,9 +45471,11 @@ const account = new WalletAccountTron(seedPhrase, "0'/0/0", {
 | `sendTransaction(tx)` | Builds and sends a transaction, or broadcasts a signed transaction | `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` | If no provider or fee exceeds `transactionMaxFee`; unsigned pre-built inputs also require consistent raw data and a matching owner |
 | `quoteSendTransaction(tx)` | Estimates the fee for an unsigned or signed Tron transaction | `Promise\<{fee: bigint, activationFee: bigint}\>` | If no provider |
 | `transfer(options)` | Transfers TRC20 tokens to another address | `Promise\<{hash: string, fee: bigint}\>` | If no provider or fee exceeds `transferMaxFee` |
+| `approve(options)` | Approves a specific amount of a TRC20 token for a spender | `Promise\<TransactionResult & TronActivationFee\>` | Generic `Error` if no provider or fee exceeds `transactionMaxFee` |
 | `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: bigint}\>` | If no provider |
 | `getBalance()` | Returns the native TRX balance (in sun) | `Promise\<bigint\>` | If no provider |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise\<bigint\>` | If no provider |
+| `getAllowance(tokenAddress, spender)` | Returns the TRC20 allowance a spender can use on behalf of the account | `Promise\<bigint\>` | If no provider |
 | `getTransaction(hash)` | Returns a normalized receipt for a TRON transaction ID | `Promise\<TransactionReceipt & TronTransactionDetails\>` | If no provider, invalid ID, or transaction not found |
 | `waitForTransaction(hash, options?)` | Waits for the requested TRON finality | `Promise\<TransactionReceipt & TronTransactionDetails\>` | If no provider, invalid ID, or timeout |
 | `getTransactionReceipt(hash)` | Deprecated: returns the native TRON receipt | `Promise\<TronTransactionReceipt \| null\>` | If no provider |
@@ -45238,6 +45620,23 @@ console.log('Transfer hash:', result.hash)
 console.log('Transfer fee:', result.fee, 'sun')
 ```
 
+##### `approve(options)`
+Builds the TRC20 `approve(address,uint256)` call, signs it, broadcasts it, and returns the transaction result. The approval replaces the current allowance for the token and spender; it does not add to it.
+
+**Parameters:**
+- `options` (ApproveOptions): Approval options
+  - `token` (string): TRC20 contract address
+  - `spender` (string): Address authorized to spend the token
+  - `amount` (number | bigint): New allowance in the token's base units
+
+**Returns:** `Promise\<TransactionResult & TronActivationFee\>` - Transaction hash, fee in sun, and the portion used for account activation
+
+**Throws:**
+- Generic `Error` if no TronWeb provider is configured
+- Generic `Error` if the transaction fee exceeds `transactionMaxFee` when configured
+
+See [Approve a bounded allowance](/sdk/wallet-modules/wallet-tron/guides/transfer-tokens#approve-a-bounded-allowance) for a read-before-change example.
+
 ##### `quoteTransfer(options)`
 Estimates the TRC20 token transfer cost from current chain parameters, account resources, contract energy use, and bandwidth use.
 
@@ -45285,6 +45684,23 @@ Returns the balance of a specific TRC20 token.
 ```javascript
 const tokenBalance = await account.getTokenBalance('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')
 console.log('USDt balance:', tokenBalance) // In 6 decimal units
+```
+
+##### `getAllowance(tokenAddress, spender)`
+Returns the remaining amount of a TRC20 token that `spender` can spend on behalf of the account.
+
+**Parameters:**
+- `tokenAddress` (string): The TRC20 contract address
+- `spender` (string): The address authorized to spend the account's tokens
+
+**Returns:** `Promise\<bigint\>` - Allowance in the token's base units
+
+**Throws:** Error if no TronWeb provider is configured
+
+**Example:**
+```javascript
+const allowance = await account.getAllowance(tokenAddress, spenderAddress)
+console.log('Current USDt allowance:', allowance)
 ```
 
 ##### `getTransactionReceipt(hash)`
@@ -45396,6 +45812,7 @@ const readOnlyAccount = new WalletAccountReadOnlyTron('TLyqzVGLV1srkB7dToTAEqgDS
 |--------|-------------|---------|--------|
 | `getBalance()` | Returns the native TRX balance (in sun) | `Promise\<bigint\>` | If no provider |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise\<bigint\>` | If no provider |
+| `getAllowance(tokenAddress, spender)` | Returns the current TRC20 allowance for a spender | `Promise\<bigint\>` | If no provider |
 | `quoteSendTransaction(tx)` | Estimates the fee for a Tron transaction | `Promise\<{fee: bigint, activationFee: bigint}\>` | If no provider |
 | `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: bigint}\>` | If no provider |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` | - |
@@ -45430,6 +45847,26 @@ Returns the balance of a specific TRC20 token.
 ```javascript
 const tokenBalance = await readOnlyAccount.getTokenBalance('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')
 console.log('USDt balance:', tokenBalance)
+```
+
+##### `getAllowance(tokenAddress, spender)`
+Returns the current TRC20 allowance granted by this account to a spender.
+
+**Parameters:**
+- `tokenAddress` (string): The TRC20 contract address
+- `spender` (string): The address allowed to spend the token
+
+**Returns:** `Promise\<bigint\>` - Allowance in the token's base units
+
+**Throws:** Error if no TronWeb provider is configured
+
+**Example:**
+```javascript
+const allowance = await readOnlyAccount.getAllowance(
+  'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
+  'TSpenderAddress...'
+)
+console.log('USDt allowance:', allowance)
 ```
 
 ##### `quoteSendTransaction(tx)`
@@ -45520,6 +45957,16 @@ interface TransferOptions {
   token: string;                      // TRC20 contract address
   recipient: string;                  // Recipient Tron address
   amount: number | bigint;            // Amount in token base units
+}
+```
+
+### ApproveOptions
+
+```typescript
+interface ApproveOptions {
+  token: string;                       // TRC20 contract address
+  spender: string;                     // Address authorized to spend tokens
+  amount: number | bigint;             // New allowance in token base units
 }
 ```
 
@@ -46198,7 +46645,7 @@ For best practices on handling errors, managing fees, and cleaning up memory, se
 URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-tron/guides/transfer-tokens
 Description: Transfer TRC20 tokens and estimate transfer fees on Tron.
 
-This guide explains how to [transfer TRC20 tokens](#transfer-tokens), [estimate transfer fees](#estimate-transfer-fees), and [validate inputs before executing](#transfer-with-validation).
+This guide explains how to [transfer TRC20 tokens](#transfer-tokens), [estimate transfer fees](#estimate-transfer-fees), [approve a bounded allowance](#approve-a-bounded-allowance), and [validate inputs before executing](#transfer-with-validation).
 
 ## Transfer Tokens
 
@@ -46228,6 +46675,58 @@ console.log('Transfer fee estimate:', transferQuote.fee, 'sun')
 ```
 
 The quote uses current chain parameters, the sender's available resources, and the TRC20 contract simulation result. It charges only the missing energy after available energy is considered, then adds any bandwidth cost.
+
+## Approve a Bounded Allowance
+
+To authorize a contract to spend USD₮ or another TRC20 token, read the current allowance first and submit an approval only when the bounded value needs to change. `approve()` replaces the allowance for the token and spender pair; it does not add to the current value. Avoid unnecessary unlimited approvals.
+
+<Callout type="warning">
+`approve()` signs and broadcasts a TRC20 contract call. Verify the token and spender addresses and choose the smallest amount required for the intended use. When changing a nonzero allowance to another nonzero value, reset it to `0` and wait for successful finality before setting the new value; otherwise a spender can race the allowance change. Revoke the allowance after use when it is no longer needed.
+</Callout>
+
+```javascript title="Read, reset, and change a bounded USDt allowance"
+const token = process.env.TRON_TOKEN_ADDRESS
+const spender = process.env.TRON_SPENDER_ADDRESS
+
+if (!token || !spender) {
+  throw new Error('Set TRON_TOKEN_ADDRESS and TRON_SPENDER_ADDRESS before approving')
+}
+
+const desiredAllowance = 1_000_000n // USDt base units; choose for the intended use
+const currentAllowance = await account.getAllowance(token, spender)
+console.log('Current allowance:', currentAllowance)
+
+async function waitForSuccessfulApproval(account, approval) {
+  const receipt = await account.waitForTransaction(approval.hash, {
+    target: 'final'
+  })
+
+  if (receipt.success !== true) {
+    throw new Error(`Approval ${approval.hash} did not execute successfully`)
+  }
+}
+
+if (currentAllowance !== desiredAllowance) {
+  if (currentAllowance !== 0n && desiredAllowance !== 0n) {
+    const reset = await account.approve({
+      token,
+      spender,
+      amount: 0n
+    })
+    await waitForSuccessfulApproval(account, reset)
+  }
+
+  const approval = await account.approve({
+    token,
+    spender,
+    amount: desiredAllowance
+  })
+  await waitForSuccessfulApproval(account, approval)
+
+  console.log('Approval transaction:', approval.hash)
+  console.log('Approval fee:', approval.fee, 'sun')
+}
+```
 
 ## Transfer with Validation
 
@@ -52798,7 +53297,7 @@ Validate a Solana address as a base58-encoded 32-byte public key. The validator 
 import { validateSolanaAddress } from '@tetherto/wdk-utils'
 
 const result = validateSolanaAddress(
-  'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+  'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'
 )
 ```
 
@@ -53465,7 +53964,7 @@ const chainAware = validateAddress(
 )
 const btc = validateBitcoinAddress('bc1qu9yqnhc6wjj6s62s9x0shnl5l2r7gq5cudm94r7mvwv0uw4s7acq0hn9g6')
 const lightning = validateLightningAddress('sprycomfort92@waletofsatoshi.com')
-const solana = validateSolanaAddress('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v')
+const solana = validateSolanaAddress('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB')
 const tron = validateTronAddress('TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH')
 const uma = validateUmaAddress('$you@uma.money')
 ```
@@ -53800,7 +54299,7 @@ Worklet Bundler packages selected WDK wallet, protocol, and optional generic mod
 - Transport-specific defaults produce a JavaScript HRPC bundle for React Native Core or native addon artifacts for JSON-RPC hosts; JavaScript-engine compatibility is configured separately.
 
 <Callout type="warn">
-Generic `modules` are generated only for HRPC through beta.10. A JSON-RPC config can currently accept a `modules` field but silently omits those modules from the generated entrypoint.
+Generic `modules` are generated only for HRPC through beta.11. A JSON-RPC config can currently accept a `modules` field but silently omits those modules from the generated entrypoint.
 </Callout>
 
 <Cards>
@@ -53872,14 +54371,14 @@ interface WdkBundleConfig {
 }
 ```
 
-`allowedMethods` is keyed by network. Its direct `methods` array restricts account calls, while `protocols` nests restrictions by protocol type and protocol name. `allowedModuleMethods` is keyed by generic-module name and applies to HRPC only. These inline helper shapes are present in the config declaration but are not named exports from the beta.10 npm entrypoint.
+`allowedMethods` is keyed by network. Its direct `methods` array restricts account calls, while `protocols` nests restrictions by protocol type and protocol name. `allowedModuleMethods` is keyed by generic-module name and applies to HRPC only. These inline helper shapes are present in the config declaration but are not named exports from the beta.11 npm entrypoint.
 
 Every omitted map, level, or `methods` field remains unrestricted. An explicit `methods: []` denies every method on that exact surface. Generated HRPC contexts receive both maps; generated JSON-RPC contexts receive only `allowedMethods`.
 
-`modules` is generated only for HRPC through beta.10. JSON-RPC entry generation ignores that map. JSON-RPC defaults addon linking to `true`; HRPC defaults it to `false`. `options.convertEsmToCjs` defaults to `false` for both transports and must be enabled explicitly for targets whose Bare engine cannot load ESM.
+`modules` is generated only for HRPC through beta.11. JSON-RPC entry generation ignores that map. JSON-RPC defaults addon linking to `true`; HRPC defaults it to `false`. `options.convertEsmToCjs` defaults to `false` for both transports and must be enabled explicitly for targets whose Bare engine cannot load ESM.
 
 <Callout type="warn">
-Beta.10 declares `output.types`, `options.minify`, and `options.sourceMaps`, but its bundle generator does not honor those fields. Declarations are always written to `./.wdk/index.d.ts`; `minify` and `sourceMaps` do not control `bare-pack` output. ESM-to-CJS conversion minifies independently.
+Beta.11 declares `output.types`, `options.minify`, and `options.sourceMaps`, but its bundle generator does not honor those fields. Declarations are always written to `./.wdk/index.d.ts`; `minify` and `sourceMaps` do not control `bare-pack` output. ESM-to-CJS conversion minifies independently.
 </Callout>
 
 #### `ResolvedConfig`
@@ -54004,7 +54503,7 @@ Use `generateBundle()` when you want the same bundle workflow that powers the CL
 - `silent`
 - `skipTypes`
 - `skipGeneration`: Reuse an existing generated entrypoint. If `config.options.convertEsmToCjs` changed, regenerate the entrypoint first so its `.mjs` loader behavior matches the bundle conversion.
-- `deferOptionalPeers?` (`boolean`): When omitted or `true`, pass missing peers marked optional through `bare-pack --defer`. Beta.10 checks root, nested, scoped, and symlinked package trees before treating an optional peer as missing. Set this option to `false` to require absent optional imports at build time.
+- `deferOptionalPeers?` (`boolean`): When omitted or `true`, pass missing peers marked optional through `bare-pack --defer`. Beta.11 checks root, nested, scoped, and symlinked package trees before treating an optional peer as missing. Set this option to `false` to require absent optional imports at build time.
 
 `deferOptionalPeers` is a per-run API option. It is not a `WdkBundleConfig` field and cannot be set in `wdk.config.js`.
 
@@ -54018,7 +54517,7 @@ Use `generateBundle()` when you want the same bundle workflow that powers the CL
 - `error?`
 - `missingModule?`
 
-In beta.10, `typesPath` can reflect a configured `output.types` path even though the declaration file is still written to `./.wdk/index.d.ts`.
+In beta.11, `typesPath` can reflect a configured `output.types` path even though the declaration file is still written to `./.wdk/index.d.ts`.
 
 ```typescript title="Generate A Bundle Programmatically"
 import { generateBundle, loadConfig } from '@tetherto/wdk-worklet-bundler'
@@ -54037,11 +54536,11 @@ Use `generateSourceFiles()` when you want the generated entrypoint without the f
 
 Use `generateEntryPoint()` when you need the generated HRPC Bare entrypoint written to a chosen output directory. This path includes configured generic modules, both method-allowlist maps, and module lifecycle/event wiring.
 
-Starting in beta.3, the generated entrypoint suspends and resumes both the `bare-http1` and `bare-https` global agents when the Bare runtime emits `suspend` and `resume`. Beta.10 also logs the generated worklet's Bare `suspend`, `resume`, and `idle` events. When `options.convertEsmToCjs` is enabled, beta.10 also emits the matching runtime `.mjs`-as-CommonJS loader patch.
+Starting in beta.3, the generated entrypoint suspends and resumes both the `bare-http1` and `bare-https` global agents when the Bare runtime emits `suspend` and `resume`. Beta.11 also logs the generated worklet's Bare `suspend`, `resume`, and `idle` events. When `options.convertEsmToCjs` is enabled, beta.11 also emits the matching runtime `.mjs`-as-CommonJS loader patch.
 
 #### `generateJsonRpcEntryPoint(config, outputDir)`
 
-Generate the framed JSON-RPC entrypoint used by native hosts. Through beta.10 this path includes wallet and protocol managers plus `allowedMethods`, but not generic `modules` or `allowedModuleMethods`. When `options.convertEsmToCjs` is enabled, it emits the same `.mjs` loader patch as the HRPC generator.
+Generate the framed JSON-RPC entrypoint used by native hosts. Through beta.11 this path includes wallet and protocol managers plus `allowedMethods`, but not generic `modules` or `allowedModuleMethods`. When `options.convertEsmToCjs` is enabled, it emits the same `.mjs` loader patch as the HRPC generator.
 
 #### `linkAddons(config, options?)`
 
@@ -54070,11 +54569,11 @@ convertBundleEsmToCjs('./.wdk-bundle/wdk-worklet.bundle.js', {
 })
 ```
 
-The beta.10 converter accepts raw `.bundle` data and the default UTF-8 CommonJS, ESM, or JSON string wrappers produced by bare-pack. Wrappers created with a non-UTF-8 `--encoding`, such as Base64, are not supported. The converter transforms `.js`, `.mjs`, and `.cjs` files, lowers dynamic imports, removes `"type": "module"` from bundled package manifests, recomputes offsets with `bare-bundle`, restores the original wrapper, and calls `validateBundle()` before returning. It throws if any source transformation or final validation fails.
+The beta.11 converter accepts raw `.bundle` data and the default UTF-8 CommonJS, ESM, or JSON string wrappers produced by bare-pack. Wrappers created with a non-UTF-8 `--encoding`, such as Base64, are not supported. The converter transforms `.js`, `.mjs`, and `.cjs` files, lowers dynamic imports, removes `"type": "module"` from bundled package manifests, recomputes offsets with `bare-bundle`, restores the original wrapper, and calls `validateBundle()` before returning. It throws if any source transformation or final validation fails.
 
 This helper rewrites only the packed bundle. For `.mjs` files to load as CommonJS at runtime, generate the HRPC or JSON-RPC entrypoint with `options.convertEsmToCjs: true` before packing, or provide equivalent loader behavior yourself. Do not convert a bundle while reusing an entrypoint generated with conversion disabled.
 
-The inline `options` shape has `minify?: boolean` and `verbose?: boolean`. `ConvertOptions` appears in the generated declaration as the parameter shape but is not a named export from the beta.10 package entrypoint.
+The inline `options` shape has `minify?: boolean` and `verbose?: boolean`. `ConvertOptions` appears in the generated declaration as the parameter shape but is not a named export from the beta.11 package entrypoint.
 
 #### `validateBundle(bundlePath)`
 
@@ -54103,7 +54602,7 @@ The published CLI exposes these commands through `wdk-worklet-bundler`:
 For the end-to-end config workflow and transport defaults, see the [Worklet Bundler configuration guide](/tools/worklet-bundler/configuration).
 
 <Callout type="warn">
-Beta.10 applies `--transport` after `loadConfig()` resolves output paths. The flag changes entrypoint generation but does not recompute the default bundle filename. Set `transport` in `wdk.config.js`, or configure `output.bundle` explicitly when using the flag.
+Beta.11 applies `--transport` after `loadConfig()` resolves output paths. The flag changes entrypoint generation but does not recompute the default bundle filename. Set `transport` in `wdk.config.js`, or configure `output.bundle` explicitly when using the flag.
 </Callout>
 
 ***
@@ -54125,11 +54624,11 @@ This page shows how to install `@tetherto/wdk-worklet-bundler` and its Pear runt
 Install the bundler as a development dependency and Pear Worklet as a runtime dependency in the host project:
 
 ```bash title="Install The Bundler And Runtime"
-npm install @tetherto/pear-wrk-wdk@1.0.0-beta.11
-npm install --save-dev @tetherto/wdk-worklet-bundler@1.0.0-beta.10
+npm install @tetherto/pear-wrk-wdk@1.0.0-beta.12
+npm install --save-dev @tetherto/wdk-worklet-bundler@1.0.0-beta.11
 ```
 
-Worklet Bundler beta.10 generates entrypoints that import Pear Worklet, but `generate --install` does not add that package. Pear Worklet beta.11 enforces the wallet, protocol, and generic-module method allowlists documented here. The GitHub beta.8 release introduced the configuration but has no public npm artifact.
+Worklet Bundler beta.11 generates entrypoints that import Pear Worklet and includes that runtime in validation and installation for both HRPC and JSON-RPC. Pear Worklet beta.12 enforces the wallet, protocol, and generic-module method allowlists documented here. The GitHub beta.8 release introduced the configuration but has no public npm artifact.
 
 ## Create `wdk.config.js`
 
@@ -54294,12 +54793,12 @@ Use `modules` for named generic packages that expose a module factory. Each entr
 The factory receives `{ seed, config, capabilities, emit }` and can return the module instance or a promise for it. A module that needs the seed must consume it synchronously rather than retain it. The build-time name, such as `preferences`, must match the key in the host's runtime module config.
 
 <Callout type="warn">
-Through beta.10, generic modules are included only in generated HRPC entrypoints. Do not configure `modules` with `transport: 'jsonrpc'`; the current schema accepts the field, but JSON-RPC generation ignores it.
+Through beta.11, generic modules are included only in generated HRPC entrypoints. Do not configure `modules` with `transport: 'jsonrpc'`; the current schema accepts the field, but JSON-RPC generation ignores it.
 </Callout>
 
 ### `transport` (optional)
 
-Choose `hrpc` or `jsonrpc`. HRPC is the default and is the transport used by React Native Core. JSON-RPC produces a length-prefixed bundle for a native host and enables addon linking by default. In beta.10, ESM-to-CJS conversion is an independent, explicit option for both transports.
+Choose `hrpc` or `jsonrpc`. HRPC is the default and is the transport used by React Native Core. JSON-RPC produces a length-prefixed bundle for a native host and enables addon linking by default. In beta.11, ESM-to-CJS conversion is an independent, explicit option for both transports.
 
 ### `preloadModules` (optional)
 
@@ -54310,7 +54809,7 @@ Use `preloadModules` for native addons or other modules that must be required be
 Supported output fields are:
 
 - `bundle`: Bundle path. Defaults to `./.wdk-bundle/wdk-worklet.bundle.js` for HRPC and `./.wdk-bundle/wdk-worklet.bundle` for JSON-RPC.
-- `types`: Declared in the beta.10 config type, but the generator does not honor a custom value and always writes declarations to `./.wdk/index.d.ts`.
+- `types`: Declared in the beta.11 config type, but the generator does not honor a custom value and always writes declarations to `./.wdk/index.d.ts`.
 - `addons.ios`, `addons.macos`, `addons.android`: Platform addon directories. Defaults are `./ios-addons`, `./mac-addons`, and `./android-addons`.
 - `addonsYml`: BareKit Swift dependency file. Defaults to `./ios-addons/addons.yml` and is generated when iOS addons are linked.
 
@@ -54318,8 +54817,8 @@ Supported output fields are:
 
 The published config type supports these build options:
 
-- `minify` (`boolean`): Declared in the beta.10 config type but not read by the bundle path. ESM-to-CJS conversion minifies independently of this field.
-- `sourceMaps` (`boolean`): Declared in the beta.10 config type but not read by the bundle path, so it does not produce source maps.
+- `minify` (`boolean`): Declared in the beta.11 config type but not read by the bundle path. ESM-to-CJS conversion minifies independently of this field.
+- `sourceMaps` (`boolean`): Declared in the beta.11 config type but not read by the bundle path, so it does not produce source maps.
 - `targets` (`string[]`): Override the default Bare build hosts. The shipped defaults cover iOS arm64 and simulator targets plus Android arm, arm64, ia32, and x64 hosts.
 - `linkAddons` (`boolean`): Link native addons with `bare-link`. Defaults to `true` for JSON-RPC and `false` for HRPC.
 - `platforms` (`('ios' | 'macos' | 'android')[]`): Addon platforms. Defaults to all three when addon linking is active.
@@ -54341,14 +54840,14 @@ module.exports = {
 }
 ```
 
-In the normal `generate` or `generateBundle()` path, beta.10 uses one flag for both build-time conversion and the generated runtime loader:
+In the normal `generate` or `generateBundle()` path, beta.11 uses one flag for both build-time conversion and the generated runtime loader:
 
 - After `bare-pack`, it converts `.js`, `.mjs`, and `.cjs` files to CommonJS, lowers dynamic `import()`, removes `"type": "module"` from bundled package manifests, and rebuilds bundle offsets with `bare-bundle`.
 - It preserves raw bundles and the default UTF-8 CommonJS, ESM, or JSON string wrappers produced by supported `bare-pack` output suffixes. Wrappers created with a non-UTF-8 `--encoding`, such as Base64, are not supported.
 - It validates the rewritten file map, offsets, lengths, CommonJS syntax, entrypoint, package manifests, and absence of dynamic imports before generation succeeds.
 - The generated HRPC or JSON-RPC entrypoint routes `.mjs` files through the CommonJS loader only when conversion is enabled.
 
-There is no beta.10 CLI flag that overrides this setting. Set `options.convertEsmToCjs` in the config used for the build.
+There is no beta.11 CLI flag that overrides this setting. Set `options.convertEsmToCjs` in the config used for the build.
 
 ## Configure JSON-RPC and native addons
 
@@ -54390,11 +54889,11 @@ npx wdk-worklet-bundler validate
 
 ## Handle peer dependencies
 
-Worklet Bundler beta.10 separates required peers from peers explicitly marked optional through `peerDependenciesMeta`:
+Worklet Bundler beta.11 separates required peers from peers explicitly marked optional through `peerDependenciesMeta`:
 
 - During bundle generation, missing required peers are offered for installation. In a non-interactive environment without `--install`, the CLI prints the exact manual install command and continues; `bare-pack` can still fail if the bundle needs that peer. The peer scan is skipped by `--source-only`.
 - Missing optional peers are not prompted for or installed. By default, the bundler passes each one to `bare-pack --defer`, so an unused optional feature does not block the build.
-- Optional peers detected anywhere in the scanned package tree are not deferred. Beta.10 matches package names across root, nested, scoped, and symlinked package trees; install a peer in an ancestor `node_modules` visible to the package that imports it, because the same package name elsewhere in the tree can suppress deferral without making that import resolvable. A peer that is required anywhere else in the scanned dependency tree is treated as required and is not deferred.
+- Optional peers detected anywhere in the scanned package tree are not deferred. Beta.11 matches package names across root, nested, scoped, and symlinked package trees; install a peer in an ancestor `node_modules` visible to the package that imports it, because the same package name elsewhere in the tree can suppress deferral without making that import resolvable. A peer that is required anywhere else in the scanned dependency tree is treated as required and is not deferred.
 
 Use `--no-defer-optional-peers` when the app uses an optional feature and you want a missing peer to fail during the build:
 
@@ -54416,17 +54915,17 @@ Use `generate` to build the worklet artifact:
 npx wdk-worklet-bundler generate --install
 ```
 
-`generate --install` can auto-install missing configured wallet, protocol, generic, and preload modules after the package manager is detected from the project root. In beta.10 it does not install the Pear Worklet runtime imported by generated entrypoints; install Pear explicitly as shown above.
+`generate --install` can auto-install missing configured wallet, protocol, generic, preload, and Pear Worklet runtime dependencies after the package manager is detected from the project root. In beta.11, the Pear Worklet runtime is included for both HRPC and JSON-RPC, so the generated entrypoint's runtime dependency is surfaced during validation and installation instead of failing later in `bare-pack`.
 
 Use `--source-only` when you want the generated `.wdk/wdk-worklet.generated.js` entrypoint and related artifacts without running `bare-pack`. This mode also skips bundle conversion. If `options.convertEsmToCjs` is `true` and you run `bare-pack` yourself, convert the packed bundle with `convertBundleEsmToCjs()` before deployment; the source-only entrypoint already contains the matching `.mjs` loader patch. Keep the same conversion setting when generating the entrypoint and converting the bundle.
 
-The `generate` command also accepts `--transport hrpc|jsonrpc`, `--link-addons`, `--skip-link-addons`, `--platforms ios,macos,android`, and `--no-defer-optional-peers`. Set `transport` in `wdk.config.js` when you rely on its transport-specific default bundle path. In beta.10, `--transport` changes the generated transport after output paths have already been resolved, so it does not switch `.js` HRPC output to the extensionless JSON-RPC default, or vice versa. If you use the flag, set `output.bundle` explicitly to the intended path.
+The `generate` command also accepts `--transport hrpc|jsonrpc`, `--link-addons`, `--skip-link-addons`, `--platforms ios,macos,android`, and `--no-defer-optional-peers`. Set `transport` in `wdk.config.js` when you rely on its transport-specific default bundle path. In beta.11, `--transport` changes the generated transport after output paths have already been resolved, so it does not switch `.js` HRPC output to the extensionless JSON-RPC default, or vice versa. If you use the flag, set `output.bundle` explicitly to the intended path.
 
 `--skip-generation` reuses an existing generated entrypoint. If `options.convertEsmToCjs` changed since that entrypoint was created, regenerate without `--skip-generation` before building so the runtime `.mjs` loader matches the bundle conversion setting.
 
 ## Suspend and resume behavior
 
-Generated HRPC worklet entrypoints register Bare lifecycle handlers for `suspend` and `resume`, then apply those handlers to both the `bare-http1` and `bare-https` global agents. No config flag is required for this behavior. Beta.10 also logs the generated worklet's Bare `suspend`, `resume`, and `idle` events.
+Generated HRPC worklet entrypoints register Bare lifecycle handlers for `suspend` and `resume`, then apply those handlers to both the `bare-http1` and `bare-https` global agents. No config flag is required for this behavior. Beta.11 also logs the generated worklet's Bare `suspend`, `resume`, and `idle` events.
 
 This matters when a generated HRPC worklet performs HTTPS-backed fetches. Starting in beta.3, those generated entrypoints suspend and resume both agents together.
 
@@ -54434,6 +54933,7 @@ This matters when a generated HRPC worklet performs HTTPS-backed fetches. Starti
 
 - If `loadConfig()` cannot find a config file, run `npx wdk-worklet-bundler init` or pass `--config \<path\>`.
 - If `validate` or `generate` reports missing modules, use `generate --install` or inspect the install command from the exported helper APIs in the [API Reference](/tools/worklet-bundler/api-reference).
+- When `bare-pack` reports an unresolved package subpath, beta.11 reduces scoped or unscoped subpaths to the installable package root and prints an install command for the package manager detected from the project root. It prints no install hint when the reported specifier is not an installable package, such as a relative or absolute path, private import, URL or builtin-prefixed specifier, or bare scope.
 - If you need to inspect generated source before bundling, use `generate --source-only` and review the files in `.wdk/`. For a CommonJS-only target, pack and convert that source as described above before running it.
 
 ***

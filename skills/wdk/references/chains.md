@@ -89,7 +89,6 @@ Default public RPCs for chains listed above. All are rate-limited — use a prov
 | Token | Decimals | Note |
 |-------|----------|------|
 | USD₮ / USD₮0 | 6 | All chains |
-| USDC | 6 | All chains |
 | DAI | 18 | EVM chains |
 | WETH | 18 | EVM chains |
 | WBTC | 8 | EVM chains |

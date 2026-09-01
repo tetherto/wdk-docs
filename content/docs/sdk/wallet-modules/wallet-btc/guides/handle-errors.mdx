@@ -7,9 +7,16 @@ This guide explains how to [handle transaction errors](#transaction-errors), [ha
 
 ## Transaction Errors
 
-Transactions sent via [`account.sendTransaction()`](/sdk/wallet-modules/wallet-btc/api-reference) can fail for several reasons. Wrap transaction calls in a `try/catch` block to handle specific error types:
+Transactions sent via [`account.sendTransaction()`](/sdk/wallet-modules/wallet-btc/api-reference) can fail for several reasons. Catch the exported WDK error classes and compare `reason` constants where an error exposes them; do not match message text:
 
 ```javascript title="Handle Transaction Errors"
+import {
+  MaximumFeeExceededError,
+  TransactionError,
+  TransactionErrorReason,
+  ValueError
+} from '@tetherto/wdk-wallet'
+
 try {
   const result = await account.sendTransaction({
     to: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
@@ -17,51 +24,63 @@ try {
   })
   console.log('Transaction hash:', result.hash)
 } catch (error) {
-  if (error.message.includes('Insufficient balance')) {
+  if (error instanceof TransactionError &&
+      error.reason === TransactionErrorReason.INSUFFICIENT_BALANCE) {
     console.error('Not enough funds in wallet')
-  } else if (error.message.includes('Exceeded maximum fee')) {
+  } else if (error instanceof MaximumFeeExceededError) {
     console.error('Transaction fee exceeds transactionMaxFee')
-  } else if (error.message.includes('dust limit')) {
-    console.error('Amount is below the minimum dust limit')
-  } else if (error.message.includes('Invalid address')) {
-    console.error('Recipient address is invalid')
+  } else if (error instanceof ValueError) {
+    console.error('Transaction amount or input selection is invalid')
   } else {
-    console.error('Transaction failed:', error.message)
+    throw error
   }
 }
 ```
 
 ## Connection Errors
 
-Network issues with the Electrum server can cause failures across all operations. Handle connection errors at a higher level:
+Network and backend failures use `ProviderError`. Inspect `error.reason` instead of parsing a provider message. For `BlockbookClient`, HTTP 401 maps to `UNAUTHORIZED`, 403 to `FORBIDDEN`, 408 or 504 to `REQUEST_TIMEOUT`, other 5xx responses to `INTERNAL_SERVER_ERROR`, and other non-2xx responses to `NETWORK_ERROR`. WebSocket connection failures use `NETWORK_ERROR`; WebSocket server-response and fee-estimation failures use `INTERNAL_SERVER_ERROR`.
 
 ```javascript title="Handle Connection Errors"
+import { ProviderError, ProviderErrorReason } from '@tetherto/wdk-wallet'
+
 try {
   const balance = await account.getBalance()
   console.log('Balance:', balance, 'satoshis')
 } catch (error) {
-  if (error.message.includes('ECONNREFUSED') || error.message.includes('timeout')) {
-    console.error('Network error: check Electrum server connection')
-  } else if (error.message.includes('Invalid seed')) {
-    console.error('Invalid seed phrase provided')
+  if (error instanceof ProviderError &&
+      (error.reason === ProviderErrorReason.NETWORK_ERROR ||
+       error.reason === ProviderErrorReason.REQUEST_TIMEOUT)) {
+    console.error('Provider unavailable or timed out; retry according to your policy')
+  } else if (error instanceof ProviderError &&
+             (error.reason === ProviderErrorReason.UNAUTHORIZED ||
+              error.reason === ProviderErrorReason.FORBIDDEN)) {
+    console.error('Check provider credentials and permissions')
+  } else if (error instanceof ProviderError &&
+             error.reason === ProviderErrorReason.INTERNAL_SERVER_ERROR) {
+    console.error('Provider failed internally; retry or use another client')
   } else {
-    console.error('Operation failed:', error.message)
+    throw error
   }
 }
 ```
+
+Invalid mnemonic and unsupported `bip` values throw `ValueError` while an account is created. Bitcoin accounts do not support token operations: `getTokenBalance(tokenAddress)`, `quoteTransfer(options)`, and `transfer(options)` throw `UnsupportedOperationError`.
 
 ## Transaction Status Errors
 
 `getTransaction()` validates the transaction ID and searches this account address's history. Handle malformed and unknown transactions on that one-shot lookup:
 
 ```javascript title="Handle a Transaction Lookup"
+import { NoSuchElementError, ValueError } from '@tetherto/wdk-wallet'
+
 try {
   const receipt = await account.getTransaction(transactionHash)
   console.log('Current finality:', receipt.finality)
 } catch (error) {
-  if (error.name === 'ValueError') {
+  if (error instanceof ValueError) {
     console.error('Expected a 64-character hexadecimal transaction ID')
-  } else if (error.name === 'NoSuchElementError') {
+  } else if (error instanceof NoSuchElementError) {
     console.error('Transaction is not in this account address history')
   } else {
     throw error
@@ -72,13 +91,15 @@ try {
 Use `waitForTransaction()` when the hash may still be propagating. It consumes `NoSuchElementError` as a transient polling state, so the caller normally handles a timeout instead:
 
 ```javascript title="Handle a Finality Timeout"
+import { TimeoutError } from '@tetherto/wdk-wallet'
+
 try {
   const receipt = await account.waitForTransaction(transactionHash, {
     target: 'final'
   })
   console.log('Final transaction:', receipt.hash)
 } catch (error) {
-  if (error.name === 'TimeoutError') {
+  if (error instanceof TimeoutError) {
     console.error('Transaction did not reach the requested finality in time')
   } else {
     throw error

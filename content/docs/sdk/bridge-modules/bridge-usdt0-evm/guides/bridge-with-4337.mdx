@@ -41,7 +41,7 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account)
 
 ## Run a gasless bridge with paymaster options
 
-You can execute [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config) with a second argument that includes `paymasterToken` and an optional `bridgeMaxFee` override. Do not submit a separate `account.approve()` call for this flow. The protocol builds an ERC20 approval to the source-chain transaction-value helper and the helper bridge call, then submits both in one UserOperation.
+You can execute [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config) with a second argument that includes `paymasterToken` and an optional `bridgeMaxFee` override. Do not submit a separate `account.approve()` call for this flow. The normal ERC-4337 batch is an ERC20 approval to the source-chain transaction-value helper followed by the helper bridge call, submitted in one UserOperation. On Ethereum mainnet, when the resolved token is USD₮ at `0xdAC17F958D2ee523a2206206994597C13D831ec7`, the protocol queries the same ERC-4337 account's allowance for that token and helper spender. If the current allowance and computed `approveAmount` are both greater than zero, it prepends `approve(spender, 0)`, then `approve(spender, approveAmount)`, then the helper bridge call. `quoteBridge()` uses the same ordering for a `WalletAccountReadOnlyEvmErc4337`. Standard EVM accounts and every other chain/token path are unchanged.
 
 ```javascript title="Gasless bridge with paymasterToken"
 const USDT_TOKEN_ADDRESS = process.env.USDT_SOURCE_TOKEN_ADDRESS
@@ -68,7 +68,7 @@ console.log('Bridge fee:', result.bridgeFee)
 ```
 
 <Callout type="info">
-The bundled approval and helper call produce one UserOperation hash. The protocol approves enough source token for the amount plus its helper-calculated bridge fee and tolerance.
+The bundled approval sequence and helper call produce one UserOperation hash. For the Ethereum mainnet USD₮ reset case, the sequence is `approve(spender, 0)`, `approve(spender, approveAmount)`, then the helper call; otherwise it is `approve(spender, approveAmount)` followed by the helper call. The protocol approves enough source token for the amount plus its helper-calculated bridge fee and tolerance.
 </Callout>
 
 <Callout type="warn">

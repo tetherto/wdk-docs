@@ -28,7 +28,7 @@ new WalletManagerSpark(seed, config)
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (object, optional): Configuration object
   - `network` (string, optional): 'MAINNET', 'SIGNET', or 'REGTEST' (default: 'MAINNET')
-  - `sparkscan` (`SparkScanConfig`, optional): SparkScan configuration for balance polling
+  - `sparkscan` (`SparkScanConfig`, optional): SparkScan configuration for balance polling. SparkScan accepts `MAINNET` and `REGTEST`; an unsupported network raises `ValueError` when the account is created.
   - `syncAndRetry` (boolean, optional): When true, failed sends and Lightning payments sync wallet state and retry once
   - `enableLogging` (boolean, optional): When true, forwards logging to the underlying Spark SDK (default: false)
 
@@ -37,7 +37,7 @@ new WalletManagerSpark(seed, config)
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getAccount(index)` | Returns a wallet account at the specified index | `Promise<WalletAccountSpark>` |
-| `getAccountByPath(path)` | Returns a wallet account at a specific BIP-44 derivation path | `Promise<WalletAccountSpark>` |
+| `getAccountByPath(path)` | Always throws because Spark accounts are addressed by index | `Promise<WalletAccountSpark>` |
 | `getFeeRates()` | Returns current fee rates for transactions (always zero for Spark) | `Promise<{normal: bigint, fast: bigint}>` |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
 
@@ -48,6 +48,8 @@ Returns a wallet account at the specified index using BIP-44 derivation path.
 - `index` (number, optional): The index of the account to get (default: 0)
 
 **Returns:** `Promise<WalletAccountSpark>` - The wallet account
+
+**Throws:** `ValueError` if `sparkscan` is configured for a network that SparkScan does not support.
 
 **Example:**
 ```javascript
@@ -80,23 +82,34 @@ wallet.dispose()
 ```
 
 ##### `getAccountByPath(path)`
-Returns a wallet account at a specific BIP-44 derivation path.
+Spark accounts are addressed by index, so this method does not support caller-supplied BIP-44 paths and always throws.
 
 **Parameters:**
 - `path` (string): The derivation path segment (e.g. `"0'/0/0"`)
 
-**Returns:** `Promise<WalletAccountSpark>` - The wallet account
+**Returns:** `Promise<WalletAccountSpark>` - The account type in the base interface; this method always throws
+
+**Throws:** `UnsupportedOperationError` because Spark accounts are addressed by index, not by a caller-supplied derivation path.
 
 **Example:**
 ```javascript
-const account = await wallet.getAccountByPath("0'/0/0")
-const address = await account.getAddress()
-console.log('Account address:', address)
+import { UnsupportedOperationError } from '@tetherto/wdk-wallet'
+
+try {
+  await wallet.getAccountByPath("0'/0/0")
+} catch (error) {
+  if (error instanceof UnsupportedOperationError) {
+    console.log('Use wallet.getAccount(index) for Spark accounts')
+  } else {
+    throw error
+  }
+}
 ```
 
 **Important Notes:**
 - All Spark transactions have zero fees
-- Network configuration is limited to predefined values
+- Accounts are addressed by index; `getAccountByPath(path)` is not supported
+- SparkScan balance polling supports `MAINNET` and `REGTEST`
 
 ## WalletAccountSpark
 
@@ -179,15 +192,23 @@ Exposes the base `IWalletAccount.signTransaction(tx)` method, but standalone Spa
 
 **Returns:** `Promise<never>` - Always throws
 
+**Throws:** `UnsupportedOperationError` because Spark transfers are signed collaboratively with Spark operators and cannot be signed locally.
+
 **Example:**
 ```javascript
+import { UnsupportedOperationError } from '@tetherto/wdk-wallet'
+
 try {
   await account.signTransaction({
     to: 'spark1...',
     value: 1000000
   })
 } catch (error) {
-  console.error(error.message) // Method 'signTransaction(tx)' not supported on spark.
+  if (error instanceof UnsupportedOperationError) {
+    console.error('Spark does not support standalone transaction signing')
+  } else {
+    throw error
+  }
 }
 ```
 
@@ -284,6 +305,8 @@ console.log('Transfer fee:', Number(quote.fee))
 Returns the account's native token balance in satoshis. When `sparkscan` is configured, this uses SparkScan's `btcSoftBalanceSats` value.
 
 **Returns:** `Promise<bigint>` - Balance in satoshis
+
+**Throws:** `ProviderError` if SparkScan is configured and returns a non-success HTTP response.
 
 **Example:**
 ```javascript
@@ -779,6 +802,8 @@ new WalletAccountReadOnlySpark(address, config)
 - `address` (string): The account's Spark address
 - `config` (SparkWalletConfig, optional): Configuration object
 
+**Throws:** `ValueError` if `sparkscan` is configured for a network that SparkScan does not support.
+
 ### Methods
 
 | Method | Description | Returns |
@@ -824,6 +849,8 @@ console.log('Identity key:', identityKey) // 02eda8...
 Returns the account's native token balance in satoshis. When `sparkscan` is configured, this uses SparkScan's `btcSoftBalanceSats` value.
 
 **Returns:** `Promise<bigint>` - Balance in satoshis
+
+**Throws:** `ProviderError` if SparkScan is configured and returns a non-success HTTP response.
 
 **Example:**
 ```javascript
@@ -986,6 +1013,8 @@ interface SparkScanConfig {
   apiKey?: string  // Optional API key for SparkScan requests
 }
 ```
+
+When SparkScan is used by `getBalance()`, a non-success HTTP response throws `ProviderError`. Inspect `error.reason` (`ProviderErrorReason`) for the response category: `UNAUTHORIZED` for HTTP 401, `FORBIDDEN` for 403, `REQUEST_TIMEOUT` for 408 or 504, `INTERNAL_SERVER_ERROR` for other 5xx responses, and `NETWORK_ERROR` for other non-2xx responses.
 
 ### SparkWalletConfig
 

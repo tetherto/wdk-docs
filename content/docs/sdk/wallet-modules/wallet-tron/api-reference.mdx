@@ -173,9 +173,11 @@ const account = new WalletAccountTron(seedPhrase, "0'/0/0", {
 | `sendTransaction(tx)` | Builds and sends a transaction, or broadcasts a signed transaction | `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` | If no provider or fee exceeds `transactionMaxFee`; unsigned pre-built inputs also require consistent raw data and a matching owner |
 | `quoteSendTransaction(tx)` | Estimates the fee for an unsigned or signed Tron transaction | `Promise\<{fee: bigint, activationFee: bigint}\>` | If no provider |
 | `transfer(options)` | Transfers TRC20 tokens to another address | `Promise\<{hash: string, fee: bigint}\>` | If no provider or fee exceeds `transferMaxFee` |
+| `approve(options)` | Approves a specific amount of a TRC20 token for a spender | `Promise\<TransactionResult & TronActivationFee\>` | Generic `Error` if no provider or fee exceeds `transactionMaxFee` |
 | `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: bigint}\>` | If no provider |
 | `getBalance()` | Returns the native TRX balance (in sun) | `Promise\<bigint\>` | If no provider |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise\<bigint\>` | If no provider |
+| `getAllowance(tokenAddress, spender)` | Returns the TRC20 allowance a spender can use on behalf of the account | `Promise\<bigint\>` | If no provider |
 | `getTransaction(hash)` | Returns a normalized receipt for a TRON transaction ID | `Promise\<TransactionReceipt & TronTransactionDetails\>` | If no provider, invalid ID, or transaction not found |
 | `waitForTransaction(hash, options?)` | Waits for the requested TRON finality | `Promise\<TransactionReceipt & TronTransactionDetails\>` | If no provider, invalid ID, or timeout |
 | `getTransactionReceipt(hash)` | Deprecated: returns the native TRON receipt | `Promise\<TronTransactionReceipt \| null\>` | If no provider |
@@ -320,6 +322,23 @@ console.log('Transfer hash:', result.hash)
 console.log('Transfer fee:', result.fee, 'sun')
 ```
 
+##### `approve(options)`
+Builds the TRC20 `approve(address,uint256)` call, signs it, broadcasts it, and returns the transaction result. The approval replaces the current allowance for the token and spender; it does not add to it.
+
+**Parameters:**
+- `options` (ApproveOptions): Approval options
+  - `token` (string): TRC20 contract address
+  - `spender` (string): Address authorized to spend the token
+  - `amount` (number | bigint): New allowance in the token's base units
+
+**Returns:** `Promise\<TransactionResult & TronActivationFee\>` - Transaction hash, fee in sun, and the portion used for account activation
+
+**Throws:**
+- Generic `Error` if no TronWeb provider is configured
+- Generic `Error` if the transaction fee exceeds `transactionMaxFee` when configured
+
+See [Approve a bounded allowance](/sdk/wallet-modules/wallet-tron/guides/transfer-tokens#approve-a-bounded-allowance) for a read-before-change example.
+
 ##### `quoteTransfer(options)`
 Estimates the TRC20 token transfer cost from current chain parameters, account resources, contract energy use, and bandwidth use.
 
@@ -367,6 +386,23 @@ Returns the balance of a specific TRC20 token.
 ```javascript
 const tokenBalance = await account.getTokenBalance('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')
 console.log('USDt balance:', tokenBalance) // In 6 decimal units
+```
+
+##### `getAllowance(tokenAddress, spender)`
+Returns the remaining amount of a TRC20 token that `spender` can spend on behalf of the account.
+
+**Parameters:**
+- `tokenAddress` (string): The TRC20 contract address
+- `spender` (string): The address authorized to spend the account's tokens
+
+**Returns:** `Promise\<bigint\>` - Allowance in the token's base units
+
+**Throws:** Error if no TronWeb provider is configured
+
+**Example:**
+```javascript
+const allowance = await account.getAllowance(tokenAddress, spenderAddress)
+console.log('Current USDt allowance:', allowance)
 ```
 
 ##### `getTransactionReceipt(hash)`
@@ -478,6 +514,7 @@ const readOnlyAccount = new WalletAccountReadOnlyTron('TLyqzVGLV1srkB7dToTAEqgDS
 |--------|-------------|---------|--------|
 | `getBalance()` | Returns the native TRX balance (in sun) | `Promise\<bigint\>` | If no provider |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise\<bigint\>` | If no provider |
+| `getAllowance(tokenAddress, spender)` | Returns the current TRC20 allowance for a spender | `Promise\<bigint\>` | If no provider |
 | `quoteSendTransaction(tx)` | Estimates the fee for a Tron transaction | `Promise\<{fee: bigint, activationFee: bigint}\>` | If no provider |
 | `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: bigint}\>` | If no provider |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` | - |
@@ -512,6 +549,26 @@ Returns the balance of a specific TRC20 token.
 ```javascript
 const tokenBalance = await readOnlyAccount.getTokenBalance('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')
 console.log('USDt balance:', tokenBalance)
+```
+
+##### `getAllowance(tokenAddress, spender)`
+Returns the current TRC20 allowance granted by this account to a spender.
+
+**Parameters:**
+- `tokenAddress` (string): The TRC20 contract address
+- `spender` (string): The address allowed to spend the token
+
+**Returns:** `Promise\<bigint\>` - Allowance in the token's base units
+
+**Throws:** Error if no TronWeb provider is configured
+
+**Example:**
+```javascript
+const allowance = await readOnlyAccount.getAllowance(
+  'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
+  'TSpenderAddress...'
+)
+console.log('USDt allowance:', allowance)
 ```
 
 ##### `quoteSendTransaction(tx)`
@@ -602,6 +659,16 @@ interface TransferOptions {
   token: string;                      // TRC20 contract address
   recipient: string;                  // Recipient Tron address
   amount: number | bigint;            // Amount in token base units
+}
+```
+
+### ApproveOptions
+
+```typescript
+interface ApproveOptions {
+  token: string;                       // TRC20 contract address
+  spender: string;                     // Address authorized to spend tokens
+  amount: number | bigint;             // New allowance in token base units
 }
 ```
 

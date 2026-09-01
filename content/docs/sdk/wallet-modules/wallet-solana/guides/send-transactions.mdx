@@ -5,7 +5,7 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-This guide explains how to [send native SOL](#send-native-sol), [wait for finality](#wait-for-finality), [sign a transaction without broadcasting](#sign-a-transaction-without-broadcasting), [quote and send a signed transaction](#quote-and-send-a-signed-transaction), [estimate transaction fees](#estimate-transaction-fees), [cap native transaction fees](#cap-native-transaction-fees), [quote or send a TransactionMessage](#quote-or-send-a-transactionmessage), [use dynamic fee rates](#use-dynamic-fee-rates), and [run a complete SOL transfer flow](#complete-example).
+This guide explains how to [send native SOL](#send-native-sol), [wait for finality](#wait-for-finality), [sign a transaction without broadcasting](#sign-a-transaction-without-broadcasting), [quote and send a signed transaction](#quote-and-send-a-signed-transaction), [estimate transaction fees](#estimate-transaction-fees), [cap native transaction fees](#cap-native-transaction-fees), [quote or send a TransactionMessage](#quote-or-send-a-transactionmessage), [use a serialized transaction](#use-a-serialized-transaction), [use dynamic fee rates](#use-dynamic-fee-rates), and [run a complete SOL transfer flow](#complete-example).
 
 <Callout type="warn">
 **BigInt Usage:** Always use `BigInt` (the `n` suffix) for monetary values to avoid precision loss with large numbers.
@@ -118,6 +118,26 @@ console.log('Estimated fee:', quote.fee, 'lamports')
 const result = await account.sendTransaction(txMessage)
 console.log('Transaction hash:', result.hash)
 ```
+
+## Use a Serialized Transaction
+
+Pass a base64-encoded serialized Solana transaction when another service builds the transaction, such as a swap or bridge API. An owned account signs this form before sending it; the serialized transaction's fee payer must be the account address.
+
+<Callout type="warn">
+Treat serialized transactions from another service as untrusted. Before signing or broadcasting one, decode and independently review every instruction, account, amount, and transaction lifetime. WDK checks the fee payer and required signatures, but it does not validate the transaction's intended effects.
+</Callout>
+
+```javascript title="Quote and Sign a Reviewed Serialized Transaction"
+async function quoteAndSignReviewedTransaction(serializedTransaction) {
+  const quote = await account.quoteSendTransaction(serializedTransaction)
+  console.log('Estimated fee:', quote.fee, 'lamports')
+
+  const signedTransaction = await account.signTransaction(serializedTransaction)
+  return { quote, signedTransaction }
+}
+```
+
+A swap or bridge service normally supplies `serializedTransaction`. Call this helper only after your application completes the independent review above. `quoteSendTransaction(serializedTransaction)` only decodes and quotes the compiled message, and `signTransaction(serializedTransaction)` signs without broadcasting. After the same review and an explicit approval step, call `sendTransaction(serializedTransaction)` to sign and broadcast directly, or pass the returned `signedTransaction` to `sendTransaction()` to broadcast the reviewed signed transaction. After this account adds its signature, the transaction must be fully signed; pre-existing signatures may be retained. A malformed serialized transaction causes these operations to throw. `signTransaction()` and `sendTransaction()` also throw when the serialized transaction's fee payer does not match the account address; `quoteSendTransaction()` does not check the fee payer.
 
 ## Use Dynamic Fee Rates
 
