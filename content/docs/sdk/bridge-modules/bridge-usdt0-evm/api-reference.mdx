@@ -54,7 +54,7 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 #### `bridge(options, config?)`
 Bridges tokens to a different blockchain using the USD₮0 protocol.
 
-With a standard EVM account, approve the source-chain bridge spender before calling `bridge()`. If you pass `oftContractAddress`, use the same address as the approval `spender`. Supported ERC-4337 accounts do not need a separate approval call; the protocol bundles an approval and helper call into one UserOperation.
+With a standard EVM account, approve the source-chain bridge spender before calling `bridge()`. If you pass `oftContractAddress`, use the same address as the approval `spender`. Supported ERC-4337 accounts do not need a separate approval call; the protocol bundles an approval and helper call into one UserOperation. On Ethereum mainnet, when the resolved token is USD₮ at `0xdAC17F958D2ee523a2206206994597C13D831ec7`, the protocol queries that ERC-4337 account's allowance for the token and the transaction-value helper spender. If the current allowance and the computed `approveAmount` are both greater than zero, it prepends `approve(spender, 0)`, then `approve(spender, approveAmount)`, then the helper bridge call in the same batch. Standard EVM accounts and every other chain/token path are unchanged.
 
 **Parameters:**
 - `options` (BridgeOptions): Bridge operation options
@@ -118,7 +118,7 @@ console.log('Bridge fee:', result2.bridgeFee)
 #### `quoteBridge(options, config?)`
 Estimates the cost of a bridge operation without executing it.
 
-For standard EVM accounts, some providers estimate the same bridge transaction that `bridge()` sends. If that estimate fails because token allowance is missing, approve the source-chain bridge spender before calling `quoteBridge()`. ERC-4337 quotes include the bundled approval transaction.
+For standard EVM accounts, some providers estimate the same bridge transaction that `bridge()` sends. If that estimate fails because token allowance is missing, approve the source-chain bridge spender before calling `quoteBridge()`. ERC-4337 quotes include the bundled approval transaction. For `WalletAccountReadOnlyEvmErc4337`, `quoteBridge()` uses the same ordered batch as `bridge()`: on Ethereum mainnet for the resolved USD₮ token at `0xdAC17F958D2ee523a2206206994597C13D831ec7`, an existing non-zero allowance and non-zero `approveAmount` produce `approve(spender, 0)`, `approve(spender, approveAmount)`, then the helper bridge call; otherwise the batch is the approval followed by the helper call.
 
 **Parameters:**
 - `options` (BridgeOptions): Bridge operation options (same as bridge method)

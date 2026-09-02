@@ -26,7 +26,7 @@ Each module doc page has subpages: `/usage`, `/configuration`, `/api-reference`
 - Use the official ASCII fallback `USDt` and `USDt0` for code-fence titles, human-readable comments, and display labels inside code fences.
 - Preserve exact case-sensitive values such as `USDT`, `USDT0`, `tron:USDT`, `USDT_TOKEN_ADDRESS`, package names, URLs, and copied provider output.
 - Mark exact copied output with `verbatim-output` only on plain-output fences (`text`, `txt`, `plaintext`, `console`, or `shellsession`); do not use that escape for executable samples or prompts.
-- Treat `USDC` as a different token, never as a spelling variant of USD₮. Verify the route and token address before changing an example.
+- Never rewrite a token from another issuer as a Tether token. Verify the route and token address before changing an example.
 - In the WDK docs repository, run `npm run check:tokens` before finalizing documentation changes.
 
 ### Reference Files

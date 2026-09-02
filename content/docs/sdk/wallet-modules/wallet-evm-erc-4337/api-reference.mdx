@@ -42,7 +42,7 @@ new WalletManagerEvmErc4337(seed, config)
   - `chainId` (number): The blockchain's ID (e.g., 1 for Ethereum mainnet)
   - `provider` (string | Eip1193Provider | Array\<string | Eip1193Provider\>): RPC endpoint URL, EIP-1193 provider instance, or ordered failover list
   - `bundlerUrl` (string): The URL of the bundler service
-  - `safeModulesVersion` (string): Must be `'0.3.0'`, the only Safe modules version supported by beta.16
+  - `safeModulesVersion` (string): Must be `'0.3.0'`, the only Safe modules version supported by beta.17
 
 **Optional common config fields:**
   - `parallel` (boolean): Put each send, sign, or transfer in a fresh random 192-bit nonce-key lane
@@ -120,6 +120,8 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
 </Tab>
 </Tabs>
 
+**Throws:** `ValueError` if `provider` is an empty array.
+
 ### Methods
 
 | Method | Description | Returns | Throws |
@@ -128,7 +130,7 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
 | `isValidSeedPhrase(seedPhrase)` | (static) Checks if a seed phrase is valid | `boolean` | - |
 | `getAccount(index?)` | Returns a wallet account at the specified index | `Promise\<WalletAccountEvmErc4337\>` | - |
 | `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise\<WalletAccountEvmErc4337\>` | - |
-| `getFeeRates()` | Returns current fee rates for transactions | `Promise\<{normal: bigint, fast: bigint}\>` | If no provider |
+| `getFeeRates()` | Returns current fee rates for transactions | `Promise\<{normal: bigint, fast: bigint}\>` | `ProviderRequiredError` if no provider |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` | - |
 
 ### Properties
@@ -204,7 +206,7 @@ Returns current fee rates with ERC-4337 specific multipliers.
 
 **Returns:** `Promise\<{normal: bigint, fast: bigint}\>` - Fee rates in wei
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -274,9 +276,9 @@ const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 | `signTransaction(tx, config?)` | Builds and signs one UserOperation without submitting it | `Promise\<UserOperationV7\>` | If a non-sponsored fee exceeds max or the token paymaster address mismatches |
 | `sendTransaction(tx, config?)` | Builds and sends transactions, or submits a signed UserOperation | `Promise\<{hash: string, fee: bigint}\>` | If a newly built operation exceeds max or the token paymaster address mismatches |
 | `quoteSendTransaction(tx, config?)` | Estimates the fee for transactions or a signed UserOperation | `Promise\<{fee: bigint}\>` | If a newly built operation's token paymaster address mismatches |
-| `transfer(options, config?, txOverrides?)` | Transfers ERC20 tokens via UserOperation | `Promise\<{hash: string, fee: bigint}\>` | If fee meets or exceeds max, or the token paymaster address mismatches |
+| `transfer(options, config?, txOverrides?)` | Transfers ERC20 tokens via UserOperation | `Promise\<{hash: string, fee: bigint}\>` | If fee exceeds max, or the token paymaster address mismatches |
 | `quoteTransfer(options, config?, txOverrides?)` | Estimates the fee for an ERC20 transfer | `Promise\<{fee: bigint}\>` | If the token paymaster address mismatches |
-| `approve(options, txOverrides?)` | Approves a spender to spend ERC20 tokens | `Promise\<{hash: string, fee: bigint}\>` | If a token paymaster address mismatches |
+| `approve(options, txOverrides?)` | Approves a spender to spend ERC20 tokens | `Promise\<{hash: string, fee: bigint}\>` | `ProviderRequiredError`, or `ValueError` when Ethereum USD₮ allowance must be reset |
 | `getBalance()` | Returns the native token balance (in wei) | `Promise\<bigint\>` | - |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise\<bigint\>` | - |
 | `getPaymasterTokenBalance()` | Returns the paymaster token balance | `Promise\<bigint\>` | - |
@@ -287,7 +289,7 @@ const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 | `getUserOperationReceipt(hash)` | Returns a UserOperation receipt | `Promise\<UserOperationReceipt \| null\>` | - |
 | `signTypedData(typedData)` | Signs EIP-712 typed structured data | `Promise\<string\>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies an EIP-712 typed data signature | `Promise\<boolean\>` | - |
-| `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise\<Map\<string, bigint\>\>` | - |
+| `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise\<Record\<string, bigint\>\>` | - |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise\<WalletAccountReadOnlyEvmErc4337\>` | - |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` | - |
 
@@ -341,7 +343,11 @@ Builds and signs one ERC-4337 v0.7 UserOperation without submitting it to the bu
 
 **Returns:** `Promise\<UserOperationV7\>` - A signed UserOperation that can be quoted or submitted later
 
-**Throws:** Error if a non-sponsored operation exceeds `transactionMaxFee`, a raw `nonceKey` is outside `0..2^192-1`, or the token paymaster address returned by the RPC mismatches the configured address
+**Throws:**
+- `MaximumFeeExceededError` if a non-sponsored operation exceeds `transactionMaxFee`.
+- `ValueError` if a raw numeric `nonceKey` is outside `0..2^192-1`.
+- `ConfigurationError` if the override is invalid or the token paymaster address returned by the RPC mismatches the configured address.
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50.
 
 ```javascript title="Sign a UserOperation"
 const signedUserOperation = await account.signTransaction({
@@ -368,7 +374,11 @@ Sends a transaction via UserOperation through the bundler.
 
 **Returns:** `Promise\<{hash: string, fee: bigint}\>` - UserOperation hash and fee
 
-**Throws:** Error if a non-sponsored, newly built operation exceeds `transactionMaxFee`, a raw `nonceKey` is outside `0..2^192-1`, or the token paymaster address returned while building mismatches the configured address
+**Throws:**
+- `MaximumFeeExceededError` if a non-sponsored, newly built operation exceeds `transactionMaxFee`.
+- `ValueError` if a raw numeric `nonceKey` is outside `0..2^192-1`.
+- `ConfigurationError` if the override is invalid or the token paymaster address returned while building mismatches the configured address.
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50 while building or submitting the operation.
 
 When `tx` is a signed `UserOperationV7`, WDK forwards that exact operation to the bundler. It does not rebuild or re-sign it, reapply the current `transactionMaxFee`, call the paymaster RPC, or rerun the paymaster-address check. Only submit an operation produced by the same account after verifying the intended fee-mode and paymaster configuration, and submit it before its nonce becomes stale.
 
@@ -406,7 +416,7 @@ const fastResult = await account.sendTransaction({
 })
 ```
 
-Beta.15 does not reserve sequential nonces locally. With no lane option, sends use the default key-0 lane and must not overlap. `parallel: true` creates a new random lane; `nonceKey` selects a reusable named or raw lane and takes precedence. Operations sharing a lane remain sequential, so wait for inclusion before reusing it. Distinct lanes are unordered; batch dependent transactions into one UserOperation.
+Beta.17 does not reserve sequential nonces locally. With no lane option, sends use the default key-0 lane and must not overlap. `parallel: true` creates a new random lane; `nonceKey` selects a reusable named or raw lane and takes precedence. Operations sharing a lane remain sequential, so wait for inclusion before reusing it. Distinct lanes are unordered; batch dependent transactions into one UserOperation.
 
 ##### `quoteSendTransaction(tx, config?)`
 Estimates the fee for a UserOperation without sending it.
@@ -425,7 +435,9 @@ The cache key contains the transaction but not the per-call fee-mode configurati
 
 **Returns:** `Promise\<{fee: bigint}\>` - Fee estimate
 
-**Throws:** `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison).
+**Throws:**
+- `ConfigurationError` if the override is invalid or the token paymaster address returned by the RPC mismatches the configured address.
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50.
 
 For a signed UserOperation, sponsored mode returns `0n`. Other modes return a 20% buffered native-gas ceiling in wei. In paymaster-token mode, this signed-operation quote is not a token-denominated paymaster charge.
 
@@ -452,9 +464,10 @@ Transfers ERC20 tokens via UserOperation.
 **Returns:** `Promise\<{hash: string, fee: bigint}\>` - UserOperation hash and fee
 
 **Throws:** 
-- Error if fee meets or exceeds `transferMaxFee`
+- `MaximumFeeExceededError` if a non-sponsored fee exceeds `transferMaxFee`; a fee equal to the cap is allowed.
 - Error if insufficient token balance
-- Error if a raw `nonceKey` is outside `0..2^192-1`
+- `ValueError` if a raw numeric `nonceKey` is outside `0..2^192-1`.
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50.
 - `ConfigurationError` if the token paymaster address returned by the RPC mismatches the configured address
 
 **Example:**
@@ -485,7 +498,9 @@ This method does not resolve or reserve a nonce lane. A later transfer using `pa
 
 **Returns:** `Promise\<{fee: bigint}\>` - Fee estimate
 
-**Throws:** `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison).
+**Throws:**
+- `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison).
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50.
 
 **Example:**
 ```javascript
@@ -550,7 +565,11 @@ Approves a spender to spend ERC20 tokens on behalf of the Safe account.
 
 **Returns:** `Promise\<{hash: string, fee: bigint}\>` - Transaction result
 
-**Throws:** `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison).
+**Throws:**
+- `ProviderRequiredError` if the account has no provider.
+- `ValueError` on Ethereum mainnet if USD₮ already has a nonzero allowance for the spender and `amount` is also nonzero. Submit an approval for `0` first.
+- `ConfigurationError` if the UserOperation configuration is invalid or the token paymaster address returned by the RPC mismatches the configured address.
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50.
 
 **Example:**
 ```javascript
@@ -704,15 +723,15 @@ Returns balances for multiple ERC20 tokens in a single call.
 **Parameters:**
 - `tokenAddresses` (string[]): Array of ERC20 token contract addresses
 
-**Returns:** `Promise\<Map\<string, bigint\>\>` - Map of token address to balance in base units
+**Returns:** `Promise\<Record\<string, bigint\>\>` - Record of token addresses to balances in base units
 
 **Example:**
 ```javascript
 const balances = await account.getTokenBalances([
   '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt
-  '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'  // USDC
+  '0x68749665FF8D2d112Fa859AA293F07A622782F38'  // XAUt
 ])
-for (const [address, balance] of balances) {
+for (const [address, balance] of Object.entries(balances)) {
   console.log(`Token ${address}: ${balance}`)
 }
 ```
@@ -849,7 +868,7 @@ const sameAddress = WalletAccountEvmErc4337.predictSafeAddress(
 | `getUserOperationReceipt(hash)` | Returns a UserOperation receipt | `Promise\<UserOperationReceipt \| null\>` | - |
 | `signTypedData(typedData)` | Signs EIP-712 typed structured data | `Promise\<string\>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies an EIP-712 typed data signature | `Promise\<boolean\>` | - |
-| `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise\<Map\<string, bigint\>\>` | - |
+| `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise\<Record\<string, bigint\>\>` | - |
 
 ##### `getAddress()`
 Returns the Safe smart contract wallet address.
@@ -943,9 +962,12 @@ Estimates the fee for a UserOperation.
 **Throws:**
 - Error if simulation fails
 - `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison)
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50
 
 **Example:**
 ```javascript
+import { TransactionError, TransactionErrorReason } from '@tetherto/wdk-wallet'
+
 try {
   const quote = await readOnlyAccount.quoteSendTransaction({
     to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
@@ -953,8 +975,11 @@ try {
   })
   console.log('Estimated fee:', quote.fee)
 } catch (error) {
-  if (error.message.includes('not enough funds')) {
-    console.error('Insufficient paymaster token balance')
+  if (error instanceof TransactionError &&
+      error.reason === TransactionErrorReason.INSUFFICIENT_BALANCE) {
+    console.error('The Safe cannot repay the paymaster')
+  } else {
+    throw error
   }
 }
 ```
@@ -969,7 +994,9 @@ Estimates the fee for an ERC20 token transfer.
 
 **Returns:** `Promise\<{fee: bigint}\>` - Fee estimate
 
-**Throws:** `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison).
+**Throws:**
+- `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison).
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50.
 
 **Example:**
 ```javascript
@@ -1075,15 +1102,15 @@ Returns balances for multiple ERC20 tokens in a single call.
 **Parameters:**
 - `tokenAddresses` (string[]): Array of ERC20 token contract addresses
 
-**Returns:** `Promise\<Map\<string, bigint\>\>` - Map of token address to balance in base units
+**Returns:** `Promise\<Record\<string, bigint\>\>` - Record of token addresses to balances in base units
 
 **Example:**
 ```javascript
 const balances = await readOnlyAccount.getTokenBalances([
   '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt
-  '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'  // USDC
+  '0x68749665FF8D2d112Fa859AA293F07A622782F38'  // XAUt
 ])
-for (const [address, balance] of balances) {
+for (const [address, balance] of Object.entries(balances)) {
   console.log(`Token ${address}: ${balance}`)
 }
 ```
@@ -1130,7 +1157,7 @@ interface EvmErc4337WalletCommonConfig {
   chainId: number;                          // Blockchain ID
   provider: string | Eip1193Provider | Array<string | Eip1193Provider>; // RPC provider or failover list
   bundlerUrl: string;                       // Bundler service URL
-  safeModulesVersion: string;               // Must be '0.3.0' in beta.16
+  safeModulesVersion: string;               // Must be '0.3.0' in beta.17
   parallel?: boolean;                       // Fresh random nonce-key lane per operation
   nonceKey?: number | bigint | string;      // Reusable raw or named uint192 lane key
 }
@@ -1171,7 +1198,7 @@ type EvmErc4337WalletConfig = EvmErc4337WalletCommonConfig &
 
 ### Config Override
 
-The published beta.16 `config` parameter type on `sendTransaction`, `signTransaction`, `quoteSendTransaction`, `transfer`, and `quoteTransfer` allows per-call overrides of gas payment settings:
+The published beta.17 `config` parameter type on `sendTransaction`, `signTransaction`, `quoteSendTransaction`, `transfer`, and `quoteTransfer` allows per-call overrides of gas payment settings:
 
 ```typescript
 type ConfigOverride = Partial<
@@ -1193,7 +1220,7 @@ type ConfigOverride = Partial<
 
 Overrides are shallow-merged with the account configuration, then validated. When switching modes, explicitly clear an inherited opposing flag: sponsorship requires `isSponsored: true` and `useNativeCoins: false`; native-coin mode requires `isSponsored: false` and `useNativeCoins: true`; paymaster-token mode requires both flags to be `false`. The merged configuration must also contain the URL, address, token, or policy fields required by the selected mode.
 
-At runtime, beta.16 additionally honors `parallel` and `nonceKey` per call for `signTransaction()`, `sendTransaction()`, and `transfer()`. Those two fields are missing from the published per-call declarations, so object literals containing them fail TypeScript excess-property checks even though JavaScript calls work. Construction-level `EvmErc4337WalletCommonConfig` includes both fields and is the typed path in this release. `quoteSendTransaction()` and `quoteTransfer()` do not select a lane.
+At runtime, beta.17 additionally honors `parallel` and `nonceKey` per call for `signTransaction()`, `sendTransaction()`, and `transfer()`. Those two fields are missing from the published per-call declarations, so object literals containing them fail TypeScript excess-property checks even though JavaScript calls work. Construction-level `EvmErc4337WalletCommonConfig` includes both fields and is the typed path in this release. `quoteSendTransaction()` and `quoteTransfer()` do not select a lane.
 
 In token-paymaster mode, every path that builds a UserOperation validates a non-empty paymaster address returned by the RPC against `paymasterAddress`. A case-insensitive mismatch throws `ConfigurationError` before the operation is returned or submitted.
 
@@ -1329,11 +1356,13 @@ interface UserOperationReceipt {
 ### ConfigurationError
 
 ```typescript
-class ConfigurationError extends Error {
+class ConfigurationError extends ValueError {
   // Thrown when the wallet configuration is invalid, including missing
   // gas-payment fields or an unexpected token paymaster address from the RPC
 }
 ```
+
+`ConfigurationError` is part of the shared WDK error taxonomy and can also be caught as `ValueError`.
 
 ### FeeRates
 

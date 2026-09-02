@@ -3,11 +3,11 @@ title: Handle Errors
 description: Handle Spark transaction and connection failures, plus fees and disposal.
 ---
 
-This guide explains how to [handle transaction errors](#transaction-errors), [handle connection errors](#connection-errors), and apply [best practices](#best-practices) for fees and secure cleanup.
+This guide explains how to [handle transaction errors](#transaction-errors), [handle connection errors](#connection-errors), handle unsupported operations and missing transfers, and apply [best practices](#best-practices) for fees and secure cleanup.
 
 ## Transaction Errors
 
-Operations such as [`account.sendTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference), [`account.transfer()`](/sdk/wallet-modules/wallet-spark/api-reference), [`account.payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference), and [`account.withdraw()`](/sdk/wallet-modules/wallet-spark/api-reference) can throw. Wrap each call in `try/catch` and branch on `message` or error type when your runtime allows it:
+Operations such as [`account.sendTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference), [`account.transfer()`](/sdk/wallet-modules/wallet-spark/api-reference), [`account.payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference), and [`account.withdraw()`](/sdk/wallet-modules/wallet-spark/api-reference) can throw. Wrap each call in `try/catch` and use public WDK error classes (and `ProviderError.reason` for SparkScan failures) instead of matching message text:
 
 ```javascript title="Handle Transaction Errors"
 try {
@@ -37,17 +37,65 @@ try {
 
 ## Connection Errors
 
-Spark relies on network access through the Spark SDK. Failures may surface as timeouts, refused connections, or generic SDK errors. Handle them around any async wallet call:
+When SparkScan returns a non-success HTTP response, it throws `ProviderError`. Inspect `error.reason` instead of matching response messages. SparkScan maps HTTP 401 to `UNAUTHORIZED`, 403 to `FORBIDDEN`, 408 and 504 to `REQUEST_TIMEOUT`, other 5xx responses to `INTERNAL_SERVER_ERROR`, and other non-2xx responses to `NETWORK_ERROR`.
 
-```javascript title="Handle Connection Errors"
+```javascript title="Handle SparkScan Provider Errors"
+import { ProviderError, ProviderErrorReason } from '@tetherto/wdk-wallet'
+
 try {
   const balance = await account.getBalance()
   console.log('Balance:', balance, 'satoshis')
 } catch (error) {
-  if (error.message.includes('timeout') || error.message.includes('ECONNREFUSED')) {
-    console.error('Network error: check connectivity and Spark service status')
+  if (!(error instanceof ProviderError)) {
+    throw error
+  }
+
+  switch (error.reason) {
+    case ProviderErrorReason.REQUEST_TIMEOUT:
+      console.error('SparkScan request timed out')
+      break
+    case ProviderErrorReason.UNAUTHORIZED:
+    case ProviderErrorReason.FORBIDDEN:
+      console.error('Check SparkScan credentials and endpoint access')
+      break
+    case ProviderErrorReason.INTERNAL_SERVER_ERROR:
+    case ProviderErrorReason.NETWORK_ERROR:
+      console.error('Check SparkScan availability and connectivity')
+      break
+    default:
+      throw error
+  }
+}
+```
+
+## Unsupported Operations and Missing Transfers
+
+Spark cannot produce standalone signed transaction payloads, so [`account.signTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference) always throws `UnsupportedOperationError`. Spark accounts are addressed by index, so [`wallet.getAccountByPath()`](/sdk/wallet-modules/wallet-spark/api-reference) throws the same error. [`account.getTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference) throws `NoSuchElementError` when Spark returns no transfer for the requested ID. Use `instanceof` checks and rethrow unknown errors:
+
+```javascript title="Handle Unsupported Operations and Missing Transfers"
+import { NoSuchElementError, UnsupportedOperationError } from '@tetherto/wdk-wallet'
+
+try {
+  await account.signTransaction({
+    to: 'spark1...',
+    value: 1000000
+  })
+} catch (error) {
+  if (error instanceof UnsupportedOperationError) {
+    console.error('Use account.sendTransaction() for Spark transfers')
   } else {
-    console.error('Operation failed:', error.message)
+    throw error
+  }
+}
+
+try {
+  const transaction = await account.getTransaction('transfer-id')
+  console.log('Transfer status:', transaction.finality)
+} catch (error) {
+  if (error instanceof NoSuchElementError) {
+    console.error('No Spark transfer was found for this ID')
+  } else {
+    throw error
   }
 }
 ```
