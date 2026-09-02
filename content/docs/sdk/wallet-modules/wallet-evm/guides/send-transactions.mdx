@@ -68,7 +68,7 @@ async function signReviewedTransaction(transaction) {
 ```
 
 <Callout type="info">
-`signTransaction()` returns signed raw transaction hex and does not broadcast it. In `1.0.0-beta.18`, `sendTransaction(signedTransaction)` quotes the signed transaction, enforces `transactionMaxFee`, and passes those exact bytes to `eth_sendRawTransaction`; it does not repopulate or re-sign them. Submit only after an independent review and explicit approval step. Use the object form of `sendTransaction()` when WDK should populate, sign, and broadcast the transaction.
+`signTransaction()` returns signed raw transaction hex and does not broadcast it. In `1.0.0-beta.18`, `sendTransaction(signedTransaction)` checks `transactionMaxFee` against a provider-current gas and fee-rate estimate, then passes those exact bytes to `eth_sendRawTransaction`; it does not repopulate or re-sign them. The cap is not an upper bound on the gas price or maximum fee encoded in the signed transaction. Submit only after independently decoding and reviewing its gas limit and fee fields together with the recipient, value, data, chain ID, and nonce. Use the object form of `sendTransaction()` when WDK should populate, sign, and broadcast the transaction.
 </Callout>
 
 ```javascript title="Submit an Approved Signed Transaction"
@@ -82,7 +82,7 @@ async function submitApprovedTransaction(signedTransaction, reviewSignedTransact
 }
 ```
 
-`reviewSignedTransaction` is an application-supplied callback. It must decode the signed transaction, show or otherwise verify its recipient, value, data, chain ID, nonce, and fee fields, and return `{ approved: true }` only after explicit approval. Any other result fails closed without broadcasting.
+`reviewSignedTransaction` is an application-supplied callback. It must decode the signed transaction, show or otherwise verify its recipient, value, data, chain ID, nonce, gas limit, and fee fields, and return `{ approved: true }` only after explicit approval. Any other result fails closed without broadcasting.
 
 ## Estimate Transaction Fees
 

@@ -189,17 +189,14 @@ Powered by [`@tetherto/wdk-mcp-toolkit`](https://github.com/tetherto/wdk-mcp-too
 - **Extensible** - Register custom tools alongside built-in ones using standard MCP SDK patterns
 - **Secure by Design** - Seed phrases stay local, `close()` wipes keys from memory, and read/write tool separation lets you control access
 
-## Supported Chains
+## Built-in Chain Identifiers
+
+The pinned release exports identifiers for 13 built-in chains. Common identifiers used across these docs include:
 
 | Chain | Identifier |
 | --- | --- |
 | Ethereum | `ethereum` |
-| Polygon | `polygon` |
 | Arbitrum | `arbitrum` |
-| Optimism | `optimism` |
-| Base | `base` |
-| Avalanche | `avalanche` |
-| BNB Chain | `bnb` |
 | Plasma | `plasma` |
 | Bitcoin | `bitcoin` |
 | Solana | `solana` |
@@ -208,7 +205,7 @@ Powered by [`@tetherto/wdk-mcp-toolkit`](https://github.com/tetherto/wdk-mcp-too
 | Tron | `tron` |
 
 <Callout type="info">
-You can register **any** blockchain name - the `CHAINS` constants are for convenience only. For custom chains, register tokens manually with `registerToken()`.
+Read the package's `CHAINS` export when your application needs the complete pinned registry. You can register **any** blockchain name - the constants are for convenience only. For custom chains, register tokens manually with `registerToken()`.
 </Callout>
 
 <Cards>
@@ -1315,8 +1312,8 @@ server.getRegisteredTokens('ethereum')  // ['USDT']
 Register additional tokens with `registerToken()`:
 
 ```javascript
-server.registerToken('ethereum', 'DAI', {
-  address: '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+server.registerToken('ethereum', 'WETH', {
+  address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
   decimals: 18
 })
 ```
@@ -1793,7 +1790,7 @@ The command has built-in definitions for 13 chains and 4 protocol modules. When 
 
 | Module | Registers | Default |
 | --- | --- | --- |
-| [`@tetherto/wdk-wallet-evm`](/sdk/wallet-modules/wallet-evm) | Ethereum, Arbitrum, Polygon, Optimism, Base, Avalanche, BNB, Plasma, Spark | Ethereum + Arbitrum enabled |
+| [`@tetherto/wdk-wallet-evm`](/sdk/wallet-modules/wallet-evm) | Configured built-in EVM chains | Ethereum + Arbitrum enabled |
 | [`@tetherto/wdk-wallet-btc`](/sdk/wallet-modules/wallet-btc) | Bitcoin | Enabled |
 | [`@tetherto/wdk-wallet-solana`](/sdk/wallet-modules/wallet-solana) | Solana | Not enabled by default |
 | [`@tetherto/wdk-wallet-ton`](/sdk/wallet-modules/wallet-ton) | TON | Not enabled by default |
@@ -1802,6 +1799,8 @@ The command has built-in definitions for 13 chains and 4 protocol modules. When 
 | [`@tetherto/wdk-protocol-bridge-usdt0-evm`](/sdk/bridge-modules/bridge-usdt0-evm) | Bridge tools (Ethereum, Arbitrum) | -- |
 | [`@tetherto/wdk-protocol-lending-aave-evm`](/sdk/lending-modules/lending-aave-evm) | Lending tools (Ethereum) | -- |
 | [`@tetherto/wdk-protocol-fiat-moonpay`](/sdk/fiat-modules/fiat-moonpay) | Fiat tools (Ethereum) | Requires `MOONPAY_API_KEY` plus a non-sensitive `MOONPAY_SECRET_KEY=unused` sentinel in the released CLI; URLs remain unsigned |
+
+Use the package's `CHAINS` export as the complete accepted-identifier registry for the installed release; see [Built-in Chain Identifiers](/ai/mcp-toolkit#built-in-chain-identifiers).
 
 <Callout type="info">
 Missing packages are silently skipped. Install only the modules you need and `serve` will pick them up. For chains or protocols **not** in the built-in registry, use a [custom config file](#custom-config-file).
@@ -1926,7 +1925,7 @@ Control `serve` behavior through environment variables:
 | Variable | Required | Default | Description |
 | --- | --- | --- | --- |
 | `WDK_SEED` | No | -- | BIP-39 seed phrase. If omitted, only pricing tools are available |
-| `WDK_CHAINS` | No | `ethereum,arbitrum,bitcoin` | Comma-separated list of chains to enable |
+| `WDK_CHAINS` | No | `ethereum,arbitrum,bitcoin` | Comma-separated identifiers from the package's `CHAINS` export |
 | `WDK_MCP_ELICITATION` | No | `true` | Set to `"false"` for programmatic agents that cannot handle confirmation dialogs |
 | `WDK_RPC_\<CHAIN\>` | No | Built-in defaults | Override the RPC endpoint for a chain (e.g. `WDK_RPC_ETHEREUM=https://my-rpc.com`) |
 | `WDK_CONFIG` | No | -- | Path to a `wdk.config.json` file for custom chains and protocols |
@@ -2131,7 +2130,7 @@ OpenClaw makes use of artificial intelligence and machine learning technologies.
 
 ## x402
 URL: https://docs.wdk.tether.io/ai/x402
-Description: Accept and make instant USD₮ payments over HTTP using WDK self-custodial wallets
+Description: Accept and make instant USD₮0 payments over HTTP using WDK self-custodial wallets
 
 ## What Is x402?
 
@@ -2235,14 +2234,18 @@ This guide walks through three things:
 3. **Server with Self-Hosted Facilitator** - Run verification and settlement in-process using a WDK wallet, with no external dependencies
 
 <Callout type="warn">
-The x402 integration described on this page uses community-developed modules and third-party facilitator services. Tether does not endorse, operate, or assume legal or financial responsibility for any third-party facilitator. You are solely responsible for using any service.
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+
+The x402 integration described on this page also uses third-party facilitator services. Tether does not operate or guarantee any third-party facilitator. You are solely responsible for using any service.
 
 Artificial intelligence and blockchain transactions carry inherent risks and limitations.
 </Callout>
 
 ### Recommended Chains
 
-x402 with WDK works on any EVM chain where USD₮0 is deployed (see full list at [docs.usdt0.to](https://docs.usdt0.to/technical-documentation/deployments)). However, we recommend **Plasma** and **Stable** for x402 payments. Both chains are purpose-built for USD₮ transfers with near-instant finality and near-zero fees. Agents only need to hold USD₮.
+x402 with WDK works on any EVM chain where USD₮0 is deployed (see full list at [docs.usdt0.to](https://docs.usdt0.to/technical-documentation/deployments)). However, we recommend **Plasma** and **Stable** for x402 payments. Both chains are purpose-built for USD₮0 transfers with near-instant finality and near-zero fees. Agents only need to hold USD₮0.
 
 | Chain | CAIP-2 | RPC | USD₮0 Contract | Explorer |
 | --- | --- | --- | --- | --- |
@@ -2314,9 +2317,9 @@ console.log("Response:", data);
 Your seed phrase controls your funds. Never commit it to version control. Use environment variables or a secrets manager.
 </Callout>
 
-### Getting USD₮0 on Plasma or Stable
+### Getting USD₮0 on Plasma or Stable [#getting-usdt0-on-plasma-or-stable]
 
-Before you can make x402 payments, your wallet needs USD₮0 on the target chain. If you hold USD₮ on Ethereum (or any supported EVM chain), bridge it using `@tetherto/wdk-protocol-bridge-usdt0-evm`.
+Before you can make x402 payments, your wallet needs USD₮0 on the target chain. If you hold a supported source token—for example, USD₮ on Ethereum—bridge it using `@tetherto/wdk-protocol-bridge-usdt0-evm`.
 
 <Callout type="info">
 The bridge uses [LayerZero](https://layerzero.network) for secure cross-chain transfers. USD₮ on Ethereum is automatically converted to USD₮0 on the destination chain.
@@ -2398,7 +2401,7 @@ USD₮0 arrives on the destination chain within a few minutes.
 </Steps>
 
 <Callout type="info">
-You can bridge from any of 25+ supported EVM chains, not just Ethereum. Point your wallet at the source chain's RPC and use the [USD₮ token address](https://tether.to/es/supported-protocols/) on that chain. See the full [bridge module documentation](/sdk/bridge-modules/bridge-usdt0-evm).
+The module supports multiple source chains. Point your wallet at the source chain's RPC, then resolve the exact token variant and address from [`getSupportedTokens()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference) or the current [USD₮0 deployments](https://docs.usdt0.to/technical-documentation/deployments). Do not reuse the Ethereum address on another chain.
 </Callout>
 
 ***
@@ -2408,7 +2411,7 @@ You can bridge from any of 25+ supported EVM chains, not just Ethereum. Point yo
 Your server delegates verification and settlement to a hosted facilitator. You never interact with the chain directly.
 
 <Callout type="info">
-**About the Semantic facilitator:** [Semantic](https://docs.semanticpay.io) operates a public USD₮-enabled x402 facilitator at `https://x402.semanticpay.io`. This is a third-party service not operated, endorsed, or guaranteed by Tether.
+**About the Semantic facilitator:** [Semantic](https://docs.semanticpay.io) operates a public USD₮0-enabled x402 facilitator at `https://x402.semanticpay.io`. This is a third-party service not operated, endorsed, or guaranteed by Tether.
 
 The x402 protocol is an open standard. Anyone can build and host their own facilitator. For the API reference, see the [Semantic facilitator docs](https://docs.semanticpay.io/endpoints).
 
@@ -2608,7 +2611,7 @@ const evmSigner = new WalletAccountEvmX402Facilitator(walletAccount);
 ```
 
 <Callout type="info">
-The facilitator wallet and the seller wallet can use different seed phrases. The facilitator pays gas; the seller receives USD₮. The facilitator wallet must have enough native token to pay gas.
+The facilitator wallet and the seller wallet can use different seed phrases. The facilitator pays gas; the seller receives USD₮0. The facilitator wallet must have enough native token to pay gas.
 </Callout>
 
 </Step>
@@ -2698,7 +2701,7 @@ app.use(
 - [x402-usdt0 Demo](https://github.com/SemanticPay/x402-usdt0-demo) - Full working buyer + seller demo
 - [WDK EVM Wallet Module](/sdk/wallet-modules/wallet-evm) - WDK EVM wallet documentation
 - [USD₮0 Deployments](https://docs.usdt0.to/technical-documentation/deployments) - Contract addresses on all chains
-- [EIP-3009 Specification](https://eips.ethereum.org/EIPS/eip-3009) - The authorization standard enabling gasless USD₮ transfers
+- [EIP-3009 Specification](https://eips.ethereum.org/EIPS/eip-3009) - The authorization standard enabling gasless USD₮0 transfers
 
 ***
 
@@ -4323,7 +4326,7 @@ Use the lowercase registry key shown by these commands with `--token` on `get ba
 | --- | --- | --- |
 | `network` | Yes | Must name an existing built-in or custom network. |
 | `token` | Yes | Registry key. Use lowercase letters, numbers, and hyphens; the first character must be a letter or number. |
-| `symbol` | Yes | Non-empty display symbol, such as `DAI`. |
+| `symbol` | Yes | Non-empty display symbol, such as `WETH`. |
 | `decimals` | Yes | Integer from `0` through `24`; used to convert decimal amounts to base units. |
 | `isNative` | Yes | `true` uses the network's native transfer path; `false` uses a token contract or mint. |
 | `address` | For non-native tokens | Non-empty contract or mint address. Optional for a native token. |
@@ -4343,35 +4346,35 @@ Only `indexerSlug`, `moonpaySlug`, and `bitfinexSlug` are retained inside `metad
 
 ## Add A Custom Token
 
-Create a file named `dai-on-ethereum.json`:
+Create a file named `weth-on-ethereum.json`:
 
-```json title="dai-on-ethereum.json"
+```json title="weth-on-ethereum.json"
 {
   "network": "ethereum",
-  "token": "dai",
-  "symbol": "DAI",
+  "token": "weth",
+  "symbol": "WETH",
   "decimals": 18,
   "isNative": false,
-  "address": "0x6B175474E89094C44Da98b954EedeAC495271d0F"
+  "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
 }
 ```
 
 Add the entry:
 
 ```bash title="Terminal"
-wdk token add ./dai-on-ethereum.json
+wdk token add ./weth-on-ethereum.json
 ```
 
 You can also pass the JSON inline:
 
 ```bash title="Terminal"
-wdk token add '{"network":"ethereum","token":"dai","symbol":"DAI","decimals":18,"isNative":false,"address":"0x6B175474E89094C44Da98b954EedeAC495271d0F"}'
+wdk token add '{"network":"ethereum","token":"weth","symbol":"WETH","decimals":18,"isNative":false,"address":"0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"}'
 ```
 
 Verify the stored entry:
 
 ```bash title="Terminal"
-wdk token info --network ethereum --token dai
+wdk token info --network ethereum --token weth
 ```
 
 <Callout type="info">
@@ -4402,10 +4405,10 @@ wdk token delete --network ethereum --token usdt
 
 ## Delete A Custom Entry
 
-Delete the DAI entry created above:
+Delete the WETH entry created above:
 
 ```bash title="Terminal"
-wdk token delete --network ethereum --token dai
+wdk token delete --network ethereum --token weth
 ```
 
 `token delete` removes only custom entries. It rejects deletion of a built-in entry when no custom override exists. Deleting a custom network also removes every custom token stored under that network.
@@ -5639,7 +5642,7 @@ npm run android # Android Emulator
 
 **Multi-Token & Chain Support**
 * **BTC**: Native SegWit transfers on Bitcoin network
-* **USD₮**: Gasless transactions on EVM (Ethereum, Polygon, Arbitrum), native transfers on TON and Tron
+* **USD₮ / USD₮0**: Gasless transactions on EVM (USD₮ on Ethereum; USD₮0 on Polygon and Arbitrum), native USD₮ transfers on TON and Tron
 * **XAU₮**: Gasless transactions on Ethereum network
 
 **Wallet Management**
@@ -6576,7 +6579,7 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 ### February 18, 2026
 
 **What's New**
-- **[x402 Payments](/ai/x402)**: New guide for accepting and making instant USD₮ payments over HTTP using WDK self-custodial wallets. Covers the x402 protocol, buyer integration with `@tetherto/wdk-wallet-evm`, seller setup with hosted and self-hosted facilitators, and bridging USD₮ to Plasma and Stable chains.
+- **[x402 Payments](/ai/x402)**: New guide for accepting and making instant USD₮0 payments over HTTP using WDK self-custodial wallets. Covers the x402 protocol, buyer integration with `@tetherto/wdk-wallet-evm`, seller setup with hosted and self-hosted facilitators, and bridging USD₮ into USD₮0 on Plasma and Stable.
 
 ---
 
@@ -6674,7 +6677,7 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 - **wdk-core**: Added support for 24-word seed phrases via `WDK.getRandomSeedPhrase(24)`
 - **indexer-api**:
   - Added new `/api/v1/chains` endpoint to list supported blockchains and tokens
-  - Added XAU₮ support for Plasma network
+  - Added XAU₮0 support for Plasma (API token key: `xaut`)
 
 **Changes**
 - **wallet-btc docs**:
@@ -7231,7 +7234,7 @@ The below faucets are for testnets. The USD₮ tokens and other tokens available
 *   **USD₮ Test Tokens (Sepolia)**: [Pimlico Faucet](https://dashboard.pimlico.io/test-erc20-faucet)
 *   **USD₮ Test Tokens (Sepolia)**: [Candide Faucet](https://dashboard.candide.dev/faucet)
 *   **Ethereum (Sepolia)**: [Google Cloud Web3 Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)
-*   **Aave Test Tokens (Sepolia)**: [Aave Faucet](https://app.aave.com/faucet/) — get test USD₮, DAI and other tokens for DeFi testing
+*   **Aave Test Tokens (Sepolia)**: [Aave Faucet](https://app.aave.com/faucet/) — get test USD₮ and other tokens for DeFi testing
 *   **TON Testnet**: [Testgiver Bot](https://t.me/testgiver_ton_bot)
 *   **Bitcoin Testnet**: [CoinFaucet](https://coinfaucet.eu/en/btc-testnet/)
 
@@ -8592,7 +8595,7 @@ The account must not be read-only. Read-only accounts cannot call [`bridge()`](/
 
 ## Supported chains
 
-Bridge operations use EVM source chains listed in the [API reference](/sdk/bridge-modules/bridge-usdt0-evm/api-reference). Destination routes include the same EVM set where USD₮0 contracts are deployed, plus Solana (EID 30168), TON (EID 30343), and TRON (EID 30420).
+Bridge operations use EVM source chains listed in the [API reference](/sdk/bridge-modules/bridge-usdt0-evm/api-reference). A configured EVM destination must have a matching USD₮0 or XAU₮0 contract for the selected token. Solana (EID 30168), TON (EID 30343), and TRON (EID 30420) are also configured as destinations. Use `getSupportedTokens()` to discover configured EVM token descriptors; it does not return these non-EVM destination-only entries. For every route, call `quoteBridge()` to verify the exact source-token and destination pair.
 
 **Source chains (EVM, `targetChain` keys)**
 
@@ -15194,13 +15197,13 @@ You can require both a chain and value limit using [`wdk.registerPolicy()`](/sdk
 
 ```typescript title="Network And Value Gate"
 wdk.registerPolicy({
-  id: 'base-small-sends',
-  name: 'Base small sends',
+  id: 'ethereum-small-sends',
+  name: 'Ethereum small sends',
   scope: 'project',
   wallet: 'ethereum',
   rules: [
     {
-      name: 'allow-base-small-send',
+      name: 'allow-ethereum-small-send',
       operation: 'sendTransaction',
       action: 'ALLOW',
       conditions: [
@@ -15208,7 +15211,7 @@ wdk.registerPolicy({
           const tx = args[0] as { chainId?: number | string; value?: bigint } | undefined
           const value = tx?.value
 
-          return String(tx?.chainId) === '8453' &&
+          return String(tx?.chainId) === '1' &&
             typeof value === 'bigint' &&
             value <= 1000000000000000n
         }
@@ -18039,7 +18042,7 @@ Use the Aave lending module to supply, withdraw, borrow, repay, and read account
 
 ## Supported Networks
 
-Works on Aave V3 supported EVM networks (e.g., Ethereum, Arbitrum, Base, Optimism, Polygon, Avalanche, BNB, Celo, Gnosis, Linea, Scroll, Soneium, Sonic, ZkSync, Metis). A working RPC provider and correct token addresses are required.
+Works on Aave V3 supported EVM networks (e.g., Ethereum, Arbitrum, Optimism, Polygon, Avalanche, BNB, Celo, Gnosis, Linea, Scroll, Soneium, Sonic, ZkSync, Metis). A working RPC provider and correct token addresses are required.
 
 ## Wallet Compatibility
 
@@ -18384,7 +18387,7 @@ const result = await aaveAA.supply({ token: '0xdAC17F958D2ee523a2206206994597C13
 
 ## Network Support
 
-Aave V3 spans multiple EVM chains (Ethereum, Arbitrum, Base, Optimism, Polygon, Avalanche, BNB, Celo, Gnosis, Linea, Scroll, Soneium, Sonic, ZkSync, Metis). Ensure the correct RPC and token addresses for the target chain.
+Aave V3 spans multiple EVM chains, including Ethereum, Arbitrum, Optimism, Polygon, Avalanche, BNB, Celo, Gnosis, Linea, Scroll, Soneium, Sonic, ZkSync, and Metis. Ensure the correct RPC and token addresses for the target chain.
 
 ```javascript
 // Ethereum Mainnet
@@ -18776,23 +18779,14 @@ Use the Morpho lending community module to interact with Morpho Vault V2 earn ta
 
 ## Supported Targets
 
-The module supports curated Ethereum mainnet presets and explicit Morpho target configuration.
+The module supports curated Ethereum mainnet presets and explicit Morpho target configuration. The package exports `MORPHO_VAULT_PRESETS` and `MORPHO_MARKET_PRESETS`; inspect those maps for the complete preset registry shipped with your installed version.
 
-### Earn Presets
+### Tether-Aligned Presets
 
-| Preset | Vault |
-|--------|-------|
-| `sky-money-usdt-savings` | `sky.money USDT Savings V2` |
-| `steakhouse-prime-instant` | Steakhouse Prime Instant V2 |
-
-### Borrow Presets
-
-| Preset | Collateral |
-|--------|------------|
-| `susds` | sUSDS |
-| `wsteth` | wstETH |
-| `wbtc` | WBTC |
-| `xaut` | XAU₮ |
+| Operation | Preset | Target |
+|-----------|--------|--------|
+| Earn | `sky-money-usdt-savings` | sky.money USD₮ Savings |
+| Borrow | `xaut` | XAU₮ collateral |
 
 ## Wallet Compatibility
 
@@ -18859,7 +18853,7 @@ Example:
 const morpho = new MorphoProtocolEvm(account, {
   presets: {
     earn: 'sky-money-usdt-savings',
-    borrow: 'wsteth'
+    borrow: 'xaut'
   }
 })
 ```
@@ -19261,7 +19255,7 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 const morpho = new MorphoProtocolEvm(account, {
   presets: {
     earn: 'sky-money-usdt-savings',
-    borrow: 'wsteth'
+    borrow: 'xaut'
   }
 })
 ```
@@ -19283,34 +19277,37 @@ The wallet account must include a provider. Read-only accounts can read position
 
 Built-in presets target Ethereum mainnet USD₮ earn and borrow flows.
 
+The package exports frozen preset maps. Use them as the complete registry for the installed package rather than copying a static list into your integration:
+
+```javascript title="Inspect the installed preset registry"
+import {
+  MORPHO_MARKET_PRESETS,
+  MORPHO_VAULT_PRESETS
+} from '@morpho-org/wdk-protocol-lending-morpho-evm'
+
+console.log(Object.keys(MORPHO_VAULT_PRESETS))
+console.log(Object.keys(MORPHO_MARKET_PRESETS))
+```
+
+Selected Tether-family presets from version `1.0.5` are shown below. See the package's [released preset source](https://github.com/morpho-org/sdks/blob/15c622bbdfb841d5cd65d1d1ff080ecd1649437a/packages/wdk-protocol-lending-morpho-evm/src/morpho-presets.ts) for the pinned registry.
+
 ```javascript title="Use built-in presets"
 const morpho = new MorphoProtocolEvm(account, {
   presets: {
-    earn: 'steakhouse-prime-instant',
-    borrow: 'wbtc'
+    earn: 'sky-money-usdt-savings',
+    borrow: 'xaut'
   }
 })
 ```
 
-Borrow presets:
-
-| Preset | Chain ID | Market ID | Collateral | LLTV |
-|--------|----------|-----------|------------|------|
-| `susds` | `1` | `0x3274643db77a064abd3bc851de77556a4ad2e2f502f4f0c80845fa8f909ecf0b` | sUSDS | 96.5% |
-| `wsteth` | `1` | `0xe7e9694b754c4d4f7e21faf7223f6fa71abaeb10296a4c43a54a7977149687d2` | wstETH | 86% |
-| `wbtc` | `1` | `0xa921ef34e2fc7a27ccc50ae7e4b154e16c9799d3387076c421423ef52ac4df99` | WBTC | 86% |
-| `xaut` | `1` | `0xb7843fe78e7e7fd3106a1b939645367967d1f986c2e45edb8932ad1896450877` | XAU₮ | 77% |
-
-Earn presets:
-
-| Preset | Chain ID | Vault Address | Vault |
-|--------|----------|---------------|-------|
-| `sky-money-usdt-savings` | `1` | `0x23f5E9c35820f4baB695Ac1F19c203cC3f8e1e11` | `sky.money USDT Savings V2` |
-| `steakhouse-prime-instant` | `1` | `0xbeef003C68896c7D2c3c60d363e8d71a49Ab2bf9` | Steakhouse Prime Instant V2 |
+| Operation | Preset | Chain ID | Target ID | Target |
+|-----------|--------|----------|-----------|--------|
+| Earn | `sky-money-usdt-savings` | `1` | `0x23f5E9c35820f4baB695Ac1F19c203cC3f8e1e11` | sky.money USD₮ Savings |
+| Borrow | `xaut` | `1` | `0xb7843fe78e7e7fd3106a1b939645367967d1f986c2e45edb8932ad1896450877` | XAU₮ collateral, 77% LLTV |
 
 ## Explicit Targets
 
-Use explicit targets when you need a vault or market outside the built-in presets.
+Use explicit targets when you want to configure a vault address or market directly instead of selecting it by preset name.
 
 ```javascript title="Use explicit Morpho targets"
 const morpho = new MorphoProtocolEvm(account, {
@@ -19445,7 +19442,7 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 const morpho = new MorphoProtocolEvm(account, {
   presets: {
     earn: 'sky-money-usdt-savings',
-    borrow: 'wsteth'
+    borrow: 'xaut'
   }
 })
 ```
@@ -20279,23 +20276,14 @@ CoinGecko uses asset IDs such as `bitcoin`, `ethereum`, and `tether-gold`. Ticke
 ```javascript title="Add custom symbols"
 const client = new CoingeckoPricingClient({
   coinIds: {
-    PEPE: 'pepe',
-    SHIB: 'shiba-inu'
+    WETH: 'weth'
   }
 })
 
-const pepeUsd = await client.getCurrentPrice('PEPE', 'USD')
+const wethUsd = await client.getCurrentPrice('WETH', 'USD')
 ```
 
-You can also override a built-in mapping:
-
-```javascript title="Override a default symbol"
-const client = new CoingeckoPricingClient({
-  coinIds: {
-    BTC: 'wrapped-bitcoin'
-  }
-})
-```
+Supplying a key that already exists in the built-in map replaces that symbol's default CoinGecko ID. Validate any replacement against CoinGecko before using it in production.
 
 ## Provider Failover
 
@@ -20563,7 +20551,7 @@ The client throws when `from` is not in its `coinIds` map:
 ```javascript title="Add missing symbols"
 const client = new CoingeckoPricingClient({
   coinIds: {
-    PEPE: 'pepe'
+    WETH: 'weth'
   }
 })
 ```
@@ -21186,7 +21174,7 @@ console.log('Total fee (wei):', result.fee)
 ```
 
 <Callout type="info">
-Token addresses must match the chain your account uses (for example, mainnet USD₮ addresses differ from Arbitrum).
+Token addresses must match the chain your account uses (for example, Ethereum USD₮ and Arbitrum USD₮0 use different contract addresses).
 </Callout>
 
 ## Next Steps
@@ -21691,30 +21679,9 @@ The method maps a successful receipt to `completed`, a reverted receipt to `fail
 getSupportedChains(): Promise<SwidgeSupportedChain[]>
 ```
 
-Returns a static list defined by the 0.1.0 package source:
+Returns the static chain list bundled with version `0.1.0`.
 
-| Chain | Chain id | Native token |
-|---|---:|---|
-| Abstract | `2741` | ETH |
-| Arbitrum One | `42161` | ETH |
-| Avalanche C-Chain | `43114` | AVAX |
-| Base | `8453` | ETH |
-| Berachain | `80094` | BERA |
-| BNB Smart Chain | `56` | BNB |
-| Ethereum | `1` | ETH |
-| HyperEVM | `999` | HYPE |
-| Ink | `57073` | ETH |
-| Linea | `59144` | ETH |
-| Mantle | `5000` | MNT |
-| Monad | `143` | MON |
-| OP Mainnet | `10` | ETH |
-| Plasma | `9745` | ETH |
-| Polygon | `137` | POL |
-| Scroll | `534352` | ETH |
-| Sonic | `146` | S |
-| Tempo | `4217` | ETH |
-| Unichain | `130` | ETH |
-| World Chain | `480` | ETH |
+Consume the returned `SwidgeSupportedChain[]` when building a chain selector instead of copying the inventory into application code. Each entry contains the chain id, display name, and native-token symbol for one network supported by the pinned package.
 
 This method does not call 0x or prove that a requested token pair has live liquidity.
 
@@ -21910,9 +21877,9 @@ The constructor checks only that `apiKey` is truthy and `chainId` is not nullish
 
 Create one `ZeroExProtocol` instance per chain and bind it to an account on that chain:
 
-```javascript title="Configure Base"
-const zeroEx = new ZeroExProtocol(baseAccount, {
-  chainId: 8453,
+```javascript title="Configure Ethereum"
+const zeroEx = new ZeroExProtocol(ethereumAccount, {
+  chainId: 1,
   apiKey: process.env.ZERO_EX_API_KEY
 })
 ```
@@ -22260,7 +22227,6 @@ Common `toChain` aliases include:
 |-------|-------|
 | `ethereum` | Ethereum |
 | `arbitrum` | Arbitrum |
-| `base` | Base |
 | `optimism` | Optimism |
 | `polygon` | Polygon |
 | `bsc` | BNB Smart Chain |
@@ -22532,15 +22498,18 @@ When `account` is omitted, `config.provider` is required for `quoteSwidge()`. Ac
 Pass a config object to `swidge(options, config)` to override fee caps or execution settings for one operation.
 
 ```javascript
+const ETHEREUM_USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+const ARBITRUM_USDT0 = '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9'
+
 const route = {
-  fromToken: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-  toToken: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  fromToken: ETHEREUM_USDT,
+  toToken: ARBITRUM_USDT0,
   toChain: 'arbitrum',
-  fromTokenAmount: 10_000_000n
+  fromTokenAmount: 100_000_000n
 }
 
 await swidge.swidge(route, {
-  maxProtocolFeeBps: 20,
+  maxProtocolFeeBps: 50,
   maxNetworkFeeBps: 75
 })
 ```
@@ -22675,11 +22644,15 @@ Use returned chain and token identifiers when building route forms.
 Call `quoteSwidge()` before execution so users can review the expected output and fees.
 
 ```javascript
+const ETHEREUM_USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+const ARBITRUM_USDT0 = '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9'
+const ETHEREUM_WETH = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
+
 const route = {
-  fromToken: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-  toToken: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  fromToken: ETHEREUM_USDT,
+  toToken: ARBITRUM_USDT0,
   toChain: 'arbitrum',
-  fromTokenAmount: 10_000_000n,
+  fromTokenAmount: 100_000_000n,
   slippage: 0.01
 }
 
@@ -22690,14 +22663,16 @@ console.log('Minimum output:', quote.toTokenAmountMin)
 console.log('Fees:', quote.fees)
 ```
 
+The example uses the exact Ethereum USD₮ and Arbitrum USD₮0 contract addresses. Resolve a different route through token discovery instead of reusing either address on another chain.
+
 When sending to another account, set `recipient` to its complete EVM address. If omitted, the module uses the bound account address.
 
 For same-chain swaps, omit `toChain` and provide the destination token on the source chain.
 
 ```javascript
 const quote = await swidge.quoteSwidge({
-  fromToken: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-  toToken: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+  fromToken: ETHEREUM_USDT,
+  toToken: ETHEREUM_WETH,
   fromTokenAmount: 10_000_000n
 })
 ```
@@ -23208,9 +23183,9 @@ For direct browser SSE, provide a scoped SSE token with `sseToken` or `getSseTok
 | `nativeAssets` | `Record<string, string>` | Native asset overrides by source chain. |
 | `tokenDecimals` | `Record<string, number>` | Token decimal overrides by chain-qualified asset key. |
 
-EVM token sources need token contract addresses. The package includes common USD₮ source addresses, but production wallets should pass their own allowlist.
+EVM token sources need token contract addresses. The package includes common Tether-family source addresses, but production wallets should pass their own allowlist.
 
-```javascript title="Configure EVM USDt source token"
+```javascript title="Configure Arbitrum USDt0 source token"
 const orchestra = new Orchestra(arbitrumAccount, {
   sourceChain: 'arbitrum',
   apiKey: process.env.FLASHNET_API_KEY,
@@ -23220,14 +23195,16 @@ const orchestra = new Orchestra(arbitrumAccount, {
 })
 ```
 
-Spark tokens other than BTC need Spark token identifiers:
+The address is Arbitrum USD₮0. Orchestra uses the legacy machine key `arbitrum:USDT` for this asset, so preserve that key exactly.
+
+Spark tokens other than BTC need Spark token identifiers. Replace the placeholder key and value below with the exact provider-returned symbol and identifier:
 
 ```javascript title="Configure Spark token identifiers"
 const orchestra = new Orchestra(sparkAccount, {
   sourceChain: 'spark',
   apiKey: process.env.FLASHNET_API_KEY,
   sparkTokenIdentifiers: {
-    USDB: 'btkn1...'
+    TOKEN: 'btkn1...'
   }
 })
 ```
@@ -23345,9 +23322,9 @@ const orchestra = new Orchestra(spark, {
 })
 ```
 
-EVM token sources need token contract addresses. Common USD₮ addresses are built in, but production wallets should pass their own allowlist.
+EVM token sources need token contract addresses. Common Tether-family addresses are built in, but production wallets should pass their own allowlist.
 
-```javascript title="Create Orchestra for Arbitrum USDt source routes"
+```javascript title="Create Orchestra for Arbitrum USDt0 source routes"
 const arbitrumOrchestra = new Orchestra(arbitrum, {
   sourceChain: 'arbitrum',
   apiKey: process.env.FLASHNET_API_KEY,
@@ -23356,6 +23333,8 @@ const arbitrumOrchestra = new Orchestra(arbitrum, {
   }
 })
 ```
+
+The address is Arbitrum USD₮0. Orchestra uses the legacy machine key `arbitrum:USDT` for this asset, so preserve that key exactly.
 
 ## Make a first quote
 
@@ -24316,7 +24295,7 @@ import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 import RhinofiProtocol from '@rhino.fi/wdk-protocol-swidge-rhinofi'
 
 const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
-  provider: 'https://arb1.arbitrum.io/rpc'
+  provider: 'https://ethereum-rpc.publicnode.com'
 })
 
 const rhinofi = new RhinofiProtocol(account, {
@@ -24324,6 +24303,9 @@ const rhinofi = new RhinofiProtocol(account, {
   maxNetworkFeeBps: 50,
   maxProtocolFeeBps: 30
 })
+
+const ETHEREUM_USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+const AVALANCHE_USDT = '0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7'
 ```
 
 ## Discover Chains and Tokens
@@ -24331,7 +24313,7 @@ const rhinofi = new RhinofiProtocol(account, {
 ```javascript
 const chains = await rhinofi.getSupportedChains()
 const tokens = await rhinofi.getSupportedTokens({
-  fromChain: 'ARBITRUM'
+  fromChain: 'ETHEREUM'
 })
 ```
 
@@ -24341,11 +24323,11 @@ The module reads live Rhino.fi chain and token config. The source chain must be 
 
 ```javascript
 const quote = await rhinofi.quoteSwidge({
-  fromToken: 'USDT',
-  toToken: 'USDT',
-  toChain: 'BASE',
+  fromToken: ETHEREUM_USDT,
+  toToken: AVALANCHE_USDT,
+  toChain: 'AVALANCHE',
   recipient: '0xRecipient...',
-  fromTokenAmount: 1_000_000n
+  fromTokenAmount: 100_000_000n
 })
 
 console.log('Expected output:', quote.toTokenAmount)
@@ -24353,19 +24335,23 @@ console.log('Minimum output:', quote.toTokenAmountMin)
 console.log('Fees:', quote.fees)
 ```
 
+This route bridges USD₮ from Ethereum to Avalanche. Token addresses are chain-specific; use the exact address returned by the provider's current config for each side of a different route.
+
 Use `toTokenAmount` instead of `fromTokenAmount` for exact-output routes when supported by the provider route.
 
 ## Execute a Route
 
-After the user confirms the quote, call `swidge()`.
+<Callout type="warn">
+`quoteSwidge()` is indicative only. `swidge()` does not reuse that response: it calls `prepareBridge()` and executes with the fresh internal quote. The configured fee caps apply to mapped network and protocol fees, but they do not lock the output amount, approval spender, or transaction payload. The package does not expose a second-confirmation hook for the fresh response, so confirm that this execution model fits your application's risk requirements before calling `swidge()`.
+</Callout>
 
 ```javascript
 const result = await rhinofi.swidge({
-  fromToken: 'USDT',
-  toToken: 'USDT',
-  toChain: 'BASE',
+  fromToken: ETHEREUM_USDT,
+  toToken: AVALANCHE_USDT,
+  toChain: 'AVALANCHE',
   recipient: '0xRecipient...',
-  fromTokenAmount: 1_000_000n
+  fromTokenAmount: 100_000_000n
 })
 
 console.log('Operation ID:', result.id)
@@ -24937,14 +24923,17 @@ For a bound account, the source sender comes from `account.getAddress()`. `recip
 
 Without an account, `recipient` supplies both the source sender and destination recipient:
 
-```javascript
+```javascript title="Quote Ethereum USDt to Arbitrum WETH"
+const ETHEREUM_USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+const ARBITRUM_WETH = '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1'
+
 const quoteOnly = new SymbiosisProtocol(undefined, {
   chain: 'Ethereum'
 })
 
 const quote = await quoteOnly.quoteSwidge({
-  fromToken: 'USDT',
-  toToken: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
+  fromToken: ETHEREUM_USDT,
+  toToken: ARBITRUM_WETH,
   toChain: 'Arbitrum One',
   recipient: '0xRecipient...',
   fromTokenAmount: 100_000_000n
@@ -25122,9 +25111,11 @@ const symbiosis = new SymbiosisProtocol(bitcoinAccount, {
 Use the token symbol `BTC` as the source token and a destination recipient in the destination chain's address format:
 
 ```javascript title="Bitcoin to Arbitrum WETH"
+const ARBITRUM_WETH = '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1'
+
 const quote = await symbiosis.quoteSwidge({
   fromToken: 'BTC',
-  toToken: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
+  toToken: ARBITRUM_WETH,
   toChain: 'Arbitrum One',
   recipient: '0xRecipient...',
   fromTokenAmount: 50_000n
@@ -25135,7 +25126,7 @@ const quote = await symbiosis.quoteSwidge({
 try {
   const result = await symbiosis.swidge({
     fromToken: 'BTC',
-    toToken: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
+    toToken: ARBITRUM_WETH,
     toChain: 'Arbitrum One',
     recipient: '0xRecipient...',
     fromTokenAmount: 50_000n
@@ -25245,13 +25236,16 @@ Prefer the exact address returned by `getSupportedTokens()` over a symbol when i
 You can run discovery and quotes before any wallet exists, for example to render prices in an onboarding flow:
 
 ```javascript title="Quote-only provider"
+const ETHEREUM_USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+const ARBITRUM_WETH = '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1'
+
 const quoteOnly = new SymbiosisProtocol(undefined, {
   chain: 'Ethereum'
 })
 
 const quote = await quoteOnly.quoteSwidge({
-  fromToken: 'USDT',
-  toToken: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
+  fromToken: ETHEREUM_USDT,
+  toToken: ARBITRUM_WETH,
   toChain: 'Arbitrum One',
   recipient: '0xRecipient...',
   fromTokenAmount: 100_000_000n
@@ -25385,9 +25379,12 @@ Complete [Get Started](/sdk/swidge-modules/swidge-symbiosis/guides/get-started):
 The same options object drives both the quote and the execution:
 
 ```javascript title="Route options"
+const ETHEREUM_USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+const ARBITRUM_WETH = '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1'
+
 const options = {
-  fromToken: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-  toToken: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
+  fromToken: ETHEREUM_USDT,
+  toToken: ARBITRUM_WETH,
   toChain: 'Arbitrum One',
   recipient: '0xRecipient...',
   fromTokenAmount: 100_000_000n,
@@ -25632,10 +25629,13 @@ Use the returned chain IDs, names, and token identifiers to build selectors, the
 
 ## Quote an exact-input route
 
-```javascript
+```javascript title="Quote Ethereum USDt to Arbitrum WETH"
+const ETHEREUM_USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+const ARBITRUM_WETH = '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1'
+
 const options = {
-  fromToken: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-  toToken: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
+  fromToken: ETHEREUM_USDT,
+  toToken: ARBITRUM_WETH,
   toChain: 'Arbitrum One',
   recipient: '0xRecipient...',
   fromTokenAmount: 100_000_000n,
@@ -25713,7 +25713,9 @@ const symbiosis = new SymbiosisProtocol(account, {
 
 For Bitcoin, configure a refund address before requesting execution:
 
-```javascript
+```javascript title="Execute Bitcoin to Arbitrum WETH"
+const ARBITRUM_WETH = '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1'
+
 const symbiosis = new SymbiosisProtocol(bitcoinAccount, {
   chain: 'Bitcoin',
   refundAddress: 'bc1qRefund...'
@@ -25721,7 +25723,7 @@ const symbiosis = new SymbiosisProtocol(bitcoinAccount, {
 
 const result = await symbiosis.swidge({
   fromToken: 'BTC',
-  toToken: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
+  toToken: ARBITRUM_WETH,
   toChain: 'Arbitrum One',
   recipient: '0xRecipient...',
   fromTokenAmount: 50_000n
@@ -25753,14 +25755,17 @@ The module also maps an HTTP `404` to `pending`. A newly submitted operation and
 
 You can construct the provider without an account for a quote:
 
-```javascript
+```javascript title="Quote Ethereum USDt to Arbitrum WETH"
+const ETHEREUM_USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+const ARBITRUM_WETH = '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1'
+
 const symbiosis = new SymbiosisProtocol(undefined, {
   chain: 'Ethereum'
 })
 
 const quote = await symbiosis.quoteSwidge({
-  fromToken: 'USDT',
-  toToken: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
+  fromToken: ETHEREUM_USDT,
+  toToken: ARBITRUM_WETH,
   toChain: 'Arbitrum One',
   recipient: '0xRecipient...',
   fromTokenAmount: 100_000_000n
@@ -28063,8 +28068,8 @@ This guide explains how to [install the package](#1-install-the-package), [creat
 *   **[Node.js](https://nodejs.org/)**: version 20.19.0 or higher. Since Wallet BTC beta.11, `@bitcoinerlab/descriptors` 3.1.7 sets this minimum.
 *   **[npm](https://www.npmjs.com/)**: usually comes with Node.js.
 
-```bash title="Install @tetherto/wdk-wallet-btc"
-npm install @tetherto/wdk-wallet-btc
+```bash title="Install wallet packages"
+npm install @tetherto/wdk-wallet-btc @tetherto/wdk-wallet@1.0.0-beta.17
 ```
 
 ## 2. Create a Wallet
@@ -31888,7 +31893,7 @@ const polygonConfig = {
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F' // USDt on Polygon
+    address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F' // USDt0 on Polygon
   },
   transferMaxFee: 100000
 }
@@ -31905,7 +31910,7 @@ const arbitrumConfig = {
   paymasterAddress: '0x777777777777AeC03fd955926DbF81597e66834C',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9' // USDt on Arbitrum
+    address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9' // USDt0 on Arbitrum
   },
   transferMaxFee: 100000
 }
@@ -31941,9 +31946,9 @@ const plasmaConfig = {
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb' // USDt
+    address: '0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb' // USDt0
   },
-  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDt if 6 decimals)
+  transferMaxFee: 100000 // 100,000 paymaster token units (e.g., 0.1 USDt0 if 6 decimals)
 }
 ```
 
@@ -32103,8 +32108,8 @@ This guide explains how to [install the package](#1-install-the-package), [creat
 *   **[Node.js](https://nodejs.org/)**: version 18 or higher.
 *   **[npm](https://www.npmjs.com/)**: usually comes with Node.js.
 
-```bash title="Install @tetherto/wdk-wallet-evm-erc-4337"
-npm install @tetherto/wdk-wallet-evm-erc-4337
+```bash title="Install wallet packages"
+npm install @tetherto/wdk-wallet-evm-erc-4337 @tetherto/wdk-wallet@1.0.0-beta.17
 ```
 
 ## 2. Create a Wallet
@@ -33207,7 +33212,7 @@ Builds, signs, and sends an EVM transaction object, or broadcasts a signed raw t
   - `chainId` (number | bigint, optional): Network chain ID
   - `authorizationList` (AuthorizationLike[], optional): ERC-7702 authorization list for type 4 transactions
 
-For a signed raw transaction string, WDK quotes the transaction, enforces `transactionMaxFee`, and passes the exact supplied hex to `eth_sendRawTransaction`. It does not repopulate or re-sign the transaction. Review the decoded recipient, value, data, chain ID, nonce, and fee fields before submitting externally supplied bytes.
+For a signed raw transaction string, WDK checks `transactionMaxFee` against a provider-current gas and fee-rate estimate, then passes the exact supplied hex to `eth_sendRawTransaction`. It does not repopulate or re-sign the transaction. The cap is not an upper bound on the gas price or maximum fee encoded in those signed bytes. Review the decoded recipient, value, data, chain ID, nonce, gas limit, and fee fields before submitting externally supplied bytes.
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
 
@@ -34258,7 +34263,7 @@ try {
 
 ### Transaction Max Fee
 
-The `transactionMaxFee` option sets a maximum fee limit for native EVM `sendTransaction()` operations and provider-backed `signTransaction()` operations. This is separate from `transferMaxFee`, which applies to ERC-20 token transfers. Offline signing without a provider cannot estimate fees, so the fee-cap check does not run there.
+The `transactionMaxFee` option rejects native EVM `sendTransaction()` operations and provider-backed `signTransaction()` operations when WDK's estimated fee exceeds the configured value. For a signed raw transaction, the check uses current provider gas and fee-rate estimates; it does not cap the fee fields encoded in the signed bytes, so decode and review those fields independently. This is separate from `transferMaxFee`, which applies to ERC-20 token transfers. Offline signing without a provider cannot estimate fees, so the fee-cap check does not run there.
 
 **Type:** `number | bigint` (optional)
 **Unit:** Wei (1 ETH = 1000000000000000000 Wei)
@@ -34320,7 +34325,7 @@ const plasmaConfig = {
   provider: 'https://plasma.drpc.org',
 }
 
-// Stable (uses USDt as native gas token)
+// Stable (uses USDt0 as its native gas token)
 // No need for ERC-4337 paymaster/bundler setup.
 const stableConfig = {
   provider: 'https://rpc.stable.xyz',
@@ -34511,7 +34516,7 @@ Resolution means the provider accepted the broadcast; it does not prove inclusio
 
 ## Manage Fee Limits
 
-Set `transactionMaxFee` to cap native `sendTransaction()` costs and provider-backed `signTransaction()` costs. Offline signing without a provider cannot estimate fees, so the fee-cap check does not run there. Set `transferMaxFee` separately to cap ERC-20 `transfer()` costs. Retrieve current network rates with [`getFeeRates()`](/sdk/wallet-modules/wallet-evm/api-reference) to make informed decisions.
+Set `transactionMaxFee` to reject native `sendTransaction()` and provider-backed `signTransaction()` operations when WDK's estimated fee exceeds the configured value. For signed raw transactions, that check uses current provider gas and fee-rate estimates rather than capping the fee fields encoded in the signed bytes; decode and review those fields independently. Offline signing without a provider cannot estimate fees, so the fee-cap check does not run there. Set `transferMaxFee` separately to cap ERC-20 `transfer()` costs. Retrieve current network rates with [`getFeeRates()`](/sdk/wallet-modules/wallet-evm/api-reference) to make informed decisions.
 
 ```javascript title="Fee Management"
 const feeRates = await wallet.getFeeRates()
@@ -34576,8 +34581,8 @@ Before you begin, ensure you have the following installed:
 
 ### Install Package
 
-```bash title="Install @tetherto/wdk-wallet-evm"
-npm install @tetherto/wdk-wallet-evm
+```bash title="Install wallet packages"
+npm install @tetherto/wdk-wallet-evm @tetherto/wdk-wallet@1.0.0-beta.17
 ```
 
 ## 2. Create a Wallet
@@ -34797,7 +34802,7 @@ async function signReviewedTransaction(transaction) {
 ```
 
 <Callout type="info">
-`signTransaction()` returns signed raw transaction hex and does not broadcast it. In `1.0.0-beta.18`, `sendTransaction(signedTransaction)` quotes the signed transaction, enforces `transactionMaxFee`, and passes those exact bytes to `eth_sendRawTransaction`; it does not repopulate or re-sign them. Submit only after an independent review and explicit approval step. Use the object form of `sendTransaction()` when WDK should populate, sign, and broadcast the transaction.
+`signTransaction()` returns signed raw transaction hex and does not broadcast it. In `1.0.0-beta.18`, `sendTransaction(signedTransaction)` checks `transactionMaxFee` against a provider-current gas and fee-rate estimate, then passes those exact bytes to `eth_sendRawTransaction`; it does not repopulate or re-sign them. The cap is not an upper bound on the gas price or maximum fee encoded in the signed transaction. Submit only after independently decoding and reviewing its gas limit and fee fields together with the recipient, value, data, chain ID, and nonce. Use the object form of `sendTransaction()` when WDK should populate, sign, and broadcast the transaction.
 </Callout>
 
 ```javascript title="Submit an Approved Signed Transaction"
@@ -34811,7 +34816,7 @@ async function submitApprovedTransaction(signedTransaction, reviewSignedTransact
 }
 ```
 
-`reviewSignedTransaction` is an application-supplied callback. It must decode the signed transaction, show or otherwise verify its recipient, value, data, chain ID, nonce, and fee fields, and return `{ approved: true }` only after explicit approval. Any other result fails closed without broadcasting.
+`reviewSignedTransaction` is an application-supplied callback. It must decode the signed transaction, show or otherwise verify its recipient, value, data, chain ID, nonce, gas limit, and fee fields, and return `{ approved: true }` only after explicit approval. Any other result fails closed without broadcasting.
 
 ## Estimate Transaction Fees
 
@@ -39964,8 +39969,8 @@ This guide explains how to [install the package](#1-install-the-package), [creat
 
 Install [@tetherto/wdk-wallet-spark](https://www.npmjs.com/package/@tetherto/wdk-wallet-spark):
 
-```bash title="Install @tetherto/wdk-wallet-spark"
-npm install @tetherto/wdk-wallet-spark
+```bash title="Install wallet packages"
+npm install @tetherto/wdk-wallet-spark @tetherto/wdk-wallet@1.0.0-beta.17
 ```
 
 <Callout type="info">
@@ -45700,7 +45705,7 @@ Returns the remaining amount of a TRC20 token that `spender` can spend on behalf
 **Example:**
 ```javascript
 const allowance = await account.getAllowance(tokenAddress, spenderAddress)
-console.log('Current USDt allowance:', allowance)
+console.log('Current token allowance:', allowance)
 ```
 
 ##### `getTransactionReceipt(hash)`
@@ -46678,21 +46683,21 @@ The quote uses current chain parameters, the sender's available resources, and t
 
 ## Approve a Bounded Allowance
 
-To authorize a contract to spend USD₮ or another TRC20 token, read the current allowance first and submit an approval only when the bounded value needs to change. `approve()` replaces the allowance for the token and spender pair; it does not add to the current value. Avoid unnecessary unlimited approvals.
+To authorize a contract to spend USD₮, read the current allowance first and submit an approval only when the bounded value needs to change. `approve()` replaces the allowance for the token and spender pair; it does not add to the current value. Avoid unnecessary unlimited approvals.
 
 <Callout type="warning">
 `approve()` signs and broadcasts a TRC20 contract call. Verify the token and spender addresses and choose the smallest amount required for the intended use. When changing a nonzero allowance to another nonzero value, reset it to `0` and wait for successful finality before setting the new value; otherwise a spender can race the allowance change. Revoke the allowance after use when it is no longer needed.
 </Callout>
 
 ```javascript title="Read, reset, and change a bounded USDt allowance"
-const token = process.env.TRON_TOKEN_ADDRESS
+const token = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'
 const spender = process.env.TRON_SPENDER_ADDRESS
 
-if (!token || !spender) {
-  throw new Error('Set TRON_TOKEN_ADDRESS and TRON_SPENDER_ADDRESS before approving')
+if (!spender) {
+  throw new Error('Set TRON_SPENDER_ADDRESS before approving')
 }
 
-const desiredAllowance = 1_000_000n // USDt base units; choose for the intended use
+const desiredAllowance = 1_000_000n // 1 USDt; choose for the intended use
 const currentAllowance = await account.getAllowance(token, spender)
 console.log('Current allowance:', currentAllowance)
 
@@ -49604,21 +49609,9 @@ A blockchain indexer continuously monitors and organizes blockchain transactions
 
 ## Supported Chains and Tokens
 
-The WDK Indexer currently supports the following blockchain networks and tokens:
+The WDK Indexer publishes its current blockchain and token inventory through `GET /api/v1/chains`. Query this endpoint at runtime instead of copying a static list into your integration because coverage can change independently of the documentation.
 
-| Blockchain | Supported Tokens |
-| --- | --- |
-| Ethereum Mainnet | USD₮, XAU₮, USA₮ |
-| TON | USD₮, XAU₮ |
-| TRON | USD₮ |
-| Arbitrum | USD₮ |
-| Sepolia | USD₮ |
-| Plasma | USD₮, XAU₮ |
-| Polygon | USD₮ |
-| Bitcoin | BTC |
-| Spark | BTC |
-
-To get the most up-to-date list of supported chains and their tokens, use the [`/api/v1/chains`] endpoint.
+The response uses lowercase route keys such as `usdt` and `xaut`. Preserve those exact values in API paths. In reader-facing text, label the contract variant deployed on the selected chain—for example, USD₮ on Ethereum and USD₮0 on Arbitrum or Polygon, with the same distinction for XAU₮ and XAU₮0.
 
 <Callout type="info">
 **Need support for a new chain or token?** Submit a request using the form below and our team will review it.
