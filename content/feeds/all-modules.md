@@ -105,6 +105,7 @@ On-ramp and off-ramp functionality for fiat currency integration.
 |--------|----------|-------------|---------------|
 | [`@tetherto/wdk-protocol-fiat-moonpay`](https://github.com/tetherto/wdk-protocol-fiat-moonpay) | MoonPay | MoonPay integration for fiat on-ramp | [Docs](/sdk/fiat-modules/fiat-moonpay/) |
 | [`@transak/wdk-protocol-fiat-transak`](https://github.com/Transak/wdk-protocol-fiat-transak) | Transak | Transak integration for fiat on-ramp and off-ramp | [Docs](/sdk/fiat-modules/fiat-transak/) |
+| [`wdk-protocol-fiat-peer`](https://www.npmjs.com/package/wdk-protocol-fiat-peer) | Peer | Base USDC off-ramp with live fiat estimates and unsigned transaction preparation | [README](https://github.com/zkp2p/wdk-protocol-fiat-peer#readme) |
 
 ## Community Modules
 
@@ -132,3 +133,4 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 | [`@swapdk/wdk-protocol-swidge-swapdk`](https://www.npmjs.com/package/@swapdk/wdk-protocol-swidge-swapdk) | Swidge | Routes through SwapDK | [README](https://github.com/Swap-DK/wdk-protocol-bridges-swapdk#readme) |
 | [`@gobob/wdk-protocol-swidge-gateway`](https://www.npmjs.com/package/@gobob/wdk-protocol-swidge-gateway) | Swidge | Routes through the BOB Gateway | [README](https://github.com/bob-collective/wdk-protocol-swidge-gateway#readme) |
 | [`@transak/wdk-protocol-fiat-transak`](https://github.com/Transak/wdk-protocol-fiat-transak) | Fiat | Transak integration for fiat on-ramp and off-ramp | [Docs](/sdk/fiat-modules/fiat-transak/) |
+| [`wdk-protocol-fiat-peer`](https://www.npmjs.com/package/wdk-protocol-fiat-peer) | Fiat | Peer off-ramp for Base USDC with live fiat estimates and unsigned transaction preparation | [README](https://github.com/zkp2p/wdk-protocol-fiat-peer#readme) |
