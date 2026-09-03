@@ -23974,15 +23974,15 @@ Community modules are developed and maintained independently by third-party cont
 Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
 </Callout>
 
-The Rhino.fi Swidge module lets WDK EVM accounts quote and execute cross-chain swaps and bridges through Rhino.fi using the shared `SwidgeProtocol` interface.
+The Rhino.fi Swidge module lets WDK EVM, Solana, and Tron accounts quote and execute cross-chain swaps and bridges through Rhino.fi using the shared `SwidgeProtocol` interface.
 
-Use this module when an app needs authenticated Rhino.fi quotes, EVM source-chain execution, live token discovery, status polling, and WDK-standard fee and status shapes.
+Use this module when an app needs authenticated Rhino.fi quotes, source-chain execution, live token discovery, status polling, and WDK-standard fee and status shapes.
 
 ## Features
 
 - **Unified route interface**: Implements `quoteSwidge()`, `swidge()`, `getSwidgeStatus()`, `getSupportedChains()`, and `getSupportedTokens()`.
 - **Rhino.fi routing**: Quotes and executes cross-chain swap and bridge routes supported by Rhino.fi.
-- **EVM source support**: Signs source-chain deposits through `@tetherto/wdk-wallet-evm` accounts, including ERC-4337 accounts.
+- **Source account support**: Signs deposits through WDK EVM accounts, including ERC-4337 accounts, plus Solana and Tron accounts.
 - **Authenticated API calls**: Uses a Rhino.fi API key for quotes, execution, discovery, and status.
 - **Config caching**: Caches Rhino.fi chain and token config to reduce repeated API calls.
 - **Fee controls**: Applies optional `maxNetworkFeeBps` and `maxProtocolFeeBps` limits before execution.
@@ -23996,18 +23996,18 @@ Call `getSupportedChains()` and `getSupportedTokens()` at runtime because Rhino.
 | Ecosystem | Source-chain support | Notes |
 |-----------|----------------------|-------|
 | EVM | Supported | Uses WDK EVM accounts to sign deposits. |
-| Solana | Planned | Destination support depends on Rhino.fi route availability. |
+| Solana | Supported | Uses WDK Solana accounts to sign deposits. |
+| Tron | Supported | Uses WDK Tron accounts to sign approvals and deposits. |
 | TON | Planned | Destination support depends on Rhino.fi route availability. |
-| Tron | Planned | Destination support depends on Rhino.fi route availability. |
 
 ## Execution Model
 
-`swidge()` submits the source-chain deposit after any required ERC-20 approval. It resolves when the deposit transaction is broadcast, while cross-chain settlement continues asynchronously.
+`swidge()` submits the source-chain deposit after any required token approval. It resolves when the deposit transaction is broadcast, while cross-chain settlement continues asynchronously.
 
 Use `getSwidgeStatus(result.id)` to track the route to completion.
 
 <Callout type="warn">
-`swidge()` can approve tokens and submit an EVM deposit transaction. Show the quote, fee breakdown, recipient, source token, destination token, and destination chain before calling it.
+`swidge()` can approve tokens and submit a source-chain deposit. Show the quote, fee breakdown, recipient, source token, destination token, and destination chain before calling it.
 </Callout>
 
 ## Next Steps
@@ -24065,14 +24065,19 @@ new RhinofiProtocol(account?, config)
 |---------|----------------------|
 | `WalletAccountEvm` | Discovery, quote, status, and execution. |
 | `WalletAccountEvmErc4337` | Discovery, quote, status, and execution through a smart account. |
-| `WalletAccountReadOnlyEvm` | Discovery and quotes for routes that do not need signing. |
-| `undefined` | Discovery and account-independent setup when route context allows it. |
+| `WalletAccountSolana` | Discovery, quote, status, and execution from Solana. |
+| `WalletAccountTron` | Discovery, quote, status, and execution from Tron. |
+| `WalletAccountReadOnlyEvm` | Discovery, quotes, and status lookups without signing. |
+| `WalletAccountReadOnlyEvmErc4337` | Discovery, quotes, and status lookups without signing. |
+| `WalletAccountReadOnlySolana` | Discovery, quotes, and status lookups without signing. |
+| `WalletAccountReadOnlyTron` | Discovery, quotes, and status lookups without signing. |
+| `undefined` | Discovery and status lookups; quotes and execution require an account. |
 
 ## Methods
 
 | Method | Description |
 |--------|-------------|
-| `quoteSwidge(options)` | Returns a non-binding Rhino.fi route quote. |
+| `quoteSwidge(options)` | Returns a Rhino.fi route quote and the raw provider quote. |
 | `swidge(options, config?)` | Executes a route and returns when the source deposit is broadcast. |
 | `getSwidgeStatus(id, options?)` | Maps Rhino.fi operation state to WDK `SwidgeStatus`. |
 | `getSupportedChains()` | Returns chains supported by Rhino.fi config. |
@@ -24081,21 +24086,21 @@ new RhinofiProtocol(account?, config)
 ### `quoteSwidge(options)`
 
 ```typescript
-quoteSwidge(options: SwidgeOptions): Promise<SwidgeQuote>
+quoteSwidge(options: SwidgeOptions): Promise<SwidgeQuote & { quote: object }>
 ```
 
-The source chain is derived from the account when required by the route.
+The source chain is derived from the account when required by the route. Pass the returned `quote` field to `swidge()` when execution must use this exact provider quote.
 
 ### `swidge(options, config?)`
 
 ```typescript
 swidge(
   options: SwidgeOptions,
-  config?: RhinofiProtocolConfig
+  config?: SwidgeCallConfig
 ): Promise<SwidgeResult>
 ```
 
-Requires a writable WDK EVM account. The method submits the source-chain deposit and returns the operation ID and source transaction hash.
+Requires a supported writable WDK source account. The method submits the source-chain deposit and returns the operation ID and source transaction hash.
 
 ### `getSwidgeStatus(id, options?)`
 
@@ -24119,6 +24124,23 @@ type RhinofiProtocolConfig = {
   configTtlMs?: number
 }
 ```
+
+## Per-Call Config Type
+
+```typescript
+type DepositSubmission =
+  | { type: 'transaction'; txHash: string }
+  | { type: 'user-operation'; userOpHash: string }
+
+type SwidgeCallConfig = {
+  maxNetworkFeeBps?: number | bigint
+  maxProtocolFeeBps?: number | bigint
+  quote?: object
+  onDepositSubmitted?: (submission: DepositSubmission) => void
+}
+```
+
+Use `quote` to execute the exact provider quote returned by `quoteSwidge()`. `onDepositSubmitted` reports that the deposit has left the device before a settled transaction hash is available; callback errors do not abort execution.
 
 ## Status Mapping
 
@@ -24200,7 +24222,7 @@ new RhinofiProtocol(account?, config)
 
 | Parameter | Description |
 |-----------|-------------|
-| `account` | Optional WDK EVM account. Writable accounts can execute. Read-only accounts can quote and discover support. |
+| `account` | Optional WDK EVM, Solana, or Tron account. Writable accounts can execute. Read-only accounts can quote, check status, and discover support. Without an account, status and discovery remain available. |
 | `config` | Required `RhinofiProtocolConfig`. Must include `apiKey`. |
 
 ## Configuration Options
@@ -24213,16 +24235,19 @@ new RhinofiProtocol(account?, config)
 | `maxProtocolFeeBps` | `number \| bigint` | Rejects execution when protocol fees exceed this many basis points of the input amount. |
 | `configTtlMs` | `number` | Milliseconds to cache Rhino.fi config and swap-token lists. Defaults to `60000`; set `0` to always fetch fresh. |
 
-## Per-Call Overrides
+## Per-Call Configuration
 
-Pass config to `swidge(options, config)` to override fee caps for a single execution.
+Pass config to `swidge(options, config)` to override fee caps for one execution. Set `quote` to the raw `quote` field returned by `quoteSwidge()` when execution must use that exact provider quote.
 
 ```javascript
 await rhinofi.swidge(options, {
   maxNetworkFeeBps: 40,
-  maxProtocolFeeBps: 25
+  maxProtocolFeeBps: 25,
+  quote: quote.quote
 })
 ```
+
+Set `onDepositSubmitted` when the app must distinguish a failed attempt from a deposit that left the device but does not yet have a settled transaction hash. Do not automatically retry after that callback. Errors thrown by the callback do not abort execution.
 
 ## API Base URL
 
@@ -24251,7 +24276,7 @@ Set `configTtlMs: 0` when you need every call to fetch fresh provider configurat
 ## Security Notes
 
 - Store `apiKey` in server-side or secret-managed configuration.
-- Use trusted RPC providers for WDK EVM accounts.
+- Use trusted RPC providers or clients for WDK source accounts.
 - Set fee caps for user-facing flows.
 - Ask for user confirmation before calling `swidge()`.
 
@@ -24279,13 +24304,22 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 ## Install
 
 ```bash
-npm install @rhino.fi/wdk-protocol-swidge-rhinofi@1.0.0-beta.2 @tetherto/wdk-wallet-evm
+npm install @rhino.fi/wdk-protocol-swidge-rhinofi@1.2.0 @tetherto/wdk-wallet-evm
 ```
 
 Install ERC-4337 support when you need smart-account execution:
 
 ```bash
 npm install @tetherto/wdk-wallet-evm-erc-4337
+```
+
+Install the matching wallet module when Solana or Tron is the source ecosystem:
+
+```bash
+# Solana source accounts
+npm install @tetherto/wdk-wallet-solana
+# Tron source accounts
+npm install @tetherto/wdk-wallet-tron
 ```
 
 ## Create the Protocol
@@ -24342,7 +24376,7 @@ Use `toTokenAmount` instead of `fromTokenAmount` for exact-output routes when su
 ## Execute a Route
 
 <Callout type="warn">
-`quoteSwidge()` is indicative only. `swidge()` does not reuse that response: it calls `prepareBridge()` and executes with the fresh internal quote. The configured fee caps apply to mapped network and protocol fees, but they do not lock the output amount, approval spender, or transaction payload. The package does not expose a second-confirmation hook for the fresh response, so confirm that this execution model fits your application's risk requirements before calling `swidge()`.
+`quoteSwidge()` returns the provider quote as `quote.quote`. Pass it to `swidge()` to execute the quote shown to the user. Quotes expire, so request a new quote if execution rejects a stale one. Omitting `quote` makes `swidge()` fetch a fresh provider quote.
 </Callout>
 
 ```javascript
@@ -24352,6 +24386,8 @@ const result = await rhinofi.swidge({
   toChain: 'AVALANCHE',
   recipient: '0xRecipient...',
   fromTokenAmount: 100_000_000n
+}, {
+  quote: quote.quote
 })
 
 console.log('Operation ID:', result.id)
@@ -24384,7 +24420,7 @@ try {
   await rhinofi.swidge(options)
 } catch (error) {
   if (error instanceof AccountRequiredError) {
-    // Bind a writable WDK EVM account before execution.
+    // Bind a supported writable WDK source account before execution.
   } else if (error instanceof ConfigurationError) {
     // Check apiKey and API configuration.
   } else if (error instanceof FeeLimitExceededError) {
