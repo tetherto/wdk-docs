@@ -7,7 +7,7 @@
 - [EIP-3009 Support (Gasless Transfers)](#eip-3009-support-gasless-transfers)
 - [Address Format Validation](#address-format-validation)
 - [Dust Thresholds](#dust-thresholds)
-- [WDK Bridge Supported Routes](#wdk-bridge-supported-routes)
+- [WDK Bridge Route Discovery](#wdk-bridge-route-discovery)
 
 ## Chains, Native Tokens & Base Units
 
@@ -35,7 +35,7 @@
 | **HyperEVM** | 999 | HYPE | wei | 18 | 10^18 wei |
 | **MegaETH** | 4326 | ETH | wei | 18 | 10^18 wei |
 | **Monad** | 143 | MON | wei | 18 | 10^18 wei |
-| **Stable** | 988 | gUSDT | wei | 18 | 10^18 wei |
+| **Stable** | 988 | USD₮0 | wei | 18 | 10^18 wei |
 | **Conflux eSpace** | 1030 | CFX | wei | 18 | 10^18 wei |
 | **Solana** | — | SOL | lamport | 9 | 1,000,000,000 lamports |
 | **Spark** | — | BTC | satoshi | 8 | 100,000,000 sats |
@@ -71,7 +71,7 @@ Default public RPCs for chains listed above. All are rate-limited — use a prov
 | **HyperEVM** | 999 | `https://rpc.hyperliquid.xyz/evm` | ⚠️ 100 req/min limit |
 | **MegaETH** | 4326 | `https://mainnet.megaeth.com/rpc` | Official MegaETH |
 | **Monad** | 143 | `https://rpc.monad.xyz` | Also: `https://monad-mainnet.drpc.org` |
-| **Stable** | 988 | `https://rpc.stable.xyz` | Gas paid in gUSDT |
+| **Stable** | 988 | `https://rpc.stable.xyz` | Gas paid in USD₮0 |
 | **Conflux eSpace** | 1030 | `https://evm.confluxrpc.com` | Official Confura; free tier rate-limited |
 
 ### Non-EVM Chains
@@ -88,11 +88,9 @@ Default public RPCs for chains listed above. All are rate-limited — use a prov
 
 | Token | Decimals | Note |
 |-------|----------|------|
-| USD₮ / USD₮0 | 6 | All chains |
-| USDC | 6 | All chains |
-| DAI | 18 | EVM chains |
+| USD₮ / USD₮0 token contracts | 6 | EVM token deployments; Stable native USD₮0 gas uses 18 decimals |
 | WETH | 18 | EVM chains |
-| WBTC | 8 | EVM chains |
+| XAU₮ | 6 | Ethereum |
 
 
 ## EIP-3009 Support (Gasless Transfers)
@@ -132,9 +130,8 @@ Minimum meaningful amounts below which transactions will fail or be rejected by 
 | **TRON** | Varies | Energy/bandwidth cost may exceed value for tiny amounts |
 
 
-## WDK Bridge Supported Routes
+## WDK Bridge Route Discovery
 
-Source chains (EVM only): ethereum, arbitrum, polygon, berachain, ink
-Destination chains: ethereum, arbitrum, polygon, berachain, ink, ton, tron
+Bridge configuration changes independently of this general chain reference. Use [`protocol-bridge.md`](./protocol-bridge.md) for the package-version-specific inventory, then inspect `getSupportedChains()` and `getSupportedTokens()` at runtime. Those methods expose configured candidates, not a guaranteed route matrix; verify the exact source token and destination with `quoteBridge()`.
 
 ERC-4337 (Account Abstraction) verified on: Ethereum (1), Polygon (137), Arbitrum (42161), Plasma (9745), Sepolia (11155111). Avalanche (43114) is NOT supported (Safe4337Module not deployed).

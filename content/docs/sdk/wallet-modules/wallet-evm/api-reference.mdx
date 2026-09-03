@@ -36,6 +36,10 @@ new WalletManagerEvm(seedOrSigner, config?)
 
 The default signer must support derivation. Register non-derivable signers, such as private-key signers, with `addSigner()` and retrieve them by name.
 
+**Throws:**
+- `ValueError` if a string seed phrase is not a valid BIP-39 mnemonic.
+- `InvalidSignerError` if the default signer does not support account derivation.
+
 **Example:**
 ```javascript
 const wallet = new WalletManagerEvm(seedPhrase, {
@@ -64,7 +68,7 @@ const signerWallet = new WalletManagerEvm(signer, {
 | `getAccount(index?, options?)` | Returns a wallet account at the specified index, optionally from a named signer | `Promise<WalletAccountEvm>` | If the requested signer is unavailable or cannot derive |
 | `getAccount(signerName)` | Returns the account associated with a registered signer | `Promise<WalletAccountEvm>` | If the named signer is unavailable |
 | `getAccountByPath(path, options?)` | Returns a wallet account at the specified BIP-44 derivation path, optionally from a named signer | `Promise<WalletAccountEvm>` | If the requested signer is unavailable or cannot derive |
-| `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` | If no provider is set |
+| `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` | `ProviderRequiredError` if no provider is set |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` | - |
 
 ### Properties
@@ -199,7 +203,7 @@ Returns current fee rates based on network conditions with predefined multiplier
 - `normal`: Base fee × 1.1 (10% above base)
 - `fast`: Base fee × 2.0 (100% above base)
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -247,7 +251,7 @@ new WalletAccountEvm(signer, config?)
   - `transactionMaxFee` (number | bigint, optional): Maximum fee amount for native `sendTransaction()` and `signTransaction()` operations (in wei)
 
 **Throws:**
-- Error if seed phrase is invalid (BIP-39 validation fails)
+- `ValueError` if a string seed phrase is not a valid BIP-39 mnemonic.
 
 **Example:**
 ```javascript
@@ -278,25 +282,25 @@ const signerAccount = new WalletAccountEvm(
 | `getAddress()` | Returns the account's address | `Promise<string>` | - |
 | `sign(message)` | Signs a message using the account's private key | `Promise<string>` | - |
 | `signTypedData(typedData)` | Signs typed data according to EIP-712 | `Promise<string>` | - |
-| `signTransaction(tx)` | Signs an EVM transaction without broadcasting it | `Promise<string>` | If transaction signing fails |
+| `signTransaction(tx)` | Signs an EVM transaction without broadcasting it | `Promise<string>` | `MaximumFeeExceededError` if the configured fee cap is exceeded |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies a typed data signature (EIP-712) | `Promise<boolean>` | - |
-| `sendTransaction(tx)` | Sends an EVM transaction object | `Promise<{hash: string, fee: bigint}>` | If no provider |
-| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction object or serialized transaction | `Promise<{fee: bigint}>` | If no provider |
-| `transfer(options)` | Transfers ERC20 tokens to another address | `Promise<{hash: string, fee: bigint}>` | If no provider or fee exceeds max |
-| `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | If no provider |
-| `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | If no provider |
-| `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<bigint>` | If no provider |
-| `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise<Record<string, bigint>>` | If no provider |
-| `approve(options)` | Approves a spender to spend tokens | `Promise<{hash: string, fee: bigint}>` | If no provider |
-| `getAllowance(token, spender)` | Returns current allowance for a spender | `Promise<bigint>` | If no provider |
-| `getTransactionReceipt(hash)` | Returns a native receipt; deprecated in favor of `getTransaction()` | `Promise<EvmTransactionReceipt \| null>` | If no provider |
-| `getTransaction(hash)` | Returns normalized finality and the native receipt | `Promise<TransactionReceipt & EvmTransactionDetails>` | If no provider, the hash is invalid, or no transaction is found |
-| `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final`, or returns `dropped` | `Promise<TransactionReceipt & EvmTransactionDetails>` | If the wait times out |
+| `sendTransaction(tx)` | Sends an EVM transaction object or signed raw transaction | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError`, `MaximumFeeExceededError`, or `ValueError` |
+| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction object or serialized transaction | `Promise<{fee: bigint}>` | `ProviderRequiredError` |
+| `transfer(options)` | Transfers ERC20 tokens to another address | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` or `MaximumFeeExceededError` |
+| `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | `ProviderRequiredError` |
+| `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | `ProviderRequiredError` |
+| `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<bigint>` | `ProviderRequiredError` |
+| `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise<Record<string, bigint>>` | `ProviderRequiredError` |
+| `approve(options)` | Approves a spender to spend tokens | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` or `ValueError` |
+| `getAllowance(token, spender)` | Returns current allowance for a spender | `Promise<bigint>` | `ProviderRequiredError` |
+| `getTransactionReceipt(hash)` | Returns a native receipt; deprecated in favor of `getTransaction()` | `Promise<EvmTransactionReceipt \| null>` | `ProviderRequiredError` |
+| `getTransaction(hash)` | Returns normalized finality and the native receipt | `Promise<TransactionReceipt & EvmTransactionDetails>` | `ProviderRequiredError`, `ValueError`, or `NoSuchElementError` |
+| `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final`, or returns `dropped` | `Promise<TransactionReceipt & EvmTransactionDetails>` | `TimeoutError` |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlyEvm>` | - |
 | `signAuthorization(auth)` | Signs an ERC-7702 authorization tuple | `Promise<Authorization>` | If signing fails |
-| `delegate(delegateAddress)` | Delegates the EOA to a contract through an ERC-7702 type 4 transaction | `Promise<{hash: string, fee: bigint}>` | If no provider |
-| `revokeDelegation()` | Revokes active ERC-7702 delegation by delegating to the zero address | `Promise<{hash: string, fee: bigint}>` | If no provider |
+| `delegate(delegateAddress)` | Delegates the EOA to a contract through an ERC-7702 type 4 transaction | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` |
+| `revokeDelegation()` | Revokes active ERC-7702 delegation by delegating to the zero address | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` | - |
 
 #### `fromPrivateKey(privateKey, config?)` (static)
@@ -397,7 +401,7 @@ Signs an EVM transaction and returns the signed raw transaction as a hex string.
 
 **Returns:** `Promise<string>` - Signed raw transaction hex string
 
-**Throws:** Error if a provider is configured and the estimated transaction fee exceeds `transactionMaxFee`.
+**Throws:** `MaximumFeeExceededError` if a provider is configured and the estimated transaction fee exceeds `transactionMaxFee`.
 
 **Example:**
 ```javascript
@@ -443,14 +447,10 @@ console.log('Typed data signature valid:', isValid) // true
 ```
 
 #### `sendTransaction(tx)`
-Sends an EVM transaction and returns the result with hash and fee.
-
-<Callout type="warning">
-In `1.0.0-beta.17`, the TypeScript declaration also accepts a serialized transaction string, but the send path does not broadcast those supplied bytes. It repopulates a transaction from the value passed to the method and can therefore broadcast a different transaction. Pass an `EvmTransaction` object here. Submit signed raw transactions through a separate relay or provider until this runtime mismatch is resolved.
-</Callout>
+Builds, signs, and sends an EVM transaction object, or broadcasts a signed raw transaction, then returns its hash and quoted fee.
 
 **Parameters:**
-- `tx` (EvmTransaction | string): The declared input type. Use the `EvmTransaction` object form for sending in `1.0.0-beta.17`.
+- `tx` (EvmTransaction | string): A transaction object or signed raw transaction hex.
   - `to` (string | null, optional): Recipient address; omit or pass `null` for contract creation
   - `value` (number | bigint): Amount in wei
   - `data` (string, optional): Transaction data in hex format
@@ -463,11 +463,14 @@ In `1.0.0-beta.17`, the TypeScript declaration also accepts a serialized transac
   - `chainId` (number | bigint, optional): Network chain ID
   - `authorizationList` (AuthorizationLike[], optional): ERC-7702 authorization list for type 4 transactions
 
+For a signed raw transaction string, WDK checks `transactionMaxFee` against a provider-current gas and fee-rate estimate, then passes the exact supplied hex to `eth_sendRawTransaction`. It does not repopulate or re-sign the transaction. The cap is not an upper bound on the gas price or maximum fee encoded in those signed bytes. Review the decoded recipient, value, data, chain ID, nonce, gas limit, and fee fields before submitting externally supplied bytes.
+
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
 
 **Throws:**
-- Error if no provider is configured
-- Error if fee exceeds `transactionMaxFee` when configured
+- `ProviderRequiredError` if no provider is configured.
+- `MaximumFeeExceededError` if the quoted fee exceeds `transactionMaxFee` when configured.
+- `ValueError` if an object transaction mixes incompatible fee fields or a type 3 transaction omits `maxFeePerBlobGas`.
 
 **Example:**
 ```javascript
@@ -501,7 +504,7 @@ For a serialized transaction, the method parses the transaction fields for gas e
 
 **Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -524,8 +527,8 @@ Transfers ERC20 tokens to another address using the standard transfer function.
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Transfer result
 
 **Throws:**
-- Error if no provider is configured
-- Error if fee exceeds `transferMaxFee` (if configured)
+- `ProviderRequiredError` if no provider is configured.
+- `MaximumFeeExceededError` if the fee exceeds `transferMaxFee` when configured.
 
 **Example:**
 ```javascript
@@ -546,7 +549,7 @@ Estimates the fee for an ERC20 token transfer.
 
 **Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -563,7 +566,7 @@ Returns the native token balance (ETH, MATIC, BNB, etc.).
 
 **Returns:** `Promise<bigint>` - Balance in wei
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -580,7 +583,7 @@ Returns the balance of a specific ERC20 token using the balanceOf function.
 
 **Returns:** `Promise<bigint>` - Token balance in base units
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -598,7 +601,7 @@ Returns balances for multiple ERC20 tokens in one call.
 
 **Returns:** `Promise<Record<string, bigint>>` - Object mapping each token address to its balance in base units
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -623,8 +626,8 @@ Approves a specific amount of tokens to a spender.
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
 
 **Throws:**
-- Error if no provider is configured
-- Error if trying to re-approve USD₮ on Ethereum without resetting to 0 first
+- `ProviderRequiredError` if no provider is configured.
+- `ValueError` if an Ethereum mainnet USD₮ allowance is already nonzero and the requested amount is also nonzero. Approve `0` first.
 
 **Example:**
 ```javascript
@@ -645,7 +648,7 @@ Returns the current token allowance for the given spender.
 
 **Returns:** `Promise<bigint>` - The current allowance
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -664,7 +667,7 @@ Returns a native transaction receipt by hash. This method is deprecated; use `ge
 
 **Returns:** `Promise<EvmTransactionReceipt | null>` - Transaction receipt or null if not mined
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -678,6 +681,11 @@ if (receipt) {
 #### `getTransaction(hash)`
 
 Returns normalized transaction finality for an exact 32-byte hexadecimal hash.
+
+**Throws:**
+- `ProviderRequiredError` if no provider is configured.
+- `ValueError` if `hash` is not an exact 32-byte hexadecimal transaction hash.
+- `NoSuchElementError` if neither a transaction nor receipt is found for `hash`.
 
 ```javascript
 const receipt = await account.getTransaction(transactionHash)
@@ -695,6 +703,8 @@ An unmined transaction is `pending`. It becomes `dropped` when the sender's late
 #### `waitForTransaction(hash, options?)`
 
 Polls `getTransaction()` until the target is reached or the transaction is classified as `dropped`. The default target is `confirmed`, the default interval is four seconds, and the EVM timeout is 120 seconds.
+
+**Throws:** `TimeoutError` if the requested target is not reached before the timeout.
 
 ```javascript
 const receipt = await account.waitForTransaction(transactionHash, {
@@ -750,10 +760,14 @@ Delegates the EOA to a smart contract through an ERC-7702 type 4 transaction.
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
 
+**Throws:** `ProviderRequiredError` if no provider is configured.
+
 #### `revokeDelegation()`
 Revokes active ERC-7702 delegation by delegating to the zero address.
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
+
+**Throws:** `ProviderRequiredError` if no provider is configured.
 
 #### `dispose()`
 Disposes the wallet account, erasing the private key from memory.
@@ -823,18 +837,18 @@ const readOnlyAccount = new WalletAccountReadOnlyEvm('0x742d35Cc6634C0532925a3b8
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
 | `getAddress()` | Returns the account's address | `Promise<string>` | - |
-| `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | If no provider |
-| `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<bigint>` | If no provider |
-| `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise<Record<string, bigint>>` | If no provider |
-| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction | `Promise<{fee: bigint}>` | If no provider |
-| `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | If no provider |
+| `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | `ProviderRequiredError` |
+| `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<bigint>` | `ProviderRequiredError` |
+| `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise<Record<string, bigint>>` | `ProviderRequiredError` |
+| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction | `Promise<{fee: bigint}>` | `ProviderRequiredError` |
+| `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | `ProviderRequiredError` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies a typed data signature (EIP-712) | `Promise<boolean>` | - |
-| `getDelegation()` | Checks active ERC-7702 delegation status | `Promise<DelegationInfo>` | If no provider |
-| `getTransactionReceipt(hash)` | Returns a native receipt; deprecated in favor of `getTransaction()` | `Promise<EvmTransactionReceipt \| null>` | If no provider |
-| `getTransaction(hash)` | Returns normalized finality and the native receipt | `Promise<TransactionReceipt & EvmTransactionDetails>` | If no provider, the hash is invalid, or no transaction is found |
-| `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final`, or returns `dropped` | `Promise<TransactionReceipt & EvmTransactionDetails>` | If the wait times out |
-| `getAllowance(token, spender)` | Returns current allowance for a spender | `Promise<bigint>` | If no provider |
+| `getDelegation()` | Checks active ERC-7702 delegation status | `Promise<DelegationInfo>` | `ProviderRequiredError` |
+| `getTransactionReceipt(hash)` | Returns a native receipt; deprecated in favor of `getTransaction()` | `Promise<EvmTransactionReceipt \| null>` | `ProviderRequiredError` |
+| `getTransaction(hash)` | Returns normalized finality and the native receipt | `Promise<TransactionReceipt & EvmTransactionDetails>` | `ProviderRequiredError`, `ValueError`, or `NoSuchElementError` |
+| `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final`, or returns `dropped` | `Promise<TransactionReceipt & EvmTransactionDetails>` | `TimeoutError` |
+| `getAllowance(token, spender)` | Returns current allowance for a spender | `Promise<bigint>` | `ProviderRequiredError` |
 
 #### `getAddress()`
 Returns the account's Ethereum address.
@@ -852,7 +866,7 @@ Returns the account's native token balance.
 
 **Returns:** `Promise<bigint>` - Balance in wei
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -868,7 +882,7 @@ Returns the balance of a specific ERC20 token.
 
 **Returns:** `Promise<bigint>` - Token balance in base units
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -884,7 +898,7 @@ Returns balances for multiple ERC20 tokens.
 
 **Returns:** `Promise<Record<string, bigint>>` - Object mapping each token address to its balance in base units
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -903,7 +917,7 @@ Estimates the fee for an EVM transaction.
 
 **Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -922,7 +936,7 @@ Estimates the fee for an ERC20 token transfer.
 
 **Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -973,6 +987,8 @@ Checks whether the account currently has an active ERC-7702 delegation.
 
 **Returns:** `Promise<DelegationInfo>` - Delegation status and delegate address
 
+**Throws:** `ProviderRequiredError` if no provider is configured.
+
 **Example:**
 ```javascript
 const delegation = await readOnlyAccount.getDelegation()
@@ -988,7 +1004,7 @@ Returns a native receipt if the transaction has been mined. This method is depre
 
 **Returns:** `Promise<EvmTransactionReceipt | null>` - Transaction receipt or null if not yet mined
 
-**Throws:** Error if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured
 
 **Example:**
 ```javascript
@@ -1004,7 +1020,7 @@ if (receipt) {
 
 #### `getTransaction(hash)` and `waitForTransaction(hash, options?)`
 
-Read-only accounts expose the same normalized transaction methods as owned accounts. `getTransaction()` returns `TransactionReceipt & EvmTransactionDetails`; `waitForTransaction()` uses a four-second interval and 120-second timeout by default. A `dropped` receipt means the sender's mined nonce advanced past the pending transaction's nonce. Always inspect `success` after inclusion because a confirmed or final transaction can have reverted.
+Read-only accounts expose the same normalized transaction methods as owned accounts. `getTransaction()` returns `TransactionReceipt & EvmTransactionDetails`; it throws `ProviderRequiredError` without a provider, `ValueError` for an invalid hash, and `NoSuchElementError` for an unknown hash. `waitForTransaction()` uses a four-second interval and 120-second timeout by default and throws `TimeoutError` if the target is not reached. A `dropped` receipt means the sender's mined nonce advanced past the pending transaction's nonce. Always inspect `success` after inclusion because a confirmed or final transaction can have reverted.
 
 #### `getAllowance(token, spender)`
 Returns the current allowance for the given token and spender.
@@ -1014,6 +1030,8 @@ Returns the current allowance for the given token and spender.
 - `spender` (string): The spender's address
 
 **Returns:** `Promise<bigint>` - The allowance
+
+**Throws:** `ProviderRequiredError` if no provider is configured.
 
 **Example:**
 ```javascript

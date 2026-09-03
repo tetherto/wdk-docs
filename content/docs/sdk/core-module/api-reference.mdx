@@ -491,7 +491,7 @@ if (receipt.finality === 'dropped') {
 
 ### Base Wallet Error Exports
 
-The root `@tetherto/wdk-wallet` entrypoint exports `WdkError` and these specialized subclasses: `AssertionError`, `InvalidSignerError`, `InvalidTokenError`, `MaximumFeeExceededError`, `NoSuchElementError`, `NotImplementedError`, `ProviderError`, `ProviderRequiredError`, `TimeoutError`, `TransactionError`, `TransferError`, `UnsupportedOperationError`, and `ValueError`.
+The root `@tetherto/wdk-wallet` entrypoint exports `WdkError` and these specialized subclasses: `AssertionError`, `InvalidSignerError`, `InvalidTokenError`, `MaximumFeeExceededError`, `NoSuchElementError`, `NotImplementedError`, `ProviderError`, `ProviderRequiredError`, `TimeoutError`, `TransactionError`, `TransferError`, `UnsupportedOperationError`, and `ValueError`. It also exports `SignerError` as an alias of `InvalidSignerError`; both names refer to the same constructor.
 
 `ProviderError`, `TransactionError`, and `TransferError` expose a `reason` field. Compare it with `ProviderErrorReason`, `TransactionErrorReason`, or `TransferErrorReason` rather than parsing the message. See [Error Handling](/sdk/core-module/guides/error-handling#base-wallet-errors) for the reason values and migration notes.
 
@@ -542,8 +542,8 @@ interface IWalletAccountMultisig extends IWalletAccountReadOnlyMultisig {
   propose(
     tx: Transaction,
     options?: MultisigTransactionOptions
-  ): Promise<MultisigProposal>
-  approveProposal(id: string): Promise<MultisigProposal>
+  ): Promise<MultisigProposal & MultisigInteractionResult>
+  approveProposal(id: string): Promise<MultisigProposal & MultisigInteractionResult>
   rejectProposal(id: string): Promise<MultisigProposal>
   executeProposal(id: string): Promise<TransactionResult>
 }
@@ -551,7 +551,7 @@ interface IWalletAccountMultisig extends IWalletAccountReadOnlyMultisig {
 
 `propose()` creates a proposal rather than executing the transaction directly. `executeProposal()` requires the approval threshold and throws `ThresholdNotMetError` when the proposal is not ready. Proposal quote, mutation, and execution methods can throw `NoSuchElementError` for an unknown ID; getter methods return `null`.
 
-When `autoExecute: true` makes the current `propose()` call supply the final required approval, the returned proposal can have `status: 'executed'`. The current base method declarations return `MultisigProposal`; they do not include the transaction result.
+`propose()` and `approveProposal()` return the proposal together with an optional `transaction` field. The field contains the on-chain transaction produced by that call when the call itself settles on-chain: it can be the execution transaction when a call triggers execution, or the proposal/approval transaction when a backend represents those calls on-chain. It is `undefined` when the call only updates off-chain state. A `transaction` value does not prove that the proposal executed; inspect `status`, which is the sole execution indicator.
 
 ### Optional Message-Signing Contracts
 
@@ -619,9 +619,13 @@ interface MultisigSignature {
 interface MultisigOptions {
   threshold: number
 }
+
+interface MultisigInteractionResult {
+  transaction?: TransactionResult
+}
 ```
 
-The subpath also re-exports the base wallet `KeyPair` type. `MultisigAutoExecuteResult` remains exported, but the current `IWalletAccountMultisig` methods do not use it in their return declarations.
+The subpath also re-exports the base wallet `KeyPair` type. In v1.0.0-beta.19, a breaking rename replaces beta.18's `MultisigAutoExecuteResult` with `MultisigInteractionResult`; the old type name is not exported. The `propose()` and `approveProposal()` return types use `MultisigInteractionResult` as shown above.
 
 ## IWalletAccountWithProtocols
 

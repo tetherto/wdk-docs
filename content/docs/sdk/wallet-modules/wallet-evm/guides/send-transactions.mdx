@@ -61,20 +61,28 @@ console.log('Deployment transaction:', result.hash)
 Use [`account.signTransaction()`](/sdk/wallet-modules/wallet-evm/api-reference#signtransactiontx) when you need a signed raw transaction but want to submit it through a separate relay, service, or review flow.
 
 ```javascript title="Sign EVM Transaction"
-const signedTransaction = await account.signTransaction({
-  to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-  value: 1000000000000000000n,
-  chainId: 1,
-  maxFeePerGas: 30000000000n,
-  maxPriorityFeePerGas: 2000000000n
-})
-
-console.log('Signed transaction:', signedTransaction)
+async function signReviewedTransaction(transaction) {
+  // Review the recipient, value, data, chain ID, nonce, and fee fields first.
+  return await account.signTransaction(transaction)
+}
 ```
 
 <Callout type="info">
-`signTransaction()` returns the signed transaction payload and does not broadcast it. In `1.0.0-beta.17`, do not pass that serialized payload back to `sendTransaction()`: the send path does not broadcast the supplied bytes and can populate a different transaction. Submit signed raw transactions through a separate relay or provider. Use `sendTransaction()` with an `EvmTransaction` object when WDK should populate, sign, broadcast, and return the transaction hash.
+`signTransaction()` returns signed raw transaction hex and does not broadcast it. In `1.0.0-beta.18`, `sendTransaction(signedTransaction)` checks `transactionMaxFee` against a provider-current gas and fee-rate estimate, then passes those exact bytes to `eth_sendRawTransaction`; it does not repopulate or re-sign them. The cap is not an upper bound on the gas price or maximum fee encoded in the signed transaction. Submit only after independently decoding and reviewing its gas limit and fee fields together with the recipient, value, data, chain ID, and nonce. Use the object form of `sendTransaction()` when WDK should populate, sign, and broadcast the transaction.
 </Callout>
+
+```javascript title="Submit an Approved Signed Transaction"
+async function submitApprovedTransaction(signedTransaction, reviewSignedTransaction) {
+  const review = await reviewSignedTransaction(signedTransaction)
+  if (review?.approved !== true) {
+    throw new Error('Signed transaction was not approved')
+  }
+
+  return await account.sendTransaction(signedTransaction)
+}
+```
+
+`reviewSignedTransaction` is an application-supplied callback. It must decode the signed transaction, show or otherwise verify its recipient, value, data, chain ID, nonce, gas limit, and fee fields, and return `{ approved: true }` only after explicit approval. Any other result fails closed without broadcasting.
 
 ## Estimate Transaction Fees
 

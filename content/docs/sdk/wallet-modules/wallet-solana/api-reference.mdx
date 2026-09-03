@@ -127,10 +127,10 @@ In v1.0.0-beta.9 the constructor was made public. The static factory method `Wal
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's Solana address | `Promise<string>` |
 | `sign(message)` | Signs a message using the account's private key | `Promise<string>` |
-| `signTransaction(tx)` | Signs a Solana transaction without broadcasting it | `Promise<FullySignedTransaction>` |
+| `signTransaction(tx)` | Signs a Solana transaction without broadcasting it, including a base64-encoded serialized transaction | `Promise<FullySignedTransaction>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
-| `sendTransaction(tx)` | Builds and sends a transaction, or broadcasts a fully signed transaction | `Promise<{hash: string, fee: bigint}>` |
-| `quoteSendTransaction(tx)` | Estimates the fee for a transaction or fully signed transaction | `Promise<{fee: bigint}>` |
+| `sendTransaction(tx)` | Builds and sends a transaction, signs and sends a base64-encoded serialized transaction, or broadcasts a fully signed transaction | `Promise<{hash: string, fee: bigint}>` |
+| `quoteSendTransaction(tx)` | Estimates the fee for a transaction, serialized transaction, or fully signed transaction | `Promise<{fee: bigint}>` |
 | `transfer(options)` | Transfers SPL tokens to another address | `Promise<{hash: string, fee: bigint}>` |
 | `quoteTransfer(options)` | Estimates the fee for an SPL token transfer | `Promise<{fee: bigint}>` |
 | `getBalance()` | Returns the native SOL balance (in lamports) | `Promise<bigint>` |
@@ -171,9 +171,13 @@ console.log('Signature:', signature)
 Signs a Solana transaction without broadcasting it. Use this method when a relay, review flow, or separate submission path needs a fully signed transaction.
 
 **Parameters:**
-- `tx` (SolanaTransaction): A simple transfer object or a prebuilt `TransactionMessage`
+- `tx` (SolanaTransaction): A simple transfer object, a prebuilt `TransactionMessage`, or a base64-encoded serialized transaction
 
 When `tx` is a `TransactionMessage`, WDK preserves an existing recent blockhash or durable nonce lifetime. If no lifetime is present, WDK fetches the latest blockhash before signing. If you set an explicit `feePayer`, it must match the wallet address.
+
+When `tx` is a base64-encoded serialized transaction, WDK decodes it, requires its fee payer to match the account address, and signs it. After this account adds its signature, the transaction must be fully signed; pre-existing signatures may be retained. This form is useful for serialized swap or bridge transactions produced by another service.
+
+Treat serialized transactions from another service as untrusted. Decode and independently review every instruction, account, amount, and transaction lifetime before signing. WDK's fee-payer and signature checks do not validate the transaction's intended effects.
 
 **Returns:** `Promise<FullySignedTransaction>` - The signed transaction
 
@@ -207,13 +211,15 @@ console.log('Signature valid:', isValid)
 Sends a Solana transaction.
 
 **Parameters:**
-- `tx` (SolanaTransaction | FullySignedTransaction): A simple transfer object, prebuilt `TransactionMessage`, or fully signed transaction
+- `tx` (SolanaTransaction | FullySignedTransaction): A simple transfer object, prebuilt `TransactionMessage`, base64-encoded serialized transaction, or fully signed transaction
   - `to` (string): Recipient's Solana address (base58-encoded)
   - `value` (number | bigint): Amount in lamports
 
 When `tx` is a `TransactionMessage`, WDK preserves an existing recent blockhash or durable nonce lifetime. If no lifetime is present, WDK fetches the latest blockhash before quoting or sending. If you set an explicit `feePayer`, it must match the wallet address.
 
 When `tx` is a `FullySignedTransaction`, WDK quotes it again, enforces `transactionMaxFee`, and broadcasts its exact wire bytes. It does not refresh the recent blockhash or durable nonce and does not re-sign the transaction.
+
+When `tx` is a base64-encoded serialized transaction, WDK signs it with this account and then broadcasts the resulting transaction. Its fee payer must match the account address. Before sending an externally supplied transaction, independently review its instructions, accounts, amounts, and lifetime; WDK does not validate its intended effects.
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Object containing transaction hash and fee (in lamports)
 
@@ -233,6 +239,8 @@ Estimates the fee for a Solana transaction.
 
 **Parameters:**
 - `tx` (SolanaTransaction | FullySignedTransaction): A transaction input or fully signed transaction (same forms as `sendTransaction`)
+
+For a base64-encoded serialized transaction, WDK decodes the transaction and quotes the compiled message without signing or broadcasting it.
 
 **Returns:** `Promise<{fee: bigint}>` - Object containing fee estimate (in lamports)
 
@@ -425,7 +433,7 @@ new WalletAccountReadOnlySolana(publicKey, config)
 | `getTokenBalance(tokenMint)` | Returns the balance of a specific SPL token | `Promise<bigint>` |
 | `getTokenBalances(tokenAddresses)` | Returns balances for multiple SPL tokens | `Promise<Record<string, bigint>>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
-| `quoteSendTransaction(tx)` | Estimates the fee for a transaction | `Promise<{fee: bigint}>` |
+| `quoteSendTransaction(tx)` | Estimates the fee for a transaction or base64-encoded serialized transaction | `Promise<{fee: bigint}>` |
 | `quoteTransfer(options)` | Estimates the fee for an SPL token transfer | `Promise<{fee: bigint}>` |
 | `getTransactionReceipt(hash)` | Gets a native transaction object; deprecated in favor of `getTransaction()` | `Promise<SolanaTransactionReceipt \| null>` |
 | `getTransaction(hash)` | Returns normalized finality for a Solana signature | `Promise<TransactionReceipt & SolanaTransactionDetails>` |
@@ -503,7 +511,7 @@ console.log('Signature valid:', isValid)
 Estimates the fee for a transaction.
 
 **Parameters:**
-- `tx` (SolanaTransaction): The transaction object
+- `tx` (SolanaTransaction): A simple transfer object, prebuilt `TransactionMessage`, or a base64-encoded serialized transaction
   - `to` (string): Recipient's Solana address (base58-encoded)
   - `value` (number): Amount in lamports
 
@@ -517,6 +525,9 @@ const quote = await readOnlyAccount.quoteSendTransaction({
 })
 console.log('Estimated fee:', quote.fee, 'lamports')
 ```
+
+Pass a base64-encoded serialized transaction to quote a message created by another service. The read-only account decodes the transaction and does not sign or broadcast it.
+
 ##### `quoteTransfer(options)`
 Estimates the fee for an SPL token transfer.
 
@@ -596,6 +607,14 @@ import type { FullySignedTransaction } from '@solana/transactions'
 ```
 
 The signed value contains the compiled message bytes and all required signatures. Its transaction lifetime is sealed at signing time.
+
+### SolanaTransaction
+
+```typescript
+type SolanaTransaction = SimpleSolanaTransaction | TransactionMessage | string
+```
+
+The `string` form is a base64-encoded serialized Solana transaction. Owned accounts can sign and send this form when its fee payer matches the account; read-only accounts can quote it.
 
 ### TransferOptions
 

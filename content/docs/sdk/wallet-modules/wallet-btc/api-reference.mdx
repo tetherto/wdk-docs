@@ -77,6 +77,9 @@ Returns a wallet account at the specified derivation path.
 // For testnet or regtest: m/84'/1'/0'/0/1
 const account = await wallet.getAccountByPath("0'/0/1")
 ```
+
+Account creation through `getAccount()` or `getAccountByPath()` throws `ValueError` when the seed is an invalid BIP-39 mnemonic or `bip` is not `44` or `84`.
+
 ##### `getFeeRates()`
 Returns current fee rates from mempool.space API.
 
@@ -120,6 +123,8 @@ new WalletAccountBtc(seed, path, config)
   - `bip` (number, optional): BIP address type - 44 (legacy) or 84 (native SegWit) (default: 84)
   - `retries` (number, optional): Additional retry attempts when `client` is an array
   - `transactionMaxFee` (number | bigint, optional): Maximum fee amount for `sendTransaction()` and `signTransaction()` operations (in satoshis)
+
+**Throws:** `ValueError` if `seed` is an invalid BIP-39 mnemonic or `bip` is not `44` or `84`.
 
 ### Methods
 
@@ -176,7 +181,11 @@ Accepts either transaction options or signed raw Bitcoin transaction hex. With t
 - `hash`: Transaction hash
 - `fee`: Transaction fee in satoshis
 
-**Throws:** Error if the transaction fee exceeds `transactionMaxFee` when configured. Invalid raw transaction data, unavailable previous transactions, and broadcast rejection errors propagate from the configured client.
+**Throws:**
+- `MaximumFeeExceededError` if the transaction fee exceeds `transactionMaxFee` when configured.
+- `ValueError` if the amount does not clear the dust limit or the spend requires more than the allowed number of inputs.
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if no unspent outputs are available or the balance does not cover the amount and fees.
+- Errors from the configured client, including `NoSuchElementError` when a Blockbook response has no raw transaction data and `ProviderError` for provider or broadcast failures.
 
 **Example:**
 ```javascript
@@ -200,7 +209,11 @@ Signs a Bitcoin transaction and returns the signed raw transaction as a hex stri
 
 **Returns:** `Promise<string>` - Signed raw transaction hex string
 
-**Throws:** Error if the estimated transaction fee exceeds `transactionMaxFee` when configured.
+**Throws:**
+- `MaximumFeeExceededError` if the estimated transaction fee exceeds `transactionMaxFee` when configured.
+- `ValueError` if the amount does not clear the dust limit or the spend requires more than the allowed number of inputs.
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if no unspent outputs are available or the balance does not cover the amount and fees.
+- Errors from the configured client, including `NoSuchElementError` when a Blockbook response has no raw transaction data.
 
 **Example:**
 ```javascript
@@ -225,6 +238,10 @@ Estimates the fee for transaction options or calculates the fee encoded by signe
 
 **Returns:** `Promise<{fee: bigint}>`
 - `fee`: Estimated transaction fee in satoshis
+
+**Throws:**
+- `ValueError` if the amount does not clear the dust limit or the spend requires more than the allowed number of inputs.
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if no unspent outputs are available or the balance does not cover the amount and fees.
 
 **Example:**
 ```javascript
@@ -272,6 +289,8 @@ Returns a transaction's native receipt if it has been included in a block. This 
 - `hash` (string): The transaction hash (64 hex characters)
 
 **Returns:** `Promise<BtcTransactionReceipt | null>` - The receipt, or null if the transaction has not been included in a block yet.
+
+**Throws:** `ValueError` if `hash` is not a valid 64-character hexadecimal transaction hash.
 
 **Example:**
 ```javascript
@@ -452,6 +471,10 @@ Estimates the fee for a transaction without broadcasting it.
   - `confirmationTarget` (number, optional): Target blocks for confirmation (default: 1)
 
 **Returns:** `Promise<{fee: bigint}>` - Estimated fee in satoshis
+
+**Throws:**
+- `ValueError` if the amount does not clear the dust limit or the spend requires more than the allowed number of inputs.
+- `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if no unspent outputs are available or the balance does not cover the amount and fees.
 
 **Example:**
 ```javascript
@@ -742,6 +765,8 @@ interface IBtcClient {
   estimateFee(blocks: number): Promise<number>
 }
 ```
+
+Built-in clients report provider failures as `ProviderError` with a `reason` from `ProviderErrorReason`. `BlockbookClient` maps HTTP 401 to `UNAUTHORIZED`, 403 to `FORBIDDEN`, 408 or 504 to `REQUEST_TIMEOUT`, other 5xx responses to `INTERNAL_SERVER_ERROR`, and other non-2xx responses to `NETWORK_ERROR`. Its `getTransaction(txHash)` throws `NoSuchElementError` when the response has no raw transaction data. `ElectrumWs` uses `NETWORK_ERROR` for connection failures and `INTERNAL_SERVER_ERROR` for server-response or fee-estimation failures.
 
 ### BtcBalance
 ```typescript

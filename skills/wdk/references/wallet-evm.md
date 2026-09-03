@@ -90,7 +90,7 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
   paymasterUrl: 'https://api.candide.dev/public/v3/42161',
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
   paymasterToken: {
-    address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9' // USDt on Arbitrum
+    address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9' // USDt0 on Arbitrum
   },
   transferMaxFee: 5000000       // in paymaster token units
 })

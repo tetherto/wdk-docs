@@ -12,6 +12,12 @@ This guide covers best practices for handling transaction errors, managing fee l
 Wrap transactions in `try/catch` blocks to handle common failure scenarios such as insufficient funds or exceeded fee limits.
 
 ```javascript title="Transaction Error Handling"
+import {
+  MaximumFeeExceededError,
+  ProviderRequiredError,
+  ValueError
+} from '@tetherto/wdk-wallet'
+
 try {
   const result = await account.sendTransaction({
     to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
@@ -19,12 +25,14 @@ try {
   })
   console.log('Transaction submitted:', result.hash)
 } catch (error) {
-  console.error('Transaction failed:', error.message)
-  if (error.message.includes('insufficient funds')) {
-    console.log('Please add more funds to your wallet')
-  }
-  if (error.message.includes('Exceeded maximum fee')) {
+  if (error instanceof ProviderRequiredError) {
+    console.log('Connect the account to a provider before sending')
+  } else if (error instanceof MaximumFeeExceededError) {
     console.log('Transaction fee too high')
+  } else if (error instanceof ValueError) {
+    console.log('Review the transaction type and fee fields')
+  } else {
+    throw error
   }
 }
 ```
@@ -34,6 +42,11 @@ try {
 Token transfers can fail for additional reasons such as invalid addresses or insufficient token balances.
 
 ```javascript title="Token Transfer Error Handling"
+import {
+  MaximumFeeExceededError,
+  ProviderRequiredError
+} from '@tetherto/wdk-wallet'
+
 try {
   const result = await account.transfer({
     token: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt
@@ -42,9 +55,12 @@ try {
   })
   console.log('Transfer submitted:', result.hash)
 } catch (error) {
-  console.error('Transfer failed:', error.message)
-  if (error.message.includes('Exceeded maximum fee')) {
+  if (error instanceof ProviderRequiredError) {
+    console.log('Connect the account to a provider before transferring')
+  } else if (error instanceof MaximumFeeExceededError) {
     console.log('Transfer fee too high')
+  } else {
+    throw error
   }
 }
 ```
@@ -53,7 +69,7 @@ Resolution means the provider accepted the broadcast; it does not prove inclusio
 
 ## Manage Fee Limits
 
-Set `transactionMaxFee` to cap native `sendTransaction()` costs and provider-backed `signTransaction()` costs. Offline signing without a provider cannot estimate fees, so the fee-cap check does not run there. Set `transferMaxFee` separately to cap ERC-20 `transfer()` costs. Retrieve current network rates with [`getFeeRates()`](/sdk/wallet-modules/wallet-evm/api-reference) to make informed decisions.
+Set `transactionMaxFee` to reject native `sendTransaction()` and provider-backed `signTransaction()` operations when WDK's estimated fee exceeds the configured value. For signed raw transactions, that check uses current provider gas and fee-rate estimates rather than capping the fee fields encoded in the signed bytes; decode and review those fields independently. Offline signing without a provider cannot estimate fees, so the fee-cap check does not run there. Set `transferMaxFee` separately to cap ERC-20 `transfer()` costs. Retrieve current network rates with [`getFeeRates()`](/sdk/wallet-modules/wallet-evm/api-reference) to make informed decisions.
 
 ```javascript title="Fee Management"
 const feeRates = await wallet.getFeeRates()
@@ -69,7 +85,7 @@ Do not treat finality as execution success. A mined EVM transaction can be `conf
 
 ## Handle Non-derivable Signers
 
-In `1.0.0-beta.17`, `PrivateKeySignerEvm.derive()` throws `InvalidSignerError` from `@tetherto/wdk-wallet`. Code that previously caught `SignerError` for this path must update its error-class check.
+In `1.0.0-beta.18`, `PrivateKeySignerEvm.derive()` throws `InvalidSignerError` from `@tetherto/wdk-wallet`. The package also uses this error when a non-derivable signer is supplied as the wallet manager's default signer.
 
 ```javascript title="Handle a Non-derivable Signer"
 import { InvalidSignerError } from '@tetherto/wdk-wallet'

@@ -89,7 +89,7 @@ const account = await wallet.getAccountByPath("0'/0/1")
 ```
 
 ##### `getFeeRates()`
-Returns normal and fast fee rates from the mainnet TON API configuration. Through `1.0.0-beta.12`, this method always requests `https://tonapi.io/v2`, does not follow the configured `tonClient` network, and returns the same calculated value for both fields.
+Returns normal and fast fee rates from the mainnet TON API configuration. Through `1.0.0-beta.14`, this method always requests `https://tonapi.io/v2`, does not follow the configured `tonClient` network, and returns the same calculated value for both fields.
 
 **Returns:** `Promise\<FeeRates\>` - Object containing normal and fast fee rates
 
@@ -222,7 +222,7 @@ Builds and signs an external-message body without broadcasting it. This is not a
   - `to` (string): Recipient TON address (e.g., 'EQ...')
   - `value` (number | bigint): Amount in nanotons (1 TON = 1,000,000,000 nanotons)
   - `bounceable` (boolean, optional): Whether the destination address is bounceable
-  - `body` (string | Cell, optional): Optional message body
+  - `body` (string | Cell, optional): Optional message body. A string whose decoded first four bytes match a TON BoC magic is decoded as a base64-serialized `Cell`; any other string is sent as a text comment. A magic-prefixed string that is not a valid BoC throws.
 
 **Returns:** `Promise\<Cell\>` - The signed body as a TON `Cell`. It is the body accepted by the matching opened `WalletContractV5R1.send()` call, not a complete external-message BOC that can be posted directly to TON Center.
 
@@ -245,8 +245,9 @@ Sends a TON transaction and returns its signed transfer body hash and fee.
   - `to` (string): Recipient TON address (e.g., 'EQ...')
   - `value` (number | bigint): Amount in nanotons (1 TON = 1,000,000,000 nanotons)
   - `bounceable` (boolean, optional): Whether the address is bounceable (TON-specific, optional)
+  - `body` (string | Cell, optional, object input): A `Cell` is used as the message body. A string whose decoded first four bytes match a TON BoC magic is decoded as a base64-serialized `Cell`; any other string is sent as a text comment. A magic-prefixed string that is not a valid BoC throws.
 
-When `tx` is a `Cell`, WDK estimates its fee, enforces `transactionMaxFee`, and passes that exact body to the matching opened `WalletContractV5R1.send()` call. It does not rebuild the body, refresh its sequence number, or re-sign it.
+When `tx` is a top-level `Cell`, WDK estimates its fee, enforces `transactionMaxFee`, and passes that exact signed transfer body to the matching opened `WalletContractV5R1.send()` call. It does not rebuild the body, refresh its sequence number, or re-sign it. A base64 string in `TonTransaction.body` is an object-input message body, not a complete signed transaction.
 
 **Returns:** `Promise\<{hash: string, fee: bigint}\>` - Object containing the signed transfer body hash as lowercase hex and the fee in nanotons
 
@@ -270,6 +271,7 @@ Estimates the fee for a transaction.
   - `to` (string): Recipient TON address (e.g., 'EQ...')
   - `value` (number | bigint): Amount in nanotons (1 TON = 1,000,000,000 nanotons)
   - `bounceable` (boolean, optional): Whether the address is bounceable (TON-specific, optional)
+  - `body` (string | Cell, optional, object input): A `Cell` is used as the message body. A string whose decoded first four bytes match a TON BoC magic is decoded as a base64-serialized `Cell`; any other string is sent as a text comment. A magic-prefixed string that is not a valid BoC throws.
 
 **Returns:** `Promise\<{fee: bigint}\>` - Object containing fee estimate (in nanotons)
 
@@ -461,6 +463,7 @@ new WalletAccountReadOnlyTon(publicKey, config)
 | `getAddress()` | Returns the account's TON address | `Promise\<string\>` |
 | `getBalance()` | Returns the native TON balance | `Promise\<bigint\>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific Jetton | `Promise\<bigint\>` |
+| `quoteSendTransaction(tx)` | Estimates the fee for a TON transaction object, including a serialized BoC body | `Promise\<{fee: bigint}\>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` |
 | `getTransaction(hash)` | Returns a normalized receipt for a message-body hash | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
 | `waitForTransaction(hash, options?)` | Waits for the requested TON finality | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
@@ -483,6 +486,29 @@ Returns the balance of a specific Jetton.
 - `tokenAddress` (string): The Jetton master contract address
 
 **Returns:** `Promise\<bigint\>` - Token balance
+
+##### `quoteSendTransaction(tx)`
+Estimates the fee for a TON transaction without signing or broadcasting it. For object inputs, a `body` string whose decoded first four bytes match a TON BoC magic is decoded as a base64-serialized `Cell`; any other string remains a text comment. A magic-prefixed string that is not a valid BoC throws.
+
+**Parameters:**
+- `tx` (TonTransaction): The transaction object
+  - `to` (string): Recipient TON address
+  - `value` (number | bigint): Amount in nanotons
+  - `bounceable` (boolean, optional): Whether the destination address is bounceable
+  - `body` (string | Cell, optional): Reviewed message body
+
+**Returns:** `Promise\<{fee: bigint}\>` - Fee estimate in nanotons
+
+**Throws:** Error if no TON client is configured or a magic-prefixed body is not a valid serialized BoC.
+
+**Example:**
+```javascript
+async function quoteReviewedTransaction(readOnlyAccount, reviewedTransaction) {
+  const quote = await readOnlyAccount.quoteSendTransaction(reviewedTransaction)
+  console.log('Estimated fee:', quote.fee, 'nanotons')
+  return quote
+}
+```
 
 ##### `verify(message, signature)`
 Verifies a message signature.
@@ -544,11 +570,15 @@ interface TonTransaction {
   bounceable?: boolean;
 
   /**
-   * Optional message body
+   * Optional message body. A string whose decoded first four bytes match a TON BoC magic
+   * is decoded as a base64-serialized Cell; any other string is sent as a text comment.
+   * A magic-prefixed string that is not a valid BoC throws.
    */
   body?: string | Cell;
 }
 ```
+
+`body` is part of the transaction-object input. The separate top-level `Cell` accepted by `sendTransaction()` and `quoteSendTransaction()` is a signed transfer body, not a base64 string supplied as `TonTransaction.body`.
 
 ### Cell
 
@@ -613,7 +643,7 @@ interface FeeRates {
   normal: bigint;
 
   /**
-   * Same mainnet-derived fee rate as `normal` through v1.0.0-beta.12
+   * Same mainnet-derived fee rate as `normal` through v1.0.0-beta.14
    * @example 100000000n // 0.1 TON
    */
   fast: bigint;

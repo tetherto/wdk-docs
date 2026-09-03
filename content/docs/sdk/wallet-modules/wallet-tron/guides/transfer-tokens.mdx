@@ -5,7 +5,7 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-This guide explains how to [transfer TRC20 tokens](#transfer-tokens), [estimate transfer fees](#estimate-transfer-fees), and [validate inputs before executing](#transfer-with-validation).
+This guide explains how to [transfer TRC20 tokens](#transfer-tokens), [estimate transfer fees](#estimate-transfer-fees), [approve a bounded allowance](#approve-a-bounded-allowance), and [validate inputs before executing](#transfer-with-validation).
 
 ## Transfer Tokens
 
@@ -35,6 +35,58 @@ console.log('Transfer fee estimate:', transferQuote.fee, 'sun')
 ```
 
 The quote uses current chain parameters, the sender's available resources, and the TRC20 contract simulation result. It charges only the missing energy after available energy is considered, then adds any bandwidth cost.
+
+## Approve a Bounded Allowance
+
+To authorize a contract to spend USD₮, read the current allowance first and submit an approval only when the bounded value needs to change. `approve()` replaces the allowance for the token and spender pair; it does not add to the current value. Avoid unnecessary unlimited approvals.
+
+<Callout type="warning">
+`approve()` signs and broadcasts a TRC20 contract call. Verify the token and spender addresses and choose the smallest amount required for the intended use. When changing a nonzero allowance to another nonzero value, reset it to `0` and wait for successful finality before setting the new value; otherwise a spender can race the allowance change. Revoke the allowance after use when it is no longer needed.
+</Callout>
+
+```javascript title="Read, reset, and change a bounded USDt allowance"
+const token = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'
+const spender = process.env.TRON_SPENDER_ADDRESS
+
+if (!spender) {
+  throw new Error('Set TRON_SPENDER_ADDRESS before approving')
+}
+
+const desiredAllowance = 1_000_000n // 1 USDt; choose for the intended use
+const currentAllowance = await account.getAllowance(token, spender)
+console.log('Current allowance:', currentAllowance)
+
+async function waitForSuccessfulApproval(account, approval) {
+  const receipt = await account.waitForTransaction(approval.hash, {
+    target: 'final'
+  })
+
+  if (receipt.success !== true) {
+    throw new Error(`Approval ${approval.hash} did not execute successfully`)
+  }
+}
+
+if (currentAllowance !== desiredAllowance) {
+  if (currentAllowance !== 0n && desiredAllowance !== 0n) {
+    const reset = await account.approve({
+      token,
+      spender,
+      amount: 0n
+    })
+    await waitForSuccessfulApproval(account, reset)
+  }
+
+  const approval = await account.approve({
+    token,
+    spender,
+    amount: desiredAllowance
+  })
+  await waitForSuccessfulApproval(account, approval)
+
+  console.log('Approval transaction:', approval.hash)
+  console.log('Approval fee:', approval.fee, 'sun')
+}
+```
 
 ## Transfer with Validation
 

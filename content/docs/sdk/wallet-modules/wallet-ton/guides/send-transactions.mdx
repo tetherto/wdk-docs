@@ -5,7 +5,7 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-This guide explains how to [send native TON](#send-native-ton), [estimate transaction fees](#estimate-transaction-fees), [cap transaction fees](#cap-transaction-fees), [read mainnet fee rates](#read-mainnet-fee-rates), [prepare a signed transaction body](#prepare-a-signed-transaction-body), and [quote and send a signed transaction body](#quote-and-send-a-signed-transaction-body).
+This guide explains how to [send native TON](#send-native-ton), [estimate transaction fees](#estimate-transaction-fees), [quote and sign a reviewed base64 BoC body](#quote-and-sign-a-reviewed-base64-boc-body), [cap transaction fees](#cap-transaction-fees), [read mainnet fee rates](#read-mainnet-fee-rates), [prepare a signed transaction body](#prepare-a-signed-transaction-body), and [quote and send a signed transaction body](#quote-and-send-a-signed-transaction-body).
 
 <Callout type="info">
 On TON, values are expressed in nanotons (1 TON = 10^9 nanotons). Transactions support an optional `bounceable` parameter specific to the TON network.
@@ -38,6 +38,44 @@ const quote = await account.quoteSendTransaction({
 console.log('Estimated fee:', quote.fee, 'nanotons')
 ```
 
+## Quote and Sign a Reviewed Base64 BoC Body
+
+For object inputs, `TonTransaction.body` can carry a base64-encoded TON BoC. WDK decodes it as a `Cell` only when the decoded first four bytes match a TON BoC magic; an ordinary string remains a text comment. A magic-prefixed string that is not a valid BoC throws instead of being sent as a comment.
+
+<Callout type="warning">
+Treat a base64 BoC as untrusted instructions. Decode and review its cell content before signing, and verify the destination, value, and bounce behavior in the transaction object. The example below only quotes and signs the reviewed body; it does not broadcast an external payload.
+</Callout>
+
+```javascript title="Review, Quote, and Sign a BoC Body"
+async function quoteAndSignReviewedBody(account, candidate, reviewTransaction) {
+  const review = await reviewTransaction(candidate)
+  if (review?.approved !== true) {
+    throw new Error('TON transaction was not approved')
+  }
+
+  const {
+    body: reviewedBody,
+    bounceable: reviewedBounceable,
+    to: reviewedDestination,
+    value: reviewedValue
+  } = review.transaction
+
+  const transaction = {
+    to: reviewedDestination,
+    value: reviewedValue,
+    body: reviewedBody,
+    bounceable: reviewedBounceable
+  }
+
+  const quote = await account.quoteSendTransaction(transaction)
+  const signedBody = await account.signTransaction(transaction)
+
+  return { quote, signedBody }
+}
+```
+
+`reviewTransaction` is an application-supplied callback. It must decode the candidate body, verify the destination, value, and optional `bounceable` flag, and return `{ approved: true, transaction }` only after explicit approval. Any other result fails closed. The helper returns a quote and signed transfer-body `Cell`; it does not call `sendTransaction()`.
+
 ## Cap Transaction Fees
 
 Set [`transactionMaxFee`](/sdk/wallet-modules/wallet-ton/configuration#transaction-max-fee) when you create the wallet to stop native `sendTransaction()` and `signTransaction()` calls if the estimated fee exceeds your limit.
@@ -51,7 +89,7 @@ const wallet = new WalletManagerTon(seedPhrase, {
 
 ## Read Mainnet Fee Rates
 
-You can retrieve mainnet TON API fee rates from the wallet manager using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-ton/api-reference#getfeerates). In `1.0.0-beta.13`, this method still does not follow a configured testnet client and returns the same calculated value for `normal` and `fast`:
+You can retrieve mainnet TON API fee rates from the wallet manager using [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-ton/api-reference#getfeerates). In `1.0.0-beta.14`, this method still does not follow a configured testnet client and returns the same calculated value for `normal` and `fast`:
 
 ```javascript title="Get Fee Rates"
 const feeRates = await wallet.getFeeRates()

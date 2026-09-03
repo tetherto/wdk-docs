@@ -17,9 +17,11 @@ new VeloraProtocolEvm(account, config?)
 ```
 
 Parameters:
-- `account`: `WalletAccountEvm | WalletAccountReadOnlyEvm | WalletAccountEvmErc4337 | WalletAccountReadOnlyEvmErc4337`
+- `account`: `IWalletAccount | IWalletAccountReadOnly` from `@tetherto/wdk-wallet`
 - `config` (optional):
   - `swapMaxFee` (`bigint`): maximum total gas fee allowed (wei)
+
+The beta.7 declarations accept the generic wallet interfaces, but this package still requires an EVM-compatible account with a configured JSON-RPC URL or EIP-1193 provider. Use an EVM account from WDK's EVM wallet modules; the wider interfaces do not add support for arbitrary or non-EVM accounts.
 
 Example:
 
@@ -53,12 +55,14 @@ Config (ERC‑4337 only):
 - `useNativeCoins` (`true`, optional): Pay fees in the chain's native token
 - `swapMaxFee` (`bigint`, optional): Per‑swap fee cap (wei)
 
+These per-swap overrides are applied only when the protocol uses a concrete `WalletAccountEvmErc4337`. With another writable EVM account, `swap()` sends one EVM transaction and does not apply the ERC‑4337 config object.
+
 Returns:
 - Standard account: `{ hash, fee, tokenInAmount, tokenOutAmount }`
 - ERC‑4337 account: `{ hash, fee, tokenInAmount, tokenOutAmount }`
 
 Notes:
-- Approve the input token with the wallet account before swapping if the spender does not already have enough allowance.
+- Approve the input token with the account's `approve()` method before swapping if the spender does not already have enough allowance.
 - Requires a provider; requires a non read‑only account to send transactions.
 
 Example:
@@ -85,6 +89,8 @@ Config (ERC‑4337 only):
 - `isSponsored` (`true`, optional): Use sponsorship mode for fee estimation
 - `sponsorshipPolicyId` (`string`, optional): Sponsorship policy override
 - `useNativeCoins` (`true`, optional): Estimate fees in the chain's native token
+
+These per-call overrides are applied only when the protocol uses a concrete `WalletAccountReadOnlyEvmErc4337`. Other accounts use the ordinary single-transaction quote path and do not apply the ERC‑4337 config object.
 
 Works with read‑only accounts.
 
