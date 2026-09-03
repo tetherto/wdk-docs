@@ -31,7 +31,7 @@ import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 import RhinofiProtocol from '@rhino.fi/wdk-protocol-swidge-rhinofi'
 
 const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
-  provider: 'https://arb1.arbitrum.io/rpc'
+  provider: 'https://ethereum-rpc.publicnode.com'
 })
 
 const rhinofi = new RhinofiProtocol(account, {
@@ -39,6 +39,9 @@ const rhinofi = new RhinofiProtocol(account, {
   maxNetworkFeeBps: 50,
   maxProtocolFeeBps: 30
 })
+
+const ETHEREUM_USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+const AVALANCHE_USDT = '0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7'
 ```
 
 ## Discover Chains and Tokens
@@ -46,7 +49,7 @@ const rhinofi = new RhinofiProtocol(account, {
 ```javascript
 const chains = await rhinofi.getSupportedChains()
 const tokens = await rhinofi.getSupportedTokens({
-  fromChain: 'ARBITRUM'
+  fromChain: 'ETHEREUM'
 })
 ```
 
@@ -56,11 +59,11 @@ The module reads live Rhino.fi chain and token config. The source chain must be 
 
 ```javascript
 const quote = await rhinofi.quoteSwidge({
-  fromToken: 'USDT',
-  toToken: 'USDT',
-  toChain: 'BASE',
+  fromToken: ETHEREUM_USDT,
+  toToken: AVALANCHE_USDT,
+  toChain: 'AVALANCHE',
   recipient: '0xRecipient...',
-  fromTokenAmount: 1_000_000n
+  fromTokenAmount: 100_000_000n
 })
 
 console.log('Expected output:', quote.toTokenAmount)
@@ -68,19 +71,23 @@ console.log('Minimum output:', quote.toTokenAmountMin)
 console.log('Fees:', quote.fees)
 ```
 
+This route bridges USD₮ from Ethereum to Avalanche. Token addresses are chain-specific; use the exact address returned by the provider's current config for each side of a different route.
+
 Use `toTokenAmount` instead of `fromTokenAmount` for exact-output routes when supported by the provider route.
 
 ## Execute a Route
 
-After the user confirms the quote, call `swidge()`.
+<Callout type="warn">
+`quoteSwidge()` is indicative only. `swidge()` does not reuse that response: it calls `prepareBridge()` and executes with the fresh internal quote. The configured fee caps apply to mapped network and protocol fees, but they do not lock the output amount, approval spender, or transaction payload. The package does not expose a second-confirmation hook for the fresh response, so confirm that this execution model fits your application's risk requirements before calling `swidge()`.
+</Callout>
 
 ```javascript
 const result = await rhinofi.swidge({
-  fromToken: 'USDT',
-  toToken: 'USDT',
-  toChain: 'BASE',
+  fromToken: ETHEREUM_USDT,
+  toToken: AVALANCHE_USDT,
+  toChain: 'AVALANCHE',
   recipient: '0xRecipient...',
-  fromTokenAmount: 1_000_000n
+  fromTokenAmount: 100_000_000n
 })
 
 console.log('Operation ID:', result.id)

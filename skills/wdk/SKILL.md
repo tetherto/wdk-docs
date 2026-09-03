@@ -35,8 +35,8 @@ This skill is organized into reference files for chain-specific and protocol-spe
 
 | File | Content |
 |------|---------|
-| `references/chains.md` | Chain IDs, native tokens, units, decimals, public RPC endpoints, dust thresholds, address formats, EIP-3009 support, bridge routes |
-| `references/deployments.md` | USD₮ native addresses, USD₮0 omnichain addresses |
+| `references/chains.md` | Chain IDs, native tokens, units, decimals, public RPC endpoints, dust thresholds, address formats, EIP-3009 support, bridge route discovery |
+| `references/deployments.md` | USD₮ native addresses and live USD₮0, XAU₮0, and USA₮ deployment-resolution guidance |
 | `references/wallet-aptos.md` | Aptos: SLIP-0010 Ed25519, APT, fungible assets, octas, fullnode REST |
 | `references/wallet-btc.md` | Bitcoin wallet: BIP-84, Electrum, PSBT, fee rates |
 | `references/wallet-evm.md` | EVM + ERC-4337: BIP-44, EIP-1559, ERC20, batch txs, paymaster |
