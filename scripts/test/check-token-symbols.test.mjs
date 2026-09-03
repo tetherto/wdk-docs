@@ -8,7 +8,6 @@ import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 
 import {
-  validateCompetingAssets,
   validateTokenSymbolFiles,
   validateTokenSymbols,
   validateVisibleTokenStrings
@@ -163,7 +162,7 @@ test('preserves lowercase machine values in code while rejecting lowercase UI co
   )
 })
 
-test('leaves competitor enforcement to the raw policy pass instead of rewriting USDC as USD₮', () => {
+test('preserves USDC because it is a distinct token rather than a USD₮ style variant', () => {
   const content = [
     'This route swaps USDC for USD₮.',
     '',
@@ -174,10 +173,6 @@ test('leaves competitor enforcement to the raw policy pass instead of rewriting 
   ].join('\n')
 
   assert.deepEqual(validateTokenSymbols(content), [])
-  assert.deepEqual(validateCompetingAssets(content).map((issue) => issue.value), [
-    'USDC',
-    'USDC'
-  ])
 })
 
 test('rejects ambiguous casing and lookalike symbols without rejecting lowercase API values', () => {
@@ -1232,9 +1227,9 @@ test('CLI exits nonzero with deterministic diagnostics for invalid source files'
     (error) => {
       assert.equal(error.code, 1)
       assert.match(error.stderr, /content\/docs\/example\.mdx:3/)
-      assert.match(error.stderr, /found: "XAUT"/)
+      assert.match(error.stderr, /found: XAUT/)
       assert.match(error.stderr, /content\/docs\/example\.mdx:4/)
-      assert.match(error.stderr, /found: "CHN₮"/)
+      assert.match(error.stderr, /found: CHN₮/)
       return true
     }
   )
@@ -1246,28 +1241,15 @@ test('CLI only scans build output when explicitly requested', async () => {
   await mkdir(path.dirname(artifact), { recursive: true })
   await writeFile(artifact, '# Send USAT\n', 'utf8')
 
-  const requiredBuildFiles = {
-    'api/search': JSON.stringify({ docs: { docs: {} } }),
-    'api/search.json': JSON.stringify({ docs: { docs: {} } }),
-    'index.html': '<!doctype html><title>WDK</title>',
-    'llms-full.txt': '# WDK\n',
-    'llms.txt': '# WDK\n'
-  }
-  for (const [relativeFile, content] of Object.entries(requiredBuildFiles)) {
-    const file = path.join(root, 'dist', relativeFile)
-    await mkdir(path.dirname(file), { recursive: true })
-    await writeFile(file, content, 'utf8')
-  }
-
   const clean = await execFileAsync(process.execPath, [CHECKER_PATH, `--root=${root}`])
-  assert.match(clean.stdout, /validated 0 documentation policy files/)
+  assert.match(clean.stdout, /validated 0 documentation source files/)
 
   await assert.rejects(
     execFileAsync(process.execPath, [CHECKER_PATH, '--root', root, '--include-build-output']),
     (error) => {
       assert.equal(error.code, 1)
       assert.match(error.stderr, /dist\/page\.md:1/)
-      assert.match(error.stderr, /found: "USAT"/)
+      assert.match(error.stderr, /found: USAT/)
       return true
     }
   )
@@ -1327,8 +1309,7 @@ test('optionally validates generated build Markdown', async () => {
     visibleSourceDirectories: [],
     visibleSourceFiles: [],
     generatedMarkdownFiles: [],
-    buildOutputDirectories: ['dist'],
-    requiredBuildOutputFiles: []
+    buildOutputDirectories: ['dist']
   })
 
   assert.deepEqual(issues.map((issue) => [issue.file, issue.value]), [
