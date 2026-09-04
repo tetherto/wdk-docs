@@ -5,6 +5,7 @@ import { once } from 'node:events';
 import fs, { mkdtemp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import lockfile from 'proper-lockfile';
 
@@ -589,7 +590,9 @@ test('waiters read source only after acquiring the output lock', async (t) => {
 });
 
 test('recovers a stale lock and abandoned output after a killed writer', async (t) => {
-  const root = await mkdtemp(path.join(tmpdir(), 'wdk-blocks-catalog-crash-'));
+  const root = await mkdtemp(
+    path.join(tmpdir(), 'wdk-blocks-catalog-crash-";process.exit(97);"-'),
+  );
   const sourcePath = path.join(root, 'content/feeds/wdk-blocks.v1.json');
   const markdownPath = path.join(root, 'content/feeds/all-modules.md');
   const outputDirectory = path.join(root, 'public/catalog/v1');
@@ -609,15 +612,19 @@ test('recovers a stale lock and abandoned output after a killed writer', async (
     writeFile(schemaTargetPath, 'old schema', 'utf8'),
   ]);
 
-  const moduleUrl = new URL('../sync-wdk-blocks-catalog.mjs', import.meta.url).href;
+  const crashWriterPath = fileURLToPath(
+    new URL('./fixtures/sync-wdk-blocks-catalog-crash-writer.mjs', import.meta.url),
+  );
   const child = spawn(
     process.execPath,
     [
-      '--input-type=module',
-      '--eval',
-      `import fs from 'node:fs/promises'; import { syncWdkBlocksCatalog } from ${JSON.stringify(moduleUrl)}; let renames = 0; const fileSystem = { ...fs, async rename(from, to) { await fs.rename(from, to); renames += 1; if (renames === 2) { process.stdout.write('ready\\n'); setInterval(() => {}, 1000); await new Promise(() => {}); } } }; await syncWdkBlocksCatalog({ sourcePath: ${JSON.stringify(sourcePath)}, markdownPath: ${JSON.stringify(markdownPath)}, catalogTargetPath: ${JSON.stringify(catalogTargetPath)}, schemaTargetPath: ${JSON.stringify(schemaTargetPath)}, fileSystem });`,
+      crashWriterPath,
+      sourcePath,
+      markdownPath,
+      catalogTargetPath,
+      schemaTargetPath,
     ],
-    { cwd: process.cwd(), stdio: ['ignore', 'pipe', 'pipe'] },
+    { cwd: process.cwd(), shell: false, stdio: ['ignore', 'pipe', 'pipe'] },
   );
   t.after(() => {
     if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
