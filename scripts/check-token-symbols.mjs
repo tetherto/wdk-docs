@@ -124,6 +124,55 @@ const TOKEN_SYMBOL_POLICIES = [
 ]
 // Alloy (aUSD₮) stays outside this gate until WDK approves a human-code fallback.
 
+// Competing stable-value assets. Unlike the policies above, these are not a
+// spelling question: WDK examples settle in Tether assets, so any mention is a
+// defect unless a reviewer marks it with an inline `token-check-allow:`
+// directive. Symbols only — issuer names such as "Circle" collide with ordinary
+// prose, and every competing mention we have seen carries the symbol anyway.
+const COMPETING_ASSET_ISSUERS = new Map([
+  ['USDC', 'Circle'],
+  ['USDbC', 'Circle'],
+  ['USDC.e', 'bridged Circle'],
+  ['EURC', 'Circle'],
+  ['DAI', 'Sky (MakerDAO)'],
+  ['sDAI', 'Sky (MakerDAO)'],
+  ['USDS', 'Sky'],
+  ['sUSDS', 'Sky'],
+  ['USDP', 'Paxos'],
+  ['PYUSD', 'Paxos and PayPal'],
+  ['BUSD', 'Paxos'],
+  ['USDG', 'Global Dollar Network'],
+  ['PAXG', 'Paxos'],
+  ['FDUSD', 'First Digital'],
+  ['TUSD', 'TrueUSD'],
+  ['GUSD', 'Gemini'],
+  ['RLUSD', 'Ripple'],
+  ['USDe', 'Ethena'],
+  ['sUSDe', 'Ethena'],
+  ['FRAX', 'Frax'],
+  ['sFRAX', 'Frax'],
+  ['frxUSD', 'Frax'],
+  ['GHO', 'Aave'],
+  ['crvUSD', 'Curve'],
+  ['LUSD', 'Liquity'],
+  ['sUSD', 'Synthetix'],
+  ['USDD', 'USDD'],
+  ['USDY', 'Ondo'],
+  ['USDM', 'Mountain'],
+  ['DOLA', 'Inverse'],
+  ['MIM', 'Abracadabra'],
+  ['alUSD', 'Alchemix'],
+  ['deUSD', 'Elixir'],
+  ['USDf', 'Falcon'],
+  ['USDX', 'Stables Labs'],
+  ['USD1', 'World Liberty'],
+  ['EURS', 'Stasis'],
+  ['XSGD', 'StraitsX']
+])
+const COMPETING_ASSET_BY_UPPERCASE = new Map(
+  [...COMPETING_ASSET_ISSUERS.keys()].map((symbol) => [symbol.toUpperCase(), symbol])
+)
+
 const TOKEN_POLICY_BY_CANDIDATE_ROOT = new Map(TOKEN_SYMBOL_POLICIES.flatMap((policy) => (
   policy.candidateRoots.map((root) => [root, policy])
 )))
@@ -150,6 +199,15 @@ const GLYPH_CANDIDATE = new RegExp(`(?<![A-Za-z0-9_])${TOKEN_ROOT_SOURCE}₮(?:\
 const STROKE_LOOKALIKE = new RegExp(`(?<![A-Za-z0-9_])${TOKEN_ROOT_SOURCE}[Ŧŧ](?:\\d+)?[sS]?(?![A-Za-z0-9_])`, 'gi')
 const MISPLACED_SUFFIX_CANDIDATE = new RegExp(`\\b${TOKEN_ROOT_SOURCE}\\d+(?:[tT]|₮|[Ŧŧ])[sS]?(?![A-Za-z0-9_])`, 'gi')
 const AMBIGUOUS_USDC_STYLE = /\b[uU][sS][dD]c\b/g
+const COMPETING_ASSET_SOURCE = [...COMPETING_ASSET_ISSUERS.keys()]
+  .sort((left, right) => right.length - left.length)
+  .map(escapeRegExp)
+  .join('|')
+const COMPETING_ASSET = new RegExp(
+  `(?<![A-Za-z0-9_])(?:${COMPETING_ASSET_SOURCE})(?![A-Za-z0-9_])`,
+  'gi'
+)
+const COMPETING_ASSET_ALLOW_DIRECTIVE = /token-check-allow:\s*([A-Za-z0-9_.,\s-]+)/i
 const URL_OR_MAILTO = /\b(?:https?:\/\/|mailto:)[^\s<>'")]+/g
 const BARE_PATH = /(?:^|[\s(=:,;])\/(?!\/)[^\s<>'")]+/g
 const SCOPED_PACKAGE = /@[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+/g
@@ -288,7 +346,7 @@ function collectStyleMatches(value, target, ignoredRanges = []) {
 
 function reasonForTarget(target, value, policy) {
   if (/^[uU][sS][dD]c$/.test(value)) {
-    return 'USDC is a distinct token. Use USDC for Circle or the context-appropriate Tether spelling.'
+    return 'USDC is Circle\'s token, not a USD₮ spelling variant. Use the context-appropriate Tether spelling; the competing-asset rule covers genuine USDC mentions.'
   }
   if (!policy) return 'Use the context-appropriate canonical token spelling.'
   if (target === 'code-human') {
@@ -1164,6 +1222,44 @@ function normalizedRelativePath(root, file) {
   return path.relative(root, file).split(path.sep).join('/')
 }
 
+function reasonForCompetingAsset(symbol) {
+  const issuer = COMPETING_ASSET_ISSUERS.get(symbol)
+  return `${symbol} is a competing stable-value asset (${issuer}). WDK documentation settles examples in Tether assets such as USD₮, USD₮0, or XAU₮. Replace it, or annotate the line with "token-check-allow: ${symbol}" when the mention is unavoidable.`
+}
+
+function allowedCompetingSymbols(lines, index) {
+  const allowed = new Set()
+
+  for (const candidate of [lines[index], lines[index - 1]]) {
+    const directive = candidate?.match(COMPETING_ASSET_ALLOW_DIRECTIVE)
+    if (!directive) continue
+    for (const symbol of directive[1].split(/[\s,]+/)) {
+      if (symbol) allowed.add(symbol.toUpperCase())
+    }
+  }
+
+  return allowed
+}
+
+export function validateCompetingAssets(content, { file = '<content>' } = {}) {
+  const issues = []
+  const lines = content.split(/\r?\n/)
+
+  lines.forEach((text, index) => {
+    let allowed
+
+    for (const match of text.matchAll(COMPETING_ASSET)) {
+      const symbol = COMPETING_ASSET_BY_UPPERCASE.get(match[0].toUpperCase())
+      if (!symbol) continue
+      allowed ??= allowedCompetingSymbols(lines, index)
+      if (allowed.has(symbol.toUpperCase())) continue
+      addIssue(issues, file, index + 1, match[0], reasonForCompetingAsset(symbol))
+    }
+  })
+
+  return issues
+}
+
 export async function validateTokenSymbolFiles({
   root = process.cwd(),
   sourceDirectories = DEFAULT_SOURCE_DIRECTORIES,
@@ -1217,9 +1313,14 @@ export async function validateTokenSymbolFiles({
     const relativeFile = normalizedRelativePath(root, file)
     const markdown = MARKDOWN_EXTENSION.test(file)
       || /(?:^|\/)llms(?:-full)?\.txt$/.test(relativeFile)
-    issues.push(...(markdown
+    const competing = validateCompetingAssets(content, { file: relativeFile })
+    const competingKeys = new Set(competing.map((issue) => `${issue.line}:${issue.value}`))
+    const styled = (markdown
       ? validateTokenSymbols(content, { file: relativeFile })
-      : validateVisibleTokenStrings(content, { file: relativeFile })))
+      : validateVisibleTokenStrings(content, { file: relativeFile })
+    ).filter((issue) => !competingKeys.has(`${issue.line}:${issue.value}`))
+
+    issues.push(...[...competing, ...styled].sort((left, right) => left.line - right.line))
   }
 
   return { files: sortedFiles, issues }
