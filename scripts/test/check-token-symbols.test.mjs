@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 
 import {
+  validateCompetingAssets,
   validateTokenSymbolFiles,
   validateTokenSymbols,
   validateVisibleTokenStrings
@@ -162,7 +163,7 @@ test('preserves lowercase machine values in code while rejecting lowercase UI co
   )
 })
 
-test('preserves USDC because it is a distinct token rather than a USD₮ style variant', () => {
+test('leaves USDC alone in the style pass because it is a distinct token, not a USD₮ variant', () => {
   const content = [
     'This route swaps USDC for USD₮.',
     '',
@@ -1315,4 +1316,73 @@ test('optionally validates generated build Markdown', async () => {
   assert.deepEqual(issues.map((issue) => [issue.file, issue.value]), [
     ['dist/page.md', 'USDT']
   ])
+})
+
+test('flags competing stable-value assets in prose, code, and source strings', () => {
+  const content = [
+    'Swap USD₮ for USDC, or borrow DAI against it.',
+    '',
+    '```javascript',
+    "const collateral = 'sUSDe'",
+    "const gold = 'PAXG'",
+    '```'
+  ].join('\n')
+
+  assert.deepEqual(validateCompetingAssets(content).map((issue) => [issue.line, issue.value]), [
+    [1, 'USDC'],
+    [1, 'DAI'],
+    [4, 'sUSDe'],
+    [5, 'PAXG']
+  ])
+  assert.deepEqual(
+    validateCompetingAssets("export const label = 'Pay with USDC'").map((issue) => issue.value),
+    ['USDC']
+  )
+})
+
+test('names the issuer so the reason explains why the mention is out of policy', () => {
+  const [issue] = validateCompetingAssets('Borrow GHO.')
+
+  assert.equal(issue.value, 'GHO')
+  assert.match(issue.reason, /competing stable-value asset \(Aave\)/)
+  assert.match(issue.reason, /token-check-allow: GHO/)
+})
+
+test('keeps Tether assets and lookalike words out of the competing-asset gate', () => {
+  const content = [
+    'Bridge USD₮ to USD₮0 and price XAU₮ through `usdt`, `usdt0`, and `xaut`.',
+    'CoinGecko returns `dailyChange` and `dailyChangeRelative`.',
+    'Register WETH, ETH, BTC, TRX, SOL, or EUR balances.'
+  ].join('\n')
+
+  assert.deepEqual(validateCompetingAssets(content), [])
+})
+
+test('honours an inline allow directive on the same or preceding line, per symbol', () => {
+  const sameLine = 'Bridge to USDC. {/* token-check-allow: USDC */}'
+  const precedingLine = ['{/* token-check-allow: USDC */}', 'Bridge to USDC.'].join('\n')
+  const scoped = 'USDC is allowed, DAI is not. {/* token-check-allow: USDC */}'
+
+  assert.deepEqual(validateCompetingAssets(sameLine), [])
+  assert.deepEqual(validateCompetingAssets(precedingLine), [])
+  assert.deepEqual(validateCompetingAssets(scoped).map((issue) => issue.value), ['DAI'])
+})
+
+test('reports a competing asset once when it also trips the ambiguous-casing rule', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'wdk-competing-assets-'))
+  const page = path.join(root, 'content/docs/page.mdx')
+  await mkdir(path.dirname(page), { recursive: true })
+  await writeFile(page, 'The usdc route is ambiguous casing and a competing asset at once.\n', 'utf8')
+
+  const { issues } = await validateTokenSymbolFiles({
+    root,
+    sourceDirectories: ['content/docs'],
+    visibleSourceDirectories: [],
+    visibleSourceFiles: [],
+    generatedMarkdownFiles: []
+  })
+
+  assert.equal(issues.length, 1)
+  assert.equal(issues[0].value, 'usdc')
+  assert.match(issues[0].reason, /competing stable-value asset/)
 })
