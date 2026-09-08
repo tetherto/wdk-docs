@@ -5873,6 +5873,25 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### September 03, 2026
+
+**What's New**
+- **worklet-bundler** ([v1.0.0-beta.12](https://github.com/tetherto/wdk-worklet-bundler/releases/tag/v1.0.0-beta.12)): Generate generic modules, method allowlists, and module suspend/resume handlers for JSON-RPC. Add `options.handleLeakCheck` for opt-in HRPC handle diagnostics; use Pear Worklet beta.13 for these runtime features.
+- **wallet-evm-7702-gasless** ([v1.0.0-beta.5](https://github.com/tetherto/wdk-wallet-evm-7702-gasless/releases/tag/v1.0.0-beta.5)): Add configurable EntryPoint v0.8/v0.9 with matching delegation implementations, and check configured `chainId` on the first UserOperation chain lookup.
+
+**Fixes**
+- **bridge-usdt0-evm** ([v1.0.0-beta.9](https://github.com/tetherto/wdk-protocol-bridge-usdt0-evm/releases/tag/v1.0.0-beta.9)): Accept shared WDK account interfaces and allow EVM-compatible accounts with a callable `sendTransaction()` to execute `bridge()`. ERC-4337 helper selection and approval batching still depend on the bridge package's concrete account classes.
+- **wallet-evm-erc-4337** ([v1.0.0-beta.18](https://github.com/tetherto/wdk-wallet-evm-erc-4337/releases/tag/v1.0.0-beta.18)): Validate the provider against configured `chainId` on the first chain lookup before building UserOperations for signing.
+
+---
+
+### September 02, 2026
+
+**Changes**
+- **pear-wrk-wdk** ([v1.0.0-beta.13](https://github.com/tetherto/pear-wrk-wdk/releases/tag/v1.0.0-beta.13)): [Breaking] Remove the `callMethod()` default-value fallback; missing methods now fail with `BAD_REQUEST`. Add generic-module calls and events over JSON-RPC, opt-in suspend handle diagnostics, and narrower logging of request and mnemonic data.
+
+---
+
 ### August 30, 2026
 
 **What's New**
@@ -7288,7 +7307,7 @@ Use the USD₮0 bridge module to move USD₮0 and XAU₮0 across supported chain
 - **LayerZero Integration**: Uses LayerZero protocol for secure cross-chain transfers
 - **Expanded Multi-Chain Support**: Discover 25 configured EVM and non-EVM network keys
 - **Non-EVM Destinations**: Bridge toward Solana, TON, and TRON when the source token has a compatible route contract
-- **Account Abstraction**: Works with both standard EVM wallets and ERC-4337 smart accounts
+- **Account Compatibility**: Accepts the shared WDK account interfaces; execution requires a callable `sendTransaction()` method and EVM transaction support. See [account requirements](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements) for ERC-4337 batching limits.
 - **Fee Management**: Built-in fee calculation and bridge cost estimation
 - **Token Support**: Supports USD₮0 and XAU₮0 ecosystem tokens
 - **Route Overrides**: Custom OFT contract addresses and destination endpoint IDs
@@ -7337,7 +7356,7 @@ All source chains above, plus:
 
 ### Non-EVM route candidates
 
-For auto-resolved routes toward Solana, TON, or TRON, beta.7 skips the source chain's ordinary `oftContract`. The bundled configuration can instead consider these source contracts:
+For auto-resolved routes toward Solana, TON, or TRON, the protocol skips the source chain's ordinary `oftContract`. The bundled configuration can instead consider these source contracts:
 
 | Source token contract family | EVM source chains with a bundled candidate |
 |---|---|
@@ -7359,7 +7378,7 @@ Standard EVM accounts can use every supported EVM source route with a matching t
 </Callout>
 
 <Callout type="warn">
-ERC-4337 `fee` and `bridgeFee` values can use different denominations in `1.0.0-beta.7`. Review the [fee-unit limitation](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#fee-units-and-bridgemaxfee) before configuring `bridgeMaxFee`.
+ERC-4337 `fee` and `bridgeFee` values can use different denominations in `1.0.0-beta.9`. Review the [fee-unit limitation](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#fee-units-and-bridgemaxfee) before configuring `bridgeMaxFee`.
 </Callout>
 
 ## Next Steps
@@ -7409,7 +7428,7 @@ new Usdt0ProtocolEvm(account, config?)
 ```
 
 **Parameters:**
-- `account` (WalletAccountEvm | WalletAccountEvmErc4337 | WalletAccountReadOnlyEvm | WalletAccountReadOnlyEvmErc4337): The wallet account to use for bridge operations
+- `account` (`IWalletAccount` or `IWalletAccountReadOnly` from `@tetherto/wdk-wallet`): The wallet account to use for bridge operations. See [account requirements](#account-requirements).
 - `config` (BridgeProtocolConfig, optional): Configuration object
   - `bridgeMaxFee` (number | bigint, optional): Rejects `bridge()` when the implementation's combined fee value is at or above this cap
 
@@ -7426,6 +7445,18 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
   bridgeMaxFee: 1000000000000000n // Standard Ethereum account: source native base units
 })
 ```
+
+### Account requirements
+
+The constructor accepts the shared `IWalletAccount` and `IWalletAccountReadOnly` interfaces in `1.0.0-beta.9`. For execution, `bridge()` checks whether the account has a callable `sendTransaction()` method instead of requiring a `WalletAccountEvm` instance.
+
+The account must still implement EVM-compatible `getAddress()` and `quoteSendTransaction()` operations. Both bridge methods require an RPC URL or EIP-1193 provider in the wallet configuration. The constructor reads `account._config.provider`, an internal field absent from the shared interfaces. Implementing the interface alone does not establish runtime compatibility; an account without `_config` fails construction.
+
+Read-only accounts can use `quoteBridge()`, subject to the same provider, route, balance, and allowance requirements. They cannot execute `bridge()` without `sendTransaction()`.
+
+<Callout type="warn">
+ERC-4337 helper selection and approval batching still depend on the concrete classes resolved by the bridge package: `WalletAccountReadOnlyEvmErc4337` for helper construction and quotes, and `WalletAccountEvmErc4337` for execution. A custom account or an account from a separate copy of the ERC-4337 package does not receive that path solely because it implements `sendTransaction()`. The bridge release depends on ERC-4337 wallet `1.0.0-beta.11`; verify package deduplication and runtime class identity when combining wallet versions. See [Bridge with ERC-4337](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337#prerequisites).
+</Callout>
 
 ### Methods
 
@@ -7455,7 +7486,7 @@ With a standard EVM account, approve the source-chain bridge spender before call
 **Returns:** `Promise<BridgeResult>` - Bridge operation result
 
 **Throws:**
-- Error if account is read-only
+- Error if the account has no callable `sendTransaction()` method
 - Error if no provider is configured
 - Error if the combined fee value is equal to or greater than `bridgeMaxFee`
 
@@ -7473,7 +7504,7 @@ await standardAccount.approve({
 const result = await standardBridgeProtocol.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...', // Recipient address
-  token: '0x...', // ₮ contract address
+  token: '0x...', // USDt contract address
   amount: 1000000n,
   oftContractAddress: '0x...' // Same address used as approval spender
 })
@@ -7501,7 +7532,7 @@ console.log('Bridge fee:', result2.bridgeFee)
 ```
 
 #### `quoteBridge(options, config?)`
-Estimates the cost of a bridge operation without executing it.
+Estimates the cost of a bridge operation without executing it. Read-only accounts are accepted, and this method does not enforce `bridgeMaxFee`.
 
 For standard EVM accounts, some providers estimate the same bridge transaction that `bridge()` sends. If that estimate fails because token allowance is missing, approve the source-chain bridge spender before calling `quoteBridge()`. ERC-4337 quotes include the bundled approval transaction. For `WalletAccountReadOnlyEvmErc4337`, `quoteBridge()` uses the same ordered batch as `bridge()`: on Ethereum mainnet for the resolved USD₮ token at `0xdAC17F958D2ee523a2206206994597C13D831ec7`, an existing non-zero allowance and non-zero `approveAmount` produce `approve(spender, 0)`, `approve(spender, approveAmount)`, then the helper bridge call; otherwise the batch is the approval followed by the helper call.
 
@@ -7624,13 +7655,14 @@ type Erc4337BridgeConfig = Erc4337QuoteConfig & {
 
 | Account flow | `fee` | `bridgeFee` |
 |---|---|---|
-| Standard EVM | Source-chain native base units | Source-chain native base units |
+| `WalletAccountEvm` | Source-chain native base units | Source-chain native base units |
+| Other compatible accounts using the single-transaction path | Account-specific `quoteSendTransaction()` fee units | Source-chain native base units |
 | ERC-4337 with native gas | Source-chain native base units | Bridged-token base units |
 | ERC-4337 with token-paid gas | Paymaster-token base units | Bridged-token base units |
 | ERC-4337 with sponsored gas | `0` | Bridged-token base units |
 
 <Callout type="warn">
-In `1.0.0-beta.7`, the ERC-4337 path numerically adds `fee + bridgeFee` when checking `bridgeMaxFee`, even when the fields have different denominations. Do not interpret that sum as a total monetary cost. Set an ERC-4337 cap only after confirming that the selected account payment mode produces compatible units. The equality boundary is rejected.
+In `1.0.0-beta.9`, `bridge()` numerically adds `fee + bridgeFee` when checking `bridgeMaxFee`, even when the fields have different denominations. This affects ERC-4337 helper flows and any compatible account whose quoted fee is not in source-chain native base units. Do not interpret that sum as a total monetary cost. Set a cap only after confirming that the selected account payment mode produces compatible units. The equality boundary is rejected.
 </Callout>
 
 `Erc4337QuoteConfig` is a partial operation-level override of the wallet's token-paid, sponsored, or native-gas configuration. Sponsored gas uses `isSponsored: true` and can include `sponsorshipPolicyId`; native gas uses `useNativeCoins: true`. See the [ERC-4337 wallet configuration](/sdk/wallet-modules/wallet-evm-erc-4337/configuration) for the complete account requirements.
@@ -7914,7 +7946,9 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 
 ## Account Configuration
 
-The bridge protocol uses the wallet account's configuration for blockchain access:
+The constructor accepts `IWalletAccount` or `IWalletAccountReadOnly` from `@tetherto/wdk-wallet`. Execution requires EVM transaction support and a callable `sendTransaction()` method; read-only accounts can quote. See [account requirements](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements) for custom accounts and ERC-4337 class identity.
+
+The bridge protocol reads the provider from the wallet account's internal configuration for blockchain access:
 
 ```javascript
 import { WalletAccountEvm, WalletAccountReadOnlyEvm } from '@tetherto/wdk-wallet-evm'
@@ -7951,10 +7985,10 @@ The `bridgeMaxFee` option rejects `bridge()` when the implementation's `fee + br
 
 **Type:** `number | bigint` (optional)
 
-For a standard EVM account, both fields use the source chain's native base unit. For example, Ethereum and Arbitrum report the values in wei.
+For `WalletAccountEvm`, both fields use the source chain's native base unit, such as wei on Ethereum and Arbitrum. Other compatible accounts retain their own `quoteSendTransaction()` fee denomination, while the single-transaction path still returns `bridgeFee` in source native base units. Confirm the units match before setting a cap.
 
 <Callout type="warn">
-For an ERC-4337 helper flow, `bridgeFee` is in bridged-token base units. The account's `fee` uses native base units for native gas, paymaster-token base units for token-paid gas, or zero for sponsored gas. In `1.0.0-beta.7`, the protocol numerically adds these values when enforcing `bridgeMaxFee`. Do not treat that sum as one currency or set a cap until your payment mode uses compatible units.
+For an ERC-4337 helper flow, `bridgeFee` is in bridged-token base units. The account's `fee` uses native base units for native gas, paymaster-token base units for token-paid gas, or zero for sponsored gas. In `1.0.0-beta.9`, the protocol numerically adds these values when enforcing `bridgeMaxFee`. Do not treat that sum as one currency or set a cap until your payment mode uses compatible units.
 </Callout>
 
 **Examples:**
@@ -7989,7 +8023,7 @@ try {
 
 ### Provider
 
-The `provider` option comes from the wallet account configuration and specifies how to connect to the blockchain.
+The `provider` option comes from the wallet account configuration and specifies how to connect to the blockchain. Both `bridge()` and `quoteBridge()` require it. The constructor reads `account._config.provider`; `_config` is not part of the shared account interfaces, so accepting an interface in TypeScript does not guarantee runtime compatibility.
 
 **Type:** `string | Eip1193Provider`
 
@@ -8012,7 +8046,7 @@ Pass either an RPC URL string or a genuine EIP-1193 provider. An ethers `JsonRpc
 
 ## ERC-4337 Configuration
 
-When using ERC-4337 accounts, you can override configuration options during bridge operations:
+When using ERC-4337 accounts recognized by the bridge package's concrete class checks, you can override configuration options during bridge operations. Review the [class identity requirement](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements) before combining package versions:
 
 ```javascript
 // Bridge with ERC-4337 account
@@ -8204,7 +8238,7 @@ Get started with WDK's Bridge USD₮0 EVM Protocol usage
 URL: https://docs.wdk.tether.io/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-cross-ecosystem
 Description: Send USD₮0 from EVM toward Solana, TON, or TRON recipients.
 
-This guide covers [prerequisites](#prerequisites) and how to [bridge to Solana](#bridge-to-solana), [bridge to TON](#bridge-to-ton), and [bridge to TRON](#bridge-to-tron) using [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config). The same [`Usdt0ProtocolEvm`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#usdt0protocolevm) instance you use for EVM destinations applies; only `targetChain` and `recipient` formats change.
+This guide covers [prerequisites](#prerequisites), how to [verify the route](#verify-the-route), and how to [bridge to Solana](#bridge-to-solana), [bridge to TON](#bridge-to-ton), and [bridge to TRON](#bridge-to-tron) using [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config). The same [`Usdt0ProtocolEvm`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#usdt0protocolevm) instance you use for EVM destinations applies; only `targetChain` and `recipient` formats change.
 
 ## Prerequisites
 
@@ -8214,7 +8248,7 @@ The examples below use a standard EVM account. For `USDT_BRIDGE_SPENDER_ADDRESS`
 
 ## Verify the route
 
-For Solana, TON, and TRON targets, beta.7 does not auto-resolve the source chain's ordinary USD₮0 OFT. Its bundled auto-resolution candidates are:
+For Solana, TON, and TRON targets, the protocol does not auto-resolve the source chain's ordinary USD₮0 OFT. Its bundled auto-resolution candidates are:
 
 | Source token contract family | EVM source chains with a bundled candidate |
 |---|---|
@@ -8463,6 +8497,7 @@ This guide covers [prerequisites](#prerequisites), how to [create an ERC-4337 ac
 * `@tetherto/wdk-wallet-evm-erc-4337` installed alongside [@tetherto/wdk-protocol-bridge-usdt0-evm](https://www.npmjs.com/package/@tetherto/wdk-protocol-bridge-usdt0-evm).
 * Bundler and paymaster endpoints for your chain (example uses Arbitrum public URLs from the API reference).
 * An ERC-4337 source chain with a configured transaction-value helper: Ethereum, Arbitrum, Plasma, or Polygon.
+* An account recognized as the same ERC-4337 class instance used by the bridge package. In `1.0.0-beta.9`, the bridge depends on ERC-4337 wallet `1.0.0-beta.11` and still uses concrete class checks for its helper and batching flow. Separate package copies, including those introduced by differing versions, can miss this path. Verify deduplication and runtime class identity before using this guide. The new `sendTransaction()` capability check alone does not enable batching. See [account requirements](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements).
 
 ## Create a WalletAccountEvmErc4337 account
 
@@ -8525,7 +8560,7 @@ The bundled approval sequence and helper call produce one UserOperation hash. Fo
 </Callout>
 
 <Callout type="warn">
-In `1.0.0-beta.7`, `bridgeFee` for this helper flow is in bridged-token base units. The account's `fee` is in native base units for native gas, paymaster-token base units for token-paid gas, or zero for sponsored gas. The protocol numerically adds those values when enforcing `bridgeMaxFee`. Do not interpret the sum as one currency or set an ERC-4337 cap until your integration has confirmed compatible units for its payment mode.
+In `1.0.0-beta.9`, `bridgeFee` for this helper flow is in bridged-token base units. The account's `fee` is in native base units for native gas, paymaster-token base units for token-paid gas, or zero for sponsored gas. The protocol numerically adds those values when enforcing `bridgeMaxFee`. Do not interpret the sum as one currency or set an ERC-4337 cap until your integration has confirmed compatible units for its payment mode.
 </Callout>
 
 <Callout type="warn">
@@ -8542,7 +8577,7 @@ Bridge to non-EVM chains in [Bridge cross-ecosystem](/sdk/bridge-modules/bridge-
 URL: https://docs.wdk.tether.io/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started
 Description: Install the bridge package, wire WalletAccountEvm, and review supported chains.
 
-This guide shows how to [install the package](#install-the-package), [create an EVM account](#create-an-evm-account), [instantiate the bridge protocol](#instantiate-the-bridge-protocol), and review [supported chains](#supported-chains).
+This guide shows how to [install the package](#install-the-package), [create an EVM account](#create-an-evm-account), [instantiate the bridge protocol](#instantiate-the-bridge-protocol), [use a read-only account](#use-a-read-only-account-optional), and review [supported chains](#supported-chains).
 
 ## Install the package
 
@@ -8554,7 +8589,7 @@ This guide shows how to [install the package](#install-the-package), [create an 
 You can add the published package to your project from npm: [@tetherto/wdk-protocol-bridge-usdt0-evm](https://www.npmjs.com/package/@tetherto/wdk-protocol-bridge-usdt0-evm).
 
 ```bash title="Install @tetherto/wdk-protocol-bridge-usdt0-evm"
-npm install @tetherto/wdk-protocol-bridge-usdt0-evm
+npm install @tetherto/wdk-protocol-bridge-usdt0-evm @tetherto/wdk-wallet-evm
 ```
 
 ## Create an EVM account
@@ -8590,8 +8625,23 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 For standard EVM accounts, `fee` and `bridgeFee` are source-chain native base units. ERC-4337 fee units depend on the account's gas-payment mode while `bridgeFee` is returned in bridged-token base units. Read [Fee units and `bridgeMaxFee`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#fee-units-and-bridgemaxfee) before setting a cap for an ERC-4337 flow.
 
 <Callout type="info">
-The account must not be read-only. Read-only accounts cannot call [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference).
+The constructor also accepts the shared WDK account interfaces. [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config) requires a callable `sendTransaction()` method and EVM transaction support. Read [account requirements](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements) before supplying a custom account or combining ERC-4337 package versions.
 </Callout>
+
+## Use a read-only account (optional)
+
+For quotes without signing, create a [`WalletAccountReadOnlyEvm`](/sdk/wallet-modules/wallet-evm/api-reference#walletaccountreadonlyevm) for the source address and pass it to [`Usdt0ProtocolEvm`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#constructor):
+
+```javascript title="Create a read-only bridge"
+import { WalletAccountReadOnlyEvm } from '@tetherto/wdk-wallet-evm'
+
+const readOnlyAccount = new WalletAccountReadOnlyEvm(await account.getAddress(), {
+  provider: 'https://eth.drpc.org'
+})
+const readOnlyBridge = new Usdt0ProtocolEvm(readOnlyAccount)
+```
+
+You can now call [`quoteBridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#quotebridgeoptions-config) with your route options. The source address needs any allowance and balance required by the route's gas estimate; a read-only account cannot grant that allowance. Calling [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config) on this instance rejects before sending a transaction.
 
 ## Supported chains
 
@@ -8648,7 +8698,7 @@ This guide describes [errors thrown by the bridge](#errors-from-the-bridge-proto
 
 ## Errors from the bridge protocol
 
-Calls to [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config) and [`quoteBridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#quotebridgeoptions-config) throw when the account is read-only, no provider is configured, the route is invalid, the combined fee value is at or above [`bridgeMaxFee`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeprotocolconfig), or the destination matches the source chain. The [API reference](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#error-handling) lists representative `error.message` substrings.
+Both [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config) and [`quoteBridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#quotebridgeoptions-config) require a provider and valid route options. Only execution rejects an account without a callable `sendTransaction()` method and enforces [`bridgeMaxFee`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeprotocolconfig). Read-only accounts can quote; a quote does not enforce the cap. For auto-resolved routes, the source and destination must differ. The [API reference](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#error-handling) lists representative `error.message` substrings.
 
 ## Catch and branch on error messages
 
@@ -8733,7 +8783,7 @@ The [@tetherto/wdk-protocol-bridge-usdt0-evm](https://www.npmjs.com/package/@tet
 
 <Cards>
 <Card title="Get Started" href="/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started">
-Install the package, attach WalletAccountEvm, and review supported chains.
+Install the package, attach a signing or read-only EVM account, and review supported chains.
 </Card>
 <Card title="Bridge Tokens" href="/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens">
 EVM-to-EVM bridges, quotes, fee caps, and optional OFT or endpoint overrides.
@@ -18781,12 +18831,13 @@ Use the Morpho lending community module to interact with Morpho Vault V2 earn ta
 
 The module supports curated Ethereum mainnet presets and explicit Morpho target configuration. The package exports `MORPHO_VAULT_PRESETS` and `MORPHO_MARKET_PRESETS`; inspect those maps for the complete preset registry shipped with your installed version.
 
-### Tether-Aligned Presets
+### XAU₮ Borrow Preset
 
 | Operation | Preset | Target |
 |-----------|--------|--------|
-| Earn | `sky-money-usdt-savings` | sky.money USD₮ Savings |
 | Borrow | `xaut` | XAU₮ collateral |
+
+For vault operations, configure an operator-selected target after verifying its underlying asset, share token, collateral exposure, and chain. See [Explicit Targets](/sdk/lending-modules/lending-morpho-evm/configuration#explicit-targets).
 
 ## Wallet Compatibility
 
@@ -18852,11 +18903,12 @@ Example:
 ```javascript
 const morpho = new MorphoProtocolEvm(account, {
   presets: {
-    earn: 'sky-money-usdt-savings',
     borrow: 'xaut'
   }
 })
 ```
+
+This example configures a borrow market. The vault examples below also require an operator-selected Ethereum mainnet USD₮ vault configured with `earnVaultAddress` and `chainId: 1`; see [Explicit Targets](/sdk/lending-modules/lending-morpho-evm/configuration#explicit-targets).
 
 ### Methods
 
@@ -19254,7 +19306,6 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 
 const morpho = new MorphoProtocolEvm(account, {
   presets: {
-    earn: 'sky-money-usdt-savings',
     borrow: 'xaut'
   }
 })
@@ -19275,7 +19326,7 @@ The wallet account must include a provider. Read-only accounts can read position
 
 ## Presets
 
-Built-in presets target Ethereum mainnet USD₮ earn and borrow flows.
+Built-in presets target Ethereum mainnet. The `xaut` borrow preset selects a market with XAU₮ collateral.
 
 The package exports frozen preset maps. Use them as the complete registry for the installed package rather than copying a static list into your integration:
 
@@ -19289,12 +19340,11 @@ console.log(Object.keys(MORPHO_VAULT_PRESETS))
 console.log(Object.keys(MORPHO_MARKET_PRESETS))
 ```
 
-Selected Tether-family presets from version `1.0.5` are shown below. See the package's [released preset source](https://github.com/morpho-org/sdks/blob/15c622bbdfb841d5cd65d1d1ff080ecd1649437a/packages/wdk-protocol-lending-morpho-evm/src/morpho-presets.ts) for the pinned registry.
+The XAU₮ collateral preset from version `1.0.5` is shown below. See the package's [released preset source](https://github.com/morpho-org/sdks/blob/15c622bbdfb841d5cd65d1d1ff080ecd1649437a/packages/wdk-protocol-lending-morpho-evm/src/morpho-presets.ts) for the pinned registry.
 
 ```javascript title="Use built-in presets"
 const morpho = new MorphoProtocolEvm(account, {
   presets: {
-    earn: 'sky-money-usdt-savings',
     borrow: 'xaut'
   }
 })
@@ -19302,17 +19352,21 @@ const morpho = new MorphoProtocolEvm(account, {
 
 | Operation | Preset | Chain ID | Target ID | Target |
 |-----------|--------|----------|-----------|--------|
-| Earn | `sky-money-usdt-savings` | `1` | `0x23f5E9c35820f4baB695Ac1F19c203cC3f8e1e11` | sky.money USD₮ Savings |
 | Borrow | `xaut` | `1` | `0xb7843fe78e7e7fd3106a1b939645367967d1f986c2e45edb8932ad1896450877` | XAU₮ collateral, 77% LLTV |
 
 ## Explicit Targets
 
-Use explicit targets when you want to configure a vault address or market directly instead of selecting it by preset name.
+Use explicit targets when you want to configure a vault address or market directly instead of selecting it by preset name. Before using a vault, verify its underlying asset, share token, collateral exposure, and chain against the deployment data. For the USD₮ vault examples, set `MORPHO_EARN_VAULT_ADDRESS` to an operator-selected Ethereum mainnet Morpho Vault V2 address whose underlying asset is USD₮.
 
 ```javascript title="Use explicit Morpho targets"
+const earnVaultAddress = process.env.MORPHO_EARN_VAULT_ADDRESS
+if (!earnVaultAddress) {
+  throw new Error('Set MORPHO_EARN_VAULT_ADDRESS to your verified vault address')
+}
+
 const morpho = new MorphoProtocolEvm(account, {
   chainId: 1,
-  earnVaultAddress: '0x23f5E9c35820f4baB695Ac1F19c203cC3f8e1e11',
+  earnVaultAddress,
   borrowMarketId: '0xe7e9694b754c4d4f7e21faf7223f6fa71abaeb10296a4c43a54a7977149687d2'
 })
 ```
@@ -19429,6 +19483,8 @@ If you use ERC-4337 smart accounts, also install `@tetherto/wdk-wallet-evm-erc-4
 
 ## Create the lending client
 
+For the vault examples, set `MORPHO_EARN_VAULT_ADDRESS` to an operator-selected Ethereum mainnet Morpho Vault V2 address whose underlying asset is USD₮. Verify the vault’s underlying asset, share token, collateral exposure, and chain before configuring it; see [Explicit Targets](/sdk/lending-modules/lending-morpho-evm/configuration#explicit-targets).
+
 You can attach Morpho actions to an EVM account from [`WalletAccountEvm`](/sdk/wallet-modules/wallet-evm/api-reference) with [`new MorphoProtocolEvm(account, options)`](/sdk/lending-modules/lending-morpho-evm/api-reference):
 
 ```javascript title="Create MorphoProtocolEvm"
@@ -19439,9 +19495,15 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
   provider: 'https://ethereum-rpc.publicnode.com'
 })
 
+const earnVaultAddress = process.env.MORPHO_EARN_VAULT_ADDRESS
+if (!earnVaultAddress) {
+  throw new Error('Set MORPHO_EARN_VAULT_ADDRESS to your verified vault address')
+}
+
 const morpho = new MorphoProtocolEvm(account, {
+  chainId: 1,
+  earnVaultAddress,
   presets: {
-    earn: 'sky-money-usdt-savings',
     borrow: 'xaut'
   }
 })
@@ -22960,7 +23022,7 @@ const result = await orchestra.swidge({
 
 | Field | Type | Description |
 |---|---|---|
-| `fromToken` | `string` | Source token, preferably chain-qualified such as `spark:BTC` or `bsc:USDT`. |
+| `fromToken` | `string` | Source token, preferably chain-qualified such as `spark:BTC` or `tron:USDT`. |
 | `toToken` | `string` | Destination token, preferably chain-qualified. |
 | `fromChain` | `string \| number` | Optional source-chain override. |
 | `toChain` | `string \| number` | Optional destination-chain override. |
@@ -23517,7 +23579,7 @@ const tokens = await orchestra.getSupportedTokens({
 })
 ```
 
-Use chain-qualified asset references such as `spark:BTC`, `bitcoin:BTC`, `bsc:USDT`, or `tron:USDT`.
+Use chain-qualified asset references such as `spark:BTC`, `bitcoin:BTC`, or `tron:USDT`.
 
 ## Quotes
 
@@ -23586,29 +23648,9 @@ const intent = await orchestra.prepareSwap({
 })
 ```
 
-### EVM USD₮ to Spark BTC
+### EVM token sources
 
-EVM token sources use the WDK account's `transfer({ token, recipient, amount })` path. The source account needs native gas for its chain.
-
-```javascript title="Prepare BSC USDt to Spark BTC"
-const bsc = await wdk.getAccount('bsc', 0)
-const spark = await wdk.getAccount('spark', 0)
-
-const orchestra = new Orchestra(bsc, {
-  sourceChain: 'bsc',
-  apiKey: process.env.FLASHNET_API_KEY,
-  sourceTokenAddresses: {
-    'bsc:USDT': '0x55d398326f99059ff775485246999027b3197955'
-  }
-})
-
-const intent = await orchestra.prepareSwap({
-  fromToken: 'bsc:USDT',
-  toToken: 'spark:BTC',
-  fromTokenAmount: 5000000n,
-  recipient: await spark.getAddress()
-})
-```
+EVM token sources use the WDK account's `transfer({ token, recipient, amount })` path. The source account needs native gas for its chain. Select a route from discovery and verify the source token contract and decimals before setting `sourceTokenAddresses` and an amount in base units.
 
 ### Bitcoin L1 source
 
@@ -23641,17 +23683,6 @@ const submitted = await orchestra.executeSwapIntent(intent, {
 ### Destination Lightning
 
 Orchestra supports destination Lightning routes where the live route matrix exposes them. Pass a BOLT11 invoice or Lightning Address as `recipient`, and include refund metadata required by the route.
-
-```javascript title="Prepare USDt to destination Lightning"
-const intent = await orchestra.prepareSwap({
-  fromToken: 'bsc:USDT',
-  toToken: 'lightning:BTC',
-  fromTokenAmount: 5000000n,
-  recipient: bolt11Invoice,
-  refundChain: 'bsc',
-  refundAddress: await bsc.getAddress()
-})
-```
 
 Lightning as a source is not supported through this package's standard `swidge()` or `executeSwapIntent()` flow.
 
@@ -23848,7 +23879,7 @@ console.log(chains)
 console.log(sparkToTronTokens)
 ```
 
-The returned token identifiers use chain-qualified asset references such as `spark:BTC`, `bitcoin:BTC`, `bsc:USDT`, or `tron:USDT`. Use the values returned by discovery when building UI route options.
+The returned token identifiers use chain-qualified asset references such as `spark:BTC`, `bitcoin:BTC`, or `tron:USDT`. Use the values returned by discovery when building UI route options.
 
 ## Quote before execution
 
@@ -28729,6 +28760,7 @@ It handles EIP-7702 authorization, UserOperation construction, UserOperation sig
 - **EOA-based EIP-7702 accounts**: `getAddress()` returns the EOA address. The account delegates execution to the configured `delegationAddress` when needed.
 - **Sponsored transactions**: Set `isSponsored: true` to use a sponsorship policy. Quotes return a zero fee in sponsored mode.
 - **Paymaster-token transactions**: Configure `paymasterToken` to pay UserOperation costs in an ERC-20 token.
+- **EntryPoint selection**: Use v0.8 by default or select v0.9 with a matching delegation implementation, bundler, and paymaster. See [configuration](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#entrypoint-version).
 - **Provider failover**: Pass one provider or an ordered list of RPC URLs / EIP-1193 providers. Provider arrays support `retries`.
 - **UserOperation finality**: Track a UserOperation from bundler acceptance through its EVM transaction's confirmed or final state with `getTransaction()` and `waitForTransaction()`.
 - **Non-broadcasting UserOperation signing**: Build and sign a self-contained `UserOperationV8` without submitting it, then quote or send that operation separately. Construction still uses the configured provider, bundler, and paymaster services.
@@ -28743,7 +28775,7 @@ This module depends on EVM infrastructure that supports both EIP-7702 account de
 - an RPC provider for a chain where the EIP-7702 flow is available;
 - an ERC-4337 bundler URL;
 - a paymaster endpoint, either the same as `bundlerUrl` or a separate `paymasterUrl`;
-- a trusted smart-account implementation address for `delegationAddress`;
+- a trusted smart-account implementation address for `delegationAddress`, built for the configured EntryPoint version;
 - either a sponsorship policy or an ERC-20 paymaster token configuration.
 
 <Callout type="warn">
@@ -28889,6 +28921,7 @@ Treat the arrays returned through `keyPair` as read-only. Call `dispose()` when 
 
 ### Quote and Send Behavior
 
+- Owned-account quotes, signing, and sends check the configured `chainId` before proceeding, including sponsored quotes and already-signed inputs. The first successful check is cached; see [chain validation](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#chain-validation).
 - Sponsored mode returns `fee: 0n` from quote methods.
 - Paymaster-token mode returns fees in the configured paymaster token's base units.
 - `signTransaction()` returns a signed `UserOperationV8` without broadcasting it. The type comes from `abstractionkit` and is not re-exported from this package's root.
@@ -28906,7 +28939,7 @@ Treat the arrays returned through `keyPair` as read-only. Call `dispose()` when 
 - A string `nonceKey` is hashed to a deterministic 192-bit key. Numeric keys must be within the uint192 range; use bigint or string form above JavaScript's safe integer range.
 - Let the first delegation reach the chain before using concurrent lanes. Overlapping operations on the same lane can return hashes even when one can never receive a receipt.
 - A fresh `parallel` lane creates a permanent EntryPoint nonce slot. Reuse a bounded set of named lanes for sustained workloads.
-- The runtime accepts lane fields in per-call overrides for signing, sending, and transfers, but the beta.4 second-argument declarations omit them. Constructor-level lane fields are correctly typed.
+- The runtime accepts lane fields in per-call overrides for signing, sending, and transfers, but the beta.5 second-argument declarations omit them. Constructor-level lane fields are correctly typed.
 
 ### Transfer Fee Cap
 
@@ -28975,6 +29008,8 @@ Known configuration errors include:
 - missing `delegationAddress`;
 - missing `paymasterToken` when `isSponsored` is absent or `false`;
 - empty provider array;
+- unsupported `entryPointVersion` or a reference delegation address paired with the wrong version;
+- the provider chain differs from configured `chainId` during the first UserOperation chain lookup;
 - configured `paymasterAddress` does not match the paymaster returned by the RPC.
 
 ## Config Types
@@ -28984,10 +29019,12 @@ Known configuration errors include:
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `provider` | `string \| Eip1193Provider \| Array\<string \| Eip1193Provider\>` | Yes | RPC endpoint, EIP-1193 provider, or provider failover list. |
+| `chainId` | `number` | No | Expected chain ID for the first UserOperation chain lookup. A successful check is cached; omission trusts the provider. |
+| `entryPointVersion` | `'0.8' \| '0.9'` | No | Selects the EntryPoint and matching account implementation. Defaults to `'0.8'`. |
 | `retries` | `number` | No | Additional retry attempts for provider arrays. Defaults to `3`. |
 | `bundlerUrl` | `string` | Yes | ERC-4337 bundler endpoint. |
 | `paymasterUrl` | `string` | No | Paymaster endpoint when different from `bundlerUrl`. |
-| `delegationAddress` | `string` | Yes | Smart-account implementation address used for EIP-7702 delegation. |
+| `delegationAddress` | `string` | Yes | Smart-account implementation address built for the configured `entryPointVersion`. |
 | `parallel` | `boolean` | No | Uses a fresh random nonce lane for each sign, send, or transfer operation unless `nonceKey` is set. |
 | `nonceKey` | `number \| bigint \| string` | No | Uses a reusable explicit uint192 nonce lane; strings are hashed deterministically. |
 
@@ -29020,7 +29057,7 @@ type Evm7702GaslessWalletConfig =
 
 The package also re-exports EVM wallet types from `@tetherto/wdk-wallet-evm`, including `FeeRates`, `KeyPair`, `EvmTransaction`, `TransactionResult`, `EvmTransferOptions`, `TransferResult`, `EvmTransactionReceipt`, `ApproveOptions`, `TypedData`, `TypedDataDomain`, and `TypedDataField`. It re-exports the shared `Finality`, `TransactionReceipt`, `WaitForTransactionTarget`, and `WaitForTransactionOptions` types from `@tetherto/wdk-wallet`.
 
-Module-specific exported types include `UserOperationReceipt`, `Evm7702GaslessTransactionDetails`, `Eip7702AuthorizationOverride`, `BuildSponsoredUserOperationOverrides`, and `SponsoredUserOperation`. `Evm7702GaslessTransactionDetails` adds `confirmations`, the native EVM `receipt`, and `userOperationReceipt` to the normalized receipt. In beta.4, `BuildSponsoredUserOperationOverrides` includes optional `nonce?: bigint` for explicitly selecting the EntryPoint nonce in lower-level builder typing; it does not expose the protected builder as a public method.
+Module-specific exported types include `UserOperationReceipt`, `Evm7702GaslessTransactionDetails`, `Eip7702AuthorizationOverride`, `BuildSponsoredUserOperationOverrides`, and `SponsoredUserOperation`. `Evm7702GaslessTransactionDetails` adds `confirmations`, the native EVM `receipt`, and `userOperationReceipt` to the normalized receipt. In beta.5, `BuildSponsoredUserOperationOverrides` includes optional `nonce?: bigint` for explicitly selecting the EntryPoint nonce in lower-level builder typing; it does not expose the protected builder as a public method.
 
 ***
 
@@ -29033,7 +29070,7 @@ Description: Configuration options for @tetherto/wdk-wallet-evm-7702-gasless.
 `WalletManagerEvm7702Gasless`, `WalletAccountEvm7702Gasless`, and `WalletAccountReadOnlyEvm7702Gasless` use the same base configuration. The account must also choose one fee mode: sponsorship policy or paymaster token.
 
 <Callout type="warn">
-Replace `'<VERIFIED_DELEGATION_ADDRESS>'` with a smart-account implementation address that you have verified for the target chain. The EOA delegates execution to this address.
+Replace `'<VERIFIED_DELEGATION_ADDRESS>'` with a smart-account implementation address that you have verified for the target chain and configured `entryPointVersion`. The EOA delegates execution to this address.
 </Callout>
 
 ```javascript title="Sponsored wallet configuration"
@@ -29068,7 +29105,7 @@ const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
 |-------|------|-------------|
 | `provider` | `string \| Eip1193Provider \| Array\<string \| Eip1193Provider\>` | RPC endpoint, EIP-1193 provider, or ordered failover list. |
 | `bundlerUrl` | `string` | ERC-4337 bundler endpoint used to build and submit UserOperations. |
-| `delegationAddress` | `string` | Smart-account implementation address used for EIP-7702 delegation. |
+| `delegationAddress` | `string` | Smart-account implementation address built for the configured `entryPointVersion`, used for EIP-7702 delegation. |
 
 Account constructors and per-call config overrides throw `ConfigurationError` if any required common field is missing.
 
@@ -29076,10 +29113,33 @@ Account constructors and per-call config overrides throw `ConfigurationError` if
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
+| `chainId` | `number` | Provider-reported chain | Expected chain ID, checked before building or signing UserOperations. See [chain validation](#chain-validation) for caching and quote behavior. |
+| `entryPointVersion` | `'0.8' \| '0.9'` | `'0.8'` | Selects the EntryPoint address and matching account implementation for construction and signing. |
 | `paymasterUrl` | `string` | `bundlerUrl` | Paymaster endpoint when it differs from the bundler endpoint. |
 | `retries` | `number` | `3` | Additional retry attempts when `provider` is an array. Total attempts are `1 + retries`. |
 | `parallel` | `boolean` | `false` | Use a fresh random EntryPoint nonce lane for each sign, send, or transfer operation. Ignored when `nonceKey` is set. |
 | `nonceKey` | `number \| bigint \| string` | - | Use a reusable explicit nonce lane. Strings are hashed to a deterministic key; numeric keys must fit the uint192 range. |
+
+### EntryPoint Version
+
+Set `entryPointVersion` in the constructor to match your bundler, paymaster, and delegation implementation. Omitting it preserves EntryPoint v0.8. The selected version controls UserOperation construction, the signing domain, nonce lookup, submission, and paymaster-token queries.
+
+| `entryPointVersion` | EntryPoint address | Reference `delegationAddress` |
+|---------------------|--------------------|-------------------------------|
+| `'0.8'` (default) | `0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108` | `0xe6Cae83BdE06E4c305530e199D7217f42808555B` |
+| `'0.9'` | `0x433709009B8330FDa32311DF1C2AFA402eD8D009` | `0xa46cc63eBF4Bd77888AA327837d20b23A63a56B5` |
+
+<Callout type="warn">
+Verify that the selected contracts are deployed on your target chain. Account creation rejects an unsupported version or a reference delegation address paired with the other version. Custom delegation addresses are accepted without verifying their EntryPoint compatibility; verify their implementation before use.
+</Callout>
+
+Configure `entryPointVersion` and `chainId` when creating the account. Per-call fee-mode overrides do not switch the account's chain or EntryPoint.
+
+### Chain Validation
+
+Set `chainId` to the expected network, for example `chainId: 1` for Ethereum mainnet. The first UserOperation chain lookup calls `eth_chainId` and throws `ConfigurationError` on a mismatch before building or signing. Owned-account quotes and sends perform this lookup too, including sponsored quotes and already-signed inputs. A read-only sponsored quote returns `0n` without checking the chain.
+
+The account caches a successful lookup. It does not detect a later network switch, so keep all failover providers on the same chain and recreate the wallet or account when changing networks. Omitting `chainId` trusts the provider-reported chain. This check does not verify the chain or EntryPoint encoded in an externally signed operation.
 
 ### Provider Failover
 
@@ -29222,7 +29282,7 @@ const result = await account.sendTransaction(tx, feeConfig)
 
 When an override is provided, the merged config is validated before the operation runs. `confirmFeeTokenAndAmount()` represents the application's explicit review of the changed fee token and quoted amount; the quote itself does not enforce `transactionMaxFee`, while the wallet-built send does.
 
-The beta.4 JavaScript runtime also reads `parallel` and `nonceKey` from per-call overrides for `signTransaction()`, `sendTransaction()`, and `transfer()`. The published second-argument TypeScript declarations include only fee-mode fields, so constructor-level lane configuration is the typed path in this release.
+The beta.5 JavaScript runtime also reads `parallel` and `nonceKey` from per-call overrides for `signTransaction()`, `sendTransaction()`, and `transfer()`. The published second-argument TypeScript declarations include only fee-mode fields, so constructor-level lane configuration is the typed path in this release.
 
 <Callout type="info">
 The two-minute quote cache key includes the transaction, sponsorship mode, paymaster token, expected paymaster address, and sponsorship policy ID. A matching operation also rechecks the current EntryPoint nonce before reuse. Changing any keyed fee-mode field causes a fresh quote.
@@ -29311,7 +29371,7 @@ npm install @tetherto/wdk-wallet-evm-7702-gasless
 ## Create a Sponsored Wallet
 
 <Callout type="warn">
-Replace `'<VERIFIED_DELEGATION_ADDRESS>'` with a smart-account implementation address that you have verified for the target chain. The EOA delegates execution to this address.
+Replace `'<VERIFIED_DELEGATION_ADDRESS>'` with a smart-account implementation address that you have verified for the target chain and EntryPoint v0.8, the default. To use v0.9, configure a [matching EntryPoint and delegation implementation](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#entrypoint-version). The EOA delegates execution to this address.
 </Callout>
 
 ```javascript title="Create a sponsored EIP-7702 gasless wallet"
@@ -29319,6 +29379,7 @@ import WalletManagerEvm7702Gasless from '@tetherto/wdk-wallet-evm-7702-gasless'
 
 const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
   provider: 'https://rpc.mevblocker.io/fast',
+  chainId: 1,
   delegationAddress: '<VERIFIED_DELEGATION_ADDRESS>',
   bundlerUrl: 'https://api.pimlico.io/v2/1/rpc?apikey=YOUR_KEY',
   isSponsored: true,
@@ -29340,6 +29401,7 @@ If the user pays gas with an ERC-20 paymaster token, configure `paymasterToken` 
 ```javascript title="Create a paymaster-token wallet"
 const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
   provider: 'https://rpc.mevblocker.io/fast',
+  chainId: 1,
   delegationAddress: '<VERIFIED_DELEGATION_ADDRESS>',
   bundlerUrl: 'https://api.pimlico.io/v2/1/rpc?apikey=YOUR_KEY',
   paymasterToken: {
@@ -29395,7 +29457,7 @@ try {
 }
 ```
 
-Common configuration errors include missing `provider`, `bundlerUrl`, `delegationAddress`, or `paymasterToken` when the account is not sponsored.
+Common configuration errors include missing `provider`, `bundlerUrl`, `delegationAddress`, or `paymasterToken` when the account is not sponsored. An unsupported `entryPointVersion` or a reference delegation address paired with the wrong version also fails account creation. A provider-chain mismatch throws when a UserOperation flow first checks `chainId`; review [chain validation](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#chain-validation) before retrying.
 
 ## Paymaster Token Errors
 
@@ -29549,7 +29611,7 @@ Read-only accounts do not expose `sign()`, `signTypedData()`, `signTransaction()
 
 ## Create a Read-only Account from an Address
 
-Use the verified EIP-7702 implementation address for the target chain. The placeholder below must be replaced before use.
+Use an EIP-7702 implementation address verified for the target chain and the [configured EntryPoint version](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#entrypoint-version). The placeholder below must be replaced before use.
 
 ```javascript title="Read-only account from address"
 import { WalletAccountReadOnlyEvm7702Gasless } from '@tetherto/wdk-wallet-evm-7702-gasless'
@@ -29668,7 +29730,7 @@ console.log('Signed operation fee:', quote.fee)
 const result = await account.sendTransaction(signedUserOperation)
 ```
 
-Quoting a signed UserOperation avoids paymaster calls. Sponsorship mode returns `fee: 0n`; paymaster-token mode derives a native-gas ceiling in wei from the operation's existing gas fields rather than returning the token amount fixed when the operation was built. Sending broadcasts the supplied nonce, authorization, gas fields, and signature without rebuilding the operation or requesting another signature.
+Quoting a signed UserOperation avoids paymaster calls. Sponsorship mode returns `fee: 0n`; paymaster-token mode derives a native-gas ceiling in wei from the operation's existing gas fields rather than returning the token amount fixed when the operation was built. Sending broadcasts the supplied nonce, authorization, gas fields, and signature without rebuilding the operation or requesting another signature. Both quoting and sending still perform the account's [cached chain check](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#chain-validation). The check validates the RPC chain, not the signed payload; submission uses the account's configured EntryPoint.
 
 <Callout type="warn">
 `sendTransaction(signedUserOperation)` does not enforce `transactionMaxFee`: the module cannot reconstruct the token-denominated paymaster fee from an already-signed operation. Apply the cap while this wallet builds or signs the operation, and independently review signed operations received from elsewhere.
@@ -29749,7 +29811,7 @@ await account.sendTransaction(scheduledPayment, { nonceKey: 'scheduled-payments'
 `nonceKey` takes precedence over `parallel`. String keys are hashed into deterministic 192-bit lane keys. A number or bigint is used as the raw key and must be between `0` and `2^192 - 1`; use a bigint or string above JavaScript's safe integer range.
 
 <Callout type="warning">
-The beta.4 runtime accepts per-call `parallel` and `nonceKey`, but the published second-argument declarations omit those common fields. TypeScript object literals using the per-call form fail type checking. Configure lanes on the wallet or account constructor for typed code, or isolate an explicit local type workaround until the package declarations are corrected.
+The beta.5 runtime accepts per-call `parallel` and `nonceKey`, but the published second-argument declarations omit those common fields. TypeScript object literals using the per-call form fail type checking. Configure lanes on the wallet or account constructor for typed code, or isolate an explicit local type workaround until the package declarations are corrected.
 </Callout>
 
 Use nonce lanes with these constraints:
@@ -29893,7 +29955,7 @@ In paymaster-token mode, set `transferMaxFee` to cancel `transfer()` when the es
 This comparison is intentionally stricter than `transactionMaxFee`: a transfer fee equal to `transferMaxFee` is rejected, while an equal send/sign/approve fee is allowed by `transactionMaxFee`.
 
 <Callout type="warn">
-Replace `'<VERIFIED_DELEGATION_ADDRESS>'` with a smart-account implementation address that you have verified for the target chain.
+Replace `'<VERIFIED_DELEGATION_ADDRESS>'` with a smart-account implementation address that you have verified for the target chain and the [configured EntryPoint version](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#entrypoint-version).
 </Callout>
 
 ```javascript title="Cap transfer fee"
@@ -29972,7 +30034,7 @@ Get started with WDK in a Node.js environment.
 Compare WDK wallet modules across supported chains.
 </Card>
 <Card title="Configuration" href="/sdk/wallet-modules/wallet-evm-7702-gasless/configuration">
-Review fee modes, providers, nonce lanes, and per-call overrides.
+Review fee modes, providers, chain validation, EntryPoint versions, and nonce lanes.
 </Card>
 <Card title="API Reference" href="/sdk/wallet-modules/wallet-evm-7702-gasless/api-reference">
 Review classes, methods, config types, and return values.
@@ -30086,7 +30148,7 @@ new WalletManagerEvmErc4337(seed, config)
   - `chainId` (number): The blockchain's ID (e.g., 1 for Ethereum mainnet)
   - `provider` (string | Eip1193Provider | Array\<string | Eip1193Provider\>): RPC endpoint URL, EIP-1193 provider instance, or ordered failover list
   - `bundlerUrl` (string): The URL of the bundler service
-  - `safeModulesVersion` (string): Must be `'0.3.0'`, the only Safe modules version supported by beta.17
+  - `safeModulesVersion` (string): Must be `'0.3.0'`, the only Safe modules version supported by beta.18
 
 **Optional common config fields:**
   - `parallel` (boolean): Put each send, sign, or transfer in a fresh random 192-bit nonce-key lane
@@ -30424,7 +30486,7 @@ Sends a transaction via UserOperation through the bundler.
 - `ConfigurationError` if the override is invalid or the token paymaster address returned while building mismatches the configured address.
 - `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50 while building or submitting the operation.
 
-When `tx` is a signed `UserOperationV7`, WDK forwards that exact operation to the bundler. It does not rebuild or re-sign it, reapply the current `transactionMaxFee`, call the paymaster RPC, or rerun the paymaster-address check. Only submit an operation produced by the same account after verifying the intended fee-mode and paymaster configuration, and submit it before its nonce becomes stale.
+When `tx` is a signed `UserOperationV7`, WDK forwards that exact operation to the bundler without checking the provider against `chainId`. It does not rebuild or re-sign it, reapply the current `transactionMaxFee`, call the paymaster RPC, or rerun the paymaster-address check. Only submit an operation produced by the same account after verifying the intended chain, EntryPoint, fee-mode, and paymaster configuration, and submit it before its nonce becomes stale.
 
 **Example:**
 ```javascript
@@ -30910,7 +30972,6 @@ const sameAddress = WalletAccountEvmErc4337.predictSafeAddress(
 | `getTransaction(hash)` | Returns normalized UserOperation finality using its bundling transaction | `Promise\<TransactionReceipt & EvmErc4337TransactionDetails\>` | If the hash is invalid or unknown |
 | `waitForTransaction(hash, options?)` | Waits for the UserOperation to reach `confirmed` or `final`, or returns `dropped` | `Promise\<TransactionReceipt & EvmErc4337TransactionDetails\>` | If the wait times out |
 | `getUserOperationReceipt(hash)` | Returns a UserOperation receipt | `Promise\<UserOperationReceipt \| null\>` | - |
-| `signTypedData(typedData)` | Signs EIP-712 typed structured data | `Promise\<string\>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies an EIP-712 typed data signature | `Promise\<boolean\>` | - |
 | `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise\<Record\<string, bigint\>\>` | - |
 
@@ -31091,40 +31152,6 @@ if (receipt) {
 }
 ```
 
-##### `signTypedData(typedData)`
-Signs EIP-712 typed structured data using the underlying EOA address.
-
-**Parameters:**
-- `typedData` (TypedData): The typed data object containing domain, types, primaryType, and message
-
-**Returns:** `Promise\<string\>` - The typed data signature
-
-**Example:**
-```javascript
-const typedData = {
-  domain: {
-    name: 'MyDApp',
-    version: '1',
-    chainId: 1,
-    verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
-  },
-  types: {
-    Transfer: [
-      { name: 'to', type: 'address' },
-      { name: 'amount', type: 'uint256' }
-    ]
-  },
-  primaryType: 'Transfer',
-  message: {
-    to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-    amount: 1000000n
-  }
-}
-
-const signature = await readOnlyAccount.signTypedData(typedData)
-console.log('Typed data signature:', signature)
-```
-
 ##### `verifyTypedData(typedData, signature)`
 Verifies an EIP-712 typed data signature against the underlying EOA address.
 
@@ -31193,6 +31220,8 @@ The package re-exports these types.
 
 ### EvmErc4337WalletConfig
 
+The constructor's `chainId` is checked against the provider's first `eth_chainId` response before building a UserOperation. A mismatch throws `ConfigurationError`; a successful lookup is cached. Sponsored quotes and already-signed operation quote/send paths do not perform this check. See [chain validation](/sdk/wallet-modules/wallet-evm-erc-4337/configuration#chain-id).
+
 The configuration is a union type combining common fields with one of three gas payment modes:
 
 ```typescript
@@ -31201,7 +31230,7 @@ interface EvmErc4337WalletCommonConfig {
   chainId: number;                          // Blockchain ID
   provider: string | Eip1193Provider | Array<string | Eip1193Provider>; // RPC provider or failover list
   bundlerUrl: string;                       // Bundler service URL
-  safeModulesVersion: string;               // Must be '0.3.0' in beta.17
+  safeModulesVersion: string;               // Must be '0.3.0' in beta.18
   parallel?: boolean;                       // Fresh random nonce-key lane per operation
   nonceKey?: number | bigint | string;      // Reusable raw or named uint192 lane key
 }
@@ -31242,7 +31271,7 @@ type EvmErc4337WalletConfig = EvmErc4337WalletCommonConfig &
 
 ### Config Override
 
-The published beta.17 `config` parameter type on `sendTransaction`, `signTransaction`, `quoteSendTransaction`, `transfer`, and `quoteTransfer` allows per-call overrides of gas payment settings:
+The published beta.18 `config` parameter type on `sendTransaction`, `signTransaction`, `quoteSendTransaction`, `transfer`, and `quoteTransfer` allows per-call overrides of gas payment settings:
 
 ```typescript
 type ConfigOverride = Partial<
@@ -31264,7 +31293,7 @@ type ConfigOverride = Partial<
 
 Overrides are shallow-merged with the account configuration, then validated. When switching modes, explicitly clear an inherited opposing flag: sponsorship requires `isSponsored: true` and `useNativeCoins: false`; native-coin mode requires `isSponsored: false` and `useNativeCoins: true`; paymaster-token mode requires both flags to be `false`. The merged configuration must also contain the URL, address, token, or policy fields required by the selected mode.
 
-At runtime, beta.17 additionally honors `parallel` and `nonceKey` per call for `signTransaction()`, `sendTransaction()`, and `transfer()`. Those two fields are missing from the published per-call declarations, so object literals containing them fail TypeScript excess-property checks even though JavaScript calls work. Construction-level `EvmErc4337WalletCommonConfig` includes both fields and is the typed path in this release. `quoteSendTransaction()` and `quoteTransfer()` do not select a lane.
+At runtime, beta.18 additionally honors `parallel` and `nonceKey` per call for `signTransaction()`, `sendTransaction()`, and `transfer()`. Those two fields are missing from the published per-call declarations, so object literals containing them fail TypeScript excess-property checks even though JavaScript calls work. Construction-level `EvmErc4337WalletCommonConfig` includes both fields and is the typed path in this release. `quoteSendTransaction()` and `quoteTransfer()` do not select a lane.
 
 In token-paymaster mode, every path that builds a UserOperation validates a non-empty paymaster address returned by the RPC against `paymasterAddress`. A case-insensitive mismatch throws `ConfigurationError` before the operation is returned or submitted.
 
@@ -31406,7 +31435,7 @@ class ConfigurationError extends ValueError {
 }
 ```
 
-`ConfigurationError` is part of the shared WDK error taxonomy and can also be caught as `ValueError`.
+`ConfigurationError` is part of the shared WDK error taxonomy and can also be caught as `ValueError`. It also reports a mismatch between the constructor's `chainId` and the provider during the first UserOperation chain lookup.
 
 ### FeeRates
 
@@ -31529,7 +31558,13 @@ const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337(
 
 ### Chain ID
 
-The `chainId` option specifies the blockchain network ID. **Required** for fee estimation and smart account initialization.
+The `chainId` option specifies the expected blockchain network ID. **Required** for fee estimation and smart account initialization.
+
+Before building a new UserOperation, the account reads `eth_chainId` from the provider and throws `ConfigurationError` if it differs from the constructor's `chainId`. The check happens before smart-account construction and UserOperation signing. This includes non-sponsored quotes that build an operation.
+
+The first successful chain lookup is cached. Keep all failover providers on the configured chain and recreate the wallet or account when switching networks. Per-call fee-mode overrides do not change the chain being checked.
+
+Sponsored quotes return `0n` without checking the chain. Quoting or submitting an already-signed UserOperation also bypasses this check. Verify that a signed operation was built for the intended account, chain, EntryPoint, and paymaster before forwarding it.
 
 **Type:** `number`
 **Required:** Yes
@@ -31706,12 +31741,12 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, config)
 Reusing one named lane remains sequential: wait for inclusion before submitting its next operation, or batch dependent calls into one UserOperation.
 
 <Callout type="warning">
-The beta.17 runtime also honors `parallel` and `nonceKey` in the per-call config for `signTransaction()`, `sendTransaction()`, and `transfer()`, but the published per-call TypeScript declarations omit both fields. Construction-level configuration is typed; JavaScript per-call usage works at runtime.
+The beta.18 runtime also honors `parallel` and `nonceKey` in the per-call config for `signTransaction()`, `sendTransaction()`, and `transfer()`, but the published per-call TypeScript declarations omit both fields. Construction-level configuration is typed; JavaScript per-call usage works at runtime.
 </Callout>
 
 ### Safe Modules Version
 
-The `safeModulesVersion` option specifies the Safe modules version for smart contract wallet implementation. Beta.17 supports only `0.3.0`; other values, including `0.2.0`, throw `ConfigurationError`. **Required** for smart account initialization.
+The `safeModulesVersion` option specifies the Safe modules version for smart contract wallet implementation. Beta.18 supports only `0.3.0`; other values, including `0.2.0`, throw `ConfigurationError`. **Required** for smart account initialization.
 
 **Type:** `string`
 **Required:** Yes
@@ -31954,7 +31989,17 @@ const plasmaConfig = {
 
 ### Sepolia Testnet (USD₮ ERC-20 mock/testnet only)
 
+Choose a six-decimal USD₮ test token supported by each paymaster on chain `11155111`. Get its address from that provider's current faucet or supported-token response, verify its contract and decimals on Sepolia, and set the corresponding environment variable below. The two providers may support different test-token contracts.
+
 ````javascript
+
+const pimlicoTestTokenAddress = process.env.PIMLICO_SEPOLIA_TEST_TOKEN_ADDRESS
+const candideTestTokenAddress = process.env.CANDIDE_SEPOLIA_TEST_TOKEN_ADDRESS
+for (const address of [pimlicoTestTokenAddress, candideTestTokenAddress]) {
+  if (!/^0x[0-9a-fA-F]{40}$/.test(address ?? '')) {
+    throw new Error('Set both verified Sepolia test-token addresses')
+  }
+}
 
 // Pimlico
 const sepoliaConfigPimlico = {
@@ -31965,7 +32010,7 @@ const sepoliaConfigPimlico = {
   paymasterAddress: '0x777777777777AeC03fd955926DbF81597e66834C',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0xd077a400968890eacc75cdc901f0356c943e4fdb' // USDt Sepolia
+    address: pimlicoTestTokenAddress
   },
   transferMaxFee: 100000 // 0.1 USDt (6 decimals)
 }
@@ -31979,7 +32024,7 @@ const sepoliaConfigCandide = {
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0xd077a400968890eacc75cdc901f0356c943e4fdb' // USDt Sepolia
+    address: candideTestTokenAddress
   },
   transferMaxFee: 100000
 }
@@ -31987,8 +32032,6 @@ const sepoliaConfigCandide = {
 
 **Important**
 Ethereum Sepolia is a testnet. The USD₮ tokens available at the links below are not real and do not entitle the holder to anything. In particular, they cannot be redeemed with Tether International, S.A. de C.V. ("Tether International") and are not Tether Tokens as described in [Tether International's Terms of Service](https://tether.to/en/legal). The USD₮ tokens available at the links below on this testnet are intended for testing WDK on Ethereum Sepolia. The links below are links to third-party websites and are Third-Party Information as described in Tether Operations, S.A. de [C.V.'s Website Terms](https://tether.io/terms/)
-
-**USD₮ on Sepolia contract:** [0xd077a400968890eacc75cdc901f0356c943e4fdb](https://sepolia.etherscan.io/address/0xd077a400968890eacc75cdc901f0356c943e4fdb)
 
 **Get test USD₮:**
 - [Pimlico faucet](https://dashboard.pimlico.io/test-erc20-faucet)
@@ -32063,12 +32106,12 @@ console.log('Paymaster token balance:', paymasterBalance)
 ```
 
 <Callout type="info">
-The paymaster token balance determines how many gasless transactions you can execute. Ensure the paymaster has sufficient token balance before initiating gasless operations.
+The paymaster token balance is held by the Safe account. Fund the Safe with enough of the configured token to repay the paymaster before initiating token-paid operations.
 </Callout>
 
 ## Read-Only Account Balances
 
-You can check balances for any smart account address without a seed phrase using [`WalletAccountReadOnlyEvmErc4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference):
+You can check balances without a seed phrase by passing the owner EOA address to [`WalletAccountReadOnlyEvmErc4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference). The module predicts the Safe address from that owner and the configuration:
 
 ```javascript title="Read-Only Balance"
 import { WalletAccountReadOnlyEvmErc4337 } from '@tetherto/wdk-wallet-evm-erc-4337'
@@ -32142,6 +32185,8 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
 To use test/mock tokens instead of real funds, see the [testnet configuration section](/sdk/wallet-modules/wallet-evm-erc-4337/configuration#network-specific-configurations).
 </Callout>
 
+The provider must serve the configured `chainId`. A mismatch throws when the account first builds a UserOperation; account creation alone does not establish that the provider matches. Review [chain validation](/sdk/wallet-modules/wallet-evm-erc-4337/configuration#chain-id) before sending.
+
 ## 3. Get Your First Account
 
 You can retrieve a smart account at a given index using [`wallet.getAccount()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference):
@@ -32170,7 +32215,7 @@ With your wallet ready, learn how to [manage multiple accounts](/sdk/wallet-modu
 URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm-erc-4337/guides/handle-errors
 Description: Handle errors, manage fees, and dispose of sensitive data.
 
-This guide explains how to [handle transaction errors](#transaction-errors), [handle transfer errors](#transfer-errors), [verify paymaster address mismatches](#paymaster-address-mismatches), [diagnose nonce-lane failures](#nonce-lane-failures), and follow [best practices](#best-practices) for fee management and memory cleanup.
+This guide explains how to [handle transaction errors](#transaction-errors), [correct a provider-chain mismatch](#provider-chain-mismatches), [handle transfer errors](#transfer-errors), [verify paymaster address mismatches](#paymaster-address-mismatches), [diagnose nonce-lane failures](#nonce-lane-failures), and follow [best practices](#best-practices) for fee management and memory cleanup.
 
 ## Transaction Errors
 
@@ -32200,6 +32245,12 @@ try {
   }
 }
 ```
+
+## Provider-Chain Mismatches
+
+When a new UserOperation is built, a provider that reports a different chain from the configured `chainId` throws [`ConfigurationError`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#configurationerror) before the operation is built or signed. Confirm the intended network and correct the RPC endpoint or constructor configuration before retrying.
+
+The first successful lookup is cached. Recreate the wallet or account when switching networks, and keep every failover provider on the same chain. A sponsored quote or an already-signed operation does not perform this check; see [chain validation](/sdk/wallet-modules/wallet-evm-erc-4337/configuration#chain-id).
 
 ## Transfer Errors
 
@@ -32235,7 +32286,7 @@ try {
 
 Starting in `v1.0.0-beta.15`, the shared UserOperation builder checks the configured `paymasterAddress` against a non-empty paymaster address returned by the RPC in token-paymaster mode. A case-insensitive mismatch throws the exported `ConfigurationError` before that newly built operation is returned or submitted. The error message identifies the configured address, the `paymasterUrl`, and the returned address.
 
-In beta.17, `ConfigurationError` extends `ValueError`, so a shared `ValueError` handler can catch it. Check `ConfigurationError` first when the application needs the package-specific recovery path below. Constructing a wallet with an empty provider list also throws `ValueError`; provider-required operations such as `getFeeRates()` use `ProviderRequiredError`.
+In beta.18, `ConfigurationError` extends `ValueError`, so a shared `ValueError` handler can catch it. Check `ConfigurationError` first when the application needs the package-specific recovery path below. Constructing a wallet with an empty provider list also throws `ValueError`; provider-required operations such as `getFeeRates()` use `ProviderRequiredError`.
 
 ```javascript title="Handle a Paymaster Address Mismatch"
 import { ConfigurationError } from '@tetherto/wdk-wallet-evm-erc-4337'
@@ -32404,7 +32455,7 @@ console.log('Estimated fee:', quote.fee)
 
 ## Sign, Quote, and Submit a UserOperation
 
-Use `signTransaction()` when a separate review or relay step needs a signed ERC-4337 v0.7 UserOperation. The method accepts one transaction, not a batch.
+Use `signTransaction()` when a separate review or relay step needs a signed ERC-4337 v0.7 UserOperation. The method accepts one transaction, not a batch. Building a new operation checks the provider against the configured `chainId`; see [chain validation](/sdk/wallet-modules/wallet-evm-erc-4337/configuration#chain-id).
 
 ```javascript title="Sign, Quote, and Submit"
 const tx = {
@@ -32423,6 +32474,8 @@ console.log('UserOperation hash:', result.hash)
 <Callout type="warning">
 Only submit an operation produced by the same account with the intended fee-mode configuration. WDK preserves the signed nonce and configuration, does not rebuild or re-sign the operation, and does not reapply `transactionMaxFee` during signed submission. Do not mutate the operation, and submit it before its nonce becomes stale.
 </Callout>
+
+Quoting and forwarding an already-signed UserOperation skip the provider-chain check. Verify its account, chain, EntryPoint, and paymaster configuration before submission.
 
 For signed UserOperations, sponsored mode quotes `0n`. Other modes quote a 20% buffered native-gas ceiling in wei. In paymaster-token mode, that signed-operation quote is not a token-denominated paymaster charge.
 
@@ -32496,7 +32549,7 @@ const refunds = await account.sendTransaction(txB, { nonceKey: 'refunds' })
 One lane is still sequential. Two concurrent sends using the same named or default lane can return UserOperation hashes even though one never receives a receipt. Wait for inclusion before reusing a lane. If calls depend on one another, batch them with `sendTransaction([tx1, tx2])` so they execute in order under one nonce. Different lanes are independent and can be included in either order.
 </Callout>
 
-`signTransaction()` preserves the lane chosen by the same configuration rules. In beta.17, per-call `parallel` and `nonceKey` work at runtime but are missing from the published per-call TypeScript declarations; construction-level lane configuration is typed.
+`signTransaction()` preserves the lane chosen by the same configuration rules. In beta.18, per-call `parallel` and `nonceKey` work at runtime but are missing from the published per-call TypeScript declarations; construction-level lane configuration is typed.
 
 ## Send with Custom Paymaster Token
 
@@ -32649,7 +32702,7 @@ If the estimated fee exceeds `transferMaxFee`, the transfer throws `MaximumFeeEx
 
 ## Transfer in a Nonce Lane
 
-`transfer()` follows the same beta.17 nonce-lane rules as sends. Use a stable named lane for an independent transfer stream, and wait for inclusion before reusing that lane:
+`transfer()` follows the same beta.18 nonce-lane rules as sends. Use a stable named lane for an independent transfer stream, and wait for inclusion before reusing that lane:
 
 ```javascript title="Transfer In A Named Lane"
 const result = await account.transfer({
@@ -32661,7 +32714,7 @@ const result = await account.transfer({
 })
 ```
 
-`quoteTransfer()` estimates the transfer but does not select or reserve a lane. A lane transfer rebuilds its UserOperation. The beta.17 runtime accepts lane fields per call, while the published per-call TypeScript declaration omits them; see [Use Parallel Nonce Lanes](/sdk/wallet-modules/wallet-evm-erc-4337/guides/send-transactions#use-parallel-nonce-lanes).
+`quoteTransfer()` estimates the transfer but does not select or reserve a lane. A lane transfer rebuilds its UserOperation. The beta.18 runtime accepts lane fields per call, while the published per-call TypeScript declaration omits them; see [Use Parallel Nonce Lanes](/sdk/wallet-modules/wallet-evm-erc-4337/guides/send-transactions#use-parallel-nonce-lanes).
 
 ## Transfer with UserOperation Gas Overrides
 
@@ -47589,9 +47642,18 @@ import { bundle } from './.wdk'
 
 Create a configuration file for your WDK setup (e.g., `src/config/wdk.ts`):
 
+Set `EXPO_PUBLIC_SEPOLIA_TEST_TOKEN_ADDRESS` to a six-decimal USD₮ test token currently supported by your configured paymaster on Sepolia. Verify the address, decimals, and paymaster support through the provider's faucet and Sepolia deployment data. The address is public configuration. Use the same value in the wallet configuration and asset used for transfers.
+
+The example uses [Expo CLI environment-variable loading](https://docs.expo.dev/guides/environment-variables/). For a bare React Native app, obtain the address through your existing public-config mechanism or replace the exported constant's value with the verified address; installing Expo modules alone does not load this environment variable.
+
 ```typescript
 // src/config/wdk.ts
 import type { WdkConfigs } from '@tetherto/wdk-react-native-core'
+
+export const sepoliaTestTokenAddress: string = process.env.EXPO_PUBLIC_SEPOLIA_TEST_TOKEN_ADDRESS ?? ''
+if (!/^0x[0-9a-fA-F]{40}$/.test(sepoliaTestTokenAddress)) {
+  throw new Error('Set EXPO_PUBLIC_SEPOLIA_TEST_TOKEN_ADDRESS to your verified test token')
+}
 
 export const wdkConfigs: WdkConfigs = {
   networks: {
@@ -47599,13 +47661,14 @@ export const wdkConfigs: WdkConfigs = {
       blockchain: 'ethereum',
       config: {
         chainId: 11155111, // Sepolia testnet
+        safeModulesVersion: '0.3.0',
         provider: 'https://rpc.sepolia.org',
         bundlerUrl: 'https://api.candide.dev/public/v3/11155111',
         paymasterUrl: 'https://api.candide.dev/public/v3/11155111',
         paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
         transferMaxFee: 5000000,
         paymasterToken: {
-          address: '0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0', // USDt on Sepolia
+          address: sepoliaTestTokenAddress,
         },
       },
     },
@@ -47615,7 +47678,7 @@ export const wdkConfigs: WdkConfigs = {
 ```
 
 <Callout type="info">
-This example uses **Sepolia testnet** with a free public RPC so you can start immediately without API keys. For production or mainnet configuration, see the [Chain Configuration Guide](/sdk/core-module/configuration).
+This example uses **Sepolia testnet**. Configure and fund the selected test token before sending. For production or mainnet configuration, see the [Chain Configuration Guide](/sdk/core-module/configuration).
 </Callout>
 
 ### Step 5: Add WdkAppProvider
@@ -47750,7 +47813,9 @@ Now that you have WDK integrated, here's what you can explore:
 Use the `useAccount()` hook to send transactions:
 
 ```tsx
+// src/screens/SendScreen.tsx
 import { useAccount, BaseAsset } from '@tetherto/wdk-react-native-core'
+import { sepoliaTestTokenAddress } from '../config/wdk'
 
 const usdt = new BaseAsset({
   id: 'usdt-ethereum',
@@ -47759,7 +47824,7 @@ const usdt = new BaseAsset({
   name: 'Tether USD',
   decimals: 6,
   isNative: false,
-  address: '0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0', // USDt on Sepolia
+  address: sepoliaTestTokenAddress,
 })
 
 function SendScreen({ recipient }: { recipient: string }) {
@@ -50307,7 +50372,7 @@ Review mirror and writer methods in the [API Reference](/tools/p2p-address-book/
 URL: https://docs.wdk.tether.io/tools/pear-wrk-wdk
 Description: HRPC and framed JSON-RPC infrastructure for running WDK inside a Bare worklet
 
-Pear Worklet WDK is the low-level transport and handler layer for running WDK inside a Bare worklet. It provides an `HRPC` client and server helper, a separate framed JSON-RPC server entrypoint for native hosts, and typed request payloads for WDK, wallet, protocol, and HRPC-only generic-module operations.
+Pear Worklet WDK is the low-level transport and handler layer for running WDK inside a Bare worklet. It provides an `HRPC` client and server helper, a separate framed JSON-RPC server entrypoint for native hosts, and request payloads for WDK, wallet, protocol, and generic-module operations.
 
 Powered by `@tetherto/pear-wrk-wdk`.
 
@@ -50317,9 +50382,10 @@ Powered by `@tetherto/pear-wrk-wdk`.
 - **Typed lifecycle requests**: Initialize WDK with `initializeWDK({ config, encryptionKey, encryptedSeed })` and tear it down with `dispose()`
 - **Selective wallet resets**: Re-register only the wallet modules listed in a new worklet `networks` config using `resetWdkWallets({ config })`
 - **Generic wallet and protocol calls**: Call account methods through `callMethod({ methodName, network, accountIndex, args, options })`, including Swidge protocols by name
-- **Opt-in method allowlists**: Restrict wallet and nested protocol calls for HRPC and JSON-RPC, plus generic-module calls for HRPC
-- **HRPC generic modules**: Construct named modules during WDK initialization, call their methods with `callModule()`, and forward declared events to the host
+- **Opt-in method allowlists**: Restrict wallet and nested protocol calls for HRPC and JSON-RPC, plus generic-module calls on both transports
+- **Generic modules on both transports**: Construct named modules during WDK initialization, call their methods with `callModule()`, and forward declared events to the host
 - **Framed JSON-RPC server**: Register a length-prefixed JSON-RPC 2.0 server through `@tetherto/pear-wrk-wdk/jsonrpc`
+- **Suspend diagnostics**: Opt in to handle snapshots during Bare suspend-to-idle transitions with `registerHandleLeakCheck()`
 - **Dynamic registration hooks**: Register additional wallets or protocols with `registerWallet()` and `registerProtocol()`
 
 ## Why this matters
@@ -50338,7 +50404,7 @@ The top-level package exports the `HRPC` runtime value. Import `registerRpcHandl
 </Callout>
 
 <Callout type="warn">
-Generic-module calls and events are HRPC-only in `v1.0.0-beta.11`; the JSON-RPC handler does not expose them. This package also does not export a pre-built WDK bundle.
+In `v1.0.0-beta.13`, a missing wallet or protocol method returns `BAD_REQUEST` even if the caller supplies `options.defaultValue`. Handle unsupported methods in the host. The package does not export a pre-built WDK bundle.
 </Callout>
 
 <Cards>
@@ -50360,7 +50426,7 @@ Review the exported class, server helper, and request shapes
 
 ## Pear Worklet WDK API Reference
 URL: https://docs.wdk.tether.io/tools/pear-wrk-wdk/api-reference
-Description: API reference for the HRPC client, registerRpcHandlers helper, and request types in @tetherto/pear-wrk-wdk
+Description: API reference for Pear Worklet HRPC, JSON-RPC, module calls, request types, and suspend diagnostics
 
 ## Package: `@tetherto/pear-wrk-wdk`
 
@@ -50428,7 +50494,7 @@ Returns:
 
 The handler requires `encryptionKey` and `encryptedSeed` to be passed together or omitted together. When a seeded WDK instance already exists, the runtime disposes it and closes its generic modules before re-registering the wallets and optional protocols in `config`.
 
-In beta.11, HRPC generic modules are constructed from `context.moduleManagers` and `config.modules` only when that request includes the encrypted seed pair. A seedless reinitialization closes existing module instances without reconstructing them. Supply both seed fields on every initialization that must construct or reconstruct modules.
+In beta.13, generic modules on either transport are constructed from `context.moduleManagers` and `config.modules` only when that request includes the encrypted seed pair. A seedless reinitialization closes existing module instances without reconstructing them. Supply both seed fields on every initialization that must construct or reconstruct modules.
 
 #### `resetWdkWallets`
 
@@ -50481,7 +50547,9 @@ A full disposal closes all generic modules and clears the WDK instance. A non-em
 
 `options.protocolType` may be `swap`, `swidge`, `bridge`, `lending`, or `fiat`. When present, the runtime requires a non-empty `options.protocolName` and resolves the protocol-specific account wrapper before invoking `methodName`. Swidge calls resolve the wrapper with `account.getSwidgeProtocol(protocolName)`.
 
-When `RpcContext.allowedMethods` defines the target surface, `methodName` must appear in its `methods` array. Account restrictions are keyed by network; protocol restrictions are nested by network, protocol type, and protocol name. Omitted surfaces remain unrestricted, while `methods: []` denies every call on that exact surface. Denied calls fail before dispatch with the runtime code `METHOD_NOT_ALLOWED` and do not use `options.defaultValue`.
+When `RpcContext.allowedMethods` defines the target surface, `methodName` must appear in its `methods` array. Account restrictions are keyed by network; protocol restrictions are nested by network, protocol type, and protocol name. Omitted surfaces remain unrestricted, while `methods: []` denies every call on that exact surface. Denied calls fail before dispatch with the runtime code `METHOD_NOT_ALLOWED`.
+
+A missing wallet or protocol method fails with `BAD_REQUEST`. Beta.13 removes the `options.defaultValue` fallback from both runtime dispatch and `CallMethodOptions`; callers must handle unsupported methods themselves.
 
 #### `registerWallet`
 
@@ -50502,19 +50570,19 @@ Returns:
 
 #### `callModule`
 
-Call one method on a configured generic module. This command is available on HRPC only.
+Call one method on a configured generic module. Both HRPC and JSON-RPC support this operation in beta.13.
 
 - `module` (`string`): Module name shared by `RpcContext.moduleManagers` and `WdkWorkletConfig.modules`.
 - `method` (`string`): Non-empty method name on the constructed module instance.
 - `args?` (`string`): Optional JSON string of arguments. Arrays are spread as positional arguments; a non-array value is passed as one argument.
 
-Returns `CallModuleResponse` with optional `result`, a JSON string. The runtime awaits promises, materializes values with `.toArray()`, and recursively converts `Uint8Array` values to hex before serialization.
+HRPC returns `CallModuleResponse` with optional `result`, a JSON string. JSON-RPC decodes that string and returns the value at `response.result.result`. The runtime awaits promises, materializes values with `.toArray()`, and recursively converts `Uint8Array` values to hex before serialization. Return a JSON-serializable value, or `null` for no result; an `undefined` result cannot be decoded by the JSON-RPC transport.
 
 When `RpcContext.allowedModuleMethods` defines the target module, `method` must appear in that module's `methods` array. Omitted modules remain unrestricted, while `methods: []` denies every method on that module. A denied call fails with `METHOD_NOT_ALLOWED` before instance lookup or dispatch.
 
 #### `moduleEvent`
 
-Send an HRPC module event to the host.
+Send an HRPC module event to the host. JSON-RPC forwards the same event as a `moduleEvent` notification with decoded `params.payload`; it has no request `id`.
 
 - `module` (`string`): Module name.
 - `event` (`string`): Event name.
@@ -50577,7 +50645,7 @@ Registers the host-side handler used to receive `moduleEvent()` messages.
 Import this helper from `@tetherto/pear-wrk-wdk/worklet`. It registers the package's server-side handlers on the provided RPC instance.
 
 - `rpc` (`any`): RPC server instance that supports the generated handler registration methods.
-- `context` (`RpcContext`): Runtime context containing `wdk`, `WDK`, `walletManagers`, `protocolManagers`, and `wdkLoadError`. HRPC generic modules can additionally supply `moduleManagers` and `capabilities`; the runtime manages `moduleRuntime` and `moduleInstances`. Optional `allowedMethods` restricts wallet and protocol dispatch on HRPC and JSON-RPC, while `allowedModuleMethods` restricts HRPC generic-module dispatch.
+- `context` (`RpcContext`): Runtime context containing `wdk`, `WDK`, `walletManagers`, `protocolManagers`, and `wdkLoadError`. Generic modules on either transport can additionally supply `moduleManagers` and `capabilities`; the runtime manages `moduleRuntime` and `moduleInstances`. Optional `allowedMethods` restricts wallet and protocol dispatch on HRPC and JSON-RPC, while `allowedModuleMethods` restricts generic-module dispatch on both transports.
 
 ### Types
 
@@ -50607,9 +50675,9 @@ interface RpcContext {
 }
 ```
 
-The four allowlist helper interfaces are exported types in beta.11. Every omitted level remains unrestricted. Use an explicit empty `methods` array to deny all dynamic calls on one exact surface.
+The four allowlist helper interfaces are exported types in beta.13. Every omitted level remains unrestricted. Use an explicit empty `methods` array to deny all dynamic calls on one exact surface.
 
-The runtime exposes `METHOD_NOT_ALLOWED` for denied calls, but the beta.11 published error-code declaration does not include that member. Treat the literal runtime code as authoritative for this release.
+The runtime exposes `METHOD_NOT_ALLOWED` for denied calls, but the beta.13 published error-code declaration does not include that member. Treat the literal runtime code as authoritative for this release.
 
 #### `WdkWorkletConfig`
 
@@ -50650,7 +50718,7 @@ interface WdkModuleManager {
 }
 ```
 
-The factory must consume `seed` synchronously rather than retain it. Module instances can optionally implement `close()`, `suspend()`, and `resume()`. The runtime calls `close()` during full disposal or reinitialization; targeted blockchain disposal and `resetWdkWallets()` leave generic modules running. Worklet Bundler-generated HRPC entrypoints forward Bare lifecycle events to `suspend()` and `resume()`; manual Pear integrations must wire those events themselves. Declared `events` are forwarded from the instance, and the injected `emit()` function can emit events directly.
+The factory must consume `seed` synchronously rather than retain it. Module instances can optionally implement `close()`, `suspend()`, and `resume()`. The runtime calls `close()` during full disposal or reinitialization; targeted blockchain disposal and `resetWdkWallets()` leave generic modules running. Manual Pear integrations must forward Bare lifecycle events to `context.moduleRuntime.suspendAll()` and `resumeAll()`; registering either transport alone does not install those listeners. Declared `events` are forwarded from the instance, and the injected `emit()` function can emit events directly.
 
 #### Module request types
 
@@ -50693,7 +50761,6 @@ enum ProtocolType {
 
 interface CallMethodOptions {
   transformResult: Function
-  defaultValue: any
   protocolType: ProtocolType
   protocolName: string
 }
@@ -50701,7 +50768,23 @@ interface CallMethodOptions {
 
 The published declarations include `ProtocolType`, but the top-level JavaScript entry does not export that enum value at runtime. Pass the corresponding string literal, such as `'swidge'`, in serialized request options.
 
-The published `CallMethodOptions` declaration marks every field as required. The request's `options` string remains optional at runtime, and the handler reads fields only when their behavior is used.
+The published `CallMethodOptions` declaration marks every remaining field as required. The request's `options` string remains optional at runtime, and the handler reads fields only when their behavior is used. `transformResult` is a function-valued internal handler option; it cannot be sent through JSON serialization. Do not place a function in serialized request options.
+
+### Diagnostic export: `registerHandleLeakCheck(options?)`
+
+Import this helper from `@tetherto/pear-wrk-wdk/diagnostics/handle-leak-check`:
+
+```ts
+interface HandleLeakCheckOptions {
+  tickIntervalMs?: number
+}
+
+function registerHandleLeakCheck(options?: HandleLeakCheckOptions): void
+```
+
+`tickIntervalMs` is the sampling interval in milliseconds, defaulting to `1000`. The helper logs immediately on Bare `suspend`, repeats with an unreferenced timer, and stops on `idle` or `resume`. Handle records include type, native address, `isActive`, `isClosing`, and `hasRef`; it reports rather than closes handles.
+
+Register once per worklet. The helper performs no interval validation and returns without registering listeners when `bare-walk-handles` or Bare lifecycle events are unavailable. Logs use `console.warn` independently of `LOG_LEVEL`. This helper is opt-in; transport registration does not enable it.
 
 ## JSON-RPC Transport
 
@@ -50715,7 +50798,7 @@ registerJsonRpcHandlers(ipc, context)
 
 The server reads UTF-8 JSON-RPC 2.0 messages framed with a four-byte unsigned big-endian payload length. Every request requires an ID, and an ID cannot be reused while its earlier request is still in flight. Malformed frames are dropped without a response. The package does not export a JSON-RPC client or native-host helper.
 
-Beta.11 supports these JSON-RPC method names:
+Beta.13 supports these JSON-RPC method names:
 
 - `workletStart`
 - `generateEntropyAndEncrypt`
@@ -50723,16 +50806,17 @@ Beta.11 supports these JSON-RPC method names:
 - `getSeedAndEntropyFromMnemonic`
 - `initializeWDK`
 - `callMethod`
+- `callModule`
 - `registerWallet`
 - `registerProtocol`
 - `dispose`
 
-JSON-RPC does not support `resetWdkWallets`, generic-module calls, or module events in this release. Use HRPC for those operations.
+JSON-RPC does not support `resetWdkWallets` in this release. Use HRPC for selective wallet resets. Generic modules require `context.moduleManagers` and matching runtime `config.modules`; `initializeWDK` constructs them only when the request includes the encrypted seed pair.
 
-The HRPC and JSON-RPC transports share the `callMethod` handler, so both support the `swidge` protocol type and enforce `RpcContext.allowedMethods` in beta.11. JSON-RPC has no `callModule` surface, so `allowedModuleMethods` is HRPC-only.
+The transports share the wallet/protocol handler and module runtime. Both support the `swidge` protocol type, enforce `RpcContext.allowedMethods`, and enforce `allowedModuleMethods` for generic-module calls. JSON-RPC `callModule` parameters match `CallModuleRequest`, including its JSON-string `args`. Results use `response.result.result`; events arrive as `moduleEvent` notifications with `params: { module, event, payload }` and a decoded payload. See the [JSON-RPC examples](/tools/pear-wrk-wdk/configuration#json-rpc-transport).
 
 <Callout type="warn">
-INFO-level logging can include wallet-call arguments and JSON-RPC parameters or results. Production defaults to ERROR logging; do not enable more verbose logging for requests that may contain seeds, mnemonics, keys, or other sensitive values.
+Beta.13 removes JSON-RPC parameters and results from INFO request/response logs and logs wallet-call arguments at DEBUG. Mnemonic validation errors identify invalid word positions without echoing the words. This does not provide general secret redaction: DEBUG arguments, module errors, and application logs can still contain sensitive values. Production defaults to ERROR logging; avoid sensitive values in custom logs and errors.
 </Callout>
 
 Mnemonic strings, encryption-key strings, and encrypted payload strings cannot be zeroed in JavaScript. Discard references promptly and never log them. The runtime validates imported mnemonics for 12 or 24 English BIP-39 words and clears temporary byte buffers where possible.
@@ -50749,7 +50833,7 @@ Mnemonic strings, encryption-key strings, and encrypted payload strings cannot b
 URL: https://docs.wdk.tether.io/tools/pear-wrk-wdk/configuration
 Description: Configure Pear Worklet HRPC and JSON-RPC contexts, WDK payloads, and generic modules
 
-This page explains how to [build the worklet context](#worklet-context), [shape the worklet config payload](#worklet-config-payload), [initialize WDK](#initialize-wdk), [call generic modules](#call-generic-module-methods), and [choose a transport](#json-rpc-transport).
+This page explains how to [build the worklet context](#worklet-context), [shape the worklet config payload](#worklet-config-payload), [initialize WDK](#initialize-wdk), [call generic modules](#call-generic-module-methods), [choose a transport](#json-rpc-transport), and [inspect suspend delays](#inspect-suspend-delays).
 
 ## Worklet Context
 
@@ -50831,7 +50915,7 @@ module.exports = (rpc) => {
 - `protocolManagers`: A map from protocol name to protocol manager implementation.
 - `wdkLoadError`: Any startup error captured while loading WDK. Use `null` when there is no load failure.
 
-For HRPC generic modules, `moduleManagers` optionally maps module names to `{ createModule, events? }`. The factory receives `{ seed, config, capabilities, emit }` and can return an instance or a promise. `capabilities` is an optional host-supplied object and is empty by default. The runtime manages `moduleRuntime` and `moduleInstances`; do not initialize those fields yourself. Manual integrations must forward Bare `suspend` and `resume` events as shown if module instances should receive those lifecycle calls. Worklet Bundler-generated HRPC entrypoints wire them automatically.
+For generic modules on either transport, `moduleManagers` optionally maps module names to `{ createModule, events? }`. The factory receives `{ seed, config, capabilities, emit }` and can return an instance or a promise. `capabilities` is an optional host-supplied object and is empty by default. The runtime manages `moduleRuntime` and `moduleInstances`; do not initialize those fields yourself. Manual integrations must forward Bare `suspend` and `resume` events as shown if module instances should receive those lifecycle calls. See [Worklet Bundler lifecycle behavior](/tools/worklet-bundler/configuration#suspend-and-resume-behavior) for generated entrypoints.
 
 ## Restrict Dynamic Methods
 
@@ -50864,11 +50948,11 @@ This map applies to the shared HRPC and JSON-RPC `callMethod()` handler. Restric
 - Omitting the map, a network, `protocols`, a protocol type, a protocol name, or `methods` leaves that exact surface unrestricted.
 - An explicit `methods: []` denies every call on that exact account or protocol surface.
 - Protocol calls use their nested list rather than falling back to the account list.
-- A denied method fails before account or protocol dispatch with `METHOD_NOT_ALLOWED`; `defaultValue` is not returned.
+- A denied method fails before account or protocol dispatch with `METHOD_NOT_ALLOWED`.
 
 ### Generic Module Methods
 
-`allowedModuleMethods` is keyed by the `moduleManagers` name and applies to HRPC `callModule()` only:
+`allowedModuleMethods` is keyed by the `moduleManagers` name and applies to `callModule()` on both HRPC and JSON-RPC:
 
 ```javascript title="Restrict Dynamic Module Calls"
 const context = {
@@ -50884,7 +50968,7 @@ const context = {
 Omitting a module or its `methods` field leaves that module unrestricted. Set `methods: []` to deny every dynamic call on it.
 
 <Callout type="warn">
-These maps are not default-deny. List every dynamic surface exposed to an untrusted host. The beta.11 runtime reports denied calls with `METHOD_NOT_ALLOWED`, but the published error-code declaration omits that new member; handle the literal runtime code until the declaration is corrected.
+These maps are not default-deny. List every dynamic surface exposed to an untrusted host. The beta.13 runtime reports denied calls with `METHOD_NOT_ALLOWED`, but the published error-code declaration omits that new member; handle the literal runtime code until the declaration is corrected.
 </Callout>
 
 ## Worklet Config Payload
@@ -50923,12 +51007,10 @@ const workletConfig = {
 - `networks` is required and must contain at least one network entry.
 - Each network entry must include `blockchain` and an object `config`.
 - `protocols` is optional during initialization.
-- `modules` is optional and contains runtime config for named generic modules. Each key must match a `moduleManagers` key in the HRPC context and the corresponding build-time Worklet Bundler module name.
+- `modules` is optional and contains runtime config for named generic modules. Each key must match a `moduleManagers` key in the worklet context and the corresponding build-time Worklet Bundler module name.
 - `resetWdkWallets()` reads only the `networks` portion of the decoded config.
 
-<Callout type="warn">
-Generic modules are HRPC-only in beta.11. The JSON-RPC handler does not construct modules or expose module calls and events.
-</Callout>
+JSON-RPC generic modules require Pear Worklet beta.13. Supply the same `moduleManagers`, `allowedModuleMethods`, and runtime `modules` config used by HRPC. If generating the entrypoint, use Worklet Bundler beta.12 with Pear Worklet beta.13.
 
 ## Initialize WDK
 
@@ -50951,8 +51033,8 @@ await hrpc.initializeWDK({
 - Pass both `encryptionKey` and `encryptedSeed`, or omit both together.
 - On first initialization, the worklet must receive an encrypted seed pair so it can create `context.wdk`.
 - If `context.wdk` already exists, a later `initializeWDK()` call disposes the existing instance and closes its generic modules before re-registering wallets and protocols from the new config.
-- In beta.11, generic modules are constructed only when that `initializeWDK()` request includes both `encryptionKey` and `encryptedSeed`. A seedless reinitialization closes existing module instances but does not rebuild them, even when `config.modules` is present. Supply the seed pair on every initialization that must construct or reconstruct modules.
-- Module `close()` is called during full disposal or reinitialization. Targeted blockchain disposal leaves generic modules running. Optional `suspend()` and `resume()` methods run only when the host forwards Bare lifecycle events; the manual context above and Worklet Bundler-generated HRPC entrypoints do so.
+- In beta.13, generic modules on either transport are constructed only when that `initializeWDK()` request includes both `encryptionKey` and `encryptedSeed`. A seedless reinitialization closes existing module instances but does not rebuild them, even when `config.modules` is present. Supply the seed pair on every initialization that must construct or reconstruct modules.
+- Module `close()` is called during full disposal or reinitialization. Targeted blockchain disposal leaves generic modules running. Optional `suspend()` and `resume()` methods run only when the host forwards Bare lifecycle events; the manual context above does so.
 
 ## Reset Selected Wallets
 
@@ -51001,6 +51083,7 @@ const result = await hrpc.callMethod({
 - When `args` decodes to an object or primitive, the handler passes it as a single argument.
 - Set `options.protocolType` to `swap`, `swidge`, `bridge`, `lending`, or `fiat` to call a protocol wrapper. Every protocol call requires a non-empty `options.protocolName`.
 - When `context.allowedMethods` contains the target account or protocol surface, `methodName` must appear in that exact surface's `methods` array.
+- In beta.13, a missing wallet or protocol method fails with `BAD_REQUEST`. The removed `options.defaultValue` field no longer supplies a fallback; catch unsupported-method errors in the host.
 
 ## Call Generic Module Methods
 
@@ -51045,11 +51128,45 @@ module.exports = (ipc) => {
 
 Messages are UTF-8 JSON-RPC 2.0 objects prefixed by a four-byte unsigned big-endian payload length. Requests require an ID, and IDs must be unique while a request is in flight. The package exports no JSON-RPC host/client helper; the native host must implement framing and correlation.
 
-JSON-RPC beta.11 supports WDK initialization and disposal, secret/mnemonic operations, wallet and protocol calls, and dynamic wallet/protocol registration. Its shared `callMethod` handler supports the `swidge` protocol type and enforces `context.allowedMethods`. It does not support `resetWdkWallets`, `callModule`, `allowedModuleMethods`, or module events. See the [API reference](/tools/pear-wrk-wdk/api-reference#json-rpc-transport) for the exact method list.
+JSON-RPC beta.13 supports generic-module initialization, `callModule`, `allowedModuleMethods`, and `moduleEvent` notifications alongside wallet and protocol operations. `resetWdkWallets` remains HRPC-only. See the [API reference](/tools/pear-wrk-wdk/api-reference#json-rpc-transport) for all methods and response shapes.
+
+Send a module call as a framed JSON-RPC request; `args` remains a JSON string:
+
+```json title="Call A Module Over JSON-RPC"
+{"jsonrpc":"2.0","id":1,"method":"callModule","params":{"module":"preferences","method":"getTheme","args":"[]"}}
+```
+
+For a module that returns `'dark'`, the response contains the decoded value inside `result.result`:
+
+```json title="JSON-RPC Module Result"
+{"jsonrpc":"2.0","id":1,"result":{"result":"dark"}}
+```
+
+A declared module event arrives as a notification without an `id`; `params.payload` is already decoded:
+
+```json title="JSON-RPC Module Event"
+{"jsonrpc":"2.0","method":"moduleEvent","params":{"module":"preferences","event":"changed","payload":{"theme":"dark"}}}
+```
+
+Manual JSON-RPC entrypoints must forward Bare `suspend` and `resume` events to `context.moduleRuntime` as shown in the HRPC context example. Registering JSON-RPC handlers alone does not install those lifecycle listeners.
 
 <Callout type="warn">
-INFO-level logs can contain wallet-call arguments and JSON-RPC parameters or results. Keep production logging at its default ERROR level when requests may contain sensitive values.
+Beta.13 omits JSON-RPC parameters and results from its INFO request/response logs and moves wallet-call arguments to DEBUG. DEBUG can still expose sensitive arguments, and module errors or application logs are not generally redacted. Keep production logging at its default ERROR level and avoid sensitive values in custom logs and error messages.
 </Callout>
+
+## Inspect Suspend Delays
+
+Register the optional [`registerHandleLeakCheck()`](/tools/pear-wrk-wdk/api-reference#diagnostic-export-registerhandleleakcheckoptions) helper once in a Bare worklet entrypoint:
+
+```javascript title="Inspect Bare Handles During Suspend"
+const { registerHandleLeakCheck } = require('@tetherto/pear-wrk-wdk/diagnostics/handle-leak-check')
+
+registerHandleLeakCheck({ tickIntervalMs: 1000 })
+```
+
+The helper logs a handle snapshot immediately on `suspend`, then repeats every `tickIntervalMs` milliseconds until `idle` or `resume`. The default interval is `1000` ms. Its timer is unreferenced so the diagnostic itself does not keep the event loop active. It reports handles; it does not close them or suspend modules.
+
+Provide a positive interval; the beta.13 helper passes the value to the timer without validating it. Registration is a no-op if the optional `bare-walk-handles` dependency or Bare lifecycle events are unavailable. Diagnostic output uses `console.warn` regardless of `LOG_LEVEL`, so register it only when you need handle diagnostics.
 
 ***
 
@@ -54270,19 +54387,20 @@ Worklet Bundler packages selected WDK wallet, protocol, and optional generic mod
 
 ## Features
 
-- **Config-driven bundle generation**: Map logical network names to wallet packages, protocol names to protocol packages, and HRPC-only generic-module names to package factories.
+- **Config-driven bundle generation**: Map logical network names to wallet packages, protocol names to protocol packages, and generic-module names to package factories.
 - **HRPC and JSON-RPC transports**: Generate an HRPC JavaScript bundle by default or a length-prefixed JSON-RPC bundle for native hosts.
 - **Generated worklet artifacts**: Produce a Bare bundle, a stable `./.wdk` host import, and generated TypeScript types.
 - **Native addon outputs**: Link iOS, macOS, and Android addons and generate `addons.yml` for JSON-RPC/native integrations.
 - **Dependency validation helpers**: Validate configured modules, detect the active package manager, and generate install or uninstall commands when dependencies are missing.
-- **Dynamic-call allowlists**: Restrict generated wallet and protocol `callMethod()` surfaces for HRPC and JSON-RPC, plus generic-module `callModule()` surfaces for HRPC.
+- **Dynamic-call allowlists**: Restrict generated wallet and protocol `callMethod()` surfaces for HRPC and JSON-RPC, plus generic-module `callModule()` surfaces on both transports.
 - **Optional peer deferral**: Defer missing peers marked optional by their package metadata, or require them at build time with `--no-defer-optional-peers`.
 - **Explicit ESM-to-CJS conversion**: Opt in for JSC, QuickJS, or another CommonJS-only Bare engine, with a matching runtime loader patch and post-conversion bundle validation.
 - **CLI workflow**: Use `init`, `validate`, `generate`, `list-modules`, and `clean` without building your own wrapper.
-- **Bare lifecycle handling**: Generated HRPC entrypoints suspend and resume both the `bare-http1` and `bare-https` global agents and log Bare suspend, resume, and idle events.
+- **Bare lifecycle handling**: Generated entrypoints forward suspend and resume events to generic modules. HRPC entrypoints also suspend and resume both HTTP global agents.
+- **Opt-in handle diagnostics**: Use `options.handleLeakCheck` to inspect suspend-to-idle delays in generated HRPC worklets.
 
 <Callout type="info">
-`v1.0.0-beta.10` makes ESM-to-CJS conversion explicit and transport-independent. When enabled in `wdk.config.js`, the generated entrypoint installs the matching `.mjs` CommonJS loader patch and the build validates the rewritten raw or default UTF-8-wrapped bundle before succeeding. The release also exports `convertBundleEsmToCjs()` and `validateBundle()` for programmatic workflows.
+`v1.0.0-beta.12` adds generic modules and their method allowlists to JSON-RPC entrypoints, including module suspend/resume forwarding. Use Pear Worklet `v1.0.0-beta.13` for JSON-RPC module calls and events. The new `options.handleLeakCheck` diagnostic is generated only for HRPC.
 </Callout>
 
 ## Why this matters
@@ -54292,7 +54410,7 @@ Worklet Bundler packages selected WDK wallet, protocol, and optional generic mod
 - Transport-specific defaults produce a JavaScript HRPC bundle for React Native Core or native addon artifacts for JSON-RPC hosts; JavaScript-engine compatibility is configured separately.
 
 <Callout type="warn">
-Generic `modules` are generated only for HRPC through beta.11. A JSON-RPC config can currently accept a `modules` field but silently omits those modules from the generated entrypoint.
+`options.handleLeakCheck` is opt-in and reports active handles without closing them. JSON-RPC entrypoints do not enable this diagnostic in beta.12; see [configuration](/tools/worklet-bundler/configuration#configure-suspend-diagnostics) for the transport boundary.
 </Callout>
 
 <Cards>
@@ -54360,19 +54478,24 @@ interface WdkBundleConfig {
     platforms?: Array<'ios' | 'macos' | 'android'>
     swiftTarget?: string
     convertEsmToCjs?: boolean
+    handleLeakCheck?: number | true
   }
 }
 ```
 
-`allowedMethods` is keyed by network. Its direct `methods` array restricts account calls, while `protocols` nests restrictions by protocol type and protocol name. `allowedModuleMethods` is keyed by generic-module name and applies to HRPC only. These inline helper shapes are present in the config declaration but are not named exports from the beta.11 npm entrypoint.
+`allowedMethods` is keyed by network. Its direct `methods` array restricts account calls, while `protocols` nests restrictions by protocol type and protocol name. `allowedModuleMethods` is keyed by generic-module name and applies to both HRPC and JSON-RPC. These inline helper shapes are present in the config declaration but are not named exports from the beta.12 npm entrypoint.
 
-Every omitted map, level, or `methods` field remains unrestricted. An explicit `methods: []` denies every method on that exact surface. Generated HRPC contexts receive both maps; generated JSON-RPC contexts receive only `allowedMethods`.
+Every omitted map, level, or `methods` field remains unrestricted. An explicit `methods: []` denies every method on that exact surface. Both generated contexts receive `allowedMethods` and `allowedModuleMethods`.
 
-`modules` is generated only for HRPC through beta.11. JSON-RPC entry generation ignores that map. JSON-RPC defaults addon linking to `true`; HRPC defaults it to `false`. `options.convertEsmToCjs` defaults to `false` for both transports and must be enabled explicitly for targets whose Bare engine cannot load ESM.
+Beta.12 generates `modules` for both transports. Use Pear Worklet beta.13 for JSON-RPC module calls and events. JSON-RPC defaults addon linking to `true`; HRPC defaults it to `false`. `options.convertEsmToCjs` defaults to `false` for both transports and must be enabled explicitly for targets whose Bare engine cannot load ESM.
 
 <Callout type="warn">
-Beta.11 declares `output.types`, `options.minify`, and `options.sourceMaps`, but its bundle generator does not honor those fields. Declarations are always written to `./.wdk/index.d.ts`; `minify` and `sourceMaps` do not control `bare-pack` output. ESM-to-CJS conversion minifies independently.
+Beta.12 declares `output.types`, `options.minify`, and `options.sourceMaps`, but its bundle generator does not honor those fields. Declarations are always written to `./.wdk/index.d.ts`; `minify` and `sourceMaps` do not control `bare-pack` output. ESM-to-CJS conversion minifies independently.
 </Callout>
+
+`options.handleLeakCheck` is optional and applies only to generated HRPC entrypoints. Set `true` to use Pear Worklet beta.13's default `1000` ms interval, or a positive number to pass as `tickIntervalMs`. Omit it to disable diagnostics; `false`, zero, negative numbers, and strings fail `loadConfig()` validation. The interval controls repeated sampling after an immediate suspend snapshot, not a one-time delay.
+
+Generation checks whether the installed Pear Worklet diagnostic subpath resolves, warning and skipping it if unavailable. The helper logs through `console.warn` until Bare `idle` or `resume`; it does not close handles. JSON-RPC generation accepts the option but does not emit diagnostic registration in beta.12.
 
 #### `ResolvedConfig`
 
@@ -54496,7 +54619,7 @@ Use `generateBundle()` when you want the same bundle workflow that powers the CL
 - `silent`
 - `skipTypes`
 - `skipGeneration`: Reuse an existing generated entrypoint. If `config.options.convertEsmToCjs` changed, regenerate the entrypoint first so its `.mjs` loader behavior matches the bundle conversion.
-- `deferOptionalPeers?` (`boolean`): When omitted or `true`, pass missing peers marked optional through `bare-pack --defer`. Beta.11 checks root, nested, scoped, and symlinked package trees before treating an optional peer as missing. Set this option to `false` to require absent optional imports at build time.
+- `deferOptionalPeers?` (`boolean`): When omitted or `true`, pass missing peers marked optional through `bare-pack --defer`. Beta.12 checks root, nested, scoped, and symlinked package trees before treating an optional peer as missing. Set this option to `false` to require absent optional imports at build time.
 
 `deferOptionalPeers` is a per-run API option. It is not a `WdkBundleConfig` field and cannot be set in `wdk.config.js`.
 
@@ -54510,7 +54633,7 @@ Use `generateBundle()` when you want the same bundle workflow that powers the CL
 - `error?`
 - `missingModule?`
 
-In beta.11, `typesPath` can reflect a configured `output.types` path even though the declaration file is still written to `./.wdk/index.d.ts`.
+In beta.12, `typesPath` can reflect a configured `output.types` path even though the declaration file is still written to `./.wdk/index.d.ts`.
 
 ```typescript title="Generate A Bundle Programmatically"
 import { generateBundle, loadConfig } from '@tetherto/wdk-worklet-bundler'
@@ -54527,13 +54650,13 @@ Use `generateSourceFiles()` when you want the generated entrypoint without the f
 
 #### `generateEntryPoint(config, outputDir)`
 
-Use `generateEntryPoint()` when you need the generated HRPC Bare entrypoint written to a chosen output directory. This path includes configured generic modules, both method-allowlist maps, and module lifecycle/event wiring.
+Use `generateEntryPoint()` when you need the generated HRPC Bare entrypoint written to a chosen output directory. This path includes configured generic modules, both method-allowlist maps, module lifecycle/event wiring, and the optional `handleLeakCheck` diagnostic.
 
-Starting in beta.3, the generated entrypoint suspends and resumes both the `bare-http1` and `bare-https` global agents when the Bare runtime emits `suspend` and `resume`. Beta.11 also logs the generated worklet's Bare `suspend`, `resume`, and `idle` events. When `options.convertEsmToCjs` is enabled, beta.11 also emits the matching runtime `.mjs`-as-CommonJS loader patch.
+Starting in beta.3, the generated entrypoint suspends and resumes both the `bare-http1` and `bare-https` global agents when the Bare runtime emits `suspend` and `resume`. Beta.12 also logs the generated worklet's Bare `suspend`, `resume`, and `idle` events. When `options.convertEsmToCjs` is enabled, beta.12 also emits the matching runtime `.mjs`-as-CommonJS loader patch.
 
 #### `generateJsonRpcEntryPoint(config, outputDir)`
 
-Generate the framed JSON-RPC entrypoint used by native hosts. Through beta.11 this path includes wallet and protocol managers plus `allowedMethods`, but not generic `modules` or `allowedModuleMethods`. When `options.convertEsmToCjs` is enabled, it emits the same `.mjs` loader patch as the HRPC generator.
+Generate the framed JSON-RPC entrypoint used by native hosts. Beta.12 includes wallet, protocol, and generic-module managers plus both method-allowlist maps. With Pear Worklet beta.13, it supports module calls/events and forwards Bare `suspend` and `resume` to the module runtime. It does not generate HRPC's HTTP-agent lifecycle hooks or the `handleLeakCheck` diagnostic. When `options.convertEsmToCjs` is enabled, it emits the same `.mjs` loader patch as the HRPC generator.
 
 #### `linkAddons(config, options?)`
 
@@ -54562,11 +54685,11 @@ convertBundleEsmToCjs('./.wdk-bundle/wdk-worklet.bundle.js', {
 })
 ```
 
-The beta.11 converter accepts raw `.bundle` data and the default UTF-8 CommonJS, ESM, or JSON string wrappers produced by bare-pack. Wrappers created with a non-UTF-8 `--encoding`, such as Base64, are not supported. The converter transforms `.js`, `.mjs`, and `.cjs` files, lowers dynamic imports, removes `"type": "module"` from bundled package manifests, recomputes offsets with `bare-bundle`, restores the original wrapper, and calls `validateBundle()` before returning. It throws if any source transformation or final validation fails.
+The beta.12 converter accepts raw `.bundle` data and the default UTF-8 CommonJS, ESM, or JSON string wrappers produced by bare-pack. Wrappers created with a non-UTF-8 `--encoding`, such as Base64, are not supported. The converter transforms `.js`, `.mjs`, and `.cjs` files, lowers dynamic imports, removes `"type": "module"` from bundled package manifests, recomputes offsets with `bare-bundle`, restores the original wrapper, and calls `validateBundle()` before returning. It throws if any source transformation or final validation fails.
 
 This helper rewrites only the packed bundle. For `.mjs` files to load as CommonJS at runtime, generate the HRPC or JSON-RPC entrypoint with `options.convertEsmToCjs: true` before packing, or provide equivalent loader behavior yourself. Do not convert a bundle while reusing an entrypoint generated with conversion disabled.
 
-The inline `options` shape has `minify?: boolean` and `verbose?: boolean`. `ConvertOptions` appears in the generated declaration as the parameter shape but is not a named export from the beta.11 package entrypoint.
+The inline `options` shape has `minify?: boolean` and `verbose?: boolean`. `ConvertOptions` appears in the generated declaration as the parameter shape but is not a named export from the beta.12 package entrypoint.
 
 #### `validateBundle(bundlePath)`
 
@@ -54595,7 +54718,7 @@ The published CLI exposes these commands through `wdk-worklet-bundler`:
 For the end-to-end config workflow and transport defaults, see the [Worklet Bundler configuration guide](/tools/worklet-bundler/configuration).
 
 <Callout type="warn">
-Beta.11 applies `--transport` after `loadConfig()` resolves output paths. The flag changes entrypoint generation but does not recompute the default bundle filename. Set `transport` in `wdk.config.js`, or configure `output.bundle` explicitly when using the flag.
+Beta.12 applies `--transport` after `loadConfig()` resolves output paths. The flag changes entrypoint generation but does not recompute the default bundle filename. Set `transport` in `wdk.config.js`, or configure `output.bundle` explicitly when using the flag.
 </Callout>
 
 ***
@@ -54617,11 +54740,11 @@ This page shows how to install `@tetherto/wdk-worklet-bundler` and its Pear runt
 Install the bundler as a development dependency and Pear Worklet as a runtime dependency in the host project:
 
 ```bash title="Install The Bundler And Runtime"
-npm install @tetherto/pear-wrk-wdk@1.0.0-beta.12
-npm install --save-dev @tetherto/wdk-worklet-bundler@1.0.0-beta.11
+npm install @tetherto/pear-wrk-wdk@1.0.0-beta.13
+npm install --save-dev @tetherto/wdk-worklet-bundler@1.0.0-beta.12
 ```
 
-Worklet Bundler beta.11 generates entrypoints that import Pear Worklet and includes that runtime in validation and installation for both HRPC and JSON-RPC. Pear Worklet beta.12 enforces the wallet, protocol, and generic-module method allowlists documented here. The GitHub beta.8 release introduced the configuration but has no public npm artifact.
+Worklet Bundler beta.12 generates entrypoints that import Pear Worklet. Use Pear Worklet beta.13 for JSON-RPC generic-module calls and events, and for the diagnostic export used by `options.handleLeakCheck`. The bundler checks whether the runtime package is installed; it does not enforce this version pairing.
 
 ## Create `wdk.config.js`
 
@@ -54631,7 +54754,7 @@ Use `init` to create a starter config, or write the file yourself:
 npx wdk-worklet-bundler init
 ```
 
-The published config surface accepts `networks`, optional `protocols`, HRPC-only generic `modules`, dynamic-call allowlists, `transport`, `preloadModules`, `output`, and `options`:
+The published config surface accepts `networks`, optional `protocols`, generic `modules`, dynamic-call allowlists, `transport`, `preloadModules`, `output`, and `options`:
 
 ```javascript title="Example wdk.config.js"
 module.exports = {
@@ -54754,9 +54877,9 @@ Restrictions are opt-in per exact surface:
 This configuration is not default-deny. List every wallet and protocol surface exposed to an untrusted host, and use an explicit empty list when that surface should accept no dynamic calls.
 </Callout>
 
-### `allowedModuleMethods` (optional, HRPC only)
+### `allowedModuleMethods` (optional)
 
-Use `allowedModuleMethods` to restrict HRPC `callModule()` dispatch. Keys must match the names under `modules`:
+Use `allowedModuleMethods` to restrict `callModule()` dispatch on both HRPC and JSON-RPC. Keys must match the names under `modules`:
 
 ```javascript title="Restrict Generic Module Calls"
 module.exports = {
@@ -54773,9 +54896,9 @@ module.exports = {
 }
 ```
 
-Omitting a module or its `methods` field leaves that module unrestricted. Set `methods: []` to deny every dynamic call on that module. JSON-RPC worklets do not generate generic modules or receive `allowedModuleMethods`.
+Omitting a module or its `methods` field leaves that module unrestricted. Set `methods: []` to deny every dynamic call on that module. Both generated transports receive this map.
 
-### `modules` (optional, HRPC only)
+### `modules` (optional)
 
 Use `modules` for named generic packages that expose a module factory. Each entry supports:
 
@@ -54785,13 +54908,11 @@ Use `modules` for named generic packages that expose a module factory. Each entr
 
 The factory receives `{ seed, config, capabilities, emit }` and can return the module instance or a promise for it. A module that needs the seed must consume it synchronously rather than retain it. The build-time name, such as `preferences`, must match the key in the host's runtime module config.
 
-<Callout type="warn">
-Through beta.11, generic modules are included only in generated HRPC entrypoints. Do not configure `modules` with `transport: 'jsonrpc'`; the current schema accepts the field, but JSON-RPC generation ignores it.
-</Callout>
+Beta.12 generates these modules for both transports. With Pear Worklet beta.13, JSON-RPC initialization constructs them from the encrypted seed pair and matching runtime `modules` config. Module calls retain JSON-string `args`; results and event payloads are decoded JSON values. See the [Pear Worklet JSON-RPC examples](/tools/pear-wrk-wdk/configuration#json-rpc-transport).
 
 ### `transport` (optional)
 
-Choose `hrpc` or `jsonrpc`. HRPC is the default and is the transport used by React Native Core. JSON-RPC produces a length-prefixed bundle for a native host and enables addon linking by default. In beta.11, ESM-to-CJS conversion is an independent, explicit option for both transports.
+Choose `hrpc` or `jsonrpc`. HRPC is the default and is the transport used by React Native Core. JSON-RPC produces a length-prefixed bundle for a native host and enables addon linking by default. In beta.12, ESM-to-CJS conversion is an independent, explicit option for both transports.
 
 ### `preloadModules` (optional)
 
@@ -54802,7 +54923,7 @@ Use `preloadModules` for native addons or other modules that must be required be
 Supported output fields are:
 
 - `bundle`: Bundle path. Defaults to `./.wdk-bundle/wdk-worklet.bundle.js` for HRPC and `./.wdk-bundle/wdk-worklet.bundle` for JSON-RPC.
-- `types`: Declared in the beta.11 config type, but the generator does not honor a custom value and always writes declarations to `./.wdk/index.d.ts`.
+- `types`: Declared in the beta.12 config type, but the generator does not honor a custom value and always writes declarations to `./.wdk/index.d.ts`.
 - `addons.ios`, `addons.macos`, `addons.android`: Platform addon directories. Defaults are `./ios-addons`, `./mac-addons`, and `./android-addons`.
 - `addonsYml`: BareKit Swift dependency file. Defaults to `./ios-addons/addons.yml` and is generated when iOS addons are linked.
 
@@ -54810,13 +54931,38 @@ Supported output fields are:
 
 The published config type supports these build options:
 
-- `minify` (`boolean`): Declared in the beta.11 config type but not read by the bundle path. ESM-to-CJS conversion minifies independently of this field.
-- `sourceMaps` (`boolean`): Declared in the beta.11 config type but not read by the bundle path, so it does not produce source maps.
+- `minify` (`boolean`): Declared in the beta.12 config type but not read by the bundle path. ESM-to-CJS conversion minifies independently of this field.
+- `sourceMaps` (`boolean`): Declared in the beta.12 config type but not read by the bundle path, so it does not produce source maps.
 - `targets` (`string[]`): Override the default Bare build hosts. The shipped defaults cover iOS arm64 and simulator targets plus Android arm, arm64, ia32, and x64 hosts.
 - `linkAddons` (`boolean`): Link native addons with `bare-link`. Defaults to `true` for JSON-RPC and `false` for HRPC.
 - `platforms` (`('ios' | 'macos' | 'android')[]`): Addon platforms. Defaults to all three when addon linking is active.
 - `swiftTarget` (`string`): Xcode target written to `addons.yml`. Defaults to `app`.
+- `handleLeakCheck` (`number | true`, HRPC only): Opt in to repeated handle snapshots while suspended. `true` uses Pear Worklet beta.13's default `1000` ms interval; a positive number sets the interval in milliseconds. Omit the field to disable it. `false`, zero, negative numbers, and strings fail config validation.
 - `convertEsmToCjs` (`boolean`): Convert the bundle for a Bare port whose JavaScript engine cannot load ES modules, such as JSC or QuickJS. Defaults to `false` for both transports. Leave it off only when every target uses an ESM-capable engine such as V8.
+
+### Configure suspend diagnostics
+
+Set `options.handleLeakCheck` to inspect handles that remain active after an HRPC worklet suspends:
+
+```javascript title="Sample Handles During Suspend"
+module.exports = {
+  networks: {
+    ethereum: { package: '@tetherto/wdk-wallet-evm' }
+  },
+  transport: 'hrpc',
+  options: {
+    handleLeakCheck: 5000
+  }
+}
+```
+
+This emits `registerHandleLeakCheck({ tickIntervalMs: 5000 })`. The diagnostic logs immediately on `suspend` and every five seconds until `idle` or `resume`. It uses an unreferenced timer and `console.warn` independently of `LOG_LEVEL`; it does not close handles or replace module lifecycle handling.
+
+If the installed Pear Worklet package does not expose `@tetherto/pear-wrk-wdk/diagnostics/handle-leak-check`, generation warns and omits the diagnostic. If the export exists but its optional `bare-walk-handles` dependency or Bare lifecycle events are unavailable, the runtime helper does nothing.
+
+<Callout type="warn">
+Beta.12 emits this diagnostic only for HRPC. Setting `options.handleLeakCheck` in a JSON-RPC config passes validation but does not emit diagnostic registration. Custom JSON-RPC entrypoints can register the [Pear Worklet helper](/tools/pear-wrk-wdk/configuration#inspect-suspend-delays) themselves.
+</Callout>
 
 ### Configure ESM-to-CJS conversion
 
@@ -54833,14 +54979,14 @@ module.exports = {
 }
 ```
 
-In the normal `generate` or `generateBundle()` path, beta.11 uses one flag for both build-time conversion and the generated runtime loader:
+In the normal `generate` or `generateBundle()` path, beta.12 uses one flag for both build-time conversion and the generated runtime loader:
 
 - After `bare-pack`, it converts `.js`, `.mjs`, and `.cjs` files to CommonJS, lowers dynamic `import()`, removes `"type": "module"` from bundled package manifests, and rebuilds bundle offsets with `bare-bundle`.
 - It preserves raw bundles and the default UTF-8 CommonJS, ESM, or JSON string wrappers produced by supported `bare-pack` output suffixes. Wrappers created with a non-UTF-8 `--encoding`, such as Base64, are not supported.
 - It validates the rewritten file map, offsets, lengths, CommonJS syntax, entrypoint, package manifests, and absence of dynamic imports before generation succeeds.
 - The generated HRPC or JSON-RPC entrypoint routes `.mjs` files through the CommonJS loader only when conversion is enabled.
 
-There is no beta.11 CLI flag that overrides this setting. Set `options.convertEsmToCjs` in the config used for the build.
+There is no beta.12 CLI flag that overrides this setting. Set `options.convertEsmToCjs` in the config used for the build.
 
 ## Configure JSON-RPC and native addons
 
@@ -54882,11 +55028,11 @@ npx wdk-worklet-bundler validate
 
 ## Handle peer dependencies
 
-Worklet Bundler beta.11 separates required peers from peers explicitly marked optional through `peerDependenciesMeta`:
+Worklet Bundler beta.12 separates required peers from peers explicitly marked optional through `peerDependenciesMeta`:
 
 - During bundle generation, missing required peers are offered for installation. In a non-interactive environment without `--install`, the CLI prints the exact manual install command and continues; `bare-pack` can still fail if the bundle needs that peer. The peer scan is skipped by `--source-only`.
 - Missing optional peers are not prompted for or installed. By default, the bundler passes each one to `bare-pack --defer`, so an unused optional feature does not block the build.
-- Optional peers detected anywhere in the scanned package tree are not deferred. Beta.11 matches package names across root, nested, scoped, and symlinked package trees; install a peer in an ancestor `node_modules` visible to the package that imports it, because the same package name elsewhere in the tree can suppress deferral without making that import resolvable. A peer that is required anywhere else in the scanned dependency tree is treated as required and is not deferred.
+- Optional peers detected anywhere in the scanned package tree are not deferred. Beta.12 matches package names across root, nested, scoped, and symlinked package trees; install a peer in an ancestor `node_modules` visible to the package that imports it, because the same package name elsewhere in the tree can suppress deferral without making that import resolvable. A peer that is required anywhere else in the scanned dependency tree is treated as required and is not deferred.
 
 Use `--no-defer-optional-peers` when the app uses an optional feature and you want a missing peer to fail during the build:
 
@@ -54908,25 +55054,25 @@ Use `generate` to build the worklet artifact:
 npx wdk-worklet-bundler generate --install
 ```
 
-`generate --install` can auto-install missing configured wallet, protocol, generic, preload, and Pear Worklet runtime dependencies after the package manager is detected from the project root. In beta.11, the Pear Worklet runtime is included for both HRPC and JSON-RPC, so the generated entrypoint's runtime dependency is surfaced during validation and installation instead of failing later in `bare-pack`.
+`generate --install` can auto-install missing configured wallet, protocol, generic, preload, and Pear Worklet runtime dependencies after the package manager is detected from the project root. In beta.12, the Pear Worklet runtime is included for both HRPC and JSON-RPC, so the generated entrypoint's runtime dependency is surfaced during validation and installation instead of failing later in `bare-pack`.
 
 Use `--source-only` when you want the generated `.wdk/wdk-worklet.generated.js` entrypoint and related artifacts without running `bare-pack`. This mode also skips bundle conversion. If `options.convertEsmToCjs` is `true` and you run `bare-pack` yourself, convert the packed bundle with `convertBundleEsmToCjs()` before deployment; the source-only entrypoint already contains the matching `.mjs` loader patch. Keep the same conversion setting when generating the entrypoint and converting the bundle.
 
-The `generate` command also accepts `--transport hrpc|jsonrpc`, `--link-addons`, `--skip-link-addons`, `--platforms ios,macos,android`, and `--no-defer-optional-peers`. Set `transport` in `wdk.config.js` when you rely on its transport-specific default bundle path. In beta.11, `--transport` changes the generated transport after output paths have already been resolved, so it does not switch `.js` HRPC output to the extensionless JSON-RPC default, or vice versa. If you use the flag, set `output.bundle` explicitly to the intended path.
+The `generate` command also accepts `--transport hrpc|jsonrpc`, `--link-addons`, `--skip-link-addons`, `--platforms ios,macos,android`, and `--no-defer-optional-peers`. Set `transport` in `wdk.config.js` when you rely on its transport-specific default bundle path. In beta.12, `--transport` changes the generated transport after output paths have already been resolved, so it does not switch `.js` HRPC output to the extensionless JSON-RPC default, or vice versa. If you use the flag, set `output.bundle` explicitly to the intended path.
 
 `--skip-generation` reuses an existing generated entrypoint. If `options.convertEsmToCjs` changed since that entrypoint was created, regenerate without `--skip-generation` before building so the runtime `.mjs` loader matches the bundle conversion setting.
 
 ## Suspend and resume behavior
 
-Generated HRPC worklet entrypoints register Bare lifecycle handlers for `suspend` and `resume`, then apply those handlers to both the `bare-http1` and `bare-https` global agents. No config flag is required for this behavior. Beta.11 also logs the generated worklet's Bare `suspend`, `resume`, and `idle` events.
+Generated HRPC and JSON-RPC entrypoints forward Bare `suspend` and `resume` events to the configured generic modules' optional lifecycle methods. Pear Worklet closes modules during full disposal or reinitialization; targeted wallet disposal leaves them running.
 
-This matters when a generated HRPC worklet performs HTTPS-backed fetches. Starting in beta.3, those generated entrypoints suspend and resume both agents together.
+HRPC entrypoints additionally suspend and resume both the `bare-http1` and `bare-https` global agents and log Bare `suspend`, `resume`, and `idle` events. JSON-RPC beta.12 does not include that HTTP-agent handling. These lifecycle hooks require no diagnostic flag; `options.handleLeakCheck` only adds HRPC handle reporting.
 
 ## Troubleshooting
 
 - If `loadConfig()` cannot find a config file, run `npx wdk-worklet-bundler init` or pass `--config \<path\>`.
 - If `validate` or `generate` reports missing modules, use `generate --install` or inspect the install command from the exported helper APIs in the [API Reference](/tools/worklet-bundler/api-reference).
-- When `bare-pack` reports an unresolved package subpath, beta.11 reduces scoped or unscoped subpaths to the installable package root and prints an install command for the package manager detected from the project root. It prints no install hint when the reported specifier is not an installable package, such as a relative or absolute path, private import, URL or builtin-prefixed specifier, or bare scope.
+- When `bare-pack` reports an unresolved package subpath, beta.12 reduces scoped or unscoped subpaths to the installable package root and prints an install command for the package manager detected from the project root. It prints no install hint when the reported specifier is not an installable package, such as a relative or absolute path, private import, URL or builtin-prefixed specifier, or bare scope.
 - If you need to inspect generated source before bundling, use `generate --source-only` and review the files in `.wdk/`. For a CommonJS-only target, pack and convert that source as described above before running it.
 
 ***

@@ -11,7 +11,7 @@ icon: Settings
 `WalletManagerEvm7702Gasless`, `WalletAccountEvm7702Gasless`, and `WalletAccountReadOnlyEvm7702Gasless` use the same base configuration. The account must also choose one fee mode: sponsorship policy or paymaster token.
 
 <Callout type="warn">
-Replace `'<VERIFIED_DELEGATION_ADDRESS>'` with a smart-account implementation address that you have verified for the target chain. The EOA delegates execution to this address.
+Replace `'<VERIFIED_DELEGATION_ADDRESS>'` with a smart-account implementation address that you have verified for the target chain and configured `entryPointVersion`. The EOA delegates execution to this address.
 </Callout>
 
 ```javascript title="Sponsored wallet configuration"
@@ -46,7 +46,7 @@ const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
 |-------|------|-------------|
 | `provider` | `string \| Eip1193Provider \| Array\<string \| Eip1193Provider\>` | RPC endpoint, EIP-1193 provider, or ordered failover list. |
 | `bundlerUrl` | `string` | ERC-4337 bundler endpoint used to build and submit UserOperations. |
-| `delegationAddress` | `string` | Smart-account implementation address used for EIP-7702 delegation. |
+| `delegationAddress` | `string` | Smart-account implementation address built for the configured `entryPointVersion`, used for EIP-7702 delegation. |
 
 Account constructors and per-call config overrides throw `ConfigurationError` if any required common field is missing.
 
@@ -54,10 +54,33 @@ Account constructors and per-call config overrides throw `ConfigurationError` if
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
+| `chainId` | `number` | Provider-reported chain | Expected chain ID, checked before building or signing UserOperations. See [chain validation](#chain-validation) for caching and quote behavior. |
+| `entryPointVersion` | `'0.8' \| '0.9'` | `'0.8'` | Selects the EntryPoint address and matching account implementation for construction and signing. |
 | `paymasterUrl` | `string` | `bundlerUrl` | Paymaster endpoint when it differs from the bundler endpoint. |
 | `retries` | `number` | `3` | Additional retry attempts when `provider` is an array. Total attempts are `1 + retries`. |
 | `parallel` | `boolean` | `false` | Use a fresh random EntryPoint nonce lane for each sign, send, or transfer operation. Ignored when `nonceKey` is set. |
 | `nonceKey` | `number \| bigint \| string` | - | Use a reusable explicit nonce lane. Strings are hashed to a deterministic key; numeric keys must fit the uint192 range. |
+
+### EntryPoint Version
+
+Set `entryPointVersion` in the constructor to match your bundler, paymaster, and delegation implementation. Omitting it preserves EntryPoint v0.8. The selected version controls UserOperation construction, the signing domain, nonce lookup, submission, and paymaster-token queries.
+
+| `entryPointVersion` | EntryPoint address | Reference `delegationAddress` |
+|---------------------|--------------------|-------------------------------|
+| `'0.8'` (default) | `0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108` | `0xe6Cae83BdE06E4c305530e199D7217f42808555B` |
+| `'0.9'` | `0x433709009B8330FDa32311DF1C2AFA402eD8D009` | `0xa46cc63eBF4Bd77888AA327837d20b23A63a56B5` |
+
+<Callout type="warn">
+Verify that the selected contracts are deployed on your target chain. Account creation rejects an unsupported version or a reference delegation address paired with the other version. Custom delegation addresses are accepted without verifying their EntryPoint compatibility; verify their implementation before use.
+</Callout>
+
+Configure `entryPointVersion` and `chainId` when creating the account. Per-call fee-mode overrides do not switch the account's chain or EntryPoint.
+
+### Chain Validation
+
+Set `chainId` to the expected network, for example `chainId: 1` for Ethereum mainnet. The first UserOperation chain lookup calls `eth_chainId` and throws `ConfigurationError` on a mismatch before building or signing. Owned-account quotes and sends perform this lookup too, including sponsored quotes and already-signed inputs. A read-only sponsored quote returns `0n` without checking the chain.
+
+The account caches a successful lookup. It does not detect a later network switch, so keep all failover providers on the same chain and recreate the wallet or account when changing networks. Omitting `chainId` trusts the provider-reported chain. This check does not verify the chain or EntryPoint encoded in an externally signed operation.
 
 ### Provider Failover
 
@@ -200,7 +223,7 @@ const result = await account.sendTransaction(tx, feeConfig)
 
 When an override is provided, the merged config is validated before the operation runs. `confirmFeeTokenAndAmount()` represents the application's explicit review of the changed fee token and quoted amount; the quote itself does not enforce `transactionMaxFee`, while the wallet-built send does.
 
-The beta.4 JavaScript runtime also reads `parallel` and `nonceKey` from per-call overrides for `signTransaction()`, `sendTransaction()`, and `transfer()`. The published second-argument TypeScript declarations include only fee-mode fields, so constructor-level lane configuration is the typed path in this release.
+The beta.5 JavaScript runtime also reads `parallel` and `nonceKey` from per-call overrides for `signTransaction()`, `sendTransaction()`, and `transfer()`. The published second-argument TypeScript declarations include only fee-mode fields, so constructor-level lane configuration is the typed path in this release.
 
 <Callout type="info">
 The two-minute quote cache key includes the transaction, sponsorship mode, paymaster token, expected paymaster address, and sponsorship policy ID. A matching operation also rechecks the current EntryPoint nonce before reuse. Changing any keyed fee-mode field causes a fresh quote.

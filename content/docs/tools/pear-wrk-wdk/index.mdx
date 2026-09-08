@@ -3,7 +3,7 @@ title: Pear Worklet WDK
 description: HRPC and framed JSON-RPC infrastructure for running WDK inside a Bare worklet
 ---
 
-Pear Worklet WDK is the low-level transport and handler layer for running WDK inside a Bare worklet. It provides an `HRPC` client and server helper, a separate framed JSON-RPC server entrypoint for native hosts, and typed request payloads for WDK, wallet, protocol, and HRPC-only generic-module operations.
+Pear Worklet WDK is the low-level transport and handler layer for running WDK inside a Bare worklet. It provides an `HRPC` client and server helper, a separate framed JSON-RPC server entrypoint for native hosts, and request payloads for WDK, wallet, protocol, and generic-module operations.
 
 Powered by `@tetherto/pear-wrk-wdk`.
 
@@ -13,9 +13,10 @@ Powered by `@tetherto/pear-wrk-wdk`.
 - **Typed lifecycle requests**: Initialize WDK with `initializeWDK({ config, encryptionKey, encryptedSeed })` and tear it down with `dispose()`
 - **Selective wallet resets**: Re-register only the wallet modules listed in a new worklet `networks` config using `resetWdkWallets({ config })`
 - **Generic wallet and protocol calls**: Call account methods through `callMethod({ methodName, network, accountIndex, args, options })`, including Swidge protocols by name
-- **Opt-in method allowlists**: Restrict wallet and nested protocol calls for HRPC and JSON-RPC, plus generic-module calls for HRPC
-- **HRPC generic modules**: Construct named modules during WDK initialization, call their methods with `callModule()`, and forward declared events to the host
+- **Opt-in method allowlists**: Restrict wallet and nested protocol calls for HRPC and JSON-RPC, plus generic-module calls on both transports
+- **Generic modules on both transports**: Construct named modules during WDK initialization, call their methods with `callModule()`, and forward declared events to the host
 - **Framed JSON-RPC server**: Register a length-prefixed JSON-RPC 2.0 server through `@tetherto/pear-wrk-wdk/jsonrpc`
+- **Suspend diagnostics**: Opt in to handle snapshots during Bare suspend-to-idle transitions with `registerHandleLeakCheck()`
 - **Dynamic registration hooks**: Register additional wallets or protocols with `registerWallet()` and `registerProtocol()`
 
 ## Why this matters
@@ -34,7 +35,7 @@ The top-level package exports the `HRPC` runtime value. Import `registerRpcHandl
 </Callout>
 
 <Callout type="warn">
-Generic-module calls and events are HRPC-only in `v1.0.0-beta.11`; the JSON-RPC handler does not expose them. This package also does not export a pre-built WDK bundle.
+In `v1.0.0-beta.13`, a missing wallet or protocol method returns `BAD_REQUEST` even if the caller supplies `options.defaultValue`. Handle unsupported methods in the host. The package does not export a pre-built WDK bundle.
 </Callout>
 
 <Cards>

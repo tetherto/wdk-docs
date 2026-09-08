@@ -107,6 +107,7 @@ Treat the arrays returned through `keyPair` as read-only. Call `dispose()` when 
 
 ### Quote and Send Behavior
 
+- Owned-account quotes, signing, and sends check the configured `chainId` before proceeding, including sponsored quotes and already-signed inputs. The first successful check is cached; see [chain validation](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#chain-validation).
 - Sponsored mode returns `fee: 0n` from quote methods.
 - Paymaster-token mode returns fees in the configured paymaster token's base units.
 - `signTransaction()` returns a signed `UserOperationV8` without broadcasting it. The type comes from `abstractionkit` and is not re-exported from this package's root.
@@ -124,7 +125,7 @@ Treat the arrays returned through `keyPair` as read-only. Call `dispose()` when 
 - A string `nonceKey` is hashed to a deterministic 192-bit key. Numeric keys must be within the uint192 range; use bigint or string form above JavaScript's safe integer range.
 - Let the first delegation reach the chain before using concurrent lanes. Overlapping operations on the same lane can return hashes even when one can never receive a receipt.
 - A fresh `parallel` lane creates a permanent EntryPoint nonce slot. Reuse a bounded set of named lanes for sustained workloads.
-- The runtime accepts lane fields in per-call overrides for signing, sending, and transfers, but the beta.4 second-argument declarations omit them. Constructor-level lane fields are correctly typed.
+- The runtime accepts lane fields in per-call overrides for signing, sending, and transfers, but the beta.5 second-argument declarations omit them. Constructor-level lane fields are correctly typed.
 
 ### Transfer Fee Cap
 
@@ -193,6 +194,8 @@ Known configuration errors include:
 - missing `delegationAddress`;
 - missing `paymasterToken` when `isSponsored` is absent or `false`;
 - empty provider array;
+- unsupported `entryPointVersion` or a reference delegation address paired with the wrong version;
+- the provider chain differs from configured `chainId` during the first UserOperation chain lookup;
 - configured `paymasterAddress` does not match the paymaster returned by the RPC.
 
 ## Config Types
@@ -202,10 +205,12 @@ Known configuration errors include:
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `provider` | `string \| Eip1193Provider \| Array\<string \| Eip1193Provider\>` | Yes | RPC endpoint, EIP-1193 provider, or provider failover list. |
+| `chainId` | `number` | No | Expected chain ID for the first UserOperation chain lookup. A successful check is cached; omission trusts the provider. |
+| `entryPointVersion` | `'0.8' \| '0.9'` | No | Selects the EntryPoint and matching account implementation. Defaults to `'0.8'`. |
 | `retries` | `number` | No | Additional retry attempts for provider arrays. Defaults to `3`. |
 | `bundlerUrl` | `string` | Yes | ERC-4337 bundler endpoint. |
 | `paymasterUrl` | `string` | No | Paymaster endpoint when different from `bundlerUrl`. |
-| `delegationAddress` | `string` | Yes | Smart-account implementation address used for EIP-7702 delegation. |
+| `delegationAddress` | `string` | Yes | Smart-account implementation address built for the configured `entryPointVersion`. |
 | `parallel` | `boolean` | No | Uses a fresh random nonce lane for each sign, send, or transfer operation unless `nonceKey` is set. |
 | `nonceKey` | `number \| bigint \| string` | No | Uses a reusable explicit uint192 nonce lane; strings are hashed deterministically. |
 
@@ -238,4 +243,4 @@ type Evm7702GaslessWalletConfig =
 
 The package also re-exports EVM wallet types from `@tetherto/wdk-wallet-evm`, including `FeeRates`, `KeyPair`, `EvmTransaction`, `TransactionResult`, `EvmTransferOptions`, `TransferResult`, `EvmTransactionReceipt`, `ApproveOptions`, `TypedData`, `TypedDataDomain`, and `TypedDataField`. It re-exports the shared `Finality`, `TransactionReceipt`, `WaitForTransactionTarget`, and `WaitForTransactionOptions` types from `@tetherto/wdk-wallet`.
 
-Module-specific exported types include `UserOperationReceipt`, `Evm7702GaslessTransactionDetails`, `Eip7702AuthorizationOverride`, `BuildSponsoredUserOperationOverrides`, and `SponsoredUserOperation`. `Evm7702GaslessTransactionDetails` adds `confirmations`, the native EVM `receipt`, and `userOperationReceipt` to the normalized receipt. In beta.4, `BuildSponsoredUserOperationOverrides` includes optional `nonce?: bigint` for explicitly selecting the EntryPoint nonce in lower-level builder typing; it does not expose the protected builder as a public method.
+Module-specific exported types include `UserOperationReceipt`, `Evm7702GaslessTransactionDetails`, `Eip7702AuthorizationOverride`, `BuildSponsoredUserOperationOverrides`, and `SponsoredUserOperation`. `Evm7702GaslessTransactionDetails` adds `confirmations`, the native EVM `receipt`, and `userOperationReceipt` to the normalized receipt. In beta.5, `BuildSponsoredUserOperationOverrides` includes optional `nonce?: bigint` for explicitly selecting the EntryPoint nonce in lower-level builder typing; it does not expose the protected builder as a public method.

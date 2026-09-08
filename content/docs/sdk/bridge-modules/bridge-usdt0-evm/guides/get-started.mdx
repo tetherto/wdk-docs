@@ -3,7 +3,7 @@ title: Get Started
 description: Install the bridge package, wire WalletAccountEvm, and review supported chains.
 ---
 
-This guide shows how to [install the package](#install-the-package), [create an EVM account](#create-an-evm-account), [instantiate the bridge protocol](#instantiate-the-bridge-protocol), and review [supported chains](#supported-chains).
+This guide shows how to [install the package](#install-the-package), [create an EVM account](#create-an-evm-account), [instantiate the bridge protocol](#instantiate-the-bridge-protocol), [use a read-only account](#use-a-read-only-account-optional), and review [supported chains](#supported-chains).
 
 ## Install the package
 
@@ -15,7 +15,7 @@ This guide shows how to [install the package](#install-the-package), [create an 
 You can add the published package to your project from npm: [@tetherto/wdk-protocol-bridge-usdt0-evm](https://www.npmjs.com/package/@tetherto/wdk-protocol-bridge-usdt0-evm).
 
 ```bash title="Install @tetherto/wdk-protocol-bridge-usdt0-evm"
-npm install @tetherto/wdk-protocol-bridge-usdt0-evm
+npm install @tetherto/wdk-protocol-bridge-usdt0-evm @tetherto/wdk-wallet-evm
 ```
 
 ## Create an EVM account
@@ -51,8 +51,23 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 For standard EVM accounts, `fee` and `bridgeFee` are source-chain native base units. ERC-4337 fee units depend on the account's gas-payment mode while `bridgeFee` is returned in bridged-token base units. Read [Fee units and `bridgeMaxFee`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#fee-units-and-bridgemaxfee) before setting a cap for an ERC-4337 flow.
 
 <Callout type="info">
-The account must not be read-only. Read-only accounts cannot call [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference).
+The constructor also accepts the shared WDK account interfaces. [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config) requires a callable `sendTransaction()` method and EVM transaction support. Read [account requirements](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements) before supplying a custom account or combining ERC-4337 package versions.
 </Callout>
+
+## Use a read-only account (optional)
+
+For quotes without signing, create a [`WalletAccountReadOnlyEvm`](/sdk/wallet-modules/wallet-evm/api-reference#walletaccountreadonlyevm) for the source address and pass it to [`Usdt0ProtocolEvm`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#constructor):
+
+```javascript title="Create a read-only bridge"
+import { WalletAccountReadOnlyEvm } from '@tetherto/wdk-wallet-evm'
+
+const readOnlyAccount = new WalletAccountReadOnlyEvm(await account.getAddress(), {
+  provider: 'https://eth.drpc.org'
+})
+const readOnlyBridge = new Usdt0ProtocolEvm(readOnlyAccount)
+```
+
+You can now call [`quoteBridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#quotebridgeoptions-config) with your route options. The source address needs any allowance and balance required by the route's gas estimate; a read-only account cannot grant that allowance. Calling [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config) on this instance rejects before sending a transaction.
 
 ## Supported chains
 

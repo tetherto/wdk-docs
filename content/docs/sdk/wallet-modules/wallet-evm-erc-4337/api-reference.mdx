@@ -42,7 +42,7 @@ new WalletManagerEvmErc4337(seed, config)
   - `chainId` (number): The blockchain's ID (e.g., 1 for Ethereum mainnet)
   - `provider` (string | Eip1193Provider | Array\<string | Eip1193Provider\>): RPC endpoint URL, EIP-1193 provider instance, or ordered failover list
   - `bundlerUrl` (string): The URL of the bundler service
-  - `safeModulesVersion` (string): Must be `'0.3.0'`, the only Safe modules version supported by beta.17
+  - `safeModulesVersion` (string): Must be `'0.3.0'`, the only Safe modules version supported by beta.18
 
 **Optional common config fields:**
   - `parallel` (boolean): Put each send, sign, or transfer in a fresh random 192-bit nonce-key lane
@@ -380,7 +380,7 @@ Sends a transaction via UserOperation through the bundler.
 - `ConfigurationError` if the override is invalid or the token paymaster address returned while building mismatches the configured address.
 - `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50 while building or submitting the operation.
 
-When `tx` is a signed `UserOperationV7`, WDK forwards that exact operation to the bundler. It does not rebuild or re-sign it, reapply the current `transactionMaxFee`, call the paymaster RPC, or rerun the paymaster-address check. Only submit an operation produced by the same account after verifying the intended fee-mode and paymaster configuration, and submit it before its nonce becomes stale.
+When `tx` is a signed `UserOperationV7`, WDK forwards that exact operation to the bundler without checking the provider against `chainId`. It does not rebuild or re-sign it, reapply the current `transactionMaxFee`, call the paymaster RPC, or rerun the paymaster-address check. Only submit an operation produced by the same account after verifying the intended chain, EntryPoint, fee-mode, and paymaster configuration, and submit it before its nonce becomes stale.
 
 **Example:**
 ```javascript
@@ -866,7 +866,6 @@ const sameAddress = WalletAccountEvmErc4337.predictSafeAddress(
 | `getTransaction(hash)` | Returns normalized UserOperation finality using its bundling transaction | `Promise\<TransactionReceipt & EvmErc4337TransactionDetails\>` | If the hash is invalid or unknown |
 | `waitForTransaction(hash, options?)` | Waits for the UserOperation to reach `confirmed` or `final`, or returns `dropped` | `Promise\<TransactionReceipt & EvmErc4337TransactionDetails\>` | If the wait times out |
 | `getUserOperationReceipt(hash)` | Returns a UserOperation receipt | `Promise\<UserOperationReceipt \| null\>` | - |
-| `signTypedData(typedData)` | Signs EIP-712 typed structured data | `Promise\<string\>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies an EIP-712 typed data signature | `Promise\<boolean\>` | - |
 | `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise\<Record\<string, bigint\>\>` | - |
 
@@ -1047,40 +1046,6 @@ if (receipt) {
 }
 ```
 
-##### `signTypedData(typedData)`
-Signs EIP-712 typed structured data using the underlying EOA address.
-
-**Parameters:**
-- `typedData` (TypedData): The typed data object containing domain, types, primaryType, and message
-
-**Returns:** `Promise\<string\>` - The typed data signature
-
-**Example:**
-```javascript
-const typedData = {
-  domain: {
-    name: 'MyDApp',
-    version: '1',
-    chainId: 1,
-    verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC'
-  },
-  types: {
-    Transfer: [
-      { name: 'to', type: 'address' },
-      { name: 'amount', type: 'uint256' }
-    ]
-  },
-  primaryType: 'Transfer',
-  message: {
-    to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-    amount: 1000000n
-  }
-}
-
-const signature = await readOnlyAccount.signTypedData(typedData)
-console.log('Typed data signature:', signature)
-```
-
 ##### `verifyTypedData(typedData, signature)`
 Verifies an EIP-712 typed data signature against the underlying EOA address.
 
@@ -1149,6 +1114,8 @@ The package re-exports these types.
 
 ### EvmErc4337WalletConfig
 
+The constructor's `chainId` is checked against the provider's first `eth_chainId` response before building a UserOperation. A mismatch throws `ConfigurationError`; a successful lookup is cached. Sponsored quotes and already-signed operation quote/send paths do not perform this check. See [chain validation](/sdk/wallet-modules/wallet-evm-erc-4337/configuration#chain-id).
+
 The configuration is a union type combining common fields with one of three gas payment modes:
 
 ```typescript
@@ -1157,7 +1124,7 @@ interface EvmErc4337WalletCommonConfig {
   chainId: number;                          // Blockchain ID
   provider: string | Eip1193Provider | Array<string | Eip1193Provider>; // RPC provider or failover list
   bundlerUrl: string;                       // Bundler service URL
-  safeModulesVersion: string;               // Must be '0.3.0' in beta.17
+  safeModulesVersion: string;               // Must be '0.3.0' in beta.18
   parallel?: boolean;                       // Fresh random nonce-key lane per operation
   nonceKey?: number | bigint | string;      // Reusable raw or named uint192 lane key
 }
@@ -1198,7 +1165,7 @@ type EvmErc4337WalletConfig = EvmErc4337WalletCommonConfig &
 
 ### Config Override
 
-The published beta.17 `config` parameter type on `sendTransaction`, `signTransaction`, `quoteSendTransaction`, `transfer`, and `quoteTransfer` allows per-call overrides of gas payment settings:
+The published beta.18 `config` parameter type on `sendTransaction`, `signTransaction`, `quoteSendTransaction`, `transfer`, and `quoteTransfer` allows per-call overrides of gas payment settings:
 
 ```typescript
 type ConfigOverride = Partial<
@@ -1220,7 +1187,7 @@ type ConfigOverride = Partial<
 
 Overrides are shallow-merged with the account configuration, then validated. When switching modes, explicitly clear an inherited opposing flag: sponsorship requires `isSponsored: true` and `useNativeCoins: false`; native-coin mode requires `isSponsored: false` and `useNativeCoins: true`; paymaster-token mode requires both flags to be `false`. The merged configuration must also contain the URL, address, token, or policy fields required by the selected mode.
 
-At runtime, beta.17 additionally honors `parallel` and `nonceKey` per call for `signTransaction()`, `sendTransaction()`, and `transfer()`. Those two fields are missing from the published per-call declarations, so object literals containing them fail TypeScript excess-property checks even though JavaScript calls work. Construction-level `EvmErc4337WalletCommonConfig` includes both fields and is the typed path in this release. `quoteSendTransaction()` and `quoteTransfer()` do not select a lane.
+At runtime, beta.18 additionally honors `parallel` and `nonceKey` per call for `signTransaction()`, `sendTransaction()`, and `transfer()`. Those two fields are missing from the published per-call declarations, so object literals containing them fail TypeScript excess-property checks even though JavaScript calls work. Construction-level `EvmErc4337WalletCommonConfig` includes both fields and is the typed path in this release. `quoteSendTransaction()` and `quoteTransfer()` do not select a lane.
 
 In token-paymaster mode, every path that builds a UserOperation validates a non-empty paymaster address returned by the RPC against `paymasterAddress`. A case-insensitive mismatch throws `ConfigurationError` before the operation is returned or submitted.
 
@@ -1362,7 +1329,7 @@ class ConfigurationError extends ValueError {
 }
 ```
 
-`ConfigurationError` is part of the shared WDK error taxonomy and can also be caught as `ValueError`.
+`ConfigurationError` is part of the shared WDK error taxonomy and can also be caught as `ValueError`. It also reports a mismatch between the constructor's `chainId` and the provider during the first UserOperation chain lookup.
 
 ### FeeRates
 

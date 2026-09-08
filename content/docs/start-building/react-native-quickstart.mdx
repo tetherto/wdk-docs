@@ -216,9 +216,18 @@ import { bundle } from './.wdk'
 
 Create a configuration file for your WDK setup (e.g., `src/config/wdk.ts`):
 
+Set `EXPO_PUBLIC_SEPOLIA_TEST_TOKEN_ADDRESS` to a six-decimal USD₮ test token currently supported by your configured paymaster on Sepolia. Verify the address, decimals, and paymaster support through the provider's faucet and Sepolia deployment data. The address is public configuration. Use the same value in the wallet configuration and asset used for transfers.
+
+The example uses [Expo CLI environment-variable loading](https://docs.expo.dev/guides/environment-variables/). For a bare React Native app, obtain the address through your existing public-config mechanism or replace the exported constant's value with the verified address; installing Expo modules alone does not load this environment variable.
+
 ```typescript
 // src/config/wdk.ts
 import type { WdkConfigs } from '@tetherto/wdk-react-native-core'
+
+export const sepoliaTestTokenAddress: string = process.env.EXPO_PUBLIC_SEPOLIA_TEST_TOKEN_ADDRESS ?? ''
+if (!/^0x[0-9a-fA-F]{40}$/.test(sepoliaTestTokenAddress)) {
+  throw new Error('Set EXPO_PUBLIC_SEPOLIA_TEST_TOKEN_ADDRESS to your verified test token')
+}
 
 export const wdkConfigs: WdkConfigs = {
   networks: {
@@ -226,13 +235,14 @@ export const wdkConfigs: WdkConfigs = {
       blockchain: 'ethereum',
       config: {
         chainId: 11155111, // Sepolia testnet
+        safeModulesVersion: '0.3.0',
         provider: 'https://rpc.sepolia.org',
         bundlerUrl: 'https://api.candide.dev/public/v3/11155111',
         paymasterUrl: 'https://api.candide.dev/public/v3/11155111',
         paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
         transferMaxFee: 5000000,
         paymasterToken: {
-          address: '0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0', // USDt on Sepolia
+          address: sepoliaTestTokenAddress,
         },
       },
     },
@@ -242,7 +252,7 @@ export const wdkConfigs: WdkConfigs = {
 ```
 
 <Callout type="info">
-This example uses **Sepolia testnet** with a free public RPC so you can start immediately without API keys. For production or mainnet configuration, see the [Chain Configuration Guide](/sdk/core-module/configuration).
+This example uses **Sepolia testnet**. Configure and fund the selected test token before sending. For production or mainnet configuration, see the [Chain Configuration Guide](/sdk/core-module/configuration).
 </Callout>
 
 ### Step 5: Add WdkAppProvider
@@ -377,7 +387,9 @@ Now that you have WDK integrated, here's what you can explore:
 Use the `useAccount()` hook to send transactions:
 
 ```tsx
+// src/screens/SendScreen.tsx
 import { useAccount, BaseAsset } from '@tetherto/wdk-react-native-core'
+import { sepoliaTestTokenAddress } from '../config/wdk'
 
 const usdt = new BaseAsset({
   id: 'usdt-ethereum',
@@ -386,7 +398,7 @@ const usdt = new BaseAsset({
   name: 'Tether USD',
   decimals: 6,
   isNative: false,
-  address: '0xaA8E23Fb1079EA71e0a56F48a2aA51851D8433D0', // USDt on Sepolia
+  address: sepoliaTestTokenAddress,
 })
 
 function SendScreen({ recipient }: { recipient: string }) {

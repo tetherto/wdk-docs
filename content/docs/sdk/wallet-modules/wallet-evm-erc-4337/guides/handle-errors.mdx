@@ -3,7 +3,7 @@ title: Handle Errors
 description: Handle errors, manage fees, and dispose of sensitive data.
 ---
 
-This guide explains how to [handle transaction errors](#transaction-errors), [handle transfer errors](#transfer-errors), [verify paymaster address mismatches](#paymaster-address-mismatches), [diagnose nonce-lane failures](#nonce-lane-failures), and follow [best practices](#best-practices) for fee management and memory cleanup.
+This guide explains how to [handle transaction errors](#transaction-errors), [correct a provider-chain mismatch](#provider-chain-mismatches), [handle transfer errors](#transfer-errors), [verify paymaster address mismatches](#paymaster-address-mismatches), [diagnose nonce-lane failures](#nonce-lane-failures), and follow [best practices](#best-practices) for fee management and memory cleanup.
 
 ## Transaction Errors
 
@@ -33,6 +33,12 @@ try {
   }
 }
 ```
+
+## Provider-Chain Mismatches
+
+When a new UserOperation is built, a provider that reports a different chain from the configured `chainId` throws [`ConfigurationError`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#configurationerror) before the operation is built or signed. Confirm the intended network and correct the RPC endpoint or constructor configuration before retrying.
+
+The first successful lookup is cached. Recreate the wallet or account when switching networks, and keep every failover provider on the same chain. A sponsored quote or an already-signed operation does not perform this check; see [chain validation](/sdk/wallet-modules/wallet-evm-erc-4337/configuration#chain-id).
 
 ## Transfer Errors
 
@@ -68,7 +74,7 @@ try {
 
 Starting in `v1.0.0-beta.15`, the shared UserOperation builder checks the configured `paymasterAddress` against a non-empty paymaster address returned by the RPC in token-paymaster mode. A case-insensitive mismatch throws the exported `ConfigurationError` before that newly built operation is returned or submitted. The error message identifies the configured address, the `paymasterUrl`, and the returned address.
 
-In beta.17, `ConfigurationError` extends `ValueError`, so a shared `ValueError` handler can catch it. Check `ConfigurationError` first when the application needs the package-specific recovery path below. Constructing a wallet with an empty provider list also throws `ValueError`; provider-required operations such as `getFeeRates()` use `ProviderRequiredError`.
+In beta.18, `ConfigurationError` extends `ValueError`, so a shared `ValueError` handler can catch it. Check `ConfigurationError` first when the application needs the package-specific recovery path below. Constructing a wallet with an empty provider list also throws `ValueError`; provider-required operations such as `getFeeRates()` use `ProviderRequiredError`.
 
 ```javascript title="Handle a Paymaster Address Mismatch"
 import { ConfigurationError } from '@tetherto/wdk-wallet-evm-erc-4337'

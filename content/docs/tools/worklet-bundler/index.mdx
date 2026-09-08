@@ -7,19 +7,20 @@ Worklet Bundler packages selected WDK wallet, protocol, and optional generic mod
 
 ## Features
 
-- **Config-driven bundle generation**: Map logical network names to wallet packages, protocol names to protocol packages, and HRPC-only generic-module names to package factories.
+- **Config-driven bundle generation**: Map logical network names to wallet packages, protocol names to protocol packages, and generic-module names to package factories.
 - **HRPC and JSON-RPC transports**: Generate an HRPC JavaScript bundle by default or a length-prefixed JSON-RPC bundle for native hosts.
 - **Generated worklet artifacts**: Produce a Bare bundle, a stable `./.wdk` host import, and generated TypeScript types.
 - **Native addon outputs**: Link iOS, macOS, and Android addons and generate `addons.yml` for JSON-RPC/native integrations.
 - **Dependency validation helpers**: Validate configured modules, detect the active package manager, and generate install or uninstall commands when dependencies are missing.
-- **Dynamic-call allowlists**: Restrict generated wallet and protocol `callMethod()` surfaces for HRPC and JSON-RPC, plus generic-module `callModule()` surfaces for HRPC.
+- **Dynamic-call allowlists**: Restrict generated wallet and protocol `callMethod()` surfaces for HRPC and JSON-RPC, plus generic-module `callModule()` surfaces on both transports.
 - **Optional peer deferral**: Defer missing peers marked optional by their package metadata, or require them at build time with `--no-defer-optional-peers`.
 - **Explicit ESM-to-CJS conversion**: Opt in for JSC, QuickJS, or another CommonJS-only Bare engine, with a matching runtime loader patch and post-conversion bundle validation.
 - **CLI workflow**: Use `init`, `validate`, `generate`, `list-modules`, and `clean` without building your own wrapper.
-- **Bare lifecycle handling**: Generated HRPC entrypoints suspend and resume both the `bare-http1` and `bare-https` global agents and log Bare suspend, resume, and idle events.
+- **Bare lifecycle handling**: Generated entrypoints forward suspend and resume events to generic modules. HRPC entrypoints also suspend and resume both HTTP global agents.
+- **Opt-in handle diagnostics**: Use `options.handleLeakCheck` to inspect suspend-to-idle delays in generated HRPC worklets.
 
 <Callout type="info">
-`v1.0.0-beta.10` makes ESM-to-CJS conversion explicit and transport-independent. When enabled in `wdk.config.js`, the generated entrypoint installs the matching `.mjs` CommonJS loader patch and the build validates the rewritten raw or default UTF-8-wrapped bundle before succeeding. The release also exports `convertBundleEsmToCjs()` and `validateBundle()` for programmatic workflows.
+`v1.0.0-beta.12` adds generic modules and their method allowlists to JSON-RPC entrypoints, including module suspend/resume forwarding. Use Pear Worklet `v1.0.0-beta.13` for JSON-RPC module calls and events. The new `options.handleLeakCheck` diagnostic is generated only for HRPC.
 </Callout>
 
 ## Why this matters
@@ -29,7 +30,7 @@ Worklet Bundler packages selected WDK wallet, protocol, and optional generic mod
 - Transport-specific defaults produce a JavaScript HRPC bundle for React Native Core or native addon artifacts for JSON-RPC hosts; JavaScript-engine compatibility is configured separately.
 
 <Callout type="warn">
-Generic `modules` are generated only for HRPC through beta.11. A JSON-RPC config can currently accept a `modules` field but silently omits those modules from the generated entrypoint.
+`options.handleLeakCheck` is opt-in and reports active handles without closing them. JSON-RPC entrypoints do not enable this diagnostic in beta.12; see [configuration](/tools/worklet-bundler/configuration#configure-suspend-diagnostics) for the transport boundary.
 </Callout>
 
 <Cards>

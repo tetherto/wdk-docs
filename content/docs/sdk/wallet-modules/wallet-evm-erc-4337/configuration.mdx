@@ -67,7 +67,13 @@ const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337(
 
 ### Chain ID
 
-The `chainId` option specifies the blockchain network ID. **Required** for fee estimation and smart account initialization.
+The `chainId` option specifies the expected blockchain network ID. **Required** for fee estimation and smart account initialization.
+
+Before building a new UserOperation, the account reads `eth_chainId` from the provider and throws `ConfigurationError` if it differs from the constructor's `chainId`. The check happens before smart-account construction and UserOperation signing. This includes non-sponsored quotes that build an operation.
+
+The first successful chain lookup is cached. Keep all failover providers on the configured chain and recreate the wallet or account when switching networks. Per-call fee-mode overrides do not change the chain being checked.
+
+Sponsored quotes return `0n` without checking the chain. Quoting or submitting an already-signed UserOperation also bypasses this check. Verify that a signed operation was built for the intended account, chain, EntryPoint, and paymaster before forwarding it.
 
 **Type:** `number`
 **Required:** Yes
@@ -244,12 +250,12 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, config)
 Reusing one named lane remains sequential: wait for inclusion before submitting its next operation, or batch dependent calls into one UserOperation.
 
 <Callout type="warning">
-The beta.17 runtime also honors `parallel` and `nonceKey` in the per-call config for `signTransaction()`, `sendTransaction()`, and `transfer()`, but the published per-call TypeScript declarations omit both fields. Construction-level configuration is typed; JavaScript per-call usage works at runtime.
+The beta.18 runtime also honors `parallel` and `nonceKey` in the per-call config for `signTransaction()`, `sendTransaction()`, and `transfer()`, but the published per-call TypeScript declarations omit both fields. Construction-level configuration is typed; JavaScript per-call usage works at runtime.
 </Callout>
 
 ### Safe Modules Version
 
-The `safeModulesVersion` option specifies the Safe modules version for smart contract wallet implementation. Beta.17 supports only `0.3.0`; other values, including `0.2.0`, throw `ConfigurationError`. **Required** for smart account initialization.
+The `safeModulesVersion` option specifies the Safe modules version for smart contract wallet implementation. Beta.18 supports only `0.3.0`; other values, including `0.2.0`, throw `ConfigurationError`. **Required** for smart account initialization.
 
 **Type:** `string`
 **Required:** Yes
@@ -492,7 +498,17 @@ const plasmaConfig = {
 
 ### Sepolia Testnet (USD₮ ERC-20 mock/testnet only)
 
+Choose a six-decimal USD₮ test token supported by each paymaster on chain `11155111`. Get its address from that provider's current faucet or supported-token response, verify its contract and decimals on Sepolia, and set the corresponding environment variable below. The two providers may support different test-token contracts.
+
 ````javascript
+
+const pimlicoTestTokenAddress = process.env.PIMLICO_SEPOLIA_TEST_TOKEN_ADDRESS
+const candideTestTokenAddress = process.env.CANDIDE_SEPOLIA_TEST_TOKEN_ADDRESS
+for (const address of [pimlicoTestTokenAddress, candideTestTokenAddress]) {
+  if (!/^0x[0-9a-fA-F]{40}$/.test(address ?? '')) {
+    throw new Error('Set both verified Sepolia test-token addresses')
+  }
+}
 
 // Pimlico
 const sepoliaConfigPimlico = {
@@ -503,7 +519,7 @@ const sepoliaConfigPimlico = {
   paymasterAddress: '0x777777777777AeC03fd955926DbF81597e66834C',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0xd077a400968890eacc75cdc901f0356c943e4fdb' // USDt Sepolia
+    address: pimlicoTestTokenAddress
   },
   transferMaxFee: 100000 // 0.1 USDt (6 decimals)
 }
@@ -517,7 +533,7 @@ const sepoliaConfigCandide = {
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
   safeModulesVersion: '0.3.0',
   paymasterToken: {
-    address: '0xd077a400968890eacc75cdc901f0356c943e4fdb' // USDt Sepolia
+    address: candideTestTokenAddress
   },
   transferMaxFee: 100000
 }
@@ -525,8 +541,6 @@ const sepoliaConfigCandide = {
 
 **Important**
 Ethereum Sepolia is a testnet. The USD₮ tokens available at the links below are not real and do not entitle the holder to anything. In particular, they cannot be redeemed with Tether International, S.A. de C.V. ("Tether International") and are not Tether Tokens as described in [Tether International's Terms of Service](https://tether.to/en/legal). The USD₮ tokens available at the links below on this testnet are intended for testing WDK on Ethereum Sepolia. The links below are links to third-party websites and are Third-Party Information as described in Tether Operations, S.A. de [C.V.'s Website Terms](https://tether.io/terms/)
-
-**USD₮ on Sepolia contract:** [0xd077a400968890eacc75cdc901f0356c943e4fdb](https://sepolia.etherscan.io/address/0xd077a400968890eacc75cdc901f0356c943e4fdb)
 
 **Get test USD₮:**
 - [Pimlico faucet](https://dashboard.pimlico.io/test-erc20-faucet)

@@ -60,7 +60,7 @@ console.log('Estimated fee:', quote.fee)
 
 ## Sign, Quote, and Submit a UserOperation
 
-Use `signTransaction()` when a separate review or relay step needs a signed ERC-4337 v0.7 UserOperation. The method accepts one transaction, not a batch.
+Use `signTransaction()` when a separate review or relay step needs a signed ERC-4337 v0.7 UserOperation. The method accepts one transaction, not a batch. Building a new operation checks the provider against the configured `chainId`; see [chain validation](/sdk/wallet-modules/wallet-evm-erc-4337/configuration#chain-id).
 
 ```javascript title="Sign, Quote, and Submit"
 const tx = {
@@ -79,6 +79,8 @@ console.log('UserOperation hash:', result.hash)
 <Callout type="warning">
 Only submit an operation produced by the same account with the intended fee-mode configuration. WDK preserves the signed nonce and configuration, does not rebuild or re-sign the operation, and does not reapply `transactionMaxFee` during signed submission. Do not mutate the operation, and submit it before its nonce becomes stale.
 </Callout>
+
+Quoting and forwarding an already-signed UserOperation skip the provider-chain check. Verify its account, chain, EntryPoint, and paymaster configuration before submission.
 
 For signed UserOperations, sponsored mode quotes `0n`. Other modes quote a 20% buffered native-gas ceiling in wei. In paymaster-token mode, that signed-operation quote is not a token-denominated paymaster charge.
 
@@ -152,7 +154,7 @@ const refunds = await account.sendTransaction(txB, { nonceKey: 'refunds' })
 One lane is still sequential. Two concurrent sends using the same named or default lane can return UserOperation hashes even though one never receives a receipt. Wait for inclusion before reusing a lane. If calls depend on one another, batch them with `sendTransaction([tx1, tx2])` so they execute in order under one nonce. Different lanes are independent and can be included in either order.
 </Callout>
 
-`signTransaction()` preserves the lane chosen by the same configuration rules. In beta.17, per-call `parallel` and `nonceKey` work at runtime but are missing from the published per-call TypeScript declarations; construction-level lane configuration is typed.
+`signTransaction()` preserves the lane chosen by the same configuration rules. In beta.18, per-call `parallel` and `nonceKey` work at runtime but are missing from the published per-call TypeScript declarations; construction-level lane configuration is typed.
 
 ## Send with Custom Paymaster Token
 
