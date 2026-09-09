@@ -19,11 +19,16 @@ new AaveProtocolEvm(account)
 ```
 
 Parameters:
-- `account`: `WalletAccountEvm | WalletAccountReadOnlyEvm | WalletAccountEvmErc4337 | WalletAccountReadOnlyEvmErc4337`
+- `account`: `IWalletAccount | IWalletAccountReadOnly` from `@tetherto/wdk-wallet`
+
+Since beta.7, write methods check for a callable `sendTransaction()` rather than a concrete account class. The implementation still reads `account._config.provider`; supply an EVM-compatible JSON-RPC URL or EIP-1193 provider for a supported Aave deployment. Shared interfaces alone do not make another chain's account compatible. The selected operation also needs its account methods, such as `getAddress()`, `getTokenBalance()`, and `quoteSendTransaction()`.
+
+Before supplying or repaying, grant the Aave Pool enough token allowance through the account's approval API and wait for approval confirmation. The lending module does not approve or reset allowances automatically. Use the Pool and token addresses for the same chain. The examples below use 1 USD₮ on Ethereum, whose contract is `0xdAC17F958D2ee523a2206206994597C13D831ec7` with 6 decimals.
 
 Example:
 
 ```javascript
+const USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
 const aave = new AaveProtocolEvm(account)
 ```
 
@@ -31,7 +36,7 @@ const aave = new AaveProtocolEvm(account)
 
 | Method | Description | Returns |
 |--------|-------------|---------|
-| `supply(options, config?)` | Add tokens to the pool | `Promise<{hash: string, fee: bigint, approveHash?: string, resetAllowanceHash?: string}>` |
+| `supply(options, config?)` | Add tokens to the pool | `Promise<{hash: string, fee: bigint}>` |
 | `quoteSupply(options, config?)` | Estimate cost to add tokens | `Promise<{fee: bigint}>` |
 | `withdraw(options, config?)` | Remove tokens from the pool | `Promise<{hash: string, fee: bigint}>` |
 | `quoteWithdraw(options, config?)` | Estimate cost to withdraw | `Promise<{fee: bigint}>` |
@@ -47,9 +52,9 @@ const aave = new AaveProtocolEvm(account)
 
 When `AaveProtocolEvm` is initialized with an ERC‑4337 smart account, the optional `config` argument on mutating and quote methods accepts the same gas-payment override families documented in [`@tetherto/wdk-wallet-evm-erc-4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference): paymaster token, sponsorship policy, and native coins.
 
-Standard (non‑ERC‑4337) accounts silently ignore this optional ERC‑4337 configuration and use their normal EVM transaction path.
+The protocol forwards `config` to the account's send or quote method. Standard WDK EVM accounts ignore ERC-4337 gas-payment fields; compatible wrappers determine their own handling. Fees retain the account's denomination, which can be native wei, paymaster-token base units, or zero for sponsorship.
 
-### `supply(options, config?)`
+#### `supply(options, config?)`
 Add tokens to the pool.
 
 Options:
@@ -58,26 +63,26 @@ Options:
 - `onBehalfOf` (`string`, optional)
 
 Returns:
-- May include `approveHash` and `resetAllowanceHash` for standard accounts (e.g., USD₮ allowance reset on Ethereum mainnet)
+- The account's transaction result, including `hash` and `fee`. The protocol does not add approval transaction hashes.
 
 Example:
 
 ```javascript
-const res = await aave.supply({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+const res = await aave.supply({ token: USDT, amount: 1000000n })
 ```
 
 ---
 
-### `quoteSupply(options, config?)`
+#### `quoteSupply(options, config?)`
 Estimate fee to add tokens.
 
 ```javascript
-const q = await aave.quoteSupply({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+const q = await aave.quoteSupply({ token: USDT, amount: 1000000n })
 ```
 
 ---
 
-### `withdraw(options, config?)`
+#### `withdraw(options, config?)`
 Remove tokens from the pool.
 
 Options:
@@ -86,21 +91,21 @@ Options:
 - `to` (`string`, optional)
 
 ```javascript
-const tx = await aave.withdraw({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+const tx = await aave.withdraw({ token: USDT, amount: 1000000n })
 ```
 
 ---
 
-### `quoteWithdraw(options, config?)`
+#### `quoteWithdraw(options, config?)`
 Estimate fee to withdraw tokens.
 
 ```javascript
-const q = await aave.quoteWithdraw({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+const q = await aave.quoteWithdraw({ token: USDT, amount: 1000000n })
 ```
 
 ---
 
-### `borrow(options, config?)`
+#### `borrow(options, config?)`
 Borrow tokens.
 
 Options:
@@ -109,21 +114,21 @@ Options:
 - `onBehalfOf` (`string`, optional)
 
 ```javascript
-const tx = await aave.borrow({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+const tx = await aave.borrow({ token: USDT, amount: 1000000n })
 ```
 
 ---
 
-### `quoteBorrow(options, config?)`
+#### `quoteBorrow(options, config?)`
 Estimate fee to borrow tokens.
 
 ```javascript
-const q = await aave.quoteBorrow({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+const q = await aave.quoteBorrow({ token: USDT, amount: 1000000n })
 ```
 
 ---
 
-### `repay(options, config?)`
+#### `repay(options, config?)`
 Repay borrowed tokens.
 
 Options:
@@ -132,33 +137,33 @@ Options:
 - `onBehalfOf` (`string`, optional)
 
 ```javascript
-const tx = await aave.repay({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+const tx = await aave.repay({ token: USDT, amount: 1000000n })
 ```
 
 Returns:
-- For standard accounts, may include `approveHash` / `resetAllowanceHash` when applicable.
+- The account's transaction result, including `hash` and `fee`. Required approvals are separate operations.
 
 ---
 
-### `quoteRepay(options, config?)`
+#### `quoteRepay(options, config?)`
 Estimate fee to repay borrowed tokens.
 
 ```javascript
-const q = await aave.quoteRepay({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+const q = await aave.quoteRepay({ token: USDT, amount: 1000000n })
 ```
 
 ---
 
-### `setUseReserveAsCollateral(token, use, config?)`
+#### `setUseReserveAsCollateral(token, use, config?)`
 Toggle token as collateral for the user.
 
 ```javascript
-const tx = await aave.setUseReserveAsCollateral('TOKEN_ADDRESS', true)
+const tx = await aave.setUseReserveAsCollateral(USDT, true)
 ```
 
 ---
 
-### `setUserEMode(categoryId, config?)`
+#### `setUserEMode(categoryId, config?)`
 Set user eMode category.
 
 ```javascript
@@ -167,7 +172,7 @@ const tx = await aave.setUserEMode(1)
 
 ---
 
-### `getAccountData(account?)`
+#### `getAccountData(account?)`
 Read account stats like total collateral, debt, and health.
 
 ```javascript

@@ -33,7 +33,7 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, config)
 
 ## Account Configuration
 
-Both `WalletAccountEvmErc4337` and `WalletAccountReadOnlyEvmErc4337` use the same configuration structure:
+The writable account uses `EvmErc4337WalletConfig`. The read-only constructor and [`fromSafeAddress()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#fromsafeaddresssafeaddress-config-static-1) use `Omit<EvmErc4337WalletConfig, 'transferMaxFee' | 'transactionMaxFee'>`, with the same network, provider, bundler, Safe modules and gas-payment settings. Use the constructor with an owner EOA address; use the factory with a known Safe address.
 
 ```javascript
 import { WalletAccountEvmErc4337, WalletAccountReadOnlyEvmErc4337 } from '@tetherto/wdk-wallet-evm-erc-4337'
@@ -47,7 +47,7 @@ const account = new WalletAccountEvmErc4337(
 
 // Read-only account (fee caps for sending are not needed)
 const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337(
-  '0x...', // Owner EOA address; the module predicts the Safe address
+  '0x405005C7c4422390F4B334F64Cf20E0b767131d0', // Test owner for address derivation
   {
     chainId: 1,
     provider: 'https://rpc.mevblocker.io/fast',
@@ -62,6 +62,8 @@ const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337(
   }
 )
 ```
+
+The read-only example uses a test owner to derive a counterfactual Safe; it does not deploy or fund that account. For an address your application already knows, follow [Read a Known Safe Address](/sdk/wallet-modules/wallet-evm-erc-4337/guides/manage-accounts#read-a-known-safe-address). The factory validates address syntax, the supported Safe modules version, and a nonempty provider list without verifying deployment or ownership.
 
 ## Configuration Options
 
@@ -96,7 +98,7 @@ const config = { chainId: 43114 }
 
 ### Provider
 
-The `provider` option specifies the RPC endpoint or EIP-1193 provider instance for blockchain interactions. **Required** for all operations. You can also pass an array of endpoints or providers to enable automatic failover: when a request to one provider fails, the wallet retries the next provider in the list.
+The `provider` option specifies the RPC endpoint or EIP-1193 provider instance for blockchain interactions. **Required** by the configuration type and used for network operations. Creating a read-only account or calling `getAddress()` does not make an RPC request. You can also pass an array of endpoints or providers to enable automatic failover: when a request to one provider fails, the wallet retries the next provider in the list.
 
 **Type:** `string | Eip1193Provider | Array<string | Eip1193Provider>`
 **Required:** Yes
@@ -113,10 +115,13 @@ const config = {
   provider: window.ethereum
 }
 
-// Using custom ethers provider
+// Adapt an ethers provider to EIP-1193
 import { JsonRpcProvider } from 'ethers'
+const rpc = new JsonRpcProvider('https://rpc.mevblocker.io/fast')
 const config = {
-  provider: new JsonRpcProvider('https://rpc.mevblocker.io/fast')
+  provider: {
+    request: ({ method, params }) => rpc.send(method, params ?? [])
+  }
 }
 
 // Using multiple providers for automatic failover
@@ -250,12 +255,12 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, config)
 Reusing one named lane remains sequential: wait for inclusion before submitting its next operation, or batch dependent calls into one UserOperation.
 
 <Callout type="warning">
-The beta.18 runtime also honors `parallel` and `nonceKey` in the per-call config for `signTransaction()`, `sendTransaction()`, and `transfer()`, but the published per-call TypeScript declarations omit both fields. Construction-level configuration is typed; JavaScript per-call usage works at runtime.
+The beta.19 runtime also honors `parallel` and `nonceKey` in the per-call config for `signTransaction()`, `sendTransaction()`, and `transfer()`, but the published per-call TypeScript declarations omit both fields. Construction-level configuration is typed; JavaScript per-call usage works at runtime.
 </Callout>
 
 ### Safe Modules Version
 
-The `safeModulesVersion` option specifies the Safe modules version for smart contract wallet implementation. Beta.18 supports only `0.3.0`; other values, including `0.2.0`, throw `ConfigurationError`. **Required** for smart account initialization.
+The `safeModulesVersion` option specifies the Safe modules version for smart contract wallet implementation. Beta.19 supports only `0.3.0`; other values, including `0.2.0`, throw `ConfigurationError`. **Required** for smart account initialization.
 
 **Type:** `string`
 **Required:** Yes

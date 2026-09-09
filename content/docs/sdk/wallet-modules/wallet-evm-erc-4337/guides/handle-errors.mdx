@@ -3,7 +3,7 @@ title: Handle Errors
 description: Handle errors, manage fees, and dispose of sensitive data.
 ---
 
-This guide explains how to [handle transaction errors](#transaction-errors), [correct a provider-chain mismatch](#provider-chain-mismatches), [handle transfer errors](#transfer-errors), [verify paymaster address mismatches](#paymaster-address-mismatches), [diagnose nonce-lane failures](#nonce-lane-failures), and follow [best practices](#best-practices) for fee management and memory cleanup.
+This guide explains how to [handle transaction errors](#transaction-errors), [correct a provider-chain mismatch](#provider-chain-mismatches), [handle transfer errors](#transfer-errors), [verify paymaster address mismatches](#paymaster-address-mismatches), [diagnose nonce-lane failures](#nonce-lane-failures), [handle known-Safe address errors](#known-safe-address-errors), and follow [best practices](#best-practices) for fee management and memory cleanup.
 
 ## Transaction Errors
 
@@ -110,6 +110,14 @@ Lane configuration and bundler behavior can fail in several ways:
 Treat a returned hash as submission evidence, not inclusion. Pass the UserOperation hash to `waitForTransaction(hash, { timeout })` for a bounded wait, or use `getUserOperationReceipt(hash)` when you specifically need the raw bundler receipt. If one same-lane hash never resolves, inspect the bundler response and on-chain lane sequence before retrying; use a fresh lane for independent work or batch dependent calls rather than blindly resubmitting the same operation.
 
 `getTransaction()` throws `ValueError` for a malformed UserOperation hash and `NoSuchElementError` when the bundler does not know a well-formed hash. During `waitForTransaction()`, an unknown hash is treated as transient while the operation propagates. A `TimeoutError` means the requested finality was not reached in time; a returned `dropped` receipt means the underlying EVM transaction's nonce was replaced or otherwise consumed. A `confirmed` or `final` receipt can still have `success: false`.
+
+## Known-Safe Address Errors
+
+[`fromSafeAddress()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#fromsafeaddresssafeaddress-config-static-1) throws `ValueError` for a malformed Safe address, an invalid mixed-case checksum, or an empty provider list. It throws [`ConfigurationError`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#configurationerror) for an unsupported `safeModulesVersion`. The owner-based constructor and [`predictSafeAddress()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#predictsafeaddressowner-config-static-1) also reject malformed owner addresses with `ValueError`.
+
+A known-Safe account has no owner or signing key. Its verification methods throw `UnsupportedOperationError`, and calling the factory on the writable [`WalletAccountEvmErc4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#walletaccountevmerc4337) class always throws that error. Import `ValueError` and `UnsupportedOperationError` from `@tetherto/wdk-wallet`.
+
+For a non-sponsored quote, an undeployed known Safe throws `ConfigurationError` because building its deployment operation requires the owner address. Confirm the network and address, then use an owner-backed signing flow to deploy the Safe if needed. Do not treat a different address or a sponsored zero-fee quote as a deployment fix: sponsored quotes skip deployment and chain checks and do not prove sponsorship eligibility.
 
 ## Best Practices
 

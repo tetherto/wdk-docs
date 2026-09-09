@@ -11,7 +11,7 @@ icon: Code
 | Class | Description | Methods |
 |-------|-------------|---------|
 | [WalletManagerEvmErc4337](#walletmanagerevmerc4337) | Main class for managing ERC-4337 EVM wallets. Extends `WalletManager` from `@tetherto/wdk-wallet`. | [Constructor](#constructor), [Methods](#methods) |
-| [WalletAccountEvmErc4337](#walletaccountevmerc4337) | Individual ERC-4337 wallet account implementation. Extends `WalletAccountReadOnlyEvmErc4337` and implements `IWalletAccount`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties) |
+| [WalletAccountEvmErc4337](#walletaccountevmerc4337) | Individual ERC-4337 wallet account implementation. Extends `WalletAccountReadOnlyEvmErc4337` and implements `IWalletAccount`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties-1) |
 | [WalletAccountReadOnlyEvmErc4337](#walletaccountreadonlyevmerc4337) | Read-only ERC-4337 wallet account. Extends `WalletAccountReadOnly` from `@tetherto/wdk-wallet`. | [Constructor](#constructor-2), [Methods](#methods-2) |
 | [ConfigurationError](#configurationerror) | Error thrown for invalid or incomplete wallet configuration, including an unexpected token paymaster address returned by the RPC. | - |
 
@@ -42,7 +42,7 @@ new WalletManagerEvmErc4337(seed, config)
   - `chainId` (number): The blockchain's ID (e.g., 1 for Ethereum mainnet)
   - `provider` (string | Eip1193Provider | Array\<string | Eip1193Provider\>): RPC endpoint URL, EIP-1193 provider instance, or ordered failover list
   - `bundlerUrl` (string): The URL of the bundler service
-  - `safeModulesVersion` (string): Must be `'0.3.0'`, the only Safe modules version supported by beta.18
+  - `safeModulesVersion` (string): Must be `'0.3.0'`, the only Safe modules version supported by beta.19
 
 **Optional common config fields:**
   - `parallel` (boolean): Put each send, sign, or transfer in a fresh random 192-bit nonce-key lane
@@ -133,12 +133,6 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise\<{normal: bigint, fast: bigint}\>` | `ProviderRequiredError` if no provider |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` | - |
 
-### Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `seed` | `Uint8Array` | The wallet's seed phrase as bytes |
-
 #### `getRandomSeedPhrase(wordCount?)` (static)
 Returns a random BIP-39 seed phrase.
 
@@ -224,6 +218,12 @@ Disposes all wallet accounts, clearing private keys from memory.
 wallet.dispose()
 ```
 
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `seed` | `Uint8Array` | The wallet's seed phrase as bytes |
+
 ## WalletAccountEvmErc4337
 
 Represents an individual ERC-4337 wallet account. Extends `WalletAccountReadOnlyEvmErc4337` and implements `IWalletAccount`.
@@ -269,7 +269,8 @@ const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
-| `predictSafeAddress(owner, config)` | (static) Predicts the Safe address for a given owner | `string` | - |
+| `predictSafeAddress(owner, config)` | (static) Predicts the Safe address for a given owner | `string` | `ValueError` for a malformed owner address |
+| `fromSafeAddress(safeAddress, config)` | (static) Unsupported on the writable class | `never` | Always `UnsupportedOperationError` |
 | `getAddress()` | Returns the Safe account's address | `Promise\<string\>` | - |
 | `sign(message)` | Signs a message using the account's private key | `Promise\<string\>` | - |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` | - |
@@ -278,10 +279,10 @@ const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 | `quoteSendTransaction(tx, config?)` | Estimates the fee for transactions or a signed UserOperation | `Promise\<{fee: bigint}\>` | If a newly built operation's token paymaster address mismatches |
 | `transfer(options, config?, txOverrides?)` | Transfers ERC20 tokens via UserOperation | `Promise\<{hash: string, fee: bigint}\>` | If fee exceeds max, or the token paymaster address mismatches |
 | `quoteTransfer(options, config?, txOverrides?)` | Estimates the fee for an ERC20 transfer | `Promise\<{fee: bigint}\>` | If the token paymaster address mismatches |
-| `approve(options, txOverrides?)` | Approves a spender to spend ERC20 tokens | `Promise\<{hash: string, fee: bigint}\>` | `ProviderRequiredError`, or `ValueError` when Ethereum USD₮ allowance must be reset |
 | `getBalance()` | Returns the native token balance (in wei) | `Promise\<bigint\>` | - |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise\<bigint\>` | - |
 | `getPaymasterTokenBalance()` | Returns the paymaster token balance | `Promise\<bigint\>` | - |
+| `approve(options, txOverrides?)` | Approves a spender to spend ERC20 tokens | `Promise\<{hash: string, fee: bigint}\>` | `ProviderRequiredError`, or `ValueError` when Ethereum USD₮ allowance must be reset |
 | `getAllowance(token, spender)` | Returns current token allowance for a spender | `Promise\<bigint\>` | - |
 | `getTransactionReceipt(hash)` | Maps a UserOperation hash to a native EVM receipt; deprecated in favor of `getTransaction()` | `Promise\<EvmTransactionReceipt \| null\>` | - |
 | `getTransaction(hash)` | Returns normalized UserOperation finality using its bundling transaction | `Promise\<TransactionReceipt & EvmErc4337TransactionDetails\>` | If the hash is invalid or unknown |
@@ -293,7 +294,15 @@ const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise\<WalletAccountReadOnlyEvmErc4337\>` | - |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` | - |
 
-##### `getAddress()`
+#### `predictSafeAddress(owner, config)` (static)
+
+Inherits the [read-only address predictor](#predictsafeaddressowner-config-static-1). It accepts an owner EOA address and `Pick<EvmErc4337WalletConfig, 'safeModulesVersion' | 'onChainIdentifier'>`, and returns a counterfactual Safe address as a `string`. A malformed owner address throws `ValueError`.
+
+#### `fromSafeAddress(safeAddress, config)` (static)
+
+Always throws `UnsupportedOperationError` and returns `never`. A Safe address alone cannot create a signing account. Use the [read-only factory](#fromsafeaddresssafeaddress-config-static-1) instead. Its parameters are `safeAddress: string` and `config: Omit<EvmErc4337WalletConfig, 'transferMaxFee' | 'transactionMaxFee'>`.
+
+#### `getAddress()`
 Returns the Safe smart contract wallet address (not the underlying EOA address).
 
 **Returns:** `Promise\<string\>` - The Safe account's address
@@ -304,7 +313,7 @@ const address = await account.getAddress()
 console.log('Safe account address:', address) // 0x... (Smart contract address)
 ```
 
-##### `sign(message)`
+#### `sign(message)`
 Signs a message using the underlying EOA private key.
 
 **Parameters:**
@@ -319,7 +328,7 @@ const signature = await account.sign(message)
 console.log('Signature:', signature)
 ```
 
-##### `verify(message, signature)`
+#### `verify(message, signature)`
 Verifies a message signature against the underlying EOA address.
 
 **Parameters:**
@@ -334,7 +343,7 @@ const isValid = await account.verify(message, signature)
 console.log('Signature valid:', isValid)
 ```
 
-##### `signTransaction(tx, config?)`
+#### `signTransaction(tx, config?)`
 Builds and signs one ERC-4337 v0.7 UserOperation without submitting it to the bundler.
 
 **Parameters:**
@@ -360,7 +369,7 @@ const signedUserOperation = await account.signTransaction({
 The returned operation contains the selected nonce lane and fee-mode configuration used while building it. Submit it promptly through the same account and do not mutate it.
 </Callout>
 
-##### `sendTransaction(tx, config?)`
+#### `sendTransaction(tx, config?)`
 Sends a transaction via UserOperation through the bundler.
 
 **Parameters:**
@@ -418,7 +427,7 @@ const fastResult = await account.sendTransaction({
 
 Beta.17 does not reserve sequential nonces locally. With no lane option, sends use the default key-0 lane and must not overlap. `parallel: true` creates a new random lane; `nonceKey` selects a reusable named or raw lane and takes precedence. Operations sharing a lane remain sequential, so wait for inclusion before reusing it. Distinct lanes are unordered; batch dependent transactions into one UserOperation.
 
-##### `quoteSendTransaction(tx, config?)`
+#### `quoteSendTransaction(tx, config?)`
 Estimates the fee for a UserOperation without sending it.
 
 Default-lane, non-sponsored UserOperations built while quoting transaction inputs can be cached internally for up to 2 minutes. When a later default-lane `sendTransaction()` or `signTransaction()` matches, the account performs a lightweight on-chain nonce check before reuse and rebuilds if the nonce has moved. Sponsored quotes do not cache a built operation. A supplied signed UserOperation is evaluated directly rather than rebuilt.
@@ -450,7 +459,7 @@ const quote = await account.quoteSendTransaction({
 console.log('Estimated fee:', quote.fee)
 ```
 
-##### `transfer(options, config?, txOverrides?)`
+#### `transfer(options, config?, txOverrides?)`
 Transfers ERC20 tokens via UserOperation.
 
 **Parameters:**
@@ -486,7 +495,7 @@ console.log('Transfer UserOperation hash:', result.hash)
 console.log('Transfer fee:', result.fee)
 ```
 
-##### `quoteTransfer(options, config?, txOverrides?)`
+#### `quoteTransfer(options, config?, txOverrides?)`
 Estimates the fee for an ERC20 token transfer.
 
 This method does not resolve or reserve a nonce lane. A later transfer using `parallel` or `nonceKey` rebuilds in that lane.
@@ -512,7 +521,7 @@ const quote = await account.quoteTransfer({
 console.log('Transfer fee estimate:', quote.fee)
 ```
 
-##### `getBalance()`
+#### `getBalance()`
 Returns the Safe account's native token balance.
 
 **Returns:** `Promise\<bigint\>` - Balance in wei
@@ -523,7 +532,7 @@ const balance = await account.getBalance()
 console.log('Native balance:', balance, 'wei')
 ```
 
-##### `getTokenBalance(tokenAddress)`
+#### `getTokenBalance(tokenAddress)`
 Returns the balance of a specific ERC20 token in the Safe account.
 
 **Parameters:**
@@ -537,7 +546,7 @@ const tokenBalance = await account.getTokenBalance('0xdAC17F958D2ee523a220620699
 console.log('USDt balance:', tokenBalance) // In 6 decimal units
 ```
 
-##### `getPaymasterTokenBalance()`
+#### `getPaymasterTokenBalance()`
 Returns the balance of the configured paymaster token used for paying fees.
 
 **Returns:** `Promise\<bigint\>` - Paymaster token balance in base units
@@ -553,7 +562,7 @@ if (paymasterBalance < 10000n) {
 }
 ```
 
-##### `approve(options, txOverrides?)`
+#### `approve(options, txOverrides?)`
 Approves a spender to spend ERC20 tokens on behalf of the Safe account.
 
 **Parameters:**
@@ -584,7 +593,7 @@ const result = await account.approve({
 console.log('Approval hash:', result.hash)
 ```
 
-##### `getAllowance(token, spender)`
+#### `getAllowance(token, spender)`
 Returns the current token allowance for the given spender.
 
 **Parameters:**
@@ -602,7 +611,7 @@ const allowance = await account.getAllowance(
 console.log('Current allowance:', allowance)
 ```
 
-##### `getTransactionReceipt(hash)`
+#### `getTransactionReceipt(hash)`
 Maps a UserOperation hash to its native EVM bundling-transaction receipt. This method is deprecated; use `getTransaction()` and read its `receipt` and `userOperationReceipt` fields.
 
 **Parameters:**
@@ -618,7 +627,7 @@ if (receipt) {
 }
 ```
 
-##### `getTransaction(hash)`
+#### `getTransaction(hash)`
 
 Returns normalized status for an exact 32-byte UserOperation hash. Before the bundler assigns an EVM transaction hash, the result is `pending` with zero confirmations and both native receipt fields set to `null`. After inclusion, finality and confirmations come from the EVM bundling transaction, while `success` and `fee` come from the UserOperation receipt when available.
 
@@ -635,7 +644,7 @@ console.log(receipt.userOperationReceipt) // Raw bundler receipt
 
 An invalid hash throws `ValueError`; a well-formed hash unknown to the bundler throws `NoSuchElementError`. A settled `confirmed` or `final` receipt can still have `success: false`, so always inspect execution success.
 
-##### `waitForTransaction(hash, options?)`
+#### `waitForTransaction(hash, options?)`
 
 Polls by UserOperation hash until the requested finality target is reached or the underlying EVM transaction is classified as `dropped`. The default target is `confirmed`, the interval is four seconds, and the ERC-4337 timeout is 180 seconds.
 
@@ -652,7 +661,7 @@ if (receipt.finality !== 'dropped' && receipt.success === false) {
 }
 ```
 
-##### `getUserOperationReceipt(hash)`
+#### `getUserOperationReceipt(hash)`
 Returns a UserOperation receipt by hash.
 
 **Parameters:**
@@ -668,7 +677,7 @@ if (receipt) {
 }
 ```
 
-##### `signTypedData(typedData)`
+#### `signTypedData(typedData)`
 Signs EIP-712 typed structured data using the underlying EOA private key.
 
 **Parameters:**
@@ -702,7 +711,7 @@ const signature = await account.signTypedData(typedData)
 console.log('Typed data signature:', signature)
 ```
 
-##### `verifyTypedData(typedData, signature)`
+#### `verifyTypedData(typedData, signature)`
 Verifies an EIP-712 typed data signature against the underlying EOA address.
 
 **Parameters:**
@@ -717,7 +726,7 @@ const isValid = await account.verifyTypedData(typedData, signature)
 console.log('Typed data signature valid:', isValid)
 ```
 
-##### `getTokenBalances(tokenAddresses)`
+#### `getTokenBalances(tokenAddresses)`
 Returns balances for multiple ERC20 tokens in a single call.
 
 **Parameters:**
@@ -736,8 +745,8 @@ for (const [address, balance] of Object.entries(balances)) {
 }
 ```
 
-##### `toReadOnlyAccount()`
-Creates a read-only copy of the account with the same Safe address and configuration.
+#### `toReadOnlyAccount()`
+Creates a read-only copy with the same Safe address, configuration, and owner EOA address. Unlike an account created by `fromSafeAddress()`, this copy can verify the owner's message and typed-data signatures.
 
 **Returns:** `Promise\<WalletAccountReadOnlyEvmErc4337\>` - Read-only account instance
 
@@ -750,7 +759,7 @@ const balance = await readOnlyAccount.getBalance()
 // readOnlyAccount.sendTransaction() // Would not be available
 ```
 
-##### `dispose()`
+#### `dispose()`
 Disposes the wallet account, clearing private keys from memory.
 
 **Example:**
@@ -780,7 +789,7 @@ console.log('Private key length:', privateKey?.length) // 32 bytes (null after d
 ⚠️ **Security Note**: The `keyPair` property contains sensitive cryptographic material. Never log, display, or expose the private key.
 
 ## WalletAccountReadOnlyEvmErc4337
-Represents a read-only ERC-4337 wallet account that can query balances and estimate fees but cannot send transactions.
+Represents a read-only ERC-4337 wallet account that can query balances and allowances but cannot sign or send transactions. Choose the owner-based constructor to predict a Safe address, or the [known-Safe factory](#fromsafeaddresssafeaddress-config-static-1) to use a supplied Safe address directly. Non-sponsored fee estimates for a known-Safe account require deployment.
 
 ### Constants
 
@@ -800,12 +809,12 @@ new WalletAccountReadOnlyEvmErc4337(address, config)
 ```
 
 **Parameters:**
-- `address` (string): The EOA address (owner address)
+- `address` (string): The owner EOA address, not the Safe address. The account predicts the counterfactual Safe from this owner and the configuration.
 - `config` (`Omit<EvmErc4337WalletConfig, 'transferMaxFee' | 'transactionMaxFee'>`): Configuration object without send-only fee caps
 
 **Example:**
 ```javascript
-const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337('0x...', {
+const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337('0x405005C7c4422390F4B334F64Cf20E0b767131d0', {
   chainId: 1,
   provider: 'https://rpc.mevblocker.io/fast',
   bundlerUrl: 'https://api.candide.dev/public/v3/1',
@@ -818,58 +827,88 @@ const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337('0x...', {
 })
 ```
 
+**Throws:** `ValueError` for a malformed owner address or an empty provider list; `ConfigurationError` for an unsupported `safeModulesVersion`.
+
+The example owner above is a derivation fixture. Constructing an account does not deploy or fund its predicted Safe.
+
 ### Static Methods
 
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `predictSafeAddress(owner, config)` | Predicts the Safe address for a given owner without instantiating an account | `string` |
+| `fromSafeAddress(safeAddress, config)` | Creates a read-only account for a supplied Safe address without its owner | `WalletAccountReadOnlyEvmErc4337` |
 
 #### `predictSafeAddress(owner, config)` (static)
 Predicts the address of a Safe account.
 
 **Parameters:**
 - `owner` (string): The Safe owner's EOA address
-- `config` (object): Configuration with:
-  - `chainId` (number): The blockchain ID
-  - `safeModulesVersion` (string): The Safe modules version
+- `config` (`Pick<EvmErc4337WalletConfig, 'safeModulesVersion' | 'onChainIdentifier'>`): Safe derivation configuration. Set `safeModulesVersion` to `'0.3.0'`. The type also accepts the optional `onChainIdentifier` field from the account configuration.
 
 **Returns:** `string` - The predicted Safe address
 
 **Example:**
 ```javascript
 const safeAddress = WalletAccountReadOnlyEvmErc4337.predictSafeAddress(
-  '0xOwnerEOA...',
-  { chainId: 1, safeModulesVersion: '0.3.0' }
+  '0x405005C7c4422390F4B334F64Cf20E0b767131d0',
+  { safeModulesVersion: '0.3.0' }
 )
 console.log('Predicted Safe address:', safeAddress)
 
 // Also available on WalletAccountEvmErc4337 (inherited)
 const sameAddress = WalletAccountEvmErc4337.predictSafeAddress(
-  '0xOwnerEOA...',
-  { chainId: 1, safeModulesVersion: '0.3.0' }
+  '0x405005C7c4422390F4B334F64Cf20E0b767131d0',
+  { safeModulesVersion: '0.3.0' }
 )
 ```
+
+**Throws:** `ValueError` for a malformed owner address, including an invalid mixed-case checksum.
+
+#### `fromSafeAddress(safeAddress, config)` (static)
+
+Creates a read-only account whose own address is the supplied Safe address. Unlike the constructor, it does not derive a new address from an owner.
+
+**Parameters:**
+- `safeAddress` (`string`): A well-formed EVM address. Lowercase addresses are accepted and normalized to checksum form; invalid mixed-case checksums are rejected.
+- `config` (`Omit<EvmErc4337WalletConfig, 'transferMaxFee' | 'transactionMaxFee'>`): Read-only configuration, including the network, provider, bundler URL, Safe modules version and selected gas-payment mode.
+
+**Returns:** `WalletAccountReadOnlyEvmErc4337` synchronously, not a Promise.
+
+**Throws:**
+- `ValueError` for a malformed Safe address, an invalid mixed-case checksum, or an empty provider list.
+- `ConfigurationError` for an unsupported `safeModulesVersion`.
+
+Use the factory with a Safe address already held by your application:
+
+```javascript
+const readOnlyAccount = WalletAccountReadOnlyEvmErc4337.fromSafeAddress(safeAddress, config)
+console.log('Safe address:', await readOnlyAccount.getAddress())
+```
+
+See [Read a Known Safe Address](/sdk/wallet-modules/wallet-evm-erc-4337/guides/manage-accounts#read-a-known-safe-address) for a complete setup example. The factory performs no network lookup: it does not confirm deployment, discover an owner, or check that the address is a Safe contract. Balance and allowance queries use this address directly, including before deployment.
+
+The owner is unknown, so `verify()` and `verifyTypedData()` throw `UnsupportedOperationError`. There is no signing or transaction-submission capability. A non-sponsored quote that builds a UserOperation throws `ConfigurationError` if the Safe is undeployed, because deployment requires the owner address. Sponsored quotes return `{ fee: 0n }` before checking deployment or chain identity; that result does not confirm sponsorship eligibility or transaction executability.
 
 ### Methods
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
 | `getAddress()` | Returns the Safe account's address | `Promise\<string\>` | - |
-| `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` | - |
+| `verify(message, signature)` | Verifies a message signature against a known owner | `Promise\<boolean\>` | `UnsupportedOperationError` for an account created from a Safe address |
 | `getBalance()` | Returns the native token balance (in wei) | `Promise\<bigint\>` | - |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise\<bigint\>` | - |
 | `getPaymasterTokenBalance()` | Returns the paymaster token balance | `Promise\<bigint\>` | - |
 | `getAllowance(token, spender)` | Returns current token allowance for a spender | `Promise\<bigint\>` | - |
-| `quoteSendTransaction(tx, config?)` | Estimates the fee for a UserOperation | `Promise\<{fee: bigint}\>` | If simulation fails or the token paymaster address mismatches |
-| `quoteTransfer(options, config?, txOverrides?)` | Estimates the fee for an ERC20 transfer | `Promise\<{fee: bigint}\>` | If simulation fails or the token paymaster address mismatches |
+| `quoteSendTransaction(tx, config?)` | Estimates the fee for a UserOperation | `Promise\<{fee: bigint}\>` | If simulation fails, the token paymaster address mismatches, or a non-sponsored known-Safe quote requires deployment |
+| `quoteTransfer(options, config?, txOverrides?)` | Estimates the fee for an ERC20 transfer | `Promise\<{fee: bigint}\>` | If simulation fails, the token paymaster address mismatches, or a non-sponsored known-Safe quote requires deployment |
 | `getTransactionReceipt(hash)` | Maps a UserOperation hash to a native EVM receipt; deprecated in favor of `getTransaction()` | `Promise\<EvmTransactionReceipt \| null\>` | - |
 | `getTransaction(hash)` | Returns normalized UserOperation finality using its bundling transaction | `Promise\<TransactionReceipt & EvmErc4337TransactionDetails\>` | If the hash is invalid or unknown |
 | `waitForTransaction(hash, options?)` | Waits for the UserOperation to reach `confirmed` or `final`, or returns `dropped` | `Promise\<TransactionReceipt & EvmErc4337TransactionDetails\>` | If the wait times out |
 | `getUserOperationReceipt(hash)` | Returns a UserOperation receipt | `Promise\<UserOperationReceipt \| null\>` | - |
-| `verifyTypedData(typedData, signature)` | Verifies an EIP-712 typed data signature | `Promise\<boolean\>` | - |
+| `verifyTypedData(typedData, signature)` | Verifies typed data against a known owner | `Promise\<boolean\>` | `UnsupportedOperationError` for an account created from a Safe address |
 | `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise\<Record\<string, bigint\>\>` | - |
 
-##### `getAddress()`
+#### `getAddress()`
 Returns the Safe smart contract wallet address.
 
 **Returns:** `Promise\<string\>` - The Safe account's address
@@ -880,8 +919,8 @@ const address = await readOnlyAccount.getAddress()
 console.log('Safe address:', address)
 ```
 
-##### `verify(message, signature)`
-Verifies a message signature against the underlying EOA address.
+#### `verify(message, signature)`
+Verifies a message signature against the known owner EOA address. Throws `UnsupportedOperationError` if this account was created with `fromSafeAddress()`, because its owner is unknown.
 
 **Parameters:**
 - `message` (string): The original message
@@ -895,7 +934,7 @@ const isValid = await readOnlyAccount.verify(message, signature)
 console.log('Signature valid:', isValid)
 ```
 
-##### `getBalance()`
+#### `getBalance()`
 Returns the Safe account's native token balance.
 
 **Returns:** `Promise\<bigint\>` - Balance in wei
@@ -906,7 +945,7 @@ const balance = await readOnlyAccount.getBalance()
 console.log('Balance:', balance, 'wei')
 ```
 
-##### `getTokenBalance(tokenAddress)`
+#### `getTokenBalance(tokenAddress)`
 Returns the balance of a specific ERC20 token.
 
 **Parameters:**
@@ -920,7 +959,7 @@ const tokenBalance = await readOnlyAccount.getTokenBalance('0xdAC17F958D2ee523a2
 console.log('USDt balance:', tokenBalance)
 ```
 
-##### `getPaymasterTokenBalance()`
+#### `getPaymasterTokenBalance()`
 Returns the balance of the configured paymaster token.
 
 **Returns:** `Promise\<bigint\>` - Paymaster token balance in base units
@@ -931,7 +970,7 @@ const paymasterBalance = await readOnlyAccount.getPaymasterTokenBalance()
 console.log('Paymaster token balance:', paymasterBalance)
 ```
 
-##### `getAllowance(token, spender)`
+#### `getAllowance(token, spender)`
 Returns the current token allowance for the given spender.
 
 **Parameters:**
@@ -949,8 +988,8 @@ const allowance = await readOnlyAccount.getAllowance(
 console.log('Allowance:', allowance)
 ```
 
-##### `quoteSendTransaction(tx, config?)`
-Estimates the fee for a UserOperation.
+#### `quoteSendTransaction(tx, config?)`
+Estimates the fee for a UserOperation. For an account created with `fromSafeAddress()`, a non-sponsored quote requires a deployed Safe. Sponsored quotes return `{ fee: 0n }` without checking deployment or chain identity; they do not confirm sponsorship eligibility.
 
 **Parameters:**
 - `tx` (EvmErc4337Transaction | EvmErc4337Transaction[]): Transaction object or array
@@ -959,6 +998,7 @@ Estimates the fee for a UserOperation.
 **Returns:** `Promise\<{fee: bigint}\>` - Fee estimate
 
 **Throws:**
+- `ConfigurationError` if a non-sponsored quote for an account created with `fromSafeAddress()` finds the Safe is undeployed
 - Error if simulation fails
 - `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison)
 - `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50
@@ -983,8 +1023,8 @@ try {
 }
 ```
 
-##### `quoteTransfer(options, config?, txOverrides?)`
-Estimates the fee for an ERC20 token transfer.
+#### `quoteTransfer(options, config?, txOverrides?)`
+Estimates the fee for an ERC20 token transfer through `quoteSendTransaction()`. Its known-Safe deployment restriction and sponsored-quote exception also apply here.
 
 **Parameters:**
 - `options` (TransferOptions): Transfer options
@@ -994,6 +1034,7 @@ Estimates the fee for an ERC20 token transfer.
 **Returns:** `Promise\<{fee: bigint}\>` - Fee estimate
 
 **Throws:**
+- `ConfigurationError` if a non-sponsored quote for an account created with `fromSafeAddress()` finds the Safe is undeployed.
 - `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison).
 - `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50.
 
@@ -1007,7 +1048,7 @@ const quote = await readOnlyAccount.quoteTransfer({
 console.log('Transfer fee estimate:', quote.fee)
 ```
 
-##### `getTransactionReceipt(hash)`
+#### `getTransactionReceipt(hash)`
 Maps a UserOperation hash to its native EVM bundling-transaction receipt. This method is deprecated; use `getTransaction()` for normalized finality.
 
 **Parameters:**
@@ -1026,11 +1067,15 @@ if (receipt) {
 }
 ```
 
-##### `getTransaction(hash)` and `waitForTransaction(hash, options?)`
+#### `getTransaction(hash)`
 
-Read-only accounts expose the same UserOperation-hash semantics as owned accounts. `getTransaction()` retains the UserOperation hash in `receipt.hash`, derives finality from the bundling transaction, and exposes both the EVM receipt and raw UserOperation receipt. `waitForTransaction()` defaults to a four-second interval and 180-second timeout. Inspect `success` after inclusion.
+Read-only accounts expose the same UserOperation-hash semantics as owned accounts. `getTransaction()` retains the UserOperation hash in `receipt.hash`, derives finality from the bundling transaction, and exposes both the EVM receipt and raw UserOperation receipt.
 
-##### `getUserOperationReceipt(hash)`
+#### `waitForTransaction(hash, options?)`
+
+Waits for the requested UserOperation finality with a four-second default interval and 180-second default timeout. Inspect `success` after inclusion. See the [owned-account method](#waitfortransactionhash-options) for options and return details.
+
+#### `getUserOperationReceipt(hash)`
 Returns a UserOperation receipt by hash.
 
 **Parameters:**
@@ -1046,8 +1091,8 @@ if (receipt) {
 }
 ```
 
-##### `verifyTypedData(typedData, signature)`
-Verifies an EIP-712 typed data signature against the underlying EOA address.
+#### `verifyTypedData(typedData, signature)`
+Verifies an EIP-712 typed data signature against the known owner EOA address. Throws `UnsupportedOperationError` if this account was created with `fromSafeAddress()`, because its owner is unknown.
 
 **Parameters:**
 - `typedData` (TypedData): The original typed data object
@@ -1061,7 +1106,7 @@ const isValid = await readOnlyAccount.verifyTypedData(typedData, signature)
 console.log('Typed data signature valid:', isValid)
 ```
 
-##### `getTokenBalances(tokenAddresses)`
+#### `getTokenBalances(tokenAddresses)`
 Returns balances for multiple ERC20 tokens in a single call.
 
 **Parameters:**
@@ -1124,7 +1169,7 @@ interface EvmErc4337WalletCommonConfig {
   chainId: number;                          // Blockchain ID
   provider: string | Eip1193Provider | Array<string | Eip1193Provider>; // RPC provider or failover list
   bundlerUrl: string;                       // Bundler service URL
-  safeModulesVersion: string;               // Must be '0.3.0' in beta.18
+  safeModulesVersion: string;               // Must be '0.3.0' in beta.19
   parallel?: boolean;                       // Fresh random nonce-key lane per operation
   nonceKey?: number | bigint | string;      // Reusable raw or named uint192 lane key
 }
@@ -1165,7 +1210,7 @@ type EvmErc4337WalletConfig = EvmErc4337WalletCommonConfig &
 
 ### Config Override
 
-The published beta.18 `config` parameter type on `sendTransaction`, `signTransaction`, `quoteSendTransaction`, `transfer`, and `quoteTransfer` allows per-call overrides of gas payment settings:
+The published beta.19 `config` parameter type on `sendTransaction`, `signTransaction`, `quoteSendTransaction`, `transfer`, and `quoteTransfer` allows per-call overrides of gas payment settings:
 
 ```typescript
 type ConfigOverride = Partial<
@@ -1187,7 +1232,7 @@ type ConfigOverride = Partial<
 
 Overrides are shallow-merged with the account configuration, then validated. When switching modes, explicitly clear an inherited opposing flag: sponsorship requires `isSponsored: true` and `useNativeCoins: false`; native-coin mode requires `isSponsored: false` and `useNativeCoins: true`; paymaster-token mode requires both flags to be `false`. The merged configuration must also contain the URL, address, token, or policy fields required by the selected mode.
 
-At runtime, beta.18 additionally honors `parallel` and `nonceKey` per call for `signTransaction()`, `sendTransaction()`, and `transfer()`. Those two fields are missing from the published per-call declarations, so object literals containing them fail TypeScript excess-property checks even though JavaScript calls work. Construction-level `EvmErc4337WalletCommonConfig` includes both fields and is the typed path in this release. `quoteSendTransaction()` and `quoteTransfer()` do not select a lane.
+At runtime, beta.19 additionally honors `parallel` and `nonceKey` per call for `signTransaction()`, `sendTransaction()`, and `transfer()`. Those two fields are missing from the published per-call declarations, so object literals containing them fail TypeScript excess-property checks even though JavaScript calls work. Construction-level `EvmErc4337WalletCommonConfig` includes both fields and is the typed path in this release. `quoteSendTransaction()` and `quoteTransfer()` do not select a lane.
 
 In token-paymaster mode, every path that builds a UserOperation validates a non-empty paymaster address returned by the RPC against `paymasterAddress`. A case-insensitive mismatch throws `ConfigurationError` before the operation is returned or submitted.
 
@@ -1329,7 +1374,7 @@ class ConfigurationError extends ValueError {
 }
 ```
 
-`ConfigurationError` is part of the shared WDK error taxonomy and can also be caught as `ValueError`. It also reports a mismatch between the constructor's `chainId` and the provider during the first UserOperation chain lookup.
+`ConfigurationError` is part of the shared WDK error taxonomy and can also be caught as `ValueError`. For an account created with `fromSafeAddress()`, it also reports an undeployed Safe when a non-sponsored quote builds a UserOperation. It also reports a mismatch between the constructor's `chainId` and the provider during the first UserOperation chain lookup.
 
 ### FeeRates
 

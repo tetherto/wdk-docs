@@ -73,6 +73,7 @@ const wallet = new WalletManagerEvm(seedPhrase, {
 - **Gasless** via UserOperations + Paymaster
 - Fees paid in **paymaster token** (e.g., USD₮) instead of native ETH
 - `getPaymasterTokenBalance()` for fee balance
+- [`WalletAccountReadOnlyEvmErc4337.fromSafeAddress()`](https://docs.wallet.tether.io/sdk/wallet-modules/wallet-evm-erc-4337/guides/manage-accounts#read-a-known-safe-address) monitors a supplied Safe address without its owner or a seed. It cannot sign, send, or verify owner signatures. Non-sponsored quotes require a deployed Safe; a sponsored zero-fee quote does not establish deployment or eligibility.
 - **Batch transactions**: `sendTransaction([tx1, tx2])` — multiple operations in one call
 - `signTransaction(tx)` signs one `UserOperationV7`; the signed result can be quoted and submitted through `sendTransaction()`.
 - The first UserOperation chain lookup checks the provider against constructor `chainId` and caches success. Sponsored quotes and already-signed quote/send paths skip this check; recreate the account when changing networks.

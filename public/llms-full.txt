@@ -5873,6 +5873,23 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### September 08, 2026
+
+**What's New**
+- **wallet-evm-erc-4337** ([v1.0.0-beta.19](https://github.com/tetherto/wdk-wallet-evm-erc-4337/releases/tag/v1.0.0-beta.19)): Monitor a known Safe address with `WalletAccountReadOnlyEvmErc4337.fromSafeAddress()` without its owner address or a seed phrase. Address validation now reports malformed owner inputs with `ValueError`.
+- **wdk-utils** ([v1.0.0-beta.12](https://github.com/tetherto/wdk-utils/releases/tag/v1.0.0-beta.12)): Add `validateTonAddress()` and `ton` dispatch for raw and checksum-validated user-friendly TON addresses. Require percent-encoded non-ASCII query text in BIP-21 and EIP-681 parsers, and fix key derivation with custom scrypt parameters above the default memory budget.
+
+**Changes**
+- **wdk-core** ([v1.0.0-beta.17](https://github.com/tetherto/wdk/releases/tag/v1.0.0-beta.17)): [Breaking] Govern public account and protocol methods outside an explicit exclusion set, replacing the fixed operation list. Add method-name rules, `DEFAULT_POLICY_EXCLUSIONS`, constructor `policyExclusions`, and `getPolicyExclusions()`. Previously ungoverned calls can now require an `ALLOW` rule; rules naming excluded methods are rejected.
+- **lending-aave-evm** ([v1.0.0-beta.7](https://github.com/tetherto/wdk-protocol-lending-aave-evm/releases/tag/v1.0.0-beta.7)): Accept shared writable and read-only wallet-account interfaces and use callable account methods instead of concrete ERC-4337 class checks. Pass one transaction object to the account while preserving per-call configuration forwarding. Supply and repayment continue to require a separate token approval to the Pool.
+- **swap-velora-evm** ([v1.0.0-beta.8](https://github.com/tetherto/wdk-protocol-swap-velora-evm/releases/tag/v1.0.0-beta.8)): Forward one swap transaction and the per-call configuration to compatible accounts. Apply per-call `swapMaxFee` to standard EVM accounts as well as ERC-4337 accounts, in the account's quoted fee units. A fee equal to or above the cap is rejected. Input-token approval remains caller-owned.
+- **worklet-bundler** ([v1.0.0-beta.13](https://github.com/tetherto/wdk-worklet-bundler/releases/tag/v1.0.0-beta.13)): Publish a maintenance release with an updated CLI version. The bundled runtime and public declarations are unchanged apart from the CLI's reported version.
+
+**Fixes**
+- **react-native-core** ([v1.0.0-beta.19](https://github.com/tetherto/wdk-react-native-core/releases/tag/v1.0.0-beta.19)): Load Zod's compiler through a side-effect import for Metro and update Zod to `^4.5.4`. Public schemas and peer requirements are unchanged. The npm artifact still omits its declared default `dist` entrypoints; use the React Native source condition.
+
+---
+
 ### September 03, 2026
 
 **What's New**
@@ -5899,7 +5916,7 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 **Fixes**
 - **wallet-evm-erc-4337** ([v1.0.0-beta.17](https://github.com/tetherto/wdk-wallet-evm-erc-4337/releases/tag/v1.0.0-beta.17)): Allow a quoted or submitted fee equal to the configured maximum, classify AA50 prefund failures as insufficient-balance transaction errors, and add typed validation for configuration, providers, fee caps, and nonce ranges. The published per-call declarations still omit the runtime-supported `parallel` and `nonceKey` fields.
-- **lending-aave-evm** ([v1.0.0-beta.6](https://github.com/tetherto/wdk-protocol-lending-aave-evm/releases/tag/v1.0.0-beta.6)): Forward each operation's optional second `config` argument to the account's quote or send method. ERC-4337 accounts consume the gas-payment override; standard EVM accounts accept and silently ignore it.
+- **lending-aave-evm** ([v1.0.0-beta.6](https://github.com/tetherto/wdk-protocol-lending-aave-evm/releases/tag/v1.0.0-beta.6)): Forward each operation's optional `config` argument to the account's quote or send method. ERC-4337 accounts consume the gas-payment override; standard EVM accounts accept and silently ignore it.
 - **worklet-bundler** ([v1.0.0-beta.11](https://github.com/tetherto/wdk-worklet-bundler/releases/tag/v1.0.0-beta.11)): Include `@tetherto/pear-wrk-wdk` in dependency validation and `generate --install` for both transports. When `bare-pack` reports an unresolved package subpath, the CLI now suggests the installable package root with the detected npm, Yarn, or pnpm command; the package-root normalization helper is internal to the CLI bundle and is not a public export.
 
 **Changes**
@@ -13097,9 +13114,9 @@ new WDK(seed, options?)
 
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
-- `options` (`WdkOptions`, optional): Instance settings. `maxConditionTimeoutMs` is a finite positive number that caps every policy condition timeout on this WDK instance and defaults to `30000` milliseconds.
+- `options` (`WdkOptions`, optional): Instance settings. `maxConditionTimeoutMs` is a finite positive number that caps every policy condition timeout on this WDK instance and defaults to `30000` milliseconds. `policyExclusions?: string[]` appends non-empty method names to the default policy exclusions.
 
-**Throws:** `Error` if the seed is invalid. Throws `PolicyConfigurationError` if `options` fails the published options schema, such as an array or primitive value, or if `maxConditionTimeoutMs` is not a finite positive number.
+**Throws:** `Error` if the seed is invalid. Throws `PolicyConfigurationError` if `options` fails the published options schema, such as an array or primitive value, if `maxConditionTimeoutMs` is not a finite positive number, or if `policyExclusions` is not an array of non-empty strings.
 
 **Example:**
 ```javascript title="Initialize WDK"
@@ -13125,13 +13142,14 @@ const policyWdk = new WDK(seedBytes, {
 | `registerWallet(blockchain, wallet, config)` | Registers a new wallet manager for a blockchain | `WDK` | If a wallet is already registered for that blockchain |
 | `registerProtocol(blockchain, label, protocol, config)` | Registers a protocol globally for a blockchain | `WDK` | - |
 | `registerMiddleware(blockchain, middleware)` | Registers middleware for account decoration | `WDK` | - |
-| `registerPolicy(policies, options?)` | Registers local transaction policies for wallet account and protocol write methods | `WDK` | If policy configuration is invalid |
+| `getPolicyExclusions()` | Returns the resolved method names that bypass policy evaluation | `readonly string[]` | - |
+| `registerPolicy(policies, options?)` | Registers local transaction policies for governed wallet account and protocol methods | `WDK` | If policy configuration is invalid |
 | `getAccount(blockchain, index?)` | Returns a wallet account for a blockchain and index | `Promise<WdkAccount>` | If wallet not registered |
 | `getAccountByPath(blockchain, path)` | Returns a wallet account for a blockchain and derivation path | `Promise<WdkAccount>` | If wallet not registered |
 | `getFeeRates(blockchain)` | Returns current fee rates for a registered blockchain | `Promise<FeeRates>` | If wallet not registered |
 | `dispose(blockchains?)` | Disposes all registered wallets, or only the named blockchains, and clears keys and account state managed by WDK | `void` | - |
 
-##### `registerWallet(blockchain, wallet, config)`
+#### `registerWallet(blockchain, wallet, config)`
 Registers a new wallet manager for a specific blockchain.
 
 **Type Parameters:**
@@ -13171,7 +13189,7 @@ const wdk2 = new WDK(seedPhrase)
   .registerWallet('ton', WalletManagerTon, tonWalletConfig)
 ```
 
-##### `registerProtocol(blockchain, label, protocol, config)`
+#### `registerProtocol(blockchain, label, protocol, config)`
 Registers a protocol globally for all accounts of a specific blockchain.
 
 For swidge or Smart Deposit Address (SDA) integrations, pass a concrete provider class that extends the corresponding base class from `@tetherto/wdk-wallet/protocols`.
@@ -13214,7 +13232,7 @@ const wdk2 = new WDK(seedPhrase)
   .registerProtocol('ethereum', 'velora', veloraProtocolEvm, veloraProtocolConfig)
 ```
 
-##### `registerMiddleware(blockchain, middleware)`
+#### `registerMiddleware(blockchain, middleware)`
 Registers middleware for account decoration and enhanced functionality.
 
 **Parameters:**
@@ -13248,10 +13266,25 @@ const wdk2 = new WDK(seedPhrase)
   })
 ```
 
-##### `registerPolicy(policies, options?)`
+#### `getPolicyExclusions()`
+
+Returns a frozen array containing [`DEFAULT_POLICY_EXCLUSIONS`](#default-policy-exclusions) followed by any additional `policyExclusions` passed to the constructor, with duplicate names removed. Names match globally across accounts and protocols on this instance; they are not scoped by wallet or protocol label.
+
+**Parameters:** None.
+
+**Returns:** `readonly string[]`. The returned array cannot be mutated, and it is not a setter for the engine's exclusions. Defaults remain present even when the constructor receives an empty array.
+
+You can check whether a named method bypasses policy evaluation:
+
+```javascript title="Inspect Policy Exclusions"
+const excludedMethods = wdk.getPolicyExclusions()
+console.log(excludedMethods.includes('getBalance')) // true
+```
+
+#### `registerPolicy(policies, options?)`
 Registers one or more local transaction policies on the WDK instance.
 
-Policies are evaluated before wrapped account and protocol write methods execute. Matching `DENY` rules and governed-account default-deny outcomes throw `PolicyViolationError`; matching `ALLOW` rules permit the call only when no higher-priority `DENY` rule applies. Governed runtime accounts also expose `account.simulate.<method>(...)` mirrors so you can dry-run policy evaluation without sending, signing, or broadcasting.
+Policies are evaluated before governed account and protocol methods execute. In beta.17, the proxy discovers public string-named methods on the account or protocol and its prototype chain, then wraps those absent from the resolved exclusion set. This replaces the earlier fixed write-method list; see [coverage and limits](/sdk/core-module/guides/transaction-policies#supported-operations). Matching `DENY` rules and governed-account default-deny outcomes throw `PolicyViolationError`; matching `ALLOW` rules permit the call only when no higher-priority `DENY` rule applies. Governed runtime accounts also expose `account.simulate.<method>(...)` mirrors so you can dry-run policy evaluation without sending, signing, or broadcasting.
 
 Evaluation order:
 
@@ -13273,7 +13306,7 @@ Distinct policy IDs keep their original per-registration timeouts. A repeated ID
 
 **Returns:** `WDK` - The WDK instance (supports method chaining)
 
-**Throws:** `PolicyConfigurationError` if a policy or option fails validation, if an account-scoped policy omits its account binding, or if a policy references a wallet identifier that has not been registered. Governed write calls also throw `PolicyConfigurationError` when WDK cannot snapshot a method argument safely.
+**Throws:** `PolicyConfigurationError` if a policy or option fails validation, if an account-scoped policy omits its account binding, if a policy references a wallet identifier that has not been registered, or if a rule names an excluded method. Governed calls also throw `PolicyConfigurationError` when WDK cannot snapshot a method argument safely.
 
 **Example:**
 ```typescript title="Register A Send Policy"
@@ -13333,13 +13366,11 @@ try {
 }
 ```
 
-Supported `PolicyOperation` values are `sendTransaction`, `signTransaction`, `transfer`, `approve`, `sign`, `signTypedData`, `signAuthorization`, `delegate`, `revokeDelegation`, `swap`, `bridge`, `supply`, `withdraw`, `borrow`, `repay`, `buy`, `sell`, `swidge`, `createDepositAddress`, `renewDepositAddress`, `recoverDepositAddress`, `disableDepositAddress`, and `*`.
+`PolicyOperation` is a string. A rule accepts one non-empty method name, a non-empty array of names, or `*` for all governed methods. Use the method's exact spelling: an unknown name registers but never matches a different method. Explicitly naming an excluded method fails registration; a wildcard does not include excluded methods.
 
-Use `sign` for message-style signing in this release. `signMessage` and `signHash` are not valid policy operation names.
+Governed methods return Promises, including methods whose underlying implementation is synchronous. Pass plain data arguments; object arguments are cloned before evaluation and execution, which can change class-instance semantics. See [argument handling and runtime caveats](/sdk/core-module/guides/transaction-policies#runtime-caveats) before governing callback-based or custom methods.
 
-Policy-enforced calls snapshot method arguments before evaluation and forward the same approved values to the wallet method. Pass structured-cloneable values such as primitives, plain objects, arrays, `bigint`, and typed arrays. Non-cloneable governed arguments fail closed with `PolicyConfigurationError`.
-
-##### `getAccount(blockchain, index?)`
+#### `getAccount(blockchain, index?)`
 Returns a wallet account for a specific blockchain and index using BIP-44 derivation.
 
 **Parameters:**
@@ -13369,7 +13400,7 @@ try {
 }
 ```
 
-##### `getAccountByPath(blockchain, path)`
+#### `getAccountByPath(blockchain, path)`
 Returns a wallet account for a specific blockchain and BIP-44 derivation path.
 
 **Parameters:**
@@ -13389,7 +13420,7 @@ const account = await wdk.getAccountByPath('ethereum', "0'/0/1")
 const customAccount = await wdk.getAccountByPath('ton', "1'/2/3")
 ```
 
-##### `getFeeRates(blockchain)`
+#### `getFeeRates(blockchain)`
 Returns current fee rates for a registered blockchain.
 
 **Parameters:**
@@ -13405,7 +13436,7 @@ const feeRates = await wdk.getFeeRates('ethereum')
 console.log('Fee rates:', feeRates)
 ```
 
-##### `dispose(blockchains?)`
+#### `dispose(blockchains?)`
 Disposes all registered wallets when called without arguments, or only the wallets for the named blockchains when you pass a string array.
 
 This clears keys and account state managed by WDK, including private keys held by registered wallets. It does not mutate or zero the seed value passed to `new WDK(seed)`. See [Seed Lifecycle](/sdk/core-module/guides/error-handling#seed-lifecycle) for the recommended cleanup pattern.
@@ -13429,7 +13460,7 @@ wdk.dispose(['ethereum'])
 | `getRandomSeedPhrase(wordCount?)` | Returns a random BIP-39 seed phrase (12 or 24 words) | `string` |
 | `isValidSeed(seed)` | Checks if a seed phrase or seed bytes value is valid | `boolean` |
 
-##### `getRandomSeedPhrase(wordCount?)`
+#### `getRandomSeedPhrase(wordCount?)`
 Returns a random BIP-39 seed phrase. Supports both 12-word (128-bit entropy) and 24-word (256-bit entropy) seed phrases.
 
 **Parameters:**
@@ -13450,7 +13481,7 @@ await presentSeedPhraseForSecureBackup(seedPhrase24)
 
 `presentSeedPhraseForSecureBackup()` represents an application-owned, non-logging backup flow. Never send a generated seed phrase to console output, telemetry, crash reports, or a remote service.
 
-##### `isValidSeed(seed)`
+#### `isValidSeed(seed)`
 Checks if a seed phrase or seed bytes value is valid.
 
 **Parameters:**
@@ -13466,6 +13497,20 @@ console.log('Seed phrase valid:', isValid) // true
 const isInvalid = WDK.isValidSeed('invalid seed phrase')
 console.log('Seed phrase valid:', isInvalid) // false
 ```
+
+### Default Policy Exclusions
+
+A root export with type `readonly string[]`. This frozen array lists method names that bypass policy evaluation by default, including `getBalance`, `quoteSendTransaction`, `dispose`, and `toReadOnlyAccount`.
+
+You can inspect the defaults without creating a wallet:
+
+```javascript title="Inspect Default Policy Exclusions"
+import { DEFAULT_POLICY_EXCLUSIONS } from '@tetherto/wdk'
+
+console.log(DEFAULT_POLICY_EXCLUSIONS.includes('getBalance')) // true
+```
+
+The list matches exact names, not prefixes: a new `get*` or `quote*` method is not automatically excluded. Use [`getPolicyExclusions()`](#getpolicyexclusions) to include the instance's custom additions. See [configuration](/sdk/core-module/configuration#policy-method-exclusions) before adding exclusions.
 
 ## IWalletAccount
 
@@ -14032,35 +14077,13 @@ type MiddlewareFunction = <A extends IWalletAccount>(
 ```typescript title="Types: Policy Engine"
 interface WdkOptions {
   maxConditionTimeoutMs?: number
+  policyExclusions?: string[]
 }
 
 type PolicyAction = 'ALLOW' | 'DENY'
 type PolicyScope = 'project' | 'account'
 
-type PolicyOperation =
-  | 'sendTransaction'
-  | 'signTransaction'
-  | 'transfer'
-  | 'approve'
-  | 'sign'
-  | 'signTypedData'
-  | 'signAuthorization'
-  | 'delegate'
-  | 'revokeDelegation'
-  | 'swap'
-  | 'bridge'
-  | 'supply'
-  | 'withdraw'
-  | 'borrow'
-  | 'repay'
-  | 'buy'
-  | 'sell'
-  | 'swidge'
-  | 'createDepositAddress'
-  | 'renewDepositAddress'
-  | 'recoverDepositAddress'
-  | 'disableDepositAddress'
-  | '*'
+type PolicyOperation = string
 
 type PolicyCondition = (context: PolicyContext) => boolean | Promise<boolean>
 
@@ -14254,7 +14277,7 @@ import WDK from '@tetherto/wdk'
 const wdk = new WDK(seedPhrase)
 ```
 
-The WDK Manager requires a seed phrase or seed bytes. Its optional second argument sets instance-level policy limits; wallet and protocol configuration remains registration-based.
+The WDK Manager requires a seed phrase or seed bytes. Its optional second argument sets instance-level policy limits and method exclusions; wallet and protocol configuration remains registration-based.
 
 ### Policy Condition Timeout Ceiling
 
@@ -14265,6 +14288,28 @@ const wdk = new WDK(seedPhrase, {
 ```
 
 `maxConditionTimeoutMs` is the maximum time any one policy condition can receive through `registerPolicy(..., { conditionTimeoutMs })`. It defaults to `30000` milliseconds and must be a finite positive number. A policy that requests a larger timeout is capped to this ceiling rather than rejected. Each `registerPolicy()` call applies its requested timeout only to the policies registered by that call.
+
+### Policy Method Exclusions
+
+Starting in `@tetherto/wdk` v1.0.0-beta.17, `policyExclusions` optionally adds method names that bypass policy evaluation on this WDK instance. It accepts an array of non-empty strings. The resolved set always includes [`DEFAULT_POLICY_EXCLUSIONS`](/sdk/core-module/api-reference#default-policy-exclusions); passing `[]` does not remove the defaults.
+
+An exclusion applies to the exact method name across every governed account and protocol on the instance. Review the method's behavior on each applicable module before excluding it. To permit a write while retaining evaluation and simulation, register an `ALLOW` rule instead.
+
+You can opt out of evaluating Spark's local balance synchronization using the constructor option:
+
+```javascript title="Configure A Method Exclusion"
+import WDK from '@tetherto/wdk'
+
+const wdk = new WDK(seedPhrase, {
+  policyExclusions: ['syncWalletBalance']
+})
+```
+
+This configuration bypasses evaluation for `syncWalletBalance`, which is governed by default. It does not grant permission to other Spark methods. Wallet and policy registration still happen separately.
+
+Inspect the resolved names with [`getPolicyExclusions()`](/sdk/core-module/api-reference#getpolicyexclusions). Duplicate names appear once, and the returned array is frozen. Names that no installed account exposes are accepted without an existence check. Exclusions are fixed when the WDK instance is created; mutating the input array later does not change them.
+
+`registerPolicy()` rejects a rule that explicitly names an excluded method, including a name inside an operation array. Remove the ineffective rule, or omit that method from your custom exclusions when creating the instance. Default exclusions cannot be removed. See [Transaction Policies](/sdk/core-module/guides/transaction-policies#supported-operations) for migration guidance.
 
 ## Wallet Registration Configuration
 
@@ -15014,7 +15059,9 @@ Learn how to [configure middleware](/sdk/core-module/guides/middleware) to add l
 URL: https://docs.wdk.tether.io/sdk/core-module/guides/transaction-policies
 Description: Register local ALLOW and DENY rules for WDK account and protocol write methods.
 
-Local transaction policies let a WDK app evaluate rules before account or protocol write methods execute. Use them for local approval limits, account-level exceptions, preflight checks, or UI flows that need a dry-run verdict before calling a wallet method.
+Use local transaction policies to evaluate account and protocol calls before execution. This guide covers [registering policies](#register-policies), [method coverage and migration](#supported-operations), and [simulating calls](#simulate-before-execution).
+
+Use `@tetherto/wdk` v1.0.0-beta.17 or later for method exclusions and coverage beyond the earlier fixed operation list. The examples assume you have loaded an app-owned `seedPhrase` and registered the relevant wallet modules.
 
 <Callout type="warn">
 Transaction policies are local pre-execution controls. They do not enforce rules on-chain, replace smart-contract permissions, or validate live token metadata, balances, prices, or contract state.
@@ -15022,15 +15069,15 @@ Transaction policies are local pre-execution controls. They do not enforce rules
 
 ## Policy Structure
 
-A transaction policy is a named local configuration object registered with `wdk.registerPolicy()`. Each policy chooses where it applies, then evaluates its ordered `rules` array before a governed account or protocol write method runs.
+A transaction policy is a named local configuration object registered with `wdk.registerPolicy()`. Each policy chooses where it applies, then evaluates its ordered `rules` array before a governed account or protocol method runs.
 
 | Concept | What you configure |
 | --- | --- |
 | Scope | `scope: 'project'` for project or wallet-level rules, or `scope: 'account'` for selected account indices or derivation paths |
 | Wallet | Optional `wallet` bindings for project policies, required `wallet` bindings for account policies |
-| Rules | Ordered `rules` array evaluated before a governed account or protocol write method runs |
+| Rules | Ordered `rules` array evaluated before a governed account or protocol method runs |
 | Action | `ALLOW` to permit a matching governed call, or `DENY` to block it with `PolicyViolationError` |
-| Operation | The wallet or protocol write operation a rule addresses, such as `sendTransaction`, `transfer`, `swap`, or `*` |
+| Operation | The wallet or protocol method a rule addresses, such as `sendTransaction`, `transfer`, `swap`, or `*` |
 | Conditions | Functions that receive `PolicyContext` and return truthy when the rule should match |
 
 Use `scope: 'project'` for rules that apply across all wallets or selected wallet identifiers. Use `scope: 'account'` with `wallet` and `accounts` for rules that apply only to specific account indices or derivation paths.
@@ -15043,9 +15090,17 @@ WDK does not manage durable policy state for you. Conditions can inspect the cur
 
 ## Register Policies
 
-Register wallets before policies. `wdk.registerPolicy()` validates wallet bindings synchronously and throws `PolicyConfigurationError` if a policy references a wallet identifier that has not been registered.
+Register wallets before policies. [`wdk.registerPolicy()`](/sdk/core-module/api-reference#registerpolicypolicies-options) validates wallet bindings synchronously and throws `PolicyConfigurationError` if a policy references a wallet identifier that has not been registered.
 
-The example below allows normal operations, then denies ETH sends above a local approval limit. The wildcard `ALLOW` rule is intentional: once a policy governs an account, wrapped write operations are default-denied unless a matching `ALLOW` permits them.
+The example allows all governed operations, then denies ETH sends above a local approval limit. Its wildcard `ALLOW` deliberately permits other methods, including newly discovered methods after an upgrade. Use explicit method names instead when your app needs a narrow permission set.
+
+To register and exercise the send limit:
+
+1. Register the Ethereum wallet with its reviewed configuration.
+2. Register the rules through [`wdk.registerPolicy()`](/sdk/core-module/api-reference#registerpolicypolicies-options).
+3. Attempt the over-limit send and handle its policy denial.
+
+You can enforce this local limit before [`sendTransaction()`](/sdk/core-module/api-reference#iwalletaccount) reaches the wallet:
 
 ```typescript title="Register A Local Send Limit"
 import WDK, { PolicyViolationError } from '@tetherto/wdk'
@@ -15112,7 +15167,7 @@ Account entries can be non-negative account indices or derivation-path strings. 
 WDK evaluates policies in this order:
 
 1. If no registered policy applies to the account, WDK returns the original account. No policy proxy or `simulate` mirror is added.
-2. If at least one policy applies, the account is governed. WDK wraps every supported write or signing operation that exists on that account, plus registered protocol write methods.
+2. If at least one policy applies, the account is governed. WDK wraps its discovered public methods and registered protocol methods unless their names are in the exclusion set. See [Supported Operations](#supported-operations) for the discovery boundary.
 3. If no rule addresses the attempted operation, WDK blocks the call with `PolicyViolationError` and `reason: 'no-applicable-rule'`.
 4. Account-scoped policies run before project-scoped policies. Within each scope, policies and rules run in registration order.
 5. A matching account-scoped `DENY` blocks immediately. A matching account-scoped `ALLOW` is recorded unless it has `override_broader_scope: true`.
@@ -15183,7 +15238,7 @@ In the example above, the treasury account can send up to `0.01 ETH` because the
 
 ## Supported Operations
 
-Use these operation names in `PolicyRule.operation`:
+In beta.17, `PolicyRule.operation` accepts any non-empty method-name string, an array of names, or `*`. The following are examples, not a closed list:
 
 | Operation | Method family |
 | --- | --- |
@@ -15202,9 +15257,29 @@ Use these operation names in `PolicyRule.operation`:
 | `buy`, `sell` | Fiat protocol writes |
 | `swidge` | Combined swap and bridge route execution |
 | `createDepositAddress`, `renewDepositAddress`, `recoverDepositAddress`, `disableDepositAddress` | Smart Deposit Address writes |
-| `*` | Wildcard rule for all wrapped write operations |
+| `*` | Wildcard rule for all governed methods |
 
-Use `sign` for message-style signing in this release. `signMessage` and `signHash` are not valid `PolicyOperation` values.
+Use the exact method name implemented by your wallet or protocol. For example, a rule for `payLightningInvoice` can now govern that Spark method. [`waitForTransaction()`](/sdk/core-module/api-reference#waitfortransactionhash-options) is also governed by default, so transaction polling needs a matching `ALLOW` rule on a governed account. A name that matches nothing still registers, but cannot allow the real call; a typo can leave that call denied. `signMessage` and `signHash` are accepted strings, but only affect methods with those names.
+
+Coverage comes from public string-named methods declared directly on the object or inherited from its class. The proxy skips names in [`getPolicyExclusions()`](/sdk/core-module/api-reference#getpolicyexclusions), `constructor`, protected members, symbol-named methods, and `Object.prototype` methods. Accessor-only properties are not intercepted; defining a getter does not add a governed method. An unfamiliar method is governed even when its name starts with `get` or `quote`. Governed methods return Promises; always `await` them even when the original method is synchronous.
+
+### Migrate From The Fixed Operation List
+
+Default-deny evaluation already existed before beta.17. This release expands which methods reach it. A call that previously bypassed evaluation can now fail with `reason: 'no-applicable-rule'`.
+
+1. Compare the methods your app calls with the resolved exclusions from [`getPolicyExclusions()`](/sdk/core-module/api-reference#getpolicyexclusions).
+2. Register an explicit `ALLOW` rule for each additional operation your app intends to permit, then verify its simulation and denial cases.
+3. For a method that should bypass evaluation, review its behavior across every applicable wallet and protocol before adding a [constructor exclusion](/sdk/core-module/configuration#policy-method-exclusions). Exclusions apply globally by name and also remove policy simulation for that method.
+
+You can inspect the resolved exclusions on an existing WDK instance:
+
+```javascript title="Inspect Method Coverage"
+const exclusions = wdk.getPolicyExclusions()
+console.log(exclusions.includes('getBalance')) // true by default
+console.log(exclusions.includes('payLightningInvoice')) // false by default
+```
+
+Default exclusions cannot be removed. [`registerPolicy()`](/sdk/core-module/api-reference#registerpolicypolicies-options) rejects rules naming an excluded method because those rules could never run. Adding a wildcard `ALLOW` permits every governed method and is not a substitute for reviewing the expanded method surface.
 
 ## Common Policy Patterns
 
@@ -15341,9 +15416,9 @@ Conditions receive a frozen `PolicyContext`:
 | `operation` | The operation being evaluated |
 | `wallet` | The wallet identifier bound to the account |
 | `account` | Read-only account view exposed by the wallet module |
-| `args` | Frozen array containing a snapshot of every argument passed to the wrapped method, in signature order |
+| `args` | Frozen array of arguments in signature order; object values are cloned for evaluation |
 
-For governed write calls, WDK snapshots the method arguments once before policy evaluation. Conditions see that snapshot, and WDK forwards the same approved values to the underlying wallet method. This prevents a caller from mutating a transaction object while an asynchronous policy condition is running.
+For governed calls, WDK clones object arguments before policy evaluation, then gives conditions a separate clone of that snapshot. The wallet receives the original snapshot, so later mutations to the caller's transaction object or the condition's copy do not change the forwarded values. The context and `args` array are frozen shallowly; nested objects are not frozen. Keep conditions free of mutations because conditions share their evaluation context.
 
 <Callout type="warn">
 `PolicyContext.params` was removed in `@tetherto/wdk` v1.0.0-beta.16. Replace `params` with `args[0]`. For multi-argument methods, use the actual signature position and check optional arguments before reading their fields. For example, a `swidge(options, config?)` condition reads `options` from `args[0]` and `config` from `args[1]`.
@@ -15355,7 +15430,7 @@ Set `maxConditionTimeoutMs` in the WDK constructor to cap every per-policy timeo
 
 ## Simulate Before Execution
 
-When a policy applies to an account, WDK adds runtime `simulate` mirrors for wrapped account and protocol write methods. Simulation returns the policy verdict and does not call the underlying wallet or protocol method.
+When a policy applies to an account, WDK adds runtime `simulate` mirrors for governed account and protocol methods, including methods outside the earlier fixed operation list. Simulation returns the policy verdict and does not call the underlying wallet or protocol method.
 
 You can dry-run a governed account method through the runtime `simulate` mirror:
 
@@ -15378,18 +15453,19 @@ In this beta, `simulate` is added at runtime but is not typed on the account ret
 
 ## Handle Errors
 
-`PolicyConfigurationError` means WDK rejected the policy setup or could not safely evaluate a governed call. Common causes include invalid scopes, actions, operation names, condition functions, timeout options, missing account bindings, wallet identifiers that have not been registered, or governed method arguments that are not structured-cloneable.
+`PolicyConfigurationError` means WDK rejected the policy setup or could not safely evaluate a governed call. Common causes include invalid scopes, actions, empty or non-string operation names, rules naming excluded methods, invalid condition functions or timeout options, missing account bindings, unknown wallet identifiers, or object arguments that cannot be cloned.
 
-`PolicyViolationError` means an enforced write call was blocked by a matching `DENY` rule or by default-deny when no `ALLOW` rule matched. Catch it around the write call and surface the `reason` to the user or approval workflow.
+`PolicyViolationError` means a governed call was blocked by a matching `DENY` rule or by default-deny when no `ALLOW` rule matched. Catch it around the write call and surface the `reason` to the user or approval workflow.
 
 ## Runtime Caveats
 
 - Policies wrap the WDK account/protocol proxy surface. On governed proxies, `keyPair` and string members beginning with `_` are absent from direct property access, membership checks, own-property descriptors, and own-key enumeration. The proxy also refuses `Object.preventExtensions()` and `Object.freeze()` with `TypeError` so those hiding rules remain valid.
 - This is not a complete sandbox. Prototype inspection, separately retained raw account or protocol references, and nested calls made inside a module remain outside the proxy interception path.
-- Quote and read methods are not wrapped. Policies apply to write methods such as sends, signs, swaps, bridges, lending writes, fiat writes, swidge execution, and SDA address creation, renewal, recovery, or disablement.
+- The default exclusions contain specific read, quote, and lifecycle method names. A read or quote method absent from that list is governed until you explicitly exclude it; a `get` or `quote` prefix does not change coverage.
 - Policy conditions receive local method arguments. WDK does not decode calldata, fetch prices, validate token metadata, or calculate fiat value unless your condition function does that work.
 - Wallet accounts must expose a read-only account view when a policy applies, otherwise `getAccount()` fails with `PolicyConfigurationError`.
-- Governed write-call arguments must be structured-cloneable, such as primitives, plain objects, arrays, `bigint`, and typed arrays. Functions, live class instances, and other non-cloneable values fail closed with `PolicyConfigurationError` instead of being forwarded unsafely.
+- Pass plain data to governed methods. An object that cannot be structured-cloned, such as a plain object containing a callback, fails with `PolicyConfigurationError`. Class instances can become plain objects and lose their methods. A top-level function argument passes through unchanged in this release, so do not treat the snapshot as isolation for callback-driven state or side effects.
+- Method discovery is not a live monitor of account changes. Add module methods before obtaining a governed account; do not rely on mutating an account or its prototype after wrapping to update policy coverage.
 - Engine-managed state hooks are not active in this beta. The schema accepts `state` and `onSuccess`, but WDK does not pass `state` into conditions, update it after execution, persist it, or call `onSuccess`. Conditions can still use app-owned state through closures or external stores; keep that state outside `rule.state`, and have your app own durability, concurrency, and rollback behavior.
 
 ## Next Steps
@@ -18100,6 +18176,8 @@ Works on supported Aave V3 EVM networks, including Ethereum, Arbitrum, Optimism,
 - **ERC‑4337 Smart Accounts**: `@tetherto/wdk-wallet-evm-erc-4337`
 - **Read‑Only Accounts**: For quoting and reading account data without sending transactions
 
+Beta.7 accepts the shared wallet interfaces and checks for a callable `sendTransaction()` before each write. The account must still expose the EVM provider and account methods the selected operation needs. See [account configuration](/sdk/lending-modules/lending-aave-evm/configuration#account-configuration) for wrapper requirements. Supply and repayment require a separate token approval to the Aave Pool.
+
 ## Key Components
 
 - **Aave V3 Integration**: Supply, withdraw, borrow, repay primitives
@@ -18139,11 +18217,16 @@ new AaveProtocolEvm(account)
 ```
 
 Parameters:
-- `account`: `WalletAccountEvm | WalletAccountReadOnlyEvm | WalletAccountEvmErc4337 | WalletAccountReadOnlyEvmErc4337`
+- `account`: `IWalletAccount | IWalletAccountReadOnly` from `@tetherto/wdk-wallet`
+
+Since beta.7, write methods check for a callable `sendTransaction()` rather than a concrete account class. The implementation still reads `account._config.provider`; supply an EVM-compatible JSON-RPC URL or EIP-1193 provider for a supported Aave deployment. Shared interfaces alone do not make another chain's account compatible. The selected operation also needs its account methods, such as `getAddress()`, `getTokenBalance()`, and `quoteSendTransaction()`.
+
+Before supplying or repaying, grant the Aave Pool enough token allowance through the account's approval API and wait for approval confirmation. The lending module does not approve or reset allowances automatically. Use the Pool and token addresses for the same chain. The examples below use 1 USD₮ on Ethereum, whose contract is `0xdAC17F958D2ee523a2206206994597C13D831ec7` with 6 decimals.
 
 Example:
 
 ```javascript
+const USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
 const aave = new AaveProtocolEvm(account)
 ```
 
@@ -18151,7 +18234,7 @@ const aave = new AaveProtocolEvm(account)
 
 | Method | Description | Returns |
 |--------|-------------|---------|
-| `supply(options, config?)` | Add tokens to the pool | `Promise<{hash: string, fee: bigint, approveHash?: string, resetAllowanceHash?: string}>` |
+| `supply(options, config?)` | Add tokens to the pool | `Promise<{hash: string, fee: bigint}>` |
 | `quoteSupply(options, config?)` | Estimate cost to add tokens | `Promise<{fee: bigint}>` |
 | `withdraw(options, config?)` | Remove tokens from the pool | `Promise<{hash: string, fee: bigint}>` |
 | `quoteWithdraw(options, config?)` | Estimate cost to withdraw | `Promise<{fee: bigint}>` |
@@ -18167,9 +18250,9 @@ const aave = new AaveProtocolEvm(account)
 
 When `AaveProtocolEvm` is initialized with an ERC‑4337 smart account, the optional `config` argument on mutating and quote methods accepts the same gas-payment override families documented in [`@tetherto/wdk-wallet-evm-erc-4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference): paymaster token, sponsorship policy, and native coins.
 
-Standard (non‑ERC‑4337) accounts silently ignore this optional ERC‑4337 configuration and use their normal EVM transaction path.
+The protocol forwards `config` to the account's send or quote method. Standard WDK EVM accounts ignore ERC-4337 gas-payment fields; compatible wrappers determine their own handling. Fees retain the account's denomination, which can be native wei, paymaster-token base units, or zero for sponsorship.
 
-### `supply(options, config?)`
+#### `supply(options, config?)`
 Add tokens to the pool.
 
 Options:
@@ -18178,26 +18261,26 @@ Options:
 - `onBehalfOf` (`string`, optional)
 
 Returns:
-- May include `approveHash` and `resetAllowanceHash` for standard accounts (e.g., USD₮ allowance reset on Ethereum mainnet)
+- The account's transaction result, including `hash` and `fee`. The protocol does not add approval transaction hashes.
 
 Example:
 
 ```javascript
-const res = await aave.supply({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+const res = await aave.supply({ token: USDT, amount: 1000000n })
 ```
 
 ---
 
-### `quoteSupply(options, config?)`
+#### `quoteSupply(options, config?)`
 Estimate fee to add tokens.
 
 ```javascript
-const q = await aave.quoteSupply({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+const q = await aave.quoteSupply({ token: USDT, amount: 1000000n })
 ```
 
 ---
 
-### `withdraw(options, config?)`
+#### `withdraw(options, config?)`
 Remove tokens from the pool.
 
 Options:
@@ -18206,21 +18289,21 @@ Options:
 - `to` (`string`, optional)
 
 ```javascript
-const tx = await aave.withdraw({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+const tx = await aave.withdraw({ token: USDT, amount: 1000000n })
 ```
 
 ---
 
-### `quoteWithdraw(options, config?)`
+#### `quoteWithdraw(options, config?)`
 Estimate fee to withdraw tokens.
 
 ```javascript
-const q = await aave.quoteWithdraw({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+const q = await aave.quoteWithdraw({ token: USDT, amount: 1000000n })
 ```
 
 ---
 
-### `borrow(options, config?)`
+#### `borrow(options, config?)`
 Borrow tokens.
 
 Options:
@@ -18229,21 +18312,21 @@ Options:
 - `onBehalfOf` (`string`, optional)
 
 ```javascript
-const tx = await aave.borrow({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+const tx = await aave.borrow({ token: USDT, amount: 1000000n })
 ```
 
 ---
 
-### `quoteBorrow(options, config?)`
+#### `quoteBorrow(options, config?)`
 Estimate fee to borrow tokens.
 
 ```javascript
-const q = await aave.quoteBorrow({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+const q = await aave.quoteBorrow({ token: USDT, amount: 1000000n })
 ```
 
 ---
 
-### `repay(options, config?)`
+#### `repay(options, config?)`
 Repay borrowed tokens.
 
 Options:
@@ -18252,33 +18335,33 @@ Options:
 - `onBehalfOf` (`string`, optional)
 
 ```javascript
-const tx = await aave.repay({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+const tx = await aave.repay({ token: USDT, amount: 1000000n })
 ```
 
 Returns:
-- For standard accounts, may include `approveHash` / `resetAllowanceHash` when applicable.
+- The account's transaction result, including `hash` and `fee`. Required approvals are separate operations.
 
 ---
 
-### `quoteRepay(options, config?)`
+#### `quoteRepay(options, config?)`
 Estimate fee to repay borrowed tokens.
 
 ```javascript
-const q = await aave.quoteRepay({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+const q = await aave.quoteRepay({ token: USDT, amount: 1000000n })
 ```
 
 ---
 
-### `setUseReserveAsCollateral(token, use, config?)`
+#### `setUseReserveAsCollateral(token, use, config?)`
 Toggle token as collateral for the user.
 
 ```javascript
-const tx = await aave.setUseReserveAsCollateral('TOKEN_ADDRESS', true)
+const tx = await aave.setUseReserveAsCollateral(USDT, true)
 ```
 
 ---
 
-### `setUserEMode(categoryId, config?)`
+#### `setUserEMode(categoryId, config?)`
 Set user eMode category.
 
 ```javascript
@@ -18287,7 +18370,7 @@ const tx = await aave.setUserEMode(1)
 
 ---
 
-### `getAccountData(account?)`
+#### `getAccountData(account?)`
 Read account stats like total collateral, debt, and health.
 
 ```javascript
@@ -18382,7 +18465,9 @@ const aave = new AaveProtocolEvm(account)
 
 ## Account Configuration
 
-The service uses the wallet account configuration to connect to the target network and sign transactions.
+The constructor accepts `IWalletAccount` or `IWalletAccountReadOnly`. The implementation reads `account._config.provider` and expects an EVM-compatible JSON-RPC URL or EIP-1193 provider. Compatible account wrappers must expose this configuration plus the methods required by the chosen operation. Every write checks for a callable `sendTransaction()`; quotes call `quoteSendTransaction()` without requiring write capability. The wider interfaces do not add support for non-EVM chains.
+
+For accounts governed by WDK transaction policies, use [`wdk.registerProtocol()`](/sdk/core-module/api-reference#registerprotocolblockchain-label-protocol-config) and the account's protocol getter. Do not pass the governed account proxy directly to this constructor: that proxy hides `_config`.
 
 ```javascript
 import { WalletAccountEvm, WalletAccountReadOnlyEvm } from '@tetherto/wdk-wallet-evm'
@@ -18393,7 +18478,7 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 })
 
 // Read-only account (quotes, reads)
-const readOnly = new WalletAccountReadOnlyEvm('0xYourAddress', {
+const readOnly = new WalletAccountReadOnlyEvm(await account.getAddress(), {
   provider: 'https://ethereum-rpc.publicnode.com'
 })
 
@@ -18402,7 +18487,7 @@ const aave = new AaveProtocolEvm(account)
 
 ## ERC‑4337 (Account Abstraction)
 
-When using ERC‑4337 smart accounts, every mutating method and quote helper accepts an optional `config` override. In `v1.0.0-beta.6`, that override matches the three gas-payment families exposed by [`@tetherto/wdk-wallet-evm-erc-4337`](/sdk/wallet-modules/wallet-evm-erc-4337/configuration): paymaster token, sponsorship policy, or native coins. Standard (non‑ERC‑4337) accounts silently ignore this optional ERC‑4337 configuration.
+Every mutating method and quote helper forwards its optional `config` argument to the account. The declared gas-payment families match [`@tetherto/wdk-wallet-evm-erc-4337`](/sdk/wallet-modules/wallet-evm-erc-4337/configuration): paymaster token, sponsorship policy, or native coins. Standard WDK EVM accounts ignore these wallet fields. Fees keep the account's denomination; a token-paymaster quote is not a native-wei quote.
 
 Use the fields that match the gas-payment mode you want for that call. For the full field-level definitions, see the [`@tetherto/wdk-wallet-evm-erc-4337` configuration docs](/sdk/wallet-modules/wallet-evm-erc-4337/configuration) and [`Config Override`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference) reference.
 
@@ -18453,20 +18538,22 @@ const arb = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 
 ## Operation Options
 
-Each operation accepts a simple options object:
+Each operation accepts an options object. Before supplying or repaying, confirm the account's token allowance to the [Aave Pool for the selected network](https://github.com/bgd-labs/aave-address-book) and send any required approval separately. The lending module does not add approval or allowance-reset transactions. To change an existing nonzero Ethereum USD₮ allowance to another nonzero amount, first approve zero and wait for confirmation, then approve the new amount and wait again. These examples use 1 USD₮ on Ethereum (6 decimals):
 
 ```javascript
+const USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USDt on Ethereum
+
 // Supply
-await aave.supply({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+await aave.supply({ token: USDT, amount: 1000000n })
 
 // Withdraw
-await aave.withdraw({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+await aave.withdraw({ token: USDT, amount: 1000000n })
 
 // Borrow
-await aave.borrow({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+await aave.borrow({ token: USDT, amount: 1000000n })
 
 // Repay
-await aave.repay({ token: 'TOKEN_ADDRESS', amount: 1000000n })
+await aave.repay({ token: USDT, amount: 1000000n })
 ```
 
 ### Common Parameters
@@ -18575,7 +18662,7 @@ try {
     token: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
     amount: 1000000n
   })
-  console.log('Borrow fee (wei):', q.fee)
+  console.log('Borrow fee (account units):', q.fee)
 } catch (e) {
   console.error('Quote failed:', e.message)
 }
@@ -18618,6 +18705,8 @@ This guide walks through [supply](#supply), [withdraw](#withdraw), [borrow](#bor
 
 ## Supply
 
+Before supplying, confirm sufficient token allowance to the Aave Pool for your chain. Send any required approval through the wallet account and wait for confirmation. The lending module does not approve or reset allowances automatically.
+
 You can deposit reserves into the pool using [`supply()`](/sdk/lending-modules/lending-aave-evm/api-reference):
 
 ```javascript title="Supply USDt"
@@ -18651,6 +18740,8 @@ console.log('Borrow tx hash:', tx.hash)
 
 ## Repay
 
+Repayment also requires sufficient token allowance to the Aave Pool. Complete any approval before calling `repay()`; it is a separate transaction from repayment.
+
 You can pay down debt using [`repay()`](/sdk/lending-modules/lending-aave-evm/api-reference):
 
 ```javascript title="Repay USDt"
@@ -18662,13 +18753,15 @@ console.log('Repay tx hash:', tx.hash)
 
 ## Quotes before sending
 
+Quote fees use the wallet account's fee denomination: native wei for standard EVM/native-coin fees, paymaster-token base units for token-paid fees, or zero for sponsored quotes. Supply and repayment quotes assume any required approval is already in place; they do not include a separate approval's cost.
+
 You can estimate the supply fee with [`quoteSupply()`](/sdk/lending-modules/lending-aave-evm/api-reference):
 
 ```javascript title="Quote supply fee"
 const USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
 
 const supplyQuote = await aave.quoteSupply({ token: USDT, amount: 1000000n })
-console.log('Supply fee (wei):', supplyQuote.fee)
+console.log('Supply fee (account units):', supplyQuote.fee)
 ```
 
 You can estimate the withdraw fee with [`quoteWithdraw()`](/sdk/lending-modules/lending-aave-evm/api-reference):
@@ -18677,7 +18770,7 @@ You can estimate the withdraw fee with [`quoteWithdraw()`](/sdk/lending-modules/
 const USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
 
 const withdrawQuote = await aave.quoteWithdraw({ token: USDT, amount: 1000000n })
-console.log('Withdraw fee (wei):', withdrawQuote.fee)
+console.log('Withdraw fee (account units):', withdrawQuote.fee)
 ```
 
 You can estimate the borrow fee with [`quoteBorrow()`](/sdk/lending-modules/lending-aave-evm/api-reference):
@@ -18686,7 +18779,7 @@ You can estimate the borrow fee with [`quoteBorrow()`](/sdk/lending-modules/lend
 const USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
 
 const borrowQuote = await aave.quoteBorrow({ token: USDT, amount: 1000000n })
-console.log('Borrow fee (wei):', borrowQuote.fee)
+console.log('Borrow fee (account units):', borrowQuote.fee)
 ```
 
 You can estimate the repay fee with [`quoteRepay()`](/sdk/lending-modules/lending-aave-evm/api-reference):
@@ -18695,7 +18788,7 @@ You can estimate the repay fee with [`quoteRepay()`](/sdk/lending-modules/lendin
 const USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
 
 const repayQuote = await aave.quoteRepay({ token: USDT, amount: 1000000n })
-console.log('Repay fee (wei):', repayQuote.fee)
+console.log('Repay fee (account units):', repayQuote.fee)
 ```
 
 <Callout type="warn">
@@ -18704,7 +18797,7 @@ Health factor and collateralization limits still apply. A quote does not guarant
 
 ## ERC-4337 smart accounts
 
-You can run the same methods through [`WalletAccountEvmErc4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference) and pass a second `config` argument to override per-call gas payment settings. In `v1.0.0-beta.6`, the lending methods accept the same override families as the wallet module: paymaster token, sponsorship policy, and native coins. Standard (non‑ERC‑4337) accounts silently ignore this optional configuration. See the [ERC-4337 config override](/sdk/lending-modules/lending-aave-evm/api-reference) section for the full field list.
+You can run the same methods through [`WalletAccountEvmErc4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference) and pass the optional `config` argument to override per-call gas payment settings. The lending methods accept the same override families as the wallet module: paymaster token, sponsorship policy, and native coins. Standard WDK EVM accounts ignore these wallet fields; compatible wrappers determine their own handling. See the [ERC-4337 config override](/sdk/lending-modules/lending-aave-evm/api-reference) section for the full field list.
 
 ```javascript title="Supply with paymaster"
 import { WalletAccountEvmErc4337 } from '@tetherto/wdk-wallet-evm-erc-4337'
@@ -18716,7 +18809,10 @@ const aa = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
   bundlerUrl: process.env.BUNDLER_URL,
   paymasterUrl: process.env.PAYMASTER_URL,
   paymasterAddress: process.env.PAYMASTER_ADDRESS,
-  safeModulesVersion: '0.3.0'
+  safeModulesVersion: '0.3.0',
+  paymasterToken: {
+    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+  }
 })
 
 const aaveAA = new AaveProtocolEvm(aa)
@@ -20765,7 +20861,7 @@ Use the Velora swap module to quote and execute token swaps on EVM chains. It wo
 
 - **Token Swapping**: Execute token swaps through velora on supported EVM networks
 - **Account Abstraction**: Compatible with standard EVM accounts and ERC‑4337 smart accounts
-- **Fee Controls**: Optional `swapMaxFee` to cap gas costs
+- **Fee Controls**: Constructor and per-call `swapMaxFee` for standard and smart accounts, in the account quote's fee units
 - **Approval-aware swaps**: Approve input tokens with the wallet account before swapping when allowance is required
 - **Provider Flexibility**: Works with JSON‑RPC URLs and EIP‑1193 providers
 - **TypeScript Support**: Full TypeScript definitions included
@@ -20782,11 +20878,13 @@ The swap service supports multiple EVM wallet types:
 - **ERC‑4337 Smart Accounts**: `@tetherto/wdk-wallet-evm-erc-4337` accounts with bundler/paymaster
 - **Read‑Only Accounts**: For quoting swaps without sending transactions
 
+The constructor accepts shared wallet interfaces, while the implementation requires an EVM provider in `account._config.provider`. Compatible wrappers must also expose the account methods used for quotes and execution. A callable `sendTransaction()` establishes writability; it does not establish chain or provider compatibility.
+
 ## Key Components
 
 - **velora Integration**: Uses velora aggregator for routing and quotes
 - **Quote System**: Pre‑transaction fee and amount estimation via `quoteSwap`
-- **AA Integration**: Optional paymaster, sponsorship, native-fee, and fee-cap overrides when using ERC‑4337
+- **AA Integration**: Forward paymaster, sponsorship, and native-fee overrides to compatible ERC‑4337 accounts
 - **Read-only quoting**: Quote swaps from read-only EVM and ERC‑4337 accounts
 
 ## Next Steps
@@ -20831,9 +20929,9 @@ new VeloraProtocolEvm(account, config?)
 Parameters:
 - `account`: `IWalletAccount | IWalletAccountReadOnly` from `@tetherto/wdk-wallet`
 - `config` (optional):
-  - `swapMaxFee` (`bigint`): maximum total gas fee allowed (wei)
+  - `swapMaxFee` (`bigint`): exclusive cap in the fee units returned by the account's quote
 
-The beta.7 declarations accept the generic wallet interfaces, but this package still requires an EVM-compatible account with a configured JSON-RPC URL or EIP-1193 provider. Use an EVM account from WDK's EVM wallet modules; the wider interfaces do not add support for arbitrary or non-EVM accounts.
+The declarations accept the shared wallet interfaces. The implementation also reads `account._config.provider` and requires an EVM-compatible JSON-RPC URL or EIP-1193 provider. An interface match alone does not establish compatibility. Quoting needs `getAddress()` and `quoteSendTransaction()`; execution additionally requires a callable `sendTransaction()`.
 
 Example:
 
@@ -20850,7 +20948,7 @@ const swap = new VeloraProtocolEvm(account, { swapMaxFee: 200000000000000n })
 
 ---
 
-### `swap(options, config?)`
+#### `swap(options, config?)`
 Execute a swap via velora.
 
 Options:
@@ -20860,14 +20958,16 @@ Options:
 - `tokenOutAmount` (`bigint`, optional): Exact output amount (base units)
 - `to` (`string`, optional): Recipient address (defaults to account address)
 
-Config (ERC‑4337 only):
+Config (optional; wallet gas-payment fields depend on the account):
 - `paymasterToken` (`{ address: string }`, optional): Paymaster token override for this swap
 - `isSponsored` (`true`, optional): Use sponsorship mode for this swap
 - `sponsorshipPolicyId` (`string`, optional): Sponsorship policy override
 - `useNativeCoins` (`true`, optional): Pay fees in the chain's native token
-- `swapMaxFee` (`bigint`, optional): Per‑swap fee cap (wei)
+- `swapMaxFee` (`bigint`, optional): Per-swap exclusive fee cap, in the account quote's units
 
-These per-swap overrides are applied only when the protocol uses a concrete `WalletAccountEvmErc4337`. With another writable EVM account, `swap()` sends one EVM transaction and does not apply the ERC‑4337 config object.
+Since beta.8, `swap()` passes one transaction object and the same `config` to the account's `quoteSendTransaction()` and `sendTransaction()`. It does not select the path by concrete account class. Standard WDK EVM accounts ignore wallet paymaster/sponsorship fields, but the protocol applies a per-call `swapMaxFee` for these accounts too.
+
+The per-call cap overrides the constructor cap. A quote equal to or above that cap rejects the swap before sending. Match the cap to the quote's denomination: native wei for standard EVM/native-coin fees, paymaster-token base units for token-paid fees, or zero for sponsored quotes. A zero cap rejects even a zero-fee quote. `quoteSwap()` itself does not enforce the cap.
 
 Returns:
 - Standard account: `{ hash, fee, tokenInAmount, tokenOutAmount }`
@@ -20881,15 +20981,15 @@ Example:
 
 ```javascript
 const tx = await swap.swap({
-  tokenIn: '0xdAC17F...ec7',      // USDt
-  tokenOut: '0xC02a...6Cc2',      // WETH
+  tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt on Ethereum
+  tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH on Ethereum
   tokenInAmount: 1000000n
 })
 ```
 
 ---
 
-### `quoteSwap(options, config?)`
+#### `quoteSwap(options, config?)`
 Get estimated fee and token in/out amounts.
 
 Options are the same as `swap`.
@@ -20902,7 +21002,7 @@ Config (ERC‑4337 only):
 - `sponsorshipPolicyId` (`string`, optional): Sponsorship policy override
 - `useNativeCoins` (`true`, optional): Estimate fees in the chain's native token
 
-These per-call overrides are applied only when the protocol uses a concrete `WalletAccountReadOnlyEvmErc4337`. Other accounts use the ordinary single-transaction quote path and do not apply the ERC‑4337 config object.
+The protocol forwards one transaction object and `config` to any compatible account's `quoteSendTransaction()`. The account determines which wallet options apply; standard WDK EVM accounts ignore the ERC-4337 fields. The returned fee keeps the account's denomination. Quoting does not enforce `swapMaxFee` or reserve a route for later execution.
 
 Works with read‑only accounts.
 
@@ -20910,8 +21010,8 @@ Example:
 
 ```javascript
 const quote = await swap.quoteSwap({
-  tokenIn: '0xdAC17F...ec7',      // USDt
-  tokenOut: '0xC02a...6Cc2',      // WETH
+  tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt on Ethereum
+  tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH on Ethereum
   tokenOutAmount: 500000000000000000n // 0.5 WETH
 })
 ```
@@ -20922,7 +21022,7 @@ const quote = await swap.quoteSwap({
 
 Common errors include:
 - Insufficient liquidity / no route for pair
-- Fee exceeds `swapMaxFee`
+- Quoted fee is equal to or greater than `swapMaxFee`
 - Read‑only account cannot send swaps
 - Provider/RPC errors (invalid endpoint, network mismatch)
 
@@ -20930,7 +21030,7 @@ Common errors include:
 
 ## Types
 
-- `swapMaxFee: bigint` — Upper bound for gas fees (wei)
+- `swapMaxFee: bigint`: Exclusive cap in the account quote's fee units
 - `tokenInAmount/tokenOutAmount: bigint` — ERC‑20 base units
 - `paymasterToken: { address: string }` — ERC‑4337 paymaster token override
 
@@ -20973,13 +21073,15 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 
 // Create swap service with configuration
 const swapProtocol = new VeloraProtocolEvm(account, {
-  swapMaxFee: 200000000000000n // Optional: Max swap fee in wei
+  swapMaxFee: 200000000000000n // Optional: Exclusive fee cap in wei for this EVM account
 })
 ```
 
 ## Account Configuration
 
-The swap service uses the wallet account configuration for network access and signing. The account must expose an EVM-compatible JSON-RPC URL or EIP-1193 provider; a generic interface type does not make a non-EVM account compatible with this module:
+The swap service reads `account._config.provider` for network access. The account must expose an EVM-compatible JSON-RPC URL or EIP-1193 provider, plus `getAddress()` and `quoteSendTransaction()`. Execution also requires a callable `sendTransaction()`. A shared interface type alone does not make a non-EVM account compatible.
+
+For accounts governed by WDK transaction policies, use [`wdk.registerProtocol()`](/sdk/core-module/api-reference#registerprotocolblockchain-label-protocol-config) and the account's protocol getter. Do not pass the governed account proxy directly to this constructor: that proxy hides `_config`.
 
 ```javascript
 import { WalletAccountEvm, WalletAccountReadOnlyEvm } from '@tetherto/wdk-wallet-evm'
@@ -20995,7 +21097,7 @@ const account = new WalletAccountEvm(
 
 // Read-only account (quotes only)
 const readOnly = new WalletAccountReadOnlyEvm(
-  '0xYourAddress',
+  await account.getAddress(),
   {
     provider: 'https://ethereum-rpc.publicnode.com'
   }
@@ -21011,29 +21113,26 @@ const swapProtocol = new VeloraProtocolEvm(account, {
 
 ### Swap Max Fee
 
-The `swapMaxFee` option sets an upper bound for total gas costs to prevent excessive fees.
+The `swapMaxFee` option rejects execution when the account's quoted fee is equal to or greater than the cap. Since beta.8, the second argument to `swap()` can override this cap for standard EVM accounts as well as smart accounts. `quoteSwap()` does not enforce it.
 
 **Type:** `bigint` (optional)
-**Unit:** Wei
+**Unit:** The account quote's fee units: native wei for standard EVM or native-coin fees, paymaster-token base units for token-paid fees, or zero for sponsored quotes. Choose a cap for the selected gas-payment mode; a zero cap rejects a zero-fee sponsored quote.
 
 **Examples:**
 
 ```javascript
-const config = {
-  // Cap total gas fee to 0.0002 ETH (in wei)
-  swapMaxFee: 200000000000000n,
-}
-
-// Usage example
+// Ethereum standard EVM account; input allowance must already be sufficient
 try {
   const result = await swapProtocol.swap({
     tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt (6 decimals)
     tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH (18 decimals)
     tokenInAmount: 1000000n
-  })
+  }, { swapMaxFee: 200000000000000n }) // Exclusive cap of 0.0002 ETH
 } catch (error) {
-  if (error.message.includes('max fee')) {
+  if (error.message === 'Exceeded maximum fee cost for swap operation.') {
     console.error('Swap stopped: Fee too high')
+  } else {
+    throw error
   }
 }
 ```
@@ -21050,30 +21149,32 @@ const aa = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
   provider: 'https://ethereum-rpc.publicnode.com',
   bundlerUrl: 'YOUR_BUNDLER_URL',
   paymasterUrl: 'YOUR_PAYMASTER_URL',
-  paymasterAddress: 'YOUR_PAYMASTER_ADDRESS',
+  paymasterAddress: process.env.PAYMASTER_ADDRESS,
   safeModulesVersion: '0.3.0',
   paymasterToken: {
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
   }
 })
 
-const swapAA = new VeloraProtocolEvm(aa, { swapMaxFee: 200000000000000n })
+const swapAA = new VeloraProtocolEvm(aa)
 
 const result = await swapAA.swap({
-  tokenIn: '0xTokenIn',
-  tokenOut: '0xTokenOut',
+  tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt on Ethereum
+  tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH on Ethereum
   tokenInAmount: 1000000n
 }, {
   paymasterToken: {
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
   },
-  swapMaxFee: 200000000000000n // Per‑swap override
+  swapMaxFee: 10000n // Exclusive cap of 0.01 USDt for this token-paid quote
 })
 ```
 
 ### Per-call ERC‑4337 Config
 
-The second argument to `swap()` and `quoteSwap()` accepts ERC‑4337 wallet config overrides only when the protocol uses the concrete `WalletAccountEvmErc4337` or `WalletAccountReadOnlyEvmErc4337` class, respectively. Use it to switch paymaster token, sponsorship policy, or native-coin fee behavior for a single call. `swap()` also accepts `swapMaxFee` as a per-swap fee cap. Standard EVM accounts use one ordinary EVM transaction and do not apply these per-call ERC‑4337 overrides.
+The protocol passes the second argument to the account's quote and send methods without a concrete-class check. Compatible ERC-4337 accounts use it to select paymaster-token, sponsorship, or native-coin behavior. Standard WDK EVM accounts ignore those wallet fields, but the protocol still applies `swapMaxFee` from the second argument to `swap()`. Quote and execution receive one transaction object, not an ERC-4337-specific array.
+
+The paymaster service must support the chosen chain and token. Configure its own endpoint and contract address; `PAYMASTER_ADDRESS` is deployment-specific. Approve the swap's input token for the current Velora spender before executing. The module does not create that approval for you. To change a nonzero Ethereum USD₮ allowance to another nonzero amount, first approve zero and wait for confirmation, then approve the new amount and wait again.
 
 **Type:** partial ERC‑4337 wallet config (optional)
 
@@ -21081,14 +21182,14 @@ The second argument to `swap()` and `quoteSwap()` accepts ERC‑4337 wallet conf
 
 ```javascript
 const result = await swapAA.swap({
-  tokenIn: '0xdAC17F...ec7',
-  tokenOut: '0xC02a...6Cc2', // WETH
+  tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt on Ethereum
+  tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH on Ethereum
   tokenInAmount: 1000000n
 }, {
   paymasterToken: {
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
   },
-  swapMaxFee: 200000000000000n
+  swapMaxFee: 10000n // Exclusive cap of 0.01 USDt for this token-paid quote
 })
 ```
 
@@ -21114,12 +21215,12 @@ When calling `swap`, provide the swap parameters:
 
 ```javascript
 const swapOptions = {
-  tokenIn: '0xTokenIn',          // ERC‑20 to sell
-  tokenOut: '0xTokenOut',        // ERC‑20 to buy
+  tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt on Ethereum
+  tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH on Ethereum
   tokenInAmount: 1000000n,       // exact input (base units)
   // OR
-  // tokenOutAmount: 1000000n,   // exact output (base units)
-  to: '0xRecipient'              // optional recipient (defaults to your address)
+  // tokenOutAmount: 1000000000000000n, // Alternative: exact output of 0.001 WETH
+  to: await account.getAddress() // Optional recipient; defaults to this account
 }
 
 const result = await swapProtocol.swap(swapOptions)
@@ -21162,7 +21263,7 @@ Description: Run exact-input swaps, exact-output swaps, and swaps with ERC-4337 
 This guide explains how to run a [basic exact-input swap](#basic-exact-input-swap), an [exact-output swap](#exact-output-swap), and a [swap from an ERC-4337 smart account](#swap-with-erc-4337). You should already have a [`VeloraProtocolEvm`](/sdk/swap-modules/swap-velora-evm/api-reference) instance.
 
 <Callout type="warn">
-Swaps spend tokens and gas on-chain. Use amounts you control and an RPC you trust.
+Swaps spend tokens and gas on-chain. Before execution, approve the input token for the current Velora spender on the account's chain. The module does not submit approvals or reset allowances. See [configuration](/sdk/swap-modules/swap-velora-evm/configuration) for approval and fee prerequisites.
 </Callout>
 
 ## Basic exact-input swap
@@ -21177,7 +21278,7 @@ const result = await swapProtocol.swap({
 })
 
 console.log('Swap transaction hash:', result.hash)
-console.log('Total fee (wei):', result.fee)
+console.log('Total fee (account units):', result.fee)
 console.log('Tokens sold (base units):', result.tokenInAmount)
 console.log('Tokens bought (base units):', result.tokenOutAmount)
 ```
@@ -21218,7 +21319,8 @@ const aa = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
   }
 })
 
-const swapAA = new VeloraProtocolEvm(aa, { swapMaxFee: 200000000000000n })
+// Exclusive cap: 0.01 USDt with this six-decimal paymaster token.
+const swapAA = new VeloraProtocolEvm(aa, { swapMaxFee: 10000n })
 
 const result = await swapAA.swap({
   tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
@@ -21228,11 +21330,11 @@ const result = await swapAA.swap({
   paymasterToken: {
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
   },
-  swapMaxFee: 200000000000000n
+  swapMaxFee: 10000n
 })
 
 console.log('Swap hash:', result.hash)
-console.log('Total fee (wei):', result.fee)
+console.log('Total fee (USDt base units):', result.fee)
 ```
 
 <Callout type="info">
@@ -21282,7 +21384,7 @@ const swapProtocol = new VeloraProtocolEvm(account, {
 })
 ```
 
-Optional `swapMaxFee` caps the total gas fee in wei for swaps. See [configuration](/sdk/swap-modules/swap-velora-evm/configuration) for environment-specific settings.
+Optional `swapMaxFee` is an exclusive cap in the account's quoted fee units: wei for the standard EVM account above. A fee equal to or above the cap rejects the swap. See [configuration](/sdk/swap-modules/swap-velora-evm/configuration) for paymaster fee units and approval prerequisites.
 
 ## Supported networks
 
@@ -21313,7 +21415,7 @@ const quote = await swapProtocol.quoteSwap({
   tokenInAmount: 1000000n
 })
 
-console.log('Estimated fee (wei):', quote.fee)
+console.log('Estimated fee (account units):', quote.fee)
 console.log('Tokens in (base units):', quote.tokenInAmount)
 console.log('Tokens out (base units):', quote.tokenOutAmount)
 ```
@@ -21327,7 +21429,7 @@ const quote = await swapProtocol.quoteSwap({
   tokenOutAmount: 500000000000000000n
 })
 
-console.log('Estimated fee (wei):', quote.fee)
+console.log('Estimated fee (account units):', quote.fee)
 console.log('Required token in (base units):', quote.tokenInAmount)
 ```
 
@@ -21347,7 +21449,9 @@ const quote = await swapAA.quoteSwap({
 
 ## Fee estimation
 
-You can read `quote.fee` from [`quoteSwap()`](/sdk/swap-modules/swap-velora-evm/api-reference) as the estimated total swap fee in wei before calling [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference):
+Read `quote.fee` in the account's fee units: native wei for a standard EVM account, token base units for token-paymaster fees, or zero for sponsorship. The quote excludes any separate input-token approval. `quoteSwap()` does not enforce `swapMaxFee`.
+
+The following examples use a standard EVM account, so the cap is in wei:
 
 ```javascript title="Quote fee before deciding"
 const quote = await swapProtocol.quoteSwap({
@@ -21360,7 +21464,7 @@ const maxFee = 200000000000000n
 console.log('Quoted fee (wei):', quote.fee, 'cap:', maxFee)
 ```
 
-You can compare that estimate to `swapMaxFee` on [`VeloraProtocolEvm`](/sdk/swap-modules/swap-velora-evm/api-reference) and only then call [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference) when the quote is within your cap:
+Compare the estimate with an exclusive cap and pass the same cap to [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference). Execution obtains a fresh fee quote and rejects a fee equal to or above `swapMaxFee`:
 
 ```javascript title="Swap when fee is under cap"
 const maxFee = 200000000000000n
@@ -21370,12 +21474,12 @@ const quote = await swapProtocol.quoteSwap({
   tokenInAmount: 1000000n
 })
 
-if (quote.fee <= maxFee) {
+if (quote.fee < maxFee) {
   const result = await swapProtocol.swap({
     tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
     tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
     tokenInAmount: 1000000n
-  })
+  }, { swapMaxFee: maxFee })
   console.log('Swap hash:', result.hash)
 }
 ```
@@ -21416,8 +21520,8 @@ try {
   if (error.message.includes('liquidity')) {
     console.log('No route or insufficient liquidity for this pair')
   }
-  if (error.message.includes('max fee')) {
-    console.log('Swap fee exceeds swapMaxFee')
+  if (error.message === 'Exceeded maximum fee cost for swap operation.') {
+    console.log('Swap fee is equal to or above swapMaxFee')
   }
   if (error.message.includes('read-only')) {
     console.log('Read-only account cannot swap')
@@ -21440,13 +21544,13 @@ try {
     tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
     tokenInAmount: 1000000n
   })
-  console.log('Quoted fee (wei):', quote.fee)
+  console.log('Quoted fee (account units):', quote.fee)
 } catch (error) {
   console.error('Quote failed:', error.message)
 }
 ```
 
-Common causes are listed under [Errors](/sdk/swap-modules/swap-velora-evm/api-reference) in the API reference (liquidity, fee cap, read-only send attempts, RPC issues).
+Quotes can fail because of routing, liquidity, or provider errors. Fee-cap enforcement and read-only send rejection occur in `swap()`, not `quoteSwap()`. See [Errors](/sdk/swap-modules/swap-velora-evm/api-reference) in the API reference.
 
 ## Best Practices
 
@@ -30059,6 +30163,7 @@ Use the ERC-4337 wallet module when your app needs EVM smart accounts, UserOpera
 
 - **BIP-39 Seed Phrase Support**: Generate and validate BIP-39 mnemonic seed phrases
 - **EVM Derivation Paths**: Support for BIP-44 standard derivation paths for Ethereum (m/44'/60')
+- **Known-Safe Monitoring**: [Read an existing Safe address](/sdk/wallet-modules/wallet-evm-erc-4337/guides/manage-accounts#read-a-known-safe-address) without its owner address or a seed phrase
 - **Multi-Account Management**: Create and manage multiple account abstraction wallets from a single seed phrase
 - **ERC-4337 Support**: Full implementation of ERC-4337 account abstraction standard
 - **UserOperation Management**: Create and send UserOperations through bundlers
@@ -30117,7 +30222,7 @@ Description: Complete API documentation for @tetherto/wdk-wallet-evm-erc-4337
 | Class | Description | Methods |
 |-------|-------------|---------|
 | [WalletManagerEvmErc4337](#walletmanagerevmerc4337) | Main class for managing ERC-4337 EVM wallets. Extends `WalletManager` from `@tetherto/wdk-wallet`. | [Constructor](#constructor), [Methods](#methods) |
-| [WalletAccountEvmErc4337](#walletaccountevmerc4337) | Individual ERC-4337 wallet account implementation. Extends `WalletAccountReadOnlyEvmErc4337` and implements `IWalletAccount`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties) |
+| [WalletAccountEvmErc4337](#walletaccountevmerc4337) | Individual ERC-4337 wallet account implementation. Extends `WalletAccountReadOnlyEvmErc4337` and implements `IWalletAccount`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties-1) |
 | [WalletAccountReadOnlyEvmErc4337](#walletaccountreadonlyevmerc4337) | Read-only ERC-4337 wallet account. Extends `WalletAccountReadOnly` from `@tetherto/wdk-wallet`. | [Constructor](#constructor-2), [Methods](#methods-2) |
 | [ConfigurationError](#configurationerror) | Error thrown for invalid or incomplete wallet configuration, including an unexpected token paymaster address returned by the RPC. | - |
 
@@ -30148,7 +30253,7 @@ new WalletManagerEvmErc4337(seed, config)
   - `chainId` (number): The blockchain's ID (e.g., 1 for Ethereum mainnet)
   - `provider` (string | Eip1193Provider | Array\<string | Eip1193Provider\>): RPC endpoint URL, EIP-1193 provider instance, or ordered failover list
   - `bundlerUrl` (string): The URL of the bundler service
-  - `safeModulesVersion` (string): Must be `'0.3.0'`, the only Safe modules version supported by beta.18
+  - `safeModulesVersion` (string): Must be `'0.3.0'`, the only Safe modules version supported by beta.19
 
 **Optional common config fields:**
   - `parallel` (boolean): Put each send, sign, or transfer in a fresh random 192-bit nonce-key lane
@@ -30239,12 +30344,6 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise\<{normal: bigint, fast: bigint}\>` | `ProviderRequiredError` if no provider |
 | `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` | - |
 
-### Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `seed` | `Uint8Array` | The wallet's seed phrase as bytes |
-
 #### `getRandomSeedPhrase(wordCount?)` (static)
 Returns a random BIP-39 seed phrase.
 
@@ -30330,6 +30429,12 @@ Disposes all wallet accounts, clearing private keys from memory.
 wallet.dispose()
 ```
 
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `seed` | `Uint8Array` | The wallet's seed phrase as bytes |
+
 ## WalletAccountEvmErc4337
 
 Represents an individual ERC-4337 wallet account. Extends `WalletAccountReadOnlyEvmErc4337` and implements `IWalletAccount`.
@@ -30375,7 +30480,8 @@ const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
-| `predictSafeAddress(owner, config)` | (static) Predicts the Safe address for a given owner | `string` | - |
+| `predictSafeAddress(owner, config)` | (static) Predicts the Safe address for a given owner | `string` | `ValueError` for a malformed owner address |
+| `fromSafeAddress(safeAddress, config)` | (static) Unsupported on the writable class | `never` | Always `UnsupportedOperationError` |
 | `getAddress()` | Returns the Safe account's address | `Promise\<string\>` | - |
 | `sign(message)` | Signs a message using the account's private key | `Promise\<string\>` | - |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` | - |
@@ -30384,10 +30490,10 @@ const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 | `quoteSendTransaction(tx, config?)` | Estimates the fee for transactions or a signed UserOperation | `Promise\<{fee: bigint}\>` | If a newly built operation's token paymaster address mismatches |
 | `transfer(options, config?, txOverrides?)` | Transfers ERC20 tokens via UserOperation | `Promise\<{hash: string, fee: bigint}\>` | If fee exceeds max, or the token paymaster address mismatches |
 | `quoteTransfer(options, config?, txOverrides?)` | Estimates the fee for an ERC20 transfer | `Promise\<{fee: bigint}\>` | If the token paymaster address mismatches |
-| `approve(options, txOverrides?)` | Approves a spender to spend ERC20 tokens | `Promise\<{hash: string, fee: bigint}\>` | `ProviderRequiredError`, or `ValueError` when Ethereum USD₮ allowance must be reset |
 | `getBalance()` | Returns the native token balance (in wei) | `Promise\<bigint\>` | - |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise\<bigint\>` | - |
 | `getPaymasterTokenBalance()` | Returns the paymaster token balance | `Promise\<bigint\>` | - |
+| `approve(options, txOverrides?)` | Approves a spender to spend ERC20 tokens | `Promise\<{hash: string, fee: bigint}\>` | `ProviderRequiredError`, or `ValueError` when Ethereum USD₮ allowance must be reset |
 | `getAllowance(token, spender)` | Returns current token allowance for a spender | `Promise\<bigint\>` | - |
 | `getTransactionReceipt(hash)` | Maps a UserOperation hash to a native EVM receipt; deprecated in favor of `getTransaction()` | `Promise\<EvmTransactionReceipt \| null\>` | - |
 | `getTransaction(hash)` | Returns normalized UserOperation finality using its bundling transaction | `Promise\<TransactionReceipt & EvmErc4337TransactionDetails\>` | If the hash is invalid or unknown |
@@ -30399,7 +30505,15 @@ const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise\<WalletAccountReadOnlyEvmErc4337\>` | - |
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` | - |
 
-##### `getAddress()`
+#### `predictSafeAddress(owner, config)` (static)
+
+Inherits the [read-only address predictor](#predictsafeaddressowner-config-static-1). It accepts an owner EOA address and `Pick<EvmErc4337WalletConfig, 'safeModulesVersion' | 'onChainIdentifier'>`, and returns a counterfactual Safe address as a `string`. A malformed owner address throws `ValueError`.
+
+#### `fromSafeAddress(safeAddress, config)` (static)
+
+Always throws `UnsupportedOperationError` and returns `never`. A Safe address alone cannot create a signing account. Use the [read-only factory](#fromsafeaddresssafeaddress-config-static-1) instead. Its parameters are `safeAddress: string` and `config: Omit<EvmErc4337WalletConfig, 'transferMaxFee' | 'transactionMaxFee'>`.
+
+#### `getAddress()`
 Returns the Safe smart contract wallet address (not the underlying EOA address).
 
 **Returns:** `Promise\<string\>` - The Safe account's address
@@ -30410,7 +30524,7 @@ const address = await account.getAddress()
 console.log('Safe account address:', address) // 0x... (Smart contract address)
 ```
 
-##### `sign(message)`
+#### `sign(message)`
 Signs a message using the underlying EOA private key.
 
 **Parameters:**
@@ -30425,7 +30539,7 @@ const signature = await account.sign(message)
 console.log('Signature:', signature)
 ```
 
-##### `verify(message, signature)`
+#### `verify(message, signature)`
 Verifies a message signature against the underlying EOA address.
 
 **Parameters:**
@@ -30440,7 +30554,7 @@ const isValid = await account.verify(message, signature)
 console.log('Signature valid:', isValid)
 ```
 
-##### `signTransaction(tx, config?)`
+#### `signTransaction(tx, config?)`
 Builds and signs one ERC-4337 v0.7 UserOperation without submitting it to the bundler.
 
 **Parameters:**
@@ -30466,7 +30580,7 @@ const signedUserOperation = await account.signTransaction({
 The returned operation contains the selected nonce lane and fee-mode configuration used while building it. Submit it promptly through the same account and do not mutate it.
 </Callout>
 
-##### `sendTransaction(tx, config?)`
+#### `sendTransaction(tx, config?)`
 Sends a transaction via UserOperation through the bundler.
 
 **Parameters:**
@@ -30524,7 +30638,7 @@ const fastResult = await account.sendTransaction({
 
 Beta.17 does not reserve sequential nonces locally. With no lane option, sends use the default key-0 lane and must not overlap. `parallel: true` creates a new random lane; `nonceKey` selects a reusable named or raw lane and takes precedence. Operations sharing a lane remain sequential, so wait for inclusion before reusing it. Distinct lanes are unordered; batch dependent transactions into one UserOperation.
 
-##### `quoteSendTransaction(tx, config?)`
+#### `quoteSendTransaction(tx, config?)`
 Estimates the fee for a UserOperation without sending it.
 
 Default-lane, non-sponsored UserOperations built while quoting transaction inputs can be cached internally for up to 2 minutes. When a later default-lane `sendTransaction()` or `signTransaction()` matches, the account performs a lightweight on-chain nonce check before reuse and rebuilds if the nonce has moved. Sponsored quotes do not cache a built operation. A supplied signed UserOperation is evaluated directly rather than rebuilt.
@@ -30556,7 +30670,7 @@ const quote = await account.quoteSendTransaction({
 console.log('Estimated fee:', quote.fee)
 ```
 
-##### `transfer(options, config?, txOverrides?)`
+#### `transfer(options, config?, txOverrides?)`
 Transfers ERC20 tokens via UserOperation.
 
 **Parameters:**
@@ -30592,7 +30706,7 @@ console.log('Transfer UserOperation hash:', result.hash)
 console.log('Transfer fee:', result.fee)
 ```
 
-##### `quoteTransfer(options, config?, txOverrides?)`
+#### `quoteTransfer(options, config?, txOverrides?)`
 Estimates the fee for an ERC20 token transfer.
 
 This method does not resolve or reserve a nonce lane. A later transfer using `parallel` or `nonceKey` rebuilds in that lane.
@@ -30618,7 +30732,7 @@ const quote = await account.quoteTransfer({
 console.log('Transfer fee estimate:', quote.fee)
 ```
 
-##### `getBalance()`
+#### `getBalance()`
 Returns the Safe account's native token balance.
 
 **Returns:** `Promise\<bigint\>` - Balance in wei
@@ -30629,7 +30743,7 @@ const balance = await account.getBalance()
 console.log('Native balance:', balance, 'wei')
 ```
 
-##### `getTokenBalance(tokenAddress)`
+#### `getTokenBalance(tokenAddress)`
 Returns the balance of a specific ERC20 token in the Safe account.
 
 **Parameters:**
@@ -30643,7 +30757,7 @@ const tokenBalance = await account.getTokenBalance('0xdAC17F958D2ee523a220620699
 console.log('USDt balance:', tokenBalance) // In 6 decimal units
 ```
 
-##### `getPaymasterTokenBalance()`
+#### `getPaymasterTokenBalance()`
 Returns the balance of the configured paymaster token used for paying fees.
 
 **Returns:** `Promise\<bigint\>` - Paymaster token balance in base units
@@ -30659,7 +30773,7 @@ if (paymasterBalance < 10000n) {
 }
 ```
 
-##### `approve(options, txOverrides?)`
+#### `approve(options, txOverrides?)`
 Approves a spender to spend ERC20 tokens on behalf of the Safe account.
 
 **Parameters:**
@@ -30690,7 +30804,7 @@ const result = await account.approve({
 console.log('Approval hash:', result.hash)
 ```
 
-##### `getAllowance(token, spender)`
+#### `getAllowance(token, spender)`
 Returns the current token allowance for the given spender.
 
 **Parameters:**
@@ -30708,7 +30822,7 @@ const allowance = await account.getAllowance(
 console.log('Current allowance:', allowance)
 ```
 
-##### `getTransactionReceipt(hash)`
+#### `getTransactionReceipt(hash)`
 Maps a UserOperation hash to its native EVM bundling-transaction receipt. This method is deprecated; use `getTransaction()` and read its `receipt` and `userOperationReceipt` fields.
 
 **Parameters:**
@@ -30724,7 +30838,7 @@ if (receipt) {
 }
 ```
 
-##### `getTransaction(hash)`
+#### `getTransaction(hash)`
 
 Returns normalized status for an exact 32-byte UserOperation hash. Before the bundler assigns an EVM transaction hash, the result is `pending` with zero confirmations and both native receipt fields set to `null`. After inclusion, finality and confirmations come from the EVM bundling transaction, while `success` and `fee` come from the UserOperation receipt when available.
 
@@ -30741,7 +30855,7 @@ console.log(receipt.userOperationReceipt) // Raw bundler receipt
 
 An invalid hash throws `ValueError`; a well-formed hash unknown to the bundler throws `NoSuchElementError`. A settled `confirmed` or `final` receipt can still have `success: false`, so always inspect execution success.
 
-##### `waitForTransaction(hash, options?)`
+#### `waitForTransaction(hash, options?)`
 
 Polls by UserOperation hash until the requested finality target is reached or the underlying EVM transaction is classified as `dropped`. The default target is `confirmed`, the interval is four seconds, and the ERC-4337 timeout is 180 seconds.
 
@@ -30758,7 +30872,7 @@ if (receipt.finality !== 'dropped' && receipt.success === false) {
 }
 ```
 
-##### `getUserOperationReceipt(hash)`
+#### `getUserOperationReceipt(hash)`
 Returns a UserOperation receipt by hash.
 
 **Parameters:**
@@ -30774,7 +30888,7 @@ if (receipt) {
 }
 ```
 
-##### `signTypedData(typedData)`
+#### `signTypedData(typedData)`
 Signs EIP-712 typed structured data using the underlying EOA private key.
 
 **Parameters:**
@@ -30808,7 +30922,7 @@ const signature = await account.signTypedData(typedData)
 console.log('Typed data signature:', signature)
 ```
 
-##### `verifyTypedData(typedData, signature)`
+#### `verifyTypedData(typedData, signature)`
 Verifies an EIP-712 typed data signature against the underlying EOA address.
 
 **Parameters:**
@@ -30823,7 +30937,7 @@ const isValid = await account.verifyTypedData(typedData, signature)
 console.log('Typed data signature valid:', isValid)
 ```
 
-##### `getTokenBalances(tokenAddresses)`
+#### `getTokenBalances(tokenAddresses)`
 Returns balances for multiple ERC20 tokens in a single call.
 
 **Parameters:**
@@ -30842,8 +30956,8 @@ for (const [address, balance] of Object.entries(balances)) {
 }
 ```
 
-##### `toReadOnlyAccount()`
-Creates a read-only copy of the account with the same Safe address and configuration.
+#### `toReadOnlyAccount()`
+Creates a read-only copy with the same Safe address, configuration, and owner EOA address. Unlike an account created by `fromSafeAddress()`, this copy can verify the owner's message and typed-data signatures.
 
 **Returns:** `Promise\<WalletAccountReadOnlyEvmErc4337\>` - Read-only account instance
 
@@ -30856,7 +30970,7 @@ const balance = await readOnlyAccount.getBalance()
 // readOnlyAccount.sendTransaction() // Would not be available
 ```
 
-##### `dispose()`
+#### `dispose()`
 Disposes the wallet account, clearing private keys from memory.
 
 **Example:**
@@ -30886,7 +31000,7 @@ console.log('Private key length:', privateKey?.length) // 32 bytes (null after d
 ⚠️ **Security Note**: The `keyPair` property contains sensitive cryptographic material. Never log, display, or expose the private key.
 
 ## WalletAccountReadOnlyEvmErc4337
-Represents a read-only ERC-4337 wallet account that can query balances and estimate fees but cannot send transactions.
+Represents a read-only ERC-4337 wallet account that can query balances and allowances but cannot sign or send transactions. Choose the owner-based constructor to predict a Safe address, or the [known-Safe factory](#fromsafeaddresssafeaddress-config-static-1) to use a supplied Safe address directly. Non-sponsored fee estimates for a known-Safe account require deployment.
 
 ### Constants
 
@@ -30906,12 +31020,12 @@ new WalletAccountReadOnlyEvmErc4337(address, config)
 ```
 
 **Parameters:**
-- `address` (string): The EOA address (owner address)
+- `address` (string): The owner EOA address, not the Safe address. The account predicts the counterfactual Safe from this owner and the configuration.
 - `config` (`Omit<EvmErc4337WalletConfig, 'transferMaxFee' | 'transactionMaxFee'>`): Configuration object without send-only fee caps
 
 **Example:**
 ```javascript
-const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337('0x...', {
+const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337('0x405005C7c4422390F4B334F64Cf20E0b767131d0', {
   chainId: 1,
   provider: 'https://rpc.mevblocker.io/fast',
   bundlerUrl: 'https://api.candide.dev/public/v3/1',
@@ -30924,58 +31038,88 @@ const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337('0x...', {
 })
 ```
 
+**Throws:** `ValueError` for a malformed owner address or an empty provider list; `ConfigurationError` for an unsupported `safeModulesVersion`.
+
+The example owner above is a derivation fixture. Constructing an account does not deploy or fund its predicted Safe.
+
 ### Static Methods
 
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `predictSafeAddress(owner, config)` | Predicts the Safe address for a given owner without instantiating an account | `string` |
+| `fromSafeAddress(safeAddress, config)` | Creates a read-only account for a supplied Safe address without its owner | `WalletAccountReadOnlyEvmErc4337` |
 
 #### `predictSafeAddress(owner, config)` (static)
 Predicts the address of a Safe account.
 
 **Parameters:**
 - `owner` (string): The Safe owner's EOA address
-- `config` (object): Configuration with:
-  - `chainId` (number): The blockchain ID
-  - `safeModulesVersion` (string): The Safe modules version
+- `config` (`Pick<EvmErc4337WalletConfig, 'safeModulesVersion' | 'onChainIdentifier'>`): Safe derivation configuration. Set `safeModulesVersion` to `'0.3.0'`. The type also accepts the optional `onChainIdentifier` field from the account configuration.
 
 **Returns:** `string` - The predicted Safe address
 
 **Example:**
 ```javascript
 const safeAddress = WalletAccountReadOnlyEvmErc4337.predictSafeAddress(
-  '0xOwnerEOA...',
-  { chainId: 1, safeModulesVersion: '0.3.0' }
+  '0x405005C7c4422390F4B334F64Cf20E0b767131d0',
+  { safeModulesVersion: '0.3.0' }
 )
 console.log('Predicted Safe address:', safeAddress)
 
 // Also available on WalletAccountEvmErc4337 (inherited)
 const sameAddress = WalletAccountEvmErc4337.predictSafeAddress(
-  '0xOwnerEOA...',
-  { chainId: 1, safeModulesVersion: '0.3.0' }
+  '0x405005C7c4422390F4B334F64Cf20E0b767131d0',
+  { safeModulesVersion: '0.3.0' }
 )
 ```
+
+**Throws:** `ValueError` for a malformed owner address, including an invalid mixed-case checksum.
+
+#### `fromSafeAddress(safeAddress, config)` (static)
+
+Creates a read-only account whose own address is the supplied Safe address. Unlike the constructor, it does not derive a new address from an owner.
+
+**Parameters:**
+- `safeAddress` (`string`): A well-formed EVM address. Lowercase addresses are accepted and normalized to checksum form; invalid mixed-case checksums are rejected.
+- `config` (`Omit<EvmErc4337WalletConfig, 'transferMaxFee' | 'transactionMaxFee'>`): Read-only configuration, including the network, provider, bundler URL, Safe modules version and selected gas-payment mode.
+
+**Returns:** `WalletAccountReadOnlyEvmErc4337` synchronously, not a Promise.
+
+**Throws:**
+- `ValueError` for a malformed Safe address, an invalid mixed-case checksum, or an empty provider list.
+- `ConfigurationError` for an unsupported `safeModulesVersion`.
+
+Use the factory with a Safe address already held by your application:
+
+```javascript
+const readOnlyAccount = WalletAccountReadOnlyEvmErc4337.fromSafeAddress(safeAddress, config)
+console.log('Safe address:', await readOnlyAccount.getAddress())
+```
+
+See [Read a Known Safe Address](/sdk/wallet-modules/wallet-evm-erc-4337/guides/manage-accounts#read-a-known-safe-address) for a complete setup example. The factory performs no network lookup: it does not confirm deployment, discover an owner, or check that the address is a Safe contract. Balance and allowance queries use this address directly, including before deployment.
+
+The owner is unknown, so `verify()` and `verifyTypedData()` throw `UnsupportedOperationError`. There is no signing or transaction-submission capability. A non-sponsored quote that builds a UserOperation throws `ConfigurationError` if the Safe is undeployed, because deployment requires the owner address. Sponsored quotes return `{ fee: 0n }` before checking deployment or chain identity; that result does not confirm sponsorship eligibility or transaction executability.
 
 ### Methods
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
 | `getAddress()` | Returns the Safe account's address | `Promise\<string\>` | - |
-| `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` | - |
+| `verify(message, signature)` | Verifies a message signature against a known owner | `Promise\<boolean\>` | `UnsupportedOperationError` for an account created from a Safe address |
 | `getBalance()` | Returns the native token balance (in wei) | `Promise\<bigint\>` | - |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise\<bigint\>` | - |
 | `getPaymasterTokenBalance()` | Returns the paymaster token balance | `Promise\<bigint\>` | - |
 | `getAllowance(token, spender)` | Returns current token allowance for a spender | `Promise\<bigint\>` | - |
-| `quoteSendTransaction(tx, config?)` | Estimates the fee for a UserOperation | `Promise\<{fee: bigint}\>` | If simulation fails or the token paymaster address mismatches |
-| `quoteTransfer(options, config?, txOverrides?)` | Estimates the fee for an ERC20 transfer | `Promise\<{fee: bigint}\>` | If simulation fails or the token paymaster address mismatches |
+| `quoteSendTransaction(tx, config?)` | Estimates the fee for a UserOperation | `Promise\<{fee: bigint}\>` | If simulation fails, the token paymaster address mismatches, or a non-sponsored known-Safe quote requires deployment |
+| `quoteTransfer(options, config?, txOverrides?)` | Estimates the fee for an ERC20 transfer | `Promise\<{fee: bigint}\>` | If simulation fails, the token paymaster address mismatches, or a non-sponsored known-Safe quote requires deployment |
 | `getTransactionReceipt(hash)` | Maps a UserOperation hash to a native EVM receipt; deprecated in favor of `getTransaction()` | `Promise\<EvmTransactionReceipt \| null\>` | - |
 | `getTransaction(hash)` | Returns normalized UserOperation finality using its bundling transaction | `Promise\<TransactionReceipt & EvmErc4337TransactionDetails\>` | If the hash is invalid or unknown |
 | `waitForTransaction(hash, options?)` | Waits for the UserOperation to reach `confirmed` or `final`, or returns `dropped` | `Promise\<TransactionReceipt & EvmErc4337TransactionDetails\>` | If the wait times out |
 | `getUserOperationReceipt(hash)` | Returns a UserOperation receipt | `Promise\<UserOperationReceipt \| null\>` | - |
-| `verifyTypedData(typedData, signature)` | Verifies an EIP-712 typed data signature | `Promise\<boolean\>` | - |
+| `verifyTypedData(typedData, signature)` | Verifies typed data against a known owner | `Promise\<boolean\>` | `UnsupportedOperationError` for an account created from a Safe address |
 | `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise\<Record\<string, bigint\>\>` | - |
 
-##### `getAddress()`
+#### `getAddress()`
 Returns the Safe smart contract wallet address.
 
 **Returns:** `Promise\<string\>` - The Safe account's address
@@ -30986,8 +31130,8 @@ const address = await readOnlyAccount.getAddress()
 console.log('Safe address:', address)
 ```
 
-##### `verify(message, signature)`
-Verifies a message signature against the underlying EOA address.
+#### `verify(message, signature)`
+Verifies a message signature against the known owner EOA address. Throws `UnsupportedOperationError` if this account was created with `fromSafeAddress()`, because its owner is unknown.
 
 **Parameters:**
 - `message` (string): The original message
@@ -31001,7 +31145,7 @@ const isValid = await readOnlyAccount.verify(message, signature)
 console.log('Signature valid:', isValid)
 ```
 
-##### `getBalance()`
+#### `getBalance()`
 Returns the Safe account's native token balance.
 
 **Returns:** `Promise\<bigint\>` - Balance in wei
@@ -31012,7 +31156,7 @@ const balance = await readOnlyAccount.getBalance()
 console.log('Balance:', balance, 'wei')
 ```
 
-##### `getTokenBalance(tokenAddress)`
+#### `getTokenBalance(tokenAddress)`
 Returns the balance of a specific ERC20 token.
 
 **Parameters:**
@@ -31026,7 +31170,7 @@ const tokenBalance = await readOnlyAccount.getTokenBalance('0xdAC17F958D2ee523a2
 console.log('USDt balance:', tokenBalance)
 ```
 
-##### `getPaymasterTokenBalance()`
+#### `getPaymasterTokenBalance()`
 Returns the balance of the configured paymaster token.
 
 **Returns:** `Promise\<bigint\>` - Paymaster token balance in base units
@@ -31037,7 +31181,7 @@ const paymasterBalance = await readOnlyAccount.getPaymasterTokenBalance()
 console.log('Paymaster token balance:', paymasterBalance)
 ```
 
-##### `getAllowance(token, spender)`
+#### `getAllowance(token, spender)`
 Returns the current token allowance for the given spender.
 
 **Parameters:**
@@ -31055,8 +31199,8 @@ const allowance = await readOnlyAccount.getAllowance(
 console.log('Allowance:', allowance)
 ```
 
-##### `quoteSendTransaction(tx, config?)`
-Estimates the fee for a UserOperation.
+#### `quoteSendTransaction(tx, config?)`
+Estimates the fee for a UserOperation. For an account created with `fromSafeAddress()`, a non-sponsored quote requires a deployed Safe. Sponsored quotes return `{ fee: 0n }` without checking deployment or chain identity; they do not confirm sponsorship eligibility.
 
 **Parameters:**
 - `tx` (EvmErc4337Transaction | EvmErc4337Transaction[]): Transaction object or array
@@ -31065,6 +31209,7 @@ Estimates the fee for a UserOperation.
 **Returns:** `Promise\<{fee: bigint}\>` - Fee estimate
 
 **Throws:**
+- `ConfigurationError` if a non-sponsored quote for an account created with `fromSafeAddress()` finds the Safe is undeployed
 - Error if simulation fails
 - `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison)
 - `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50
@@ -31089,8 +31234,8 @@ try {
 }
 ```
 
-##### `quoteTransfer(options, config?, txOverrides?)`
-Estimates the fee for an ERC20 token transfer.
+#### `quoteTransfer(options, config?, txOverrides?)`
+Estimates the fee for an ERC20 token transfer through `quoteSendTransaction()`. Its known-Safe deployment restriction and sponsored-quote exception also apply here.
 
 **Parameters:**
 - `options` (TransferOptions): Transfer options
@@ -31100,6 +31245,7 @@ Estimates the fee for an ERC20 token transfer.
 **Returns:** `Promise\<{fee: bigint}\>` - Fee estimate
 
 **Throws:**
+- `ConfigurationError` if a non-sponsored quote for an account created with `fromSafeAddress()` finds the Safe is undeployed.
 - `ConfigurationError` in token-paymaster mode when the RPC returns a non-empty paymaster address that differs from the configured `paymasterAddress` (case-insensitive comparison).
 - `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50.
 
@@ -31113,7 +31259,7 @@ const quote = await readOnlyAccount.quoteTransfer({
 console.log('Transfer fee estimate:', quote.fee)
 ```
 
-##### `getTransactionReceipt(hash)`
+#### `getTransactionReceipt(hash)`
 Maps a UserOperation hash to its native EVM bundling-transaction receipt. This method is deprecated; use `getTransaction()` for normalized finality.
 
 **Parameters:**
@@ -31132,11 +31278,15 @@ if (receipt) {
 }
 ```
 
-##### `getTransaction(hash)` and `waitForTransaction(hash, options?)`
+#### `getTransaction(hash)`
 
-Read-only accounts expose the same UserOperation-hash semantics as owned accounts. `getTransaction()` retains the UserOperation hash in `receipt.hash`, derives finality from the bundling transaction, and exposes both the EVM receipt and raw UserOperation receipt. `waitForTransaction()` defaults to a four-second interval and 180-second timeout. Inspect `success` after inclusion.
+Read-only accounts expose the same UserOperation-hash semantics as owned accounts. `getTransaction()` retains the UserOperation hash in `receipt.hash`, derives finality from the bundling transaction, and exposes both the EVM receipt and raw UserOperation receipt.
 
-##### `getUserOperationReceipt(hash)`
+#### `waitForTransaction(hash, options?)`
+
+Waits for the requested UserOperation finality with a four-second default interval and 180-second default timeout. Inspect `success` after inclusion. See the [owned-account method](#waitfortransactionhash-options) for options and return details.
+
+#### `getUserOperationReceipt(hash)`
 Returns a UserOperation receipt by hash.
 
 **Parameters:**
@@ -31152,8 +31302,8 @@ if (receipt) {
 }
 ```
 
-##### `verifyTypedData(typedData, signature)`
-Verifies an EIP-712 typed data signature against the underlying EOA address.
+#### `verifyTypedData(typedData, signature)`
+Verifies an EIP-712 typed data signature against the known owner EOA address. Throws `UnsupportedOperationError` if this account was created with `fromSafeAddress()`, because its owner is unknown.
 
 **Parameters:**
 - `typedData` (TypedData): The original typed data object
@@ -31167,7 +31317,7 @@ const isValid = await readOnlyAccount.verifyTypedData(typedData, signature)
 console.log('Typed data signature valid:', isValid)
 ```
 
-##### `getTokenBalances(tokenAddresses)`
+#### `getTokenBalances(tokenAddresses)`
 Returns balances for multiple ERC20 tokens in a single call.
 
 **Parameters:**
@@ -31230,7 +31380,7 @@ interface EvmErc4337WalletCommonConfig {
   chainId: number;                          // Blockchain ID
   provider: string | Eip1193Provider | Array<string | Eip1193Provider>; // RPC provider or failover list
   bundlerUrl: string;                       // Bundler service URL
-  safeModulesVersion: string;               // Must be '0.3.0' in beta.18
+  safeModulesVersion: string;               // Must be '0.3.0' in beta.19
   parallel?: boolean;                       // Fresh random nonce-key lane per operation
   nonceKey?: number | bigint | string;      // Reusable raw or named uint192 lane key
 }
@@ -31271,7 +31421,7 @@ type EvmErc4337WalletConfig = EvmErc4337WalletCommonConfig &
 
 ### Config Override
 
-The published beta.18 `config` parameter type on `sendTransaction`, `signTransaction`, `quoteSendTransaction`, `transfer`, and `quoteTransfer` allows per-call overrides of gas payment settings:
+The published beta.19 `config` parameter type on `sendTransaction`, `signTransaction`, `quoteSendTransaction`, `transfer`, and `quoteTransfer` allows per-call overrides of gas payment settings:
 
 ```typescript
 type ConfigOverride = Partial<
@@ -31293,7 +31443,7 @@ type ConfigOverride = Partial<
 
 Overrides are shallow-merged with the account configuration, then validated. When switching modes, explicitly clear an inherited opposing flag: sponsorship requires `isSponsored: true` and `useNativeCoins: false`; native-coin mode requires `isSponsored: false` and `useNativeCoins: true`; paymaster-token mode requires both flags to be `false`. The merged configuration must also contain the URL, address, token, or policy fields required by the selected mode.
 
-At runtime, beta.18 additionally honors `parallel` and `nonceKey` per call for `signTransaction()`, `sendTransaction()`, and `transfer()`. Those two fields are missing from the published per-call declarations, so object literals containing them fail TypeScript excess-property checks even though JavaScript calls work. Construction-level `EvmErc4337WalletCommonConfig` includes both fields and is the typed path in this release. `quoteSendTransaction()` and `quoteTransfer()` do not select a lane.
+At runtime, beta.19 additionally honors `parallel` and `nonceKey` per call for `signTransaction()`, `sendTransaction()`, and `transfer()`. Those two fields are missing from the published per-call declarations, so object literals containing them fail TypeScript excess-property checks even though JavaScript calls work. Construction-level `EvmErc4337WalletCommonConfig` includes both fields and is the typed path in this release. `quoteSendTransaction()` and `quoteTransfer()` do not select a lane.
 
 In token-paymaster mode, every path that builds a UserOperation validates a non-empty paymaster address returned by the RPC against `paymasterAddress`. A case-insensitive mismatch throws `ConfigurationError` before the operation is returned or submitted.
 
@@ -31435,7 +31585,7 @@ class ConfigurationError extends ValueError {
 }
 ```
 
-`ConfigurationError` is part of the shared WDK error taxonomy and can also be caught as `ValueError`. It also reports a mismatch between the constructor's `chainId` and the provider during the first UserOperation chain lookup.
+`ConfigurationError` is part of the shared WDK error taxonomy and can also be caught as `ValueError`. For an account created with `fromSafeAddress()`, it also reports an undeployed Safe when a non-sponsored quote builds a UserOperation. It also reports a mismatch between the constructor's `chainId` and the provider during the first UserOperation chain lookup.
 
 ### FeeRates
 
@@ -31524,7 +31674,7 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, config)
 
 ## Account Configuration
 
-Both `WalletAccountEvmErc4337` and `WalletAccountReadOnlyEvmErc4337` use the same configuration structure:
+The writable account uses `EvmErc4337WalletConfig`. The read-only constructor and [`fromSafeAddress()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#fromsafeaddresssafeaddress-config-static-1) use `Omit<EvmErc4337WalletConfig, 'transferMaxFee' | 'transactionMaxFee'>`, with the same network, provider, bundler, Safe modules and gas-payment settings. Use the constructor with an owner EOA address; use the factory with a known Safe address.
 
 ```javascript
 import { WalletAccountEvmErc4337, WalletAccountReadOnlyEvmErc4337 } from '@tetherto/wdk-wallet-evm-erc-4337'
@@ -31538,7 +31688,7 @@ const account = new WalletAccountEvmErc4337(
 
 // Read-only account (fee caps for sending are not needed)
 const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337(
-  '0x...', // Owner EOA address; the module predicts the Safe address
+  '0x405005C7c4422390F4B334F64Cf20E0b767131d0', // Test owner for address derivation
   {
     chainId: 1,
     provider: 'https://rpc.mevblocker.io/fast',
@@ -31553,6 +31703,8 @@ const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337(
   }
 )
 ```
+
+The read-only example uses a test owner to derive a counterfactual Safe; it does not deploy or fund that account. For an address your application already knows, follow [Read a Known Safe Address](/sdk/wallet-modules/wallet-evm-erc-4337/guides/manage-accounts#read-a-known-safe-address). The factory validates address syntax, the supported Safe modules version, and a nonempty provider list without verifying deployment or ownership.
 
 ## Configuration Options
 
@@ -31587,7 +31739,7 @@ const config = { chainId: 43114 }
 
 ### Provider
 
-The `provider` option specifies the RPC endpoint or EIP-1193 provider instance for blockchain interactions. **Required** for all operations. You can also pass an array of endpoints or providers to enable automatic failover: when a request to one provider fails, the wallet retries the next provider in the list.
+The `provider` option specifies the RPC endpoint or EIP-1193 provider instance for blockchain interactions. **Required** by the configuration type and used for network operations. Creating a read-only account or calling `getAddress()` does not make an RPC request. You can also pass an array of endpoints or providers to enable automatic failover: when a request to one provider fails, the wallet retries the next provider in the list.
 
 **Type:** `string | Eip1193Provider | Array<string | Eip1193Provider>`
 **Required:** Yes
@@ -31604,10 +31756,13 @@ const config = {
   provider: window.ethereum
 }
 
-// Using custom ethers provider
+// Adapt an ethers provider to EIP-1193
 import { JsonRpcProvider } from 'ethers'
+const rpc = new JsonRpcProvider('https://rpc.mevblocker.io/fast')
 const config = {
-  provider: new JsonRpcProvider('https://rpc.mevblocker.io/fast')
+  provider: {
+    request: ({ method, params }) => rpc.send(method, params ?? [])
+  }
 }
 
 // Using multiple providers for automatic failover
@@ -31741,12 +31896,12 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, config)
 Reusing one named lane remains sequential: wait for inclusion before submitting its next operation, or batch dependent calls into one UserOperation.
 
 <Callout type="warning">
-The beta.18 runtime also honors `parallel` and `nonceKey` in the per-call config for `signTransaction()`, `sendTransaction()`, and `transfer()`, but the published per-call TypeScript declarations omit both fields. Construction-level configuration is typed; JavaScript per-call usage works at runtime.
+The beta.19 runtime also honors `parallel` and `nonceKey` in the per-call config for `signTransaction()`, `sendTransaction()`, and `transfer()`, but the published per-call TypeScript declarations omit both fields. Construction-level configuration is typed; JavaScript per-call usage works at runtime.
 </Callout>
 
 ### Safe Modules Version
 
-The `safeModulesVersion` option specifies the Safe modules version for smart contract wallet implementation. Beta.18 supports only `0.3.0`; other values, including `0.2.0`, throw `ConfigurationError`. **Required** for smart account initialization.
+The `safeModulesVersion` option specifies the Safe modules version for smart contract wallet implementation. Beta.19 supports only `0.3.0`; other values, including `0.2.0`, throw `ConfigurationError`. **Required** for smart account initialization.
 
 **Type:** `string`
 **Required:** Yes
@@ -32111,26 +32266,16 @@ The paymaster token balance is held by the Safe account. Fund the Safe with enou
 
 ## Read-Only Account Balances
 
-You can check balances without a seed phrase by passing the owner EOA address to [`WalletAccountReadOnlyEvmErc4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference). The module predicts the Safe address from that owner and the configuration:
+Create the read-only account with the [known-Safe workflow](/sdk/wallet-modules/wallet-evm-erc-4337/guides/manage-accounts#read-a-known-safe-address), then use [`getBalance()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#getbalance-1) to query that Safe's native balance:
 
 ```javascript title="Read-Only Balance"
-import { WalletAccountReadOnlyEvmErc4337 } from '@tetherto/wdk-wallet-evm-erc-4337'
-
-const readOnlyAccount = new WalletAccountReadOnlyEvmErc4337('0x...', {
-  chainId: 1,
-  provider: 'https://rpc.mevblocker.io/fast',
-  bundlerUrl: 'https://api.candide.dev/public/v3/1',
-  paymasterUrl: 'https://api.candide.dev/public/v3/1',
-  paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
-  safeModulesVersion: '0.3.0',
-  paymasterToken: {
-    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
-  }
-})
-
 const balance = await readOnlyAccount.getBalance()
-console.log('Read-only account balance:', balance, 'wei')
+console.log('Read-only Safe balance:', balance, 'wei')
 ```
+
+The same account supports the token and allowance queries listed in the [API reference](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#methods-2). Balance reads do not require the Safe to be deployed. Reading the configured paymaster token balance requires a `paymasterToken` configuration.
+
+If you have the owner EOA address instead, use the [read-only constructor](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#constructor-2). Passing a Safe address to that constructor predicts a different account; use the [factory](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#fromsafeaddresssafeaddress-config-static-1) to read the supplied Safe directly.
 
 ## Next Steps
 
@@ -32215,7 +32360,7 @@ With your wallet ready, learn how to [manage multiple accounts](/sdk/wallet-modu
 URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm-erc-4337/guides/handle-errors
 Description: Handle errors, manage fees, and dispose of sensitive data.
 
-This guide explains how to [handle transaction errors](#transaction-errors), [correct a provider-chain mismatch](#provider-chain-mismatches), [handle transfer errors](#transfer-errors), [verify paymaster address mismatches](#paymaster-address-mismatches), [diagnose nonce-lane failures](#nonce-lane-failures), and follow [best practices](#best-practices) for fee management and memory cleanup.
+This guide explains how to [handle transaction errors](#transaction-errors), [correct a provider-chain mismatch](#provider-chain-mismatches), [handle transfer errors](#transfer-errors), [verify paymaster address mismatches](#paymaster-address-mismatches), [diagnose nonce-lane failures](#nonce-lane-failures), [handle known-Safe address errors](#known-safe-address-errors), and follow [best practices](#best-practices) for fee management and memory cleanup.
 
 ## Transaction Errors
 
@@ -32323,6 +32468,14 @@ Treat a returned hash as submission evidence, not inclusion. Pass the UserOperat
 
 `getTransaction()` throws `ValueError` for a malformed UserOperation hash and `NoSuchElementError` when the bundler does not know a well-formed hash. During `waitForTransaction()`, an unknown hash is treated as transient while the operation propagates. A `TimeoutError` means the requested finality was not reached in time; a returned `dropped` receipt means the underlying EVM transaction's nonce was replaced or otherwise consumed. A `confirmed` or `final` receipt can still have `success: false`.
 
+## Known-Safe Address Errors
+
+[`fromSafeAddress()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#fromsafeaddresssafeaddress-config-static-1) throws `ValueError` for a malformed Safe address, an invalid mixed-case checksum, or an empty provider list. It throws [`ConfigurationError`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#configurationerror) for an unsupported `safeModulesVersion`. The owner-based constructor and [`predictSafeAddress()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#predictsafeaddressowner-config-static-1) also reject malformed owner addresses with `ValueError`.
+
+A known-Safe account has no owner or signing key. Its verification methods throw `UnsupportedOperationError`, and calling the factory on the writable [`WalletAccountEvmErc4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#walletaccountevmerc4337) class always throws that error. Import `ValueError` and `UnsupportedOperationError` from `@tetherto/wdk-wallet`.
+
+For a non-sponsored quote, an undeployed known Safe throws `ConfigurationError` because building its deployment operation requires the owner address. Confirm the network and address, then use an owner-backed signing flow to deploy the Safe if needed. Do not treat a different address or a sponsored zero-fee quote as a deployment fix: sponsored quotes skip deployment and chain checks and do not prove sponsorship eligibility.
+
 ## Best Practices
 
 ### Fee Management
@@ -32360,9 +32513,9 @@ Always call [`dispose()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference)
 
 ## Manage Accounts
 URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm-erc-4337/guides/manage-accounts
-Description: Work with multiple smart accounts and custom derivation paths.
+Description: Work with multiple smart accounts, custom derivation paths, and known Safe addresses.
 
-This guide explains how to [retrieve accounts by index](#retrieve-accounts-by-index) and [use custom derivation paths](#retrieve-account-by-custom-derivation-path).
+This guide explains how to [retrieve accounts by index](#retrieve-accounts-by-index), [use custom derivation paths](#retrieve-account-by-custom-derivation-path), and [read a known Safe address](#read-a-known-safe-address).
 
 ## Retrieve Accounts by Index
 
@@ -32387,6 +32540,43 @@ const customAccount = await wallet.getAccountByPath("0'/0/5")
 const customAddress = await customAccount.getAddress()
 console.log('Custom account address:', customAddress)
 ```
+
+## Read a Known Safe Address
+
+Use [`WalletAccountReadOnlyEvmErc4337.fromSafeAddress()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#fromsafeaddresssafeaddress-config-static-1) when your app already has the Safe address. It does not need a seed phrase or owner address. The ordinary [read-only constructor](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#constructor-2) instead takes an owner EOA address and predicts a Safe address from it.
+
+1. Obtain the Safe address from your application and select its network configuration.
+2. Pass that address and configuration to the read-only factory.
+3. Confirm that [`getAddress()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#getaddress-1) returns the supplied address in checksummed form.
+
+The example below derives a counterfactual Safe from an upstream test owner to demonstrate the factory. It does not deploy or fund the Safe; use your application's known Safe address for actual balance monitoring.
+
+```javascript title="Read a Known Safe Address"
+import { WalletAccountReadOnlyEvmErc4337 } from '@tetherto/wdk-wallet-evm-erc-4337'
+
+const config = {
+  chainId: 1,
+  provider: 'https://rpc.mevblocker.io/fast',
+  bundlerUrl: 'https://api.candide.dev/public/v3/1',
+  safeModulesVersion: '0.3.0',
+  useNativeCoins: true
+}
+
+// Derivation fixture only; this does not prove the Safe is deployed.
+const safeAddress = WalletAccountReadOnlyEvmErc4337.predictSafeAddress(
+  '0x405005C7c4422390F4B334F64Cf20E0b767131d0',
+  { safeModulesVersion: '0.3.0' }
+)
+const readOnlyAccount = WalletAccountReadOnlyEvmErc4337.fromSafeAddress(
+  safeAddress,
+  config
+)
+console.log('Safe address:', await readOnlyAccount.getAddress())
+```
+
+The factory returns an account synchronously and does not check deployment, discover the owner, or validate that the supplied address is a Safe contract. It can [read balances](/sdk/wallet-modules/wallet-evm-erc-4337/guides/check-balances#read-only-account-balances) and allowances, but cannot sign or send transactions. Its owner is unknown, so [signature verification](/sdk/wallet-modules/wallet-evm-erc-4337/guides/sign-verify-messages#verify-a-signature) is unavailable.
+
+Non-sponsored quotes require this Safe to be deployed before the module can build a UserOperation. A sponsored quote returns a zero fee without checking deployment or sponsorship eligibility; see [known-Safe errors](/sdk/wallet-modules/wallet-evm-erc-4337/guides/handle-errors#known-safe-address-errors).
 
 ## Next Steps
 
@@ -32597,13 +32787,15 @@ console.log('Signature:', signature)
 
 ## Verify a Signature
 
-You can verify a signature using a read-only account. Use [`account.toReadOnlyAccount()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference) to create one, then call [`readOnlyAccount.verify()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference):
+You can verify a signature using a read-only account that retains the owner EOA address. Use [`account.toReadOnlyAccount()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference) to create one, then call [`readOnlyAccount.verify()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference):
 
 ```javascript title="Verify Signature"
 const readOnlyAccount = await account.toReadOnlyAccount()
 const isValid = await readOnlyAccount.verify('Hello, ERC-4337!', signature)
 console.log('Signature valid:', isValid)
 ```
+
+Accounts created with [`fromSafeAddress()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#fromsafeaddresssafeaddress-config-static-1) do not know the owner. Their [`verify()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#verifymessage-signature-1) and [`verifyTypedData()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#verifytypeddatatypeddata-signature-1) methods throw `UnsupportedOperationError`; they do not perform Safe contract signature verification. Use an owner-based read-only account when you need to verify that owner's signature.
 
 ## Sign Typed Data (EIP-712)
 
@@ -32761,7 +32953,7 @@ The `@tetherto/wdk-wallet-evm-erc-4337` module provides account abstraction wall
 Install the package and create your first smart account.
 </Card>
 <Card title="Manage Accounts" href="/sdk/wallet-modules/wallet-evm-erc-4337/guides/manage-accounts">
-Work with multiple smart accounts and custom derivation paths.
+Work with derived smart accounts or monitor a known Safe address.
 </Card>
 <Card title="Check Balances" href="/sdk/wallet-modules/wallet-evm-erc-4337/guides/check-balances">
 Query native, ERC-20, and paymaster token balances.
@@ -47551,15 +47743,15 @@ Integrate WDK into your existing React Native or Expo project using `@tetherto/w
 ### Step 1: Install
 
 ```bash
-npm install @tetherto/wdk-react-native-core@1.0.0-beta.18 react-native-bare-kit
+npm install @tetherto/wdk-react-native-core@1.0.0-beta.19 react-native-bare-kit
 npx expo install expo-crypto
 ```
 
 <Callout type="warn">
-The `v1.0.0-beta.18` npm artifact includes the React Native source entry at `src/index.ts`, but it does not include the declared default JavaScript or type declaration files under `dist/`. TypeScript must use `moduleResolution: "bundler"` with `customConditions: ["react-native"]`, and Metro must retain the `react-native` export condition. Resolvers that select `default` or `types` target files that are not present in this artifact.
+The `v1.0.0-beta.19` npm artifact includes the React Native source entry at `src/index.ts`, but it does not include the declared default JavaScript or type declaration files under `dist/`. TypeScript must use `moduleResolution: "bundler"` with `customConditions: ["react-native"]`, and Metro must retain the `react-native` export condition. Resolvers that select `default` or `types` target files that are not present in this artifact.
 </Callout>
 
-Beta.18 requires `expo-crypto` `>=55.0.0 <57.0.0` and `react-native-bare-kit` `>=0.14.5` as peer dependencies. Confirm that the version selected by `npx expo install` is both inside the package range and compatible with the app's Expo SDK. If the SDK requires a version outside that range, do not force the peer installation; use compatible releases instead. Bare React Native apps must [install and configure Expo modules](https://docs.expo.dev/bare/installing-expo-modules/) before installing `expo-crypto`.
+Beta.19 requires `expo-crypto` `>=55.0.0 <57.0.0` and `react-native-bare-kit` `>=0.14.5` as peer dependencies. Confirm that the version selected by `npx expo install` is both inside the package range and compatible with the app's Expo SDK. If the SDK requires a version outside that range, do not force the peer installation; use compatible releases instead. Bare React Native apps must [install and configure Expo modules](https://docs.expo.dev/bare/installing-expo-modules/) before installing `expo-crypto`.
 
 ### Step 2: Configure Android minSdkVersion
 
@@ -47926,7 +48118,7 @@ Ensure your component is rendered inside `WdkAppProvider`. The provider must be 
 
 **No biometric prompt appears before a wallet operation**
 
-React Native Core beta.18 does not enforce biometrics and does not accept a `requireBiometrics` provider prop. Run your app's biometric, passcode, or other authentication flow before calling `createWallet()`, `restoreWallet()`, `unlock()`, `switchWallet()`, or key-access methods.
+React Native Core beta.19 does not enforce biometrics and does not accept a `requireBiometrics` provider prop. Run your app's biometric, passcode, or other authentication flow before calling `createWallet()`, `restoreWallet()`, `unlock()`, `switchWallet()`, or key-access methods.
 
 For background locking, revoke the app's authenticated UI state synchronously, then call and catch `lock()`. The lifecycle mutex rejects instead of queuing when another guarded operation is running, so track a pending lock and retry it after the in-flight guarded operation settles. Require authentication again on foreground and do not treat the SDK session as locked until a retry succeeds.
 
@@ -47942,7 +48134,7 @@ npx react-native start --reset-cache
 
 **TypeScript cannot resolve React Native Core**
 
-Beta.18's published `default` and `types` export targets are absent. Configure TypeScript to select the included React Native source export:
+Beta.19's published `default` and `types` export targets are absent. Configure TypeScript to select the included React Native source export:
 
 ```json
 {
@@ -47953,7 +48145,7 @@ Beta.18's published `default` and `types` export targets are absent. Configure T
 }
 ```
 
-Use a current React Native or Expo Metro configuration that honors package exports and retains the `react-native` condition. `skipLibCheck` can suppress checks inside declarations after resolution; it cannot repair the missing beta.18 export targets.
+Use a current React Native or Expo Metro configuration that honors package exports and retains the `react-native` condition. `skipLibCheck` can suppress checks inside declarations after resolution; it cannot repair the missing beta.19 export targets.
 
 ### Complete Setup Checklist
 
@@ -51529,7 +51721,7 @@ Starting in `v1.0.0-beta.17`, wallet identity is caller-owned and the library no
 </Callout>
 
 <Callout type="warn">
-The `v1.0.0-beta.18` npm artifact includes the React Native source entry at `src/index.ts`, but it does not include the declared default JavaScript or type declaration files under `dist/`. TypeScript must use `moduleResolution: "bundler"` with `customConditions: ["react-native"]`, and Metro must retain the `react-native` export condition. Resolvers that select `default` or `types` target files that are not present in this artifact.
+The `v1.0.0-beta.19` npm artifact includes the React Native source entry at `src/index.ts`, but it does not include the declared default JavaScript or type declaration files under `dist/`. TypeScript must use `moduleResolution: "bundler"` with `customConditions: ["react-native"]`, and Metro must retain the `react-native` export condition. Resolvers that select `default` or `types` target files that are not present in this artifact.
 </Callout>
 
 ## Quick Start
@@ -51537,11 +51729,11 @@ The `v1.0.0-beta.18` npm artifact includes the React Native source entry at `src
 ### 1. Install
 
 ```bash
-npm install @tetherto/wdk-react-native-core@1.0.0-beta.18 react-native-bare-kit
+npm install @tetherto/wdk-react-native-core@1.0.0-beta.19 react-native-bare-kit
 npx expo install expo-crypto
 ```
 
-Beta.18 requires `expo-crypto` `>=55.0.0 <57.0.0` and `react-native-bare-kit` `>=0.14.5` as peer dependencies. Confirm that the version selected by `npx expo install` is inside the package range and matches the app's Expo SDK. If the SDK requires a version outside the range, do not force the peer installation; use compatible releases instead. In a bare React Native app, [install and configure Expo modules](https://docs.expo.dev/bare/installing-expo-modules/) before installing `expo-crypto`.
+Beta.19 requires `expo-crypto` `>=55.0.0 <57.0.0` and `react-native-bare-kit` `>=0.14.5` as peer dependencies. Confirm that the version selected by `npx expo install` is inside the package range and matches the app's Expo SDK. If the SDK requires a version outside the range, do not force the peer installation; use compatible releases instead. In a bare React Native app, [install and configure Expo modules](https://docs.expo.dev/bare/installing-expo-modules/) before installing `expo-crypto`.
 
 ### 2. Wrap Your App
 
@@ -51743,7 +51935,7 @@ Must be placed at the root of your component tree. All hooks in this library req
 | `children` | `React.ReactNode` | **required** | Child components |
 
 <Callout type="warn">
-Starting in `v1.0.0-beta.17`, `enableAutoInitialization`, `currentUserId`, and `clearSensitiveDataOnBackground` are no longer provider props. `requireBiometrics`, which was removed earlier, is also not accepted by beta.18. The app owns wallet identity, background-locking behavior, and biometric or other authentication checks.
+Starting in `v1.0.0-beta.17`, `enableAutoInitialization`, `currentUserId`, and `clearSensitiveDataOnBackground` are no longer provider props. `requireBiometrics`, which was removed earlier, is also not accepted by beta.19. The app owns wallet identity, background-locking behavior, and biometric or other authentication checks.
 </Callout>
 
 ### Example
@@ -51876,15 +52068,15 @@ Hook for wallet lifecycle operations: create, restore, lock, unlock, delete, and
 Only one wallet can be active. Call and await `lock()` before creating or restoring a different identity. To select a wallet that is already stored, use `switchWallet()` or lock and then unlock that wallet explicitly. `createWallet()`, `restoreWallet()`, `lock()`, `unlock()`, `switchWallet()`, and `createTemporaryWallet()` use a fail-fast mutex, so an overlapping guarded call rejects instead of queuing. The mutex timeout does not cancel an already-running underlying operation. `switchWallet()` is serialized, but it is not transactional: it locks first and does not restore the previous wallet if the new unlock fails.
 
 <Callout type="error">
-`deleteWallet()` and `clearTemporaryWallet()` are not protected by that mutex in beta.18. Deleting even an inactive wallet resets shared local worklet lifecycle state, while the Bare worklet and IPC remain running; this is not remote key cleanup or memory zeroization. The underlying secure-storage deletion can also be partially completed if individual storage operations fail. Authenticate and explicitly confirm destructive deletion, verify another recovery path first, serialize it against every lifecycle operation in the app, call and await `lock()` before deleting the active wallet, and verify the stored wallet inventory afterward.
+`deleteWallet()` and `clearTemporaryWallet()` are not protected by that mutex in beta.19. Deleting even an inactive wallet resets shared local worklet lifecycle state, while the Bare worklet and IPC remain running; this is not remote key cleanup or memory zeroization. The underlying secure-storage deletion can also be partially completed if individual storage operations fail. Authenticate and explicitly confirm destructive deletion, verify another recovery path first, serialize it against every lifecycle operation in the app, call and await `lock()` before deleting the active wallet, and verify the stored wallet inventory afterward.
 </Callout>
 
 <Callout type="error">
-`lock()` is an application-state boundary, not a zeroization guarantee. Beta.18 clears the active ID, local addresses, and local initialization flags, but it does not terminate the Bare worklet or send a remote cleanup request. Do not claim that calling it proves seeds or keys were erased from worklet memory.
+`lock()` is an application-state boundary, not a zeroization guarantee. Beta.19 clears the active ID, local addresses, and local initialization flags, but it does not terminate the Bare worklet or send a remote cleanup request. Do not claim that calling it proves seeds or keys were erased from worklet memory.
 </Callout>
 
 <Callout type="warn">
-React Native Core beta.18 does not enforce biometrics before wallet lifecycle or key-access methods. Authenticate in the app before invoking these methods. For app-background locking, close the authenticated UI boundary immediately and retry `lock()` after any in-flight guarded operation settles; a mutex rejection does not queue or cancel that operation.
+React Native Core beta.19 does not enforce biometrics before wallet lifecycle or key-access methods. Authenticate in the app before invoking these methods. For app-background locking, close the authenticated UI boundary immediately and retry `lock()` after any in-flight guarded operation settles; a mutex rejection does not queue or cancel that operation.
 </Callout>
 
 #### Advanced Crypto Methods
@@ -53233,12 +53425,12 @@ sm.dispose()
 URL: https://docs.wdk.tether.io/tools/wdk-utils
 Description: Chain-aware address validation, mnemonic sharing, seed encryption, deterministic key derivation, and payment-request helpers for @tetherto/wdk-utils
 
-WDK Utils provides CAIP-2-aware and chain-specific validation helpers for Bitcoin, EVM, Lightning, Solana, Spark, Tron, and UMA identifiers, Shamir-based mnemonic sharing, passphrase-based seed encryption, deterministic HKDF-SHA256 and Ed25519 key derivation, BIP-21 Bitcoin payment URI helpers, BOLT11 invoice helpers, and EIP-681 request parsing for token transfer deep links. Powered by [`@tetherto/wdk-utils`](https://github.com/tetherto/wdk-utils).
+WDK Utils provides CAIP-2-aware and chain-specific validation helpers for Bitcoin, EVM, Lightning, Solana, Spark, TON, Tron, and UMA identifiers, Shamir-based mnemonic sharing, passphrase-based seed encryption, deterministic HKDF-SHA256 and Ed25519 key derivation, BIP-21 Bitcoin payment URI helpers, BOLT11 invoice helpers, and EIP-681 request parsing for token transfer deep links. Powered by [`@tetherto/wdk-utils`](https://github.com/tetherto/wdk-utils).
 
 ## Features
 
-- **Chain-aware address validation**: Dispatch to Bitcoin, EVM, Solana, Spark, or Tron validation with a CAIP-2 chain ID, including network checks for Bitcoin and Spark.
-- **Address validation helpers**: Validate Bitcoin, EVM, Lightning invoice, LNURL, Lightning address, Solana, Spark, Tron, and UMA inputs before you hand them to a wallet flow.
+- **Chain-aware address validation**: Dispatch to Bitcoin, EVM, Solana, Spark, TON, or Tron validation with a CAIP-2 chain ID, including network checks for Bitcoin and Spark.
+- **Address validation helpers**: Validate Bitcoin, EVM, Lightning invoice, LNURL, Lightning address, Solana, Spark, TON, Tron, and UMA inputs before you hand them to a wallet flow.
 - **Mnemonic sharing helpers**: Split an English BIP-39 mnemonic into threshold-based Shamir shares and combine enough shares to recover it.
 - **BIP-21 payment URI helpers**: Detect, parse, and encode `bitcoin:` payment URIs with optional amount, label, and message fields.
 - **Seed encryption helpers**: Encrypt and decrypt seed phrases or other strings with AES-256-GCM and scrypt-derived keys.
@@ -53309,13 +53501,14 @@ Description: Validation, encryption, mnemonic sharing, BIP-21, BOLT11, and EIP-6
 | `decodeLnurl(address)` | Decode an LNURL string into its original URL. | `LnurlDecodingResult` |
 | `validateLightningAddress(address)` | Validate a Lightning Address in `user@domain.tld` form. | `LightningAddressValidationResult` |
 | `validateSparkAddress(address)` | Validate a Spark address or a Bitcoin L1 deposit address accepted by Spark flows. | `SparkAddressValidationResult` |
+| `validateTonAddress(address)` | Validate raw TON address structure or a user-friendly address and its checksum. | `TonAddressValidationResult` |
 | `validateTronAddress(address)` | Validate a Tron Base58Check address and prefix byte. | `TronAddressValidationResult` |
 | `validateUmaAddress(address)` | Validate a Universal Money Address. | `UmaAddressValidationResult` |
 | `resolveUmaUsername(uma)` | Split a valid UMA string into `localPart`, `domain`, and `lightningAddress`. | Parsed UMA details or `null`. |
 
 #### `validateAddress(chainId, address)`
 
-Validate an address with the chain-specific validator selected by a CAIP-2 chain ID or a bare namespace accepted by WDK Utils. The supported namespaces are `bip122`, `eip155`, `solana`, `spark`, and `tron`.
+Validate an address with the chain-specific validator selected by a CAIP-2 chain ID or a bare namespace accepted by WDK Utils. The supported namespaces are `bip122`, `eip155`, `solana`, `spark`, `ton`, and `tron`.
 
 ```javascript title="Validate An Address For A CAIP-2 Chain"
 import { validateAddress } from '@tetherto/wdk-utils'
@@ -53339,7 +53532,7 @@ For `bip122` and `spark`, the reference selects the expected network. Other supp
 
 Validate a Base58Check Bitcoin address and identify whether it matches a supported P2PKH or P2SH network version byte.
 
-The current beta.11 type declaration includes an internal `{ decoded: Uint8Array }` branch in this return type. The shipped runtime returns validation results rather than exposing that intermediate decode object.
+The beta.12 type declaration includes an internal `{ decoded: Uint8Array }` branch in this return type. The shipped runtime returns validation results rather than exposing that intermediate decode object.
 
 ```javascript title="Validate A Base58 Bitcoin Address"
 import { validateBase58 } from '@tetherto/wdk-utils'
@@ -53584,6 +53777,35 @@ const l1Deposit = validateSparkAddress(
 
 Bitcoin L1 deposit-address formats can be shared by Spark testnet/signet or regtest/local, so the compatibility array can contain two networks.
 
+#### `validateTonAddress(address)`
+
+Validate a required string `address` in raw `<workchain>:<64 hex characters>` form or user-friendly base64/base64url form. The synchronous signature is `validateTonAddress(address: string): TonAddressValidationResult`.
+
+```javascript title="Validate A TON Address"
+import { validateTonAddress } from '@tetherto/wdk-utils'
+
+const result = validateTonAddress(
+  'EQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPrHF'
+)
+// { success: true, type: 'ton' }
+```
+
+The package root exports these types:
+
+- `TonAddressValidationSuccess`: `{ success: true, type: 'ton' }`.
+- `TonAddressValidationFailure`: the shared failure shape, `{ success: false, reason: string }`.
+- `TonAddressValidationResult`: the union of those success and failure types. `ValidateAddressResult` also includes it when `validateAddress()` dispatches the `ton` namespace.
+
+The validator trims surrounding whitespace. Raw addresses receive a structure check for a signed integer workchain ID and 64 hexadecimal characters; they have no checksum. User-friendly addresses must have 48 characters, decode to the expected size, carry a bounceable or non-bounceable tag, and pass the CRC16-CCITT checksum. Standard base64 and URL-safe base64 are accepted.
+
+Runtime failure reasons are:
+
+- `EMPTY_ADDRESS`: the string is empty after trimming.
+- `INVALID_FORMAT`: the input is not a string or its structure, encoding, decoded size, or tag is invalid.
+- `INVALID_CHECKSUM`: the user-friendly address checksum does not match.
+
+Success does not establish account existence, ownership, or whether a workchain is supported. Test-only user-friendly addresses are accepted, and the result does not identify their network. `validateAddress()` also does not enforce the TON reference against the address's test-only flag; apply the intended network and recipient policy separately.
+
 #### `validateTronAddress(address)`
 
 Validate a Tron Base58Check address. The helper checks the `T` prefix, the 34-character address length, the Tron prefix byte, and the checksum.
@@ -53689,6 +53911,10 @@ import { decryptWithKey } from '@tetherto/wdk-utils'
 const plaintext = decryptWithKey(encrypted, key)
 ```
 
+#### `DEFAULT_SCRYPT_PARAMS`
+
+The exported default cost parameters are `{ N: 65536, r: 8, p: 1 }`. The encryption helpers use these values for omitted scrypt parameters.
+
 ### Seed Key Derivation Helpers
 
 Derive deterministic, domain-separated key material from high-entropy seed bytes.
@@ -53771,7 +53997,7 @@ const shares = await splitMnemonic(seedPhrase, {
 - The returned shares are unencrypted lowercase hex strings.
 - The package-specific share strings are not SLIP-39 mnemonic shares. They do not include the recovery threshold or a format-version marker, so retain that metadata separately.
 - Invalid BIP-39 words, word counts, and checksums are rejected.
-- Node.js uses the dependency's `node:crypto` implementation. Browser and React Native paths must provide secure `crypto.getRandomValues`; React Native apps may need to load `react-native-get-random-values` before importing WDK Utils. In Bare, import from the package root so the Bare entrypoint provides the Node-compatible crypto path; do not load the React Native polyfill. The dependency versions currently resolved for a fresh beta.11 installation require Bare `1.28.0` or later.
+- Node.js uses the dependency's `node:crypto` implementation. Browser and React Native paths must provide secure `crypto.getRandomValues`; React Native apps may need to load `react-native-get-random-values` before importing WDK Utils. In Bare, import from the package root so the Bare entrypoint provides the Node-compatible crypto path; do not load the React Native polyfill. With `bare-module` 6.4.0, the beta.12 dependency tree requires Bare `1.29.4` or later.
 
 #### `combineMnemonic(shares)`
 
@@ -53819,11 +54045,13 @@ const looksLikeRequest = isBip21Request(
 
 Parse a BIP-21 Bitcoin payment URI. The helper validates the Bitcoin address, accepts optional `amount`, `label`, and `message` parameters, rejects unsupported `req-` parameters, and returns machine-readable failure reasons.
 
+Raw non-ASCII characters in the query return `INVALID_FORMAT`. Percent-encode query text: `label=Caf%C3%A9` is accepted and decoded to `Café`, while `label=Café` is rejected. `isBip21Request()` checks the request shape and does not perform this validation.
+
 ```javascript title="Parse A BIP-21 Request"
 import { parseBip21Request } from '@tetherto/wdk-utils'
 
 const result = parseBip21Request(
-  'bitcoin:1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH?amount=0.001&label=Coffee&message=Thanks'
+  'bitcoin:1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH?amount=0.001&label=Caf%C3%A9&message=Thanks'
 )
 ```
 
@@ -53843,7 +54071,7 @@ const result = parseBip21Request(
 
 #### `encodeBip21Request(request)`
 
-Encode a BIP-21 Bitcoin payment URI from a request object. The helper validates the Bitcoin address and amount before returning the URI.
+Encode a BIP-21 Bitcoin payment URI from a request object. The helper validates the Bitcoin address and amount, then percent-encodes the query values before returning the URI. Pass the original `label` and `message` text; do not pre-encode these fields.
 
 ```javascript title="Encode A BIP-21 Request"
 import { encodeBip21Request } from '@tetherto/wdk-utils'
@@ -53880,6 +54108,8 @@ const looksLikeRequest = isEip681Request(
 #### `parseEip681Request(input)`
 
 Parse a supported EIP-681 transfer request. The published runtime supports `transfer` requests, accepts `value` as an alias for `uint256`, and normalizes scientific-notation amounts into integer `amountSmallest` strings.
+
+Raw non-ASCII characters anywhere in the query return `INVALID_FORMAT`, including in parameters the parser otherwise ignores. Percent-encode non-ASCII query text before parsing. `isEip681Request()` only checks the request shape; a positive detection result does not prove that the query is valid.
 
 ```javascript title="Parse An EIP-681 Request"
 import { parseEip681Request } from '@tetherto/wdk-utils'
@@ -53950,6 +54180,7 @@ import {
   validateLightningAddress,
   validateSolanaAddress,
   validateSparkAddress,
+  validateTonAddress,
   validateTronAddress,
   validateUmaAddress,
   resolveUmaUsername
@@ -54031,15 +54262,17 @@ import {
 ## Runtime notes
 
 - `@tetherto/wdk-utils` exports plain functions. There is no client object to initialize.
-- The package publishes a default module entrypoint through `index.js` and a Bare runtime entrypoint through `bare.js`. The dependency versions currently resolved for a fresh beta.11 installation require Bare `1.28.0` or later.
-- `validateAddress()` dispatches the CAIP-2 namespaces `bip122`, `eip155`, `solana`, `spark`, and `tron` to their chain validators. Unsupported namespaces return `UNSUPPORTED_CHAIN`, and malformed chain IDs return `INVALID_CHAIN_ID`.
+- The package publishes a default module entrypoint through `index.js` and a Bare runtime entrypoint through `bare.js`. With `bare-module` 6.4.0, the beta.12 dependency tree requires Bare `1.29.4` or later.
+- `validateAddress()` dispatches the CAIP-2 namespaces `bip122`, `eip155`, `solana`, `spark`, `ton`, and `tron` to their chain validators. Unsupported namespaces return `UNSUPPORTED_CHAIN`, and malformed chain IDs return `INVALID_CHAIN_ID`.
 - For `bip122` and `spark`, the chain reference selects the expected network. A missing, unknown, or incompatible reference returns `NETWORK_MISMATCH`. Other supported namespaces validate the address format but do not enforce the reference value.
 - Successful Bitcoin and Spark validators return `compatibleNetworks`, because some address formats are valid on more than one network. WDK Utils validates structure and network compatibility, not account existence, ownership, or recipient intent.
+- `validateTonAddress()` accepts raw TON addresses and user-friendly base64/base64url addresses. It checks the checksum only for user-friendly inputs and does not enforce mainnet/testnet compatibility. See [TON validation](/tools/wdk-utils/api-reference#validatetonaddressaddress) for result types and failures.
 - `validateSolanaAddress()` accepts base58-encoded 32-byte public keys, including off-curve program-derived addresses. Solana has no address checksum, so the helper cannot detect every mistyped address.
 - `splitMnemonic()` accepts valid 12-, 15-, 18-, 21-, or 24-word English BIP-39 phrases. It returns hex-encoded Shamir shares and supports threshold schemes from 2-of-2 through 255-of-255.
 - `combineMnemonic()` verifies an embedded 32-bit integrity checksum before returning the reconstructed phrase. The checksum normally detects accidental corruption, but it can collide and does not authenticate shares.
 - `encrypt()` requires `globalThis.crypto.getRandomValues`. In Node.js, `splitMnemonic()` uses the dependency's `node:crypto` implementation; browser and React Native paths require `globalThis.crypto.getRandomValues`. In React Native, load `react-native-get-random-values` before importing `@tetherto/wdk-utils` when the runtime does not provide secure random bytes. In Bare, import from the package root so the Bare entrypoint provides the Node-compatible crypto path; do not load the React Native polyfill.
 - `parseBip21Request()` accepts `bitcoin:` URIs with a validated Bitcoin address and optional `amount`, `label`, and `message` parameters.
+- `parseBip21Request()` and `parseEip681Request()` reject raw non-ASCII query text with `INVALID_FORMAT`. Percent-encode query values, for example `Caf%C3%A9` for `Café`. The BIP-21 encoder handles encoding for its `label` and `message` fields.
 - `encodeBip21Request()` validates the Bitcoin address and amount before returning a `bitcoin:` URI.
 - `encrypt()` returns a versioned payload with hex-encoded `salt`, `iv`, `tag`, and `ciphertext` fields plus the scrypt cost parameters used for key derivation.
 - `decrypt()` reads the scrypt cost parameters from the encrypted payload when they are present.
@@ -54079,6 +54312,17 @@ const tron = validateTronAddress('TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH')
 const uma = validateUmaAddress('$you@uma.money')
 ```
 
+Validate a TON address using [`validateTonAddress()`](/tools/wdk-utils/api-reference#validatetonaddressaddress). This address is a format-validation fixture; a successful result does not verify the account or its owner:
+
+```javascript title="Validate A TON Address"
+import { validateTonAddress } from '@tetherto/wdk-utils'
+
+const result = validateTonAddress(
+  'EQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPrHF'
+)
+// { success: true, type: 'ton' }
+```
+
 You can decode BOLT11 invoice details before presenting a payment request:
 
 ```javascript title="Decode A BOLT11 Invoice"
@@ -54089,19 +54333,19 @@ const invoice = decodeBolt11(
 )
 ```
 
-You can parse and encode a BIP-21 Bitcoin payment request:
+Parse a BIP-21 Bitcoin payment request with a percent-encoded label, or pass the original label to `encodeBip21Request()` to encode it:
 
 ```javascript title="Handle A BIP-21 Request"
 import { encodeBip21Request, parseBip21Request } from '@tetherto/wdk-utils'
 
 const parsed = parseBip21Request(
-  'bitcoin:1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH?amount=0.001&label=Coffee'
+  'bitcoin:1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH?amount=0.001&label=Caf%C3%A9'
 )
 
 const encoded = encodeBip21Request({
   address: '1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH',
   amount: '0.001',
-  label: 'Coffee'
+  label: 'Café'
 })
 ```
 
@@ -54172,7 +54416,7 @@ You need:
 - A recovery policy that defines the total number of shares (`n`) and the threshold needed to recover (`k`). Both values must be integers, `2 <= k <= n <= 255`.
 - A secure way to distribute and retain each share separately, plus a tamper-evident record for authenticating the share bytes during recovery.
 - Cryptographically secure randomness. Node.js uses its `node:crypto` implementation. Browser and React Native paths must provide `globalThis.crypto.getRandomValues`; React Native runtimes may need a polyfill.
-- Bare `1.28.0` or later when using the package's Bare entrypoint. That entrypoint loads `bare-node-runtime/global`, and the dependency versions currently resolved for a fresh beta.11 installation enforce this minimum.
+- Bare `1.29.4` or later when using the package's Bare entrypoint. That entrypoint loads `bare-node-runtime/global`; the beta.12 dependency tree with `bare-module` 6.4.0 declares this minimum.
 
 <Callout type="warn">
 The helper receives only the mnemonic words. It does not include an optional BIP-39 passphrase, derivation path, network, account index, or other wallet metadata. Preserve everything your wallet needs for recovery through a separate protected process.
@@ -54400,7 +54644,7 @@ Worklet Bundler packages selected WDK wallet, protocol, and optional generic mod
 - **Opt-in handle diagnostics**: Use `options.handleLeakCheck` to inspect suspend-to-idle delays in generated HRPC worklets.
 
 <Callout type="info">
-`v1.0.0-beta.12` adds generic modules and their method allowlists to JSON-RPC entrypoints, including module suspend/resume forwarding. Use Pear Worklet `v1.0.0-beta.13` for JSON-RPC module calls and events. The new `options.handleLeakCheck` diagnostic is generated only for HRPC.
+`v1.0.0-beta.13` supports generic modules and their method allowlists in JSON-RPC entrypoints, including module suspend/resume forwarding. Use Pear Worklet `v1.0.0-beta.13` for JSON-RPC module calls and events. The `options.handleLeakCheck` diagnostic is generated only for HRPC.
 </Callout>
 
 ## Why this matters
@@ -54410,7 +54654,7 @@ Worklet Bundler packages selected WDK wallet, protocol, and optional generic mod
 - Transport-specific defaults produce a JavaScript HRPC bundle for React Native Core or native addon artifacts for JSON-RPC hosts; JavaScript-engine compatibility is configured separately.
 
 <Callout type="warn">
-`options.handleLeakCheck` is opt-in and reports active handles without closing them. JSON-RPC entrypoints do not enable this diagnostic in beta.12; see [configuration](/tools/worklet-bundler/configuration#configure-suspend-diagnostics) for the transport boundary.
+`options.handleLeakCheck` is opt-in and reports active handles without closing them. JSON-RPC entrypoints do not enable this diagnostic in beta.13; see [configuration](/tools/worklet-bundler/configuration#configure-suspend-diagnostics) for the transport boundary.
 </Callout>
 
 <Cards>
@@ -54483,19 +54727,19 @@ interface WdkBundleConfig {
 }
 ```
 
-`allowedMethods` is keyed by network. Its direct `methods` array restricts account calls, while `protocols` nests restrictions by protocol type and protocol name. `allowedModuleMethods` is keyed by generic-module name and applies to both HRPC and JSON-RPC. These inline helper shapes are present in the config declaration but are not named exports from the beta.12 npm entrypoint.
+`allowedMethods` is keyed by network. Its direct `methods` array restricts account calls, while `protocols` nests restrictions by protocol type and protocol name. `allowedModuleMethods` is keyed by generic-module name and applies to both HRPC and JSON-RPC. These inline helper shapes are present in the config declaration but are not named exports from the beta.13 npm entrypoint.
 
 Every omitted map, level, or `methods` field remains unrestricted. An explicit `methods: []` denies every method on that exact surface. Both generated contexts receive `allowedMethods` and `allowedModuleMethods`.
 
-Beta.12 generates `modules` for both transports. Use Pear Worklet beta.13 for JSON-RPC module calls and events. JSON-RPC defaults addon linking to `true`; HRPC defaults it to `false`. `options.convertEsmToCjs` defaults to `false` for both transports and must be enabled explicitly for targets whose Bare engine cannot load ESM.
+Beta.13 generates `modules` for both transports. Use Pear Worklet beta.13 for JSON-RPC module calls and events. JSON-RPC defaults addon linking to `true`; HRPC defaults it to `false`. `options.convertEsmToCjs` defaults to `false` for both transports and must be enabled explicitly for targets whose Bare engine cannot load ESM.
 
 <Callout type="warn">
-Beta.12 declares `output.types`, `options.minify`, and `options.sourceMaps`, but its bundle generator does not honor those fields. Declarations are always written to `./.wdk/index.d.ts`; `minify` and `sourceMaps` do not control `bare-pack` output. ESM-to-CJS conversion minifies independently.
+Beta.13 declares `output.types`, `options.minify`, and `options.sourceMaps`, but its bundle generator does not honor those fields. Declarations are always written to `./.wdk/index.d.ts`; `minify` and `sourceMaps` do not control `bare-pack` output. ESM-to-CJS conversion minifies independently.
 </Callout>
 
 `options.handleLeakCheck` is optional and applies only to generated HRPC entrypoints. Set `true` to use Pear Worklet beta.13's default `1000` ms interval, or a positive number to pass as `tickIntervalMs`. Omit it to disable diagnostics; `false`, zero, negative numbers, and strings fail `loadConfig()` validation. The interval controls repeated sampling after an immediate suspend snapshot, not a one-time delay.
 
-Generation checks whether the installed Pear Worklet diagnostic subpath resolves, warning and skipping it if unavailable. The helper logs through `console.warn` until Bare `idle` or `resume`; it does not close handles. JSON-RPC generation accepts the option but does not emit diagnostic registration in beta.12.
+Generation checks whether the installed Pear Worklet diagnostic subpath resolves, warning and skipping it if unavailable. The helper logs through `console.warn` until Bare `idle` or `resume`; it does not close handles. JSON-RPC generation accepts the option but does not emit diagnostic registration in beta.13.
 
 #### `ResolvedConfig`
 
@@ -54619,7 +54863,7 @@ Use `generateBundle()` when you want the same bundle workflow that powers the CL
 - `silent`
 - `skipTypes`
 - `skipGeneration`: Reuse an existing generated entrypoint. If `config.options.convertEsmToCjs` changed, regenerate the entrypoint first so its `.mjs` loader behavior matches the bundle conversion.
-- `deferOptionalPeers?` (`boolean`): When omitted or `true`, pass missing peers marked optional through `bare-pack --defer`. Beta.12 checks root, nested, scoped, and symlinked package trees before treating an optional peer as missing. Set this option to `false` to require absent optional imports at build time.
+- `deferOptionalPeers?` (`boolean`): When omitted or `true`, pass missing peers marked optional through `bare-pack --defer`. Beta.13 checks root, nested, scoped, and symlinked package trees before treating an optional peer as missing. Set this option to `false` to require absent optional imports at build time.
 
 `deferOptionalPeers` is a per-run API option. It is not a `WdkBundleConfig` field and cannot be set in `wdk.config.js`.
 
@@ -54633,7 +54877,7 @@ Use `generateBundle()` when you want the same bundle workflow that powers the CL
 - `error?`
 - `missingModule?`
 
-In beta.12, `typesPath` can reflect a configured `output.types` path even though the declaration file is still written to `./.wdk/index.d.ts`.
+In beta.13, `typesPath` can reflect a configured `output.types` path even though the declaration file is still written to `./.wdk/index.d.ts`.
 
 ```typescript title="Generate A Bundle Programmatically"
 import { generateBundle, loadConfig } from '@tetherto/wdk-worklet-bundler'
@@ -54652,11 +54896,11 @@ Use `generateSourceFiles()` when you want the generated entrypoint without the f
 
 Use `generateEntryPoint()` when you need the generated HRPC Bare entrypoint written to a chosen output directory. This path includes configured generic modules, both method-allowlist maps, module lifecycle/event wiring, and the optional `handleLeakCheck` diagnostic.
 
-Starting in beta.3, the generated entrypoint suspends and resumes both the `bare-http1` and `bare-https` global agents when the Bare runtime emits `suspend` and `resume`. Beta.12 also logs the generated worklet's Bare `suspend`, `resume`, and `idle` events. When `options.convertEsmToCjs` is enabled, beta.12 also emits the matching runtime `.mjs`-as-CommonJS loader patch.
+Starting in beta.3, the generated entrypoint suspends and resumes both the `bare-http1` and `bare-https` global agents when the Bare runtime emits `suspend` and `resume`. Beta.13 also logs the generated worklet's Bare `suspend`, `resume`, and `idle` events. When `options.convertEsmToCjs` is enabled, beta.13 also emits the matching runtime `.mjs`-as-CommonJS loader patch.
 
 #### `generateJsonRpcEntryPoint(config, outputDir)`
 
-Generate the framed JSON-RPC entrypoint used by native hosts. Beta.12 includes wallet, protocol, and generic-module managers plus both method-allowlist maps. With Pear Worklet beta.13, it supports module calls/events and forwards Bare `suspend` and `resume` to the module runtime. It does not generate HRPC's HTTP-agent lifecycle hooks or the `handleLeakCheck` diagnostic. When `options.convertEsmToCjs` is enabled, it emits the same `.mjs` loader patch as the HRPC generator.
+Generate the framed JSON-RPC entrypoint used by native hosts. Beta.13 includes wallet, protocol, and generic-module managers plus both method-allowlist maps. With Pear Worklet beta.13, it supports module calls/events and forwards Bare `suspend` and `resume` to the module runtime. It does not generate HRPC's HTTP-agent lifecycle hooks or the `handleLeakCheck` diagnostic. When `options.convertEsmToCjs` is enabled, it emits the same `.mjs` loader patch as the HRPC generator.
 
 #### `linkAddons(config, options?)`
 
@@ -54685,11 +54929,11 @@ convertBundleEsmToCjs('./.wdk-bundle/wdk-worklet.bundle.js', {
 })
 ```
 
-The beta.12 converter accepts raw `.bundle` data and the default UTF-8 CommonJS, ESM, or JSON string wrappers produced by bare-pack. Wrappers created with a non-UTF-8 `--encoding`, such as Base64, are not supported. The converter transforms `.js`, `.mjs`, and `.cjs` files, lowers dynamic imports, removes `"type": "module"` from bundled package manifests, recomputes offsets with `bare-bundle`, restores the original wrapper, and calls `validateBundle()` before returning. It throws if any source transformation or final validation fails.
+The beta.13 converter accepts raw `.bundle` data and the default UTF-8 CommonJS, ESM, or JSON string wrappers produced by bare-pack. Wrappers created with a non-UTF-8 `--encoding`, such as Base64, are not supported. The converter transforms `.js`, `.mjs`, and `.cjs` files, lowers dynamic imports, removes `"type": "module"` from bundled package manifests, recomputes offsets with `bare-bundle`, restores the original wrapper, and calls `validateBundle()` before returning. It throws if any source transformation or final validation fails.
 
 This helper rewrites only the packed bundle. For `.mjs` files to load as CommonJS at runtime, generate the HRPC or JSON-RPC entrypoint with `options.convertEsmToCjs: true` before packing, or provide equivalent loader behavior yourself. Do not convert a bundle while reusing an entrypoint generated with conversion disabled.
 
-The inline `options` shape has `minify?: boolean` and `verbose?: boolean`. `ConvertOptions` appears in the generated declaration as the parameter shape but is not a named export from the beta.12 package entrypoint.
+The inline `options` shape has `minify?: boolean` and `verbose?: boolean`. `ConvertOptions` appears in the generated declaration as the parameter shape but is not a named export from the beta.13 package entrypoint.
 
 #### `validateBundle(bundlePath)`
 
@@ -54718,7 +54962,7 @@ The published CLI exposes these commands through `wdk-worklet-bundler`:
 For the end-to-end config workflow and transport defaults, see the [Worklet Bundler configuration guide](/tools/worklet-bundler/configuration).
 
 <Callout type="warn">
-Beta.12 applies `--transport` after `loadConfig()` resolves output paths. The flag changes entrypoint generation but does not recompute the default bundle filename. Set `transport` in `wdk.config.js`, or configure `output.bundle` explicitly when using the flag.
+Beta.13 applies `--transport` after `loadConfig()` resolves output paths. The flag changes entrypoint generation but does not recompute the default bundle filename. Set `transport` in `wdk.config.js`, or configure `output.bundle` explicitly when using the flag.
 </Callout>
 
 ***
@@ -54741,10 +54985,10 @@ Install the bundler as a development dependency and Pear Worklet as a runtime de
 
 ```bash title="Install The Bundler And Runtime"
 npm install @tetherto/pear-wrk-wdk@1.0.0-beta.13
-npm install --save-dev @tetherto/wdk-worklet-bundler@1.0.0-beta.12
+npm install --save-dev @tetherto/wdk-worklet-bundler@1.0.0-beta.13
 ```
 
-Worklet Bundler beta.12 generates entrypoints that import Pear Worklet. Use Pear Worklet beta.13 for JSON-RPC generic-module calls and events, and for the diagnostic export used by `options.handleLeakCheck`. The bundler checks whether the runtime package is installed; it does not enforce this version pairing.
+Worklet Bundler beta.13 generates entrypoints that import Pear Worklet. Use Pear Worklet beta.13 for JSON-RPC generic-module calls and events, and for the diagnostic export used by `options.handleLeakCheck`. The bundler checks whether the runtime package is installed; it does not enforce this version pairing.
 
 ## Create `wdk.config.js`
 
@@ -54908,11 +55152,11 @@ Use `modules` for named generic packages that expose a module factory. Each entr
 
 The factory receives `{ seed, config, capabilities, emit }` and can return the module instance or a promise for it. A module that needs the seed must consume it synchronously rather than retain it. The build-time name, such as `preferences`, must match the key in the host's runtime module config.
 
-Beta.12 generates these modules for both transports. With Pear Worklet beta.13, JSON-RPC initialization constructs them from the encrypted seed pair and matching runtime `modules` config. Module calls retain JSON-string `args`; results and event payloads are decoded JSON values. See the [Pear Worklet JSON-RPC examples](/tools/pear-wrk-wdk/configuration#json-rpc-transport).
+Beta.13 generates these modules for both transports. With Pear Worklet beta.13, JSON-RPC initialization constructs them from the encrypted seed pair and matching runtime `modules` config. Module calls retain JSON-string `args`; results and event payloads are decoded JSON values. See the [Pear Worklet JSON-RPC examples](/tools/pear-wrk-wdk/configuration#json-rpc-transport).
 
 ### `transport` (optional)
 
-Choose `hrpc` or `jsonrpc`. HRPC is the default and is the transport used by React Native Core. JSON-RPC produces a length-prefixed bundle for a native host and enables addon linking by default. In beta.12, ESM-to-CJS conversion is an independent, explicit option for both transports.
+Choose `hrpc` or `jsonrpc`. HRPC is the default and is the transport used by React Native Core. JSON-RPC produces a length-prefixed bundle for a native host and enables addon linking by default. In beta.13, ESM-to-CJS conversion is an independent, explicit option for both transports.
 
 ### `preloadModules` (optional)
 
@@ -54923,7 +55167,7 @@ Use `preloadModules` for native addons or other modules that must be required be
 Supported output fields are:
 
 - `bundle`: Bundle path. Defaults to `./.wdk-bundle/wdk-worklet.bundle.js` for HRPC and `./.wdk-bundle/wdk-worklet.bundle` for JSON-RPC.
-- `types`: Declared in the beta.12 config type, but the generator does not honor a custom value and always writes declarations to `./.wdk/index.d.ts`.
+- `types`: Declared in the beta.13 config type, but the generator does not honor a custom value and always writes declarations to `./.wdk/index.d.ts`.
 - `addons.ios`, `addons.macos`, `addons.android`: Platform addon directories. Defaults are `./ios-addons`, `./mac-addons`, and `./android-addons`.
 - `addonsYml`: BareKit Swift dependency file. Defaults to `./ios-addons/addons.yml` and is generated when iOS addons are linked.
 
@@ -54931,8 +55175,8 @@ Supported output fields are:
 
 The published config type supports these build options:
 
-- `minify` (`boolean`): Declared in the beta.12 config type but not read by the bundle path. ESM-to-CJS conversion minifies independently of this field.
-- `sourceMaps` (`boolean`): Declared in the beta.12 config type but not read by the bundle path, so it does not produce source maps.
+- `minify` (`boolean`): Declared in the beta.13 config type but not read by the bundle path. ESM-to-CJS conversion minifies independently of this field.
+- `sourceMaps` (`boolean`): Declared in the beta.13 config type but not read by the bundle path, so it does not produce source maps.
 - `targets` (`string[]`): Override the default Bare build hosts. The shipped defaults cover iOS arm64 and simulator targets plus Android arm, arm64, ia32, and x64 hosts.
 - `linkAddons` (`boolean`): Link native addons with `bare-link`. Defaults to `true` for JSON-RPC and `false` for HRPC.
 - `platforms` (`('ios' | 'macos' | 'android')[]`): Addon platforms. Defaults to all three when addon linking is active.
@@ -54961,7 +55205,7 @@ This emits `registerHandleLeakCheck({ tickIntervalMs: 5000 })`. The diagnostic l
 If the installed Pear Worklet package does not expose `@tetherto/pear-wrk-wdk/diagnostics/handle-leak-check`, generation warns and omits the diagnostic. If the export exists but its optional `bare-walk-handles` dependency or Bare lifecycle events are unavailable, the runtime helper does nothing.
 
 <Callout type="warn">
-Beta.12 emits this diagnostic only for HRPC. Setting `options.handleLeakCheck` in a JSON-RPC config passes validation but does not emit diagnostic registration. Custom JSON-RPC entrypoints can register the [Pear Worklet helper](/tools/pear-wrk-wdk/configuration#inspect-suspend-delays) themselves.
+Beta.13 emits this diagnostic only for HRPC. Setting `options.handleLeakCheck` in a JSON-RPC config passes validation but does not emit diagnostic registration. Custom JSON-RPC entrypoints can register the [Pear Worklet helper](/tools/pear-wrk-wdk/configuration#inspect-suspend-delays) themselves.
 </Callout>
 
 ### Configure ESM-to-CJS conversion
@@ -54979,14 +55223,14 @@ module.exports = {
 }
 ```
 
-In the normal `generate` or `generateBundle()` path, beta.12 uses one flag for both build-time conversion and the generated runtime loader:
+In the normal `generate` or `generateBundle()` path, beta.13 uses one flag for both build-time conversion and the generated runtime loader:
 
 - After `bare-pack`, it converts `.js`, `.mjs`, and `.cjs` files to CommonJS, lowers dynamic `import()`, removes `"type": "module"` from bundled package manifests, and rebuilds bundle offsets with `bare-bundle`.
 - It preserves raw bundles and the default UTF-8 CommonJS, ESM, or JSON string wrappers produced by supported `bare-pack` output suffixes. Wrappers created with a non-UTF-8 `--encoding`, such as Base64, are not supported.
 - It validates the rewritten file map, offsets, lengths, CommonJS syntax, entrypoint, package manifests, and absence of dynamic imports before generation succeeds.
 - The generated HRPC or JSON-RPC entrypoint routes `.mjs` files through the CommonJS loader only when conversion is enabled.
 
-There is no beta.12 CLI flag that overrides this setting. Set `options.convertEsmToCjs` in the config used for the build.
+There is no beta.13 CLI flag that overrides this setting. Set `options.convertEsmToCjs` in the config used for the build.
 
 ## Configure JSON-RPC and native addons
 
@@ -55028,11 +55272,11 @@ npx wdk-worklet-bundler validate
 
 ## Handle peer dependencies
 
-Worklet Bundler beta.12 separates required peers from peers explicitly marked optional through `peerDependenciesMeta`:
+Worklet Bundler beta.13 separates required peers from peers explicitly marked optional through `peerDependenciesMeta`:
 
 - During bundle generation, missing required peers are offered for installation. In a non-interactive environment without `--install`, the CLI prints the exact manual install command and continues; `bare-pack` can still fail if the bundle needs that peer. The peer scan is skipped by `--source-only`.
 - Missing optional peers are not prompted for or installed. By default, the bundler passes each one to `bare-pack --defer`, so an unused optional feature does not block the build.
-- Optional peers detected anywhere in the scanned package tree are not deferred. Beta.12 matches package names across root, nested, scoped, and symlinked package trees; install a peer in an ancestor `node_modules` visible to the package that imports it, because the same package name elsewhere in the tree can suppress deferral without making that import resolvable. A peer that is required anywhere else in the scanned dependency tree is treated as required and is not deferred.
+- Optional peers detected anywhere in the scanned package tree are not deferred. Beta.13 matches package names across root, nested, scoped, and symlinked package trees; install a peer in an ancestor `node_modules` visible to the package that imports it, because the same package name elsewhere in the tree can suppress deferral without making that import resolvable. A peer that is required anywhere else in the scanned dependency tree is treated as required and is not deferred.
 
 Use `--no-defer-optional-peers` when the app uses an optional feature and you want a missing peer to fail during the build:
 
@@ -55054,11 +55298,11 @@ Use `generate` to build the worklet artifact:
 npx wdk-worklet-bundler generate --install
 ```
 
-`generate --install` can auto-install missing configured wallet, protocol, generic, preload, and Pear Worklet runtime dependencies after the package manager is detected from the project root. In beta.12, the Pear Worklet runtime is included for both HRPC and JSON-RPC, so the generated entrypoint's runtime dependency is surfaced during validation and installation instead of failing later in `bare-pack`.
+`generate --install` can auto-install missing configured wallet, protocol, generic, preload, and Pear Worklet runtime dependencies after the package manager is detected from the project root. In beta.13, the Pear Worklet runtime is included for both HRPC and JSON-RPC, so the generated entrypoint's runtime dependency is surfaced during validation and installation instead of failing later in `bare-pack`.
 
 Use `--source-only` when you want the generated `.wdk/wdk-worklet.generated.js` entrypoint and related artifacts without running `bare-pack`. This mode also skips bundle conversion. If `options.convertEsmToCjs` is `true` and you run `bare-pack` yourself, convert the packed bundle with `convertBundleEsmToCjs()` before deployment; the source-only entrypoint already contains the matching `.mjs` loader patch. Keep the same conversion setting when generating the entrypoint and converting the bundle.
 
-The `generate` command also accepts `--transport hrpc|jsonrpc`, `--link-addons`, `--skip-link-addons`, `--platforms ios,macos,android`, and `--no-defer-optional-peers`. Set `transport` in `wdk.config.js` when you rely on its transport-specific default bundle path. In beta.12, `--transport` changes the generated transport after output paths have already been resolved, so it does not switch `.js` HRPC output to the extensionless JSON-RPC default, or vice versa. If you use the flag, set `output.bundle` explicitly to the intended path.
+The `generate` command also accepts `--transport hrpc|jsonrpc`, `--link-addons`, `--skip-link-addons`, `--platforms ios,macos,android`, and `--no-defer-optional-peers`. Set `transport` in `wdk.config.js` when you rely on its transport-specific default bundle path. In beta.13, `--transport` changes the generated transport after output paths have already been resolved, so it does not switch `.js` HRPC output to the extensionless JSON-RPC default, or vice versa. If you use the flag, set `output.bundle` explicitly to the intended path.
 
 `--skip-generation` reuses an existing generated entrypoint. If `options.convertEsmToCjs` changed since that entrypoint was created, regenerate without `--skip-generation` before building so the runtime `.mjs` loader matches the bundle conversion setting.
 
@@ -55066,13 +55310,13 @@ The `generate` command also accepts `--transport hrpc|jsonrpc`, `--link-addons`,
 
 Generated HRPC and JSON-RPC entrypoints forward Bare `suspend` and `resume` events to the configured generic modules' optional lifecycle methods. Pear Worklet closes modules during full disposal or reinitialization; targeted wallet disposal leaves them running.
 
-HRPC entrypoints additionally suspend and resume both the `bare-http1` and `bare-https` global agents and log Bare `suspend`, `resume`, and `idle` events. JSON-RPC beta.12 does not include that HTTP-agent handling. These lifecycle hooks require no diagnostic flag; `options.handleLeakCheck` only adds HRPC handle reporting.
+HRPC entrypoints additionally suspend and resume both the `bare-http1` and `bare-https` global agents and log Bare `suspend`, `resume`, and `idle` events. JSON-RPC beta.13 does not include that HTTP-agent handling. These lifecycle hooks require no diagnostic flag; `options.handleLeakCheck` only adds HRPC handle reporting.
 
 ## Troubleshooting
 
 - If `loadConfig()` cannot find a config file, run `npx wdk-worklet-bundler init` or pass `--config \<path\>`.
 - If `validate` or `generate` reports missing modules, use `generate --install` or inspect the install command from the exported helper APIs in the [API Reference](/tools/worklet-bundler/api-reference).
-- When `bare-pack` reports an unresolved package subpath, beta.12 reduces scoped or unscoped subpaths to the installable package root and prints an install command for the package manager detected from the project root. It prints no install hint when the reported specifier is not an installable package, such as a relative or absolute path, private import, URL or builtin-prefixed specifier, or bare scope.
+- When `bare-pack` reports an unresolved package subpath, beta.13 reduces scoped or unscoped subpaths to the installable package root and prints an install command for the package manager detected from the project root. It prints no install hint when the reported specifier is not an installable package, such as a relative or absolute path, private import, URL or builtin-prefixed specifier, or bare scope.
 - If you need to inspect generated source before bundling, use `generate --source-only` and review the files in `.wdk/`. For a CommonJS-only target, pack and convert that source as described above before running it.
 
 ***

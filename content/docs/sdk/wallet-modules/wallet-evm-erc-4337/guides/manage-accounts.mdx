@@ -1,9 +1,9 @@
 ---
 title: Manage Accounts
-description: Work with multiple smart accounts and custom derivation paths.
+description: Work with multiple smart accounts, custom derivation paths, and known Safe addresses.
 ---
 
-This guide explains how to [retrieve accounts by index](#retrieve-accounts-by-index) and [use custom derivation paths](#retrieve-account-by-custom-derivation-path).
+This guide explains how to [retrieve accounts by index](#retrieve-accounts-by-index), [use custom derivation paths](#retrieve-account-by-custom-derivation-path), and [read a known Safe address](#read-a-known-safe-address).
 
 ## Retrieve Accounts by Index
 
@@ -28,6 +28,43 @@ const customAccount = await wallet.getAccountByPath("0'/0/5")
 const customAddress = await customAccount.getAddress()
 console.log('Custom account address:', customAddress)
 ```
+
+## Read a Known Safe Address
+
+Use [`WalletAccountReadOnlyEvmErc4337.fromSafeAddress()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#fromsafeaddresssafeaddress-config-static-1) when your app already has the Safe address. It does not need a seed phrase or owner address. The ordinary [read-only constructor](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#constructor-2) instead takes an owner EOA address and predicts a Safe address from it.
+
+1. Obtain the Safe address from your application and select its network configuration.
+2. Pass that address and configuration to the read-only factory.
+3. Confirm that [`getAddress()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#getaddress-1) returns the supplied address in checksummed form.
+
+The example below derives a counterfactual Safe from an upstream test owner to demonstrate the factory. It does not deploy or fund the Safe; use your application's known Safe address for actual balance monitoring.
+
+```javascript title="Read a Known Safe Address"
+import { WalletAccountReadOnlyEvmErc4337 } from '@tetherto/wdk-wallet-evm-erc-4337'
+
+const config = {
+  chainId: 1,
+  provider: 'https://rpc.mevblocker.io/fast',
+  bundlerUrl: 'https://api.candide.dev/public/v3/1',
+  safeModulesVersion: '0.3.0',
+  useNativeCoins: true
+}
+
+// Derivation fixture only; this does not prove the Safe is deployed.
+const safeAddress = WalletAccountReadOnlyEvmErc4337.predictSafeAddress(
+  '0x405005C7c4422390F4B334F64Cf20E0b767131d0',
+  { safeModulesVersion: '0.3.0' }
+)
+const readOnlyAccount = WalletAccountReadOnlyEvmErc4337.fromSafeAddress(
+  safeAddress,
+  config
+)
+console.log('Safe address:', await readOnlyAccount.getAddress())
+```
+
+The factory returns an account synchronously and does not check deployment, discover the owner, or validate that the supplied address is a Safe contract. It can [read balances](/sdk/wallet-modules/wallet-evm-erc-4337/guides/check-balances#read-only-account-balances) and allowances, but cannot sign or send transactions. Its owner is unknown, so [signature verification](/sdk/wallet-modules/wallet-evm-erc-4337/guides/sign-verify-messages#verify-a-signature) is unavailable.
+
+Non-sponsored quotes require this Safe to be deployed before the module can build a UserOperation. A sponsored quote returns a zero fee without checking deployment or sponsorship eligibility; see [known-Safe errors](/sdk/wallet-modules/wallet-evm-erc-4337/guides/handle-errors#known-safe-address-errors).
 
 ## Next Steps
 
