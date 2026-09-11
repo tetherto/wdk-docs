@@ -1,0 +1,83 @@
+---
+title: MoonPay Trade Swidge Configuration
+description: Configure MoonPay Trade API access, discovery caching, execution slippage, and provider fee limits.
+docType: reference
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Pass configuration to `new MoonPayTradeSwidgeProtocol(account, config)`. The `config` object and `apiKey` are required even when the account is `undefined`.
+
+## Constructor settings
+
+| Option | Type | Required | Default and effect |
+|---|---|---|---|
+| `apiKey` | `string` | Yes | Sent as the `x-api-key` header on every API request. Validate that it is nonempty in your application. |
+| `baseUrl` | `string` | No | `https://api-v2.swaps.xyz`. Use a trusted API origin without an additional path prefix; the module sends its key to this destination. |
+| `cacheTtlMs` | `number` | No | `600000` milliseconds. Per-instance discovery cache lifetime; `0` disables storage. |
+| `maxProtocolFeeBps` | `number \| bigint` | No | No cap. Limits the provider's `applicationFee` during execution. |
+| `maxNetworkFeeBps` | `number \| bigint` | No | No cap. Limits the provider's `bridgeFee` during execution. |
+
+Use nonnegative integer fee caps. One basis point is 0.01%; `50` means 0.5%. Fractional numbers cannot be converted to the integer fee-cap representation.
+
+Configure API access and limits after validating your application's values:
+
+```javascript title="Configure execution limits"
+import MoonPayTradeSwidgeProtocol from '@moonpay/wdk-protocol-swidge-moonpay-trade'
+
+const protocol = new MoonPayTradeSwidgeProtocol(account, {
+  apiKey,
+  cacheTtlMs: 600_000,
+  maxProtocolFeeBps: 50,
+  maxNetworkFeeBps: 100
+})
+```
+
+`account` is the writable wallet created in the [execution guide](/sdk/swidge-modules/swidge-moonpay-trade/guides/execute-swidge); `apiKey` is your configured SwapsXYZ credential.
+
+## Fee limits
+
+Per-call settings override the corresponding constructor setting for that execution:
+
+```javascript title="Override one fee cap"
+const result = await protocol.swidge(confirmedOptions, {
+  maxProtocolFeeBps: 25
+})
+```
+
+`confirmedOptions` contains the user-approved exact-input route and its `minAmountOut`. The unchanged network cap still comes from the constructor.
+
+The module calculates each checked fee as `fee * 10000 / inputAmount` using integer division. For exact-input execution, the denominator is the requested `fromTokenAmount`. It checks the refreshed quote before creating the provider swap.
+
+<Callout type="warn">
+These caps do not limit the provider's separate `protocolFee`, which appears as an `other` fee, or the wallet's deposit-submission gas. A gas fee returned by the wallet is not a provider bridge fee. Configure wallet transaction limits separately and review all disclosed fee categories before execution.
+</Callout>
+
+Fee limits are checked by `swidge()`, not by `quoteSwidge()`. A configured cap is therefore not an indication that an indicative quote has passed it.
+
+## Slippage and minimum output
+
+Pass `slippage` in execution options as a decimal, for example `0.005` for 0.5%. Execution defaults to `0.005`. Validate that the value is finite and in your application's accepted range before calling the module; version 0.2.0 does not enforce that range.
+
+Pass `minAmountOut` as a positive `bigint` in destination token units. Before submission, the module compares it with the refreshed expected output minus the configured slippage, rounded to basis points. If that computed amount is lower, execution throws `MinAmountOutNotMetError`.
+
+The indicative quote request does not forward `slippage`, `minAmountOut`, `recipient`, or `refundAddress`. Set the final recipient and minimum output explicitly in the options passed to execution.
+
+## Discovery caching
+
+`getSupportedChains()` and chain-filtered `getSupportedTokens({ fromChain })` reuse per-instance cached data. Calling `getSupportedTokens()` without a filter always requests the full list and refreshes the per-chain cache.
+
+Use `clearCache()` to refresh discovery on the next request. With `cacheTtlMs: 0`, chain discovery returns an empty `nativeToken` string in this release because native-symbol lookup reads the cache. Token discovery still returns provider token data.
+
+The module falls back to 18 decimals and a non-native token when execution cannot find an address in the provider token list. Reject unknown identifiers in your application before execution; do not rely on this fallback for amount conversion.
+
+## Runtime requirements
+
+The default package entry uses global `fetch`. The `bare` export condition initializes `bare-node-runtime`; import the same package root when your runtime selects that condition. The package does not declare a minimum engine version. Check the requirements of your resolved dependency tree when deploying to Bare.
+
+The module has no request timeout, retry, cancellation, or manual deposit-confirmation setting. Configure operational deadlines in the host application and reconcile provider and wallet state after an interrupted execution.

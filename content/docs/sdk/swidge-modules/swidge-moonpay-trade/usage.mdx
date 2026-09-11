@@ -1,0 +1,117 @@
+---
+title: MoonPay Trade Swidge Usage
+description: Install MoonPay Trade Swidge 0.2.0 and request an indicative quote with discovered token identifiers.
+docType: how-to
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+[Install the module](#install-the-module), [configure API access](#configure-api-access), [select supported tokens](#select-supported-tokens), and [preview a quote](#preview-a-quote). This accountless flow does not submit a transaction.
+
+## Install the module
+
+Use [Node.js](https://nodejs.org/) with global `fetch` and [npm](https://docs.npmjs.com/). Obtain a SwapsXYZ API key from your MoonPay integration contact. Keep it in secret-managed configuration and out of client bundles and logs.
+
+Install the version covered by these pages:
+
+```bash
+npm install @moonpay/wdk-protocol-swidge-moonpay-trade@0.2.0
+```
+
+The module installs its core wallet dependency. You do not need a chain-specific wallet package for this accountless example. The [execution guide](/sdk/swidge-modules/swidge-moonpay-trade/guides/execute-swidge) installs the EVM wallet separately.
+
+## Configure API access
+
+Create an ES module file such as `quote.mjs`. The snippets below belong in that file, in order.
+
+Construct [`MoonPayTradeSwidgeProtocol`](/sdk/swidge-modules/swidge-moonpay-trade/api-reference#constructor) with no wallet:
+
+```javascript title="Configure the provider"
+import MoonPayTradeSwidgeProtocol from '@moonpay/wdk-protocol-swidge-moonpay-trade'
+
+const apiKey = process.env.SWAPS_XYZ_KEY
+if (!apiKey) throw new Error('Set SWAPS_XYZ_KEY')
+
+const protocol = new MoonPayTradeSwidgeProtocol(undefined, { apiKey })
+```
+
+## Select supported tokens
+
+This example uses Ethereum, chain id `1`, and two token identifiers supplied by your application's approved token selection. Before quoting, verify each selected token's address and decimals against its issuer or protocol's deployment information.
+
+1. Set `MOONPAY_FROM_TOKEN_ID` and `MOONPAY_TO_TOKEN_ID` to exact discovered identifiers in the form `chainId:address`.
+2. Set `MOONPAY_FROM_DECIMALS` and `MOONPAY_TO_DECIMALS` to the precision verified from that deployment information.
+3. Set `MOONPAY_FROM_AMOUNT` to a positive integer string in the source token's smallest unit.
+4. Require both identifiers to remain in the current provider response. Do not resolve an asset by symbol alone.
+
+Check the chain with [`getSupportedChains()`](/sdk/swidge-modules/swidge-moonpay-trade/api-reference#getsupportedchains):
+
+```javascript title="Check the source chain"
+const chainId = 1
+const chains = await protocol.getSupportedChains()
+if (!chains.some(chain => Number(chain.id) === chainId)) {
+  throw new Error('The provider does not currently list Ethereum')
+}
+```
+
+Resolve the exact selected identifiers with [`getSupportedTokens()`](/sdk/swidge-modules/swidge-moonpay-trade/api-reference#getsupportedtokens):
+
+```javascript title="Validate the selected tokens and amount"
+const tokens = await protocol.getSupportedTokens({ fromChain: chainId })
+const from = tokens.find(token => token.token === process.env.MOONPAY_FROM_TOKEN_ID)
+const to = tokens.find(token => token.token === process.env.MOONPAY_TO_TOKEN_ID)
+const amount = process.env.MOONPAY_FROM_AMOUNT ?? ''
+const fromDecimals = Number(process.env.MOONPAY_FROM_DECIMALS)
+const toDecimals = Number(process.env.MOONPAY_TO_DECIMALS)
+
+if (!from || !to || from.token === to.token) {
+  throw new Error('Select two different approved tokens from the provider response')
+}
+if (![fromDecimals, toDecimals].every(value => Number.isInteger(value) && value >= 0) ||
+    from.decimals !== fromDecimals || to.decimals !== toDecimals) {
+  throw new Error('Provider token precision differs from the verified token metadata')
+}
+if (!/^[1-9][0-9]*$/.test(amount)) {
+  throw new Error('Set MOONPAY_FROM_AMOUNT to a positive integer in source token units')
+}
+
+const route = {
+  fromToken: from.token,
+  toToken: to.token,
+  fromTokenAmount: BigInt(amount)
+}
+```
+
+The embedded chain in each discovered identifier determines the route. For cross-chain operations, discover the destination token on its own chain and supply an explicitly validated destination recipient before execution. Do not assume the same address represents the same asset on another chain.
+
+## Preview a quote
+
+Request an indicative quote with [`quoteSwidge()`](/sdk/swidge-modules/swidge-moonpay-trade/api-reference#quoteswidge):
+
+```javascript title="Preview the selected route"
+const quote = await protocol.quoteSwidge(route)
+console.log({
+  input: quote.fromTokenAmount.toString(),
+  expectedOutput: quote.toTokenAmount.toString(),
+  minimumOutput: quote.toTokenAmountMin.toString()
+})
+```
+
+Run the file after configuring the environment variables:
+
+```bash
+node quote.mjs
+```
+
+A successful call returns amounts as `bigint` values and itemized fees. Format each amount using its token's verified decimals. Keep fee amounts separate by token and chain; they are not interchangeable units. The accountless quote does not include the wallet's deposit-gas estimate.
+
+The provider can reject a pair or amount even when both tokens appear in discovery. See [errors](/sdk/swidge-modules/swidge-moonpay-trade/api-reference#errors) for response handling.
+
+## Next Steps
+
+Continue to [Execute a Swidge](/sdk/swidge-modules/swidge-moonpay-trade/guides/execute-swidge) to bind a writable EVM account and confirm a transaction. Review [configuration](/sdk/swidge-modules/swidge-moonpay-trade/configuration) before setting fee limits.
