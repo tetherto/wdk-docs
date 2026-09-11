@@ -1,0 +1,152 @@
+---
+title: Execute a MoonPay Trade Swidge
+description: Confirm an exact-input EVM route, submit the source deposit, and track MoonPay Trade settlement.
+docType: how-to
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+[Prepare an EVM account](#prepare-an-evm-account), [confirm the operation](#confirm-the-operation), [submit the deposit](#submit-the-deposit), and [track settlement](#track-settlement). Use [recovery guidance](#recover-from-an-interrupted-operation) if an operation is interrupted. For support, see [Need Help?](#need-help).
+
+Complete the [accountless usage example](/sdk/swidge-modules/swidge-moonpay-trade/usage) first. This guide reuses its validated Ethereum `route`, `apiKey`, and package import. It executes an exact-input operation with those same token identifiers and amount.
+
+## Prepare an EVM account
+
+Prepare an Ethereum RPC endpoint, a securely managed wallet seed phrase, sufficient source assets, and native gas funds. Verify that the RPC endpoint serves Ethereum before using this route. The protocol does not check that the wallet network matches the chain encoded in the selected token identifiers.
+
+Install the EVM wallet version used by this example:
+
+```bash
+npm install @moonpay/wdk-protocol-swidge-moonpay-trade@0.2.0 @tetherto/wdk-wallet-evm@1.0.0-beta.16
+```
+
+Create a [`WalletManagerEvm`](/sdk/wallet-modules/wallet-evm/api-reference#walletmanagerevm) and retrieve the signing account with [`getAccount()`](/sdk/wallet-modules/wallet-evm/api-reference#getaccountindex):
+
+```javascript title="Create the source wallet"
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+
+const seedPhrase = process.env.WDK_SEED_PHRASE
+const provider = process.env.ETHEREUM_RPC_URL
+if (!seedPhrase || !provider) {
+  throw new Error('Configure the wallet seed phrase and Ethereum RPC endpoint')
+}
+
+const wallet = new WalletManagerEvm(seedPhrase, { provider })
+const account = await wallet.getAccount(0)
+```
+
+Bind [`MoonPayTradeSwidgeProtocol`](/sdk/swidge-modules/swidge-moonpay-trade/api-reference#constructor) to that account:
+
+```javascript title="Bind the protocol to the source account"
+const executor = new MoonPayTradeSwidgeProtocol(account, {
+  apiKey,
+  maxProtocolFeeBps: 50,
+  maxNetworkFeeBps: 100
+})
+```
+
+The limits above are example application policies. They exclude the separate `other` fee and deposit-submission gas; review [fee-limit coverage](/sdk/swidge-modules/swidge-moonpay-trade/configuration#fee-limits).
+
+## Confirm the operation
+
+1. Set the recipient explicitly. This same-chain example receives output at the source account.
+2. Preview the same route with [`quoteSwidge()`](/sdk/swidge-modules/swidge-moonpay-trade/api-reference#quoteswidge).
+3. Let the user review the token identities, chains, amounts, recipient, fees, slippage, and minimum output before submission.
+
+Prepare the recipient and slippage using [`account.getAddress()`](/sdk/wallet-modules/wallet-evm/api-reference#getaddress):
+
+```javascript title="Set the execution options"
+const options = {
+  ...route,
+  recipient: await account.getAddress(),
+  slippage: 0.005
+}
+```
+
+Before quoting with a bound account, configure credential redaction for captured console output. A failed gas estimate can write a raw wallet error to `console.warn`, including its RPC request URL. Avoid forwarding unredacted wallet or provider errors to shared logs.
+
+Obtain an indicative quote with [`quoteSwidge()`](/sdk/swidge-modules/swidge-moonpay-trade/api-reference#quoteswidge):
+
+```javascript title="Preview before confirmation"
+const preview = await executor.quoteSwidge(options)
+if (preview.toTokenAmountMin <= 0n) {
+  throw new Error('The preview has no positive minimum output')
+}
+const confirmedOptions = {
+  ...options,
+  minAmountOut: preview.toTokenAmountMin
+}
+```
+
+`confirmOperation` below is a function your application must implement. It displays the operation details and returns `true` only after explicit user approval. This approval includes sending a source deposit to the provider-selected address; the module does not expose that address for a second confirmation step.
+
+Require application confirmation before calling [`swidge()`](/sdk/swidge-modules/swidge-moonpay-trade/api-reference#swidge):
+
+```javascript title="Require user confirmation"
+const approved = await confirmOperation({
+  options: confirmedOptions,
+  indicativeQuote: preview
+})
+if (!approved) throw new Error('Operation cancelled before submission')
+```
+
+The execution quote can differ from this preview. The minimum-output check can reject execution if the refreshed quote falls below the confirmed minimum.
+
+## Submit the deposit
+
+<Callout type="warn">
+The next call creates a provider swap and sends funds. For a native source asset, the wallet sends a native transaction; for an EVM token, it transfers tokens directly to the deposit address. There is no module-level allowance check, spender approval, or nonzero-allowance reset to configure.
+</Callout>
+
+Submit the confirmed exact-input route with [`swidge()`](/sdk/swidge-modules/swidge-moonpay-trade/api-reference#swidge):
+
+```javascript title="Submit the source deposit"
+const result = await executor.swidge(confirmedOptions)
+```
+
+Persist `result.id`, `result.hash`, and the confirmed route in your application's operation record immediately. The `id` identifies the provider swap; the `hash` identifies the source transaction. A returned hash does not establish destination settlement, and `result.toTokenAmount` remains an expected output amount.
+
+The module checks the refreshed quote's provider fees, minimum output, and exact-input deposit ceiling before creating the swap. It rejects a provider-requested input amount above `fromTokenAmount`.
+
+## Track settlement
+
+Check the persisted tracking id with [`getSwidgeStatus()`](/sdk/swidge-modules/swidge-moonpay-trade/api-reference#getswidgestatus):
+
+```javascript title="Read provider status"
+const status = await executor.getSwidgeStatus(result.id)
+const supportedStatuses = new Set([
+  'pending', 'refund-pending', 'completed', 'failed',
+  'refunded', 'cancelled', 'expired'
+])
+if (typeof status.status !== 'string' || !supportedStatuses.has(status.status)) {
+  throw new Error('Unrecognized settlement status; keep the operation unresolved')
+}
+console.log(status.status)
+```
+
+Schedule subsequent status checks in your application. `pending` and `refund-pending` require further tracking. The module can return `completed`, `failed`, `refunded`, `cancelled`, or `expired` as terminal outcomes. A failed or expired operation does not itself prove a refund; reconcile the provider status and reported transactions.
+
+## Recover from an interrupted operation
+
+- If execution throws before a result is returned, a provider swap may already exist and a source transaction may already have been broadcast. Check your wallet's transaction history and provider records before repeating the call.
+- If you have the tracking id, resume [`getSwidgeStatus()`](/sdk/swidge-modules/swidge-moonpay-trade/api-reference#getswidgestatus) from the saved operation record. The module has no idempotency-key option for execution.
+- If a fee, input ceiling, or minimum-output guard rejects the refreshed quote, obtain a new preview and ask for a new confirmation before changing those limits.
+- For `ProviderApiError`, use its status to guide read-only request retries. Do not treat an execution HTTP or network error as proof that nothing happened.
+- For `UnknownStatusError`, keep the operation unresolved and investigate `rawStatus`; do not assume completion.
+
+See the complete [error reference](/sdk/swidge-modules/swidge-moonpay-trade/api-reference#errors). After completing account work, use the wallet's [cleanup guidance](/sdk/wallet-modules/wallet-evm/guides/manage-accounts). The protocol itself does not expose a disposal method.
+
+## Next Steps
+
+Review [configuration](/sdk/swidge-modules/swidge-moonpay-trade/configuration) for caching and fee policies, or the [API reference](/sdk/swidge-modules/swidge-moonpay-trade/api-reference) for exact result and status fields.
+
+---
+
+## Need Help?
+
+<SupportCards />

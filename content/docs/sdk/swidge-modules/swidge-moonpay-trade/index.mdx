@@ -1,0 +1,73 @@
+---
+title: MoonPay Trade Swidge Overview
+description: Discover routes, preview quotes, and submit wallet deposits with the MoonPay Trade Swidge module.
+docType: explanation
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+The MoonPay Trade Swidge module connects WDK wallet accounts to MoonPay's SwapsXYZ API for swaps and cross-chain transfers. These pages cover [`@moonpay/wdk-protocol-swidge-moonpay-trade@0.2.0`](https://www.npmjs.com/package/@moonpay/wdk-protocol-swidge-moonpay-trade/v/0.2.0).
+
+The default entry requires global `fetch` and a SwapsXYZ API key. Execution also requires a chain-specific wallet package and a configured source-network RPC provider. See [runtime requirements](/sdk/swidge-modules/swidge-moonpay-trade/configuration#runtime-requirements).
+
+Use the module to discover provider-supported chains and tokens, request indicative quotes, submit a source deposit through a writable wallet account, and track the provider's settlement status.
+
+## How execution works
+
+1. Discover the source and destination tokens and validate their identifiers and precision.
+2. Request an indicative quote with `quoteSwidge()`.
+3. Confirm the route, input amount, recipient, fees, and minimum acceptable output in your application.
+4. Call `swidge()` to obtain a fresh quote, create a provider swap, and send the source deposit.
+5. Track the returned `id` with `getSwidgeStatus()`.
+
+`swidge()` sends funds to the deposit address returned by the provider. It returns the provider's tracking `id` and the source transaction `hash`; it does not wait for destination settlement. For an EVM token, the wallet performs a token transfer. The module does not request an ERC-20 allowance or approve a spender.
+
+<Callout type="warn">
+The indicative quote is not the quote executed by `swidge()`. Set `minAmountOut` and fee limits before execution. Version 0.2.0 does not expose the fresh quote or deposit address for a separate confirmation callback before submission.
+</Callout>
+
+## Choose an integration
+
+| Need | Account requirement |
+|---|---|
+| Discover chains and tokens, preview quotes, or check provider status | No wallet required |
+| Include a best-effort deposit-gas estimate in a quote | A compatible account with transfer-quoting methods |
+| Send the source deposit | A supported concrete writable WDK account, connected to the source network |
+
+The [execution guide](/sdk/swidge-modules/swidge-moonpay-trade/guides/execute-swidge) covers exact-input EVM operations. The declared account types also include Bitcoin, TON, Tron, Solana, and account-abstraction variants; see [account requirements](/sdk/swidge-modules/swidge-moonpay-trade/api-reference#account-requirements) before using another wallet.
+
+## Integration limits
+
+- Provider discovery changes over time. A listed token or chain does not guarantee a quote or executable route.
+- Use exact-input execution. The types accept exact-output options, but the execution request does not send an exact-output direction selector.
+- The application must verify that the account's network matches the source chain and that the recipient is valid for the destination chain.
+- Fee limits cover selected provider fee categories, not the entire cost. See [fee limits](/sdk/swidge-modules/swidge-moonpay-trade/configuration#fee-limits).
+- API requests have no module-level timeout, retry, or cancellation settings. Reconcile a failed submission before retrying it.
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-moonpay-trade/usage">
+Install the module, discover tokens, and preview a quote without a wallet.
+</Card>
+<Card title="Execute a Swidge" href="/sdk/swidge-modules/swidge-moonpay-trade/guides/execute-swidge">
+Configure an EVM account, confirm an exact-input operation, and track settlement.
+</Card>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-moonpay-trade/configuration">
+Set API access, caching, slippage, and fee limits.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-moonpay-trade/api-reference">
+Review methods, options, result fields, and exported errors.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

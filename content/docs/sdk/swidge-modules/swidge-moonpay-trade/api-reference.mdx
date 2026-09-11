@@ -1,0 +1,232 @@
+---
+title: MoonPay Trade Swidge API Reference
+description: Constructor, methods, options, results, and errors for MoonPay Trade Swidge 0.2.0.
+docType: reference
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+This reference covers [`@moonpay/wdk-protocol-swidge-moonpay-trade@0.2.0`](https://www.npmjs.com/package/@moonpay/wdk-protocol-swidge-moonpay-trade/v/0.2.0) and its `@tetherto/wdk-wallet@1.0.0-beta.16` protocol types.
+
+## Exports
+
+Import the default class, its named alias, and provider types from the package root:
+
+```typescript title="Public entrypoint"
+import MoonPayTradeSwidgeProtocol, {
+  type MoonPayTradeConfig,
+  type MoonPayTradeSwidgeOptions,
+  type SwidgeReadOnlyAccount,
+  type SwidgeWritableAccount,
+  type ISwidgeProtocol
+} from '@moonpay/wdk-protocol-swidge-moonpay-trade'
+```
+
+The named class export is also `MoonPayTradeSwidgeProtocol`. All nine [error classes](#errors) are exported from this entrypoint. There are no public mapper or account-classification subpaths.
+
+## Constructor
+
+The constructor has writable and read-only overloads:
+
+```typescript
+new MoonPayTradeSwidgeProtocol(account: SwidgeWritableAccount, config: MoonPayTradeConfig)
+new MoonPayTradeSwidgeProtocol(account: SwidgeReadOnlyAccount | undefined, config: MoonPayTradeConfig)
+```
+
+The account can be `undefined` for discovery, indicative quotes, and status lookups. `config.apiKey` is required. See [constructor settings](/sdk/swidge-modules/swidge-moonpay-trade/configuration#constructor-settings) for all five configuration fields.
+
+### Account requirements
+
+Execution recognizes these writable WDK account classes:
+
+| Class | Optional peer package |
+|---|---|
+| `WalletAccountEvm` | `@tetherto/wdk-wallet-evm` |
+| `WalletAccountEvmErc4337` | `@tetherto/wdk-wallet-evm-erc-4337` |
+| `WalletAccountTron` | `@tetherto/wdk-wallet-tron` |
+| `WalletAccountTronGasfree` | `@tetherto/wdk-wallet-tron-gasfree` |
+| `WalletAccountBtc` | `@tetherto/wdk-wallet-btc` |
+| `WalletAccountTon` | `@tetherto/wdk-wallet-ton` |
+| `WalletAccountSolana` | `@tetherto/wdk-wallet-solana` |
+| `WalletAccountSolanaGasless` | `@tetherto/wdk-wallet-solana-gasless` |
+
+Install the wallet package for the account you use. The [execution example](/sdk/swidge-modules/swidge-moonpay-trade/guides/execute-swidge) pins the EVM wallet to `1.0.0-beta.16`. The corresponding read-only account classes are accepted for read-only operations.
+
+The 0.2.0 declarations import types from every optional wallet peer. TypeScript builds that check dependency declarations can therefore report missing-module errors when only one wallet is installed. Resolve those peer types or configure dependency-declaration checking according to your project policy; this does not change which wallet packages the JavaScript runtime needs.
+
+Account recognition depends on constructor names in the prototype chain. Preserve these class names when bundling; a generic object with similarly named methods is not a supported writable account.
+
+Account recognition does not verify network compatibility or establish that every deposit form works with every wallet version. The module forwards a single `{ to, value }` object for native deposits and `{ token, recipient, amount }` for token transfers. Verify that the chosen wallet accepts that shape, including any account-abstraction requirements. Native TON deposits can attach a memo through `body`; token deposits with a memo and non-TON native deposits with a memo throw `UnsupportedDepositError`. Sponsorship and relay policies belong to the wallet configuration.
+
+## Methods
+
+### Method summary
+
+| Method | Returns | Purpose |
+|---|---|---|
+| `clearCache()` | `void` | Clear this instance's token and chain caches. |
+| `quoteSwidge(options)` | `Promise<SwidgeQuote>` | Preview a route without sending funds. |
+| `swidge(options, config?)` | `Promise<SwidgeResult>` | Refresh the quote, create a swap, and submit its source deposit. |
+| `getSwidgeStatus(id, options?)` | `Promise<SwidgeStatusResult>` | Read provider settlement status. |
+| `getSupportedChains()` | `Promise<SwidgeSupportedChain[]>` | Discover provider-supported chains. |
+| `getSupportedTokens(options?)` | `Promise<SwidgeSupportedToken[]>` | Discover tokens, optionally by source chain. |
+| `swap(options)` | `Promise<SwapResult>` | Inherited adapter to execution. |
+| `quoteSwap(options)` | `Promise<Omit<SwapResult, 'hash'>>` | Inherited adapter to indicative quoting. |
+| `bridge(options)` | `Promise<BridgeResult>` | Inherited adapter with a shared source/destination token identifier. |
+| `quoteBridge(options)` | `Promise<Omit<BridgeResult, 'hash'>>` | Inherited adapter to a bridge quote. |
+
+### Method details
+
+#### clearCache
+
+`clearCache(): void` clears both caches for this instance. It does not cancel in-flight requests or affect another protocol instance.
+
+#### quoteSwidge
+
+`quoteSwidge(options: MoonPayTradeSwidgeOptions): Promise<SwidgeQuote>` calls `GET /api/getQuote`. Provide exactly one amount: `fromTokenAmount` for an exact-input preview or `toTokenAmount` for an exact-output preview.
+
+The request includes token addresses, chain ids, amount, and direction. It does not forward recipient, refund address, slippage, or minimum-output options. If an account is bound, the module attempts to estimate deposit gas using a transfer to the account's own address; if estimation fails, it logs the raw wallet error to `console.warn` and returns the quote without that fee. Wallet errors can contain RPC request URLs, so configure credential redaction for captured console output before quoting.
+
+#### swidge
+
+`swidge(options: MoonPayTradeSwidgeOptions, config?: SwidgeProtocolConfig): Promise<SwidgeResult>` requires a recognized writable account. It requests a new decimal-amount quote from `POST /api/postQuote`, checks fees, minimum output, and the exact-input ceiling, creates a swap through `POST /api/postSwap`, and sends its deposit.
+
+Use `fromTokenAmount` for execution. Although the type accepts `toTokenAmount`, the POST request does not send an exact-output direction selector; do not depend on exact-output execution semantics in this release.
+
+The operation uses the provider's returned deposit address, rather than transaction calldata from the indicative quote. EVM token deposits use a direct token transfer, without a module-managed allowance or spender approval. The result does not wait for settlement.
+
+#### getSwidgeStatus
+
+`getSwidgeStatus(id: string, options?: SwidgeStatusOptions): Promise<SwidgeStatusResult>` calls `GET /api/getStatus` with `txId: id`. Pass the provider id returned by execution, not the source transaction hash. `options.fromChain` and `options.toChain` are accepted but ignored. An empty id throws a generic `Error`.
+
+#### getSupportedChains
+
+`getSupportedChains(): Promise<SwidgeSupportedChain[]>` fetches chain metadata and derives native symbols from provider token data. Each result has `id`, `name`, `type`, and `nativeToken`. The id is provider-specific; do not assume every non-EVM id uses an EVM chain-id standard.
+
+Discovery is cached by instance. `nativeToken` can be empty when no native entry exists or caching is disabled. Listing a chain does not establish route liquidity or wallet compatibility.
+
+#### getSupportedTokens
+
+`getSupportedTokens(options?: { fromChain?: string | number; fromToken?: string; toChain?: string | number }): Promise<SwidgeSupportedToken[]>` fetches token metadata. Only `fromChain` filters the request; the other option fields are ignored.
+
+Each result has `token`, `chain`, `symbol`, `decimals`, and `address`; `name` is included when supplied by the provider. `token` is an exact `chainId:address` identifier. Entries without a symbol are omitted. The result does not expose the provider's native-token flag.
+
+A call without a filter requests all tokens each time. Chain-filtered calls reuse the cache. Token identity and decimal validation remain the application's responsibility.
+
+#### swap
+
+The inherited `swap(options: SwapOptions): Promise<SwapResult>` maps `tokenIn`, `tokenOut`, `tokenInAmount` or `tokenOutAmount`, `to`, and `minAmountOut` to execution. It does not supply `fromChain`, so token identifiers need an embedded chain. Its result uses the provider tracking id as `hash` and sums all itemized fee amounts into `fee`, even when their units differ.
+
+Use `swidge()` to retain the actual transaction hash and itemized fees.
+
+#### quoteSwap
+
+The inherited `quoteSwap(options: SwapOptions): Promise<Omit<SwapResult, 'hash'>>` maps the same swap options to indicative quoting. It also sums fee amounts without denomination conversion. Use `quoteSwidge()` when displaying fees or working with explicit chains.
+
+#### bridge
+
+The inherited `bridge(options: BridgeOptions): Promise<BridgeResult>` passes `options.token` as both source and destination token, `targetChain` as `toChain`, and `amount` as the input. It cannot express different source and destination token identifiers.
+
+A plain token lacks the required source chain, while an embedded token chain overrides the destination fallback. Use `swidge()` with independently discovered source and destination identifiers for cross-chain operations. The inherited result places the tracking id in `hash`, sums `network` fees into `fee`, and sums `protocol` fees into `bridgeFee` without converting denominations.
+
+#### quoteBridge
+
+The inherited `quoteBridge(options: BridgeOptions): Promise<Omit<BridgeResult, 'hash'>>` applies the same token mapping and fee aggregation to indicative quoting. The same chain-resolution limitation applies; use `quoteSwidge()` for an explicit cross-chain route.
+
+## Route options
+
+`MoonPayTradeSwidgeOptions` extends the core `SwidgeOptions` with optional `fromChain`.
+
+| Field | Type | Behavior |
+|---|---|---|
+| `fromToken` | `string` | Required source address or exact `chainId:address` identifier. |
+| `toToken` | `string` | Required destination address or exact `chainId:address` identifier. |
+| `fromChain` | `string \| number` | Required for a plain source address; must resolve to a positive integer. Ignored when the source identifier embeds a chain. |
+| `toChain` | `string \| number` | Destination chain for a plain destination address. Defaults to the resolved source chain. An embedded destination chain takes precedence. |
+| `fromTokenAmount` | `number \| bigint` | Exact-input amount in source token units. Use a positive `bigint` for execution. |
+| `toTokenAmount` | `number \| bigint` | Exact-output preview amount in destination token units; mutually exclusive with `fromTokenAmount` in the type. |
+| `recipient` | `string` | Execution recipient. Defaults to the account's address; provide it explicitly for cross-chain routes. |
+| `refundAddress` | `string` | Forwarded to both execution POST requests when nonempty. |
+| `slippage` | `number` | Execution slippage as a decimal. Defaults to `0.005`. Not forwarded for indicative quotes. |
+| `minAmountOut` | `number \| bigint` | Minimum acceptable output in destination units, checked against the refreshed execution quote after slippage. |
+
+The application must enforce positive amounts, exactly one amount field, valid recipient addresses, a supported token pair, and an accepted slippage range. JavaScript runtime calls do not enforce the type's mutually exclusive amount fields: when both exist, `fromTokenAmount` wins.
+
+## Results and fees
+
+### Quote
+
+`SwidgeQuote` contains `fromTokenAmount`, `toTokenAmount`, `toTokenAmountMin`, and `fees`. Token amounts and fee amounts are `bigint`. Optional `estimatedDuration`, `priceImpact`, and `expiry` pass through provider values. The core contract defines duration in seconds, impact as a decimal, and expiry as Unix seconds.
+
+### Execution result
+
+`SwidgeResult` contains the tracking `id`, source `hash`, `fees`, input amount, expected output amount, and a `transactions` array with the source transaction. This release does not populate `toTokenAmountMin` in the execution result, even though the core type allows it.
+
+### Fee categories
+
+| Provider or wallet value | WDK category | Denomination and cap |
+|---|---|---|
+| `applicationFee` | `protocol` | Provider token/chain in previews; source token in execution. Checked by `maxProtocolFeeBps` during execution. |
+| `bridgeFee` | `network` | Provider token/chain in previews; source token in execution. Checked by `maxNetworkFeeBps` during execution. |
+| `protocolFee` | `other` | Included when positive. Not checked by either cap. |
+| Wallet deposit fee | `network` | Native source-chain units, `included: false`, description `deposit submission gas`. Not checked by either provider cap. |
+
+Fee `token` values are plain addresses, with the chain in the separate `chain` field. Deposit gas uses the zero address as its native-token marker. Previews can omit this gas entry if no account is bound, estimation fails, or the reported value is zero. Execution uses the fee value returned by the wallet; the EVM wallet used in the guide returns an estimate, not a receipt-derived final gas cost.
+
+Do not add fee amounts across different tokens or chains. The module does not establish a total cost in a common currency, and provider fee entries do not specify the optional `included` flag.
+
+### Status
+
+`SwidgeStatusResult` contains `status` and optional source/destination transactions when the provider reports their hashes.
+
+| Provider status | Returned status |
+|---|---|
+| `pending`, `submitted`, `rent_gas_submitted`, `rent_gas_completed`, `approval_submitted`, `approval_success`, `payout_created` | `pending` |
+| `success`, `completed` | `completed` |
+| `failed` | `failed` |
+| `requires refund`, `refund_requested` | `refund-pending` |
+| `refunded` | `refunded` |
+| `expired` | `expired` |
+| `cancelled` | `cancelled` |
+
+Status matching is case-insensitive. Unmapped statuses normally throw `UnknownStatusError`, but version 0.2.0 does not validate every malformed response. Validate the returned `status` against the values in this table before updating an operation, as shown in the [execution guide](/sdk/swidge-modules/swidge-moonpay-trade/guides/execute-swidge#track-settlement). The wider core enum also contains `partial` and `action-required`, but this module has no mapping to those values in 0.2.0.
+
+## Errors
+
+All error classes below are public root exports.
+
+| Error | Trigger | Additional fields |
+|---|---|---|
+| `AccountRequiredError` | Execution has no recognized concrete writable account. | None |
+| `UnsupportedDepositError` | Deposit memo cannot be attached by the chosen transfer path. | `depositAddress` |
+| `UnauthorizedDepositAmountError` | Fresh exact-input quote requests more source tokens than authorized. | `authorized`, `actual` (`bigint`) |
+| `MinAmountOutNotMetError` | Fresh output after slippage is below the requested minimum. | `minAmountOut`, `guaranteedAmountOut` (`bigint`) |
+| `FeeLimitExceededError` | A checked fee exceeds its cap. | `feeType`, `actualBps`, `limitBps` |
+| `UnknownStatusError` | The provider status lookup returns no mapping. This is not a complete response-validation check. | `rawStatus` |
+| `InvalidTokenIdError` | Embedded chain-id syntax is invalid. | `tokenId` |
+| `MissingChainError` | A plain address has no valid chain fallback. | `token` |
+| `ProviderApiError` | An API request returns a non-success HTTP response. | `endpoint`, `status`, `responseBody` (first 500 characters) |
+
+Network failures, invalid JSON, malformed amounts, invalid configuration conversions, and wallet errors can propagate as other errors. These classes do not guarantee that a provider swap or wallet transaction was never created. Use the [recovery guidance](/sdk/swidge-modules/swidge-moonpay-trade/guides/execute-swidge#recover-from-an-interrupted-operation) before retrying execution.
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-moonpay-trade/usage">
+Install the module and follow the integration examples.
+</Card>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-moonpay-trade/configuration">
+Review runtime requirements, provider settings, and fee limits.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
