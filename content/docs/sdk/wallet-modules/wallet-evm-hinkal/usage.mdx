@@ -1,0 +1,104 @@
+---
+title: Wallet EVM Hinkal Usage
+description: Install Hinkal v0.0.7, configure Node bundling, and create a seed-derived EVM account.
+docType: how-to
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+This page covers [prerequisites](#prerequisites), [installation](#install), [account creation](#create-an-account), [Node bundling](#build-for-node), and [core registration limits](#use-with-wdk-core).
+
+## Prerequisites
+
+Use [Node.js](https://nodejs.org/) with [npm](https://www.npmjs.com/), an application-managed BIP-39 mnemonic or seed bytes, and an RPC endpoint on your intended chain. The Node example below uses Node 22 and esbuild.
+
+For Hinkal operations, confirm the chain and token are currently supported by Hinkal. Keep the account's mnemonic and seed outside logs, analytics, and error reports.
+
+1. Install the package.
+2. Create a [wallet manager](/sdk/wallet-modules/wallet-evm-hinkal/api-reference#walletmanagerevmhinkal) and retrieve an account.
+3. Bundle the module before loading it in Node.
+
+## Install
+
+Install the [published Hinkal module](https://www.npmjs.com/package/@hinkal/wdk-wallet-evm-hinkal/v/0.0.7):
+
+```bash
+npm install @hinkal/wdk-wallet-evm-hinkal@0.0.7
+```
+
+The package includes its WDK wallet dependencies. A standalone manager does not require `@tetherto/wdk`. It pins the EVM wallet to `1.0.0-beta.18` and Hinkal's SDK to `0.3.13`.
+
+## Create an Account
+
+Save this factory as `wallet.js`. The application supplies the seed and RPC URL when it needs an account through [`getAccount()`](/sdk/wallet-modules/wallet-evm-hinkal/api-reference#getaccount):
+
+```javascript
+import WalletManagerEvmHinkal from '@hinkal/wdk-wallet-evm-hinkal'
+
+export async function createHinkalAccount(seed, rpcUrl) {
+  if (!rpcUrl) throw new Error('An RPC URL is required')
+
+  const wallet = new WalletManagerEvmHinkal(seed, {
+    provider: rpcUrl
+  })
+  const account = await wallet.getAccount(0)
+
+  return { wallet, account }
+}
+```
+
+The returned account uses path `m/44'/60'/0'/0/0` and provides the Hinkal methods alongside ordinary EVM methods. This factory creates an account without submitting a transaction.
+
+For another derivation path, use [`getAccountByPath()`](/sdk/wallet-modules/wallet-evm-hinkal/api-reference#getaccountbypath). Both account methods accept seed-derived accounts only.
+
+## Build for Node
+
+The Hinkal dependency in v0.0.7 does not load directly through native Node ESM. Bundle the application as CommonJS and leave Hinkal's SDK external so Node resolves its CommonJS export.
+
+Install the bundler used for this example:
+
+```bash
+npm install --save-dev esbuild@0.25.12
+```
+
+Compile the account factory and its WDK dependencies, leaving the Hinkal SDK and sodium runtime packages external:
+
+```bash
+npx esbuild wallet.js --bundle --platform=node --format=cjs \
+  '--external:@hinkal/common/*' \
+  --external:sodium-native --external:sodium-universal \
+  --outfile=wallet.cjs
+```
+
+Verify that Node can load the factory without creating an account or contacting an RPC:
+
+```bash
+node -e "const { createHinkalAccount } = require('./wallet.cjs'); console.log(typeof createHinkalAccount)"
+```
+
+The expected output is `function`. Your Node application can then load `wallet.cjs` and call the factory with its securely stored seed and selected RPC URL. Check the production build with the same dependency versions before enabling transfers.
+
+Bare selects the package's `bare` export automatically. That entrypoint installs `bare-node-runtime` globals. Do not assume a successful Node build verifies your Bare application.
+
+## Use with WDK Core
+
+The examples here use the standalone manager. In strict TypeScript, `@tetherto/wdk@1.0.0-beta.17` rejects this module's seed-only constructor at the [`registerWallet()`](/sdk/core-module/api-reference) boundary because core's manager type also accepts signers. Use direct construction for a type-checked integration with these versions.
+
+## Next Steps
+
+<Cards>
+<Card title="Send Private Tokens" href="/sdk/wallet-modules/wallet-evm-hinkal/guides/send-private-tokens">
+Review funds and fees, submit once, and track settlement.
+</Card>
+<Card title="Recover Shielded Funds" href="/sdk/wallet-modules/wallet-evm-hinkal/guides/recover-shielded-funds">
+Inspect balances after an interrupted operation.
+</Card>
+<Card title="Configuration" href="/sdk/wallet-modules/wallet-evm-hinkal/configuration">
+Review provider options and fee-cap boundaries.
+</Card>
+</Cards>

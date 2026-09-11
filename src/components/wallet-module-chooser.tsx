@@ -19,6 +19,7 @@ type ChainFilter =
 type GoalFilter =
   | "all"
   | "standard"
+  | "private"
   | "gasless"
   | "lightning"
   | "assets"
@@ -54,6 +55,7 @@ const chainOptions: Array<{ value: ChainFilter; label: string }> = [
 const goalOptions: Array<{ value: GoalFilter; label: string }> = [
   { value: "all", label: "Any wallet" },
   { value: "standard", label: "Standard wallet" },
+  { value: "private", label: "Private transfers" },
   { value: "gasless", label: "Gasless or smart account" },
   { value: "lightning", label: "Lightning payments" },
   { value: "assets", label: "RGB assets" },
@@ -77,6 +79,21 @@ const walletModules: WalletModule[] = [
       "You want the normal EVM account model.",
       "Users can pay gas with the chain native token.",
       "You need EVM transfers, token transfers, signing, and balances.",
+    ],
+  },
+  {
+    id: "evm-hinkal",
+    label: "EVM Hinkal",
+    chain: "evm",
+    goals: ["private"],
+    packageName: "@hinkal/wdk-wallet-evm-hinkal",
+    docsHref: "/sdk/wallet-modules/wallet-evm-hinkal",
+    apiHref: "/sdk/wallet-modules/wallet-evm-hinkal/api-reference",
+    bestFor: "Hinkal private sends and shielded-fund recovery from seed-derived EVM accounts.",
+    chooseWhen: [
+      "You need Hinkal private sends on a supported chain and token.",
+      "Your app can track scheduled withdrawals and reconcile interrupted deposits.",
+      "You can provide a seed-derived account and the required runtime setup, including Node bundling.",
     ],
   },
   {
