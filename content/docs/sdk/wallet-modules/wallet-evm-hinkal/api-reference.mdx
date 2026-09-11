@@ -1,0 +1,207 @@
+---
+title: Wallet EVM Hinkal API Reference
+description: Reference for Hinkal manager and account methods, result shapes, inherited EVM APIs, and errors.
+docType: reference
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+This reference covers `@hinkal/wdk-wallet-evm-hinkal@0.0.7`, backed by `@tetherto/wdk-wallet-evm@1.0.0-beta.18` and `@hinkal/common@0.3.13`.
+
+## Exports
+
+Import the default manager, named account class, and error classes from the package root:
+
+```javascript
+import WalletManagerEvmHinkal, {
+  WalletAccountEvmHinkal,
+  HinkalError,
+  InvalidRecipientError,
+  InvalidAmountError,
+  WdkError,
+  InvalidSignerError,
+  ProviderRequiredError
+} from '@hinkal/wdk-wallet-evm-hinkal'
+```
+
+The package does not export a Hinkal read-only account or named result types from its root. Its export map does not expose internal source or declaration paths.
+
+## WalletManagerEvmHinkal
+
+Extends `WalletManagerEvm`. Construct it with a seed and optional [EVM configuration](/sdk/wallet-modules/wallet-evm-hinkal/configuration):
+
+```typescript
+new WalletManagerEvmHinkal(seed: string | Uint8Array, config?: EvmWalletConfig)
+```
+
+`seed` is a BIP-39 mnemonic or seed bytes. A signer object raises `InvalidSignerError`.
+
+### Methods
+
+| Method | Result |
+|---|---|
+| `getAccount(index?, options?)` | `Promise<WalletAccountEvmHinkal>` |
+| `getAccountByPath(path, options?)` | `Promise<WalletAccountEvmHinkal>` |
+| `dispose()` | `void` |
+
+#### getAccount
+
+Returns a cached or newly derived account. The declaration accepts `index?: number | string` and `options?: { signerName?: string }`, but **every string index and every supplied `signerName` is rejected** with `InvalidSignerError`.
+
+A numeric index defaults to `0` and maps to relative path `0'/0/index` beneath `m/44'/60'/`.
+
+#### getAccountByPath
+
+Accepts `path: string` and optional `options` (declared as `any`). Use a relative BIP-44 path such as `"0'/0/0"`. Do not supply `signerName`; the method rejects it. Accounts are cached by path.
+
+#### dispose (manager)
+
+`dispose(): void` is inherited from the WDK manager. It disposes cached accounts and signers. In v0.0.7, it retains the Hinkal seed reference; it does not promise complete seed zeroization. Finish outstanding operations before disposal.
+
+## WalletAccountEvmHinkal
+
+Extends `WalletAccountEvm`. The constructor accepts seed material and a relative derivation path:
+
+```typescript
+new WalletAccountEvmHinkal(
+  seed: string | Uint8Array,
+  path: string,
+  config?: EvmWalletConfig
+)
+```
+
+Prefer manager-created accounts when you want path caching and manager disposal.
+
+### Methods
+
+| Method | Result |
+|---|---|
+| `privateSend(options)` | `Promise<{ depositTxHash: string; scheduleId: string }>` |
+| `getSendStatus(scheduleId)` | `Promise<ScheduledTransactionStatus>` |
+| `stuckUtxoBalances()` | `Promise<StuckUtxoBalance[]>` |
+| `withdrawStuckUtxos(options)` | `Promise<{ hashes: string[] }>` |
+| `dispose()` | `void` |
+
+#### privateSend
+
+Validates the recipient and amount, deposits through Hinkal, and schedules a later withdrawal. Requires a configured provider and a chain/token supported by Hinkal.
+
+| Field | Type | Required | Behavior |
+|---|---|---|---|
+| `token` | `string` | Yes | Token address on the connected chain; support is resolved by Hinkal. |
+| `recipient` | `string` | Yes | Valid EVM destination address. |
+| `amount` | `number` or `bigint` | Yes | Positive integer amount in token base units. Prefer `bigint`. |
+
+The parameter is typed as the inherited `EvmTransferOptions`. Its optional `authorizationList` is ignored by this method. Runtime converts `amount` with `BigInt()` before checking positivity; decimal numbers and malformed values raise `InvalidAmountError`. Although integer strings can pass runtime conversion, they are outside the declared amount type.
+
+The SDK can submit ERC-20 approvals and a deposit before later proof or scheduling failures. Deposit calculation adds a flat token fee to the supplied amount; native gas and other Hinkal fee processing are additional considerations. There is no module-level private-send quote, fee cap, net-receive guarantee, or idempotency key. Inherited EVM fee caps do not apply.
+
+Returns a deposit hash and schedule ID, not a settlement receipt. Keep both identifiers. Do not blindly retry after rejection because funds may already have moved. See [Send Private Tokens](/sdk/wallet-modules/wallet-evm-hinkal/guides/send-private-tokens).
+
+#### getSendStatus
+
+`getSendStatus(scheduleId: string)` performs one Hinkal status lookup. It requires a configured provider and Hinkal account session, even though the argument is a schedule ID.
+
+The returned status has these fields:
+
+| Field | Type | Meaning |
+|---|---|---|
+| `scheduleId` | `string` | Scheduled-send identifier. |
+| `chainId` | `number` | Chain used for the scheduled send. |
+| `hashedEthereumAddress` | `string` or `null` | Provider-returned account identifier. |
+| `transactions` | `ScheduledTransactionItemStatus[]` | Individual scheduled transaction items. |
+
+Each item has the following shape:
+
+| Field | Type | Meaning |
+|---|---|---|
+| `status` | `string` | Provider-defined status; not a closed enum. |
+| `scheduledTime` | `string` | Provider-returned scheduled time. |
+| `txHash` | `string` or `null` | Transaction hash when available. |
+
+The module forwards this response without polling, normalizing status values, or waiting for finality.
+
+#### stuckUtxoBalances
+
+`stuckUtxoBalances()` returns an array of balances the Hinkal SDK identifies as stuck on the connected chain. Requires a provider and the account's Hinkal session.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `token` | `string` | Token address. |
+| `balance` | `bigint` | Shielded balance in token base units, before recovery costs. |
+
+The method maps the SDK's `erc20Address` field to `token`. It does not return ordinary EVM balances or prove that all scheduled sends have completed.
+
+#### withdrawStuckUtxos
+
+`withdrawStuckUtxos(options: { token: string })` attempts recovery of the selected token to the account's own address. It does not accept an amount or a custom recipient.
+
+Returns `{ hashes: string[] }` for submitted withdrawals. A result can represent partial recovery if a later batch fails. Reconcile the returned hashes and remaining balances; do not infer complete recovery from a resolved promise. Recovery fees can make a positive balance unrecoverable. Inherited EVM fee caps do not apply.
+
+See [Recover Shielded Funds](/sdk/wallet-modules/wallet-evm-hinkal/guides/recover-shielded-funds).
+
+#### dispose
+
+`dispose(): void` disposes the parent account signer and drops references to the Hinkal signer and session. It does not cancel a scheduled withdrawal or guarantee zeroization of all JavaScript-held secret material.
+
+## Inherited EVM APIs
+
+The following EVM APIs remain available. Follow the linked EVM reference for their signatures; those calls retain ordinary EVM behavior.
+
+- **Manager:** [seed helpers and manager APIs](/sdk/wallet-modules/wallet-evm/api-reference#walletmanagerevm), including seed-phrase generation/validation, fee rates, and signer access. Named signer registration does not make that signer available to Hinkal account creation.
+- **Account identity and balances:** [`getAddress()`](/sdk/wallet-modules/wallet-evm/api-reference#getaddress), [`getBalance()`](/sdk/wallet-modules/wallet-evm/api-reference#getbalance), [`getTokenBalance()`](/sdk/wallet-modules/wallet-evm/api-reference#gettokenbalancetokenaddress), and [`getTokenBalances()`](/sdk/wallet-modules/wallet-evm/api-reference#gettokenbalancestokenaddresses).
+- **Ordinary transactions:** [`sendTransaction()`](/sdk/wallet-modules/wallet-evm/api-reference#sendtransactiontx), [`quoteSendTransaction()`](/sdk/wallet-modules/wallet-evm/api-reference#quotesendtransactiontx), [`transfer()`](/sdk/wallet-modules/wallet-evm/api-reference#transferoptions), and [`quoteTransfer()`](/sdk/wallet-modules/wallet-evm/api-reference#quotetransferoptions).
+- **Signatures and delegation:** [message, typed-data, transaction, and authorization signing](/sdk/wallet-modules/wallet-evm/api-reference#walletaccountevm), signature verification, delegation, and revocation.
+- **Allowance and transaction tracking:** [`approve()`](/sdk/wallet-modules/wallet-evm/api-reference#approveoptions), [`getAllowance()`](/sdk/wallet-modules/wallet-evm/api-reference#getallowancetoken-spender), and [normalized transaction tracking](/sdk/wallet-modules/wallet-evm/api-reference#normalized-transaction-types).
+
+Two inherited constructors/conversions return plain EVM accounts: `WalletAccountEvmHinkal.fromPrivateKey()` returns `WalletAccountEvm`, and `account.toReadOnlyAccount()` returns `WalletAccountReadOnlyEvm`. Neither result has Hinkal methods. The package does not offer private-key or address-only alternatives to seed-based Hinkal account creation.
+
+## TypeScript Result Types
+
+The result names above describe declaration shapes, not root-level type exports. Derive the inferred result type from the public method when needed:
+
+```typescript
+import type { WalletAccountEvmHinkal } from '@hinkal/wdk-wallet-evm-hinkal'
+
+type SendStatus = Awaited<ReturnType<WalletAccountEvmHinkal['getSendStatus']>>
+type StuckBalances = Awaited<ReturnType<WalletAccountEvmHinkal['stuckUtxoBalances']>>
+```
+
+For configuration or transfer types, import `EvmWalletConfig` and `EvmTransferOptions` from `@tetherto/wdk-wallet-evm`, adding that exact dependency to your project if you import it directly.
+
+## Errors
+
+| Export | When used | Additional fields |
+|---|---|---|
+| `HinkalError` | Parent class of module-specific input errors; extends `WdkError`. | `isUserActionable: boolean`, default `false`. |
+| `InvalidRecipientError` | Recipient fails EVM address validation. | `recipient: string`; `isUserActionable: true`. |
+| `InvalidAmountError` | Amount cannot convert to a positive integer. | `amount: string`, `number`, or `bigint`; `isUserActionable: true`. |
+| `ProviderRequiredError` | A Hinkal operation has no provider. | Re-exported WDK error. |
+| `InvalidSignerError` | Manager receives a signer object, string account index, or `signerName`. | Re-exported WDK error. |
+| `WdkError` | WDK parent error class. | Re-exported from `@tetherto/wdk-wallet`. |
+
+`HinkalError(message, isUserActionable?, options?)` accepts an optional `ErrorOptions`. The two input-error constructors accept their offending value. Do not log that value indiscriminately: error messages can contain recipient addresses or input data.
+
+Errors from the Hinkal SDK, RPC, relayer, proof generation, or unsupported tokens propagate unchanged. Catching only `HinkalError` does not handle every failure. Submission errors must be reconciled before retrying.
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/wallet-modules/wallet-evm-hinkal/usage">
+Install the module and follow the integration examples.
+</Card>
+<Card title="Configuration" href="/sdk/wallet-modules/wallet-evm-hinkal/configuration">
+Review runtime requirements, provider settings, and fee limits.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

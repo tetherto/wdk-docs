@@ -1,0 +1,84 @@
+---
+title: Wallet EVM Hinkal Configuration
+description: Configure Hinkal account providers, derivation paths, and inherited EVM fee limits.
+docType: reference
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Pass an `EvmWalletConfig` object to [WalletManagerEvmHinkal](/sdk/wallet-modules/wallet-evm-hinkal/api-reference#walletmanagerevmhinkal) or [WalletAccountEvmHinkal](/sdk/wallet-modules/wallet-evm-hinkal/api-reference#walletaccountevmhinkal). The module uses the configuration from `@tetherto/wdk-wallet-evm@1.0.0-beta.18` without adding Hinkal-specific configuration fields.
+
+## Provider Options
+
+Every field is optional in the type. A nonempty `provider` is required at runtime for all four Hinkal methods, including status and shielded-balance reads.
+
+| Field | Type | Default | Effect |
+|---|---|---|---|
+| `provider` | `string`, `Eip1193Provider`, or an array of either | None | RPC URL or EIP-1193 provider. Arrays enable ordered provider failover. |
+| `retries` | `number` | `3` | Additional attempts after the first failure when using an array. |
+| `chainId` | `number` | Provider detection | Pins the network for an RPC URL provider. Hinkal reads that provider network, so this setting also affects its chain selection. |
+| `transferMaxFee` | `number` or `bigint` | None | Maximum estimated fee in wei for inherited ERC-20 transfers. |
+| `transactionMaxFee` | `number` or `bigint` | None | Maximum estimated fee in wei for inherited transaction sending and provider-connected signing. |
+
+Keep every provider in a failover array on the same chain. When `chainId` is set for an RPC URL, the provider trusts that value without checking the endpoint's network. Independently verify that every endpoint serves the configured chain, or leave `chainId` unset for network detection. Setting it does not establish Hinkal service support for that chain. An empty provider array leaves Hinkal operations without a provider.
+
+Configure the manager with application-selected RPC endpoints:
+
+```javascript
+const config = {
+  provider: [primaryRpcUrl, fallbackRpcUrl],
+  retries: 3
+}
+```
+
+Hinkal also uses its own token, relayer, proof, and status services. RPC failover does not control retries or availability for those services.
+
+## Seed and Derivation Paths
+
+The manager accepts a BIP-39 mnemonic string or `Uint8Array` seed. It does not accept signer objects. Passing a signer name to either account method raises `InvalidSignerError`.
+
+| Operation | Derived path |
+|---|---|
+| `getAccount(0)` | `m/44'/60'/0'/0/0` |
+| `getAccount(1)` | `m/44'/60'/0'/0/1` |
+| `getAccountByPath("1'/0/0")` | `m/44'/60'/1'/0/0` |
+
+Paths passed to the account constructor or path method are relative to `m/44'/60'/`. The manager caches accounts by relative path. See [account creation](/sdk/wallet-modules/wallet-evm-hinkal/usage#create-an-account) for setup.
+
+## Fee Boundaries
+
+<Callout type="warn">
+`transferMaxFee` and `transactionMaxFee` do not apply to `privateSend()` or `withdrawStuckUtxos()`. There is no public private-send quote or maximum-fee parameter. An ordinary EVM quote does not quote the Hinkal operation.
+</Callout>
+
+For private sends, the Hinkal SDK adds a flat token fee when calculating the deposit and applies its fee structure to withdrawal processing. Fund the account for the requested amount, additional token costs, and native gas for approvals and the deposit. Do not promise an exact net amount from the requested amount alone.
+
+Recovery also incurs Hinkal fees. A positive stuck balance can be too small to recover after fees. See [recovery behavior](/sdk/wallet-modules/wallet-evm-hinkal/guides/recover-shielded-funds).
+
+## Resource Lifecycle
+
+Call the [manager's `dispose()`](/sdk/wallet-modules/wallet-evm-hinkal/api-reference#dispose-manager) after all operations finish. It disposes cached accounts and signers. The account override also drops its Hinkal signer and session references.
+
+Disposal does not cancel a scheduled withdrawal or erase all seed copies. The manager retains the original Hinkal seed reference in v0.0.7. Release application references to the manager and seed when finished; do not treat disposal as complete memory zeroization.
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/wallet-modules/wallet-evm-hinkal/usage">
+Install the module and set up your integration.
+</Card>
+<Card title="API Reference" href="/sdk/wallet-modules/wallet-evm-hinkal/api-reference">
+Review exact methods, options, results, and errors.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

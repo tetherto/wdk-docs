@@ -1,0 +1,94 @@
+---
+title: Send Private Tokens with Hinkal
+description: Submit an ERC-20 private send and track the deposit and scheduled withdrawal separately.
+docType: how-to
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+This guide explains how to [prepare a send](#prerequisites), [submit it once](#submit-a-private-send), [track the withdrawal](#track-the-withdrawal), and [handle interrupted operations](#handle-failures). For support, see [Need Help?](#need-help).
+
+## Prerequisites
+
+- Complete the [installation and runtime setup](/sdk/wallet-modules/wallet-evm-hinkal/usage).
+- Use a seed-derived [WalletAccountEvmHinkal](/sdk/wallet-modules/wallet-evm-hinkal/api-reference#walletaccountevmhinkal) with a provider on the intended chain.
+- Confirm the token's contract and decimals on that chain, its current Hinkal support, and the recipient address.
+- Fund the account for the requested amount, Hinkal token fees, and native gas for approvals and the deposit.
+- Keep an application record of the chain, sender, token, recipient, and requested amount before submission. Persist returned identifiers when available.
+
+The example uses Ethereum USD₮ at `0xdAC17F958D2ee523a2206206994597C13D831ec7`, with six decimals. Confirm the contract against [Tether's supported protocols](https://tether.to/en/supported-protocols/) and current support with [Hinkal](https://hinkal-team.gitbook.io/hinkal) before enabling the send. Token metadata does not guarantee that a send can execute at a particular time.
+
+## Submit a Private Send
+
+<Callout type="warn">
+This call can approve spending and deposit funds on chain before the scheduled withdrawal exists. The module exposes no private-send quote or fee cap. Review the operation with the user before calling it, and do not automatically retry a failed call.
+</Callout>
+
+1. Confirm the account is connected to Ethereum mainnet and the user approves the recipient and amount.
+2. Submit once with [`privateSend()`](/sdk/wallet-modules/wallet-evm-hinkal/api-reference#privatesend).
+3. Persist the returned deposit hash and schedule ID, then track the withdrawal separately.
+
+This helper accepts an application-validated recipient and amount in token base units, and submits through [`privateSend()`](/sdk/wallet-modules/wallet-evm-hinkal/api-reference#privatesend):
+
+```javascript
+const USDT_ETHEREUM = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+
+export async function sendPrivateUsdt(account, recipient, amount) {
+  if (typeof amount !== 'bigint' || amount <= 0n) {
+    throw new Error('Amount must be a positive bigint')
+  }
+
+  return account.privateSend({
+    token: USDT_ETHEREUM,
+    recipient,
+    amount
+  })
+}
+```
+
+For USD₮, `1_000_000n` represents one token before additional costs. Prefer `bigint` to avoid JavaScript number precision loss.
+
+The SDK handles ERC-20 allowance for the deposit contract. If allowance is insufficient, it can submit an approval before the deposit. For Ethereum USD₮, an existing nonzero insufficient allowance is reset to zero first. These transactions require gas. Do not approve an address copied from an unrelated Hinkal contract or manually add an approval without checking the actual spender.
+
+A resolved result contains `depositTxHash` and `scheduleId`. It confirms the module returned the deposit identifier and scheduled-send identifier; it does not establish that the recipient has received funds.
+
+## Track the Withdrawal
+
+Use the persisted `scheduleId` with [`getSendStatus()`](/sdk/wallet-modules/wallet-evm-hinkal/api-reference#getsendstatus):
+
+```javascript
+const status = await account.getSendStatus(scheduleId)
+
+for (const transaction of status.transactions) {
+  console.log(transaction.status, transaction.scheduledTime, transaction.txHash)
+}
+```
+
+The response can contain several transaction items. Their `status` is a provider-defined string and `txHash` can be `null`. Treat each item independently, and handle unknown status values in the UI. The method performs one lookup; it does not poll or wait for settlement.
+
+For repeated lookups, use an application-controlled interval and timeout. A timeout does not cancel the send. Keep the schedule ID for later reconciliation.
+
+## Handle Failures
+
+[`InvalidRecipientError`](/sdk/wallet-modules/wallet-evm-hinkal/api-reference#errors) and [`InvalidAmountError`](/sdk/wallet-modules/wallet-evm-hinkal/api-reference#errors) are local input failures. [`ProviderRequiredError`](/sdk/wallet-modules/wallet-evm-hinkal/api-reference#errors) indicates missing provider configuration. Hinkal SDK, RPC, proof, and relayer errors propagate without being wrapped in the module's error class.
+
+If submission fails after it starts, an approval or deposit may already exist even when no `scheduleId` was returned. Reconcile the account's chain activity and Hinkal state before allowing another send. Repeating the call can deposit funds again.
+
+Use the [recovery guide](/sdk/wallet-modules/wallet-evm-hinkal/guides/recover-shielded-funds) to inspect balances reported as stuck. A pending withdrawal is not automatically a stuck balance, and recovery is a separate operation requiring its own review.
+
+## Next Steps
+
+- [Recover Shielded Funds](/sdk/wallet-modules/wallet-evm-hinkal/guides/recover-shielded-funds)
+- [Review Fee Boundaries](/sdk/wallet-modules/wallet-evm-hinkal/configuration#fee-boundaries)
+- [API Reference](/sdk/wallet-modules/wallet-evm-hinkal/api-reference)
+
+---
+
+## Need Help?
+
+<SupportCards />

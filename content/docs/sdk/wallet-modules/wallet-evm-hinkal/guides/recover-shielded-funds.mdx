@@ -1,0 +1,82 @@
+---
+title: Recover Hinkal Shielded Funds
+description: Inspect stuck shielded balances and recover a token to the originating account.
+docType: how-to
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+This guide covers [recovery prerequisites](#prerequisites), [stuck-balance inspection](#inspect-stuck-balances), [token recovery](#recover-one-token), and [verification and cleanup](#verify-recovery). For support, see [Need Help?](#need-help).
+
+## Prerequisites
+
+Complete the [runtime setup](/sdk/wallet-modules/wallet-evm-hinkal/usage) and recreate the same seed-derived [WalletAccountEvmHinkal](/sdk/wallet-modules/wallet-evm-hinkal/api-reference#walletaccountevmhinkal) on the chain used for the interrupted operation. Recovery and shielded-balance reads need its signer-backed Hinkal session and provider; an address-only EVM account is insufficient.
+
+Reconcile any [scheduled withdrawal](/sdk/wallet-modules/wallet-evm-hinkal/guides/send-private-tokens#track-the-withdrawal) before starting recovery. This flow withdraws funds reported as stuck to the account's own EVM address. It does not retry delivery to the original private-send recipient.
+
+1. Inspect balances through [`stuckUtxoBalances()`](/sdk/wallet-modules/wallet-evm-hinkal/api-reference#stuckutxobalances).
+2. Review one returned token with the user.
+3. Recover it through [`withdrawStuckUtxos()`](/sdk/wallet-modules/wallet-evm-hinkal/api-reference#withdrawstuckutxos).
+4. Verify returned transactions and inspect remaining balances.
+
+## Inspect Stuck Balances
+
+Read token addresses and balances through [`stuckUtxoBalances()`](/sdk/wallet-modules/wallet-evm-hinkal/api-reference#stuckutxobalances):
+
+```javascript
+const balances = await account.stuckUtxoBalances()
+```
+
+Each item has `{ token: string, balance: bigint }`. Balances use the token's base units. Resolve token metadata on the same chain before formatting an amount; do not assume every token uses the same decimals.
+
+An empty array means this query returned no stuck balances. It does not prove every scheduled send has settled. A positive balance also does not guarantee recovery is economical after Hinkal fees.
+
+## Recover One Token
+
+<Callout type="warn">
+Recovery moves funds and incurs Hinkal fees. It has no amount, recipient, or maximum-fee parameter. The SDK can return hashes for a partially submitted recovery, so a resolved promise does not prove that the entire balance was recovered.
+</Callout>
+
+After the user selects a token from the balance response, call [`withdrawStuckUtxos()`](/sdk/wallet-modules/wallet-evm-hinkal/api-reference#withdrawstuckutxos) with that token address:
+
+```javascript
+export async function recoverSelectedToken(account, selectedToken) {
+  return account.withdrawStuckUtxos({ token: selectedToken })
+}
+```
+
+The module uses the account's own address as recipient and returns `{ hashes: string[] }`. Save those identifiers for reconciliation. The SDK deducts recovery fees, and an insufficient balance can prevent recovery.
+
+## Verify Recovery
+
+Check the returned transaction hashes through your chain-tracking flow, then read [`stuckUtxoBalances()`](/sdk/wallet-modules/wallet-evm-hinkal/api-reference#stuckutxobalances) again:
+
+```javascript
+const remaining = await account.stuckUtxoBalances()
+```
+
+If balances remain, review the transactions and updated Hinkal state before starting another recovery. Do not loop automatically on the returned array or interpret a partial result as a safe retry signal.
+
+After all operations finish, call the [manager's `dispose()`](/sdk/wallet-modules/wallet-evm-hinkal/api-reference#dispose-manager):
+
+```javascript
+wallet.dispose()
+```
+
+Disposal releases cached account resources; it does not cancel on-chain or scheduled work or erase every seed copy. See [resource lifecycle](/sdk/wallet-modules/wallet-evm-hinkal/configuration#resource-lifecycle).
+
+## Next Steps
+
+- [Scheduled Send Tracking](/sdk/wallet-modules/wallet-evm-hinkal/guides/send-private-tokens#track-the-withdrawal)
+- [API Reference](/sdk/wallet-modules/wallet-evm-hinkal/api-reference)
+
+---
+
+## Need Help?
+
+<SupportCards />

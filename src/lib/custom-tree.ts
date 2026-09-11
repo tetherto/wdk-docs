@@ -92,6 +92,15 @@ export const customTree: Node[] = [
       configuration('/sdk/wallet-modules/wallet-evm/configuration'),
       apiReference('/sdk/wallet-modules/wallet-evm/api-reference'),
     ]),
+    folder('EVM Hinkal', '/sdk/wallet-modules/wallet-evm-hinkal', 'Shield', [
+      usage('/sdk/wallet-modules/wallet-evm-hinkal/usage'),
+      guides([
+        page('Send Private Tokens', '/sdk/wallet-modules/wallet-evm-hinkal/guides/send-private-tokens'),
+        page('Recover Shielded Funds', '/sdk/wallet-modules/wallet-evm-hinkal/guides/recover-shielded-funds'),
+      ]),
+      configuration('/sdk/wallet-modules/wallet-evm-hinkal/configuration'),
+      apiReference('/sdk/wallet-modules/wallet-evm-hinkal/api-reference'),
+    ]),
     folder('Smart accounts (ERC-4337)', '/sdk/wallet-modules/wallet-evm-erc-4337', 'ShieldCheck', [
       usage('/sdk/wallet-modules/wallet-evm-erc-4337/usage'),
       guides([
