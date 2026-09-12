@@ -73,8 +73,10 @@ const wallet = new WalletManagerEvm(seedPhrase, {
 - **Gasless** via UserOperations + Paymaster
 - Fees paid in **paymaster token** (e.g., USD₮) instead of native ETH
 - `getPaymasterTokenBalance()` for fee balance
+- [`WalletAccountReadOnlyEvmErc4337.fromSafeAddress()`](https://docs.wallet.tether.io/sdk/wallet-modules/wallet-evm-erc-4337/guides/manage-accounts#read-a-known-safe-address) monitors a supplied Safe address without its owner or a seed. It cannot sign, send, or verify owner signatures. Non-sponsored quotes require a deployed Safe; a sponsored zero-fee quote does not establish deployment or eligibility.
 - **Batch transactions**: `sendTransaction([tx1, tx2])` — multiple operations in one call
 - `signTransaction(tx)` signs one `UserOperationV7`; the signed result can be quoted and submitted through `sendTransaction()`.
+- The first UserOperation chain lookup checks the provider against constructor `chainId` and caches success. Sponsored quotes and already-signed quote/send paths skip this check; recreate the account when changing networks.
 - Signed UserOperations preserve their nonce and fee-mode configuration. Submit promptly through the same account and do not mutate them.
 - Signed UserOperation submission does not reapply `transactionMaxFee`. In paymaster-token mode, a signed-operation quote is a buffered native-gas ceiling in wei, not a token-denominated charge.
 - Quote-cache keys omit fee-mode configuration. Use the same mode, paymaster token, paymaster endpoints, and sponsorship policy for a quote and its matching send, sign, or transfer.
@@ -86,6 +88,7 @@ const wallet = new WalletManagerEvm(seedPhrase, {
 const wallet = new WalletManagerEvmErc4337(seedPhrase, {
   provider: 'https://arb1.arbitrum.io/rpc',
   chainId: 42161,
+  safeModulesVersion: '0.3.0',
   bundlerUrl: 'https://api.candide.dev/public/v3/42161',
   paymasterUrl: 'https://api.candide.dev/public/v3/42161',
   paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
@@ -100,7 +103,9 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
 
 - Uses EIP-7702 delegation and ERC-4337 UserOperations while retaining the EOA address.
 - Supports sponsored mode and paymaster-token mode.
+- `entryPointVersion` accepts `'0.8'` (default) or `'0.9'`. Match the delegation implementation, bundler, and paymaster to that version.
+- Optional `chainId` checks the provider's first UserOperation chain lookup and caches success. Owned-account quotes and sends check even sponsored or signed inputs; read-only sponsored quotes skip it. The check does not validate an externally signed payload's chain or EntryPoint.
 - Owned account paymaster-token quotes are cached for up to 2 minutes.
 - Before reusing a cached UserOperation, the account validates its EntryPoint nonce and re-quotes if the nonce moved.
 - A send that needs a fresh EIP-7702 authorization rebuilds the UserOperation instead of reusing the cached one.
-- Quote-cache keys omit fee-mode configuration. Use the same mode, paymaster token, paymaster endpoints, and sponsorship policy for a quote and its matching send or transfer.
+- Quote-cache keys include the transaction, sponsorship mode, paymaster token, expected paymaster address, and sponsorship policy. Changing a keyed field creates a fresh quote.

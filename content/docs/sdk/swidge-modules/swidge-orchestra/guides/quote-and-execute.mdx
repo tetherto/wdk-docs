@@ -26,7 +26,7 @@ const tokens = await orchestra.getSupportedTokens({
 })
 ```
 
-Use chain-qualified asset references such as `spark:BTC`, `bitcoin:BTC`, `bsc:USDT`, or `tron:USDT`.
+Use chain-qualified asset references such as `spark:BTC`, `bitcoin:BTC`, or `tron:USDT`.
 
 ## Quotes
 
@@ -95,29 +95,9 @@ const intent = await orchestra.prepareSwap({
 })
 ```
 
-### EVM USD₮ to Spark BTC
+### EVM token sources
 
-EVM token sources use the WDK account's `transfer({ token, recipient, amount })` path. The source account needs native gas for its chain.
-
-```javascript title="Prepare BSC USDt to Spark BTC"
-const bsc = await wdk.getAccount('bsc', 0)
-const spark = await wdk.getAccount('spark', 0)
-
-const orchestra = new Orchestra(bsc, {
-  sourceChain: 'bsc',
-  apiKey: process.env.FLASHNET_API_KEY,
-  sourceTokenAddresses: {
-    'bsc:USDT': '0x55d398326f99059ff775485246999027b3197955'
-  }
-})
-
-const intent = await orchestra.prepareSwap({
-  fromToken: 'bsc:USDT',
-  toToken: 'spark:BTC',
-  fromTokenAmount: 5000000n,
-  recipient: await spark.getAddress()
-})
-```
+EVM token sources use the WDK account's `transfer({ token, recipient, amount })` path. The source account needs native gas for its chain. Select a route from discovery and verify the source token contract and decimals before setting `sourceTokenAddresses` and an amount in base units.
 
 ### Bitcoin L1 source
 
@@ -150,16 +130,5 @@ const submitted = await orchestra.executeSwapIntent(intent, {
 ### Destination Lightning
 
 Orchestra supports destination Lightning routes where the live route matrix exposes them. Pass a BOLT11 invoice or Lightning Address as `recipient`, and include refund metadata required by the route.
-
-```javascript title="Prepare USDt to destination Lightning"
-const intent = await orchestra.prepareSwap({
-  fromToken: 'bsc:USDT',
-  toToken: 'lightning:BTC',
-  fromTokenAmount: 5000000n,
-  recipient: bolt11Invoice,
-  refundChain: 'bsc',
-  refundAddress: await bsc.getAddress()
-})
-```
 
 Lightning as a source is not supported through this package's standard `swidge()` or `executeSwapIntent()` flow.

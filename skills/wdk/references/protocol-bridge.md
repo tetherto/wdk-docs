@@ -25,12 +25,16 @@ import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
 
 ## Choose the account flow
 
+From `1.0.0-beta.9`, the constructor accepts shared `IWalletAccountReadOnly` and `IWalletAccount` interfaces. Runtime use still requires EVM-compatible account operations and the account's internal `_config.provider`; implementing the shared interface alone is insufficient. Read-only accounts can quote. Execution additionally requires a callable `sendTransaction()`.
+
 | Account | Approval behavior | Submission |
 |---|---|---|
 | Standard `WalletAccountEvm` | Call `account.approve()` for the source-chain OFT or bridge spender before `bridge()`. | Approval and bridge are separate EVM transactions. |
 | `WalletAccountEvmErc4337` | Do not call `account.approve()` separately. The protocol builds an approval to the transaction-value helper. | Approval and helper bridge call are submitted in one UserOperation. |
 
 ERC-4337 helper bridging is available from Ethereum, Arbitrum, Plasma, and Polygon. Other supported EVM source chains require a standard account.
+
+Helper selection and batching use the bridge package's concrete ERC-4337 classes. Beta.9 pins `@tetherto/wdk-wallet-evm-erc-4337` to beta.11. An account from a separate package copy, including a separately installed beta.18, can take the single-transaction path instead. Verify dependency resolution and class identity before relying on automatic approval batching; see the [account requirements](https://docs.wallet.tether.io/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements).
 
 ## Standard account quick reference
 
@@ -85,7 +89,7 @@ The returned hash identifies the single UserOperation containing the approval an
 
 ### ERC-4337 fee-unit limitation
 
-In `1.0.0-beta.7`:
+In `1.0.0-beta.9`:
 
 - `bridgeFee` is in bridged-token base units.
 - `fee` is in source-native base units for native gas, paymaster-token base units for token-paid gas, or zero for sponsored gas.
@@ -99,7 +103,7 @@ Do not interpret that sum as one currency or configure an ERC-4337 cap until the
 
 **Additional destination keys:** `solana`, `ton`, `tron`
 
-For Solana, TON, and TRON targets, beta.7 skips a source chain's ordinary `oftContract` during auto-resolution. The bundled source-side candidates are:
+For Solana, TON, and TRON targets, beta.9 skips a source chain's ordinary `oftContract` during auto-resolution. The bundled source-side candidates are:
 
 - USD₮0 legacy mesh: Ethereum, Arbitrum, Celo.
 - XAU₮0 OFT: Ethereum, Arbitrum, Avalanche, Celo, HyperEVM, Ink, Monad, Plasma, Polygon, Stable.

@@ -19,9 +19,9 @@ new VeloraProtocolEvm(account, config?)
 Parameters:
 - `account`: `IWalletAccount | IWalletAccountReadOnly` from `@tetherto/wdk-wallet`
 - `config` (optional):
-  - `swapMaxFee` (`bigint`): maximum total gas fee allowed (wei)
+  - `swapMaxFee` (`bigint`): exclusive cap in the fee units returned by the account's quote
 
-The beta.7 declarations accept the generic wallet interfaces, but this package still requires an EVM-compatible account with a configured JSON-RPC URL or EIP-1193 provider. Use an EVM account from WDK's EVM wallet modules; the wider interfaces do not add support for arbitrary or non-EVM accounts.
+The declarations accept the shared wallet interfaces. The implementation also reads `account._config.provider` and requires an EVM-compatible JSON-RPC URL or EIP-1193 provider. An interface match alone does not establish compatibility. Quoting needs `getAddress()` and `quoteSendTransaction()`; execution additionally requires a callable `sendTransaction()`.
 
 Example:
 
@@ -38,7 +38,7 @@ const swap = new VeloraProtocolEvm(account, { swapMaxFee: 200000000000000n })
 
 ---
 
-### `swap(options, config?)`
+#### `swap(options, config?)`
 Execute a swap via velora.
 
 Options:
@@ -48,14 +48,16 @@ Options:
 - `tokenOutAmount` (`bigint`, optional): Exact output amount (base units)
 - `to` (`string`, optional): Recipient address (defaults to account address)
 
-Config (ERC‑4337 only):
+Config (optional; wallet gas-payment fields depend on the account):
 - `paymasterToken` (`{ address: string }`, optional): Paymaster token override for this swap
 - `isSponsored` (`true`, optional): Use sponsorship mode for this swap
 - `sponsorshipPolicyId` (`string`, optional): Sponsorship policy override
 - `useNativeCoins` (`true`, optional): Pay fees in the chain's native token
-- `swapMaxFee` (`bigint`, optional): Per‑swap fee cap (wei)
+- `swapMaxFee` (`bigint`, optional): Per-swap exclusive fee cap, in the account quote's units
 
-These per-swap overrides are applied only when the protocol uses a concrete `WalletAccountEvmErc4337`. With another writable EVM account, `swap()` sends one EVM transaction and does not apply the ERC‑4337 config object.
+Since beta.8, `swap()` passes one transaction object and the same `config` to the account's `quoteSendTransaction()` and `sendTransaction()`. It does not select the path by concrete account class. Standard WDK EVM accounts ignore wallet paymaster/sponsorship fields, but the protocol applies a per-call `swapMaxFee` for these accounts too.
+
+The per-call cap overrides the constructor cap. A quote equal to or above that cap rejects the swap before sending. Match the cap to the quote's denomination: native wei for standard EVM/native-coin fees, paymaster-token base units for token-paid fees, or zero for sponsored quotes. A zero cap rejects even a zero-fee quote. `quoteSwap()` itself does not enforce the cap.
 
 Returns:
 - Standard account: `{ hash, fee, tokenInAmount, tokenOutAmount }`
@@ -69,15 +71,15 @@ Example:
 
 ```javascript
 const tx = await swap.swap({
-  tokenIn: '0xdAC17F...ec7',      // USDt
-  tokenOut: '0xC02a...6Cc2',      // WETH
+  tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt on Ethereum
+  tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH on Ethereum
   tokenInAmount: 1000000n
 })
 ```
 
 ---
 
-### `quoteSwap(options, config?)`
+#### `quoteSwap(options, config?)`
 Get estimated fee and token in/out amounts.
 
 Options are the same as `swap`.
@@ -90,7 +92,7 @@ Config (ERC‑4337 only):
 - `sponsorshipPolicyId` (`string`, optional): Sponsorship policy override
 - `useNativeCoins` (`true`, optional): Estimate fees in the chain's native token
 
-These per-call overrides are applied only when the protocol uses a concrete `WalletAccountReadOnlyEvmErc4337`. Other accounts use the ordinary single-transaction quote path and do not apply the ERC‑4337 config object.
+The protocol forwards one transaction object and `config` to any compatible account's `quoteSendTransaction()`. The account determines which wallet options apply; standard WDK EVM accounts ignore the ERC-4337 fields. The returned fee keeps the account's denomination. Quoting does not enforce `swapMaxFee` or reserve a route for later execution.
 
 Works with read‑only accounts.
 
@@ -98,8 +100,8 @@ Example:
 
 ```javascript
 const quote = await swap.quoteSwap({
-  tokenIn: '0xdAC17F...ec7',      // USDt
-  tokenOut: '0xC02a...6Cc2',      // WETH
+  tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt on Ethereum
+  tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH on Ethereum
   tokenOutAmount: 500000000000000000n // 0.5 WETH
 })
 ```
@@ -110,7 +112,7 @@ const quote = await swap.quoteSwap({
 
 Common errors include:
 - Insufficient liquidity / no route for pair
-- Fee exceeds `swapMaxFee`
+- Quoted fee is equal to or greater than `swapMaxFee`
 - Read‑only account cannot send swaps
 - Provider/RPC errors (invalid endpoint, network mismatch)
 
@@ -118,7 +120,7 @@ Common errors include:
 
 ## Types
 
-- `swapMaxFee: bigint` — Upper bound for gas fees (wei)
+- `swapMaxFee: bigint`: Exclusive cap in the account quote's fee units
 - `tokenInAmount/tokenOutAmount: bigint` — ERC‑20 base units
 - `paymasterToken: { address: string }` — ERC‑4337 paymaster token override
 
