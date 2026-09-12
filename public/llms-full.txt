@@ -5873,6 +5873,13 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### September 11, 2026
+
+**Changes**
+- **pear-wrk-wdk** ([v1.0.0-beta.14](https://github.com/tetherto/pear-wrk-wdk/releases/tag/v1.0.0-beta.14)): [Breaking] Remove `CallMethodOptions.transformResult`; transform responses in the host. Zero the retained seed buffer on full disposal and seed replacement; targeted disposal and config-only reinitialization retain it. Add named-field log redaction, default unknown log levels to `ERROR`, and omit native parser details from invalid-JSON field errors. Normalize generic-module void results to `null`, fix HRPC module-event forwarding, and update optional `bare-walk-handles` to `^2.1.0`.
+
+---
+
 ### September 08, 2026
 
 **What's New**
@@ -50566,7 +50573,7 @@ Description: HRPC and framed JSON-RPC infrastructure for running WDK inside a Ba
 
 Pear Worklet WDK is the low-level transport and handler layer for running WDK inside a Bare worklet. It provides an `HRPC` client and server helper, a separate framed JSON-RPC server entrypoint for native hosts, and request payloads for WDK, wallet, protocol, and generic-module operations.
 
-Powered by `@tetherto/pear-wrk-wdk`.
+Powered by `@tetherto/pear-wrk-wdk`. These pages cover `v1.0.0-beta.14`.
 
 ## Features
 
@@ -50588,7 +50595,7 @@ Powered by `@tetherto/pear-wrk-wdk`.
 - You can host the same wallet and protocol handlers behind HRPC or a native JSON-RPC bridge, within each transport's supported method set
 
 <Callout type="info">
-Use this package when you need direct control over the worklet host and RPC layer. If you want generated worklet entry files instead, start with [`@tetherto/wdk-worklet-bundler`](https://github.com/tetherto/wdk-worklet-bundler).
+Use this package when you need direct control over the worklet host and RPC layer. If you want generated worklet entry files instead, start with [Worklet Bundler](/tools/worklet-bundler).
 </Callout>
 
 <Callout type="info">
@@ -50596,7 +50603,7 @@ The top-level package exports the `HRPC` runtime value. Import `registerRpcHandl
 </Callout>
 
 <Callout type="warn">
-In `v1.0.0-beta.13`, a missing wallet or protocol method returns `BAD_REQUEST` even if the caller supplies `options.defaultValue`. Handle unsupported methods in the host. The package does not export a pre-built WDK bundle.
+Since beta.13, a missing wallet or protocol method returns `BAD_REQUEST` even if the caller supplies `options.defaultValue`. Beta.14 also removes `options.transformResult`. Handle unsupported methods and transform returned values in the host. The package does not export a pre-built WDK bundle.
 </Callout>
 
 <Cards>
@@ -50684,9 +50691,9 @@ Returns:
 - `encryptedSeed?` (`string`): Base64-encoded encrypted seed buffer.
 - `config` (`string`): JSON stringified `WdkWorkletConfig`.
 
-The handler requires `encryptionKey` and `encryptedSeed` to be passed together or omitted together. When a seeded WDK instance already exists, the runtime disposes it and closes its generic modules before re-registering the wallets and optional protocols in `config`.
+The handler requires `encryptionKey` and `encryptedSeed` to be passed together or omitted together. When a seeded WDK instance already exists, the runtime closes its generic modules and calls `wdk.dispose()` before validating the new config. In beta.14, a replacement seed pair then causes the old retained buffer to be zeroed before the new seed is decrypted. Config-only reinitialization reuses the existing WDK object and seed buffer.
 
-In beta.13, generic modules on either transport are constructed from `context.moduleManagers` and `config.modules` only when that request includes the encrypted seed pair. A seedless reinitialization closes existing module instances without reconstructing them. Supply both seed fields on every initialization that must construct or reconstruct modules.
+Generic modules on either transport are constructed from `context.moduleManagers` and `config.modules` only when that request includes the encrypted seed pair. A seedless reinitialization closes existing module instances without reconstructing them. Supply both seed fields on every initialization that must construct or reconstruct modules. See [initialization and cleanup limits](/tools/pear-wrk-wdk/configuration#initialization-rules).
 
 #### `resetWdkWallets`
 
@@ -50727,7 +50734,9 @@ Returns:
 
 - `args` (`DisposeRequest`): Optional `blockchains` array. Omit it or pass an empty array for a full disposal.
 
-A full disposal closes all generic modules and clears the WDK instance. A non-empty `blockchains` array disposes only those wallets and leaves generic modules running.
+A full disposal closes all generic modules and clears the WDK instance. Beta.14 also zeroes and releases `context.wdkSeedBuffer`. After module shutdown completes, this cleanup runs even if `wdk.dispose()` throws. A non-empty `blockchains` array disposes only those wallets and retains the instance, seed buffer, and generic modules.
+
+HRPC sends this request without awaiting a response and returns `void`. JSON-RPC returns `{ status: 'disposed' }` inside its response `result` when the handler completes successfully. See [disposal limits](/tools/pear-wrk-wdk/configuration#dispose-wdk).
 
 #### `callMethod`
 
@@ -50742,6 +50751,8 @@ A full disposal closes all generic modules and clears the WDK instance. A non-em
 When `RpcContext.allowedMethods` defines the target surface, `methodName` must appear in its `methods` array. Account restrictions are keyed by network; protocol restrictions are nested by network, protocol type, and protocol name. Omitted surfaces remain unrestricted, while `methods: []` denies every call on that exact surface. Denied calls fail before dispatch with the runtime code `METHOD_NOT_ALLOWED`.
 
 A missing wallet or protocol method fails with `BAD_REQUEST`. Beta.13 removes the `options.defaultValue` fallback from both runtime dispatch and `CallMethodOptions`; callers must handle unsupported methods themselves.
+
+Beta.14 removes `options.transformResult` from `CallMethodOptions` and no longer invokes it in the handler. Transform results after receiving them in the host. Invalid JSON in `args` or `options` still fails with `BAD_REQUEST`, but no longer includes the native JSON parser's error detail.
 
 #### `registerWallet`
 
@@ -50762,19 +50773,21 @@ Returns:
 
 #### `callModule`
 
-Call one method on a configured generic module. Both HRPC and JSON-RPC support this operation in beta.13.
+Call one method on a configured generic module. Both HRPC and JSON-RPC support this operation since beta.13.
 
 - `module` (`string`): Module name shared by `RpcContext.moduleManagers` and `WdkWorkletConfig.modules`.
 - `method` (`string`): Non-empty method name on the constructed module instance.
-- `args?` (`string`): Optional JSON string of arguments. Arrays are spread as positional arguments; a non-array value is passed as one argument.
+- `args?` (`string`): Optional JSON string of arguments. Arrays are spread as positional arguments; omitted or decoded `null` arguments call the method with no arguments. Other values are passed as one argument.
 
-HRPC returns `CallModuleResponse` with optional `result`, a JSON string. JSON-RPC decodes that string and returns the value at `response.result.result`. The runtime awaits promises, materializes values with `.toArray()`, and recursively converts `Uint8Array` values to hex before serialization. Return a JSON-serializable value, or `null` for no result; an `undefined` result cannot be decoded by the JSON-RPC transport.
+HRPC returns `CallModuleResponse` with optional `result`, a JSON string. JSON-RPC decodes that string and returns the value at `response.result.result`. The runtime awaits promises, materializes values with `.toArray()`, and recursively converts `Uint8Array` values to hex before serialization. In beta.14, a top-level `undefined` or `null` result becomes the HRPC string `"null"` and the decoded JSON-RPC value `null`. Other falsy results such as `false`, `0`, and `''` are preserved. This module normalization does not apply to wallet or protocol `callMethod()` results.
 
 When `RpcContext.allowedModuleMethods` defines the target module, `method` must appear in that module's `methods` array. Omitted modules remain unrestricted, while `methods: []` denies every method on that module. A denied call fails with `METHOD_NOT_ALLOWED` before instance lookup or dispatch.
 
 #### `moduleEvent`
 
 Send an HRPC module event to the host. JSON-RPC forwards the same event as a `moduleEvent` notification with decoded `params.payload`; it has no request `id`.
+
+Beta.14 fixes HRPC event forwarding from hosted modules by preserving the RPC receiver when sending `moduleEvent()`. The event payload shape is unchanged.
 
 - `module` (`string`): Module name.
 - `event` (`string`): Event name.
@@ -50837,9 +50850,13 @@ Registers the host-side handler used to receive `moduleEvent()` messages.
 Import this helper from `@tetherto/pear-wrk-wdk/worklet`. It registers the package's server-side handlers on the provided RPC instance.
 
 - `rpc` (`any`): RPC server instance that supports the generated handler registration methods.
-- `context` (`RpcContext`): Runtime context containing `wdk`, `WDK`, `walletManagers`, `protocolManagers`, and `wdkLoadError`. Generic modules on either transport can additionally supply `moduleManagers` and `capabilities`; the runtime manages `moduleRuntime` and `moduleInstances`. Optional `allowedMethods` restricts wallet and protocol dispatch on HRPC and JSON-RPC, while `allowedModuleMethods` restricts generic-module dispatch on both transports.
+- `context` (`RpcContext`): Runtime context containing `wdk`, `WDK`, `walletManagers`, `protocolManagers`, and `wdkLoadError`. Generic modules on either transport can additionally supply `moduleManagers` and `capabilities`; the runtime manages `moduleRuntime`, `moduleInstances`, and, in beta.14, `wdkSeedBuffer`. Optional `allowedMethods` restricts wallet and protocol dispatch on HRPC and JSON-RPC, while `allowedModuleMethods` restricts generic-module dispatch on both transports.
 
 ### Types
+
+#### `RpcContext.wdkSeedBuffer`
+
+`wdkSeedBuffer?: Buffer | null` is a runtime-managed field added in beta.14. It retains the decrypted buffer passed to the WDK constructor so the runtime can zero it on full disposal or seed replacement. Do not populate it manually. Targeted wallet disposal and config-only reinitialization retain it. See [initialization rules](/tools/pear-wrk-wdk/configuration#initialization-rules) for failure-path limits.
 
 #### `RpcContext` Method Restrictions
 
@@ -50869,7 +50886,7 @@ interface RpcContext {
 
 The four allowlist helper interfaces are exported types in beta.13. Every omitted level remains unrestricted. Use an explicit empty `methods` array to deny all dynamic calls on one exact surface.
 
-The runtime exposes `METHOD_NOT_ALLOWED` for denied calls, but the beta.13 published error-code declaration does not include that member. Treat the literal runtime code as authoritative for this release.
+The runtime exposes `METHOD_NOT_ALLOWED` for denied calls, but the beta.14 published error-code declaration still does not include that member. Treat the literal runtime code as authoritative for this release.
 
 #### `WdkWorkletConfig`
 
@@ -50952,7 +50969,6 @@ enum ProtocolType {
 }
 
 interface CallMethodOptions {
-  transformResult: Function
   protocolType: ProtocolType
   protocolName: string
 }
@@ -50960,7 +50976,7 @@ interface CallMethodOptions {
 
 The published declarations include `ProtocolType`, but the top-level JavaScript entry does not export that enum value at runtime. Pass the corresponding string literal, such as `'swidge'`, in serialized request options.
 
-The published `CallMethodOptions` declaration marks every remaining field as required. The request's `options` string remains optional at runtime, and the handler reads fields only when their behavior is used. `transformResult` is a function-valued internal handler option; it cannot be sent through JSON serialization. Do not place a function in serialized request options.
+The published `CallMethodOptions` declaration marks both fields as required. The request's `options` string remains optional at runtime, and the handler reads fields only when their behavior is used. Beta.14 removes the former function-valued `transformResult` field; apply transformations in the host after decoding the response.
 
 ### Diagnostic export: `registerHandleLeakCheck(options?)`
 
@@ -50990,7 +51006,7 @@ registerJsonRpcHandlers(ipc, context)
 
 The server reads UTF-8 JSON-RPC 2.0 messages framed with a four-byte unsigned big-endian payload length. Every request requires an ID, and an ID cannot be reused while its earlier request is still in flight. Malformed frames are dropped without a response. The package does not export a JSON-RPC client or native-host helper.
 
-Beta.13 supports these JSON-RPC method names:
+Beta.14 supports these JSON-RPC method names:
 
 - `workletStart`
 - `generateEntropyAndEncrypt`
@@ -51008,7 +51024,7 @@ JSON-RPC does not support `resetWdkWallets` in this release. Use HRPC for select
 The transports share the wallet/protocol handler and module runtime. Both support the `swidge` protocol type, enforce `RpcContext.allowedMethods`, and enforce `allowedModuleMethods` for generic-module calls. JSON-RPC `callModule` parameters match `CallModuleRequest`, including its JSON-string `args`. Results use `response.result.result`; events arrive as `moduleEvent` notifications with `params: { module, event, payload }` and a decoded payload. See the [JSON-RPC examples](/tools/pear-wrk-wdk/configuration#json-rpc-transport).
 
 <Callout type="warn">
-Beta.13 removes JSON-RPC parameters and results from INFO request/response logs and logs wallet-call arguments at DEBUG. Mnemonic validation errors identify invalid word positions without echoing the words. This does not provide general secret redaction: DEBUG arguments, module errors, and application logs can still contain sensitive values. Production defaults to ERROR logging; avoid sensitive values in custom logs and errors.
+Beta.14 redacts named secret fields in object arguments to the package logger. It does not scrub raw strings, typed-array arguments, or formatted Error stacks. Production defaults to ERROR logging; see [logging configuration and limits](/tools/pear-wrk-wdk/configuration#configure-logging).
 </Callout>
 
 Mnemonic strings, encryption-key strings, and encrypted payload strings cannot be zeroed in JavaScript. Discard references promptly and never log them. The runtime validates imported mnemonics for 12 or 24 English BIP-39 words and clears temporary byte buffers where possible.
@@ -51025,7 +51041,7 @@ Mnemonic strings, encryption-key strings, and encrypted payload strings cannot b
 URL: https://docs.wdk.tether.io/tools/pear-wrk-wdk/configuration
 Description: Configure Pear Worklet HRPC and JSON-RPC contexts, WDK payloads, and generic modules
 
-This page explains how to [build the worklet context](#worklet-context), [shape the worklet config payload](#worklet-config-payload), [initialize WDK](#initialize-wdk), [call generic modules](#call-generic-module-methods), [choose a transport](#json-rpc-transport), and [inspect suspend delays](#inspect-suspend-delays).
+This page explains how to configure a beta.14 worklet context, initialize and dispose WDK, call wallet and generic-module methods, and configure logging and suspend diagnostics. Use the table of contents to find each task.
 
 ## Worklet Context
 
@@ -51160,7 +51176,7 @@ const context = {
 Omitting a module or its `methods` field leaves that module unrestricted. Set `methods: []` to deny every dynamic call on it.
 
 <Callout type="warn">
-These maps are not default-deny. List every dynamic surface exposed to an untrusted host. The beta.13 runtime reports denied calls with `METHOD_NOT_ALLOWED`, but the published error-code declaration omits that new member; handle the literal runtime code until the declaration is corrected.
+These maps are not default-deny. List every dynamic surface exposed to an untrusted host. The beta.14 runtime reports denied calls with `METHOD_NOT_ALLOWED`, but the published error-code declaration still omits that member; handle the literal runtime code until the declaration is corrected.
 </Callout>
 
 ## Worklet Config Payload
@@ -51202,7 +51218,7 @@ const workletConfig = {
 - `modules` is optional and contains runtime config for named generic modules. Each key must match a `moduleManagers` key in the worklet context and the corresponding build-time Worklet Bundler module name.
 - `resetWdkWallets()` reads only the `networks` portion of the decoded config.
 
-JSON-RPC generic modules require Pear Worklet beta.13. Supply the same `moduleManagers`, `allowedModuleMethods`, and runtime `modules` config used by HRPC. If generating the entrypoint, use Worklet Bundler beta.12 with Pear Worklet beta.13.
+JSON-RPC generic-module support was introduced in Pear Worklet beta.13. Supply the same `moduleManagers`, `allowedModuleMethods`, and runtime `modules` config used by HRPC. For generated entrypoints, use [Worklet Bundler beta.13 with Pear Worklet beta.14](/tools/worklet-bundler/configuration#install-the-packages).
 
 ## Initialize WDK
 
@@ -51224,9 +51240,25 @@ await hrpc.initializeWDK({
 
 - Pass both `encryptionKey` and `encryptedSeed`, or omit both together.
 - On first initialization, the worklet must receive an encrypted seed pair so it can create `context.wdk`.
-- If `context.wdk` already exists, a later `initializeWDK()` call disposes the existing instance and closes its generic modules before re-registering wallets and protocols from the new config.
-- In beta.13, generic modules on either transport are constructed only when that `initializeWDK()` request includes both `encryptionKey` and `encryptedSeed`. A seedless reinitialization closes existing module instances but does not rebuild them, even when `config.modules` is present. Supply the seed pair on every initialization that must construct or reconstruct modules.
+- If `context.wdk` already exists, reinitialization closes its generic modules and calls `wdk.dispose()` before validating the new config. With both seed fields present, beta.14 then zeroes the old retained seed buffer before attempting replacement. Validate the replacement payload before sending it; a failed replacement does not restore the old seed.
+- Without a seed pair, reinitialization reuses the existing WDK object and retained seed to re-register wallets and protocols. It closes generic modules without rebuilding them, even when `config.modules` is present. Supply the seed pair on every initialization that must construct or reconstruct modules.
 - Module `close()` is called during full disposal or reinitialization. Targeted blockchain disposal leaves generic modules running. Optional `suspend()` and `resume()` methods run only when the host forwards Bare lifecycle events; the manual context above does so.
+
+The runtime manages the decrypted buffer through `context.wdkSeedBuffer`; do not set this field yourself. If the WDK constructor throws, beta.14 zeroes the newly decrypted buffer. Later wallet or protocol registration failures retain the new instance and seed, so handle those failures and dispose the instance when abandoning initialization.
+
+## Dispose WDK
+
+Send a full disposal request when the worklet should release its WDK instance:
+
+```javascript title="Dispose The Worklet WDK"
+hrpc.dispose({})
+```
+
+A full disposal closes generic modules, disposes WDK, and zeroes and releases its retained seed buffer. Once module shutdown completes, the instance and buffer are cleared even if `wdk.dispose()` throws. HRPC `dispose()` is one-way and returns `void`; its return does not acknowledge cleanup completion.
+
+To dispose only selected wallets, pass a non-empty `blockchains` array, such as `hrpc.dispose({ blockchains: ['ethereum'] })`. This retains the WDK instance, seed buffer, and generic modules. An omitted or empty array requests full disposal.
+
+This cleanup covers the buffer retained by the worklet runtime. It cannot erase JavaScript strings or copies retained by application or module code.
 
 ## Reset Selected Wallets
 
@@ -51272,10 +51304,13 @@ const result = await hrpc.callMethod({
 - `args` is optional and must be a JSON string when provided.
 - `options` is optional and must be a JSON string when provided.
 - When `args` decodes to an array, the handler spreads the values as positional method arguments.
-- When `args` decodes to an object or primitive, the handler passes it as a single argument.
+- Omitted or decoded `null` arguments call the method with no arguments. Other objects or primitives are passed as one argument.
 - Set `options.protocolType` to `swap`, `swidge`, `bridge`, `lending`, or `fiat` to call a protocol wrapper. Every protocol call requires a non-empty `options.protocolName`.
 - When `context.allowedMethods` contains the target account or protocol surface, `methodName` must appear in that exact surface's `methods` array.
 - In beta.13, a missing wallet or protocol method fails with `BAD_REQUEST`. The removed `options.defaultValue` field no longer supplies a fallback; catch unsupported-method errors in the host.
+- Beta.14 removes `options.transformResult` from the declarations and ignores it during dispatch. Transform the returned value in the host instead.
+
+Invalid JSON in `config`, `args`, or `options` fails with `BAD_REQUEST`. Beta.14 reports a message such as `args must be valid JSON` without the native parser's error detail.
 
 ## Call Generic Module Methods
 
@@ -51291,7 +51326,9 @@ const response = await hrpc.callModule({
 const theme = response.result ? JSON.parse(response.result) : undefined
 ```
 
-`args` is an optional JSON string. Arrays are spread into positional arguments; a non-array value is passed as one argument. Promise results are awaited, `.toArray()` results are materialized, and `Uint8Array` values are normalized to hex before the response is serialized.
+`args` is an optional JSON string. Arrays are spread into positional arguments; omitted or decoded `null` arguments call the method with no arguments. Other values are passed as one argument. Promise results are awaited, `.toArray()` results are materialized, and `Uint8Array` values are normalized to hex before the response is serialized.
+
+In beta.14, a module method that returns `undefined` or `null` produces the JSON string `"null"` in the HRPC response. JSON-RPC decodes it to `response.result.result === null`. This normalization applies to `callModule()`, not wallet or protocol `callMethod()` results.
 
 When `context.allowedModuleMethods` contains the target module, `method` must appear in its `methods` array. A denied call returns `METHOD_NOT_ALLOWED` before module instance lookup or dispatch.
 
@@ -51342,8 +51379,14 @@ A declared module event arrives as a notification without an `id`; `params.paylo
 
 Manual JSON-RPC entrypoints must forward Bare `suspend` and `resume` events to `context.moduleRuntime` as shown in the HRPC context example. Registering JSON-RPC handlers alone does not install those lifecycle listeners.
 
+## Configure Logging
+
+Set `LOG_LEVEL` in the worklet environment before loading the package. Accepted values are `DEBUG`, `INFO`, `WARN`, `ERROR`, and `NONE`; beta.14 trims whitespace and ignores case. An unrecognized value falls back to `ERROR`. With `LOG_LEVEL` unset or empty, `NODE_ENV=development` selects `DEBUG`; other environments default to `ERROR`.
+
+At every enabled level, the package logger replaces object fields named `mnemonic`, `encryptionKey`, `encryptedSeed`, `encryptedSeedBuffer`, `encryptedEntropy`, `encryptedEntropyBuffer`, or `seed` with `[redacted]`. Matching is case-sensitive. Nested objects at depth three are replaced with `[object]`.
+
 <Callout type="warn">
-Beta.13 omits JSON-RPC parameters and results from its INFO request/response logs and moves wallet-call arguments to DEBUG. DEBUG can still expose sensitive arguments, and module errors or application logs are not generally redacted. Keep production logging at its default ERROR level and avoid sensitive values in custom logs and error messages.
+This is field-based redaction, not a general secret filter. Raw strings, serialized JSON, typed-array arguments, and formatted Error stacks are not scrubbed. Wallet-call arguments can appear at DEBUG, and module error messages and application logs can still expose sensitive values. Keep production logging at `ERROR` and avoid secrets in custom logs and errors.
 </Callout>
 
 ## Inspect Suspend Delays
@@ -51358,7 +51401,7 @@ registerHandleLeakCheck({ tickIntervalMs: 1000 })
 
 The helper logs a handle snapshot immediately on `suspend`, then repeats every `tickIntervalMs` milliseconds until `idle` or `resume`. The default interval is `1000` ms. Its timer is unreferenced so the diagnostic itself does not keep the event loop active. It reports handles; it does not close them or suspend modules.
 
-Provide a positive interval; the beta.13 helper passes the value to the timer without validating it. Registration is a no-op if the optional `bare-walk-handles` dependency or Bare lifecycle events are unavailable. Diagnostic output uses `console.warn` regardless of `LOG_LEVEL`, so register it only when you need handle diagnostics.
+Provide a positive interval; the beta.14 helper passes the value to the timer without validating it. Registration is a no-op if the optional `bare-walk-handles` dependency or Bare lifecycle events are unavailable. Diagnostic output uses `console.warn` regardless of `LOG_LEVEL`, so register it only when you need handle diagnostics.
 
 ***
 
@@ -54644,7 +54687,7 @@ Worklet Bundler packages selected WDK wallet, protocol, and optional generic mod
 - **Opt-in handle diagnostics**: Use `options.handleLeakCheck` to inspect suspend-to-idle delays in generated HRPC worklets.
 
 <Callout type="info">
-`v1.0.0-beta.13` supports generic modules and their method allowlists in JSON-RPC entrypoints, including module suspend/resume forwarding. Use Pear Worklet `v1.0.0-beta.13` for JSON-RPC module calls and events. The `options.handleLeakCheck` diagnostic is generated only for HRPC.
+`v1.0.0-beta.13` supports generic modules and their method allowlists in JSON-RPC entrypoints, including module suspend/resume forwarding. The [installation example](/tools/worklet-bundler/configuration#install-the-packages) pairs it with Pear Worklet `v1.0.0-beta.14` for runtime module calls and events. The `options.handleLeakCheck` diagnostic is generated only for HRPC.
 </Callout>
 
 ## Why this matters
@@ -54984,11 +55027,11 @@ This page shows how to install `@tetherto/wdk-worklet-bundler` and its Pear runt
 Install the bundler as a development dependency and Pear Worklet as a runtime dependency in the host project:
 
 ```bash title="Install The Bundler And Runtime"
-npm install @tetherto/pear-wrk-wdk@1.0.0-beta.13
+npm install @tetherto/pear-wrk-wdk@1.0.0-beta.14
 npm install --save-dev @tetherto/wdk-worklet-bundler@1.0.0-beta.13
 ```
 
-Worklet Bundler beta.13 generates entrypoints that import Pear Worklet. Use Pear Worklet beta.13 for JSON-RPC generic-module calls and events, and for the diagnostic export used by `options.handleLeakCheck`. The bundler checks whether the runtime package is installed; it does not enforce this version pairing.
+Worklet Bundler beta.13 generates entrypoints that import Pear Worklet. These examples pair it with Pear Worklet beta.14 for generic-module calls and events, seed-buffer cleanup, and the diagnostic export used by `options.handleLeakCheck`. The bundler checks whether the runtime package is installed; it does not enforce this version pairing.
 
 ## Create `wdk.config.js`
 
@@ -55152,7 +55195,7 @@ Use `modules` for named generic packages that expose a module factory. Each entr
 
 The factory receives `{ seed, config, capabilities, emit }` and can return the module instance or a promise for it. A module that needs the seed must consume it synchronously rather than retain it. The build-time name, such as `preferences`, must match the key in the host's runtime module config.
 
-Beta.13 generates these modules for both transports. With Pear Worklet beta.13, JSON-RPC initialization constructs them from the encrypted seed pair and matching runtime `modules` config. Module calls retain JSON-string `args`; results and event payloads are decoded JSON values. See the [Pear Worklet JSON-RPC examples](/tools/pear-wrk-wdk/configuration#json-rpc-transport).
+Beta.13 generates these modules for both transports. With Pear Worklet beta.14, JSON-RPC initialization constructs them from the encrypted seed pair and matching runtime `modules` config. Module calls retain JSON-string `args`; results and event payloads are decoded JSON values. See the [Pear Worklet JSON-RPC examples](/tools/pear-wrk-wdk/configuration#json-rpc-transport).
 
 ### `transport` (optional)
 
@@ -55181,7 +55224,7 @@ The published config type supports these build options:
 - `linkAddons` (`boolean`): Link native addons with `bare-link`. Defaults to `true` for JSON-RPC and `false` for HRPC.
 - `platforms` (`('ios' | 'macos' | 'android')[]`): Addon platforms. Defaults to all three when addon linking is active.
 - `swiftTarget` (`string`): Xcode target written to `addons.yml`. Defaults to `app`.
-- `handleLeakCheck` (`number | true`, HRPC only): Opt in to repeated handle snapshots while suspended. `true` uses Pear Worklet beta.13's default `1000` ms interval; a positive number sets the interval in milliseconds. Omit the field to disable it. `false`, zero, negative numbers, and strings fail config validation.
+- `handleLeakCheck` (`number | true`, HRPC only): Opt in to repeated handle snapshots while suspended. `true` uses Pear Worklet's default `1000` ms interval; a positive number sets the interval in milliseconds. Omit the field to disable it. `false`, zero, negative numbers, and strings fail config validation.
 - `convertEsmToCjs` (`boolean`): Convert the bundle for a Bare port whose JavaScript engine cannot load ES modules, such as JSC or QuickJS. Defaults to `false` for both transports. Leave it off only when every target uses an ESM-capable engine such as V8.
 
 ### Configure suspend diagnostics
