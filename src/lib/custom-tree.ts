@@ -92,7 +92,7 @@ export const customTree: Node[] = [
       configuration('/sdk/wallet-modules/wallet-evm/configuration'),
       apiReference('/sdk/wallet-modules/wallet-evm/api-reference'),
     ]),
-    folder('EVM Hinkal', '/sdk/wallet-modules/wallet-evm-hinkal', 'Shield', [
+    folder('Private transfers (Hinkal)', '/sdk/wallet-modules/wallet-evm-hinkal', 'Shield', [
       usage('/sdk/wallet-modules/wallet-evm-hinkal/usage'),
       guides([
         page('Send Private Tokens', '/sdk/wallet-modules/wallet-evm-hinkal/guides/send-private-tokens'),

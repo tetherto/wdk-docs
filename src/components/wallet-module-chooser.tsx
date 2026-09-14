@@ -83,7 +83,7 @@ const walletModules: WalletModule[] = [
   },
   {
     id: "evm-hinkal",
-    label: "EVM Hinkal",
+    label: "Private transfers (Hinkal)",
     chain: "evm",
     goals: ["private"],
     packageName: "@hinkal/wdk-wallet-evm-hinkal",
