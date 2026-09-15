@@ -24,7 +24,7 @@ new Usdt0ProtocolEvm(account, config?)
 ```
 
 **Parameters:**
-- `account` (WalletAccountEvm | WalletAccountEvmErc4337 | WalletAccountReadOnlyEvm | WalletAccountReadOnlyEvmErc4337): The wallet account to use for bridge operations
+- `account` (`IWalletAccount` or `IWalletAccountReadOnly` from `@tetherto/wdk-wallet`): The wallet account to use for bridge operations. See [account requirements](#account-requirements).
 - `config` (BridgeProtocolConfig, optional): Configuration object
   - `bridgeMaxFee` (number | bigint, optional): Rejects `bridge()` when the implementation's combined fee value is at or above this cap
 
@@ -41,6 +41,18 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
   bridgeMaxFee: 1000000000000000n // Standard Ethereum account: source native base units
 })
 ```
+
+### Account requirements
+
+The constructor accepts the shared `IWalletAccount` and `IWalletAccountReadOnly` interfaces in `1.0.0-beta.9`. For execution, `bridge()` checks whether the account has a callable `sendTransaction()` method instead of requiring a `WalletAccountEvm` instance.
+
+The account must still implement EVM-compatible `getAddress()` and `quoteSendTransaction()` operations. Both bridge methods require an RPC URL or EIP-1193 provider in the wallet configuration. The constructor reads `account._config.provider`, an internal field absent from the shared interfaces. Implementing the interface alone does not establish runtime compatibility; an account without `_config` fails construction.
+
+Read-only accounts can use `quoteBridge()`, subject to the same provider, route, balance, and allowance requirements. They cannot execute `bridge()` without `sendTransaction()`.
+
+<Callout type="warn">
+ERC-4337 helper selection and approval batching still depend on the concrete classes resolved by the bridge package: `WalletAccountReadOnlyEvmErc4337` for helper construction and quotes, and `WalletAccountEvmErc4337` for execution. A custom account or an account from a separate copy of the ERC-4337 package does not receive that path solely because it implements `sendTransaction()`. The bridge release depends on ERC-4337 wallet `1.0.0-beta.11`; verify package deduplication and runtime class identity when combining wallet versions. See [Bridge with ERC-4337](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337#prerequisites).
+</Callout>
 
 ### Methods
 
@@ -70,7 +82,7 @@ With a standard EVM account, approve the source-chain bridge spender before call
 **Returns:** `Promise<BridgeResult>` - Bridge operation result
 
 **Throws:**
-- Error if account is read-only
+- Error if the account has no callable `sendTransaction()` method
 - Error if no provider is configured
 - Error if the combined fee value is equal to or greater than `bridgeMaxFee`
 
@@ -88,7 +100,7 @@ await standardAccount.approve({
 const result = await standardBridgeProtocol.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...', // Recipient address
-  token: '0x...', // ₮ contract address
+  token: '0x...', // USDt contract address
   amount: 1000000n,
   oftContractAddress: '0x...' // Same address used as approval spender
 })
@@ -116,7 +128,7 @@ console.log('Bridge fee:', result2.bridgeFee)
 ```
 
 #### `quoteBridge(options, config?)`
-Estimates the cost of a bridge operation without executing it.
+Estimates the cost of a bridge operation without executing it. Read-only accounts are accepted, and this method does not enforce `bridgeMaxFee`.
 
 For standard EVM accounts, some providers estimate the same bridge transaction that `bridge()` sends. If that estimate fails because token allowance is missing, approve the source-chain bridge spender before calling `quoteBridge()`. ERC-4337 quotes include the bundled approval transaction. For `WalletAccountReadOnlyEvmErc4337`, `quoteBridge()` uses the same ordered batch as `bridge()`: on Ethereum mainnet for the resolved USD₮ token at `0xdAC17F958D2ee523a2206206994597C13D831ec7`, an existing non-zero allowance and non-zero `approveAmount` produce `approve(spender, 0)`, `approve(spender, approveAmount)`, then the helper bridge call; otherwise the batch is the approval followed by the helper call.
 
@@ -239,13 +251,14 @@ type Erc4337BridgeConfig = Erc4337QuoteConfig & {
 
 | Account flow | `fee` | `bridgeFee` |
 |---|---|---|
-| Standard EVM | Source-chain native base units | Source-chain native base units |
+| `WalletAccountEvm` | Source-chain native base units | Source-chain native base units |
+| Other compatible accounts using the single-transaction path | Account-specific `quoteSendTransaction()` fee units | Source-chain native base units |
 | ERC-4337 with native gas | Source-chain native base units | Bridged-token base units |
 | ERC-4337 with token-paid gas | Paymaster-token base units | Bridged-token base units |
 | ERC-4337 with sponsored gas | `0` | Bridged-token base units |
 
 <Callout type="warn">
-In `1.0.0-beta.7`, the ERC-4337 path numerically adds `fee + bridgeFee` when checking `bridgeMaxFee`, even when the fields have different denominations. Do not interpret that sum as a total monetary cost. Set an ERC-4337 cap only after confirming that the selected account payment mode produces compatible units. The equality boundary is rejected.
+In `1.0.0-beta.9`, `bridge()` numerically adds `fee + bridgeFee` when checking `bridgeMaxFee`, even when the fields have different denominations. This affects ERC-4337 helper flows and any compatible account whose quoted fee is not in source-chain native base units. Do not interpret that sum as a total monetary cost. Set a cap only after confirming that the selected account payment mode produces compatible units. The equality boundary is rejected.
 </Callout>
 
 `Erc4337QuoteConfig` is a partial operation-level override of the wallet's token-paid, sponsored, or native-gas configuration. Sponsored gas uses `isSponsored: true` and can include `sponsorshipPolicyId`; native gas uses `useNativeCoins: true`. See the [ERC-4337 wallet configuration](/sdk/wallet-modules/wallet-evm-erc-4337/configuration) for the complete account requirements.

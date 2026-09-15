@@ -16,7 +16,7 @@ const quote = await swapProtocol.quoteSwap({
   tokenInAmount: 1000000n
 })
 
-console.log('Estimated fee (wei):', quote.fee)
+console.log('Estimated fee (account units):', quote.fee)
 console.log('Tokens in (base units):', quote.tokenInAmount)
 console.log('Tokens out (base units):', quote.tokenOutAmount)
 ```
@@ -30,7 +30,7 @@ const quote = await swapProtocol.quoteSwap({
   tokenOutAmount: 500000000000000000n
 })
 
-console.log('Estimated fee (wei):', quote.fee)
+console.log('Estimated fee (account units):', quote.fee)
 console.log('Required token in (base units):', quote.tokenInAmount)
 ```
 
@@ -50,7 +50,9 @@ const quote = await swapAA.quoteSwap({
 
 ## Fee estimation
 
-You can read `quote.fee` from [`quoteSwap()`](/sdk/swap-modules/swap-velora-evm/api-reference) as the estimated total swap fee in wei before calling [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference):
+Read `quote.fee` in the account's fee units: native wei for a standard EVM account, token base units for token-paymaster fees, or zero for sponsorship. The quote excludes any separate input-token approval. `quoteSwap()` does not enforce `swapMaxFee`.
+
+The following examples use a standard EVM account, so the cap is in wei:
 
 ```javascript title="Quote fee before deciding"
 const quote = await swapProtocol.quoteSwap({
@@ -63,7 +65,7 @@ const maxFee = 200000000000000n
 console.log('Quoted fee (wei):', quote.fee, 'cap:', maxFee)
 ```
 
-You can compare that estimate to `swapMaxFee` on [`VeloraProtocolEvm`](/sdk/swap-modules/swap-velora-evm/api-reference) and only then call [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference) when the quote is within your cap:
+Compare the estimate with an exclusive cap and pass the same cap to [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference). Execution obtains a fresh fee quote and rejects a fee equal to or above `swapMaxFee`:
 
 ```javascript title="Swap when fee is under cap"
 const maxFee = 200000000000000n
@@ -73,12 +75,12 @@ const quote = await swapProtocol.quoteSwap({
   tokenInAmount: 1000000n
 })
 
-if (quote.fee <= maxFee) {
+if (quote.fee < maxFee) {
   const result = await swapProtocol.swap({
     tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
     tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
     tokenInAmount: 1000000n
-  })
+  }, { swapMaxFee: maxFee })
   console.log('Swap hash:', result.hash)
 }
 ```
