@@ -276,9 +276,9 @@ const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 | `signTransaction(tx, config?)` | Builds and signs one UserOperation without submitting it | `Promise\<UserOperationV7\>` | If a non-sponsored fee exceeds max or the token paymaster address mismatches |
 | `sendTransaction(tx, config?)` | Builds and sends transactions, or submits a signed UserOperation | `Promise\<{hash: string, fee: bigint}\>` | If a newly built operation exceeds max or the token paymaster address mismatches |
 | `quoteSendTransaction(tx, config?)` | Estimates the fee for transactions or a signed UserOperation | `Promise\<{fee: bigint}\>` | If a newly built operation's token paymaster address mismatches |
-| `transfer(options, config?, txOverrides?)` | Transfers ERC20 tokens via UserOperation | `Promise\<{hash: string, fee: bigint}\>` | If fee exceeds max, or the token paymaster address mismatches |
-| `quoteTransfer(options, config?, txOverrides?)` | Estimates the fee for an ERC20 transfer | `Promise\<{fee: bigint}\>` | If the token paymaster address mismatches |
-| `approve(options, txOverrides?)` | Approves a spender to spend ERC20 tokens | `Promise\<{hash: string, fee: bigint}\>` | `ProviderRequiredError`, or `ValueError` when Ethereum USD₮ allowance must be reset |
+| `transfer(options, config?)` | Transfers ERC20 tokens via UserOperation | `Promise\<{hash: string, fee: bigint}\>` | If fee exceeds max, or the token paymaster address mismatches |
+| `quoteTransfer(options, config?)` | Estimates the fee for an ERC20 transfer | `Promise\<{fee: bigint}\>` | If the token paymaster address mismatches |
+| `approve(options)` | Approves a spender to spend ERC20 tokens | `Promise\<{hash: string, fee: bigint}\>` | `ProviderRequiredError`, or `ValueError` when Ethereum USD₮ allowance must be reset |
 | `getBalance()` | Returns the native token balance (in wei) | `Promise\<bigint\>` | - |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise\<bigint\>` | - |
 | `getPaymasterTokenBalance()` | Returns the paymaster token balance | `Promise\<bigint\>` | - |
@@ -450,16 +450,16 @@ const quote = await account.quoteSendTransaction({
 console.log('Estimated fee:', quote.fee)
 ```
 
-##### `transfer(options, config?, txOverrides?)`
+##### `transfer(options, config?)`
 Transfers ERC20 tokens via UserOperation.
 
 **Parameters:**
-- `options` (TransferOptions): Transfer options
+- `options` (EvmErc4337TransferOptions): Transfer options
   - `token` (string): ERC20 token contract address
   - `recipient` (string): Recipient address
   - `amount` (number | bigint): Amount in token base units
+  - Optional UserOperation gas and fee overrides (see [EvmErc4337GasOverrides](#evmerc4337gasoverrides))
 - `config` (optional): Per-call configuration override (see [Config Override](#config-override))
-- `txOverrides` (optional): UserOperation gas and fee overrides (see [EvmErc4337GasOverrides](#evmerc4337gasoverrides))
 
 **Returns:** `Promise\<{hash: string, fee: bigint}\>` - UserOperation hash and fee
 
@@ -486,15 +486,14 @@ console.log('Transfer UserOperation hash:', result.hash)
 console.log('Transfer fee:', result.fee)
 ```
 
-##### `quoteTransfer(options, config?, txOverrides?)`
+##### `quoteTransfer(options, config?)`
 Estimates the fee for an ERC20 token transfer.
 
 This method does not resolve or reserve a nonce lane. A later transfer using `parallel` or `nonceKey` rebuilds in that lane.
 
 **Parameters:**
-- `options` (TransferOptions): Transfer options (same as transfer)
+- `options` (EvmErc4337TransferOptions): Transfer options (same as transfer), including any optional UserOperation gas and fee overrides (see [EvmErc4337GasOverrides](#evmerc4337gasoverrides))
 - `config` (optional): Per-call configuration override (see [Config Override](#config-override))
-- `txOverrides` (optional): UserOperation gas and fee overrides (see [EvmErc4337GasOverrides](#evmerc4337gasoverrides))
 
 **Returns:** `Promise\<{fee: bigint}\>` - Fee estimate
 
@@ -553,15 +552,15 @@ if (paymasterBalance < 10000n) {
 }
 ```
 
-##### `approve(options, txOverrides?)`
+##### `approve(options)`
 Approves a spender to spend ERC20 tokens on behalf of the Safe account.
 
 **Parameters:**
-- `options` (ApproveOptions): Approve options
+- `options` (EvmErc4337ApproveOptions): Approve options
   - `token` (string): ERC20 token contract address
   - `spender` (string): The address allowed to spend the tokens
   - `amount` (number | bigint): Amount to approve in token base units
-- `txOverrides` (optional): UserOperation gas and fee overrides (see [EvmErc4337GasOverrides](#evmerc4337gasoverrides))
+  - Optional UserOperation gas and fee overrides (see [EvmErc4337GasOverrides](#evmerc4337gasoverrides))
 
 **Returns:** `Promise\<{hash: string, fee: bigint}\>` - Transaction result
 
@@ -861,7 +860,7 @@ const sameAddress = WalletAccountEvmErc4337.predictSafeAddress(
 | `getPaymasterTokenBalance()` | Returns the paymaster token balance | `Promise\<bigint\>` | - |
 | `getAllowance(token, spender)` | Returns current token allowance for a spender | `Promise\<bigint\>` | - |
 | `quoteSendTransaction(tx, config?)` | Estimates the fee for a UserOperation | `Promise\<{fee: bigint}\>` | If simulation fails or the token paymaster address mismatches |
-| `quoteTransfer(options, config?, txOverrides?)` | Estimates the fee for an ERC20 transfer | `Promise\<{fee: bigint}\>` | If simulation fails or the token paymaster address mismatches |
+| `quoteTransfer(options, config?)` | Estimates the fee for an ERC20 transfer | `Promise\<{fee: bigint}\>` | If simulation fails or the token paymaster address mismatches |
 | `getTransactionReceipt(hash)` | Maps a UserOperation hash to a native EVM receipt; deprecated in favor of `getTransaction()` | `Promise\<EvmTransactionReceipt \| null\>` | - |
 | `getTransaction(hash)` | Returns normalized UserOperation finality using its bundling transaction | `Promise\<TransactionReceipt & EvmErc4337TransactionDetails\>` | If the hash is invalid or unknown |
 | `waitForTransaction(hash, options?)` | Waits for the UserOperation to reach `confirmed` or `final`, or returns `dropped` | `Promise\<TransactionReceipt & EvmErc4337TransactionDetails\>` | If the wait times out |
@@ -984,13 +983,12 @@ try {
 }
 ```
 
-##### `quoteTransfer(options, config?, txOverrides?)`
+##### `quoteTransfer(options, config?)`
 Estimates the fee for an ERC20 token transfer.
 
 **Parameters:**
-- `options` (TransferOptions): Transfer options
+- `options` (EvmErc4337TransferOptions): Transfer options, including any optional UserOperation gas and fee overrides (see [EvmErc4337GasOverrides](#evmerc4337gasoverrides))
 - `config` (optional): Per-call configuration override (see [Config Override](#config-override))
-- `txOverrides` (optional): UserOperation gas and fee overrides (see [EvmErc4337GasOverrides](#evmerc4337gasoverrides))
 
 **Returns:** `Promise\<{fee: bigint}\>` - Fee estimate
 
@@ -1257,7 +1255,7 @@ import type { UserOperationV7 } from '@tetherto/wdk-wallet-evm-erc-4337'
 
 ### EvmErc4337GasOverrides
 
-The helper methods `transfer()`, `quoteTransfer()`, and `approve()` accept these same UserOperation gas and fee override fields as a separate `txOverrides` argument.
+The helper methods `transfer()`, `quoteTransfer()`, and `approve()` accept these same UserOperation gas and fee override fields directly on their options object; see [EvmErc4337TransferOptions](#evmerc4337transferoptions) and [EvmErc4337ApproveOptions](#evmerc4337approveoptions). Set `maxFeePerGas` and `maxPriorityFeePerGas` together.
 
 ```typescript
 interface EvmErc4337GasOverrides {
@@ -1267,6 +1265,22 @@ interface EvmErc4337GasOverrides {
   maxFeePerGas?: number | bigint;
   maxPriorityFeePerGas?: number | bigint;
 }
+```
+
+### EvmErc4337TransferOptions
+
+The options accepted by `transfer()` and `quoteTransfer()`: the standard [TransferOptions](#transferoptions) extended with the optional [EvmErc4337GasOverrides](#evmerc4337gasoverrides) fields.
+
+```typescript
+type EvmErc4337TransferOptions = TransferOptions & EvmErc4337GasOverrides
+```
+
+### EvmErc4337ApproveOptions
+
+The options accepted by `approve()`: the standard [ApproveOptions](#approveoptions) extended with the optional [EvmErc4337GasOverrides](#evmerc4337gasoverrides) fields.
+
+```typescript
+type EvmErc4337ApproveOptions = ApproveOptions & EvmErc4337GasOverrides
 ```
 
 ### TransferOptions
