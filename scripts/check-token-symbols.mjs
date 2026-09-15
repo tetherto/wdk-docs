@@ -1229,8 +1229,11 @@ function reasonForCompetingAsset(symbol) {
 
 function allowedCompetingSymbols(lines, index) {
   const allowed = new Set()
+  let previousIndex = index - 1
+  // Markdown formatters separate a standalone MDX comment from its paragraph.
+  while (previousIndex >= 0 && lines[previousIndex].trim() === '') previousIndex -= 1
 
-  for (const candidate of [lines[index], lines[index - 1]]) {
+  for (const candidate of [lines[index], lines[previousIndex]]) {
     const directive = candidate?.match(COMPETING_ASSET_ALLOW_DIRECTIVE)
     if (!directive) continue
     for (const symbol of directive[1].split(/[\s,]+/)) {

@@ -85,18 +85,20 @@ and the generated `public/llms*.txt` artifacts:
   context-appropriate form — the glyph in reader-facing prose, `USDt`-style in
   human-readable text inside code samples, and the exact machine value
   (`USDT`, `usdt`, …) where an API requires it.
-- **Competing assets.** Any non-Tether stable-value symbol (USDC, DAI, PYUSD,
-  GHO, USDe, PAXG, …) fails the gate wherever it appears, including code blocks.
-  Examples settle in Tether assets.
+- **Competing assets.** Symbols listed in [the checker](scripts/check-token-symbols.mjs)
+  fail the gate wherever they appear, including code blocks. Examples settle in
+  Tether assets.
 
-When a competing asset genuinely has to be named, annotate the line — the
-directive applies to the line it sits on and the line after it, and only to the
-symbols it lists:
+When a competing asset has to be named, annotate the line. The directive applies
+to its own line and the next non-empty line, and only to the symbols it lists.
+Blank lines inserted by Markdown formatting do not end the exception:
 
 ```mdx
-{/* token-check-allow: USDC */}
-The facilitator settles USD₮0 rather than USDC.
+{/* token-check-allow: ASSET_SYMBOL */}
+An unavoidable reference to ASSET_SYMBOL.
 ```
+
+Replace `ASSET_SYMBOL` with the exact symbol reported by the checker.
 
 ## Build
 
