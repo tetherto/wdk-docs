@@ -1,0 +1,157 @@
+---
+title: Butter Network Swidge Configuration
+description: Configure Butter API access, source chains, transaction adapters, approvals, and fee limits.
+docType: reference
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Configure one [`ButterSwidgeProtocol`](/sdk/swidge-modules/swidge-butter/api-reference#butterswidgeprotocol) instance for each source chain and account. Discovery and quoting can use an accountless instance. Execution also depends on the account's methods and RPC configuration.
+
+<Callout type="info">
+This reference describes the `0.2.0` source at [revision `c1f373d`](https://github.com/butternetwork/wdk-protocol-swidge-butter/tree/c1f373d9876668502e0b23b351cb1e4db6328b7c). The published npm `0.1.0` package predates this API. Follow the [source installation steps](/sdk/swidge-modules/swidge-butter/usage#install-the-source-snapshot).
+</Callout>
+
+## API access
+
+Only `sourceChainId` and `entrance` are required constructor fields. The remaining fields are optional in `ButterSwidgeProtocolConfig`; some become necessary for a particular execution path.
+
+| Field | Type | Default and behavior |
+|---|---|---|
+| `sourceChainId` | `string` or `number` | Required. Source chain handled by this instance. Match the sending account and its RPC provider to this chain. |
+| `entrance` | `string` | Required. Integration entrance issued by Butter. |
+| `apiKeyId` | `string` | Unset. Supply together with `apiSecret`. |
+| `apiSecret` | `string` | Unset. Server-side Butter API secret. |
+| `authMode` | `'optional'` or `'required'` | `'optional'`. Required mode rejects missing credentials during construction. |
+| `routerBaseUrl` | `string` | `https://bs-router-v3.chainservice.io` |
+| `tokenBaseUrl` | `string` | `https://bs-tokens-api.chainservice.io` |
+| `appBaseUrl` | `string` | `https://bs-app-api.chainservice.io` |
+| `requestTimeoutMs` | `number` | `10000`. Positive safe integer in milliseconds, covering the request and response-body parsing. |
+| `fetch` | Fetch-compatible function | Global `fetch`. Receives a URL and GET options with headers and an abort signal. |
+
+Keep `apiSecret` out of browser and mobile bundles. Route authenticated API access through a server you control. When credentials are supplied, all three base URLs must use HTTPS. Optional authentication permits anonymous requests; it does not guarantee that Butter will accept or rate-limit them identically to authenticated requests.
+
+The module sends `apiKeyId` in `x-api-key-id` and `apiSecret` in a Bearer authorization header. Custom API endpoints must be trusted to receive those credentials. Endpoint paths start at the URL origin, so a path prefix in a custom base URL is not preserved.
+
+HTTP timeouts abort the request and throw `ButterApiError`. Requests are not retried automatically. A custom fetch implementation must return `ok`, `status`, and an asynchronous `json()` method; `text()` is optional and supplies bounded error-body diagnostics. Do not log credentials or unfiltered error details.
+
+## Chain and token settings
+
+| Field | Type | Default and behavior |
+|---|---|---|
+| `routerContracts` | `Partial<Record<number, readonly ButterRouterDeployment[]>>` | Built-in Router deployments. Each configured chain replaces its default list; an empty list removes that chain's built-in execution path. |
+| `evmChainIds` | Array of strings or numbers | No additional IDs. Recognizes extra EVM chains for address-family checks and native-token encoding. Does not add Router deployments. |
+| `tokenDecimals` | `Record<string, number>` | Unset. Source-token decimals keyed by the exact token identifier or an equivalent chain-specific form. |
+| `nativeTokenDecimals` | `Record<string, number>` | Chain defaults: 18, except Bitcoin 8, Solana 9, and Tron 6. Overrides are keyed by chain ID. |
+| `strictSlippageChainIds` | Array of strings or numbers | No additional IDs. Adds chains requiring a minimum slippage of 300 basis points. |
+| `affiliate` | `string` | Unset. Butter affiliate in `<nickname>` or `<nickname>:<rate>` form; rate must be nonnegative. |
+| `referrer` | `string` | Unset. Required by this module for Solana same-chain routes; optional for other routes. |
+
+Router entries contain `address` and `version: 'v3'`. Use only deployments you have verified with Butter. Router configuration controls local calldata validation; it does not prove that a chain or token pair currently has a route. Use [`getSupportedChains()`](/sdk/swidge-modules/swidge-butter/api-reference#getsupportedchains) and a fresh quote for current discovery.
+
+Native-token precision uses `nativeTokenDecimals` or the chain default. Other source tokens use `tokenDecimals`, then Butter's token lookup. A validated token catalog can also populate the lookup cache. Decimal counts must be integers from 0 through 255. Conflicting precision for equivalent identifiers is rejected.
+
+Use chain-specific token identifiers. On recognized EVM chains, `native`, the zero address, and the all-`e` native sentinel are sent to Butter as the zero address. Token symbols alone do not establish a contract address or precision.
+
+`affiliate` and `referrer` participate in route identity. Leaving the affiliate unset does not establish that a route has no affiliate fee. Inspect the returned fee entries; affiliate charges count toward `maxProtocolFeeBps`.
+
+## Fee limits
+
+| Field | Type | Scope |
+|---|---|---|
+| `maxNetworkFeeBps` | `number` or `bigint` | Maximum ratio of the route's estimated source network fee to input value, in basis points. Optional. |
+| `maxProtocolFeeBps` | `number` or `bigint` | Maximum aggregate ratio of protocol and affiliate fees to their corresponding route values, in basis points. Optional. |
+| `maxNativeFee` | `number` or `bigint` | Absolute cap on built-in EVM transaction native value beyond any native input amount. Required for built-in cross-chain EVM execution; optional for same-chain EVM execution. |
+
+All caps accept nonnegative integers. Use `bigint` for amounts beyond JavaScript's safe integer range. Omitting a cap leaves that category uncapped; `0n` permits no fee in that category.
+
+The second argument to [`swidge()`](/sdk/swidge-modules/swidge-butter/api-reference#swidge) overrides the two basis-point limits. An execution's `options.maxNativeFee` overrides the constructor's absolute cap. Both override paths preserve an explicit zero. The second argument does not change the account's transaction settings or get forwarded to its sender.
+
+Quotes remain inspectable when fees exceed a configured cap. During execution, the module checks the percentage limits before requesting swap data. Missing or inconsistent fee metadata needed to value a configured cap causes `ButterFeeValuationError`; the module does not treat an unvalued fee as zero. Cross-token valuation can depend on Butter's positive USD estimates, which are not an independent price oracle.
+
+<Callout type="warn">
+`maxNativeFee` is enforced by the built-in EVM validator and excludes network gas. Transaction adapters bypass that validator and must enforce their own native-spend and transaction-intent limits. The network percentage cap checks a route estimate, not the final gas bill or every possible settlement cost.
+</Callout>
+
+### Fee entries
+
+Read `fees[]` by `chain` and `token` together. Amounts use the base units of each entry's token; different tokens cannot be added into one total.
+
+| Butter fee | WDK type | Included in quoted amounts |
+|---|---|---|
+| Inbound and outbound bridge components | `protocol` | Yes |
+| Affiliate bridge component | `affiliate` | Yes |
+| Source gas estimate | `network` | No |
+| Native swap fee | `protocol` | No |
+| Input-token swap fee | `protocol` | Yes |
+
+The top-level bridge summary is not added as another fee. `feeConfig` is used to validate transaction data; its charge is already represented by `swapFee`. A missing component breakdown may produce a warning and prevent execution with a protocol cap.
+
+If Butter reports no fees, `fees[]` contains a zero-valued network entry and emits a warning. This means no fees were reported, not that the operation is free. After execution, the network estimate is replaced with the sum of sender-reported fees only when every send reports a valid fee. Those reports may themselves be estimates.
+
+## EVM approvals
+
+The built-in EVM path sends through the account supplied to the constructor. The account must accept transactions containing `to`, `value`, `data`, and `chainId`. There is no secondary wallet client or sender fallback.
+
+| Field | Type | Default and behavior |
+|---|---|---|
+| `evm.publicClient` | `EvmPublicClient` | Unset. Provides allowance reads, approval confirmation, and transaction or receipt lookup. Adapt a viem client with [`toEvmPublicClient()`](/sdk/swidge-modules/swidge-butter/api-reference#toevmpublicclient). |
+| `evm.approvalConfirmations` | `number` | `1`. Positive safe integer. More than one confirmation requires the public client's `waitForTransactionReceipt` when approval is needed. |
+| `evm.approvalTimeoutMs` | `number` | `10000`. Per-approval receipt and allowance confirmation budget in milliseconds, starting after submission returns a hash. Zero causes immediate timeout. |
+
+ERC-20 execution reads allowance through `evm.publicClient.readContract`, or through the account's `getAllowance(token, spender)` when no public client is configured. If the selected reader fails, the error propagates without switching readers. Native-token execution does not require an allowance reader.
+
+The spender is the validated Router transaction target. An allowance equal to the input amount needs no approval. Zero allowance requires an exact approval. Any other nonzero allowance, including a larger one, is reset to zero and confirmed before the exact input amount is approved.
+
+Each approval requires a successful receipt and an allowance read matching the exact expected value. An approval receipt identifying a different transaction is rejected. Allowance mismatches are polled every two seconds within the remaining deadline. If an approval is required, configure either `evm.publicClient.waitForTransactionReceipt` or the account's `getTransactionReceipt` before execution.
+
+Up to three transactions can be submitted: a zero reset, an amount approval, and the source operation. A timeout or later failure can leave earlier transactions submitted. Follow [Track Settlement](/sdk/swidge-modules/swidge-butter/guides/track-settlement) before retrying.
+
+## Route lifetime and diagnostics
+
+| Field | Type | Default and behavior |
+|---|---|---|
+| `routeExecutionMarginSeconds` | `number` | `45`. Finite, nonnegative, and below 300. Remaining quote lifetime must exceed this margin to execute. |
+| `now` | `() => number` | Current Unix time in seconds. Clock injection for controlled environments and tests. |
+| `onWarning` | `(warning: ButterWarning) => void` | Unset. Synchronous notification of fee-reporting limitations. |
+
+Routes have at most five minutes of lifetime. Quoting requires more than 15 seconds remaining; execution requires more than the configured margin. Execution checks that margin after receiving swap data and immediately before each account send, including approvals and adapter transactions. Account-internal confirmation delays and chain inclusion occur outside these checks.
+
+When approval waits are expected, size the execution margin to cover those waits and API latency. A pinned quote inside the margin is rejected instead of replaced. Once execution has selected a route, it does not automatically requote, resend, or revoke an allowance if the remaining lifetime becomes insufficient.
+
+`onWarning` receives `code`, `message`, and optional `details`. Its codes are `mixed-currency-protocol-fees`, `no-fees-reported`, and `bridge-fee-components-missing`. Keep the callback short and avoid throwing, because a thrown error can abort quoting. Redact diagnostics before storing or displaying them.
+
+## Transaction adapters
+
+`transactionAdapters` is an optional `Record<string, ButterTransactionAdapter>` keyed by source chain ID. It supports execution when no built-in EVM path is selected. Tron always uses an adapter path. A configured adapter does not override a built-in EVM Router path.
+
+Each synchronous adapter receives one Butter transaction plus `{ sender, receiver, route, options }`. Return the account's transaction payload, or `{ transaction, type }`. When Butter supplies multiple transactions, classify each with a supported role and produce exactly one `source` transaction. The module validates this classification before sending.
+
+The module checks the provider transaction's required fields and source chain, then delegates conversion to the adapter and submission to the bound account. The adapter must validate spend amounts, recipients, destination intent, refund behavior, and any native-fee cap. There is no built-in adapter implementation in this package.
+
+Both adapter execution and built-in cross-chain execution report destination guarantees as `quoted-only`. Built-in cross-chain EVM validation checks source intent, the destination chain, and an explicit refund address when supplied; it trusts Butter's nested destination routing. See the [API reference](/sdk/swidge-modules/swidge-butter/api-reference#quoteswidge) for quote guarantees.
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-butter/usage">
+Install the source snapshot and request a quote.
+</Card>
+<Card title="Execute a Swidge" href="/sdk/swidge-modules/swidge-butter/guides/execute-swidge">
+Confirm and execute a quote through an EVM account.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-butter/api-reference">
+Check method signatures, results, and errors.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

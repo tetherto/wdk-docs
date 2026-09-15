@@ -1,0 +1,258 @@
+---
+title: Execute a Swidge with Butter Network
+description: Bind an EVM account, inspect and confirm a pinned quote, and retain transaction hashes for recovery.
+docType: how-to
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Execute a same-chain Ethereum swap by [checking prerequisites](#prerequisites), [connecting the account](#connect-the-account), [reviewing a quote](#review-the-quote), and [submitting the confirmed route](#submit-the-confirmed-route). Review [approval and retry behavior](#handle-approvals-and-retries) before adapting the example. For support, see [Need Help?](#need-help).
+
+## Prerequisites
+
+- Complete the [source snapshot installation](/sdk/swidge-modules/swidge-butter/usage#install-the-source-snapshot). This guide targets source `0.2.0` at revision `c1f373d`, which differs from npm `0.1.0`.
+- Use [Node.js 22](https://nodejs.org/en/download) and an ES module application.
+- Supply an Ethereum RPC endpoint, a signing account, and your Butter-issued `entrance`. Butter must accept your integration and offer a route for the pair and amount.
+- Fund the account with the `0.001 ETH` input plus network gas. The example requests Ethereum USD₮ at its [issuer-listed contract](https://tether.to/en/supported-protocols/), with six decimals.
+
+Install the EVM account module and the public RPC client in the same application:
+
+```bash
+npm install @tetherto/wdk-wallet-evm@1.0.0-beta.17 viem@2.43.1
+```
+
+<Callout type="warn">
+This example submits a real Ethereum transaction after interactive confirmation. Keep the private key and any API credentials in a trusted server process. Never put them in source control, browser bundles, logs, or shared shell history.
+</Callout>
+
+## Connect the account
+
+Set `RPC_URL`, `PRIVATE_KEY`, and `BUTTER_ENTRANCE` through your environment. Set `MAX_NETWORK_FEE_BPS` and `MAX_PROTOCOL_FEE_BPS` to nonnegative integer limits chosen for your application; `100` means 1%. Neither is a guaranteed ceiling on the final gas bill. See [fee limits](/sdk/swidge-modules/swidge-butter/configuration#fee-limits).
+
+1. Validate the environment and check that the RPC reports Ethereum chain ID `1`.
+2. Create the signing account with [`WalletAccountEvm.fromPrivateKey()`](/sdk/wallet-modules/wallet-evm/api-reference#fromprivatekeyprivatekey-config-static).
+3. Bind the account to [`ButterSwidgeProtocol`](/sdk/swidge-modules/swidge-butter/api-reference#constructor), using [`toEvmPublicClient()`](/sdk/swidge-modules/swidge-butter/api-reference#toevmpublicclient) for read operations.
+
+Save the following JavaScript blocks, in order, in one `execute-butter.mjs` file. This setup uses the same RPC for the account and public client:
+
+```javascript
+import ButterSwidgeProtocol, {
+  ButterPartialExecutionError,
+  formatTokenAmount,
+  parseTokenAmount,
+  toEvmPublicClient,
+} from '@butternetwork/wdk-protocol-swidge-butter'
+import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
+import { createPublicClient, http } from 'viem'
+import { mainnet } from 'viem/chains'
+import { createInterface } from 'node:readline/promises'
+import { stdin, stdout } from 'node:process'
+import { appendFile, writeFile } from 'node:fs/promises'
+import { randomUUID } from 'node:crypto'
+
+function requireEnv(name) {
+  const value = process.env[name]?.trim()
+  if (!value) throw new Error(`Set ${name}`)
+  return value
+}
+
+function feeLimit(name) {
+  const value = requireEnv(name)
+  if (!/^\d+$/.test(value) || !Number.isSafeInteger(Number(value))) {
+    throw new Error(`${name} must be a nonnegative safe integer`)
+  }
+  return Number(value)
+}
+
+const rpcUrl = requireEnv('RPC_URL')
+try {
+  if (new URL(rpcUrl).protocol !== 'https:') throw new Error()
+} catch {
+  throw new Error('Set a valid HTTPS RPC URL')
+}
+const privateKey = requireEnv('PRIVATE_KEY')
+if (!/^0x[0-9a-fA-F]{64}$/.test(privateKey)) {
+  throw new Error('PRIVATE_KEY must be a 32-byte 0x-prefixed hex value')
+}
+const entrance = requireEnv('BUTTER_ENTRANCE')
+const limits = Object.freeze({
+  maxNetworkFeeBps: feeLimit('MAX_NETWORK_FEE_BPS'),
+  maxProtocolFeeBps: feeLimit('MAX_PROTOCOL_FEE_BPS'),
+})
+const publicClient = createPublicClient({ chain: mainnet, transport: http(rpcUrl) })
+const chainId = await publicClient.getChainId().catch(() => {
+  throw new Error('RPC chain check failed; verify endpoint access without logging credentials')
+})
+if (chainId !== 1) throw new Error('RPC must use Ethereum chain 1')
+
+let account
+try {
+  account = WalletAccountEvm.fromPrivateKey(privateKey, { provider: rpcUrl, chainId: 1 })
+} catch {
+  throw new Error('Could not initialize the EVM account; check the private key and provider')
+}
+const protocol = new ButterSwidgeProtocol(account, {
+  sourceChainId: '1',
+  entrance,
+  ...limits,
+  evm: { publicClient: toEvmPublicClient(publicClient) },
+})
+```
+
+If your integration requires API credentials, configure both keys and `authMode: 'required'` as described in [API access](/sdk/swidge-modules/swidge-butter/configuration#api-access). Do not print the configuration object.
+
+## Review the quote
+
+Use one immutable intent for both quoting and execution, including an explicit recipient. The example returns USD₮ to the signing account and sets `maxNativeFee: 0n`, so built-in EVM validation rejects additional native route fees. Ethereum network gas remains payable.
+
+1. Request a quote with [`quoteSwidge()`](/sdk/swidge-modules/swidge-butter/api-reference#quoteswidge).
+2. Display the amount, recipient, chain, output minimum, expiry, fee denominations, and configured limits.
+3. Require confirmation of that quote before returning its `routeHash`.
+
+Add this function to review the quote, using [`formatTokenAmount()`](/sdk/swidge-modules/swidge-butter/api-reference#formattokenamount) only with the verified USD₮ precision:
+
+```javascript
+const ETHEREUM_USDt = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+const USDt_DECIMALS = 6
+const json = value => JSON.stringify(value, (_key, item) => (
+  typeof item === 'bigint' ? item.toString() : item
+), 2)
+
+async function confirmQuote(intent) {
+  const quote = await protocol.quoteSwidge(intent)
+  console.log(json({
+    sourceChain: '1', intent, limits,
+    estimatedUSDt: formatTokenAmount(quote.toTokenAmount, USDt_DECIMALS),
+    minimumUSDt: formatTokenAmount(quote.toTokenAmountMin, USDt_DECIMALS),
+    expiryUnixSeconds: quote.expiry,
+    destinationGuarantees: quote.destinationGuarantees,
+    fees: quote.fees.map(({ type, amount, token, chain, included }) => ({
+      type, amountBaseUnits: amount, token, chain, included,
+    })),
+  }))
+  if (!stdin.isTTY || !stdout.isTTY) throw new Error('Interactive confirmation is required')
+  const prompt = createInterface({ input: stdin, output: stdout })
+  try {
+    if (await prompt.question('Type EXECUTE to submit this quote: ') !== 'EXECUTE') {
+      throw new Error('Execution was not confirmed')
+    }
+  } finally {
+    prompt.close()
+  }
+  return quote
+}
+```
+
+Fee amounts above are base units of each entry's token on its chain. Do not sum different assets. Missing fee data or a zero placeholder does not prove that an operation is free. Quote generation does not enforce the percentage caps; execution does.
+
+The same-chain built-in EVM path reports `destinationGuarantees: 'enforced'` and checks the minimum in Router calldata. Cross-chain and adapter execution report `quoted-only`; do not present their quoted minimum as a destination guarantee enforced by this package.
+
+## Submit the confirmed route
+
+Keep the same instance and unchanged intent when calling [`swidge()`](/sdk/swidge-modules/swidge-butter/api-reference#swidge). A pin is consumed by one execution attempt, including attempts that fail later. It is not an idempotency key. A stale, mismatched, or consumed pin fails without silently selecting another quote.
+
+1. Create a local operation record before quoting.
+2. Obtain confirmation and submit with that quote's `routeHash`.
+3. Save the source hash and every returned transaction. On a known partial failure, save all available hashes before stopping.
+4. Release the signing account with [`dispose()`](/sdk/wallet-modules/wallet-evm/api-reference#dispose-1).
+
+Add this execution block. [`ButterPartialExecutionError`](/sdk/swidge-modules/swidge-butter/api-reference#errors) exposes transactions that the module knows were broadcast:
+
+```javascript
+const recordPath = `butter-${randomUUID()}.jsonl`
+async function recordOperation(record) {
+  const line = json(record).replaceAll('\n', '') + '\n'
+  try {
+    await appendFile(recordPath, line, { encoding: 'utf8', flush: true })
+  } catch {
+    console.error('Operation record write failed. Retain these details:', line)
+    throw new Error('Inspect the wallet and preserve operation details before retrying')
+  }
+}
+
+try {
+  const intent = Object.freeze({
+    fromToken: 'native',
+    toToken: ETHEREUM_USDt,
+    fromTokenAmount: parseTokenAmount('0.001', 18),
+    toChain: '1',
+    recipient: await account.getAddress(),
+    slippage: 0.01,
+    maxNativeFee: 0n,
+  })
+  await writeFile(recordPath, '', { flag: 'wx', mode: 0o600 })
+  await recordOperation({ state: 'created', fromChain: '1', toChain: '1', intent })
+  console.log('Operation record:', recordPath)
+  const quote = await confirmQuote(intent)
+  try {
+    const result = await protocol.swidge({ ...intent, routeHash: quote.routeHash })
+    await recordOperation({
+      state: 'submitted', sourceHash: result.id, fromChain: '1', toChain: '1',
+      transactions: result.transactions,
+    })
+    console.log('Source transaction:', result.id)
+  } catch (error) {
+    if (error instanceof ButterPartialExecutionError) {
+      await recordOperation({
+        state: 'partial', fromChain: '1', toChain: '1',
+        transactions: error.transactions, failedType: error.failedType,
+      })
+    }
+    throw new Error('Execution did not finish. Inspect the record and wallet before retrying')
+  }
+} catch {
+  console.error('Operation stopped. Inspect the operation record and wallet before retrying.')
+  process.exitCode = 1
+} finally {
+  account.dispose()
+}
+```
+
+Run the assembled file in an interactive terminal after setting the environment:
+
+```bash
+node execute-butter.mjs
+```
+
+Submission returns the source transaction hash, not final settlement. Returned output amounts remain estimates. Continue with [Track Settlement](/sdk/swidge-modules/swidge-butter/guides/track-settlement).
+
+The local record contains hashes reported after submission returns or throws. A process crash or sender failure can leave a broadcast without a recorded hash. Production applications also need durable wallet submission records and RPC reconciliation; absence of a partial-error wrapper does not establish that nothing was sent.
+
+## Handle approvals and retries
+
+The native ETH example needs no token approval. For ERC-20 inputs, built-in EVM execution uses the validated Router as spender and requires an allowance reader and approval receipt support:
+
+- An allowance equal to the exact input amount requires no approval.
+- A zero allowance requires an exact-amount approval.
+- Any other nonzero allowance, including a larger allowance, requires a confirmed zero reset followed by a confirmed exact-amount approval.
+
+The module checks the exact allowance after each approval. An operation can submit two approval transactions and one source transaction. Approval timeout does not undo a broadcast, and route freshness is checked again before each send.
+
+After any uncertain failure, inspect all known transaction hashes, account nonces, receipts, and current allowance before requesting a fresh quote. Do not automatically call [`swidge()`](/sdk/swidge-modules/swidge-butter/api-reference#swidge) again. The package does not revoke approvals, refund funds, or roll back submitted transactions.
+
+For cross-chain EVM execution, choose an explicit absolute native-fee bound suitable for the route; `maxNativeFee` excludes network gas. Host adapters must enforce their own native-spend and transaction-intent bounds. Review [Configuration](/sdk/swidge-modules/swidge-butter/configuration) before changing the chain, token, recipient, or adapter.
+
+## Next Steps
+
+<Cards>
+<Card title="Track Settlement" href="/sdk/swidge-modules/swidge-butter/guides/track-settlement">
+Resume status checks from a source hash and handle partial execution.
+</Card>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-butter/configuration">
+Review fee boundaries, approval settings, and adapters.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-butter/api-reference">
+Inspect execution options, return values, and errors.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

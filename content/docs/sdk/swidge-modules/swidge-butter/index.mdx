@@ -1,0 +1,74 @@
+---
+title: Butter Network Swidge Overview
+description: Discover routes, quote exact-input operations, and execute through Butter Network with WDK accounts.
+docType: explanation
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+The Butter Network Swidge module connects WDK accounts to Butter's routing service for same-chain swaps and cross-chain operations. You can discover chains and tokens and request exact-input quotes without binding an account. Execution requires an account that can send the selected chain's transactions.
+
+<Callout type="info">
+These pages describe the `0.2.0` source at [revision `c1f373d`](https://github.com/butternetwork/wdk-protocol-swidge-butter/tree/c1f373d9876668502e0b23b351cb1e4db6328b7c). The published npm `0.1.0` package predates this API. Follow the [source installation steps](/sdk/swidge-modules/swidge-butter/usage#install-the-source-snapshot) for this version.
+</Callout>
+
+## Choose an integration
+
+| Goal | Integration |
+|------|-------------|
+| Discover chains, inspect the token catalog, or preview a quote | Create an accountless instance with a source chain and a Butter-issued `entrance`. |
+| Execute on an EVM chain with a configured Butter Router | Bind a send-capable EVM account and a matching RPC provider. ERC-20 inputs also require an allowance reader. |
+| Execute through another chain's transaction format | Supply a trusted transaction adapter and a compatible account. The adapter owns transaction-intent validation. |
+| Track settlement | Retain the source hash and chain context, then query the module's status API. |
+
+Start with [Usage](/sdk/swidge-modules/swidge-butter/usage). The [execution guide](/sdk/swidge-modules/swidge-butter/guides/execute-swidge) covers a same-chain Ethereum example.
+
+## Understand the execution boundary
+
+1. A quote includes itemized fees, output amounts, expiry, and an opaque `routeHash`.
+2. Your application displays the operation and obtains confirmation.
+3. Pass that hash to execution on the same protocol instance to consume the selected quote. Without the hash, execution may request another route.
+4. The built-in EVM path checks the Router transaction and can submit allowance changes before the source transaction.
+5. Submission returns transaction hashes. Track the source transaction and any cross-chain settlement separately.
+
+`destinationGuarantees` is `enforced` for built-in same-chain EVM execution, which checks the destination minimum against calldata. It is `quoted-only` for cross-chain and adapter execution. A cross-chain quote does not establish that this package validates the nested destination transaction.
+
+## Integration limits
+
+- Only exact-input operations are supported. Exact-output requests are rejected.
+- Chain and token discovery does not guarantee liquidity or a route for a particular amount. The token catalog is non-exhaustive.
+- Execution capabilities depend on Router configuration, account methods, RPC access, and any configured adapter. A discovered chain alone is insufficient.
+- Built-in cross-chain EVM execution requires an absolute native-fee cap. Percentage fee caps do not cover every possible wallet or settlement cost.
+- A pinned quote is local to one instance and consumed by one execution attempt. It cannot be restored after a restart or treated as an idempotency key.
+- A failed operation can leave approval or source transactions submitted. Reconcile them before retrying.
+- API secrets belong on the server. The default package entry requires a fetch implementation; the Bare entry initializes its runtime compatibility layer.
+
+See [Configuration](/sdk/swidge-modules/swidge-butter/configuration) for fee boundaries, credentials, and adapter responsibilities, and [Track Settlement](/sdk/swidge-modules/swidge-butter/guides/track-settlement) for recovery.
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-butter/usage">
+Install the source snapshot and request an accountless quote.
+</Card>
+<Card title="Execute a Swidge" href="/sdk/swidge-modules/swidge-butter/guides/execute-swidge">
+Confirm a quote and submit through an EVM account.
+</Card>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-butter/configuration">
+Configure API access, Router support, and fee limits.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-butter/api-reference">
+Review methods, options, results, and errors.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

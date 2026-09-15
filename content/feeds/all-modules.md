@@ -56,6 +56,7 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 | [`@symbiosis-finance/wdk-protocol-swidge-symbiosis`](https://www.npmjs.com/package/@symbiosis-finance/wdk-protocol-swidge-symbiosis) | Symbiosis | Community | Runtime-discovered exact-input quotes with EVM, Bitcoin, and capability-gated TON, Tron, and Solana source execution through the Symbiosis API | [Docs](/sdk/swidge-modules/swidge-symbiosis/) |
 | [`@lifi/wdk-protocol-swidge-lifi`](https://www.npmjs.com/package/@lifi/wdk-protocol-swidge-lifi) | LI.FI | Community | Swidge routes for LI.FI swap, bridge, and combined swap-plus-bridge operations | [Docs](/sdk/swidge-modules/swidge-lifi/) |
 | [`@0x/wdk-protocol-swidge-0x`](https://www.npmjs.com/package/@0x/wdk-protocol-swidge-0x) | 0x | Community | Same-chain EVM token swaps through the 0x Swap API v2 | [Docs](/sdk/swidge-modules/swidge-0x/) |
+| [`@butternetwork/wdk-protocol-swidge-butter`](https://github.com/butternetwork/wdk-protocol-swidge-butter/tree/c1f373d9876668502e0b23b351cb1e4db6328b7c) | Butter Network | Community | Exact-input quotes and capability-dependent execution through Butter. Documentation targets source snapshot `0.2.0`; the published `0.1.0` package has a different API. | [Docs](/sdk/swidge-modules/swidge-butter/) |
 
 ## Pricing Modules
 
