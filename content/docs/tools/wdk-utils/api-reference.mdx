@@ -28,13 +28,14 @@ schemaType: APIReference
 | `decodeLnurl(address)` | Decode an LNURL string into its original URL. | `LnurlDecodingResult` |
 | `validateLightningAddress(address)` | Validate a Lightning Address in `user@domain.tld` form. | `LightningAddressValidationResult` |
 | `validateSparkAddress(address)` | Validate a Spark address or a Bitcoin L1 deposit address accepted by Spark flows. | `SparkAddressValidationResult` |
+| `validateTonAddress(address)` | Validate raw TON address structure or a user-friendly address and its checksum. | `TonAddressValidationResult` |
 | `validateTronAddress(address)` | Validate a Tron Base58Check address and prefix byte. | `TronAddressValidationResult` |
 | `validateUmaAddress(address)` | Validate a Universal Money Address. | `UmaAddressValidationResult` |
 | `resolveUmaUsername(uma)` | Split a valid UMA string into `localPart`, `domain`, and `lightningAddress`. | Parsed UMA details or `null`. |
 
 #### `validateAddress(chainId, address)`
 
-Validate an address with the chain-specific validator selected by a CAIP-2 chain ID or a bare namespace accepted by WDK Utils. The supported namespaces are `bip122`, `eip155`, `solana`, `spark`, and `tron`.
+Validate an address with the chain-specific validator selected by a CAIP-2 chain ID or a bare namespace accepted by WDK Utils. The supported namespaces are `bip122`, `eip155`, `solana`, `spark`, `ton`, and `tron`.
 
 ```javascript title="Validate An Address For A CAIP-2 Chain"
 import { validateAddress } from '@tetherto/wdk-utils'
@@ -58,7 +59,7 @@ For `bip122` and `spark`, the reference selects the expected network. Other supp
 
 Validate a Base58Check Bitcoin address and identify whether it matches a supported P2PKH or P2SH network version byte.
 
-The current beta.11 type declaration includes an internal `{ decoded: Uint8Array }` branch in this return type. The shipped runtime returns validation results rather than exposing that intermediate decode object.
+The beta.12 type declaration includes an internal `{ decoded: Uint8Array }` branch in this return type. The shipped runtime returns validation results rather than exposing that intermediate decode object.
 
 ```javascript title="Validate A Base58 Bitcoin Address"
 import { validateBase58 } from '@tetherto/wdk-utils'
@@ -303,6 +304,35 @@ const l1Deposit = validateSparkAddress(
 
 Bitcoin L1 deposit-address formats can be shared by Spark testnet/signet or regtest/local, so the compatibility array can contain two networks.
 
+#### `validateTonAddress(address)`
+
+Validate a required string `address` in raw `<workchain>:<64 hex characters>` form or user-friendly base64/base64url form. The synchronous signature is `validateTonAddress(address: string): TonAddressValidationResult`.
+
+```javascript title="Validate A TON Address"
+import { validateTonAddress } from '@tetherto/wdk-utils'
+
+const result = validateTonAddress(
+  'EQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPrHF'
+)
+// { success: true, type: 'ton' }
+```
+
+The package root exports these types:
+
+- `TonAddressValidationSuccess`: `{ success: true, type: 'ton' }`.
+- `TonAddressValidationFailure`: the shared failure shape, `{ success: false, reason: string }`.
+- `TonAddressValidationResult`: the union of those success and failure types. `ValidateAddressResult` also includes it when `validateAddress()` dispatches the `ton` namespace.
+
+The validator trims surrounding whitespace. Raw addresses receive a structure check for a signed integer workchain ID and 64 hexadecimal characters; they have no checksum. User-friendly addresses must have 48 characters, decode to the expected size, carry a bounceable or non-bounceable tag, and pass the CRC16-CCITT checksum. Standard base64 and URL-safe base64 are accepted.
+
+Runtime failure reasons are:
+
+- `EMPTY_ADDRESS`: the string is empty after trimming.
+- `INVALID_FORMAT`: the input is not a string or its structure, encoding, decoded size, or tag is invalid.
+- `INVALID_CHECKSUM`: the user-friendly address checksum does not match.
+
+Success does not establish account existence, ownership, or whether a workchain is supported. Test-only user-friendly addresses are accepted, and the result does not identify their network. `validateAddress()` also does not enforce the TON reference against the address's test-only flag; apply the intended network and recipient policy separately.
+
 #### `validateTronAddress(address)`
 
 Validate a Tron Base58Check address. The helper checks the `T` prefix, the 34-character address length, the Tron prefix byte, and the checksum.
@@ -408,6 +438,10 @@ import { decryptWithKey } from '@tetherto/wdk-utils'
 const plaintext = decryptWithKey(encrypted, key)
 ```
 
+#### `DEFAULT_SCRYPT_PARAMS`
+
+The exported default cost parameters are `{ N: 65536, r: 8, p: 1 }`. The encryption helpers use these values for omitted scrypt parameters.
+
 ### Seed Key Derivation Helpers
 
 Derive deterministic, domain-separated key material from high-entropy seed bytes.
@@ -490,7 +524,7 @@ const shares = await splitMnemonic(seedPhrase, {
 - The returned shares are unencrypted lowercase hex strings.
 - The package-specific share strings are not SLIP-39 mnemonic shares. They do not include the recovery threshold or a format-version marker, so retain that metadata separately.
 - Invalid BIP-39 words, word counts, and checksums are rejected.
-- Node.js uses the dependency's `node:crypto` implementation. Browser and React Native paths must provide secure `crypto.getRandomValues`; React Native apps may need to load `react-native-get-random-values` before importing WDK Utils. In Bare, import from the package root so the Bare entrypoint provides the Node-compatible crypto path; do not load the React Native polyfill. The dependency versions currently resolved for a fresh beta.11 installation require Bare `1.28.0` or later.
+- Node.js uses the dependency's `node:crypto` implementation. Browser and React Native paths must provide secure `crypto.getRandomValues`; React Native apps may need to load `react-native-get-random-values` before importing WDK Utils. In Bare, import from the package root so the Bare entrypoint provides the Node-compatible crypto path; do not load the React Native polyfill. With `bare-module` 6.4.0, the beta.12 dependency tree requires Bare `1.29.4` or later.
 
 #### `combineMnemonic(shares)`
 
@@ -538,11 +572,13 @@ const looksLikeRequest = isBip21Request(
 
 Parse a BIP-21 Bitcoin payment URI. The helper validates the Bitcoin address, accepts optional `amount`, `label`, and `message` parameters, rejects unsupported `req-` parameters, and returns machine-readable failure reasons.
 
+Raw non-ASCII characters in the query return `INVALID_FORMAT`. Percent-encode query text: `label=Caf%C3%A9` is accepted and decoded to `Café`, while `label=Café` is rejected. `isBip21Request()` checks the request shape and does not perform this validation.
+
 ```javascript title="Parse A BIP-21 Request"
 import { parseBip21Request } from '@tetherto/wdk-utils'
 
 const result = parseBip21Request(
-  'bitcoin:1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH?amount=0.001&label=Coffee&message=Thanks'
+  'bitcoin:1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH?amount=0.001&label=Caf%C3%A9&message=Thanks'
 )
 ```
 
@@ -562,7 +598,7 @@ const result = parseBip21Request(
 
 #### `encodeBip21Request(request)`
 
-Encode a BIP-21 Bitcoin payment URI from a request object. The helper validates the Bitcoin address and amount before returning the URI.
+Encode a BIP-21 Bitcoin payment URI from a request object. The helper validates the Bitcoin address and amount, then percent-encodes the query values before returning the URI. Pass the original `label` and `message` text; do not pre-encode these fields.
 
 ```javascript title="Encode A BIP-21 Request"
 import { encodeBip21Request } from '@tetherto/wdk-utils'
@@ -599,6 +635,8 @@ const looksLikeRequest = isEip681Request(
 #### `parseEip681Request(input)`
 
 Parse a supported EIP-681 transfer request. The published runtime supports `transfer` requests, accepts `value` as an alias for `uint256`, and normalizes scientific-notation amounts into integer `amountSmallest` strings.
+
+Raw non-ASCII characters anywhere in the query return `INVALID_FORMAT`, including in parameters the parser otherwise ignores. Percent-encode non-ASCII query text before parsing. `isEip681Request()` only checks the request shape; a positive detection result does not prove that the query is valid.
 
 ```javascript title="Parse An EIP-681 Request"
 import { parseEip681Request } from '@tetherto/wdk-utils'

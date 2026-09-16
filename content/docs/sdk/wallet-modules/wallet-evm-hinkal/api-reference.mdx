@@ -93,13 +93,13 @@ Validates the recipient and amount, deposits through Hinkal, and schedules a lat
 
 | Field | Type | Required | Behavior |
 |---|---|---|---|
-| `token` | `string` | Yes | Token address on the connected chain; support is resolved by Hinkal. |
+| `token` | `string` | Yes | ERC-20 address, or `0x0000000000000000000000000000000000000000` for the native token. Hinkal must support the chain and token. |
 | `recipient` | `string` | Yes | Valid EVM destination address. |
-| `amount` | `number` or `bigint` | Yes | Positive integer amount in token base units. Prefer `bigint`. |
+| `amount` | `number` or `bigint` | Yes | Positive integer amount in the selected ERC-20 or native token's base units. Prefer `bigint`. |
 
 The parameter is typed as the inherited `EvmTransferOptions`. Its optional `authorizationList` is ignored by this method. Runtime converts `amount` with `BigInt()` before checking positivity; decimal numbers and malformed values raise `InvalidAmountError`. Although integer strings can pass runtime conversion, they are outside the declared amount type.
 
-The SDK can submit ERC-20 approvals and a deposit before later proof or scheduling failures. Deposit calculation adds a flat token fee to the supplied amount; native gas and other Hinkal fee processing are additional considerations. There is no module-level private-send quote, fee cap, net-receive guarantee, or idempotency key. Inherited EVM fee caps do not apply.
+For ERC-20 tokens, the SDK can submit approvals before the deposit. For the native token, it submits the deposit through transaction `value` and skips approval. Either deposit can precede later proof or scheduling failures. Deposit calculation adds a flat token fee to the supplied amount, including for native-token deposits; reserve native gas separately. There is no module-level private-send quote, fee cap, net-receive guarantee, or idempotency key. Inherited EVM fee caps do not apply.
 
 Returns a deposit hash and schedule ID, not a settlement receipt. Keep both identifiers. Do not blindly retry after rejection because funds may already have moved. See [Send Private Tokens](/sdk/wallet-modules/wallet-evm-hinkal/guides/send-private-tokens).
 
@@ -123,6 +123,8 @@ Each item has the following shape:
 | `status` | `string` | Provider-defined status; not a closed enum. |
 | `scheduledTime` | `string` | Provider-returned scheduled time. |
 | `txHash` | `string` or `null` | Transaction hash when available. |
+
+The Hinkal SDK in this release defines these item statuses: `pending`, `processing`, `waiting_for_relayer`, `sent_on_chain`, `completed`, `failed`, and `deposit_failed`. The module still declares `status` as `string`; handle unknown values and each transaction item independently. These names do not establish a guaranteed sequence.
 
 The module forwards this response without polling, normalizing status values, or waiting for finality.
 
@@ -159,7 +161,7 @@ The following EVM APIs remain available. Follow the linked EVM reference for the
 - **Signatures and delegation:** [message, typed-data, transaction, and authorization signing](/sdk/wallet-modules/wallet-evm/api-reference#walletaccountevm), signature verification, delegation, and revocation.
 - **Allowance and transaction tracking:** [`approve()`](/sdk/wallet-modules/wallet-evm/api-reference#approveoptions), [`getAllowance()`](/sdk/wallet-modules/wallet-evm/api-reference#getallowancetoken-spender), and [normalized transaction tracking](/sdk/wallet-modules/wallet-evm/api-reference#normalized-transaction-types).
 
-Two inherited constructors/conversions return plain EVM accounts: `WalletAccountEvmHinkal.fromPrivateKey()` returns `WalletAccountEvm`, and `account.toReadOnlyAccount()` returns `WalletAccountReadOnlyEvm`. Neither result has Hinkal methods. The package does not offer private-key or address-only alternatives to seed-based Hinkal account creation.
+Two inherited constructors/conversions produce plain EVM accounts: `WalletAccountEvmHinkal.fromPrivateKey()` returns `WalletAccountEvm` synchronously, while `account.toReadOnlyAccount()` returns `Promise<WalletAccountReadOnlyEvm>` and resolves to the read-only account. Use `await account.toReadOnlyAccount()` to obtain it. Neither account has Hinkal methods. The package does not offer private-key or address-only alternatives to seed-based Hinkal account creation.
 
 ## TypeScript Result Types
 

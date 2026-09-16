@@ -42,7 +42,6 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 
 const morpho = new MorphoProtocolEvm(account, {
   presets: {
-    earn: 'sky-money-usdt-savings',
     borrow: 'xaut'
   }
 })
@@ -63,7 +62,7 @@ The wallet account must include a provider. Read-only accounts can read position
 
 ## Presets
 
-Built-in presets target Ethereum mainnet USD₮ earn and borrow flows.
+Built-in presets target Ethereum mainnet. The `xaut` borrow preset selects a market with XAU₮ collateral.
 
 The package exports frozen preset maps. Use them as the complete registry for the installed package rather than copying a static list into your integration:
 
@@ -77,12 +76,11 @@ console.log(Object.keys(MORPHO_VAULT_PRESETS))
 console.log(Object.keys(MORPHO_MARKET_PRESETS))
 ```
 
-Selected Tether-family presets from version `1.0.5` are shown below. See the package's [released preset source](https://github.com/morpho-org/sdks/blob/15c622bbdfb841d5cd65d1d1ff080ecd1649437a/packages/wdk-protocol-lending-morpho-evm/src/morpho-presets.ts) for the pinned registry.
+The XAU₮ collateral preset from version `1.0.5` is shown below. See the package's [released preset source](https://github.com/morpho-org/sdks/blob/15c622bbdfb841d5cd65d1d1ff080ecd1649437a/packages/wdk-protocol-lending-morpho-evm/src/morpho-presets.ts) for the pinned registry.
 
 ```javascript title="Use built-in presets"
 const morpho = new MorphoProtocolEvm(account, {
   presets: {
-    earn: 'sky-money-usdt-savings',
     borrow: 'xaut'
   }
 })
@@ -90,17 +88,21 @@ const morpho = new MorphoProtocolEvm(account, {
 
 | Operation | Preset | Chain ID | Target ID | Target |
 |-----------|--------|----------|-----------|--------|
-| Earn | `sky-money-usdt-savings` | `1` | `0x23f5E9c35820f4baB695Ac1F19c203cC3f8e1e11` | sky.money USD₮ Savings |
 | Borrow | `xaut` | `1` | `0xb7843fe78e7e7fd3106a1b939645367967d1f986c2e45edb8932ad1896450877` | XAU₮ collateral, 77% LLTV |
 
 ## Explicit Targets
 
-Use explicit targets when you want to configure a vault address or market directly instead of selecting it by preset name.
+Use explicit targets when you want to configure a vault address or market directly instead of selecting it by preset name. Before using a vault, verify its underlying asset, share token, collateral exposure, and chain against the deployment data. For the USD₮ vault examples, set `MORPHO_EARN_VAULT_ADDRESS` to an operator-selected Ethereum mainnet Morpho Vault V2 address whose underlying asset is USD₮.
 
 ```javascript title="Use explicit Morpho targets"
+const earnVaultAddress = process.env.MORPHO_EARN_VAULT_ADDRESS
+if (!earnVaultAddress) {
+  throw new Error('Set MORPHO_EARN_VAULT_ADDRESS to your verified vault address')
+}
+
 const morpho = new MorphoProtocolEvm(account, {
   chainId: 1,
-  earnVaultAddress: '0x23f5E9c35820f4baB695Ac1F19c203cC3f8e1e11',
+  earnVaultAddress,
   borrowMarketId: '0xe7e9694b754c4d4f7e21faf7223f6fa71abaeb10296a4c43a54a7977149687d2'
 })
 ```

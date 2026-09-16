@@ -76,6 +76,30 @@ Use the external link checker when network checks are required:
 npm run check:links
 ```
 
+### Token policy
+
+`npm run check:tokens` enforces two rules over `content/`, `skills/wdk/`, `src/`,
+and the generated `public/llms*.txt` artifacts:
+
+- **Tether spelling.** USD₮, USA₮, XAU₮, MXN₮, CNH₮, and EUR₮ must use the
+  context-appropriate form — the glyph in reader-facing prose, `USDt`-style in
+  human-readable text inside code samples, and the exact machine value
+  (`USDT`, `usdt`, …) where an API requires it.
+- **Competing assets.** Symbols listed in [the checker](scripts/check-token-symbols.mjs)
+  fail the gate wherever they appear, including code blocks. Examples settle in
+  Tether assets.
+
+When a competing asset has to be named, annotate the line. The directive applies
+to its own line and the next non-empty line, and only to the symbols it lists.
+Blank lines inserted by Markdown formatting do not end the exception:
+
+```mdx
+{/* token-check-allow: ASSET_SYMBOL */}
+An unavoidable reference to ASSET_SYMBOL.
+```
+
+Replace `ASSET_SYMBOL` with the exact symbol reported by the checker.
+
 ## Build
 
 ```bash

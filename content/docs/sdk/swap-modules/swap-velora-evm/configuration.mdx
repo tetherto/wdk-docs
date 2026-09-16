@@ -21,13 +21,15 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 
 // Create swap service with configuration
 const swapProtocol = new VeloraProtocolEvm(account, {
-  swapMaxFee: 200000000000000n // Optional: Max swap fee in wei
+  swapMaxFee: 200000000000000n // Optional: Exclusive fee cap in wei for this EVM account
 })
 ```
 
 ## Account Configuration
 
-The swap service uses the wallet account configuration for network access and signing. The account must expose an EVM-compatible JSON-RPC URL or EIP-1193 provider; a generic interface type does not make a non-EVM account compatible with this module:
+The swap service reads `account._config.provider` for network access. The account must expose an EVM-compatible JSON-RPC URL or EIP-1193 provider, plus `getAddress()` and `quoteSendTransaction()`. Execution also requires a callable `sendTransaction()`. A shared interface type alone does not make a non-EVM account compatible.
+
+For accounts governed by WDK transaction policies, use [`wdk.registerProtocol()`](/sdk/core-module/api-reference#registerprotocolblockchain-label-protocol-config) and the account's protocol getter. Do not pass the governed account proxy directly to this constructor: that proxy hides `_config`.
 
 ```javascript
 import { WalletAccountEvm, WalletAccountReadOnlyEvm } from '@tetherto/wdk-wallet-evm'
@@ -43,7 +45,7 @@ const account = new WalletAccountEvm(
 
 // Read-only account (quotes only)
 const readOnly = new WalletAccountReadOnlyEvm(
-  '0xYourAddress',
+  await account.getAddress(),
   {
     provider: 'https://ethereum-rpc.publicnode.com'
   }
@@ -59,29 +61,26 @@ const swapProtocol = new VeloraProtocolEvm(account, {
 
 ### Swap Max Fee
 
-The `swapMaxFee` option sets an upper bound for total gas costs to prevent excessive fees.
+The `swapMaxFee` option rejects execution when the account's quoted fee is equal to or greater than the cap. Since beta.8, the second argument to `swap()` can override this cap for standard EVM accounts as well as smart accounts. `quoteSwap()` does not enforce it.
 
 **Type:** `bigint` (optional)  
-**Unit:** Wei
+**Unit:** The account quote's fee units: native wei for standard EVM or native-coin fees, paymaster-token base units for token-paid fees, or zero for sponsored quotes. Choose a cap for the selected gas-payment mode; a zero cap rejects a zero-fee sponsored quote.
 
 **Examples:**
 
 ```javascript
-const config = {
-  // Cap total gas fee to 0.0002 ETH (in wei)
-  swapMaxFee: 200000000000000n,
-}
-
-// Usage example
+// Ethereum standard EVM account; input allowance must already be sufficient
 try {
   const result = await swapProtocol.swap({
     tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt (6 decimals)
     tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH (18 decimals)
     tokenInAmount: 1000000n
-  })
+  }, { swapMaxFee: 200000000000000n }) // Exclusive cap of 0.0002 ETH
 } catch (error) {
-  if (error.message.includes('max fee')) {
+  if (error.message === 'Exceeded maximum fee cost for swap operation.') {
     console.error('Swap stopped: Fee too high')
+  } else {
+    throw error
   }
 }
 ```
@@ -98,30 +97,32 @@ const aa = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
   provider: 'https://ethereum-rpc.publicnode.com',
   bundlerUrl: 'YOUR_BUNDLER_URL',
   paymasterUrl: 'YOUR_PAYMASTER_URL',
-  paymasterAddress: 'YOUR_PAYMASTER_ADDRESS',
+  paymasterAddress: process.env.PAYMASTER_ADDRESS,
   safeModulesVersion: '0.3.0',
   paymasterToken: {
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
   }
 })
 
-const swapAA = new VeloraProtocolEvm(aa, { swapMaxFee: 200000000000000n })
+const swapAA = new VeloraProtocolEvm(aa)
 
 const result = await swapAA.swap({
-  tokenIn: '0xTokenIn',
-  tokenOut: '0xTokenOut',
+  tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt on Ethereum
+  tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH on Ethereum
   tokenInAmount: 1000000n
 }, {
   paymasterToken: {
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
   },
-  swapMaxFee: 200000000000000n // Per‑swap override
+  swapMaxFee: 10000n // Exclusive cap of 0.01 USDt for this token-paid quote
 })
 ```
 
 ### Per-call ERC‑4337 Config
 
-The second argument to `swap()` and `quoteSwap()` accepts ERC‑4337 wallet config overrides only when the protocol uses the concrete `WalletAccountEvmErc4337` or `WalletAccountReadOnlyEvmErc4337` class, respectively. Use it to switch paymaster token, sponsorship policy, or native-coin fee behavior for a single call. `swap()` also accepts `swapMaxFee` as a per-swap fee cap. Standard EVM accounts use one ordinary EVM transaction and do not apply these per-call ERC‑4337 overrides.
+The protocol passes the second argument to the account's quote and send methods without a concrete-class check. Compatible ERC-4337 accounts use it to select paymaster-token, sponsorship, or native-coin behavior. Standard WDK EVM accounts ignore those wallet fields, but the protocol still applies `swapMaxFee` from the second argument to `swap()`. Quote and execution receive one transaction object, not an ERC-4337-specific array.
+
+The paymaster service must support the chosen chain and token. Configure its own endpoint and contract address; `PAYMASTER_ADDRESS` is deployment-specific. Approve the swap's input token for the current Velora spender before executing. The module does not create that approval for you. To change a nonzero Ethereum USD₮ allowance to another nonzero amount, first approve zero and wait for confirmation, then approve the new amount and wait again.
 
 **Type:** partial ERC‑4337 wallet config (optional)
 
@@ -129,14 +130,14 @@ The second argument to `swap()` and `quoteSwap()` accepts ERC‑4337 wallet conf
 
 ```javascript
 const result = await swapAA.swap({
-  tokenIn: '0xdAC17F...ec7',
-  tokenOut: '0xC02a...6Cc2', // WETH
+  tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt on Ethereum
+  tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH on Ethereum
   tokenInAmount: 1000000n
 }, {
   paymasterToken: {
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
   },
-  swapMaxFee: 200000000000000n
+  swapMaxFee: 10000n // Exclusive cap of 0.01 USDt for this token-paid quote
 })
 ```
 
@@ -162,12 +163,12 @@ When calling `swap`, provide the swap parameters:
 
 ```javascript
 const swapOptions = {
-  tokenIn: '0xTokenIn',          // ERC‑20 to sell
-  tokenOut: '0xTokenOut',        // ERC‑20 to buy
+  tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDt on Ethereum
+  tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', // WETH on Ethereum
   tokenInAmount: 1000000n,       // exact input (base units)
   // OR
-  // tokenOutAmount: 1000000n,   // exact output (base units)
-  to: '0xRecipient'              // optional recipient (defaults to your address)
+  // tokenOutAmount: 1000000000000000n, // Alternative: exact output of 0.001 WETH
+  to: await account.getAddress() // Optional recipient; defaults to this account
 }
 
 const result = await swapProtocol.swap(swapOptions)
