@@ -20,9 +20,9 @@ import WalletManagerEvm7702Gasless from '@tetherto/wdk-wallet-evm-7702-gasless'
 const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
   provider: 'https://rpc.mevblocker.io/fast',
   delegationAddress: '<VERIFIED_DELEGATION_ADDRESS>',
-  bundlerUrl: 'https://api.pimlico.io/v2/1/rpc?apikey=YOUR_KEY',
+  bundlerUrl: 'https://api.candide.dev/api/v3/1/YOUR_API_KEY',
   isSponsored: true,
-  sponsorshipPolicyId: 'sp_my_policy'
+  sponsorshipPolicyId: 'your_policy_id'
 })
 ```
 
@@ -30,8 +30,8 @@ const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
 const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
   provider: 'https://rpc.mevblocker.io/fast',
   delegationAddress: '<VERIFIED_DELEGATION_ADDRESS>',
-  bundlerUrl: 'https://api.pimlico.io/v2/1/rpc?apikey=YOUR_KEY',
-  paymasterAddress: '0x888888888888Ec68A58AB8094Cc1AD20Ba3D2402',
+  bundlerUrl: 'https://api.candide.dev/api/v3/1/YOUR_API_KEY',
+  paymasterAddress: '0xa8151918eac3818deb713d3dbbb7930329fe86ed',
   paymasterToken: {
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
   },
@@ -94,7 +94,7 @@ const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
   ],
   retries: 3,
   delegationAddress: '<VERIFIED_DELEGATION_ADDRESS>',
-  bundlerUrl: 'https://api.pimlico.io/v2/1/rpc?apikey=YOUR_KEY',
+  bundlerUrl: 'https://api.candide.dev/api/v3/1/YOUR_API_KEY',
   isSponsored: true
 })
 ```
@@ -111,7 +111,7 @@ The default lane uses key `0` and is sequential. Use `parallel: true` for indepe
 const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
   provider: 'https://rpc.mevblocker.io/fast',
   delegationAddress: '<VERIFIED_DELEGATION_ADDRESS>',
-  bundlerUrl: 'https://api.pimlico.io/v2/1/rpc?apikey=YOUR_KEY',
+  bundlerUrl: 'https://api.candide.dev/api/v3/1/YOUR_API_KEY',
   isSponsored: true,
   nonceKey: 'payments'
 })
@@ -136,9 +136,9 @@ Use sponsorship mode when a paymaster sponsors UserOperation fees.
 const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
   provider: 'https://rpc.mevblocker.io/fast',
   delegationAddress: '<VERIFIED_DELEGATION_ADDRESS>',
-  bundlerUrl: 'https://api.pimlico.io/v2/1/rpc?apikey=YOUR_KEY',
+  bundlerUrl: 'https://api.candide.dev/api/v3/1/YOUR_API_KEY',
   isSponsored: true,
-  sponsorshipPolicyId: 'sp_my_policy'
+  sponsorshipPolicyId: 'your_policy_id'
 })
 ```
 
@@ -162,7 +162,7 @@ If `isSponsored` is omitted or `false`, `paymasterToken` is required.
 const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
   provider: 'https://rpc.mevblocker.io/fast',
   delegationAddress: '<VERIFIED_DELEGATION_ADDRESS>',
-  bundlerUrl: 'https://api.pimlico.io/v2/1/rpc?apikey=YOUR_KEY',
+  bundlerUrl: 'https://api.candide.dev/api/v3/1/YOUR_API_KEY',
   paymasterToken: {
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
   },
@@ -179,22 +179,45 @@ Passing an already-signed `UserOperationV8` to `sendTransaction()` bypasses `tra
 
 When `paymasterAddress` is set, the account checks the paymaster address returned by the RPC response and throws `ConfigurationError` if it does not match.
 
-## Using Candide
+## Bundler and Paymaster Providers
 
-Candide serves the bundler and paymaster from a single unified URL, so you only need `bundlerUrl` — the paymaster is reached at the same endpoint. The chain is selected by its chain ID in the path. Use the public endpoint (rate-limited, no key required) or an authenticated endpoint with an API key from the [dashboard](https://dashboard.candide.dev):
+The examples on this page use Candide, which serves the bundler and paymaster from a single unified URL, so you only need `bundlerUrl` — the paymaster is reached at the same endpoint. The chain is selected by its chain ID in the path. Use the public endpoint (rate-limited, no key required) or an authenticated endpoint with an API key from the [dashboard](https://dashboard.candide.dev):
 
 - Public: `https://api.candide.dev/public/v3/{chainId}`
 - Authenticated: `https://api.candide.dev/api/v3/{chainId}/{apiKey}`
 
-```javascript title="Using Candide"
+```javascript title="Candide public endpoint"
 const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
   provider: 'https://rpc.mevblocker.io/fast',
   delegationAddress: '<VERIFIED_DELEGATION_ADDRESS>',
-  bundlerUrl: 'https://api.candide.dev/api/v3/1/YOUR_API_KEY',
-  isSponsored: true,
-  sponsorshipPolicyId: 'your_policy_id'
+  bundlerUrl: 'https://api.candide.dev/public/v3/1',
+  isSponsored: true
 })
 ```
+
+Sponsorship policies are created in the Candide dashboard. A public policy applies with no policy ID, while a private policy is referenced by `sponsorshipPolicyId`, so use an authenticated endpoint for your account's own policies and for higher rate limits.
+
+### Using Pimlico
+
+Pimlico is the tested alternative. A single URL serves both the bundler and the paymaster, with the API key in the query string:
+
+```javascript title="Using Pimlico"
+const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
+  provider: 'https://rpc.mevblocker.io/fast',
+  delegationAddress: '<VERIFIED_DELEGATION_ADDRESS>',
+  bundlerUrl: 'https://api.pimlico.io/v2/1/rpc?apikey=YOUR_KEY',
+  paymasterAddress: '0x888888888888Ec68A58AB8094Cc1AD20Ba3D2402',
+  paymasterToken: {
+    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+  },
+  transactionMaxFee: 100000n,
+  transferMaxFee: 100000n // 0.1 USDt when the token has 6 decimals
+})
+```
+
+<Callout type="info">
+`paymasterAddress` is specific to a provider, chain, and EntryPoint version. The addresses used on this page are the Ethereum mainnet token paymasters on EntryPoint v0.8: `0xa8151918eac3818deb713d3dbbb7930329fe86ed` for Candide and `0x888888888888Ec68A58AB8094Cc1AD20Ba3D2402` for Pimlico. Omit the field to accept the paymaster address the provider's RPC reports, or confirm the expected contract with your provider before pinning it.
+</Callout>
 
 If a provider serves its paymaster from a different URL than the bundler, set `paymasterUrl` to that endpoint; otherwise it defaults to `bundlerUrl`.
 
