@@ -5,7 +5,9 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-Local transaction policies let a WDK app evaluate rules before account or protocol write methods execute. Use them for local approval limits, account-level exceptions, preflight checks, or UI flows that need a dry-run verdict before calling a wallet method.
+Use local transaction policies to evaluate account and protocol calls before execution. This guide covers [registering policies](#register-policies), [method coverage and migration](#supported-operations), and [simulating calls](#simulate-before-execution).
+
+Use `@tetherto/wdk` v1.0.0-beta.17 or later for method exclusions and coverage beyond the earlier fixed operation list. The examples assume you have loaded an app-owned `seedPhrase` and registered the relevant wallet modules.
 
 <Callout type="warn">
 Transaction policies are local pre-execution controls. They do not enforce rules on-chain, replace smart-contract permissions, or validate live token metadata, balances, prices, or contract state.
@@ -13,15 +15,15 @@ Transaction policies are local pre-execution controls. They do not enforce rules
 
 ## Policy Structure
 
-A transaction policy is a named local configuration object registered with `wdk.registerPolicy()`. Each policy chooses where it applies, then evaluates its ordered `rules` array before a governed account or protocol write method runs.
+A transaction policy is a named local configuration object registered with `wdk.registerPolicy()`. Each policy chooses where it applies, then evaluates its ordered `rules` array before a governed account or protocol method runs.
 
 | Concept | What you configure |
 | --- | --- |
 | Scope | `scope: 'project'` for project or wallet-level rules, or `scope: 'account'` for selected account indices or derivation paths |
 | Wallet | Optional `wallet` bindings for project policies, required `wallet` bindings for account policies |
-| Rules | Ordered `rules` array evaluated before a governed account or protocol write method runs |
+| Rules | Ordered `rules` array evaluated before a governed account or protocol method runs |
 | Action | `ALLOW` to permit a matching governed call, or `DENY` to block it with `PolicyViolationError` |
-| Operation | The wallet or protocol write operation a rule addresses, such as `sendTransaction`, `transfer`, `swap`, or `*` |
+| Operation | The wallet or protocol method a rule addresses, such as `sendTransaction`, `transfer`, `swap`, or `*` |
 | Conditions | Functions that receive `PolicyContext` and return truthy when the rule should match |
 
 Use `scope: 'project'` for rules that apply across all wallets or selected wallet identifiers. Use `scope: 'account'` with `wallet` and `accounts` for rules that apply only to specific account indices or derivation paths.
@@ -34,9 +36,17 @@ WDK does not manage durable policy state for you. Conditions can inspect the cur
 
 ## Register Policies
 
-Register wallets before policies. `wdk.registerPolicy()` validates wallet bindings synchronously and throws `PolicyConfigurationError` if a policy references a wallet identifier that has not been registered.
+Register wallets before policies. [`wdk.registerPolicy()`](/sdk/core-module/api-reference#registerpolicypolicies-options) validates wallet bindings synchronously and throws `PolicyConfigurationError` if a policy references a wallet identifier that has not been registered.
 
-The example below allows normal operations, then denies ETH sends above a local approval limit. The wildcard `ALLOW` rule is intentional: once a policy governs an account, wrapped write operations are default-denied unless a matching `ALLOW` permits them.
+The example allows all governed operations, then denies ETH sends above a local approval limit. Its wildcard `ALLOW` deliberately permits other methods, including newly discovered methods after an upgrade. Use explicit method names instead when your app needs a narrow permission set.
+
+To register and exercise the send limit:
+
+1. Register the Ethereum wallet with its reviewed configuration.
+2. Register the rules through [`wdk.registerPolicy()`](/sdk/core-module/api-reference#registerpolicypolicies-options).
+3. Attempt the over-limit send and handle its policy denial.
+
+You can enforce this local limit before [`sendTransaction()`](/sdk/core-module/api-reference#iwalletaccount) reaches the wallet:
 
 ```typescript title="Register A Local Send Limit"
 import WDK, { PolicyViolationError } from '@tetherto/wdk'
@@ -103,7 +113,7 @@ Account entries can be non-negative account indices or derivation-path strings. 
 WDK evaluates policies in this order:
 
 1. If no registered policy applies to the account, WDK returns the original account. No policy proxy or `simulate` mirror is added.
-2. If at least one policy applies, the account is governed. WDK wraps every supported write or signing operation that exists on that account, plus registered protocol write methods.
+2. If at least one policy applies, the account is governed. WDK wraps its discovered public methods and registered protocol methods unless their names are in the exclusion set. See [Supported Operations](#supported-operations) for the discovery boundary.
 3. If no rule addresses the attempted operation, WDK blocks the call with `PolicyViolationError` and `reason: 'no-applicable-rule'`.
 4. Account-scoped policies run before project-scoped policies. Within each scope, policies and rules run in registration order.
 5. A matching account-scoped `DENY` blocks immediately. A matching account-scoped `ALLOW` is recorded unless it has `override_broader_scope: true`.
@@ -174,7 +184,7 @@ In the example above, the treasury account can send up to `0.01 ETH` because the
 
 ## Supported Operations
 
-Use these operation names in `PolicyRule.operation`:
+In beta.17, `PolicyRule.operation` accepts any non-empty method-name string, an array of names, or `*`. The following are examples, not a closed list:
 
 | Operation | Method family |
 | --- | --- |
@@ -193,9 +203,29 @@ Use these operation names in `PolicyRule.operation`:
 | `buy`, `sell` | Fiat protocol writes |
 | `swidge` | Combined swap and bridge route execution |
 | `createDepositAddress`, `renewDepositAddress`, `recoverDepositAddress`, `disableDepositAddress` | Smart Deposit Address writes |
-| `*` | Wildcard rule for all wrapped write operations |
+| `*` | Wildcard rule for all governed methods |
 
-Use `sign` for message-style signing in this release. `signMessage` and `signHash` are not valid `PolicyOperation` values.
+Use the exact method name implemented by your wallet or protocol. For example, a rule for `payLightningInvoice` can now govern that Spark method. [`waitForTransaction()`](/sdk/core-module/api-reference#waitfortransactionhash-options) is also governed by default, so transaction polling needs a matching `ALLOW` rule on a governed account. A name that matches nothing still registers, but cannot allow the real call; a typo can leave that call denied. `signMessage` and `signHash` are accepted strings, but only affect methods with those names.
+
+Coverage comes from public string-named methods declared directly on the object or inherited from its class. The proxy skips names in [`getPolicyExclusions()`](/sdk/core-module/api-reference#getpolicyexclusions), `constructor`, protected members, symbol-named methods, and `Object.prototype` methods. Accessor-only properties are not intercepted; defining a getter does not add a governed method. An unfamiliar method is governed even when its name starts with `get` or `quote`. Governed methods return Promises; always `await` them even when the original method is synchronous.
+
+### Migrate From The Fixed Operation List
+
+Default-deny evaluation already existed before beta.17. This release expands which methods reach it. A call that previously bypassed evaluation can now fail with `reason: 'no-applicable-rule'`.
+
+1. Compare the methods your app calls with the resolved exclusions from [`getPolicyExclusions()`](/sdk/core-module/api-reference#getpolicyexclusions).
+2. Register an explicit `ALLOW` rule for each additional operation your app intends to permit, then verify its simulation and denial cases.
+3. For a method that should bypass evaluation, review its behavior across every applicable wallet and protocol before adding a [constructor exclusion](/sdk/core-module/configuration#policy-method-exclusions). Exclusions apply globally by name and also remove policy simulation for that method.
+
+You can inspect the resolved exclusions on an existing WDK instance:
+
+```javascript title="Inspect Method Coverage"
+const exclusions = wdk.getPolicyExclusions()
+console.log(exclusions.includes('getBalance')) // true by default
+console.log(exclusions.includes('payLightningInvoice')) // false by default
+```
+
+Default exclusions cannot be removed. [`registerPolicy()`](/sdk/core-module/api-reference#registerpolicypolicies-options) rejects rules naming an excluded method because those rules could never run. Adding a wildcard `ALLOW` permits every governed method and is not a substitute for reviewing the expanded method surface.
 
 ## Common Policy Patterns
 
@@ -332,9 +362,9 @@ Conditions receive a frozen `PolicyContext`:
 | `operation` | The operation being evaluated |
 | `wallet` | The wallet identifier bound to the account |
 | `account` | Read-only account view exposed by the wallet module |
-| `args` | Frozen array containing a snapshot of every argument passed to the wrapped method, in signature order |
+| `args` | Frozen array of arguments in signature order; object values are cloned for evaluation |
 
-For governed write calls, WDK snapshots the method arguments once before policy evaluation. Conditions see that snapshot, and WDK forwards the same approved values to the underlying wallet method. This prevents a caller from mutating a transaction object while an asynchronous policy condition is running.
+For governed calls, WDK clones object arguments before policy evaluation, then gives conditions a separate clone of that snapshot. The wallet receives the original snapshot, so later mutations to the caller's transaction object or the condition's copy do not change the forwarded values. The context and `args` array are frozen shallowly; nested objects are not frozen. Keep conditions free of mutations because conditions share their evaluation context.
 
 <Callout type="warn">
 `PolicyContext.params` was removed in `@tetherto/wdk` v1.0.0-beta.16. Replace `params` with `args[0]`. For multi-argument methods, use the actual signature position and check optional arguments before reading their fields. For example, a `swidge(options, config?)` condition reads `options` from `args[0]` and `config` from `args[1]`.
@@ -346,7 +376,7 @@ Set `maxConditionTimeoutMs` in the WDK constructor to cap every per-policy timeo
 
 ## Simulate Before Execution
 
-When a policy applies to an account, WDK adds runtime `simulate` mirrors for wrapped account and protocol write methods. Simulation returns the policy verdict and does not call the underlying wallet or protocol method.
+When a policy applies to an account, WDK adds runtime `simulate` mirrors for governed account and protocol methods, including methods outside the earlier fixed operation list. Simulation returns the policy verdict and does not call the underlying wallet or protocol method.
 
 You can dry-run a governed account method through the runtime `simulate` mirror:
 
@@ -369,18 +399,19 @@ In this beta, `simulate` is added at runtime but is not typed on the account ret
 
 ## Handle Errors
 
-`PolicyConfigurationError` means WDK rejected the policy setup or could not safely evaluate a governed call. Common causes include invalid scopes, actions, operation names, condition functions, timeout options, missing account bindings, wallet identifiers that have not been registered, or governed method arguments that are not structured-cloneable.
+`PolicyConfigurationError` means WDK rejected the policy setup or could not safely evaluate a governed call. Common causes include invalid scopes, actions, empty or non-string operation names, rules naming excluded methods, invalid condition functions or timeout options, missing account bindings, unknown wallet identifiers, or object arguments that cannot be cloned.
 
-`PolicyViolationError` means an enforced write call was blocked by a matching `DENY` rule or by default-deny when no `ALLOW` rule matched. Catch it around the write call and surface the `reason` to the user or approval workflow.
+`PolicyViolationError` means a governed call was blocked by a matching `DENY` rule or by default-deny when no `ALLOW` rule matched. Catch it around the write call and surface the `reason` to the user or approval workflow.
 
 ## Runtime Caveats
 
 - Policies wrap the WDK account/protocol proxy surface. On governed proxies, `keyPair` and string members beginning with `_` are absent from direct property access, membership checks, own-property descriptors, and own-key enumeration. The proxy also refuses `Object.preventExtensions()` and `Object.freeze()` with `TypeError` so those hiding rules remain valid.
 - This is not a complete sandbox. Prototype inspection, separately retained raw account or protocol references, and nested calls made inside a module remain outside the proxy interception path.
-- Quote and read methods are not wrapped. Policies apply to write methods such as sends, signs, swaps, bridges, lending writes, fiat writes, swidge execution, and SDA address creation, renewal, recovery, or disablement.
+- The default exclusions contain specific read, quote, and lifecycle method names. A read or quote method absent from that list is governed until you explicitly exclude it; a `get` or `quote` prefix does not change coverage.
 - Policy conditions receive local method arguments. WDK does not decode calldata, fetch prices, validate token metadata, or calculate fiat value unless your condition function does that work.
 - Wallet accounts must expose a read-only account view when a policy applies, otherwise `getAccount()` fails with `PolicyConfigurationError`.
-- Governed write-call arguments must be structured-cloneable, such as primitives, plain objects, arrays, `bigint`, and typed arrays. Functions, live class instances, and other non-cloneable values fail closed with `PolicyConfigurationError` instead of being forwarded unsafely.
+- Pass plain data to governed methods. An object that cannot be structured-cloned, such as a plain object containing a callback, fails with `PolicyConfigurationError`. Class instances can become plain objects and lose their methods. A top-level function argument passes through unchanged in this release, so do not treat the snapshot as isolation for callback-driven state or side effects.
+- Method discovery is not a live monitor of account changes. Add module methods before obtaining a governed account; do not rely on mutating an account or its prototype after wrapping to update policy coverage.
 - Engine-managed state hooks are not active in this beta. The schema accepts `state` and `onSuccess`, but WDK does not pass `state` into conditions, update it after execution, persist it, or call `onSuccess`. Conditions can still use app-owned state through closures or external stores; keep that state outside `rule.state`, and have your app own durability, concurrency, and rollback behavior.
 
 ## Next Steps

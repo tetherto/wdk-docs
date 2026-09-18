@@ -6,7 +6,7 @@ description: Run exact-input swaps, exact-output swaps, and swaps with ERC-4337 
 This guide explains how to run a [basic exact-input swap](#basic-exact-input-swap), an [exact-output swap](#exact-output-swap), and a [swap from an ERC-4337 smart account](#swap-with-erc-4337). You should already have a [`VeloraProtocolEvm`](/sdk/swap-modules/swap-velora-evm/api-reference) instance.
 
 <Callout type="warn">
-Swaps spend tokens and gas on-chain. Use amounts you control and an RPC you trust.
+Swaps spend tokens and gas on-chain. Before execution, approve the input token for the current Velora spender on the account's chain. The module does not submit approvals or reset allowances. See [configuration](/sdk/swap-modules/swap-velora-evm/configuration) for approval and fee prerequisites.
 </Callout>
 
 ## Basic exact-input swap
@@ -21,7 +21,7 @@ const result = await swapProtocol.swap({
 })
 
 console.log('Swap transaction hash:', result.hash)
-console.log('Total fee (wei):', result.fee)
+console.log('Total fee (account units):', result.fee)
 console.log('Tokens sold (base units):', result.tokenInAmount)
 console.log('Tokens bought (base units):', result.tokenOutAmount)
 ```
@@ -62,7 +62,8 @@ const aa = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
   }
 })
 
-const swapAA = new VeloraProtocolEvm(aa, { swapMaxFee: 200000000000000n })
+// Exclusive cap: 0.01 USDt with this six-decimal paymaster token.
+const swapAA = new VeloraProtocolEvm(aa, { swapMaxFee: 10000n })
 
 const result = await swapAA.swap({
   tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
@@ -72,11 +73,11 @@ const result = await swapAA.swap({
   paymasterToken: {
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
   },
-  swapMaxFee: 200000000000000n
+  swapMaxFee: 10000n
 })
 
 console.log('Swap hash:', result.hash)
-console.log('Total fee (wei):', result.fee)
+console.log('Total fee (USDt base units):', result.fee)
 ```
 
 <Callout type="info">

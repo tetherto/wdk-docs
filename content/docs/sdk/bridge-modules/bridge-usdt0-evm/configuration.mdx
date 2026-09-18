@@ -27,7 +27,9 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 
 ## Account Configuration
 
-The bridge protocol uses the wallet account's configuration for blockchain access:
+The constructor accepts `IWalletAccount` or `IWalletAccountReadOnly` from `@tetherto/wdk-wallet`. Execution requires EVM transaction support and a callable `sendTransaction()` method; read-only accounts can quote. See [account requirements](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements) for custom accounts and ERC-4337 class identity.
+
+The bridge protocol reads the provider from the wallet account's internal configuration for blockchain access:
 
 ```javascript
 import { WalletAccountEvm, WalletAccountReadOnlyEvm } from '@tetherto/wdk-wallet-evm'
@@ -64,10 +66,10 @@ The `bridgeMaxFee` option rejects `bridge()` when the implementation's `fee + br
 
 **Type:** `number | bigint` (optional)
 
-For a standard EVM account, both fields use the source chain's native base unit. For example, Ethereum and Arbitrum report the values in wei.
+For `WalletAccountEvm`, both fields use the source chain's native base unit, such as wei on Ethereum and Arbitrum. Other compatible accounts retain their own `quoteSendTransaction()` fee denomination, while the single-transaction path still returns `bridgeFee` in source native base units. Confirm the units match before setting a cap.
 
 <Callout type="warn">
-For an ERC-4337 helper flow, `bridgeFee` is in bridged-token base units. The account's `fee` uses native base units for native gas, paymaster-token base units for token-paid gas, or zero for sponsored gas. In `1.0.0-beta.7`, the protocol numerically adds these values when enforcing `bridgeMaxFee`. Do not treat that sum as one currency or set a cap until your payment mode uses compatible units.
+For an ERC-4337 helper flow, `bridgeFee` is in bridged-token base units. The account's `fee` uses native base units for native gas, paymaster-token base units for token-paid gas, or zero for sponsored gas. In `1.0.0-beta.9`, the protocol numerically adds these values when enforcing `bridgeMaxFee`. Do not treat that sum as one currency or set a cap until your payment mode uses compatible units.
 </Callout>
 
 **Examples:**
@@ -102,7 +104,7 @@ try {
 
 ### Provider
 
-The `provider` option comes from the wallet account configuration and specifies how to connect to the blockchain.
+The `provider` option comes from the wallet account configuration and specifies how to connect to the blockchain. Both `bridge()` and `quoteBridge()` require it. The constructor reads `account._config.provider`; `_config` is not part of the shared account interfaces, so accepting an interface in TypeScript does not guarantee runtime compatibility.
 
 **Type:** `string | Eip1193Provider`
 
@@ -125,7 +127,7 @@ Pass either an RPC URL string or a genuine EIP-1193 provider. An ethers `JsonRpc
 
 ## ERC-4337 Configuration
 
-When using ERC-4337 accounts, you can override configuration options during bridge operations:
+When using ERC-4337 accounts recognized by the bridge package's concrete class checks, you can override configuration options during bridge operations. Review the [class identity requirement](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements) before combining package versions:
 
 ```javascript
 // Bridge with ERC-4337 account

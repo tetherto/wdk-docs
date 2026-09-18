@@ -334,6 +334,14 @@ export const customTree: Node[] = [
     configuration('/sdk/swidge-modules/swidge-0x/configuration'),
     apiReference('/sdk/swidge-modules/swidge-0x/api-reference'),
   ]),
+  folder('MoonPay Trade', '/sdk/swidge-modules/swidge-moonpay-trade', 'Waypoints', [
+    usage('/sdk/swidge-modules/swidge-moonpay-trade/usage'),
+    guides([
+      page('Execute a Swidge', '/sdk/swidge-modules/swidge-moonpay-trade/guides/execute-swidge'),
+    ]),
+    configuration('/sdk/swidge-modules/swidge-moonpay-trade/configuration'),
+    apiReference('/sdk/swidge-modules/swidge-moonpay-trade/api-reference'),
+  ]),
   folder('Velora', '/sdk/swap-modules/swap-velora-evm', 'ArrowLeftRight', [
     usage('/sdk/swap-modules/swap-velora-evm/usage'),
     guides([

@@ -7,6 +7,8 @@ This guide walks through [supply](#supply), [withdraw](#withdraw), [borrow](#bor
 
 ## Supply
 
+Before supplying, confirm sufficient token allowance to the Aave Pool for your chain. Send any required approval through the wallet account and wait for confirmation. The lending module does not approve or reset allowances automatically.
+
 You can deposit reserves into the pool using [`supply()`](/sdk/lending-modules/lending-aave-evm/api-reference):
 
 ```javascript title="Supply USDt"
@@ -40,6 +42,8 @@ console.log('Borrow tx hash:', tx.hash)
 
 ## Repay
 
+Repayment also requires sufficient token allowance to the Aave Pool. Complete any approval before calling `repay()`; it is a separate transaction from repayment.
+
 You can pay down debt using [`repay()`](/sdk/lending-modules/lending-aave-evm/api-reference):
 
 ```javascript title="Repay USDt"
@@ -51,13 +55,15 @@ console.log('Repay tx hash:', tx.hash)
 
 ## Quotes before sending
 
+Quote fees use the wallet account's fee denomination: native wei for standard EVM/native-coin fees, paymaster-token base units for token-paid fees, or zero for sponsored quotes. Supply and repayment quotes assume any required approval is already in place; they do not include a separate approval's cost.
+
 You can estimate the supply fee with [`quoteSupply()`](/sdk/lending-modules/lending-aave-evm/api-reference):
 
 ```javascript title="Quote supply fee"
 const USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
 
 const supplyQuote = await aave.quoteSupply({ token: USDT, amount: 1000000n })
-console.log('Supply fee (wei):', supplyQuote.fee)
+console.log('Supply fee (account units):', supplyQuote.fee)
 ```
 
 You can estimate the withdraw fee with [`quoteWithdraw()`](/sdk/lending-modules/lending-aave-evm/api-reference):
@@ -66,7 +72,7 @@ You can estimate the withdraw fee with [`quoteWithdraw()`](/sdk/lending-modules/
 const USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
 
 const withdrawQuote = await aave.quoteWithdraw({ token: USDT, amount: 1000000n })
-console.log('Withdraw fee (wei):', withdrawQuote.fee)
+console.log('Withdraw fee (account units):', withdrawQuote.fee)
 ```
 
 You can estimate the borrow fee with [`quoteBorrow()`](/sdk/lending-modules/lending-aave-evm/api-reference):
@@ -75,7 +81,7 @@ You can estimate the borrow fee with [`quoteBorrow()`](/sdk/lending-modules/lend
 const USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
 
 const borrowQuote = await aave.quoteBorrow({ token: USDT, amount: 1000000n })
-console.log('Borrow fee (wei):', borrowQuote.fee)
+console.log('Borrow fee (account units):', borrowQuote.fee)
 ```
 
 You can estimate the repay fee with [`quoteRepay()`](/sdk/lending-modules/lending-aave-evm/api-reference):
@@ -84,7 +90,7 @@ You can estimate the repay fee with [`quoteRepay()`](/sdk/lending-modules/lendin
 const USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
 
 const repayQuote = await aave.quoteRepay({ token: USDT, amount: 1000000n })
-console.log('Repay fee (wei):', repayQuote.fee)
+console.log('Repay fee (account units):', repayQuote.fee)
 ```
 
 <Callout type="warn">
@@ -93,7 +99,7 @@ Health factor and collateralization limits still apply. A quote does not guarant
 
 ## ERC-4337 smart accounts
 
-You can run the same methods through [`WalletAccountEvmErc4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference) and pass a second `config` argument to override per-call gas payment settings. In `v1.0.0-beta.6`, the lending methods accept the same override families as the wallet module: paymaster token, sponsorship policy, and native coins. Standard (non‑ERC‑4337) accounts silently ignore this optional configuration. See the [ERC-4337 config override](/sdk/lending-modules/lending-aave-evm/api-reference) section for the full field list.
+You can run the same methods through [`WalletAccountEvmErc4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference) and pass the optional `config` argument to override per-call gas payment settings. The lending methods accept the same override families as the wallet module: paymaster token, sponsorship policy, and native coins. Standard WDK EVM accounts ignore these wallet fields; compatible wrappers determine their own handling. See the [ERC-4337 config override](/sdk/lending-modules/lending-aave-evm/api-reference) section for the full field list.
 
 ```javascript title="Supply with paymaster"
 import { WalletAccountEvmErc4337 } from '@tetherto/wdk-wallet-evm-erc-4337'
@@ -105,7 +111,10 @@ const aa = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
   bundlerUrl: process.env.BUNDLER_URL,
   paymasterUrl: process.env.PAYMASTER_URL,
   paymasterAddress: process.env.PAYMASTER_ADDRESS,
-  safeModulesVersion: '0.3.0'
+  safeModulesVersion: '0.3.0',
+  paymasterToken: {
+    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+  }
 })
 
 const aaveAA = new AaveProtocolEvm(aa)
