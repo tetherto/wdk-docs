@@ -69,7 +69,7 @@ The `bridgeMaxFee` option rejects `bridge()` when the implementation's `fee + br
 For `WalletAccountEvm`, both fields use the source chain's native base unit, such as wei on Ethereum and Arbitrum. Other compatible accounts retain their own `quoteSendTransaction()` fee denomination, while the single-transaction path still returns `bridgeFee` in source native base units. Confirm the units match before setting a cap.
 
 <Callout type="warn">
-For an ERC-4337 helper flow, `bridgeFee` is in bridged-token base units. The account's `fee` uses native base units for native gas, paymaster-token base units for token-paid gas, or zero for sponsored gas. In `1.0.0-beta.9`, the protocol numerically adds these values when enforcing `bridgeMaxFee`. Do not treat that sum as one currency or set a cap until your payment mode uses compatible units.
+Starting in `1.0.0-beta.10`, an ERC-4337 helper flow returns `bridgeFee` in source-native base units. Native-gas and sponsored flows therefore use compatible units for `fee + bridgeFee`. Token-paid gas still returns `fee` in paymaster-token base units and `bridgeFee` in native base units, so do not treat that sum as one currency or set `bridgeMaxFee` for that mode without an application-owned conversion.
 </Callout>
 
 **Examples:**
@@ -234,7 +234,9 @@ The `targetChain` option specifies which blockchain to bridge tokens to.
 The `recipient` option specifies the address that will receive the bridged tokens.
 
 **Type:** `string`
-**Format:** Valid address for the target chain
+**Format:** Valid, non-zero address for the target chain
+
+Starting in beta.10, both `quoteBridge()` and `bridge()` validate EVM, Solana, TON, and TRON recipient formats before quoting or executing. TON accepts workchain `0` only. The protocol rejects all-zero destinations and the TRON zero/burn address. Validation failures begin with `Invalid recipient address for target chain` and include the target chain and reason.
 
 ### Token
 

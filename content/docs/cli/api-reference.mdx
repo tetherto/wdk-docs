@@ -1,12 +1,12 @@
 ---
 title: API Reference
-description: Complete WDK CLI beta.3 command and option reference
+description: Complete WDK CLI beta.5 command and option reference
 docType: reference
 schemaType: TechArticle
 icon: ListChecks
 ---
 
-This page documents the 37 leaf commands in `@tetherto/wdk-cli@1.0.0-beta.3`. Run `wdk COMMAND --help` to inspect the installed command surface.
+This page documents the 42 leaf commands in `@tetherto/wdk-cli@1.0.0-beta.5`. Run `wdk COMMAND --help` to inspect the installed command surface.
 
 ## Root Options
 
@@ -21,7 +21,7 @@ The WDK-specific global flags are `--json` and `--verbose`; version and help are
 
 ## Shared Wallet Selection
 
-Wallet-dependent read, send, buy, and sell commands use:
+Wallet-dependent read, message, send, swap, bridge, buy, and sell commands use:
 
 | Option | Behavior |
 | --- | --- |
@@ -102,7 +102,7 @@ Locks one wallet or every wallet.
 | `--name <name>` | One selector required | Wallet to lock |
 | `--all` | One selector required | Lock every wallet |
 
-If both selectors are present, beta.3 applies `--all`.
+If both selectors are present, beta.5 applies `--all`.
 
 ### `wdk wallet default`
 
@@ -146,7 +146,7 @@ Derives an address for one network or for a network group.
 | `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
 | `--testnet` | No | Off | With `--all`, select testnets instead of mainnets |
 
-When both `--network` and `--all` are supplied, beta.3 runs the single-network path. In aggregate mode, networks that fail address derivation are omitted from the result.
+When both `--network` and `--all` are supplied, beta.5 runs the single-network path. In aggregate mode, networks that fail address derivation are omitted from the result.
 
 ### `wdk get balance`
 
@@ -177,7 +177,22 @@ Reads token-transfer history through the configured indexer.
 | `--wallet <name>` | No | Default wallet | Wallet selection |
 | `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
 
-When `--token` is omitted, beta.3 batches the network's supported token requests, ignores failed batch items, merges successful transfers by timestamp, and then applies `--limit`.
+When `--token` is omitted, beta.5 batches the network's supported token requests, ignores failed batch items, merges successful transfers by timestamp, and then applies `--limit`.
+
+### `wdk get transaction`
+
+Reads a normalized transaction receipt, optionally waiting for a finality target.
+
+| Option | Required | Default | Description |
+| --- | --- | --- | --- |
+| `--network <network>` | Yes | None | Network containing the transaction |
+| `--hash <hash>` | Yes | None | Non-empty transaction hash |
+| `--finality <target>` | No | Current receipt | Wait for `confirmed` or `final` |
+| `--timeout <ms>` | No | `150000` with `--finality` | Positive wait budget in milliseconds; valid only with `--finality` |
+| `--wallet <name>` | No | Default wallet | Wallet selection |
+| `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
+
+Without `--finality`, the command calls the account's current transaction lookup and returns without waiting for a later state. With `--finality`, it waits until the target, a dropped transaction, or the timeout. The text view shows the common receipt fields; use `--json` for the full module-specific receipt. Every returned `bigint` is serialized as a decimal string.
 
 ## Send Command
 
@@ -208,7 +223,86 @@ wdk send \
 
 Without `--dry-run`, the command broadcasts immediately. There is no additional interactive confirmation.
 
-Before either fee estimation or broadcast, beta.3 validates the recipient against the selected built-in network's CAIP-2 address rules. A format or mainnet/testnet mismatch fails with `INVALID_ADDRESS` after the unlocked-wallet check but before the estimate or send request. A custom network without a supported CAIP-2 validator is left to its wallet module for final validation.
+Before either fee estimation or broadcast, beta.5 validates the recipient against the selected built-in network's CAIP-2 address rules. A format or mainnet/testnet mismatch fails with `INVALID_ADDRESS` after the unlocked-wallet check but before the estimate or send request. A custom network without a supported CAIP-2 validator is left to its wallet module for final validation.
+
+## Message Commands
+
+Both message commands require an unlocked wallet. They use the selected account's signing and verification methods.
+
+### `wdk message sign`
+
+| Option | Required | Default | Description |
+| --- | --- | --- | --- |
+| `--network <network>` | Yes | None | Network whose account key signs the message |
+| `--message <message>` | Yes | None | Non-empty message to sign |
+| `--wallet <name>` | No | Default wallet | Wallet selection |
+| `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
+
+<Callout type="error">
+Signing happens immediately. The command has no dry run, confirmation prompt, or second passphrase check. A signature can authorize actions on some chains, so review the exact message, network, wallet, and account index before running it.
+</Callout>
+
+The result includes the network, account index, signer address, original message, and signature.
+
+### `wdk message verify`
+
+| Option | Required | Default | Description |
+| --- | --- | --- | --- |
+| `--network <network>` | Yes | None | Network whose account key verifies the message |
+| `--message <message>` | Yes | None | Original signed message |
+| `--signature <signature>` | Yes | None | Signature to verify |
+| `--wallet <name>` | No | Default wallet | Wallet selection |
+| `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
+
+The result reports `valid: true` or `valid: false` for that account, message, and signature.
+
+## Swap Command
+
+### `wdk swap`
+
+Quotes or executes a same-network or cross-network token swap.
+
+| Option | Required | Default | Description |
+| --- | --- | --- | --- |
+| `--network <network>` | Yes | None | Source network |
+| `--from-token <token>` | Yes | None | Registered source token |
+| `--to-token <token>` | Yes | None | Registered destination token |
+| `--amount-in <value>` | One amount required | None | Exact decimal amount to sell |
+| `--amount-out <value>` | One amount required | None | Exact decimal amount to receive |
+| `--to-network <network>` | No | Source network | Destination network for a cross-network swap |
+| `--recipient <address>` | No | Selected account | Destination-network recipient |
+| `--protocol <name>` | No | Best route | Restrict quoting to one protocol in the installed catalog |
+| `--wallet <name>` | No | Default wallet | Wallet selection |
+| `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
+| `--dry-run` | No | Off | Quote without executing |
+
+Provide exactly one of `--amount-in` and `--amount-out`. Exact-input routing selects the successful quote with the highest output. Exact-output routing selects the quote with the lowest input. Separate gas and bridge fees are displayed but excluded from ranking because their denomination and inclusion differ between protocol types. Failed quote attempts appear under `skipped` when another protocol succeeds.
+
+<Callout type="error">
+Without `--dry-run`, `wdk swap` executes immediately. Execution requests fresh quotes, so its protocol and amounts can differ from an earlier preview. There is no daemon confirmation step.
+</Callout>
+
+If `--recipient` is omitted, the daemon derives an address on the destination network from the selected wallet and the same account index. `wdk module add` does not add a protocol to the installed routing catalog. See [Swap and Bridge](/cli/guides/swap-and-bridge) for the review workflow.
+
+## Bridge Command
+
+### `wdk bridge`
+
+Quotes or executes an exact-input transfer of the same registered token between different networks.
+
+| Option | Required | Default | Description |
+| --- | --- | --- | --- |
+| `--network <network>` | Yes | None | Source network |
+| `--token <token>` | Yes | None | Registered token on both networks |
+| `--to-network <network>` | Yes | None | Different destination network |
+| `--amount <value>` | Yes | None | Exact decimal input amount |
+| `--recipient <address>` | No | Selected account | Destination-network recipient |
+| `--protocol <name>` | No | Best route | Restrict quoting to one protocol in the installed catalog |
+| `--wallet <name>` | No | Default wallet | Wallet selection |
+| `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
+| `--dry-run` | No | Off | Quote without executing |
+
+The source and destination networks must differ. The omitted-recipient behavior, ranking, skipped-protocol reporting, execution requote, and immediate-execution warning are the same as for `wdk swap`.
 
 ## Fiat Ramp Commands
 
@@ -240,7 +334,7 @@ Before either fee estimation or broadcast, beta.3 validates the recipient agains
 | `--wallet <name>` | No | Default wallet | Wallet selection |
 | `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
 
-For each command, provide exactly one of `--fiat-amount` and `--crypto-amount`. Beta.3 supports only the `moonpay` module.
+For each command, provide exactly one of `--fiat-amount` and `--crypto-amount`. Beta.5 supports only the `moonpay` module.
 
 ## Configuration Commands
 
@@ -287,7 +381,7 @@ Prints the resolved `config.json` path. This command has no command-specific opt
 | `--testnet` | Off | Show only testnets |
 | `--mainnet` | Off | Show only mainnets |
 
-With neither option, the command shows every registered network. If both are provided, beta.3 applies `--testnet`.
+With neither option, the command shows every registered network. If both are provided, beta.5 applies `--testnet`.
 
 ### `wdk network create <data>`
 
@@ -384,7 +478,7 @@ Lists built-in and custom modules with their pinned version, installed version, 
 | --- | --- | --- |
 | `--name <package>` | Yes | npm package name, optionally followed by a version string; use a reviewed literal version, not a tag or range |
 
-When no version is supplied, the command resolves npm's current version once and stores that exact pin. When a suffix is supplied, beta.3 stores it verbatim and does not require exact semver, so tags and ranges are accepted even though they are unsafe for artifact pinning. It refuses to replace a built-in module or change an existing custom value in place. Remove the custom module before selecting a different literal version.
+When no version is supplied, the command resolves npm's current version once and stores that exact pin. When a suffix is supplied, beta.5 stores it verbatim and does not require exact semver, so tags and ranges are accepted even though they are unsafe for artifact pinning. It refuses to replace a built-in module or change an existing custom value in place. Remove the custom module before selecting a different literal version.
 
 The command verifies the default wallet passphrase when a wallet exists, locks a running daemon, runs `npm install --no-save PACKAGE@VERSION` inside the CLI installation, and records the pin under `customModules` in `config.json`. A package registered but missing or mismatched on disk can be repaired by running `module add` again without changing its pin.
 
@@ -397,11 +491,11 @@ The command verifies the default wallet passphrase when a wallet exists, locks a
 The command verifies the default wallet passphrase when a wallet exists, locks a running daemon, removes the custom-module record, and runs `npm uninstall --no-save`. Built-in modules cannot be removed.
 
 <Callout type="warn">
-Adding or removing a package runs npm and can execute package lifecycle scripts; an added default export can later run inside the wallet daemon with access to unlocked accounts. Audit the exact package and version before adding it. Beta.3 only warns about a configured/installed version mismatch and still loads the installed package. Delete custom networks that depend on a module before removing that module.
+Adding or removing a package runs npm and can execute package lifecycle scripts; an added default export can later run inside the wallet daemon with access to unlocked accounts. Audit the exact package and version before adding it. Beta.5 only warns about a configured/installed version mismatch and still loads the installed package. Delete custom networks that depend on a module before removing that module.
 </Callout>
 
 <Callout type="error">
-Unset `WDK_PASSPHRASE` before `module add` or `module remove` and use the hidden interactive prompt. Beta.3 passes its environment to npm, so install or uninstall lifecycle scripts can otherwise inherit the wallet passphrase.
+Unset `WDK_PASSPHRASE` before `module add` or `module remove` and use the hidden interactive prompt. Beta.5 passes its environment to npm, so install or uninstall lifecycle scripts can otherwise inherit the wallet passphrase.
 </Callout>
 
 See [Manage Modules](/cli/guides/manage-modules) for the trust boundary, repair behavior, and custom-network workflow.

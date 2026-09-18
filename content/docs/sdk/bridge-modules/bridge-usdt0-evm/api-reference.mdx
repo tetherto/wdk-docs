@@ -84,6 +84,7 @@ With a standard EVM account, approve the source-chain bridge spender before call
 **Throws:**
 - Error if the account has no callable `sendTransaction()` method
 - Error if no provider is configured
+- Error if `recipient` is invalid for the target chain, resolves to a zero address, or uses a TON workchain other than `0`
 - Error if the combined fee value is equal to or greater than `bridgeMaxFee`
 
 **Example:**
@@ -138,7 +139,10 @@ For standard EVM accounts, some providers estimate the same bridge transaction t
 
 **Returns:** `Promise<Omit<BridgeResult, 'hash'>>` - Bridge cost estimate
 
-**Throws:** Error if no provider is configured
+**Throws:**
+- Error if no provider is configured
+- Error if `recipient` is invalid for the target chain, resolves to the zero address, or, for TRON, is the burn address
+- Error if a TON `recipient` uses a workchain other than `0`
 
 **Standard-account example:**
 ```javascript
@@ -223,7 +227,7 @@ interface BridgeOptions {
 interface BridgeResult {
   hash: string;                     // Main bridge transaction hash
   fee: bigint;                      // Account quote fee; unit depends on account gas-payment mode
-  bridgeFee: bigint;                // Standard: source native unit; ERC-4337 helper: bridged-token base units
+  bridgeFee: bigint;                // Source-chain native base units
 }
 ```
 
@@ -253,13 +257,17 @@ type Erc4337BridgeConfig = Erc4337QuoteConfig & {
 |---|---|---|
 | `WalletAccountEvm` | Source-chain native base units | Source-chain native base units |
 | Other compatible accounts using the single-transaction path | Account-specific `quoteSendTransaction()` fee units | Source-chain native base units |
-| ERC-4337 with native gas | Source-chain native base units | Bridged-token base units |
-| ERC-4337 with token-paid gas | Paymaster-token base units | Bridged-token base units |
-| ERC-4337 with sponsored gas | `0` | Bridged-token base units |
+| ERC-4337 with native gas | Source-chain native base units | Source-chain native base units |
+| ERC-4337 with token-paid gas | Paymaster-token base units | Source-chain native base units |
+| ERC-4337 with sponsored gas | `0` | Source-chain native base units |
 
 <Callout type="warn">
-In `1.0.0-beta.9`, `bridge()` numerically adds `fee + bridgeFee` when checking `bridgeMaxFee`, even when the fields have different denominations. This affects ERC-4337 helper flows and any compatible account whose quoted fee is not in source-chain native base units. Do not interpret that sum as a total monetary cost. Set a cap only after confirming that the selected account payment mode produces compatible units. The equality boundary is rejected.
+In `1.0.0-beta.10`, the ERC-4337 helper returns LayerZero's `nativeFee` as `bridgeFee`. Native-gas and sponsored flows therefore have compatible `fee` and `bridgeFee` units. Token-paid gas still mixes a paymaster-token `fee` with a source-native `bridgeFee`, and another compatible account can expose its own quote denomination. Do not interpret a mixed-unit sum as a total monetary cost. Set a cap only after confirming compatible units. The equality boundary is rejected.
 </Callout>
+
+### Recipient validation
+
+Beta.10 validates `recipient` during both `quoteBridge()` and `bridge()`. It uses the target chain's EVM, Solana, TON, or TRON address validator, rejects an all-zero destination, rejects the TRON zero/burn address, and accepts TON workchain `0` only. A failure starts with `Invalid recipient address for target chain '<chain>'` and includes the validation reason.
 
 `Erc4337QuoteConfig` is a partial operation-level override of the wallet's token-paid, sponsored, or native-gas configuration. Sponsored gas uses `isSponsored: true` and can include `sponsorshipPolicyId`; native gas uses `useNativeCoins: true`. See the [ERC-4337 wallet configuration](/sdk/wallet-modules/wallet-evm-erc-4337/configuration) for the complete account requirements.
 
@@ -359,6 +367,15 @@ try {
   }
   if (error.message.includes('cannot be equal to the source chain')) {
     console.error('Cannot bridge to the same chain')
+  }
+  if (error.message.includes('Invalid recipient address')) {
+    console.error('Recipient is invalid for the target chain')
+  }
+  if (error.message.includes('ZERO_ADDRESS')) {
+    console.error('Recipient resolves to the zero address or the TRON burn address')
+  }
+  if (error.message.includes('UNSUPPORTED_WORKCHAIN')) {
+    console.error('TON recipients must use workchain 0')
   }
 }
 ```

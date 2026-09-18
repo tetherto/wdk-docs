@@ -29,6 +29,7 @@ Requires peer dependency: `@buildonspark/spark-sdk`
 - **Balance unit**: satoshis (1 BTC = 100,000,000 sats)
 - **Zero fees** for Spark-to-Spark transactions
 - **Lightning Network** integration for invoices and payments
+- **Derivation errors**: In beta.26, HD-key derivation errors retain the `hdkey` field identifier without seed bytes; other validation-error context can still be sensitive.
 
 ### Key Tree
 

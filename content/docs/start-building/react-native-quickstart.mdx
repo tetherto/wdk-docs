@@ -125,15 +125,15 @@ Integrate WDK into your existing React Native or Expo project using `@tetherto/w
 ### Step 1: Install
 
 ```bash
-npm install @tetherto/wdk-react-native-core@1.0.0-beta.19 react-native-bare-kit
+npm install @tetherto/wdk-react-native-core@1.0.0-beta.20 react-native-bare-kit
 npx expo install expo-crypto
 ```
 
 <Callout type="warn">
-The `v1.0.0-beta.19` npm artifact includes the React Native source entry at `src/index.ts`, but it does not include the declared default JavaScript or type declaration files under `dist/`. TypeScript must use `moduleResolution: "bundler"` with `customConditions: ["react-native"]`, and Metro must retain the `react-native` export condition. Resolvers that select `default` or `types` target files that are not present in this artifact.
+The `v1.0.0-beta.20` npm artifact includes the React Native source entry at `src/index.ts`, but it does not include the declared default JavaScript or type declaration files under `dist/`. TypeScript must use `moduleResolution: "bundler"` with `customConditions: ["react-native"]`, and Metro must retain the `react-native` export condition. Resolvers that select `default` or `types` target files that are not present in this artifact.
 </Callout>
 
-Beta.19 requires `expo-crypto` `>=55.0.0 <57.0.0` and `react-native-bare-kit` `>=0.14.5` as peer dependencies. Confirm that the version selected by `npx expo install` is both inside the package range and compatible with the app's Expo SDK. If the SDK requires a version outside that range, do not force the peer installation; use compatible releases instead. Bare React Native apps must [install and configure Expo modules](https://docs.expo.dev/bare/installing-expo-modules/) before installing `expo-crypto`.
+Beta.20 requires `expo-crypto` `>=55.0.0 <57.0.0` and `react-native-bare-kit` `>=0.14.5` as peer dependencies. Confirm that the version selected by `npx expo install` is both inside the package range and compatible with the app's Expo SDK. If the SDK requires a version outside that range, do not force the peer installation; use compatible releases instead. Bare React Native apps must [install and configure Expo modules](https://docs.expo.dev/bare/installing-expo-modules/) before installing `expo-crypto`.
 
 ### Step 2: Configure Android minSdkVersion
 
@@ -186,7 +186,7 @@ The WDK engine runs inside a Bare worklet. Use the `@tetherto/wdk-worklet-bundle
 
 ```bash
 # 1. Install the bundler CLI
-npm install -g @tetherto/wdk-worklet-bundler
+npm install -g @tetherto/wdk-worklet-bundler@1.0.0-beta.14
 
 # 2. Initialize configuration in your React Native project
 wdk-worklet-bundler init
@@ -435,7 +435,7 @@ function LockButton() {
   const { lock } = useWalletManager()
 
   const handleLock = async () => {
-    // This does not stop or prove zeroization of the running worklet.
+    // This does not stop the worklet or confirm disposal completion.
     await lock()
   }
 
@@ -443,7 +443,7 @@ function LockButton() {
 }
 ```
 
-`lock()` resets local lifecycle flags but leaves the Bare worklet and IPC connection running. Treat it as an application access boundary, not evidence that seeds or keys were erased from worklet memory.
+When a wallet is active, `lock()` sends a one-way full WDK disposal request and then resets local lifecycle flags. The Bare worklet and IPC connection stay running, and the call does not wait for worklet cleanup acknowledgement. Treat it as an application access boundary, not evidence that every seed or key copy was erased from memory.
 
 ### Refresh Balances
 
@@ -500,7 +500,7 @@ Ensure your component is rendered inside `WdkAppProvider`. The provider must be 
 
 **No biometric prompt appears before a wallet operation**
 
-React Native Core beta.19 does not enforce biometrics and does not accept a `requireBiometrics` provider prop. Run your app's biometric, passcode, or other authentication flow before calling `createWallet()`, `restoreWallet()`, `unlock()`, `switchWallet()`, or key-access methods.
+React Native Core beta.20 does not enforce biometrics and does not accept a `requireBiometrics` provider prop. Run your app's biometric, passcode, or other authentication flow before calling `createWallet()`, `restoreWallet()`, `unlock()`, `switchWallet()`, or key-access methods.
 
 For background locking, revoke the app's authenticated UI state synchronously, then call and catch `lock()`. The lifecycle mutex rejects instead of queuing when another guarded operation is running, so track a pending lock and retry it after the in-flight guarded operation settles. Require authentication again on foreground and do not treat the SDK session as locked until a retry succeeds.
 
@@ -516,7 +516,7 @@ npx react-native start --reset-cache
 
 **TypeScript cannot resolve React Native Core**
 
-Beta.19's published `default` and `types` export targets are absent. Configure TypeScript to select the included React Native source export:
+Beta.20's published `default` and `types` export targets are absent. Configure TypeScript to select the included React Native source export:
 
 ```json
 {
@@ -527,7 +527,7 @@ Beta.19's published `default` and `types` export targets are absent. Configure T
 }
 ```
 
-Use a current React Native or Expo Metro configuration that honors package exports and retains the `react-native` condition. `skipLibCheck` can suppress checks inside declarations after resolution; it cannot repair the missing beta.19 export targets.
+Use a current React Native or Expo Metro configuration that honors package exports and retains the `react-native` condition. `skipLibCheck` can suppress checks inside declarations after resolution; it cannot repair the missing beta.20 export targets.
 
 ### Complete Setup Checklist
 

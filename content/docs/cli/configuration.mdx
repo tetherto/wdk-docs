@@ -1,6 +1,6 @@
 ---
 title: Configuration
-description: Configure WDK CLI paths, defaults, indexer access, wallet modules, and fiat ramps
+description: Configure WDK CLI paths, defaults, indexer access, wallet modules, routing protocols, and fiat ramps
 docType: reference
 schemaType: TechArticle
 icon: Settings
@@ -62,7 +62,7 @@ An empty `WDK_PASSPHRASE` value does not override the prompt. To use an empty pa
 | `WDK_INDEXER_API_KEY` | Overrides `indexer.apiKey` for the current process |
 | `WDK_PASSPHRASE` | Supplies a non-empty passphrase instead of opening a prompt |
 
-There are no beta.3 environment-variable mappings for `indexer.baseUrl`, wallet defaults, account defaults, network configuration, custom modules, or MoonPay configuration.
+There are no beta.5 environment-variable mappings for `indexer.baseUrl`, wallet defaults, account defaults, network configuration, custom modules, or MoonPay configuration.
 
 <Callout type="warn">
 Environment variables can be inherited by child processes and may be visible to other processes running as the same OS user. Limit their lifetime and do not print them in shell history, CI logs, or agent transcripts.
@@ -117,7 +117,7 @@ wdk config get --all
 `config.json` is plaintext. The CLI does not request an owner-only mode for this file, so its effective permissions follow the operating system and runtime defaults and may be `0644`. `config get --all` can reveal stored API keys, signing URLs, and credentials embedded in provider URLs. Do not publish the file or command output.
 </Callout>
 
-Prefer `WDK_INDEXER_API_KEY` when you do not want to persist the indexer key. No environment override is available for MoonPay configuration in beta.3.
+Prefer `WDK_INDEXER_API_KEY` when you do not want to persist the indexer key. No environment override is available for MoonPay configuration in beta.5.
 
 ## Set Configuration
 
@@ -203,7 +203,7 @@ Changing or resetting a key under `networks` locks all wallets so the next unloc
 
 ## Module Packages
 
-Beta.3 records built-in module pins in the installed catalog and custom pins under `customModules` in `config.json`.
+Beta.5 records built-in module pins in the installed catalog and custom pins under `customModules` in `config.json`.
 
 ```bash title="Terminal"
 wdk module list
@@ -216,6 +216,18 @@ Custom modules are executable code. Adding one runs npm installation in the CLI 
 </Callout>
 
 Custom packages are installed with npm's `--no-save` option. A later npm operation can prune them. Use `wdk module list` to detect a missing or mismatched package, then run `wdk module add --name PACKAGE` to repair the stored pin. See [Manage Modules](/cli/guides/manage-modules).
+
+## Swap And Bridge Protocols
+
+`wdk swap` and `wdk bridge` discover protocols from the installed CLI package's `wdk.config.json`. Each protocol has a short name, a module package, general configuration, and optional per-network overrides. The CLI passes the general configuration merged with the selected network's override to that protocol module.
+
+Use `--protocol NAME` to restrict a request to one short name in this installed catalog. Omitting the option lets the CLI quote every installed protocol that supports the requested operation.
+
+<Callout type="info">
+`wdk module add` can install a package needed by an existing catalog entry, but it does not create a swap or bridge protocol entry. The beta.5 CLI has no command for adding protocol definitions to the routing catalog.
+</Callout>
+
+See [Swap and Bridge](/cli/guides/swap-and-bridge) for routing and execution behavior.
 
 ## Indexer
 
@@ -256,7 +268,7 @@ The proxy must accept both history request forms:
 
 Forward the query parameters or JSON request body and the Indexer response unchanged. Add the Indexer `x-api-key` header when forwarding the request upstream.
 
-`WDK_INDEXER_BASE_URL` is not read by beta.3.
+`WDK_INDEXER_BASE_URL` is not read by beta.5.
 
 ## MoonPay
 
@@ -294,7 +306,7 @@ Return a successful JSON response with the complete signed URL:
 Returning only the signature is not supported.
 
 <Callout type="warn">
-Keep the MoonPay secret key in the signing service. Beta.3 does not send configurable authentication headers to `signUrl`, so bind the service locally, keep it on a private network, or restrict access with network-level controls. Do not expose an unauthenticated public signing endpoint.
+Keep the MoonPay secret key in the signing service. Beta.5 does not send configurable authentication headers to `signUrl`, so bind the service locally, keep it on a private network, or restrict access with network-level controls. Do not expose an unauthenticated public signing endpoint.
 </Callout>
 
 ### Select an Environment

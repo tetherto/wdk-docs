@@ -224,7 +224,7 @@ Distinct policy IDs keep their original per-registration timeouts. A repeated ID
 
 **Example:**
 ```typescript title="Register A Send Policy"
-import WDK, { PolicyViolationError } from '@tetherto/wdk'
+import WDK, { DENIAL_CODES, PolicyViolationError } from '@tetherto/wdk'
 
 const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
@@ -265,7 +265,7 @@ const simulation = await (account as any).simulate.sendTransaction({
 })
 
 if (simulation.decision === 'DENY') {
-  console.warn(simulation.reason)
+  console.warn(simulation.code, simulation.reason)
 }
 
 try {
@@ -275,7 +275,11 @@ try {
   })
 } catch (error) {
   if (error instanceof PolicyViolationError) {
-    console.error(error.reason)
+    if (error.code === DENIAL_CODES.NO_APPLICABLE_RULE) {
+      console.error(`No rule addresses ${error.operation}`)
+    } else {
+      console.error(error.code, error.reason)
+    }
   }
 }
 ```
@@ -425,6 +429,18 @@ console.log(DEFAULT_POLICY_EXCLUSIONS.includes('getBalance')) // true
 ```
 
 The list matches exact names, not prefixes: a new `get*` or `quote*` method is not automatically excluded. Use [`getPolicyExclusions()`](#getpolicyexclusions) to include the instance's custom additions. See [configuration](/sdk/core-module/configuration#policy-method-exclusions) before adding exclusions.
+
+### Policy Denial Codes
+
+`DENIAL_CODES` is a root export with three machine-readable policy outcomes:
+
+| Value | Meaning |
+| --- | --- |
+| `RULE_DENIED` | A matching `DENY` rule blocked the operation. |
+| `NO_APPLICABLE_RULE` | No registered rule addressed the governed operation. |
+| `GOVERNED_BUT_UNMATCHED` | Rules addressed the operation, but none of their condition sets matched. |
+
+`PolicyViolationError.code` contains one of these values, and `PolicyViolationError.operation` names the blocked method. Compare `code` instead of parsing `reason`, because a matching rule can supply application-owned reason text. A simulation returns the same denial code without executing the governed method.
 
 ## IWalletAccount
 
@@ -996,6 +1012,10 @@ interface WdkOptions {
 
 type PolicyAction = 'ALLOW' | 'DENY'
 type PolicyScope = 'project' | 'account'
+type DenialCode =
+  | 'RULE_DENIED'
+  | 'NO_APPLICABLE_RULE'
+  | 'GOVERNED_BUT_UNMATCHED'
 
 type PolicyOperation = string
 
@@ -1043,6 +1063,7 @@ interface SimulationTraceEntry {
 
 interface SimulationResult {
   decision: 'ALLOW' | 'DENY'
+  code: DenialCode | null
   policy_id: string | null
   matched_rule: string | null
   reason: string | null
@@ -1060,7 +1081,7 @@ interface SimulationResult {
 
 `conditionTimeoutMs` belongs to the policies registered by one `registerPolicy()` call. Distinct policy IDs retain their earlier timeouts, while a repeated ID replaces the policy within its registry bucket and takes the new registration's timeout. All project-scoped policies share one bucket; account-scoped policies are bucketed by wallet. `maxConditionTimeoutMs` is the instance-wide ceiling set by `new WDK(seed, options)`. Both timeout settings default to `30000` milliseconds, and a per-policy request above the ceiling is capped.
 
-Simulation results returned by the runtime `account.simulate.<method>(...)` mirrors include `decision`, `policy_id`, `matched_rule`, `reason`, and a `trace` array that records evaluated rules. `reason` can include a rule reason or one of the engine outcomes: `matched`, `override`, `no-applicable-rule`, or `governed-but-unmatched`.
+Simulation results returned by the runtime `account.simulate.<method>(...)` mirrors include `decision`, `code`, `policy_id`, `matched_rule`, `reason`, and a `trace` array that records evaluated rules. `code` is `null` for an allowed call and matches the `PolicyViolationError.code` that execution would produce for a denied call. `reason` can include application-owned rule text or one of the engine outcomes, so branch on `code` when handling denials.
 
 ### Protocol Types
 

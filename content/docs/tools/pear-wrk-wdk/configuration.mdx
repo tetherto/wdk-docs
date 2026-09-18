@@ -3,7 +3,7 @@ title: Pear Worklet WDK Configuration
 description: Configure Pear Worklet HRPC and JSON-RPC contexts, WDK payloads, and generic modules
 ---
 
-This page explains how to configure a beta.14 worklet context, initialize and dispose WDK, call wallet and generic-module methods, and configure logging and suspend diagnostics. Use the table of contents to find each task.
+This page explains how to configure a beta.15 worklet context, initialize and dispose WDK, call wallet and generic-module methods, and configure logging and suspend diagnostics. Use the table of contents to find each task.
 
 ## Worklet Context
 
@@ -138,7 +138,7 @@ const context = {
 Omitting a module or its `methods` field leaves that module unrestricted. Set `methods: []` to deny every dynamic call on it.
 
 <Callout type="warn">
-These maps are not default-deny. List every dynamic surface exposed to an untrusted host. The beta.14 runtime reports denied calls with `METHOD_NOT_ALLOWED`, but the published error-code declaration still omits that member; handle the literal runtime code until the declaration is corrected.
+These maps are not default-deny. List every dynamic surface exposed to an untrusted host. The beta.15 runtime reports denied calls with `METHOD_NOT_ALLOWED`, but the published error-code declaration still omits that member; handle the literal runtime code until the declaration is corrected.
 </Callout>
 
 ## Worklet Config Payload
@@ -180,7 +180,19 @@ const workletConfig = {
 - `modules` is optional and contains runtime config for named generic modules. Each key must match a `moduleManagers` key in the worklet context and the corresponding build-time Worklet Bundler module name.
 - `resetWdkWallets()` reads only the `networks` portion of the decoded config.
 
-JSON-RPC generic-module support was introduced in Pear Worklet beta.13. Supply the same `moduleManagers`, `allowedModuleMethods`, and runtime `modules` config used by HRPC. For generated entrypoints, use [Worklet Bundler beta.13 with Pear Worklet beta.14](/tools/worklet-bundler/configuration#install-the-packages).
+JSON-RPC generic-module support was introduced in Pear Worklet beta.13. Supply the same `moduleManagers`, `allowedModuleMethods`, and runtime `modules` config used by HRPC. For generated entrypoints, use [Worklet Bundler beta.14 with Pear Worklet beta.15](/tools/worklet-bundler/configuration#install-the-packages).
+
+## Secret Payload Representations
+
+Beta.15 uses different secret representations at each public boundary:
+
+| Boundary | `encryptionKey` and encrypted seed or entropy fields |
+| --- | --- |
+| Pear HRPC requests and responses | Native `Buffer` values |
+| Framed JSON-RPC requests and responses | Base64 strings |
+| React Native Core public wallet hooks | Base64 strings |
+
+Decode values read from string storage before sending them over HRPC. The caller owns its input buffers and every buffer returned by HRPC, and should overwrite them after the final consumer finishes. JSON-RPC converts known secret fields between base64 strings and buffers inside the server. JavaScript strings and additional copies retained by application code cannot be overwritten reliably.
 
 ## Initialize WDK
 
@@ -202,11 +214,11 @@ await hrpc.initializeWDK({
 
 - Pass both `encryptionKey` and `encryptedSeed`, or omit both together.
 - On first initialization, the worklet must receive an encrypted seed pair so it can create `context.wdk`.
-- If `context.wdk` already exists, reinitialization closes its generic modules and calls `wdk.dispose()` before validating the new config. With both seed fields present, beta.14 then zeroes the old retained seed buffer before attempting replacement. Validate the replacement payload before sending it; a failed replacement does not restore the old seed.
+- If `context.wdk` already exists, reinitialization closes its generic modules and calls `wdk.dispose()` before validating the new config. With both seed fields present, beta.15 then overwrites the old retained seed buffer before attempting replacement. Validate the replacement payload before sending it; a failed replacement does not restore the old seed.
 - Without a seed pair, reinitialization reuses the existing WDK object and retained seed to re-register wallets and protocols. It closes generic modules without rebuilding them, even when `config.modules` is present. Supply the seed pair on every initialization that must construct or reconstruct modules.
 - Module `close()` is called during full disposal or reinitialization. Targeted blockchain disposal leaves generic modules running. Optional `suspend()` and `resume()` methods run only when the host forwards Bare lifecycle events; the manual context above does so.
 
-The runtime manages the decrypted buffer through `context.wdkSeedBuffer`; do not set this field yourself. If the WDK constructor throws, beta.14 zeroes the newly decrypted buffer. Later wallet or protocol registration failures retain the new instance and seed, so handle those failures and dispose the instance when abandoning initialization.
+The runtime manages the decrypted buffer through `context.wdkSeedBuffer`; do not set this field yourself. If decryption or WDK construction fails, beta.15 overwrites temporary buffers owned by that handler. After the buffer has been handed to a constructed WDK instance, a later wallet or protocol registration failure retains the partial instance and seed. Treat that failure as requiring explicit disposal before abandoning or retrying initialization.
 
 ## Dispose WDK
 
@@ -216,9 +228,13 @@ Send a full disposal request when the worklet should release its WDK instance:
 hrpc.dispose({})
 ```
 
-A full disposal closes generic modules, disposes WDK, and zeroes and releases its retained seed buffer. Once module shutdown completes, the instance and buffer are cleared even if `wdk.dispose()` throws. HRPC `dispose()` is one-way and returns `void`; its return does not acknowledge cleanup completion.
+A full disposal closes generic modules, disposes WDK, and overwrites and releases its retained seed buffer. Once module shutdown completes, the instance and buffer are cleared even if `wdk.dispose()` throws. HRPC `dispose()` is one-way and returns `void`; its return does not acknowledge cleanup completion.
 
-To dispose only selected wallets, pass a non-empty `blockchains` array, such as `hrpc.dispose({ blockchains: ['ethereum'] })`. This retains the WDK instance, seed buffer, and generic modules. An omitted or empty array requests full disposal.
+<Callout type="error">
+The beta.15 HRPC schema encodes `dispose()` as an empty request. The published `DisposeRequest` type still declares `blockchains`, but HRPC drops that field and performs full disposal. Do not pass `blockchains` to HRPC expecting a selective result. Use `resetWdkWallets()` below when the selected wallets must be disposed and then re-registered.
+</Callout>
+
+Framed JSON-RPC does preserve a non-empty `params.blockchains` array for selective disposal. That path retains the WDK instance, seed buffer, and generic modules and returns `{ status: 'disposed' }` after the handler completes. Omitting `blockchains` or sending an empty array requests full disposal.
 
 This cleanup covers the buffer retained by the worklet runtime. It cannot erase JavaScript strings or copies retained by application or module code.
 
@@ -290,7 +306,7 @@ const theme = response.result ? JSON.parse(response.result) : undefined
 
 `args` is an optional JSON string. Arrays are spread into positional arguments; omitted or decoded `null` arguments call the method with no arguments. Other values are passed as one argument. Promise results are awaited, `.toArray()` results are materialized, and `Uint8Array` values are normalized to hex before the response is serialized.
 
-In beta.14, a module method that returns `undefined` or `null` produces the JSON string `"null"` in the HRPC response. JSON-RPC decodes it to `response.result.result === null`. This normalization applies to `callModule()`, not wallet or protocol `callMethod()` results.
+In beta.15, a module method that returns `undefined` or `null` produces the JSON string `"null"` in the HRPC response. JSON-RPC decodes it to `response.result.result === null`. This normalization applies to `callModule()`, not wallet or protocol `callMethod()` results.
 
 When `context.allowedModuleMethods` contains the target module, `method` must appear in its `methods` array. A denied call returns `METHOD_NOT_ALLOWED` before module instance lookup or dispatch.
 
@@ -319,7 +335,7 @@ module.exports = (ipc) => {
 
 Messages are UTF-8 JSON-RPC 2.0 objects prefixed by a four-byte unsigned big-endian payload length. Requests require an ID, and IDs must be unique while a request is in flight. The package exports no JSON-RPC host/client helper; the native host must implement framing and correlation.
 
-JSON-RPC beta.13 supports generic-module initialization, `callModule`, `allowedModuleMethods`, and `moduleEvent` notifications alongside wallet and protocol operations. `resetWdkWallets` remains HRPC-only. See the [API reference](/tools/pear-wrk-wdk/api-reference#json-rpc-transport) for all methods and response shapes.
+JSON-RPC supports generic-module initialization, `callModule`, `allowedModuleMethods`, and `moduleEvent` notifications alongside wallet and protocol operations. `resetWdkWallets` remains HRPC-only. Secret-bearing fields use base64 strings on this JSON boundary; the server decodes them before dispatch and encodes buffer results before replying. See the [API reference](/tools/pear-wrk-wdk/api-reference#json-rpc-transport) for all methods and response shapes.
 
 Send a module call as a framed JSON-RPC request; `args` remains a JSON string:
 
@@ -343,7 +359,9 @@ Manual JSON-RPC entrypoints must forward Bare `suspend` and `resume` events to `
 
 ## Configure Logging
 
-Set `LOG_LEVEL` in the worklet environment before loading the package. Accepted values are `DEBUG`, `INFO`, `WARN`, `ERROR`, and `NONE`; beta.14 trims whitespace and ignores case. An unrecognized value falls back to `ERROR`. With `LOG_LEVEL` unset or empty, `NODE_ENV=development` selects `DEBUG`; other environments default to `ERROR`.
+Set `LOG_LEVEL` in the worklet environment before loading the package. Accepted values are `DEBUG`, `INFO`, `WARN`, `ERROR`, and `NONE`; beta.15 trims whitespace and ignores case. An unrecognized value falls back to `ERROR`. With `LOG_LEVEL` unset or empty, `NODE_ENV=development` selects `DEBUG`; other environments default to `ERROR`.
+
+Beta.15 no longer emits routine JSON-RPC request, response, or handler-registration info logs. Error logs remain. Do not use the removed info lines as readiness or request-completion signals.
 
 At every enabled level, the package logger replaces object fields named `mnemonic`, `encryptionKey`, `encryptedSeed`, `encryptedSeedBuffer`, `encryptedEntropy`, `encryptedEntropyBuffer`, or `seed` with `[redacted]`. Matching is case-sensitive. Nested objects at depth three are replaced with `[object]`.
 
@@ -363,7 +381,7 @@ registerHandleLeakCheck({ tickIntervalMs: 1000 })
 
 The helper logs a handle snapshot immediately on `suspend`, then repeats every `tickIntervalMs` milliseconds until `idle` or `resume`. The default interval is `1000` ms. Its timer is unreferenced so the diagnostic itself does not keep the event loop active. It reports handles; it does not close them or suspend modules.
 
-Provide a positive interval; the beta.14 helper passes the value to the timer without validating it. Registration is a no-op if the optional `bare-walk-handles` dependency or Bare lifecycle events are unavailable. Diagnostic output uses `console.warn` regardless of `LOG_LEVEL`, so register it only when you need handle diagnostics.
+Provide a positive interval; the beta.15 helper passes the value to the timer without validating it. Registration is a no-op if the optional `bare-walk-handles` dependency or Bare lifecycle events are unavailable. Diagnostic output uses `console.warn` regardless of `LOG_LEVEL`, so register it only when you need handle diagnostics.
 
 ***
 

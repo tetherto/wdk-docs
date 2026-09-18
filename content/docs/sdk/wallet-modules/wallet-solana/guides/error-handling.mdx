@@ -5,13 +5,20 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-This guide covers best practices for handling transaction errors, managing fee limits, and cleaning up sensitive data from memory.
+Use this guide to handle typed transaction errors, transfer failures, fee limits, transaction status errors, and sensitive-data disposal.
 
-## Handle Transaction Errors
+## Handle Typed Transaction Errors
 
-Wrap transactions in `try/catch` blocks to handle common failure scenarios such as insufficient balance, invalid addresses, or exceeded fee limits.
+Starting in beta.15, `@tetherto/wdk-wallet-solana` re-exports the shared WDK error classes it uses. Branch on these classes instead of matching error-message text.
 
 ```javascript title="Transaction Error Handling"
+import {
+  AssertionError,
+  MaximumFeeExceededError,
+  ProviderRequiredError,
+  ValueError
+} from '@tetherto/wdk-wallet-solana'
+
 try {
   const result = await account.transfer({
     token: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDt mint address
@@ -20,14 +27,21 @@ try {
   })
   console.log('Transfer submitted:', result.hash)
 } catch (error) {
-  console.error('Transfer failed:', error.message)
-  if (error.message.toLowerCase().includes('insufficient')) {
-    console.log('Please add more tokens to your wallet')
-  } else if (error.message.toLowerCase().includes('fee')) {
-    console.log('The transfer fee exceeds your configured maximum')
+  if (error instanceof MaximumFeeExceededError) {
+    console.error('The transfer fee exceeds transferMaxFee')
+  } else if (error instanceof ProviderRequiredError) {
+    console.error('Configure a Solana RPC provider')
+  } else if (error instanceof AssertionError) {
+    console.error('The wallet account has been disposed')
+  } else if (error instanceof ValueError) {
+    console.error('Review the transfer input:', error.message)
+  } else {
+    throw error
   }
 }
 ```
+
+The package uses `ValueError` for invalid mnemonics and derivation paths, out-of-range token amounts, mismatched fee payers, malformed transaction signature or hash inputs, and fee estimates that cannot be calculated. An upstream Solana RPC or program failure can still use a provider-specific error type, so keep an unknown-error fallback.
 
 ## Handle SOL Transfer Errors
 
@@ -57,15 +71,7 @@ async function safeTransfer(account, wallet) {
 
     return result
   } catch (error) {
-    if (error.message.includes('Insufficient SOL')) {
-      console.error('Please add more SOL to your wallet')
-    } else if (error.message.includes('invalid address')) {
-      console.error('The recipient address is invalid')
-    } else if (error.message.toLowerCase().includes('fee')) {
-      console.error('The transaction fee exceeds your configured maximum')
-    } else {
-      console.error('Transaction failed:', error.message)
-    }
+    console.error('Transaction failed:', error)
     throw error
   } finally {
     account.dispose()
@@ -76,9 +82,11 @@ async function safeTransfer(account, wallet) {
 
 Both transfer and native-send results report submission, not successful execution. Wait for the returned signature with `waitForTransaction()` and inspect `success` after the requested commitment before treating the operation as complete.
 
-## Handle Prebuilt TransactionMessage Errors
+## Handle Prebuilt Transaction Errors
 
 If you pass a prebuilt `TransactionMessage`, make sure it already has a recent blockhash or durable nonce lifetime, or let WDK inject the latest blockhash for you. If you set `feePayer`, it must match the wallet address.
+
+Beta.15 reports a mismatched fee payer as `ValueError`. For a base64 serialized transaction, the account also checks that every required signature is present after adding its own. Missing signatures throw a Solana error with code `SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING`.
 
 <Callout type="info">
 Durable nonce flows still need a valid nonce account and signer setup in the message you provide. WDK preserves that lifetime instead of replacing it.
@@ -102,7 +110,7 @@ const walletWithCaps = new WalletManagerSolana(seedPhrase, {
 
 ## Handle Transaction Status Errors
 
-`getTransaction()` throws `ValueError` for an invalid base58 signature and `NoSuchElementError` when a well-formed signature is absent from transaction history. `waitForTransaction()` treats an unknown signature as transient during propagation and throws `TimeoutError` if the target is not reached within the configured time.
+Without a provider, both methods throw `ProviderRequiredError`. `getTransaction()` throws `ValueError` for an invalid base58 signature and `NoSuchElementError` when a well-formed signature is absent from transaction history. `waitForTransaction()` propagates the input error, treats an unknown signature as transient during propagation, and throws `TimeoutError` if the target is not reached within the configured time.
 
 The Solana implementation does not currently return `dropped`; a never-landed or evicted signature times out. A confirmed or final receipt can still have `success: false`, so finality must not be used as an execution-success check.
 

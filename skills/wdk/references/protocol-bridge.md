@@ -34,7 +34,7 @@ From `1.0.0-beta.9`, the constructor accepts shared `IWalletAccountReadOnly` and
 
 ERC-4337 helper bridging is available from Ethereum, Arbitrum, Plasma, and Polygon. Other supported EVM source chains require a standard account.
 
-Helper selection and batching use the bridge package's concrete ERC-4337 classes. Beta.9 pins `@tetherto/wdk-wallet-evm-erc-4337` to beta.11. An account from a separate package copy, including a separately installed beta.18, can take the single-transaction path instead. Verify dependency resolution and class identity before relying on automatic approval batching; see the [account requirements](https://docs.wallet.tether.io/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements).
+Helper selection and batching use the bridge package's concrete ERC-4337 classes. Beta.10 pins `@tetherto/wdk-wallet-evm-erc-4337` to beta.11. An account from a separate package copy or version, including a separately installed beta.20, can take the single-transaction path instead. Verify dependency resolution and class identity before relying on automatic approval batching; see the [account requirements](https://docs.wallet.tether.io/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements).
 
 ## Standard account quick reference
 
@@ -87,15 +87,15 @@ const result = await bridge.bridge(
 
 The returned hash identifies the single UserOperation containing the approval and helper bridge call.
 
-### ERC-4337 fee-unit limitation
+### ERC-4337 fee units
 
-In `1.0.0-beta.9`:
+Starting in `1.0.0-beta.10`:
 
-- `bridgeFee` is in bridged-token base units.
+- `bridgeFee` is in source-native base units.
 - `fee` is in source-native base units for native gas, paymaster-token base units for token-paid gas, or zero for sponsored gas.
 - The protocol numerically adds `fee + bridgeFee` when enforcing `bridgeMaxFee`.
 
-Do not interpret that sum as one currency or configure an ERC-4337 cap until the selected payment mode is known to produce compatible units. Equality with the cap is rejected.
+Native-gas and sponsored flows use compatible units. Do not interpret the token-paid sum as one currency or configure a cap for that mode without an application-owned conversion. Equality with the cap is rejected.
 
 ## Supported routes
 
@@ -103,7 +103,7 @@ Do not interpret that sum as one currency or configure an ERC-4337 cap until the
 
 **Additional destination keys:** `solana`, `ton`, `tron`
 
-For Solana, TON, and TRON targets, beta.9 skips a source chain's ordinary `oftContract` during auto-resolution. The bundled source-side candidates are:
+For Solana, TON, and TRON targets, beta.10 skips a source chain's ordinary `oftContract` during auto-resolution. The bundled source-side candidates are:
 
 - USD₮0 legacy mesh: Ethereum, Arbitrum, Celo.
 - XAU₮0 OFT: Ethereum, Arbitrum, Avalanche, Celo, HyperEVM, Ink, Monad, Plasma, Polygon, Stable.
@@ -121,4 +121,4 @@ Route availability also depends on a matching USD₮0 or XAU₮0 deployment. Ver
 | `getSupportedChains()` | Return the configured chain descriptors. |
 | `getSupportedTokens(options?)` | Return configured USD₮0 or XAU₮0 token descriptors, optionally filtered by chain or token symbol. |
 
-Validate the destination address for its target ecosystem, verify route contracts and endpoint overrides, and keep approvals bounded to the intended standard-account transfer.
+Beta.10 validates EVM, Solana, TON, and TRON recipients during quote and execution. It rejects zero destinations, the TRON zero/burn address, and TON workchains other than `0`. Keep application validation before the write, verify route contracts and endpoint overrides, and keep approvals bounded to the intended standard-account transfer.
