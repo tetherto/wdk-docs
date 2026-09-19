@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - develop
+      - main
   workflow_dispatch:
 
 concurrency:
@@ -24,6 +25,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -35,6 +38,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.NPM_READ_TOKEN || secrets.GITHUB_TOKEN || github.token }}
         run: npm ci
+
+      - name: Check catalog compatibility
+        if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000')
+        env:
+          CATALOG_BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: node scripts/sync-wdk-blocks-catalog.mjs --check --base-ref "$CATALOG_BASE_REF"
 
       - name: Run quality gates
         run: npm run quality
