@@ -121,18 +121,14 @@ For swidge or Smart Deposit Address (SDA) integrations, pass a concrete provider
 
 Global registration stores the provider class and config without constructing or validating the provider. Provider-constructor errors therefore surface when an account retrieves the protocol. A global registration takes precedence over an account-scoped registration with the same type and label.
 
+<Callout type="warn">
+Do not register Velora beta.8, USD₮0 bridge beta.10, or Aave beta.7 for accounts derived by `WalletManagerEvm` beta.19. Each protocol treats the manager's shared ethers `Provider` as EIP-1193 and rejects it during construction. Use a directly constructed `WalletAccountEvm` with the original RPC URL or EIP-1193 provider for these exact combinations, and never mutate the account's internal provider field. Direct accounts do not receive WDK policy or middleware decoration, so retain the required application checks and account-level controls.
+</Callout>
+
 **Example:**
 ```javascript title="Register Protocols"
-import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
-import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
-
-// Register swap protocol for Ethereum
-wdk.registerProtocol('ethereum', 'velora', veloraProtocolEvm, {
-  apiKey: 'YOUR_velora_API_KEY'
-})
-
-// Register bridge protocol for Ethereum
-wdk.registerProtocol('ethereum', 'usdt0', Usdt0ProtocolEvm)
+// Register an illustrative swap provider for Ethereum
+wdk.registerProtocol('ethereum', 'swap', MySwapProtocol, swapProtocolConfig)
 
 // Register a concrete swidge provider for Ethereum
 wdk.registerProtocol('ethereum', 'swidge', MySwidgeProtocol, swidgeProtocolConfig)
@@ -143,8 +139,10 @@ wdk.registerProtocol('ethereum', 'deposits', MySdaProtocol, sdaProtocolConfig)
 // Method chaining
 const wdk2 = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
-  .registerProtocol('ethereum', 'velora', veloraProtocolEvm, veloraProtocolConfig)
+  .registerProtocol('ethereum', 'swap', MySwapProtocol, swapProtocolConfig)
 ```
+
+`MySwapProtocol` is an illustrative class that extends `SwapProtocol`; use a concrete provider whose constructor supports the account and provider shape supplied by your wallet.
 
 #### `registerMiddleware(blockchain, middleware)`
 Registers middleware for account decoration and enhanced functionality.
@@ -702,19 +700,17 @@ Registers a new protocol for this specific account.
 
 **Example:**
 ```javascript title="Register Protocol for Account"
-import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
-
 const account = await wdk.getAccount('ethereum', 0)
 
 // Register protocol for this specific account
-account.registerProtocol('usdt0', Usdt0ProtocolEvm, {
-  apiKey: 'YOUR_API_KEY'
-})
+account.registerProtocol('deposits', MySdaProtocol, sdaProtocolConfig)
 
 // Method chaining on the resolved account
 const account2 = (await wdk.getAccount('ethereum', 1))
-  .registerProtocol('usdt0', Usdt0ProtocolEvm, usdt0ProtocolConfig)
+  .registerProtocol('deposits', MySdaProtocol, sdaProtocolConfig)
 ```
+
+`MySdaProtocol` is an illustrative class that extends `SdaProtocol`; replace it with the concrete provider used by your application.
 
 ##### `getSwapProtocol(label)`
 Returns the swap protocol with the given label.
@@ -728,16 +724,14 @@ Returns the swap protocol with the given label.
 
 **Example:**
 ```javascript title="Get Swap Protocol"
-import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
-
 // Register swap protocol
-account.registerProtocol('velora', veloraProtocolEvm, veloraProtocolConfig)
+account.registerProtocol('swap', MySwapProtocol, swapProtocolConfig)
 
 // Get swap protocol
-const velora = account.getSwapProtocol('velora')
+const swap = account.getSwapProtocol('swap')
 
 // Use the protocol
-const swapResult = await velora.swap({
+const swapResult = await swap.swap({
   tokenIn: '0x...',
   tokenOut: '0x...',
   tokenInAmount: 1000000n
@@ -751,6 +745,8 @@ const swapResult = await velora.swap({
 // }
 ```
 
+`MySwapProtocol` is an illustrative class that extends `SwapProtocol`.
+
 ##### `getBridgeProtocol(label)`
 Returns the bridge protocol with the given label.
 
@@ -763,29 +759,22 @@ Returns the bridge protocol with the given label.
 
 **Example:**
 ```javascript title="Get Bridge Protocol"
-import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
-
 // Register bridge protocol
-account.registerProtocol('usdt0', Usdt0ProtocolEvm)
+account.registerProtocol('bridge', MyBridgeProtocol, bridgeProtocolConfig)
 
 // Get bridge protocol
-const usdt0 = account.getBridgeProtocol('usdt0')
+const bridge = account.getBridgeProtocol('bridge')
 
 // Use the protocol
-await account.approve({
-  token: '0x...',
-  spender: '0x...', // OFT or bridge spender address
-  amount: 1000000n
-})
-
-const bridgeResult = await usdt0.bridge({
+const bridgeResult = await bridge.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...',
   token: '0x...',
-  amount: 1000000n,
-  oftContractAddress: '0x...' // Same address used as approval spender
+  amount: 1000000n
 })
 ```
+
+`MyBridgeProtocol` is an illustrative class that extends `BridgeProtocol`. Follow the concrete provider's approval and configuration requirements before execution.
 
 ##### `getLendingProtocol(label)`
 Returns the lending protocol with the given label.
@@ -799,20 +788,20 @@ Returns the lending protocol with the given label.
 
 **Example:**
 ```javascript title="Get Lending Protocol"
-import AaveProtocolEvm from '@tetherto/wdk-protocol-lending-aave-evm'
-
 // Register lending protocol
-account.registerProtocol('aave', AaveProtocolEvm, aaveProtocolConfig)
+account.registerProtocol('lending', MyLendingProtocol, lendingProtocolConfig)
 
 // Get lending protocol
-const aave = account.getLendingProtocol('aave')
+const lending = account.getLendingProtocol('lending')
 
 // Use the protocol
-const supplyResult = await aave.supply({
+const supplyResult = await lending.supply({
   token: '0x...',
   amount: 1000000n
 })
 ```
+
+`MyLendingProtocol` is an illustrative class that extends `LendingProtocol`.
 
 ##### `getFiatProtocol(label)`
 Returns the fiat protocol with the given label.
@@ -899,8 +888,6 @@ Global SDA registrations are constructed when retrieved. Account-scoped SDA regi
 import WDK from '@tetherto/wdk'
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
 import WalletManagerTon from '@tetherto/wdk-wallet-ton'
-import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
-import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
 
 // Initialize WDK Manager
 const wdk = new WDK(seedPhrase)
@@ -911,10 +898,7 @@ const wdk = new WDK(seedPhrase)
     tonApiKey: 'YOUR_TON_API_KEY',
     tonApiEndpoint: 'https://tonapi.io'
   })
-  .registerProtocol('ethereum', 'velora', veloraProtocolEvm, {
-    apiKey: 'YOUR_velora_API_KEY'
-  })
-  .registerProtocol('ethereum', 'usdt0', Usdt0ProtocolEvm)
+  .registerProtocol('ethereum', 'swap', MySwapProtocol, swapProtocolConfig)
 
 // Get accounts
 const accountEth = await wdk.getAccount('ethereum', 3)
@@ -927,21 +911,14 @@ const { hash, fee } = await accountEth.sendTransaction({
 })
 
 // Use protocols
-const velora = accountEth.getSwapProtocol('velora')
-const swapResult = await velora.swap(swapOptions)
-
-const usdt0 = accountEth.getBridgeProtocol('usdt0')
-// bridgeOptions.oftContractAddress is the source-chain bridge spender.
-await accountEth.approve({
-  token: bridgeOptions.token,
-  spender: bridgeOptions.oftContractAddress,
-  amount: bridgeOptions.amount
-})
-const bridgeResult = await usdt0.bridge(bridgeOptions)
+const swap = accountEth.getSwapProtocol('swap')
+const swapResult = await swap.swap(swapOptions)
 
 // Clean up
 wdk.dispose()
 ```
+
+`MySwapProtocol` is illustrative and must support the manager account's provider shape. Velora beta.8, USD₮0 bridge beta.10, and Aave beta.7 are intentionally excluded from this manager-derived beta.19 flow. Their direct standard-account guides cover [Velora setup](/sdk/swap-modules/swap-velora-evm/guides/get-started), [bridge setup](/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started), and [Aave setup](/sdk/lending-modules/lending-aave-evm/guides/get-started). Preserve application checks and account-level controls because WDK policies and middleware do not decorate those separate accounts.
 
 ## Types
 

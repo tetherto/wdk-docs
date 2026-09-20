@@ -29,6 +29,10 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 
 The constructor accepts `IWalletAccount` or `IWalletAccountReadOnly` from `@tetherto/wdk-wallet`. Execution requires EVM transaction support and a callable `sendTransaction()` method; read-only accounts can quote. See [account requirements](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements) for custom accounts and ERC-4337 class identity.
 
+<Callout type="warn">
+Use a directly constructed account with bridge beta.10. Accounts derived by `WalletManagerEvm` beta.19 contain an ethers `Provider`, which the bridge passes to `BrowserProvider` as though it were EIP-1193. Construction then fails before a quote or transaction. Keep the original URL or EIP-1193 input in the direct account configuration; do not mutate internal account fields.
+</Callout>
+
 The bridge protocol reads the provider from the wallet account's internal configuration for blockchain access:
 
 ```javascript
@@ -123,11 +127,11 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 
 ```
 
-Pass either an RPC URL string or a genuine EIP-1193 provider. An ethers `JsonRpcProvider` is not an EIP-1193 provider and is not accepted by this wallet release.
+Pass either an RPC URL string or a genuine EIP-1193 provider. Although wallet-evm beta.19 can reuse an ethers `Provider`, bridge beta.10 cannot consume that provider shape.
 
 ## ERC-4337 Configuration
 
-When using ERC-4337 accounts recognized by the bridge package's concrete class checks, you can override configuration options during bridge operations. Review the [class identity requirement](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements) before combining package versions:
+When using ERC-4337 accounts recognized by the bridge package's concrete class checks, you can override configuration options during bridge operations. Bridge beta.10's helper path requires its exact beta.11 wallet class; a separate beta.20 account falls through to the non-batched standard path. Follow the [exact install and resolution check](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337#prerequisites) before using these overrides:
 
 ```javascript
 // Bridge with ERC-4337 account

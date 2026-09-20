@@ -16,16 +16,19 @@
 ## Package
 
 ```bash
-npm install @tetherto/wdk-protocol-bridge-usdt0-evm
+npm install @tetherto/wdk-protocol-bridge-usdt0-evm @tetherto/wdk-wallet-evm
 ```
 
 ```javascript
 import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
+import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 ```
 
 ## Choose the account flow
 
 From `1.0.0-beta.9`, the constructor accepts shared `IWalletAccountReadOnly` and `IWalletAccount` interfaces. Runtime use still requires EVM-compatible account operations and the account's internal `_config.provider`; implementing the shared interface alone is insufficient. Read-only accounts can quote. Execution additionally requires a callable `sendTransaction()`.
+
+⚠️ Bridge beta.10 is incompatible with accounts derived by `WalletManagerEvm` beta.19. Those accounts contain an ethers `Provider`, while the bridge treats every non-string value as EIP-1193 and rejects it during construction. Use a directly constructed `WalletAccountEvm` with its original URL or EIP-1193 input. Do not mutate `_config`. This direct account is outside WDK Core's policy and middleware decoration, so retain any required application checks and account-level fee caps explicitly.
 
 | Account | Approval behavior | Submission |
 |---|---|---|
@@ -34,11 +37,16 @@ From `1.0.0-beta.9`, the constructor accepts shared `IWalletAccountReadOnly` and
 
 ERC-4337 helper bridging is available from Ethereum, Arbitrum, Plasma, and Polygon. Other supported EVM source chains require a standard account.
 
-Helper selection and batching use the bridge package's concrete ERC-4337 classes. Beta.10 pins `@tetherto/wdk-wallet-evm-erc-4337` to beta.11. An account from a separate package copy or version, including a separately installed beta.20, can take the single-transaction path instead. Verify dependency resolution and class identity before relying on automatic approval batching; see the [account requirements](https://docs.wallet.tether.io/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements).
+Helper selection and batching use the bridge package's concrete ERC-4337 classes. Beta.10 pins `@tetherto/wdk-wallet-evm-erc-4337` to beta.11. An account from a separate package copy or version, including beta.20, takes the non-batched standard path and skips the helper and per-call ERC-4337 configuration. Use the exact isolated pair below; do not override the bridge dependency or downgrade an application that needs beta.20.
 
 ## Standard account quick reference
 
 ```javascript
+const evmAccount = new WalletAccountEvm(seedPhrase, "0'/0/0", {
+  provider: 'https://eth.drpc.org',
+  transactionMaxFee: 5000000000000000n
+})
+
 const bridge = new Usdt0ProtocolEvm(evmAccount, {
   bridgeMaxFee: 1000000000000000n
 })
@@ -51,20 +59,31 @@ const options = {
   oftContractAddress: process.env.USDT0_OFT_ADDRESS
 }
 
-const quote = await bridge.quoteBridge(options)
+try {
+  const quote = await bridge.quoteBridge(options)
 
-await evmAccount.approve({
-  token: options.token,
-  spender: options.oftContractAddress,
-  amount: options.amount
-})
+  await evmAccount.approve({
+    token: options.token,
+    spender: options.oftContractAddress,
+    amount: options.amount
+  })
 
-const result = await bridge.bridge(options)
+  const result = await bridge.bridge(options)
+} finally {
+  evmAccount.dispose()
+}
 ```
 
 For a standard account, `fee` and `bridgeFee` are in source-chain native base units. `bridge()` rejects when `fee + bridgeFee` is equal to or greater than `bridgeMaxFee`.
 
 ## ERC-4337 quick reference
+
+```bash
+npm install --save-exact @tetherto/wdk-protocol-bridge-usdt0-evm@1.0.0-beta.10 @tetherto/wdk-wallet-evm-erc-4337@1.0.0-beta.11
+npm ls @tetherto/wdk-wallet-evm-erc-4337 --all
+```
+
+Proceed only when every listed copy is beta.11 and the bridge's entry is `deduped`. If beta.20 is also listed, keep that application on the standard account flow or isolate the beta.10/beta.11 pair in a separate package.
 
 ```javascript
 const bridge = new Usdt0ProtocolEvm(erc4337Account)

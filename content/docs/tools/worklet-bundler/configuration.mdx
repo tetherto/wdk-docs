@@ -334,11 +334,11 @@ The `generate` command also accepts `--transport hrpc|jsonrpc`, `--link-addons`,
 
 ## Suspend and resume behavior
 
-Generated HRPC and JSON-RPC entrypoints handle Bare `suspend` and `resume` with the same lifecycle code. At each event, beta.14 scans the public `require.cache` for every loaded copy of `bare-http1` and `bare-https`, deduplicates shared `globalAgent` objects, and invokes `suspend()` or `resume()` on each agent. It also invokes the configured generic-module runtime's `suspendAll()` or `resumeAll()` method.
+Generated HRPC and JSON-RPC entrypoints forward Bare `suspend` and `resume` events to loaded HTTP agents and configured generic modules. No diagnostic flag is needed; `options.handleLeakCheck` remains HRPC-only and adds handle reporting.
 
-These calls are fire-and-forget. Synchronous throws and rejected promises are logged separately for each resource, so one failure does not stop the remaining lifecycle calls. The Bare event is not delayed until asynchronous cleanup completes. Pear Worklet closes modules during full disposal or reinitialization; selective JSON-RPC disposal and `resetWdkWallets()` leave them running.
+The hooks log failures and continue with the other resources, but they do not wait for asynchronous cleanup. Treat suspension separately from [disposing the worklet's WDK instance](/tools/pear-wrk-wdk/configuration#dispose-wdk). Full disposal or reinitialization closes generic modules; selective JSON-RPC disposal and `resetWdkWallets()` leave them running.
 
-The lifecycle hooks require no diagnostic flag. `options.handleLeakCheck` remains HRPC-only and only adds handle reporting.
+See the [entrypoint API reference](/tools/worklet-bundler/api-reference#generateentrypointconfig-outputdir) for agent discovery and callback behavior.
 
 ## Troubleshooting
 

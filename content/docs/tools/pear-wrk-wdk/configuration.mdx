@@ -212,13 +212,15 @@ await hrpc.initializeWDK({
 
 ### Initialization Rules
 
+Pass both seed fields whenever initialization must create generic modules. If wallet or protocol registration fails after WDK is created, explicitly dispose the partial instance before abandoning or retrying initialization.
+
 - Pass both `encryptionKey` and `encryptedSeed`, or omit both together.
 - On first initialization, the worklet must receive an encrypted seed pair so it can create `context.wdk`.
 - If `context.wdk` already exists, reinitialization closes its generic modules and calls `wdk.dispose()` before validating the new config. With both seed fields present, beta.15 then overwrites the old retained seed buffer before attempting replacement. Validate the replacement payload before sending it; a failed replacement does not restore the old seed.
 - Without a seed pair, reinitialization reuses the existing WDK object and retained seed to re-register wallets and protocols. It closes generic modules without rebuilding them, even when `config.modules` is present. Supply the seed pair on every initialization that must construct or reconstruct modules.
 - Module `close()` is called during full disposal or reinitialization. Targeted blockchain disposal leaves generic modules running. Optional `suspend()` and `resume()` methods run only when the host forwards Bare lifecycle events; the manual context above does so.
 
-The runtime manages the decrypted buffer through `context.wdkSeedBuffer`; do not set this field yourself. If decryption or WDK construction fails, beta.15 overwrites temporary buffers owned by that handler. After the buffer has been handed to a constructed WDK instance, a later wallet or protocol registration failure retains the partial instance and seed. Treat that failure as requiring explicit disposal before abandoning or retrying initialization.
+The runtime manages the decrypted buffer through `context.wdkSeedBuffer`; do not set this field yourself. If decryption or WDK construction fails, beta.15 overwrites temporary buffers owned by that handler. A later wallet or protocol registration failure retains the partial instance and seed until disposal.
 
 ## Dispose WDK
 

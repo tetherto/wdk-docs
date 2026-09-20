@@ -48,10 +48,12 @@ The constructor accepts the shared `IWalletAccount` and `IWalletAccountReadOnly`
 
 The account must still implement EVM-compatible `getAddress()` and `quoteSendTransaction()` operations. Both bridge methods require an RPC URL or EIP-1193 provider in the wallet configuration. The constructor reads `account._config.provider`, an internal field absent from the shared interfaces. Implementing the interface alone does not establish runtime compatibility; an account without `_config` fails construction.
 
+Bridge beta.10 creates a `JsonRpcProvider` for a string and a `BrowserProvider` for every non-string value. A directly constructed `WalletAccountEvm` retains its original URL or EIP-1193 input and is compatible. A beta.19 `WalletManagerEvm` account instead contains the manager's ethers `Provider`; passing it to this constructor throws `INVALID_ARGUMENT: invalid EIP-1193 provider`. Do not mutate `_config` to work around this. Construct a separate standard account as shown in [Get Started](/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started).
+
 Read-only accounts can use `quoteBridge()`, subject to the same provider, route, balance, and allowance requirements. They cannot execute `bridge()` without `sendTransaction()`.
 
 <Callout type="warn">
-ERC-4337 helper selection and approval batching still depend on the concrete classes resolved by the bridge package: `WalletAccountReadOnlyEvmErc4337` for helper construction and quotes, and `WalletAccountEvmErc4337` for execution. A custom account or an account from a separate copy of the ERC-4337 package does not receive that path solely because it implements `sendTransaction()`. The bridge release depends on ERC-4337 wallet `1.0.0-beta.11`; verify package deduplication and runtime class identity when combining wallet versions. See [Bridge with ERC-4337](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337#prerequisites).
+ERC-4337 helper selection and approval batching still depend on the concrete classes resolved by the bridge package: `WalletAccountReadOnlyEvmErc4337` for helper construction and quotes, and `WalletAccountEvmErc4337` for execution. A custom account or an account from a separate copy of the ERC-4337 package does not receive that path solely because it implements `sendTransaction()`. Bridge beta.10 depends on ERC-4337 wallet beta.11. Use the exact isolated pairing and resolution check in [Bridge with ERC-4337](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337#prerequisites); a separately installed beta.20 account is a different class instance and falls through to the non-batched standard path.
 </Callout>
 
 ### Methods

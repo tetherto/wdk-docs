@@ -58,6 +58,7 @@ import WalletManagerEvm7702Gasless from '@tetherto/wdk-wallet-evm-7702-gasless'
 - ⚠️ In wallet-evm `1.0.0-beta.16`, do not pass a serialized signed transaction to `sendTransaction()`. The declared string input is not broadcast as supplied and can produce a different populated transaction. Use a separate relay or provider for signed raw bytes.
 - `quoteSendTransaction(serializedTx)` is non-broadcasting, but calculates with current provider fee data rather than reproducing the serialized fee settings.
 - In wallet-evm beta.19, the runtime accepts and reuses an existing ethers `Provider`, and a manager shares one provider across its accounts. The published declaration still accepts only URLs and EIP-1193 providers, so this ethers-provider path is runtime-only for TypeScript consumers.
+- ⚠️ Do not pass a beta.19 manager-derived account to Velora beta.8, USD₮0 bridge beta.10, or Aave beta.7. These releases treat the shared ethers `Provider` as EIP-1193 and reject it. Construct `WalletAccountEvm` directly with the original RPC URL or genuine EIP-1193 provider; never mutate its internal provider field. Direct accounts are outside WDK Core policy and middleware decoration, so retain required application checks and account-level controls.
 
 ## Configuration — wallet-evm
 

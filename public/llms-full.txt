@@ -1279,17 +1279,15 @@ server.useIndexer({ apiKey: process.env.WDK_INDEXER_API_KEY })
 
 ### Protocols
 
-DeFi protocols are registered per-chain:
+Protocol modules are registered per-chain. This example uses MoonPay:
+
+<Callout type="warn">
+Do not register Velora beta.8, USD₮0 bridge beta.10, or Aave beta.7 with EVM wallet beta.19. These adapters reject the provider on manager-derived accounts, so the example below omits them. Verify the installed versions before enabling their tools; see [EVM provider compatibility](/sdk/wallet-modules/wallet-evm/configuration#provider). A separate direct account does not inherit the server's registered account controls.
+</Callout>
 
 ```javascript
-import VeloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
-import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
-import AaveProtocolEvm from '@tetherto/wdk-protocol-lending-aave-evm'
 import MoonPayProtocol from '@tetherto/wdk-protocol-fiat-moonpay'
 
-server.registerProtocol('ethereum', 'velora', VeloraProtocolEvm)
-server.registerProtocol('ethereum', 'usdt0', Usdt0ProtocolEvm)
-server.registerProtocol('ethereum', 'aave', AaveProtocolEvm)
 server.registerProtocol('ethereum', 'moonpay', MoonPayProtocol, {
   apiKey: process.env.MOONPAY_API_KEY
 })
@@ -1691,20 +1689,18 @@ Write operations (sending, swapping, bridging) will show a **confirmation dialog
 
 Add more capabilities by installing additional packages and enabling them on the server:
 
+<Callout type="warn">
+Do not enable Velora beta.8, USD₮0 bridge beta.10, or Aave beta.7 with EVM wallet beta.19. These adapters reject the provider on manager-derived accounts when the protocol is constructed, so the example below omits them. Check the installed wallet and adapter versions before registering them; see [EVM provider compatibility](/sdk/wallet-modules/wallet-evm/configuration#provider). A separate direct account does not inherit the server's registered account controls.
+</Callout>
+
 ```javascript title="Additional capabilities"
-import { INDEXER_TOOLS, SWAP_TOOLS, BRIDGE_TOOLS, LENDING_TOOLS, FIAT_TOOLS } from '@tetherto/wdk-mcp-toolkit'
-import VeloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
-import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
-import AaveProtocolEvm from '@tetherto/wdk-protocol-lending-aave-evm'
+import { INDEXER_TOOLS, FIAT_TOOLS } from '@tetherto/wdk-mcp-toolkit'
 import MoonPayProtocol from '@tetherto/wdk-protocol-fiat-moonpay'
 
 // Indexer - transaction history
 server.useIndexer({ apiKey: process.env.WDK_INDEXER_API_KEY })
 
-// DeFi protocols
-server.registerProtocol('ethereum', 'velora', VeloraProtocolEvm)
-server.registerProtocol('ethereum', 'usdt0', Usdt0ProtocolEvm)
-server.registerProtocol('ethereum', 'aave', AaveProtocolEvm)
+// Fiat protocol
 server.registerProtocol('ethereum', 'moonpay', MoonPayProtocol, {
   apiKey: process.env.MOONPAY_API_KEY
 })
@@ -1712,9 +1708,6 @@ server.registerProtocol('ethereum', 'moonpay', MoonPayProtocol, {
 // Register the corresponding tools
 server.registerTools([
   ...INDEXER_TOOLS,
-  ...SWAP_TOOLS,
-  ...BRIDGE_TOOLS,
-  ...LENDING_TOOLS,
   ...FIAT_TOOLS
 ])
 ```
@@ -2136,7 +2129,7 @@ Description: Accept and make instant USD₮0 payments over HTTP using WDK self-c
 
 [x402](https://www.x402.org) is an open payment protocol, [originally developed by Coinbase](https://docs.x402.org/), that gives the long-reserved [HTTP 402 Payment Required](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/402) status code a concrete, blockchain-native meaning: if you want this resource, pay for it. No accounts, API keys, or checkout flows. Just plain HTTP.
 
-This matters for AI agents because they need to pay for resources programmatically. x402 makes payment a first-class part of the web stack, so an agent can discover a price, sign a payment, and receive a resource in a single request-response cycle.
+This matters for AI agents because they need to pay for resources programmatically. x402 makes payment a first-class part of the web stack, so an agent can discover a price, sign a payment, and retry the HTTP request automatically.
 
 ### The Three Roles
 
@@ -2160,19 +2153,26 @@ A standard HTTP request. `GET`, `POST`, whatever your API expects.
 
 #### Server responds with 402 Payment Required
 
-The response body describes what to pay: amount, token, network, and recipient address.
+With x402 v2, the base64-encoded `PAYMENT-REQUIRED` response header describes the protected resource and accepted payment options. Decoded, it has this shape:
 
 ```json
 {
-  "x402Version": 1,
+  "x402Version": 2,
+  "resource": {
+    "url": "https://api.example.com/data",
+    "description": "Example data",
+    "mimeType": "application/json"
+  },
   "accepts": [{
     "scheme": "exact",
     "network": "eip155:9745",
-    "maxAmountRequired": "1000000",
+    "amount": "1000000",
     "asset": "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
-    "resource": "https://api.example.com/data",
-    "payTo": "0x1234...abcd"
-  }]
+    "payTo": "0x1111111111111111111111111111111111111111",
+    "maxTimeoutSeconds": 60,
+    "extra": { "name": "USDT0", "version": "1", "decimals": 6 }
+  }],
+  "extensions": {}
 }
 ```
 
@@ -2188,7 +2188,7 @@ The client constructs an [EIP-3009](https://eips.ethereum.org/EIPS/eip-3009) `tr
 
 #### Client retries with payment header
 
-The signed payload goes in the `X-PAYMENT` header on the same request.
+The signed payload goes in the `PAYMENT-SIGNATURE` header on a retry of the same request. `X-PAYMENT` is the x402 v1 header.
 
 </Step>
 <Step>
@@ -2216,7 +2216,7 @@ The server calls the facilitator's `/settle` endpoint. The facilitator submits t
 
 #### Server returns the resource
 
-`200 OK` with the result in the body and a settlement receipt in the `X-PAYMENT-RESPONSE` header.
+`200 OK` with the result in the body and a settlement receipt in the `PAYMENT-RESPONSE` header. `X-PAYMENT-RESPONSE` is the x402 v1 header.
 
 </Step>
 </Steps>
@@ -2225,13 +2225,13 @@ For the full protocol specification, see [x402.org](https://www.x402.org) and th
 
 ## How to Use x402 With WDK
 
-WDK wallets work as drop-in signers for x402. `WalletAccountEvm` satisfies the client x402 signer interface directly. Self-custodial x402 payments on any EVM chain.
+WDK wallets work as drop-in client signers for the versions used below. `WalletAccountEvm` beta.19 satisfies the x402 2.26.0 client signer interface directly. Each integration still needs a configured RPC, a supported x402 scheme and network, and an asset contract that implements the selected authorization method.
 
 This guide walks through three things:
 
 1. **Client (Buyer)** - Pay for x402-protected resources using a WDK wallet
 2. **Server with Hosted Facilitator** - Accept x402 payments by delegating verification and settlement to a third-party facilitator
-3. **Server with Self-Hosted Facilitator** - Run verification and settlement in-process using a WDK wallet, with no external dependencies
+3. **Server with Self-Hosted Facilitator** - Assess the current community adapter's version constraints before adopting it
 
 <Callout type="warn">
 Community modules are developed and maintained independently by third-party contributors.
@@ -2245,7 +2245,7 @@ Artificial intelligence and blockchain transactions carry inherent risks and lim
 
 ### Recommended Chains
 
-x402 with WDK works on any EVM chain where USD₮0 is deployed (see full list at [docs.usdt0.to](https://docs.usdt0.to/technical-documentation/deployments)). However, we recommend **Plasma** and **Stable** for x402 payments. Both chains are purpose-built for USD₮0 transfers with near-instant finality and near-zero fees. Agents only need to hold USD₮0.
+The EVM exact scheme can be configured for a CAIP-2 EVM network when the chosen token implements EIP-3009 and the client, resource server, and facilitator all support that scheme and network. The examples use **Plasma** and **Stable**. Buyers sign an EIP-3009 authorization and do not submit an ERC-20 approval or pay settlement gas; they still need enough USD₮0, and the facilitator needs the chain's native gas token.
 
 | Chain | CAIP-2 | RPC | USD₮0 Contract | Explorer |
 | --- | --- | --- | --- | --- |
@@ -2256,12 +2256,8 @@ x402 with WDK works on any EVM chain where USD₮0 is deployed (see full list at
 
 ## Client: Paying for Resources
 
-<Callout type="info">
-See the full working client example at [`x402/client.js`](https://github.com/SemanticPay/x402-usdt0-demo/blob/main/x402/client.js).
-</Callout>
-
 ```bash
-npm install @tetherto/wdk-wallet-evm @x402/fetch @x402/evm
+npm install @tetherto/wdk-wallet-evm@1.0.0-beta.19 @x402/fetch@2.26.0 @x402/evm@2.26.0
 ```
 
 <Steps>
@@ -2299,12 +2295,16 @@ const fetchWithPayment = wrapFetchWithPayment(fetch, client);
 
 #### Make a paid request
 
-`fetchWithPayment` intercepts any `402` response, signs an EIP-3009 authorization with your WDK wallet, and retries automatically.
+`fetchWithPayment` parses a compatible `402` response, signs an EIP-3009 authorization with your WDK wallet, and makes one paid retry. Check the returned status before consuming the body; a failed verification or settlement can return another error response.
 
 ```javascript
 const response = await fetchWithPayment("https://api.example.com/weather", {
   method: "GET",
 });
+
+if (!response.ok) {
+  throw new Error(`x402 request failed (${response.status})`);
+}
 
 const data = await response.json();
 console.log("Response:", data);
@@ -2319,89 +2319,10 @@ Your seed phrase controls your funds. Never commit it to version control. Use en
 
 ### Getting USD₮0 on Plasma or Stable [#getting-usdt0-on-plasma-or-stable]
 
-Before you can make x402 payments, your wallet needs USD₮0 on the target chain. If you hold a supported source token—for example, USD₮ on Ethereum—bridge it using `@tetherto/wdk-protocol-bridge-usdt0-evm`.
+Before making a payment, fund the buyer with USD₮0 on the selected network. If you need to bridge a supported source token, follow the [USD₮0 bridge guide](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens) for the current route, spender, bounded allowance, quote, and settlement steps.
 
-<Callout type="info">
-The bridge uses [LayerZero](https://layerzero.network) for secure cross-chain transfers. USD₮ on Ethereum is automatically converted to USD₮0 on the destination chain.
-</Callout>
-
-```bash
-npm install @tetherto/wdk-wallet-evm @tetherto/wdk-protocol-bridge-usdt0-evm
-```
-
-#### Bridge USD₮ from Ethereum to Plasma / Stable
-
-<Steps>
-<Step>
-
-#### Create wallet and bridge protocol
-
-```javascript
-import WalletManagerEvm from "@tetherto/wdk-wallet-evm";
-import Usdt0ProtocolEvm from "@tetherto/wdk-protocol-bridge-usdt0-evm";
-
-const account = await new WalletManagerEvm(process.env.SEED_PHRASE, {
-  provider: "https://eth.drpc.org",
-}).getAccount();
-
-const bridge = new Usdt0ProtocolEvm(account, {
-  bridgeMaxFee: 100000000000000n, // Max 0.0001 ETH in bridge fees
-});
-```
-
-</Step>
-<Step>
-
-#### Approve and get a quote (recommended)
-
-```javascript
-const USDT_ETHEREUM = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
-const USDT0_ETHEREUM_OFT = "0x6C96dE32CEa08842dcc4058c14d3aaAD7Fa41dee";
-const amount = 10000000n; // 10 USDt (6 decimals)
-
-await account.approve({
-  token: USDT_ETHEREUM,
-  spender: USDT0_ETHEREUM_OFT,
-  amount,
-});
-
-const quote = await bridge.quoteBridge({
-  targetChain: "plasma", // or "stable"
-  recipient: await account.getAddress(),
-  token: USDT_ETHEREUM,
-  amount,
-  oftContractAddress: USDT0_ETHEREUM_OFT,
-});
-
-console.log("Total cost:", Number(quote.fee + quote.bridgeFee) / 1e18, "ETH");
-```
-
-</Step>
-<Step>
-
-#### Execute the bridge
-
-Use the same approved `USDT0_ETHEREUM_OFT` spender when executing the bridge.
-
-```javascript
-const result = await bridge.bridge({
-  targetChain: "plasma", // or "stable"
-  recipient: await account.getAddress(),
-  token: USDT_ETHEREUM,
-  amount,
-  oftContractAddress: USDT0_ETHEREUM_OFT,
-});
-
-console.log("Bridge tx:", result.hash);
-```
-
-USD₮0 arrives on the destination chain within a few minutes.
-
-</Step>
-</Steps>
-
-<Callout type="info">
-The module supports multiple source chains. Point your wallet at the source chain's RPC, then resolve the exact token variant and address from [`getSupportedTokens()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference) or the current [USD₮0 deployments](https://docs.usdt0.to/technical-documentation/deployments). Do not reuse the Ethereum address on another chain.
+<Callout type="warn">
+For EVM wallet beta.19 with bridge beta.10, construct the account directly with its original RPC URL. Manager-derived accounts contain a provider that the bridge rejects. This direct account does not inherit WDK Core transaction policies or middleware; retain required application checks before approval and bridging. See [bridge setup](/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started).
 </Callout>
 
 ***
@@ -2411,15 +2332,16 @@ The module supports multiple source chains. Point your wallet at the source chai
 Your server delegates verification and settlement to a hosted facilitator. You never interact with the chain directly.
 
 <Callout type="info">
-**About the Semantic facilitator:** [Semantic](https://docs.semanticpay.io) operates a public x402 facilitator at `https://x402.semanticpay.io`. It currently verifies and settles USD₮0 payments on Plasma and Stable. This is a third-party service not operated, endorsed, or guaranteed by Tether.
+**About the Semantic facilitator:** [Semantic](https://docs.semanticpay.io) documents a public x402 facilitator at `https://x402.semanticpay.io` for USD₮0 payments on Plasma and Stable. This is a third-party service not operated, endorsed, or guaranteed by Tether.
 
 The x402 protocol is an open standard. Anyone can build and host their own facilitator. For the API reference, see the [Semantic facilitator docs](https://docs.semanticpay.io/endpoints).
 
-See the full working server example at [`x402/server.js`](https://github.com/SemanticPay/x402-usdt0-demo/blob/main/x402/server.js).
 </Callout>
 
+Before enabling payments, request `GET https://x402.semanticpay.io/supported` as described in the [facilitator API](https://docs.semanticpay.io/endpoints) and confirm that the response advertises x402 v2, your payment scheme, and your network. If the request fails or that combination is absent, do not enable the hosted integration. Select a facilitator verified for the required x402 version, scheme, and network; also review the [current self-hosting limitations](#server-self-hosted-facilitator-in-process).
+
 ```bash
-npm install @tetherto/wdk-wallet-evm @x402/express @x402/evm @x402/core express dotenv
+npm install @tetherto/wdk-wallet-evm@1.0.0-beta.19 @x402/express@2.26.0 @x402/evm@2.26.0 @x402/core@2.26.0 express@5.2.1 dotenv@17.2.3
 ```
 
 <Steps>
@@ -2523,7 +2445,7 @@ Routes not listed in the middleware config behave like normal Express routes.
 
 ### Multi-Chain (Plasma + Stable)
 
-To accept payments on both chains, add both networks to the `accepts` array and register both with the resource server. The buyer's client picks whichever network it has funds on.
+To accept payments on both chains, add both networks to the `accepts` array and register both with the resource server. The default x402 client selects the first compatible payment option; it does not select by wallet balance. Fund that network or provide an application-owned payment selector.
 
 ```javascript
 const NETWORKS = {
@@ -2544,141 +2466,23 @@ const resourceServer = new x402ResourceServer(facilitatorClient)
 
 ### Lifecycle Events
 
-The Semantic facilitator supports an optional `X-Event-Callback` header. When provided, the facilitator POSTs real-time events to your callback URL during verification and settlement.
-
-| Type               | When                              | Key Fields                          |
-| ------------------ | --------------------------------- | ----------------------------------- |
-| `verify_started`   | Facilitator begins verifying      | `details.network`, `details.checks` |
-| `verify_completed` | Verification finished             | `details.isValid`                   |
-| `verify_failed`    | Verification error                | `details.error`                     |
-| `settle_started`   | Broadcasting on-chain transaction | `details.network`                   |
-| `settle_completed` | Transaction confirmed             | `details.transactionHash`           |
-| `settle_failed`    | Settlement error                  | `details.error`                     |
-
-```javascript
-const facilitatorClient = new HTTPFacilitatorClient({
-  url: "https://x402.semanticpay.io/",
-  fetch: (url, init) =>
-    fetch(url, {
-      ...init,
-      headers: { ...init?.headers, "X-Event-Callback": "http://localhost:4021/payment-events" },
-    }),
-});
-```
-
-<Callout type="info">
-Events are fire-and-forget. If the callback URL is unreachable, events are silently dropped.
-</Callout>
+For facilitator-specific notifications, consult the [Semantic facilitator API](https://docs.semanticpay.io/endpoints) and confirm support with the provider. Use verification and settlement responses to decide whether a payment succeeded.
 
 ***
 
 ## Server: Self-Hosted Facilitator (In-Process)
 
-Instead of relying on a hosted facilitator, you can run verification and settlement in-process using the `@semanticio/wdk-wallet-evm-x402-facilitator` community module. This wraps a WDK wallet as an x402 `FacilitatorEvmSigner`. Your server handles the entire payment lifecycle locally.
-
-<Callout type="info">
-Unlike the hosted Semantic facilitator (Plasma and Stable only), a self-hosted facilitator works with **any EVM chain where USD₮0 is deployed**. See the full deployment list at [docs.usdt0.to](https://docs.usdt0.to/technical-documentation/deployments).
-</Callout>
+The `@semanticio/wdk-wallet-evm-x402-facilitator` community module is intended to adapt a WDK EVM account to the x402 facilitator signer interface. Verify an exact compatible package set before using it for in-process verification and settlement.
 
 <Callout type="warn">
 `@semanticio/wdk-wallet-evm-x402-facilitator` is a community module developed and maintained by [Semantic Pay](https://www.semanticpay.io). Tether does not endorse, audit, or assume responsibility for this module. It is currently in beta. Test thoroughly before using in production.
 </Callout>
 
-<Callout type="info">
-See the full working self-hosted server example at [`x402/server-inprocess.js`](https://github.com/SemanticPay/x402-usdt0-demo/blob/main/x402/server-inprocess.js).
+<Callout type="warn">
+The published `@semanticio/wdk-wallet-evm-x402-facilitator@1.0.0-beta.2` package depends on `@tetherto/wdk-wallet-evm@1.0.0-beta.7` and `@x402/evm@2.2.0`. Its facilitator signer implementation does not fully match the x402 2.26.0 signer contract used by the runnable client and hosted examples on this page. Do not combine beta.2 with those versions as a production recipe without maintainer-confirmed compatibility and end-to-end verification of rejection, settlement, timeout, and receipt behavior.
 </Callout>
 
-```bash
-npm install @semanticio/wdk-wallet-evm-x402-facilitator @tetherto/wdk-wallet-evm @x402/core @x402/evm @x402/express express dotenv
-```
-
-<Steps>
-<Step>
-
-#### Create the facilitator signer
-
-The facilitator wallet submits settlement transactions on-chain. It needs gas tokens on the target chain.
-
-```javascript
-import WalletManagerEvm from "@tetherto/wdk-wallet-evm";
-import WalletAccountEvmX402Facilitator from "@semanticio/wdk-wallet-evm-x402-facilitator";
-
-const walletAccount = await new WalletManagerEvm(process.env.FACILITATOR_MNEMONIC, {
-  provider: process.env.RPC_URL, // Any EVM chain with USDt0
-}).getAccount();
-
-const evmSigner = new WalletAccountEvmX402Facilitator(walletAccount);
-```
-
-<Callout type="info">
-The facilitator wallet and the seller wallet can use different seed phrases. The facilitator pays gas; the seller receives USD₮0. The facilitator wallet must have enough native token to pay gas.
-</Callout>
-
-</Step>
-<Step>
-
-#### Initialize the facilitator
-
-```javascript
-import { x402Facilitator } from "@x402/core/facilitator";
-import { registerExactEvmScheme } from "@x402/evm/exact/facilitator";
-
-const facilitator = new x402Facilitator()
-  .onAfterVerify(async (ctx) => {
-    console.log("[verify]", ctx.result?.isValid ? "valid" : "invalid");
-  })
-  .onAfterSettle(async (ctx) => {
-    console.log("[settle] tx:", ctx.result?.transaction);
-  });
-
-registerExactEvmScheme(facilitator, {
-  signer: evmSigner,
-  networks: process.env.NETWORK_ID, // e.g. "eip155:9745"
-});
-```
-
-Available hooks: `onBeforeVerify`, `onAfterVerify`, `onBeforeSettle`, `onAfterSettle`. All are `async` and receive a context object with the payment payload and result.
-
-</Step>
-<Step>
-
-#### Wire into Express
-
-Same `paymentMiddleware` pattern, but pass the in-process `facilitator` directly instead of an `HTTPFacilitatorClient`.
-
-```javascript
-import { paymentMiddleware, x402ResourceServer } from "@x402/express";
-import { ExactEvmScheme } from "@x402/evm/exact/server";
-
-const NETWORK = process.env.NETWORK_ID || "eip155:9745";          // Stable: "eip155:988"
-const USDT0 = process.env.USDT0_ADDRESS || "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb"; // Stable: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736"
-
-const resourceServer = new x402ResourceServer(facilitator).register(
-  NETWORK,
-  new ExactEvmScheme(),
-);
-
-app.use(
-  paymentMiddleware(
-    {
-      "GET /weather": {
-        accepts: [{
-          scheme: "exact",
-          network: NETWORK,
-          price: { amount: "1000", asset: USDT0, extra: { name: "USDT0", version: "1", decimals: 6 } },
-          payTo: process.env.PAY_TO_ADDRESS,
-        }],
-        description: "Weather data",
-        mimeType: "application/json",
-      },
-    },
-    resourceServer,
-  ),
-);
-```
-
-</Step>
-</Steps>
+The [published package](https://www.npmjs.com/package/@semanticio/wdk-wallet-evm-x402-facilitator) and its [source repository](https://github.com/SemanticPay/wdk-wallet-evm-x402-facilitator) are the primary references. The related [SemanticPay demo](https://github.com/SemanticPay/x402-usdt0-demo) targets an older, differently named GitHub dependency and x402 2.2.0, so it is not a runnable example for the npm package and versions documented above.
 
 ***
 
@@ -2686,9 +2490,9 @@ app.use(
 
 | Role                     | Packages                                                                                                               | Notes                                                                   |
 | ------------------------ | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| **Buyer (Client)**       | `@tetherto/wdk-wallet-evm`, `@x402/fetch`, `@x402/evm`                                                                | `WalletAccountEvm` satisfies `ClientEvmSigner` directly.                |
-| **Seller (Hosted)**      | `@tetherto/wdk-wallet-evm`, `@x402/express`, `@x402/evm`, `@x402/core`                                                | Delegates to a hosted facilitator. Semantic supports Plasma and Stable.  |
-| **Seller (Self-Hosted)** | `@tetherto/wdk-wallet-evm`, `@semanticio/wdk-wallet-evm-x402-facilitator`, `@x402/core`, `@x402/evm`, `@x402/express` | In-process facilitator. Any USD₮0 chain.                                |
+| **Buyer (Client)**       | WDK EVM beta.19; x402 fetch and EVM 2.26.0 | `WalletAccountEvm` satisfies `ClientEvmSigner` directly. |
+| **Seller (Hosted)**      | WDK EVM beta.19; x402 Express, EVM, and core 2.26.0 | Enable only after the facilitator advertises x402 v2 and the exact scheme and network. |
+| **Seller (Self-Hosted)** | Community adapter beta.2 | No runnable pairing is documented here; verify a maintainer-supported package set first. |
 
 ***
 
@@ -2697,8 +2501,8 @@ app.use(
 - [x402 Protocol Spec](https://www.x402.org) - The open standard specification
 - [x402 GitHub](https://github.com/coinbase/x402) - Reference implementations and examples
 - [Semantic Facilitator Docs](https://docs.semanticpay.io) - API reference for the hosted facilitator
-- [Self-Hosted Facilitator Module](https://www.npmjs.com/package/@semanticio/wdk-wallet-evm-x402-facilitator) - Community in-process facilitator
-- [x402-usdt0 Demo](https://github.com/SemanticPay/x402-usdt0-demo) - Full working buyer + seller demo
+- [Self-Hosted Facilitator Module](https://www.npmjs.com/package/@semanticio/wdk-wallet-evm-x402-facilitator) - Beta community adapter; check its exact dependencies before use
+- [x402-usdt0 Demo](https://github.com/SemanticPay/x402-usdt0-demo) - Historical x402 2.2.0 demo source, not the package set used above
 - [WDK EVM Wallet Module](/sdk/wallet-modules/wallet-evm) - WDK EVM wallet documentation
 - [USD₮0 Deployments](https://docs.usdt0.to/technical-documentation/deployments) - Contract addresses on all chains
 - [EIP-3009 Specification](https://eips.ethereum.org/EIPS/eip-3009) - The token-neutral authorization standard used here for signed USD₮0 transfers; the facilitator submits the authorization on-chain
@@ -4822,7 +4626,7 @@ Description: Preview and execute token swaps and cross-network bridges with WDK 
 
 WDK CLI can quote installed swap and bridge protocols, select a route, and execute it from an unlocked wallet. Use `wdk token list` to find the registered network and token names accepted by these commands.
 
-Before you begin, [set up and unlock a wallet](/cli/guides/get-started), register the source and destination tokens, and fund the source account with the tokens and native gas asset needed for execution.
+Before you begin, [set up and unlock a wallet](/cli/guides/get-started) and check the source and destination token names with `wdk token list`. Built-in entries need no registration. If an entry is missing, [add a custom token](/cli/guides/manage-tokens#add-a-custom-token). Fund the source account with the tokens and native gas asset needed for execution.
 
 If you register a custom or overriding native token, read [Manage Tokens](/cli/guides/manage-tokens) first: `wdk token add` cannot retain `nativeId`, so routing works only when the selected protocol discovers the asset by symbol or does not require a native route identifier. Custom native tokens are not guaranteed to swap or bridge.
 
@@ -6135,7 +5939,7 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 ### September 17, 2026
 
 **Changes**
-- **wallet-evm** ([v1.0.0-beta.19](https://github.com/tetherto/wdk-wallet-evm/releases/tag/v1.0.0-beta.19)): Accept and reuse an existing ethers `Provider` at runtime, and share one provider object across accounts derived by a wallet manager. The published TypeScript declaration still omits ethers `Provider` from the accepted configuration type.
+- **wallet-evm** ([v1.0.0-beta.19](https://github.com/tetherto/wdk-wallet-evm/releases/tag/v1.0.0-beta.19)): Accept and reuse an existing ethers `Provider` at runtime, and share one provider object across accounts derived by a wallet manager. The published TypeScript declaration still omits ethers `Provider` from the accepted configuration type. Manager-derived accounts are incompatible with Velora beta.8, bridge-usdt0-evm beta.10, and Aave beta.7; see the [direct-account setup and policy limitations](/sdk/core-module/guides/protocol-integration).
 - **wallet-solana** ([v1.0.0-beta.15](https://github.com/tetherto/wdk-wallet-solana/releases/tag/v1.0.0-beta.15)): Re-export seven shared WDK error classes from the package root. Replace generic errors for disposed accounts, missing providers, fee caps, and invalid values; existing typed lookup and timeout errors are now importable from this package. Solana RPC and program failures can still use provider-specific errors.
 - **react-native-core** ([v1.0.0-beta.20](https://github.com/tetherto/wdk-react-native-core/releases/tag/v1.0.0-beta.20)): Use Pear Worklet beta.15 and `Buffer` values on the internal HRPC boundary while keeping the public hook and secure-storage boundary base64 encoded. Locking and switching now send a one-way full-disposal request while the worklet and IPC remain running. After secure-storage deletion succeeds, `deleteWallet()` sends the same request; it now uses the lifecycle mutex. The npm artifact still omits its declared `dist` entrypoints.
 
@@ -7626,19 +7430,23 @@ Use the USD₮0 bridge module to move USD₮0 and XAU₮0 across supported chain
 These pages reflect `@tetherto/wdk-protocol-bridge-usdt0-evm@1.0.0-beta.10`. For ERC-4337, the approval amount includes the bridged token amount plus a tolerance-adjusted token-denominated helper fee, while the returned `bridgeFee` is in source-chain native base units. Recipient validation covers EVM, Solana, TON, and TRON during both quote and execution.
 </Callout>
 
+<Callout type="warn">
+Bridge beta.10 is not compatible with accounts derived by `WalletManagerEvm` beta.19. Those accounts contain an ethers `Provider`, while the bridge expects its non-string provider value to implement EIP-1193 `request()`. Use a directly constructed `WalletAccountEvm` with its original RPC URL or EIP-1193 provider for this release.
+</Callout>
+
 ## Features
 
 - **Cross-Chain Bridge**: Move USD₮0 tokens between supported blockchains
 - **LayerZero Integration**: Uses LayerZero protocol for secure cross-chain transfers
 - **Expanded Multi-Chain Support**: Discover 25 configured EVM and non-EVM network keys
 - **Non-EVM Destinations**: Bridge toward Solana, TON, and TRON when the source token has a compatible route contract
-- **Account Compatibility**: Accepts the shared WDK account interfaces; execution requires a callable `sendTransaction()` method and EVM transaction support. See [account requirements](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements) for ERC-4337 batching limits.
+- **Account Compatibility**: Accepts the shared WDK account interfaces; execution requires a callable `sendTransaction()` method and EVM transaction support. ERC-4337 helper batching also requires the exact concrete wallet class used by the bridge. See [account requirements](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements).
 - **Fee Management**: Built-in fee calculation and bridge cost estimation
 - **Token Support**: Supports USD₮0 and XAU₮0 ecosystem tokens
 - **Route Overrides**: Custom OFT contract addresses and destination endpoint IDs
 - **TypeScript Support**: Full TypeScript definitions included
 - **Memory Safety**: Secure transaction handling with proper error management
-- **Provider Flexibility**: Works with JSON-RPC URLs and EIP-1193 browser providers
+- **Provider Inputs**: Works with JSON-RPC URLs and EIP-1193 providers retained by a directly constructed account
 
 ## Supported Networks
 
@@ -7699,7 +7507,7 @@ Token support is determined by the contracts deployed on each chain. The protoco
 </Callout>
 
 <Callout type="info">
-Standard EVM accounts can use every supported EVM source route with a matching token deployment. ERC-4337 helper bridging is available from Ethereum, Arbitrum, Plasma, and Polygon. The ERC-4337 flow bundles token approval and the helper call into one UserOperation.
+Standard EVM accounts can use every supported EVM source route with a matching token deployment. ERC-4337 helper bridging is available from Ethereum, Arbitrum, Plasma, and Polygon when the [exact package identity requirement](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337#prerequisites) is satisfied. That flow bundles token approval and the helper call into one UserOperation.
 </Callout>
 
 <Callout type="warn">
@@ -7777,10 +7585,12 @@ The constructor accepts the shared `IWalletAccount` and `IWalletAccountReadOnly`
 
 The account must still implement EVM-compatible `getAddress()` and `quoteSendTransaction()` operations. Both bridge methods require an RPC URL or EIP-1193 provider in the wallet configuration. The constructor reads `account._config.provider`, an internal field absent from the shared interfaces. Implementing the interface alone does not establish runtime compatibility; an account without `_config` fails construction.
 
+Bridge beta.10 creates a `JsonRpcProvider` for a string and a `BrowserProvider` for every non-string value. A directly constructed `WalletAccountEvm` retains its original URL or EIP-1193 input and is compatible. A beta.19 `WalletManagerEvm` account instead contains the manager's ethers `Provider`; passing it to this constructor throws `INVALID_ARGUMENT: invalid EIP-1193 provider`. Do not mutate `_config` to work around this. Construct a separate standard account as shown in [Get Started](/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started).
+
 Read-only accounts can use `quoteBridge()`, subject to the same provider, route, balance, and allowance requirements. They cannot execute `bridge()` without `sendTransaction()`.
 
 <Callout type="warn">
-ERC-4337 helper selection and approval batching still depend on the concrete classes resolved by the bridge package: `WalletAccountReadOnlyEvmErc4337` for helper construction and quotes, and `WalletAccountEvmErc4337` for execution. A custom account or an account from a separate copy of the ERC-4337 package does not receive that path solely because it implements `sendTransaction()`. The bridge release depends on ERC-4337 wallet `1.0.0-beta.11`; verify package deduplication and runtime class identity when combining wallet versions. See [Bridge with ERC-4337](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337#prerequisites).
+ERC-4337 helper selection and approval batching still depend on the concrete classes resolved by the bridge package: `WalletAccountReadOnlyEvmErc4337` for helper construction and quotes, and `WalletAccountEvmErc4337` for execution. A custom account or an account from a separate copy of the ERC-4337 package does not receive that path solely because it implements `sendTransaction()`. Bridge beta.10 depends on ERC-4337 wallet beta.11. Use the exact isolated pairing and resolution check in [Bridge with ERC-4337](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337#prerequisites); a separately installed beta.20 account is a different class instance and falls through to the non-batched standard path.
 </Callout>
 
 ### Methods
@@ -8290,6 +8100,10 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 
 The constructor accepts `IWalletAccount` or `IWalletAccountReadOnly` from `@tetherto/wdk-wallet`. Execution requires EVM transaction support and a callable `sendTransaction()` method; read-only accounts can quote. See [account requirements](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements) for custom accounts and ERC-4337 class identity.
 
+<Callout type="warn">
+Use a directly constructed account with bridge beta.10. Accounts derived by `WalletManagerEvm` beta.19 contain an ethers `Provider`, which the bridge passes to `BrowserProvider` as though it were EIP-1193. Construction then fails before a quote or transaction. Keep the original URL or EIP-1193 input in the direct account configuration; do not mutate internal account fields.
+</Callout>
+
 The bridge protocol reads the provider from the wallet account's internal configuration for blockchain access:
 
 ```javascript
@@ -8384,11 +8198,11 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 
 ```
 
-Pass either an RPC URL string or a genuine EIP-1193 provider. An ethers `JsonRpcProvider` is not an EIP-1193 provider and is not accepted by this wallet release.
+Pass either an RPC URL string or a genuine EIP-1193 provider. Although wallet-evm beta.19 can reuse an ethers `Provider`, bridge beta.10 cannot consume that provider shape.
 
 ## ERC-4337 Configuration
 
-When using ERC-4337 accounts recognized by the bridge package's concrete class checks, you can override configuration options during bridge operations. Review the [class identity requirement](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements) before combining package versions:
+When using ERC-4337 accounts recognized by the bridge package's concrete class checks, you can override configuration options during bridge operations. Bridge beta.10's helper path requires its exact beta.11 wallet class; a separate beta.20 account falls through to the non-batched standard path. Follow the [exact install and resolution check](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337#prerequisites) before using these overrides:
 
 ```javascript
 // Bridge with ERC-4337 account
@@ -8700,6 +8514,12 @@ LayerZero endpoint IDs for these destinations are listed under [Supported chains
 
 Harden integrations with [Handle errors](/sdk/bridge-modules/bridge-usdt0-evm/guides/handle-errors), or return to [Bridge tokens](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens) for EVM-only flows and quotes.
 
+---
+
+## Need Help?
+
+<SupportCards />
+
 ***
 
 ## Bridge Tokens
@@ -8836,6 +8656,12 @@ For standard accounts, both values use source-chain native base units. ERC-4337 
 
 Bridge to Solana, TON, or TRON in [Bridge cross-ecosystem](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-cross-ecosystem), or switch to a smart account in [Bridge with ERC-4337](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337).
 
+---
+
+## Need Help?
+
+<SupportCards />
+
 ***
 
 ## Bridge with ERC-4337
@@ -8846,14 +8672,23 @@ This guide covers [prerequisites](#prerequisites), how to [create an ERC-4337 ac
 
 ## Prerequisites
 
-* `@tetherto/wdk-wallet-evm-erc-4337` installed alongside [@tetherto/wdk-protocol-bridge-usdt0-evm](https://www.npmjs.com/package/@tetherto/wdk-protocol-bridge-usdt0-evm).
 * Bundler and paymaster endpoints for your chain (example uses Arbitrum public URLs from the API reference).
 * An ERC-4337 source chain with a configured transaction-value helper: Ethereum, Arbitrum, Plasma, or Polygon.
-* An account recognized as the same ERC-4337 class instance used by the bridge package. In `1.0.0-beta.10`, the bridge depends on ERC-4337 wallet `1.0.0-beta.11` and still uses concrete class checks for its helper and batching flow. Separate package copies, including those introduced by differing versions, can miss this path. Verify deduplication and runtime class identity before using this guide. The `sendTransaction()` capability check alone does not enable batching. See [account requirements](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements).
+
+Bridge beta.10 uses concrete classes from its exact ERC-4337 wallet beta.11 dependency. For this helper and approval-batching flow, install that pair in an isolated dependency boundary:
+
+```bash title="Install the exact ERC-4337 bridge pair"
+npm install --save-exact @tetherto/wdk-protocol-bridge-usdt0-evm@1.0.0-beta.10 @tetherto/wdk-wallet-evm-erc-4337@1.0.0-beta.11
+npm ls @tetherto/wdk-wallet-evm-erc-4337 --all
+```
+
+The dependency tree must contain only `@tetherto/wdk-wallet-evm-erc-4337@1.0.0-beta.11`, with the bridge's entry marked `deduped`. If it also shows beta.20 at the application root and beta.11 beneath the bridge, the beta.20 account is a different class instance. Bridge beta.10 then takes its non-batched standard path, skips the transaction-value helper and per-call ERC-4337 configuration, and does not combine approval with the bridge call.
+
+Do not override the bridge's dependency to beta.20 or downgrade an application that needs beta.20. Keep that application on the [standard account flow](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens), or isolate this exact beta.10/beta.11 pair in a separate package. The `sendTransaction()` capability check alone does not enable batching. See [account requirements](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements).
 
 ## Create a WalletAccountEvmErc4337 account
 
-You can construct an ERC-4337 signing account using [`new WalletAccountEvmErc4337(seed, path, config)`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#constructor-1) with chain, provider, bundler, and paymaster settings:
+The exact beta.11 package publicly exports `WalletAccountEvmErc4337` and accepts `seed`, `path`, and a configuration with chain, provider, bundler, Safe modules, and paymaster fields:
 
 ```javascript title="ERC-4337 account on Arbitrum"
 import { WalletAccountEvmErc4337 } from '@tetherto/wdk-wallet-evm-erc-4337'
@@ -8889,22 +8724,26 @@ const USDT0_OFT_ADDRESS = process.env.USDT0_OFT_ADDRESS
 const amount = 1000000n
 const paymasterToken = { address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9' }
 
-const result = await bridgeProtocol.bridge(
-  {
-    targetChain: 'polygon',
-    recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-    token: USDT_TOKEN_ADDRESS,
-    amount,
-    oftContractAddress: USDT0_OFT_ADDRESS
-  },
-  {
-    paymasterToken
-  }
-)
+try {
+  const result = await bridgeProtocol.bridge(
+    {
+      targetChain: 'polygon',
+      recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+      token: USDT_TOKEN_ADDRESS,
+      amount,
+      oftContractAddress: USDT0_OFT_ADDRESS
+    },
+    {
+      paymasterToken
+    }
+  )
 
-console.log('Bridge hash:', result.hash)
-console.log('Account fee:', result.fee)
-console.log('Bridge fee:', result.bridgeFee)
+  console.log('Bridge hash:', result.hash)
+  console.log('Account fee:', result.fee)
+  console.log('Bridge fee:', result.bridgeFee)
+} finally {
+  account.dispose()
+}
 ```
 
 <Callout type="info">
@@ -8922,6 +8761,12 @@ Paymaster policies, token addresses, and URLs are service-specific. Confirm supp
 ## Next Steps
 
 Bridge to non-EVM chains in [Bridge cross-ecosystem](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-cross-ecosystem). For failure modes and cleanup, read [Handle errors](/sdk/bridge-modules/bridge-usdt0-evm/guides/handle-errors).
+
+---
+
+## Need Help?
+
+<SupportCards />
 
 ***
 
@@ -8957,6 +8802,10 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
   provider: 'https://eth.drpc.org'
 })
 ```
+
+<Callout type="warn">
+Use the direct constructor for bridge beta.10. Do not pass an account derived by `WalletManagerEvm` beta.19 or WDK Core with that manager: it contains an ethers `Provider`, and the bridge rejects it as an invalid EIP-1193 provider. A genuine EIP-1193 provider also works when supplied directly. Do not replace the account's internal provider field. Direct accounts are not decorated by WDK Core [transaction policies](/sdk/core-module/guides/transaction-policies) or middleware, so retain any required application checks.
+</Callout>
 
 <Callout type="error">
 **Seed phrase:** Store the mnemonic securely. Anyone with the phrase controls the funds on derived accounts.
@@ -8994,6 +8843,12 @@ const readOnlyBridge = new Usdt0ProtocolEvm(readOnlyAccount)
 ```
 
 You can now call [`quoteBridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#quotebridgeoptions-config) with your route options. The source address needs any allowance and balance required by the route's gas estimate; a read-only account cannot grant that allowance. Calling [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config) on this instance rejects before sending a transaction.
+
+When the signing session ends, clear the directly constructed account's key material:
+
+```javascript title="Dispose the signing account"
+account.dispose()
+```
 
 ## Supported chains
 
@@ -9039,6 +8894,12 @@ ERC-4337 helper workflows are available when the source chain is Ethereum, Arbit
 ## Next Steps
 
 Run a standard EVM-to-EVM transfer with [Bridge tokens](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens), or use [Bridge with ERC-4337](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337) for gasless flows on supported networks.
+
+---
+
+## Need Help?
+
+<SupportCards />
 
 ***
 
@@ -9125,6 +8986,12 @@ Combine quoting, fee caps via [`new Usdt0ProtocolEvm(account, config?)`](/sdk/br
 
 Review configuration defaults in [WDK Bridge USD₮0 EVM Protocol Configuration](/sdk/bridge-modules/bridge-usdt0-evm/configuration) or return to [Get Started](/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started) for setup.
 
+---
+
+## Need Help?
+
+<SupportCards />
+
 ***
 
 ## Bridge USD₮0 EVM Usage
@@ -9144,7 +9011,7 @@ Install the package, attach a signing or read-only EVM account, and review suppo
 EVM-to-EVM bridges, quotes, fee caps, and optional OFT or endpoint overrides.
 </Card>
 <Card title="Bridge with ERC-4337" href="/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337">
-Gasless bridging with WalletAccountEvmErc4337 and paymaster options.
+Gasless bridging with the bridge's exact WalletAccountEvmErc4337 class and paymaster options.
 </Card>
 <Card title="Bridge Cross-Ecosystem" href="/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-cross-ecosystem">
 Send toward Solana, TON, or TRON recipients from EVM.
@@ -13549,18 +13416,14 @@ For swidge or Smart Deposit Address (SDA) integrations, pass a concrete provider
 
 Global registration stores the provider class and config without constructing or validating the provider. Provider-constructor errors therefore surface when an account retrieves the protocol. A global registration takes precedence over an account-scoped registration with the same type and label.
 
+<Callout type="warn">
+Do not register Velora beta.8, USD₮0 bridge beta.10, or Aave beta.7 for accounts derived by `WalletManagerEvm` beta.19. Each protocol treats the manager's shared ethers `Provider` as EIP-1193 and rejects it during construction. Use a directly constructed `WalletAccountEvm` with the original RPC URL or EIP-1193 provider for these exact combinations, and never mutate the account's internal provider field. Direct accounts do not receive WDK policy or middleware decoration, so retain the required application checks and account-level controls.
+</Callout>
+
 **Example:**
 ```javascript title="Register Protocols"
-import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
-import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
-
-// Register swap protocol for Ethereum
-wdk.registerProtocol('ethereum', 'velora', veloraProtocolEvm, {
-  apiKey: 'YOUR_velora_API_KEY'
-})
-
-// Register bridge protocol for Ethereum
-wdk.registerProtocol('ethereum', 'usdt0', Usdt0ProtocolEvm)
+// Register an illustrative swap provider for Ethereum
+wdk.registerProtocol('ethereum', 'swap', MySwapProtocol, swapProtocolConfig)
 
 // Register a concrete swidge provider for Ethereum
 wdk.registerProtocol('ethereum', 'swidge', MySwidgeProtocol, swidgeProtocolConfig)
@@ -13571,8 +13434,10 @@ wdk.registerProtocol('ethereum', 'deposits', MySdaProtocol, sdaProtocolConfig)
 // Method chaining
 const wdk2 = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
-  .registerProtocol('ethereum', 'velora', veloraProtocolEvm, veloraProtocolConfig)
+  .registerProtocol('ethereum', 'swap', MySwapProtocol, swapProtocolConfig)
 ```
+
+`MySwapProtocol` is an illustrative class that extends `SwapProtocol`; use a concrete provider whose constructor supports the account and provider shape supplied by your wallet.
 
 #### `registerMiddleware(blockchain, middleware)`
 Registers middleware for account decoration and enhanced functionality.
@@ -14130,19 +13995,17 @@ Registers a new protocol for this specific account.
 
 **Example:**
 ```javascript title="Register Protocol for Account"
-import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
-
 const account = await wdk.getAccount('ethereum', 0)
 
 // Register protocol for this specific account
-account.registerProtocol('usdt0', Usdt0ProtocolEvm, {
-  apiKey: 'YOUR_API_KEY'
-})
+account.registerProtocol('deposits', MySdaProtocol, sdaProtocolConfig)
 
 // Method chaining on the resolved account
 const account2 = (await wdk.getAccount('ethereum', 1))
-  .registerProtocol('usdt0', Usdt0ProtocolEvm, usdt0ProtocolConfig)
+  .registerProtocol('deposits', MySdaProtocol, sdaProtocolConfig)
 ```
+
+`MySdaProtocol` is an illustrative class that extends `SdaProtocol`; replace it with the concrete provider used by your application.
 
 ##### `getSwapProtocol(label)`
 Returns the swap protocol with the given label.
@@ -14156,16 +14019,14 @@ Returns the swap protocol with the given label.
 
 **Example:**
 ```javascript title="Get Swap Protocol"
-import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
-
 // Register swap protocol
-account.registerProtocol('velora', veloraProtocolEvm, veloraProtocolConfig)
+account.registerProtocol('swap', MySwapProtocol, swapProtocolConfig)
 
 // Get swap protocol
-const velora = account.getSwapProtocol('velora')
+const swap = account.getSwapProtocol('swap')
 
 // Use the protocol
-const swapResult = await velora.swap({
+const swapResult = await swap.swap({
   tokenIn: '0x...',
   tokenOut: '0x...',
   tokenInAmount: 1000000n
@@ -14179,6 +14040,8 @@ const swapResult = await velora.swap({
 // }
 ```
 
+`MySwapProtocol` is an illustrative class that extends `SwapProtocol`.
+
 ##### `getBridgeProtocol(label)`
 Returns the bridge protocol with the given label.
 
@@ -14191,29 +14054,22 @@ Returns the bridge protocol with the given label.
 
 **Example:**
 ```javascript title="Get Bridge Protocol"
-import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
-
 // Register bridge protocol
-account.registerProtocol('usdt0', Usdt0ProtocolEvm)
+account.registerProtocol('bridge', MyBridgeProtocol, bridgeProtocolConfig)
 
 // Get bridge protocol
-const usdt0 = account.getBridgeProtocol('usdt0')
+const bridge = account.getBridgeProtocol('bridge')
 
 // Use the protocol
-await account.approve({
-  token: '0x...',
-  spender: '0x...', // OFT or bridge spender address
-  amount: 1000000n
-})
-
-const bridgeResult = await usdt0.bridge({
+const bridgeResult = await bridge.bridge({
   targetChain: 'arbitrum',
   recipient: '0x...',
   token: '0x...',
-  amount: 1000000n,
-  oftContractAddress: '0x...' // Same address used as approval spender
+  amount: 1000000n
 })
 ```
+
+`MyBridgeProtocol` is an illustrative class that extends `BridgeProtocol`. Follow the concrete provider's approval and configuration requirements before execution.
 
 ##### `getLendingProtocol(label)`
 Returns the lending protocol with the given label.
@@ -14227,20 +14083,20 @@ Returns the lending protocol with the given label.
 
 **Example:**
 ```javascript title="Get Lending Protocol"
-import AaveProtocolEvm from '@tetherto/wdk-protocol-lending-aave-evm'
-
 // Register lending protocol
-account.registerProtocol('aave', AaveProtocolEvm, aaveProtocolConfig)
+account.registerProtocol('lending', MyLendingProtocol, lendingProtocolConfig)
 
 // Get lending protocol
-const aave = account.getLendingProtocol('aave')
+const lending = account.getLendingProtocol('lending')
 
 // Use the protocol
-const supplyResult = await aave.supply({
+const supplyResult = await lending.supply({
   token: '0x...',
   amount: 1000000n
 })
 ```
+
+`MyLendingProtocol` is an illustrative class that extends `LendingProtocol`.
 
 ##### `getFiatProtocol(label)`
 Returns the fiat protocol with the given label.
@@ -14327,8 +14183,6 @@ Global SDA registrations are constructed when retrieved. Account-scoped SDA regi
 import WDK from '@tetherto/wdk'
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
 import WalletManagerTon from '@tetherto/wdk-wallet-ton'
-import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
-import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
 
 // Initialize WDK Manager
 const wdk = new WDK(seedPhrase)
@@ -14339,10 +14193,7 @@ const wdk = new WDK(seedPhrase)
     tonApiKey: 'YOUR_TON_API_KEY',
     tonApiEndpoint: 'https://tonapi.io'
   })
-  .registerProtocol('ethereum', 'velora', veloraProtocolEvm, {
-    apiKey: 'YOUR_velora_API_KEY'
-  })
-  .registerProtocol('ethereum', 'usdt0', Usdt0ProtocolEvm)
+  .registerProtocol('ethereum', 'swap', MySwapProtocol, swapProtocolConfig)
 
 // Get accounts
 const accountEth = await wdk.getAccount('ethereum', 3)
@@ -14355,21 +14206,14 @@ const { hash, fee } = await accountEth.sendTransaction({
 })
 
 // Use protocols
-const velora = accountEth.getSwapProtocol('velora')
-const swapResult = await velora.swap(swapOptions)
-
-const usdt0 = accountEth.getBridgeProtocol('usdt0')
-// bridgeOptions.oftContractAddress is the source-chain bridge spender.
-await accountEth.approve({
-  token: bridgeOptions.token,
-  spender: bridgeOptions.oftContractAddress,
-  amount: bridgeOptions.amount
-})
-const bridgeResult = await usdt0.bridge(bridgeOptions)
+const swap = accountEth.getSwapProtocol('swap')
+const swapResult = await swap.swap(swapOptions)
 
 // Clean up
 wdk.dispose()
 ```
+
+`MySwapProtocol` is illustrative and must support the manager account's provider shape. Velora beta.8, USD₮0 bridge beta.10, and Aave beta.7 are intentionally excluded from this manager-derived beta.19 flow. Their direct standard-account guides cover [Velora setup](/sdk/swap-modules/swap-velora-evm/guides/get-started), [bridge setup](/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started), and [Aave setup](/sdk/lending-modules/lending-aave-evm/guides/get-started). Preserve application checks and account-level controls because WDK policies and middleware do not decorate those separate accounts.
 
 ## Types
 
@@ -14695,14 +14539,11 @@ const wdk = new WDK(seedPhrase)
 ## Protocol Registration Configuration
 
 ```javascript title="Register WDK Protocol"
-import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
-
 const wdk = new WDK(seedPhrase)
-  .registerProtocol('ethereum', 'velora', veloraProtocolEvm, {
-    apiKey: 'YOUR_velora_API_KEY'
-  })
+  .registerProtocol('ethereum', 'swap', MySwapProtocol, swapProtocolConfig)
 ```
 
+`MySwapProtocol` is an illustrative class that extends `SwapProtocol`. Replace it with a provider whose constructor supports the account and provider shape used by your registered wallet.
 
 ## Configuration Options
 
@@ -14743,12 +14584,11 @@ Protocols also require their own configuration objects when registered.
 #### Swap Protocol Configuration
 
 ```javascript title="Swap WDK Protocol Configuration"
-const veloraProtocolConfig = {
-  apiKey: 'YOUR_velora_API_KEY',
-  baseUrl: 'https://apiv5.velora.io'
+const swapProtocolConfig = {
+  swapMaxFee: 200000000000000n
 }
 
-wdk.registerProtocol('ethereum', 'velora', veloraProtocolEvm, veloraProtocolConfig)
+wdk.registerProtocol('ethereum', 'swap', MySwapProtocol, swapProtocolConfig)
 ```
 
 
@@ -14774,9 +14614,7 @@ const wdk = new WDK(process.env.SEED_PHRASE)
   .registerWallet('ethereum', WalletManagerEvm, {
     provider: process.env.ETHEREUM_RPC_URL
   })
-  .registerProtocol('ethereum', 'velora', veloraProtocolEvm, {
-    apiKey: process.env.velora_API_KEY
-  })
+  .registerProtocol('ethereum', 'swap', MySwapProtocol, swapProtocolConfig)
 ```
 
 
@@ -14802,9 +14640,9 @@ try {
 }
 
 try {
-  wdk.registerProtocol('ethereum', 'velora', veloraProtocolEvm, invalidConfig)
+  wdk.registerProtocol('ethereum', 'swap', MySwapProtocol, invalidConfig)
   const account = await wdk.getAccount('ethereum', 0)
-  account.getSwapProtocol('velora')
+  account.getSwapProtocol('swap')
 } catch (error) {
   console.error('Protocol construction or retrieval failed:', error.message)
 }
@@ -15268,40 +15106,27 @@ Global registration ensures that every account you retrieve already has the prot
 
 ### 1. Install Protocol Modules
 
-Install the [`@tetherto/wdk-protocol-swap-velora-evm`](https://www.npmjs.com/package/@tetherto/wdk-protocol-swap-velora-evm) and [`@tetherto/wdk-protocol-bridge-usdt0-evm`](https://www.npmjs.com/package/@tetherto/wdk-protocol-bridge-usdt0-evm) packages:
+Install the exact wallet and protocol releases used by the direct-account compatibility flows later in this guide:
 
 ```bash
-npm install @tetherto/wdk-protocol-swap-velora-evm && npm install @tetherto/wdk-protocol-bridge-usdt0-evm
+npm install --save-exact @tetherto/wdk-wallet-evm@1.0.0-beta.19 @tetherto/wdk-protocol-swap-velora-evm@1.0.0-beta.8 @tetherto/wdk-protocol-bridge-usdt0-evm@1.0.0-beta.10
 ```
 
 ### 2. Register in Code
 
-Now, import the protocol modules and register them with your WDK instance. This makes the protocol methods available to any account derived from that instance.
-
-First, import the necessary modules:
-
-```typescript title="Import Protocols"
-import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
-import usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
-```
-
-Then, register the protocols for the specific chains they support:
+Register a compatible protocol class for the specific chains it supports. This makes its methods available to accounts derived from that WDK instance.
 
 ```typescript title="Register Protocols"
-// Register protocols for specific chains
 const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, ethConfig)
-
-  // Register Velora Swap for Ethereum
-  .registerProtocol('ethereum', 'velora', veloraProtocolEvm, {
-    apiKey: 'YOUR_API_KEY'
-  })
-
-  // Register USDt0 Bridge for Ethereum
-  .registerProtocol('ethereum', 'usdt0', usdt0ProtocolEvm, {
-     ethereumRpcUrl: 'https://eth.drpc.org' // Configuration depends on the module
-  })
+  .registerProtocol('ethereum', 'swap', MySwapProtocol, swapProtocolConfig)
 ```
+
+`MySwapProtocol` is an illustrative class that extends `SwapProtocol`. Replace it with a provider whose constructor supports the manager account's provider shape.
+
+<Callout type="warn">
+Do not register Velora beta.8, USD₮0 bridge beta.10, or Aave beta.7 on a wallet-evm beta.19 manager account. These protocol constructors treat the manager's shared ethers `Provider` as EIP-1193 and reject it. Use a direct standard account with its original RPC URL or EIP-1193 provider for these exact combinations; never replace the account's internal provider field. For Aave, follow the [direct-account configuration](/sdk/lending-modules/lending-aave-evm/configuration#service-setup).
+</Callout>
 
 ## Use Protocols
 
@@ -15370,46 +15195,74 @@ Existing swap and bridge modules keep their current accessors for released modul
 
 ### Swapping Tokens
 
-Use `getSwapProtocol` to access registered swap services on any wallet account.
+Velora beta.8 requires a directly constructed standard account that retains its RPC URL or EIP-1193 provider when paired with wallet-evm beta.19. Approve the input token for the current Velora spender before running this example; see [Execute Swaps](/sdk/swap-modules/swap-velora-evm/guides/execute-swaps).
+
+<Callout type="warn">
+This compatibility path does not use `wdk.getAccount()`, so WDK transaction policies and middleware do not decorate `swapAccount`. Keep required application checks before approval and swap execution. The account-level `transactionMaxFee` and protocol-level `swapMaxFee` caps remain available, but they do not replace WDK policy rules.
+</Callout>
 
 ```typescript title="Swap Tokens"
-const ethAccount = await wdk.getAccount('ethereum', 0)
-const velora = ethAccount.getSwapProtocol('velora')
+import VeloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
+import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
-const result = await velora.swap({
-  tokenIn: '0x...', // Address of token to sell
-  tokenOut: '0x...', // Address of token to buy
-  tokenInAmount: 1000000n // Amount to swap
+const swapAccount = new WalletAccountEvm(seedPhrase, "0'/0/0", {
+  provider: 'https://eth.drpc.org',
+  transactionMaxFee: 5000000000000000n
 })
+const velora = new VeloraProtocolEvm(swapAccount, {
+  swapMaxFee: 200000000000000n
+})
+
+try {
+  const result = await velora.swap({
+    tokenIn: '0x...', // Address of the approved token to sell
+    tokenOut: '0x...', // Address of token to buy
+    tokenInAmount: 1000000n // Amount to swap
+  })
+} finally {
+  swapAccount.dispose()
+}
 ```
 
 ### Bridging Assets
 
-1. Use `getBridgeProtocol` to access cross-chain bridges.
-2. Approve the source-chain bridge spender for the token and amount.
-3. Call `bridge` from the bridge protocol to send tokens from one protocol to another.
+Bridge beta.10 requires a directly constructed standard account that retains its RPC URL or EIP-1193 provider. Instantiate the bridge with that account, approve the source-chain spender, and then call `bridge()`.
+
+<Callout type="warn">
+This compatibility path does not use `wdk.getAccount()`, so WDK transaction policies and middleware do not decorate `bridgeAccount`. Keep required application checks before approval and bridge execution. Account-level options such as `transactionMaxFee` remain available, but they do not replace WDK policy rules.
+</Callout>
 
 ```typescript title="Bridge Assets"
-const ethAccount = await wdk.getAccount('ethereum', 0)
-const usdt0 = ethAccount.getBridgeProtocol('usdt0')
+import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
+import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
-await ethAccount.approve({
-  token: '0x...', // ERC20 Token Address
-  spender: '0x...', // OFT or bridge spender address
-  amount: 1000000n
+const bridgeAccount = new WalletAccountEvm(seedPhrase, "0'/0/0", {
+  provider: 'https://eth.drpc.org',
+  transactionMaxFee: 5000000000000000n
 })
+const usdt0 = new Usdt0ProtocolEvm(bridgeAccount)
 
-const result = await usdt0.bridge({
-  targetChain: 'ton',
-  recipient: 'UQBla...', // TON address
-  token: '0x...', // ERC20 Token Address
-  amount: 1000000n,
-  oftContractAddress: '0x...' // Same address used as approval spender
-})
+try {
+  await bridgeAccount.approve({
+    token: '0x...', // ERC20 token address
+    spender: '0x...', // OFT or bridge spender address
+    amount: 1000000n
+  })
+
+  const result = await usdt0.bridge({
+    targetChain: 'ton',
+    recipient: 'UQBla...', // TON address
+    token: '0x...', // Same ERC20 token address
+    amount: 1000000n,
+    oftContractAddress: '0x...' // Same address used as approval spender
+  })
+} finally {
+  bridgeAccount.dispose()
+}
 ```
 
 <Callout type="info">
-**Protocol Availability:** If you try to access a protocol that hasn't been registered (e.g., `getSwapProtocol('uniswap')`), the SDK will throw an error. always ensure registration matches the ID you request.
+**Protocol Availability:** If you try to access a protocol that has not been registered (for example, `getSwapProtocol('uniswap')`), the SDK throws an error. Always ensure registration matches the ID you request.
 </Callout>
 
 ## Next Steps
@@ -15424,7 +15277,7 @@ Description: Register local ALLOW and DENY rules for WDK account and protocol wr
 
 Use local transaction policies to evaluate account and protocol calls before execution. This guide covers [registering policies](#register-policies), [method coverage and migration](#supported-operations), and [simulating calls](#simulate-before-execution).
 
-Use `@tetherto/wdk` v1.0.0-beta.17 or later for method exclusions and coverage beyond the earlier fixed operation list. The examples assume you have loaded an app-owned `seedPhrase` and registered the relevant wallet modules.
+Use `@tetherto/wdk` v1.0.0-beta.18 or later for these examples because they import `DENIAL_CODES` and read the stable `error.code` and `error.operation` fields. Method exclusions and coverage beyond the earlier fixed operation list arrived in beta.17. The examples assume you have loaded an app-owned `seedPhrase` and registered the relevant wallet modules.
 
 <Callout type="warn">
 Transaction policies are local pre-execution controls. They do not enforce rules on-chain, replace smart-contract permissions, or validate live token metadata, balances, prices, or contract state.
@@ -18306,21 +18159,20 @@ const wdkWithWallets = wdk
 
 **3. Protocol Module Registration**
 
-```typescript title="Register Protocols"
-import SwapveloraEvm from '@tetherto/wdk-protocol-swap-velora-evm'
+For a compatible protocol, use `wdk.registerProtocol(blockchain, label, ProtocolClass, config)` and retrieve it from an account with its typed getter, such as `getSwapProtocol(label)`. See [Protocol Integration](/sdk/core-module/guides/protocol-integration) for setup and execution examples.
 
-const wdkWithProtocols = wdkWithWallets
-  .registerProtocol('swap-velora-evm', SwapveloraEvm)
-```
+<Callout type="warn">
+Velora beta.8, USD₮0 bridge beta.10, and Aave beta.7 cannot consume the shared ethers provider on EVM wallet beta.19 manager accounts. Use the direct-account setup in the linked guide, and retain any application checks normally supplied by WDK policies and middleware.
+</Callout>
 
 #### Unified Operations
 
-Once registered, all modules work through the same interface:
+Registered wallet modules expose common account operations:
 
 ```typescript title="Unified Operations"
 // Get accounts from different blockchains using the same method
-const ethAccount = await wdkWithProtocols.getAccount('ethereum', 0)
-const btcAccount = await wdkWithProtocols.getAccount('bitcoin', 0)
+const ethAccount = await wdkWithWallets.getAccount('ethereum', 0)
+const btcAccount = await wdkWithWallets.getAccount('bitcoin', 0)
 
 // Check balances using unified interface
 const ethBalance = await ethAccount.getBalance()
@@ -18329,7 +18181,7 @@ const btcBalance = await btcAccount.getBalance()
 // Send transactions with consistent API
 const ethTx = await ethAccount.sendTransaction({
   to: '0x...',
-  value: '1000000000000000000'
+  value: 1000000000000000000n
 })
 
 const btcTx = await btcAccount.sendTransaction({
@@ -18337,12 +18189,6 @@ const btcTx = await btcAccount.sendTransaction({
   value: 100000000
 })
 
-// Use DeFi protocols through the same interface
-const swapResult = await wdkWithProtocols.executeProtocol('swap-velora-evm', {
-  fromToken: 'ETH',
-  toToken: 'USDT',
-  amount: '1000000000000000000'
-})
 ```
 
 ***
@@ -18834,7 +18680,9 @@ const aave = new AaveProtocolEvm(account)
 
 The constructor accepts `IWalletAccount` or `IWalletAccountReadOnly`. The implementation reads `account._config.provider` and expects an EVM-compatible JSON-RPC URL or EIP-1193 provider. Compatible account wrappers must expose this configuration plus the methods required by the chosen operation. Every write checks for a callable `sendTransaction()`; quotes call `quoteSendTransaction()` without requiring write capability. The wider interfaces do not add support for non-EVM chains.
 
-For accounts governed by WDK transaction policies, use [`wdk.registerProtocol()`](/sdk/core-module/api-reference#registerprotocolblockchain-label-protocol-config) and the account's protocol getter. Do not pass the governed account proxy directly to this constructor: that proxy hides `_config`.
+Aave beta.7 cannot use accounts derived by `WalletManagerEvm` beta.19: their shared ethers provider is not a URL or EIP-1193 input. Use the direct `WalletAccountEvm` setup above with its original provider value. Direct accounts do not receive WDK Core policies or middleware, so retain required application checks before approval and execution.
+
+For a compatible wallet version, policy-governed integrations use [`wdk.registerProtocol()`](/sdk/core-module/api-reference#registerprotocolblockchain-label-protocol-config) and the account's protocol getter. That registration path does not fix the beta.19 incompatibility. Do not pass a governed account proxy directly to this constructor: the proxy hides `_config`.
 
 ```javascript
 import { WalletAccountEvm, WalletAccountReadOnlyEvm } from '@tetherto/wdk-wallet-evm'
@@ -21448,7 +21296,9 @@ const swapProtocol = new VeloraProtocolEvm(account, {
 
 The swap service reads `account._config.provider` for network access. The account must expose an EVM-compatible JSON-RPC URL or EIP-1193 provider, plus `getAddress()` and `quoteSendTransaction()`. Execution also requires a callable `sendTransaction()`. A shared interface type alone does not make a non-EVM account compatible.
 
-For accounts governed by WDK transaction policies, use [`wdk.registerProtocol()`](/sdk/core-module/api-reference#registerprotocolblockchain-label-protocol-config) and the account's protocol getter. Do not pass the governed account proxy directly to this constructor: that proxy hides `_config`.
+Velora beta.8 cannot use accounts derived by `WalletManagerEvm` beta.19: their shared ethers provider is not a URL or EIP-1193 input. Use the direct `WalletAccountEvm` setup above with its original provider value. Direct accounts do not receive WDK Core policies or middleware, so retain required application checks before approval and execution.
+
+For a compatible wallet version, policy-governed integrations use [`wdk.registerProtocol()`](/sdk/core-module/api-reference#registerprotocolblockchain-label-protocol-config) and the account's protocol getter. That registration path does not fix the beta.19 incompatibility. Do not pass a governed account proxy directly to this constructor: the proxy hides `_config`.
 
 ```javascript
 import { WalletAccountEvm, WalletAccountReadOnlyEvm } from '@tetherto/wdk-wallet-evm'
@@ -30528,6 +30378,10 @@ Use the EVM wallet module for standard Ethereum-compatible accounts where users 
 These pages reflect `@tetherto/wdk-wallet-evm@1.0.0-beta.19`. The runtime accepts and reuses an ethers `Provider`, including for manager-derived accounts; the published configuration type still omits that input.
 </Callout>
 
+<Callout type="warn">
+Do not pass a beta.19 manager-derived account to Velora beta.8, USD₮0 bridge beta.10, or Aave beta.7. Each protocol treats every non-string provider as EIP-1193 and rejects the ethers `Provider` shared by the manager. For these exact releases, construct `WalletAccountEvm` directly with the original RPC URL or genuine EIP-1193 provider. Never mutate its internal provider field. Direct accounts are outside WDK Core's policy and middleware decoration, so retain required application checks and account-level controls. See the direct setup for [Velora](/sdk/swap-modules/swap-velora-evm/guides/get-started), [the bridge](/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started), or [Aave](/sdk/lending-modules/lending-aave-evm/guides/get-started).
+</Callout>
+
 ## Features
 
 - **BIP-39 Seed Phrase Support**: Generate and validate BIP-39 mnemonic seed phrases
@@ -34341,6 +34195,17 @@ try {
 Always call [`dispose()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference) when finished with accounts. Private keys are securely wiped from memory. Disposal is irreversible.
 </Callout>
 
+## Next Steps
+
+- [Configuration](/sdk/wallet-modules/wallet-evm-erc-4337/configuration) - Configure bundler, paymaster, and fee limits.
+- [API Reference](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference) - Check method signatures and error types.
+
+***
+
+## Need Help?
+
+<SupportCards />
+
 ***
 
 ## Manage Accounts
@@ -36227,6 +36092,10 @@ The `provider` option specifies how to connect to the blockchain. The published 
 At runtime, beta.19 also accepts an already-built ethers `Provider`, such as `JsonRpcProvider`, either directly or in the failover array. The runtime reuses that object instead of wrapping it. The published beta.19 TypeScript declaration does not include ethers `Provider`. JavaScript can use this runtime-only path directly; TypeScript projects that require the published type must use one of the declared provider inputs until the declaration is corrected.
 
 `WalletManagerEvm` builds or accepts its provider once and shares the same provider object with every account it derives. Direct account constructors process their configurations independently, but they can share a caller-supplied ethers `Provider` object.
+
+<Callout type="warn">
+The shared ethers provider makes beta.19 manager-derived accounts incompatible with Velora beta.8, USD₮0 bridge beta.10, and Aave beta.7. These releases wrap every non-string provider in `BrowserProvider`, which requires an EIP-1193 `request()` method. Use a directly constructed `WalletAccountEvm` that retains its original RPC URL or EIP-1193 provider for these exact combinations; do not replace the account's internal provider field. Direct accounts do not receive WDK Core policy or middleware decoration, so preserve the required application checks and account-level controls.
+</Callout>
 
 **Examples:**
 
@@ -39939,6 +39808,17 @@ wallet.dispose()
 Always call [`dispose()`](/sdk/wallet-modules/wallet-solana/api-reference) in a `finally` block or cleanup handler to ensure sensitive data is cleared even if an error occurs.
 </Callout>
 
+## Next Steps
+
+- [Configuration](/sdk/wallet-modules/wallet-solana/configuration) - Configure providers and fee limits.
+- [API Reference](/sdk/wallet-modules/wallet-solana/api-reference) - Check method signatures and error types.
+
+***
+
+## Need Help?
+
+<SupportCards />
+
 ***
 
 ## Getting Started
@@ -42346,6 +42226,12 @@ After [`dispose()`](/sdk/wallet-modules/wallet-spark/api-reference), the account
 ## Next Steps
 
 Return to the [Spark wallet usage overview](/sdk/wallet-modules/wallet-spark/usage) or open the [API Reference](/sdk/wallet-modules/wallet-spark/api-reference) for full method signatures.
+
+***
+
+## Need Help?
+
+<SupportCards />
 
 ***
 
@@ -49509,17 +49395,11 @@ console.log('Transaction hash:', result.hash)
 
 ### **Use DeFi Protocols**
 
-```bash
-npm install @tetherto/wdk-protocol-swap-velora-evm
-```
+Follow [Protocol Integration](/sdk/core-module/guides/protocol-integration) to choose an account and configure swaps or bridges.
 
-```typescript
-import VeloraProtocolEvm  from '@tetherto/wdk-protocol-swap-velora-evm'
-
-wdk.registerProtocol('ethereum', 'swap-velora-evm', VeloraProtocolEvm, {
-  provider: 'https://eth.drpc.org'
-})
-```
+<Callout type="warn">
+Accounts derived by EVM wallet beta.19 cannot initialize Velora beta.8, USD₮0 bridge beta.10, or Aave beta.7 because those adapters do not accept the manager's shared ethers provider. The linked guide shows a direct-account setup with its policy, middleware, and cleanup requirements.
+</Callout>
 
 ***
 
@@ -53209,13 +53089,15 @@ await hrpc.initializeWDK({
 
 ### Initialization Rules
 
+Pass both seed fields whenever initialization must create generic modules. If wallet or protocol registration fails after WDK is created, explicitly dispose the partial instance before abandoning or retrying initialization.
+
 - Pass both `encryptionKey` and `encryptedSeed`, or omit both together.
 - On first initialization, the worklet must receive an encrypted seed pair so it can create `context.wdk`.
 - If `context.wdk` already exists, reinitialization closes its generic modules and calls `wdk.dispose()` before validating the new config. With both seed fields present, beta.15 then overwrites the old retained seed buffer before attempting replacement. Validate the replacement payload before sending it; a failed replacement does not restore the old seed.
 - Without a seed pair, reinitialization reuses the existing WDK object and retained seed to re-register wallets and protocols. It closes generic modules without rebuilding them, even when `config.modules` is present. Supply the seed pair on every initialization that must construct or reconstruct modules.
 - Module `close()` is called during full disposal or reinitialization. Targeted blockchain disposal leaves generic modules running. Optional `suspend()` and `resume()` methods run only when the host forwards Bare lifecycle events; the manual context above does so.
 
-The runtime manages the decrypted buffer through `context.wdkSeedBuffer`; do not set this field yourself. If decryption or WDK construction fails, beta.15 overwrites temporary buffers owned by that handler. After the buffer has been handed to a constructed WDK instance, a later wallet or protocol registration failure retains the partial instance and seed. Treat that failure as requiring explicit disposal before abandoning or retrying initialization.
+The runtime manages the decrypted buffer through `context.wdkSeedBuffer`; do not set this field yourself. If decryption or WDK construction fails, beta.15 overwrites temporary buffers owned by that handler. A later wallet or protocol registration failure retains the partial instance and seed until disposal.
 
 ## Dispose WDK
 
@@ -57342,11 +57224,11 @@ The `generate` command also accepts `--transport hrpc|jsonrpc`, `--link-addons`,
 
 ## Suspend and resume behavior
 
-Generated HRPC and JSON-RPC entrypoints handle Bare `suspend` and `resume` with the same lifecycle code. At each event, beta.14 scans the public `require.cache` for every loaded copy of `bare-http1` and `bare-https`, deduplicates shared `globalAgent` objects, and invokes `suspend()` or `resume()` on each agent. It also invokes the configured generic-module runtime's `suspendAll()` or `resumeAll()` method.
+Generated HRPC and JSON-RPC entrypoints forward Bare `suspend` and `resume` events to loaded HTTP agents and configured generic modules. No diagnostic flag is needed; `options.handleLeakCheck` remains HRPC-only and adds handle reporting.
 
-These calls are fire-and-forget. Synchronous throws and rejected promises are logged separately for each resource, so one failure does not stop the remaining lifecycle calls. The Bare event is not delayed until asynchronous cleanup completes. Pear Worklet closes modules during full disposal or reinitialization; selective JSON-RPC disposal and `resetWdkWallets()` leave them running.
+The hooks log failures and continue with the other resources, but they do not wait for asynchronous cleanup. Treat suspension separately from [disposing the worklet's WDK instance](/tools/pear-wrk-wdk/configuration#dispose-wdk). Full disposal or reinitialization closes generic modules; selective JSON-RPC disposal and `resetWdkWallets()` leave them running.
 
-The lifecycle hooks require no diagnostic flag. `options.handleLeakCheck` remains HRPC-only and only adds handle reporting.
+See the [entrypoint API reference](/tools/worklet-bundler/api-reference#generateentrypointconfig-outputdir) for agent discovery and callback behavior.
 
 ## Troubleshooting
 
