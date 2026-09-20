@@ -28,6 +28,7 @@ Wallet modules provide blockchain-specific wallet functionality for managing add
 |--------|------------|-------------|---------------|
 | [`@tetherto/wdk-wallet-btc`](https://github.com/tetherto/wdk-wallet-btc) | Bitcoin | Bitcoin SegWit wallet with BIP-39/BIP-44 support | [Docs](/sdk/wallet-modules/wallet-btc/) |
 | [`@tetherto/wdk-wallet-evm`](https://github.com/tetherto/wdk-wallet-evm) | EVM | Ethereum and EVM-compatible chains wallet | [Docs](/sdk/wallet-modules/wallet-evm/) |
+| [`@hinkal/wdk-wallet-evm-hinkal`](https://www.npmjs.com/package/@hinkal/wdk-wallet-evm-hinkal) | EVM | Community module for seed-derived Hinkal private sends and shielded-fund recovery; Node bundling required | [Docs](/sdk/wallet-modules/wallet-evm-hinkal/) |
 | [`@tetherto/wdk-wallet-evm-erc-4337`](https://github.com/tetherto/wdk-wallet-evm-erc-4337) | EVM | ERC-4337 Account Abstraction for EVM chains | [Docs](/sdk/wallet-modules/wallet-evm-erc-4337/) |
 | [`@tetherto/wdk-wallet-evm-7702-gasless`](https://github.com/tetherto/wdk-wallet-evm-7702-gasless) | EVM | EIP-7702 gasless account abstraction for EVM chains | [Docs](/sdk/wallet-modules/wallet-evm-7702-gasless/) |
 | [`@tetherto/wdk-wallet-ton`](https://github.com/tetherto/wdk-wallet-ton) | TON | TON blockchain wallet | [Docs](/sdk/wallet-modules/wallet-ton/) |
@@ -56,7 +57,8 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 | [`@symbiosis-finance/wdk-protocol-swidge-symbiosis`](https://www.npmjs.com/package/@symbiosis-finance/wdk-protocol-swidge-symbiosis) | Symbiosis | Community | Runtime-discovered exact-input quotes with EVM, Bitcoin, and capability-gated TON, Tron, and Solana source execution through the Symbiosis API | [Docs](/sdk/swidge-modules/swidge-symbiosis/) |
 | [`@lifi/wdk-protocol-swidge-lifi`](https://www.npmjs.com/package/@lifi/wdk-protocol-swidge-lifi) | LI.FI | Community | Swidge routes for LI.FI swap, bridge, and combined swap-plus-bridge operations | [Docs](/sdk/swidge-modules/swidge-lifi/) |
 | [`@0x/wdk-protocol-swidge-0x`](https://www.npmjs.com/package/@0x/wdk-protocol-swidge-0x) | 0x | Community | Same-chain EVM token swaps through the 0x Swap API v2 | [Docs](/sdk/swidge-modules/swidge-0x/) |
-| [`@butternetwork/wdk-protocol-swidge-butter`](https://github.com/butternetwork/wdk-protocol-swidge-butter/tree/c1f373d9876668502e0b23b351cb1e4db6328b7c) | Butter Network | Community | Exact-input quotes and capability-dependent execution through Butter. Documentation targets source snapshot `0.2.0`; the published `0.1.0` package has a different API. | [Docs](/sdk/swidge-modules/swidge-butter/) |
+| [`@moonpay/wdk-protocol-swidge-moonpay-trade`](https://www.npmjs.com/package/@moonpay/wdk-protocol-swidge-moonpay-trade) | MoonPay Trade | Community | Provider route discovery, indicative quotes, and source-deposit execution through writable WDK accounts | [Docs](/sdk/swidge-modules/swidge-moonpay-trade/) |
+| [`@butternetwork/wdk-protocol-swidge-butter`](https://www.npmjs.com/package/@butternetwork/wdk-protocol-swidge-butter) | Butter Network | Community | Exact-input quotes and capability-dependent execution through Butter | [Docs](/sdk/swidge-modules/swidge-butter/) |
 
 ## Pricing Modules
 
@@ -129,7 +131,7 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 | [`@symbiosis-finance/wdk-protocol-swidge-symbiosis`](https://www.npmjs.com/package/@symbiosis-finance/wdk-protocol-swidge-symbiosis) | Swidge | Same-chain and cross-chain exact-input routes through Symbiosis | [Docs](/sdk/swidge-modules/swidge-symbiosis/) |
 | [`@lifi/wdk-protocol-swidge-lifi`](https://www.npmjs.com/package/@lifi/wdk-protocol-swidge-lifi) | Swidge | LI.FI swap and bridge route integration | [Docs](/sdk/swidge-modules/swidge-lifi/) |
 | [`@0x/wdk-protocol-swidge-0x`](https://www.npmjs.com/package/@0x/wdk-protocol-swidge-0x) | Swidge | 0x same-chain EVM route integration | [Docs](/sdk/swidge-modules/swidge-0x/) |
-| [`@moonpay/wdk-protocol-swidge-moonpay-trade`](https://www.npmjs.com/package/@moonpay/wdk-protocol-swidge-moonpay-trade) | Swidge | Routes through MoonPay Trade | [README](https://www.npmjs.com/package/@moonpay/wdk-protocol-swidge-moonpay-trade#readme) |
+| [`@moonpay/wdk-protocol-swidge-moonpay-trade`](https://www.npmjs.com/package/@moonpay/wdk-protocol-swidge-moonpay-trade) | Swidge | Provider route discovery, indicative quotes, and source-deposit execution | [Docs](/sdk/swidge-modules/swidge-moonpay-trade/) |
 | [`@swapdk/wdk-protocol-swidge-swapdk`](https://www.npmjs.com/package/@swapdk/wdk-protocol-swidge-swapdk) | Swidge | Routes through SwapDK | [README](https://github.com/Swap-DK/wdk-protocol-bridges-swapdk#readme) |
 | [`@gobob/wdk-protocol-swidge-gateway`](https://www.npmjs.com/package/@gobob/wdk-protocol-swidge-gateway) | Swidge | Routes through the BOB Gateway | [README](https://github.com/bob-collective/wdk-protocol-swidge-gateway#readme) |
 | [`@transak/wdk-protocol-fiat-transak`](https://github.com/Transak/wdk-protocol-fiat-transak) | Fiat | Transak integration for fiat on-ramp and off-ramp | [Docs](/sdk/fiat-modules/fiat-transak/) |

@@ -1,6 +1,6 @@
 ---
 title: Butter Network Swidge Usage
-description: Install the Butter source snapshot, discover provider data, and preview an exact-input quote without a wallet.
+description: Install the Butter module, discover provider data, and preview an exact-input quote without a wallet.
 docType: how-to
 schemaType: TechArticle
 ---
@@ -11,40 +11,28 @@ Community modules are developed and maintained independently by third-party cont
 Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
 </Callout>
 
-[Check prerequisites](#prerequisites), [install the source snapshot](#install-the-source-snapshot), [configure the client](#configure-the-client), [discover provider data](#discover-provider-data), and [preview a quote](#preview-a-quote). For support, see [Need Help?](#need-help). This flow does not submit transactions.
+[Check prerequisites](#prerequisites), [install the module](#installation), [configure the client](#configure-the-client), [discover provider data](#discover-provider-data), and [preview a quote](#preview-a-quote). For support, see [Need Help?](#need-help). This flow does not submit transactions.
 
 ## Prerequisites
 
-- [Node.js 22](https://nodejs.org/en/download), [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm), and [Git](https://git-scm.com/downloads).
+- [Node.js 22](https://nodejs.org/en/download) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
 - A Node application configured for ES modules, for example with `"type": "module"` in its `package.json`.
 - A Butter-issued `entrance` identifier accepted by the Router API. Obtain integration access through [Butter Network](https://www.butternetwork.io/); do not assume an example identifier is provisioned for your application.
 - Network access to the [configured Butter APIs](/sdk/swidge-modules/swidge-butter/configuration#api-access).
 
-These pages target source version `0.2.0` at [revision `c1f373d`](https://github.com/butternetwork/wdk-protocol-swidge-butter/tree/c1f373d9876668502e0b23b351cb1e4db6328b7c). The published [npm `0.1.0` package](https://www.npmjs.com/package/@butternetwork/wdk-protocol-swidge-butter/v/0.1.0) has a different API. Use the source installation below until a matching release is available.
+## Installation
 
-## Install the source snapshot
-
-From your application's directory:
-
-1. Check out the exact source revision in a separate vendor directory.
-2. Install its locked build dependencies and pack the compiled module.
-3. Install the archive and the compatible WDK wallet peer in your application.
-
-Build and install the pinned source with these commands:
+Install the published module and its compatible WDK wallet peer in your application:
 
 ```bash
-git clone https://github.com/butternetwork/wdk-protocol-swidge-butter.git vendor/butter-module
-git -C vendor/butter-module checkout --detach c1f373d9876668502e0b23b351cb1e4db6328b7c
-npm --prefix vendor/butter-module ci
-npm pack ./vendor/butter-module --pack-destination "$PWD"
-npm install ./butternetwork-wdk-protocol-swidge-butter-0.2.0.tgz @tetherto/wdk-wallet@1.0.0-beta.17
+npm install @butternetwork/wdk-protocol-swidge-butter@0.2.0 @tetherto/wdk-wallet@1.0.0-beta.17
 ```
 
-The pack step runs the source build. Retain the archive and its revision in your dependency records. Installing the older npm release does not reproduce this snapshot. Transaction execution also requires a suitable wallet module; the [execution guide](/sdk/swidge-modules/swidge-butter/guides/execute-swidge) installs the EVM dependencies.
+Transaction execution also requires a suitable wallet module. The [execution guide](/sdk/swidge-modules/swidge-butter/guides/execute-swidge) installs the EVM dependencies.
 
 ## Configure the client
 
-Set `BUTTER_ENTRANCE` in the server process environment. Create an accountless [`ButterSwidgeProtocol`](/sdk/swidge-modules/swidge-butter/api-reference#constructor) for Ethereum:
+Save the JavaScript blocks below, in order, in `quote-butter.mjs`. Set `BUTTER_ENTRANCE` in the server process environment, then create an accountless [`ButterSwidgeProtocol`](/sdk/swidge-modules/swidge-butter/api-reference#constructor) for Ethereum:
 
 ```javascript
 import ButterSwidgeProtocol, {
@@ -110,6 +98,12 @@ console.log('Estimated USDt output:', formatTokenAmount(quote.toTokenAmount, USD
 console.log('Minimum USDt output:', formatTokenAmount(quote.toTokenAmountMin, USDt_DECIMALS))
 console.log('Expiry (Unix seconds):', quote.expiry)
 console.log('Destination validation:', quote.destinationGuarantees)
+```
+
+Run the file with your configured environment:
+
+```bash
+node quote-butter.mjs
 ```
 
 Show each `fees[]` entry with its own token, chain, amount, and inclusion flag. Do not add amounts across different assets. Quotes do not enforce execution fee caps. `enforced` describes built-in same-chain EVM validation; cross-chain and adapter destination guarantees are `quoted-only`.

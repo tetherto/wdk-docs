@@ -40,6 +40,7 @@ import {
   validateLightningAddress,
   validateSolanaAddress,
   validateSparkAddress,
+  validateTonAddress,
   validateTronAddress,
   validateUmaAddress,
   resolveUmaUsername
@@ -121,15 +122,17 @@ import {
 ## Runtime notes
 
 - `@tetherto/wdk-utils` exports plain functions. There is no client object to initialize.
-- The package publishes a default module entrypoint through `index.js` and a Bare runtime entrypoint through `bare.js`. The dependency versions currently resolved for a fresh beta.11 installation require Bare `1.28.0` or later.
-- `validateAddress()` dispatches the CAIP-2 namespaces `bip122`, `eip155`, `solana`, `spark`, and `tron` to their chain validators. Unsupported namespaces return `UNSUPPORTED_CHAIN`, and malformed chain IDs return `INVALID_CHAIN_ID`.
+- The package publishes a default module entrypoint through `index.js` and a Bare runtime entrypoint through `bare.js`. With `bare-module` 6.4.0, the beta.12 dependency tree requires Bare `1.29.4` or later.
+- `validateAddress()` dispatches the CAIP-2 namespaces `bip122`, `eip155`, `solana`, `spark`, `ton`, and `tron` to their chain validators. Unsupported namespaces return `UNSUPPORTED_CHAIN`, and malformed chain IDs return `INVALID_CHAIN_ID`.
 - For `bip122` and `spark`, the chain reference selects the expected network. A missing, unknown, or incompatible reference returns `NETWORK_MISMATCH`. Other supported namespaces validate the address format but do not enforce the reference value.
 - Successful Bitcoin and Spark validators return `compatibleNetworks`, because some address formats are valid on more than one network. WDK Utils validates structure and network compatibility, not account existence, ownership, or recipient intent.
+- `validateTonAddress()` accepts raw TON addresses and user-friendly base64/base64url addresses. It checks the checksum only for user-friendly inputs and does not enforce mainnet/testnet compatibility. See [TON validation](/tools/wdk-utils/api-reference#validatetonaddressaddress) for result types and failures.
 - `validateSolanaAddress()` accepts base58-encoded 32-byte public keys, including off-curve program-derived addresses. Solana has no address checksum, so the helper cannot detect every mistyped address.
 - `splitMnemonic()` accepts valid 12-, 15-, 18-, 21-, or 24-word English BIP-39 phrases. It returns hex-encoded Shamir shares and supports threshold schemes from 2-of-2 through 255-of-255.
 - `combineMnemonic()` verifies an embedded 32-bit integrity checksum before returning the reconstructed phrase. The checksum normally detects accidental corruption, but it can collide and does not authenticate shares.
 - `encrypt()` requires `globalThis.crypto.getRandomValues`. In Node.js, `splitMnemonic()` uses the dependency's `node:crypto` implementation; browser and React Native paths require `globalThis.crypto.getRandomValues`. In React Native, load `react-native-get-random-values` before importing `@tetherto/wdk-utils` when the runtime does not provide secure random bytes. In Bare, import from the package root so the Bare entrypoint provides the Node-compatible crypto path; do not load the React Native polyfill.
 - `parseBip21Request()` accepts `bitcoin:` URIs with a validated Bitcoin address and optional `amount`, `label`, and `message` parameters.
+- `parseBip21Request()` and `parseEip681Request()` reject raw non-ASCII query text with `INVALID_FORMAT`. Percent-encode query values, for example `Caf%C3%A9` for `Café`. The BIP-21 encoder handles encoding for its `label` and `message` fields.
 - `encodeBip21Request()` validates the Bitcoin address and amount before returning a `bitcoin:` URI.
 - `encrypt()` returns a versioned payload with hex-encoded `salt`, `iv`, `tag`, and `ciphertext` fields plus the scrypt cost parameters used for key derivation.
 - `decrypt()` reads the scrypt cost parameters from the encrypted payload when they are present.
@@ -169,6 +172,17 @@ const tron = validateTronAddress('TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH')
 const uma = validateUmaAddress('$you@uma.money')
 ```
 
+Validate a TON address using [`validateTonAddress()`](/tools/wdk-utils/api-reference#validatetonaddressaddress). This address is a format-validation fixture; a successful result does not verify the account or its owner:
+
+```javascript title="Validate A TON Address"
+import { validateTonAddress } from '@tetherto/wdk-utils'
+
+const result = validateTonAddress(
+  'EQDKbjIcfM6ezt8KjKJJLshZJJSqX7XOA4ff-W72r5gqPrHF'
+)
+// { success: true, type: 'ton' }
+```
+
 You can decode BOLT11 invoice details before presenting a payment request:
 
 ```javascript title="Decode A BOLT11 Invoice"
@@ -179,19 +193,19 @@ const invoice = decodeBolt11(
 )
 ```
 
-You can parse and encode a BIP-21 Bitcoin payment request:
+Parse a BIP-21 Bitcoin payment request with a percent-encoded label, or pass the original label to `encodeBip21Request()` to encode it:
 
 ```javascript title="Handle A BIP-21 Request"
 import { encodeBip21Request, parseBip21Request } from '@tetherto/wdk-utils'
 
 const parsed = parseBip21Request(
-  'bitcoin:1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH?amount=0.001&label=Coffee'
+  'bitcoin:1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH?amount=0.001&label=Caf%C3%A9'
 )
 
 const encoded = encodeBip21Request({
   address: '1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH',
   amount: '0.001',
-  label: 'Coffee'
+  label: 'Café'
 })
 ```
 

@@ -92,6 +92,15 @@ export const customTree: Node[] = [
       configuration('/sdk/wallet-modules/wallet-evm/configuration'),
       apiReference('/sdk/wallet-modules/wallet-evm/api-reference'),
     ]),
+    folder('Private transfers (Hinkal)', '/sdk/wallet-modules/wallet-evm-hinkal', 'Shield', [
+      usage('/sdk/wallet-modules/wallet-evm-hinkal/usage'),
+      guides([
+        page('Send Private Tokens', '/sdk/wallet-modules/wallet-evm-hinkal/guides/send-private-tokens'),
+        page('Recover Shielded Funds', '/sdk/wallet-modules/wallet-evm-hinkal/guides/recover-shielded-funds'),
+      ]),
+      configuration('/sdk/wallet-modules/wallet-evm-hinkal/configuration'),
+      apiReference('/sdk/wallet-modules/wallet-evm-hinkal/api-reference'),
+    ]),
     folder('Smart accounts (ERC-4337)', '/sdk/wallet-modules/wallet-evm-erc-4337', 'ShieldCheck', [
       usage('/sdk/wallet-modules/wallet-evm-erc-4337/usage'),
       guides([
@@ -333,6 +342,14 @@ export const customTree: Node[] = [
     usage('/sdk/swidge-modules/swidge-0x/usage'),
     configuration('/sdk/swidge-modules/swidge-0x/configuration'),
     apiReference('/sdk/swidge-modules/swidge-0x/api-reference'),
+  ]),
+  folder('MoonPay Trade', '/sdk/swidge-modules/swidge-moonpay-trade', 'Waypoints', [
+    usage('/sdk/swidge-modules/swidge-moonpay-trade/usage'),
+    guides([
+      page('Execute a Swidge', '/sdk/swidge-modules/swidge-moonpay-trade/guides/execute-swidge'),
+    ]),
+    configuration('/sdk/swidge-modules/swidge-moonpay-trade/configuration'),
+    apiReference('/sdk/swidge-modules/swidge-moonpay-trade/api-reference'),
   ]),
   folder('Butter Network', '/sdk/swidge-modules/swidge-butter', 'Waypoints', [
     usage('/sdk/swidge-modules/swidge-butter/usage'),

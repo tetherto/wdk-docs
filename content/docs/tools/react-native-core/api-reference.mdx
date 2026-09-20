@@ -50,7 +50,7 @@ Must be placed at the root of your component tree. All hooks in this library req
 | `children` | `React.ReactNode` | **required** | Child components |
 
 <Callout type="warn">
-Starting in `v1.0.0-beta.17`, `enableAutoInitialization`, `currentUserId`, and `clearSensitiveDataOnBackground` are no longer provider props. `requireBiometrics`, which was removed earlier, is also not accepted by beta.18. The app owns wallet identity, background-locking behavior, and biometric or other authentication checks.
+Starting in `v1.0.0-beta.17`, `enableAutoInitialization`, `currentUserId`, and `clearSensitiveDataOnBackground` are no longer provider props. `requireBiometrics`, which was removed earlier, is also not accepted by beta.19. The app owns wallet identity, background-locking behavior, and biometric or other authentication checks.
 </Callout>
 
 ### Example
@@ -183,15 +183,15 @@ Hook for wallet lifecycle operations: create, restore, lock, unlock, delete, and
 Only one wallet can be active. Call and await `lock()` before creating or restoring a different identity. To select a wallet that is already stored, use `switchWallet()` or lock and then unlock that wallet explicitly. `createWallet()`, `restoreWallet()`, `lock()`, `unlock()`, `switchWallet()`, and `createTemporaryWallet()` use a fail-fast mutex, so an overlapping guarded call rejects instead of queuing. The mutex timeout does not cancel an already-running underlying operation. `switchWallet()` is serialized, but it is not transactional: it locks first and does not restore the previous wallet if the new unlock fails.
 
 <Callout type="error">
-`deleteWallet()` and `clearTemporaryWallet()` are not protected by that mutex in beta.18. Deleting even an inactive wallet resets shared local worklet lifecycle state, while the Bare worklet and IPC remain running; this is not remote key cleanup or memory zeroization. The underlying secure-storage deletion can also be partially completed if individual storage operations fail. Authenticate and explicitly confirm destructive deletion, verify another recovery path first, serialize it against every lifecycle operation in the app, call and await `lock()` before deleting the active wallet, and verify the stored wallet inventory afterward.
+`deleteWallet()` and `clearTemporaryWallet()` are not protected by that mutex in beta.19. Deleting even an inactive wallet resets shared local worklet lifecycle state, while the Bare worklet and IPC remain running; this is not remote key cleanup or memory zeroization. The underlying secure-storage deletion can also be partially completed if individual storage operations fail. Authenticate and explicitly confirm destructive deletion, verify another recovery path first, serialize it against every lifecycle operation in the app, call and await `lock()` before deleting the active wallet, and verify the stored wallet inventory afterward.
 </Callout>
 
 <Callout type="error">
-`lock()` is an application-state boundary, not a zeroization guarantee. Beta.18 clears the active ID, local addresses, and local initialization flags, but it does not terminate the Bare worklet or send a remote cleanup request. Do not claim that calling it proves seeds or keys were erased from worklet memory.
+`lock()` is an application-state boundary, not a zeroization guarantee. Beta.19 clears the active ID, local addresses, and local initialization flags, but it does not terminate the Bare worklet or send a remote cleanup request. Do not claim that calling it proves seeds or keys were erased from worklet memory.
 </Callout>
 
 <Callout type="warn">
-React Native Core beta.18 does not enforce biometrics before wallet lifecycle or key-access methods. Authenticate in the app before invoking these methods. For app-background locking, close the authenticated UI boundary immediately and retry `lock()` after any in-flight guarded operation settles; a mutex rejection does not queue or cancel that operation.
+React Native Core beta.19 does not enforce biometrics before wallet lifecycle or key-access methods. Authenticate in the app before invoking these methods. For app-background locking, close the authenticated UI boundary immediately and retry `lock()` after any in-flight guarded operation settles; a mutex rejection does not queue or cancel that operation.
 </Callout>
 
 #### Advanced Crypto Methods
