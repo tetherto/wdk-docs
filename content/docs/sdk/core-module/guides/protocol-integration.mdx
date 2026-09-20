@@ -137,7 +137,7 @@ try {
 
 ### Bridging Assets
 
-Bridge beta.10 requires a directly constructed standard account that retains its RPC URL or EIP-1193 provider. Instantiate the bridge with that account, approve the source-chain spender, and then call `bridge()`.
+Bridge beta.10 requires a directly constructed standard account that retains its RPC URL or EIP-1193 provider. Instantiate the bridge with that account. Before calling `bridge()`, [prepare and confirm a bounded allowance](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens#confirm-the-source-token-allowance) for the same source token, spender, and amount. Reuse that confirmed allowance in the example below.
 
 <Callout type="warn">
 This compatibility path does not use `wdk.getAccount()`, so WDK transaction policies and middleware do not decorate `bridgeAccount`. Keep required application checks before approval and bridge execution. Account-level options such as `transactionMaxFee` remain available, but they do not replace WDK policy rules.
@@ -154,12 +154,6 @@ const bridgeAccount = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 const usdt0 = new Usdt0ProtocolEvm(bridgeAccount)
 
 try {
-  await bridgeAccount.approve({
-    token: '0x...', // ERC20 token address
-    spender: '0x...', // OFT or bridge spender address
-    amount: 1000000n
-  })
-
   const result = await usdt0.bridge({
     targetChain: 'ton',
     recipient: 'UQBla...', // TON address
