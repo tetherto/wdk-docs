@@ -114,7 +114,7 @@ Starting in `1.0.0-beta.10`:
 - `fee` is in source-native base units for native gas, paymaster-token base units for token-paid gas, or zero for sponsored gas.
 - The protocol numerically adds `fee + bridgeFee` when enforcing `bridgeMaxFee`.
 
-Native-gas and sponsored flows use compatible units. Do not interpret the token-paid sum as one currency or configure a cap for that mode without an application-owned conversion. Equality with the cap is rejected.
+Native-gas and sponsored flows use compatible units. Token-paid gas mixes paymaster-token and source-native units, so beta.10 cannot provide a meaningful single-currency `bridgeMaxFee` spending cap for that mode. A separate quote cannot bind a converted cap because `bridge()` requotes during execution. Equality with the cap is rejected.
 
 ## Supported routes
 

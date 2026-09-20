@@ -120,7 +120,9 @@ The code set is not a closed protocol enum. The daemon and WDK dependencies can 
 | `MISSING_CONFIG` for history | Configure `indexer.baseUrl` and, when required, `WDK_INDEXER_API_KEY` |
 | `MISSING_CONFIG` for buy or sell | Configure all `ramp.moonpay` values |
 | `ENVIRONMENT_MISMATCH` | Use MoonPay `sandbox` with a testnet or `production` with a mainnet |
-| `QUOTE_REJECTED` | Inspect each protocol failure, then correct its configuration or try a supported token pair, network pair, amount, or installed protocol |
+| `QUOTE_REJECTED` | Inspect every protocol failure. For a Velora ERC-20 route, follow the [allowance prerequisite](/cli/guides/swap-and-bridge#prepare-a-velora-token-allowance); do not guess the spender or approval amount. Then correct configuration or try a supported pair or amount |
+| Built-in protocol package reported missing | Reinstall `@tetherto/wdk-cli@1.0.0-beta.5`; `wdk module add` rejects built-in packages even when the runtime suggestion recommends it |
+| Custom module reported `not installed` or `version mismatch` | Run `wdk module add --name PACKAGE` to repair its stored custom pin after reviewing the exact package |
 | `NETWORK_ERROR`, `TIMEOUT`, or `SERVER_ERROR` | Check the RPC/indexer endpoint and retry only when repeating the operation is safe |
 | Text error with empty stdout | Without `--json`, treat it as an argument/help parsing failure and inspect stderr |
 
@@ -133,7 +135,7 @@ Some successful aggregate operations omit failed items:
 - `wdk get history` without `--token` ignores failed token batch items and returns successful transfers.
 - `wdk swap` and `wdk bridge` return successful route previews or executions with unsuccessful protocol quotes listed under `skipped`.
 
-These commands can exit `0` with an incomplete aggregate or route result. If completeness matters, query each required network or token separately and inspect every skipped protocol before acting.
+These commands can exit `0` with an incomplete aggregate or route result. If completeness matters, query each required network or token separately and inspect every skipped protocol before acting. A successful beta.5 cross-network swap preview is not proof that its selected provider received the destination network; do not execute that route shape.
 
 ***
 

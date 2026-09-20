@@ -2555,7 +2555,7 @@ Most users invoke `wdk`. The CLI and MCP integrations manage the other two binar
 | `wdk get` | Derive addresses and read balances, transfer history, or normalized transaction receipts |
 | `wdk message` | Sign a message or verify its signature with the selected wallet account |
 | `wdk send` | Preview or broadcast native and registered-token transfers |
-| `wdk swap` | Quote or execute the best available same-network or cross-network token swap route |
+| `wdk swap` | Quote or execute same-network token swaps; read the beta.5 cross-network limitation before using `--to-network` |
 | `wdk bridge` | Quote or execute an exact-input, same-token route between networks |
 | `wdk buy`, `wdk sell` | Create MoonPay on-ramp or off-ramp URLs |
 | `wdk config` | Read, update, reset, or locate local configuration |
@@ -2880,7 +2880,7 @@ The result reports `valid: true` or `valid: false` for that account, message, an
 
 ### `wdk swap`
 
-Quotes or executes a same-network or cross-network token swap.
+Quotes or executes a token swap. Same-network swaps are the documented beta.5 path; see the warning below before using the accepted cross-network option.
 
 | Option | Required | Default | Description |
 | --- | --- | --- | --- |
@@ -2889,9 +2889,9 @@ Quotes or executes a same-network or cross-network token swap.
 | `--to-token <token>` | Yes | None | Registered destination token |
 | `--amount-in <value>` | One amount required | None | Exact decimal amount to sell |
 | `--amount-out <value>` | One amount required | None | Exact decimal amount to receive |
-| `--to-network <network>` | No | Source network | Destination network for a cross-network swap |
+| `--to-network <network>` | No | Source network | Accepted destination network; unsafe in beta.5 because same-chain candidates can receive no destination |
 | `--recipient <address>` | No | Selected account | Destination-network recipient |
-| `--protocol <name>` | No | Best route | Restrict quoting to one protocol in the installed catalog |
+| `--protocol <name>` | No | Best route | Restrict quoting to one short key in the exact installed catalog; beta.5 has no protocol-list command |
 | `--wallet <name>` | No | Default wallet | Wallet selection |
 | `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
 | `--dry-run` | No | Off | Quote without executing |
@@ -2899,10 +2899,18 @@ Quotes or executes a same-network or cross-network token swap.
 Provide exactly one of `--amount-in` and `--amount-out`. Exact-input routing selects the successful quote with the highest output. Exact-output routing selects the quote with the lowest input. Separate gas and bridge fees are displayed but excluded from ranking because their denomination and inclusion differ between protocol types. Failed quote attempts appear under `skipped` when another protocol succeeds.
 
 <Callout type="error">
-Without `--dry-run`, `wdk swap` executes immediately. Execution requests fresh quotes, so its protocol and amounts can differ from an earlier preview. There is no daemon confirmation step.
+Without `--dry-run`, `wdk swap` executes immediately. Execution requests fresh quotes. Unless `--protocol` is set, the provider can change; amounts and fees can change even when it is set. Beta.5 exposes no CLI option that binds a minimum output, maximum input, fee, slippage limit, or expiry to the preview, and there is no daemon confirmation step.
 </Callout>
 
-If `--recipient` is omitted, the daemon derives an address on the destination network from the selected wallet and the same account index. `wdk module add` does not add a protocol to the installed routing catalog. See [Swap and Bridge](/cli/guides/swap-and-bridge) for the review workflow.
+<Callout type="error">
+Do not use `--to-network` for a beta.5 swap. Candidate selection can admit a same-chain swap provider, and the swap adapter omits the destination network from that provider's quote and execution options.
+</Callout>
+
+If `--recipient` is omitted, the daemon derives an address on the destination network from the selected wallet and the same account index. The preview output does not include that recipient, wallet, or index. Select all three explicitly and verify the destination address with `wdk get address --network NETWORK --wallet WALLET --index INDEX` before previewing.
+
+Velora beta.6 requires a prior allowance when the input is an ERC-20 token. Beta.5 does not approve automatically or expose the provider spender. Resolve the chain-specific spender with Velora SDK 9's [`swap.getSpender()`](https://github.com/VeloraDEX/sdk/blob/86679ae70686ad3f01ee29baba9033be0a1b742b/src/methods/swap/spender.ts#L33-L63) lookup, approve a bounded base-unit amount through the catalog-declared wallet method, verify a confirmed receipt with `success: true`, and read the allowance again. Native-token input has no ERC-20 allowance, and other protocols can manage approval differently. See [Call Module Methods](/cli/guides/call-module-methods#call-a-write-method).
+
+Beta.5 has no protocol-list command or MCP tool. Read the `protocols` object in its [exact released catalog](https://github.com/tetherto/wdk-cli/blob/09ab893506ca7221bc179cf3702d78958dfd4cd5/wdk.config.json#L62-L78) and compare it with the installed `wdk.config.json`; `wdk module list` does not list routing keys. `wdk module add` cannot add a routing entry or repair a built-in package. Reinstall `@tetherto/wdk-cli@1.0.0-beta.5` if a built-in dependency is missing. See [Swap and Bridge](/cli/guides/swap-and-bridge) for the complete workflow.
 
 ## Bridge Command
 
@@ -2917,12 +2925,12 @@ Quotes or executes an exact-input transfer of the same registered token between 
 | `--to-network <network>` | Yes | None | Different destination network |
 | `--amount <value>` | Yes | None | Exact decimal input amount |
 | `--recipient <address>` | No | Selected account | Destination-network recipient |
-| `--protocol <name>` | No | Best route | Restrict quoting to one protocol in the installed catalog |
+| `--protocol <name>` | No | Best route | Restrict quoting to one short key in the exact installed catalog; beta.5 has no protocol-list command |
 | `--wallet <name>` | No | Default wallet | Wallet selection |
 | `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
 | `--dry-run` | No | Off | Quote without executing |
 
-The source and destination networks must differ. The omitted-recipient behavior, ranking, skipped-protocol reporting, execution requote, and immediate-execution warning are the same as for `wdk swap`.
+The source and destination networks must differ. The omitted-recipient behavior, preview identity omission, ranking, skipped-protocol reporting, fresh execution quote, lack of CLI bounds relative to the preview, and immediate-execution warning are the same as for `wdk swap`.
 
 ## Fiat Ramp Commands
 
@@ -3100,7 +3108,7 @@ Lists built-in and custom modules with their pinned version, installed version, 
 
 When no version is supplied, the command resolves npm's current version once and stores that exact pin. When a suffix is supplied, beta.5 stores it verbatim and does not require exact semver, so tags and ranges are accepted even though they are unsafe for artifact pinning. It refuses to replace a built-in module or change an existing custom value in place. Remove the custom module before selecting a different literal version.
 
-The command verifies the default wallet passphrase when a wallet exists, locks a running daemon, runs `npm install --no-save PACKAGE@VERSION` inside the CLI installation, and records the pin under `customModules` in `config.json`. A package registered but missing or mismatched on disk can be repaired by running `module add` again without changing its pin.
+The command verifies the default wallet passphrase when a wallet exists, locks a running daemon, runs `npm install --no-save PACKAGE@VERSION` inside the CLI installation, and records the pin under `customModules` in `config.json`. A custom package registered but missing or mismatched on disk can be repaired by running `module add` again without changing its pin. Built-in packages are rejected; reinstall the exact CLI version to repair them.
 
 ### `wdk module remove`
 
@@ -3381,10 +3389,10 @@ Custom packages are installed with npm's `--no-save` option. A later npm operati
 
 `wdk swap` and `wdk bridge` discover protocols from the installed CLI package's `wdk.config.json`. Each protocol has a short name, a module package, general configuration, and optional per-network overrides. The CLI passes the general configuration merged with the selected network's override to that protocol module.
 
-Use `--protocol NAME` to restrict a request to one short name in this installed catalog. Omitting the option lets the CLI quote every installed protocol that supports the requested operation.
+Use `--protocol NAME` to restrict a request to one short name in this installed catalog. Beta.5 has no protocol-list command or MCP tool. Read the `protocols` object in its [exact released `wdk.config.json`](https://github.com/tetherto/wdk-cli/blob/09ab893506ca7221bc179cf3702d78958dfd4cd5/wdk.config.json#L62-L78) and compare it with the file shipped in your installation because later catalogs can differ. `wdk module list` reports package names rather than routing keys. Omitting `--protocol` lets the CLI quote the candidates it classifies for the requested operation.
 
 <Callout type="info">
-`wdk module add` can install a package needed by an existing catalog entry, but it does not create a swap or bridge protocol entry. The beta.5 CLI has no command for adding protocol definitions to the routing catalog.
+`wdk module add` manages custom modules. It rejects built-in catalog packages and cannot create a swap or bridge protocol entry. Reinstall `@tetherto/wdk-cli@1.0.0-beta.5` to repair a missing built-in package. The beta.5 CLI has no command for adding protocol definitions to the routing catalog.
 </Callout>
 
 See [Swap and Bridge](/cli/guides/swap-and-bridge) for routing and execution behavior.
@@ -3525,7 +3533,9 @@ wdk method call \
   --network ethereum \
   --name getAllowance \
   --token 0xTOKEN_ADDRESS \
-  --spender 0xSPENDER_ADDRESS
+  --spender 0xSPENDER_ADDRESS \
+  --wallet WALLET \
+  --index 0
 ```
 
 The selected wallet must be unlocked because method calls run against a wallet account in the daemon. Use `--wallet <name>` and `--index <n>` when the default selection is not the intended account.
@@ -3567,10 +3577,25 @@ wdk method call \
   --name approve \
   --token 0xTOKEN_ADDRESS \
   --spender 0xSPENDER_ADDRESS \
-  --amount 1000000
+  --amount 1000000 \
+  --wallet WALLET \
+  --index 0
 ```
 
-Review the token, spender, allowance amount, network, and account before running this command. Avoid unlimited allowances unless the user explicitly requires and understands them.
+Review the token, spender, allowance amount, network, wallet, and account index before running this command. Use the provider's documented chain-specific lookup, such as Velora's [`swap.getSpender()`](https://github.com/VeloraDEX/sdk/blob/86679ae70686ad3f01ee29baba9033be0a1b742b/src/methods/swap/spender.ts#L33-L63), when it supplies the approval target. Do not guess the spender, copy it from another chain, or infer it from a transaction recipient. Approve only the amount required in base units; avoid unlimited allowances unless the user explicitly requires and understands them.
+
+The EVM `approve` method returns a transaction result containing a hash. Wait for that exact approval with the same wallet and account, require both `finality: confirmed` and `success: true` in the receipt, then call `getAllowance` again:
+
+```bash title="Terminal"
+wdk get transaction \
+  --network ethereum \
+  --hash APPROVAL_TRANSACTION_HASH \
+  --finality confirmed \
+  --wallet WALLET \
+  --index 0
+```
+
+On Ethereum mainnet, the beta.5 EVM wallet rejects changing a nonzero USD₮ allowance directly to another nonzero value. When that exact case applies, approve `0`, verify a confirmed receipt with `success: true`, and verify the zero allowance before submitting the new bounded approval.
 
 ## Use JSON Output
 
@@ -4052,7 +4077,9 @@ The code set is not a closed protocol enum. The daemon and WDK dependencies can 
 | `MISSING_CONFIG` for history | Configure `indexer.baseUrl` and, when required, `WDK_INDEXER_API_KEY` |
 | `MISSING_CONFIG` for buy or sell | Configure all `ramp.moonpay` values |
 | `ENVIRONMENT_MISMATCH` | Use MoonPay `sandbox` with a testnet or `production` with a mainnet |
-| `QUOTE_REJECTED` | Inspect each protocol failure, then correct its configuration or try a supported token pair, network pair, amount, or installed protocol |
+| `QUOTE_REJECTED` | Inspect every protocol failure. For a Velora ERC-20 route, follow the [allowance prerequisite](/cli/guides/swap-and-bridge#prepare-a-velora-token-allowance); do not guess the spender or approval amount. Then correct configuration or try a supported pair or amount |
+| Built-in protocol package reported missing | Reinstall `@tetherto/wdk-cli@1.0.0-beta.5`; `wdk module add` rejects built-in packages even when the runtime suggestion recommends it |
+| Custom module reported `not installed` or `version mismatch` | Run `wdk module add --name PACKAGE` to repair its stored custom pin after reviewing the exact package |
 | `NETWORK_ERROR`, `TIMEOUT`, or `SERVER_ERROR` | Check the RPC/indexer endpoint and retry only when repeating the operation is safe |
 | Text error with empty stdout | Without `--json`, treat it as an argument/help parsing failure and inspect stderr |
 
@@ -4065,7 +4092,7 @@ Some successful aggregate operations omit failed items:
 - `wdk get history` without `--token` ignores failed token batch items and returns successful transfers.
 - `wdk swap` and `wdk bridge` return successful route previews or executions with unsuccessful protocol quotes listed under `skipped`.
 
-These commands can exit `0` with an incomplete aggregate or route result. If completeness matters, query each required network or token separately and inspect every skipped protocol before acting.
+These commands can exit `0` with an incomplete aggregate or route result. If completeness matters, query each required network or token separately and inspect every skipped protocol before acting. A successful beta.5 cross-network swap preview is not proof that its selected provider received the destination network; do not execute that route shape.
 
 ***
 
@@ -4624,15 +4651,48 @@ Environment variables can leak through process inspection, child-process inherit
 URL: https://docs.wdk.tether.io/cli/guides/swap-and-bridge
 Description: Preview and execute token swaps and cross-network bridges with WDK CLI
 
-WDK CLI can quote installed swap and bridge protocols, select a route, and execute it from an unlocked wallet. Use `wdk token list` to find the registered network and token names accepted by these commands.
+WDK CLI beta.5 can quote installed swap and bridge protocols, select a route, and execute it from an unlocked wallet. Use `wdk token list` to find the registered network and token names accepted by these commands.
 
 Before you begin, [set up and unlock a wallet](/cli/guides/get-started) and check the source and destination token names with `wdk token list`. Built-in entries need no registration. If an entry is missing, [add a custom token](/cli/guides/manage-tokens#add-a-custom-token). Fund the source account with the tokens and native gas asset needed for execution.
 
 If you register a custom or overriding native token, read [Manage Tokens](/cli/guides/manage-tokens) first: `wdk token add` cannot retain `nativeId`, so routing works only when the selected protocol discovers the asset by symbol or does not require a native route identifier. Custom native tokens are not guaranteed to swap or bridge.
 
 <Callout type="error">
-`wdk swap` and `wdk bridge` execute immediately unless you add `--dry-run`. Preview first, inspect the route, amounts, fees, recipient, and skipped protocols, then decide whether to execute.
+`wdk swap` and `wdk bridge` execute immediately unless you add `--dry-run`. A preview is advisory: execution obtains fresh quotes. `--protocol` can restrict the provider, but beta.5 has no CLI option that binds a minimum output, maximum input, fee, slippage limit, or expiry to the preview.
 </Callout>
+
+## Select The Account And Recipient
+
+Choose the wallet and account index explicitly. Derive the address for the destination network before previewing; for a same-network swap, use the source network here:
+
+```bash title="Destination address"
+wdk get address \
+  --network DESTINATION_NETWORK \
+  --wallet WALLET \
+  --index 0
+```
+
+Pass the same `--wallet`, `--index`, and returned address as `--recipient` to the preview and execution commands. Beta.5 swap and bridge previews do not include the wallet name, account index, or resolved recipient in text or JSON output, so the preview cannot verify an omitted default.
+
+## Prepare A Velora Token Allowance
+
+<Callout type="warn">
+Velora beta.6 requires an ERC-20 allowance before both `quoteSwap` and `swap`. WDK CLI beta.5 does not create that approval or expose the Velora spender address. Use the provider's chain-specific lookup described below. Do not guess the spender, copy it from another chain, or infer it from the swap transaction recipient.
+</Callout>
+
+For a Velora ERC-20 input, use the Market swap spender returned by [Velora SDK 9's `swap.getSpender()`](https://github.com/VeloraDEX/sdk/blob/86679ae70686ad3f01ee29baba9033be0a1b742b/src/methods/swap/spender.ts#L33-L63). The CLI's bundled adapter uses API version `6.2`. The equivalent read-only lookup is:
+
+```bash title="Look up the source-chain approval target"
+curl --fail --silent --show-error \
+  'https://api.paraswap.io/adapters/contracts?network=1&version=6.2'
+```
+
+This example looks up Ethereum (`network=1`). Set `network` to your source chain's numeric ID. Use the response's `TokenTransferProxy` field as the spender. The CLI and MCP do not expose this lookup; do not proceed if you cannot verify it for the selected chain.
+
+1. With the same wallet, account index, and source network, read `getAllowance` and submit a bounded `approve` only if needed. See [Call Module Methods](/cli/guides/call-module-methods#call-a-write-method), including the USD₮ allowance-reset case.
+2. Approve no more than the intended exact-input amount in token base units. Wait for the approval to reach `confirmed`, require `success: true`, and read the allowance again before quoting.
+
+Native-token input does not use an ERC-20 allowance, and other protocols can manage approvals differently. For an exact-output Velora request, beta.5 does not expose the required input before this prerequisite; do not guess an approval amount.
 
 ## Preview A Swap
 
@@ -4644,6 +4704,9 @@ wdk swap \
   --from-token SOURCE_TOKEN \
   --to-token DESTINATION_TOKEN \
   --amount-in 100 \
+  --wallet WALLET \
+  --index 0 \
+  --recipient RECIPIENT_ADDRESS \
   --dry-run
 ```
 
@@ -4655,26 +4718,36 @@ wdk swap \
   --from-token SOURCE_TOKEN \
   --to-token DESTINATION_TOKEN \
   --amount-out 100 \
+  --wallet WALLET \
+  --index 0 \
+  --recipient RECIPIENT_ADDRESS \
   --dry-run
 ```
 
-Replace the uppercase placeholders with values from `wdk network list` and `wdk token list`. Add `--to-network DESTINATION_NETWORK` for a cross-network swap.
+Replace the uppercase placeholders with values from `wdk network list`, `wdk token list`, and the address check above.
+
+<Callout type="error">
+Do not use `wdk swap --to-network` with beta.5. The command accepts the option, but route selection can admit a same-chain swap provider and then omit the destination network from that provider's quote and execution calls. No forced-protocol workaround has been verified for this guide.
+</Callout>
 
 The ranking compares token amounts only. Separate gas and bridge fees can use different denominations or already be included in a provider quote, so they do not affect route selection. Review both the on-top and included fee lines. A successful result can also list protocols under `skipped` when those protocols failed to quote.
 
 ## Execute A Swap
 
-Run the same command without `--dry-run` only after reviewing the preview:
+Run the same command without `--dry-run` only if you accept a fresh quote with no CLI minimum-output, maximum-input, fee, or expiry bound relative to the preview:
 
 ```bash title="Execution"
 wdk swap \
   --network SOURCE_NETWORK \
   --from-token SOURCE_TOKEN \
   --to-token DESTINATION_TOKEN \
-  --amount-in 100
+  --amount-in 100 \
+  --wallet WALLET \
+  --index 0 \
+  --recipient RECIPIENT_ADDRESS
 ```
 
-Execution requests new quotes and can select a different route or return different amounts than the earlier preview. WDK CLI does not ask for another confirmation.
+Unless `--protocol` is set, execution can select a different protocol. Its amounts and fees can differ even when the provider is restricted. WDK CLI does not ask for another confirmation. Do not execute through beta.5 when your transaction policy requires enforceable output or fee bounds relative to the preview.
 
 ## Preview And Execute A Bridge
 
@@ -4686,20 +4759,24 @@ wdk bridge \
   --token TOKEN \
   --to-network DESTINATION_NETWORK \
   --amount 100 \
+  --wallet WALLET \
+  --index 0 \
+  --recipient RECIPIENT_ADDRESS \
   --dry-run
 ```
 
-The source and destination networks must differ. After reviewing the preview, remove `--dry-run` to execute. Execution requotes before choosing and running a route.
+The source and destination networks must differ. Removing `--dry-run` executes a fresh quote request, with the same identity omissions and lack of CLI limits bound to the preview described above.
 
-## Choose The Recipient And Protocol
+## Choose A Protocol
 
-If `--recipient` is omitted, WDK CLI derives the destination-network address from the same wallet and account index. An explicit recipient must be valid for the destination network.
+Beta.5 has no protocol-list command or MCP tool. Before passing `--protocol NAME`, read the `protocols` object in the [`wdk.config.json` for the exact beta.5 source revision](https://github.com/tetherto/wdk-cli/blob/09ab893506ca7221bc179cf3702d78958dfd4cd5/wdk.config.json#L62-L78) and compare it with the file shipped in your installation. Later versions can differ, and `wdk module list` reports package names rather than routing keys.
 
-Use `--protocol NAME` to restrict quoting to one protocol already registered in the installed CLI catalog. `wdk module add` installs a wallet-module package for custom networks; it does not add a swap or bridge protocol to this routing catalog.
+`wdk module add` manages custom modules and cannot create a routing entry or repair a built-in catalog package. If a built-in protocol package is missing, reinstall the pinned CLI with `npm install -g @tetherto/wdk-cli@1.0.0-beta.5`.
 
 ## Next Steps
 
 - [API Reference](/cli/api-reference#swap-command)
+- [Call Module Methods](/cli/guides/call-module-methods)
 - [Use the MCP Server](/cli/guides/use-mcp-server#preview-and-confirm-transactions)
 - [Handle Errors](/cli/guides/handle-errors)
 - [Security Model](/cli/reference/security-model)
@@ -4821,7 +4898,7 @@ This configuration requires the client process to find `wdk-mcp` on its `PATH`. 
 | `sign_message` | Yes | Sign an arbitrary message with the selected account key. |
 | `verify_message` | Yes | Verify a message and signature against the selected account key. |
 | `get_transaction` | Yes | Read a normalized receipt, optionally waiting for confirmed or final status. |
-| `swap_token` | Yes | Preview or execute a same-network or cross-network token swap. |
+| `swap_token` | Yes | Preview or execute a token swap; beta.5's `toNetwork` path has a route-selection limitation described below. |
 | `bridge_token` | Yes | Preview or execute an exact-input, same-token bridge between networks. |
 | `buy_crypto` | Yes | Create a signed MoonPay buy URL. |
 | `sell_crypto` | Yes | Create a signed MoonPay sell URL. |
@@ -4841,10 +4918,11 @@ This is a boundary of the MCP tool surface, not an operating-system sandbox. An 
 
 `send_token`, `swap_token`, and `bridge_token` default to `dryRun: true`. The recommended client workflow is:
 
-1. Call the tool without `dryRun`, or with `dryRun: true`.
-2. Show the wallet, account index, networks, tokens, recipient, amounts, route, fees, and skipped protocols that apply.
-3. Ask the user to confirm those exact values.
-4. Call the same tool with `dryRun: false` only after confirmation.
+1. Select the wallet and account index explicitly. For a swap or bridge, call `get_address` with the same `wallet`, `index`, and destination `network`, then pass its returned address as `recipient`.
+2. Call the transaction tool without `dryRun`, or with `dryRun: true`.
+3. Show the retained request identity and every value returned by the preview. Swap and bridge previews do not echo the wallet, account index, or recipient, so label those as separately verified request values rather than preview output.
+4. Explain that swap and bridge execution makes a fresh quote request. Unless `protocol` is supplied, the provider can change; amounts and fees can change even when it is supplied. Ask whether to proceed without a minimum output, maximum input, fee, or expiry bound relative to the preview.
+5. Call the same tool with `dryRun: false` only after confirmation.
 
 The following examples are argument objects for `send_token`. See [Swap and Bridge](/cli/guides/swap-and-bridge) for the fields used by `swap_token` and `bridge_token`.
 
@@ -4872,12 +4950,16 @@ Example `send_token` execution request after confirmation:
 ```
 
 <Callout type="error">
-The preview-and-confirm sequence is guidance for the AI client; the daemon does not enforce it. A direct `send_token`, `swap_token`, or `bridge_token` call with `dryRun: false` executes when the selected wallet is unlocked and the request is otherwise valid.
+The preview-and-confirm sequence is guidance for the AI client; the daemon does not enforce it. A direct `send_token`, `swap_token`, or `bridge_token` call with `dryRun: false` executes when the selected wallet is unlocked and the request is otherwise valid. `protocol` can restrict the provider, but beta.5 has no MCP field that binds a minimum output, maximum input, fee, slippage limit, or expiry to a swap or bridge preview.
 </Callout>
 
-For `swap_token`, provide exactly one of the decimal-string fields `amountIn` and `amountOut`. `toNetwork` is optional. For `bridge_token`, provide the exact-input `amount`; the same registered token moves between two different networks. If `recipient` is omitted, the daemon derives the destination address from the selected wallet and the same account index.
+For `swap_token`, provide exactly one of the decimal-string fields `amountIn` and `amountOut`. The schema accepts `toNetwork`, but do not use it with beta.5: candidate selection can admit a same-chain swap provider, and the adapter does not pass the destination network to that provider. For `bridge_token`, provide the exact-input `amount`; the same registered token moves between two different networks. If `recipient` is omitted, the daemon derives the destination address from the selected wallet and the same account index, but the preview does not return the resolved address.
 
-Swap and bridge execution requests fresh quotes. The route, amounts, or skipped protocols can therefore differ from the earlier preview. Exact-input routing ranks successful quotes by highest output, and exact-output routing ranks them by lowest input. Separate gas and bridge fees are shown but excluded from route ranking. See [Swap and Bridge](/cli/guides/swap-and-bridge).
+Swap and bridge execution requests fresh quotes. The route, amounts, fees, or skipped protocols can therefore differ from the earlier preview. Exact-input routing ranks successful quotes by highest output, and exact-output routing ranks them by lowest input. Separate gas and bridge fees are shown but excluded from route ranking.
+
+Velora beta.6 requires an allowance before quoting or executing with an ERC-20 input. Beta.5 does not expose the Velora spender or approve automatically. Resolve the chain-specific spender with Velora SDK 9's [`swap.getSpender()`](https://github.com/VeloraDEX/sdk/blob/86679ae70686ad3f01ee29baba9033be0a1b742b/src/methods/swap/spender.ts#L33-L63) lookup, then use `list_methods` and `call_method` to read the allowance and approve only a bounded base-unit amount. Use `get_transaction` to wait for `confirmed`, require `success: true`, and read the allowance again. Native-token input has no ERC-20 allowance, and other protocols can manage approval differently. Do not guess the spender or the required amount for an exact-output Velora request.
+
+Beta.5 has no MCP tool for listing protocol short names. Before supplying `protocol`, read the `protocols` object in the [exact released catalog](https://github.com/tetherto/wdk-cli/blob/09ab893506ca7221bc179cf3702d78958dfd4cd5/wdk.config.json#L62-L78) and compare it with the installed `wdk.config.json`. See [Swap and Bridge](/cli/guides/swap-and-bridge).
 
 ## Sign And Verify Messages
 
@@ -5043,11 +5125,11 @@ A custom module runs in the wallet daemon and can access unlocked wallet account
 
 Beta.5 reads swap and bridge protocol definitions from the installed `wdk.config.json`. A definition maps a short protocol name to a package and configuration. General configuration is shallow-merged with any per-network override before the daemon constructs the protocol.
 
-For a route preview, the daemon concurrently requests quotes from every installed protocol that supports the operation. An exact-input request selects the quote with the highest output; an exact-output request selects the quote with the lowest input. Separate gas and bridge fees are returned for review but excluded from ranking because their denomination and inclusion differ between protocol types. Quote failures do not discard successful quotes and are returned as `skipped`; the request fails with `QUOTE_REJECTED` if every candidate fails.
+For a route preview, the daemon concurrently requests quotes from installed protocols whose detected kind matches the requested command, with swidge protocols admitted for both commands. Beta.5 does not also check route shape: a cross-network swap can admit a same-chain swap protocol, and the swap adapter omits the destination chain from that provider's options. An exact-input request selects the quote with the highest output; an exact-output request selects the quote with the lowest input. Separate gas and bridge fees are returned for review but excluded from ranking because their denomination and inclusion differ between protocol types. Quote failures do not discard successful quotes and are returned as `skipped`; the request fails with `QUOTE_REJECTED` if every candidate fails.
 
-Execution is a separate request that quotes the candidates again and executes only that request's winner. It can therefore select a different route or amount than an earlier preview. An omitted recipient resolves to the destination-network account derived from the same wallet and account index.
+Execution is a separate request that quotes the candidates again and executes only that request's winner. Unless the caller supplies `protocol`, it can select a different provider; amounts and fees can change even when the provider is restricted. Beta.5 exposes no CLI or MCP minimum output, maximum input, fee, or expiry bound relative to the preview. An omitted recipient resolves to the destination-network account derived from the same wallet and account index, but swap and bridge preview results omit that recipient, wallet name, and index.
 
-`wdk module add` installs and records a wallet-module package. It does not add a routing protocol definition to the installed catalog.
+`wdk module add` installs and records a custom wallet-module package. It does not add a routing protocol definition and rejects built-in catalog packages. A missing built-in dependency requires reinstalling the exact CLI version.
 
 ## IPC and operating systems
 
@@ -5126,7 +5208,7 @@ Treat an unlocked WDK CLI wallet as a local hot wallet. Use a dedicated wallet w
 | PID file | Mode `0600` on macOS and Linux | Process discovery through other operating-system interfaces |
 | Wallet session | Per-wallet absolute TTL and explicit lock | Activity does not shorten or refresh exposure; `--ttl 0` has no automatic expiry |
 | In-memory cleanup | WDK disposal plus best-effort zeroing of retained mutable buffers | Immutable JavaScript strings, copies inside dependencies, swap, core dumps, crashes, or abrupt termination |
-| CLI and MCP sends, swaps, and bridges | Dry-run support and caller-level guidance | The daemon does not enforce a second confirmation or passphrase check for an unlocked wallet; route execution requotes and may differ from a preview |
+| CLI and MCP sends, swaps, and bridges | Dry-run support, optional provider restriction, and caller-level guidance | The daemon does not enforce a second confirmation or passphrase check for an unlocked wallet; route execution requotes without CLI output, fee, slippage, or expiry limits bound to the preview |
 | Message signing | Caller can display the message and request approval | Signing is immediate, with no dry run or daemon-enforced confirmation |
 | Chain-specific methods | Built-in catalog allowlists method names and validates declared parameters | A `write` label does not enforce confirmation, a dry run, or a fee limit |
 | Custom modules | User-configured version string and literal installed-version status | Tags or ranges, warn-only version mismatch, npm lifecycle scripts, inherited environment secrets, malicious package code, dependency compromise, or incompatible wallet-manager behavior |
@@ -5191,7 +5273,7 @@ Adding a custom module:
 - locks a running daemon before changing its module graph
 - makes the package name eligible for a custom-network spec
 
-`wdk module add` does not register a package as a swap or bridge protocol. Routing protocol entries come from the CLI's installed catalog. Installing a package named by an existing catalog entry still grants that package the same process and wallet access described below.
+`wdk module add` does not register a package as a swap or bridge protocol, and beta.5 rejects built-in catalog packages. Routing protocol entries and built-in pins come from the CLI release. Repair a missing built-in package by reinstalling the exact pinned CLI version; reserve `module add` for reviewed custom modules.
 
 When that network is later used, the package's default wallet-manager export runs inside the daemon with access to the unlocked account. The CLI checks package presence and literal version equality, but a mismatch only prints a warning; it does not block import or execution. The CLI does not sandbox the module, validate its publisher, audit its dependencies, or prove that it implements a compatible wallet manager.
 
@@ -5203,7 +5285,9 @@ Chain-specific `wdk method call` and MCP `call_method` requests are limited to m
 
 Message signing has the same authorization boundary. CLI `wdk message sign` and MCP `sign_message` sign immediately against an unlocked account. Show the exact wallet, network, account index, and message and require approval before signing.
 
-Swap and bridge previews are observations, not execution commitments. Execution requotes the available protocols and can select a different route or amount. Route ranking compares token input or output amounts and excludes separate gas and bridge fees. Review those fees, any included-fee note, and all `skipped` protocols before deciding whether to execute.
+Swap and bridge previews are observations, not execution commitments. Execution requotes; unless the caller restricts `protocol`, it can select a different provider, and amounts or fees can change even when the provider is fixed. Beta.5 exposes no CLI or MCP output, input, fee, slippage, or expiry limit bound to the preview. Preview output also omits the selected wallet, account index, and resolved recipient; select them explicitly and verify the destination address with `wdk get address` or MCP `get_address` before quoting. Route ranking compares token input or output amounts and excludes separate gas and bridge fees.
+
+Do not use the beta.5 cross-network swap option. Candidate selection can admit a same-chain swap provider, and the adapter then omits the destination network from that provider's calls. A Velora route with an ERC-20 input also requires a prior, bounded allowance to the chain-specific spender returned by Velora SDK 9's [`swap.getSpender()`](https://github.com/VeloraDEX/sdk/blob/86679ae70686ad3f01ee29baba9033be0a1b742b/src/methods/swap/spender.ts#L33-L63) lookup; beta.5 does not expose that lookup or approve automatically. Native-token input has no ERC-20 allowance, and other protocols can manage approval differently.
 
 See [Manage Modules](/cli/guides/manage-modules) and [Call Module Methods](/cli/guides/call-module-methods).
 
@@ -5291,8 +5375,8 @@ Before unlock:
 
 While unlocked:
 
-- preview the recipient, amount, networks, tokens, route, and fees before a send, swap, or bridge
-- treat a route preview as stale at execution time because execution requotes
+- select the wallet and account index explicitly, verify the destination address separately, and pass it as the recipient before a swap or bridge preview
+- treat a route preview as advisory because execution requotes without a minimum output, maximum input, fee, or expiry bound relative to the preview
 - inspect the exact message before signing it
 - require explicit confirmation for every chain-specific method marked `write`
 - remember that normal use does not refresh the timer
@@ -7511,7 +7595,7 @@ Standard EVM accounts can use every supported EVM source route with a matching t
 </Callout>
 
 <Callout type="warn">
-In beta.10, ERC-4337 `bridgeFee` uses source-native base units. Token-paid gas still returns `fee` in paymaster-token units, so that mode can mix denominations in `fee + bridgeFee`. Review the [fee-unit limitation](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#fee-units-and-bridgemaxfee) before configuring `bridgeMaxFee`.
+In beta.10, ERC-4337 `bridgeFee` uses source-native base units. Token-paid gas still returns `fee` in paymaster-token units, so that mode mixes denominations in `fee + bridgeFee` and cannot provide a meaningful single-currency `bridgeMaxFee` spending cap. Native-gas and sponsored flows use compatible units; see the [fee-unit limitation](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#fee-units-and-bridgemaxfee).
 </Callout>
 
 ## Next Steps
@@ -7801,7 +7885,7 @@ type Erc4337BridgeConfig = Erc4337QuoteConfig & {
 | ERC-4337 with sponsored gas | `0` | Source-chain native base units |
 
 <Callout type="warn">
-In `1.0.0-beta.10`, the ERC-4337 helper returns LayerZero's `nativeFee` as `bridgeFee`. Native-gas and sponsored flows therefore have compatible `fee` and `bridgeFee` units. Token-paid gas still mixes a paymaster-token `fee` with a source-native `bridgeFee`, and another compatible account can expose its own quote denomination. Do not interpret a mixed-unit sum as a total monetary cost. Set a cap only after confirming compatible units. The equality boundary is rejected.
+In `1.0.0-beta.10`, the ERC-4337 helper returns LayerZero's `nativeFee` as `bridgeFee`. Native-gas and sponsored flows therefore have compatible `fee` and `bridgeFee` units. Token-paid gas still mixes a paymaster-token `fee` with a source-native `bridgeFee`, and another compatible account can expose its own quote denomination. Do not interpret a mixed-unit sum as a total monetary cost. Beta.10 cannot provide a meaningful single-currency `bridgeMaxFee` spending cap for token-paid gas; a separate quote cannot bind a converted cap because `bridge()` requotes during execution. The equality boundary is rejected.
 </Callout>
 
 ### Recipient validation
@@ -8141,10 +8225,10 @@ The `bridgeMaxFee` option rejects `bridge()` when the implementation's `fee + br
 
 **Type:** `number | bigint` (optional)
 
-For `WalletAccountEvm`, both fields use the source chain's native base unit, such as wei on Ethereum and Arbitrum. Other compatible accounts retain their own `quoteSendTransaction()` fee denomination, while the single-transaction path still returns `bridgeFee` in source native base units. Confirm the units match before setting a cap.
+For `WalletAccountEvm`, both fields use the source chain's native base unit, such as wei on Ethereum and Arbitrum. Other compatible accounts retain their own `quoteSendTransaction()` fee denomination, while the single-transaction path still returns `bridgeFee` in source native base units. A cap is meaningful only when the two returned fields use the same denomination.
 
 <Callout type="warn">
-Starting in `1.0.0-beta.10`, an ERC-4337 helper flow returns `bridgeFee` in source-native base units. Native-gas and sponsored flows therefore use compatible units for `fee + bridgeFee`. Token-paid gas still returns `fee` in paymaster-token base units and `bridgeFee` in native base units, so do not treat that sum as one currency or set `bridgeMaxFee` for that mode without an application-owned conversion.
+Starting in `1.0.0-beta.10`, an ERC-4337 helper flow returns `bridgeFee` in source-native base units. Native-gas and sponsored flows therefore use compatible units for `fee + bridgeFee`. Token-paid gas still returns `fee` in paymaster-token base units and `bridgeFee` in native base units. Beta.10 has no meaningful single-currency `bridgeMaxFee` spending cap for token-paid gas, so do not configure that option as a token-paid spending limit.
 </Callout>
 
 **Examples:**
@@ -8669,7 +8753,7 @@ const cappedBridge = new Usdt0ProtocolEvm(account, {
 ```
 
 <Callout type="warn">
-For standard accounts, both values use source-chain native base units. ERC-4337 accounts can also pass `bridgeMaxFee` in the second argument to [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config), but their returned fee fields can use different denominations. See [Bridge with ERC-4337](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337) before applying that cap.
+For standard accounts, both values use source-chain native base units, so the cap has one meaningful denomination. ERC-4337 native-gas and sponsored flows also use compatible units. Token-paid gas returns a paymaster-token `fee` and a source-native `bridgeFee`; beta.10 cannot provide a meaningful single-currency `bridgeMaxFee` spending cap for that mode. See [Bridge with ERC-4337](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337) for the fee-unit limitation.
 </Callout>
 
 ## Next Steps
@@ -8736,7 +8820,11 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account)
 
 ## Run a gasless bridge with paymaster options
 
-You can execute [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config) with a second argument that includes `paymasterToken` and an optional `bridgeMaxFee` override. Do not submit a separate `account.approve()` call for this flow. The normal ERC-4337 batch is an ERC20 approval to the source-chain transaction-value helper followed by the helper bridge call, submitted in one UserOperation. On Ethereum mainnet, when the resolved token is USD₮ at `0xdAC17F958D2ee523a2206206994597C13D831ec7`, the protocol queries the same ERC-4337 account's allowance for that token and helper spender. If the current allowance and computed `approveAmount` are both greater than zero, it prepends `approve(spender, 0)`, then `approve(spender, approveAmount)`, then the helper bridge call. `quoteBridge()` uses the same ordering for a `WalletAccountReadOnlyEvmErc4337`. Standard EVM accounts and every other chain/token path are unchanged.
+You can execute [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config) with a second argument that includes `paymasterToken`. Do not submit a separate `account.approve()` call for this flow. The normal ERC-4337 batch is an ERC20 approval to the source-chain transaction-value helper followed by the helper bridge call, submitted in one UserOperation. On Ethereum mainnet, when the resolved token is USD₮ at `0xdAC17F958D2ee523a2206206994597C13D831ec7`, the protocol queries the same ERC-4337 account's allowance for that token and helper spender. If the current allowance and computed `approveAmount` are both greater than zero, it prepends `approve(spender, 0)`, then `approve(spender, approveAmount)`, then the helper bridge call. `quoteBridge()` uses the same ordering for a `WalletAccountReadOnlyEvmErc4337`. Standard EVM accounts and every other chain/token path are unchanged.
+
+<Callout type="warn">
+In `1.0.0-beta.10`, `bridgeFee` for this helper flow is in source-native base units. Native-gas and sponsored flows use compatible units. Token-paid gas still returns the account `fee` in paymaster-token units, so `fee + bridgeFee` is not one currency and beta.10 cannot provide a meaningful single-currency `bridgeMaxFee` spending cap for that mode. `bridge()` requotes during execution, so a separate quote cannot bind a converted cap to the submitted operation.
+</Callout>
 
 ```javascript title="Gasless bridge with paymasterToken"
 const USDT_TOKEN_ADDRESS = process.env.USDT_SOURCE_TOKEN_ADDRESS
@@ -8768,10 +8856,6 @@ try {
 
 <Callout type="info">
 The bundled approval sequence and helper call produce one UserOperation hash. For the Ethereum mainnet USD₮ reset case, the sequence is `approve(spender, 0)`, `approve(spender, approveAmount)`, then the helper call; otherwise it is `approve(spender, approveAmount)` followed by the helper call. The protocol approves enough source token for the amount plus its helper-calculated bridge fee and tolerance.
-</Callout>
-
-<Callout type="warn">
-In `1.0.0-beta.10`, `bridgeFee` for this helper flow is in source-native base units. Native-gas and sponsored flows use compatible units. Token-paid gas still returns the account `fee` in paymaster-token units, so do not treat `fee + bridgeFee` as one currency or set `bridgeMaxFee` for that mode without an application-owned conversion.
 </Callout>
 
 <Callout type="warn">
@@ -8833,7 +8917,7 @@ Use the direct constructor for bridge beta.10. Do not pass an account derived by
 
 ## Instantiate the bridge protocol
 
-You can create a [`Usdt0ProtocolEvm`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference) instance with the [`new Usdt0ProtocolEvm(account, config?)`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference) constructor. Optional `bridgeMaxFee` rejects a bridge when the implementation's combined fee value is at or above the cap:
+You can create a [`Usdt0ProtocolEvm`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference) instance with the [`new Usdt0ProtocolEvm(account, config?)`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference) constructor. For standard accounts, optional `bridgeMaxFee` rejects a bridge when the implementation's combined fee value is at or above the cap:
 
 ```javascript title="Construct Usdt0ProtocolEvm"
 import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
@@ -8843,7 +8927,7 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 })
 ```
 
-For standard EVM accounts, `fee` and `bridgeFee` are source-chain native base units. Starting in beta.10, ERC-4337 `bridgeFee` also uses source-native base units. Token-paid gas still reports `fee` in paymaster-token units, so read [Fee units and `bridgeMaxFee`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#fee-units-and-bridgemaxfee) before setting a cap for that mode.
+For standard EVM accounts, `fee` and `bridgeFee` are source-chain native base units. Starting in beta.10, ERC-4337 `bridgeFee` also uses source-native base units. Token-paid gas still reports `fee` in paymaster-token units, so beta.10 cannot provide a meaningful single-currency `bridgeMaxFee` spending cap for that mode. Native-gas and sponsored ERC-4337 flows use compatible units; see [Fee units and `bridgeMaxFee`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#fee-units-and-bridgemaxfee).
 
 <Callout type="info">
 The constructor also accepts the shared WDK account interfaces. [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config) requires a callable `sendTransaction()` method and EVM transaction support. Read [account requirements](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements) before supplying a custom account or combining ERC-4337 package versions.
@@ -49944,6 +50028,10 @@ React Native Core beta.20 does not enforce biometrics and does not accept a `req
 
 For background locking, revoke the app's authenticated UI state synchronously, then call and catch `lock()`. The lifecycle mutex rejects instead of queuing when another guarded operation is running, so track a pending lock and retry it after the in-flight guarded operation settles. Require authentication again on foreground and do not treat the SDK session as locked until a retry succeeds.
 
+**Worklet startup reports an error**
+
+After fixing the reported bundle, configuration, or native startup cause, restart the application so it creates a fresh JavaScript runtime. React Native Core beta.20 has [no supported in-process recovery from a failed worklet start](/tools/react-native-core/api-reference#startup-failure-recovery); remounting `WdkAppProvider` in the same runtime does not reset its readiness state.
+
 **Metro cache issues**
 
 If you see stale module errors after upgrading, clear the Metro cache:
@@ -53710,6 +53798,8 @@ function WalletScreen({
 }
 ```
 
+If startup reaches `ERROR` before the worklet starts, follow the [beta.20 startup failure recovery guidance](/tools/react-native-core/api-reference#startup-failure-recovery). Remounting `WdkAppProvider` in the same JavaScript runtime is not a recovery path.
+
 For a full integration guide, see the [React Native Quickstart](/start-building/react-native-quickstart).
 
 ## Bundle Configuration
@@ -53920,6 +54010,12 @@ The `state` property is a discriminated union on the `status` field:
 | `'LOCKED'` | `walletId?: string` | No wallet is unlocked; the optional ID is a hint when a specific wallet is being targeted |
 | `'READY'` | `walletId: string` | The active wallet identity matches the wallet loaded in the worklet |
 | `'ERROR'` | `error: Error` | Worklet initialization or a wallet lifecycle operation failed |
+
+#### Startup failure recovery
+
+<Callout type="warn">
+If beta.20 reports an `ERROR` before the worklet starts, do not rely on an in-process retry. An asynchronous startup failure can retrigger initialization while the singleton readiness promise remains rejected, and remounting `WdkAppProvider` in the same JavaScript runtime does not recreate that promise. Fix the reported bundle, configuration, or native startup cause, then restart the application so it creates a fresh JavaScript runtime before retrying.
+</Callout>
 
 ### Example
 

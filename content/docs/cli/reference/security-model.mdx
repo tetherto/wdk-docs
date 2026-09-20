@@ -21,7 +21,7 @@ Treat an unlocked WDK CLI wallet as a local hot wallet. Use a dedicated wallet w
 | PID file | Mode `0600` on macOS and Linux | Process discovery through other operating-system interfaces |
 | Wallet session | Per-wallet absolute TTL and explicit lock | Activity does not shorten or refresh exposure; `--ttl 0` has no automatic expiry |
 | In-memory cleanup | WDK disposal plus best-effort zeroing of retained mutable buffers | Immutable JavaScript strings, copies inside dependencies, swap, core dumps, crashes, or abrupt termination |
-| CLI and MCP sends, swaps, and bridges | Dry-run support and caller-level guidance | The daemon does not enforce a second confirmation or passphrase check for an unlocked wallet; route execution requotes and may differ from a preview |
+| CLI and MCP sends, swaps, and bridges | Dry-run support, optional provider restriction, and caller-level guidance | The daemon does not enforce a second confirmation or passphrase check for an unlocked wallet; route execution requotes without CLI output, fee, slippage, or expiry limits bound to the preview |
 | Message signing | Caller can display the message and request approval | Signing is immediate, with no dry run or daemon-enforced confirmation |
 | Chain-specific methods | Built-in catalog allowlists method names and validates declared parameters | A `write` label does not enforce confirmation, a dry run, or a fee limit |
 | Custom modules | User-configured version string and literal installed-version status | Tags or ranges, warn-only version mismatch, npm lifecycle scripts, inherited environment secrets, malicious package code, dependency compromise, or incompatible wallet-manager behavior |
@@ -86,7 +86,7 @@ Adding a custom module:
 - locks a running daemon before changing its module graph
 - makes the package name eligible for a custom-network spec
 
-`wdk module add` does not register a package as a swap or bridge protocol. Routing protocol entries come from the CLI's installed catalog. Installing a package named by an existing catalog entry still grants that package the same process and wallet access described below.
+`wdk module add` does not register a package as a swap or bridge protocol, and beta.5 rejects built-in catalog packages. Routing protocol entries and built-in pins come from the CLI release. Repair a missing built-in package by reinstalling the exact pinned CLI version; reserve `module add` for reviewed custom modules.
 
 When that network is later used, the package's default wallet-manager export runs inside the daemon with access to the unlocked account. The CLI checks package presence and literal version equality, but a mismatch only prints a warning; it does not block import or execution. The CLI does not sandbox the module, validate its publisher, audit its dependencies, or prove that it implements a compatible wallet manager.
 
@@ -98,7 +98,9 @@ Chain-specific `wdk method call` and MCP `call_method` requests are limited to m
 
 Message signing has the same authorization boundary. CLI `wdk message sign` and MCP `sign_message` sign immediately against an unlocked account. Show the exact wallet, network, account index, and message and require approval before signing.
 
-Swap and bridge previews are observations, not execution commitments. Execution requotes the available protocols and can select a different route or amount. Route ranking compares token input or output amounts and excludes separate gas and bridge fees. Review those fees, any included-fee note, and all `skipped` protocols before deciding whether to execute.
+Swap and bridge previews are observations, not execution commitments. Execution requotes; unless the caller restricts `protocol`, it can select a different provider, and amounts or fees can change even when the provider is fixed. Beta.5 exposes no CLI or MCP output, input, fee, slippage, or expiry limit bound to the preview. Preview output also omits the selected wallet, account index, and resolved recipient; select them explicitly and verify the destination address with `wdk get address` or MCP `get_address` before quoting. Route ranking compares token input or output amounts and excludes separate gas and bridge fees.
+
+Do not use the beta.5 cross-network swap option. Candidate selection can admit a same-chain swap provider, and the adapter then omits the destination network from that provider's calls. A Velora route with an ERC-20 input also requires a prior, bounded allowance to the chain-specific spender returned by Velora SDK 9's [`swap.getSpender()`](https://github.com/VeloraDEX/sdk/blob/86679ae70686ad3f01ee29baba9033be0a1b742b/src/methods/swap/spender.ts#L33-L63) lookup; beta.5 does not expose that lookup or approve automatically. Native-token input has no ERC-20 allowance, and other protocols can manage approval differently.
 
 See [Manage Modules](/cli/guides/manage-modules) and [Call Module Methods](/cli/guides/call-module-methods).
 
@@ -186,8 +188,8 @@ Before unlock:
 
 While unlocked:
 
-- preview the recipient, amount, networks, tokens, route, and fees before a send, swap, or bridge
-- treat a route preview as stale at execution time because execution requotes
+- select the wallet and account index explicitly, verify the destination address separately, and pass it as the recipient before a swap or bridge preview
+- treat a route preview as advisory because execution requotes without a minimum output, maximum input, fee, or expiry bound relative to the preview
 - inspect the exact message before signing it
 - require explicit confirmation for every chain-specific method marked `write`
 - remember that normal use does not refresh the timer

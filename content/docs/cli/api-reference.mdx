@@ -260,7 +260,7 @@ The result reports `valid: true` or `valid: false` for that account, message, an
 
 ### `wdk swap`
 
-Quotes or executes a same-network or cross-network token swap.
+Quotes or executes a token swap. Same-network swaps are the documented beta.5 path; see the warning below before using the accepted cross-network option.
 
 | Option | Required | Default | Description |
 | --- | --- | --- | --- |
@@ -269,9 +269,9 @@ Quotes or executes a same-network or cross-network token swap.
 | `--to-token <token>` | Yes | None | Registered destination token |
 | `--amount-in <value>` | One amount required | None | Exact decimal amount to sell |
 | `--amount-out <value>` | One amount required | None | Exact decimal amount to receive |
-| `--to-network <network>` | No | Source network | Destination network for a cross-network swap |
+| `--to-network <network>` | No | Source network | Accepted destination network; unsafe in beta.5 because same-chain candidates can receive no destination |
 | `--recipient <address>` | No | Selected account | Destination-network recipient |
-| `--protocol <name>` | No | Best route | Restrict quoting to one protocol in the installed catalog |
+| `--protocol <name>` | No | Best route | Restrict quoting to one short key in the exact installed catalog; beta.5 has no protocol-list command |
 | `--wallet <name>` | No | Default wallet | Wallet selection |
 | `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
 | `--dry-run` | No | Off | Quote without executing |
@@ -279,10 +279,18 @@ Quotes or executes a same-network or cross-network token swap.
 Provide exactly one of `--amount-in` and `--amount-out`. Exact-input routing selects the successful quote with the highest output. Exact-output routing selects the quote with the lowest input. Separate gas and bridge fees are displayed but excluded from ranking because their denomination and inclusion differ between protocol types. Failed quote attempts appear under `skipped` when another protocol succeeds.
 
 <Callout type="error">
-Without `--dry-run`, `wdk swap` executes immediately. Execution requests fresh quotes, so its protocol and amounts can differ from an earlier preview. There is no daemon confirmation step.
+Without `--dry-run`, `wdk swap` executes immediately. Execution requests fresh quotes. Unless `--protocol` is set, the provider can change; amounts and fees can change even when it is set. Beta.5 exposes no CLI option that binds a minimum output, maximum input, fee, slippage limit, or expiry to the preview, and there is no daemon confirmation step.
 </Callout>
 
-If `--recipient` is omitted, the daemon derives an address on the destination network from the selected wallet and the same account index. `wdk module add` does not add a protocol to the installed routing catalog. See [Swap and Bridge](/cli/guides/swap-and-bridge) for the review workflow.
+<Callout type="error">
+Do not use `--to-network` for a beta.5 swap. Candidate selection can admit a same-chain swap provider, and the swap adapter omits the destination network from that provider's quote and execution options.
+</Callout>
+
+If `--recipient` is omitted, the daemon derives an address on the destination network from the selected wallet and the same account index. The preview output does not include that recipient, wallet, or index. Select all three explicitly and verify the destination address with `wdk get address --network NETWORK --wallet WALLET --index INDEX` before previewing.
+
+Velora beta.6 requires a prior allowance when the input is an ERC-20 token. Beta.5 does not approve automatically or expose the provider spender. Resolve the chain-specific spender with Velora SDK 9's [`swap.getSpender()`](https://github.com/VeloraDEX/sdk/blob/86679ae70686ad3f01ee29baba9033be0a1b742b/src/methods/swap/spender.ts#L33-L63) lookup, approve a bounded base-unit amount through the catalog-declared wallet method, verify a confirmed receipt with `success: true`, and read the allowance again. Native-token input has no ERC-20 allowance, and other protocols can manage approval differently. See [Call Module Methods](/cli/guides/call-module-methods#call-a-write-method).
+
+Beta.5 has no protocol-list command or MCP tool. Read the `protocols` object in its [exact released catalog](https://github.com/tetherto/wdk-cli/blob/09ab893506ca7221bc179cf3702d78958dfd4cd5/wdk.config.json#L62-L78) and compare it with the installed `wdk.config.json`; `wdk module list` does not list routing keys. `wdk module add` cannot add a routing entry or repair a built-in package. Reinstall `@tetherto/wdk-cli@1.0.0-beta.5` if a built-in dependency is missing. See [Swap and Bridge](/cli/guides/swap-and-bridge) for the complete workflow.
 
 ## Bridge Command
 
@@ -297,12 +305,12 @@ Quotes or executes an exact-input transfer of the same registered token between 
 | `--to-network <network>` | Yes | None | Different destination network |
 | `--amount <value>` | Yes | None | Exact decimal input amount |
 | `--recipient <address>` | No | Selected account | Destination-network recipient |
-| `--protocol <name>` | No | Best route | Restrict quoting to one protocol in the installed catalog |
+| `--protocol <name>` | No | Best route | Restrict quoting to one short key in the exact installed catalog; beta.5 has no protocol-list command |
 | `--wallet <name>` | No | Default wallet | Wallet selection |
 | `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
 | `--dry-run` | No | Off | Quote without executing |
 
-The source and destination networks must differ. The omitted-recipient behavior, ranking, skipped-protocol reporting, execution requote, and immediate-execution warning are the same as for `wdk swap`.
+The source and destination networks must differ. The omitted-recipient behavior, preview identity omission, ranking, skipped-protocol reporting, fresh execution quote, lack of CLI bounds relative to the preview, and immediate-execution warning are the same as for `wdk swap`.
 
 ## Fiat Ramp Commands
 
@@ -480,7 +488,7 @@ Lists built-in and custom modules with their pinned version, installed version, 
 
 When no version is supplied, the command resolves npm's current version once and stores that exact pin. When a suffix is supplied, beta.5 stores it verbatim and does not require exact semver, so tags and ranges are accepted even though they are unsafe for artifact pinning. It refuses to replace a built-in module or change an existing custom value in place. Remove the custom module before selecting a different literal version.
 
-The command verifies the default wallet passphrase when a wallet exists, locks a running daemon, runs `npm install --no-save PACKAGE@VERSION` inside the CLI installation, and records the pin under `customModules` in `config.json`. A package registered but missing or mismatched on disk can be repaired by running `module add` again without changing its pin.
+The command verifies the default wallet passphrase when a wallet exists, locks a running daemon, runs `npm install --no-save PACKAGE@VERSION` inside the CLI installation, and records the pin under `customModules` in `config.json`. A custom package registered but missing or mismatched on disk can be repaired by running `module add` again without changing its pin. Built-in packages are rejected; reinstall the exact CLI version to repair them.
 
 ### `wdk module remove`
 

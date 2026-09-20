@@ -98,11 +98,11 @@ A custom module runs in the wallet daemon and can access unlocked wallet account
 
 Beta.5 reads swap and bridge protocol definitions from the installed `wdk.config.json`. A definition maps a short protocol name to a package and configuration. General configuration is shallow-merged with any per-network override before the daemon constructs the protocol.
 
-For a route preview, the daemon concurrently requests quotes from every installed protocol that supports the operation. An exact-input request selects the quote with the highest output; an exact-output request selects the quote with the lowest input. Separate gas and bridge fees are returned for review but excluded from ranking because their denomination and inclusion differ between protocol types. Quote failures do not discard successful quotes and are returned as `skipped`; the request fails with `QUOTE_REJECTED` if every candidate fails.
+For a route preview, the daemon concurrently requests quotes from installed protocols whose detected kind matches the requested command, with swidge protocols admitted for both commands. Beta.5 does not also check route shape: a cross-network swap can admit a same-chain swap protocol, and the swap adapter omits the destination chain from that provider's options. An exact-input request selects the quote with the highest output; an exact-output request selects the quote with the lowest input. Separate gas and bridge fees are returned for review but excluded from ranking because their denomination and inclusion differ between protocol types. Quote failures do not discard successful quotes and are returned as `skipped`; the request fails with `QUOTE_REJECTED` if every candidate fails.
 
-Execution is a separate request that quotes the candidates again and executes only that request's winner. It can therefore select a different route or amount than an earlier preview. An omitted recipient resolves to the destination-network account derived from the same wallet and account index.
+Execution is a separate request that quotes the candidates again and executes only that request's winner. Unless the caller supplies `protocol`, it can select a different provider; amounts and fees can change even when the provider is restricted. Beta.5 exposes no CLI or MCP minimum output, maximum input, fee, or expiry bound relative to the preview. An omitted recipient resolves to the destination-network account derived from the same wallet and account index, but swap and bridge preview results omit that recipient, wallet name, and index.
 
-`wdk module add` installs and records a wallet-module package. It does not add a routing protocol definition to the installed catalog.
+`wdk module add` installs and records a custom wallet-module package. It does not add a routing protocol definition and rejects built-in catalog packages. A missing built-in dependency requires reinstalling the exact CLI version.
 
 ## IPC and operating systems
 
