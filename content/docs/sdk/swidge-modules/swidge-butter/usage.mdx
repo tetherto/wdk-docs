@@ -1,0 +1,131 @@
+---
+title: Butter Network Swidge Usage
+description: Install the Butter module, discover provider data, and preview an exact-input quote without a wallet.
+docType: how-to
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+[Check prerequisites](#prerequisites), [install the module](#installation), [configure the client](#configure-the-client), [discover provider data](#discover-provider-data), and [preview a quote](#preview-a-quote). For support, see [Need Help?](#need-help). This flow does not submit transactions.
+
+## Prerequisites
+
+- [Node.js 22](https://nodejs.org/en/download) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
+- A Node application configured for ES modules, for example with `"type": "module"` in its `package.json`.
+- A Butter-issued `entrance` identifier accepted by the Router API. Obtain integration access through [Butter Network](https://www.butternetwork.io/); do not assume an example identifier is provisioned for your application.
+- Network access to the [configured Butter APIs](/sdk/swidge-modules/swidge-butter/configuration#api-access).
+
+## Installation
+
+Install the published module and its compatible WDK wallet peer in your application:
+
+```bash
+npm install @butternetwork/wdk-protocol-swidge-butter@0.2.0 @tetherto/wdk-wallet@1.0.0-beta.17
+```
+
+Transaction execution also requires a suitable wallet module. The [execution guide](/sdk/swidge-modules/swidge-butter/guides/execute-swidge) installs the EVM dependencies.
+
+## Configure the client
+
+Save the JavaScript blocks below, in order, in `quote-butter.mjs`. Set `BUTTER_ENTRANCE` in the server process environment, then create an accountless [`ButterSwidgeProtocol`](/sdk/swidge-modules/swidge-butter/api-reference#constructor) for Ethereum:
+
+```javascript
+import ButterSwidgeProtocol, {
+  parseTokenAmount,
+  formatTokenAmount,
+} from '@butternetwork/wdk-protocol-swidge-butter'
+
+const entrance = process.env.BUTTER_ENTRANCE?.trim()
+if (!entrance) throw new Error('Set your Butter-issued BUTTER_ENTRANCE')
+
+const protocol = new ButterSwidgeProtocol(undefined, {
+  sourceChainId: '1',
+  entrance,
+})
+```
+
+Authentication is optional at the module level, but Butter may require credentials for your integration. When needed, supply both `apiKeyId` and `apiSecret` and set `authMode: 'required'` in a server process. Never place the secret in browser or mobile code. See [API access](/sdk/swidge-modules/swidge-butter/configuration#api-access).
+
+## Discover provider data
+
+Retrieve runtime chain data with [`getSupportedChains()`](/sdk/swidge-modules/swidge-butter/api-reference#getsupportedchains):
+
+```javascript
+const chains = await protocol.getSupportedChains()
+console.log('Advertised chains:', chains.length)
+```
+
+Each entry includes an `execution` classification. `native` identifies built-in Router support; it does not prove that an account, matching RPC, or liquid route is available. Filter provider data through your application's supported-chain and asset policies before displaying it.
+
+Retrieve Ethereum's token catalog with [`getSupportedTokens()`](/sdk/swidge-modules/swidge-butter/api-reference#getsupportedtokens):
+
+```javascript
+const tokens = await protocol.getSupportedTokens({ fromChain: '1' })
+console.log('Catalog entries for Ethereum:', tokens.length)
+```
+
+The catalog is non-exhaustive. A token can be absent yet routable, and catalog membership does not guarantee a quote. Use chain-specific token identifiers and verify decimals before constructing amounts.
+
+## Preview a quote
+
+This example requests `0.001 ETH` to Ethereum USD₮. The USD₮ contract and six-decimal precision come from [Tether's supported protocols](https://tether.to/en/supported-protocols/). Butter must still accept the integration, pair, and amount; this example does not guarantee route availability.
+
+Create the intent with [`parseTokenAmount()`](/sdk/swidge-modules/swidge-butter/api-reference#parsetokenamount). `native` is the module's native-token identifier; the input uses Ethereum's 18 decimals:
+
+```javascript
+const ETHEREUM_USDt = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+const USDt_DECIMALS = 6
+
+const intent = Object.freeze({
+  fromToken: 'native',
+  toToken: ETHEREUM_USDt,
+  fromTokenAmount: parseTokenAmount('0.001', 18),
+  toChain: '1',
+  slippage: 0.01,
+})
+```
+
+Request the estimate with [`quoteSwidge()`](/sdk/swidge-modules/swidge-butter/api-reference#quoteswidge) and format the output with [`formatTokenAmount()`](/sdk/swidge-modules/swidge-butter/api-reference#formattokenamount):
+
+```javascript
+const quote = await protocol.quoteSwidge(intent)
+console.log('Estimated USDt output:', formatTokenAmount(quote.toTokenAmount, USDt_DECIMALS))
+console.log('Minimum USDt output:', formatTokenAmount(quote.toTokenAmountMin, USDt_DECIMALS))
+console.log('Expiry (Unix seconds):', quote.expiry)
+console.log('Destination validation:', quote.destinationGuarantees)
+```
+
+Run the file with your configured environment:
+
+```bash
+node quote-butter.mjs
+```
+
+Show each `fees[]` entry with its own token, chain, amount, and inclusion flag. Do not add amounts across different assets. Quotes do not enforce execution fee caps. `enforced` describes built-in same-chain EVM validation; cross-chain and adapter destination guarantees are `quoted-only`.
+
+The accountless quote belongs to this instance. For execution, create a bound instance and obtain a new quote with the explicit recipient, then pass its `routeHash` on that same instance. Do not transfer a quote pin between instances.
+
+## Next Steps
+
+<Cards>
+<Card title="Execute a Swidge" href="/sdk/swidge-modules/swidge-butter/guides/execute-swidge">
+Bind an EVM account, confirm an operation, and submit the pinned quote.
+</Card>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-butter/configuration">
+Review credentials, slippage, fee limits, and Router settings.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-butter/api-reference">
+Review exact options, result fields, and error classes.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
