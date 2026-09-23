@@ -5,11 +5,14 @@ description: HRPC and framed JSON-RPC infrastructure for running WDK inside a Ba
 
 Pear Worklet WDK is the low-level transport and handler layer for running WDK inside a Bare worklet. It provides an `HRPC` client and server helper, a separate framed JSON-RPC server entrypoint for native hosts, and request payloads for WDK, wallet, protocol, and generic-module operations.
 
-Powered by `@tetherto/pear-wrk-wdk`. These pages cover `v1.0.0-beta.14`.
+<Callout type="info">
+These pages reflect `@tetherto/pear-wrk-wdk@1.0.0-beta.15`. This release updates the HRPC schema and makes HRPC `dispose()` perform full disposal of hosted WDK state inside the running worklet.
+</Callout>
 
 ## Features
 
 - **Bare worklet bridge**: Connect a host app to a worklet through the shipped `HRPC` client and generated HRPC schema
+- **Binary secret transport**: Carry encryption keys and encrypted seed or entropy payloads as native `Buffer` fields over HRPC while keeping base64 strings at the JSON-RPC wire boundary
 - **Typed lifecycle requests**: Initialize WDK with `initializeWDK({ config, encryptionKey, encryptedSeed })` and tear it down with `dispose()`
 - **Selective wallet resets**: Re-register only the wallet modules listed in a new worklet `networks` config using `resetWdkWallets({ config })`
 - **Generic wallet and protocol calls**: Call account methods through `callMethod({ methodName, network, accountIndex, args, options })`, including Swidge protocols by name
@@ -35,7 +38,11 @@ The top-level package exports the `HRPC` runtime value. Import `registerRpcHandl
 </Callout>
 
 <Callout type="warn">
-Since beta.13, a missing wallet or protocol method returns `BAD_REQUEST` even if the caller supplies `options.defaultValue`. Beta.14 also removes `options.transformResult`. Handle unsupported methods and transform returned values in the host. The package does not export a pre-built WDK bundle.
+Beta.15 changes the HRPC secret fields from base64 strings to native `Buffer` values. It also removes `utils.crypto.generateEncryptionKey()` and changes `encrypt()`, `decrypt()`, and `encryptSecrets()` to accept or return buffers. Update both ends of an HRPC integration together. JSON-RPC continues to use base64 strings on the wire.
+</Callout>
+
+<Callout type="warn">
+The beta.15 HRPC schema carries no fields for `dispose()`, even though the published `DisposeRequest` type still declares `blockchains`. Every HRPC `dispose()` call requests full disposal. Use `resetWdkWallets()` to dispose and re-register selected wallets; framed JSON-RPC can send a selective `blockchains` request.
 </Callout>
 
 <Cards>

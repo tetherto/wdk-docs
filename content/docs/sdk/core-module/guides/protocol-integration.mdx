@@ -17,40 +17,27 @@ Global registration ensures that every account you retrieve already has the prot
 
 ### 1. Install Protocol Modules
 
-Install the [`@tetherto/wdk-protocol-swap-velora-evm`](https://www.npmjs.com/package/@tetherto/wdk-protocol-swap-velora-evm) and [`@tetherto/wdk-protocol-bridge-usdt0-evm`](https://www.npmjs.com/package/@tetherto/wdk-protocol-bridge-usdt0-evm) packages:
+Install the exact wallet and protocol releases used by the direct-account compatibility flows later in this guide:
 
 ```bash
-npm install @tetherto/wdk-protocol-swap-velora-evm && npm install @tetherto/wdk-protocol-bridge-usdt0-evm
+npm install --save-exact @tetherto/wdk-wallet-evm@1.0.0-beta.19 @tetherto/wdk-protocol-swap-velora-evm@1.0.0-beta.8 @tetherto/wdk-protocol-bridge-usdt0-evm@1.0.0-beta.10
 ```
 
 ### 2. Register in Code
 
-Now, import the protocol modules and register them with your WDK instance. This makes the protocol methods available to any account derived from that instance.
-
-First, import the necessary modules:
-
-```typescript title="Import Protocols"
-import veloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
-import usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
-```
-
-Then, register the protocols for the specific chains they support:
+Register a compatible protocol class for the specific chains it supports. This makes its methods available to accounts derived from that WDK instance.
 
 ```typescript title="Register Protocols"
-// Register protocols for specific chains
 const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, ethConfig)
-
-  // Register Velora Swap for Ethereum
-  .registerProtocol('ethereum', 'velora', veloraProtocolEvm, {
-    apiKey: 'YOUR_API_KEY'
-  })
-
-  // Register USDt0 Bridge for Ethereum
-  .registerProtocol('ethereum', 'usdt0', usdt0ProtocolEvm, {
-     ethereumRpcUrl: 'https://eth.drpc.org' // Configuration depends on the module
-  })
+  .registerProtocol('ethereum', 'swap', MySwapProtocol, swapProtocolConfig)
 ```
+
+`MySwapProtocol` is an illustrative class that extends `SwapProtocol`. Replace it with a provider whose constructor supports the manager account's provider shape.
+
+<Callout type="warn">
+Do not register Velora beta.8, USD₮0 bridge beta.10, or Aave beta.7 on a wallet-evm beta.19 manager account. These protocol constructors treat the manager's shared ethers `Provider` as EIP-1193 and reject it. Use a direct standard account with its original RPC URL or EIP-1193 provider for these exact combinations; never replace the account's internal provider field. For Aave, follow the [direct-account configuration](/sdk/lending-modules/lending-aave-evm/configuration#service-setup).
+</Callout>
 
 ## Use Protocols
 
@@ -119,46 +106,68 @@ Existing swap and bridge modules keep their current accessors for released modul
 
 ### Swapping Tokens
 
-Use `getSwapProtocol` to access registered swap services on any wallet account.
+Velora beta.8 requires a directly constructed standard account that retains its RPC URL or EIP-1193 provider when paired with wallet-evm beta.19. Approve the input token for the current Velora spender before running this example; see [Execute Swaps](/sdk/swap-modules/swap-velora-evm/guides/execute-swaps).
+
+<Callout type="warn">
+This compatibility path does not use `wdk.getAccount()`, so WDK transaction policies and middleware do not decorate `swapAccount`. Keep required application checks before approval and swap execution. The account-level `transactionMaxFee` and protocol-level `swapMaxFee` caps remain available, but they do not replace WDK policy rules.
+</Callout>
 
 ```typescript title="Swap Tokens"
-const ethAccount = await wdk.getAccount('ethereum', 0)
-const velora = ethAccount.getSwapProtocol('velora')
+import VeloraProtocolEvm from '@tetherto/wdk-protocol-swap-velora-evm'
+import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
-const result = await velora.swap({
-  tokenIn: '0x...', // Address of token to sell
-  tokenOut: '0x...', // Address of token to buy
-  tokenInAmount: 1000000n // Amount to swap
+const swapAccount = new WalletAccountEvm(seedPhrase, "0'/0/0", {
+  provider: 'https://eth.drpc.org',
+  transactionMaxFee: 5000000000000000n
 })
+const velora = new VeloraProtocolEvm(swapAccount, {
+  swapMaxFee: 200000000000000n
+})
+
+try {
+  const result = await velora.swap({
+    tokenIn: '0x...', // Address of the approved token to sell
+    tokenOut: '0x...', // Address of token to buy
+    tokenInAmount: 1000000n // Amount to swap
+  })
+} finally {
+  swapAccount.dispose()
+}
 ```
 
 ### Bridging Assets
 
-1. Use `getBridgeProtocol` to access cross-chain bridges.
-2. Approve the source-chain bridge spender for the token and amount.
-3. Call `bridge` from the bridge protocol to send tokens from one protocol to another.
+Bridge beta.10 requires a directly constructed standard account that retains its RPC URL or EIP-1193 provider. Instantiate the bridge with that account. Before calling `bridge()`, [prepare and confirm a bounded allowance](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens#confirm-the-source-token-allowance) for the same source token, spender, and amount. Reuse that confirmed allowance in the example below.
+
+<Callout type="warn">
+This compatibility path does not use `wdk.getAccount()`, so WDK transaction policies and middleware do not decorate `bridgeAccount`. Keep required application checks before approval and bridge execution. Account-level options such as `transactionMaxFee` remain available, but they do not replace WDK policy rules.
+</Callout>
 
 ```typescript title="Bridge Assets"
-const ethAccount = await wdk.getAccount('ethereum', 0)
-const usdt0 = ethAccount.getBridgeProtocol('usdt0')
+import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
+import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
-await ethAccount.approve({
-  token: '0x...', // ERC20 Token Address
-  spender: '0x...', // OFT or bridge spender address
-  amount: 1000000n
+const bridgeAccount = new WalletAccountEvm(seedPhrase, "0'/0/0", {
+  provider: 'https://eth.drpc.org',
+  transactionMaxFee: 5000000000000000n
 })
+const usdt0 = new Usdt0ProtocolEvm(bridgeAccount)
 
-const result = await usdt0.bridge({
-  targetChain: 'ton',
-  recipient: 'UQBla...', // TON address
-  token: '0x...', // ERC20 Token Address
-  amount: 1000000n,
-  oftContractAddress: '0x...' // Same address used as approval spender
-})
+try {
+  const result = await usdt0.bridge({
+    targetChain: 'ton',
+    recipient: 'UQBla...', // TON address
+    token: '0x...', // Same ERC20 token address
+    amount: 1000000n,
+    oftContractAddress: '0x...' // Same address used as approval spender
+  })
+} finally {
+  bridgeAccount.dispose()
+}
 ```
 
 <Callout type="info">
-**Protocol Availability:** If you try to access a protocol that hasn't been registered (e.g., `getSwapProtocol('uniswap')`), the SDK will throw an error. always ensure registration matches the ID you request.
+**Protocol Availability:** If you try to access a protocol that has not been registered (for example, `getSwapProtocol('uniswap')`), the SDK throws an error. Always ensure registration matches the ID you request.
 </Callout>
 
 ## Next Steps

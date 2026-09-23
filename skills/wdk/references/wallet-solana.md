@@ -32,6 +32,8 @@ import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 - `signTransaction()` returns a `FullySignedTransaction` from `@solana/transactions`; WDK does not re-export that type.
 - `quoteSendTransaction()` and `sendTransaction()` accept that signed value. Send broadcasts the exact wire bytes and rechecks `transactionMaxFee`.
 - ⚠️ Signing seals the recent blockhash or durable nonce. WDK does not refresh or re-sign a supplied signed transaction; submit it before its lifetime becomes invalid.
+- Starting in beta.15, the package root re-exports `AssertionError`, `MaximumFeeExceededError`, `NoSuchElementError`, `ProviderRequiredError`, `TimeoutError`, `ValueError`, and `WdkError`. Branch on those classes for wallet preconditions and keep a fallback for provider-native Solana RPC or program errors.
+- A base64 serialized transaction whose required signatures remain incomplete after this account signs throws a Solana error with code `SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING`; that Solana error class is not re-exported by WDK.
 
 ## Configuration
 

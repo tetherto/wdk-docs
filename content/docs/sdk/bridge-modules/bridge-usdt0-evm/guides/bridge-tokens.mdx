@@ -13,6 +13,32 @@ Before calling [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#b
 
 For placeholder values such as `USDT0_OFT_ADDRESS`, use the current token and bridge contract addresses from the [USD₮0 deployments](https://docs.usdt0.to/technical-documentation/deployments). For the route mapping used by the WDK package, see the package [`src/config.js`](https://github.com/tetherto/wdk-protocol-bridge-usdt0-evm/blob/main/src/config.js), especially `oftContract`, `legacyMeshContract`, and `xautOftContract`.
 
+## Confirm the source-token allowance
+
+Read the allowance for the exact source token and bridge spender before approving. If it already covers the amount, no new approval is needed. Ethereum USD₮ requires a non-zero allowance to be reset to zero before setting a new non-zero amount. The helper below uses that sequence whenever an existing allowance is insufficient.
+
+`approve()` returns a submitted transaction hash. Wait for each approval to be confirmed and successful before quoting or bridging:
+
+```javascript title="Prepare a bounded allowance"
+async function approveBridgeAmount(account, token, spender, amount) {
+  const allowance = await account.getAllowance(token, spender)
+  if (allowance >= amount) return
+
+  async function approveAndConfirm(value) {
+    const { hash } = await account.approve({ token, spender, amount: value })
+    const receipt = await account.waitForTransaction(hash)
+    if (receipt.finality === 'dropped' || receipt.success !== true) {
+      throw new Error('Bridge approval did not succeed')
+    }
+  }
+
+  if (allowance > 0n) await approveAndConfirm(0n)
+  await approveAndConfirm(amount)
+}
+```
+
+A timeout or failed approval stops this sequence. Check the submitted transaction before retrying; a timeout does not prove that it failed on-chain. Keep the token, spender, amount, and account unchanged between allowance preparation, quote, and execution.
+
 ## Run a standard EVM-to-EVM bridge
 
 You can move USD₮ on the source chain toward another EVM chain by calling [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config) with `targetChain`, `recipient`, `token`, and `amount` (token base units). Amount `1000000n` is 1 USD₮ when the token uses 6 decimals.
@@ -22,11 +48,7 @@ const USDT_TOKEN_ADDRESS = '0xdac17f958d2ee523a2206206994597c13d831ec7'
 const USDT0_OFT_ADDRESS = process.env.USDT0_OFT_ADDRESS
 const amount = 1000000n
 
-await account.approve({
-  token: USDT_TOKEN_ADDRESS,
-  spender: USDT0_OFT_ADDRESS,
-  amount
-})
+await approveBridgeAmount(account, USDT_TOKEN_ADDRESS, USDT0_OFT_ADDRESS, amount)
 
 const result = await bridgeProtocol.bridge({
   targetChain: 'arbitrum',
@@ -44,6 +66,8 @@ console.log('Bridge fee:', result.bridgeFee, 'source native base units')
 <Callout type="warn">
 `bridge()` does not approve token allowance for you. Use a bounded approval for the bridge amount rather than an unlimited allowance.
 </Callout>
+
+The returned hash identifies the source-chain transaction. Confirm that it succeeded, then verify destination receipt using the bridge's tracking information and the destination token balance before spending the bridged funds. Source-chain confirmation alone does not prove cross-chain settlement.
 
 ## Quote bridge fees
 
@@ -64,7 +88,7 @@ console.log('Bridge fee:', quote.bridgeFee, 'source native base units')
 Compare `quote.fee` and `quote.bridgeFee` to your risk limits before calling [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config).
 
 <Callout type="info">
-Some providers estimate the bridge transaction during [`quoteBridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#quotebridgeoptions-config). If the estimate fails because allowance is missing, approve the same `token`, `spender`, and `amount` before quoting.
+Some providers estimate the bridge transaction during [`quoteBridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#quotebridgeoptions-config). If the estimate requires allowance, use the [allowance preparation](#confirm-the-source-token-allowance) above with the same `token`, `spender`, and `amount` before quoting.
 </Callout>
 
 ## Override OFT contract and destination endpoint
@@ -76,11 +100,7 @@ const USDT_TOKEN_ADDRESS = '0xdac17f958d2ee523a2206206994597c13d831ec7'
 const USDT0_OFT_ADDRESS = process.env.USDT0_OFT_ADDRESS
 const amount = 1000000n
 
-await account.approve({
-  token: USDT_TOKEN_ADDRESS,
-  spender: USDT0_OFT_ADDRESS,
-  amount
-})
+await approveBridgeAmount(account, USDT_TOKEN_ADDRESS, USDT0_OFT_ADDRESS, amount)
 
 const result = await bridgeProtocol.bridge({
   targetChain: 'arbitrum',
@@ -126,9 +146,15 @@ const cappedBridge = new Usdt0ProtocolEvm(account, {
 ```
 
 <Callout type="warn">
-For standard accounts, both values use source-chain native base units. ERC-4337 accounts can also pass `bridgeMaxFee` in the second argument to [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config), but their returned fee fields can use different denominations. See [Bridge with ERC-4337](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337) before applying that cap.
+For standard accounts, both values use source-chain native base units, so the cap has one meaningful denomination. ERC-4337 native-gas and sponsored flows also use compatible units. Token-paid gas returns a paymaster-token `fee` and a source-native `bridgeFee`; beta.10 cannot provide a meaningful single-currency `bridgeMaxFee` spending cap for that mode. See [Bridge with ERC-4337](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337) for the fee-unit limitation.
 </Callout>
 
 ## Next Steps
 
 Bridge to Solana, TON, or TRON in [Bridge cross-ecosystem](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-cross-ecosystem), or switch to a smart account in [Bridge with ERC-4337](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337).
+
+---
+
+## Need Help?
+
+<SupportCards />
