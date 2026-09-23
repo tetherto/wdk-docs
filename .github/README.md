@@ -11,3 +11,4 @@ The Wallet Development Kit (WDK) is Tether's open-source toolkit that empowers d
 ## Contributing
 
 If you'd like to contribute or report issues, please open an issue or pull request.
+
