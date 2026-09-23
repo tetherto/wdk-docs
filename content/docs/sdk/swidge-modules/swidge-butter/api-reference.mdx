@@ -1,0 +1,314 @@
+---
+title: Butter Network Swidge API Reference
+description: Reference for Butter Swidge methods, quote and execution options, results, utilities, and errors.
+docType: reference
+schemaType: APIReference
+icon: Code
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Use `ButterSwidgeProtocol` to discover routes, request exact-input quotes, submit operations, and track their status.
+
+These pages document [`@butternetwork/wdk-protocol-swidge-butter@0.2.0`](https://www.npmjs.com/package/@butternetwork/wdk-protocol-swidge-butter/v/0.2.0). See [Usage](/sdk/swidge-modules/swidge-butter/usage#installation) for installation.
+
+## Package exports
+
+The package exports the same class as both its default export and named `ButterSwidgeProtocol` export. Import the class, utilities, and error constructors from the package root:
+
+```javascript
+import ButterSwidgeProtocol, {
+  ButterApiError,
+  ButterPartialExecutionError,
+  parseTokenAmount,
+  formatTokenAmount,
+  toButterSlippage,
+  toEvmPublicClient
+} from '@butternetwork/wdk-protocol-swidge-butter'
+```
+
+The package exports the [public types](#public-types) and [error constructors](#errors) listed below. Internal source files are not public package subpaths.
+
+Node uses the standard ESM entry, which requires a fetch implementation and `AbortController`. Importing the package from Bare selects its conditional entry and initializes the `bare-node-runtime` compatibility layer. See [Usage](/sdk/swidge-modules/swidge-butter/usage#prerequisites) for runtime and installation prerequisites.
+
+## ButterSwidgeProtocol
+
+The class extends WDK's `SwidgeProtocol`. Quoting and discovery can use `undefined` instead of an account. Execution requires an account capable of submitting the selected chain's transactions.
+
+### Constructor
+
+The constructor binds the source chain, optional account, and integration settings:
+
+```typescript
+new ButterSwidgeProtocol(
+  account: ButterAccount | undefined,
+  config: ButterSwidgeProtocolConfig
+)
+```
+
+`config` requires `sourceChainId` and a Butter-issued `entrance`. Construction validates configuration and performs no API request or transaction. See [Configuration](/sdk/swidge-modules/swidge-butter/configuration) for every field and execution prerequisite.
+
+`ButterAccount` requires `getAddress()`, which returns a string or a promise of a string. Execution additionally requires `sendTransaction(transaction)`. Allowance and receipt methods are optional in the type but may be required for ERC-20 execution or same-chain status. Built-in EVM execution requires an account that accepts Router calldata; matching the structural type alone does not establish chain compatibility.
+
+### Methods
+
+| Method | Purpose | Returns |
+|---|---|---|
+| `quoteSwidge(options)` | Obtain an exact-input quote without broadcasting. | `Promise<ButterSwidgeQuote>` |
+| `swidge(options, config?)` | Validate and submit an exact-input operation. | `Promise<SwidgeResult>` |
+| `getSwidgeStatus(id, options?)` | Read receipt or Butter settlement status. | `Promise<SwidgeStatusResult>` |
+| `getSupportedChains()` | Discover advertised chains and local execution modes. | `Promise<ButterSupportedChain[]>` |
+| `getSupportedTokens(options?)` | Read the selected chain's non-exhaustive token catalog. | `Promise<SwidgeSupportedToken[]>` |
+| `swap(options)` | Inherited same-chain swap delegation. | `Promise<SwapResult>` |
+| `quoteSwap(options)` | Inherited same-chain quote delegation. | `Promise<Omit<SwapResult, 'hash'>>` |
+| `bridge(options)` | Inherited bridge delegation using one token identifier. | `Promise<BridgeResult>` |
+| `quoteBridge(options)` | Inherited bridge quote delegation. | `Promise<Omit<BridgeResult, 'hash'>>` |
+
+#### quoteSwidge
+
+Accepts WDK `SwidgeOptions` and returns a non-binding `ButterSwidgeQuote`. Only exact-input options work; supplying `toTokenAmount` throws `ButterExactOutUnsupportedError` before any API request. An account is not required, although a Solana-source quote needs an explicit recipient when no account address is available.
+
+The quote includes an opaque `routeHash` and is cached only after its complete response has been validated. Quoting does not enforce configured fee caps. A successful quote does not guarantee that later execution will pass those caps, have sufficient lifetime, or complete settlement.
+
+`destinationGuarantees` is `enforced` for the built-in same-chain EVM path, which validates the destination minimum against Router calldata. It is `quoted-only` for cross-chain or adapter execution. This field describes the validation path; it does not prove that a sending account is configured.
+
+#### swidge
+
+Accepts `ButterSwidgeOptions` and an optional WDK `SwidgeProtocolConfig`. The second argument overrides only `maxNetworkFeeBps` and `maxProtocolFeeBps`. The module does not forward it to the account's sender.
+
+For a confirmed quote, pass its `routeHash` with the same route intent on the same protocol instance. A pin must match the cached route and have more than the configured execution margin remaining. It is consumed for one execution attempt, even if a later stage fails. Pins that are absent from the cache, stale, or mismatched throw `ButterActionRequiredError`; they are not silently replaced. Without a pin, execution can obtain a new route.
+
+<Callout type="warn">
+This method can submit approval changes and the source transaction. Obtain confirmation first and retain every returned transaction hash. Submission is not settlement. A failed attempt can leave transactions submitted or an allowance changed; reconcile wallet state before retrying.
+</Callout>
+
+The built-in EVM path verifies the Router target, source amount, token, sender, and fee data. For same-chain operations, it also validates the recipient, minimum output, and leftover recipient. Cross-chain validation trusts Butter's nested destination routing. Adapter execution bypasses these EVM calldata checks and requires host validation.
+
+For ERC-20 inputs, the module adjusts any differing allowance to the exact input amount, with a confirmed zero reset when necessary. See [EVM approvals](/sdk/swidge-modules/swidge-butter/configuration#evm-approvals). The result is returned after source submission; use [`getSwidgeStatus()`](#getswidgestatus) to track it.
+
+#### getSwidgeStatus
+
+Accepts a nonempty `id` string and optional `ButterSwidgeStatusOptions`. By default, `id` is the source transaction hash returned by `swidge()`. Set `byOrderId: true` only when the ID came separately from Butter; this module does not return order IDs.
+
+Same-chain operations recorded by the instance use receipt status. For an unrecorded EVM operation, configure a public client with transaction and receipt lookup so the module can attribute the transaction to an allowlisted Butter Router. Explicit chain hints do not bypass attribution. Unverifiable same-chain IDs throw an error. Solana and Tron same-chain operations require the executing instance's record and the account's receipt method.
+
+Cross-chain operations use Butter's status API. Reported source hashes and chain IDs are checked against the lookup and any retained operation context when available. The result contains `status` and any transaction records supplied by the status source.
+
+| Status source | Mapped status |
+|---|---|
+| Butter `0`, `crossing`, or `pending` | `pending` |
+| Butter `1`, `success`, or `completed` | `completed` |
+| Butter `6`, `refund`, or `refunded` | `refunded` |
+| Butter `action-required`, `refund-pending`, `failed`, `cancelled`, `expired`, or `partial` | Same status string |
+| Unrecognized Butter state | `pending` |
+| Same-chain receipt success, revert, or unknown outcome | `completed`, `failed`, or `pending`, respectively |
+
+A missing record or state throws `ButterApiError`. RPC failures propagate rather than being treated as absent transactions. Follow [Track Settlement](/sdk/swidge-modules/swidge-butter/guides/track-settlement) for bounded polling and partial-execution handling.
+
+#### getSupportedChains
+
+Takes no arguments. It combines Router-supported chains with metadata from Butter's token API and drops entries without usable IDs, types, or native-token symbols.
+
+Each `ButterSupportedChain` contains `id`, `name`, `type`, `nativeToken`, and `execution`. Execution modes are `native` for a configured built-in EVM Router path, `adapter` for a configured adapter, or `quote-only`. These modes describe local configuration, not account readiness or liquidity. The instance remains bound to its constructor's source chain.
+
+#### getSupportedTokens
+
+Accepts optional WDK `SwidgeSupportedTokensOptions`. Chain selection uses `fromChain`, then `toChain`, then the instance's source chain. Butter's listing does not provide route-scoped `fromToken` filtering.
+
+Entries contain `token`, `chain`, `symbol`, and `decimals`, with optional `address` and `name`. Use the `token` value as the provider identifier. The catalog is non-exhaustive; a token's absence does not establish that no route exists. Obtain a quote for the chosen pair and amount.
+
+Malformed entries are dropped. Conflicting precision for the same canonical token causes `ButterApiError`. Validated entries can seed the instance's source-token decimal cache.
+
+#### swap
+
+Accepts WDK `SwapOptions` and delegates to `swidge()` on the instance's source chain. It maps `tokenIn`, `tokenOut`, `to`, `tokenInAmount`, `tokenOutAmount`, and `minAmountOut` to Swidge options. Exact-output `tokenOutAmount` is rejected by Butter.
+
+Returns `hash`, `fee`, `tokenInAmount`, and `tokenOutAmount`. The inherited `fee` sums every fee amount across token denominations and categories. This delegation does not preserve Butter quote pins or an explicit slippage option. Use `swidge()` and its itemized fees when those details matter.
+
+#### quoteSwap
+
+Accepts the same WDK `SwapOptions` mapping as `swap()` and delegates to `quoteSwidge()`. Returns the legacy swap fields without `hash`. It performs no broadcast, but its aggregated `fee` and omitted route pin have the same limitations as `swap()`.
+
+#### bridge
+
+Accepts WDK `BridgeOptions`: `token`, `targetChain`, `recipient`, and `amount`. It sends the same `token` identifier as both source and destination, and delegates to `swidge()`. Use the direct method when the two chains require different token identifiers.
+
+Returns `hash`, `fee`, and `bridgeFee`. The inherited method sums network entries into `fee` and protocol entries into `bridgeFee`, omitting affiliate entries. A group containing different currencies has no meaningful single-token total. It does not forward a Butter route pin; direct Swidge methods retain that control.
+
+#### quoteBridge
+
+Accepts the same WDK `BridgeOptions` mapping as `bridge()` and delegates to `quoteSwidge()`. Returns `fee` and `bridgeFee` without broadcasting. The token-identifier and aggregated-fee limitations are the same as `bridge()`.
+
+## Options
+
+### ButterSwidgeOptions
+
+This type adds `routeHash` and `maxNativeFee` to WDK `SwidgeOptions`. The shared WDK union includes exact-output requests, but this provider rejects them at runtime.
+
+| Field | Type | Requirement and behavior |
+|---|---|---|
+| `fromToken` | `string` | Required source token identifier. |
+| `toToken` | `string` | Required destination token identifier. |
+| `fromTokenAmount` | `number` or `bigint` | Required positive integer input in source-token base units. Prefer `bigint`. |
+| `toTokenAmount` | `number` or `bigint` | Unsupported. Supplying it rejects an exact-output request. |
+| `toChain` | `string` or `number` | Optional destination chain; defaults to the source chain. |
+| `recipient` | `string` | Optional within a recognized address family; execution defaults to the account address. Required for a different or unrecognized destination address family. |
+| `refundAddress` | `string` | Optional expected refund address. Built-in EVM execution verifies it in returned transaction data; the module does not send it as an API request parameter. |
+| `slippage` | `number` | Optional decimal fraction. `0.01` means 1%. See [slippage conversion](#tobutterslippage). |
+| `minAmountOut` | `number` or `bigint` | Optional nonnegative minimum in destination-token base units. Checked against the route locally. |
+| `routeHash` | `string` | Optional execution pin from a successful quote on the same instance. Must be nonempty with no surrounding whitespace. |
+| `maxNativeFee` | `number` or `bigint` | Optional per-operation override in source-native base units. Enforced by built-in EVM execution; required there for cross-chain operations. Excludes gas. |
+
+The quote cache identity includes tokens, chain, amount, recipient, slippage, entrance, affiliate, and referrer. Caller minimum and refund constraints are checked separately where applicable. A route pin is not a durable identifier or protection against duplicate execution across separate attempts.
+
+### ButterSwidgeStatusOptions
+
+| Field | Type | Behavior |
+|---|---|---|
+| `fromChain` | `string` or `number` | Optional source-chain hint. Must agree with retained or returned operation context. |
+| `toChain` | `string` or `number` | Optional destination-chain hint. Must agree with retained or returned operation context. |
+| `byOrderId` | `boolean` | Optional. Defaults to source-hash lookup when absent or false; true selects Butter order-ID lookup. |
+
+## Results
+
+### ButterSwidgeQuote
+
+| Field | Type | Meaning |
+|---|---|---|
+| `fromTokenAmount` | `bigint` | Echoes the requested source input in base units. |
+| `toTokenAmount` | `bigint` | Estimated destination output in base units. |
+| `toTokenAmountMin` | `bigint` | Quoted minimum. Its execution boundary is described by `destinationGuarantees`. |
+| `fees` | `SwidgeFee[]` | Itemized fees with token, chain, amount, type, and optional inclusion or description fields. |
+| `routeHash` | `string` | Opaque route pin for this instance. |
+| `destinationGuarantees` | `'enforced'` or `'quoted-only'` | Whether the built-in execution path validates the destination minimum against calldata. |
+| `expiry` | Optional `number` | Unix seconds. Butter supplies it at runtime, with at most five minutes of route lifetime. |
+| `estimatedDuration` | Optional `number` | Provider-reported estimate in seconds, when available. |
+| `priceImpact` | Optional `number` | Finite top-level value reported by Butter. The module does not aggregate per-leg impact or independently establish its unit. |
+
+Source-token precision is resolved from configuration or validated discovery. Output precision comes from the route's destination metadata. Inspect fees by token and chain rather than adding unlike amounts; see [Fee limits](/sdk/swidge-modules/swidge-butter/configuration#fee-limits).
+
+### SwidgeResult
+
+`id` and `hash` contain the source transaction hash. The result also includes `transactions`, `fees`, `fromTokenAmount`, `toTokenAmount`, and `toTokenAmountMin`. Output amounts remain route estimates; returning a result does not prove that the destination amount arrived.
+
+Each transaction record contains `hash`, optional `chain`, and optional `type`. Roles are `source`, `destination`, `approval`, `refund`, and `other`. Butter execution reports every known broadcast transaction and uses the `source` transaction as the operation ID. Save the records before beginning status polling.
+
+## Utilities
+
+### parseTokenAmount
+
+Convert a decimal amount to token base units with an explicit precision:
+
+```typescript
+parseTokenAmount('1.25', 6) // 1250000n
+```
+
+Signature: `parseTokenAmount(amount, decimals = 18, options = {}): bigint`. `amount` accepts a decimal string, a nonnegative safe integer number, a `bigint`, `undefined`, or `null`. Decimal strings are scaled; a `bigint` is already in base units and passes through unchanged. Null or undefined returns `0n`. Fractional numbers, negative values, and malformed strings are rejected.
+
+`options.rounding` accepts `'reject'`, `'floor'`, or `'ceil'`. The default rejects nonzero precision beyond the token's decimals. Decimal counts must be integers from 0 through 255. Use decimal strings when parsing user-entered fractional amounts.
+
+### formatTokenAmount
+
+Format integer base units without converting through floating-point arithmetic:
+
+```typescript
+formatTokenAmount(1250000n, 6) // '1.25'
+```
+
+Signature: `formatTokenAmount(amount, decimals = 18): string`. Accepts a nonnegative `bigint`, safe integer number, or decimal integer string. Fractional, signed, exponent, hexadecimal, and empty strings are rejected. Trailing fractional zeros are removed.
+
+### toButterSlippage
+
+Convert a WDK decimal fraction to Butter's integer basis points:
+
+```typescript
+toButterSlippage(0.01) // 100
+```
+
+Signature: `toButterSlippage(slippage, options = {}): number`. The first argument is a `number` or `undefined`. Options are `crossChain`, `sourceChainId`, `toChainId`, and `strictChainMinimum`. `crossChain` is boolean, chain IDs are strings or numbers, and `strictChainMinimum` is a basis-point number.
+
+The converted value must be from 0 through 5000 basis points. Fractional basis points are rounded down; positive slippage below one basis point is rejected. When omitted, slippage defaults to 100 basis points, increased to the applicable minimum: 150 for cross-chain routes and 300 for Bitcoin or configured strict chains. An explicit value below the applicable minimum throws `ButterActionRequiredError` rather than being widened.
+
+### toEvmPublicClient
+
+`toEvmPublicClient(client: ViemPublicClientLike): EvmPublicClient` adapts a viem read-only client. It wraps allowance reads, approval waits, and transaction or receipt lookup. See the [execution guide](/sdk/swidge-modules/swidge-butter/guides/execute-swidge) for setup.
+
+Only viem transaction-not-found and receipt-not-found errors become `null` during lookups. Other RPC failures propagate. This utility does not create a signer or send transactions.
+
+## Public types
+
+These types are named exports from the package root. WDK result and option types referenced by their signatures are defined by `@tetherto/wdk-wallet/protocols`.
+
+In TypeScript, import types separately:
+
+```typescript
+import type {
+  ButterSwidgeProtocolConfig,
+  ButterSwidgeOptions,
+  ButterSwidgeQuote,
+} from '@butternetwork/wdk-protocol-swidge-butter'
+```
+
+| Export | Purpose |
+|---|---|
+| `ButterSwidgeProtocolConfig` | Complete constructor configuration; see [Configuration](/sdk/swidge-modules/swidge-butter/configuration). |
+| `ButterSwidgeOptions`, `ButterSwidgeExecutionOptions` | WDK options with the execution pin and native cap, or those two added fields alone. |
+| `ButterSwidgeStatusOptions` | WDK chain hints plus `byOrderId`. |
+| `ButterSwidgeQuote`, `ButterDestinationGuarantees` | Quote with route pin and `'enforced'` or `'quoted-only'` minimum validation. |
+| `ButterAccount` | Structural account contract used for address lookup, submission, allowance reads, and receipts. |
+| `EvmPublicClient`, `ViemPublicClientLike` | Read-only client contracts for the provider and its viem adapter. |
+| `ButterSupportedChain`, `ButterChainExecution` | Discovery descriptor and its `'native'`, `'adapter'`, or `'quote-only'` execution mode. |
+| `ButterRouterDeployment`, `ButterRouterVersion` | Router allowlist entry and the supported `'v3'` validator version. |
+| `ButterTransactionAdapter`, `ButterAdapterResult` | Synchronous transaction converter and optional `{ transaction, type }` wrapper. |
+| `ButterRoute`, `ButterSwapTx` | Provider route and transaction data passed to adapters. These are not independent transaction-authority guarantees. |
+| `ButterWarning` | Fee-reporting warning with `code`, `message`, and optional `details`. |
+
+There is no public `dispose()`, automatic refund, allowance-revocation, or route-cache serialization method. Release the protocol instance when finished and manage the wallet's lifecycle through its own API.
+
+## Errors
+
+Butter error constructors and the WDK categories below are exported from the package root. Catch narrower classes before their parent categories. Details can contain provider or account diagnostics; redact them before logging.
+
+| Error | Parent category | Handling |
+|---|---|---|
+| `ButterApiError` | `WdkError` | Inspect malformed, unsuccessful, or timed-out API data; do not assume every network failure has this type. |
+| `ButterUnsupportedError` | `UnsupportedOperationError` | Correct unsupported options, pins, adapters, or transaction shapes. |
+| `ButterConfigurationError` | `ValueError` | Correct configuration, account capabilities, or confirmation settings. |
+| `ButterActionRequiredError` | `WdkError` | Resolve a stale quote, recipient requirement, slippage floor, or minimum-output condition. |
+| `ButterFeeLimitExceededError` | `MaximumFeeExceededError` | Review the route or cap. Do not loosen limits automatically. |
+| `ButterFeeValuationError` | `ButterApiError` | A fee cannot be valued safely with the supplied metadata; do not bypass the cap. |
+| `ButterNoRouteError` | `ButterApiError` | No liquid route is reported; reconsider the pair or amount, or try later. |
+| `ButterPartialExecutionError` | `ButterActionRequiredError` | Inspect every submitted transaction before another execution attempt. |
+| `ButterReadOnlyAccountError` | `AccountRequiredError` | Supply a send-capable account for the execution path. |
+| `ButterExactOutUnsupportedError` | `ButterUnsupportedError` | Supply an exact input using `fromTokenAmount`. |
+| `ButterTransactionValidationError` | `ButterApiError` | Reject transaction data that fails intent or native-value validation. |
+
+`ButterPartialExecutionError` exposes `transactions`, `cause`, and `failedType`. Fee-limit errors expose `details.feeType`, `details.actualBps`, and `details.maximumBps`, with the ratios represented as strings.
+
+The package re-exports these unchanged WDK error constructors: `WdkError`, `ValueError`, `UnsupportedOperationError`, `MaximumFeeExceededError`, `ProviderRequiredError`, `ProviderError`, `TransactionError`, and `AccountRequiredError`. A first-send account error can propagate unchanged; after a known broadcast it is retained as the partial-execution cause.
+
+An account can fail after submitting a transaction or return an unusable hash. Therefore, the absence of `ButterPartialExecutionError` is not proof that nothing was submitted. Check wallet and RPC state before retrying an uncertain submission.
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-butter/usage">
+Install the module and inspect a quote.
+</Card>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-butter/configuration">
+Set API access, approval confirmation, and fee limits.
+</Card>
+<Card title="Track Settlement" href="/sdk/swidge-modules/swidge-butter/guides/track-settlement">
+Interpret status and reconcile submitted transactions.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
