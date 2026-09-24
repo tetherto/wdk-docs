@@ -32,7 +32,7 @@ new RhinofiProtocol(account?, config)
 
 | Parameter | Description |
 |-----------|-------------|
-| `account` | Optional WDK EVM account. Writable accounts can execute. Read-only accounts can quote and discover support. |
+| `account` | Optional WDK EVM, Solana, or Tron account. Writable accounts can execute. Read-only accounts can quote, check status, and discover support. Without an account, status and discovery remain available. |
 | `config` | Required `RhinofiProtocolConfig`. Must include `apiKey`. |
 
 ## Configuration Options
@@ -45,16 +45,19 @@ new RhinofiProtocol(account?, config)
 | `maxProtocolFeeBps` | `number \| bigint` | Rejects execution when protocol fees exceed this many basis points of the input amount. |
 | `configTtlMs` | `number` | Milliseconds to cache Rhino.fi config and swap-token lists. Defaults to `60000`; set `0` to always fetch fresh. |
 
-## Per-Call Overrides
+## Per-Call Configuration
 
-Pass config to `swidge(options, config)` to override fee caps for a single execution.
+Pass config to `swidge(options, config)` to override fee caps for one execution. Set `quote` to the raw `quote` field returned by `quoteSwidge()` when execution must use that exact provider quote.
 
 ```javascript
 await rhinofi.swidge(options, {
   maxNetworkFeeBps: 40,
-  maxProtocolFeeBps: 25
+  maxProtocolFeeBps: 25,
+  quote: quote.quote
 })
 ```
+
+Set `onDepositSubmitted` when the app must distinguish a failed attempt from a deposit that left the device but does not yet have a settled transaction hash. Do not automatically retry after that callback. Errors thrown by the callback do not abort execution.
 
 ## API Base URL
 
@@ -83,7 +86,7 @@ Set `configTtlMs: 0` when you need every call to fetch fresh provider configurat
 ## Security Notes
 
 - Store `apiKey` in server-side or secret-managed configuration.
-- Use trusted RPC providers for WDK EVM accounts.
+- Use trusted RPC providers or clients for WDK source accounts.
 - Set fee caps for user-facing flows.
 - Ask for user confirmation before calling `swidge()`.
 
