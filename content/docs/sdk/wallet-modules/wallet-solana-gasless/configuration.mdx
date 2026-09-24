@@ -204,6 +204,45 @@ In `1.0.0-beta.4`, overrides support `paymasterToken`, `transferMaxFee`, and `tr
 
 For an already signed transaction, its payment token and amount are fixed in the signed message. `quoteSendTransaction(signedTransaction)` searches for a matching embedded payment and does not use the per-call token override. On `sendTransaction(signedTransaction, { transactionMaxFee })`, only the fee cap is relevant before direct RPC broadcast; an override cannot replace the signed payment token. In beta.4, a missing match returns `0n` instead of rejecting, so restrict this path to exact locally produced output or perform independent signed-message validation.
 
+## Authenticated Paymasters
+
+Some Kora-compatible paymasters require an API key. Pass a `KoraClientOptions` object as `paymasterUrl` and set `apiKey`; the Kora client sends it in the `x-api-key` header on every paymaster request.
+
+### Openfort
+
+[Openfort](https://www.openfort.io) serves a Kora-compatible paymaster at `https://api.openfort.io/rpc/solana/{cluster}`, where `{cluster}` is `devnet` or `mainnet-beta`. Requests are authenticated with your project's publishable key, and fees are sponsored according to the project's fee sponsorship policy.
+
+```javascript title="Use Openfort as the paymaster"
+const config = {
+  provider: 'https://api.devnet.solana.com',
+  commitment: 'confirmed',
+  paymasterUrl: {
+    rpcUrl: 'https://api.openfort.io/rpc/solana/devnet',
+    apiKey: 'Bearer pk_test_your_publishable_key'
+  },
+  paymasterAddress: 'FeePayer1111111111111111111111111111111111', // from getConfig below
+  paymasterToken: {
+    address: 'TokenMint111111111111111111111111111111111' // from getConfig below
+  }
+}
+```
+
+Look up the fee payer address and the accepted fee tokens with the paymaster's `getConfig` method. Any address listed in `fee_payers` can be used as `paymasterAddress`, and `paymasterToken.address` must be one of `allowed_spl_paid_tokens`:
+
+```bash title="Look up fee payers and fee tokens"
+curl https://api.openfort.io/rpc/solana/devnet \
+  -H 'x-api-key: Bearer pk_test_your_publishable_key' \
+  -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"getConfig","params":{}}'
+```
+
+<Callout type="warn">
+Two details decide whether a sponsored transaction goes through:
+
+- **Key format.** Openfort expects the `x-api-key` value to carry the `Bearer ` prefix. A bare publishable key is rejected with `Invalid authorization provided.`
+- **Fee token account.** The module always appends a payment instruction in `paymasterToken`, even when the sponsored fee is `0`. The sending account needs an existing associated token account for that mint; otherwise simulation fails with `invalid account data for instruction`. This affects native SOL sends from a new account that has never held the fee token.
+</Callout>
+
 ## Security Considerations
 
 - Use HTTPS Solana RPC and paymaster endpoints.
