@@ -104,9 +104,17 @@ const readOnlyAccount = new WalletAccountReadOnlyEvm(
 
 ### Provider
 
-The `provider` option specifies how to connect to the blockchain. It can be a URL string, an EIP-1193 compatible provider instance, or an ordered array of URL strings and EIP-1193 providers for automatic failover.
+The `provider` option specifies how to connect to the blockchain. The published beta.19 declaration accepts a URL string, an EIP-1193 compatible provider instance, or an ordered array of those values for automatic failover.
 
 **Type:** `string | Eip1193Provider | Array<string | Eip1193Provider>`
+
+At runtime, beta.19 also accepts an already-built ethers `Provider`, such as `JsonRpcProvider`, either directly or in the failover array. The runtime reuses that object instead of wrapping it. The published beta.19 TypeScript declaration does not include ethers `Provider`. JavaScript can use this runtime-only path directly; TypeScript projects that require the published type must use one of the declared provider inputs until the declaration is corrected.
+
+`WalletManagerEvm` builds or accepts its provider once and shares the same provider object with every account it derives. Direct account constructors process their configurations independently, but they can share a caller-supplied ethers `Provider` object.
+
+<Callout type="warn">
+The shared ethers provider makes beta.19 manager-derived accounts incompatible with Velora beta.8, USD₮0 bridge beta.10, and Aave beta.7. These releases wrap every non-string provider in `BrowserProvider`, which requires an EIP-1193 `request()` method. Use a directly constructed `WalletAccountEvm` that retains its original RPC URL or EIP-1193 provider for these exact combinations; do not replace the account's internal provider field. Direct accounts do not receive WDK Core policy or middleware decoration, so preserve the required application checks and account-level controls.
+</Callout>
 
 **Examples:**
 
@@ -157,6 +165,15 @@ const config = {
   ],
   retries: 2
 }
+```
+
+In JavaScript, you can also reuse an existing ethers provider:
+
+```javascript
+import { JsonRpcProvider } from 'ethers'
+
+const provider = new JsonRpcProvider('https://eth.drpc.org')
+const config = { provider }
 ```
 
 When `provider` is an array, the wallet uses the candidates in order and retries connection failures against the next provider. If `retries` is greater than the number of providers, the failover loop wraps around in round-robin order.

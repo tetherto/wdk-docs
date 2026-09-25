@@ -10,7 +10,7 @@ icon: Banknote
 
 [x402](https://www.x402.org) is an open payment protocol, [originally developed by Coinbase](https://docs.x402.org/), that gives the long-reserved [HTTP 402 Payment Required](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/402) status code a concrete, blockchain-native meaning: if you want this resource, pay for it. No accounts, API keys, or checkout flows. Just plain HTTP.
 
-This matters for AI agents because they need to pay for resources programmatically. x402 makes payment a first-class part of the web stack, so an agent can discover a price, sign a payment, and receive a resource in a single request-response cycle.
+This matters for AI agents because they need to pay for resources programmatically. x402 makes payment a first-class part of the web stack, so an agent can discover a price, sign a payment, and retry the HTTP request automatically.
 
 ### The Three Roles
 
@@ -34,19 +34,26 @@ A standard HTTP request. `GET`, `POST`, whatever your API expects.
 
 #### Server responds with 402 Payment Required
 
-The response body describes what to pay: amount, token, network, and recipient address.
+With x402 v2, the base64-encoded `PAYMENT-REQUIRED` response header describes the protected resource and accepted payment options. Decoded, it has this shape:
 
 ```json
 {
-  "x402Version": 1,
+  "x402Version": 2,
+  "resource": {
+    "url": "https://api.example.com/data",
+    "description": "Example data",
+    "mimeType": "application/json"
+  },
   "accepts": [{
     "scheme": "exact",
     "network": "eip155:9745",
-    "maxAmountRequired": "1000000",
+    "amount": "1000000",
     "asset": "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb",
-    "resource": "https://api.example.com/data",
-    "payTo": "0x1234...abcd"
-  }]
+    "payTo": "0x1111111111111111111111111111111111111111",
+    "maxTimeoutSeconds": 60,
+    "extra": { "name": "USDT0", "version": "1", "decimals": 6 }
+  }],
+  "extensions": {}
 }
 ```
 
@@ -62,7 +69,7 @@ The client constructs an [EIP-3009](https://eips.ethereum.org/EIPS/eip-3009) `tr
 
 #### Client retries with payment header
 
-The signed payload goes in the `X-PAYMENT` header on the same request.
+The signed payload goes in the `PAYMENT-SIGNATURE` header on a retry of the same request. `X-PAYMENT` is the x402 v1 header.
 
 </Step>
 <Step>
@@ -90,7 +97,7 @@ The server calls the facilitator's `/settle` endpoint. The facilitator submits t
 
 #### Server returns the resource
 
-`200 OK` with the result in the body and a settlement receipt in the `X-PAYMENT-RESPONSE` header.
+`200 OK` with the result in the body and a settlement receipt in the `PAYMENT-RESPONSE` header. `X-PAYMENT-RESPONSE` is the x402 v1 header.
 
 </Step>
 </Steps>
@@ -99,13 +106,13 @@ For the full protocol specification, see [x402.org](https://www.x402.org) and th
 
 ## How to Use x402 With WDK
 
-WDK wallets work as drop-in signers for x402. `WalletAccountEvm` satisfies the client x402 signer interface directly. Self-custodial x402 payments on any EVM chain.
+WDK wallets work as drop-in client signers for the versions used below. `WalletAccountEvm` beta.19 satisfies the x402 2.26.0 client signer interface directly. Each integration still needs a configured RPC, a supported x402 scheme and network, and an asset contract that implements the selected authorization method.
 
 This guide walks through three things:
 
 1. **Client (Buyer)** - Pay for x402-protected resources using a WDK wallet
 2. **Server with Hosted Facilitator** - Accept x402 payments by delegating verification and settlement to a third-party facilitator
-3. **Server with Self-Hosted Facilitator** - Run verification and settlement in-process using a WDK wallet, with no external dependencies
+3. **Server with Self-Hosted Facilitator** - Assess the current community adapter's version constraints before adopting it
 
 <Callout type="warn">
 Community modules are developed and maintained independently by third-party contributors.
@@ -119,7 +126,7 @@ Artificial intelligence and blockchain transactions carry inherent risks and lim
 
 ### Recommended Chains
 
-x402 with WDK works on any EVM chain where USD₮0 is deployed (see full list at [docs.usdt0.to](https://docs.usdt0.to/technical-documentation/deployments)). However, we recommend **Plasma** and **Stable** for x402 payments. Both chains are purpose-built for USD₮0 transfers with near-instant finality and near-zero fees. Agents only need to hold USD₮0.
+The EVM exact scheme can be configured for a CAIP-2 EVM network when the chosen token implements EIP-3009 and the client, resource server, and facilitator all support that scheme and network. The examples use **Plasma** and **Stable**. Buyers sign an EIP-3009 authorization and do not submit an ERC-20 approval or pay settlement gas; they still need enough USD₮0, and the facilitator needs the chain's native gas token.
 
 | Chain | CAIP-2 | RPC | USD₮0 Contract | Explorer |
 | --- | --- | --- | --- | --- |
@@ -130,12 +137,8 @@ x402 with WDK works on any EVM chain where USD₮0 is deployed (see full list at
 
 ## Client: Paying for Resources
 
-<Callout type="info">
-See the full working client example at [`x402/client.js`](https://github.com/SemanticPay/x402-usdt0-demo/blob/main/x402/client.js).
-</Callout>
-
 ```bash
-npm install @tetherto/wdk-wallet-evm @x402/fetch @x402/evm
+npm install @tetherto/wdk-wallet-evm@1.0.0-beta.19 @x402/fetch@2.26.0 @x402/evm@2.26.0
 ```
 
 <Steps>
@@ -173,12 +176,16 @@ const fetchWithPayment = wrapFetchWithPayment(fetch, client);
 
 #### Make a paid request
 
-`fetchWithPayment` intercepts any `402` response, signs an EIP-3009 authorization with your WDK wallet, and retries automatically.
+`fetchWithPayment` parses a compatible `402` response, signs an EIP-3009 authorization with your WDK wallet, and makes one paid retry. Check the returned status before consuming the body; a failed verification or settlement can return another error response.
 
 ```javascript
 const response = await fetchWithPayment("https://api.example.com/weather", {
   method: "GET",
 });
+
+if (!response.ok) {
+  throw new Error(`x402 request failed (${response.status})`);
+}
 
 const data = await response.json();
 console.log("Response:", data);
@@ -193,89 +200,10 @@ Your seed phrase controls your funds. Never commit it to version control. Use en
 
 ### Getting USD₮0 on Plasma or Stable [#getting-usdt0-on-plasma-or-stable]
 
-Before you can make x402 payments, your wallet needs USD₮0 on the target chain. If you hold a supported source token—for example, USD₮ on Ethereum—bridge it using `@tetherto/wdk-protocol-bridge-usdt0-evm`.
+Before making a payment, fund the buyer with USD₮0 on the selected network. If you need to bridge a supported source token, follow the [USD₮0 bridge guide](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens) for the current route, spender, bounded allowance, quote, and settlement steps.
 
-<Callout type="info">
-The bridge uses [LayerZero](https://layerzero.network) for secure cross-chain transfers. USD₮ on Ethereum is automatically converted to USD₮0 on the destination chain.
-</Callout>
-
-```bash
-npm install @tetherto/wdk-wallet-evm @tetherto/wdk-protocol-bridge-usdt0-evm
-```
-
-#### Bridge USD₮ from Ethereum to Plasma / Stable
-
-<Steps>
-<Step>
-
-#### Create wallet and bridge protocol
-
-```javascript
-import WalletManagerEvm from "@tetherto/wdk-wallet-evm";
-import Usdt0ProtocolEvm from "@tetherto/wdk-protocol-bridge-usdt0-evm";
-
-const account = await new WalletManagerEvm(process.env.SEED_PHRASE, {
-  provider: "https://eth.drpc.org",
-}).getAccount();
-
-const bridge = new Usdt0ProtocolEvm(account, {
-  bridgeMaxFee: 100000000000000n, // Max 0.0001 ETH in bridge fees
-});
-```
-
-</Step>
-<Step>
-
-#### Approve and get a quote (recommended)
-
-```javascript
-const USDT_ETHEREUM = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
-const USDT0_ETHEREUM_OFT = "0x6C96dE32CEa08842dcc4058c14d3aaAD7Fa41dee";
-const amount = 10000000n; // 10 USDt (6 decimals)
-
-await account.approve({
-  token: USDT_ETHEREUM,
-  spender: USDT0_ETHEREUM_OFT,
-  amount,
-});
-
-const quote = await bridge.quoteBridge({
-  targetChain: "plasma", // or "stable"
-  recipient: await account.getAddress(),
-  token: USDT_ETHEREUM,
-  amount,
-  oftContractAddress: USDT0_ETHEREUM_OFT,
-});
-
-console.log("Total cost:", Number(quote.fee + quote.bridgeFee) / 1e18, "ETH");
-```
-
-</Step>
-<Step>
-
-#### Execute the bridge
-
-Use the same approved `USDT0_ETHEREUM_OFT` spender when executing the bridge.
-
-```javascript
-const result = await bridge.bridge({
-  targetChain: "plasma", // or "stable"
-  recipient: await account.getAddress(),
-  token: USDT_ETHEREUM,
-  amount,
-  oftContractAddress: USDT0_ETHEREUM_OFT,
-});
-
-console.log("Bridge tx:", result.hash);
-```
-
-USD₮0 arrives on the destination chain within a few minutes.
-
-</Step>
-</Steps>
-
-<Callout type="info">
-The module supports multiple source chains. Point your wallet at the source chain's RPC, then resolve the exact token variant and address from [`getSupportedTokens()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference) or the current [USD₮0 deployments](https://docs.usdt0.to/technical-documentation/deployments). Do not reuse the Ethereum address on another chain.
+<Callout type="warn">
+For EVM wallet beta.19 with bridge beta.10, construct the account directly with its original RPC URL. Manager-derived accounts contain a provider that the bridge rejects. This direct account does not inherit WDK Core transaction policies or middleware; retain required application checks before approval and bridging. See [bridge setup](/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started).
 </Callout>
 
 ***
@@ -285,15 +213,16 @@ The module supports multiple source chains. Point your wallet at the source chai
 Your server delegates verification and settlement to a hosted facilitator. You never interact with the chain directly.
 
 <Callout type="info">
-**About the Semantic facilitator:** [Semantic](https://docs.semanticpay.io) operates a public x402 facilitator at `https://x402.semanticpay.io`. It currently verifies and settles USD₮0 payments on Plasma and Stable. This is a third-party service not operated, endorsed, or guaranteed by Tether.
+**About the Semantic facilitator:** [Semantic](https://docs.semanticpay.io) documents a public x402 facilitator at `https://x402.semanticpay.io` for USD₮0 payments on Plasma and Stable. This is a third-party service not operated, endorsed, or guaranteed by Tether.
 
 The x402 protocol is an open standard. Anyone can build and host their own facilitator. For the API reference, see the [Semantic facilitator docs](https://docs.semanticpay.io/endpoints).
 
-See the full working server example at [`x402/server.js`](https://github.com/SemanticPay/x402-usdt0-demo/blob/main/x402/server.js).
 </Callout>
 
+Before enabling payments, request `GET https://x402.semanticpay.io/supported` as described in the [facilitator API](https://docs.semanticpay.io/endpoints) and confirm that the response advertises x402 v2, your payment scheme, and your network. If the request fails or that combination is absent, do not enable the hosted integration. Select a facilitator verified for the required x402 version, scheme, and network; also review the [current self-hosting limitations](#server-self-hosted-facilitator-in-process).
+
 ```bash
-npm install @tetherto/wdk-wallet-evm @x402/express @x402/evm @x402/core express dotenv
+npm install @tetherto/wdk-wallet-evm@1.0.0-beta.19 @x402/express@2.26.0 @x402/evm@2.26.0 @x402/core@2.26.0 express@5.2.1 dotenv@17.2.3
 ```
 
 <Steps>
@@ -397,7 +326,7 @@ Routes not listed in the middleware config behave like normal Express routes.
 
 ### Multi-Chain (Plasma + Stable)
 
-To accept payments on both chains, add both networks to the `accepts` array and register both with the resource server. The buyer's client picks whichever network it has funds on.
+To accept payments on both chains, add both networks to the `accepts` array and register both with the resource server. The default x402 client selects the first compatible payment option; it does not select by wallet balance. Fund that network or provide an application-owned payment selector.
 
 ```javascript
 const NETWORKS = {
@@ -418,141 +347,23 @@ const resourceServer = new x402ResourceServer(facilitatorClient)
 
 ### Lifecycle Events
 
-The Semantic facilitator supports an optional `X-Event-Callback` header. When provided, the facilitator POSTs real-time events to your callback URL during verification and settlement.
-
-| Type               | When                              | Key Fields                          |
-| ------------------ | --------------------------------- | ----------------------------------- |
-| `verify_started`   | Facilitator begins verifying      | `details.network`, `details.checks` |
-| `verify_completed` | Verification finished             | `details.isValid`                   |
-| `verify_failed`    | Verification error                | `details.error`                     |
-| `settle_started`   | Broadcasting on-chain transaction | `details.network`                   |
-| `settle_completed` | Transaction confirmed             | `details.transactionHash`           |
-| `settle_failed`    | Settlement error                  | `details.error`                     |
-
-```javascript
-const facilitatorClient = new HTTPFacilitatorClient({
-  url: "https://x402.semanticpay.io/",
-  fetch: (url, init) =>
-    fetch(url, {
-      ...init,
-      headers: { ...init?.headers, "X-Event-Callback": "http://localhost:4021/payment-events" },
-    }),
-});
-```
-
-<Callout type="info">
-Events are fire-and-forget. If the callback URL is unreachable, events are silently dropped.
-</Callout>
+For facilitator-specific notifications, consult the [Semantic facilitator API](https://docs.semanticpay.io/endpoints) and confirm support with the provider. Use verification and settlement responses to decide whether a payment succeeded.
 
 ***
 
 ## Server: Self-Hosted Facilitator (In-Process)
 
-Instead of relying on a hosted facilitator, you can run verification and settlement in-process using the `@semanticio/wdk-wallet-evm-x402-facilitator` community module. This wraps a WDK wallet as an x402 `FacilitatorEvmSigner`. Your server handles the entire payment lifecycle locally.
-
-<Callout type="info">
-Unlike the hosted Semantic facilitator (Plasma and Stable only), a self-hosted facilitator works with **any EVM chain where USD₮0 is deployed**. See the full deployment list at [docs.usdt0.to](https://docs.usdt0.to/technical-documentation/deployments).
-</Callout>
+The `@semanticio/wdk-wallet-evm-x402-facilitator` community module is intended to adapt a WDK EVM account to the x402 facilitator signer interface. Verify an exact compatible package set before using it for in-process verification and settlement.
 
 <Callout type="warn">
 `@semanticio/wdk-wallet-evm-x402-facilitator` is a community module developed and maintained by [Semantic Pay](https://www.semanticpay.io). Tether does not endorse, audit, or assume responsibility for this module. It is currently in beta. Test thoroughly before using in production.
 </Callout>
 
-<Callout type="info">
-See the full working self-hosted server example at [`x402/server-inprocess.js`](https://github.com/SemanticPay/x402-usdt0-demo/blob/main/x402/server-inprocess.js).
+<Callout type="warn">
+The published `@semanticio/wdk-wallet-evm-x402-facilitator@1.0.0-beta.2` package depends on `@tetherto/wdk-wallet-evm@1.0.0-beta.7` and `@x402/evm@2.2.0`. Its facilitator signer implementation does not fully match the x402 2.26.0 signer contract used by the runnable client and hosted examples on this page. Do not combine beta.2 with those versions as a production recipe without maintainer-confirmed compatibility and end-to-end verification of rejection, settlement, timeout, and receipt behavior.
 </Callout>
 
-```bash
-npm install @semanticio/wdk-wallet-evm-x402-facilitator @tetherto/wdk-wallet-evm @x402/core @x402/evm @x402/express express dotenv
-```
-
-<Steps>
-<Step>
-
-#### Create the facilitator signer
-
-The facilitator wallet submits settlement transactions on-chain. It needs gas tokens on the target chain.
-
-```javascript
-import WalletManagerEvm from "@tetherto/wdk-wallet-evm";
-import WalletAccountEvmX402Facilitator from "@semanticio/wdk-wallet-evm-x402-facilitator";
-
-const walletAccount = await new WalletManagerEvm(process.env.FACILITATOR_MNEMONIC, {
-  provider: process.env.RPC_URL, // Any EVM chain with USDt0
-}).getAccount();
-
-const evmSigner = new WalletAccountEvmX402Facilitator(walletAccount);
-```
-
-<Callout type="info">
-The facilitator wallet and the seller wallet can use different seed phrases. The facilitator pays gas; the seller receives USD₮0. The facilitator wallet must have enough native token to pay gas.
-</Callout>
-
-</Step>
-<Step>
-
-#### Initialize the facilitator
-
-```javascript
-import { x402Facilitator } from "@x402/core/facilitator";
-import { registerExactEvmScheme } from "@x402/evm/exact/facilitator";
-
-const facilitator = new x402Facilitator()
-  .onAfterVerify(async (ctx) => {
-    console.log("[verify]", ctx.result?.isValid ? "valid" : "invalid");
-  })
-  .onAfterSettle(async (ctx) => {
-    console.log("[settle] tx:", ctx.result?.transaction);
-  });
-
-registerExactEvmScheme(facilitator, {
-  signer: evmSigner,
-  networks: process.env.NETWORK_ID, // e.g. "eip155:9745"
-});
-```
-
-Available hooks: `onBeforeVerify`, `onAfterVerify`, `onBeforeSettle`, `onAfterSettle`. All are `async` and receive a context object with the payment payload and result.
-
-</Step>
-<Step>
-
-#### Wire into Express
-
-Same `paymentMiddleware` pattern, but pass the in-process `facilitator` directly instead of an `HTTPFacilitatorClient`.
-
-```javascript
-import { paymentMiddleware, x402ResourceServer } from "@x402/express";
-import { ExactEvmScheme } from "@x402/evm/exact/server";
-
-const NETWORK = process.env.NETWORK_ID || "eip155:9745";          // Stable: "eip155:988"
-const USDT0 = process.env.USDT0_ADDRESS || "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb"; // Stable: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736"
-
-const resourceServer = new x402ResourceServer(facilitator).register(
-  NETWORK,
-  new ExactEvmScheme(),
-);
-
-app.use(
-  paymentMiddleware(
-    {
-      "GET /weather": {
-        accepts: [{
-          scheme: "exact",
-          network: NETWORK,
-          price: { amount: "1000", asset: USDT0, extra: { name: "USDT0", version: "1", decimals: 6 } },
-          payTo: process.env.PAY_TO_ADDRESS,
-        }],
-        description: "Weather data",
-        mimeType: "application/json",
-      },
-    },
-    resourceServer,
-  ),
-);
-```
-
-</Step>
-</Steps>
+The [published package](https://www.npmjs.com/package/@semanticio/wdk-wallet-evm-x402-facilitator) and its [source repository](https://github.com/SemanticPay/wdk-wallet-evm-x402-facilitator) are the primary references. The related [SemanticPay demo](https://github.com/SemanticPay/x402-usdt0-demo) targets an older, differently named GitHub dependency and x402 2.2.0, so it is not a runnable example for the npm package and versions documented above.
 
 ***
 
@@ -560,9 +371,9 @@ app.use(
 
 | Role                     | Packages                                                                                                               | Notes                                                                   |
 | ------------------------ | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| **Buyer (Client)**       | `@tetherto/wdk-wallet-evm`, `@x402/fetch`, `@x402/evm`                                                                | `WalletAccountEvm` satisfies `ClientEvmSigner` directly.                |
-| **Seller (Hosted)**      | `@tetherto/wdk-wallet-evm`, `@x402/express`, `@x402/evm`, `@x402/core`                                                | Delegates to a hosted facilitator. Semantic supports Plasma and Stable.  |
-| **Seller (Self-Hosted)** | `@tetherto/wdk-wallet-evm`, `@semanticio/wdk-wallet-evm-x402-facilitator`, `@x402/core`, `@x402/evm`, `@x402/express` | In-process facilitator. Any USD₮0 chain.                                |
+| **Buyer (Client)**       | WDK EVM beta.19; x402 fetch and EVM 2.26.0 | `WalletAccountEvm` satisfies `ClientEvmSigner` directly. |
+| **Seller (Hosted)**      | WDK EVM beta.19; x402 Express, EVM, and core 2.26.0 | Enable only after the facilitator advertises x402 v2 and the exact scheme and network. |
+| **Seller (Self-Hosted)** | Community adapter beta.2 | No runnable pairing is documented here; verify a maintainer-supported package set first. |
 
 ***
 
@@ -571,8 +382,8 @@ app.use(
 - [x402 Protocol Spec](https://www.x402.org) - The open standard specification
 - [x402 GitHub](https://github.com/coinbase/x402) - Reference implementations and examples
 - [Semantic Facilitator Docs](https://docs.semanticpay.io) - API reference for the hosted facilitator
-- [Self-Hosted Facilitator Module](https://www.npmjs.com/package/@semanticio/wdk-wallet-evm-x402-facilitator) - Community in-process facilitator
-- [x402-usdt0 Demo](https://github.com/SemanticPay/x402-usdt0-demo) - Full working buyer + seller demo
+- [Self-Hosted Facilitator Module](https://www.npmjs.com/package/@semanticio/wdk-wallet-evm-x402-facilitator) - Beta community adapter; check its exact dependencies before use
+- [x402-usdt0 Demo](https://github.com/SemanticPay/x402-usdt0-demo) - Historical x402 2.2.0 demo source, not the package set used above
 - [WDK EVM Wallet Module](/sdk/wallet-modules/wallet-evm) - WDK EVM wallet documentation
 - [USD₮0 Deployments](https://docs.usdt0.to/technical-documentation/deployments) - Contract addresses on all chains
 - [EIP-3009 Specification](https://eips.ethereum.org/EIPS/eip-3009) - The token-neutral authorization standard used here for signed USD₮0 transfers; the facilitator submits the authorization on-chain

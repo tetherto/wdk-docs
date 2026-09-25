@@ -50,7 +50,7 @@ Must be placed at the root of your component tree. All hooks in this library req
 | `children` | `React.ReactNode` | **required** | Child components |
 
 <Callout type="warn">
-Starting in `v1.0.0-beta.17`, `enableAutoInitialization`, `currentUserId`, and `clearSensitiveDataOnBackground` are no longer provider props. `requireBiometrics`, which was removed earlier, is also not accepted by beta.19. The app owns wallet identity, background-locking behavior, and biometric or other authentication checks.
+Starting in `v1.0.0-beta.17`, `enableAutoInitialization`, `currentUserId`, and `clearSensitiveDataOnBackground` are no longer provider props. `requireBiometrics`, which was removed earlier, is also not accepted by beta.20. The app owns wallet identity, background-locking behavior, and biometric or other authentication checks.
 </Callout>
 
 ### Example
@@ -116,6 +116,12 @@ The `state` property is a discriminated union on the `status` field:
 | `'READY'` | `walletId: string` | The active wallet identity matches the wallet loaded in the worklet |
 | `'ERROR'` | `error: Error` | Worklet initialization or a wallet lifecycle operation failed |
 
+#### Startup failure recovery
+
+<Callout type="warn">
+If beta.20 reports an `ERROR` before the worklet starts, do not rely on an in-process retry. An asynchronous startup failure can retrigger initialization while the singleton readiness promise remains rejected, and remounting `WdkAppProvider` in the same JavaScript runtime does not recreate that promise. Fix the reported bundle, configuration, or native startup cause, then restart the application so it creates a fresh JavaScript runtime before retrying.
+</Callout>
+
 ### Example
 
 ```tsx
@@ -170,28 +176,32 @@ Hook for wallet lifecycle operations: create, restore, lock, unlock, delete, and
 | `wallets` | [`WalletInfo[]`](#walletinfo) | List of wallets managed by the device |
 | `createWallet` | `(walletId: string) => Promise<void>` | Create and activate a new wallet with the supplied identity |
 | `restoreWallet` | `(mnemonic: string, walletId: string) => Promise<string>` | Restore a wallet from a seed phrase. Returns the wallet ID |
-| `deleteWallet` | `(walletId: string) => Promise<void>` | Delete the selected wallet's stored data and reset local worklet lifecycle state; it does not stop or remotely clear the running worklet |
-| `lock` | `() => Promise<void>` | Clear the active identity, local addresses, and local initialization state; the worklet and its IPC connection keep running |
+| `deleteWallet` | `(walletId: string) => Promise<void>` | Delete stored data, send a one-way full WDK disposal request, and reset local lifecycle state; the worklet and IPC keep running |
+| `lock` | `() => Promise<void>` | When a wallet is active, send a one-way full WDK disposal request and clear local wallet state; the worklet and IPC keep running |
 | `unlock` | `(walletId: string) => Promise<void>` | Explicitly decrypt and load the selected wallet; the ID has no implicit fallback |
 | `switchWallet` | `(walletId: string) => Promise<void>` | Under one mutex, lock the current wallet and then unlock the selected wallet; a failed unlock leaves the prior wallet locked |
 | `generateMnemonic` | `(wordCount?: 12 \| 24) => Promise<string>` | Generate a new BIP39 mnemonic phrase |
 | `getMnemonic` | `(walletId: string) => Promise<string \| null>` | Reconstruct the plaintext mnemonic from the selected wallet's stored encrypted entropy and encryption key; returns `null` when either is missing |
 | `createTemporaryWallet` | `(walletId: string, mnemonic?: string) => Promise<string>` | Create an in-memory wallet for previewing addresses. Returns the temporary wallet ID |
-| `clearTemporaryWallet` | `() => void` | Clear the temporary wallet session |
+| `clearTemporaryWallet` | `() => void` | Clear the temporary wallet session. If it is active, also send a one-way full WDK disposal request and clear shared initialization and address state |
 | `clearCache` | `() => void` | Clear cached balance data |
 
-Only one wallet can be active. Call and await `lock()` before creating or restoring a different identity. To select a wallet that is already stored, use `switchWallet()` or lock and then unlock that wallet explicitly. `createWallet()`, `restoreWallet()`, `lock()`, `unlock()`, `switchWallet()`, and `createTemporaryWallet()` use a fail-fast mutex, so an overlapping guarded call rejects instead of queuing. The mutex timeout does not cancel an already-running underlying operation. `switchWallet()` is serialized, but it is not transactional: it locks first and does not restore the previous wallet if the new unlock fails.
+Only one wallet can be active. Call and await `lock()` before creating or restoring a different identity. To select a wallet that is already stored, use `switchWallet()` or lock and then unlock that wallet explicitly. `createWallet()`, `restoreWallet()`, `deleteWallet()`, `lock()`, `unlock()`, `switchWallet()`, and `createTemporaryWallet()` use a fail-fast mutex, so an overlapping guarded call rejects instead of queuing. The mutex timeout does not cancel an already-running underlying operation. `switchWallet()` is serialized, but it is not transactional: it locks first and does not restore the previous wallet if the new unlock fails.
 
 <Callout type="error">
-`deleteWallet()` and `clearTemporaryWallet()` are not protected by that mutex in beta.19. Deleting even an inactive wallet resets shared local worklet lifecycle state, while the Bare worklet and IPC remain running; this is not remote key cleanup or memory zeroization. The underlying secure-storage deletion can also be partially completed if individual storage operations fail. Authenticate and explicitly confirm destructive deletion, verify another recovery path first, serialize it against every lifecycle operation in the app, call and await `lock()` before deleting the active wallet, and verify the stored wallet inventory afterward.
+Beta.20 protects `deleteWallet()` with the lifecycle mutex; `clearTemporaryWallet()` remains unguarded. Clearing the active temporary wallet resets shared worklet lifecycle state and sends the same one-way full disposal request as `lock()`. Serialize `clearTemporaryWallet()` with lifecycle operations in the app to avoid racing a guarded call. Deleting even an inactive wallet deletes its secure-storage records and then resets shared worklet lifecycle state. A storage failure can leave a partial deletion and prevent the reset from running. Authenticate and explicitly confirm destructive deletion, verify another recovery path first, and verify the stored wallet inventory afterward.
 </Callout>
 
 <Callout type="error">
-`lock()` is an application-state boundary, not a zeroization guarantee. Beta.19 clears the active ID, local addresses, and local initialization flags, but it does not terminate the Bare worklet or send a remote cleanup request. Do not claim that calling it proves seeds or keys were erased from worklet memory.
+When a wallet is active, `lock()` sends `hrpc.dispose({})` before clearing local state. The reset performed after a successful `deleteWallet()` also sends that request. HRPC disposal is one-way, so neither method waits for worklet cleanup or confirms that every copy was overwritten. The Bare worklet and IPC connection keep running. Treat these methods as application-state boundaries, not zeroization proof.
 </Callout>
 
 <Callout type="warn">
-React Native Core beta.19 does not enforce biometrics before wallet lifecycle or key-access methods. Authenticate in the app before invoking these methods. For app-background locking, close the authenticated UI boundary immediately and retry `lock()` after any in-flight guarded operation settles; a mutex rejection does not queue or cancel that operation.
+React Native Core beta.20 does not enforce biometrics before wallet lifecycle or key-access methods. Authenticate in the app before invoking these methods. For app-background locking, close the authenticated UI boundary immediately and retry `lock()` after any in-flight guarded operation settles; a mutex rejection does not queue or cancel that operation.
+</Callout>
+
+<Callout type="warn">
+A rejected create, restore, unlock, or temporary-wallet initialization is not cleanup confirmation. If the worklet constructs WDK and a later wallet or protocol registration fails, it can retain a partial instance and its seed buffer. Beta.20 exposes no public worklet teardown method. Do not retry a sensitive flow in the same session on the assumption that rejection removed that state; restart the application or hosting environment so it creates a new worklet before retrying.
 </Callout>
 
 #### Advanced Crypto Methods
@@ -200,12 +210,14 @@ These methods provide lower-level access to wallet cryptographic operations. Mos
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `getEncryptionKey` | `(walletId: string) => Promise<string \| null>` | Get the selected wallet's encryption key |
-| `getEncryptedSeed` | `(walletId: string) => Promise<string \| null>` | Get encrypted seed from storage |
-| `getEncryptedEntropy` | `(walletId: string) => Promise<string \| null>` | Get encrypted entropy from storage |
-| `generateEntropyAndEncrypt` | `(wordCount?: 12 \| 24) => Promise<{ encryptionKey, encryptedSeedBuffer, encryptedEntropyBuffer }>` | Generate and encrypt entropy for wallet creation |
-| `getMnemonicFromEntropy` | `(encryptedEntropy: string, encryptionKey: string) => Promise<{ mnemonic: string }>` | Derive mnemonic from encrypted entropy |
-| `getSeedAndEntropyFromMnemonic` | `(mnemonic: string) => Promise<{ encryptionKey, encryptedSeedBuffer, encryptedEntropyBuffer }>` | Get encrypted seed and entropy from a mnemonic phrase |
+| `getEncryptionKey` | `(walletId: string) => Promise<string \| null>` | Get the selected wallet's base64 encryption key |
+| `getEncryptedSeed` | `(walletId: string) => Promise<string \| null>` | Get the base64 encrypted seed from storage |
+| `getEncryptedEntropy` | `(walletId: string) => Promise<string \| null>` | Get the base64 encrypted entropy from storage |
+| `generateEntropyAndEncrypt` | `(wordCount?: 12 \| 24) => Promise<{ encryptionKey: string, encryptedSeedBuffer: string, encryptedEntropyBuffer: string }>` | Generate and encrypt entropy for wallet creation; all returned strings are base64 |
+| `getMnemonicFromEntropy` | `(encryptedEntropy: string, encryptionKey: string) => Promise<{ mnemonic: string }>` | Derive a mnemonic from base64 encrypted entropy and key strings |
+| `getSeedAndEntropyFromMnemonic` | `(mnemonic: string) => Promise<{ encryptionKey: string, encryptedSeedBuffer: string, encryptedEntropyBuffer: string }>` | Get encrypted seed and entropy from a mnemonic phrase; all returned strings are base64 |
+
+Beta.20 converts these base64 strings to native buffers only at its internal HRPC boundary and overwrites several owned temporary buffers after use. Public hook results and storage values remain immutable JavaScript strings, and conversion can create additional copies. Discard references promptly and do not treat method completion as proof that every copy was erased.
 
 ### Example
 

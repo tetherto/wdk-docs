@@ -108,6 +108,11 @@ This configuration requires the client process to find `wdk-mcp` on its `PATH`. 
 | `list_methods` | No | List the chain-specific methods declared by one built-in wallet module or every module in the catalog. |
 | `call_method` | Yes | Invoke one catalog-declared chain-specific wallet method. |
 | `send_token` | Yes | Preview or execute a native or registered-token transfer. |
+| `sign_message` | Yes | Sign an arbitrary message with the selected account key. |
+| `verify_message` | Yes | Verify a message and signature against the selected account key. |
+| `get_transaction` | Yes | Read a normalized receipt, optionally waiting for confirmed or final status. |
+| `swap_token` | Yes | Preview or execute a token swap; beta.5's `toNetwork` path has a route-selection limitation described below. |
+| `bridge_token` | Yes | Preview or execute an exact-input, same-token bridge between networks. |
 | `buy_crypto` | Yes | Create a signed MoonPay buy URL. |
 | `sell_crypto` | Yes | Create a signed MoonPay sell URL. |
 
@@ -115,23 +120,26 @@ This configuration requires the client process to find `wdk-mcp` on its `PATH`. 
 
 ## CLI Capabilities Not Exposed Over MCP
 
-`wdk-mcp` registers only the eleven tools listed above. Through this server, an agent can operate a wallet that a person has already unlocked, but it cannot call the CLI's wallet administration or persistent-configuration commands.
+`wdk-mcp` registers only the sixteen tools listed above. Through this server, an agent can operate a wallet that a person has already unlocked, but it cannot call the CLI's wallet administration or persistent-configuration commands.
 
 - Wallet administration: `wdk wallet create`, `import`, `export`, `unlock`, `lock`, `delete`, `rename`, and `default`. These commands create, import, or reveal seed material; confirm wallet ownership; change wallet identity or default selection; or control an unlock session. `wdk wallet unlock` is deliberately the human authorization moment, and `wdk wallet lock` ends that session.
 - Persistent configuration: `wdk config set` and `reset`, `wdk network create` and `delete`, `wdk token add` and `delete`, and `wdk module add` and `remove`. These commands change durable local configuration or installed executable code and remain user-driven decisions.
 
 This is a boundary of the MCP tool surface, not an operating-system sandbox. An AI client with separate shell access is outside this boundary and may be able to invoke `wdk` directly.
 
-## Preview And Confirm Transfers
+## Preview And Confirm Transactions
 
-`send_token` defaults to `dryRun: true`. The recommended client workflow is:
+`send_token`, `swap_token`, and `bridge_token` default to `dryRun: true`. The recommended client workflow is:
 
-1. Call `send_token` without `dryRun`, or with `dryRun: true`.
-2. Show the network, token, recipient, amount, and estimated fee to the user.
-3. Ask the user to confirm those exact values.
-4. Call `send_token` with `dryRun: false` only after confirmation.
+1. Select the wallet and account index explicitly. For a swap or bridge, call `get_address` with the same `wallet`, `index`, and destination `network`, then pass its returned address as `recipient`.
+2. Call the transaction tool without `dryRun`, or with `dryRun: true`.
+3. Show the retained request identity and every value returned by the preview. Swap and bridge previews do not echo the wallet, account index, or recipient, so label those as separately verified request values rather than preview output.
+4. Explain that swap and bridge execution makes a fresh quote request. Unless `protocol` is supplied, the provider can change; amounts and fees can change even when it is supplied. Ask whether to proceed without a minimum output, maximum input, fee, or expiry bound relative to the preview.
+5. Call the same tool with `dryRun: false` only after confirmation.
 
-Example preview request:
+The following examples are argument objects for `send_token`. See [Swap and Bridge](/cli/guides/swap-and-bridge) for the fields used by `swap_token` and `bridge_token`.
+
+Example `send_token` preview request:
 
 ```json
 {
@@ -142,7 +150,7 @@ Example preview request:
 }
 ```
 
-Example execution request after confirmation:
+Example `send_token` execution request after confirmation:
 
 ```json
 {
@@ -155,8 +163,32 @@ Example execution request after confirmation:
 ```
 
 <Callout type="error">
-The preview-and-confirm sequence is guidance for the AI client; the daemon does not enforce it. A direct `send_token` call with `dryRun: false` broadcasts when the selected wallet is unlocked and the request is otherwise valid.
+The preview-and-confirm sequence is guidance for the AI client; the daemon does not enforce it. A direct `send_token`, `swap_token`, or `bridge_token` call with `dryRun: false` executes when the selected wallet is unlocked and the request is otherwise valid. `protocol` can restrict the provider, but beta.5 has no MCP field that binds a minimum output, maximum input, fee, slippage limit, or expiry to a swap or bridge preview.
 </Callout>
+
+For `swap_token`, provide exactly one of the decimal-string fields `amountIn` and `amountOut`. The schema accepts `toNetwork`, but do not use it with beta.5: candidate selection can admit a same-chain swap provider, and the adapter does not pass the destination network to that provider. For `bridge_token`, provide the exact-input `amount`; the same registered token moves between two different networks. If `recipient` is omitted, the daemon derives the destination address from the selected wallet and the same account index, but the preview does not return the resolved address.
+
+Swap and bridge execution requests fresh quotes. The route, amounts, fees, or skipped protocols can therefore differ from the earlier preview. Exact-input routing ranks successful quotes by highest output, and exact-output routing ranks them by lowest input. Separate gas and bridge fees are shown but excluded from route ranking.
+
+Velora beta.6 requires an allowance before quoting or executing with an ERC-20 input. Beta.5 does not expose the Velora spender or approve automatically. Resolve the chain-specific spender with Velora SDK 9's [`swap.getSpender()`](https://github.com/VeloraDEX/sdk/blob/86679ae70686ad3f01ee29baba9033be0a1b742b/src/methods/swap/spender.ts#L33-L63) lookup, then use `list_methods` and `call_method` to read the allowance and approve only a bounded base-unit amount. Use `get_transaction` to wait for `confirmed`, require `success: true`, and read the allowance again. Native-token input has no ERC-20 allowance, and other protocols can manage approval differently. Do not guess the spender or the required amount for an exact-output Velora request.
+
+Beta.5 has no MCP tool for listing protocol short names. Before supplying `protocol`, read the `protocols` object in the [exact released catalog](https://github.com/tetherto/wdk-cli/blob/09ab893506ca7221bc179cf3702d78958dfd4cd5/wdk.config.json#L62-L78) and compare it with the installed `wdk.config.json`. See [Swap and Bridge](/cli/guides/swap-and-bridge).
+
+## Sign And Verify Messages
+
+`sign_message` accepts `network`, `message`, and optional `wallet` and `index` fields. Show those exact values and obtain explicit user confirmation before calling it.
+
+<Callout type="error">
+`sign_message` signs immediately. It has no dry run, confirmation prompt, or second passphrase check, and the daemon does not enforce the tool description's confirmation guidance. A signature can authorize actions on some chains.
+</Callout>
+
+`verify_message` accepts the same account fields plus `signature` and returns whether that account verifies the message and signature. Both tools require the selected wallet to be unlocked.
+
+## Read A Transaction
+
+`get_transaction` requires `network` and `hash`, with optional `wallet` and `index` fields. Omit `finality` to return the account's current normalized receipt without waiting. Set `finality` to `confirmed` or `final` to wait for that target. When you set `finality`, use a positive integer `timeout` in milliseconds; the default finality wait is 150,000 milliseconds. Beta.5's MCP schema accepts any number and does not enforce positivity or integrality, so validate this value in the client.
+
+Module-specific receipt fields are retained. Returned `bigint` values are decimal strings.
 
 ## Call Module Methods
 
@@ -178,7 +210,7 @@ Use decimal integer strings for `bigint` parameters. Encode a structured paramet
 Methods marked `write` can move funds or mutate state. `call_method` has no dry-run or enforced confirmation. Show the exact wallet, network, method, and arguments to the user and call it only after explicit confirmation. The method's `kind` is catalog metadata for the client; the daemon does not use it as an authorization control.
 </Callout>
 
-The method allowlist comes from the built-in beta.3 catalog. The server does not reflect over arbitrary methods from custom module packages. See [Call Module Methods](/cli/guides/call-module-methods) for CLI examples and parameter formats.
+The method allowlist comes from the built-in beta.5 catalog. The server does not reflect over arbitrary methods from custom module packages. See [Call Module Methods](/cli/guides/call-module-methods) for CLI examples and parameter formats.
 
 ## Security And Session Boundaries
 
