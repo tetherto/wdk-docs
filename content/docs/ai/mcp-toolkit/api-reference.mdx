@@ -13,13 +13,14 @@ The `WdkMcpServer` class extends `McpServer` from `@modelcontextprotocol/sdk` wi
 ### Constructor
 
 ```javascript
-const server = new WdkMcpServer(name: string, version: string)
+const server = new WdkMcpServer(name: string, version: string, options?: ServerOptions)
 ```
 
 | Parameter | Type | Description |
 | --- | --- | --- |
 | `name` | `string` | Server name (shown to AI clients) |
 | `version` | `string` | Server version string |
+| `options.capabilities.elicitation` | `boolean` | Defaults to `true`. When `false`, confirmation requests are automatically accepted; see [confirmation settings](/ai/mcp-toolkit/configuration#confirmation-and-agent-access). |
 
 ### Core Methods
 
@@ -138,10 +139,10 @@ server.registerToken(chain: string, symbol: string, token: TokenInfo): WdkMcpSer
 
 #### `close()`
 
-Disposes the WDK instance and clears seed material from memory. Call this when shutting down the server.
+Calls WDK disposal, releases the server's WDK reference, and closes the MCP server. Await this when shutting down. Cleanup is best effort and cannot guarantee erasure of every seed or key copy in process memory.
 
 ```typescript
-server.close(): void
+server.close(): Promise<void>
 ```
 
 ### Query Methods
@@ -203,7 +204,7 @@ Every tool declares these annotations:
 | `openWorldHint` | `boolean` | Tool interacts with external systems |
 
 <Callout type="info">
-**Human Confirmation** - All tools where `destructiveHint: true` use MCP [elicitations](https://modelcontextprotocol.io/docs/concepts/elicitation) to show a confirmation dialog before broadcasting. The user must explicitly approve each transaction.
+**Configurable confirmation** - Tools that request confirmation use MCP elicitation when enabled. Disabling elicitation automatically accepts confirmation requests. The annotations are descriptive hints, not authorization checks; see [confirmation and agent access](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
 </Callout>
 
 ***
@@ -348,7 +349,7 @@ Estimate the fee for transferring a token. **Read-only.** Does not broadcast.
 
 ### `sendTransaction`
 
-Send native currency (ETH, BTC, etc.). **Destructive** - requires user confirmation.
+Send native currency (ETH, BTC, etc.). **Destructive** - requests confirmation when [elicitation is enabled](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
 
 **Input:**
 
@@ -366,14 +367,14 @@ Send native currency (ETH, BTC, etc.). **Destructive** - requires user confirmat
 | `fee` | `string` | Actual fee paid |
 
 <Callout type="warn">
-This tool shows a confirmation dialog with transaction details before broadcasting. The user must approve the transaction explicitly.
+With elicitation enabled and a compatible MCP client, this tool requests approval before broadcasting. With elicitation disabled, the confirmation request is automatically accepted.
 </Callout>
 
 ---
 
 ### `transfer`
 
-Transfer a registered token. **Destructive** - requires user confirmation.
+Transfer a registered token. **Destructive** - requests confirmation when [elicitation is enabled](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
 
 **Input:**
 
@@ -392,7 +393,7 @@ Transfer a registered token. **Destructive** - requires user confirmation.
 | `fee` | `string` | Actual fee paid |
 
 <Callout type="warn">
-This tool shows a confirmation dialog with transaction details before broadcasting. The user must approve the transaction explicitly.
+With elicitation enabled and a compatible MCP client, this tool requests approval before broadcasting. With elicitation disabled, the confirmation request is automatically accepted.
 </Callout>
 
 ---
@@ -585,7 +586,7 @@ Get a swap quote without executing. **Read-only.**
 
 ### `swap`
 
-Execute a token swap. **Destructive** - requires user confirmation.
+Execute a token swap. **Destructive** - requests confirmation when [elicitation is enabled](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
 
 **Input:**
 
@@ -612,7 +613,7 @@ Execute a token swap. **Destructive** - requires user confirmation.
 | `fee` | `string` | Fee paid |
 
 <Callout type="warn">
-This tool quotes the swap first, then shows a confirmation dialog before broadcasting.
+This tool quotes the swap first, then requests approval when elicitation is enabled. With elicitation disabled, the confirmation request is automatically accepted.
 </Callout>
 
 ***
@@ -651,7 +652,7 @@ Get a bridge quote without executing. **Read-only.**
 
 ### `bridge`
 
-Execute a cross-chain bridge. **Destructive** - requires user confirmation.
+Execute a cross-chain bridge. **Destructive** - requests confirmation when [elicitation is enabled](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
 
 **Input:**
 
@@ -714,7 +715,7 @@ Get a fee estimate for supplying tokens to a lending pool. **Read-only.**
 
 ### `supply`
 
-Supply tokens to a lending pool. **Destructive** - requires user confirmation.
+Supply tokens to a lending pool. **Destructive** - requests confirmation when [elicitation is enabled](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
 
 Same input as `quoteSupply`. Output includes `success`, `protocol`, `hash`, `token`, `amount`, and `fee`.
 
@@ -738,7 +739,7 @@ Estimate fee for withdrawing from a lending pool. **Read-only.**
 
 ### `withdraw`
 
-Withdraw tokens from a lending pool. **Destructive** - requires user confirmation.
+Withdraw tokens from a lending pool. **Destructive** - requests confirmation when [elicitation is enabled](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
 
 Same input as `quoteWithdraw`. Output includes `success`, `protocol`, `hash`, `token`, `amount`, and `fee`.
 
@@ -762,7 +763,7 @@ Estimate fee for borrowing from a lending pool. **Read-only.**
 
 ### `borrow`
 
-Borrow tokens from a lending pool. **Destructive** - requires user confirmation.
+Borrow tokens from a lending pool. **Destructive** - requests confirmation when [elicitation is enabled](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
 
 Same input as `quoteBorrow`. Output includes `success`, `protocol`, `hash`, `token`, `amount`, and `fee`.
 
@@ -786,7 +787,7 @@ Estimate fee for repaying a loan. **Read-only.**
 
 ### `repay`
 
-Repay borrowed tokens. **Destructive** - requires user confirmation.
+Repay borrowed tokens. **Destructive** - requests confirmation when [elicitation is enabled](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
 
 Same input as `quoteRepay`. Output includes `success`, `protocol`, `hash`, `token`, `amount`, and `fee`.
 
@@ -826,9 +827,9 @@ Get a quote for purchasing crypto with fiat. **Read-only.**
 
 ### `buy`
 
-Execute a fiat-to-crypto purchase. **Destructive** - requires user confirmation.
+Generate a provider URL for a fiat-to-crypto purchase. This tool does not request MCP confirmation; the user opens the URL to complete the purchase with the provider.
 
-Same input as `quoteBuy`. Output includes `success`, `protocol`, redirect URL or transaction details.
+Accepts the `quoteBuy` inputs plus an optional `recipient` address, which defaults to the wallet address. Returns `protocol` and `buyUrl`.
 
 ---
 
@@ -836,15 +837,15 @@ Same input as `quoteBuy`. Output includes `success`, `protocol`, redirect URL or
 
 Get a quote for selling crypto to fiat. **Read-only.**
 
-Same input structure as `quoteBuy`. Same output structure.
+Requires `chain`, `cryptoAsset`, `fiatCurrency`, and `cryptoAmount` (a string in base units). Returns the same output fields as `quoteBuy`.
 
 ---
 
 ### `sell`
 
-Execute a crypto-to-fiat sale. **Destructive** - requires user confirmation.
+Generate a provider URL for a crypto-to-fiat sale. This tool does not request MCP confirmation; the user opens the URL to complete the sale with the provider.
 
-Same input as `quoteSell`. Output includes `success`, `protocol`, and transaction details.
+Requires `chain`, `cryptoAsset`, `fiatCurrency`, and `cryptoAmount` (a string in base units). The optional `refundAddress` defaults to the wallet address. Returns `protocol` and `sellUrl`.
 
 ---
 

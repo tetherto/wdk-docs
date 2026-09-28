@@ -10,27 +10,27 @@ icon: Rocket
 **Building a LangChain agent?** The `serve` command provides zero-config MCP server startup -- no server script needed. See [LangChain Integration](/ai/mcp-toolkit/langchain/).
 </Callout>
 
-## Setup Wizard
+## Source Setup
 
-The fastest way to get running. Clone the repository and let the wizard configure everything:
+The toolkit is currently available from [source](/ai/mcp-toolkit/), not as a working npm release. Check out the revision described by these pages:
 
 ```bash title="Terminal"
 git clone https://github.com/tetherto/wdk-mcp-toolkit.git
 cd wdk-mcp-toolkit
-npm install
-npm run setup
+git checkout 0640ef219d8a6242d90b0e80b6733548a0bc3eb5
+npm ci
 ```
 
-The wizard will:
-1. Prompt for your seed phrase (required)
-2. Ask for optional API keys (WDK Indexer, MoonPay)
-3. Generate `.vscode/mcp.json` with your credentials
-4. Install required dependencies automatically
+Start the stdio server with:
 
-Once complete, open the project in VS Code, start the MCP server from `.vscode/mcp.json`, and open the chatbot with **Cmd + Shift + I** (or run **Chat: Open Agent** from the Command Palette on non-Mac).
+```bash title="Terminal"
+node bin/index.js serve
+```
+
+Without a configured seed, `serve` exposes pricing tools only. To enable wallet tools, supply `WDK_SEED` through your trusted local configuration and install the wallet modules you need. For client setup, use `node` with the absolute path to `bin/index.js` followed by `serve`; see the [LangChain examples](/ai/mcp-toolkit/langchain#quick-start).
 
 <Callout type="warn">
-**Security** - Your seed phrase is stored locally in `.vscode/mcp.json`, which is gitignored. Always use a **dedicated development wallet** with limited funds.
+**Security** - A seed in an environment variable or gitignored client configuration is still accessible to code that can read that environment or file. Use a dedicated development wallet with limited funds. Review [confirmation and agent access](/ai/mcp-toolkit/configuration#confirmation-and-agent-access) before exposing write tools.
 </Callout>
 
 ***
@@ -47,7 +47,7 @@ If you prefer to set things up yourself or want to integrate the toolkit into an
 Install the MCP Toolkit and the wallet modules you need:
 
 ```bash title="Terminal"
-npm install @tetherto/wdk-mcp-toolkit @modelcontextprotocol/sdk
+npm install github:tetherto/wdk-mcp-toolkit#0640ef219d8a6242d90b0e80b6733548a0bc3eb5 @modelcontextprotocol/sdk
 
 # Wallet modules (add any combination)
 npm install @tetherto/wdk-wallet-evm    # Ethereum, Polygon, Arbitrum, etc.
@@ -60,10 +60,11 @@ npm install @tetherto/wdk-wallet-btc    # Bitcoin
 
 #### Create your MCP server
 
-Create `index.js` with a basic multi-chain server:
+Create `index.js` with a basic multi-chain server. Set `"type": "module"` in your app's `package.json` to use these imports:
 
 ```javascript title="index.js"
-import { WdkMcpServer, CHAINS, WALLET_TOOLS, PRICING_TOOLS } from '@tetherto/wdk-mcp-toolkit'
+import { WdkMcpServer, WALLET_TOOLS, PRICING_TOOLS } from '@tetherto/wdk-mcp-toolkit'
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
 import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
@@ -88,6 +89,7 @@ server.usePricing()
 
 // 4. Register tools and start
 server.registerTools([...WALLET_TOOLS, ...PRICING_TOOLS])
+await server.connect(new StdioServerTransport())
 ```
 
 </Step>
@@ -237,7 +239,7 @@ Send 10 USDt to 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb7 on ethereum
 ```
 
 <Callout type="info">
-Write operations (sending, swapping, bridging) will show a **confirmation dialog** before executing. You must explicitly approve each transaction.
+With elicitation enabled and a compatible MCP client, sending, swapping, bridging, signing, and lending tools request approval before continuing. Disabling elicitation automatically accepts those requests. See [confirmation settings and limits](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
 </Callout>
 
 </Step>

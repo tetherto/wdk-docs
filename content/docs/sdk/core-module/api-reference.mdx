@@ -196,6 +196,10 @@ console.log(excludedMethods.includes('getBalance')) // true
 #### `registerPolicy(policies, options?)`
 Registers one or more local transaction policies on the WDK instance.
 
+<Callout type="warn">
+The transaction policy engine is experimental and not production ready. Local policy evaluation does not provide isolation from a compromised agent environment. See the [security boundary](/sdk/core-module/guides/transaction-policies#security-boundary) for enforcement scope and limits.
+</Callout>
+
 Policies are evaluated before governed account and protocol methods execute. In beta.17, the proxy discovers public string-named methods on the account or protocol and its prototype chain, then wraps those absent from the resolved exclusion set. This replaces the earlier fixed write-method list; see [coverage and limits](/sdk/core-module/guides/transaction-policies#supported-operations). Matching `DENY` rules and governed-account default-deny outcomes throw `PolicyViolationError`; matching `ALLOW` rules permit the call only when no higher-priority `DENY` rule applies. Governed runtime accounts also expose `account.simulate.<method>(...)` mirrors so you can dry-run policy evaluation without sending, signing, or broadcasting.
 
 Evaluation order:
@@ -293,7 +297,7 @@ Returns a wallet account for a specific blockchain and index using BIP-44 deriva
 - `blockchain` (string): The name of the blockchain (e.g., "ethereum")
 - `index` (number, optional): The index of the account to get (default: 0)
 
-**Returns:** `Promise<WdkAccount>` - The writable wallet account with protocol support. When a registered policy targets the account, the returned runtime account is policy-enforced and exposes matching `simulate` helpers.
+**Returns:** `Promise<WdkAccount>` - The writable wallet account with protocol support. When a registered policy targets the account, WDK returns a proxy that evaluates [governed methods](/sdk/core-module/guides/transaction-policies#security-boundary) and exposes matching `simulate` helpers. Otherwise, WDK returns the original account without adding policy enforcement.
 
 **Throws:** Error if no wallet has been registered for the given blockchain. Throws `PolicyConfigurationError` if a registered policy applies but the wallet account does not expose a read-only account view.
 
@@ -323,7 +327,7 @@ Returns a wallet account for a specific blockchain and BIP-44 derivation path.
 - `blockchain` (string): The name of the blockchain (e.g., "ethereum")
 - `path` (string): The derivation path (e.g., "0'/0/0")
 
-**Returns:** `Promise<WdkAccount>` - The writable wallet account with protocol support. When a registered policy targets the account, the returned runtime account is policy-enforced and exposes matching `simulate` helpers.
+**Returns:** `Promise<WdkAccount>` - The writable wallet account with protocol support. When a registered policy targets the account, WDK returns a proxy that evaluates [governed methods](/sdk/core-module/guides/transaction-policies#security-boundary) and exposes matching `simulate` helpers. Otherwise, WDK returns the original account without adding policy enforcement.
 
 **Throws:** Error if no wallet has been registered for the given blockchain. Throws `PolicyConfigurationError` if a registered policy applies but the wallet account does not expose a read-only account view.
 

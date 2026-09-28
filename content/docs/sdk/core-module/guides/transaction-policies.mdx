@@ -10,8 +10,17 @@ Use local transaction policies to evaluate account and protocol calls before exe
 Use `@tetherto/wdk` v1.0.0-beta.18 or later for these examples because they import `DENIAL_CODES` and read the stable `error.code` and `error.operation` fields. Method exclusions and coverage beyond the earlier fixed operation list arrived in beta.17. The examples assume you have loaded an app-owned `seedPhrase` and registered the relevant wallet modules.
 
 <Callout type="warn">
-Transaction policies are local pre-execution controls. They do not enforce rules on-chain, replace smart-contract permissions, or validate live token metadata, balances, prices, or contract state.
+The transaction policy engine is experimental and not production ready. Its local checks do not provide a security boundary against a compromised agent environment. Read the [security boundary](#security-boundary) before giving an agent wallet access.
 </Callout>
+
+## Security Boundary
+
+The policy engine in `@tetherto/wdk@1.0.0-beta.18` provides these local controls and limits:
+
+- **Governed calls only.** Register policies before retrieving accounts. If no policy applies to an account, WDK returns the original account without adding policy enforcement. Default-deny applies only to intercepted methods on governed accounts; excluded methods bypass evaluation. See [Evaluation Rules](#evaluation-rules).
+- **Method arguments, not final signing validation.** Conditions inspect the method name and argument snapshots before the wallet or protocol method runs. The policy engine does not independently validate the final transaction bytes or decode calldata. It does not enforce rules on-chain, replace smart-contract permissions, or validate live token metadata, balances, prices, or contract state for you.
+- **Trusted runtime and administration.** The application must control the seed, signing authority, WDK instance, and policy configuration. A caller with raw account references, the seed, or control over that runtime or configuration can bypass or replace local checks. The engine does not isolate keys or policy administration from the agent, and cannot guarantee protection when the agent environment is compromised. An allowed call can still spend within its permitted scope even when it came from prompt injection.
+- **No built-in durable accounting.** WDK does not persist policy state, update spending counters, or run `onSuccess` hooks. Conditions can use app-owned state, but the application must handle persistence, concurrency, and rollback. See [Runtime Caveats](#runtime-caveats).
 
 ## Policy Structure
 
@@ -29,10 +38,6 @@ A transaction policy is a named local configuration object registered with `wdk.
 Use `scope: 'project'` for rules that apply across all wallets or selected wallet identifiers. Use `scope: 'account'` with `wallet` and `accounts` for rules that apply only to specific account indices or derivation paths.
 
 Each rule addresses one operation, multiple operations, or `*`. A matching `ALLOW` can permit the governed call, while a matching `DENY` blocks the call with `PolicyViolationError`.
-
-<Callout type="info">
-WDK does not manage durable policy state for you. Conditions can inspect the current `PolicyContext` and app-owned inputs, including in-memory or externally stored state, but WDK does not persist `rule.state`, update counters, or run `onSuccess` hooks. Keep app-owned state outside `rule.state`; that field is reserved for future runtime semantics.
-</Callout>
 
 ## Register Policies
 

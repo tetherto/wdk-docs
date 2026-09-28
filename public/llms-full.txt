@@ -75,7 +75,7 @@ Explore our React Native UI Kit with pre-built components
 URL: https://docs.wdk.tether.io/ai/agent-skills
 Description: Give any AI agent self-custodial wallet capabilities with WDK agent skills
 
-WDK provides agent skills: structured instruction sets that teach AI agents how to create wallets, send transactions, swap tokens, bridge assets, and interact with DeFi protocols across 20+ blockchains. All operations are self-custodial. Keys stay on your machine, with no third-party custody dependency.
+WDK provides agent skills: structured instruction sets that teach AI agents how to create wallets, send transactions, swap tokens, bridge assets, and interact with DeFi protocols through WDK modules. The SDK uses app-managed keys; loading a skill does not isolate those keys from the agent's tools or runtime.
 
 <Callout type="info">
 **Skill vs MCP Toolkit vs WDK CLI**: Use an **agent skill** when your agent platform works with file-based instructions (e.g., OpenClaw, Cursor). Use the [MCP Toolkit](/ai/mcp-toolkit/) when you are building a custom MCP server in code. Use [WDK CLI](/cli/) when you want a ready-made local wallet CLI, daemon, and MCP server.
@@ -102,17 +102,19 @@ Once an agent loads the WDK skill, it can:
 | **Gasless** | Fee-free transfers on TON (via paymaster) and Tron (via gas-free service), and ERC-4337 account abstraction on EVM |
 
 <Callout type="warn">
-All write operations require explicit human confirmation. The skill instructs agents to estimate fees before sending and includes prompt injection protection guidance.
+The skill instructs agents to request explicit human confirmation before write operations and to estimate fees before sending. These are instructions to the agent, not enforced authorization checks. They do not guarantee that an agent will ask for approval or resist prompt injection.
+
+Enforce tool permissions and signing authorization outside the model's instructions. WDK transaction policies also have a limited [security boundary](/sdk/core-module/guides/transaction-policies#security-boundary); they do not isolate an agent that can execute arbitrary code in the wallet runtime.
 </Callout>
 
 ## How It Works
 
-1. **Install the skill** by cloning the skill repository or installing from a skill registry like [ClawHub](https://clawhub.ai/HumanRupert/tether-wallet-development-kit)
+1. **Review and copy the skill** from the official [WDK skill directory](https://github.com/tetherto/wdk-docs/tree/main/skills/wdk), including its reference files, into the location your agent platform supports
 2. **Agent loads the skill** and reads `SKILL.md` along with per-module reference files to learn WDK's API surface
 3. **Agent executes operations** when you ask it to create a wallet or send a transaction, generating the correct WDK code
-4. **You confirm** before any write operation (transactions, swaps, bridges) goes through
+4. **Agent requests confirmation** as instructed before a write operation; your integration must enforce any required approval before allowing execution
 
-The skill includes security guidance: pre-transaction validation checklists, prompt injection detection rules, and mandatory key cleanup patterns.
+The skill includes pre-transaction checklists, examples of prompt injection attempts, and instructions to clean up keys. Review the generated code and the platform's tool permissions before allowing wallet access. For the separate CLI integration, read the [WDK CLI security model](/cli/reference/security-model/).
 
 ## Self-Custodial vs Hosted
 
@@ -124,7 +126,7 @@ WDK's agent skills use a self-custodial model where your agent controls its own 
 | Multi-chain | Yes (EVM, Bitcoin, Solana, TON, Tron, Spark + more) | EVM + Solana | EVM + Solana + Bitcoin + more |
 | Open source | Yes (SDK + skills) | CLI/skills open, infra closed | Skills open, API closed |
 | MCP support | Yes ([MCP Toolkit](/ai/mcp-toolkit/)) | Via skills | Via skills |
-| OpenClaw support | Yes ([ClawHub skill](https://clawhub.ai/HumanRupert/tether-wallet-development-kit)) | Yes (npx skills) | Yes (ClawHub skill) |
+| OpenClaw support | [Integration options and community skill status](/ai/openclaw/) | Yes (npx skills) | Yes (ClawHub skill) |
 | x402 payments | Via [community extensions](#community-projects) | Yes (native) | No |
 | Key management | Local / self-managed | Coinbase infrastructure | Privy infrastructure |
 
@@ -132,7 +134,7 @@ WDK's agent skills use a self-custodial model where your agent controls its own 
 
 | Platform | How to Use |
 | --- | --- |
-| **OpenClaw** | Install from [ClawHub](/ai/openclaw/) or clone to workspace. See [OpenClaw Integration](/ai/openclaw/) |
+| **OpenClaw** | See [OpenClaw Integration](/ai/openclaw/) for the official skill source, CLI MCP setup, and community skill availability |
 | **Claude** | Upload `SKILL.md` as project knowledge, or paste into conversation |
 | **Cursor / Windsurf** | Clone to `.cursor/skills/wdk` or `.windsurf/skills/wdk` |
 | **Any MCP-compatible agent** | Use [WDK CLI](/cli/guides/use-mcp-server/) for a ready-made local daemon, or the [MCP Toolkit](/ai/mcp-toolkit/) for a custom MCP server |
@@ -143,16 +145,22 @@ WDK's agent skills use a self-custodial model where your agent controls its own 
 
 Community-built projects using WDK's agentic capabilities:
 
+<Callout type="warn">
+Community showcase projects are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
 | Project | Description |
 | --- | --- |
 | [wdk-wallet-evm-x402-facilitator](https://github.com/SemanticPay/wdk-wallet-evm-x402-facilitator) | Agent-to-agent payments using the x402 HTTP payment protocol |
-| [x402-usdt0](https://github.com/baghdadgherras/x402-usdt0) | Reference implementation of x402 on Plasma with USD₮0 |
-| [Novanet zkML Guardrails](https://github.com/hshadab/tether) | Zero-knowledge ML safety checks for wallet operations |
+| [x402-usdt0](https://github.com/baghdadgherras/x402-usdt0) | Community x402 payment demo on Plasma with USD₮0 |
+| [Novanet zkML Guardrails](https://github.com/hshadab/tether) | Proof-of-concept zero-knowledge ML checks for wallet operations |
 
 ## Resources
 
 - [WDK SKILL.md on GitHub](https://github.com/tetherto/wdk-docs/blob/main/skills/wdk/SKILL.md) - The full skill file agents consume
-- [WDK Skill on ClawHub](https://clawhub.ai/HumanRupert/tether-wallet-development-kit) - Install the skill
+- [OpenClaw community skill status](/ai/openclaw/) - Check availability and integration options
 - [AgentSkills Specification](https://agentskills.io/specification) - The skill format standard
 - [WDK CLI](/cli/) - Local CLI, daemon, and MCP server for AI agents
 - [WDK MCP Toolkit](https://github.com/tetherto/wdk-mcp-toolkit) - MCP server for structured tool calling
@@ -175,7 +183,7 @@ The MCP Toolkit lets AI agents interact with self-custodial WDK wallets. It crea
 Powered by [`@tetherto/wdk-mcp-toolkit`](https://github.com/tetherto/wdk-mcp-toolkit).
 
 <Callout type="warn">
-**Beta** - This package is in active development (`v1.0.0-beta.1`). APIs may change between releases.
+**Source preview** - These pages describe [repository revision `0640ef2`](https://github.com/tetherto/wdk-mcp-toolkit/tree/0640ef219d8a6242d90b0e80b6733548a0bc3eb5), which declares `v1.0.0-beta.1`. That version is not published on npm; the npm `0.0.0` placeholder does not provide the toolkit. Use the [source setup](/ai/mcp-toolkit/get-started#source-setup). APIs may change.
 </Callout>
 
 <Embed url="/assets/mcp-toolkit-demo.mp4" />
@@ -185,13 +193,13 @@ Powered by [`@tetherto/wdk-mcp-toolkit`](https://github.com/tetherto/wdk-mcp-too
 - **MCP Server Extension** - Extends the official `@modelcontextprotocol/sdk` McpServer with WDK-specific capabilities
 - **Multi-Chain** - Support for 13 blockchains out of the box, including EVM chains, Bitcoin, Solana, Spark, TON, and Tron
 - **35 Built-in Tools** - Ready-to-use tools for wallets, pricing, indexer queries, swaps, bridges, lending, and fiat on/off-ramps
-- **Human Confirmation** - All write operations use MCP elicitations to require explicit user approval before broadcasting transactions
+- **Configurable Confirmation** - Tools that request confirmation use MCP elicitation when enabled; disabling it automatically accepts confirmation requests
 - **Extensible** - Register custom tools alongside built-in ones using standard MCP SDK patterns
-- **Secure by Design** - Seed phrases stay local, `close()` wipes keys from memory, and read/write tool separation lets you control access
+- **Tool Selection** - Register read-only or write tools for your application. Tool selection does not isolate the server's seed or enforce limits against code with access to its environment. See [confirmation and agent access](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
 
 ## Built-in Chain Identifiers
 
-The pinned release exports identifiers for 13 built-in chains. Common identifiers used across these docs include:
+The pinned source exports identifiers for 13 built-in chains. Common identifiers used across these docs include:
 
 | Chain | Identifier |
 | --- | --- |
@@ -245,13 +253,14 @@ The `WdkMcpServer` class extends `McpServer` from `@modelcontextprotocol/sdk` wi
 ### Constructor
 
 ```javascript
-const server = new WdkMcpServer(name: string, version: string)
+const server = new WdkMcpServer(name: string, version: string, options?: ServerOptions)
 ```
 
 | Parameter | Type | Description |
 | --- | --- | --- |
 | `name` | `string` | Server name (shown to AI clients) |
 | `version` | `string` | Server version string |
+| `options.capabilities.elicitation` | `boolean` | Defaults to `true`. When `false`, confirmation requests are automatically accepted; see [confirmation settings](/ai/mcp-toolkit/configuration#confirmation-and-agent-access). |
 
 ### Core Methods
 
@@ -370,10 +379,10 @@ server.registerToken(chain: string, symbol: string, token: TokenInfo): WdkMcpSer
 
 #### `close()`
 
-Disposes the WDK instance and clears seed material from memory. Call this when shutting down the server.
+Calls WDK disposal, releases the server's WDK reference, and closes the MCP server. Await this when shutting down. Cleanup is best effort and cannot guarantee erasure of every seed or key copy in process memory.
 
 ```typescript
-server.close(): void
+server.close(): Promise<void>
 ```
 
 ### Query Methods
@@ -435,7 +444,7 @@ Every tool declares these annotations:
 | `openWorldHint` | `boolean` | Tool interacts with external systems |
 
 <Callout type="info">
-**Human Confirmation** - All tools where `destructiveHint: true` use MCP [elicitations](https://modelcontextprotocol.io/docs/concepts/elicitation) to show a confirmation dialog before broadcasting. The user must explicitly approve each transaction.
+**Configurable confirmation** - Tools that request confirmation use MCP elicitation when enabled. Disabling elicitation automatically accepts confirmation requests. The annotations are descriptive hints, not authorization checks; see [confirmation and agent access](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
 </Callout>
 
 ***
@@ -580,7 +589,7 @@ Estimate the fee for transferring a token. **Read-only.** Does not broadcast.
 
 ### `sendTransaction`
 
-Send native currency (ETH, BTC, etc.). **Destructive** - requires user confirmation.
+Send native currency (ETH, BTC, etc.). **Destructive** - requests confirmation when [elicitation is enabled](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
 
 **Input:**
 
@@ -598,14 +607,14 @@ Send native currency (ETH, BTC, etc.). **Destructive** - requires user confirmat
 | `fee` | `string` | Actual fee paid |
 
 <Callout type="warn">
-This tool shows a confirmation dialog with transaction details before broadcasting. The user must approve the transaction explicitly.
+With elicitation enabled and a compatible MCP client, this tool requests approval before broadcasting. With elicitation disabled, the confirmation request is automatically accepted.
 </Callout>
 
 ---
 
 ### `transfer`
 
-Transfer a registered token. **Destructive** - requires user confirmation.
+Transfer a registered token. **Destructive** - requests confirmation when [elicitation is enabled](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
 
 **Input:**
 
@@ -624,7 +633,7 @@ Transfer a registered token. **Destructive** - requires user confirmation.
 | `fee` | `string` | Actual fee paid |
 
 <Callout type="warn">
-This tool shows a confirmation dialog with transaction details before broadcasting. The user must approve the transaction explicitly.
+With elicitation enabled and a compatible MCP client, this tool requests approval before broadcasting. With elicitation disabled, the confirmation request is automatically accepted.
 </Callout>
 
 ---
@@ -817,7 +826,7 @@ Get a swap quote without executing. **Read-only.**
 
 ### `swap`
 
-Execute a token swap. **Destructive** - requires user confirmation.
+Execute a token swap. **Destructive** - requests confirmation when [elicitation is enabled](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
 
 **Input:**
 
@@ -844,7 +853,7 @@ Execute a token swap. **Destructive** - requires user confirmation.
 | `fee` | `string` | Fee paid |
 
 <Callout type="warn">
-This tool quotes the swap first, then shows a confirmation dialog before broadcasting.
+This tool quotes the swap first, then requests approval when elicitation is enabled. With elicitation disabled, the confirmation request is automatically accepted.
 </Callout>
 
 ***
@@ -883,7 +892,7 @@ Get a bridge quote without executing. **Read-only.**
 
 ### `bridge`
 
-Execute a cross-chain bridge. **Destructive** - requires user confirmation.
+Execute a cross-chain bridge. **Destructive** - requests confirmation when [elicitation is enabled](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
 
 **Input:**
 
@@ -946,7 +955,7 @@ Get a fee estimate for supplying tokens to a lending pool. **Read-only.**
 
 ### `supply`
 
-Supply tokens to a lending pool. **Destructive** - requires user confirmation.
+Supply tokens to a lending pool. **Destructive** - requests confirmation when [elicitation is enabled](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
 
 Same input as `quoteSupply`. Output includes `success`, `protocol`, `hash`, `token`, `amount`, and `fee`.
 
@@ -970,7 +979,7 @@ Estimate fee for withdrawing from a lending pool. **Read-only.**
 
 ### `withdraw`
 
-Withdraw tokens from a lending pool. **Destructive** - requires user confirmation.
+Withdraw tokens from a lending pool. **Destructive** - requests confirmation when [elicitation is enabled](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
 
 Same input as `quoteWithdraw`. Output includes `success`, `protocol`, `hash`, `token`, `amount`, and `fee`.
 
@@ -994,7 +1003,7 @@ Estimate fee for borrowing from a lending pool. **Read-only.**
 
 ### `borrow`
 
-Borrow tokens from a lending pool. **Destructive** - requires user confirmation.
+Borrow tokens from a lending pool. **Destructive** - requests confirmation when [elicitation is enabled](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
 
 Same input as `quoteBorrow`. Output includes `success`, `protocol`, `hash`, `token`, `amount`, and `fee`.
 
@@ -1018,7 +1027,7 @@ Estimate fee for repaying a loan. **Read-only.**
 
 ### `repay`
 
-Repay borrowed tokens. **Destructive** - requires user confirmation.
+Repay borrowed tokens. **Destructive** - requests confirmation when [elicitation is enabled](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
 
 Same input as `quoteRepay`. Output includes `success`, `protocol`, `hash`, `token`, `amount`, and `fee`.
 
@@ -1058,9 +1067,9 @@ Get a quote for purchasing crypto with fiat. **Read-only.**
 
 ### `buy`
 
-Execute a fiat-to-crypto purchase. **Destructive** - requires user confirmation.
+Generate a provider URL for a fiat-to-crypto purchase. This tool does not request MCP confirmation; the user opens the URL to complete the purchase with the provider.
 
-Same input as `quoteBuy`. Output includes `success`, `protocol`, redirect URL or transaction details.
+Accepts the `quoteBuy` inputs plus an optional `recipient` address, which defaults to the wallet address. Returns `protocol` and `buyUrl`.
 
 ---
 
@@ -1068,15 +1077,15 @@ Same input as `quoteBuy`. Output includes `success`, `protocol`, redirect URL or
 
 Get a quote for selling crypto to fiat. **Read-only.**
 
-Same input structure as `quoteBuy`. Same output structure.
+Requires `chain`, `cryptoAsset`, `fiatCurrency`, and `cryptoAmount` (a string in base units). Returns the same output fields as `quoteBuy`.
 
 ---
 
 ### `sell`
 
-Execute a crypto-to-fiat sale. **Destructive** - requires user confirmation.
+Generate a provider URL for a crypto-to-fiat sale. This tool does not request MCP confirmation; the user opens the URL to complete the sale with the provider.
 
-Same input as `quoteSell`. Output includes `success`, `protocol`, and transaction details.
+Requires `chain`, `cryptoAsset`, `fiatCurrency`, and `cryptoAmount` (a string in base units). The optional `refundAddress` defaults to the wallet address. Returns `protocol` and `sellUrl`.
 
 ---
 
@@ -1198,6 +1207,28 @@ const server = new WdkMcpServer('my-server', '1.0.0')
 
 The `WdkMcpServer` extends `McpServer` from the official [`@modelcontextprotocol/sdk`](https://github.com/modelcontextprotocol/typescript-sdk) with WDK-specific capabilities. All standard MCP server features are available.
 
+## Confirmation and Agent Access
+
+The server enables MCP elicitation by default. `sendTransaction`, `transfer`, `sign`, `swap`, `bridge`, and lending execution tools request approval through the MCP client before continuing. The client must support elicitation and present the request to the user. Fiat `buy` and `sell` return provider URLs without this confirmation step; the user completes the purchase or sale with the provider.
+
+For a programmatic server, the setting is `options.capabilities.elicitation`:
+
+```javascript
+const server = new WdkMcpServer('my-server', '1.0.0', {
+  capabilities: { elicitation: true }
+})
+```
+
+The `serve` command uses `WDK_MCP_ELICITATION`; the exact string `"false"` disables elicitation. A custom server script must set the constructor option itself.
+
+<Callout type="warn">
+**Disabling elicitation automatically accepts confirmation requests.** It removes the human approval step; it does not add policy checks or spending limits. If your client cannot support confirmation, expose only [read-only tools](#read-only-mode) or provide authorization outside the agent's control before enabling writes.
+</Callout>
+
+These controls apply to the exposed MCP tools. They do not isolate signing keys from code that can access the server's seed, configuration, or runtime. The toolkit does not register transaction policies automatically. The [policy engine is experimental and not production ready](/sdk/core-module/guides/transaction-policies#security-boundary), and its local method checks are not a substitute for that isolation.
+
+MCP tool annotations and agent instructions describe expected behavior; they do not enforce authorization. For the separate WDK CLI daemon, see its [security model](/cli/reference/security-model#same-user-daemon-access).
+
 ***
 
 ## Wallet Configuration
@@ -1211,7 +1242,7 @@ server.useWdk({ seed: process.env.WDK_SEED })
 The `seed` is a BIP-39 mnemonic phrase used for key derivation across all registered blockchains.
 
 <Callout type="error">
-**Never hardcode seed phrases in source code.** Use environment variables or a secrets manager. The setup wizard generates a gitignored `.vscode/mcp.json` for local development.
+**Never hardcode seed phrases in source code.** Use environment variables or a secrets manager. Keep local client configuration files such as `.vscode/mcp.json` out of version control; gitignore does not restrict access by local processes.
 </Callout>
 
 ### Register Wallets
@@ -1299,10 +1330,10 @@ server.registerProtocol('ethereum', 'moonpay', MoonPayProtocol, {
 
 ### Default Tokens
 
-USD₮ is auto-registered for supported chains via `DEFAULT_TOKENS`. You can query what's available:
+`DEFAULT_TOKENS` registers Tether-family tokens for configured chains, including USD₮ and XAU₮ on Ethereum. Query the registry for the available machine symbols:
 
 ```javascript
-server.getRegisteredTokens('ethereum')  // ['USDT']
+server.getRegisteredTokens('ethereum')  // ['USDT', 'XAUT']
 ```
 
 ### Custom Tokens
@@ -1348,7 +1379,7 @@ Each category exports three arrays for fine-grained control:
 
 ### Read-Only Mode
 
-To allow an AI agent to query data without the ability to make transactions:
+To expose only read-only MCP tools to an AI agent:
 
 ```javascript
 import {
@@ -1428,11 +1459,11 @@ server.registerTool(
 
 - [ ] **Use a dedicated development wallet** - Never use production wallets with real funds for testing
 - [ ] **Never hardcode seed phrases** - Always use environment variables or `.vscode/mcp.json` (gitignored)
-- [ ] **Use `WALLET_READ_TOOLS` for untrusted agents** - Only register write tools when user confirmation is available
-- [ ] **Call `server.close()` on shutdown** - This disposes the WDK instance and wipes keys from memory
+- [ ] **Limit the exposed tools** - Use read-only tool arrays when writes are unnecessary. Before enabling writes, review [confirmation and agent access](#confirmation-and-agent-access).
+- [ ] **Await `server.close()` on shutdown** - This calls WDK disposal and closes the MCP server. Cleanup is best effort; it cannot guarantee erasure of every seed or key copy in process memory.
 - [ ] **Use `stdio` transport** - The default transport communicates only with the local AI client process
 - [ ] **Review MCP annotations** - Tools declare `readOnlyHint` and `destructiveHint` so clients can warn users appropriately
-- [ ] **Keep `.vscode/mcp.json` gitignored** - The setup wizard handles this automatically
+- [ ] **Keep client configuration gitignored** - Exclude files containing wallet credentials and restrict which processes can read them
 
 ***
 
@@ -1450,27 +1481,27 @@ Description: Install the MCP Toolkit and run your first AI-powered wallet server
 **Building a LangChain agent?** The `serve` command provides zero-config MCP server startup -- no server script needed. See [LangChain Integration](/ai/mcp-toolkit/langchain/).
 </Callout>
 
-## Setup Wizard
+## Source Setup
 
-The fastest way to get running. Clone the repository and let the wizard configure everything:
+The toolkit is currently available from [source](/ai/mcp-toolkit/), not as a working npm release. Check out the revision described by these pages:
 
 ```bash title="Terminal"
 git clone https://github.com/tetherto/wdk-mcp-toolkit.git
 cd wdk-mcp-toolkit
-npm install
-npm run setup
+git checkout 0640ef219d8a6242d90b0e80b6733548a0bc3eb5
+npm ci
 ```
 
-The wizard will:
-1. Prompt for your seed phrase (required)
-2. Ask for optional API keys (WDK Indexer, MoonPay)
-3. Generate `.vscode/mcp.json` with your credentials
-4. Install required dependencies automatically
+Start the stdio server with:
 
-Once complete, open the project in VS Code, start the MCP server from `.vscode/mcp.json`, and open the chatbot with **Cmd + Shift + I** (or run **Chat: Open Agent** from the Command Palette on non-Mac).
+```bash title="Terminal"
+node bin/index.js serve
+```
+
+Without a configured seed, `serve` exposes pricing tools only. To enable wallet tools, supply `WDK_SEED` through your trusted local configuration and install the wallet modules you need. For client setup, use `node` with the absolute path to `bin/index.js` followed by `serve`; see the [LangChain examples](/ai/mcp-toolkit/langchain#quick-start).
 
 <Callout type="warn">
-**Security** - Your seed phrase is stored locally in `.vscode/mcp.json`, which is gitignored. Always use a **dedicated development wallet** with limited funds.
+**Security** - A seed in an environment variable or gitignored client configuration is still accessible to code that can read that environment or file. Use a dedicated development wallet with limited funds. Review [confirmation and agent access](/ai/mcp-toolkit/configuration#confirmation-and-agent-access) before exposing write tools.
 </Callout>
 
 ***
@@ -1487,7 +1518,7 @@ If you prefer to set things up yourself or want to integrate the toolkit into an
 Install the MCP Toolkit and the wallet modules you need:
 
 ```bash title="Terminal"
-npm install @tetherto/wdk-mcp-toolkit @modelcontextprotocol/sdk
+npm install github:tetherto/wdk-mcp-toolkit#0640ef219d8a6242d90b0e80b6733548a0bc3eb5 @modelcontextprotocol/sdk
 
 # Wallet modules (add any combination)
 npm install @tetherto/wdk-wallet-evm    # Ethereum, Polygon, Arbitrum, etc.
@@ -1500,10 +1531,11 @@ npm install @tetherto/wdk-wallet-btc    # Bitcoin
 
 #### Create your MCP server
 
-Create `index.js` with a basic multi-chain server:
+Create `index.js` with a basic multi-chain server. Set `"type": "module"` in your app's `package.json` to use these imports:
 
 ```javascript title="index.js"
-import { WdkMcpServer, CHAINS, WALLET_TOOLS, PRICING_TOOLS } from '@tetherto/wdk-mcp-toolkit'
+import { WdkMcpServer, WALLET_TOOLS, PRICING_TOOLS } from '@tetherto/wdk-mcp-toolkit'
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
 import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
@@ -1528,6 +1560,7 @@ server.usePricing()
 
 // 4. Register tools and start
 server.registerTools([...WALLET_TOOLS, ...PRICING_TOOLS])
+await server.connect(new StdioServerTransport())
 ```
 
 </Step>
@@ -1677,7 +1710,7 @@ Send 10 USDt to 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb7 on ethereum
 ```
 
 <Callout type="info">
-Write operations (sending, swapping, bridging) will show a **confirmation dialog** before executing. You must explicitly approve each transaction.
+With elicitation enabled and a compatible MCP client, sending, swapping, bridging, signing, and lending tools request approval before continuing. Disabling elicitation automatically accepts those requests. See [confirmation settings and limits](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
 </Callout>
 
 </Step>
@@ -1757,20 +1790,20 @@ This approach uses LangChain's MCP adapters to connect to the WDK MCP server. WD
 
 ## The `serve` Command
 
-The `serve` command provides zero-config MCP server startup so you don't need to write a server script:
+Complete the pinned [source setup](/ai/mcp-toolkit/get-started#source-setup) first. From that checkout, `serve` starts the MCP server without a custom server script:
 
 ```bash title="Terminal"
-npx @tetherto/wdk-mcp-toolkit serve
+node bin/index.js serve
 ```
 
 Pass `WDK_SEED` to enable wallet operations, or omit it to run with pricing tools only:
 
 ```bash title="Terminal"
 # With wallet operations
-WDK_SEED="your twelve word seed phrase here" npx @tetherto/wdk-mcp-toolkit serve
+WDK_SEED="your twelve word seed phrase here" node bin/index.js serve
 
 # Pricing-only mode (no seed required)
-npx @tetherto/wdk-mcp-toolkit serve
+node bin/index.js serve
 ```
 
 ### Default Chains
@@ -1791,9 +1824,9 @@ The command has built-in definitions for 13 chains and 4 protocol modules. When 
 | [`@tetherto/wdk-protocol-swap-velora-evm`](/sdk/swap-modules/swap-velora-evm) | Swap tools (Ethereum, Arbitrum) | -- |
 | [`@tetherto/wdk-protocol-bridge-usdt0-evm`](/sdk/bridge-modules/bridge-usdt0-evm) | Bridge tools (Ethereum, Arbitrum) | -- |
 | [`@tetherto/wdk-protocol-lending-aave-evm`](/sdk/lending-modules/lending-aave-evm) | Lending tools (Ethereum) | -- |
-| [`@tetherto/wdk-protocol-fiat-moonpay`](/sdk/fiat-modules/fiat-moonpay) | Fiat tools (Ethereum) | Requires `MOONPAY_API_KEY` plus a non-sensitive `MOONPAY_SECRET_KEY=unused` sentinel in the released CLI; URLs remain unsigned |
+| [`@tetherto/wdk-protocol-fiat-moonpay`](/sdk/fiat-modules/fiat-moonpay) | Fiat tools (Ethereum) | Requires `MOONPAY_API_KEY` plus a non-sensitive `MOONPAY_SECRET_KEY=unused` sentinel in the pinned source CLI; URLs remain unsigned |
 
-Use the package's `CHAINS` export as the complete accepted-identifier registry for the installed release; see [Built-in Chain Identifiers](/ai/mcp-toolkit#built-in-chain-identifiers).
+Use the package's `CHAINS` export as the complete accepted-identifier registry for the source checkout; see [Built-in Chain Identifiers](/ai/mcp-toolkit#built-in-chain-identifiers).
 
 <Callout type="info">
 Missing packages are silently skipped. Install only the modules you need and `serve` will pick them up. For chains or protocols **not** in the built-in registry, use a [custom config file](#custom-config-file).
@@ -1802,6 +1835,12 @@ Missing packages are silently skipped. Install only the modules you need and `se
 ***
 
 ## Quick Start
+
+Replace `/absolute/path/wdk-mcp-toolkit` in both examples with your source checkout path.
+
+<Callout type="warn">
+The examples below set `WDK_MCP_ELICITATION="false"`, which automatically accepts confirmation requests. With a seed configured, `serve` exposes write tools as well as read tools; asking only for a balance or price does not restrict what the agent can call. Use a dedicated development wallet with limited funds. For read-only access, [register only read tools in a custom server](/ai/mcp-toolkit/configuration#read-only-mode); for writes, provide authorization outside the agent's control. See [confirmation and agent access](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
+</Callout>
 
 <Tabs items={["Python", "TypeScript"]}>
 <Tab value="Python">
@@ -1823,8 +1862,8 @@ async def main():
     client = MultiServerMCPClient({
         "wdk": {
             "transport": "stdio",
-            "command": "npx",
-            "args": ["-y", "@tetherto/wdk-mcp-toolkit", "serve"],
+            "command": "node",
+            "args": ["/absolute/path/wdk-mcp-toolkit/bin/index.js", "serve"],
             "env": {
                 "WDK_SEED": "your twelve word seed phrase here",
                 "WDK_MCP_ELICITATION": "false",
@@ -1869,8 +1908,8 @@ import { ChatOpenAI } from "@langchain/openai";
 const client = new MultiServerMCPClient({
   wdk: {
     transport: "stdio",
-    command: "npx",
-    args: ["-y", "@tetherto/wdk-mcp-toolkit", "serve"],
+    command: "node",
+    args: ["/absolute/path/wdk-mcp-toolkit/bin/index.js", "serve"],
     env: {
       WDK_SEED: "your twelve word seed phrase here",
       WDK_MCP_ELICITATION: "false",
@@ -1903,10 +1942,6 @@ npx tsx agent.ts
 </Tab>
 </Tabs>
 
-<Callout type="warn">
-**Security** -- Always use a dedicated development wallet with limited funds. Set `WDK_MCP_ELICITATION` to `"false"` for programmatic agents since elicitation dialogs require a human in the loop.
-</Callout>
-
 ***
 
 ## Configuration
@@ -1919,15 +1954,15 @@ Control `serve` behavior through environment variables:
 | --- | --- | --- | --- |
 | `WDK_SEED` | No | -- | BIP-39 seed phrase. If omitted, only pricing tools are available |
 | `WDK_CHAINS` | No | `ethereum,arbitrum,bitcoin` | Comma-separated identifiers from the package's `CHAINS` export |
-| `WDK_MCP_ELICITATION` | No | `true` | Set to `"false"` for programmatic agents that cannot handle confirmation dialogs |
-| `WDK_RPC_\<CHAIN\>` | No | Built-in defaults | Override the RPC endpoint for a chain (e.g. `WDK_RPC_ETHEREUM=https://my-rpc.com`) |
+| `WDK_MCP_ELICITATION` | No | `true` | The exact string `"false"` disables elicitation and automatically accepts confirmation requests; it does not enforce spending limits |
+| `WDK_RPC_\<CHAIN\>` | No | Built-in defaults | Override an existing `provider` field for a configured chain (e.g. `WDK_RPC_ETHEREUM=https://my-rpc.com`) |
 | `WDK_CONFIG` | No | -- | Path to a `wdk.config.json` file for custom chains and protocols |
 | `WDK_INDEXER_API_KEY` | No | -- | Enables indexer tools for balance and transfer history queries |
-| `MOONPAY_API_KEY` | No | -- | With the sentinel below, passes the released `serve` CLI's MoonPay registration gate |
-| `MOONPAY_SECRET_KEY` | No | -- | Set to a non-sensitive sentinel such as `unused` only to satisfy the released CLI gate; never provide the real MoonPay signing secret |
+| `MOONPAY_API_KEY` | No | -- | With the sentinel below, passes the pinned `serve` source's MoonPay registration gate |
+| `MOONPAY_SECRET_KEY` | No | -- | Set to a non-sensitive sentinel such as `unused` only to satisfy the pinned source CLI gate; never provide the real MoonPay signing secret |
 
 <Callout type="warn">
-The released `serve` CLI checks for both MoonPay variables but passes a configuration field that MoonPay beta.3 does not use. Its generated widget URLs therefore remain unsigned. Never give `serve` the real signing secret. For signed MoonPay flows, use programmatic registration with the [`signUrl` configuration](/sdk/fiat-modules/fiat-moonpay/configuration#basic-configuration) and keep the signing secret in an authenticated backend.
+The pinned `serve` source checks for both MoonPay variables but passes a configuration field that MoonPay beta.3 does not use. Its generated widget URLs therefore remain unsigned. Never give `serve` the real signing secret. For signed MoonPay flows, use programmatic registration with the [`signUrl` configuration](/sdk/fiat-modules/fiat-moonpay/configuration#basic-configuration) and keep the signing secret in an authenticated backend.
 </Callout>
 
 ### Custom Config File
@@ -1935,7 +1970,7 @@ The released `serve` CLI checks for both MoonPay variables but passes a configur
 For chains or protocols not in the built-in defaults, create a `wdk.config.json` and pass its path via `WDK_CONFIG`:
 
 ```bash title="Terminal"
-WDK_CONFIG=./wdk.config.json WDK_SEED="..." npx @tetherto/wdk-mcp-toolkit serve
+WDK_CONFIG=./wdk.config.json WDK_SEED="..." node bin/index.js serve
 ```
 
 ```json title="wdk.config.json"
@@ -1996,7 +2031,7 @@ The examples auto-detect which provider to use based on which API key is set. If
 
 ## OpenClaw (Community Skill)
 URL: https://docs.wdk.tether.io/ai/openclaw
-Description: Give your OpenClaw AI agent a self-custodial WDK wallet in minutes
+Description: Review OpenClaw integration options, community skill availability, and wallet security boundaries.
 
 <Callout type="warn">
 The WDK skill for OpenClaw is a community skill, developed and maintained independently by a third-party contributor.
@@ -2004,74 +2039,31 @@ The WDK skill for OpenClaw is a community skill, developed and maintained indepe
 Tether and the WDK Team do not endorse or assume responsibility for its code, security, or maintenance. Use your own judgment and proceed at your own risk. Artificial intelligence has inherent risks and limitations. You assume full responsibility for any reliance and use of artificial intelligence and agree that any such reliance and use is entirely at your own risk.
 </Callout>
 
-[OpenClaw](https://openclaw.ai) is an open-source AI agent platform. With the WDK community skill, your OpenClaw agent can create wallets, send transactions, swap tokens, bridge assets, and interact with DeFi protocols. Everything stays self-custodial.
-
-<Callout type="info">
-The WDK community skill follows the [AgentSkills specification](https://agentskills.io/specification), so it works with any compatible agent platform. This page covers the OpenClaw-specific setup.
-</Callout>
-
-<Callout type="info">
-If you want OpenClaw to call a ready-made local wallet daemon through MCP instead of loading a file-based skill, see [WDK CLI MCP setup](/cli/guides/use-mcp-server/).
-</Callout>
+[OpenClaw](https://openclaw.ai) is an open-source AI agent platform. You can connect it to the [WDK CLI MCP server](/cli/guides/use-mcp-server/) or review the official [WDK skill source](https://github.com/tetherto/wdk-docs/tree/main/skills/wdk) for use as agent instructions.
 
 ## Install the WDK Community Skill
 
-Install from [ClawHub](https://clawhub.ai/HumanRupert/tether-wallet-development-kit):
-
-```bash
-npx clawhub install tether-wallet-development-kit
-```
-
-This installs the skill into your workspace's `skills/` directory. OpenClaw picks it up automatically on the next session.
-
 <Callout type="warn">
-You might see a VirusTotal warning during installation. It flags the skill as suspicious because it handles crypto keys and calls external APIs. This is normal for any wallet SDK skill, nevertheless review the skill's source code on [ClawHub](https://clawhub.ai/HumanRupert/tether-wallet-development-kit) before proceeding.
+As of September 28, 2026, ClawHub does not return a downloadable artifact for the previously linked [community skill](https://clawhub.ai/HumanRupert/tether-wallet-development-kit). Use the integration options on this page.
 </Callout>
 
-<Callout type="info">
-We plan to publish the official WDK skill to its own GitHub repository. Once that's live, you'll also be able to install via `git clone`.
-</Callout>
+For file-based instructions, review the official [WDK skill directory](https://github.com/tetherto/wdk-docs/tree/main/skills/wdk), including its reference files, and follow [OpenClaw's skill-loading documentation](https://docs.openclaw.ai/tools/skills). The official source is separate from the community ClawHub distribution. Review the publisher, exact files, and permissions before installing any third-party skill; do not dismiss a security scanner warning as an expected property of wallet software.
 
 ## Configuration
 
-The WDK community skill does not require environment variables. Your agent will ask for a seed phrase in conversation when it needs to create or recover a wallet. The skill passes the seed phrase as a constructor parameter in code rather than reading it from configuration.
+Do not paste a seed phrase into an agent conversation. Keep wallet secrets out of prompts, responses, logs, and source control. Review how the chosen integration loads keys and which processes and tools can access them before using a wallet.
 
 <Callout type="warn">
-Your seed phrase controls real funds. Never share it, commit it to version control, or expose it in logs. The skill instructs agents to never log or expose seed phrases or private keys.
+The official WDK skill instructs agents to request human confirmation before write operations. A skill file does not enforce that approval, prevent prompt injection, or isolate keys. An agent with shell or code execution access can act outside the intended tool flow. Enforce permissions and signing authorization separately, and read the [transaction policy security boundary](/sdk/core-module/guides/transaction-policies#security-boundary).
 </Callout>
 
-## Verify It Works
-
-Start a new OpenClaw session and try a simple prompt:
-
-```
-Create a multi-chain wallet with Ethereum and Bitcoin support, then show me the addresses.
-```
-
-The agent should use the WDK community skill to create wallet accounts and return the generated addresses. All write operations (transactions, swaps, bridges) require your explicit confirmation before executing.
-
-![OpenClaw creating a multi-chain wallet using the WDK skill](/assets/openclaw-wallet-output.png)
-
-*Example output from the WDK skill creating a multi-chain wallet*
-
-## What Your Agent Can Do
-
-Once the skill is loaded, your agent can:
-
-- **Create wallets** across 20+ blockchains (EVM, Bitcoin, Solana, TON, Tron, Spark)
-- **Send transactions** and token transfers
-- **Swap and route tokens** via Velora and Swidge providers such as Orchestra
-- **Bridge assets** cross-chain with USD₮0
-- **Lend and borrow** through Aave V3
-- **Buy and sell crypto** via MoonPay fiat on/off-ramps
-
-For the full list of capabilities and how skills work, see [Agent Skills](/ai/agent-skills/).
+For WDK CLI MCP setup, keep wallet creation and unlocking user-driven and read the [CLI security model](/cli/reference/security-model/) first. An unlocked CLI wallet trusts processes running as its operating-system user; client confirmation prompts are not daemon authorization controls.
 
 ## Security Risks and Safety Precautions
 
 OpenClaw is powerful because it runs on your system and can take real actions like creating files, fetching data from the web, and executing transactions. That same power can become a security risk if you're not careful about how and where you run it.
 
-This isn't a flaw in OpenClaw. It's what happens when you give any AI agent direct system access. Knowing these risks lets you use OpenClaw safely.
+Loading wallet instructions does not change the permissions of the agent runtime. Review the platform's [tool and agent permissions](https://docs.openclaw.ai/gateway/security/tool-permissions) before exposing a wallet.
 
 ### Why running OpenClaw locally requires caution
 
@@ -2082,9 +2074,9 @@ When you run OpenClaw on your own computer or a virtual server, you're allowing 
 - Is connected to a publicly accessible chat
 - Receives poorly scoped instructions
 
-It can unintentionally modify files, overwrite data, or expose information you didn't intend to share. The risk isn't that OpenClaw is malicious. The risk is that it will do exactly what it's told, even when the instruction is vague or unsafe.
+It can unintentionally modify files, overwrite data, or expose information you did not intend to share. Vague instructions and malicious content can both lead to unwanted actions.
 
-### How to use OpenClaw safely
+### Reduce Wallet Exposure
 
 To reduce risk, here are some practical safety measures:
 
@@ -13366,6 +13358,10 @@ WDK Core is the main runtime for registering and managing wallet, protocol, midd
 These pages reflect `@tetherto/wdk@1.0.0-beta.18`. This release adds machine-readable policy denial codes; integrations can branch on `DENIAL_CODES`, `PolicyViolationError.code`, or `SimulationResult.code` instead of parsing `reason`.
 </Callout>
 
+<Callout type="warn">
+The transaction policy engine is experimental and not production ready. Its local checks do not isolate signing authority from a compromised agent environment. Review the [policy security boundary](/sdk/core-module/guides/transaction-policies#security-boundary) before relying on these controls.
+</Callout>
+
 Use WDK Core to:
 
 - Register wallet managers for the chains your app supports.
@@ -13598,6 +13594,10 @@ console.log(excludedMethods.includes('getBalance')) // true
 #### `registerPolicy(policies, options?)`
 Registers one or more local transaction policies on the WDK instance.
 
+<Callout type="warn">
+The transaction policy engine is experimental and not production ready. Local policy evaluation does not provide isolation from a compromised agent environment. See the [security boundary](/sdk/core-module/guides/transaction-policies#security-boundary) for enforcement scope and limits.
+</Callout>
+
 Policies are evaluated before governed account and protocol methods execute. In beta.17, the proxy discovers public string-named methods on the account or protocol and its prototype chain, then wraps those absent from the resolved exclusion set. This replaces the earlier fixed write-method list; see [coverage and limits](/sdk/core-module/guides/transaction-policies#supported-operations). Matching `DENY` rules and governed-account default-deny outcomes throw `PolicyViolationError`; matching `ALLOW` rules permit the call only when no higher-priority `DENY` rule applies. Governed runtime accounts also expose `account.simulate.<method>(...)` mirrors so you can dry-run policy evaluation without sending, signing, or broadcasting.
 
 Evaluation order:
@@ -13695,7 +13695,7 @@ Returns a wallet account for a specific blockchain and index using BIP-44 deriva
 - `blockchain` (string): The name of the blockchain (e.g., "ethereum")
 - `index` (number, optional): The index of the account to get (default: 0)
 
-**Returns:** `Promise<WdkAccount>` - The writable wallet account with protocol support. When a registered policy targets the account, the returned runtime account is policy-enforced and exposes matching `simulate` helpers.
+**Returns:** `Promise<WdkAccount>` - The writable wallet account with protocol support. When a registered policy targets the account, WDK returns a proxy that evaluates [governed methods](/sdk/core-module/guides/transaction-policies#security-boundary) and exposes matching `simulate` helpers. Otherwise, WDK returns the original account without adding policy enforcement.
 
 **Throws:** Error if no wallet has been registered for the given blockchain. Throws `PolicyConfigurationError` if a registered policy applies but the wallet account does not expose a read-only account view.
 
@@ -13725,7 +13725,7 @@ Returns a wallet account for a specific blockchain and BIP-44 derivation path.
 - `blockchain` (string): The name of the blockchain (e.g., "ethereum")
 - `path` (string): The derivation path (e.g., "0'/0/0")
 
-**Returns:** `Promise<WdkAccount>` - The writable wallet account with protocol support. When a registered policy targets the account, the returned runtime account is policy-enforced and exposes matching `simulate` helpers.
+**Returns:** `Promise<WdkAccount>` - The writable wallet account with protocol support. When a registered policy targets the account, WDK returns a proxy that evaluates [governed methods](/sdk/core-module/guides/transaction-policies#security-boundary) and exposes matching `simulate` helpers. Otherwise, WDK returns the original account without adding policy enforcement.
 
 **Throws:** Error if no wallet has been registered for the given blockchain. Throws `PolicyConfigurationError` if a registered policy applies but the wallet account does not expose a read-only account view.
 
@@ -15381,8 +15381,17 @@ Use local transaction policies to evaluate account and protocol calls before exe
 Use `@tetherto/wdk` v1.0.0-beta.18 or later for these examples because they import `DENIAL_CODES` and read the stable `error.code` and `error.operation` fields. Method exclusions and coverage beyond the earlier fixed operation list arrived in beta.17. The examples assume you have loaded an app-owned `seedPhrase` and registered the relevant wallet modules.
 
 <Callout type="warn">
-Transaction policies are local pre-execution controls. They do not enforce rules on-chain, replace smart-contract permissions, or validate live token metadata, balances, prices, or contract state.
+The transaction policy engine is experimental and not production ready. Its local checks do not provide a security boundary against a compromised agent environment. Read the [security boundary](#security-boundary) before giving an agent wallet access.
 </Callout>
+
+## Security Boundary
+
+The policy engine in `@tetherto/wdk@1.0.0-beta.18` provides these local controls and limits:
+
+- **Governed calls only.** Register policies before retrieving accounts. If no policy applies to an account, WDK returns the original account without adding policy enforcement. Default-deny applies only to intercepted methods on governed accounts; excluded methods bypass evaluation. See [Evaluation Rules](#evaluation-rules).
+- **Method arguments, not final signing validation.** Conditions inspect the method name and argument snapshots before the wallet or protocol method runs. The policy engine does not independently validate the final transaction bytes or decode calldata. It does not enforce rules on-chain, replace smart-contract permissions, or validate live token metadata, balances, prices, or contract state for you.
+- **Trusted runtime and administration.** The application must control the seed, signing authority, WDK instance, and policy configuration. A caller with raw account references, the seed, or control over that runtime or configuration can bypass or replace local checks. The engine does not isolate keys or policy administration from the agent, and cannot guarantee protection when the agent environment is compromised. An allowed call can still spend within its permitted scope even when it came from prompt injection.
+- **No built-in durable accounting.** WDK does not persist policy state, update spending counters, or run `onSuccess` hooks. Conditions can use app-owned state, but the application must handle persistence, concurrency, and rollback. See [Runtime Caveats](#runtime-caveats).
 
 ## Policy Structure
 
@@ -15400,10 +15409,6 @@ A transaction policy is a named local configuration object registered with `wdk.
 Use `scope: 'project'` for rules that apply across all wallets or selected wallet identifiers. Use `scope: 'account'` with `wallet` and `accounts` for rules that apply only to specific account indices or derivation paths.
 
 Each rule addresses one operation, multiple operations, or `*`. A matching `ALLOW` can permit the governed call, while a matching `DENY` blocks the call with `PolicyViolationError`.
-
-<Callout type="info">
-WDK does not manage durable policy state for you. Conditions can inspect the current `PolicyContext` and app-owned inputs, including in-memory or externally stored state, but WDK does not persist `rule.state`, update counters, or run `onSuccess` hooks. Keep app-owned state outside `rule.state`; that field is reserved for future runtime semantics.
-</Callout>
 
 ## Register Policies
 

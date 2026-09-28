@@ -20,20 +20,20 @@ This approach uses LangChain's MCP adapters to connect to the WDK MCP server. WD
 
 ## The `serve` Command
 
-The `serve` command provides zero-config MCP server startup so you don't need to write a server script:
+Complete the pinned [source setup](/ai/mcp-toolkit/get-started#source-setup) first. From that checkout, `serve` starts the MCP server without a custom server script:
 
 ```bash title="Terminal"
-npx @tetherto/wdk-mcp-toolkit serve
+node bin/index.js serve
 ```
 
 Pass `WDK_SEED` to enable wallet operations, or omit it to run with pricing tools only:
 
 ```bash title="Terminal"
 # With wallet operations
-WDK_SEED="your twelve word seed phrase here" npx @tetherto/wdk-mcp-toolkit serve
+WDK_SEED="your twelve word seed phrase here" node bin/index.js serve
 
 # Pricing-only mode (no seed required)
-npx @tetherto/wdk-mcp-toolkit serve
+node bin/index.js serve
 ```
 
 ### Default Chains
@@ -54,9 +54,9 @@ The command has built-in definitions for 13 chains and 4 protocol modules. When 
 | [`@tetherto/wdk-protocol-swap-velora-evm`](/sdk/swap-modules/swap-velora-evm) | Swap tools (Ethereum, Arbitrum) | -- |
 | [`@tetherto/wdk-protocol-bridge-usdt0-evm`](/sdk/bridge-modules/bridge-usdt0-evm) | Bridge tools (Ethereum, Arbitrum) | -- |
 | [`@tetherto/wdk-protocol-lending-aave-evm`](/sdk/lending-modules/lending-aave-evm) | Lending tools (Ethereum) | -- |
-| [`@tetherto/wdk-protocol-fiat-moonpay`](/sdk/fiat-modules/fiat-moonpay) | Fiat tools (Ethereum) | Requires `MOONPAY_API_KEY` plus a non-sensitive `MOONPAY_SECRET_KEY=unused` sentinel in the released CLI; URLs remain unsigned |
+| [`@tetherto/wdk-protocol-fiat-moonpay`](/sdk/fiat-modules/fiat-moonpay) | Fiat tools (Ethereum) | Requires `MOONPAY_API_KEY` plus a non-sensitive `MOONPAY_SECRET_KEY=unused` sentinel in the pinned source CLI; URLs remain unsigned |
 
-Use the package's `CHAINS` export as the complete accepted-identifier registry for the installed release; see [Built-in Chain Identifiers](/ai/mcp-toolkit#built-in-chain-identifiers).
+Use the package's `CHAINS` export as the complete accepted-identifier registry for the source checkout; see [Built-in Chain Identifiers](/ai/mcp-toolkit#built-in-chain-identifiers).
 
 <Callout type="info">
 Missing packages are silently skipped. Install only the modules you need and `serve` will pick them up. For chains or protocols **not** in the built-in registry, use a [custom config file](#custom-config-file).
@@ -65,6 +65,12 @@ Missing packages are silently skipped. Install only the modules you need and `se
 ***
 
 ## Quick Start
+
+Replace `/absolute/path/wdk-mcp-toolkit` in both examples with your source checkout path.
+
+<Callout type="warn">
+The examples below set `WDK_MCP_ELICITATION="false"`, which automatically accepts confirmation requests. With a seed configured, `serve` exposes write tools as well as read tools; asking only for a balance or price does not restrict what the agent can call. Use a dedicated development wallet with limited funds. For read-only access, [register only read tools in a custom server](/ai/mcp-toolkit/configuration#read-only-mode); for writes, provide authorization outside the agent's control. See [confirmation and agent access](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
+</Callout>
 
 <Tabs items={["Python", "TypeScript"]}>
 <Tab value="Python">
@@ -86,8 +92,8 @@ async def main():
     client = MultiServerMCPClient({
         "wdk": {
             "transport": "stdio",
-            "command": "npx",
-            "args": ["-y", "@tetherto/wdk-mcp-toolkit", "serve"],
+            "command": "node",
+            "args": ["/absolute/path/wdk-mcp-toolkit/bin/index.js", "serve"],
             "env": {
                 "WDK_SEED": "your twelve word seed phrase here",
                 "WDK_MCP_ELICITATION": "false",
@@ -132,8 +138,8 @@ import { ChatOpenAI } from "@langchain/openai";
 const client = new MultiServerMCPClient({
   wdk: {
     transport: "stdio",
-    command: "npx",
-    args: ["-y", "@tetherto/wdk-mcp-toolkit", "serve"],
+    command: "node",
+    args: ["/absolute/path/wdk-mcp-toolkit/bin/index.js", "serve"],
     env: {
       WDK_SEED: "your twelve word seed phrase here",
       WDK_MCP_ELICITATION: "false",
@@ -166,10 +172,6 @@ npx tsx agent.ts
 </Tab>
 </Tabs>
 
-<Callout type="warn">
-**Security** -- Always use a dedicated development wallet with limited funds. Set `WDK_MCP_ELICITATION` to `"false"` for programmatic agents since elicitation dialogs require a human in the loop.
-</Callout>
-
 ***
 
 ## Configuration
@@ -182,15 +184,15 @@ Control `serve` behavior through environment variables:
 | --- | --- | --- | --- |
 | `WDK_SEED` | No | -- | BIP-39 seed phrase. If omitted, only pricing tools are available |
 | `WDK_CHAINS` | No | `ethereum,arbitrum,bitcoin` | Comma-separated identifiers from the package's `CHAINS` export |
-| `WDK_MCP_ELICITATION` | No | `true` | Set to `"false"` for programmatic agents that cannot handle confirmation dialogs |
-| `WDK_RPC_\<CHAIN\>` | No | Built-in defaults | Override the RPC endpoint for a chain (e.g. `WDK_RPC_ETHEREUM=https://my-rpc.com`) |
+| `WDK_MCP_ELICITATION` | No | `true` | The exact string `"false"` disables elicitation and automatically accepts confirmation requests; it does not enforce spending limits |
+| `WDK_RPC_\<CHAIN\>` | No | Built-in defaults | Override an existing `provider` field for a configured chain (e.g. `WDK_RPC_ETHEREUM=https://my-rpc.com`) |
 | `WDK_CONFIG` | No | -- | Path to a `wdk.config.json` file for custom chains and protocols |
 | `WDK_INDEXER_API_KEY` | No | -- | Enables indexer tools for balance and transfer history queries |
-| `MOONPAY_API_KEY` | No | -- | With the sentinel below, passes the released `serve` CLI's MoonPay registration gate |
-| `MOONPAY_SECRET_KEY` | No | -- | Set to a non-sensitive sentinel such as `unused` only to satisfy the released CLI gate; never provide the real MoonPay signing secret |
+| `MOONPAY_API_KEY` | No | -- | With the sentinel below, passes the pinned `serve` source's MoonPay registration gate |
+| `MOONPAY_SECRET_KEY` | No | -- | Set to a non-sensitive sentinel such as `unused` only to satisfy the pinned source CLI gate; never provide the real MoonPay signing secret |
 
 <Callout type="warn">
-The released `serve` CLI checks for both MoonPay variables but passes a configuration field that MoonPay beta.3 does not use. Its generated widget URLs therefore remain unsigned. Never give `serve` the real signing secret. For signed MoonPay flows, use programmatic registration with the [`signUrl` configuration](/sdk/fiat-modules/fiat-moonpay/configuration#basic-configuration) and keep the signing secret in an authenticated backend.
+The pinned `serve` source checks for both MoonPay variables but passes a configuration field that MoonPay beta.3 does not use. Its generated widget URLs therefore remain unsigned. Never give `serve` the real signing secret. For signed MoonPay flows, use programmatic registration with the [`signUrl` configuration](/sdk/fiat-modules/fiat-moonpay/configuration#basic-configuration) and keep the signing secret in an authenticated backend.
 </Callout>
 
 ### Custom Config File
@@ -198,7 +200,7 @@ The released `serve` CLI checks for both MoonPay variables but passes a configur
 For chains or protocols not in the built-in defaults, create a `wdk.config.json` and pass its path via `WDK_CONFIG`:
 
 ```bash title="Terminal"
-WDK_CONFIG=./wdk.config.json WDK_SEED="..." npx @tetherto/wdk-mcp-toolkit serve
+WDK_CONFIG=./wdk.config.json WDK_SEED="..." node bin/index.js serve
 ```
 
 ```json title="wdk.config.json"
