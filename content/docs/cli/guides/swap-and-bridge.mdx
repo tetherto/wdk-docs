@@ -1,0 +1,143 @@
+---
+title: Swap and Bridge
+description: Preview and execute token swaps and cross-network bridges with WDK CLI
+docType: how-to
+schemaType: TechArticle
+icon: ArrowLeftRight
+---
+
+WDK CLI beta.5 can quote installed swap and bridge protocols, select a route, and execute it from an unlocked wallet. Use `wdk token list` to find the registered network and token names accepted by these commands.
+
+Before you begin, [set up and unlock a wallet](/cli/guides/get-started) and check the source and destination token names with `wdk token list`. Built-in entries need no registration. If an entry is missing, [add a custom token](/cli/guides/manage-tokens#add-a-custom-token). Fund the source account with the tokens and native gas asset needed for execution.
+
+If you register a custom or overriding native token, read [Manage Tokens](/cli/guides/manage-tokens) first: `wdk token add` cannot retain `nativeId`, so routing works only when the selected protocol discovers the asset by symbol or does not require a native route identifier. Custom native tokens are not guaranteed to swap or bridge.
+
+<Callout type="error">
+`wdk swap` and `wdk bridge` execute immediately unless you add `--dry-run`. A preview is advisory: execution obtains fresh quotes. `--protocol` can restrict the provider, but beta.5 has no CLI option that binds a minimum output, maximum input, fee, slippage limit, or expiry to the preview.
+</Callout>
+
+## Select The Account And Recipient
+
+Choose the wallet and account index explicitly. Derive the address for the destination network before previewing; for a same-network swap, use the source network here:
+
+```bash title="Destination address"
+wdk get address \
+  --network DESTINATION_NETWORK \
+  --wallet WALLET \
+  --index 0
+```
+
+Pass the same `--wallet`, `--index`, and returned address as `--recipient` to the preview and execution commands. Beta.5 swap and bridge previews do not include the wallet name, account index, or resolved recipient in text or JSON output, so the preview cannot verify an omitted default.
+
+## Prepare A Velora Token Allowance
+
+<Callout type="warn">
+Velora beta.6 requires an ERC-20 allowance before both `quoteSwap` and `swap`. WDK CLI beta.5 does not create that approval or expose the Velora spender address. Use the provider's chain-specific lookup described below. Do not guess the spender, copy it from another chain, or infer it from the swap transaction recipient.
+</Callout>
+
+For a Velora ERC-20 input, use the Market swap spender returned by [Velora SDK 9's `swap.getSpender()`](https://github.com/VeloraDEX/sdk/blob/86679ae70686ad3f01ee29baba9033be0a1b742b/src/methods/swap/spender.ts#L33-L63). The CLI's bundled adapter uses API version `6.2`. The equivalent read-only lookup is:
+
+```bash title="Look up the source-chain approval target"
+curl --fail --silent --show-error \
+  'https://api.paraswap.io/adapters/contracts?network=1&version=6.2'
+```
+
+This example looks up Ethereum (`network=1`). Set `network` to your source chain's numeric ID. Use the response's `TokenTransferProxy` field as the spender. The CLI and MCP do not expose this lookup; do not proceed if you cannot verify it for the selected chain.
+
+1. With the same wallet, account index, and source network, read `getAllowance` and submit a bounded `approve` only if needed. See [Call Module Methods](/cli/guides/call-module-methods#call-a-write-method), including the USD₮ allowance-reset case.
+2. Approve no more than the intended exact-input amount in token base units. Wait for the approval to reach `confirmed`, require `success: true`, and read the allowance again before quoting.
+
+Native-token input does not use an ERC-20 allowance, and other protocols can manage approvals differently. For an exact-output Velora request, beta.5 does not expose the required input before this prerequisite; do not guess an approval amount.
+
+## Preview A Swap
+
+Provide exactly one of `--amount-in` and `--amount-out`.
+
+```bash title="Exact-input preview"
+wdk swap \
+  --network SOURCE_NETWORK \
+  --from-token SOURCE_TOKEN \
+  --to-token DESTINATION_TOKEN \
+  --amount-in 100 \
+  --wallet WALLET \
+  --index 0 \
+  --recipient RECIPIENT_ADDRESS \
+  --dry-run
+```
+
+An exact-input request selects the successful quote with the highest output. An exact-output request selects the quote with the lowest input:
+
+```bash title="Exact-output preview"
+wdk swap \
+  --network SOURCE_NETWORK \
+  --from-token SOURCE_TOKEN \
+  --to-token DESTINATION_TOKEN \
+  --amount-out 100 \
+  --wallet WALLET \
+  --index 0 \
+  --recipient RECIPIENT_ADDRESS \
+  --dry-run
+```
+
+Replace the uppercase placeholders with values from `wdk network list`, `wdk token list`, and the address check above.
+
+<Callout type="error">
+Do not use `wdk swap --to-network` with beta.5. The command accepts the option, but route selection can admit a same-chain swap provider and then omit the destination network from that provider's quote and execution calls. No forced-protocol workaround has been verified for this guide.
+</Callout>
+
+The ranking compares token amounts only. Separate gas and bridge fees can use different denominations or already be included in a provider quote, so they do not affect route selection. Review both the on-top and included fee lines. A successful result can also list protocols under `skipped` when those protocols failed to quote.
+
+## Execute A Swap
+
+Run the same command without `--dry-run` only if you accept a fresh quote with no CLI minimum-output, maximum-input, fee, or expiry bound relative to the preview:
+
+```bash title="Execution"
+wdk swap \
+  --network SOURCE_NETWORK \
+  --from-token SOURCE_TOKEN \
+  --to-token DESTINATION_TOKEN \
+  --amount-in 100 \
+  --wallet WALLET \
+  --index 0 \
+  --recipient RECIPIENT_ADDRESS
+```
+
+Unless `--protocol` is set, execution can select a different protocol. Its amounts and fees can differ even when the provider is restricted. WDK CLI does not ask for another confirmation. Do not execute through beta.5 when your transaction policy requires enforceable output or fee bounds relative to the preview.
+
+## Preview And Execute A Bridge
+
+`wdk bridge` moves the same registered token between different networks. It supports exact input only.
+
+```bash title="Bridge preview"
+wdk bridge \
+  --network SOURCE_NETWORK \
+  --token TOKEN \
+  --to-network DESTINATION_NETWORK \
+  --amount 100 \
+  --wallet WALLET \
+  --index 0 \
+  --recipient RECIPIENT_ADDRESS \
+  --dry-run
+```
+
+The source and destination networks must differ. Removing `--dry-run` executes a fresh quote request, with the same identity omissions and lack of CLI limits bound to the preview described above.
+
+## Choose A Protocol
+
+Beta.5 has no protocol-list command or MCP tool. Before passing `--protocol NAME`, read the `protocols` object in the [`wdk.config.json` for the exact beta.5 source revision](https://github.com/tetherto/wdk-cli/blob/09ab893506ca7221bc179cf3702d78958dfd4cd5/wdk.config.json#L62-L78) and compare it with the file shipped in your installation. Later versions can differ, and `wdk module list` reports package names rather than routing keys.
+
+`wdk module add` manages custom modules and cannot create a routing entry or repair a built-in catalog package. If a built-in protocol package is missing, reinstall the pinned CLI with `npm install -g @tetherto/wdk-cli@1.0.0-beta.5`.
+
+## Next Steps
+
+- [API Reference](/cli/api-reference#swap-command)
+- [Call Module Methods](/cli/guides/call-module-methods)
+- [Use the MCP Server](/cli/guides/use-mcp-server#preview-and-confirm-transactions)
+- [Handle Errors](/cli/guides/handle-errors)
+- [Security Model](/cli/reference/security-model)
+
+***
+
+## Need Help?
+
+<SupportCards />

@@ -14,13 +14,13 @@ schemaType: APIReference
 | Method | Signature | Description |
 | --- | --- | --- |
 | `log()` | `log(args: LogRequest): void` | Sends a log payload over the HRPC stream. |
-| `workletStart()` | `workletStart(args: WorkletStartRequest): Promise\<WorkletStartResponse\>` | Deprecated worklet startup request. Prefer `initializeWDK()`. |
+| `workletStart()` | `workletStart(args: WorkletStartRequest): Promise\<WorkletStartResponse\>` | Deprecated empty startup handshake. The published request type is stale in beta.15. |
 | `initializeWDK()` | `initializeWDK(args: WdkInitializeParams): Promise\<{ status: string }\>` | Creates or reinitializes the worklet WDK instance and registers wallets and optional protocols from `config`. |
 | `resetWdkWallets()` | `resetWdkWallets(args: WdkResetWalletParams): Promise\<{ status: string }\>` | Selectively disposes and re-registers only the wallets listed in `config.networks`. |
 | `generateEntropyAndEncrypt()` | `generateEntropyAndEncrypt(args: WdkGenerateEntropyParams): Promise\<WdkEntropyResult\>` | Generates encrypted seed and entropy buffers inside the worklet. |
 | `getMnemonicFromEntropy()` | `getMnemonicFromEntropy(args: WdkGetMnemonicParams): Promise\<{ mnemonic: string }\>` | Decrypts an encrypted entropy payload and returns the mnemonic. |
 | `getSeedAndEntropyFromMnemonic()` | `getSeedAndEntropyFromMnemonic(args: { mnemonic: string }): Promise\<WdkEntropyResult\>` | Converts a mnemonic into encrypted seed and entropy buffers. |
-| `dispose()` | `dispose(args: DisposeRequest): void` | Disposes the full worklet WDK instance or only selected blockchains. |
+| `dispose()` | `dispose(args: DisposeRequest): void` | Sends a one-way full-disposal request over HRPC. The declared selective field is not encoded in beta.15. |
 | `callMethod()` | `callMethod(args: CallMethodRequest): Promise\<CallMethodResponse\>` | Looks up the target account and invokes one wallet or protocol method by name. |
 | `registerWallet()` | `registerWallet(args: { config: string }): Promise\<{ status: string, blockchains: string }\>` | Dynamically registers additional wallets from a JSON config string. |
 | `registerProtocol()` | `registerProtocol(args: { config: string }): Promise\<{ status: string }\>` | Dynamically registers additional protocols from a JSON config string. |
@@ -52,12 +52,9 @@ schemaType: APIReference
 
 #### `workletStart`
 
-Deprecated startup request retained in the shipped type surface.
+Deprecated startup request retained in the shipped type surface. Its runtime payload is `{}`. JavaScript callers can use `workletStart({})`. The published TypeScript type cannot express the empty runtime request, so isolate the mismatch behind a local compatibility wrapper until the declaration is corrected.
 
-- `enableDebugLogs?` (`number`)
-- `seedPhrase?` (`string | null`)
-- `seedBuffer?` (`string | null`)
-- `config` (`string`): JSON string of network configurations.
+The beta.15 HRPC schema encodes an empty request and ignores `enableDebugLogs`, `seedPhrase`, `seedBuffer`, and `config`. The published `WorkletStartRequest` declaration still lists those obsolete fields and incorrectly requires `config`. JSON-RPC also treats `workletStart` as an empty handshake.
 
 Returns:
 
@@ -65,11 +62,11 @@ Returns:
 
 #### `initializeWDK`
 
-- `encryptionKey?` (`string`): Base64-encoded decryption key for the encrypted seed buffer.
-- `encryptedSeed?` (`string`): Base64-encoded encrypted seed buffer.
+- `encryptionKey?` (`Buffer`): Decryption key for the encrypted seed buffer.
+- `encryptedSeed?` (`Buffer`): Encrypted seed buffer.
 - `config` (`string`): JSON stringified `WdkWorkletConfig`.
 
-The handler requires `encryptionKey` and `encryptedSeed` to be passed together or omitted together. When a seeded WDK instance already exists, the runtime closes its generic modules and calls `wdk.dispose()` before validating the new config. In beta.14, a replacement seed pair then causes the old retained buffer to be zeroed before the new seed is decrypted. Config-only reinitialization reuses the existing WDK object and seed buffer.
+The handler requires `encryptionKey` and `encryptedSeed` to be passed together or omitted together. HRPC carries both as native buffers; JSON-RPC accepts base64 strings for the same fields. When a seeded WDK instance already exists, the runtime closes its generic modules and calls `wdk.dispose()` before validating the new config. A replacement seed pair then causes the old retained buffer to be overwritten before the new seed is decrypted. Config-only reinitialization reuses the existing WDK object and seed buffer.
 
 Generic modules on either transport are constructed from `context.moduleManagers` and `config.modules` only when that request includes the encrypted seed pair. A seedless reinitialization closes existing module instances without reconstructing them. Supply both seed fields on every initialization that must construct or reconstruct modules. See [initialization and cleanup limits](/tools/pear-wrk-wdk/configuration#initialization-rules).
 
@@ -85,14 +82,16 @@ The runtime validates `config.networks`, extracts each target `blockchain`, call
 
 Returns:
 
-- `encryptionKey` (`string`)
-- `encryptedSeedBuffer` (`string`)
-- `encryptedEntropyBuffer` (`string`)
+- `encryptionKey` (`Buffer`)
+- `encryptedSeedBuffer` (`Buffer`)
+- `encryptedEntropyBuffer` (`Buffer`)
+
+These are live buffers returned to the HRPC caller. Overwrite them after their final use. JSON-RPC encodes the same three result fields as base64 strings.
 
 #### `getMnemonicFromEntropy`
 
-- `encryptedEntropy` (`string`): Base64-encoded encrypted entropy buffer.
-- `encryptionKey` (`string`): Base64-encoded decryption key.
+- `encryptedEntropy` (`Buffer`): Encrypted entropy.
+- `encryptionKey` (`Buffer`): Decryption key.
 
 Returns:
 
@@ -104,17 +103,21 @@ Returns:
 
 Returns:
 
-- `encryptionKey` (`string`)
-- `encryptedSeedBuffer` (`string`)
-- `encryptedEntropyBuffer` (`string`)
+- `encryptionKey` (`Buffer`)
+- `encryptedSeedBuffer` (`Buffer`)
+- `encryptedEntropyBuffer` (`Buffer`)
+
+These are live buffers returned to the HRPC caller. Overwrite them after their final use. JSON-RPC encodes the same three result fields as base64 strings.
 
 #### `dispose`
 
-- `args` (`DisposeRequest`): Optional `blockchains` array. Omit it or pass an empty array for a full disposal.
+- `args` (`DisposeRequest`): Pass `{}` for HRPC full disposal. The declaration's optional `blockchains` field is stale for the beta.15 HRPC wire schema.
 
-A full disposal closes all generic modules and clears the WDK instance. Beta.14 also zeroes and releases `context.wdkSeedBuffer`. After module shutdown completes, this cleanup runs even if `wdk.dispose()` throws. A non-empty `blockchains` array disposes only those wallets and retains the instance, seed buffer, and generic modules.
+A full disposal closes all generic modules and clears the WDK instance. It also overwrites and releases `context.wdkSeedBuffer`. After module shutdown completes, this cleanup runs even if `wdk.dispose()` throws.
 
-HRPC sends this request without awaiting a response and returns `void`. JSON-RPC returns `{ status: 'disposed' }` inside its response `result` when the handler completes successfully. See [disposal limits](/tools/pear-wrk-wdk/configuration#dispose-wdk).
+HRPC encodes no request fields, so `dispose({ blockchains: [...] })` still performs full disposal. It sends the request without awaiting a response and returns `void`. Use `resetWdkWallets()` for selective HRPC disposal and re-registration.
+
+JSON-RPC preserves a non-empty `params.blockchains` array and disposes only those wallets while retaining the WDK instance, seed buffer, and generic modules. It returns `{ status: 'disposed' }` inside its response `result` when the handler completes successfully. See [disposal limits](/tools/pear-wrk-wdk/configuration#dispose-wdk).
 
 #### `callMethod`
 
@@ -157,7 +160,7 @@ Call one method on a configured generic module. Both HRPC and JSON-RPC support t
 - `method` (`string`): Non-empty method name on the constructed module instance.
 - `args?` (`string`): Optional JSON string of arguments. Arrays are spread as positional arguments; omitted or decoded `null` arguments call the method with no arguments. Other values are passed as one argument.
 
-HRPC returns `CallModuleResponse` with optional `result`, a JSON string. JSON-RPC decodes that string and returns the value at `response.result.result`. The runtime awaits promises, materializes values with `.toArray()`, and recursively converts `Uint8Array` values to hex before serialization. In beta.14, a top-level `undefined` or `null` result becomes the HRPC string `"null"` and the decoded JSON-RPC value `null`. Other falsy results such as `false`, `0`, and `''` are preserved. This module normalization does not apply to wallet or protocol `callMethod()` results.
+HRPC returns `CallModuleResponse` with optional `result`, a JSON string. JSON-RPC decodes that string and returns the value at `response.result.result`. The runtime awaits promises, materializes values with `.toArray()`, and recursively converts `Uint8Array` values to hex before serialization. A top-level `undefined` or `null` result becomes the HRPC string `"null"` and the decoded JSON-RPC value `null`. Other falsy results such as `false`, `0`, and `''` are preserved. This module normalization does not apply to wallet or protocol `callMethod()` results.
 
 When `RpcContext.allowedModuleMethods` defines the target module, `method` must appear in that module's `methods` array. Omitted modules remain unrestricted, while `methods: []` denies every method on that module. A denied call fails with `METHOD_NOT_ALLOWED` before instance lookup or dispatch.
 
@@ -228,13 +231,33 @@ Registers the host-side handler used to receive `moduleEvent()` messages.
 Import this helper from `@tetherto/pear-wrk-wdk/worklet`. It registers the package's server-side handlers on the provided RPC instance.
 
 - `rpc` (`any`): RPC server instance that supports the generated handler registration methods.
-- `context` (`RpcContext`): Runtime context containing `wdk`, `WDK`, `walletManagers`, `protocolManagers`, and `wdkLoadError`. Generic modules on either transport can additionally supply `moduleManagers` and `capabilities`; the runtime manages `moduleRuntime`, `moduleInstances`, and, in beta.14, `wdkSeedBuffer`. Optional `allowedMethods` restricts wallet and protocol dispatch on HRPC and JSON-RPC, while `allowedModuleMethods` restricts generic-module dispatch on both transports.
+- `context` (`RpcContext`): Runtime context containing `wdk`, `WDK`, `walletManagers`, `protocolManagers`, and `wdkLoadError`. Generic modules on either transport can additionally supply `moduleManagers` and `capabilities`; the runtime manages `moduleRuntime`, `moduleInstances`, and `wdkSeedBuffer`. Optional `allowedMethods` restricts wallet and protocol dispatch on HRPC and JSON-RPC, while `allowedModuleMethods` restricts generic-module dispatch on both transports.
+
+### Worklet utility exports
+
+The `@tetherto/pear-wrk-wdk/worklet` and `@tetherto/pear-wrk-wdk/jsonrpc` runtime entrypoints expose `utils.crypto` and `utils.validation`. The top-level runtime entrypoint exports only `HRPC`, even though its beta.15 declaration also lists utility members.
+
+#### `utils.crypto`
+
+| Function | Signature | Ownership |
+| --- | --- | --- |
+| `memzero()` | `(buffer: Buffer \| Uint8Array \| ArrayBuffer) => void` | Overwrites the supplied mutable bytes. |
+| `encrypt()` | `(data: Uint8Array \| Buffer, key: Buffer) => Buffer` | Leaves caller-owned inputs unchanged and returns a caller-owned buffer. |
+| `decrypt()` | `(encryptedBuffer: Buffer, key: Buffer) => Buffer` | Leaves both inputs unchanged and returns a caller-owned buffer. |
+| `generateEntropy()` | `(wordCount: 12 \| 24) => Uint8Array` | Returns caller-owned entropy bytes. |
+| `encryptSecrets()` | `(seed: Uint8Array \| Buffer, entropy: Uint8Array \| Buffer) => WdkEntropyResult` | Leaves caller-owned inputs unchanged and returns caller-owned key, seed, and entropy buffers. |
+
+Beta.15 removes `generateEncryptionKey()` and replaces the base64-string inputs or results of `encrypt()`, `decrypt()`, and `encryptSecrets()` with buffers. `generateEntropy()` still returns `Uint8Array`, and `memzero()` still returns `void`. Overwrite caller-owned inputs and returned buffers after their final use. This cannot remove immutable strings or extra copies created elsewhere.
+
+#### `utils.validation`
+
+Beta.15 replaces `validateBase64(value, fieldName)` with `validateBuffer(value, fieldName)`. The new helper accepts only a non-empty `Buffer`.
 
 ### Types
 
 #### `RpcContext.wdkSeedBuffer`
 
-`wdkSeedBuffer?: Buffer | null` is a runtime-managed field added in beta.14. It retains the decrypted buffer passed to the WDK constructor so the runtime can zero it on full disposal or seed replacement. Do not populate it manually. Targeted wallet disposal and config-only reinitialization retain it. See [initialization rules](/tools/pear-wrk-wdk/configuration#initialization-rules) for failure-path limits.
+`wdkSeedBuffer?: Buffer | null` is a runtime-managed field added in beta.14. It retains the decrypted buffer passed to the WDK constructor so the runtime can overwrite it on full disposal or seed replacement. Do not populate it manually. JSON-RPC selective disposal, `resetWdkWallets()`, and config-only reinitialization retain it. See [initialization rules](/tools/pear-wrk-wdk/configuration#initialization-rules) for failure-path limits.
 
 #### `RpcContext` Method Restrictions
 
@@ -264,7 +287,7 @@ interface RpcContext {
 
 The four allowlist helper interfaces are exported types in beta.13. Every omitted level remains unrestricted. Use an explicit empty `methods` array to deny all dynamic calls on one exact surface.
 
-The runtime exposes `METHOD_NOT_ALLOWED` for denied calls, but the beta.14 published error-code declaration still does not include that member. Treat the literal runtime code as authoritative for this release.
+The runtime exposes `METHOD_NOT_ALLOWED` for denied calls, but the beta.15 published error-code declaration still does not include that member. Treat the literal runtime code as authoritative for this release.
 
 #### `WdkWorkletConfig`
 
@@ -384,7 +407,11 @@ registerJsonRpcHandlers(ipc, context)
 
 The server reads UTF-8 JSON-RPC 2.0 messages framed with a four-byte unsigned big-endian payload length. Every request requires an ID, and an ID cannot be reused while its earlier request is still in flight. Malformed frames are dropped without a response. The package does not export a JSON-RPC client or native-host helper.
 
-Beta.14 supports these JSON-RPC method names:
+<Callout type="warn">
+Beta.15 decodes known base64 secret fields before it rejects a missing, `null`, or duplicate in-flight request ID. Those early-rejected requests do not explicitly overwrite the decoded request buffers. Validate and allocate a unique ID before sending secret-bearing requests; an error response is not cleanup confirmation.
+</Callout>
+
+Beta.15 supports these JSON-RPC method names:
 
 - `workletStart`
 - `generateEntropyAndEncrypt`
@@ -397,15 +424,15 @@ Beta.14 supports these JSON-RPC method names:
 - `registerProtocol`
 - `dispose`
 
-JSON-RPC does not support `resetWdkWallets` in this release. Use HRPC for selective wallet resets. Generic modules require `context.moduleManagers` and matching runtime `config.modules`; `initializeWDK` constructs them only when the request includes the encrypted seed pair.
+JSON-RPC does not support `resetWdkWallets` in this release. It does support selective `dispose` through a non-empty `params.blockchains` array. Use HRPC `resetWdkWallets()` when selected wallets must be disposed and then re-registered. Generic modules require `context.moduleManagers` and matching runtime `config.modules`; `initializeWDK` constructs them only when the request includes the encrypted seed pair.
 
 The transports share the wallet/protocol handler and module runtime. Both support the `swidge` protocol type, enforce `RpcContext.allowedMethods`, and enforce `allowedModuleMethods` for generic-module calls. JSON-RPC `callModule` parameters match `CallModuleRequest`, including its JSON-string `args`. Results use `response.result.result`; events arrive as `moduleEvent` notifications with `params: { module, event, payload }` and a decoded payload. See the [JSON-RPC examples](/tools/pear-wrk-wdk/configuration#json-rpc-transport).
 
 <Callout type="warn">
-Beta.14 redacts named secret fields in object arguments to the package logger. It does not scrub raw strings, typed-array arguments, or formatted Error stacks. Production defaults to ERROR logging; see [logging configuration and limits](/tools/pear-wrk-wdk/configuration#configure-logging).
+Beta.15 redacts named secret fields in object arguments to the package logger. It does not scrub raw strings, typed-array arguments, or formatted Error stacks. Production defaults to ERROR logging; see [logging configuration and limits](/tools/pear-wrk-wdk/configuration#configure-logging).
 </Callout>
 
-Mnemonic strings, encryption-key strings, and encrypted payload strings cannot be zeroed in JavaScript. Discard references promptly and never log them. The runtime validates imported mnemonics for 12 or 24 English BIP-39 words and clears temporary byte buffers where possible.
+HRPC returns secret payloads as live buffers owned by the caller. JSON-RPC sends the corresponding fields as base64 strings, and React Native Core also exposes base64 strings at its public wallet-hook boundary. Overwrite mutable buffers after use, discard string references promptly, and never log either form. These steps reduce retention but cannot prove that every runtime or application copy has been erased.
 
 ***
 

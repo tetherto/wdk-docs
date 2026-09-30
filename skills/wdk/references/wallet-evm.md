@@ -57,6 +57,8 @@ import WalletManagerEvm7702Gasless from '@tetherto/wdk-wallet-evm-7702-gasless'
 - ⚠️ `sendTransaction` accepts a `data` field (arbitrary hex calldata) — can execute **any** contract function. Extra scrutiny for non-empty `data`.
 - ⚠️ In wallet-evm `1.0.0-beta.16`, do not pass a serialized signed transaction to `sendTransaction()`. The declared string input is not broadcast as supplied and can produce a different populated transaction. Use a separate relay or provider for signed raw bytes.
 - `quoteSendTransaction(serializedTx)` is non-broadcasting, but calculates with current provider fee data rather than reproducing the serialized fee settings.
+- In wallet-evm beta.19, the runtime accepts and reuses an existing ethers `Provider`, and a manager shares one provider across its accounts. The published declaration still accepts only URLs and EIP-1193 providers, so this ethers-provider path is runtime-only for TypeScript consumers.
+- ⚠️ Do not pass a beta.19 manager-derived account to Velora beta.8, USD₮0 bridge beta.10, or Aave beta.7. These releases treat the shared ethers `Provider` as EIP-1193 and reject it. Construct `WalletAccountEvm` directly with the original RPC URL or genuine EIP-1193 provider; never mutate its internal provider field. Direct accounts are outside WDK Core policy and middleware decoration, so retain required application checks and account-level controls.
 
 ## Configuration — wallet-evm
 
@@ -79,7 +81,7 @@ const wallet = new WalletManagerEvm(seedPhrase, {
 - The first UserOperation chain lookup checks the provider against constructor `chainId` and caches success. Sponsored quotes and already-signed quote/send paths skip this check; recreate the account when changing networks.
 - Signed UserOperations preserve their nonce and fee-mode configuration. Submit promptly through the same account and do not mutate them.
 - Signed UserOperation submission does not reapply `transactionMaxFee`. In paymaster-token mode, a signed-operation quote is a buffered native-gas ceiling in wei, not a token-denominated charge.
-- Quote-cache keys omit fee-mode configuration. Use the same mode, paymaster token, paymaster endpoints, and sponsorship policy for a quote and its matching send, sign, or transfer.
+- Quote-cache keys omit fee-mode configuration. Keep the same mode, paymaster token, paymaster URL, `paymasterHeaders`, address, and sponsorship policy for a quote and its matching send, sign, or transfer.
 - Same `data` risk as wallet-evm, plus batch execution risk
 
 ## Configuration — wallet-evm-erc-4337

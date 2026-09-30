@@ -32,13 +32,17 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 })
 ```
 
+<Callout type="warn">
+Use the direct constructor for bridge beta.10. Do not pass an account derived by `WalletManagerEvm` beta.19 or WDK Core with that manager: it contains an ethers `Provider`, and the bridge rejects it as an invalid EIP-1193 provider. A genuine EIP-1193 provider also works when supplied directly. Do not replace the account's internal provider field. Direct accounts are not decorated by WDK Core [transaction policies](/sdk/core-module/guides/transaction-policies) or middleware, so retain any required application checks.
+</Callout>
+
 <Callout type="error">
 **Seed phrase:** Store the mnemonic securely. Anyone with the phrase controls the funds on derived accounts.
 </Callout>
 
 ## Instantiate the bridge protocol
 
-You can create a [`Usdt0ProtocolEvm`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference) instance with the [`new Usdt0ProtocolEvm(account, config?)`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference) constructor. Optional `bridgeMaxFee` rejects a bridge when the implementation's combined fee value is at or above the cap:
+You can create a [`Usdt0ProtocolEvm`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference) instance with the [`new Usdt0ProtocolEvm(account, config?)`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference) constructor. For standard accounts, optional `bridgeMaxFee` rejects a bridge when the implementation's combined fee value is at or above the cap:
 
 ```javascript title="Construct Usdt0ProtocolEvm"
 import Usdt0ProtocolEvm from '@tetherto/wdk-protocol-bridge-usdt0-evm'
@@ -48,7 +52,7 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 })
 ```
 
-For standard EVM accounts, `fee` and `bridgeFee` are source-chain native base units. ERC-4337 fee units depend on the account's gas-payment mode while `bridgeFee` is returned in bridged-token base units. Read [Fee units and `bridgeMaxFee`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#fee-units-and-bridgemaxfee) before setting a cap for an ERC-4337 flow.
+For standard EVM accounts, `fee` and `bridgeFee` are source-chain native base units. Starting in beta.10, ERC-4337 `bridgeFee` also uses source-native base units. Token-paid gas still reports `fee` in paymaster-token units, so beta.10 cannot provide a meaningful single-currency `bridgeMaxFee` spending cap for that mode. Native-gas and sponsored ERC-4337 flows use compatible units; see [Fee units and `bridgeMaxFee`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#fee-units-and-bridgemaxfee).
 
 <Callout type="info">
 The constructor also accepts the shared WDK account interfaces. [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config) requires a callable `sendTransaction()` method and EVM transaction support. Read [account requirements](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements) before supplying a custom account or combining ERC-4337 package versions.
@@ -68,6 +72,12 @@ const readOnlyBridge = new Usdt0ProtocolEvm(readOnlyAccount)
 ```
 
 You can now call [`quoteBridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#quotebridgeoptions-config) with your route options. The source address needs any allowance and balance required by the route's gas estimate; a read-only account cannot grant that allowance. Calling [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config) on this instance rejects before sending a transaction.
+
+When the signing session ends, clear the directly constructed account's key material:
+
+```javascript title="Dispose the signing account"
+account.dispose()
+```
 
 ## Supported chains
 
@@ -113,3 +123,9 @@ ERC-4337 helper workflows are available when the source chain is Ethereum, Arbit
 ## Next Steps
 
 Run a standard EVM-to-EVM transfer with [Bridge tokens](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens), or use [Bridge with ERC-4337](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337) for gasless flows on supported networks.
+
+---
+
+## Need Help?
+
+<SupportCards />

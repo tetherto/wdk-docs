@@ -96,21 +96,20 @@ const wdkWithWallets = wdk
 
 **3. Protocol Module Registration**
 
-```typescript title="Register Protocols"
-import SwapveloraEvm from '@tetherto/wdk-protocol-swap-velora-evm'
+For a compatible protocol, use `wdk.registerProtocol(blockchain, label, ProtocolClass, config)` and retrieve it from an account with its typed getter, such as `getSwapProtocol(label)`. See [Protocol Integration](/sdk/core-module/guides/protocol-integration) for setup and execution examples.
 
-const wdkWithProtocols = wdkWithWallets
-  .registerProtocol('swap-velora-evm', SwapveloraEvm)
-```
+<Callout type="warn">
+Velora beta.8, USD₮0 bridge beta.10, and Aave beta.7 cannot consume the shared ethers provider on EVM wallet beta.19 manager accounts. Use the direct-account setup in the linked guide, and retain any application checks normally supplied by WDK policies and middleware.
+</Callout>
 
 #### Unified Operations
 
-Once registered, all modules work through the same interface:
+Registered wallet modules expose common account operations:
 
 ```typescript title="Unified Operations"
 // Get accounts from different blockchains using the same method
-const ethAccount = await wdkWithProtocols.getAccount('ethereum', 0)
-const btcAccount = await wdkWithProtocols.getAccount('bitcoin', 0)
+const ethAccount = await wdkWithWallets.getAccount('ethereum', 0)
+const btcAccount = await wdkWithWallets.getAccount('bitcoin', 0)
 
 // Check balances using unified interface
 const ethBalance = await ethAccount.getBalance()
@@ -119,7 +118,7 @@ const btcBalance = await btcAccount.getBalance()
 // Send transactions with consistent API
 const ethTx = await ethAccount.sendTransaction({
   to: '0x...',
-  value: '1000000000000000000'
+  value: 1000000000000000000n
 })
 
 const btcTx = await btcAccount.sendTransaction({
@@ -127,12 +126,6 @@ const btcTx = await btcAccount.sendTransaction({
   value: 100000000
 })
 
-// Use DeFi protocols through the same interface
-const swapResult = await wdkWithProtocols.executeProtocol('swap-velora-evm', {
-  fromToken: 'ETH',
-  toToken: 'USDT',
-  amount: '1000000000000000000'
-})
 ```
 
 ***

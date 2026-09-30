@@ -7,19 +7,27 @@ schemaType: TechArticle
 
 Use the USD₮0 bridge module to move USD₮0 and XAU₮0 across supported chains from WDK EVM wallet accounts.
 
+<Callout type="info">
+These pages reflect `@tetherto/wdk-protocol-bridge-usdt0-evm@1.0.0-beta.10`. For ERC-4337, the approval amount includes the bridged token amount plus a tolerance-adjusted token-denominated helper fee, while the returned `bridgeFee` is in source-chain native base units. Recipient validation covers EVM, Solana, TON, and TRON during both quote and execution.
+</Callout>
+
+<Callout type="warn">
+Bridge beta.10 is not compatible with accounts derived by `WalletManagerEvm` beta.19. Those accounts contain an ethers `Provider`, while the bridge expects its non-string provider value to implement EIP-1193 `request()`. Use a directly constructed `WalletAccountEvm` with its original RPC URL or EIP-1193 provider for this release.
+</Callout>
+
 ## Features
 
 - **Cross-Chain Bridge**: Move USD₮0 tokens between supported blockchains
 - **LayerZero Integration**: Uses LayerZero protocol for secure cross-chain transfers
 - **Expanded Multi-Chain Support**: Discover 25 configured EVM and non-EVM network keys
 - **Non-EVM Destinations**: Bridge toward Solana, TON, and TRON when the source token has a compatible route contract
-- **Account Compatibility**: Accepts the shared WDK account interfaces; execution requires a callable `sendTransaction()` method and EVM transaction support. See [account requirements](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements) for ERC-4337 batching limits.
+- **Account Compatibility**: Accepts the shared WDK account interfaces; execution requires a callable `sendTransaction()` method and EVM transaction support. ERC-4337 helper batching also requires the exact concrete wallet class used by the bridge. See [account requirements](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements).
 - **Fee Management**: Built-in fee calculation and bridge cost estimation
 - **Token Support**: Supports USD₮0 and XAU₮0 ecosystem tokens
 - **Route Overrides**: Custom OFT contract addresses and destination endpoint IDs
 - **TypeScript Support**: Full TypeScript definitions included
 - **Memory Safety**: Secure transaction handling with proper error management
-- **Provider Flexibility**: Works with JSON-RPC URLs and EIP-1193 browser providers
+- **Provider Inputs**: Works with JSON-RPC URLs and EIP-1193 providers retained by a directly constructed account
 
 ## Supported Networks
 
@@ -80,11 +88,11 @@ Token support is determined by the contracts deployed on each chain. The protoco
 </Callout>
 
 <Callout type="info">
-Standard EVM accounts can use every supported EVM source route with a matching token deployment. ERC-4337 helper bridging is available from Ethereum, Arbitrum, Plasma, and Polygon. The ERC-4337 flow bundles token approval and the helper call into one UserOperation.
+Standard EVM accounts can use every supported EVM source route with a matching token deployment. ERC-4337 helper bridging is available from Ethereum, Arbitrum, Plasma, and Polygon when the [exact package identity requirement](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337#prerequisites) is satisfied. That flow bundles token approval and the helper call into one UserOperation.
 </Callout>
 
 <Callout type="warn">
-ERC-4337 `fee` and `bridgeFee` values can use different denominations in `1.0.0-beta.9`. Review the [fee-unit limitation](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#fee-units-and-bridgemaxfee) before configuring `bridgeMaxFee`.
+In beta.10, ERC-4337 `bridgeFee` uses source-native base units. Token-paid gas still returns `fee` in paymaster-token units, so that mode mixes denominations in `fee + bridgeFee` and cannot provide a meaningful single-currency `bridgeMaxFee` spending cap. Native-gas and sponsored flows use compatible units; see the [fee-unit limitation](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#fee-units-and-bridgemaxfee).
 </Callout>
 
 ## Next Steps
