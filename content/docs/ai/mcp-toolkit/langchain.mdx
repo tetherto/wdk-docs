@@ -26,13 +26,14 @@ Complete the pinned [source setup](/ai/mcp-toolkit/get-started#source-setup) fir
 node bin/index.js serve
 ```
 
-Pass `WDK_SEED` to enable wallet operations, or omit it to run with pricing tools only:
+Configure a trusted secret-manager command to enable wallet operations. Replace the placeholder with your own executable that prints only the mnemonic to stdout, and authenticate the secret manager before starting the agent. The command must work without interactive input. See [seed sources, precedence, and startup behavior](/ai/mcp-toolkit/configuration#seed-sources-for-serve).
 
 ```bash title="Terminal"
 # With wallet operations
-WDK_SEED="your twelve word seed phrase here" node bin/index.js serve
+WDK_SEED_COMMAND="/absolute/path/to/trusted-seed-loader" node bin/index.js serve
 
-# Pricing-only mode (no seed required)
+# Pricing-only mode (no seed sources configured)
+unset WDK_SEED WDK_SEED_COMMAND WDK_SEED_FILE
 node bin/index.js serve
 ```
 
@@ -42,13 +43,13 @@ By default, `serve` enables **three chains**: Ethereum, Arbitrum, and Bitcoin. F
 
 ### Built-in Registry
 
-The command has built-in definitions for 13 chains and 4 protocol modules. When a chain is enabled and its package is installed, the wallet is registered automatically. Protocol modules are also auto-registered when their packages are installed and at least one of their target chains is enabled.
+The command has built-in definitions for 13 chains and 4 protocol modules. When a chain is enabled and its configured package is installed, the wallet is registered automatically. Protocol modules are also auto-registered when their packages are installed and at least one of their target chains is enabled.
 
 | Module | Registers | Default |
 | --- | --- | --- |
 | [`@tetherto/wdk-wallet-evm`](/sdk/wallet-modules/wallet-evm) | Configured built-in EVM chains | Ethereum + Arbitrum enabled |
 | [`@tetherto/wdk-wallet-btc`](/sdk/wallet-modules/wallet-btc) | Bitcoin | Enabled |
-| [`@tetherto/wdk-wallet-solana`](/sdk/wallet-modules/wallet-solana) | Solana | Not enabled by default |
+| [`@tetherto/wdk-wallet-solana`](/sdk/wallet-modules/wallet-solana) | Solana | Requires a module override; not enabled by default |
 | [`@tetherto/wdk-wallet-ton`](/sdk/wallet-modules/wallet-ton) | TON | Not enabled by default |
 | [`@tetherto/wdk-wallet-tron`](/sdk/wallet-modules/wallet-tron) | Tron | Not enabled by default |
 | [`@tetherto/wdk-protocol-swap-velora-evm`](/sdk/swap-modules/swap-velora-evm) | Swap tools (Ethereum, Arbitrum) | -- |
@@ -58,15 +59,17 @@ The command has built-in definitions for 13 chains and 4 protocol modules. When 
 
 Use the package's `CHAINS` export as the complete accepted-identifier registry for the source checkout; see [Built-in Chain Identifiers](/ai/mcp-toolkit#built-in-chain-identifiers).
 
+The pinned `serve` source imports `@tetherto/wdk-wallet-sol` for Solana. To use the installed `@tetherto/wdk-wallet-solana` package, set `chains.solana.module` to `"@tetherto/wdk-wallet-solana"` in a [custom config file](#custom-config-file), supply its [wallet configuration](/sdk/wallet-modules/wallet-solana/configuration), and enable `solana` through `enabledChains` (or `WDK_CHAINS` when `enabledChains` is omitted).
+
 <Callout type="info">
-Missing packages are silently skipped. Install only the modules you need and `serve` will pick them up. For chains or protocols **not** in the built-in registry, use a [custom config file](#custom-config-file).
+Unavailable wallet packages are skipped with a startup warning. Install the packages named by the registry or your config. For chains or protocols **not** in the built-in registry, use a [custom config file](#custom-config-file).
 </Callout>
 
 ***
 
 ## Quick Start
 
-Replace `/absolute/path/wdk-mcp-toolkit` in both examples with your source checkout path.
+Replace `/absolute/path/wdk-mcp-toolkit` in both examples with your source checkout path and `/absolute/path/to/trusted-seed-loader` with your secret-manager executable. WDK does not provide the loader. Authenticate it first, ensure it runs without interactive input in the server's environment, and unset any inherited `WDK_SEED` so it cannot override the command source.
 
 <Callout type="warn">
 The examples below set `WDK_MCP_ELICITATION="false"`, which automatically accepts confirmation requests. With a seed configured, `serve` exposes write tools as well as read tools; asking only for a balance or price does not restrict what the agent can call. Use a dedicated development wallet with limited funds. For read-only access, [register only read tools in a custom server](/ai/mcp-toolkit/configuration#read-only-mode); for writes, provide authorization outside the agent's control. See [confirmation and agent access](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
@@ -95,7 +98,7 @@ async def main():
             "command": "node",
             "args": ["/absolute/path/wdk-mcp-toolkit/bin/index.js", "serve"],
             "env": {
-                "WDK_SEED": "your twelve word seed phrase here",
+                "WDK_SEED_COMMAND": "/absolute/path/to/trusted-seed-loader",
                 "WDK_MCP_ELICITATION": "false",
             },
         }
@@ -141,7 +144,7 @@ const client = new MultiServerMCPClient({
     command: "node",
     args: ["/absolute/path/wdk-mcp-toolkit/bin/index.js", "serve"],
     env: {
-      WDK_SEED: "your twelve word seed phrase here",
+      WDK_SEED_COMMAND: "/absolute/path/to/trusted-seed-loader",
       WDK_MCP_ELICITATION: "false",
     },
   },
@@ -178,11 +181,13 @@ npx tsx agent.ts
 
 ### Environment Variables
 
-Control `serve` behavior through environment variables:
+Control `serve` behavior through environment variables. The three seed sources are optional individually and are checked in the order shown. A nonempty resolved seed is required for wallet tools; see [seed resolution and failure behavior](/ai/mcp-toolkit/configuration#seed-sources-for-serve).
 
 | Variable | Required | Default | Description |
 | --- | --- | --- | --- |
-| `WDK_SEED` | No | -- | BIP-39 seed phrase. If omitted, only pricing tools are available |
+| `WDK_SEED` | No | -- | Direct mnemonic; takes precedence over the command and file sources |
+| `WDK_SEED_COMMAND` | No | -- | Trusted command whose stdout contains the mnemonic; used when `WDK_SEED` is unset or empty |
+| `WDK_SEED_FILE` | No | -- | UTF-8 mnemonic file; used when both preceding variables are unset or empty |
 | `WDK_CHAINS` | No | `ethereum,arbitrum,bitcoin` | Comma-separated identifiers from the package's `CHAINS` export |
 | `WDK_MCP_ELICITATION` | No | `true` | The exact string `"false"` disables elicitation and automatically accepts confirmation requests; it does not enforce spending limits |
 | `WDK_RPC_\<CHAIN\>` | No | Built-in defaults | Override an existing `provider` field for a configured chain (e.g. `WDK_RPC_ETHEREUM=https://my-rpc.com`) |
@@ -200,7 +205,7 @@ The pinned `serve` source checks for both MoonPay variables but passes a configu
 For chains or protocols not in the built-in defaults, create a `wdk.config.json` and pass its path via `WDK_CONFIG`:
 
 ```bash title="Terminal"
-WDK_CONFIG=./wdk.config.json WDK_SEED="..." node bin/index.js serve
+WDK_CONFIG=./wdk.config.json WDK_SEED_COMMAND="/absolute/path/to/trusted-seed-loader" node bin/index.js serve
 ```
 
 ```json title="wdk.config.json"

@@ -27,7 +27,15 @@ Start the stdio server with:
 node bin/index.js serve
 ```
 
-Without a configured seed, `serve` exposes pricing tools only. To enable wallet tools, supply `WDK_SEED` through your trusted local configuration and install the wallet modules you need. For client setup, use `node` with the absolute path to `bin/index.js` followed by `serve`; see the [LangChain examples](/ai/mcp-toolkit/langchain#quick-start).
+Without a seed source, `serve` exposes pricing tools only. To enable wallet tools, configure a trusted secret-manager command and install the wallet modules you need:
+
+```bash title="Terminal"
+WDK_SEED_COMMAND="/absolute/path/to/trusted-seed-loader" node bin/index.js serve
+```
+
+Replace the placeholder with your own trusted executable that reads the mnemonic from a secret manager. WDK does not provide this executable. Authenticate the secret manager before starting the MCP client; the command must run without interactive input and print only the mnemonic to stdout. See [seed sources and precedence](/ai/mcp-toolkit/configuration#seed-sources-for-serve) for `WDK_SEED_COMMAND`, `WDK_SEED_FILE`, and `WDK_SEED`.
+
+For client setup, use `node` with the absolute path to `bin/index.js` followed by `serve`; see the [LangChain examples](/ai/mcp-toolkit/langchain#quick-start).
 
 <Callout type="warn">
 **Security** - A seed in an environment variable or gitignored client configuration is still accessible to code that can read that environment or file. Use a dedicated development wallet with limited funds. Review [confirmation and agent access](/ai/mcp-toolkit/configuration#confirmation-and-agent-access) before exposing write tools.
@@ -60,18 +68,41 @@ npm install @tetherto/wdk-wallet-btc    # Bitcoin
 
 #### Create your MCP server
 
-Create `index.js` with a basic multi-chain server. Set `"type": "module"` in your app's `package.json` to use these imports:
+Create `index.js` with a basic multi-chain server. Set `"type": "module"` in your app's `package.json` to use these imports.
+
+The `loadSeed()` function below is application code that explicitly reads `WDK_SEED_COMMAND`. The `useWdk()` API does not resolve command or file sources itself. This example requires a trusted, noninteractive secret-manager command, rejects empty output, and sets a 30-second timeout. The built-in `serve` command has no configured command timeout.
 
 ```javascript title="index.js"
 import { WdkMcpServer, WALLET_TOOLS, PRICING_TOOLS } from '@tetherto/wdk-mcp-toolkit'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { execSync } from 'node:child_process'
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
 import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
+function loadSeed () {
+  const command = process.env.WDK_SEED_COMMAND
+  if (!command?.trim()) {
+    throw new Error('Set WDK_SEED_COMMAND to a trusted secret-manager command.')
+  }
+
+  try {
+    const seed = execSync(command, {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+      timeout: 30000,
+      killSignal: 'SIGKILL'
+    }).trim()
+    if (!seed) throw new Error('Empty seed')
+    return seed
+  } catch {
+    throw new Error('Seed loading failed. Check your secret manager and command configuration.')
+  }
+}
+
 const server = new WdkMcpServer('my-wallet-server', '1.0.0')
 
-// 1. Enable WDK with your seed phrase
-server.useWdk({ seed: process.env.WDK_SEED })
+// 1. Load the seed without printing it or child-process errors
+server.useWdk({ seed: loadSeed() })
 
 // 2. Register wallet modules
 server.registerWallet('ethereum', WalletManagerEvm, {
@@ -98,7 +129,9 @@ await server.connect(new StdioServerTransport())
 
 #### Connect your AI client
 
-Add the MCP server to your AI tool's configuration:
+Add the custom `index.js` server to your AI tool's configuration. In the JSON and YAML examples, replace `/absolute/path/to/index.js` with the full path to your custom server so startup does not depend on the client's working directory.
+
+In every example below, replace `/absolute/path/to/trusted-seed-loader` with your secret-manager executable. Authenticate it first and ensure it can run without interactive input in the MCP server's environment. Keep the command under your control; it is executed through a shell.
 
 <Tabs items={["GitHub Copilot", "Cursor", "Claude Code", "Windsurf", "Cline", "Continue"]}>
 <Tab value="GitHub Copilot">
@@ -110,9 +143,9 @@ Add the MCP server to your AI tool's configuration:
     "wdk": {
       "type": "stdio",
       "command": "node",
-      "args": ["index.js"],
+      "args": ["/absolute/path/to/index.js"],
       "env": {
-        "WDK_SEED": "your twelve word seed phrase here"
+        "WDK_SEED_COMMAND": "/absolute/path/to/trusted-seed-loader"
       }
     }
   }
@@ -134,9 +167,9 @@ Then in VS Code:
   "mcpServers": {
     "wdk": {
       "command": "node",
-      "args": ["index.js"],
+      "args": ["/absolute/path/to/index.js"],
       "env": {
-        "WDK_SEED": "your twelve word seed phrase here"
+        "WDK_SEED_COMMAND": "/absolute/path/to/trusted-seed-loader"
       }
     }
   }
@@ -152,10 +185,10 @@ Run this command from your project directory:
 claude mcp add wdk -- node index.js
 ```
 
-Set the environment variable separately:
+Set the environment variable before starting Claude Code from the same shell, and authenticate your secret manager first:
 
 ```bash
-export WDK_SEED="your twelve word seed phrase here"
+export WDK_SEED_COMMAND="/absolute/path/to/trusted-seed-loader"
 ```
 
 → [Claude Code MCP documentation](https://docs.anthropic.com/en/docs/claude-code/tutorials#set-up-model-context-protocol-mcp)
@@ -168,9 +201,9 @@ export WDK_SEED="your twelve word seed phrase here"
   "mcpServers": {
     "wdk": {
       "command": "node",
-      "args": ["index.js"],
+      "args": ["/absolute/path/to/index.js"],
       "env": {
-        "WDK_SEED": "your twelve word seed phrase here"
+        "WDK_SEED_COMMAND": "/absolute/path/to/trusted-seed-loader"
       }
     }
   }
@@ -187,9 +220,9 @@ Add via Cline's MCP settings panel in VS Code, or create the config file directl
   "mcpServers": {
     "wdk": {
       "command": "node",
-      "args": ["index.js"],
+      "args": ["/absolute/path/to/index.js"],
       "env": {
-        "WDK_SEED": "your twelve word seed phrase here"
+        "WDK_SEED_COMMAND": "/absolute/path/to/trusted-seed-loader"
       }
     }
   }
@@ -205,9 +238,9 @@ Add to the `mcpServers` section with the command and arguments for your server:
 
 ```
 command: node
-args: ["index.js"]
+args: ["/absolute/path/to/index.js"]
 env:
-  WDK_SEED: "your twelve word seed phrase here"
+  WDK_SEED_COMMAND: "/absolute/path/to/trusted-seed-loader"
 ```
 
 → [Continue MCP documentation](https://docs.continue.dev/customize/mcp-tools)
@@ -278,9 +311,13 @@ server.registerTools([
 
 ## Environment Variables
 
+For built-in `serve`, each seed variable is optional; wallet tools require a nonempty resolved seed. See [source precedence](/ai/mcp-toolkit/configuration#seed-sources-for-serve). The custom `index.js` example above requires `WDK_SEED_COMMAND` and does not implement the other two sources.
+
 | Variable | Required | Description |
 | --- | --- | --- |
-| `WDK_SEED` | Yes | BIP-39 seed phrase for wallet derivation |
+| `WDK_SEED` | No | Direct mnemonic; takes precedence over the command and file sources in `serve` |
+| `WDK_SEED_COMMAND` | No | Trusted command whose stdout contains the mnemonic; preferred over storing the mnemonic in client configuration |
+| `WDK_SEED_FILE` | No | UTF-8 file containing the mnemonic; used by `serve` when both preceding variables are unset or empty |
 | `WDK_INDEXER_API_KEY` | No | Enables `INDEXER_TOOLS` - [get a key](/tools/indexer-api/get-started/#request-api-key) |
 | `MOONPAY_API_KEY` | No | Enables `FIAT_TOOLS` - [MoonPay Dashboard](https://dashboard.moonpay.com/) |
 

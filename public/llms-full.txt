@@ -274,7 +274,9 @@ server.useWdk(config: WdkConfig): WdkMcpServer
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
-| `config.seed` | `string` | Yes | BIP-39 mnemonic seed phrase |
+| `config.seed` | `string` | Unless `WDK_SEED` is set | BIP-39 mnemonic seed phrase. An omitted or empty value falls back to `WDK_SEED`. |
+
+Pass a mnemonic resolved by your application's secret-manager integration. This method does not execute `WDK_SEED_COMMAND` or read `WDK_SEED_FILE`; those are [seed sources for the built-in `serve` command](/ai/mcp-toolkit/configuration#seed-sources-for-serve). See the [custom server example](/ai/mcp-toolkit/get-started#create-your-mcp-server) for an explicit command loader.
 
 **Returns:** `WdkMcpServer` (for chaining)
 
@@ -1235,15 +1237,41 @@ MCP tool annotations and agent instructions describe expected behavior; they do 
 
 ### Enable WDK
 
+Pass a BIP-39 mnemonic resolved by your application to `useWdk()`. See the [custom server example](/ai/mcp-toolkit/get-started#create-your-mcp-server) for a command-based loader:
+
 ```javascript
-server.useWdk({ seed: process.env.WDK_SEED })
+server.useWdk({ seed })
 ```
 
-The `seed` is a BIP-39 mnemonic phrase used for key derivation across all registered blockchains.
+The mnemonic is used for key derivation across all registered blockchains. If `config.seed` is omitted or empty, `useWdk()` falls back to `WDK_SEED`. The API does not resolve `WDK_SEED_COMMAND` or `WDK_SEED_FILE`; those sources are implemented by the built-in `serve` command.
 
 <Callout type="error">
-**Never hardcode seed phrases in source code.** Use environment variables or a secrets manager. Keep local client configuration files such as `.vscode/mcp.json` out of version control; gitignore does not restrict access by local processes.
+**Never hardcode seed phrases in source code or client configuration.** Prefer a trusted secret-manager command. Keep credential files out of version control and restrict access; gitignore does not prevent local processes from reading them.
 </Callout>
+
+### Seed Sources for `serve`
+
+The built-in `serve` command selects the first environment variable with a nonempty value in this order:
+
+1. `WDK_SEED`: the mnemonic supplied directly.
+2. `WDK_SEED_COMMAND`: a trusted shell command whose stdout contains the mnemonic.
+3. `WDK_SEED_FILE`: a UTF-8 file containing the mnemonic.
+
+Prefer `WDK_SEED_COMMAND` to putting the mnemonic in client configuration. Replace `/absolute/path/to/trusted-seed-loader` below with your own secret-manager executable; WDK does not supply it. Authenticate the secret manager before starting the MCP client. The command must work without interactive input and print only the mnemonic to stdout.
+
+```bash title="Terminal"
+WDK_SEED_COMMAND="/absolute/path/to/trusted-seed-loader" node bin/index.js serve
+```
+
+Unset `WDK_SEED` when selecting the command source, and unset both preceding variables when selecting a file. Use an absolute file path: relative paths resolve against the server process's working directory.
+
+`serve` trims the selected value or output. An empty environment value is skipped, but a whitespace-only value or empty command/file output does not trigger fallback to another source; it starts pricing-only mode. A command failure or unreadable file aborts startup. A nonempty invalid mnemonic also aborts startup.
+
+<Callout type="warn">
+**The command runs through a shell and blocks startup until it finishes.** `serve` does not configure a timeout, so a hung command prevents the MCP server from connecting. Use only commands and configuration controlled by your application, never agent-generated command text. Do not include the mnemonic in diagnostics or errors: command failures can reach client logs.
+</Callout>
+
+After resolving a nonempty seed, `serve` removes all three source variables from its own environment as it initializes WDK. This does not delete a seed file, change the parent environment, or isolate the mnemonic from code running in the server process.
 
 ### Register Wallets
 
@@ -1443,9 +1471,13 @@ server.registerTool(
 
 ## Environment Variables
 
+For `serve`, seed variables are optional individually. Wallet tools require a nonempty resolved seed; see [seed sources and precedence](#seed-sources-for-serve). Custom servers must resolve command or file sources in application code before calling `useWdk()`.
+
 | Variable | Required | Description |
 | --- | --- | --- |
-| `WDK_SEED` | Yes | BIP-39 mnemonic for wallet key derivation |
+| `WDK_SEED` | No | Direct mnemonic; first source checked by `serve`, and fallback for `useWdk({})` |
+| `WDK_SEED_COMMAND` | No | Trusted command whose stdout supplies the mnemonic to `serve` |
+| `WDK_SEED_FILE` | No | UTF-8 mnemonic file read by `serve` when both preceding variables are unset or empty |
 | `WDK_INDEXER_API_KEY` | No | API key for WDK Indexer |
 | `MOONPAY_API_KEY` | No | API key for MoonPay fiat on/off-ramp |
 
@@ -1458,7 +1490,7 @@ server.registerTool(
 </Callout>
 
 - [ ] **Use a dedicated development wallet** - Never use production wallets with real funds for testing
-- [ ] **Never hardcode seed phrases** - Always use environment variables or `.vscode/mcp.json` (gitignored)
+- [ ] **Use a secret-manager command** - Keep the mnemonic out of source code and client configuration; configure only a trusted loader command and authenticate it before startup
 - [ ] **Limit the exposed tools** - Use read-only tool arrays when writes are unnecessary. Before enabling writes, review [confirmation and agent access](#confirmation-and-agent-access).
 - [ ] **Await `server.close()` on shutdown** - This calls WDK disposal and closes the MCP server. Cleanup is best effort; it cannot guarantee erasure of every seed or key copy in process memory.
 - [ ] **Use `stdio` transport** - The default transport communicates only with the local AI client process
@@ -1498,7 +1530,15 @@ Start the stdio server with:
 node bin/index.js serve
 ```
 
-Without a configured seed, `serve` exposes pricing tools only. To enable wallet tools, supply `WDK_SEED` through your trusted local configuration and install the wallet modules you need. For client setup, use `node` with the absolute path to `bin/index.js` followed by `serve`; see the [LangChain examples](/ai/mcp-toolkit/langchain#quick-start).
+Without a seed source, `serve` exposes pricing tools only. To enable wallet tools, configure a trusted secret-manager command and install the wallet modules you need:
+
+```bash title="Terminal"
+WDK_SEED_COMMAND="/absolute/path/to/trusted-seed-loader" node bin/index.js serve
+```
+
+Replace the placeholder with your own trusted executable that reads the mnemonic from a secret manager. WDK does not provide this executable. Authenticate the secret manager before starting the MCP client; the command must run without interactive input and print only the mnemonic to stdout. See [seed sources and precedence](/ai/mcp-toolkit/configuration#seed-sources-for-serve) for `WDK_SEED_COMMAND`, `WDK_SEED_FILE`, and `WDK_SEED`.
+
+For client setup, use `node` with the absolute path to `bin/index.js` followed by `serve`; see the [LangChain examples](/ai/mcp-toolkit/langchain#quick-start).
 
 <Callout type="warn">
 **Security** - A seed in an environment variable or gitignored client configuration is still accessible to code that can read that environment or file. Use a dedicated development wallet with limited funds. Review [confirmation and agent access](/ai/mcp-toolkit/configuration#confirmation-and-agent-access) before exposing write tools.
@@ -1531,18 +1571,41 @@ npm install @tetherto/wdk-wallet-btc    # Bitcoin
 
 #### Create your MCP server
 
-Create `index.js` with a basic multi-chain server. Set `"type": "module"` in your app's `package.json` to use these imports:
+Create `index.js` with a basic multi-chain server. Set `"type": "module"` in your app's `package.json` to use these imports.
+
+The `loadSeed()` function below is application code that explicitly reads `WDK_SEED_COMMAND`. The `useWdk()` API does not resolve command or file sources itself. This example requires a trusted, noninteractive secret-manager command, rejects empty output, and sets a 30-second timeout. The built-in `serve` command has no configured command timeout.
 
 ```javascript title="index.js"
 import { WdkMcpServer, WALLET_TOOLS, PRICING_TOOLS } from '@tetherto/wdk-mcp-toolkit'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { execSync } from 'node:child_process'
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
 import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 
+function loadSeed () {
+  const command = process.env.WDK_SEED_COMMAND
+  if (!command?.trim()) {
+    throw new Error('Set WDK_SEED_COMMAND to a trusted secret-manager command.')
+  }
+
+  try {
+    const seed = execSync(command, {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+      timeout: 30000,
+      killSignal: 'SIGKILL'
+    }).trim()
+    if (!seed) throw new Error('Empty seed')
+    return seed
+  } catch {
+    throw new Error('Seed loading failed. Check your secret manager and command configuration.')
+  }
+}
+
 const server = new WdkMcpServer('my-wallet-server', '1.0.0')
 
-// 1. Enable WDK with your seed phrase
-server.useWdk({ seed: process.env.WDK_SEED })
+// 1. Load the seed without printing it or child-process errors
+server.useWdk({ seed: loadSeed() })
 
 // 2. Register wallet modules
 server.registerWallet('ethereum', WalletManagerEvm, {
@@ -1569,7 +1632,9 @@ await server.connect(new StdioServerTransport())
 
 #### Connect your AI client
 
-Add the MCP server to your AI tool's configuration:
+Add the custom `index.js` server to your AI tool's configuration. In the JSON and YAML examples, replace `/absolute/path/to/index.js` with the full path to your custom server so startup does not depend on the client's working directory.
+
+In every example below, replace `/absolute/path/to/trusted-seed-loader` with your secret-manager executable. Authenticate it first and ensure it can run without interactive input in the MCP server's environment. Keep the command under your control; it is executed through a shell.
 
 <Tabs items={["GitHub Copilot", "Cursor", "Claude Code", "Windsurf", "Cline", "Continue"]}>
 <Tab value="GitHub Copilot">
@@ -1581,9 +1646,9 @@ Add the MCP server to your AI tool's configuration:
     "wdk": {
       "type": "stdio",
       "command": "node",
-      "args": ["index.js"],
+      "args": ["/absolute/path/to/index.js"],
       "env": {
-        "WDK_SEED": "your twelve word seed phrase here"
+        "WDK_SEED_COMMAND": "/absolute/path/to/trusted-seed-loader"
       }
     }
   }
@@ -1605,9 +1670,9 @@ Then in VS Code:
   "mcpServers": {
     "wdk": {
       "command": "node",
-      "args": ["index.js"],
+      "args": ["/absolute/path/to/index.js"],
       "env": {
-        "WDK_SEED": "your twelve word seed phrase here"
+        "WDK_SEED_COMMAND": "/absolute/path/to/trusted-seed-loader"
       }
     }
   }
@@ -1623,10 +1688,10 @@ Run this command from your project directory:
 claude mcp add wdk -- node index.js
 ```
 
-Set the environment variable separately:
+Set the environment variable before starting Claude Code from the same shell, and authenticate your secret manager first:
 
 ```bash
-export WDK_SEED="your twelve word seed phrase here"
+export WDK_SEED_COMMAND="/absolute/path/to/trusted-seed-loader"
 ```
 
 → [Claude Code MCP documentation](https://docs.anthropic.com/en/docs/claude-code/tutorials#set-up-model-context-protocol-mcp)
@@ -1639,9 +1704,9 @@ export WDK_SEED="your twelve word seed phrase here"
   "mcpServers": {
     "wdk": {
       "command": "node",
-      "args": ["index.js"],
+      "args": ["/absolute/path/to/index.js"],
       "env": {
-        "WDK_SEED": "your twelve word seed phrase here"
+        "WDK_SEED_COMMAND": "/absolute/path/to/trusted-seed-loader"
       }
     }
   }
@@ -1658,9 +1723,9 @@ Add via Cline's MCP settings panel in VS Code, or create the config file directl
   "mcpServers": {
     "wdk": {
       "command": "node",
-      "args": ["index.js"],
+      "args": ["/absolute/path/to/index.js"],
       "env": {
-        "WDK_SEED": "your twelve word seed phrase here"
+        "WDK_SEED_COMMAND": "/absolute/path/to/trusted-seed-loader"
       }
     }
   }
@@ -1676,9 +1741,9 @@ Add to the `mcpServers` section with the command and arguments for your server:
 
 ```
 command: node
-args: ["index.js"]
+args: ["/absolute/path/to/index.js"]
 env:
-  WDK_SEED: "your twelve word seed phrase here"
+  WDK_SEED_COMMAND: "/absolute/path/to/trusted-seed-loader"
 ```
 
 → [Continue MCP documentation](https://docs.continue.dev/customize/mcp-tools)
@@ -1749,9 +1814,13 @@ server.registerTools([
 
 ## Environment Variables
 
+For built-in `serve`, each seed variable is optional; wallet tools require a nonempty resolved seed. See [source precedence](/ai/mcp-toolkit/configuration#seed-sources-for-serve). The custom `index.js` example above requires `WDK_SEED_COMMAND` and does not implement the other two sources.
+
 | Variable | Required | Description |
 | --- | --- | --- |
-| `WDK_SEED` | Yes | BIP-39 seed phrase for wallet derivation |
+| `WDK_SEED` | No | Direct mnemonic; takes precedence over the command and file sources in `serve` |
+| `WDK_SEED_COMMAND` | No | Trusted command whose stdout contains the mnemonic; preferred over storing the mnemonic in client configuration |
+| `WDK_SEED_FILE` | No | UTF-8 file containing the mnemonic; used by `serve` when both preceding variables are unset or empty |
 | `WDK_INDEXER_API_KEY` | No | Enables `INDEXER_TOOLS` - [get a key](/tools/indexer-api/get-started/#request-api-key) |
 | `MOONPAY_API_KEY` | No | Enables `FIAT_TOOLS` - [MoonPay Dashboard](https://dashboard.moonpay.com/) |
 
@@ -1796,13 +1865,14 @@ Complete the pinned [source setup](/ai/mcp-toolkit/get-started#source-setup) fir
 node bin/index.js serve
 ```
 
-Pass `WDK_SEED` to enable wallet operations, or omit it to run with pricing tools only:
+Configure a trusted secret-manager command to enable wallet operations. Replace the placeholder with your own executable that prints only the mnemonic to stdout, and authenticate the secret manager before starting the agent. The command must work without interactive input. See [seed sources, precedence, and startup behavior](/ai/mcp-toolkit/configuration#seed-sources-for-serve).
 
 ```bash title="Terminal"
 # With wallet operations
-WDK_SEED="your twelve word seed phrase here" node bin/index.js serve
+WDK_SEED_COMMAND="/absolute/path/to/trusted-seed-loader" node bin/index.js serve
 
-# Pricing-only mode (no seed required)
+# Pricing-only mode (no seed sources configured)
+unset WDK_SEED WDK_SEED_COMMAND WDK_SEED_FILE
 node bin/index.js serve
 ```
 
@@ -1812,13 +1882,13 @@ By default, `serve` enables **three chains**: Ethereum, Arbitrum, and Bitcoin. F
 
 ### Built-in Registry
 
-The command has built-in definitions for 13 chains and 4 protocol modules. When a chain is enabled and its package is installed, the wallet is registered automatically. Protocol modules are also auto-registered when their packages are installed and at least one of their target chains is enabled.
+The command has built-in definitions for 13 chains and 4 protocol modules. When a chain is enabled and its configured package is installed, the wallet is registered automatically. Protocol modules are also auto-registered when their packages are installed and at least one of their target chains is enabled.
 
 | Module | Registers | Default |
 | --- | --- | --- |
 | [`@tetherto/wdk-wallet-evm`](/sdk/wallet-modules/wallet-evm) | Configured built-in EVM chains | Ethereum + Arbitrum enabled |
 | [`@tetherto/wdk-wallet-btc`](/sdk/wallet-modules/wallet-btc) | Bitcoin | Enabled |
-| [`@tetherto/wdk-wallet-solana`](/sdk/wallet-modules/wallet-solana) | Solana | Not enabled by default |
+| [`@tetherto/wdk-wallet-solana`](/sdk/wallet-modules/wallet-solana) | Solana | Requires a module override; not enabled by default |
 | [`@tetherto/wdk-wallet-ton`](/sdk/wallet-modules/wallet-ton) | TON | Not enabled by default |
 | [`@tetherto/wdk-wallet-tron`](/sdk/wallet-modules/wallet-tron) | Tron | Not enabled by default |
 | [`@tetherto/wdk-protocol-swap-velora-evm`](/sdk/swap-modules/swap-velora-evm) | Swap tools (Ethereum, Arbitrum) | -- |
@@ -1828,15 +1898,17 @@ The command has built-in definitions for 13 chains and 4 protocol modules. When 
 
 Use the package's `CHAINS` export as the complete accepted-identifier registry for the source checkout; see [Built-in Chain Identifiers](/ai/mcp-toolkit#built-in-chain-identifiers).
 
+The pinned `serve` source imports `@tetherto/wdk-wallet-sol` for Solana. To use the installed `@tetherto/wdk-wallet-solana` package, set `chains.solana.module` to `"@tetherto/wdk-wallet-solana"` in a [custom config file](#custom-config-file), supply its [wallet configuration](/sdk/wallet-modules/wallet-solana/configuration), and enable `solana` through `enabledChains` (or `WDK_CHAINS` when `enabledChains` is omitted).
+
 <Callout type="info">
-Missing packages are silently skipped. Install only the modules you need and `serve` will pick them up. For chains or protocols **not** in the built-in registry, use a [custom config file](#custom-config-file).
+Unavailable wallet packages are skipped with a startup warning. Install the packages named by the registry or your config. For chains or protocols **not** in the built-in registry, use a [custom config file](#custom-config-file).
 </Callout>
 
 ***
 
 ## Quick Start
 
-Replace `/absolute/path/wdk-mcp-toolkit` in both examples with your source checkout path.
+Replace `/absolute/path/wdk-mcp-toolkit` in both examples with your source checkout path and `/absolute/path/to/trusted-seed-loader` with your secret-manager executable. WDK does not provide the loader. Authenticate it first, ensure it runs without interactive input in the server's environment, and unset any inherited `WDK_SEED` so it cannot override the command source.
 
 <Callout type="warn">
 The examples below set `WDK_MCP_ELICITATION="false"`, which automatically accepts confirmation requests. With a seed configured, `serve` exposes write tools as well as read tools; asking only for a balance or price does not restrict what the agent can call. Use a dedicated development wallet with limited funds. For read-only access, [register only read tools in a custom server](/ai/mcp-toolkit/configuration#read-only-mode); for writes, provide authorization outside the agent's control. See [confirmation and agent access](/ai/mcp-toolkit/configuration#confirmation-and-agent-access).
@@ -1865,7 +1937,7 @@ async def main():
             "command": "node",
             "args": ["/absolute/path/wdk-mcp-toolkit/bin/index.js", "serve"],
             "env": {
-                "WDK_SEED": "your twelve word seed phrase here",
+                "WDK_SEED_COMMAND": "/absolute/path/to/trusted-seed-loader",
                 "WDK_MCP_ELICITATION": "false",
             },
         }
@@ -1911,7 +1983,7 @@ const client = new MultiServerMCPClient({
     command: "node",
     args: ["/absolute/path/wdk-mcp-toolkit/bin/index.js", "serve"],
     env: {
-      WDK_SEED: "your twelve word seed phrase here",
+      WDK_SEED_COMMAND: "/absolute/path/to/trusted-seed-loader",
       WDK_MCP_ELICITATION: "false",
     },
   },
@@ -1948,11 +2020,13 @@ npx tsx agent.ts
 
 ### Environment Variables
 
-Control `serve` behavior through environment variables:
+Control `serve` behavior through environment variables. The three seed sources are optional individually and are checked in the order shown. A nonempty resolved seed is required for wallet tools; see [seed resolution and failure behavior](/ai/mcp-toolkit/configuration#seed-sources-for-serve).
 
 | Variable | Required | Default | Description |
 | --- | --- | --- | --- |
-| `WDK_SEED` | No | -- | BIP-39 seed phrase. If omitted, only pricing tools are available |
+| `WDK_SEED` | No | -- | Direct mnemonic; takes precedence over the command and file sources |
+| `WDK_SEED_COMMAND` | No | -- | Trusted command whose stdout contains the mnemonic; used when `WDK_SEED` is unset or empty |
+| `WDK_SEED_FILE` | No | -- | UTF-8 mnemonic file; used when both preceding variables are unset or empty |
 | `WDK_CHAINS` | No | `ethereum,arbitrum,bitcoin` | Comma-separated identifiers from the package's `CHAINS` export |
 | `WDK_MCP_ELICITATION` | No | `true` | The exact string `"false"` disables elicitation and automatically accepts confirmation requests; it does not enforce spending limits |
 | `WDK_RPC_\<CHAIN\>` | No | Built-in defaults | Override an existing `provider` field for a configured chain (e.g. `WDK_RPC_ETHEREUM=https://my-rpc.com`) |
@@ -1970,7 +2044,7 @@ The pinned `serve` source checks for both MoonPay variables but passes a configu
 For chains or protocols not in the built-in defaults, create a `wdk.config.json` and pass its path via `WDK_CONFIG`:
 
 ```bash title="Terminal"
-WDK_CONFIG=./wdk.config.json WDK_SEED="..." node bin/index.js serve
+WDK_CONFIG=./wdk.config.json WDK_SEED_COMMAND="/absolute/path/to/trusted-seed-loader" node bin/index.js serve
 ```
 
 ```json title="wdk.config.json"
@@ -13618,16 +13692,26 @@ For policy scoping, default-deny behavior, account-level overrides, and protocol
 
 Distinct policy IDs keep their original per-registration timeouts. A repeated ID replaces the stored policy within its registry bucket and takes the timeout from the new registration call. All project-scoped policies share one bucket; account-scoped policies are bucketed by wallet.
 
+Register policies before retrieving accounts. Registration does not retrofit raw references returned when no policy applied; retrieve a new governed reference and stop using the old one. Existing governed proxies consult the current policy registry on each call.
+
 **Returns:** `WDK` - The WDK instance (supports method chaining)
 
 **Throws:** `PolicyConfigurationError` if a policy or option fails validation, if an account-scoped policy omits its account binding, if a policy references a wallet identifier that has not been registered, or if a rule names an excluded method. Governed calls also throw `PolicyConfigurationError` when WDK cannot snapshot a method argument safely.
 
-**Example:**
+**Example:** Install the [example dependencies and save `eth-send-policy.js`](/sdk/core-module/guides/transaction-policies#register-policies) first. This helper permits only Ethereum type-2 objects with no calldata, bounded value, and explicit bounded gas fields. It rejects serialized transactions and unsupported fields. This setup has no `ALLOW` rule for signing or other governed methods. `seedPhrase` and `ethereumWalletConfig` are app-owned inputs; use a trusted Ethereum mainnet RPC because the wallet derives the execution chain from its provider.
+
 ```typescript title="Register A Send Policy"
 import WDK, { DENIAL_CODES, PolicyViolationError } from '@tetherto/wdk'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import { isAllowedEthSend, MAX_EXECUTION_FEE } from './eth-send-policy.js'
+
+const RECIPIENT = '0x71C7656EC7ab88b098defB751B7401B5f6d8976F'
 
 const wdk = new WDK(seedPhrase)
-  .registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
+  .registerWallet('ethereum', WalletManagerEvm, {
+    ...ethereumWalletConfig,
+    transactionMaxFee: MAX_EXECUTION_FEE
+  })
   .registerPolicy({
     id: 'eth-send-limit',
     name: 'ETH send limit',
@@ -13635,54 +13719,48 @@ const wdk = new WDK(seedPhrase)
     wallet: 'ethereum',
     rules: [
       {
-        name: 'allow-normal-operations',
-        operation: '*',
-        action: 'ALLOW',
-        reason: 'Default local approval',
-        conditions: [() => true]
-      },
-      {
-        name: 'block-large-send',
+        name: 'allow-bounded-eth-send',
         operation: 'sendTransaction',
-        action: 'DENY',
-        reason: 'Transaction value exceeds local policy',
-        conditions: [
-          ({ args }) => {
-            const tx = args[0] as { value?: bigint } | undefined
-            const value = tx?.value
-            return typeof value === 'bigint' && value > 1000000000000000000n
-          }
-        ]
+        action: 'ALLOW',
+        conditions: [({ args }) => args.length === 1 && isAllowedEthSend(args[0])]
       }
     ]
   })
 
 const account = await wdk.getAccount('ethereum', 0)
 
-const simulation = await (account as any).simulate.sendTransaction({
-  to: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
-  value: 2000000000000000000n
-})
+const overLimitTransaction = {
+  to: RECIPIENT,
+  value: 2000000000000000000n,
+  chainId: 1,
+  type: 2,
+  gasLimit: 21000n,
+  maxFeePerGas: 20000000000n,
+  maxPriorityFeePerGas: 1000000000n
+}
+
+const simulation = await (account as any).simulate.sendTransaction(overLimitTransaction)
 
 if (simulation.decision === 'DENY') {
   console.warn(simulation.code, simulation.reason)
 }
 
 try {
-  await account.sendTransaction({
-    to: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
-    value: 2000000000000000000n
-  })
+  await account.sendTransaction(overLimitTransaction)
 } catch (error) {
   if (error instanceof PolicyViolationError) {
-    if (error.code === DENIAL_CODES.NO_APPLICABLE_RULE) {
-      console.error(`No rule addresses ${error.operation}`)
+    if (error.code === DENIAL_CODES.GOVERNED_BUT_UNMATCHED) {
+      console.error(`No allow condition matched ${error.operation}`)
     } else {
       console.error(error.code, error.reason)
     }
+  } else {
+    throw error
   }
 }
 ```
+
+The helper caps `gasLimit * maxFeePerGas` separately from transaction value. `transactionMaxFee` checks WDK's provider-estimated fee; it does not cap the request's gas fields or total spending. See [Bound Transaction Fees](/sdk/core-module/guides/transaction-policies#bound-transaction-fees).
 
 `PolicyOperation` is a string. A rule accepts one non-empty method name, a non-empty array of names, or `*` for all governed methods. Use the method's exact spelling: an unknown name registers but never matches a different method. Explicitly naming an excluded method fails registration; a wildcard does not include excluded methods.
 
@@ -13695,7 +13773,7 @@ Returns a wallet account for a specific blockchain and index using BIP-44 deriva
 - `blockchain` (string): The name of the blockchain (e.g., "ethereum")
 - `index` (number, optional): The index of the account to get (default: 0)
 
-**Returns:** `Promise<WdkAccount>` - The writable wallet account with protocol support. When a registered policy targets the account, WDK returns a proxy that evaluates [governed methods](/sdk/core-module/guides/transaction-policies#security-boundary) and exposes matching `simulate` helpers. Otherwise, WDK returns the original account without adding policy enforcement.
+**Returns:** `Promise<WdkAccount>` - The writable wallet account with protocol support. When a registered policy targets the account, WDK returns a proxy that evaluates [governed methods](/sdk/core-module/guides/transaction-policies#security-boundary) and exposes matching `simulate` helpers. Otherwise, WDK returns the original account without adding policy enforcement. Later policy registration does not change that retained raw reference; retrieve the account again to obtain a governed proxy.
 
 **Throws:** Error if no wallet has been registered for the given blockchain. Throws `PolicyConfigurationError` if a registered policy applies but the wallet account does not expose a read-only account view.
 
@@ -13725,7 +13803,7 @@ Returns a wallet account for a specific blockchain and BIP-44 derivation path.
 - `blockchain` (string): The name of the blockchain (e.g., "ethereum")
 - `path` (string): The derivation path (e.g., "0'/0/0")
 
-**Returns:** `Promise<WdkAccount>` - The writable wallet account with protocol support. When a registered policy targets the account, WDK returns a proxy that evaluates [governed methods](/sdk/core-module/guides/transaction-policies#security-boundary) and exposes matching `simulate` helpers. Otherwise, WDK returns the original account without adding policy enforcement.
+**Returns:** `Promise<WdkAccount>` - The writable wallet account with protocol support. When a registered policy targets the account, WDK returns a proxy that evaluates [governed methods](/sdk/core-module/guides/transaction-policies#security-boundary) and exposes matching `simulate` helpers. Otherwise, WDK returns the original account without adding policy enforcement. Later policy registration does not change that retained raw reference; retrieve the account again to obtain a governed proxy.
 
 **Throws:** Error if no wallet has been registered for the given blockchain. Throws `PolicyConfigurationError` if a registered policy applies but the wallet account does not expose a read-only account view.
 
@@ -15378,7 +15456,7 @@ Description: Register local ALLOW and DENY rules for WDK account and protocol wr
 
 Use local transaction policies to evaluate account and protocol calls before execution. This guide covers [registering policies](#register-policies), [method coverage and migration](#supported-operations), and [simulating calls](#simulate-before-execution).
 
-Use `@tetherto/wdk` v1.0.0-beta.18 or later for these examples because they import `DENIAL_CODES` and read the stable `error.code` and `error.operation` fields. Method exclusions and coverage beyond the earlier fixed operation list arrived in beta.17. The examples assume you have loaded an app-owned `seedPhrase` and registered the relevant wallet modules.
+These examples use `@tetherto/wdk@1.0.0-beta.18`, `@tetherto/wdk-wallet-evm@1.0.0-beta.19`, and `ethers@6.17.0`. They assume you have loaded an app-owned `seedPhrase` and an `ethereumWalletConfig` using a trusted Ethereum mainnet RPC. The EVM module derives the execution chain from its provider; checking the caller's `chainId` does not verify that provider's network.
 
 <Callout type="warn">
 The transaction policy engine is experimental and not production ready. Its local checks do not provide a security boundary against a compromised agent environment. Read the [security boundary](#security-boundary) before giving an agent wallet access.
@@ -15388,7 +15466,7 @@ The transaction policy engine is experimental and not production ready. Its loca
 
 The policy engine in `@tetherto/wdk@1.0.0-beta.18` provides these local controls and limits:
 
-- **Governed calls only.** Register policies before retrieving accounts. If no policy applies to an account, WDK returns the original account without adding policy enforcement. Default-deny applies only to intercepted methods on governed accounts; excluded methods bypass evaluation. See [Evaluation Rules](#evaluation-rules).
+- **Governed calls only.** Register policies before retrieving accounts. If no policy applies at retrieval, WDK returns the original account without adding policy enforcement. Later registration does not retrofit that reference; retrieve a new governed reference and stop using the old one. Existing governed proxies evaluate the current policy registry on each call. Default-deny applies only to intercepted methods on governed accounts; excluded methods bypass evaluation. See [Evaluation Rules](#evaluation-rules).
 - **Method arguments, not final signing validation.** Conditions inspect the method name and argument snapshots before the wallet or protocol method runs. The policy engine does not independently validate the final transaction bytes or decode calldata. It does not enforce rules on-chain, replace smart-contract permissions, or validate live token metadata, balances, prices, or contract state for you.
 - **Trusted runtime and administration.** The application must control the seed, signing authority, WDK instance, and policy configuration. A caller with raw account references, the seed, or control over that runtime or configuration can bypass or replace local checks. The engine does not isolate keys or policy administration from the agent, and cannot guarantee protection when the agent environment is compromised. An allowed call can still spend within its permitted scope even when it came from prompt injection.
 - **No built-in durable accounting.** WDK does not persist policy state, update spending counters, or run `onSuccess` hooks. Conditions can use app-owned state, but the application must handle persistence, concurrency, and rollback. See [Runtime Caveats](#runtime-caveats).
@@ -15414,21 +15492,69 @@ Each rule addresses one operation, multiple operations, or `*`. A matching `ALLO
 
 Register wallets before policies. [`wdk.registerPolicy()`](/sdk/core-module/api-reference#registerpolicypolicies-options) validates wallet bindings synchronously and throws `PolicyConfigurationError` if a policy references a wallet identifier that has not been registered.
 
-The example allows all governed operations, then denies ETH sends above a local approval limit. Its wildcard `ALLOW` deliberately permits other methods, including newly discovered methods after an upgrade. Use explicit method names instead when your app needs a narrow permission set.
+Install the versions used in this example, including the direct `ethers` import:
 
-To register and exercise the send limit:
+```bash title="Install Policy Example Dependencies"
+npm install @tetherto/wdk@1.0.0-beta.18 @tetherto/wdk-wallet-evm@1.0.0-beta.19 ethers@6.17.0
+```
 
-1. Register the Ethereum wallet with its reviewed configuration.
-2. Register the rules through [`wdk.registerPolicy()`](/sdk/core-module/api-reference#registerpolicypolicies-options).
-3. Attempt the over-limit send and handle its policy denial.
+This example permits only Ethereum type-2 `sendTransaction` objects with no calldata and explicit value and gas fields. It rejects serialized transactions, unsupported fields, and invalid numeric inputs. Other governed methods, including transaction and message signing, have no `ALLOW` rule and are denied.
 
-You can enforce this local limit before [`sendTransaction()`](/sdk/core-module/api-reference#iwalletaccount) reaches the wallet:
+Save this helper as `eth-send-policy.js` beside the examples that import it. The limits are illustrative: at most 1 ETH in value, 100,000 gas, 100 gwei per gas, and 0.001 ETH in maximum execution-gas fees. `getBigInt()` compares bigint, safe integer, decimal-string, and hex-string inputs consistently; invalid inputs fail closed.
 
-```typescript title="Register A Local Send Limit"
+```javascript title="eth-send-policy.js"
+import { getBigInt, isAddress } from 'ethers'
+
+export const MAX_VALUE = 1000000000000000000n // 1 ETH
+export const MAX_GAS_LIMIT = 100000n
+export const MAX_FEE_PER_GAS = 100000000000n // 100 gwei
+export const MAX_EXECUTION_FEE = 1000000000000000n // 0.001 ETH
+
+const allowedFields = new Set([
+  'to', 'value', 'chainId', 'type', 'data',
+  'gasLimit', 'maxFeePerGas', 'maxPriorityFeePerGas'
+])
+
+export function isAllowedEthSend(tx, maxValue = MAX_VALUE) {
+  if (!tx || typeof tx !== 'object' || Array.isArray(tx)) return false
+  if (Object.keys(tx).some(key => !allowedFields.has(key))) return false
+  if (typeof tx.to !== 'string' || !isAddress(tx.to)) return false
+  if (tx.data !== undefined && tx.data !== '0x') return false
+
+  try {
+    const value = getBigInt(tx.value)
+    const gasLimit = getBigInt(tx.gasLimit)
+    const maxFeePerGas = getBigInt(tx.maxFeePerGas)
+    const maxPriorityFeePerGas = getBigInt(tx.maxPriorityFeePerGas)
+
+    return getBigInt(tx.chainId) === 1n && getBigInt(tx.type) === 2n &&
+      value >= 0n && value <= maxValue &&
+      gasLimit > 0n && gasLimit <= MAX_GAS_LIMIT &&
+      maxFeePerGas > 0n && maxFeePerGas <= MAX_FEE_PER_GAS &&
+      maxPriorityFeePerGas >= 0n && maxPriorityFeePerGas <= maxFeePerGas &&
+      gasLimit * maxFeePerGas <= MAX_EXECUTION_FEE
+  } catch {
+    return false
+  }
+}
+```
+
+The field allowlist also rejects `gasPrice`, authorization lists, and blob transaction fields. This helper does not decode contract calls or prove that a recipient is an externally owned account; even a send with no calldata can invoke a recipient contract. Apply recipient restrictions when needed.
+
+Register the wallet and policy before obtaining an account, then exercise a denied call. The wallet's `transactionMaxFee` setting adds a separate [estimated-fee check](#bound-transaction-fees).
+
+```javascript title="Register A Local Send Limit"
 import WDK, { DENIAL_CODES, PolicyViolationError } from '@tetherto/wdk'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import { isAllowedEthSend, MAX_EXECUTION_FEE } from './eth-send-policy.js'
+
+const RECIPIENT = '0x71C7656EC7ab88b098defB751B7401B5f6d8976F'
 
 const wdk = new WDK(seedPhrase)
-  .registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
+  .registerWallet('ethereum', WalletManagerEvm, {
+    ...ethereumWalletConfig,
+    transactionMaxFee: MAX_EXECUTION_FEE
+  })
   .registerPolicy({
     id: 'eth-local-send-limit',
     name: 'ETH local send limit',
@@ -15436,24 +15562,10 @@ const wdk = new WDK(seedPhrase)
     wallet: 'ethereum',
     rules: [
       {
-        name: 'allow-normal-operations',
-        operation: '*',
-        action: 'ALLOW',
-        reason: 'Default local approval',
-        conditions: [() => true]
-      },
-      {
-        name: 'deny-large-eth-send',
+        name: 'allow-bounded-eth-send',
         operation: 'sendTransaction',
-        action: 'DENY',
-        reason: 'Amount exceeds the local approval limit',
-        conditions: [
-          ({ args }) => {
-            const tx = args[0] as { value?: bigint } | undefined
-            const value = tx?.value
-            return typeof value === 'bigint' && value > 1000000000000000000n
-          }
-        ]
+        action: 'ALLOW',
+        conditions: [({ args }) => args.length === 1 && isAllowedEthSend(args[0])]
       }
     ]
   })
@@ -15462,19 +15574,34 @@ const account = await wdk.getAccount('ethereum', 0)
 
 try {
   await account.sendTransaction({
-    to: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
-    value: 2000000000000000000n
+    to: RECIPIENT,
+    value: 2000000000000000000n, // Denied: above MAX_VALUE
+    chainId: 1,
+    type: 2,
+    gasLimit: 21000n,
+    maxFeePerGas: 20000000000n,
+    maxPriorityFeePerGas: 1000000000n
   })
 } catch (error) {
   if (error instanceof PolicyViolationError) {
-    if (error.code === DENIAL_CODES.RULE_DENIED) {
+    if (error.code === DENIAL_CODES.GOVERNED_BUT_UNMATCHED) {
       console.error(error.operation, error.reason)
     } else {
       console.error(error.operation, error.code)
     }
+  } else {
+    throw error
   }
 }
 ```
+
+## Bound Transaction Fees
+
+`value` is the native amount sent to the recipient. It excludes network fees. For the Ethereum type-2 requests above, `gasLimit * maxFeePerGas` bounds the maximum execution-gas fee permitted by those fields. `maxPriorityFeePerGas` is included within `maxFeePerGas`, so do not add it again. The EVM module preserves these explicit gas fields when populating the transaction.
+
+Keep this request ceiling separate from [`transactionMaxFee`](/sdk/wallet-modules/wallet-evm/configuration#transaction-max-fee). In EVM beta.19, that setting rejects `sendTransaction` and provider-backed `signTransaction` when WDK's provider-estimated fee exceeds the configured value. The estimate uses estimated gas and current provider fee data, not the product of the request's explicit gas fields. It is not an enforced ceiling on those fields, even for an object transaction. A signed raw transaction is broadcast unchanged after the estimate check, which is why the helper rejects strings.
+
+Quotes and returned fee estimates are not actual receipt costs. Missing gas fields can be populated using later provider data; requiring explicit fields avoids that substitution in this example. These per-request limits are not a total spending budget: value is separate, repeated calls can accumulate, and other transaction types, chains, and protocol operations can have additional costs. Review each supported operation before extending this example.
 
 ## Scope Policies
 
@@ -15492,7 +15619,7 @@ Account entries can be non-negative account indices or derivation-path strings. 
 
 WDK evaluates policies in this order:
 
-1. If no registered policy applies to the account, WDK returns the original account. No policy proxy or `simulate` mirror is added.
+1. If no registered policy applies when the account is retrieved, WDK returns the original account. No policy proxy or `simulate` mirror is added. Later registration does not change that retained reference; retrieve the account again to obtain a governed proxy.
 2. If at least one policy applies, the account is governed. WDK wraps its discovered public methods and registered protocol methods unless their names are in the exclusion set. See [Supported Operations](#supported-operations) for the discovery boundary.
 3. If no rule addresses the attempted operation, WDK blocks the call with `PolicyViolationError.code: 'NO_APPLICABLE_RULE'`.
 4. Account-scoped policies run before project-scoped policies. Within each scope, policies and rules run in registration order.
@@ -15503,9 +15630,22 @@ WDK evaluates policies in this order:
 
 Conditions run in array order and every condition must return truthy for the rule to match. If an `ALLOW` condition throws or times out, WDK treats that rule as unmatched. If a `DENY` condition throws or times out, WDK blocks the call.
 
-You can create an account-scoped exception using [`wdk.registerPolicy()`](/sdk/core-module/api-reference#registerpolicypolicies-options):
+This alternative setup gives account `0` a higher value limit. Start with a fresh WDK instance and reuse the [send validator](#register-policies), so both limits retain the same transaction-shape and fee restrictions:
 
-```typescript title="Account-Level Exception"
+```javascript title="Account-Level Exception"
+import WDK from '@tetherto/wdk'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import { isAllowedEthSend, MAX_EXECUTION_FEE } from './eth-send-policy.js'
+
+const PROJECT_MAX_VALUE = 1000000000000000n // 0.001 ETH
+const TREASURY_MAX_VALUE = 10000000000000000n // 0.01 ETH
+
+const wdk = new WDK(seedPhrase)
+  .registerWallet('ethereum', WalletManagerEvm, {
+    ...ethereumWalletConfig,
+    transactionMaxFee: MAX_EXECUTION_FEE
+  })
+
 wdk.registerPolicy([
   {
     id: 'project-send-limit',
@@ -15514,22 +15654,11 @@ wdk.registerPolicy([
     wallet: 'ethereum',
     rules: [
       {
-        name: 'allow-normal-operations',
-        operation: '*',
-        action: 'ALLOW',
-        conditions: [() => true]
-      },
-      {
-        name: 'deny-large-send',
+        name: 'allow-project-sends',
         operation: 'sendTransaction',
-        action: 'DENY',
-        reason: 'Project send limit exceeded',
+        action: 'ALLOW',
         conditions: [
-          ({ args }) => {
-            const tx = args[0] as { value?: bigint } | undefined
-            const value = tx?.value
-            return typeof value === 'bigint' && value > 1000000000000000n
-          }
+          ({ args }) => args.length === 1 && isAllowedEthSend(args[0], PROJECT_MAX_VALUE)
         ]
       }
     ]
@@ -15548,11 +15677,7 @@ wdk.registerPolicy([
         override_broader_scope: true,
         reason: 'Treasury account has a higher local approval limit',
         conditions: [
-          ({ args }) => {
-            const tx = args[0] as { value?: bigint } | undefined
-            const value = tx?.value
-            return typeof value === 'bigint' && value <= 10000000000000000n
-          }
+          ({ args }) => args.length === 1 && isAllowedEthSend(args[0], TREASURY_MAX_VALUE)
         ]
       }
     ]
@@ -15560,7 +15685,7 @@ wdk.registerPolicy([
 ])
 ```
 
-In the example above, the treasury account can send up to `0.01 ETH` because the account-scoped `ALLOW` rule matches and skips the project-scoped limit. If the account rule does not match, project-scoped rules still run and can block the call.
+In this setup, the treasury account can send up to `0.01 ETH` because the account-scoped `ALLOW` rule matches and skips the project-scoped limit. Other accounts can send up to `0.001 ETH`. Both use the same fee and shape checks. If neither rule matches, default-deny blocks the call. Keep every required restriction in the override rule because a matching override skips all project-scoped rules.
 
 ## Supported Operations
 
@@ -15611,6 +15736,8 @@ Default exclusions cannot be removed. [`registerPolicy()`](/sdk/core-module/api-
 
 WDK policies use JavaScript condition functions. Inspect the positional `args` array passed by the wallet or protocol method you are governing, then return `true` only when that rule should match. `args[0]` is the first argument, `args[1]` is the second, and so on.
 
+The patterns below are alternatives for a fresh instance with the wallet registered and no other policies. Additional `ALLOW` rules can broaden access; put conditions in the same rule when all must hold. The send patterns import the [validator above](#register-policies).
+
 <Callout type="info">
 WDK does not fetch prices, decode calldata, maintain address lists, or manage durable policy state for you. Keep app-owned inputs current, and handle persistence and concurrency when a condition depends on counters or cumulative limits.
 </Callout>
@@ -15618,9 +15745,10 @@ WDK does not fetch prices, decode calldata, maintain address lists, or manage du
 You can allow sends to approved recipients using [`wdk.registerPolicy()`](/sdk/core-module/api-reference#registerpolicypolicies-options):
 
 ```typescript title="Address Allowlist"
-const allowedRecipients = new Set([
-  '0x71C7656EC7ab88b098defB751B7401B5f6d8976F'.toLowerCase()
-])
+import { isAllowedEthSend } from './eth-send-policy.js'
+
+const APPROVED_RECIPIENT = '0x71C7656EC7ab88b098defB751B7401B5f6d8976F'
+const allowedRecipients = new Set([APPROVED_RECIPIENT.toLowerCase()])
 
 wdk.registerPolicy({
   id: 'approved-recipients',
@@ -15633,6 +15761,7 @@ wdk.registerPolicy({
       operation: 'sendTransaction',
       action: 'ALLOW',
       conditions: [
+        ({ args }) => args.length === 1 && isAllowedEthSend(args[0]),
         ({ args }) => {
           const tx = args[0] as { to?: string } | undefined
           const to = tx?.to
@@ -15644,9 +15773,13 @@ wdk.registerPolicy({
 })
 ```
 
-You can require both a chain and value limit using [`wdk.registerPolicy()`](/sdk/core-module/api-reference#registerpolicypolicies-options):
+You can lower the value limit while retaining the helper's Ethereum type-2 and fee restrictions:
 
-```typescript title="Network And Value Gate"
+```javascript title="Network And Value Gate"
+import { isAllowedEthSend } from './eth-send-policy.js'
+
+const SMALL_SEND_MAX_VALUE = 1000000000000000n // 0.001 ETH
+
 wdk.registerPolicy({
   id: 'ethereum-small-sends',
   name: 'Ethereum small sends',
@@ -15658,14 +15791,7 @@ wdk.registerPolicy({
       operation: 'sendTransaction',
       action: 'ALLOW',
       conditions: [
-        ({ args }) => {
-          const tx = args[0] as { chainId?: number | string; value?: bigint } | undefined
-          const value = tx?.value
-
-          return String(tx?.chainId) === '1' &&
-            typeof value === 'bigint' &&
-            value <= 1000000000000000n
-        }
+        ({ args }) => args.length === 1 && isAllowedEthSend(args[0], SMALL_SEND_MAX_VALUE)
       ]
     }
   ]
@@ -15765,7 +15891,12 @@ const account = await wdk.getAccount('ethereum', 0)
 
 const result = await (account as any).simulate.sendTransaction({
   to: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
-  value: 2000000000000000n
+  value: 2000000000000000000n, // Denied by the first example's 1 ETH limit
+  chainId: 1,
+  type: 2,
+  gasLimit: 21000n,
+  maxFeePerGas: 20000000000n,
+  maxPriorityFeePerGas: 1000000000n
 })
 
 console.log(result.decision, result.code, result.reason, result.trace)
@@ -15792,6 +15923,7 @@ In this beta, `simulate` is added at runtime but is not typed on the account ret
 - Wallet accounts must expose a read-only account view when a policy applies, otherwise `getAccount()` fails with `PolicyConfigurationError`.
 - Pass plain data to governed methods. An object that cannot be structured-cloned, such as a plain object containing a callback, fails with `PolicyConfigurationError`. Class instances can become plain objects and lose their methods. A top-level function argument passes through unchanged in this release, so do not treat the snapshot as isolation for callback-driven state or side effects.
 - Method discovery is not a live monitor of account changes. Add module methods before obtaining a governed account; do not rely on mutating an account or its prototype after wrapping to update policy coverage.
+- Policy registration does not retrofit previously returned raw references. Retrieve an account again after registering a policy that applies to it and stop using the raw reference. A governed proxy consults the current policy registry for subsequent calls, so policy replacement affects that proxy's later decisions.
 - Engine-managed state hooks are not active in this beta. The schema accepts `state` and `onSuccess`, but WDK does not pass `state` into conditions, update it after execution, persist it, or call `onSuccess`. Conditions can still use app-owned state through closures or external stores; keep that state outside `rule.state`, and have your app own durability, concurrency, and rollback behavior.
 
 ## Next Steps
@@ -36342,7 +36474,11 @@ try {
 
 ### Transaction Max Fee
 
-The `transactionMaxFee` option rejects native EVM `sendTransaction()` operations and provider-backed `signTransaction()` operations when WDK's estimated fee exceeds the configured value. For a signed raw transaction, the check uses current provider gas and fee-rate estimates; it does not cap the fee fields encoded in the signed bytes, so decode and review those fields independently. This is separate from `transferMaxFee`, which applies to ERC-20 token transfers. Offline signing without a provider cannot estimate fees, so the fee-cap check does not run there.
+The `transactionMaxFee` option rejects native EVM `sendTransaction()` operations and provider-backed `signTransaction()` operations when WDK's estimated fee exceeds the configured value.
+
+For both object requests and signed raw transactions, the check uses current provider gas and fee-rate estimates, not the supplied `gasLimit` multiplied by `maxFeePerGas` or `gasPrice`. Validate those fields separately: a low estimate can pass even when the request permits a much larger fee. Object requests may fetch fee data again during population, while signed bytes are broadcast unchanged. See the [policy guide's fee limits](/sdk/core-module/guides/transaction-policies#bound-transaction-fees) for an example that also bounds explicit Ethereum type-2 gas fields.
+
+This is separate from `transferMaxFee`, which applies to ERC-20 token transfers. Offline signing without a provider cannot estimate fees, so the fee-cap check does not run there.
 
 **Type:** `number | bigint` (optional)
 **Unit:** Wei (1 ETH = 1000000000000000000 Wei)
@@ -36912,6 +37048,8 @@ console.log('Estimated fee:', quote.fee, 'wei')
 ## Cap Transaction Fees
 
 Set [`transactionMaxFee`](/sdk/wallet-modules/wallet-evm/configuration#transaction-max-fee) when you create the wallet to stop native `sendTransaction()` calls and provider-backed `signTransaction()` calls if the estimated fee exceeds your limit. Offline signing without a provider cannot estimate fees, so the fee-cap check does not run there.
+
+This checks the provider's current estimate for both object and signed transaction inputs. It does not bound the supplied gas limit or fee fields. For Ethereum type-2 requests, validate explicit `gasLimit`, `maxFeePerGas`, and `maxPriorityFeePerGas` as well; see [Bound Transaction Fees](/sdk/core-module/guides/transaction-policies#bound-transaction-fees). A native value limit and a network-fee limit are separate checks.
 
 ```javascript title="Cap Native Transaction Fees"
 const wallet = new WalletManagerEvm(seedPhrase, {
