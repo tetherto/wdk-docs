@@ -196,6 +196,10 @@ console.log(excludedMethods.includes('getBalance')) // true
 #### `registerPolicy(policies, options?)`
 Registers one or more local transaction policies on the WDK instance.
 
+<Callout type="warn">
+The transaction policy engine is experimental and not production ready. Local policy evaluation does not provide isolation from a compromised agent environment. See the [security boundary](/sdk/core-module/guides/transaction-policies#security-boundary) for enforcement scope and limits.
+</Callout>
+
 Policies are evaluated before governed account and protocol methods execute. In beta.17, the proxy discovers public string-named methods on the account or protocol and its prototype chain, then wraps those absent from the resolved exclusion set. This replaces the earlier fixed write-method list; see [coverage and limits](/sdk/core-module/guides/transaction-policies#supported-operations). Matching `DENY` rules and governed-account default-deny outcomes throw `PolicyViolationError`; matching `ALLOW` rules permit the call only when no higher-priority `DENY` rule applies. Governed runtime accounts also expose `account.simulate.<method>(...)` mirrors so you can dry-run policy evaluation without sending, signing, or broadcasting.
 
 Evaluation order:
@@ -216,16 +220,26 @@ For policy scoping, default-deny behavior, account-level overrides, and protocol
 
 Distinct policy IDs keep their original per-registration timeouts. A repeated ID replaces the stored policy within its registry bucket and takes the timeout from the new registration call. All project-scoped policies share one bucket; account-scoped policies are bucketed by wallet.
 
+Register policies before retrieving accounts. Registration does not retrofit raw references returned when no policy applied; retrieve a new governed reference and stop using the old one. Existing governed proxies consult the current policy registry on each call.
+
 **Returns:** `WDK` - The WDK instance (supports method chaining)
 
 **Throws:** `PolicyConfigurationError` if a policy or option fails validation, if an account-scoped policy omits its account binding, if a policy references a wallet identifier that has not been registered, or if a rule names an excluded method. Governed calls also throw `PolicyConfigurationError` when WDK cannot snapshot a method argument safely.
 
-**Example:**
+**Example:** Install the [example dependencies and save `eth-send-policy.js`](/sdk/core-module/guides/transaction-policies#register-policies) first. This helper permits only Ethereum type-2 objects with no calldata, bounded value, and explicit bounded gas fields. It rejects serialized transactions and unsupported fields. This setup has no `ALLOW` rule for signing or other governed methods. `seedPhrase` and `ethereumWalletConfig` are app-owned inputs; use a trusted Ethereum mainnet RPC because the wallet derives the execution chain from its provider.
+
 ```typescript title="Register A Send Policy"
 import WDK, { DENIAL_CODES, PolicyViolationError } from '@tetherto/wdk'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import { isAllowedEthSend, MAX_EXECUTION_FEE } from './eth-send-policy.js'
+
+const RECIPIENT = '0x71C7656EC7ab88b098defB751B7401B5f6d8976F'
 
 const wdk = new WDK(seedPhrase)
-  .registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
+  .registerWallet('ethereum', WalletManagerEvm, {
+    ...ethereumWalletConfig,
+    transactionMaxFee: MAX_EXECUTION_FEE
+  })
   .registerPolicy({
     id: 'eth-send-limit',
     name: 'ETH send limit',
@@ -233,54 +247,48 @@ const wdk = new WDK(seedPhrase)
     wallet: 'ethereum',
     rules: [
       {
-        name: 'allow-normal-operations',
-        operation: '*',
-        action: 'ALLOW',
-        reason: 'Default local approval',
-        conditions: [() => true]
-      },
-      {
-        name: 'block-large-send',
+        name: 'allow-bounded-eth-send',
         operation: 'sendTransaction',
-        action: 'DENY',
-        reason: 'Transaction value exceeds local policy',
-        conditions: [
-          ({ args }) => {
-            const tx = args[0] as { value?: bigint } | undefined
-            const value = tx?.value
-            return typeof value === 'bigint' && value > 1000000000000000000n
-          }
-        ]
+        action: 'ALLOW',
+        conditions: [({ args }) => args.length === 1 && isAllowedEthSend(args[0])]
       }
     ]
   })
 
 const account = await wdk.getAccount('ethereum', 0)
 
-const simulation = await (account as any).simulate.sendTransaction({
-  to: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
-  value: 2000000000000000000n
-})
+const overLimitTransaction = {
+  to: RECIPIENT,
+  value: 2000000000000000000n,
+  chainId: 1,
+  type: 2,
+  gasLimit: 21000n,
+  maxFeePerGas: 20000000000n,
+  maxPriorityFeePerGas: 1000000000n
+}
+
+const simulation = await (account as any).simulate.sendTransaction(overLimitTransaction)
 
 if (simulation.decision === 'DENY') {
   console.warn(simulation.code, simulation.reason)
 }
 
 try {
-  await account.sendTransaction({
-    to: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
-    value: 2000000000000000000n
-  })
+  await account.sendTransaction(overLimitTransaction)
 } catch (error) {
   if (error instanceof PolicyViolationError) {
-    if (error.code === DENIAL_CODES.NO_APPLICABLE_RULE) {
-      console.error(`No rule addresses ${error.operation}`)
+    if (error.code === DENIAL_CODES.GOVERNED_BUT_UNMATCHED) {
+      console.error(`No allow condition matched ${error.operation}`)
     } else {
       console.error(error.code, error.reason)
     }
+  } else {
+    throw error
   }
 }
 ```
+
+The helper caps `gasLimit * maxFeePerGas` separately from transaction value. `transactionMaxFee` checks WDK's provider-estimated fee; it does not cap the request's gas fields or total spending. See [Bound Transaction Fees](/sdk/core-module/guides/transaction-policies#bound-transaction-fees).
 
 `PolicyOperation` is a string. A rule accepts one non-empty method name, a non-empty array of names, or `*` for all governed methods. Use the method's exact spelling: an unknown name registers but never matches a different method. Explicitly naming an excluded method fails registration; a wildcard does not include excluded methods.
 
@@ -293,7 +301,7 @@ Returns a wallet account for a specific blockchain and index using BIP-44 deriva
 - `blockchain` (string): The name of the blockchain (e.g., "ethereum")
 - `index` (number, optional): The index of the account to get (default: 0)
 
-**Returns:** `Promise<WdkAccount>` - The writable wallet account with protocol support. When a registered policy targets the account, the returned runtime account is policy-enforced and exposes matching `simulate` helpers.
+**Returns:** `Promise<WdkAccount>` - The writable wallet account with protocol support. When a registered policy targets the account, WDK returns a proxy that evaluates [governed methods](/sdk/core-module/guides/transaction-policies#security-boundary) and exposes matching `simulate` helpers. Otherwise, WDK returns the original account without adding policy enforcement. Later policy registration does not change that retained raw reference; retrieve the account again to obtain a governed proxy.
 
 **Throws:** Error if no wallet has been registered for the given blockchain. Throws `PolicyConfigurationError` if a registered policy applies but the wallet account does not expose a read-only account view.
 
@@ -323,7 +331,7 @@ Returns a wallet account for a specific blockchain and BIP-44 derivation path.
 - `blockchain` (string): The name of the blockchain (e.g., "ethereum")
 - `path` (string): The derivation path (e.g., "0'/0/0")
 
-**Returns:** `Promise<WdkAccount>` - The writable wallet account with protocol support. When a registered policy targets the account, the returned runtime account is policy-enforced and exposes matching `simulate` helpers.
+**Returns:** `Promise<WdkAccount>` - The writable wallet account with protocol support. When a registered policy targets the account, WDK returns a proxy that evaluates [governed methods](/sdk/core-module/guides/transaction-policies#security-boundary) and exposes matching `simulate` helpers. Otherwise, WDK returns the original account without adding policy enforcement. Later policy registration does not change that retained raw reference; retrieve the account again to obtain a governed proxy.
 
 **Throws:** Error if no wallet has been registered for the given blockchain. Throws `PolicyConfigurationError` if a registered policy applies but the wallet account does not expose a read-only account view.
 
