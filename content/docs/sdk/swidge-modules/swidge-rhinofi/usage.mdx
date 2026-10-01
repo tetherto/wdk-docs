@@ -15,13 +15,22 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 ## Install
 
 ```bash
-npm install @rhino.fi/wdk-protocol-swidge-rhinofi@1.0.0-beta.2 @tetherto/wdk-wallet-evm
+npm install @rhino.fi/wdk-protocol-swidge-rhinofi@1.2.0 @tetherto/wdk-wallet-evm
 ```
 
 Install ERC-4337 support when you need smart-account execution:
 
 ```bash
 npm install @tetherto/wdk-wallet-evm-erc-4337
+```
+
+Install the matching wallet module when Solana or Tron is the source ecosystem:
+
+```bash
+# Solana source accounts
+npm install @tetherto/wdk-wallet-solana
+# Tron source accounts
+npm install @tetherto/wdk-wallet-tron
 ```
 
 ## Create the Protocol
@@ -78,7 +87,7 @@ Use `toTokenAmount` instead of `fromTokenAmount` for exact-output routes when su
 ## Execute a Route
 
 <Callout type="warn">
-`quoteSwidge()` is indicative only. `swidge()` does not reuse that response: it calls `prepareBridge()` and executes with the fresh internal quote. The configured fee caps apply to mapped network and protocol fees, but they do not lock the output amount, approval spender, or transaction payload. The package does not expose a second-confirmation hook for the fresh response, so confirm that this execution model fits your application's risk requirements before calling `swidge()`.
+`quoteSwidge()` returns the provider quote as `quote.quote`. Pass it to `swidge()` to execute the quote shown to the user. Quotes expire, so request a new quote if execution rejects a stale one. Omitting `quote` makes `swidge()` fetch a fresh provider quote.
 </Callout>
 
 ```javascript
@@ -88,6 +97,8 @@ const result = await rhinofi.swidge({
   toChain: 'AVALANCHE',
   recipient: '0xRecipient...',
   fromTokenAmount: 100_000_000n
+}, {
+  quote: quote.quote
 })
 
 console.log('Operation ID:', result.id)
@@ -120,7 +131,7 @@ try {
   await rhinofi.swidge(options)
 } catch (error) {
   if (error instanceof AccountRequiredError) {
-    // Bind a writable WDK EVM account before execution.
+    // Bind a supported writable WDK source account before execution.
   } else if (error instanceof ConfigurationError) {
     // Check apiKey and API configuration.
   } else if (error instanceof FeeLimitExceededError) {
