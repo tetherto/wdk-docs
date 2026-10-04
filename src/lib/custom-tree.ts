@@ -115,6 +115,20 @@ export const customTree: Node[] = [
       configuration('/sdk/wallet-modules/wallet-evm-erc-4337/configuration'),
       apiReference('/sdk/wallet-modules/wallet-evm-erc-4337/api-reference'),
     ]),
+    folder('Multisig (Safe)', '/sdk/wallet-modules/wallet-multisig-safe', 'Users', [
+      usage('/sdk/wallet-modules/wallet-multisig-safe/usage'),
+      guides([
+        page('Get Started', '/sdk/wallet-modules/wallet-multisig-safe/guides/get-started'),
+        page('Deploy a Safe', '/sdk/wallet-modules/wallet-multisig-safe/guides/deploy-safe'),
+        page('Manage Proposals', '/sdk/wallet-modules/wallet-multisig-safe/guides/manage-proposals'),
+        page('Manage Owners', '/sdk/wallet-modules/wallet-multisig-safe/guides/manage-owners'),
+        page('Sign Messages', '/sdk/wallet-modules/wallet-multisig-safe/guides/sign-messages'),
+        page('Coordinate Approvals', '/sdk/wallet-modules/wallet-multisig-safe/guides/coordinate-approvals'),
+        page('Handle Errors', '/sdk/wallet-modules/wallet-multisig-safe/guides/handle-errors'),
+      ]),
+      configuration('/sdk/wallet-modules/wallet-multisig-safe/configuration'),
+      apiReference('/sdk/wallet-modules/wallet-multisig-safe/api-reference'),
+    ]),
     folder('EIP-7702 accounts', '/sdk/wallet-modules/wallet-evm-7702-gasless', 'BadgeCheck', [
       usage('/sdk/wallet-modules/wallet-evm-7702-gasless/usage'),
       guides([
@@ -232,6 +246,19 @@ export const customTree: Node[] = [
       ]),
       configuration('/sdk/wallet-modules/wallet-solana/configuration'),
       apiReference('/sdk/wallet-modules/wallet-solana/api-reference'),
+    ]),
+    folder('Multisig (Squads)', '/sdk/wallet-modules/wallet-multisig-squads', 'Users', [
+      usage('/sdk/wallet-modules/wallet-multisig-squads/usage'),
+      guides([
+        page('Get Started', '/sdk/wallet-modules/wallet-multisig-squads/guides/get-started'),
+        page('Deploy a Multisig', '/sdk/wallet-modules/wallet-multisig-squads/guides/deploy-multisig'),
+        page('Manage Proposals', '/sdk/wallet-modules/wallet-multisig-squads/guides/manage-proposals'),
+        page('Manage Owners', '/sdk/wallet-modules/wallet-multisig-squads/guides/manage-owners'),
+        page('Coordinate Approvals', '/sdk/wallet-modules/wallet-multisig-squads/guides/coordinate-approvals'),
+        page('Handle Errors', '/sdk/wallet-modules/wallet-multisig-squads/guides/handle-errors'),
+      ]),
+      configuration('/sdk/wallet-modules/wallet-multisig-squads/configuration'),
+      apiReference('/sdk/wallet-modules/wallet-multisig-squads/api-reference'),
     ]),
     folder('Gasless Solana', '/sdk/wallet-modules/wallet-solana-gasless', 'Fuel', [
       usage('/sdk/wallet-modules/wallet-solana-gasless/usage'),

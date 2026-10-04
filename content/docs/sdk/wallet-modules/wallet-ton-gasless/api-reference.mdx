@@ -25,7 +25,7 @@ new WalletManagerTonGasless(seed, config)
 ```
 
 **Parameters:**
-- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
+- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or raw BIP-32 master seed (16–64 bytes)
 - `config` (TonGaslessWalletConfig): Configuration object
   - `tonClient` (object | TonClient | array): TON client configuration, instance, or an array of configurations or instances for failover
     - `url` (string): TON Center v2 JSON-RPC URL (e.g., 'https://toncenter.com/api/v2/jsonRPC')
@@ -38,6 +38,8 @@ new WalletManagerTonGasless(seed, config)
   - `retries` (number, optional): Failover retries used when `tonClient` and `tonApiClient` are arrays (default: 3)
   - `transferMaxFee` (number | bigint, optional): Maximum fee for gasless transfer operations
   - `transactionMaxFee` (number | bigint, optional): Shared wallet config option; native `sendTransaction()`, `quoteSendTransaction()`, and `signTransaction()` are unsupported on this module
+
+Beta.13 initializes TON RPC and TON API clients once per manager and shares them across derived accounts and their read-only conversions. Supplied client instances are reused as-is.
 
 **Example:**
 ```javascript
@@ -126,7 +128,7 @@ new WalletAccountTonGasless(seed, path, config)
 ```
 
 **Parameters:**
-- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
+- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or raw BIP-32 master seed (16–64 bytes)
 - `path` (string): BIP-44 derivation path (e.g., "0'/0/0")
 - `config` (TonGaslessWalletConfig): Configuration object (same as WalletManagerTonGasless)
 
@@ -163,7 +165,7 @@ console.log('Account address:', address)
 ```
 
 ##### `sign(message)`
-Signs a message using the account's private key.
+Signs the TON domain-separated message digest using the account's private key. Beta.13 uses Ed25519 over `SHA-256(0xffff || UTF-8("ton-safe-sign-magic") || UTF-8(message))`, inherited from TON beta.15. Signatures from earlier gasless releases are incompatible with this scheme; update external verifiers before upgrading.
 
 **Parameters:**
 - `message` (string): The message to sign
@@ -219,7 +221,7 @@ await account.quoteSendTransaction({ to: 'EQ...', value: 1000000000n })
 ```
 
 ##### `verify(message, signature)`
-Verifies a message signature.
+Verifies a signature over the same TON domain-separated digest as [`sign()`](#signmessage). It does not fall back to the raw-message signature scheme used by earlier gasless releases.
 
 **Parameters:**
 - `message` (string): The original message
@@ -237,6 +239,8 @@ console.log('Signature valid:', isValid)
 Transfers a Jetton using a gasless transaction, paying the fee with the configured paymaster token. This is the only way to move funds on the gasless module: `sendTransaction()`, `quoteSendTransaction()`, and `signTransaction()` are not supported and reject or throw.
 
 Before signing or submitting, the wallet validates the TON API estimate against the requested Jetton transfer. It rejects an altered transfer body, sender, relay, destination, amount, payload, state initialization, expiry, commission, message count, or paymaster commission transfer. Validation resolves the configured paymaster token's Jetton wallet through `tonClient`, so this flow includes an additional TON RPC lookup and can fail if that provider is unavailable.
+
+Beta.13 requires `globalThis.crypto.getRandomValues()` when constructing Jetton transfer messages, including `quoteTransfer()` on owned or read-only accounts. Query IDs are random 64-bit values; they are not caller-supplied idempotency keys.
 
 **Parameters:**
 - `options` (TransferOptions): Transfer options
@@ -505,7 +509,7 @@ console.log('Transfer fee estimate:', quote.fee, 'paymaster token units')
 ```
 
 ##### `verify(message, signature)`
-Verifies a message signature.
+Verifies a signature over the TON domain-separated digest described by [`sign()`](#signmessage). Signatures made by earlier gasless releases over raw message bytes do not verify under this scheme.
 
 **Parameters:**
 - `message` (string): The original message

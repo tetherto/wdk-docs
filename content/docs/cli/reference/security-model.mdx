@@ -50,7 +50,7 @@ The interactive passphrase prompt hides input. For automation, `WDK_PASSPHRASE` 
 
 Environment variables can be inherited by child processes and may be visible through process inspection, crash reports, shell tooling, or automation logs. Prefer the interactive prompt for manual use. If automation requires `WDK_PASSPHRASE`, scope it to one trusted process, prevent command tracing, and remove it immediately after use.
 
-Beta.5 provides `wallet import --seed-stdin` and `wallet change-passphrase --new-passphrase-stdin` for human-operated scripts. Standard input avoids command-line arguments, but it is not a secure enclave: the secret still enters JavaScript process memory and can leak through an input file, pipeline, parent process, or automation environment. Do not expose these flags to an agent or untrusted script.
+Beta.6 provides `wallet import --seed-stdin` and `wallet change-passphrase --new-passphrase-stdin` for human-operated scripts. Standard input avoids command-line arguments, but it is not a secure enclave: the secret still enters JavaScript process memory and can leak through an input file, pipeline, parent process, or automation environment. Do not expose these flags to an agent or untrusted script.
 
 The current CLI accepts an empty passphrase. The file is still AES-GCM ciphertext, but an empty passphrase provides no meaningful confidentiality because anyone who obtains the file knows the value required to derive its key.
 
@@ -75,18 +75,20 @@ For stronger practical separation, run WDK CLI under a dedicated non-administrat
 
 ## Custom module, protocol, and method trust
 
-Beta.5 installs built-in wallet modules as normal `@tetherto/wdk-cli` dependencies and does not need a postinstall lifecycle-script allowlist. This does not make `wdk module add` a safe package verifier.
+Beta.6 installs built-in wallet modules as normal `@tetherto/wdk-cli` dependencies and does not need a postinstall lifecycle-script allowlist. This does not make `wdk module add` a safe package verifier.
+
+Provider registration also imports executable module code to check its declared `swap`, `bridge`, or `swidge` kind. It requires passphrase confirmation when a wallet exists, but does not sandbox the package or prove chain and asset compatibility. Apply the same review before `wdk provider add` and before overriding a built-in module version.
 
 Adding a custom module:
 
 - resolves npm's current version when no version is supplied, then records the resolved exact pin
-- accepts and stores an explicit tag or range verbatim; use a reviewed literal version because beta.5 does not enforce exact semver
+- accepts and stores an explicit tag or range verbatim; use a reviewed literal version because beta.6 does not enforce exact semver
 - runs npm installation inside the CLI package, including lifecycle scripts allowed by the user's npm policy
 - stores the pin in plaintext `config.json`
 - locks a running daemon before changing its module graph
 - makes the package name eligible for a custom-network spec
 
-`wdk module add` does not register a package as a swap or bridge protocol, and beta.5 rejects built-in catalog packages. Routing protocol entries and built-in pins come from the CLI release. Repair a missing built-in package by reinstalling the exact pinned CLI version; reserve `module add` for reviewed custom modules.
+`wdk module add` installs packages and supports explicit built-in version overrides. `wdk provider add` separately registers a routing provider. A builtin add at its current configured version still fails even if the package is missing; reinstall the exact pinned CLI version to repair a missing default package. See [Manage Modules](/cli/guides/manage-modules) for override and restore behavior.
 
 When that network is later used, the package's default wallet-manager export runs inside the daemon with access to the unlocked account. The CLI checks package presence and literal version equality, but a mismatch only prints a warning; it does not block import or execution. The CLI does not sandbox the module, validate its publisher, audit its dependencies, or prove that it implements a compatible wallet manager.
 
@@ -98,9 +100,9 @@ Chain-specific `wdk method call` and MCP `call_method` requests are limited to m
 
 Message signing has the same authorization boundary. CLI `wdk message sign` and MCP `sign_message` sign immediately against an unlocked account. Show the exact wallet, network, account index, and message and require approval before signing.
 
-Swap and bridge previews are observations, not execution commitments. Execution requotes; unless the caller restricts `protocol`, it can select a different provider, and amounts or fees can change even when the provider is fixed. Beta.5 exposes no CLI or MCP output, input, fee, slippage, or expiry limit bound to the preview. Preview output also omits the selected wallet, account index, and resolved recipient; select them explicitly and verify the destination address with `wdk get address` or MCP `get_address` before quoting. Route ranking compares token input or output amounts and excludes separate gas and bridge fees.
+Swap and bridge previews are observations, not execution commitments. Execution requotes; unless the caller restricts `protocol`, it can select a different provider, and amounts or fees can change even when the provider is fixed. Beta.6 exposes no CLI or MCP output, input, fee, slippage, or expiry limit bound to the preview. Preview output also omits the selected wallet, account index, and resolved recipient; select them explicitly and verify the destination address with `wdk get address` or MCP `get_address` before quoting. Route ranking compares token input or output amounts and excludes separate gas and bridge fees.
 
-Do not use the beta.5 cross-network swap option. Candidate selection can admit a same-chain swap provider, and the adapter then omits the destination network from that provider's calls. A Velora route with an ERC-20 input also requires a prior, bounded allowance to the chain-specific spender returned by Velora SDK 9's [`swap.getSpender()`](https://github.com/VeloraDEX/sdk/blob/86679ae70686ad3f01ee29baba9033be0a1b742b/src/methods/swap/spender.ts#L33-L63) lookup; beta.5 does not expose that lookup or approve automatically. Native-token input has no ERC-20 allowance, and other protocols can manage approval differently.
+Do not use the beta.6 cross-network swap option. Candidate selection can admit a same-chain swap provider, and the adapter then omits the destination network from that provider's calls. A Velora route with an ERC-20 input also requires a prior, bounded allowance to the chain-specific spender returned by Velora SDK 9's [`swap.getSpender()`](https://github.com/VeloraDEX/sdk/blob/86679ae70686ad3f01ee29baba9033be0a1b742b/src/methods/swap/spender.ts#L33-L63) lookup; beta.6 does not expose that lookup or approve automatically. Native-token input has no ERC-20 allowance, and other protocols can manage approval differently.
 
 See [Manage Modules](/cli/guides/manage-modules) and [Call Module Methods](/cli/guides/call-module-methods).
 

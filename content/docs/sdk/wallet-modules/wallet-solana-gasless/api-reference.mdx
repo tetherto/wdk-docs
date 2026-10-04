@@ -7,7 +7,7 @@ icon: Code
 ---
 
 <Callout type="info">
-This page documents the published `@tetherto/wdk-wallet-solana-gasless@1.0.0-beta.4` type declarations and runtime behavior.
+This page documents the published `@tetherto/wdk-wallet-solana-gasless@1.0.0-beta.6` type declarations and runtime behavior.
 </Callout>
 
 ## Imports
@@ -44,11 +44,11 @@ import {
 | `TransactionResult` | Type | Result shape for send operations. |
 | `TransferOptions` | Type | SPL transfer input options. |
 | `TransferResult` | Type | Result shape for SPL token transfers. |
-| `ConfigurationError` | Type declaration only at the package root | The runtime uses this class internally but the beta.4 JavaScript root does not re-export it. |
+| `AssertionError`, `MaximumFeeExceededError`, `NoSuchElementError`, `ProviderRequiredError`, `TimeoutError`, `ValueError` | Classes | Runtime error classes re-exported from `@tetherto/wdk-wallet`. |
 
 ## WalletManagerSolanaGasless
 
-Derives and returns owned Solana gasless accounts from a BIP-39 seed phrase or seed bytes. Extends `WalletManager` from `@tetherto/wdk-wallet`.
+Derives and returns owned Solana gasless accounts from a BIP-39 mnemonic or raw BIP-32 master seed (16–64 bytes). Extends `WalletManager` from `@tetherto/wdk-wallet`. The manager shares one Solana RPC client and one Kora paymaster client across derived accounts and their read-only conversions.
 
 ### Constructor
 
@@ -61,7 +61,7 @@ new WalletManagerSolanaGasless(
 
 **Parameters:**
 
-- `seed`: BIP-39 mnemonic seed phrase or seed bytes.
+- `seed`: BIP-39 mnemonic seed phrase or raw BIP-32 master seed (16–64 bytes).
 - `config`: Solana RPC and Kora-compatible paymaster configuration.
 
 ### Methods
@@ -112,7 +112,7 @@ new WalletAccountSolanaGasless(
 
 **Parameters:**
 
-- `seed`: BIP-39 mnemonic seed phrase or seed bytes.
+- `seed`: BIP-39 mnemonic seed phrase or raw BIP-32 master seed (16–64 bytes).
 - `path`: SLIP-0010 derivation path, for example `"0'/0'/0'"`.
 - `config`: Solana RPC and Kora-compatible paymaster configuration.
 
@@ -201,7 +201,7 @@ console.log(result.fee)
 The method throws when the payment fee is greater than `transactionMaxFee`; a fee equal to the cap is allowed. An unsigned-flow payment above `Number.MAX_SAFE_INTEGER` can be rounded internally before this comparison. A signed transaction retains its existing blockhash or durable nonce lifetime, payment instruction, and signatures. The method does not refresh or re-sign it.
 
 <Callout type="error">
-For arbitrary signed input, beta.4 returns `fee: 0n` when no matching payment instruction exists and can broadcast after that value passes the cap check. Restrict this path to exact output from the same account's `signTransaction()`, or independently validate the full signed message, payment, fee payer, lifetime, and signatures first.
+A signed input with no payment instruction matching the effective `paymasterToken` raises `NoSuchElementError` before broadcast. Pass the same fee token used at signing; the override selects the payment to decode and does not change the signed message. Restrict this path to this account's exact signed output, or independently validate every instruction, payment, fee payer, lifetime, and signature first.
 </Callout>
 
 #### transfer
@@ -213,7 +213,7 @@ transfer(
 ): Promise<TransferResult>
 ```
 
-Transfers SPL tokens through the paymaster. Native SOL transfers are handled by `sendTransaction()` instead.
+Transfers SPL tokens through the paymaster. Native SOL transfers are handled by `sendTransaction()` instead. The second argument contains paymaster overrides, not standard Solana memo options. Transfer memos and Token-2022 mints remain unsupported.
 
 ```javascript title="Transfer an SPL token"
 const result = await account.transfer({
@@ -236,7 +236,7 @@ quoteSendTransaction(
 ): Promise<Omit<TransactionResult, 'hash'>>
 ```
 
-For an unsigned input, requests a paymaster fee quote for `sendTransaction()` or `signTransaction()` inputs. Beta.4 validates the returned SPL payment instruction but converts its `u64` amount through `Number`; values above `Number.MAX_SAFE_INTEGER` can round before being returned as `bigint`. For a `FullySignedTransaction`, it does not call the paymaster or broadcast: it searches for a signed SPL token payment to the configured paymaster token account and decodes a matching `u64` exactly. If there is no match, beta.4 returns `0n` rather than rejecting. Neither form enforces `transactionMaxFee` during the quote.
+For an unsigned input, requests a paymaster fee quote for `sendTransaction()` or `signTransaction()` inputs. Beta.5 validates the returned SPL payment instruction but converts its `u64` amount through `Number`; values above `Number.MAX_SAFE_INTEGER` can round before being returned as `bigint`. For a `FullySignedTransaction`, it does not call the paymaster or broadcast: it searches for a signed SPL token payment to the configured paymaster token account and decodes a matching `u64` exactly. The effective `paymasterToken`, including a per-call override, selects the payment to decode. If there is no match, the method throws `NoSuchElementError`. Neither form enforces `transactionMaxFee` during the quote.
 
 #### quoteTransfer
 
@@ -355,11 +355,11 @@ Combines the base Solana wallet configuration with the required paymaster config
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
-| `provider` | `string \| string[]` | No | Solana RPC endpoint or ordered failover list. RPC-backed reads, quotes, signing, sending, and transfers require a usable `provider` or `rpcUrl`. |
+| `provider` | `string \| SolanaRpc \| Array<string \| SolanaRpc>` | No | Solana RPC endpoint, existing client, or mixed ordered failover list. RPC-backed reads, quotes, signing, sending, and transfers require a usable `provider` or `rpcUrl`. |
 | `rpcUrl` | `string \| string[]` | No | Deprecated alias inherited from the base Solana wallet module. Use `provider`. |
 | `commitment` | `'processed' \| 'confirmed' \| 'finalized'` | No | Solana commitment level for reads and receipts. |
 | `retries` | `number` | No | Additional retry attempts for ordered Solana RPC or paymaster failover lists. Default: `3`. |
-| `paymasterUrl` | `string \| KoraClientOptions \| Array<string \| KoraClientOptions>` | Yes | Kora-compatible paymaster endpoint, client options, or ordered failover list. |
+| `paymasterUrl` | `string \| KoraClientOptions \| KoraClient \| Array<string \| KoraClientOptions \| KoraClient>` | Yes | Kora-compatible paymaster endpoint, client options, existing client, or mixed ordered failover list. Existing clients are reused as-is. |
 | `paymasterAddress` | `string` | Yes | Solana address used as the transaction fee payer. |
 | `paymasterToken` | `PaymasterTokenConfig` | Yes | Token used by the paymaster to quote and charge fees. |
 | `transferMaxFee` | `number \| bigint` | No | Fee cap for `transfer()` calls, in the paymaster token's base units. |
@@ -369,7 +369,7 @@ Combines the base Solana wallet configuration with the required paymaster config
 
 ```typescript
 type SolanaGaslessWalletPaymasterConfig = {
-  paymasterUrl: string | KoraClientOptions | (string | KoraClientOptions)[]
+  paymasterUrl: string | KoraClientOptions | KoraClient | (string | KoraClientOptions | KoraClient)[]
   paymasterAddress: string
   paymasterToken: PaymasterTokenConfig
 }
@@ -392,25 +392,37 @@ type SolanaGaslessWalletPaymasterConfigOverrides = Partial<
 >
 ```
 
-Pass overrides as the second argument to quote, sign, send, or transfer methods.
+Pass overrides as the second argument to quote, sign, send, or transfer methods. Fields set to `undefined` retain their configured values; this is a shallow merge. For a signed transaction, retain the `paymasterToken` used at signing.
 
 | Override | Applies to | Description |
 |----------|------------|-------------|
-| `paymasterToken` | Quotes, signing, sends, transfers | Overrides the fee token for one call. |
+| `paymasterToken` | Quotes, signing, sends, transfers | Selects the fee token; for signed input it must match the embedded payment. |
 | `transactionMaxFee` | `sendTransaction()`, `signTransaction()` | Cancels the operation when the quoted transaction fee is above the cap. |
 | `transferMaxFee` | `transfer()` | Cancels the operation when the quoted transfer fee is above the cap. |
 
-## ConfigurationError
+## Errors
 
-The beta.4 TypeScript declarations include `ConfigurationError`, and the runtime uses that error name for missing required paymaster fields. The JavaScript root entrypoint does not re-export the runtime class, so JavaScript code should not import `ConfigurationError` from `@tetherto/wdk-wallet-solana-gasless`.
+Import runtime error classes from the package root:
 
-```typescript
-class ConfigurationError extends Error {
-  constructor(message: string)
-}
+```javascript
+import {
+  AssertionError,
+  MaximumFeeExceededError,
+  NoSuchElementError,
+  ProviderRequiredError,
+  TimeoutError,
+  ValueError
+} from '@tetherto/wdk-wallet-solana-gasless'
 ```
 
-Missing `paymasterUrl`, `paymasterAddress`, or `paymasterToken` throws an error named `ConfigurationError`. An empty `paymasterUrl` failover list throws a plain `Error`.
+- `ValueError`: missing required paymaster fields, an empty paymaster endpoint list, a mismatched fee payer, or an invalid returned payment instruction. `ConfigurationError` was removed in beta.5.
+- `MaximumFeeExceededError`: a sign, send, or transfer fee exceeds its applicable cap.
+- `NoSuchElementError`: a signed quote/send cannot find a payment for the effective fee token, or transaction status lookup finds no matching transaction.
+- `ProviderRequiredError`: an operation requiring Solana RPC has no configured provider.
+- `TimeoutError`: the requested transaction finality is not reached in time.
+- `AssertionError`: an inherited account precondition fails, such as using a disposed signing account.
+
+Provider and Solana libraries may throw other errors; rethrow unfamiliar failures rather than treating every exception as a WDK error.
 
 ## Next Steps
 

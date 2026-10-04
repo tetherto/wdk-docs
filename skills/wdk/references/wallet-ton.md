@@ -47,6 +47,8 @@ import WalletManagerTonGasless from '@tetherto/wdk-wallet-ton-gasless'
 - `quoteSendTransaction()` and `sendTransaction()` accept that `Cell`; send passes the exact body to the matching `WalletContractV5R1.send()` call and rechecks `transactionMaxFee`.
 - ⚠️ The signed body contains the current wallet sequence number. Submit it through the same account before the sequence number changes; WDK does not rebuild or re-sign it.
 - The returned send hash is the signed transfer-body hash, not a network transaction hash.
+- In standard TON beta.15, `sign()` and `verify()` use domain-separated TON safe-sign hashing. Raw-byte signatures from older versions do not pass the new verifier; align external signers and verifiers before upgrading.
+- Standard TON beta.15 uses `globalThis.crypto.getRandomValues()` for Jetton query IDs. Ensure that runtime API is available. Manager-derived accounts and read-only conversions share the TON client.
 
 > **Derivation path change in v1.0.0-beta.6+**: Previous default was `m/44'/607'/0'/0/{index}`, updated to match ecosystem conventions. Existing wallets created with old path will generate different addresses. Use `getAccountByPath` for legacy wallet recovery.
 
@@ -69,6 +71,9 @@ const wallet = new WalletManagerTon(seedPhrase, {
 - Requires a `tonApiClient` base URL and `paymasterToken.address` configuration
 - **Jetton transfers only**: `sendTransaction()`, `quoteSendTransaction()`, and `signTransaction()` are unsupported — use `transfer()` and `quoteTransfer()`
 - Transfer fees are returned in paymaster Jetton base units. The account pays them from its configured paymaster Jetton balance; if that Jetton is also being transferred, the same balance must cover both the transfer amount and the final fee.
+- Gasless beta.13 depends on standard TON beta.15 and inherits its domain-separated message signing. Older raw-byte signatures fail the new verifier; align external signers and verifiers before upgrading.
+- Gasless beta.13 requires `globalThis.crypto.getRandomValues()` for owned and read-only Jetton transfer quotes as well as execution. Random 64-bit query IDs are not application idempotency keys.
+- The gasless beta.13 manager shares its TON RPC and TON API clients across derived accounts and their read-only conversions. Existing clients keep their settings.
 
 ## Configuration — wallet-ton-gasless
 

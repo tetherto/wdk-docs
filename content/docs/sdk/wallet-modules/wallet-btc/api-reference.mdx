@@ -29,7 +29,7 @@ Extends `WalletManager` from `@tetherto/wdk-wallet`.
 new WalletManagerBtc(seed, config)
 ```
 **Parameters:**
-- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
+- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or raw BIP-32 master seed (16–64 bytes)
 - `config` (BtcWalletConfig, optional): Configuration object
   - `client` (`IBtcClient | BtcClientDescriptor | Array<IBtcClient | BtcClientDescriptor>`, optional): Bitcoin client, descriptor, or ordered failover list
   - `network` (string, optional): "bitcoin", "testnet", or "regtest" (default: "bitcoin")
@@ -115,7 +115,7 @@ new WalletAccountBtc(seed, path, config)
 ```
 
 **Parameters:**
-- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
+- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or raw BIP-32 master seed (16–64 bytes)
 - `path` (string): Derivation path suffix (e.g., "0'/0/0")
 - `config` (BtcWalletConfig, optional): Configuration object
   - `client` (`IBtcClient | BtcClientDescriptor | Array<IBtcClient | BtcClientDescriptor>`, optional): Bitcoin client, descriptor, or ordered failover list
@@ -183,6 +183,7 @@ Accepts either transaction options or signed raw Bitcoin transaction hex. With t
 
 **Throws:**
 - `MaximumFeeExceededError` if the transaction fee exceeds `transactionMaxFee` when configured.
+- `AssertionError` if an unsigned BIP-44 input's fetched previous transaction ID, output script, or output value differs from the selected UTXO. This check runs before signing and does not apply to the signed-hex broadcast path.
 - `ValueError` if the amount does not clear the dust limit or the spend requires more than the allowed number of inputs.
 - `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if no unspent outputs are available or the balance does not cover the amount and fees.
 - Errors from the configured client, including `NoSuchElementError` when a Blockbook response has no raw transaction data and `ProviderError` for provider or broadcast failures.
@@ -211,6 +212,7 @@ Signs a Bitcoin transaction and returns the signed raw transaction as a hex stri
 
 **Throws:**
 - `MaximumFeeExceededError` if the estimated transaction fee exceeds `transactionMaxFee` when configured.
+- `AssertionError` if a BIP-44 input's fetched previous transaction ID, output script, or output value differs from the selected UTXO. The wallet rejects that input before signing.
 - `ValueError` if the amount does not clear the dust limit or the spend requires more than the allowed number of inputs.
 - `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if no unspent outputs are available or the balance does not cover the amount and fees.
 - Errors from the configured client, including `NoSuchElementError` when a Blockbook response has no raw transaction data.
@@ -562,7 +564,7 @@ new ElectrumTcp(config)
 
 ## ElectrumTls
 
-Electrum client using TLS transport.
+Electrum client using TLS through the built-in mempool adapter. The runtime must trust the server certificate, and its identity must match the configured `host`. Recognized certificate failures are wrapped in `ProviderError` with `ProviderErrorReason.NETWORK_ERROR` and the original error as `cause`; other connection failures can retain their underlying error type.
 Implements `IBtcClient`.
 
 #### Constructor
@@ -578,7 +580,7 @@ new ElectrumTls(config)
 
 ## ElectrumSsl
 
-Electrum client using SSL transport.
+Electrum client using the built-in mempool adapter's SSL transport. It enforces the same certificate trust, hostname checks, and certificate-error mapping as [`ElectrumTls`](#electrumtls).
 Implements `IBtcClient`.
 
 #### Constructor

@@ -68,7 +68,7 @@ async function signReviewedTransaction(transaction) {
 ```
 
 <Callout type="info">
-`signTransaction()` returns signed raw transaction hex and does not broadcast it. In `1.0.0-beta.18`, `sendTransaction(signedTransaction)` checks `transactionMaxFee` against a provider-current gas and fee-rate estimate, then passes those exact bytes to `eth_sendRawTransaction`; it does not repopulate or re-sign them. The cap is not an upper bound on the gas price or maximum fee encoded in the signed transaction. Submit only after independently decoding and reviewing its gas limit and fee fields together with the recipient, value, data, chain ID, and nonce. Use the object form of `sendTransaction()` when WDK should populate, sign, and broadcast the transaction.
+`signTransaction()` returns signed raw transaction hex and does not broadcast it. In `1.0.0-beta.20`, `sendTransaction(signedTransaction)` checks `transactionMaxFee` against the encoded gas limit multiplied by the encoded `maxFeePerGas` or `gasPrice`, then passes those exact bytes to `eth_sendRawTransaction`; it does not repopulate or re-sign them. This check covers execution gas, not transferred value or a separate blob-gas fee. Submit only after independently decoding and reviewing all fee fields together with the recipient, value, data, chain ID, and nonce. Use the object form of `sendTransaction()` when WDK should populate, sign, and broadcast the transaction.
 </Callout>
 
 ```javascript title="Submit an Approved Signed Transaction"
@@ -88,6 +88,8 @@ async function submitApprovedTransaction(signedTransaction, reviewSignedTransact
 
 Use [`account.quoteSendTransaction()`](/sdk/wallet-modules/wallet-evm/api-reference#quotesendtransactiontx) to get a fee estimate before sending.
 
+In beta.20, a quote uses your supplied `gasLimit` (otherwise an estimate), multiplied by `maxFeePerGas`, then `gasPrice`, then the current provider fee rate in that order. It still simulates the transaction, so an explicit gas limit does not bypass a revert. The quoted execution-gas fee excludes value and blob gas, and is not the eventual fee paid. Unspecified fields can change before an object transaction is populated and sent.
+
 ```javascript title="Quote Transaction Fee"
 const quote = await account.quoteSendTransaction({
   to: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
@@ -98,7 +100,7 @@ console.log('Estimated fee:', quote.fee, 'wei')
 
 ## Cap Transaction Fees
 
-Set [`transactionMaxFee`](/sdk/wallet-modules/wallet-evm/configuration#transaction-max-fee) when you create the wallet to stop native `sendTransaction()` calls and provider-backed `signTransaction()` calls if the estimated fee exceeds your limit. Offline signing without a provider cannot estimate fees, so the fee-cap check does not run there.
+Set [`transactionMaxFee`](/sdk/wallet-modules/wallet-evm/configuration#transaction-max-fee) when you create the wallet to stop `sendTransaction()` and provider-backed `signTransaction()` if the quoted execution-gas fee exceeds your limit. Equality is allowed. This also applies to sends made by ERC-20 transfers and approvals. Offline signing without a provider does not run the fee-cap check.
 
 ```javascript title="Cap Native Transaction Fees"
 const wallet = new WalletManagerEvm(seedPhrase, {
@@ -125,7 +127,7 @@ const result = await account.sendTransaction({
   maxPriorityFeePerGas: 2000000000n
 })
 console.log('Transaction sent:', result.hash)
-console.log('Fee paid:', result.fee, 'wei')
+console.log('Quoted execution-gas fee:', result.fee, 'wei')
 ```
 
 <Callout type="info">

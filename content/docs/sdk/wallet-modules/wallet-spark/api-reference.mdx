@@ -25,11 +25,12 @@ Extends `WalletManager` from `@tetherto/wdk-wallet`.
 new WalletManagerSpark(seed, config)
 ```
 **Parameters:**
-- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
+- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or raw BIP-32 master seed (16–64 bytes)
 - `config` (object, optional): Configuration object
   - `network` (string, optional): 'MAINNET', 'SIGNET', or 'REGTEST' (default: 'MAINNET')
+  - `client` (`SparkReadonlyClient`, optional): Existing read-only Spark client, reused as-is. The manager shares one read-only client across its accounts and their read-only conversions; signing wallets remain account-specific.
   - `sparkscan` (`SparkScanConfig`, optional): SparkScan configuration for balance polling. SparkScan accepts `MAINNET` and `REGTEST`; an unsupported network raises `ValueError` when the account is created.
-  - `syncAndRetry` (boolean, optional): When true, failed sends and Lightning payments sync wallet state and retry once
+  - `syncAndRetry` (boolean, optional): When true, native sends reconcile failures against history without resubmission; Lightning payments retry stale-leaf failures once with the same transfer ID
   - `enableLogging` (boolean, optional): When true, forwards logging to the underlying Spark SDK (default: false)
 
 If HD-key derivation cannot produce the master key's private or public key, the wallet raises the Spark SDK `ValidationError` with `field: 'hdkey'`. If a derived child key is incomplete, it uses `field: 'derivedKeys'`. In beta.26 these derivation errors do not include seed bytes in their context; validation errors elsewhere may still contain sensitive context.
@@ -228,7 +229,7 @@ console.log('Identity key:', identityKey) // 02eda8...
 ##### `sendTransaction({to, value})`
 Sends a Spark transaction.
 
-When `syncAndRetry` is enabled, the wallet syncs state and retries once after a failure.
+When `syncAndRetry` is enabled, the wallet reads matching transfer history before submitting at most once. After a failed submission response, it syncs and returns a matching new transfer from history when found; otherwise it throws. An initial history-read failure prevents submission. Do not run identical recipient/amount sends concurrently from one wallet, because history matching cannot distinguish them.
 
 **Parameters:**
 - `to` (string): Recipient's Spark address
@@ -606,12 +607,13 @@ if (request) {
 ##### `payLightningInvoice(options)`
 Pays a Lightning invoice.
 
-When `syncAndRetry` is enabled, the wallet syncs state and retries once after a failure.
+When `syncAndRetry` is enabled, the wallet syncs after a payment failure and retries once only for a stale-leaf error. It reuses `options.transferId`, or generates an ID when omitted, for both attempts. An unrecovered payment failure raises [`LightningPaymentError`](#lightningpaymenterror) carrying that transfer ID and the original cause. Setup or sync failures may use other error types. Reuse the ID with the same invoice and options if you later choose to retry.
 
 **Parameters:**
 - `options` (PayLightningInvoiceParams): Payment options object
-  - `encodedInvoice` (string): BOLT11 Lightning invoice
-  - `maxFeeSats` (number, optional): Maximum fee willing to pay in satoshis
+  - `invoice` (string): BOLT11 Lightning invoice
+  - `maxFeeSats` (number): Maximum fee willing to pay in satoshis
+  - `transferId` (UUID, optional): Spark transfer ID to reuse for another attempt of the same payment
   - Additional options from `PayLightningInvoiceParams` may be supported
 
 **Returns:** `Promise<LightningSendRequest>` - Payment details
@@ -619,7 +621,7 @@ When `syncAndRetry` is enabled, the wallet syncs state and retries once after a 
 **Example:**
 ```javascript
 const payment = await account.payLightningInvoice({
-  encodedInvoice: 'lnbc...',
+  invoice: 'lnbc...',
   maxFeeSats: 1000
 })
 console.log('Payment result:', payment)
@@ -1018,15 +1020,27 @@ interface SparkScanConfig {
 
 When SparkScan is used by `getBalance()`, a non-success HTTP response throws `ProviderError`. Inspect `error.reason` (`ProviderErrorReason`) for the response category: `UNAUTHORIZED` for HTTP 401, `FORBIDDEN` for 403, `REQUEST_TIMEOUT` for 408 or 504, `INTERNAL_SERVER_ERROR` for other 5xx responses, and `NETWORK_ERROR` for other non-2xx responses.
 
+### LightningPaymentError
+
+Exported from `@tetherto/wdk-wallet-spark`; extends `WdkError`. Its `transferId` is the Spark transfer ID used for the failed Lightning payment, and `cause` preserves the underlying error. It is distinct from the Lightning request ID accepted by `getLightningSendRequest()`.
+
+```javascript
+import { LightningPaymentError } from '@tetherto/wdk-wallet-spark'
+```
+
 ### SparkWalletConfig
 
 ```typescript
 interface SparkWalletConfig {
   network?: 'MAINNET' | 'SIGNET' | 'REGTEST'  // The network (default: "MAINNET")
+  client?: SparkReadonlyClient // Existing read-only client; match the configured network
   sparkscan?: SparkScanConfig  // Optional SparkScan configuration for balance polling
-  syncAndRetry?: boolean       // When true, failed sends and Lightning payments sync wallet state and retry once
+  syncAndRetry?: boolean       // Native send recovery and stale-leaf Lightning retry
+  enableLogging?: boolean     // Logging for newly constructed SDK clients/wallets
 }
 ```
+
+`SparkReadonlyClient` is a type exported by this WDK package. Import the runtime class from `@buildonspark/spark-sdk`; see the [client configuration example](/sdk/wallet-modules/wallet-spark/configuration#read-only-client). A supplied client keeps its existing network and logging settings.
 
 ### SparkTransaction
 
@@ -1203,12 +1217,11 @@ interface CreateLightningInvoiceParams {
 ### Lightning Payment Options
 
 ```typescript
-// Use PayLightningInvoiceParams from @buildonspark/spark-sdk
-// Basic options include:
-interface PayLightningInvoiceParams {
-  encodedInvoice: string  // BOLT11-encoded Lightning invoice to pay
-  maxFeeSats?: number     // Maximum fee in satoshis to pay
-  // Additional options may be available
+import type { PayLightningInvoiceParams } from '@tetherto/wdk-wallet-spark'
+
+const paymentOptions: PayLightningInvoiceParams = {
+  invoice: 'lnbc...',
+  maxFeeSats: 1000
 }
 ```
 

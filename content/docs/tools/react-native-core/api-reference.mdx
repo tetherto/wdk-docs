@@ -22,6 +22,10 @@ schemaType: APIReference
 | [`BaseAsset`](#baseasset) | Class | Default `IAsset` implementation |
 | [`validateMnemonic`](#validatemnemonic) | Utility | Validate BIP39 mnemonic phrases |
 | [`balanceQueryKeys`](#balancequerykeys) | Utility | TanStack Query key factory |
+| [`createSecureStorage`](#createsecurestorage) | Function | Access keychain-backed wallet credentials directly |
+| [`DEFAULT_IDENTIFIER`](#legacy-storage-compatibility) | Constant | Reserved identifier for the predecessor's no-identifier storage slot |
+| [`SecureStorageError` and subclasses](#storage-errors) | Classes | Storage validation, timeout, and keychain failures |
+| `SecureStorage` | Type | Direct credential-storage interface |
 | `WdkAppProviderProps` | Type | Props for `WdkAppProvider` |
 | `WdkAppContextValue` | Type | Provider context containing the lifecycle state |
 | `UseWdkAppResult` | Type | Return type of `useWdkApp`, including manual reset methods |
@@ -50,7 +54,7 @@ Must be placed at the root of your component tree. All hooks in this library req
 | `children` | `React.ReactNode` | **required** | Child components |
 
 <Callout type="warn">
-Starting in `v1.0.0-beta.17`, `enableAutoInitialization`, `currentUserId`, and `clearSensitiveDataOnBackground` are no longer provider props. `requireBiometrics`, which was removed earlier, is also not accepted by beta.20. The app owns wallet identity, background-locking behavior, and biometric or other authentication checks.
+Starting in `v1.0.0-beta.17`, `enableAutoInitialization`, `currentUserId`, and `clearSensitiveDataOnBackground` are no longer provider props. `requireBiometrics`, which was removed earlier, is also not accepted by beta.21. The app owns wallet identity, background-locking behavior, and biometric or other authentication checks.
 </Callout>
 
 ### Example
@@ -119,7 +123,7 @@ The `state` property is a discriminated union on the `status` field:
 #### Startup failure recovery
 
 <Callout type="warn">
-If beta.20 reports an `ERROR` before the worklet starts, do not rely on an in-process retry. An asynchronous startup failure can retrigger initialization while the singleton readiness promise remains rejected, and remounting `WdkAppProvider` in the same JavaScript runtime does not recreate that promise. Fix the reported bundle, configuration, or native startup cause, then restart the application so it creates a fresh JavaScript runtime before retrying.
+If beta.21 reports an `ERROR` before the worklet starts, do not rely on an in-process retry. An asynchronous startup failure can retrigger initialization while the singleton readiness promise remains rejected, and remounting `WdkAppProvider` in the same JavaScript runtime does not recreate that promise. Fix the reported bundle, configuration, or native startup cause, then restart the application so it creates a fresh JavaScript runtime before retrying.
 </Callout>
 
 ### Example
@@ -189,7 +193,7 @@ Hook for wallet lifecycle operations: create, restore, lock, unlock, delete, and
 Only one wallet can be active. Call and await `lock()` before creating or restoring a different identity. To select a wallet that is already stored, use `switchWallet()` or lock and then unlock that wallet explicitly. `createWallet()`, `restoreWallet()`, `deleteWallet()`, `lock()`, `unlock()`, `switchWallet()`, and `createTemporaryWallet()` use a fail-fast mutex, so an overlapping guarded call rejects instead of queuing. The mutex timeout does not cancel an already-running underlying operation. `switchWallet()` is serialized, but it is not transactional: it locks first and does not restore the previous wallet if the new unlock fails.
 
 <Callout type="error">
-Beta.20 protects `deleteWallet()` with the lifecycle mutex; `clearTemporaryWallet()` remains unguarded. Clearing the active temporary wallet resets shared worklet lifecycle state and sends the same one-way full disposal request as `lock()`. Serialize `clearTemporaryWallet()` with lifecycle operations in the app to avoid racing a guarded call. Deleting even an inactive wallet deletes its secure-storage records and then resets shared worklet lifecycle state. A storage failure can leave a partial deletion and prevent the reset from running. Authenticate and explicitly confirm destructive deletion, verify another recovery path first, and verify the stored wallet inventory afterward.
+Beta.21 protects `deleteWallet()` with the lifecycle mutex; `clearTemporaryWallet()` remains unguarded. Clearing the active temporary wallet resets shared worklet lifecycle state and sends the same one-way full disposal request as `lock()`. Serialize `clearTemporaryWallet()` with lifecycle operations in the app to avoid racing a guarded call. Deleting even an inactive wallet deletes its secure-storage records and then resets shared worklet lifecycle state. A storage failure can leave a partial deletion and prevent the reset from running. Authenticate and explicitly confirm destructive deletion, verify another recovery path first, and verify the stored wallet inventory afterward.
 </Callout>
 
 <Callout type="error">
@@ -197,11 +201,11 @@ When a wallet is active, `lock()` sends `hrpc.dispose({})` before clearing local
 </Callout>
 
 <Callout type="warn">
-React Native Core beta.20 does not enforce biometrics before wallet lifecycle or key-access methods. Authenticate in the app before invoking these methods. For app-background locking, close the authenticated UI boundary immediately and retry `lock()` after any in-flight guarded operation settles; a mutex rejection does not queue or cancel that operation.
+React Native Core beta.21 does not enforce biometrics before wallet lifecycle or key-access methods. Authenticate in the app before invoking these methods. For app-background locking, close the authenticated UI boundary immediately and retry `lock()` after any in-flight guarded operation settles; a mutex rejection does not queue or cancel that operation.
 </Callout>
 
 <Callout type="warn">
-A rejected create, restore, unlock, or temporary-wallet initialization is not cleanup confirmation. If the worklet constructs WDK and a later wallet or protocol registration fails, it can retain a partial instance and its seed buffer. Beta.20 exposes no public worklet teardown method. Do not retry a sensitive flow in the same session on the assumption that rejection removed that state; restart the application or hosting environment so it creates a new worklet before retrying.
+A rejected create, restore, unlock, or temporary-wallet initialization is not cleanup confirmation. If the worklet constructs WDK and a later wallet or protocol registration fails, it can retain a partial instance and its seed buffer. Beta.21 exposes no public worklet teardown method. Do not retry a sensitive flow in the same session on the assumption that rejection removed that state; restart the application or hosting environment so it creates a new worklet before retrying.
 </Callout>
 
 #### Advanced Crypto Methods
@@ -217,7 +221,7 @@ These methods provide lower-level access to wallet cryptographic operations. Mos
 | `getMnemonicFromEntropy` | `(encryptedEntropy: string, encryptionKey: string) => Promise<{ mnemonic: string }>` | Derive a mnemonic from base64 encrypted entropy and key strings |
 | `getSeedAndEntropyFromMnemonic` | `(mnemonic: string) => Promise<{ encryptionKey: string, encryptedSeedBuffer: string, encryptedEntropyBuffer: string }>` | Get encrypted seed and entropy from a mnemonic phrase; all returned strings are base64 |
 
-Beta.20 converts these base64 strings to native buffers only at its internal HRPC boundary and overwrites several owned temporary buffers after use. Public hook results and storage values remain immutable JavaScript strings, and conversion can create additional copies. Discard references promptly and do not treat method completion as proof that every copy was erased.
+Beta.21 converts these base64 strings to native buffers only at its internal HRPC boundary and overwrites several owned temporary buffers after use. Public hook results and storage values remain immutable JavaScript strings, and conversion can create additional copies. Discard references promptly and do not treat method completion as proof that every copy was erased.
 
 ### Example
 
@@ -386,6 +390,8 @@ const transfers = await btcApi.getTransfers()
 
 ---
 
+Account extension calls preserve a legitimate `null` result from the underlying account method. Handle nullable outcomes according to that module's return contract; malformed JSON still rejects.
+
 ## useProtocol
 
 Hook to call configured protocol modules through the active WDK worklet account. It returns a typed proxy, so each method you access is forwarded to the protocol registered for the requested account, network, type, and name.
@@ -403,7 +409,7 @@ Hook to call configured protocol modules through the active WDK worklet account.
 
 Returns `T`, a proxy for the protocol methods you type with the hook generic. Each method returns a promise from the worklet call.
 
-If no active account is available, protocol method calls log an error and return `undefined`.
+If no active account is available, protocol method calls log an error and return `undefined`. A successfully called protocol method can return `null` when that is its underlying contract; Core no longer rejects that result during JSON parsing.
 
 The `swidge` protocol type is available in `v1.0.0-beta.15`. It requires a non-empty `protocolName` and forwards calls through the matching Swidge protocol wrapper on the selected account.
 
@@ -970,6 +976,116 @@ interface AccountInfo {
   addresses: Record<string, string> // Address for each network
 }
 ```
+
+---
+
+## Direct Credential Storage
+
+Most apps should use [`useWalletManager`](#usewalletmanager) for wallet lifecycle operations. The direct API supports existing keychain integrations and migrations; it does not update the wallet inventory or initialize, lock, or dispose a worklet.
+
+### createSecureStorage
+
+`createSecureStorage(): SecureStorage` returns the same config-free singleton on every call. It has no biometric, cache, or timeout configuration arguments. Authenticate in your app before reading or changing wallet credentials. No `WdkAppProvider` is needed for this direct API, but the native keychain and Expo Crypto runtime must be available.
+
+Import runtime values from the package root before any separate type-only imports:
+
+```typescript title="Access direct storage"
+import { createSecureStorage } from '@tetherto/wdk-react-native-core'
+import type { SecureStorage } from '@tetherto/wdk-react-native-core'
+
+const storage: SecureStorage = createSecureStorage()
+```
+
+Each credential method requires a wallet `identifier`. Normal identifiers are trimmed and lowercased before hashing into the keychain service name, so case or surrounding whitespace does not create a separate slot. Use a stable unique identifier of at most 256 characters containing letters, digits, `.`, `-`, `_`, `+`, or the supported email format. Values must be non-empty strings of at most 10,240 characters.
+
+| Method | Return | Purpose |
+| --- | --- | --- |
+| `setEncryptionKey(key, identifier)` | `Promise<void>` | Store an encryption-key string |
+| `getEncryptionKey(identifier)` | `Promise<string \| null>` | Read the encryption key |
+| `setEncryptedSeed(encryptedSeed, identifier)` | `Promise<void>` | Store an encrypted-seed string |
+| `getEncryptedSeed(identifier)` | `Promise<string \| null>` | Read the encrypted seed |
+| `setEncryptedEntropy(encryptedEntropy, identifier)` | `Promise<void>` | Store an encrypted-entropy string |
+| `getEncryptedEntropy(identifier)` | `Promise<string \| null>` | Read the encrypted entropy |
+| `getAllEncrypted(identifier)` | `Promise<{ encryptedSeed: string \| null, encryptedEntropy: string \| null, encryptionKey: string \| null }>` | Read all three values |
+| `hasWallet(identifier)` | `Promise<boolean>` | Check for the encrypted-seed entry |
+| `deleteWallet(identifier)` | `Promise<void>` | Delete the three credential entries |
+| `cleanup()` | `void` | No operation in beta.21 |
+
+All setter values and identifiers above are `string`. The storage layer does not encrypt an input seed for you or verify its encoding. Core's wallet hooks store base64 strings here; preserve that format when interoperating with them.
+
+#### setEncryptionKey
+
+`setEncryptionKey(key: string, identifier: string): Promise<void>` stores the supplied key using keychain `WHEN_UNLOCKED` accessibility. It does not prompt for biometric authentication.
+
+#### getEncryptionKey
+
+`getEncryptionKey(identifier: string): Promise<string | null>` returns the stored key, or `null` when no non-empty keychain value exists. Treat the result as secret material.
+
+#### setEncryptedSeed
+
+`setEncryptedSeed(encryptedSeed: string, identifier: string): Promise<void>` stores an already-encrypted seed. On iOS it uses `WHEN_UNLOCKED_THIS_DEVICE_ONLY`, which prevents migration of that entry to another device through an encrypted backup restore.
+
+#### getEncryptedSeed
+
+`getEncryptedSeed(identifier: string): Promise<string | null>` returns the stored encrypted seed, or `null` when absent.
+
+#### setEncryptedEntropy
+
+`setEncryptedEntropy(encryptedEntropy: string, identifier: string): Promise<void>` stores already-encrypted entropy with the same iOS device-only accessibility as the encrypted seed.
+
+#### getEncryptedEntropy
+
+`getEncryptedEntropy(identifier: string): Promise<string | null>` returns the stored encrypted entropy, or `null` when absent.
+
+#### getAllEncrypted
+
+`getAllEncrypted(identifier: string)` reads the three values concurrently and returns the nullable object shown in the table. The object includes the encryption key, so do not log it or treat it as an encrypted backup. These separate reads are not an atomic snapshot; serialize credential mutations in your app when consistency matters.
+
+#### hasWallet
+
+`hasWallet(identifier: string): Promise<boolean>` checks for the encrypted-seed entry without reading its value. `true` does not prove that the encryption key and entropy are present or that recovery will succeed.
+
+#### deleteWallet
+
+`deleteWallet(identifier: string): Promise<void>` deletes the encryption key and encrypted entropy first, then deletes the seed only if both preceding deletions succeed. Deletion is not atomic; failure can leave partial data. Authenticate, confirm the target identifier, and verify an independent recovery path before deletion. A rejected call is not deletion confirmation. This direct method does not reset Core's wallet state or dispose its worklet.
+
+#### cleanup
+
+`cleanup(): void` is a no-op. It does not delete keychain entries or clear copies of values returned to your app.
+
+### Storage Errors
+
+Catch these runtime classes from the package root:
+
+| Export | `code` | Meaning |
+| --- | --- | --- |
+| `SecureStorageError` | Operation-specific string | Base storage error; failed deletion uses `WALLET_DELETE_ERROR` |
+| `KeychainReadError` | `KEYCHAIN_READ_ERROR` | Keychain read or existence-check failure |
+| `KeychainWriteError` | `KEYCHAIN_WRITE_ERROR` | Keychain write failure |
+| `ValidationError` | `VALIDATION_ERROR` | Invalid identifier or stored value |
+| `TimeoutError` | `TIMEOUT_ERROR` | A keychain operation exceeded 30 seconds |
+
+Errors expose `message`, `code`, and optional `cause`. The timeout rejects the caller without cancelling the native operation; a timed-out write or delete can still finish later. Recheck state before retrying or continuing a migration.
+
+### Legacy Storage Compatibility
+
+Core beta.21 replaces its dependency on `@tetherto/wdk-react-native-secure-storage`. Existing normalized per-identifier keychain names remain compatible. The new direct API requires an identifier and omits the predecessor's biometric/cache configuration options; do not forward those options to it.
+
+`DEFAULT_IDENTIFIER` is the reserved string `__default__`. It selects the predecessor's bare keychain service names used when no identifier was supplied. Use it only to inspect or migrate that legacy slot, never as the identifier for a new user's wallet.
+
+After authenticating in your app, check for the legacy slot without reading its secrets:
+
+```typescript title="Check the legacy storage slot"
+import {
+  createSecureStorage,
+  DEFAULT_IDENTIFIER,
+} from '@tetherto/wdk-react-native-core'
+
+const storage = createSecureStorage()
+const hasLegacyWallet = await storage.hasWallet(DEFAULT_IDENTIFIER)
+```
+
+For a migration, serialize writes, retain the same complete set of credentials, write under the new unique identifier, and verify the new wallet can be recovered before explicitly deleting the old slot. A timeout or partial write must stop the migration; do not delete the source merely because some destination entries exist. Migrating keychain values alone does not migrate Core's wallet inventory.
 
 ---
 

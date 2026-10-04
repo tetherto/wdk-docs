@@ -32,8 +32,10 @@ new WalletManagerEvm7702Gasless(seed, config)
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `seed` | `string \| Uint8Array` | BIP-39 mnemonic seed phrase or seed bytes. |
+| `seed` | `string \| Uint8Array` | BIP-39 mnemonic or raw BIP-32 master seed (16–64 bytes). |
 | `config` | `Evm7702GaslessWalletConfig` | Wallet configuration with common fields and one fee mode. |
+
+In beta.7, the manager builds one RPC client and shares it across the accounts it derives. A supplied ethers provider is reused; see [provider configuration](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#provider-failover).
 
 ### Methods
 
@@ -63,9 +65,9 @@ new WalletAccountEvm7702Gasless(walletAccountEvm, config)
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `seed` | `string \| Uint8Array` | BIP-39 mnemonic seed phrase or seed bytes. |
+| `seed` | `string \| Uint8Array` | BIP-39 mnemonic or raw BIP-32 master seed (16–64 bytes). |
 | `path` | `string` | EVM derivation path suffix, for example `"0'/0/0"`. |
-| `walletAccountEvm` | `WalletAccountEvm` | Existing EVM account to wrap. |
+| `walletAccountEvm` | `WalletAccountEvm` | Existing EVM account from the same beta.19 package instance used by this module; see [wrapping an account](/sdk/wallet-modules/wallet-evm-7702-gasless/guides/manage-accounts#wrap-an-existing-evm-account). |
 | `config` | `Evm7702GaslessWalletConfig` | Wallet configuration. |
 
 ### Properties
@@ -102,7 +104,7 @@ Treat the arrays returned through `keyPair` as read-only. Call `dispose()` when 
 | `getTransactionReceipt(hash)` | `hash: string` | `Promise\<EvmTransactionReceipt \| null\>` | Maps a UserOperation hash to an EVM receipt; deprecated in favor of `getTransaction()`. |
 | `getTransaction(hash)` | `hash: string` | `Promise\<TransactionReceipt & Evm7702GaslessTransactionDetails\>` | Returns normalized finality for a UserOperation hash. |
 | `waitForTransaction(hash, options?)` | UserOperation hash, `WaitForTransactionOptions` | `Promise\<TransactionReceipt & Evm7702GaslessTransactionDetails\>` | Waits for `confirmed` or `final`, or returns `dropped`. |
-| `toReadOnlyAccount()` | - | `Promise\<WalletAccountReadOnlyEvm7702Gasless\>` | Returns a cached read-only account. |
+| `toReadOnlyAccount()` | - | `Promise\<WalletAccountReadOnlyEvm7702Gasless\>` | Returns a cached read-only account that shares this account's provider. |
 | `dispose()` | - | `void` | Clears quote cache and disposes the wrapped EVM account. |
 
 ### Quote and Send Behavior
@@ -125,7 +127,7 @@ Treat the arrays returned through `keyPair` as read-only. Call `dispose()` when 
 - A string `nonceKey` is hashed to a deterministic 192-bit key. Numeric keys must be within the uint192 range; use bigint or string form above JavaScript's safe integer range.
 - Let the first delegation reach the chain before using concurrent lanes. Overlapping operations on the same lane can return hashes even when one can never receive a receipt.
 - A fresh `parallel` lane creates a permanent EntryPoint nonce slot. Reuse a bounded set of named lanes for sustained workloads.
-- The runtime accepts lane fields in per-call overrides for signing, sending, and transfers, but the beta.5 second-argument declarations omit them. Constructor-level lane fields are correctly typed.
+- The runtime accepts lane fields in per-call overrides for signing, sending, and transfers, but the beta.7 second-argument declarations still omit them. Constructor-level lane fields are correctly typed.
 
 ### Transfer Fee Cap
 
@@ -204,7 +206,7 @@ Known configuration errors include:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `provider` | `string \| Eip1193Provider \| Array\<string \| Eip1193Provider\>` | Yes | RPC endpoint, EIP-1193 provider, or provider failover list. |
+| `provider` | `string \| Provider \| Eip1193Provider \| Array\<string \| Provider \| Eip1193Provider\>` | Yes | RPC endpoint, ethers provider with JSON-RPC `send`, EIP-1193 provider, or mixed failover list. `Provider` is the ethers type. |
 | `chainId` | `number` | No | Expected chain ID for the first UserOperation chain lookup. A successful check is cached; omission trusts the provider. |
 | `entryPointVersion` | `'0.8' \| '0.9'` | No | Selects the EntryPoint and matching account implementation. Defaults to `'0.8'`. |
 | `retries` | `number` | No | Additional retry attempts for provider arrays. Defaults to `3`. |

@@ -19,7 +19,7 @@ icon: Settings
 
 ```javascript
 import WalletManagerTronGasfree from '@tetherto/wdk-wallet-tron-gasfree'
-import TronWeb from 'tronweb'
+import { TronWeb } from 'tronweb'
 
 // Option 1: Using RPC URL
 const config = {
@@ -94,9 +94,11 @@ const readOnlyAccount = new WalletAccountReadOnlyTronGasfree(
 
 ### Provider
 
-The `provider` option specifies how to connect to the Tron network.
+The `provider` option connects to TRON RPC. It accepts one endpoint URL, one TronWeb instance, or an ordered array mixing URLs and instances. Every entry must use the network matching `chainId` and the GasFree relay. The module does not validate that the endpoints belong to the same network.
 
-**Type:** `string | TronWeb`
+The manager initializes one RPC provider shared by its derived accounts. Use separate managers for independent RPC settings.
+
+**Type:** `string | TronWeb | Array<string | TronWeb>`
 
 **Required:** Yes
 
@@ -114,6 +116,20 @@ const config = {
   provider: tronWeb
 }
 
+```
+
+### RPC Failover Retries
+
+`retries` is optional and defaults to `3` additional attempts after the initial failed RPC call when `provider` is an array. Failover cycles through the configured providers and can revisit one when retries exceed the list length. This does not add failover or retries to the `gasFreeProvider` relay URL.
+
+Configure `secondaryTronWeb` with an independent mainnet RPC endpoint, then combine it with your existing GasFree settings:
+
+```javascript
+const failoverConfig = {
+  ...config,
+  provider: ['https://api.trongrid.io', secondaryTronWeb],
+  retries: 3
+}
 ```
 
 ### Chain ID

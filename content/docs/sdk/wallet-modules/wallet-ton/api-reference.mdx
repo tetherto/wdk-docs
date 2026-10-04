@@ -23,6 +23,8 @@ icon: Code
 The main class for managing TON wallets.  
 Extends `WalletManager` from `@tetherto/wdk-wallet`.
 
+The manager initializes one TON client shared by its derived accounts and their read-only conversions. Jetton quotes and transfers require `globalThis.crypto.getRandomValues` for TEP-74 query IDs; see [runtime prerequisites](/sdk/wallet-modules/wallet-ton/configuration#runtime-prerequisites).
+
 #### Constructor
 
 ```javascript
@@ -89,7 +91,7 @@ const account = await wallet.getAccountByPath("0'/0/1")
 ```
 
 ##### `getFeeRates()`
-Returns normal and fast fee rates from the mainnet TON API configuration. Through `1.0.0-beta.14`, this method always requests `https://tonapi.io/v2`, does not follow the configured `tonClient` network, and returns the same calculated value for both fields.
+Returns normal and fast fee rates from the mainnet TON API configuration. Through `1.0.0-beta.15`, this method always requests `https://tonapi.io/v2`, does not follow the configured `tonClient` network, and returns the same calculated value for both fields.
 
 **Returns:** `Promise\<FeeRates\>` - Object containing normal and fast fee rates
 
@@ -158,8 +160,8 @@ const account = new WalletAccountTon(seedPhrase, "0'/0/0", {
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's TON address | `Promise\<string\>` |
-| `sign(message)` | Signs a message using the account's private key | `Promise\<string\>` |
-| `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` |
+| `sign(message)` | Signs a domain-separated message digest | `Promise\<string\>` |
+| `verify(message, signature)` | Verifies a domain-separated message signature | `Promise\<boolean\>` |
 | `signTransaction(tx)` | Builds a signed external-message body using current chain state, without broadcasting it | `Promise\<Cell\>` |
 | `sendTransaction(tx)` | Builds and sends a transaction, or sends a signed transfer-body `Cell` | `Promise\<{hash: string, fee: bigint}\>` |
 | `quoteSendTransaction(tx)` | Estimates the fee for a transaction or signed transfer-body `Cell` | `Promise\<{fee: bigint}\>` |
@@ -174,7 +176,7 @@ const account = new WalletAccountTon(seedPhrase, "0'/0/0", {
 | `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
 
 ##### `verify(message, signature)`
-Verifies a message signature.
+Verifies a hex-encoded Ed25519 signature over the same domain-separated digest as [`sign()`](#signmessage). Beta.15 does not fall back to the raw-message scheme used by earlier versions.
 
 **Parameters:**
 - `message` (string): The original message
@@ -201,7 +203,7 @@ console.log('Account address:', address)
 ```
 
 ##### `sign(message)`
-Signs a message using the account's private key.
+Signs a domain-separated SHA-256 digest with the account's Ed25519 private key and returns the signature as hex. The digest input concatenates the bytes `0xffff`, UTF-8 `ton-safe-sign-magic`, and the UTF-8 message. Starting with beta.15, this replaces signing raw message bytes; older signatures require their original verification scheme.
 
 **Parameters:**
 - `message` (string): The message to sign
@@ -464,7 +466,7 @@ new WalletAccountReadOnlyTon(publicKey, config)
 | `getBalance()` | Returns the native TON balance | `Promise\<bigint\>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific Jetton | `Promise\<bigint\>` |
 | `quoteSendTransaction(tx)` | Estimates the fee for a TON transaction object, including a serialized BoC body | `Promise\<{fee: bigint}\>` |
-| `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` |
+| `verify(message, signature)` | Verifies a domain-separated message signature | `Promise\<boolean\>` |
 | `getTransaction(hash)` | Returns a normalized receipt for a message-body hash | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
 | `waitForTransaction(hash, options?)` | Waits for the requested TON finality | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
 | `getTransactionReceipt(hash)` | Deprecated: returns the native TON transaction | `Promise\<TonTransactionReceipt \| null\>` |
@@ -511,7 +513,7 @@ async function quoteReviewedTransaction(readOnlyAccount, reviewedTransaction) {
 ```
 
 ##### `verify(message, signature)`
-Verifies a message signature.
+Verifies a hex-encoded Ed25519 signature over the same domain-separated digest as [`sign()`](#signmessage). Beta.15 does not fall back to the raw-message scheme used by earlier versions.
 
 **Parameters:**
 - `message` (string): The original message
@@ -643,7 +645,7 @@ interface FeeRates {
   normal: bigint;
 
   /**
-   * Same mainnet-derived fee rate as `normal` through v1.0.0-beta.14
+   * Same mainnet-derived fee rate as `normal` through v1.0.0-beta.15
    * @example 100000000n // 0.1 TON
    */
   fast: bigint;

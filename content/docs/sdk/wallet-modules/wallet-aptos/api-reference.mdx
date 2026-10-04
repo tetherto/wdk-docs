@@ -21,6 +21,8 @@ import WalletManagerAptos, {
 
 Creates and manages seed-derived Aptos accounts.
 
+`seed` accepts a BIP-39 mnemonic or raw BIP-32 master seed (16–64 bytes). Beta.3 reuses one manager-created REST client across derived accounts and their read-only conversions.
+
 ```typescript
 new WalletManagerAptos(
   seed: string | Uint8Array,
@@ -74,7 +76,7 @@ new WalletAccountAptos(
 | `getTransactionReceipt(hash)` | Deprecated raw lookup for a pending or committed Aptos transaction. | `Promise<{ type: string; hash: string; success?: boolean; vm_status?: string } \| null>` |
 | `sign(message)` | Signs a message with the account key. | `Promise<string>` |
 | `verify(message, signature)` | Verifies a message signature. | `Promise<boolean>` |
-| `toReadOnlyAccount()` | Returns a read-only account for the same address. | `Promise<WalletAccountReadOnlyAptos>` |
+| `toReadOnlyAccount()` | Returns a read-only account for the same address, public key, and REST client. | `Promise<WalletAccountReadOnlyAptos>` |
 | `dispose()` | Clears private key material from memory. | `void` |
 
 ## WalletAccountReadOnlyAptos
@@ -89,7 +91,7 @@ new WalletAccountReadOnlyAptos(
 )
 ```
 
-An address-only instance supports balance reads and transaction tracking. `quoteSendTransaction()`, `quoteTransfer()`, and `verify()` require the matching public key because an Aptos address cannot be reversed into an Ed25519 public key. `toReadOnlyAccount()` supplies that key automatically.
+An address-only instance supports balance reads and transaction tracking. `quoteSendTransaction()`, `quoteTransfer()`, and `verify()` require the matching public key because an Aptos address cannot be reversed into an Ed25519 public key. `toReadOnlyAccount()` supplies that key and reuses the writable account's REST client.
 
 <Callout type="warn">
 The read-only constructor stores the supplied address as-is; it does not validate or normalize it. Validate an externally supplied address before constructing the account.
@@ -111,7 +113,7 @@ The read-only constructor stores the supplied address as-is; it does not validat
 
 ```typescript
 type AptosWalletConfig = {
-  provider?: string | string[]
+  provider?: string | AptosRpc | string[]
   chainId?: number
   retries?: number
   txnExpirationSecs?: number
@@ -121,11 +123,13 @@ type AptosWalletConfig = {
 
 | Field | Default and behavior |
 |---|---|
-| `provider` | No default. An array enables endpoint failover. |
+| `provider` | No default. A URL array enables endpoint failover. An existing package `AptosRpc` instance is reused as-is. |
 | `chainId` | Fetched from ledger info on first use when omitted. A supplied value must match the provider network. |
 | `retries` | `3` for a provider array. |
 | `txnExpirationSecs` | `60`. |
 | `transferMaxFee` | No default. Applies only to fungible asset `transfer()` and rejects fees at or above the cap. |
+
+`AptosRpc` is the package's internal REST client class, not a root export. The public configuration examples use URLs. An existing instance retains its retry settings; generic Aptos SDK clients and mixed URL/client arrays are not supported by this type.
 
 ## Transaction Types
 
@@ -218,7 +222,7 @@ type AptosReceiptShape = {
 </Callout>
 
 <Callout type="warn">
-`transferMaxFee` does not protect native `sendTransaction()` or `signTransaction()` calls. A native quote can support user review, but send and sign simulate again and expose no hard maximum-fee control in beta.2.
+`transferMaxFee` does not protect native `sendTransaction()` or `signTransaction()` calls. A native quote can support user review, but send and sign simulate again and expose no hard maximum-fee control in beta.3.
 </Callout>
 
 <Cards>

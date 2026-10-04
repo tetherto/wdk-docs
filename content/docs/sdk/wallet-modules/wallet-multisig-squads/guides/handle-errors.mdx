@@ -1,0 +1,64 @@
+---
+title: Handle Squads multisig errors
+description: Handle permission, proposal, fee and RPC failures and dispose of member signing material.
+docType: how-to
+schemaType: TechArticle
+---
+
+[Handle failures](#handle-failures) and follow [best practices](#best-practices). See [Need Help](#need-help) for support.
+
+Prerequisites: an [initialized member account](/sdk/wallet-modules/wallet-multisig-squads/guides/get-started). Preserve proposal IDs and submitted signatures so retries can inspect existing state first.
+
+## Handle Failures
+
+| Error or condition | Response |
+| --- | --- |
+| `ProviderRequiredError` | Configure the correct cluster RPC for network operations. |
+| `AccountNotOwnerError` | Verify the signer path, current member list and required permission. |
+| `ValueError` for invalid status or time lock | Check the member mask and fresh proposal state; wait for the configured time lock when applicable. |
+| `ThresholdNotMetError` | Collect the required on-chain approvals. |
+| `MaximumFeeExceededError` | Inspect the relevant quote and configured cap before changing it. |
+| `NoSuchElementError` | Verify the multisig/proposal exists; a missing transaction may also be pending, dropped or outside RPC history. |
+| Approval `transaction` is `undefined` | A coordinator has only collected signatures; wait for the completed bundle to be broadcast before checking its receipt. |
+| `UnsupportedOperationError` | Use supported proposal APIs and transaction kinds. |
+
+Import the runtime error classes you handle:
+
+```javascript title="Recognize an unmet approval threshold"
+import { ThresholdNotMetError } from '@tetherto/wdk-wallet-multisig-squads'
+import { account, requiredEnv } from './squads-account.mjs'
+
+try {
+  await account.executeProposal(requiredEnv('PROPOSAL_ID'))
+} catch (error) {
+  if (error instanceof ThresholdNotMetError) console.error('More on-chain approvals are required')
+  throw error
+}
+```
+
+RPC and program failures can also propagate. `waitForTransaction()` checks finality, but callers must inspect `success`. Without the original blockhash, a missing signature cannot distinguish a dropped transaction from one the RPC never saw; polling can time out. Reconcile the proposal and signature before retrying a write.
+
+## Best Practices
+
+Keep member gas/rent funds separate from vault payment funds. Do not treat a proposal's creation or approval transaction as the payment's execution. Verify Token Program compatibility before a token transfer; Token-2022 is unsupported in beta.2.
+
+Use [`dispose()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#dispose) when the signing session ends:
+
+```javascript title="Clear member signing accounts"
+import { wallet } from './squads-account.mjs'
+wallet.dispose()
+```
+
+Await [`toReadOnlyAccount()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#toreadonlyaccount) if you need a query-only copy first. Manager disposal clears cached member signers but retains the manager's seed bytes in beta.2. Release the manager when finished and clear caller-controlled mutable copies after their final use. Caller-held seeds, create-key secrets and configuration copies remain your application's responsibility. Never log the `keyPair` property.
+
+## Next Steps
+
+- [Usage](/sdk/wallet-modules/wallet-multisig-squads/usage)
+- [Configuration](/sdk/wallet-modules/wallet-multisig-squads/configuration)
+- [API reference](/sdk/wallet-modules/wallet-multisig-squads/api-reference)
+
+---
+
+## Need Help?
+
+<SupportCards />

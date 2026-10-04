@@ -1,0 +1,61 @@
+---
+title: Sign messages with a Safe
+description: Collect owner signatures for a Safe message and verify the resulting EIP-1271 signature.
+docType: how-to
+schemaType: TechArticle
+---
+
+[Propose a message](#propose-a-message), [collect message approvals](#collect-message-approvals), then [verify the signature](#verify-the-signature). See [Need Help](#need-help) for support.
+
+Prerequisites: a deployed Safe, owner accounts and a shared coordinator. Show every owner the exact message and its intended use before signing. A valid signature is not consent to a different message or domain.
+
+## Propose a Message
+
+Use [`proposeMessage()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#proposemessage) to sign and share a message:
+
+```javascript title="Propose a reviewed message"
+import { account, requiredEnv } from './safe-account.mjs'
+const message = requiredEnv('MESSAGE_TO_SIGN')
+const proposed = await account.proposeMessage(message)
+console.log(proposed.messageId)
+```
+
+[`sign()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#sign) also creates and shares a message proposal, then returns only this owner's signature. It is not a local-only signing helper and does not return the combined Safe signature.
+
+## Collect Message Approvals
+
+After another owner reviews the message, use [`approveMessageProposal()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#approvemessageproposal) from that owner's account:
+
+```javascript title="Approve the reviewed message"
+const approved = await account.approveMessageProposal(requiredEnv('MESSAGE_ID'))
+console.log(approved.confirmations, approved.threshold)
+```
+
+The module checks that the coordinator's message hashes to the requested identifier before signing. A missing `combinedSignature` means the coordinator has not supplied an assembled signature; a signature from one owner alone does not establish the threshold.
+
+## Verify the Signature
+
+Use [`getMessageProposal()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#getmessageproposal) and [`verify()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#verify) to check the coordinator-provided combined signature against the deployed Safe:
+
+```javascript title="Verify a combined signature"
+const result = await account.getMessageProposal(requiredEnv('MESSAGE_ID'))
+if (!result?.combinedSignature || result.confirmations < result.threshold) {
+  throw new Error('Combined signature is not ready')
+}
+const valid = await account.verify(result.message, result.combinedSignature)
+console.log('EIP-1271 valid:', valid)
+```
+
+Verification can return false for a revert or invalid signature, and can throw for other RPC failures. Do not present an RPC failure as a valid signature.
+
+## Next Steps
+
+- [Usage](/sdk/wallet-modules/wallet-multisig-safe/usage)
+- [Configuration](/sdk/wallet-modules/wallet-multisig-safe/configuration)
+- [API reference](/sdk/wallet-modules/wallet-multisig-safe/api-reference)
+
+---
+
+## Need Help?
+
+<SupportCards />

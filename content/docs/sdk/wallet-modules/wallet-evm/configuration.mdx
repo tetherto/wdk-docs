@@ -26,7 +26,7 @@ const config = {
   // Optional: Maximum fee for ERC-20 transfer operations (in wei)
   transferMaxFee: 100000000000000, // 0.0001 ETH
 
-  // Optional: Maximum fee for native send/provider-backed sign operations (in wei)
+  // Optional: Execution-gas fee cap for send/provider-backed sign operations (in wei)
   transactionMaxFee: 100000000000000
 }
 
@@ -35,7 +35,7 @@ const wallet = new WalletManagerEvm(seedPhrase, config)
 
 ## Signer Configuration
 
-`WalletManagerEvm` accepts either a BIP-39 seed phrase/seed bytes or a derivable EVM signer as its first argument. Use the `@tetherto/wdk-wallet-evm/signers` entrypoint when you need explicit signer objects:
+`WalletManagerEvm` accepts a BIP-39 mnemonic, raw BIP-32 master seed bytes (16–64 bytes), or a derivable EVM signer as its first argument. Raw seed bytes do not have to originate from BIP-39. Use the `@tetherto/wdk-wallet-evm/signers` entrypoint when you need explicit signer objects:
 
 ```javascript title="Create A Manager From A Seed Signer"
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
@@ -104,16 +104,16 @@ const readOnlyAccount = new WalletAccountReadOnlyEvm(
 
 ### Provider
 
-The `provider` option specifies how to connect to the blockchain. The published beta.19 declaration accepts a URL string, an EIP-1193 compatible provider instance, or an ordered array of those values for automatic failover.
+The `provider` option specifies how to connect to the blockchain. The published beta.20 declaration accepts a URL string, an EIP-1193 compatible provider instance, or an ordered array of those values for automatic failover.
 
 **Type:** `string | Eip1193Provider | Array<string | Eip1193Provider>`
 
-At runtime, beta.19 also accepts an already-built ethers `Provider`, such as `JsonRpcProvider`, either directly or in the failover array. The runtime reuses that object instead of wrapping it. The published beta.19 TypeScript declaration does not include ethers `Provider`. JavaScript can use this runtime-only path directly; TypeScript projects that require the published type must use one of the declared provider inputs until the declaration is corrected.
+At runtime, beta.20 also accepts an already-built ethers `Provider`, such as `JsonRpcProvider`, either directly or in the failover array. The runtime reuses that object instead of wrapping it. The published beta.20 TypeScript declaration does not include ethers `Provider`. JavaScript can use this runtime-only path directly; TypeScript projects that require the published type must use one of the declared provider inputs until the declaration is corrected.
 
 `WalletManagerEvm` builds or accepts its provider once and shares the same provider object with every account it derives. Direct account constructors process their configurations independently, but they can share a caller-supplied ethers `Provider` object.
 
 <Callout type="warn">
-The shared ethers provider makes beta.19 manager-derived accounts incompatible with Velora beta.8, USD₮0 bridge beta.10, and Aave beta.7. These releases wrap every non-string provider in `BrowserProvider`, which requires an EIP-1193 `request()` method. Use a directly constructed `WalletAccountEvm` that retains its original RPC URL or EIP-1193 provider for these exact combinations; do not replace the account's internal provider field. Direct accounts do not receive WDK Core policy or middleware decoration, so preserve the required application checks and account-level controls.
+When the shared ethers provider lacks EIP-1193 `request()`, beta.19 and beta.20 manager-derived accounts cannot initialize Velora beta.8 and beta.9, USD₮0 bridge beta.10, or Aave beta.7. These releases wrap every non-string provider in `BrowserProvider`, which requires an EIP-1193 `request()` method. Use a directly constructed `WalletAccountEvm` that retains its original RPC URL or EIP-1193 provider for these exact combinations; do not replace the account's internal provider field. Direct accounts do not receive WDK Core policy or middleware decoration, so preserve the required application checks and account-level controls.
 </Callout>
 
 **Examples:**
@@ -245,7 +245,11 @@ try {
 
 ### Transaction Max Fee
 
-The `transactionMaxFee` option rejects native EVM `sendTransaction()` operations and provider-backed `signTransaction()` operations when WDK's estimated fee exceeds the configured value. For a signed raw transaction, the check uses current provider gas and fee-rate estimates; it does not cap the fee fields encoded in the signed bytes, so decode and review those fields independently. This is separate from `transferMaxFee`, which applies to ERC-20 token transfers. Offline signing without a provider cannot estimate fees, so the fee-cap check does not run there.
+The `transactionMaxFee` option rejects `sendTransaction()` and provider-backed `signTransaction()` when the quoted execution-gas fee exceeds the configured value. Equality is allowed. ERC-20 transfers and approvals also send through `sendTransaction()`, so this cap applies to them; transfers additionally check `transferMaxFee`.
+
+In beta.20, the quote uses the supplied `gasLimit` (or an estimate) multiplied by `maxFeePerGas`, then `gasPrice`, then the provider's current fee rate, in that order. For signed raw bytes, it uses the encoded gas limit and encoded fee rate. The quote still simulates the transaction and can reject a revert even when a gas limit is supplied. See [fee quoting](/sdk/wallet-modules/wallet-evm/api-reference#quotesendtransactiontx).
+
+This cap covers execution gas, not transferred value or the separate EIP-4844 blob-gas fee. Unspecified fields can change when an object transaction is populated after the check; a quote does not lock those fields or report the eventual fee paid. Review all signed fields before submitting external bytes. Offline signing without a provider does not run the fee-cap check.
 
 **Type:** `number | bigint` (optional)
 **Unit:** Wei (1 ETH = 1000000000000000000 Wei)

@@ -30,15 +30,17 @@ You can pay an invoice using [`account.payLightningInvoice()`](/sdk/wallet-modul
 
 ```javascript title="Pay Lightning Invoice"
 const payment = await account.payLightningInvoice({
-  encodedInvoice: 'lnbc500u1p...',
+  invoice: 'lnbc500u1p...',
   maxFeeSats: 1000
 })
 console.log('Payment result:', payment)
 ```
 
-If you enable [`syncAndRetry`](/sdk/wallet-modules/wallet-spark/configuration#automatic-retry), the wallet syncs state and retries [`account.payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference) once after a failure:
+If you enable [`syncAndRetry`](/sdk/wallet-modules/wallet-spark/configuration#automatic-retry), the wallet syncs state after a payment failure and retries [`account.payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference#paylightninginvoiceoptions) once only for a stale-leaf error. Both attempts reuse the same `transferId`. The wallet generates an ID when you omit it.
 
-```javascript title="Retry Lightning Payment Once"
+You can enable the stale-leaf retry when constructing the wallet:
+
+```javascript title="Enable Stale-Leaf Lightning Retry"
 const wallet = new WalletManagerSpark(seedPhrase, {
   network: 'MAINNET',
   syncAndRetry: true,
@@ -46,10 +48,12 @@ const wallet = new WalletManagerSpark(seedPhrase, {
 
 const account = await wallet.getAccount(0)
 await account.payLightningInvoice({
-  encodedInvoice: 'lnbc500u1p...',
+  invoice: 'lnbc500u1p...',
   maxFeeSats: 1000,
 })
 ```
+
+If a payment attempt fails with [`LightningPaymentError`](/sdk/wallet-modules/wallet-spark/api-reference#lightningpaymenterror), keep its `transferId` with the original invoice and payment options. If you later choose to retry that payment, pass the same ID rather than starting another payment. The error ID is a Spark transfer ID; it is not the Lightning request `id` accepted by [`getLightningSendRequest()`](/sdk/wallet-modules/wallet-spark/api-reference#getlightningsendrequestrequestid). See [typed error handling](/sdk/wallet-modules/wallet-spark/guides/handle-errors#transaction-errors).
 
 ## Estimate Lightning Fees
 

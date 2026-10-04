@@ -30,7 +30,7 @@ new WalletManagerSolana(seed, config)
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (object): Configuration object
-  - `provider` (string | string[], optional): Solana RPC endpoint URL or an ordered list of endpoints for failover
+  - `provider` (`string | SolanaRpc | Array<string | SolanaRpc>`, optional): RPC URL, constructed Solana RPC client, or an ordered list mixing both for failover
   - `rpcUrl` (string | string[], optional): Deprecated alias for `provider`. If both are set, `provider` takes precedence
   - `commitment` (string, optional): Commitment level ('processed', 'confirmed', or 'finalized')
   - `retries` (number, optional): Additional retry attempts for ordered provider failover (default: 3)
@@ -137,8 +137,8 @@ In v1.0.0-beta.9 the constructor was made public. The static factory method `Wal
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `sendTransaction(tx)` | Builds and sends a transaction, signs and sends a base64-encoded serialized transaction, or broadcasts a fully signed transaction | `Promise<{hash: string, fee: bigint}>` |
 | `quoteSendTransaction(tx)` | Estimates the fee for a transaction, serialized transaction, or fully signed transaction | `Promise<{fee: bigint}>` |
-| `transfer(options)` | Transfers SPL tokens to another address | `Promise<{hash: string, fee: bigint}>` |
-| `quoteTransfer(options)` | Estimates the fee for an SPL token transfer | `Promise<{fee: bigint}>` |
+| `transfer(options, solanaOptions?)` | Transfers SPL tokens to another address | `Promise<{hash: string, fee: bigint}>` |
+| `quoteTransfer(options, solanaOptions?)` | Estimates the fee for an SPL token transfer | `Promise<{fee: bigint}>` |
 | `getBalance()` | Returns the native SOL balance (in lamports) | `Promise<bigint>` |
 | `getTokenBalance(tokenMint)` | Returns the balance of a specific SPL token | `Promise<bigint>` |
 | `getTokenBalances(tokenAddresses)` | Returns balances for multiple SPL tokens | `Promise<Record<string, bigint>>` |
@@ -276,7 +276,9 @@ console.log('Estimated fee:', quote.fee, 'lamports')
 ```
 
 ##### `transfer(options)`
-Transfers SPL tokens to another address.
+
+**Signature:** `transfer(options, solanaOptions?)`
+Transfers SPL tokens to another address, with an optional UTF-8 memo. Token-2022 mints and native SOL are not supported by this method.
 
 **Parameters:**
 - `options` (TransferOptions): Transfer options
@@ -284,13 +286,15 @@ Transfers SPL tokens to another address.
   - `recipient` (string): Recipient's Solana address (base58-encoded)
   - `amount` (number | bigint): Amount in token's base units
 
+- `solanaOptions` ([SolanaTransferOptions](#solanatransferoptions), optional): `{ memo?: string }`; omitted or empty memos add no instruction
+
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Object containing transaction hash and fee (in lamports)
 
 **Throws:**
 - `AssertionError` if the account has been disposed.
 - `ProviderRequiredError` if the wallet is not connected to a provider.
 - `MaximumFeeExceededError` if the estimated fee is greater than `transferMaxFee`.
-- `ValueError` if the token amount exceeds the supported integer range or the provider cannot calculate the fee.
+- `ValueError` if the token amount exceeds the supported integer range, the memo is not a string, the transaction exceeds the size limit, or the provider cannot calculate the fee.
 
 **Example:**
 ```javascript
@@ -304,16 +308,20 @@ console.log('Transfer fee:', result.fee, 'lamports')
 ```
 
 ##### `quoteTransfer(options)`
-Estimates the fee for an SPL token transfer.
+
+**Signature:** `quoteTransfer(options, solanaOptions?)`
+Estimates the fee for an SPL token transfer, including an optional memo. Token-2022 mints and native SOL are not supported by this method.
 
 **Parameters:**
 - `options` (TransferOptions): Transfer options (same as transfer)
+
+- `solanaOptions` ([SolanaTransferOptions](#solanatransferoptions), optional): `{ memo?: string }`; omitted or empty memos add no instruction
 
 **Returns:** `Promise<{fee: bigint}>` - Object containing fee estimate (in lamports)
 
 **Throws:**
 - `ProviderRequiredError` if the wallet is not connected to a provider.
-- `ValueError` if the token amount exceeds the supported integer range or the provider cannot calculate the fee.
+- `ValueError` if the token amount exceeds the supported integer range, the memo is not a string, the transaction exceeds the size limit, or the provider cannot calculate the fee.
 
 **Example:**
 ```javascript
@@ -474,7 +482,7 @@ new WalletAccountReadOnlySolana(publicKey, config)
 | `getTokenBalances(tokenAddresses)` | Returns balances for multiple SPL tokens | `Promise<Record<string, bigint>>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `quoteSendTransaction(tx)` | Estimates the fee for a transaction or base64-encoded serialized transaction | `Promise<{fee: bigint}>` |
-| `quoteTransfer(options)` | Estimates the fee for an SPL token transfer | `Promise<{fee: bigint}>` |
+| `quoteTransfer(options, solanaOptions?)` | Estimates the fee for an SPL token transfer | `Promise<{fee: bigint}>` |
 | `getTransactionReceipt(hash)` | Gets a native transaction object; deprecated in favor of `getTransaction()` | `Promise<SolanaTransactionReceipt \| null>` |
 | `getTransaction(hash)` | Returns normalized finality for a Solana signature | `Promise<TransactionReceipt & SolanaTransactionDetails>` |
 | `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final` finality | `Promise<TransactionReceipt & SolanaTransactionDetails>` |
@@ -579,19 +587,23 @@ console.log('Estimated fee:', quote.fee, 'lamports')
 Pass a base64-encoded serialized transaction to quote a message created by another service. The read-only account decodes the transaction and does not sign or broadcast it.
 
 ##### `quoteTransfer(options)`
-Estimates the fee for an SPL token transfer.
+
+**Signature:** `quoteTransfer(options, solanaOptions?)`
+Estimates the fee for an SPL token transfer, including an optional memo. Token-2022 mints and native SOL are not supported by this method.
 
 **Parameters:**
 - `options` (TransferOptions): Transfer options
   - `token` (string): Token mint address (base58-encoded)
   - `recipient` (string): Recipient's Solana address (base58-encoded)
-  - `amount` (number): Amount in token's base units
+  - `amount` (number | bigint): Amount in token's base units
+
+- `solanaOptions` ([SolanaTransferOptions](#solanatransferoptions), optional): `{ memo?: string }`; omitted or empty memos add no instruction
 
 **Returns:** `Promise<{fee: bigint}>` - Object containing fee estimate (in lamports)
 
 **Throws:**
 - `ProviderRequiredError` if the wallet is not connected to a provider.
-- `ValueError` if the token amount exceeds the supported integer range or the provider cannot calculate the fee.
+- `ValueError` if the token amount exceeds the supported integer range, the memo is not a string, the transaction exceeds the size limit, or the provider cannot calculate the fee.
 
 **Example:**
 ```javascript
@@ -640,9 +652,15 @@ The package re-exports these types. `dropped` is part of the shared union, but t
 
 ### SolanaWalletConfig
 
+A manager shares one initialized RPC client with every derived account and their read-only conversions. Every failover entry must use the same network. A supplied client is reused as-is.
+
 ```typescript
+import { createSolanaRpc } from '@solana/rpc'
+
+type SolanaRpc = ReturnType<typeof createSolanaRpc>
+
 interface SolanaWalletConfig {
-  provider?: string | string[];
+  provider?: string | SolanaRpc | Array<string | SolanaRpc>;
   /** Deprecated alias for provider. provider takes precedence when both are set. */
   rpcUrl?: string | string[];
   commitment?: 'processed' | 'confirmed' | 'finalized';
@@ -651,6 +669,18 @@ interface SolanaWalletConfig {
   transactionMaxFee?: number | bigint;
 }
 ```
+
+### SolanaTransferOptions
+
+Import this public type from the package root when annotating the optional second argument to SPL transfer or quote methods:
+
+```typescript
+import type { SolanaTransferOptions } from '@tetherto/wdk-wallet-solana'
+
+const solanaOptions: SolanaTransferOptions = { memo: 'Invoice 1042' }
+```
+
+`memo?: string` is encoded as UTF-8 and added before the SPL transfer instruction. An empty string is ignored. A non-string memo or an oversized complete transaction raises `ValueError`; the available memo length depends on the other transaction instructions. Token-2022 memo-transfer extensions remain unsupported.
 
 ### FullySignedTransaction
 

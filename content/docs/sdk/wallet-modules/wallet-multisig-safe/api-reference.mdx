@@ -1,0 +1,569 @@
+---
+title: Safe multisig API reference
+description: Reference the public Safe multisig classes, proposal and message methods, configuration and result semantics.
+docType: reference
+schemaType: APIReference
+---
+
+This reference covers `@tetherto/wdk-wallet-multisig-safe` **1.0.0-beta.1**. Runtime behavior and declarations are checked against the [published revision](https://github.com/tetherto/wdk-wallet-multisig-safe/tree/6c748fcb8ac7ced5252c38509c7362c7828243aa).
+
+## Imports
+
+Import JavaScript values from the package root:
+
+```javascript
+import WalletManagerMultisigSafe, {
+  WalletAccountMultisigSafe,
+  WalletAccountReadOnlyMultisigSafe,
+  SafeTxServiceCoordinator,
+  ConfigurationError,
+  HashMismatchError,
+  toJsonSafe
+} from '@tetherto/wdk-wallet-multisig-safe'
+```
+
+Import TypeScript-only contracts separately:
+
+```typescript
+import type {
+  MultisigSafeWalletConfig,
+  MultisigSafeWalletReadOnlyConfig,
+  MultisigProposal,
+  MultisigMessageProposal,
+  MultisigInteractionResult,
+  IMultisigCoordinator
+} from '@tetherto/wdk-wallet-multisig-safe'
+```
+
+The tables use `or` for union alternatives. See [configuration](/sdk/wallet-modules/wallet-multisig-safe/configuration) for the complete config variants.
+
+## WalletManagerMultisigSafe
+
+The default export derives signer accounts for one configured Safe.
+
+| Method | Returns |
+| --- | --- |
+| `new WalletManagerMultisigSafe(seed, config)` | `WalletManagerMultisigSafe` |
+| `getAccount(index?)` | `Promise<WalletAccountMultisigSafe>` |
+| `getAccountByPath(path)` | `Promise<WalletAccountMultisigSafe>` |
+| `getFeeRates()` | `Promise<FeeRates>` |
+| `dispose()` | `void` |
+| `static getRandomSeedPhrase(wordCount?)` | `string` |
+| `static isValidSeedPhrase(seedPhrase)` | `boolean` |
+| `addSigner(name, signer)` | `WalletManager` |
+| `getSigner(name?)` | `ISigner` |
+| `getSigners()` | `Record<string, ISigner>` |
+
+`seed` is an inherited `Uint8Array` or undefined getter; never log it. Named signer registry methods do not change this module's seed-based derivation.
+#### constructor
+
+`new WalletManagerMultisigSafe(seed, config)` returns `WalletManagerMultisigSafe`. Accepts a mnemonic string or seed bytes and `MultisigSafeWalletConfig`. This module derives owners from the seed; the Safe identity comes from `safeOptions`.
+
+#### getAccount
+
+`getAccount(index?)` returns `Promise<WalletAccountMultisigSafe>`. Derives and caches the owner at `m/44'/60'/0'/0/index`; default index is zero. All derived owners share the configured Safe, rather than creating a different Safe per index.
+
+#### getAccountByPath
+
+`getAccountByPath(path)` returns `Promise<WalletAccountMultisigSafe>`. Derives the owner's relative BIP-44 path, for example `0'/0/0`. A derivation does not establish Safe ownership.
+
+#### getFeeRates
+
+`getFeeRates()` returns `Promise<FeeRates>`. Returns normal and fast EVM fee rates in wei from the configured provider. Requires a provider.
+
+#### dispose
+
+`dispose()` returns `void`. Disposes cached owner accounts. Beta.1 retains the manager's seed bytes; this call does not erase all secret material. Release the manager when finished and clear caller-controlled mutable copies after their final use.
+
+#### getRandomSeedPhrase
+
+`static getRandomSeedPhrase(wordCount?)` returns `string`. Inherited seed helper; accepts 12 or 24 words, default 12. Never log a generated production mnemonic.
+
+#### isValidSeedPhrase
+
+`static isValidSeedPhrase(seedPhrase)` returns `boolean`. Inherited mnemonic-format/checksum validation. It does not establish ownership, funding or the correct derivation path.
+
+#### addSigner
+
+`addSigner(name, signer)` returns `WalletManager`. Inherited registry operation accepting `ISigner`; blank names fail. This Safe manager does not consume named signers when deriving accounts, so registration does not provide hardware/external signer support.
+
+#### getSigner
+
+`getSigner(name?)` returns `ISigner`. Reads the inherited registry. Throws when the requested signer, or omitted default signer, is absent.
+
+#### getSigners
+
+`getSigners()` returns `Record<string, ISigner>`. Returns a shallow copy of the named-signer registry. It excludes the default signer.
+
+## WalletAccountReadOnlyMultisigSafe
+
+Use an account without a seed to inspect Safe state and prepare estimates.
+
+| Method | Returns |
+| --- | --- |
+| `new WalletAccountReadOnlyMultisigSafe(config)` | `WalletAccountReadOnlyMultisigSafe` |
+| `static generateDeterministicSaltNonce(owners, threshold)` | `string` |
+| `getAddress()` | `Promise<string>` |
+| `isDeployed()` | `Promise<boolean>` |
+| `getOwners()` | `Promise<string[]>` |
+| `getThreshold()` | `Promise<number>` |
+| `getMultisigInfo()` | `Promise<MultisigInfo>` |
+| `getNonce()` | `Promise<bigint>` |
+| `getVersion()` | `Promise<string>` |
+| `getBalance()` | `Promise<bigint>` |
+| `getTokenBalance(tokenAddress)` | `Promise<bigint>` |
+| `getTransactionReceipt(hash)` | `Promise<EvmTransactionReceipt or UserOperationReceipt or null>` |
+| `verify(message, signature)` | `Promise<boolean>` |
+| `getPaymasterTokenBalance()` | `Promise<bigint>` |
+| `getProposal(proposalId)` | `Promise<MultisigProposal or null>` |
+| `getProposals(proposalIds)` | `Promise<Record<string, MultisigProposal or null>>` |
+| `isReadyToExecute(proposalId)` | `Promise<boolean>` |
+| `getMessageProposal(messageId)` | `Promise<MultisigMessageProposal or null>` |
+| `getMessageProposals(messageIds)` | `Promise<Record<string, MultisigMessageProposal or null>>` |
+| `quoteDeploy()` | `Promise<{ fee: bigint }>` |
+| `quoteSendTransaction(tx, config?)` | `Promise<{ fee: bigint }>` |
+| `quoteTransfer(transferOptions, config?)` | `Promise<{ fee: bigint }>` |
+| `quoteExecuteProposal(proposalId)` | `Promise<Omit<TransactionResult, "hash">>` |
+| `getTransaction(hash)` | `Promise<TransactionReceipt>` |
+| `waitForTransaction(hash, options?)` | `Promise<TransactionReceipt>` |
+
+Inherited polling getters are `defaultWaitInterval: number` (4000 ms) and `defaultWaitTimeout: number` (60000 ms). They do not make normalized lookup work in beta.1.
+#### constructor
+
+`new WalletAccountReadOnlyMultisigSafe(config)` returns `WalletAccountReadOnlyMultisigSafe`. Accepts `MultisigSafeWalletReadOnlyConfig`. Supply existing or predicted Safe options and a matching chain/provider/bundler. No seed is accepted.
+
+#### generateDeterministicSaltNonce
+
+`static generateDeterministicSaltNonce(owners, threshold)` returns `string`. Returns the hexadecimal salt derived from the sorted lowercase owner addresses and threshold. Use the same owner, threshold and salt configuration on every device.
+
+#### getAddress
+
+`getAddress()` returns `Promise<string>`. Returns the existing or predicted Safe address, not the owner EOA. Prediction does not deploy or fund the Safe.
+
+#### isDeployed
+
+`isDeployed()` returns `Promise<boolean>`. Checks for Safe deployment through the provider.
+
+#### getOwners
+
+`getOwners()` returns `Promise<string[]>`. Returns cached owners, reads deployed owners, or uses the predicted owner list. Throws if an undeployed account has no configured owners. Recreate the account after external governance changes to avoid stale cached values.
+
+#### getThreshold
+
+`getThreshold()` returns `Promise<number>`. Returns the cached, deployed or predicted threshold. The deployed threshold can change after a governance transaction.
+
+#### getMultisigInfo
+
+`getMultisigInfo()` returns `Promise<MultisigInfo>`. Returns `{ owners, threshold }` using the same owner/threshold cache.
+
+#### getNonce
+
+`getNonce()` returns `Promise<bigint>`. Reads the operation nonce using the Safe account. A stored proposal retains its signed nonce.
+
+#### getVersion
+
+`getVersion()` returns `Promise<string>`. Returns the deployed Safe version or `1.4.1` for an undeployed Safe.
+
+#### getBalance
+
+`getBalance()` returns `Promise<bigint>`. Returns the Safe native balance in wei, not the owner EOA balance.
+
+#### getTokenBalance
+
+`getTokenBalance(tokenAddress)` returns `Promise<bigint>`. Returns the Safe ERC-20 balance in token base units. Verify the token belongs to the configured chain.
+
+#### getTransactionReceipt
+
+`getTransactionReceipt(hash)` returns `Promise<EvmTransactionReceipt or UserOperationReceipt or null>`. First queries an EVM transaction receipt; if absent, requests a UserOperation receipt from the bundler. RPC exceptions can prevent fallback. Receipt presence alone is insufficient: check the EVM status or UserOperation success. This does not normalize the two receipt shapes.
+
+#### verify
+
+`verify(message, signature)` returns `Promise<boolean>`. Calls the deployed Safe EIP-1271 verifier with the message hash and combined signature. Returns false for an invalid result or revert; other RPC errors propagate.
+
+#### getPaymasterTokenBalance
+
+`getPaymasterTokenBalance()` returns `Promise<bigint>`. Reads the Safe balance for `paymasterTokenAddress`. Throws when no paymaster token is configured.
+
+#### getProposal
+
+`getProposal(proposalId)` returns `Promise<MultisigProposal or null>`. Reads coordinator data and returns identifier, confirmations, threshold and status. Status is `executed` when the stored UserOperation has an Ethereum transaction hash, otherwise `pending`. This is not a receipt-success check and does not expose the full payment payload.
+
+#### getProposals
+
+`getProposals(proposalIds)` returns `Promise<Record<string, MultisigProposal or null>>`. Looks up the supplied string identifiers in parallel. Missing proposals produce null entries; an underlying service failure rejects the call.
+
+#### isReadyToExecute
+
+`isReadyToExecute(proposalId)` returns `Promise<boolean>`. Returns whether the coordinator reports enough confirmations; missing proposals return false. It does not check receipt success or guarantee executable on-chain state.
+
+#### getMessageProposal
+
+`getMessageProposal(messageId)` returns `Promise<MultisigMessageProposal or null>`. Returns the message, confirmations, threshold and optional combined signature from coordinator data, or null when missing.
+
+#### getMessageProposals
+
+`getMessageProposals(messageIds)` returns `Promise<Record<string, MultisigMessageProposal or null>>`. Looks up string message identifiers in parallel, preserving missing entries as null.
+
+#### quoteDeploy
+
+`quoteDeploy()` returns `Promise<{ fee: bigint }>`. Estimates the EOA-funded deployment in native wei; throws if the Safe is already deployed. Use predicted owner options for deployment.
+
+#### quoteSendTransaction
+
+`quoteSendTransaction(tx, config?)` returns `Promise<{ fee: bigint }>`. Accepts `EvmTransaction` and partial fee-mode configuration. Returns native wei or paymaster token base units. Sponsored mode returns zero without proving the operation will be accepted. The quote does not submit or cap a later operation.
+
+#### quoteTransfer
+
+`quoteTransfer(transferOptions, config?)` returns `Promise<{ fee: bigint }>`. Builds an ERC-20 transfer from `token`, `recipient` and `amount`, then applies the same estimate behavior as the transaction quote. Amount is in token base units.
+
+#### quoteExecuteProposal
+
+`quoteExecuteProposal(proposalId)` returns `Promise<Omit<TransactionResult, "hash">>`. Reads the stored UserOperation and calculates its maximum native gas cost, regardless of token or sponsored fee mode. Missing proposals fail. Do not compare this directly with a token-denominated transfer quote.
+
+#### getTransaction
+
+`getTransaction(hash)` returns `Promise<TransactionReceipt>`. Inherited from the base wallet but not implemented by Safe beta.1; throws `NotImplementedError`. Use the explicit receipt API.
+
+#### waitForTransaction
+
+`waitForTransaction(hash, options?)` returns `Promise<TransactionReceipt>`. Inherited polling requires the unimplemented normalized `getTransaction()`, so it is not a working Safe beta.1 tracking path.
+
+## WalletAccountMultisigSafe
+
+The writable account exposes these signing/proposal methods and all read-only members below.
+
+| Method | Returns |
+| --- | --- |
+| `new WalletAccountMultisigSafe(seed, path, config)` | `WalletAccountMultisigSafe` |
+| `getSignerAddress()` | `Promise<string>` |
+| `sign(message)` | `Promise<string>` |
+| `proposeMessage(message)` | `Promise<MultisigMessageProposal & MultisigSignature>` |
+| `approveMessageProposal(messageId)` | `Promise<MultisigMessageProposal & MultisigSignature>` |
+| `validateSignerIsOwner()` | `Promise<void>` |
+| `deploy()` | `Promise<TransactionResult>` |
+| `propose(tx, options?)` | `Promise<MultisigProposal & MultisigInteractionResult>` |
+| `proposeTransfer(transferOptions, options?)` | `Promise<MultisigProposal & MultisigInteractionResult>` |
+| `approveProposal(proposalId)` | `Promise<MultisigProposal & MultisigInteractionResult>` |
+| `rejectProposal(proposalId)` | `Promise<MultisigProposal>` |
+| `executeProposal(proposalId)` | `Promise<TransactionResult>` |
+| `addOwner(ownerAddress, options?)` | `Promise<MultisigProposal>` |
+| `removeOwner(ownerAddress, options?)` | `Promise<MultisigProposal>` |
+| `swapOwner(oldOwnerAddress, newOwnerAddress, config?)` | `Promise<MultisigProposal>` |
+| `changeThreshold(newThreshold, config?)` | `Promise<MultisigProposal>` |
+| `updateOwners(newOwners, newThreshold, config?)` | `Promise<MultisigProposal>` |
+| `toReadOnlyAccount()` | `Promise<WalletAccountReadOnlyMultisigSafe>` |
+| `dispose()` | `void` |
+| `static generateDeterministicSaltNonce(owners, threshold)` | `string` |
+| `getAddress()` | `Promise<string>` |
+| `isDeployed()` | `Promise<boolean>` |
+| `getOwners()` | `Promise<string[]>` |
+| `getThreshold()` | `Promise<number>` |
+| `getMultisigInfo()` | `Promise<MultisigInfo>` |
+| `getNonce()` | `Promise<bigint>` |
+| `getVersion()` | `Promise<string>` |
+| `getBalance()` | `Promise<bigint>` |
+| `getTokenBalance(tokenAddress)` | `Promise<bigint>` |
+| `getTransactionReceipt(hash)` | `Promise<EvmTransactionReceipt or UserOperationReceipt or null>` |
+| `verify(message, signature)` | `Promise<boolean>` |
+| `getPaymasterTokenBalance()` | `Promise<bigint>` |
+| `getProposal(proposalId)` | `Promise<MultisigProposal or null>` |
+| `getProposals(proposalIds)` | `Promise<Record<string, MultisigProposal or null>>` |
+| `isReadyToExecute(proposalId)` | `Promise<boolean>` |
+| `getMessageProposal(messageId)` | `Promise<MultisigMessageProposal or null>` |
+| `getMessageProposals(messageIds)` | `Promise<Record<string, MultisigMessageProposal or null>>` |
+| `quoteDeploy()` | `Promise<{ fee: bigint }>` |
+| `quoteSendTransaction(tx, config?)` | `Promise<{ fee: bigint }>` |
+| `quoteTransfer(transferOptions, config?)` | `Promise<{ fee: bigint }>` |
+| `quoteExecuteProposal(proposalId)` | `Promise<Omit<TransactionResult, "hash">>` |
+| `getTransaction(hash)` | `Promise<TransactionReceipt>` |
+| `waitForTransaction(hash, options?)` | `Promise<TransactionReceipt>` |
+
+Properties: `index: number`, `path: string`, and `keyPair: KeyPair`. They describe the owner signer. Do not expose or mutate key bytes. Inherited polling getters retain the read-only values and limitations.
+#### constructor
+
+`new WalletAccountMultisigSafe(seed, path, config)` returns `WalletAccountMultisigSafe`. Accepts a mnemonic string or seed bytes, relative owner derivation path and `MultisigSafeWalletConfig`. It extends the read-only Safe account.
+
+#### getSignerAddress
+
+`getSignerAddress()` returns `Promise<string>`. Returns the derived owner EOA address, separate from the Safe address.
+
+#### sign
+
+`sign(message)` returns `Promise<string>`. Calls `proposeMessage()` and returns the current owner signature. This writes through the coordinator and does not return a combined threshold signature.
+
+#### proposeMessage
+
+`proposeMessage(message)` returns `Promise<MultisigMessageProposal & MultisigSignature>`. Validates ownership, signs the Safe message and submits it to the coordinator. Returns message ID/text, owner signature, confirmation count, threshold and the coordinator combined signature, which may be null.
+
+#### approveMessageProposal
+
+`approveMessageProposal(messageId)` returns `Promise<MultisigMessageProposal & MultisigSignature>`. Checks membership, loads the message, verifies its hash against the requested ID and adds this owner signature. Missing or mismatched messages fail before signing.
+
+#### validateSignerIsOwner
+
+`validateSignerIsOwner()` returns `Promise<void>`. Checks the signer against the Safe owners. Throws a WDK signer error when it is not an owner.
+
+#### deploy
+
+`deploy()` returns `Promise<TransactionResult>`. Submits an EOA-funded Safe factory transaction from predicted options. Requires native funds in the signer EOA; already deployed Safes fail. Returned hash is an EVM transaction hash.
+
+#### propose
+
+`propose(tx, options?)` returns `Promise<MultisigProposal & MultisigInteractionResult>`. Accepts `EvmTransaction`; options combine `MultisigTransactionOptions` with partial token/sponsored/native configuration. Builds, signs and shares an operation. With `autoExecute: true`, submits when the initial confirmation already meets the threshold; `status: executed` at that point means bundler submission, not receipt-confirmed success.
+
+#### proposeTransfer
+
+`proposeTransfer(transferOptions, options?)` returns `Promise<MultisigProposal & MultisigInteractionResult>`. Accepts ERC-20 `{ token, recipient, amount }` and the same proposal options. The token-paid branch checks its estimate against `transferMaxFee` using greater-than, so equality passes. Native and sponsored branches do not enforce that cap. The check is not a later execution cap.
+
+#### approveProposal
+
+`approveProposal(proposalId)` returns `Promise<MultisigProposal & MultisigInteractionResult>`. Validates membership and operation hash, signs and shares the confirmation. Returns pending even at threshold; no auto-execution option is accepted.
+
+#### rejectProposal
+
+`rejectProposal(proposalId)` returns `Promise<MultisigProposal>`. Creates a zero-value self-transaction proposal using the original operation nonce. It needs approvals and execution; calling this method does not cancel a payment on its own.
+
+#### executeProposal
+
+`executeProposal(proposalId)` returns `Promise<TransactionResult>`. Requires enough confirmations and a matching operation hash, aggregates signatures and submits through the bundler. Returns UserOperation hash and maximum native gas cost, not an observed charged fee. Confirm the receipt before declaring success.
+
+#### addOwner
+
+`addOwner(ownerAddress, options?)` returns `Promise<MultisigProposal>`. Proposes an owner addition. Options combine optional `threshold` and partial fee-mode config. Does not apply the change immediately.
+
+#### removeOwner
+
+`removeOwner(ownerAddress, options?)` returns `Promise<MultisigProposal>`. Proposes removal. If no threshold is supplied, it lowers the current threshold when needed to fit the remaining owners. Review the resulting configuration.
+
+#### swapOwner
+
+`swapOwner(oldOwnerAddress, newOwnerAddress, config?)` returns `Promise<MultisigProposal>`. Proposes replacing one owner, with optional partial fee-mode configuration.
+
+#### changeThreshold
+
+`changeThreshold(newThreshold, config?)` returns `Promise<MultisigProposal>`. Proposes a new numeric approval threshold, with optional fee-mode configuration.
+
+#### updateOwners
+
+`updateOwners(newOwners, newThreshold, config?)` returns `Promise<MultisigProposal>`. Builds a batched owner/threshold change. Throws when there is no change. Review the complete resulting owner set before approving.
+
+#### toReadOnlyAccount
+
+`toReadOnlyAccount()` returns `Promise<WalletAccountReadOnlyMultisigSafe>`. Returns a query-only copy asynchronously. Await the result before calling its methods; this does not itself dispose the original signer.
+
+#### dispose
+
+`dispose()` returns `void`. Disposes the derived signer and clears local secret references. Do not continue signing afterward.
+
+#### generateDeterministicSaltNonce
+
+`static generateDeterministicSaltNonce(owners, threshold)` returns `string`. Returns the hexadecimal salt derived from the sorted lowercase owner addresses and threshold. Use the same owner, threshold and salt configuration on every device.
+
+#### getAddress
+
+`getAddress()` returns `Promise<string>`. Returns the existing or predicted Safe address, not the owner EOA. Prediction does not deploy or fund the Safe.
+
+#### isDeployed
+
+`isDeployed()` returns `Promise<boolean>`. Checks for Safe deployment through the provider.
+
+#### getOwners
+
+`getOwners()` returns `Promise<string[]>`. Returns cached owners, reads deployed owners, or uses the predicted owner list. Throws if an undeployed account has no configured owners. Recreate the account after external governance changes to avoid stale cached values.
+
+#### getThreshold
+
+`getThreshold()` returns `Promise<number>`. Returns the cached, deployed or predicted threshold. The deployed threshold can change after a governance transaction.
+
+#### getMultisigInfo
+
+`getMultisigInfo()` returns `Promise<MultisigInfo>`. Returns `{ owners, threshold }` using the same owner/threshold cache.
+
+#### getNonce
+
+`getNonce()` returns `Promise<bigint>`. Reads the operation nonce using the Safe account. A stored proposal retains its signed nonce.
+
+#### getVersion
+
+`getVersion()` returns `Promise<string>`. Returns the deployed Safe version or `1.4.1` for an undeployed Safe.
+
+#### getBalance
+
+`getBalance()` returns `Promise<bigint>`. Returns the Safe native balance in wei, not the owner EOA balance.
+
+#### getTokenBalance
+
+`getTokenBalance(tokenAddress)` returns `Promise<bigint>`. Returns the Safe ERC-20 balance in token base units. Verify the token belongs to the configured chain.
+
+#### getTransactionReceipt
+
+`getTransactionReceipt(hash)` returns `Promise<EvmTransactionReceipt or UserOperationReceipt or null>`. First queries an EVM transaction receipt; if absent, requests a UserOperation receipt from the bundler. RPC exceptions can prevent fallback. Receipt presence alone is insufficient: check the EVM status or UserOperation success. This does not normalize the two receipt shapes.
+
+#### verify
+
+`verify(message, signature)` returns `Promise<boolean>`. Calls the deployed Safe EIP-1271 verifier with the message hash and combined signature. Returns false for an invalid result or revert; other RPC errors propagate.
+
+#### getPaymasterTokenBalance
+
+`getPaymasterTokenBalance()` returns `Promise<bigint>`. Reads the Safe balance for `paymasterTokenAddress`. Throws when no paymaster token is configured.
+
+#### getProposal
+
+`getProposal(proposalId)` returns `Promise<MultisigProposal or null>`. Reads coordinator data and returns identifier, confirmations, threshold and status. Status is `executed` when the stored UserOperation has an Ethereum transaction hash, otherwise `pending`. This is not a receipt-success check and does not expose the full payment payload.
+
+#### getProposals
+
+`getProposals(proposalIds)` returns `Promise<Record<string, MultisigProposal or null>>`. Looks up the supplied string identifiers in parallel. Missing proposals produce null entries; an underlying service failure rejects the call.
+
+#### isReadyToExecute
+
+`isReadyToExecute(proposalId)` returns `Promise<boolean>`. Returns whether the coordinator reports enough confirmations; missing proposals return false. It does not check receipt success or guarantee executable on-chain state.
+
+#### getMessageProposal
+
+`getMessageProposal(messageId)` returns `Promise<MultisigMessageProposal or null>`. Returns the message, confirmations, threshold and optional combined signature from coordinator data, or null when missing.
+
+#### getMessageProposals
+
+`getMessageProposals(messageIds)` returns `Promise<Record<string, MultisigMessageProposal or null>>`. Looks up string message identifiers in parallel, preserving missing entries as null.
+
+#### quoteDeploy
+
+`quoteDeploy()` returns `Promise<{ fee: bigint }>`. Estimates the EOA-funded deployment in native wei; throws if the Safe is already deployed. Use predicted owner options for deployment.
+
+#### quoteSendTransaction
+
+`quoteSendTransaction(tx, config?)` returns `Promise<{ fee: bigint }>`. Accepts `EvmTransaction` and partial fee-mode configuration. Returns native wei or paymaster token base units. Sponsored mode returns zero without proving the operation will be accepted. The quote does not submit or cap a later operation.
+
+#### quoteTransfer
+
+`quoteTransfer(transferOptions, config?)` returns `Promise<{ fee: bigint }>`. Builds an ERC-20 transfer from `token`, `recipient` and `amount`, then applies the same estimate behavior as the transaction quote. Amount is in token base units.
+
+#### quoteExecuteProposal
+
+`quoteExecuteProposal(proposalId)` returns `Promise<Omit<TransactionResult, "hash">>`. Reads the stored UserOperation and calculates its maximum native gas cost, regardless of token or sponsored fee mode. Missing proposals fail. Do not compare this directly with a token-denominated transfer quote.
+
+#### getTransaction
+
+`getTransaction(hash)` returns `Promise<TransactionReceipt>`. Inherited from the base wallet but not implemented by Safe beta.1; throws `NotImplementedError`. Use the explicit receipt API.
+
+#### waitForTransaction
+
+`waitForTransaction(hash, options?)` returns `Promise<TransactionReceipt>`. Inherited polling requires the unimplemented normalized `getTransaction()`, so it is not a working Safe beta.1 tracking path.
+
+## IMultisigCoordinator
+
+The JavaScript export is an extendable base whose unimplemented operations throw. Its TypeScript export is an interface: implement it structurally rather than using a TypeScript value constructor. Generic parameters are proposal input, message input, proposal response and message response. The Safe adapter needs Safe-service-compatible data beyond the generic confirmation arrays.
+
+| Method | Returns |
+| --- | --- |
+| `submitProposal(proposalId, proposal)` | `Promise<void>` |
+| `getProposal(proposalId)` | `Promise<TProposalResponse or null>` |
+| `confirmProposal(proposalId, signature)` | `Promise<void>` |
+| `submitMessage(accountAddress, messageId, message)` | `Promise<void>` |
+| `getMessage(messageId)` | `Promise<TMessageResponse or null>` |
+| `confirmMessage(messageId, signature)` | `Promise<void>` |
+
+
+#### submitProposal
+
+`submitProposal(proposalId, proposal)` returns `Promise<void>`. Persist the complete signed operation under its identifier.
+
+#### getProposal
+
+`getProposal(proposalId)` returns `Promise<TProposalResponse or null>`. Return the stored Safe operation with its UserOperation and confirmations, or null when absent.
+
+#### confirmProposal
+
+`confirmProposal(proposalId, signature)` returns `Promise<void>`. Add one owner confirmation to the operation.
+
+#### submitMessage
+
+`submitMessage(accountAddress, messageId, message)` returns `Promise<void>`. Store the Safe message and current owner signature.
+
+#### getMessage
+
+`getMessage(messageId)` returns `Promise<TMessageResponse or null>`. Return the message, confirmations and assembled `preparedSignature` where available.
+
+#### confirmMessage
+
+`confirmMessage(messageId, signature)` returns `Promise<void>`. Add one owner message confirmation.
+
+## SafeTxServiceCoordinator
+
+Construct with `SafeTxServiceCoordinatorConfig`: required bigint `chainId`, optional `txServiceUrl` and `apiKey`. URL takes precedence. Service initialization occurs on the first request. The beta.1 service response declarations allow optional confirmations, so this class does not assign to the default `IMultisigCoordinator` interface in TypeScript. Use account `txServiceUrl`/`safeApiKey` configuration for the default coordinator; the explicit instance path works at runtime in JavaScript.
+
+| Method | Returns |
+| --- | --- |
+| `new SafeTxServiceCoordinator(config)` | `SafeTxServiceCoordinator` |
+| `submitProposal(proposalId, proposal)` | `Promise<void>` |
+| `getProposal(proposalId)` | `Promise<TProposalResponse or null>` |
+| `confirmProposal(proposalId, signature)` | `Promise<void>` |
+| `submitMessage(accountAddress, messageId, message)` | `Promise<void>` |
+| `getMessage(messageId)` | `Promise<TMessageResponse or null>` |
+| `confirmMessage(messageId, signature)` | `Promise<void>` |
+
+
+#### constructor
+
+`new SafeTxServiceCoordinator(config)` returns `SafeTxServiceCoordinator`. Creates the default Safe API Kit-backed coordinator.
+
+#### submitProposal
+
+`submitProposal(proposalId, proposal)` returns `Promise<void>`. Persist the complete signed operation under its identifier.
+
+#### getProposal
+
+`getProposal(proposalId)` returns `Promise<TProposalResponse or null>`. Return the stored Safe operation with its UserOperation and confirmations, or null when absent.
+
+#### confirmProposal
+
+`confirmProposal(proposalId, signature)` returns `Promise<void>`. Add one owner confirmation to the operation.
+
+#### submitMessage
+
+`submitMessage(accountAddress, messageId, message)` returns `Promise<void>`. Store the Safe message and current owner signature.
+
+#### getMessage
+
+`getMessage(messageId)` returns `Promise<TMessageResponse or null>`. Return the message, confirmations and assembled `preparedSignature` where available.
+
+#### confirmMessage
+
+`confirmMessage(messageId, signature)` returns `Promise<void>`. Add one owner message confirmation.
+
+## Serialization
+
+#### toJsonSafe
+
+`toJsonSafe(value: unknown): unknown` recursively converts bigints to decimal strings and byte arrays to lowercase prefixed hex. It processes arrays and plain objects without authenticating or encrypting the result.
+
+## Results and Types
+
+| Type family | Root exports |
+| --- | --- |
+| Identity/config | `ExistingSafeOptions`, `PredictedSafeOptions`, `MultisigSafeWalletCommonConfig`, `MultisigSafeWalletPaymasterTokenConfig`, `MultisigSafeWalletSponsoredConfig`, `MultisigSafeWalletNativeCoinsConfig`, `MultisigSafeWalletConfig`, `MultisigSafeWalletReadOnlyConfig` |
+| Shared multisig contracts | `MultisigInfo`, `MultisigProposal`, `MultisigMessageProposal`, `MultisigTransactionOptions`, `MultisigInteractionResult`, `MultisigSignature`, `MultisigOptions` |
+| EVM values | `FeeRates`, `KeyPair`, `EvmTransaction`, `TransactionResult`, `EvmTransactionReceipt`, `TransferOptions`, `ApproveOptions`, `UserOperationReceipt` |
+| Coordination | `MultisigCoordinatorProposal`, `MultisigCoordinatorMessage`, `MultisigCoordinatorMessageInput`, `SafeTxServiceCoordinatorConfig` |
+
+`MultisigInfo` has owners and threshold. `MultisigProposal` has `proposalId`, `confirmations`, `threshold` and a string `status`; do not narrow the shared public type to a fixed enum. `MultisigInteractionResult` optionally contains `{ hash, fee }` under `transaction`. `MultisigMessageProposal` has `messageId`, `message`, counts and a nullable combined signature; `MultisigSignature` adds the current owner `signature`. `MultisigTransactionOptions` contains optional `autoExecute`; `MultisigOptions` contains optional `threshold`.
+
+Runtime Safe proposal statuses described above reflect coordinator/submission state. Always check the receipt for success. A missing item is null; a backend failure can reject a bulk lookup.
+
+`DEFAULT_SAFE_MODULES_VERSION` is `0.2.0`; `DEFAULT_SAFE_VERSION` is `1.4.1`. Only the documented root exports and `./package` metadata subpath are public; do not import internal helpers.
+
+## Errors and Unsupported Operations
+
+The root exports `ConfigurationError` and `HashMismatchError`. Calls can also throw WDK base errors, plain errors and provider/coordinator failures. A hash mismatch must stop signing. Read-only accounts cannot sign or execute proposals. The writable account has no direct `sendTransaction()` or `transfer()` API: use proposals. Normalized `getTransaction()` and inherited `waitForTransaction()` are not implemented by this Safe release.
+
+## Next Steps
+
+- [Usage](/sdk/wallet-modules/wallet-multisig-safe/usage)
+- [Configuration](/sdk/wallet-modules/wallet-multisig-safe/configuration)
+
+---
+
+## Need Help?
+
+<SupportCards />
