@@ -18,21 +18,69 @@ const server = new WdkMcpServer('my-server', '1.0.0')
 
 The `WdkMcpServer` extends `McpServer` from the official [`@modelcontextprotocol/sdk`](https://github.com/modelcontextprotocol/typescript-sdk) with WDK-specific capabilities. All standard MCP server features are available.
 
+## Confirmation and Agent Access
+
+The server enables MCP elicitation by default. `sendTransaction`, `transfer`, `sign`, `swap`, `bridge`, and lending execution tools request approval through the MCP client before continuing. The client must support elicitation and present the request to the user. Fiat `buy` and `sell` return provider URLs without this confirmation step; the user completes the purchase or sale with the provider.
+
+For a programmatic server, the setting is `options.capabilities.elicitation`:
+
+```javascript
+const server = new WdkMcpServer('my-server', '1.0.0', {
+  capabilities: { elicitation: true }
+})
+```
+
+The `serve` command uses `WDK_MCP_ELICITATION`; the exact string `"false"` disables elicitation. A custom server script must set the constructor option itself.
+
+<Callout type="warn">
+**Disabling elicitation automatically accepts confirmation requests.** It removes the human approval step; it does not add policy checks or spending limits. If your client cannot support confirmation, expose only [read-only tools](#read-only-mode) or provide authorization outside the agent's control before enabling writes.
+</Callout>
+
+These controls apply to the exposed MCP tools. They do not isolate signing keys from code that can access the server's seed, configuration, or runtime. The toolkit does not register transaction policies automatically. The [policy engine is experimental and not production ready](/sdk/core-module/guides/transaction-policies#security-boundary), and its local method checks are not a substitute for that isolation.
+
+MCP tool annotations and agent instructions describe expected behavior; they do not enforce authorization. For the separate WDK CLI daemon, see its [security model](/cli/reference/security-model#same-user-daemon-access).
+
 ***
 
 ## Wallet Configuration
 
 ### Enable WDK
 
+Pass a BIP-39 mnemonic resolved by your application to `useWdk()`. See the [custom server example](/ai/mcp-toolkit/get-started#create-your-mcp-server) for a command-based loader:
+
 ```javascript
-server.useWdk({ seed: process.env.WDK_SEED })
+server.useWdk({ seed })
 ```
 
-The `seed` is a BIP-39 mnemonic phrase used for key derivation across all registered blockchains.
+The mnemonic is used for key derivation across all registered blockchains. If `config.seed` is omitted or empty, `useWdk()` falls back to `WDK_SEED`. The API does not resolve `WDK_SEED_COMMAND` or `WDK_SEED_FILE`; those sources are implemented by the built-in `serve` command.
 
 <Callout type="error">
-**Never hardcode seed phrases in source code.** Use environment variables or a secrets manager. The setup wizard generates a gitignored `.vscode/mcp.json` for local development.
+**Never hardcode seed phrases in source code or client configuration.** Prefer a trusted secret-manager command. Keep credential files out of version control and restrict access; gitignore does not prevent local processes from reading them.
 </Callout>
+
+### Seed Sources for `serve`
+
+The built-in `serve` command selects the first environment variable with a nonempty value in this order:
+
+1. `WDK_SEED`: the mnemonic supplied directly.
+2. `WDK_SEED_COMMAND`: a trusted shell command whose stdout contains the mnemonic.
+3. `WDK_SEED_FILE`: a UTF-8 file containing the mnemonic.
+
+Prefer `WDK_SEED_COMMAND` to putting the mnemonic in client configuration. Replace `/absolute/path/to/trusted-seed-loader` below with your own secret-manager executable; WDK does not supply it. Authenticate the secret manager before starting the MCP client. The command must work without interactive input and print only the mnemonic to stdout.
+
+```bash title="Terminal"
+WDK_SEED_COMMAND="/absolute/path/to/trusted-seed-loader" node bin/index.js serve
+```
+
+Unset `WDK_SEED` when selecting the command source, and unset both preceding variables when selecting a file. Use an absolute file path: relative paths resolve against the server process's working directory.
+
+`serve` trims the selected value or output. An empty environment value is skipped, but a whitespace-only value or empty command/file output does not trigger fallback to another source; it starts pricing-only mode. A command failure or unreadable file aborts startup. A nonempty invalid mnemonic also aborts startup.
+
+<Callout type="warn">
+**The command runs through a shell and blocks startup until it finishes.** `serve` does not configure a timeout, so a hung command prevents the MCP server from connecting. Use only commands and configuration controlled by your application, never agent-generated command text. Do not include the mnemonic in diagnostics or errors: command failures can reach client logs.
+</Callout>
+
+After resolving a nonempty seed, `serve` removes all three source variables from its own environment as it initializes WDK. This does not delete a seed file, change the parent environment, or isolate the mnemonic from code running in the server process.
 
 ### Register Wallets
 
@@ -119,10 +167,10 @@ server.registerProtocol('ethereum', 'moonpay', MoonPayProtocol, {
 
 ### Default Tokens
 
-USD₮ is auto-registered for supported chains via `DEFAULT_TOKENS`. You can query what's available:
+`DEFAULT_TOKENS` registers Tether-family tokens for configured chains, including USD₮ and XAU₮ on Ethereum. Query the registry for the available machine symbols:
 
 ```javascript
-server.getRegisteredTokens('ethereum')  // ['USDT']
+server.getRegisteredTokens('ethereum')  // ['USDT', 'XAUT']
 ```
 
 ### Custom Tokens
@@ -168,7 +216,7 @@ Each category exports three arrays for fine-grained control:
 
 ### Read-Only Mode
 
-To allow an AI agent to query data without the ability to make transactions:
+To expose only read-only MCP tools to an AI agent:
 
 ```javascript
 import {
@@ -232,9 +280,13 @@ server.registerTool(
 
 ## Environment Variables
 
+For `serve`, seed variables are optional individually. Wallet tools require a nonempty resolved seed; see [seed sources and precedence](#seed-sources-for-serve). Custom servers must resolve command or file sources in application code before calling `useWdk()`.
+
 | Variable | Required | Description |
 | --- | --- | --- |
-| `WDK_SEED` | Yes | BIP-39 mnemonic for wallet key derivation |
+| `WDK_SEED` | No | Direct mnemonic; first source checked by `serve`, and fallback for `useWdk({})` |
+| `WDK_SEED_COMMAND` | No | Trusted command whose stdout supplies the mnemonic to `serve` |
+| `WDK_SEED_FILE` | No | UTF-8 mnemonic file read by `serve` when both preceding variables are unset or empty |
 | `WDK_INDEXER_API_KEY` | No | API key for WDK Indexer |
 | `MOONPAY_API_KEY` | No | API key for MoonPay fiat on/off-ramp |
 
@@ -247,12 +299,12 @@ server.registerTool(
 </Callout>
 
 - [ ] **Use a dedicated development wallet** - Never use production wallets with real funds for testing
-- [ ] **Never hardcode seed phrases** - Always use environment variables or `.vscode/mcp.json` (gitignored)
-- [ ] **Use `WALLET_READ_TOOLS` for untrusted agents** - Only register write tools when user confirmation is available
-- [ ] **Call `server.close()` on shutdown** - This disposes the WDK instance and wipes keys from memory
+- [ ] **Use a secret-manager command** - Keep the mnemonic out of source code and client configuration; configure only a trusted loader command and authenticate it before startup
+- [ ] **Limit the exposed tools** - Use read-only tool arrays when writes are unnecessary. Before enabling writes, review [confirmation and agent access](#confirmation-and-agent-access).
+- [ ] **Await `server.close()` on shutdown** - This calls WDK disposal and closes the MCP server. Cleanup is best effort; it cannot guarantee erasure of every seed or key copy in process memory.
 - [ ] **Use `stdio` transport** - The default transport communicates only with the local AI client process
 - [ ] **Review MCP annotations** - Tools declare `readOnlyHint` and `destructiveHint` so clients can warn users appropriately
-- [ ] **Keep `.vscode/mcp.json` gitignored** - The setup wizard handles this automatically
+- [ ] **Keep client configuration gitignored** - Exclude files containing wallet credentials and restrict which processes can read them
 
 ***
 
