@@ -1,0 +1,89 @@
+---
+title: Rhino.fi SDA Configuration
+description: Configure Rhino.fi SDA authentication, destination defaults, cache lifetime, and deposit-address options.
+docType: reference
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Configure [`RhinofiProtocol`](/sdk/sda-modules/sda-rhinofi/api-reference#rhinofiprotocol) with an authenticated Rhino.fi API key. A WDK wallet account is optional. See [Usage](/sdk/sda-modules/sda-rhinofi/usage#install-and-configure) for the installation and JavaScript imports.
+
+## API Access
+
+| Field | Type | Requirement and behavior |
+|---|---|---|
+| `apiKey` | `string` | Required. Authenticates every SDA request. Missing credentials throw `ConfigurationError` during construction. |
+| `apiBaseUrl` | `string` | Optional. Defaults to the SDK's mainnet endpoint, `https://api.rhino.fi`. Trailing slashes are removed before the SDK appends its paths. |
+| `configTtlMs` | `number` | Optional. Defaults to `60000` milliseconds. Caches chain configuration and each route's accepted-token response. Set `0` to fetch fresh data on every call. |
+
+Obtain a project API key through the [Rhino.fi Console](https://console.rhino.fi) and confirm that Smart Deposit Addresses are enabled for the project. API access, creation limits, and supported routes depend on your provider account.
+
+`getTransfers()`, `getTransfer()`, `disableDepositAddress()`, and `enableDepositAddress()` require a `SECRET_` key. Keep these keys on a server you control, outside browser or mobile bundles. The provider distinguishes [public and secret API keys](https://docs.rhino.fi/get-started/api-keys); choose permissions appropriate to the operation. Custom endpoints receive the configured credential, so use only a trusted endpoint.
+
+The module omits `destinationAddress` from address descriptors when the API response does not disclose it. Standard keys do not receive that field; `SECRET_` keys can receive it. The requested destination still controls settlement. Store the destination you validated when creating the address instead of reconstructing it from an incomplete response.
+
+Cache entries include in-flight requests. A failed request is removed from the cache, so a later call can retry. Quote, history, address creation, and pause requests are not cached. Caching reduces configuration requests; it does not reserve a route, fee, or settlement amount.
+
+## Account Binding
+
+| Constructor account | Creation destination | Signing behavior |
+|---|---|---|
+| `undefined` | Pass `destinationAddress` explicitly. | No wallet is required. |
+| WDK read-only account | Defaults to the account's address when omitted. | The module only reads the address. |
+| WDK full account | Defaults to the account's address when omitted. | The module does not use its signing methods. |
+
+The default applies to [`createDepositAddress()`](/sdk/sda-modules/sda-rhinofi/api-reference#createdepositaddress). [`quoteDeposit()`](/sdk/sda-modules/sda-rhinofi/api-reference#quotedeposit) always requires an explicit `depositor` and `destinationAddress`, even when an account is bound.
+
+Match the destination chain to the supplied account or explicit address. A bound account does not select the destination chain. The provider validates the address for the requested chain; the module does not perform local address-format validation.
+
+## Address Creation Options
+
+| Field | Type | Requirement and behavior |
+|---|---|---|
+| `sourceChains` | `Blockchain[]` | Required, nonempty. One descriptor is returned per source chain. The provider currently permits multiple source chains only for EVM chains; other families require separate calls. |
+| `destinationChain` | `Blockchain` | Required. Where the provider delivers the result. |
+| `outputAsset` | `string` | Optional. Token identifier on the destination chain. Omit to bridge each accepted input token as its equivalent. |
+| `destinationAddress` | `string` | Optional with a bound account; required without one. Overrides the account destination. |
+| `addressNote` | `string` | Optional label stored by the provider, with a maximum of 80 characters. Avoid sensitive user information. |
+| `refundAddress` | `string` | Optional refund destination. Leave unset unless your Rhino.fi account manager has advised otherwise. |
+| `webhookUrl` | `string` | Optional URL for this address's events, overriding the project webhook URL in the provider console. |
+| `reusePolicy` | `'create-new'` or `'reuse-existing'` | Optional. The provider reuses a matching address by default; use `'create-new'` to request another address. |
+| `bridgeIfNotSwappable` | `boolean` | Optional. With `outputAsset`, allows a deposit that cannot be swapped to bridge as its original asset. |
+
+`Blockchain` is `string` or `number`. Use provider chain keys or numeric network IDs resolved against live configuration. Use token identifiers or contract addresses resolved against that chain's current token configuration.
+
+The module forwards the Rhino.fi creation extras to the provider. The provider enforces constraints such as the note length, mixed chain families, destination validity, and account limits. Do not treat local token resolution as proof that a requested route is currently available.
+
+<Callout type="warn">
+`bridgeIfNotSwappable: true` permits delivery of a different asset from the requested `outputAsset`. Enable it only if the recipient and application can handle the original token. A prior quote does not bind later SDA settlement.
+</Callout>
+
+## History and Webhooks
+
+[`getTransfers()`](/sdk/sda-modules/sda-rhinofi/api-reference#gettransfers) requires the deposit address's `sourceChain`. Both history methods accept `fromTimestamp` and `toTimestamp` as `Date` values. The default window ends now and starts 31 days earlier. Move the window to inspect older deposits; its span cannot exceed 31 days.
+
+`limit`, `skip`, and `status` filter the fetched history locally. They do not request another server page. Supply valid dates and nonnegative integer pagination values. The module rejects inverted or oversized windows and negative pagination values, but callers must validate other malformed inputs.
+
+Follow the provider's [webhook signature verification](https://docs.rhino.fi/webhook/verify-webhook-signature) before updating balances or status from an event. The SDA module does not expose a webhook server or signature-verification method. For rejected deposits, use `SDA_REFUND_COMPLETED` to observe refund completion; address history continues to report `refund-pending`.
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/sda-modules/sda-rhinofi/usage">
+Discover a route, create a deposit address, and track deposits.
+</Card>
+<Card title="API Reference" href="/sdk/sda-modules/sda-rhinofi/api-reference">
+Review exact options, return fields, and typed failures.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

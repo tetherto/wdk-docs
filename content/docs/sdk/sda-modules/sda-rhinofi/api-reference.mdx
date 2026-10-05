@@ -1,0 +1,299 @@
+---
+title: Rhino.fi SDA API Reference
+description: Reference for Rhino.fi SDA methods, deposit addresses, transfer status, and errors.
+docType: reference
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+The `@rhino.fi/wdk-protocol-sda-rhinofi` entrypoint exports the default class and its named alias `RhinofiProtocol`, the WDK `ISdaProtocol` interface class, seven error classes, and SDA TypeScript types. Use the [Usage](/sdk/sda-modules/sda-rhinofi/usage) page for executable JavaScript imports and examples.
+
+## RhinofiProtocol
+
+`RhinofiProtocol` extends the WDK `SdaProtocol` base class. It makes authenticated Rhino.fi requests and reads a bound account's address when address creation needs a default destination. It does not sign or broadcast funding transactions.
+
+### Constructor
+
+| Parameter | Type | Requirement |
+|---|---|---|
+| `account` | `IWalletAccount`, `IWalletAccountReadOnly`, or `undefined` | Pass `undefined` for accountless use. A bound account supplies only the default creation destination. |
+| `config` | `RhinofiProtocolConfig` | Required configuration containing `apiKey`. |
+
+See [Configuration](/sdk/sda-modules/sda-rhinofi/configuration#api-access) for the optional `apiBaseUrl` and `configTtlMs` fields. A missing API key throws the module's `ConfigurationError`. The constructor does not validate an API key's provider permissions.
+
+### Methods
+
+All methods return promises. History and lifecycle controls require a server-side `SECRET_` API key.
+
+| Method | Return type | Purpose |
+|---|---|---|
+| `getSupportedRoutes(options)` | `Promise<SdaRoute[]>` | Discover accepted input tokens for a destination. |
+| `quoteDeposit(options)` | `Promise<SdaDepositQuote>` | Estimate output and fees without locking settlement terms. |
+| `createDepositAddress(options)` | `Promise<RhinofiSdaDepositAddress[]>` | Request one descriptor per source chain. |
+| `getDepositAddress(id)` | `Promise<RhinofiSdaDepositAddress>` | Retrieve an address descriptor. |
+| `getTransfers(address, options)` | `Promise<RhinofiSdaTransfer[]>` | Read and filter address history. |
+| `getTransfer(id, options)` | `Promise<RhinofiSdaTransfer>` | Find one transfer within an address-history window. |
+| `disableDepositAddress(id)` | `Promise<void>` | Pause deposit acceptance. |
+| `enableDepositAddress(id)` | `Promise<void>` | Resume deposit acceptance. |
+
+#### getSupportedRoutes
+
+Accepts optional `SdaRoutesOptions`; `destinationChain` is required by this provider even though the generic type declares it optional.
+
+| Option | Type | Behavior |
+|---|---|---|
+| `destinationChain` | `Blockchain` | Required at runtime. Resolves against the current provider configuration. |
+| `sourceChain` | `Blockchain` | Optional. Restricts discovery to one SDA-enabled source chain. |
+| `sourceToken` | `string` | Optional. Filters accepted tokens by identifier or contract address, case-insensitively. |
+| `outputAsset` | `string` | Optional. Resolves a destination token and requests routes delivering it. |
+
+Returns one route per source chain with at least one matching input token. Each route contains `sourceChains`, `inputTokens`, `destinationChain`, `reusable: true`, and `outputAsset` when requested. Input tokens include the provider's USD deposit bounds. Tokens lacking a bridge-config entry are omitted because their decimals are unknown.
+
+Without `sourceChain`, the module requests each deposit-enabled source chain in parallel. Failed source requests are skipped; if every source request fails, it throws the first failure. A named source-chain failure propagates. A partial response is therefore not an exhaustive provider inventory.
+
+Throws `ValueError` for a missing destination, `UnsupportedChainError` for an unresolved chain or disabled source, `UnsupportedTokenError` for an unresolved output token, or `SdaExecutionError` for a failed provider request.
+
+#### quoteDeposit
+
+Accepts `RhinofiQuoteDepositOptions`, which extends `SdaDepositOptions` with two required addresses.
+
+| Option | Type | Requirement |
+|---|---|---|
+| `sourceChain` | `Blockchain` | Required. Must have SDAs enabled. |
+| `inputToken` | `string` | Required. Identifier or contract address resolved on the source chain. |
+| `destinationChain` | `Blockchain` | Required. Must exist in provider configuration. |
+| `outputAsset` | `string` | Optional. Defaults to the input token's identifier resolved on the destination chain. |
+| `inputAmount` | `number` or `bigint` | Required, positive whole base units. Use `bigint` to avoid numeric precision loss. |
+| `depositor` | `string` | Required source-chain sender address. |
+| `destinationAddress` | `string` | Required destination address, including when an account is bound. |
+
+Returns `SdaDepositQuote` with `inputChain`, `inputToken`, `inputAmount`, `destinationChain`, `outputAsset`, `outputAmount`, `fees`, and a decimal-string `rate` for a positive quoted input. Input and output amounts are `bigint` values in their respective token base units. The module omits `id` and `expiry`.
+
+The request is priced as an SDA deposit using the API account's fee configuration. The result is indicative: the provider prices settlement when the funds arrive. The module exposes no fee cap or minimum-output enforcement for that later deposit.
+
+Throws `ValueError` for a missing or nonpositive amount or missing address, `UnsupportedChainError` or `UnsupportedTokenError` for failed resolution, and `SdaExecutionError` for provider failures. Converting a noninteger `number` to base units throws native `RangeError`; malformed values can produce other native errors.
+
+#### createDepositAddress
+
+Accepts `RhinofiCreateDepositAddressOptions`: the shared `sourceChains`, `destinationChain`, optional `outputAsset`, and optional `destinationAddress`, plus the provider extras documented under [Address Creation Options](/sdk/sda-modules/sda-rhinofi/configuration#address-creation-options).
+
+`sourceChains` must be a nonempty array of SDA-enabled chains. The provider currently permits multiple sources in one call only for EVM chains. It returns one descriptor per source chain, with the same deposit address across those EVM chains; other families require separate calls. An explicit `destinationAddress` overrides the bound account; omitting it without an account throws `ValueError`. With an account, the module awaits its `getAddress()` method.
+
+Returns provider-issued, reusable descriptors. A standard key's response omits `destinationAddress`, and the module does not fill it from the request or account. Keep the confirmed destination alongside the descriptor. The provider validates mixed chain families, address validity, account limits, and creation extras.
+
+Throws `ValueError`, `UnsupportedChainError`, `UnsupportedTokenError`, or `SdaExecutionError`. This method creates or reuses a live address; it does not fund it, commit a quote, or send a blockchain transaction.
+
+#### getDepositAddress
+
+Accepts a `string` identifier returned in a descriptor's `id` and returns its current descriptor. Identifiers carry the provider chain and address in `<chain>:<address>` form. Store and reuse them verbatim.
+
+Throws `ValueError` for malformed identifiers, `NoSuchElementError` for a missing address, or `SdaExecutionError` for other request failures. Destination-field disclosure depends on the API key.
+
+#### getTransfers
+
+Accepts a deposit-address `string` and optional `RhinofiTransfersOptions`. Requires a `SECRET_` key and `options.sourceChain` at runtime.
+
+| Option | Type | Behavior |
+|---|---|---|
+| `sourceChain` | `Blockchain` | Required by this provider; identifies the address's source chain. |
+| `fromTimestamp` | `Date` | Optional window start. Defaults to 31 days before the end. |
+| `toTimestamp` | `Date` | Optional window end. Defaults to now. |
+| `limit` | `number` | Optional maximum results from the fetched window. |
+| `skip` | `number` | Optional number of filtered, sorted results to skip within that window. |
+| `status` | `SdaTransferStatus` | Optional exact normalized status filter. |
+
+Returns normalized transfers newest first, with missing timestamps last. Status filtering, sorting, and pagination happen locally after the address history is fetched. Moving the date window is required for older periods; pagination does not extend it.
+
+Supply valid `Date` values and nonnegative integer pagination values. The module rejects an inverted window, a span over 31 days, missing address or source chain, and negative `limit` or `skip`. It does not validate every malformed date or pagination value.
+
+Throws `ValueError`, `UnsupportedChainError`, `NoSuchElementError` for a missing address, or `SdaExecutionError`. Window validation occurs after the chain-config read. See [Transfer Status](#transfer-status) for refund limitations.
+
+#### getTransfer
+
+Accepts a `string` transfer `id` and optional `RhinofiHistoryWindow`. Requires a `SECRET_` key. The identifier contains the source chain, deposit address, and provider deposit ID in `<chain>:<address>:<depositId>` form.
+
+Searches the address's history within the requested window and returns the matching transfer. The default window covers the last 31 days; pass the original window for older transfers. There is no direct provider lookup by SDA transfer ID through this method.
+
+Throws `ValueError` for malformed identifiers or an inverted or oversized window, `NoSuchElementError` when the address or transfer is absent from that window, and `SdaExecutionError` for request failures. A missing transfer does not establish that it never existed.
+
+#### disableDepositAddress
+
+Accepts a descriptor's `id` as a `string`. Requires a `SECRET_` key. Sends a pause request scoped to the deposit chain embedded in the identifier and resolves when that request succeeds.
+
+Deposits arriving while paused are rejected instead of converted; refund processing follows the provider's policies. This does not cancel or prove completion of earlier activity. Throws `ValueError`, `NoSuchElementError`, or `SdaExecutionError`.
+
+#### enableDepositAddress
+
+Accepts a descriptor's `id` as a `string`. Requires a `SECRET_` key. Sends an unpause request for its deposit chain and resolves when the request succeeds.
+
+This provider-specific method resumes acceptance after `disableDepositAddress()`. It is not declared on `ISdaProtocol`. Throws `ValueError`, `NoSuchElementError`, or `SdaExecutionError`.
+
+### Unsupported Methods
+
+These inherited optional methods are callable but always reject with WDK `UnsupportedOperationError`.
+
+| Method | Behavior |
+|---|---|
+| `deriveDepositAddress(options)` | Unsupported. Provider-issued addresses cannot be derived locally. |
+| `renewDepositAddress(id)` | Unsupported. The module exposes no activation-renewal flow. |
+| `recoverDepositAddress(options)` | Unsupported. The module exposes no deposit-reindex endpoint. |
+| `getTransfersByRecipient(destinationChain, recipient, options)` | Unsupported. Read history per address instead. |
+
+#### deriveDepositAddress
+
+Inherits the base method taking `SdaCreateDepositAddressOptions`. Rejects with `UnsupportedOperationError` without deriving an address. Client-side derivation or verification of provider-issued addresses is unavailable.
+
+#### renewDepositAddress
+
+Inherits the base method taking a `string` address identifier. Rejects with `UnsupportedOperationError`; no new expiry or renewed descriptor is returned.
+
+#### recoverDepositAddress
+
+Inherits the base method taking WDK `SdaRecoveryOptions`. Rejects with `UnsupportedOperationError`; the module does not initiate reindexing or refund recovery.
+
+#### getTransfersByRecipient
+
+Inherits the base method taking `Blockchain`, recipient `string`, and optional `SdaTransfersOptions`. Rejects with `UnsupportedOperationError`. Keep an application index of created addresses and reconcile each address separately.
+
+## Returned Types
+
+### RhinofiSdaToken
+
+Extends `SdaToken` with USD-denominated deposit bounds.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `token` | `string` | Provider identifier used in subsequent SDA calls. |
+| `chain` | `Blockchain` | Provider chain key for this token. |
+| `symbol` | `string` | Provider token symbol. Preserve it when passing machine values. |
+| `decimals` | `number` | Precision used to interpret token base units. |
+| `address` | `string`, optional | Contract address when available. |
+| `minDepositLimitUsd` | `number` | Minimum deposit value in USD. |
+| `maxDepositLimitUsd` | `number` | Maximum deposit value in USD. |
+
+The mapper does not populate the generic optional `name`. The numeric USD bounds are not token quantities. Routes and address descriptors omit the generic base-unit `limits` field.
+
+### RhinofiSdaDepositAddress
+
+Defined as `Omit<SdaDepositAddress, 'destinationAddress'> & RhinofiDepositAddressExtras` so the returned destination can be absent.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `address` | `string` | Source-chain address to fund. |
+| `id` | `string` | Composite identifier for lookup and lifecycle methods. |
+| `sourceChains` | `Blockchain[]` | One source chain for each returned descriptor. |
+| `supportedInputTokens` | `SdaToken[]` | Runtime entries carry the Rhino.fi USD deposit-limit fields. |
+| `destinationChain` | `Blockchain` | Chain where settlement occurs. |
+| `outputAsset` | `SdaToken`, optional | Requested output token, when present. |
+| `destinationAddress` | `string`, optional | Disclosed only to `SECRET_` keys. |
+| `reusable` | `boolean` | Returned as `true`. |
+| `isActive` | `boolean` | Whether the provider monitors the address. |
+| `isPaused` | `boolean` | Whether deposit acceptance is paused. |
+| `addressNote` | `string`, optional | Provider-stored label. |
+| `refundAddress` | `string`, optional | Configured refund destination. |
+| `chainMetadata` | `RhinofiChainMetadata`, optional | Stellar base address and memo data. |
+
+The module does not populate `limits` or `expiry`. The shared type allows those optional fields. `isActive` and `isPaused` are required in the declared Rhino.fi type; treat missing provider response fields as incomplete data instead of assuming activation.
+
+`RhinofiChainMetadata` contains `_tag: 'STELLAR'`, `baseAddress: string`, and `memoId: string`. When sending to the Stellar base address instead of the muxed address, the exact memo is required to attribute the deposit.
+
+### RhinofiSdaTransfer
+
+Extends the shared `SdaTransfer` with provider deposit details.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `id` | `string` | Composite transfer identifier. |
+| `status` | `SdaTransferStatus` | Normalized history status. |
+| `address` | `string` | Deposit address that received the funds. |
+| `sourceChain` | `Blockchain` | Source chain of that address. |
+| `token` | `string`, optional | Deposited token identifier. |
+| `tokenAddress` | `string`, optional | Source-chain token contract. |
+| `amount` | `bigint`, optional | Deposit amount in token base units. |
+| `amountUsd` | `number`, optional | Provider-reported USD deposit value. |
+| `sender` | `string`, optional | Depositor address. |
+| `txHash` | `string`, optional | Source deposit transaction hash. |
+| `reason` | `string`, optional | Provider rejection reason. |
+| `createdAt` | `string`, optional | ISO-8601 timestamp reported for the state. |
+
+Optional data depends on what the provider reports for that item. `txHash` is not the destination delivery or refund hash.
+
+## Transfer Status
+
+The shared `SdaTransferStatus` union includes `'pending'`, `'detected'`, `'processing'`, `'completed'`, `'failed'`, `'refund-pending'`, `'refunded'`, and `'expired'`. This module's history mapper emits the subset below.
+
+| Provider history value | Normalized status |
+|---|---|
+| `_tag: 'detected'` | `detected` |
+| `_tag: 'confirming'` | `processing` |
+| Accepted state `PENDING`, `PENDING_CONFIRMATION`, `DEPOSIT_ACCEPTED`, or `ACCEPTED` | `processing` |
+| Accepted state `EXECUTED` | `completed` |
+| Accepted state `FAILED`, or `_tag: 'failed'` | `failed` |
+| `_tag: 'rejected'` | `refund-pending` |
+| Unknown accepted state or history tag | `processing` |
+
+These mappings do not guarantee a state sequence. History does not establish refund completion and does not emit `refunded`; use the provider's [`SDA_REFUND_COMPLETED` webhook event](https://docs.rhino.fi/webhook/events-list).
+
+## Quote Fees
+
+All returned fee amounts are `bigint` values in the deposited token's base units. Entries have `included: true` and are already reflected in the quoted output. Positive components are mapped as follows; zero components are omitted.
+
+| Provider component | Fee type | Chain |
+|---|---|---|
+| `sourceGasFee` | `network` | Source chain, covering the provider's sweep. |
+| `gasFee` | `network` | Destination chain, covering delivery. |
+| Positive remainder of `fee - sourceGasFee - gasFee` | `protocol` | Omitted. |
+
+This estimate does not include a separate gas quote for the depositor's ordinary funding transfer. An empty fee array does not guarantee that a later deposit is free. These fee entries do not impose an execution cap.
+
+## Exported Types
+
+The entrypoint exports these provider types: `RhinofiProtocolConfig`, `RhinofiCreateDepositAddressOptions`, `RhinofiCreateDepositAddressExtras`, `RhinofiQuoteDepositOptions`, `RhinofiQuoteDepositExtras`, `RhinofiTransfersOptions`, `RhinofiHistoryWindow`, `RhinofiSdaToken`, `RhinofiTokenLimits`, `RhinofiSdaDepositAddress`, `RhinofiDepositAddressExtras`, `RhinofiSdaTransfer`, `RhinofiTransferExtras`, `RhinofiChainMetadata`, and `SdaExecutionErrorDetails`.
+
+It also re-exports WDK types: `Blockchain`, `SdaToken`, `SdaDepositAddressLimits`, `SdaRoutesOptions`, `SdaRoute`, `SdaDepositOptions`, `SdaFeeType`, `SdaFee`, `SdaDepositQuote`, `SdaCreateDepositAddressOptions`, `SdaDepositAddress`, `SdaTransferStatus`, `SdaTransfer`, and `SdaTransfersOptions`. Their generic shapes do not remove this provider's runtime requirements or populate fields the mapper omits.
+
+## TypeScript Compatibility
+
+In `@rhino.fi/wdk-protocol-sda-rhinofi@1.0.1`, direct JavaScript construction and WDK registration work, but the declarations do not fully align with WDK's base types. The returned Rhino.fi descriptor makes `destinationAddress` optional, whereas the WDK `SdaDepositAddress` type requires it. Assigning the provider to `ISdaProtocol` therefore fails type checking. The provider constructor requires the configuration argument, which also causes TypeScript to reject the class in WDK's generic `registerProtocol()` call.
+
+Use the concrete provider class and Rhino.fi result types for direct TypeScript integrations. Do not rely on a cast to restore the missing destination or change the runtime API. The JavaScript registration example demonstrates runtime integration; it is not a type-checking workaround.
+
+## Errors
+
+The module's errors extend `RhinofiProtocolError`, which extends JavaScript `Error`. These are provider-specific classes. The inherited unsupported methods throw WDK `UnsupportedOperationError`, outside this hierarchy.
+
+| Export | Meaning and extra fields |
+|---|---|
+| `RhinofiProtocolError` | Base class for module-specific failures. |
+| `ConfigurationError` | API key missing during construction. |
+| `ValueError` | Selected missing or invalid method arguments. It does not cover every native conversion or malformed-input error. |
+| `UnsupportedChainError` | Chain unresolved or source SDA disabled; carries `chain`. |
+| `UnsupportedTokenError` | Token unresolved on a chain; carries `token` and `chain`. |
+| `NoSuchElementError` | Address or transfer not found; carries `id`. |
+| `SdaExecutionError` | Provider rejection, non-success HTTP result, or transport failure; carries optional `code` and can retain an underlying `cause`. |
+
+For provider failures, `code` preserves a response error tag when available, such as `DepositAddressRateLimitExceeded` or `ExtensionNotEnabled`. Untagged failures can have no `code`. Lookup and pause methods map the provider's not-found tag or HTTP 404 to `NoSuchElementError`.
+
+Do not assume that a `ValueError` means no network request occurred. Validate inputs before calling the module, and avoid logging credentials or unfiltered error causes. See [Handle Errors](/sdk/sda-modules/sda-rhinofi/usage#handle-errors).
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/sda-modules/sda-rhinofi/usage">
+Follow the deposit workflow and inspect its outputs.
+</Card>
+<Card title="Configuration" href="/sdk/sda-modules/sda-rhinofi/configuration">
+Review API-key permissions, account binding, and provider creation options.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
