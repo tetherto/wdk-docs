@@ -384,6 +384,14 @@ export const customTree: Node[] = [
     apiReference('/sdk/bridge-modules/bridge-usdt0-evm/api-reference'),
   ]),
 
+  separator('Smart Deposit Addresses'),
+  page('SDA modules', '/sdk/sda-modules', 'Inbox'),
+  folder('Candide', '/sdk/sda-modules/sda-candide', 'Inbox', [
+    usage('/sdk/sda-modules/sda-candide/usage'),
+    configuration('/sdk/sda-modules/sda-candide/configuration'),
+    apiReference('/sdk/sda-modules/sda-candide/api-reference'),
+  ]),
+
   separator('Lending'),
   page('Lending modules', '/sdk/lending-modules', 'Banknote'),
   folder('Aave', '/sdk/lending-modules/lending-aave-evm', 'Landmark', [
