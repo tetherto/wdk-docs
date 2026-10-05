@@ -1,0 +1,280 @@
+---
+title: Candide Smart Deposit Addresses API Reference
+description: Reference for Candide SDA methods, deposit addresses, transfer status, and errors.
+docType: reference
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+<Callout type="info">
+The package is not yet published on npm. This reference describes the public source candidate `1.0.0-beta.1`; confirm the released package and declarations after publication.
+</Callout>
+
+The candidate's generated TypeScript declarations need correction before publication. This reference describes the runtime methods and intended public types; do not treat the candidate declarations as a verified TypeScript integration.
+
+`CandideForwardingProtocol` is the default export of `@candidelabs/wdk-protocol-sda-candide` and extends WDK's `SdaProtocol`. It supports unbound, read-only-account, and full-account construction. API operations do not sign wallet transactions.
+
+## Constructor
+
+You can import the class through the package entrypoint:
+
+```javascript
+import CandideForwardingProtocol from '@candidelabs/wdk-protocol-sda-candide'
+```
+
+The constructor accepts the following account variants:
+
+```typescript
+new CandideForwardingProtocol(account: undefined, config: CandideForwardingProtocolConfig)
+new CandideForwardingProtocol(account: IWalletAccountReadOnly, config: CandideForwardingProtocolConfig)
+new CandideForwardingProtocol(account: IWalletAccount, config: CandideForwardingProtocolConfig)
+```
+
+`config.apiUrl` is required. An account's EVM address supplies the default recipient for creation and derivation. Without an account, those methods require `destinationAddress`. See [configuration fields](/sdk/sda-modules/sda-candide/configuration#configuration-fields) for exact types, defaults, and credential requirements.
+
+## Methods
+
+| Method | Returns | Policy secret | Purpose |
+|--------|---------|---------------|---------|
+| `getSupportedRoutes(options?)` | `Promise<SdaRoute[]>` | No | Discover routes for a required source chain. |
+| `quoteDeposit(options)` | `Promise<CandideDepositQuote>` | No | Obtain a non-binding estimate. |
+| `createDepositAddress(options)` | `Promise<CandideDepositAddress[]>` | Yes | Activate one address covering source chains and the destination chain. |
+| `deriveDepositAddress(options)` | `Promise<string>` | No | Derive an address without activation. |
+| `getDepositAddress(id)` | `Promise<CandideDepositAddress>` | No | Look up the stored address and monitoring descriptor. |
+| `renewDepositAddress(id)` | `Promise<CandideDepositAddress>` | Yes | Refresh activation on every recorded source chain. |
+| `getTransfers(address, options?)` | `Promise<CandideTransfer[]>` | No | List forwards through one address. |
+| `getTransfersByRecipient(destinationChain, recipient, options?)` | `Promise<CandideTransfer[]>` | No | List forwards across a recipient's addresses. |
+| `getTransfer(id)` | `Promise<CandideTransfer>` | No | Look up one opaque forward ID. |
+| `recoverDepositAddress(options)` | `Promise<SdaRecoveryResult>` | Yes | Reactivate monitoring for an existing address. |
+| `disableDepositAddress(id)` | `Promise<void>` | Not applicable | Always rejects with `UnsupportedOperationError`. |
+| `getDeployParams()` | `Promise<CandideDeployParams>` | No | Get the deployment inputs used for derivation. |
+
+### Route and Address Operations
+
+#### getSupportedRoutes
+
+Lists one route per source and destination chain pair. The declared options are `SdaRoutesOptions`, but this provider requires `sourceChain` at runtime.
+
+| Option | Type | Requirement | Behavior |
+|--------|------|-------------|----------|
+| `sourceChain` | `Blockchain` | Required by Candide | Source chain to discover. |
+| `destinationChain` | `Blockchain` | Optional | Keep routes to this chain. |
+| `sourceToken` | `string` | Optional | Filter to this source contract and request the smallest bridge minimum. |
+| `outputAsset` | `string` | Optional in shared type | Ignored by this implementation. |
+
+`Blockchain` is `string` or `number`. Numeric IDs, numeric strings, and recognized chain aliases are accepted. Alias recognition is not evidence of live support; discover routes at runtime.
+
+Each result contains `sourceChains`, `destinationChain`, `inputTokens`, and `reusable: true`. `outputAsset` is unset because each input is delivered as its own destination equivalent. Tokens also carry Candide's `destinationTokenAddress` and `feeBps` at runtime.
+
+With `sourceToken`, `limits.min` is the smallest reported bridge minimum as a `bigint` in input-token base units. It is omitted if no minimum is reported. `limits.max` is not supplied by this method. Re-estimate before displaying instructions, since minimums change. Routes use the per-source cache configured by `routesCacheTtlMs`.
+
+#### quoteDeposit
+
+Accepts `CandideDepositOptions`, which extends `SdaDepositOptions` with optional `depositAddress`.
+
+| Option | Type | Requirement | Behavior |
+|--------|------|-------------|----------|
+| `sourceChain` | `Blockchain` | Required | Source chain. |
+| `inputToken` | `string` | Required | Source-chain token address or the provider's native-token sentinel. Use a discovered `token` value. |
+| `destinationChain` | `Blockchain` | Required | Delivery chain. |
+| `inputAmount` | `number` or `bigint` | Required | Positive integer in the input token's base units. A number must be a safe integer. Prefer `bigint`. |
+| `outputAsset` | `string` | Optional | Ignored; the provider selects the corresponding destination token. |
+| `depositAddress` | `string` | Optional | Activated address whose policy should be reflected in the estimate. |
+
+The result includes standard quote fields and `bridge`, `outputAssetSymbol`, and `sponsored`. `outputAsset` identifies the destination token by contract address or native-token sentinel; `outputAmount` is a `bigint` in that token's base units.
+
+Candide uses `0x0000000000000000000000000000000000000000` for native ETH when advertised by a route. Use native base units for that token and distinguish the sender's gas costs from forwarding fees. A normal native send and an ERC-20 token transfer have different wallet transaction requirements; this module performs neither send.
+
+The two fee entries are the Candide relayer fee (`type: 'protocol'`) and bridge fee (`type: 'network'`). Both use input-token base units. `included: true` means the fee is already reflected in the output estimate; sponsored fees have `included: false`.
+
+The module uses an explicit provider `sponsored` flag when available. Otherwise it infers sponsorship by comparing full input and output amounts with known decimals; missing decimals are assumed equal. Treat it as estimate metadata, not proof of a policy commitment. The result does not reserve the amount, bridge, fees, or settlement time.
+
+#### createDepositAddress
+
+Accepts `CandideCreateDepositAddressOptions` and returns a one-element `CandideDepositAddress[]` after activating monitoring.
+
+| Option | Type | Requirement | Behavior |
+|--------|------|-------------|----------|
+| `sourceChains` | `Blockchain[]` | Required, non-empty | Chains to monitor. Duplicates are removed and the destination chain is added. |
+| `destinationChain` | `Blockchain` | Required | Delivery chain and an additional monitored source chain. |
+| `destinationAddress` | `string` | Optional with a bound account | EVM recipient; required when no account is bound. |
+| `outputAsset` | `string` | Optional in shared type | Ignored; each supported token forwards as its own equivalent. |
+| `recoveryWithdrawer` | `string` | Optional | Override the configured recovery wallet. Defaults to the recipient if neither value is supplied. |
+| `salt` | `string` | Optional | 32-byte hex value; defaults to exported `ZERO_SALT`. |
+
+The address's `id` equals its lowercase `address`. Its descriptor includes `sourceChains`, `supportedInputTokens`, `destinationChain`, recipient `destinationAddress`, `reusable: true`, optional Unix-second `expiry`, `recoveryWithdrawer`, and `salt`. `outputAsset` and `limits` are not supplied in the descriptor.
+
+With default verification, local derivation happens before activation and the returned address is compared afterward. `ADDRESS_MISMATCH` can therefore reject after the API has activated its address. Fetching supported tokens can also fail after activation. Reconcile state before retrying, and do not fund an address whose verification failed.
+
+#### deriveDepositAddress
+
+Accepts the same options as creation and returns the lowercase CREATE2 address. It does not activate monitoring, deploy a contract, or send a transaction.
+
+Deployment inputs are resolved through the API and cached unless `deployParams.allowedRelayer` is supplied; with that field, derivation is offline. The source-chain list is validated, but does not create a different address for each source chain. A derived address alone is not ready for monitored deposits.
+
+#### getDepositAddress
+
+Accepts a valid EVM address as `id`. Retrieves stored derivation inputs and activation history, then reconstructs the descriptor.
+
+`sourceChains` includes every recorded chain, active or expired. `expiry` is the earliest per-chain `expiresAt` or `expiredAt` value and can be absent. A past expiry means at least one chain needs renewal. No activation history results in `NoSuchElementError`.
+
+#### renewDepositAddress
+
+Accepts the address's `id`, reloads its stored recipient, recovery withdrawer, destination chain, salt, and source-chain history, and activates those chains again. It requires `policySecret` and returns the refreshed descriptor.
+
+When verification is enabled and stored data includes the relayer, the module derives and compares the stored address before renewal. It always rejects if activation returns a different address, regardless of `verifyAddresses`. The method does not migrate a recipient or recovery wallet to a new value from constructor configuration.
+
+#### getTransfers
+
+Accepts the forwarding address and optional `SdaTransfersOptions`. Resolves the address's recipient and destination chain, then filters the recipient's paginated forwards by `proxyAddress`. Returns newest-first forwards. It does not list every raw funding transaction.
+
+| Option | Type | Default | Behavior |
+|--------|------|---------|----------|
+| `status` | `SdaTransferStatus` | None | Match the mapped WDK status. Use `processing` for Candide's `pending` or `unknown`. |
+| `skip` | `number` | `0` | Non-negative integer count after filtering. |
+| `limit` | `number` | Unbounded | Non-negative integer maximum after filtering; `0` returns no forwards. |
+| `sourceChain` | `Blockchain` | None | Shared-type field, ignored by this provider. Filter returned records yourself if needed. |
+
+Use a finite `limit` for application history views. Without it, the module walks every provider cursor page until exhausted. Unknown addresses throw `NoSuchElementError`.
+
+#### getTransfersByRecipient
+
+Accepts `destinationChain: Blockchain`, `recipient: string`, and the same optional history filters. Lists every forward delivered to that recipient on that destination chain, across forwarding addresses. Pagination and status mapping match `getTransfers()`.
+
+The recipient must be a valid EVM address. `sourceChain` is not applied as a filter.
+
+#### getTransfer
+
+Accepts the non-empty, opaque `CandideTransfer.id` returned in history. Fetches a single forward and maps its current state. It is not a transaction-hash lookup. A missing forward throws `NoSuchElementError`.
+
+#### recoverDepositAddress
+
+Accepts `SdaRecoveryOptions`: `{ id: string }` or `{ address: string }`. Both identify the same forwarding address. The shared `sourceChain` field is not needed by Candide.
+
+Calls renewal and returns `{ status: 'reindexed', address, id, message }`. It requires prior activation history and `policySecret`. It does not withdraw funds or send an on-chain transaction. `reindexed` confirms reactivation, rather than completed delivery.
+
+For withdrawal, use the separate [recovery frontend](https://forwarding-address.candidelabs.com/) and review [recipient and recovery rights](/sdk/sda-modules/sda-candide/configuration#recipient-and-recovery-withdrawer).
+
+#### disableDepositAddress
+
+Always rejects with `UnsupportedOperationError`. Candide provides no explicit disable operation through this module; activations expire on their own.
+
+#### getDeployParams
+
+Returns `CandideDeployParams`: `factory`, `singleton`, `proxyCreationCode`, `allowedRelayer`, and optional `version`.
+
+By default, the resolver compares the API's factory, beacon, and bytecode with `PINNED_DEPLOY_PARAMS`, then uses its relayer. Overridden fields are not compared. Supplying `allowedRelayer` skips the deployment API call. See [deployment verification](/sdk/sda-modules/sda-candide/configuration#deployment-verification) before overriding these values.
+
+## Transfer Fields and Status
+
+`CandideTransfer` extends the minimal WDK `{ id, status }` transfer with provider fields. Fields omitted by the API remain absent at runtime.
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `providerStatus` | `pending`, `delivered`, `failed`, or `unknown` in the declared type | Original provider value; unfamiliar runtime values remain preserved. |
+| `recipient` | `string` | Destination recipient. |
+| `sourceChainId` | `number` | Forward's source chain. |
+| `sourceTxHash` | `string` | Forwarding transaction on the source chain, not the depositor's funding transaction. |
+| `sourceAddresses` | Optional array or `null` | Depositors and string base-unit amounts; an address may be the literal `"redacted"` for dust. Absent for records without this field. |
+| `destinationChainId` | Optional `number` | Destination chain when supplied. |
+| `destinationTxHash` | Optional `string` | Delivery transaction when supplied. |
+| `proxyAddress` | Optional `string` | Forwarding address associated with the record. |
+| `route` | Optional provider route value | Bridge or same-chain route used. |
+| `sourceBlockTimestamp` | Optional `number` | Source block's Unix timestamp. |
+| `failureReason` | Optional provider reason | `refunded`, `expired`, or `reverted` in the declared type. |
+| `refundTxHash` | Optional `string` | Refund transaction when supplied. |
+
+The `sourceAddresses` array contains `{ address: string, amount: string }` entries. `null` means attribution was unavailable. Treat provider extension fields as optional in application rendering even when a declared type expects a value.
+
+| Provider state | WDK `status` |
+|----------------|--------------|
+| `delivered` | `completed` |
+| `pending` or `unknown` | `processing` |
+| `failed` with `failureReason: 'refunded'` | `refunded` |
+| `failed` with `failureReason: 'expired'` | `expired` |
+| Other `failed` | `failed` |
+| Unrecognized provider state | `pending` |
+
+These are mappings, rather than a guaranteed sequence of transitions. History's provider `unknown` is not a successful delivery or a terminal failure.
+
+## Exported Types and Helpers
+
+Type-only imports are separate from the JavaScript class and error imports:
+
+```typescript
+import type {
+  CandideCreateDepositAddressOptions,
+  CandideDepositAddress,
+  CandideDepositOptions,
+  CandideDepositQuote,
+  CandideDeployParams,
+  CandideForwardingProtocolConfig,
+  CandideSdaToken,
+  CandideTransfer,
+} from '@candidelabs/wdk-protocol-sda-candide'
+```
+
+The entrypoint also re-exports WDK SDA types and the provider payload types `CandideRoute`, `CandideRouteToken`, and `CandideForward`. They describe provider data, rather than methods on the protocol. Internal RPC clients, resolvers, normalization utilities, and mappers are not exported through the package entrypoint.
+
+| Runtime export | Purpose |
+|----------------|---------|
+| `computeProxyAddress(params)` | Synchronous CREATE2 derivation using explicit deployment and recipient inputs. |
+| `ZERO_SALT` | Default all-zero 32-byte salt. |
+| `PINNED_DEPLOY_PARAMS` | Read-only factory, beacon, and proxy bytecode pins. |
+| `CHAIN_IDS` | Read-only input alias map; not an authoritative supported-chain inventory. |
+| `RpcErrorCode` | Provider JSON-RPC error-code constants. |
+| `CandideForwardingError` | WDK error subclass for derivation/deployment mismatches. |
+| `CandideForwardingErrorReason` | `ADDRESS_MISMATCH` and `DEPLOYMENT_CHANGED`. |
+
+### computeProxyAddress
+
+Returns a lowercase EVM address synchronously. Required parameters are `recipient`, `recoveryWithdrawer`, `destinationChainId: number`, `allowedRelayer`, `factory`, `singleton`, and `proxyCreationCode`; `salt` is optional and defaults to `ZERO_SALT`. All other fields are strings. Invalid inputs throw `ValueError`.
+
+This helper performs no API call, deployment, monitoring activation, or contract-code inspection. Prefer the protocol's derivation method when you need its deployment resolution and configuration behavior.
+
+## Errors
+
+Shared errors are imported from the WDK protocols entrypoint:
+
+```javascript
+import { InvalidTokenError, NoSuchElementError, ProviderError, SdaError, UnsupportedOperationError, ValueError } from '@tetherto/wdk-wallet/protocols'
+import { CandideForwardingError, CandideForwardingErrorReason } from '@candidelabs/wdk-protocol-sda-candide'
+```
+
+| Condition | Error | Reason or detail |
+|-----------|-------|------------------|
+| Malformed token in an estimate | `InvalidTokenError` | Expected an ERC-20 address. |
+| Invalid input, missing activation secret, or provider minimum/maximum rejection | `ValueError` | JSON-RPC details may be in `cause`. |
+| Unsupported route | `SdaError` | `ROUTE_NOT_SUPPORTED`. |
+| Unknown address or forward | `NoSuchElementError` | Address lacks activation history or the forward ID is unknown. |
+| Wrong policy secret | `ProviderError` | `UNAUTHORIZED`. |
+| Disabled policy or address limit reached | `ProviderError` | `FORBIDDEN`. |
+| Transport, HTTP, or invalid JSON failure | `ProviderError` | `NETWORK_ERROR`. |
+| Quote unavailable or other provider RPC failure | `ProviderError` | `INTERNAL_SERVER_ERROR`. |
+| Returned address differs from derivation or renewal address | `CandideForwardingError` | `ADDRESS_MISMATCH`. Remote activation may have occurred. |
+| API deployment differs from non-overridden pins | `CandideForwardingError` | `DEPLOYMENT_CHANGED`. |
+| Explicit disable | `UnsupportedOperationError` | Method is unsupported. |
+
+Provider JSON-RPC codes and messages are preserved in `cause`. Do not log raw causes, credentials, or full dashboard URLs. Contact Candide through [integration support](https://www.candide.dev/contact), report package bugs through [GitHub issues](https://github.com/candidelabs/wdk-protocol-sda-candide/issues), and report security concerns privately as described in [SECURITY.md](https://github.com/candidelabs/wdk-protocol-sda-candide/blob/main/SECURITY.md).
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/sda-modules/sda-candide/usage">
+Follow route discovery, activation, renewal, and history with JavaScript examples.
+</Card>
+<Card title="Configuration" href="/sdk/sda-modules/sda-candide/configuration">
+Review credential scope, recovery rights, and deployment overrides.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
