@@ -6020,6 +6020,13 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### October 06, 2026
+
+**Changes**
+- **Rhino.fi SDA** ([v1.1.0](https://www.npmjs.com/package/@rhino.fi/wdk-protocol-sda-rhinofi/v/1.1.0)): [Breaking] Use the shared WDK error hierarchy and reason codes, remove `RhinofiProtocolError` and the former lookup error's `id` field, and map unknown provider history states to `pending`. The published TypeScript declarations still reject generic WDK registration.
+
+---
+
 ### September 17, 2026
 
 **What's New**
@@ -6064,6 +6071,13 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 **What's New**
 - **wallet-evm-hinkal** ([v0.0.7](https://www.npmjs.com/package/@hinkal/wdk-wallet-evm-hinkal/v/0.0.7)): Add Hinkal private sends, scheduled-send tracking, and recovery of stuck shielded balances to seed-derived EVM accounts. Version 0.0.7 renames `@hinkal/wdk-wallet-evm` to `@hinkal/wdk-wallet-evm-hinkal`; update the dependency and imports when upgrading.
+
+---
+
+### September 09, 2026
+
+**What's New**
+- **Rhino.fi SDA** ([v1.0.1](https://www.npmjs.com/package/@rhino.fi/wdk-protocol-sda-rhinofi/v/1.0.1)): Receive deposits through provider-issued addresses, discover current routes, estimate output and fees, and reconcile address history. Addresses use a trusted-operator custody model.
 
 ---
 
@@ -15257,7 +15271,7 @@ const routes = await deposits.getSupportedRoutes({
 })
 ```
 
-Every SDA provider implements route discovery and deposit-address creation. Quote, derivation, renewal, lookup, history, recovery, and disable operations are optional. Check the concrete provider's contract before calling them; the base implementations throw `UnsupportedOperationError`. Output assets are route-specific, with USD₮ shown only as an example.
+Every SDA provider implements route discovery and deposit-address creation. Quote, derivation, renewal, lookup, history, recovery, and disable operations are optional. Check the concrete provider's contract before calling them; the base implementations throw `UnsupportedOperationError`. Output assets are route-specific, with USD₮ shown only as an example. See [Smart Deposit Address Modules](/sdk/sda-modules/) for concrete providers and their setup requirements.
 
 ### Swidge Routes
 
@@ -18179,6 +18193,7 @@ It is built on some core principles: **self-custodial and stateless** (private k
 * **Multi-Chain Support**: Bitcoin, Ethereum, TON, TRON, Solana, Spark, and more
 * **Account Abstraction**: Gasless transactions on supported chains
 * **DeFi Integration**: Plug-in support for swidge routes, swaps, bridges, and lending protocols
+* **Smart Deposit Addresses**: Provider-managed deposit routing; review each provider's custody model
 * **Extensible Design**: Add custom modules for new blockchains or protocols
 
 ***
@@ -18196,7 +18211,7 @@ New functionality is added through modules rather than modifying core code. Also
 
 #### Module Types
 
-WDK modules are organized into six main categories, each serving a specific purpose in the blockchain application stack:
+WDK modules are organized by capability, each serving a specific purpose in the blockchain application stack:
 
 <Cards>
 <Card title="Core" href="/sdk/core-module">
@@ -18213,6 +18228,9 @@ Token swapping across DEXs
 </Card>
 <Card title="Bridge" href="/sdk/bridge-modules">
 Cross-chain asset transfers
+</Card>
+<Card title="Smart Deposit Addresses" href="/sdk/sda-modules">
+Provider-issued deposit addresses, routing, and transfer tracking
 </Card>
 <Card title="Lending" href="/sdk/lending-modules">
 DeFi lending and borrowing
@@ -58351,9 +58369,813 @@ function Settings() {
 
 ***
 
+## Smart Deposit Address Modules Overview
+URL: https://docs.wdk.tether.io/sdk/sda-modules
+Description: Choose a WDK provider for deposit addresses, routing, and transfer tracking.
+
+Smart Deposit Address (SDA) modules let an application discover deposit routes and issue deposit addresses through a provider. A depositor sends an ordinary transfer to the issued address; the provider handles its supported routing and settlement flow.
+
+<Callout type="warn">
+Rows marked Community are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Choose a provider
+
+| Module | Provider | Ownership | Custody model | Documentation |
+|--------|----------|-----------|---------------|---------------|
+| [`@rhino.fi/wdk-protocol-sda-rhinofi`](https://www.npmjs.com/package/@rhino.fi/wdk-protocol-sda-rhinofi) | Rhino.fi | Community | Trusted operator: Rhino.fi issues and sweeps the deposit addresses. | [Overview](/sdk/sda-modules/sda-rhinofi/) |
+
+Provider custody and available operations differ. Rhino.fi manages funds while routing a deposit, even though its WDK module does not sign transactions or access private keys. Read the provider's limitations before displaying a deposit address to a user.
+
+## Understand the shared interface
+
+SDA providers extend `SdaProtocol`. Route discovery and address creation are required; quote, lookup, history, disable, derivation, renewal, and recovery operations depend on the provider. An optional method can throw `UnsupportedOperationError` when the provider does not implement it.
+
+Register a compatible provider with `wdk.registerProtocol()` and retrieve it from an account with [`getSdaProtocol()`](/sdk/core-module/api-reference#getsdaprotocollabel). Some providers also support direct construction without a wallet account. Follow their usage pages for the exact constructor, credentials, and supported methods.
+
+Discover routes at runtime rather than assuming a chain or asset is available. Preserve the issued address's chain, asset restrictions, destination, and any required memo when instructing a depositor. Address issuance and deposit completion are separate events; use the provider's documented history or webhook flow to reconcile transfers.
+
+## Next Steps
+
+<Cards>
+<Card title="Rhino.fi" href="/sdk/sda-modules/sda-rhinofi/">
+Review Rhino.fi's custody model and deposit-routing limitations.
+</Card>
+<Card title="Usage" href="/sdk/sda-modules/sda-rhinofi/usage">
+Install the module, discover routes, and create deposit addresses.
+</Card>
+<Card title="Protocol Integration" href="/sdk/core-module/guides/protocol-integration#smart-deposit-addresses">
+Understand registration and the shared SDA interface.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
+
+***
+
+## Rhino.fi SDA API Reference
+URL: https://docs.wdk.tether.io/sdk/sda-modules/sda-rhinofi/api-reference
+Description: Reference for Rhino.fi SDA methods, deposit addresses, transfer status, and errors.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+The `@rhino.fi/wdk-protocol-sda-rhinofi` entrypoint exports the default class and its named alias `RhinofiProtocol`, the WDK `ISdaProtocol` interface class, WDK and provider error classes, and SDA TypeScript types. Use the [Usage](/sdk/sda-modules/sda-rhinofi/usage) page for executable JavaScript imports and examples.
+
+## RhinofiProtocol
+
+`RhinofiProtocol` extends the WDK `SdaProtocol` base class. It makes authenticated Rhino.fi requests and reads a bound account's address when address creation needs a default destination. It does not sign or broadcast funding transactions.
+
+### Constructor
+
+| Parameter | Type | Requirement |
+|---|---|---|
+| `account` | `IWalletAccount`, `IWalletAccountReadOnly`, or `undefined` | Pass `undefined` for accountless use. A bound account supplies only the default creation destination. |
+| `config` | `RhinofiProtocolConfig` | Required configuration containing `apiKey`. |
+
+See [Configuration](/sdk/sda-modules/sda-rhinofi/configuration#api-access) for the optional `apiBaseUrl` and `configTtlMs` fields. A missing API key throws the module's `ConfigurationError`. The constructor does not validate an API key's provider permissions.
+
+### Methods
+
+All methods return promises. History and lifecycle controls require a server-side `SECRET_` API key.
+
+| Method | Return type | Purpose |
+|---|---|---|
+| `getSupportedRoutes(options)` | `Promise<SdaRoute[]>` | Discover accepted input tokens for a destination. |
+| `quoteDeposit(options)` | `Promise<SdaDepositQuote>` | Estimate output and fees without locking settlement terms. |
+| `createDepositAddress(options)` | `Promise<RhinofiSdaDepositAddress[]>` | Request one descriptor per source chain. |
+| `getDepositAddress(id)` | `Promise<RhinofiSdaDepositAddress>` | Retrieve an address descriptor. |
+| `getTransfers(address, options)` | `Promise<RhinofiSdaTransfer[]>` | Read and filter address history. |
+| `getTransfer(id, options)` | `Promise<RhinofiSdaTransfer>` | Find one transfer within an address-history window. |
+| `disableDepositAddress(id)` | `Promise<void>` | Pause deposit acceptance. |
+| `enableDepositAddress(id)` | `Promise<void>` | Resume deposit acceptance. |
+
+#### getSupportedRoutes
+
+Accepts optional `SdaRoutesOptions`; `destinationChain` is required by this provider even though the generic type declares it optional.
+
+| Option | Type | Behavior |
+|---|---|---|
+| `destinationChain` | `Blockchain` | Required at runtime. Resolves against the current provider configuration. |
+| `sourceChain` | `Blockchain` | Optional. Restricts discovery to one SDA-enabled source chain. |
+| `sourceToken` | `string` | Optional. Filters accepted tokens by identifier or contract address, case-insensitively. |
+| `outputAsset` | `string` | Optional. Resolves a destination token and requests routes delivering it. |
+
+Returns one route per source chain with at least one matching input token. Each route contains `sourceChains`, `inputTokens`, `destinationChain`, `reusable: true`, and `outputAsset` when requested. Input tokens include the provider's USD deposit bounds. Tokens lacking a bridge-config entry are omitted because their decimals are unknown.
+
+Without `sourceChain`, the module requests each deposit-enabled source chain in parallel. Failed source requests are skipped; if every source request fails, it throws the first failure. A named source-chain failure propagates. A partial response is therefore not an exhaustive provider inventory.
+
+Throws `ValueError` for a missing destination, `UnsupportedChainError` for an unresolved chain or disabled source, `UnsupportedTokenError` for an unresolved output token, or `SdaExecutionError` for a failed provider request.
+
+#### quoteDeposit
+
+Accepts `RhinofiQuoteDepositOptions`, which extends `SdaDepositOptions` with two required addresses.
+
+| Option | Type | Requirement |
+|---|---|---|
+| `sourceChain` | `Blockchain` | Required. Must have SDAs enabled. |
+| `inputToken` | `string` | Required. Identifier or contract address resolved on the source chain. |
+| `destinationChain` | `Blockchain` | Required. Must exist in provider configuration. |
+| `outputAsset` | `string` | Optional. Defaults to the input token's identifier resolved on the destination chain. |
+| `inputAmount` | `number` or `bigint` | Required, positive whole base units. Use `bigint` to avoid numeric precision loss. |
+| `depositor` | `string` | Required source-chain sender address. |
+| `destinationAddress` | `string` | Required destination address, including when an account is bound. |
+
+Returns `SdaDepositQuote` with `inputChain`, `inputToken`, `inputAmount`, `destinationChain`, `outputAsset`, `outputAmount`, `fees`, and a decimal-string `rate` for a positive quoted input. Input and output amounts are `bigint` values in their respective token base units. The module omits `id` and `expiry`.
+
+The request is priced as an SDA deposit using the API account's fee configuration. The result is indicative: the provider prices settlement when the funds arrive. The module exposes no fee cap or minimum-output enforcement for that later deposit.
+
+Throws `ValueError` for a missing or nonpositive amount or missing address, `UnsupportedChainError` or `UnsupportedTokenError` for failed resolution, and `SdaExecutionError` for provider failures. Converting a noninteger `number` to base units throws native `RangeError`; malformed values can produce other native errors.
+
+#### createDepositAddress
+
+Accepts `RhinofiCreateDepositAddressOptions`: the shared `sourceChains`, `destinationChain`, optional `outputAsset`, and optional `destinationAddress`, plus the provider extras documented under [Address Creation Options](/sdk/sda-modules/sda-rhinofi/configuration#address-creation-options).
+
+`sourceChains` must be a nonempty array of SDA-enabled chains. The provider currently permits multiple sources in one call only for EVM chains. It returns one descriptor per source chain, with the same deposit address across those EVM chains; other families require separate calls. An explicit `destinationAddress` overrides the bound account; omitting it without an account throws `ValueError`. With an account, the module awaits its `getAddress()` method.
+
+Returns provider-issued, reusable descriptors. A standard key's response omits `destinationAddress`, and the module does not fill it from the request or account. Keep the confirmed destination alongside the descriptor. The provider validates mixed chain families, address validity, account limits, and creation extras.
+
+Throws `ValueError`, `UnsupportedChainError`, `UnsupportedTokenError`, or `SdaExecutionError`. This method creates or reuses a live address; it does not fund it, commit a quote, or send a blockchain transaction.
+
+#### getDepositAddress
+
+Accepts a `string` identifier returned in a descriptor's `id` and returns its current descriptor. Identifiers carry the provider chain and address in `<chain>:<address>` form. Store and reuse them verbatim.
+
+Throws `ValueError` for malformed identifiers, `NoSuchElementError` for a missing address, or `SdaExecutionError` for other request failures. Destination-field disclosure depends on the API key.
+
+#### getTransfers
+
+Accepts a deposit-address `string` and optional `RhinofiTransfersOptions`. Requires a `SECRET_` key and `options.sourceChain` at runtime.
+
+| Option | Type | Behavior |
+|---|---|---|
+| `sourceChain` | `Blockchain` | Required by this provider; identifies the address's source chain. |
+| `fromTimestamp` | `Date` | Optional window start. Defaults to 31 days before the end. |
+| `toTimestamp` | `Date` | Optional window end. Defaults to now. |
+| `limit` | `number` | Optional maximum results from the fetched window. |
+| `skip` | `number` | Optional number of filtered, sorted results to skip within that window. |
+| `status` | `SdaTransferStatus` | Optional exact normalized status filter. |
+
+Returns normalized transfers newest first, with missing timestamps last. Status filtering, sorting, and pagination happen locally after the address history is fetched. Moving the date window is required for older periods; pagination does not extend it.
+
+Supply valid `Date` values and nonnegative integer pagination values. The module rejects an inverted window, a span over 31 days, missing address or source chain, and negative `limit` or `skip`. It does not validate every malformed date or pagination value.
+
+Throws `ValueError`, `UnsupportedChainError`, `NoSuchElementError` for a missing address, or `SdaExecutionError`. Window validation occurs after the chain-config read. See [Transfer Status](#transfer-status) for refund limitations.
+
+#### getTransfer
+
+Accepts a `string` transfer `id` and optional `RhinofiHistoryWindow`. Requires a `SECRET_` key. The identifier contains the source chain, deposit address, and provider deposit ID in `<chain>:<address>:<depositId>` form.
+
+Searches the address's history within the requested window and returns the matching transfer. The default window covers the last 31 days; pass the original window for older transfers. There is no direct provider lookup by SDA transfer ID through this method.
+
+Throws `ValueError` for malformed identifiers or an inverted or oversized window, `NoSuchElementError` when the address or transfer is absent from that window, and `SdaExecutionError` for request failures. A missing transfer does not establish that it never existed.
+
+#### disableDepositAddress
+
+Accepts a descriptor's `id` as a `string`. Requires a `SECRET_` key. Sends a pause request scoped to the deposit chain embedded in the identifier and resolves when that request succeeds.
+
+Deposits arriving while paused are rejected instead of converted; refund processing follows the provider's policies. This does not cancel or prove completion of earlier activity. Throws `ValueError`, `NoSuchElementError`, or `SdaExecutionError`.
+
+#### enableDepositAddress
+
+Accepts a descriptor's `id` as a `string`. Requires a `SECRET_` key. Sends an unpause request for its deposit chain and resolves when the request succeeds.
+
+This provider-specific method resumes acceptance after `disableDepositAddress()`. It is not declared on `ISdaProtocol`. Throws `ValueError`, `NoSuchElementError`, or `SdaExecutionError`.
+
+### Unsupported Methods
+
+These inherited optional methods are callable but always reject with WDK `UnsupportedOperationError`.
+
+| Method | Behavior |
+|---|---|
+| `deriveDepositAddress(options)` | Unsupported. Provider-issued addresses cannot be derived locally. |
+| `renewDepositAddress(id)` | Unsupported. The module exposes no activation-renewal flow. |
+| `recoverDepositAddress(options)` | Unsupported. The module exposes no deposit-reindex endpoint. |
+| `getTransfersByRecipient(destinationChain, recipient, options)` | Unsupported. Read history per address instead. |
+
+#### deriveDepositAddress
+
+Inherits the base method taking `SdaCreateDepositAddressOptions`. Rejects with `UnsupportedOperationError` without deriving an address. Client-side derivation or verification of provider-issued addresses is unavailable.
+
+#### renewDepositAddress
+
+Inherits the base method taking a `string` address identifier. Rejects with `UnsupportedOperationError`; no new expiry or renewed descriptor is returned.
+
+#### recoverDepositAddress
+
+Inherits the base method taking WDK `SdaRecoveryOptions`. Rejects with `UnsupportedOperationError`; the module does not initiate reindexing or refund recovery.
+
+#### getTransfersByRecipient
+
+Inherits the base method taking `Blockchain`, recipient `string`, and optional `SdaTransfersOptions`. Rejects with `UnsupportedOperationError`. Keep an application index of created addresses and reconcile each address separately.
+
+## Returned Types
+
+### RhinofiSdaToken
+
+Extends `SdaToken` with USD-denominated deposit bounds.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `token` | `string` | Provider identifier used in subsequent SDA calls. |
+| `chain` | `Blockchain` | Provider chain key for this token. |
+| `symbol` | `string` | Provider token symbol. Preserve it when passing machine values. |
+| `decimals` | `number` | Precision used to interpret token base units. |
+| `address` | `string`, optional | Contract address when available. |
+| `minDepositLimitUsd` | `number` | Minimum deposit value in USD. |
+| `maxDepositLimitUsd` | `number` | Maximum deposit value in USD. |
+
+The mapper does not populate the generic optional `name`. The numeric USD bounds are not token quantities. Routes and address descriptors omit the generic base-unit `limits` field.
+
+### RhinofiSdaDepositAddress
+
+Defined as `Omit<SdaDepositAddress, 'destinationAddress'> & RhinofiDepositAddressExtras` so the returned destination can be absent.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `address` | `string` | Source-chain address to fund. |
+| `id` | `string` | Composite identifier for lookup and lifecycle methods. |
+| `sourceChains` | `Blockchain[]` | One source chain for each returned descriptor. |
+| `supportedInputTokens` | `SdaToken[]` | Runtime entries carry the Rhino.fi USD deposit-limit fields. |
+| `destinationChain` | `Blockchain` | Chain where settlement occurs. |
+| `outputAsset` | `SdaToken`, optional | Requested output token, when present. |
+| `destinationAddress` | `string`, optional | Disclosed only to `SECRET_` keys. |
+| `reusable` | `boolean` | Returned as `true`. |
+| `isActive` | `boolean` | Whether the provider monitors the address. |
+| `isPaused` | `boolean` | Whether deposit acceptance is paused. |
+| `addressNote` | `string`, optional | Provider-stored label. |
+| `refundAddress` | `string`, optional | Configured refund destination. |
+| `chainMetadata` | `RhinofiChainMetadata`, optional | Stellar base address and memo data. |
+
+The module does not populate `limits` or `expiry`. The shared type allows those optional fields. `isActive` and `isPaused` are required in the declared Rhino.fi type; treat missing provider response fields as incomplete data instead of assuming activation.
+
+`RhinofiChainMetadata` contains `_tag: 'STELLAR'`, `baseAddress: string`, and `memoId: string`. When sending to the Stellar base address instead of the muxed address, the exact memo is required to attribute the deposit.
+
+### RhinofiSdaTransfer
+
+Extends the shared `SdaTransfer` with provider deposit details.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `id` | `string` | Composite transfer identifier. |
+| `status` | `SdaTransferStatus` | Normalized history status. |
+| `address` | `string` | Deposit address that received the funds. |
+| `sourceChain` | `Blockchain` | Source chain of that address. |
+| `token` | `string`, optional | Deposited token identifier. |
+| `tokenAddress` | `string`, optional | Source-chain token contract. |
+| `amount` | `bigint`, optional | Deposit amount in token base units. |
+| `amountUsd` | `number`, optional | Provider-reported USD deposit value. |
+| `sender` | `string`, optional | Depositor address. |
+| `txHash` | `string`, optional | Source deposit transaction hash. |
+| `reason` | `string`, optional | Provider rejection reason. |
+| `createdAt` | `string`, optional | ISO-8601 timestamp reported for the state. |
+
+Optional data depends on what the provider reports for that item. `txHash` is not the destination delivery or refund hash.
+
+## Transfer Status
+
+The shared `SdaTransferStatus` union includes `'pending'`, `'detected'`, `'processing'`, `'completed'`, `'failed'`, `'refund-pending'`, `'refunded'`, and `'expired'`. This module's history mapper emits the subset below.
+
+| Provider history value | Normalized status |
+|---|---|
+| `_tag: 'detected'` | `detected` |
+| `_tag: 'confirming'` | `processing` |
+| Accepted state `PENDING`, `PENDING_CONFIRMATION`, `DEPOSIT_ACCEPTED`, or `ACCEPTED` | `processing` |
+| Accepted state `EXECUTED` | `completed` |
+| Accepted state `FAILED`, or `_tag: 'failed'` | `failed` |
+| `_tag: 'rejected'` | `refund-pending` |
+| Unknown accepted state or history tag | `pending` |
+
+These mappings do not guarantee a state sequence. History does not establish refund completion and does not emit `refunded`; use the provider's [`SDA_REFUND_COMPLETED` webhook event](https://docs.rhino.fi/webhook/events-list).
+
+## Quote Fees
+
+All returned fee amounts are `bigint` values in the deposited token's base units. Entries have `included: true` and are already reflected in the quoted output. Positive components are mapped as follows; zero components are omitted.
+
+| Provider component | Fee type | Chain |
+|---|---|---|
+| `sourceGasFee` | `network` | Source chain, covering the provider's sweep. |
+| `gasFee` | `network` | Destination chain, covering delivery. |
+| Positive remainder of `fee - sourceGasFee - gasFee` | `protocol` | Omitted. |
+
+This estimate does not include a separate gas quote for the depositor's ordinary funding transfer. An empty fee array does not guarantee that a later deposit is free. These fee entries do not impose an execution cap.
+
+## Exported Types
+
+The entrypoint exports these provider types: `RhinofiProtocolConfig`, `RhinofiCreateDepositAddressOptions`, `RhinofiCreateDepositAddressExtras`, `RhinofiQuoteDepositOptions`, `RhinofiQuoteDepositExtras`, `RhinofiTransfersOptions`, `RhinofiHistoryWindow`, `RhinofiSdaToken`, `RhinofiTokenLimits`, `RhinofiSdaDepositAddress`, `RhinofiDepositAddressExtras`, `RhinofiSdaTransfer`, `RhinofiTransferExtras`, `RhinofiChainMetadata`, and `SdaExecutionErrorDetails`.
+
+It also re-exports WDK types: `Blockchain`, `SdaToken`, `SdaDepositAddressLimits`, `SdaRoutesOptions`, `SdaRoute`, `SdaDepositOptions`, `SdaFeeType`, `SdaFee`, `SdaDepositQuote`, `SdaCreateDepositAddressOptions`, `SdaDepositAddress`, `SdaTransferStatus`, `SdaTransfer`, and `SdaTransfersOptions`. Their generic shapes do not remove this provider's runtime requirements or populate fields the mapper omits.
+
+## TypeScript Compatibility
+
+In `@rhino.fi/wdk-protocol-sda-rhinofi@1.1.0`, direct JavaScript construction and WDK registration work, but the declarations still do not fully align with WDK's base types. The returned Rhino.fi descriptor makes `destinationAddress` optional, whereas the WDK `SdaDepositAddress` type requires it. Assigning the provider to `ISdaProtocol` therefore fails type checking. Its required configuration argument also differs from WDK's expected constructor signature, so TypeScript rejects the class in a generic `registerProtocol()` call.
+
+Direct use of the concrete provider class avoids generic registration, but the published declarations also fail strict checking with `skipLibCheck: false`. Do not rely on a cast to restore the missing destination or change the runtime API. The JavaScript registration example demonstrates runtime integration; it is not a type-checking workaround.
+
+## Errors
+
+Version 1.1.0 uses the shared WDK error hierarchy and no longer exports `RhinofiProtocolError`. The package re-exports WDK `WdkError`, `ValueError`, `NoSuchElementError`, `SdaError`, and `ProviderError`, along with `SdaErrorReason` and `ProviderErrorReason`. The inherited unsupported methods throw WDK `UnsupportedOperationError`.
+
+| Export | Meaning and extra fields |
+|---|---|
+| `ConfigurationError` | Missing API key during construction; extends WDK `ValueError`. |
+| `ValueError` | Re-exported WDK error for selected missing or invalid method arguments. It does not cover every native conversion or malformed-input error. |
+| `UnsupportedChainError` | Chain unresolved or source SDA disabled; extends WDK `SdaError` with `ROUTE_NOT_SUPPORTED` and carries `chain`. |
+| `UnsupportedTokenError` | Token unresolved on a chain; extends WDK `SdaError` with `ROUTE_NOT_SUPPORTED` and carries `token` and `chain`. |
+| `NoSuchElementError` | Re-exported WDK error for a missing address or transfer. It does not carry the module's former `id` field. |
+| `SdaExecutionError` | Provider rejection, non-success HTTP result, or transport failure; extends WDK `ProviderError` with optional `reason`, provider `code`, and underlying `cause`. |
+
+For provider failures, `code` preserves a response error tag when available, such as `DepositAddressRateLimitExceeded` or `ExtensionNotEnabled`. Untagged failures can have no `code`. `reason` maps rejected credentials to `UNAUTHORIZED`, disabled access to `FORBIDDEN`, HTTP 408/504 responses to `REQUEST_TIMEOUT`, server errors to `INTERNAL_SERVER_ERROR`, and transport failures without a response to `NETWORK_ERROR`; other failures can have no WDK reason. Lookup and pause methods map the provider's not-found tag or HTTP 404 to `NoSuchElementError`.
+
+Do not assume that a `ValueError` means no network request occurred. Validate inputs before calling the module, and avoid logging credentials or unfiltered error causes. See [Handle Errors](/sdk/sda-modules/sda-rhinofi/usage#handle-errors).
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/sda-modules/sda-rhinofi/usage">
+Follow the deposit workflow and inspect its outputs.
+</Card>
+<Card title="Configuration" href="/sdk/sda-modules/sda-rhinofi/configuration">
+Review API-key permissions, account binding, and provider creation options.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
+
+***
+
+## Rhino.fi SDA Configuration
+URL: https://docs.wdk.tether.io/sdk/sda-modules/sda-rhinofi/configuration
+Description: Configure Rhino.fi SDA authentication, destination defaults, cache lifetime, and deposit-address options.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Configure [`RhinofiProtocol`](/sdk/sda-modules/sda-rhinofi/api-reference#rhinofiprotocol) with an authenticated Rhino.fi API key. A WDK wallet account is optional. See [Usage](/sdk/sda-modules/sda-rhinofi/usage#install-and-configure) for the installation and JavaScript imports.
+
+## API Access
+
+| Field | Type | Requirement and behavior |
+|---|---|---|
+| `apiKey` | `string` | Required. Authenticates every SDA request. Missing credentials throw `ConfigurationError` during construction. |
+| `apiBaseUrl` | `string` | Optional. Defaults to the SDK's mainnet endpoint, `https://api.rhino.fi`. Trailing slashes are removed before the SDK appends its paths. |
+| `configTtlMs` | `number` | Optional. Defaults to `60000` milliseconds. Caches chain configuration and each route's accepted-token response. Set `0` to fetch fresh data on every call. |
+
+Obtain a project API key through the [Rhino.fi Console](https://console.rhino.fi) and confirm that Smart Deposit Addresses are enabled for the project. API access, creation limits, and supported routes depend on your provider account.
+
+`getTransfers()`, `getTransfer()`, `disableDepositAddress()`, and `enableDepositAddress()` require a `SECRET_` key. Keep these keys on a server you control, outside browser or mobile bundles. The provider distinguishes [public and secret API keys](https://docs.rhino.fi/get-started/api-keys); choose permissions appropriate to the operation. Custom endpoints receive the configured credential, so use only a trusted endpoint.
+
+The module omits `destinationAddress` from address descriptors when the API response does not disclose it. Standard keys do not receive that field; `SECRET_` keys can receive it. The requested destination still controls settlement. Store the destination you validated when creating the address instead of reconstructing it from an incomplete response.
+
+Cache entries include in-flight requests. A failed request is removed from the cache, so a later call can retry. Quote, history, address creation, and pause requests are not cached. Caching reduces configuration requests; it does not reserve a route, fee, or settlement amount.
+
+## Account Binding
+
+| Constructor account | Creation destination | Signing behavior |
+|---|---|---|
+| `undefined` | Pass `destinationAddress` explicitly. | No wallet is required. |
+| WDK read-only account | Defaults to the account's address when omitted. | The module only reads the address. |
+| WDK full account | Defaults to the account's address when omitted. | The module does not use its signing methods. |
+
+The default applies to [`createDepositAddress()`](/sdk/sda-modules/sda-rhinofi/api-reference#createdepositaddress). [`quoteDeposit()`](/sdk/sda-modules/sda-rhinofi/api-reference#quotedeposit) always requires an explicit `depositor` and `destinationAddress`, even when an account is bound.
+
+Match the destination chain to the supplied account or explicit address. A bound account does not select the destination chain. The provider validates the address for the requested chain; the module does not perform local address-format validation.
+
+## Address Creation Options
+
+| Field | Type | Requirement and behavior |
+|---|---|---|
+| `sourceChains` | `Blockchain[]` | Required, nonempty. One descriptor is returned per source chain. The provider currently permits multiple source chains only for EVM chains; other families require separate calls. |
+| `destinationChain` | `Blockchain` | Required. Where the provider delivers the result. |
+| `outputAsset` | `string` | Optional. Token identifier on the destination chain. Omit to bridge each accepted input token as its equivalent. |
+| `destinationAddress` | `string` | Optional with a bound account; required without one. Overrides the account destination. |
+| `addressNote` | `string` | Optional label stored by the provider, with a maximum of 80 characters. Avoid sensitive user information. |
+| `refundAddress` | `string` | Optional refund destination. Leave unset unless your Rhino.fi account manager has advised otherwise. |
+| `webhookUrl` | `string` | Optional URL for this address's events, overriding the project webhook URL in the provider console. |
+| `reusePolicy` | `'create-new'` or `'reuse-existing'` | Optional. The provider reuses a matching address by default; use `'create-new'` to request another address. |
+| `bridgeIfNotSwappable` | `boolean` | Optional. With `outputAsset`, allows a deposit that cannot be swapped to bridge as its original asset. |
+
+`Blockchain` is `string` or `number`. Use provider chain keys or numeric network IDs resolved against live configuration. Use token identifiers or contract addresses resolved against that chain's current token configuration.
+
+The module forwards the Rhino.fi creation extras to the provider. The provider enforces constraints such as the note length, mixed chain families, destination validity, and account limits. Do not treat local token resolution as proof that a requested route is currently available.
+
+<Callout type="warn">
+`bridgeIfNotSwappable: true` permits delivery of a different asset from the requested `outputAsset`. Enable it only if the recipient and application can handle the original token. A prior quote does not bind later SDA settlement.
+</Callout>
+
+## History and Webhooks
+
+[`getTransfers()`](/sdk/sda-modules/sda-rhinofi/api-reference#gettransfers) requires the deposit address's `sourceChain`. Both history methods accept `fromTimestamp` and `toTimestamp` as `Date` values. The default window ends now and starts 31 days earlier. Move the window to inspect older deposits; its span cannot exceed 31 days.
+
+`limit`, `skip`, and `status` filter the fetched history locally. They do not request another server page. Supply valid dates and nonnegative integer pagination values. The module rejects inverted or oversized windows and negative pagination values, but callers must validate other malformed inputs.
+
+Follow the provider's [webhook signature verification](https://docs.rhino.fi/webhook/verify-webhook-signature) before updating balances or status from an event. The SDA module does not expose a webhook server or signature-verification method. For rejected deposits, use `SDA_REFUND_COMPLETED` to observe refund completion; address history continues to report `refund-pending`.
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/sda-modules/sda-rhinofi/usage">
+Discover a route, create a deposit address, and track deposits.
+</Card>
+<Card title="API Reference" href="/sdk/sda-modules/sda-rhinofi/api-reference">
+Review exact options, return fields, and typed failures.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
+
+***
+
+## Rhino.fi SDA Overview
+URL: https://docs.wdk.tether.io/sdk/sda-modules/sda-rhinofi
+Description: Receive deposits through provider-issued addresses and deliver assets to a chosen destination with the Rhino.fi SDA module.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+The `@rhino.fi/wdk-protocol-sda-rhinofi` module lets an application discover deposit routes, request Smart Deposit Addresses (SDAs), estimate conversion amounts, and track deposits through Rhino.fi. An SDA accepts supported tokens on a source chain and routes them to a configured destination chain and address.
+
+Use this module when users should fund a deposit address with an ordinary token transfer. Rhino.fi handles the subsequent sweep, conversion, and delivery. The module does not sign or broadcast the user's funding transaction.
+
+## Deposit Model
+
+Rhino.fi operates the deposit addresses and controls the sweep and settlement. This is a trusted-operator custody model. The addresses are issued by the provider and cannot be derived locally from a WDK wallet.
+
+1. Discover a route and its current accepted tokens.
+2. Request deposit-address descriptors for the selected source chains.
+3. Show the user the deposit address, accepted token, chain, deposit limits, and destination.
+4. The user funds that address through their source wallet.
+5. Track settlement with verified provider webhooks and reconcile address history.
+
+Created addresses are monitored immediately and accept repeat deposits. The module returns `reusable: true` and omits an activation `expiry`. Pausing an address is reversible. Deposits arriving while it is paused are rejected instead of converted; refund processing follows the provider's policies.
+
+<Callout type="warn">
+Address creation configures where future deposits will settle. Confirm the destination chain and address before creating it. Keep your validated destination record: standard API keys do not receive `destinationAddress` in the returned descriptor. Rhino.fi discloses that field only to `SECRET_` keys.
+</Callout>
+
+## Capabilities
+
+| Capability | Behavior |
+|---|---|
+| Runtime route discovery | Returns accepted input tokens for a requested destination; `destinationChain` is required. |
+| Deposit estimate | Returns an indicative output amount and itemized fees. Settlement is priced when funds arrive. |
+| Address creation and lookup | Returns one descriptor per source chain, with a provider-issued address and composite identifier. |
+| Address history | Reads one address and source chain within a window of up to 31 days. |
+| Lifecycle control | Pauses or resumes deposit acceptance through authenticated provider requests. |
+| Account integration | Works without a WDK account, or reads a bound full or read-only account's address as the default creation destination. |
+
+The inherited `deriveDepositAddress()`, `renewDepositAddress()`, `recoverDepositAddress()`, and `getTransfersByRecipient()` methods are unsupported. They reject with `UnsupportedOperationError`. See [API Reference](/sdk/sda-modules/sda-rhinofi/api-reference#unsupported-methods) for details.
+
+## Routes and Deposit Limits
+
+Rhino.fi controls the available routes. Use [`getSupportedRoutes()`](/sdk/sda-modules/sda-rhinofi/api-reference#getsupportedroutes) at runtime instead of maintaining a fixed network or token inventory. Each returned route covers one source chain. The provider currently supports multiple source chains in one creation call only for EVM chains. It returns a descriptor for each chain; those EVM descriptors share the same deposit address. Other chain families require separate calls.
+
+Deposit limits are denominated in USD, per token. The module omits the generic base-unit `limits` field and exposes `minDepositLimitUsd` and `maxDepositLimitUsd` on the accepted tokens. These values do not represent quantities of USD₮ or any other deposit token.
+
+## Quotes and Settlement
+
+[`quoteDeposit()`](/sdk/sda-modules/sda-rhinofi/api-reference#quotedeposit) returns a non-binding estimate using the API account's fee configuration. The estimate includes the provider's source-chain sweep and destination delivery costs. It contains no quote identifier or expiry, and address creation does not lock its output amount or fees.
+
+History reports rejected deposits as `refund-pending`. It does not report refund completion. Integrate the provider's `SDA_REFUND_COMPLETED` event to establish when a refund was issued. Unknown provider history states map to `pending`; do not assume a guaranteed sequence of states. See [Track Deposits](/sdk/sda-modules/sda-rhinofi/usage#track-deposits).
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/sda-modules/sda-rhinofi/usage">
+Install the module, discover a route, request an address, and reconcile deposits.
+</Card>
+<Card title="Configuration" href="/sdk/sda-modules/sda-rhinofi/configuration">
+Configure API access, caching, destination defaults, and creation options.
+</Card>
+<Card title="API Reference" href="/sdk/sda-modules/sda-rhinofi/api-reference">
+Review methods, option types, return fields, statuses, and errors.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
+
+***
+
+## Rhino.fi SDA Usage
+URL: https://docs.wdk.tether.io/sdk/sda-modules/sda-rhinofi/usage
+Description: Discover deposit routes, request Rhino.fi Smart Deposit Addresses, and reconcile their transfer history.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+This guide shows how to [install and configure](#install-and-configure) an accountless protocol, [discover a route](#discover-a-route), [estimate a deposit](#estimate-a-deposit-optional), [create a deposit address](#create-a-deposit-address), [track deposits](#track-deposits), [pause or resume an address](#pause-or-resume-an-address), [register with WDK](#register-with-wdk-optional), and [handle errors](#handle-errors). See [support options](#need-help) if you need help with the integration.
+
+## Install and Configure
+
+Before starting, obtain a Rhino.fi project `SECRET_` API key with SDA access. This server-side guide includes history and pause operations that require it. Prepare an EVM depositor address on Arbitrum and a destination address on Ethereum that you control or have independently verified. The example checks live support before using that pair.
+
+Install the SDA package for the accountless flow:
+
+```bash
+npm install @rhino.fi/wdk-protocol-sda-rhinofi@1.1.0
+```
+
+Create an accountless [`RhinofiProtocol`](/sdk/sda-modules/sda-rhinofi/api-reference#rhinofiprotocol) and load the confirmed addresses from your server environment:
+
+```javascript
+import RhinofiProtocol, {
+  NoSuchElementError,
+  SdaExecutionError
+} from '@rhino.fi/wdk-protocol-sda-rhinofi'
+
+const apiKey = process.env.RHINO_API_KEY
+if (!apiKey) throw new Error('Set RHINO_API_KEY')
+
+function confirmedEvmAddress(name) {
+  const address = process.env[name]
+  if (!address || !/^0x[0-9a-fA-F]{40}$/.test(address) || /^0x0{40}$/i.test(address)) {
+    throw new Error(`Set ${name} to a confirmed EVM address`)
+  }
+  return address
+}
+
+const depositor = confirmedEvmAddress('RHINO_DEPOSITOR_ADDRESS')
+const destinationAddress = confirmedEvmAddress('RHINO_DESTINATION_ADDRESS')
+const sourceChain = 'ARBITRUM'
+const destinationChain = 'ETHEREUM'
+const expectedInputTokenAddress = '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9'
+const expectedOutputTokenAddress = '0xdac17f958d2ee523a2206206994597c13d831ec7'
+const expectedTokenDecimals = 6
+const matchesAddress = (actual, expected) =>
+  typeof actual === 'string' && actual.toLowerCase() === expected.toLowerCase()
+const sda = new RhinofiProtocol(undefined, { apiKey })
+```
+
+Address syntax does not establish ownership or the intended chain. Confirm both addresses before continuing. Keep secret keys on your server; see [API Access](/sdk/sda-modules/sda-rhinofi/configuration#api-access).
+
+For TypeScript, import option and result types separately from the JavaScript classes and errors:
+
+```typescript
+import type {
+  RhinofiCreateDepositAddressOptions,
+  RhinofiQuoteDepositOptions,
+  RhinofiSdaDepositAddress,
+  RhinofiSdaTransfer
+} from '@rhino.fi/wdk-protocol-sda-rhinofi'
+```
+
+## Discover a Route
+
+Use [`getSupportedRoutes()`](/sdk/sda-modules/sda-rhinofi/api-reference#getsupportedroutes) to check whether USD₮0 is accepted on Arbitrum and USD₮ is delivered on Ethereum:
+
+```javascript
+const routes = await sda.getSupportedRoutes({
+  sourceChain,
+  sourceToken: 'USDT',
+  destinationChain,
+  outputAsset: 'USDT'
+})
+const route = routes.find(item =>
+  item.sourceChains.includes(sourceChain) && item.destinationChain === destinationChain
+)
+const inputToken = route?.inputTokens.find(token =>
+  token.token === 'USDT' && matchesAddress(token.address, expectedInputTokenAddress)
+)
+if (!route || !inputToken ||
+    inputToken.decimals !== expectedTokenDecimals ||
+    !matchesAddress(route.outputAsset?.address, expectedOutputTokenAddress) ||
+    route.outputAsset?.decimals !== expectedTokenDecimals) {
+  throw new Error('The requested Tether route is unavailable or its token details differ')
+}
+
+console.log(inputToken.decimals)
+console.log(inputToken.minDepositLimitUsd, inputToken.maxDepositLimitUsd)
+```
+
+The example uses Rhino.fi's `USDT` machine identifier, which its 1.1.0 README uses for Arbitrum. The checks use the official [Arbitrum USD₮0 deployment](https://docs.usdt0.to/technical-documentation/deployments), [Ethereum USD₮ contract](https://tether.to/en/supported-protocols/), and [six-decimal token specification](https://docs.usdt0.to/technical-documentation/developer/). Stop if the provider returns different or missing token details; a ticker alone does not identify the asset. Preserve the returned identifier and decimals in subsequent calls. Deposit bounds are USD values, not token base units. Refresh discovery when presenting a route; an earlier response does not reserve it. Passing `sourceChain` avoids querying every deposit-enabled source chain.
+
+## Estimate a Deposit (optional)
+
+Use [`quoteDeposit()`](/sdk/sda-modules/sda-rhinofi/api-reference#quotedeposit) to estimate the output and fees for 100 USD₮0, expressed using the discovered source-token decimals:
+
+```javascript
+const inputAmount = 100n * 10n ** BigInt(inputToken.decimals)
+const quote = await sda.quoteDeposit({
+  sourceChain,
+  inputToken: inputToken.token,
+  destinationChain,
+  outputAsset: 'USDT',
+  inputAmount,
+  depositor,
+  destinationAddress
+})
+
+console.log(quote.outputAmount, quote.fees)
+```
+
+The amount must fit the provider's current USD deposit limits. Both addresses are required even for a protocol bound to an account. The provider prices the actual deposit when funds arrive; this estimate contains no reusable quote ID or expiry and does not cap later fees or guarantee this output amount.
+
+## Create a Deposit Address
+
+1. Confirm the destination chain and address, accepted token, USD limits, and indicative fees with the user.
+2. Request the address using [`createDepositAddress()`](/sdk/sda-modules/sda-rhinofi/api-reference#createdepositaddress).
+3. Store the returned descriptor and the confirmed destination together before showing funding instructions.
+
+<Callout type="warn">
+The following call creates or reuses a live provider deposit address. It does not transfer funds. Only fund it with a token and source chain accepted by its current descriptor. The depositor's ordinary wallet transfer is a separate action outside this module.
+</Callout>
+
+Request an address using the same confirmed destination as the estimate:
+
+```javascript
+const deposits = await sda.createDepositAddress({
+  sourceChains: [sourceChain],
+  destinationChain,
+  outputAsset: 'USDT',
+  destinationAddress,
+  reusePolicy: 'reuse-existing'
+})
+const deposit = deposits.find(item =>
+  item.sourceChains.includes(sourceChain) &&
+  item.destinationChain === destinationChain &&
+  matchesAddress(item.destinationAddress, destinationAddress) &&
+  matchesAddress(item.outputAsset?.address, expectedOutputTokenAddress) &&
+  item.outputAsset?.decimals === expectedTokenDecimals
+)
+if (!deposit) throw new Error('No matching deposit address returned for the selected route')
+if (deposit.isActive !== true || deposit.isPaused !== false) {
+  throw new Error('Deposit address is inactive, paused, or has incomplete lifecycle data')
+}
+const acceptedToken = deposit.supportedInputTokens.find(token =>
+  token.token === inputToken.token &&
+  matchesAddress(token.address, expectedInputTokenAddress) &&
+  token.decimals === expectedTokenDecimals
+)
+if (!acceptedToken) throw new Error('The address does not currently accept the selected token')
+
+console.log(deposit.address, deposit.id, acceptedToken)
+console.log(acceptedToken.minDepositLimitUsd, acceptedToken.maxDepositLimitUsd)
+```
+
+Use the created descriptor's token and USD limits in the funding instructions, and refresh the descriptor before a later deposit. This server-side example checks the returned destination to avoid showing a reused address for a different recipient; if the provider omits it, reconcile the address before funding. Keep `deposit.id` verbatim for lookups and lifecycle actions. With a standard API key, `deposit.destinationAddress` is omitted even though the requested destination controls settlement. See [Address Creation Options](/sdk/sda-modules/sda-rhinofi/configuration#address-creation-options) for labels, webhooks, refunds, and asset fallback.
+
+For a Stellar descriptor containing `chainMetadata`, a sender that cannot use the muxed address must send to `baseAddress` with the exact `memoId`. Omitting the memo prevents deposit attribution. Read these values from the descriptor rather than constructing them.
+
+## Track Deposits
+
+Configure a project webhook in the Rhino.fi Console, or pass an approved `webhookUrl` when creating an address. Verify events using the provider's [signature-verification instructions](https://docs.rhino.fi/webhook/verify-webhook-signature) before trusting their contents. The SDA module exposes history methods for reconciliation; it does not verify or receive webhook events.
+
+Use [`getTransfers()`](/sdk/sda-modules/sda-rhinofi/api-reference#gettransfers) to read the last 31 days for the address on its source chain:
+
+```javascript
+const transfers = await sda.getTransfers(deposit.address, {
+  sourceChain,
+  limit: 20,
+  skip: 0
+})
+for (const transfer of transfers) {
+  console.log(transfer.id, transfer.status, transfer.txHash)
+}
+```
+
+For an older period, pass valid `fromTimestamp` and `toTimestamp` dates spanning no more than 31 days. Filtering and pagination apply within the fetched window; increasing `skip` does not fetch older periods.
+
+Use [`getTransfer()`](/sdk/sda-modules/sda-rhinofi/api-reference#gettransfer) with an identifier returned by history:
+
+```javascript
+if (transfers.length > 0) {
+  const transfer = await sda.getTransfer(transfers[0].id)
+  console.log(transfer.status)
+}
+```
+
+`getTransfer()` searches address history within the same default window. Supply the original window when looking up an older transfer. A missing result can mean the transfer is outside the window.
+
+Interpret each transfer independently. Rejected deposits report `refund-pending`, and polling does not change that status to `refunded`. Use the provider's [`SDA_REFUND_COMPLETED` event](https://docs.rhino.fi/webhook/events-list) for refund completion. Unsupported or out-of-range deposits can require the provider's Account Management team to arrange recovery; do not assume every rejected transfer is automatically refunded. Unknown provider states map to `pending`; see [Transfer Status](/sdk/sda-modules/sda-rhinofi/api-reference#transfer-status).
+
+## Pause or Resume an Address
+
+Use [`disableDepositAddress()`](/sdk/sda-modules/sda-rhinofi/api-reference#disabledepositaddress) to pause acceptance for the address and chain identified by `deposit.id`:
+
+```javascript
+await sda.disableDepositAddress(deposit.id)
+```
+
+Deposits arriving during the pause are rejected. Refund handling can require provider intervention. Pausing does not establish that an existing transfer has completed or that its refund was issued.
+
+Use [`enableDepositAddress()`](/sdk/sda-modules/sda-rhinofi/api-reference#enabledepositaddress) to resume acceptance:
+
+```javascript
+await sda.enableDepositAddress(deposit.id)
+```
+
+## Register with WDK (optional)
+
+Use this alternative when your application already manages the destination account through WDK. Install all three packages imported by the account-bound example:
+
+```bash
+npm install @rhino.fi/wdk-protocol-sda-rhinofi@1.1.0 @tetherto/wdk@1.0.0-beta.18 @tetherto/wdk-wallet-evm@1.0.0-beta.20
+```
+
+1. Register the destination wallet and the SDA protocol with [`registerProtocol()`](/sdk/core-module/api-reference#registerprotocolblockchain-label-protocol-config).
+2. Retrieve the destination account and its SDA protocol.
+3. Dispose the WDK wallet after using it.
+
+Retrieve the registered provider with [`getSdaProtocol()`](/sdk/core-module/api-reference#getsdaprotocollabel); the example only reads the account's address:
+
+```javascript
+import WDK from '@tetherto/wdk'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import RhinofiProtocol from '@rhino.fi/wdk-protocol-sda-rhinofi'
+
+const seed = process.env.WDK_SEED_PHRASE
+const apiKey = process.env.RHINO_API_KEY
+if (!seed || !WDK.isValidSeed(seed) || !apiKey) {
+  throw new Error('Set a valid WDK_SEED_PHRASE and RHINO_API_KEY')
+}
+
+const wdk = new WDK(seed)
+try {
+  wdk.registerWallet('ethereum', WalletManagerEvm, {})
+  wdk.registerProtocol('ethereum', 'rhinofi-sda', RhinofiProtocol, { apiKey })
+  const account = await wdk.getAccount('ethereum', 0)
+  const accountSda = account.getSdaProtocol('rhinofi-sda')
+  const destinationAddress = await account.getAddress()
+  console.log(destinationAddress, typeof accountSda.createDepositAddress)
+} finally {
+  wdk.dispose()
+}
+```
+
+The bound account supplies the default creation destination when omitted. Always pass `destinationChain` explicitly and match it to that account. The returned core interface is `ISdaProtocol`. The JavaScript registration flow works with the package combination above, but current `1.1.0` declarations still have [TypeScript compatibility limitations](/sdk/sda-modules/sda-rhinofi/api-reference#typescript-compatibility). A direct [`RhinofiProtocol`](/sdk/sda-modules/sda-rhinofi/api-reference#rhinofiprotocol) instance exposes provider-specific options, return fields, and [`enableDepositAddress()`](/sdk/sda-modules/sda-rhinofi/api-reference#enabledepositaddress); it does not repair the published declaration errors.
+
+## Handle Errors
+
+Use the imported [`SdaExecutionError`](/sdk/sda-modules/sda-rhinofi/api-reference#errors) and WDK [`NoSuchElementError`](/sdk/sda-modules/sda-rhinofi/api-reference#errors) classes to classify request failures and missing addresses:
+
+```javascript
+try {
+  await sda.getDepositAddress(deposit.id)
+} catch (error) {
+  if (error instanceof SdaExecutionError) {
+    console.error('Rhino.fi request failed', error.code)
+  } else if (error instanceof NoSuchElementError) {
+    console.error('Deposit address not found')
+  } else {
+    throw error
+  }
+}
+```
+
+`SdaExecutionError.code` and its WDK `reason` are optional. Local numeric conversions can also throw native errors. Validate caller inputs and avoid logging credentials or unfiltered provider error details. After an uncertain address-creation response, reconcile with your stored provider records before requesting another address.
+
+## Next Steps
+
+<Cards>
+<Card title="Configuration" href="/sdk/sda-modules/sda-rhinofi/configuration">
+Review authentication, caching, account defaults, and creation extras.
+</Card>
+<Card title="API Reference" href="/sdk/sda-modules/sda-rhinofi/api-reference">
+Review exact methods, returned descriptors, status mapping, and errors.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
+
+***
+
 ## All Modules
 URL: https://wdk.tether.io/developers/blocks
-Description: Complete list of available WDK wallet, backup, pricing, swidge, swap, bridge, lending, and fiat interfaces and modules.
+Description: Complete list of available WDK wallet, backup, pricing, swidge, smart deposit address, swap, bridge, lending, and fiat interfaces and modules.
 
 A comprehensive list of all available WDK modules. Each module is designed to be modular and can be used independently or combined with others.
 
@@ -58412,6 +59234,20 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 | [`@0x/wdk-protocol-swidge-0x`](https://www.npmjs.com/package/@0x/wdk-protocol-swidge-0x) | 0x | Community | Same-chain EVM token swaps through the 0x Swap API v2 | [Docs](/sdk/swidge-modules/swidge-0x/) |
 | [`@moonpay/wdk-protocol-swidge-moonpay-trade`](https://www.npmjs.com/package/@moonpay/wdk-protocol-swidge-moonpay-trade) | MoonPay Trade | Community | Provider route discovery, indicative quotes, and source-deposit execution through writable WDK accounts | [Docs](/sdk/swidge-modules/swidge-moonpay-trade/) |
 | [`@butternetwork/wdk-protocol-swidge-butter`](https://www.npmjs.com/package/@butternetwork/wdk-protocol-swidge-butter) | Butter Network | Community | Exact-input quotes and capability-dependent execution through Butter | [Docs](/sdk/swidge-modules/swidge-butter/) |
+
+## Smart Deposit Address Modules
+
+SDA modules discover provider deposit routes, issue deposit addresses, and expose provider-specific tracking operations. Check each provider's custody model and limitations.
+
+<Callout type="warn">
+Rows marked Community are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+| Module | Provider | Ownership | Description | Documentation |
+|--------|----------|-----------|-------------|---------------|
+| [`@rhino.fi/wdk-protocol-sda-rhinofi`](https://www.npmjs.com/package/@rhino.fi/wdk-protocol-sda-rhinofi) | Rhino.fi | Community | Provider-issued deposit addresses with trusted-operator routing and deposit-history access | [Docs](/sdk/sda-modules/sda-rhinofi/) |
 
 ## Pricing Modules
 
@@ -58481,6 +59317,7 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 | [`@morpho-org/wdk-protocol-lending-morpho-evm`](https://www.npmjs.com/package/@morpho-org/wdk-protocol-lending-morpho-evm) | Lending | Morpho Vault V2 and Morpho Blue lending integration | [Docs](/sdk/lending-modules/lending-morpho-evm/) |
 | [`wdk-protocol-swidge-orchestra`](https://github.com/flashnetxyz/wdk-protocol-swidge-orchestra) | Swidge | Flashnet Orchestra BTC and stablecoin route integration | [Docs](/sdk/swidge-modules/swidge-orchestra/) |
 | [`@rhino.fi/wdk-protocol-swidge-rhinofi`](https://www.npmjs.com/package/@rhino.fi/wdk-protocol-swidge-rhinofi) | Swidge | Rhino.fi cross-chain route integration | [Docs](/sdk/swidge-modules/swidge-rhinofi/) |
+| [`@rhino.fi/wdk-protocol-sda-rhinofi`](https://www.npmjs.com/package/@rhino.fi/wdk-protocol-sda-rhinofi) | SDA | Provider-issued deposit addresses with trusted-operator routing and deposit-history access | [Docs](/sdk/sda-modules/sda-rhinofi/) |
 | [`@symbiosis-finance/wdk-protocol-swidge-symbiosis`](https://www.npmjs.com/package/@symbiosis-finance/wdk-protocol-swidge-symbiosis) | Swidge | Same-chain and cross-chain exact-input routes through Symbiosis | [Docs](/sdk/swidge-modules/swidge-symbiosis/) |
 | [`@lifi/wdk-protocol-swidge-lifi`](https://www.npmjs.com/package/@lifi/wdk-protocol-swidge-lifi) | Swidge | LI.FI swap and bridge route integration | [Docs](/sdk/swidge-modules/swidge-lifi/) |
 | [`@0x/wdk-protocol-swidge-0x`](https://www.npmjs.com/package/@0x/wdk-protocol-swidge-0x) | Swidge | 0x same-chain EVM route integration | [Docs](/sdk/swidge-modules/swidge-0x/) |

@@ -1,0 +1,77 @@
+---
+title: Rhino.fi SDA Overview
+description: Receive deposits through provider-issued addresses and deliver assets to a chosen destination with the Rhino.fi SDA module.
+docType: explanation
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+The `@rhino.fi/wdk-protocol-sda-rhinofi` module lets an application discover deposit routes, request Smart Deposit Addresses (SDAs), estimate conversion amounts, and track deposits through Rhino.fi. An SDA accepts supported tokens on a source chain and routes them to a configured destination chain and address.
+
+Use this module when users should fund a deposit address with an ordinary token transfer. Rhino.fi handles the subsequent sweep, conversion, and delivery. The module does not sign or broadcast the user's funding transaction.
+
+## Deposit Model
+
+Rhino.fi operates the deposit addresses and controls the sweep and settlement. This is a trusted-operator custody model. The addresses are issued by the provider and cannot be derived locally from a WDK wallet.
+
+1. Discover a route and its current accepted tokens.
+2. Request deposit-address descriptors for the selected source chains.
+3. Show the user the deposit address, accepted token, chain, deposit limits, and destination.
+4. The user funds that address through their source wallet.
+5. Track settlement with verified provider webhooks and reconcile address history.
+
+Created addresses are monitored immediately and accept repeat deposits. The module returns `reusable: true` and omits an activation `expiry`. Pausing an address is reversible. Deposits arriving while it is paused are rejected instead of converted; refund processing follows the provider's policies.
+
+<Callout type="warn">
+Address creation configures where future deposits will settle. Confirm the destination chain and address before creating it. Keep your validated destination record: standard API keys do not receive `destinationAddress` in the returned descriptor. Rhino.fi discloses that field only to `SECRET_` keys.
+</Callout>
+
+## Capabilities
+
+| Capability | Behavior |
+|---|---|
+| Runtime route discovery | Returns accepted input tokens for a requested destination; `destinationChain` is required. |
+| Deposit estimate | Returns an indicative output amount and itemized fees. Settlement is priced when funds arrive. |
+| Address creation and lookup | Returns one descriptor per source chain, with a provider-issued address and composite identifier. |
+| Address history | Reads one address and source chain within a window of up to 31 days. |
+| Lifecycle control | Pauses or resumes deposit acceptance through authenticated provider requests. |
+| Account integration | Works without a WDK account, or reads a bound full or read-only account's address as the default creation destination. |
+
+The inherited `deriveDepositAddress()`, `renewDepositAddress()`, `recoverDepositAddress()`, and `getTransfersByRecipient()` methods are unsupported. They reject with `UnsupportedOperationError`. See [API Reference](/sdk/sda-modules/sda-rhinofi/api-reference#unsupported-methods) for details.
+
+## Routes and Deposit Limits
+
+Rhino.fi controls the available routes. Use [`getSupportedRoutes()`](/sdk/sda-modules/sda-rhinofi/api-reference#getsupportedroutes) at runtime instead of maintaining a fixed network or token inventory. Each returned route covers one source chain. The provider currently supports multiple source chains in one creation call only for EVM chains. It returns a descriptor for each chain; those EVM descriptors share the same deposit address. Other chain families require separate calls.
+
+Deposit limits are denominated in USD, per token. The module omits the generic base-unit `limits` field and exposes `minDepositLimitUsd` and `maxDepositLimitUsd` on the accepted tokens. These values do not represent quantities of USD₮ or any other deposit token.
+
+## Quotes and Settlement
+
+[`quoteDeposit()`](/sdk/sda-modules/sda-rhinofi/api-reference#quotedeposit) returns a non-binding estimate using the API account's fee configuration. The estimate includes the provider's source-chain sweep and destination delivery costs. It contains no quote identifier or expiry, and address creation does not lock its output amount or fees.
+
+History reports rejected deposits as `refund-pending`. It does not report refund completion. Integrate the provider's `SDA_REFUND_COMPLETED` event to establish when a refund was issued. Unknown provider history states map to `pending`; do not assume a guaranteed sequence of states. See [Track Deposits](/sdk/sda-modules/sda-rhinofi/usage#track-deposits).
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/sda-modules/sda-rhinofi/usage">
+Install the module, discover a route, request an address, and reconcile deposits.
+</Card>
+<Card title="Configuration" href="/sdk/sda-modules/sda-rhinofi/configuration">
+Configure API access, caching, destination defaults, and creation options.
+</Card>
+<Card title="API Reference" href="/sdk/sda-modules/sda-rhinofi/api-reference">
+Review methods, option types, return fields, statuses, and errors.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
