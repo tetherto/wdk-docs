@@ -21,14 +21,14 @@ Before starting, obtain a Rhino.fi project `SECRET_` API key with SDA access. Th
 Install the SDA package for the accountless flow:
 
 ```bash
-npm install @rhino.fi/wdk-protocol-sda-rhinofi@1.0.1
+npm install @rhino.fi/wdk-protocol-sda-rhinofi@1.1.0
 ```
 
 Create an accountless [`RhinofiProtocol`](/sdk/sda-modules/sda-rhinofi/api-reference#rhinofiprotocol) and load the confirmed addresses from your server environment:
 
 ```javascript
 import RhinofiProtocol, {
-  RhinofiProtocolError,
+  NoSuchElementError,
   SdaExecutionError
 } from '@rhino.fi/wdk-protocol-sda-rhinofi'
 
@@ -82,7 +82,7 @@ console.log(inputToken.decimals)
 console.log(inputToken.minDepositLimitUsd, inputToken.maxDepositLimitUsd)
 ```
 
-For this pair, Rhino.fi uses the machine identifier `USDT` for USD₮0 on Arbitrum and USD₮ on Ethereum. Preserve that provider identifier in calls. Use the returned token identifier and decimals together. Deposit bounds are USD values, not token base units. Refresh discovery when presenting a route; an earlier response does not reserve it. Passing `sourceChain` avoids querying every deposit-enabled source chain.
+The example uses Rhino.fi's `USDT` machine identifier, which its 1.1.0 README uses for Arbitrum. On Arbitrum the canonical Tether token is USD₮0; on Ethereum it is USD₮. Confirm the current provider token addresses and route response before funding, then preserve the returned identifier and decimals in subsequent calls. Deposit bounds are USD values, not token base units. Refresh discovery when presenting a route; an earlier response does not reserve it. Passing `sourceChain` avoids querying every deposit-enabled source chain.
 
 ## Estimate a Deposit (optional)
 
@@ -171,7 +171,7 @@ if (transfers.length > 0) {
 
 `getTransfer()` searches address history within the same default window. Supply the original window when looking up an older transfer. A missing result can mean the transfer is outside the window.
 
-Interpret each transfer independently. Rejected deposits report `refund-pending`, and polling does not change that status to `refunded`. Use the provider's [`SDA_REFUND_COMPLETED` event](https://docs.rhino.fi/webhook/events-list) for refund completion. Unsupported or out-of-range deposits can require the provider's Account Management team to arrange recovery; do not assume every rejected transfer is automatically refunded. Unknown provider states map to `processing`; see [Transfer Status](/sdk/sda-modules/sda-rhinofi/api-reference#transfer-status).
+Interpret each transfer independently. Rejected deposits report `refund-pending`, and polling does not change that status to `refunded`. Use the provider's [`SDA_REFUND_COMPLETED` event](https://docs.rhino.fi/webhook/events-list) for refund completion. Unsupported or out-of-range deposits can require the provider's Account Management team to arrange recovery; do not assume every rejected transfer is automatically refunded. Unknown provider states map to `pending`; see [Transfer Status](/sdk/sda-modules/sda-rhinofi/api-reference#transfer-status).
 
 ## Pause or Resume an Address
 
@@ -194,7 +194,7 @@ await sda.enableDepositAddress(deposit.id)
 Use this alternative when your application already manages the destination account through WDK. Install all three packages imported by the account-bound example:
 
 ```bash
-npm install @rhino.fi/wdk-protocol-sda-rhinofi@1.0.1 @tetherto/wdk@1.0.0-beta.18 @tetherto/wdk-wallet-evm@1.0.0-beta.20
+npm install @rhino.fi/wdk-protocol-sda-rhinofi@1.1.0 @tetherto/wdk@1.0.0-beta.18 @tetherto/wdk-wallet-evm@1.0.0-beta.20
 ```
 
 1. Register the destination wallet and the SDA protocol with [`registerProtocol()`](/sdk/core-module/api-reference#registerprotocolblockchain-label-protocol-config).
@@ -227,11 +227,11 @@ try {
 }
 ```
 
-The bound account supplies the default creation destination when omitted. Always pass `destinationChain` explicitly and match it to that account. The returned core interface is `ISdaProtocol`. The JavaScript registration flow works with the package combination above, but current `1.0.1` declarations have [TypeScript compatibility limitations](/sdk/sda-modules/sda-rhinofi/api-reference#typescript-compatibility). Use a direct [`RhinofiProtocol`](/sdk/sda-modules/sda-rhinofi/api-reference#rhinofiprotocol) instance when you need provider-specific TypeScript options, return fields, or [`enableDepositAddress()`](/sdk/sda-modules/sda-rhinofi/api-reference#enabledepositaddress).
+The bound account supplies the default creation destination when omitted. Always pass `destinationChain` explicitly and match it to that account. The returned core interface is `ISdaProtocol`. The JavaScript registration flow works with the package combination above, but current `1.1.0` declarations still have [TypeScript compatibility limitations](/sdk/sda-modules/sda-rhinofi/api-reference#typescript-compatibility). A direct [`RhinofiProtocol`](/sdk/sda-modules/sda-rhinofi/api-reference#rhinofiprotocol) instance exposes provider-specific options, return fields, and [`enableDepositAddress()`](/sdk/sda-modules/sda-rhinofi/api-reference#enabledepositaddress); it does not repair the published declaration errors.
 
 ## Handle Errors
 
-Use the imported [`SdaExecutionError`](/sdk/sda-modules/sda-rhinofi/api-reference#errors) and [`RhinofiProtocolError`](/sdk/sda-modules/sda-rhinofi/api-reference#errors) classes to classify provider failures:
+Use the imported [`SdaExecutionError`](/sdk/sda-modules/sda-rhinofi/api-reference#errors) and WDK [`NoSuchElementError`](/sdk/sda-modules/sda-rhinofi/api-reference#errors) classes to classify request failures and missing addresses:
 
 ```javascript
 try {
@@ -239,15 +239,15 @@ try {
 } catch (error) {
   if (error instanceof SdaExecutionError) {
     console.error('Rhino.fi request failed', error.code)
-  } else if (error instanceof RhinofiProtocolError) {
-    console.error(error.name)
+  } else if (error instanceof NoSuchElementError) {
+    console.error('Deposit address not found')
   } else {
     throw error
   }
 }
 ```
 
-`SdaExecutionError.code` is optional. Local numeric conversions can also throw native errors. Validate caller inputs and avoid logging credentials or unfiltered provider error details. After an uncertain address-creation response, reconcile with your stored provider records before requesting another address.
+`SdaExecutionError.code` and its WDK `reason` are optional. Local numeric conversions can also throw native errors. Validate caller inputs and avoid logging credentials or unfiltered provider error details. After an uncertain address-creation response, reconcile with your stored provider records before requesting another address.
 
 ## Next Steps
 

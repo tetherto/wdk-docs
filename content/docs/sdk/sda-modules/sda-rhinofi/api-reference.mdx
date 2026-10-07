@@ -11,7 +11,7 @@ Community modules are developed and maintained independently by third-party cont
 Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
 </Callout>
 
-The `@rhino.fi/wdk-protocol-sda-rhinofi` entrypoint exports the default class and its named alias `RhinofiProtocol`, the WDK `ISdaProtocol` interface class, seven error classes, and SDA TypeScript types. Use the [Usage](/sdk/sda-modules/sda-rhinofi/usage) page for executable JavaScript imports and examples.
+The `@rhino.fi/wdk-protocol-sda-rhinofi` entrypoint exports the default class and its named alias `RhinofiProtocol`, the WDK `ISdaProtocol` interface class, WDK and provider error classes, and SDA TypeScript types. Use the [Usage](/sdk/sda-modules/sda-rhinofi/usage) page for executable JavaScript imports and examples.
 
 ## RhinofiProtocol
 
@@ -235,7 +235,7 @@ The shared `SdaTransferStatus` union includes `'pending'`, `'detected'`, `'proce
 | Accepted state `EXECUTED` | `completed` |
 | Accepted state `FAILED`, or `_tag: 'failed'` | `failed` |
 | `_tag: 'rejected'` | `refund-pending` |
-| Unknown accepted state or history tag | `processing` |
+| Unknown accepted state or history tag | `pending` |
 
 These mappings do not guarantee a state sequence. History does not establish refund completion and does not emit `refunded`; use the provider's [`SDA_REFUND_COMPLETED` webhook event](https://docs.rhino.fi/webhook/events-list).
 
@@ -259,25 +259,24 @@ It also re-exports WDK types: `Blockchain`, `SdaToken`, `SdaDepositAddressLimits
 
 ## TypeScript Compatibility
 
-In `@rhino.fi/wdk-protocol-sda-rhinofi@1.0.1`, direct JavaScript construction and WDK registration work, but the declarations do not fully align with WDK's base types. The returned Rhino.fi descriptor makes `destinationAddress` optional, whereas the WDK `SdaDepositAddress` type requires it. Assigning the provider to `ISdaProtocol` therefore fails type checking. The provider constructor requires the configuration argument, which also causes TypeScript to reject the class in WDK's generic `registerProtocol()` call.
+In `@rhino.fi/wdk-protocol-sda-rhinofi@1.1.0`, direct JavaScript construction and WDK registration work, but the declarations still do not fully align with WDK's base types. The returned Rhino.fi descriptor makes `destinationAddress` optional, whereas the WDK `SdaDepositAddress` type requires it. Assigning the provider to `ISdaProtocol` therefore fails type checking. Its required configuration argument also differs from WDK's expected constructor signature, so TypeScript rejects the class in a generic `registerProtocol()` call.
 
-Use the concrete provider class and Rhino.fi result types for direct TypeScript integrations. Do not rely on a cast to restore the missing destination or change the runtime API. The JavaScript registration example demonstrates runtime integration; it is not a type-checking workaround.
+Direct use of the concrete provider class avoids generic registration, but the published declarations also fail strict checking with `skipLibCheck: false`. Do not rely on a cast to restore the missing destination or change the runtime API. The JavaScript registration example demonstrates runtime integration; it is not a type-checking workaround.
 
 ## Errors
 
-The module's errors extend `RhinofiProtocolError`, which extends JavaScript `Error`. These are provider-specific classes. The inherited unsupported methods throw WDK `UnsupportedOperationError`, outside this hierarchy.
+Version 1.1.0 uses the shared WDK error hierarchy and no longer exports `RhinofiProtocolError`. The package re-exports WDK `WdkError`, `ValueError`, `NoSuchElementError`, `SdaError`, and `ProviderError`, along with `SdaErrorReason` and `ProviderErrorReason`. The inherited unsupported methods throw WDK `UnsupportedOperationError`.
 
 | Export | Meaning and extra fields |
 |---|---|
-| `RhinofiProtocolError` | Base class for module-specific failures. |
-| `ConfigurationError` | API key missing during construction. |
-| `ValueError` | Selected missing or invalid method arguments. It does not cover every native conversion or malformed-input error. |
-| `UnsupportedChainError` | Chain unresolved or source SDA disabled; carries `chain`. |
-| `UnsupportedTokenError` | Token unresolved on a chain; carries `token` and `chain`. |
-| `NoSuchElementError` | Address or transfer not found; carries `id`. |
-| `SdaExecutionError` | Provider rejection, non-success HTTP result, or transport failure; carries optional `code` and can retain an underlying `cause`. |
+| `ConfigurationError` | Missing API key during construction; extends WDK `ValueError`. |
+| `ValueError` | Re-exported WDK error for selected missing or invalid method arguments. It does not cover every native conversion or malformed-input error. |
+| `UnsupportedChainError` | Chain unresolved or source SDA disabled; extends WDK `SdaError` with `ROUTE_NOT_SUPPORTED` and carries `chain`. |
+| `UnsupportedTokenError` | Token unresolved on a chain; extends WDK `SdaError` with `ROUTE_NOT_SUPPORTED` and carries `token` and `chain`. |
+| `NoSuchElementError` | Re-exported WDK error for a missing address or transfer. It does not carry the module's former `id` field. |
+| `SdaExecutionError` | Provider rejection, non-success HTTP result, or transport failure; extends WDK `ProviderError` with optional `reason`, provider `code`, and underlying `cause`. |
 
-For provider failures, `code` preserves a response error tag when available, such as `DepositAddressRateLimitExceeded` or `ExtensionNotEnabled`. Untagged failures can have no `code`. Lookup and pause methods map the provider's not-found tag or HTTP 404 to `NoSuchElementError`.
+For provider failures, `code` preserves a response error tag when available, such as `DepositAddressRateLimitExceeded` or `ExtensionNotEnabled`. Untagged failures can have no `code`. `reason` maps rejected credentials to `UNAUTHORIZED`, disabled access to `FORBIDDEN`, HTTP 408/504 responses to `REQUEST_TIMEOUT`, server errors to `INTERNAL_SERVER_ERROR`, and transport failures without a response to `NETWORK_ERROR`; other failures can have no WDK reason. Lookup and pause methods map the provider's not-found tag or HTTP 404 to `NoSuchElementError`.
 
 Do not assume that a `ValueError` means no network request occurred. Validate inputs before calling the module, and avoid logging credentials or unfiltered error causes. See [Handle Errors](/sdk/sda-modules/sda-rhinofi/usage#handle-errors).
 

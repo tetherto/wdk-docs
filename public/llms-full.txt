@@ -6020,6 +6020,13 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 ---
 
+### October 06, 2026
+
+**Changes**
+- **Rhino.fi SDA** ([v1.1.0](https://www.npmjs.com/package/@rhino.fi/wdk-protocol-sda-rhinofi/v/1.1.0)): [Breaking] Use the shared WDK error hierarchy and reason codes, remove `RhinofiProtocolError` and the former lookup error's `id` field, and map unknown provider history states to `pending`. The published TypeScript declarations still reject generic WDK registration.
+
+---
+
 ### September 17, 2026
 
 **What's New**
@@ -7038,7 +7045,6 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 - Check this page for the latest updates
 - Join our [Discord community](https://discord.gg/arYXDhHB2w) for real-time announcements
 - Star and follow the [GitHub repositories](https://github.com/orgs/tetherto/repositories?q=wdk) for detailed release notes
-
 ***
 
 ## Partner with WDK
@@ -58422,7 +58428,7 @@ Community modules are developed and maintained independently by third-party cont
 Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
 </Callout>
 
-The `@rhino.fi/wdk-protocol-sda-rhinofi` entrypoint exports the default class and its named alias `RhinofiProtocol`, the WDK `ISdaProtocol` interface class, seven error classes, and SDA TypeScript types. Use the [Usage](/sdk/sda-modules/sda-rhinofi/usage) page for executable JavaScript imports and examples.
+The `@rhino.fi/wdk-protocol-sda-rhinofi` entrypoint exports the default class and its named alias `RhinofiProtocol`, the WDK `ISdaProtocol` interface class, WDK and provider error classes, and SDA TypeScript types. Use the [Usage](/sdk/sda-modules/sda-rhinofi/usage) page for executable JavaScript imports and examples.
 
 ## RhinofiProtocol
 
@@ -58646,7 +58652,7 @@ The shared `SdaTransferStatus` union includes `'pending'`, `'detected'`, `'proce
 | Accepted state `EXECUTED` | `completed` |
 | Accepted state `FAILED`, or `_tag: 'failed'` | `failed` |
 | `_tag: 'rejected'` | `refund-pending` |
-| Unknown accepted state or history tag | `processing` |
+| Unknown accepted state or history tag | `pending` |
 
 These mappings do not guarantee a state sequence. History does not establish refund completion and does not emit `refunded`; use the provider's [`SDA_REFUND_COMPLETED` webhook event](https://docs.rhino.fi/webhook/events-list).
 
@@ -58670,25 +58676,24 @@ It also re-exports WDK types: `Blockchain`, `SdaToken`, `SdaDepositAddressLimits
 
 ## TypeScript Compatibility
 
-In `@rhino.fi/wdk-protocol-sda-rhinofi@1.0.1`, direct JavaScript construction and WDK registration work, but the declarations do not fully align with WDK's base types. The returned Rhino.fi descriptor makes `destinationAddress` optional, whereas the WDK `SdaDepositAddress` type requires it. Assigning the provider to `ISdaProtocol` therefore fails type checking. The provider constructor requires the configuration argument, which also causes TypeScript to reject the class in WDK's generic `registerProtocol()` call.
+In `@rhino.fi/wdk-protocol-sda-rhinofi@1.1.0`, direct JavaScript construction and WDK registration work, but the declarations still do not fully align with WDK's base types. The returned Rhino.fi descriptor makes `destinationAddress` optional, whereas the WDK `SdaDepositAddress` type requires it. Assigning the provider to `ISdaProtocol` therefore fails type checking. Its required configuration argument also differs from WDK's expected constructor signature, so TypeScript rejects the class in a generic `registerProtocol()` call.
 
-Use the concrete provider class and Rhino.fi result types for direct TypeScript integrations. Do not rely on a cast to restore the missing destination or change the runtime API. The JavaScript registration example demonstrates runtime integration; it is not a type-checking workaround.
+Direct use of the concrete provider class avoids generic registration, but the published declarations also fail strict checking with `skipLibCheck: false`. Do not rely on a cast to restore the missing destination or change the runtime API. The JavaScript registration example demonstrates runtime integration; it is not a type-checking workaround.
 
 ## Errors
 
-The module's errors extend `RhinofiProtocolError`, which extends JavaScript `Error`. These are provider-specific classes. The inherited unsupported methods throw WDK `UnsupportedOperationError`, outside this hierarchy.
+Version 1.1.0 uses the shared WDK error hierarchy and no longer exports `RhinofiProtocolError`. The package re-exports WDK `WdkError`, `ValueError`, `NoSuchElementError`, `SdaError`, and `ProviderError`, along with `SdaErrorReason` and `ProviderErrorReason`. The inherited unsupported methods throw WDK `UnsupportedOperationError`.
 
 | Export | Meaning and extra fields |
 |---|---|
-| `RhinofiProtocolError` | Base class for module-specific failures. |
-| `ConfigurationError` | API key missing during construction. |
-| `ValueError` | Selected missing or invalid method arguments. It does not cover every native conversion or malformed-input error. |
-| `UnsupportedChainError` | Chain unresolved or source SDA disabled; carries `chain`. |
-| `UnsupportedTokenError` | Token unresolved on a chain; carries `token` and `chain`. |
-| `NoSuchElementError` | Address or transfer not found; carries `id`. |
-| `SdaExecutionError` | Provider rejection, non-success HTTP result, or transport failure; carries optional `code` and can retain an underlying `cause`. |
+| `ConfigurationError` | Missing API key during construction; extends WDK `ValueError`. |
+| `ValueError` | Re-exported WDK error for selected missing or invalid method arguments. It does not cover every native conversion or malformed-input error. |
+| `UnsupportedChainError` | Chain unresolved or source SDA disabled; extends WDK `SdaError` with `ROUTE_NOT_SUPPORTED` and carries `chain`. |
+| `UnsupportedTokenError` | Token unresolved on a chain; extends WDK `SdaError` with `ROUTE_NOT_SUPPORTED` and carries `token` and `chain`. |
+| `NoSuchElementError` | Re-exported WDK error for a missing address or transfer. It does not carry the module's former `id` field. |
+| `SdaExecutionError` | Provider rejection, non-success HTTP result, or transport failure; extends WDK `ProviderError` with optional `reason`, provider `code`, and underlying `cause`. |
 
-For provider failures, `code` preserves a response error tag when available, such as `DepositAddressRateLimitExceeded` or `ExtensionNotEnabled`. Untagged failures can have no `code`. Lookup and pause methods map the provider's not-found tag or HTTP 404 to `NoSuchElementError`.
+For provider failures, `code` preserves a response error tag when available, such as `DepositAddressRateLimitExceeded` or `ExtensionNotEnabled`. Untagged failures can have no `code`. `reason` maps rejected credentials to `UNAUTHORIZED`, disabled access to `FORBIDDEN`, HTTP 408/504 responses to `REQUEST_TIMEOUT`, server errors to `INTERNAL_SERVER_ERROR`, and transport failures without a response to `NETWORK_ERROR`; other failures can have no WDK reason. Lookup and pause methods map the provider's not-found tag or HTTP 404 to `NoSuchElementError`.
 
 Do not assume that a `ValueError` means no network request occurred. Validate inputs before calling the module, and avoid logging credentials or unfiltered error causes. See [Handle Errors](/sdk/sda-modules/sda-rhinofi/usage#handle-errors).
 
@@ -58708,7 +58713,6 @@ Review API-key permissions, account binding, and provider creation options.
 ## Need Help?
 
 <SupportCards />
-
 ***
 
 ## Rhino.fi SDA Configuration
@@ -58853,7 +58857,7 @@ Deposit limits are denominated in USD, per token. The module omits the generic b
 
 [`quoteDeposit()`](/sdk/sda-modules/sda-rhinofi/api-reference#quotedeposit) returns a non-binding estimate using the API account's fee configuration. The estimate includes the provider's source-chain sweep and destination delivery costs. It contains no quote identifier or expiry, and address creation does not lock its output amount or fees.
 
-History reports rejected deposits as `refund-pending`. It does not report refund completion. Integrate the provider's `SDA_REFUND_COMPLETED` event to establish when a refund was issued. Unknown provider history states map to `processing`; do not assume a guaranteed sequence of states. See [Track Deposits](/sdk/sda-modules/sda-rhinofi/usage#track-deposits).
+History reports rejected deposits as `refund-pending`. It does not report refund completion. Integrate the provider's `SDA_REFUND_COMPLETED` event to establish when a refund was issued. Unknown provider history states map to `pending`; do not assume a guaranteed sequence of states. See [Track Deposits](/sdk/sda-modules/sda-rhinofi/usage#track-deposits).
 
 ## Next Steps
 
@@ -58874,7 +58878,6 @@ Review methods, option types, return fields, statuses, and errors.
 ## Need Help?
 
 <SupportCards />
-
 ***
 
 ## Rhino.fi SDA Usage
@@ -58896,14 +58899,14 @@ Before starting, obtain a Rhino.fi project `SECRET_` API key with SDA access. Th
 Install the SDA package for the accountless flow:
 
 ```bash
-npm install @rhino.fi/wdk-protocol-sda-rhinofi@1.0.1
+npm install @rhino.fi/wdk-protocol-sda-rhinofi@1.1.0
 ```
 
 Create an accountless [`RhinofiProtocol`](/sdk/sda-modules/sda-rhinofi/api-reference#rhinofiprotocol) and load the confirmed addresses from your server environment:
 
 ```javascript
 import RhinofiProtocol, {
-  RhinofiProtocolError,
+  NoSuchElementError,
   SdaExecutionError
 } from '@rhino.fi/wdk-protocol-sda-rhinofi'
 
@@ -58957,7 +58960,7 @@ console.log(inputToken.decimals)
 console.log(inputToken.minDepositLimitUsd, inputToken.maxDepositLimitUsd)
 ```
 
-For this pair, Rhino.fi uses the machine identifier `USDT` for USD₮0 on Arbitrum and USD₮ on Ethereum. Preserve that provider identifier in calls. Use the returned token identifier and decimals together. Deposit bounds are USD values, not token base units. Refresh discovery when presenting a route; an earlier response does not reserve it. Passing `sourceChain` avoids querying every deposit-enabled source chain.
+The example uses Rhino.fi's `USDT` machine identifier, which its 1.1.0 README uses for Arbitrum. On Arbitrum the canonical Tether token is USD₮0; on Ethereum it is USD₮. Confirm the current provider token addresses and route response before funding, then preserve the returned identifier and decimals in subsequent calls. Deposit bounds are USD values, not token base units. Refresh discovery when presenting a route; an earlier response does not reserve it. Passing `sourceChain` avoids querying every deposit-enabled source chain.
 
 ## Estimate a Deposit (optional)
 
@@ -59046,7 +59049,7 @@ if (transfers.length > 0) {
 
 `getTransfer()` searches address history within the same default window. Supply the original window when looking up an older transfer. A missing result can mean the transfer is outside the window.
 
-Interpret each transfer independently. Rejected deposits report `refund-pending`, and polling does not change that status to `refunded`. Use the provider's [`SDA_REFUND_COMPLETED` event](https://docs.rhino.fi/webhook/events-list) for refund completion. Unsupported or out-of-range deposits can require the provider's Account Management team to arrange recovery; do not assume every rejected transfer is automatically refunded. Unknown provider states map to `processing`; see [Transfer Status](/sdk/sda-modules/sda-rhinofi/api-reference#transfer-status).
+Interpret each transfer independently. Rejected deposits report `refund-pending`, and polling does not change that status to `refunded`. Use the provider's [`SDA_REFUND_COMPLETED` event](https://docs.rhino.fi/webhook/events-list) for refund completion. Unsupported or out-of-range deposits can require the provider's Account Management team to arrange recovery; do not assume every rejected transfer is automatically refunded. Unknown provider states map to `pending`; see [Transfer Status](/sdk/sda-modules/sda-rhinofi/api-reference#transfer-status).
 
 ## Pause or Resume an Address
 
@@ -59069,7 +59072,7 @@ await sda.enableDepositAddress(deposit.id)
 Use this alternative when your application already manages the destination account through WDK. Install all three packages imported by the account-bound example:
 
 ```bash
-npm install @rhino.fi/wdk-protocol-sda-rhinofi@1.0.1 @tetherto/wdk@1.0.0-beta.18 @tetherto/wdk-wallet-evm@1.0.0-beta.20
+npm install @rhino.fi/wdk-protocol-sda-rhinofi@1.1.0 @tetherto/wdk@1.0.0-beta.18 @tetherto/wdk-wallet-evm@1.0.0-beta.20
 ```
 
 1. Register the destination wallet and the SDA protocol with [`registerProtocol()`](/sdk/core-module/api-reference#registerprotocolblockchain-label-protocol-config).
@@ -59102,11 +59105,11 @@ try {
 }
 ```
 
-The bound account supplies the default creation destination when omitted. Always pass `destinationChain` explicitly and match it to that account. The returned core interface is `ISdaProtocol`. The JavaScript registration flow works with the package combination above, but current `1.0.1` declarations have [TypeScript compatibility limitations](/sdk/sda-modules/sda-rhinofi/api-reference#typescript-compatibility). Use a direct [`RhinofiProtocol`](/sdk/sda-modules/sda-rhinofi/api-reference#rhinofiprotocol) instance when you need provider-specific TypeScript options, return fields, or [`enableDepositAddress()`](/sdk/sda-modules/sda-rhinofi/api-reference#enabledepositaddress).
+The bound account supplies the default creation destination when omitted. Always pass `destinationChain` explicitly and match it to that account. The returned core interface is `ISdaProtocol`. The JavaScript registration flow works with the package combination above, but current `1.1.0` declarations still have [TypeScript compatibility limitations](/sdk/sda-modules/sda-rhinofi/api-reference#typescript-compatibility). A direct [`RhinofiProtocol`](/sdk/sda-modules/sda-rhinofi/api-reference#rhinofiprotocol) instance exposes provider-specific options, return fields, and [`enableDepositAddress()`](/sdk/sda-modules/sda-rhinofi/api-reference#enabledepositaddress); it does not repair the published declaration errors.
 
 ## Handle Errors
 
-Use the imported [`SdaExecutionError`](/sdk/sda-modules/sda-rhinofi/api-reference#errors) and [`RhinofiProtocolError`](/sdk/sda-modules/sda-rhinofi/api-reference#errors) classes to classify provider failures:
+Use the imported [`SdaExecutionError`](/sdk/sda-modules/sda-rhinofi/api-reference#errors) and WDK [`NoSuchElementError`](/sdk/sda-modules/sda-rhinofi/api-reference#errors) classes to classify request failures and missing addresses:
 
 ```javascript
 try {
@@ -59114,15 +59117,15 @@ try {
 } catch (error) {
   if (error instanceof SdaExecutionError) {
     console.error('Rhino.fi request failed', error.code)
-  } else if (error instanceof RhinofiProtocolError) {
-    console.error(error.name)
+  } else if (error instanceof NoSuchElementError) {
+    console.error('Deposit address not found')
   } else {
     throw error
   }
 }
 ```
 
-`SdaExecutionError.code` is optional. Local numeric conversions can also throw native errors. Validate caller inputs and avoid logging credentials or unfiltered provider error details. After an uncertain address-creation response, reconcile with your stored provider records before requesting another address.
+`SdaExecutionError.code` and its WDK `reason` are optional. Local numeric conversions can also throw native errors. Validate caller inputs and avoid logging credentials or unfiltered provider error details. After an uncertain address-creation response, reconcile with your stored provider records before requesting another address.
 
 ## Next Steps
 
@@ -59140,7 +59143,6 @@ Review exact methods, returned descriptors, status mapping, and errors.
 ## Need Help?
 
 <SupportCards />
-
 ***
 
 ## All Modules
