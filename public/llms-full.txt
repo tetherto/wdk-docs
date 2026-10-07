@@ -58928,6 +58928,11 @@ const depositor = confirmedEvmAddress('RHINO_DEPOSITOR_ADDRESS')
 const destinationAddress = confirmedEvmAddress('RHINO_DESTINATION_ADDRESS')
 const sourceChain = 'ARBITRUM'
 const destinationChain = 'ETHEREUM'
+const expectedInputTokenAddress = '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9'
+const expectedOutputTokenAddress = '0xdac17f958d2ee523a2206206994597c13d831ec7'
+const expectedTokenDecimals = 6
+const matchesAddress = (actual, expected) =>
+  typeof actual === 'string' && actual.toLowerCase() === expected.toLowerCase()
 const sda = new RhinofiProtocol(undefined, { apiKey })
 ```
 
@@ -58955,15 +58960,24 @@ const routes = await sda.getSupportedRoutes({
   destinationChain,
   outputAsset: 'USDT'
 })
-const route = routes[0]
-const inputToken = route?.inputTokens.find(token => token.token === 'USDT')
-if (!route || !inputToken) throw new Error('The requested deposit route is unavailable')
+const route = routes.find(item =>
+  item.sourceChains.includes(sourceChain) && item.destinationChain === destinationChain
+)
+const inputToken = route?.inputTokens.find(token =>
+  token.token === 'USDT' && matchesAddress(token.address, expectedInputTokenAddress)
+)
+if (!route || !inputToken ||
+    inputToken.decimals !== expectedTokenDecimals ||
+    !matchesAddress(route.outputAsset?.address, expectedOutputTokenAddress) ||
+    route.outputAsset?.decimals !== expectedTokenDecimals) {
+  throw new Error('The requested Tether route is unavailable or its token details differ')
+}
 
 console.log(inputToken.decimals)
 console.log(inputToken.minDepositLimitUsd, inputToken.maxDepositLimitUsd)
 ```
 
-The example uses Rhino.fi's `USDT` machine identifier, which its 1.1.0 README uses for Arbitrum. On Arbitrum the canonical Tether token is USD₮0; on Ethereum it is USD₮. Confirm the current provider token addresses and route response before funding, then preserve the returned identifier and decimals in subsequent calls. Deposit bounds are USD values, not token base units. Refresh discovery when presenting a route; an earlier response does not reserve it. Passing `sourceChain` avoids querying every deposit-enabled source chain.
+The example uses Rhino.fi's `USDT` machine identifier, which its 1.1.0 README uses for Arbitrum. The checks use the official [Arbitrum USD₮0 deployment](https://docs.usdt0.to/technical-documentation/deployments), [Ethereum USD₮ contract](https://tether.to/en/supported-protocols/), and [six-decimal token specification](https://docs.usdt0.to/technical-documentation/developer/). Stop if the provider returns different or missing token details; a ticker alone does not identify the asset. Preserve the returned identifier and decimals in subsequent calls. Deposit bounds are USD values, not token base units. Refresh discovery when presenting a route; an earlier response does not reserve it. Passing `sourceChain` avoids querying every deposit-enabled source chain.
 
 ## Estimate a Deposit (optional)
 
@@ -59006,19 +59020,29 @@ const deposits = await sda.createDepositAddress({
   destinationAddress,
   reusePolicy: 'reuse-existing'
 })
-const deposit = deposits.find(item => item.sourceChains.includes(sourceChain))
-if (!deposit) throw new Error('No deposit address returned for the selected chain')
+const deposit = deposits.find(item =>
+  item.sourceChains.includes(sourceChain) &&
+  item.destinationChain === destinationChain &&
+  matchesAddress(item.destinationAddress, destinationAddress) &&
+  matchesAddress(item.outputAsset?.address, expectedOutputTokenAddress) &&
+  item.outputAsset?.decimals === expectedTokenDecimals
+)
+if (!deposit) throw new Error('No matching deposit address returned for the selected route')
 if (deposit.isActive !== true || deposit.isPaused !== false) {
   throw new Error('Deposit address is inactive, paused, or has incomplete lifecycle data')
 }
-const acceptedToken = deposit.supportedInputTokens.find(token => token.token === inputToken.token)
+const acceptedToken = deposit.supportedInputTokens.find(token =>
+  token.token === inputToken.token &&
+  matchesAddress(token.address, expectedInputTokenAddress) &&
+  token.decimals === expectedTokenDecimals
+)
 if (!acceptedToken) throw new Error('The address does not currently accept the selected token')
 
 console.log(deposit.address, deposit.id, acceptedToken)
 console.log(acceptedToken.minDepositLimitUsd, acceptedToken.maxDepositLimitUsd)
 ```
 
-Use the created descriptor's token and USD limits in the funding instructions, and refresh the descriptor before a later deposit. Keep `deposit.id` verbatim for lookups and lifecycle actions. With a standard API key, `deposit.destinationAddress` is omitted even though the requested destination controls settlement. See [Address Creation Options](/sdk/sda-modules/sda-rhinofi/configuration#address-creation-options) for labels, webhooks, refunds, and asset fallback.
+Use the created descriptor's token and USD limits in the funding instructions, and refresh the descriptor before a later deposit. This server-side example checks the returned destination to avoid showing a reused address for a different recipient; if the provider omits it, reconcile the address before funding. Keep `deposit.id` verbatim for lookups and lifecycle actions. With a standard API key, `deposit.destinationAddress` is omitted even though the requested destination controls settlement. See [Address Creation Options](/sdk/sda-modules/sda-rhinofi/configuration#address-creation-options) for labels, webhooks, refunds, and asset fallback.
 
 For a Stellar descriptor containing `chainMetadata`, a sender that cannot use the muxed address must send to `baseAddress` with the exact `memoId`. Omitting the memo prevents deposit attribution. Read these values from the descriptor rather than constructing them.
 
