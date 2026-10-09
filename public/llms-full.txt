@@ -4809,8 +4809,6 @@ Description: Preview and execute token swaps and cross-network bridges with WDK 
 
 WDK CLI beta.6 can quote installed swap and bridge protocols, select a route, and execute it from an unlocked wallet. Use `wdk token list` to find the registered network and token names accepted by these commands.
 
-Use this guide to [Select The Account And Recipient](#select-the-account-and-recipient), [Prepare A Velora Token Allowance](#prepare-a-velora-token-allowance), [Preview A Swap](#preview-a-swap), [Execute A Swap](#execute-a-swap), [Preview And Execute A Bridge](#preview-and-execute-a-bridge), [Choose A Protocol](#choose-a-protocol).
-
 Before you begin, [set up and unlock a wallet](/cli/guides/get-started) and check the source and destination token names with `wdk token list`. Built-in entries need no registration. If an entry is missing, [add a custom token](/cli/guides/manage-tokens#add-a-custom-token). Fund the source account with the tokens and native gas asset needed for execution.
 
 If you register a custom or overriding native token, read [Manage Tokens](/cli/guides/manage-tokens) first: `wdk token add` cannot retain `nativeId`, so routing works only when the selected protocol discovers the asset by symbol or does not require a native route identifier. Custom native tokens are not guaranteed to swap or bridge.
@@ -6186,6 +6184,28 @@ URL: https://docs.wdk.tether.io/overview/changelog
 Description: Updates and improvements to the Wallet Development Kit (WDK) modules and tools.
 
 Stay up to date with the latest improvements, new features, and bug fixes across all WDK modules.
+
+---
+
+### October 07, 2026
+
+**What's New**
+
+- **indexer-http** ([v1.0.1](https://github.com/tetherto/wdk-indexer-http/releases/tag/v1.0.1)): Add the [Indexer HTTP SDK](/tools/indexer-api/sdk) for Node.js and Bare, with balance and transfer queries, typed errors, per-item batch results, and registered-wallet transfer syncing.
+
+---
+
+### October 05, 2026
+
+**What's New**
+
+- **pricing-bitfinex-http** ([v1.0.0-beta.6](https://github.com/tetherto/wdk-pricing-bitfinex-http/releases/tag/v1.0.0-beta.6)): Translate common ticker symbols for current-price, price-data, and historical requests; add `currencyCodes` overrides for explicit Bitfinex currency mappings.
+
+**Changes**
+
+- **wdk-wallet** ([v1.0.0-beta.22](https://github.com/tetherto/wdk-wallet/releases/tag/v1.0.0-beta.22)): [Breaking] Add required `IDisposable.disposed`, expose manager disposal state, make repeated completed disposal calls idempotent, and export `DisposalError` from the root and protocols entrypoints.
+- **pricing-provider** ([v1.0.0-beta.7](https://github.com/tetherto/wdk-pricing-provider/releases/tag/v1.0.0-beta.7)): Clarify the `PricingClient` contract for case-insensitive common tickers, client-side vendor translation, ordered batch results, and `null` entries for unresolved current-price and price-data pairs. Runtime logic and return declarations are unchanged.
+- **wallet-tron** ([v1.0.0-beta.15](https://github.com/tetherto/wdk-wallet-tron/releases/tag/v1.0.0-beta.15)): Update TronWeb to 6.5.1 and constructor documentation for raw BIP-32 seed input; the wallet module’s own executable methods are unchanged.
 
 ---
 
@@ -13585,7 +13605,7 @@ WDK Core is the main runtime for registering and managing wallet, protocol, midd
 <Callout type="info">
 These pages reflect `@tetherto/wdk@1.0.0-beta.18`. This release adds machine-readable policy denial codes; integrations can branch on `DENIAL_CODES`, `PolicyViolationError.code`, or `SimulationResult.code` instead of parsing `reason`.
 
-The base-wallet reference also covers `@tetherto/wdk-wallet@1.0.0-beta.21`, including raw BIP-32 seed input, signer capabilities, and account disposal. This is a separate package from the WDK orchestrator; see the [base-wallet migration notes](/sdk/core-module/api-reference#base-wallet-signer-contracts).
+The base-wallet reference also covers `@tetherto/wdk-wallet@1.0.0-beta.22`, including signer capabilities, disposal state, and `DisposalError`. This is a separate package from the WDK orchestrator; see the [base-wallet migration notes](/sdk/core-module/api-reference#base-wallet-signer-contracts).
 </Callout>
 
 Use WDK Core to:
@@ -13654,8 +13674,6 @@ new WDK(seed, options?)
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `options` (`WdkOptions`, optional): Instance settings. `maxConditionTimeoutMs` is a finite positive number that caps every policy condition timeout on this WDK instance and defaults to `30000` milliseconds. `policyExclusions?: string[]` appends non-empty method names to the default policy exclusions.
-
-For base `WalletManager` implementations, `@tetherto/wdk-wallet@1.0.0-beta.20` clarifies that byte input is a raw BIP-32 master seed of 16–64 bytes. It need not have been generated from a BIP-39 mnemonic. This is a declaration clarification, not a new derivation algorithm; check each concrete wallet's seed and derivation requirements.
 
 **Throws:** `Error` if the seed is invalid. Throws `PolicyConfigurationError` if `options` fails the published options schema, such as an array or primitive value, if `maxConditionTimeoutMs` is not a finite positive number, or if `policyExclusions` is not an array of non-empty strings.
 
@@ -14069,18 +14087,19 @@ The list matches exact names, not prefixes: a new `get*` or `quote*` method is n
 
 ## Base Wallet Signer Contracts
 
-These contracts belong to `@tetherto/wdk-wallet@1.0.0-beta.21`. They describe the base package used by module authors; a concrete wallet must implement the relevant signer support before applications can use it. Updating a direct base-wallet dependency does not upgrade the separate copy pinned by another wallet package.
+These contracts belong to `@tetherto/wdk-wallet@1.0.0-beta.22`. They describe the base package used by module authors; a concrete wallet must implement the relevant signer support before applications can use it. Updating a direct base-wallet dependency does not upgrade the separate copy pinned by another wallet package.
 
-Declare `@tetherto/wdk-wallet@1.0.0-beta.21` as a direct dependency before importing these contracts.
+Declare `@tetherto/wdk-wallet@1.0.0-beta.22` as a direct dependency before importing these contracts.
 
 ```javascript title="Import Base Wallet Contracts"
-import WalletManager, { IDisposable, ISigner } from '@tetherto/wdk-wallet'
+import WalletManager, { DisposalError, IDisposable, ISigner } from '@tetherto/wdk-wallet'
 ```
 
-`IDisposable` is a new root export declaring `dispose(): void`. Its base implementation throws `NotImplementedError`; implementations provide their own cleanup. `ISigner` extends this contract and now requires these capabilities in addition to `derive(path)` and `getAddress()`:
+`IDisposable`, introduced in beta.21, declares `dispose(): void`. Beta.22 adds a read-only `disposed: boolean` getter. Both base members throw `NotImplementedError`; implementations provide their own state and cleanup. `ISigner` extends this contract and requires these capabilities in addition to `derive(path)` and `getAddress()`:
 
 | Member | Contract |
 | --- | --- |
+| `disposed` | `boolean` indicating whether the implementation has been disposed. Added to `IDisposable` in beta.22. |
 | `isDerivable` | `boolean` indicating whether the signer supports child derivation. |
 | `keyPair` | `KeyPair \| null`; null when key material cannot be retrieved, for example from a hardware signer. |
 | `path` | `string \| null`; null when the signer is not bound to a derivation position. |
@@ -14094,24 +14113,34 @@ The base manager's `dispose()` calls `dispose()` on cached accounts only when `a
 
 Applications and module authors must manage signer resources and caller-owned seed buffers explicitly. Do not treat manager disposal as proof that a hardware session, signer, or all seed material has been cleared. Coordinate cleanup with other accounts that share the same signer, and see [seed lifecycle](/sdk/core-module/guides/error-handling#seed-lifecycle).
 
+### Disposal State In Base Wallet Beta.22
+
+`WalletManager.disposed` starts as `false`. After `dispose()` completes, it becomes `true`; subsequent calls to `dispose()` return immediately. The cached-account cleanup and retained seed and signer references described above remain unchanged.
+
+Beta.22 exports `DisposalError` from both `@tetherto/wdk-wallet` and `@tetherto/wdk-wallet/protocols`. It extends `WdkError` and identifies operations rejected because an object has been disposed. The signer, account, and protocol contracts describe disposal failures; concrete implementations supply the checks.
+
 ## IWalletAccount
 
 Base single-signer writable wallet account interface exposed by `@tetherto/wdk-wallet`. Blockchain modules implement this interface and may narrow the transaction type accepted by `signTransaction()` and `sendTransaction()`.
 
 In base wallet beta.21, `path` is `string | null` and `keyPair` is `KeyPair | null`. The base interface no longer requires `index`, and its TypeScript contract extends `IDisposable`. A concrete wallet can still expose an index or non-null key material; code written against the base interface must handle null values and cannot assume an index exists.
 
+Beta.22 adds `disposed: boolean` through that TypeScript contract. Its runtime `IWalletAccount` base class no longer inherits from `IWalletAccountReadOnly`, while the published TypeScript interface retains its read-only and disposable inheritance. Implementations must provide the declared read and write methods.
+
 ### Methods
+
+The Throws column summarizes the beta.22 contract; each concrete module implements its own checks.
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
 | `getAddress()` | Returns the account address | `Promise<string>` | - |
-| `sign(message)` | Signs a message using the account's signing implementation | `Promise<string>` | - |
-| `signTransaction(tx)` | Signs a transaction without broadcasting it | `Promise<unknown>` | If the transaction is invalid for the module |
+| `sign(message)` | Signs a message using the account's signing implementation | `Promise<string>` | `DisposalError` |
+| `signTransaction(tx)` | Signs a transaction without broadcasting it | `Promise<unknown>` | `DisposalError` or an invalid-transaction error |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
 | `getTransaction(hash)` | Returns a normalized transaction receipt | `Promise<TransactionReceipt>` | `ValueError`, `NoSuchElementError`, `ProviderRequiredError`, or `ProviderError` |
 | `waitForTransaction(hash, options?)` | Polls until the requested finality or a stable dropped state | `Promise<TransactionReceipt>` | Transaction lookup errors or `TimeoutError` |
-| `sendTransaction(tx)` | Signs, broadcasts, and returns the transaction result | `Promise<TransactionResult>` | If provider access or broadcast fails |
-| `transfer(options)` | Transfers a token where supported by the module | `Promise<TransferResult>` | If the module does not support token transfers |
+| `sendTransaction(tx)` | Signs, broadcasts, and returns the transaction result | `Promise<TransactionResult>` | `DisposalError`, provider, broadcast, or fee errors |
+| `transfer(options)` | Transfers a token where supported by the module | `Promise<TransferResult>` | `DisposalError` or a token-transfer error |
 | `toReadOnlyAccount()` | Returns a read-only account copy | `Promise<IWalletAccountReadOnly>` | - |
 | `dispose()` | Clears sensitive account material from memory | `void` | - |
 
@@ -15155,16 +15184,16 @@ Always use `try/catch` blocks when initializing sessions or accessing dynamic fe
 
 ### Base Wallet Errors
 
-`@tetherto/wdk-wallet` v1.0.0-beta.19 exports a shared `WdkError` hierarchy so applications can distinguish invalid input, provider failures, transaction outcomes, and unsupported capabilities without matching message strings.
+`@tetherto/wdk-wallet` v1.0.0-beta.22 exports a shared `WdkError` hierarchy so applications can distinguish invalid input, disposal state, provider failures, transaction outcomes, and unsupported capabilities without matching message strings.
 
 Install the base wallet as a direct dependency before importing these contracts; do not rely on a transitive copy supplied by Core or a concrete wallet module:
 
 ```bash title="Install Base Wallet Error Contracts"
-npm install @tetherto/wdk-wallet@1.0.0-beta.19
+npm install @tetherto/wdk-wallet@1.0.0-beta.22
 ```
 
 <Callout type="info">
-These classes define the beta.19 base contract. Concrete wallet modules can depend on a different base version, so confirm the concrete package version and keep a fallback for unknown errors.
+These classes define the beta.22 base contract. Concrete wallet modules can depend on a different base version, so confirm the concrete package version and keep a fallback for unknown errors.
 </Callout>
 
 | Error | Meaning |
@@ -15172,6 +15201,7 @@ These classes define the beta.19 base contract. Concrete wallet modules can depe
 | `ValueError` | A method argument is invalid |
 | `NoSuchElementError` | A requested signer, transaction, proposal, or other identifier was not found |
 | `InvalidSignerError` | A signer is incompatible with the requested operation |
+| `DisposalError` | An implementation rejects an operation on a disposed object; also exported by the protocols subpath |
 | `InvalidTokenError` | An address does not resolve to a supported token |
 | `ProviderRequiredError` | The operation needs a configured provider |
 | `ProviderError` | The configured provider failed; inspect `reason` |
@@ -21898,20 +21928,6 @@ Execution fetches a new rate and rejects a mismatched pair, mismatched input amo
 
 ## Exact output swap
 
-You can receive an exact amount of the output token by passing `tokenOutAmount` to [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference):
-
-```javascript title="Exact output amount"
-const result = await swapProtocol.swap({
-  tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-  tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-  tokenOutAmount: 500000000000000000n
-})
-
-console.log('Swap hash:', result.hash)
-console.log('Quoted input (base units):', result.tokenInAmount)
-console.log('Quoted output (base units):', result.tokenOutAmount)
-```
-
 BUY validates the requested exact output and retains it in the transaction build. An optional `minAmountOut` also rejects an output below that floor; it does not add an input-token spending cap.
 
 ## Swap with ERC-4337
@@ -27418,7 +27434,7 @@ Use this module when an app needs Aptos account derivation, APT balances, fungib
 
 ## Features
 
-- **Seed inputs**: Accepts a BIP-39 mnemonic phrase or raw BIP-32 master seed (16–64 bytes).
+- **BIP-39 seed support**: Accepts a mnemonic phrase or seed bytes.
 - **Shared RPC client**: Beta.3 shares the manager's Aptos REST client across derived accounts and their read-only conversions.
 - **SLIP-0010 Ed25519 derivation**: Uses Aptos coin type `637` and hardened path segments.
 - **Aptos addresses**: Derives 32-byte Aptos addresses from the public key.
@@ -27499,7 +27515,7 @@ import WalletManagerAptos, {
 
 Creates and manages seed-derived Aptos accounts.
 
-`seed` accepts a BIP-39 mnemonic or raw BIP-32 master seed (16–64 bytes). Beta.3 reuses one manager-created REST client across derived accounts and their read-only conversions.
+Beta.3 reuses one manager-created REST client across derived accounts and their read-only conversions.
 
 ```typescript
 new WalletManagerAptos(
@@ -28180,7 +28196,7 @@ Extends `WalletManager` from `@tetherto/wdk-wallet`.
 new WalletManagerBtc(seed, config)
 ```
 **Parameters:**
-- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or raw BIP-32 master seed (16–64 bytes)
+- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (BtcWalletConfig, optional): Configuration object
   - `client` (`IBtcClient | BtcClientDescriptor | Array<IBtcClient | BtcClientDescriptor>`, optional): Bitcoin client, descriptor, or ordered failover list
   - `network` (string, optional): "bitcoin", "testnet", or "regtest" (default: "bitcoin")
@@ -28266,7 +28282,7 @@ new WalletAccountBtc(seed, path, config)
 ```
 
 **Parameters:**
-- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or raw BIP-32 master seed (16–64 bytes)
+- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `path` (string): Derivation path suffix (e.g., "0'/0/0")
 - `config` (BtcWalletConfig, optional): Configuration object
   - `client` (`IBtcClient | BtcClientDescriptor | Array<IBtcClient | BtcClientDescriptor>`, optional): Bitcoin client, descriptor, or ordered failover list
@@ -29720,7 +29736,7 @@ Learn how to [sign and verify messages](/sdk/wallet-modules/wallet-btc/guides/si
 URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-btc/guides/handle-errors
 Description: Handle errors, manage fees, and dispose of sensitive data.
 
-This guide explains how to [handle transaction errors](#transaction-errors), [handle connection errors](#connection-errors), [handle transaction status errors](#transaction-status-errors), and follow [best practices](#best-practices) for fee management and memory cleanup.
+This guide explains how to [handle transaction errors](#transaction-errors), [handle connection errors](#connection-errors), and follow [best practices](#best-practices) for fee management and memory cleanup.
 
 ## Transaction Errors
 
@@ -30994,7 +31010,7 @@ new WalletManagerEvm7702Gasless(seed, config)
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `seed` | `string \| Uint8Array` | BIP-39 mnemonic or raw BIP-32 master seed (16–64 bytes). |
+| `seed` | `string \| Uint8Array` | BIP-39 mnemonic seed phrase or seed bytes. |
 | `config` | `Evm7702GaslessWalletConfig` | Wallet configuration with common fields and one fee mode. |
 
 In beta.7, the manager builds one RPC client and shares it across the accounts it derives. A supplied ethers provider is reused; see [provider configuration](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#provider-failover).
@@ -31027,7 +31043,7 @@ new WalletAccountEvm7702Gasless(walletAccountEvm, config)
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `seed` | `string \| Uint8Array` | BIP-39 mnemonic or raw BIP-32 master seed (16–64 bytes). |
+| `seed` | `string \| Uint8Array` | BIP-39 mnemonic seed phrase or seed bytes. |
 | `path` | `string` | EVM derivation path suffix, for example `"0'/0/0"`. |
 | `walletAccountEvm` | `WalletAccountEvm` | Existing EVM account from the same beta.19 package instance used by this module; see [wrapping an account](/sdk/wallet-modules/wallet-evm-7702-gasless/guides/manage-accounts#wrap-an-existing-evm-account). |
 | `config` | `Evm7702GaslessWalletConfig` | Wallet configuration. |
@@ -32335,7 +32351,7 @@ new WalletManagerEvmErc4337(seed, config)
 In beta.21, this manager builds one RPC client and shares it across derived accounts and their read-only views. See [provider configuration](/sdk/wallet-modules/wallet-evm-erc-4337/configuration#provider).
 
 **Parameters:**
-- `seed` (string | Uint8Array): BIP-39 mnemonic or raw BIP-32 master seed (16–64 bytes)
+- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (EvmErc4337WalletConfig): Configuration object with common fields and a gas payment mode
 
 **Common config fields (required for all modes):**
@@ -32525,7 +32541,7 @@ wallet.dispose()
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `seed` | `Uint8Array` | Raw BIP-32 master seed bytes, including bytes derived from a supplied mnemonic |
+| `seed` | `Uint8Array` | Seed bytes |
 
 ## WalletAccountEvmErc4337
 
@@ -32549,7 +32565,7 @@ new WalletAccountEvmErc4337(seed, path, config)
 ```
 
 **Parameters:**
-- `seed` (string | Uint8Array): BIP-39 mnemonic or raw BIP-32 master seed (16–64 bytes)
+- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `path` (string): BIP-44 derivation path (e.g., "0'/0/0")
 - `config` (EvmErc4337WalletConfig): Configuration object (same as [WalletManagerEvmErc4337](#constructor))
 
@@ -35213,7 +35229,7 @@ new WalletManagerEvm(seedOrSigner, config?)
 ```
 
 **Parameters:**
-- `seedOrSigner` (`string | Uint8Array | ISigner`): BIP-39 mnemonic, raw BIP-32 master seed (16–64 bytes), or a derivable root signer
+- `seedOrSigner` (`string | Uint8Array | ISigner`): BIP-39 mnemonic seed phrase, seed bytes, or a derivable root signer
 - `config` (object, optional): Configuration object
   - `provider` (`string | Eip1193Provider | Array<string | Eip1193Provider>`, optional): RPC endpoint URL, EIP-1193 provider instance, or ordered failover list
   - `retries` (number, optional): Additional retry attempts when `provider` is an array
@@ -35429,7 +35445,7 @@ new WalletAccountEvm(signer, config?)
 ```
 
 **Parameters:**
-- `seed` (string | Uint8Array): BIP-39 mnemonic or raw BIP-32 master seed (16–64 bytes)
+- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `path` (string): BIP-44 derivation path (e.g., "0'/0/0")
 - `signer`: Object implementing the EVM signer shape
 - `config` (object, optional): Configuration object
@@ -36556,7 +36572,7 @@ const wallet = new WalletManagerEvm(seedPhrase, config)
 
 ## Signer Configuration
 
-`WalletManagerEvm` accepts a BIP-39 mnemonic, raw BIP-32 master seed bytes (16–64 bytes), or a derivable EVM signer as its first argument. Raw seed bytes do not have to originate from BIP-39. Use the `@tetherto/wdk-wallet-evm/signers` entrypoint when you need explicit signer objects:
+`WalletManagerEvm` accepts either a BIP-39 seed phrase/seed bytes or a derivable EVM signer as its first argument. Use the `@tetherto/wdk-wallet-evm/signers` entrypoint when you need explicit signer objects:
 
 ```javascript title="Create A Manager From A Seed Signer"
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
@@ -37452,36 +37468,16 @@ This guide explains how to [transfer ERC-20 tokens](#transfer-tokens), [estimate
 
 Use [`account.transfer()`](/sdk/wallet-modules/wallet-evm/api-reference#transferoptions) to send ERC-20 tokens to a recipient address.
 
-```javascript title="Transfer ERC-20 Tokens"
-const USDT_ETHEREUM = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
-
-const transferResult = await account.transfer({
-  token: USDT_ETHEREUM,
-  recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-  amount: 1000000n // 1 USDt on Ethereum (6 decimals)
-})
-console.log('Transfer hash:', transferResult.hash)
-console.log('Transfer fee:', transferResult.fee, 'wei')
-```
-
 ## Estimate Transfer Fees
 
 Use [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-evm/api-reference#quotetransferoptions) to get a fee estimate before executing the transfer.
-
-```javascript title="Quote Token Transfer"
-const transferQuote = await account.quoteTransfer({
-  token: USDT_ETHEREUM,
-  recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-  amount: 1000000n
-})
-console.log('Transfer fee estimate:', transferQuote.fee, 'wei')
-```
 
 ## Override Gas and Fees (optional)
 
 Starting in beta.20, pass gas overrides directly in the options for [`quoteTransfer()`](/sdk/wallet-modules/wallet-evm/api-reference#quotetransferoptions) and [`transfer()`](/sdk/wallet-modules/wallet-evm/api-reference#transferoptions). Use EIP-1559 fee fields or legacy `gasPrice`; do not combine them.
 
 ```javascript title="Quote a Transfer with Explicit Fee Rates"
+const USDT_ETHEREUM = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
 const transfer = {
   token: USDT_ETHEREUM,
   recipient,
@@ -37807,7 +37803,7 @@ import {
 
 ## WalletManagerSolanaGasless
 
-Derives and returns owned Solana gasless accounts from a BIP-39 mnemonic or raw BIP-32 master seed (16–64 bytes). Extends `WalletManager` from `@tetherto/wdk-wallet`. The manager shares one Solana RPC client and one Kora paymaster client across derived accounts and their read-only conversions.
+Derives and returns owned Solana gasless accounts from a BIP-39 seed phrase or seed bytes. Extends `WalletManager` from `@tetherto/wdk-wallet`. The manager shares one Solana RPC client and one Kora paymaster client across derived accounts and their read-only conversions.
 
 ### Constructor
 
@@ -37820,7 +37816,7 @@ new WalletManagerSolanaGasless(
 
 **Parameters:**
 
-- `seed`: BIP-39 mnemonic seed phrase or raw BIP-32 master seed (16–64 bytes).
+- `seed`: BIP-39 mnemonic seed phrase or seed bytes.
 - `config`: Solana RPC and Kora-compatible paymaster configuration.
 
 ### Methods
@@ -37871,7 +37867,7 @@ new WalletAccountSolanaGasless(
 
 **Parameters:**
 
-- `seed`: BIP-39 mnemonic seed phrase or raw BIP-32 master seed (16–64 bytes).
+- `seed`: BIP-39 mnemonic seed phrase or seed bytes.
 - `path`: SLIP-0010 derivation path, for example `"0'/0'/0'"`.
 - `config`: Solana RPC and Kora-compatible paymaster configuration.
 
@@ -38211,7 +38207,7 @@ Description: Configuration options for @tetherto/wdk-wallet-solana-gasless.
 
 ## Wallet Configuration
 
-`WalletManagerSolanaGasless` accepts a BIP-39 mnemonic or raw BIP-32 master seed (16–64 bytes) plus a Solana gasless wallet configuration. Beta.6 shares one Solana RPC client and one Kora paymaster client across manager-derived accounts and their read-only conversions:
+`WalletManagerSolanaGasless` accepts a seed phrase or seed bytes plus a Solana gasless wallet configuration. Beta.6 shares one Solana RPC client and one Kora paymaster client across manager-derived accounts and their read-only conversions:
 
 ```javascript title="Create a gasless Solana wallet"
 import WalletManagerSolanaGasless from '@tetherto/wdk-wallet-solana-gasless'
@@ -38566,7 +38562,7 @@ wallet.dispose()
 URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-solana-gasless/guides/handle-errors
 Description: Handle paymaster, fee, transaction, and cleanup errors in Solana gasless wallets.
 
-This guide covers [configuration errors](#handle-configuration-errors), [fee caps](#manage-fee-caps), [invalid payment instructions](#handle-invalid-payment-instructions), [paymaster failures](#handle-paymaster-failures), [transaction status](#handle-transaction-status-errors), [signed broadcasts](#handle-signed-transaction-broadcasts), and [cleanup](#best-practices).
+This guide covers configuration errors, paymaster failures, fee caps, transaction message fee payer checks, and memory cleanup.
 
 Beta.5 exports public error classes from the package root. Use `instanceof` checks, rethrow unfamiliar errors, and avoid branching on message text. `ConfigurationError` was removed; missing required paymaster fields now raise `ValueError`.
 
@@ -38587,44 +38583,82 @@ try {
 }
 ```
 
-## Handle Invalid Payment Instructions
+## Handle Transaction Fee Caps
 
-For unsigned flows, the module requires an SPL Token `Transfer` or `TransferChecked` payment to the associated token account derived from the configured paymaster address and effective fee token. It decodes the fee from that instruction rather than trusting separate `payment_amount` metadata. Invalid payment instructions raise `ValueError`.
+[`sendTransaction()`](/sdk/wallet-modules/wallet-solana-gasless/api-reference#sendtransaction) and [`signTransaction()`](/sdk/wallet-modules/wallet-solana-gasless/api-reference#signtransaction) raise `MaximumFeeExceededError` when the fee is greater than `transactionMaxFee`. A fee equal to the cap is allowed. Caps use the effective paymaster token's base units.
 
-A prebuilt `TransactionMessage` with a fee payer that differs from `paymasterAddress` also raises `ValueError`. Check the configuration and intended instructions; do not accept an unexpected payment destination or disable the cap to force a payment through.
+Handle the new error class for a transaction your application has prepared and reviewed:
 
-You can stop signing when [`signTransaction()`](/sdk/wallet-modules/wallet-solana-gasless/api-reference#signtransaction) rejects the input or paymaster response:
+```javascript title="Transaction fee cap handling"
+import { MaximumFeeExceededError } from '@tetherto/wdk-wallet-solana-gasless'
 
-```javascript title="Handle invalid transaction or payment data"
 try {
-  await account.signTransaction(transactionMessage)
+  const result = await account.sendTransaction(transaction, {
+    transactionMaxFee: 500000n
+  })
+  console.log('Transaction submitted:', result.hash)
+} catch (error) {
+  if (!(error instanceof MaximumFeeExceededError)) throw error
+  console.error('The paymaster fee exceeded the approved cap')
+}
+```
+
+## Handle Transfer Fee Caps
+
+[`transfer()`](/sdk/wallet-modules/wallet-solana-gasless/api-reference#transfer) raises `MaximumFeeExceededError` when the fee is greater than `transferMaxFee`. Pass your reviewed token, recipient and base-unit amount in `transferOptions`:
+
+```javascript title="Transfer fee cap handling"
+try {
+  const result = await account.transfer(transferOptions, {
+    transferMaxFee: 500000n
+  })
+  console.log('Transfer submitted:', result.hash)
+} catch (error) {
+  if (!(error instanceof MaximumFeeExceededError)) throw error
+  console.error('The paymaster fee exceeded the approved cap')
+}
+```
+
+## Handle Fee Payer Mismatches
+
+When you pass a prebuilt `TransactionMessage`, the explicit fee payer must match `paymasterAddress`. Beta.5 raises `ValueError` for a mismatch:
+
+```javascript title="Fee payer mismatch handling"
+try {
+  await account.sendTransaction(transactionMessage)
 } catch (error) {
   if (!(error instanceof ValueError)) throw error
-  console.error('Check the transaction and paymaster configuration:', error.message)
+  console.error('Check the TransactionMessage fee payer and paymaster configuration')
 }
 ```
 
 ## Handle Paymaster Failures
 
-Paymaster calls can fail when the endpoint is unavailable, the transaction cannot be quoted, or the fee token cannot fund the requested flow. Provider libraries can throw errors outside the exported WDK classes.
+Paymaster calls can fail when the endpoint is unavailable, the paymaster cannot quote the transaction, or the paymaster token is not funded for the requested flow. Wrap quote and send calls in `try/catch` blocks.
 
-You can surface a quote failure from [`quoteSendTransaction()`](/sdk/wallet-modules/wallet-solana-gasless/api-reference#quotesendtransaction) without treating it as permission to send:
+Use ordered `paymasterUrl` arrays and `retries` when you need endpoint failover.
 
-```javascript title="Handle a paymaster quote failure"
+## Handle Invalid Payment Instructions
+
+In beta.5, invalid payment instructions raise `ValueError`. For unsigned flows, the module does not trust the paymaster's separate `payment_amount` metadata. It derives the configured paymaster's associated token account, requires the returned instruction to be an SPL Token `Transfer` or `TransferChecked` to that account, and decodes the fee from the instruction before applying fee caps or requesting signatures. Keep trusted paymaster fees at or below `Number.MAX_SAFE_INTEGER`; beta.5 still converts that decoded amount through `Number` before the owned account compares it.
+
+```javascript title="Reject an invalid paymaster payment"
 try {
-  const quote = await account.quoteSendTransaction(transaction)
-  console.log('Paymaster fee estimate:', quote.fee)
+  await account.signTransaction(transaction)
 } catch (error) {
-  console.error('Unable to quote the paymaster fee:', error.message)
-  throw error
+  if (error instanceof ValueError) {
+    console.error('Check the transaction and paymaster configuration:', error.message)
+  } else {
+    throw error
+  }
 }
 ```
 
-Use ordered `paymasterUrl` arrays and `retries` when you need endpoint failover. A timeout after a send does not prove that the transaction failed to reach the network.
+Do not retry by accepting the returned destination or by disabling fee caps. Verify `paymasterAddress`, `paymasterToken`, and the endpoint before trying again.
 
 ## Handle Transaction Status Errors
 
-[`getTransaction()`](/sdk/wallet-modules/wallet-solana-gasless/api-reference#gettransaction) throws `ValueError` for an invalid base58 signature and `NoSuchElementError` for a well-formed signature absent from history. [`waitForTransaction()`](/sdk/wallet-modules/wallet-solana-gasless/api-reference#waitfortransaction) throws `TimeoutError` when the target is not reached. A confirmed or final receipt can still have `success: false`; the Solana implementation does not currently classify a transaction as `dropped`.
+`getTransaction()` throws `ValueError` for an invalid base58 signature and `NoSuchElementError` for a well-formed signature absent from transaction history. `waitForTransaction()` throws `TimeoutError` when the target is not reached. A confirmed or final receipt can still have `success: false`, and the Solana implementation does not currently classify a transaction as `dropped`.
 
 ## Handle Signed-Transaction Broadcasts
 
@@ -38656,50 +38690,13 @@ try {
 This payment check does not validate every instruction or signature. Accept this account's exact signed output, or independently validate externally supplied payloads. The module does not refresh a signed blockhash, durable nonce, payment, or signature. After an uncertain RPC result, inspect the original transaction's status and lifetime before creating a replacement.
 </Callout>
 
-## Best Practices
+## Dispose of Sensitive Data
 
-### Manage Fee Caps
+Call `dispose()` on owned accounts and wallet managers when private keys are no longer needed.
 
-[`sendTransaction()`](/sdk/wallet-modules/wallet-solana-gasless/api-reference#sendtransaction) and [`signTransaction()`](/sdk/wallet-modules/wallet-solana-gasless/api-reference#signtransaction) enforce `transactionMaxFee`; [`transfer()`](/sdk/wallet-modules/wallet-solana-gasless/api-reference#transfer) enforces `transferMaxFee`. A fee greater than the applicable cap raises `MaximumFeeExceededError`; a fee equal to the cap is allowed. Caps use the effective paymaster token's base units.
-
-You can handle a rejected cap for a prepared transaction:
-
-```javascript title="Handle a transaction fee cap"
-import { MaximumFeeExceededError } from '@tetherto/wdk-wallet-solana-gasless'
-
-try {
-  const result = await account.sendTransaction(transaction, {
-    transactionMaxFee: 500000n
-  })
-  console.log('Transaction submitted:', result.hash)
-} catch (error) {
-  if (!(error instanceof MaximumFeeExceededError)) throw error
-  console.error('The paymaster fee exceeded the approved cap')
-}
-```
-
-For unsigned flows, keep trusted paymaster payment amounts at or below `Number.MAX_SAFE_INTEGER`. Beta.5 still converts the decoded `u64` through `Number` before returning a `bigint`, so larger amounts can round in quotes and cap comparisons. Signed-fee decoding uses `bigint` directly.
-
-### Dispose of sensitive data
-
-Call [`dispose()`](/sdk/wallet-modules/wallet-solana/api-reference#dispose-1) when owned accounts and managers are no longer needed:
-
-```javascript title="Dispose wallet resources"
-account.dispose()
-wallet.dispose()
-```
-
-Read-only accounts do not hold private keys. Disposing an owned account clears the keys held by its standard Solana account.
-
-## Next Steps
-
-Return to [Send Transactions](/sdk/wallet-modules/wallet-solana-gasless/guides/send-transactions) for quote, sign, and broadcast flows.
-
-***
-
-## Need Help?
-
-<SupportCards />
+<Callout type="warn">
+Read-only accounts do not hold private keys, but owned accounts wrap a standard Solana account and should be disposed after use.
+</Callout>
 
 ***
 
@@ -39756,7 +39753,7 @@ Estimates the fee for an SPL token transfer, including an optional memo. Token-2
 - `options` (TransferOptions): Transfer options
   - `token` (string): Token mint address (base58-encoded)
   - `recipient` (string): Recipient's Solana address (base58-encoded)
-  - `amount` (number | bigint): Amount in token's base units
+  - `amount`: Amount in token's base units
 
 - `solanaOptions` ([SolanaTransferOptions](#solanatransferoptions), optional): `{ memo?: string }`; omitted or empty memos add no instruction
 
@@ -40981,7 +40978,7 @@ Extends `WalletManager` from `@tetherto/wdk-wallet`.
 new WalletManagerSpark(seed, config)
 ```
 **Parameters:**
-- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or raw BIP-32 master seed (16–64 bytes)
+- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (object, optional): Configuration object
   - `network` (string, optional): 'MAINNET', 'SIGNET', or 'REGTEST' (default: 'MAINNET')
   - `client` (`SparkReadonlyClient`, optional): Existing read-only Spark client, reused as-is. The manager shares one read-only client across its accounts and their read-only conversions; signing wallets remain account-specific.
@@ -42758,7 +42755,7 @@ With your wallet ready, learn how to [manage multiple accounts](/sdk/wallet-modu
 URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-spark/guides/handle-errors
 Description: Handle Spark transaction and connection failures, plus fees and disposal.
 
-This guide explains how to [handle transaction errors](#transaction-errors), [handle connection errors](#connection-errors), [handle unsupported operations and missing transfers](#unsupported-operations-and-missing-transfers), and apply [best practices](#best-practices) for fees and secure cleanup. Constructor and derivation failures can also expose validation context, so avoid logging complete error objects when they may contain sensitive values. In beta.26, the HD-key derivation failure keeps the `hdkey` field identifier but omits seed bytes from that context.
+This guide explains how to [handle transaction errors](#transaction-errors), [handle connection errors](#connection-errors), handle unsupported operations and missing transfers, and apply [best practices](#best-practices) for fees and secure cleanup. Constructor and derivation failures can also expose validation context, so avoid logging complete error objects when they may contain sensitive values. In beta.26, the HD-key derivation failure keeps the `hdkey` field identifier but omits seed bytes from that context.
 
 ## Transaction Errors
 
@@ -42947,16 +42944,6 @@ console.log('Lightning invoice:', invoice.invoice)
 2. Set `maxFeeSats` to cap routing fees.
 3. Call [`account.payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference).
 
-You can pay an invoice using [`account.payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference):
-
-```javascript title="Pay Lightning Invoice"
-const payment = await account.payLightningInvoice({
-  invoice: 'lnbc500u1p...',
-  maxFeeSats: 1000
-})
-console.log('Payment result:', payment)
-```
-
 If you enable [`syncAndRetry`](/sdk/wallet-modules/wallet-spark/configuration#automatic-retry), the wallet syncs state after a payment failure and retries [`account.payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference#paylightninginvoiceoptions) once only for a stale-leaf error. Both attempts reuse the same `transferId`. The wallet generates an ID when you omit it.
 
 You can enable the stale-leaf retry when constructing the wallet:
@@ -42968,7 +42955,7 @@ const wallet = new WalletManagerSpark(seedPhrase, {
 })
 
 const account = await wallet.getAccount(0)
-await account.payLightningInvoice({
+const payment = await account.payLightningInvoice({
   invoice: 'lnbc500u1p...',
   maxFeeSats: 1000,
 })
@@ -43398,7 +43385,7 @@ new WalletManagerTonGasless(seed, config)
 ```
 
 **Parameters:**
-- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or raw BIP-32 master seed (16–64 bytes)
+- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (TonGaslessWalletConfig): Configuration object
   - `tonClient` (object | TonClient | array): TON client configuration, instance, or an array of configurations or instances for failover
     - `url` (string): TON Center v2 JSON-RPC URL (e.g., 'https://toncenter.com/api/v2/jsonRPC')
@@ -43501,7 +43488,7 @@ new WalletAccountTonGasless(seed, path, config)
 ```
 
 **Parameters:**
-- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or raw BIP-32 master seed (16–64 bytes)
+- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `path` (string): BIP-44 derivation path (e.g., "0'/0/0")
 - `config` (TonGaslessWalletConfig): Configuration object (same as WalletManagerTonGasless)
 
@@ -45949,7 +45936,7 @@ With balance checks in place, learn how to [send TON](/sdk/wallet-modules/wallet
 URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-ton/guides/get-started
 Description: Install and create your first TON wallet.
 
-This guide explains how to [install the package](#1-install-the-package), [create a wallet](#2-create-a-wallet), [get your first account](#3-get-your-first-account), and [convert it to read-only](#4-optional-convert-to-read-only).
+This guide explains how to [install the package](#1-install-the-package), [create a wallet](#2-create-a-wallet), and [get your first account](#3-get-your-first-account).
 
 ## 1. Install the Package
 
@@ -46470,7 +46457,7 @@ Description: Create and manage TRON wallets with TRX transfers, TRC20 balances, 
 Use the TRON wallet module for standard TRON accounts where users can handle regular TRON fees and resources.
 
 <Callout type="info">
-These pages reflect `@tetherto/wdk-wallet-tron@1.0.0-beta.14`. Accounts derived by one manager and their read-only conversions share one TRON provider.
+These pages reflect `@tetherto/wdk-wallet-tron@1.0.0-beta.15`. Accounts derived by one manager and their read-only conversions share one TRON provider. Beta.15 updates TronWeb to 6.5.1 without changing the wallet module's own executable methods.
 </Callout>
 
 ## Features
@@ -47284,9 +47271,7 @@ Description: Configuration options and settings for @tetherto/wdk-wallet-tron-ga
 
 ```javascript
 import WalletManagerTronGasfree from '@tetherto/wdk-wallet-tron-gasfree'
-import { TronWeb } from 'tronweb'
 
-// Option 1: Using RPC URL
 const config = {
   // Required parameters
   chainId: 728126428, // Blockchain ID
@@ -47297,16 +47282,6 @@ const config = {
 }
 
 const wallet = new WalletManagerTronGasfree(seedPhrase, config)
-
-// Option 2: Using TronWeb instance
-const tronWeb = new TronWeb({ fullHost: 'https://api.trongrid.io' })
-const config2 = {
-  chainId: 728126428,
-  provider: tronWeb,
-  gasFreeProvider: 'https://open.gasfree.io/tron/',
-  serviceProvider: 'REPLACE_WITH_PROVIDER_ADDRESS',
-  verifyingContract: 'TFFAMQLZybALaLb4uxHA9RBE7pxhUAjF3U'
-}
 ```
 
 `gasFreeApiKey` and `gasFreeApiSecret` are optional. Omit both when your GasFree provider accepts unsigned requests. If you configure signed GasFree API requests, provide both values together; the constructor rejects partial credentials.
@@ -47370,15 +47345,8 @@ The manager initializes one RPC provider shared by its derived accounts. Use sep
 **Examples:**
 
 ```javascript
-// Option 1: Using RPC URL
 const config = {
   provider: 'https://api.trongrid.io'
-}
-
-// Option 2: Using TronWeb instance
-const tronWeb = new TronWeb({ fullHost: 'https://api.trongrid.io' })
-const config = {
-  provider: tronWeb
 }
 
 ```
@@ -54726,6 +54694,8 @@ A blockchain indexer continuously monitors and organizes blockchain transactions
 
 [Get Started](/tools/indexer-api/get-started)
 
+For Node.js and Bare applications, use the [JavaScript SDK](/tools/indexer-api/sdk) to query balances and transfers and manage registered wallets. Its [SDK API reference](/tools/indexer-api/sdk-api-reference) covers the published HTTP client's methods, configuration, and errors.
+
 ## Supported Chains and Tokens
 
 The WDK Indexer publishes its current blockchain and token inventory through `GET /api/v1/chains`. Query this endpoint at runtime instead of copying a static list into your integration because coverage can change independently of the documentation.
@@ -54939,8 +54909,434 @@ console.log(`Balance: ${balance.amount} ${balance.token.toUpperCase()}`);
 ## Next Steps
 
 * [**API Reference**](/tools/indexer-api/api-reference/) - Complete method documentation with examples and response formats
+* [**JavaScript SDK**](/tools/indexer-api/sdk) - Install the Node.js or Bare client and handle queries, batch results, and wallet registration
 
 ***
+
+## Need Help?
+
+<SupportCards />
+
+***
+
+## Use the JavaScript SDK
+URL: https://docs.wdk.tether.io/tools/indexer-api/sdk
+Description: Install the WDK Indexer HTTP client, query balances and transfers, and register wallets for transfer syncing.
+
+Use `@tetherto/wdk-indexer-http` to call the Indexer API from Node.js or Bare. This guide covers [installation](#install-the-client), [configuration](#configure-the-client), [balance and transfer queries](#query-balances-and-transfers), [batch results](#handle-batch-results), [wallet registration](#register-wallets-for-syncing), and [request errors](#handle-request-errors). See [Need Help](#need-help) for support.
+
+The examples use published version `1.0.1`. The client reads indexed blockchain data and manages server-side wallet records; it does not generate keys or sign transactions.
+
+## Install the Client
+
+1. Use Node.js 22 or later. For Bare, the package documents Bare 1.27 or later and requires the optional peers below.
+2. Install the version used in this guide:
+
+```bash
+npm install @tetherto/wdk-indexer-http@1.0.1
+```
+
+3. For Bare only, install its fetch, abort-controller, and URL peers:
+
+```bash
+npm install bare-fetch@^3.4.0 bare-abort-controller@^1.1.2 bare-url@^2.5.4
+```
+
+Use named imports in an ES module, such as an `.mjs` file:
+
+```javascript
+import { WdkIndexerClient, isApiError } from '@tetherto/wdk-indexer-http';
+```
+
+CommonJS uses the same package entrypoint:
+
+```javascript
+const { WdkIndexerClient, isApiError } = require('@tetherto/wdk-indexer-http');
+```
+
+The package selects the Bare peers automatically on Bare. The `/bare` subpath is an alias of the root entrypoint. See the [SDK API reference](/tools/indexer-api/sdk-api-reference#exports) for the complete export list.
+
+## Configure the Client
+
+1. [Request an API key](/tools/indexer-api/get-started#getting-started) for authenticated operations.
+2. Supply the key through your application's secret configuration. For these Node.js examples, set `WDK_INDEXER_API_KEY` in the process environment.
+3. Create a [WdkIndexerClient](/tools/indexer-api/sdk-api-reference#wdkindexerclient) with that key:
+
+```javascript
+const apiKey = process.env.WDK_INDEXER_API_KEY;
+if (!apiKey) throw new Error('Set WDK_INDEXER_API_KEY');
+
+const client = new WdkIndexerClient({ apiKey, timeout: 30_000 });
+```
+
+Version `1.0.1` defaults to `https://wdk-api.tether.su` and appends `/api/v1` to request paths. Set `baseUrl` to the origin of another Indexer deployment when needed; do not include `/api/v1`. The optional `fetch` setting replaces the runtime fetch, for example in an offline test. See all [configuration fields](/tools/indexer-api/sdk-api-reference#configuration).
+
+Only [health()](/tools/indexer-api/sdk-api-reference#health) and [getChains()](/tools/indexer-api/sdk-api-reference#getchains) work without a key. They never send it. Other methods reject before sending a request when `apiKey` is missing.
+
+## Query Balances and Transfers
+
+1. Call [getChains()](/tools/indexer-api/sdk-api-reference#getchains) to discover the current blockchain and token route keys. Preserve those values rather than deriving them from display names.
+2. Set `WDK_INDEXER_ADDRESS` to an Ethereum account address you want to query, and validate its format in your application.
+3. Confirm the selected pair is available, then call [getTokenBalance()](/tools/indexer-api/sdk-api-reference#gettokenbalance):
+
+```javascript
+const address = process.env.WDK_INDEXER_ADDRESS;
+if (!address) throw new Error('Set WDK_INDEXER_ADDRESS');
+
+const { chains } = await client.getChains();
+const ethereum = chains.find((chain) => chain.name === 'ethereum');
+if (!ethereum?.tokens.includes('usdt')) {
+  throw new Error('This deployment does not advertise the selected token');
+}
+
+const { tokenBalance } = await client.getTokenBalance('ethereum', 'usdt', address);
+console.log('USDt balance in base units:', tokenBalance.amount);
+```
+
+The returned amount is a decimal string in the token's base units. Keep it as a string or convert it to `BigInt` for integer arithmetic; converting it to `Number` can lose precision. This example selects USD₮ on Ethereum, using the API's exact `usdt` route key.
+
+Use [getTokenTransfers()](/tools/indexer-api/sdk-api-reference#gettokentransfers) to retrieve up to 50 recent transfers for the same address:
+
+```javascript
+const { transfers } = await client.getTokenTransfers('ethereum', 'usdt', address, {
+  limit: 50,
+  fromTs: Date.now() - 7 * 24 * 60 * 60 * 1000,
+});
+
+for (const transfer of transfers) {
+  console.log(transfer.transactionHash, transfer.amount, transfer.timestamp);
+}
+```
+
+The time bounds and returned `timestamp` use Unix milliseconds. [getTransactionTransfers()](/tools/indexer-api/sdk-api-reference#gettransactiontransfers) retrieves a token's transfers within a specific transaction. Validate application-supplied path values: only address arguments are automatically URL-encoded. See [input handling](/tools/indexer-api/sdk-api-reference#input-handling).
+
+## Handle Batch Results
+
+[getBatchTokenBalances()](/tools/indexer-api/sdk-api-reference#getbatchtokenbalances) and [getBatchTokenTransfers()](/tools/indexer-api/sdk-api-reference#getbatchtokentransfers) return results in request order. A successful HTTP request can contain failed items. Check each item with [isApiError()](/tools/indexer-api/sdk-api-reference#isapierror) before using its success fields:
+
+```javascript
+const results = await client.getBatchTokenBalances([
+  { blockchain: 'ethereum', token: 'usdt', address },
+]);
+
+for (const item of results) {
+  if (isApiError(item)) {
+    console.error(item.error, item.message);
+    continue;
+  }
+  console.log(item.tokenBalance.amount);
+}
+```
+
+The server's documented batch size is 1–10 items. The exported [BATCH_LIMIT](/tools/indexer-api/sdk-api-reference#batch-limit) is `10`; use it to split larger inputs in your application. The client neither splits requests nor rejects oversized arrays locally. Transport errors and unsuccessful HTTP responses still reject the whole call; handle them as described below.
+
+## Register Wallets for Syncing
+
+[registerWallets()](/tools/indexer-api/sdk-api-reference#registerwallets) stores address records so the server can sync their transfers. This changes your Indexer account's wallet records; it does not create an on-chain wallet.
+
+1. Choose the addresses you want the service to monitor.
+2. Send 1–10 registrations with `type: 'client_wallet'` and at least one address each.
+3. Check every result's numeric `status` and optional `error` before using its `id`:
+
+```javascript
+const { wallets } = await client.registerWallets([
+  { type: 'client_wallet', name: 'Treasury', addresses: { ethereum: address } },
+]);
+
+for (const result of wallets) {
+  if (result.status !== 201 || typeof result.id !== 'string') {
+    console.error('Wallet registration failed:', result.status, result.error);
+    continue;
+  }
+  const synced = await client.getWalletTransfers(result.id, { limit: 50 });
+  console.log(result.id, synced.transfers);
+}
+```
+
+Registration can succeed for some items and fail for others, including validation or quota failures. Do not treat the top-level HTTP status as proof that every wallet was created. A Spark registration also needs `meta.spark`; see [registration fields](/tools/indexer-api/sdk-api-reference#walletregistration).
+
+Use [listWallets()](/tools/indexer-api/sdk-api-reference#listwallets) to find existing records and [getWallet()](/tools/indexer-api/sdk-api-reference#getwallet) to inspect one. [updateWallet()](/tools/indexer-api/sdk-api-reference#updatewallet) changes its name or enables/disables syncing. [deleteWallet()](/tools/indexer-api/sdk-api-reference#deletewallet) removes the record and stops syncing. [getTransfers()](/tools/indexer-api/sdk-api-reference#gettransfers) queries synced transfers across your registered wallets.
+
+Synced transfer results use `ts` for Unix milliseconds, whereas token-transfer results use `timestamp`.
+
+## Handle Request Errors
+
+Import the error classes as JavaScript values before checking failures:
+
+```javascript
+import {
+  WdkIndexerApiError,
+  WdkIndexerTimeoutError,
+  WdkIndexerNetworkError,
+} from '@tetherto/wdk-indexer-http';
+```
+
+Distinguish API responses, timeouts, and fetch or body-read failures:
+
+```javascript
+try {
+  await client.getTokenBalance('ethereum', 'usdt', address);
+} catch (error) {
+  if (error instanceof WdkIndexerApiError) {
+    console.error(error.status, error.errorType, error.message);
+  } else if (error instanceof WdkIndexerTimeoutError) {
+    console.error('Request timed out after', error.timeout, 'ms');
+  } else if (error instanceof WdkIndexerNetworkError) {
+    console.error('Request or response-body read failed');
+  } else {
+    throw error;
+  }
+}
+```
+
+All package errors extend [WdkIndexerError](/tools/indexer-api/sdk-api-reference#errors). The timeout covers both fetching the response and reading its body. The client does not retry requests automatically. After a wallet mutation times out, inspect the server's wallet records before deciding whether to repeat it: a client timeout does not establish whether the server applied the request.
+
+## Next Steps
+
+<Cards>
+  <Card title="SDK API Reference" href="/tools/indexer-api/sdk-api-reference">
+    Configuration, all 14 methods, response types, and error fields
+  </Card>
+  <Card title="REST API Reference" href="/tools/indexer-api/api-reference">
+    Call the Indexer endpoints directly over HTTP
+  </Card>
+</Cards>
+
+## Need Help?
+
+<SupportCards />
+
+***
+
+## SDK API Reference
+URL: https://docs.wdk.tether.io/tools/indexer-api/sdk-api-reference
+Description: Configuration, methods, types, and errors for the WDK Indexer HTTP client 1.0.1.
+
+This reference describes `@tetherto/wdk-indexer-http@1.0.1`. Start with the [JavaScript SDK guide](/tools/indexer-api/sdk) for installation and a complete request flow. The existing [REST API reference](/tools/indexer-api/api-reference) documents direct HTTP access separately.
+
+## Exports
+
+The package root exports these JavaScript values on Node.js and Bare:
+
+```javascript
+import {
+  WdkIndexerClient,
+  WdkIndexerError,
+  WdkIndexerApiError,
+  WdkIndexerTimeoutError,
+  WdkIndexerNetworkError,
+  isApiError,
+  BATCH_LIMIT,
+} from '@tetherto/wdk-indexer-http';
+```
+
+CommonJS can access the same named exports with `require('@tetherto/wdk-indexer-http')`. The `/bare` export is an alias of the root. Node.js requires version 22 or later; Bare requires the [optional peers](/tools/indexer-api/sdk#install-the-client).
+
+TypeScript definitions ship with the package. Import types separately from JavaScript values:
+
+```typescript
+import type {
+  WdkIndexerClientConfig,
+  TokenTransferOptions,
+  BatchTokenBalanceRequest,
+  BatchTokenTransferRequest,
+  TransferFilters,
+  WalletRegistration,
+  WalletUpdate,
+} from '@tetherto/wdk-indexer-http';
+```
+
+## WdkIndexerClient
+
+Construct a client with optional configuration:
+
+```javascript
+const client = new WdkIndexerClient({ timeout: 30_000 });
+```
+
+### Configuration
+
+| Option | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `apiKey` | `string` | No at construction; required for authenticated methods | None | Sent as `X-API-KEY`. Missing keys reject authenticated calls before a request is sent. |
+| `baseUrl` | `string` | No | `https://wdk-api.tether.su` | Deployment origin. Trailing slashes are removed; the client appends `/api/v1`. |
+| `timeout` | `number` | No | `30000` | Per-request timeout in milliseconds, covering fetch and response-body reading. |
+| `fetch` | `FetchLike` | No | Runtime fetch | Custom fetch implementation, such as an offline mock. Bare selects `bare-fetch`. |
+
+`FetchLike` receives a URL string and `FetchInitLike` containing `method`, `headers`, optional `body`, and `signal`. It returns a promise of `FetchResponseLike` with `ok`, `status`, `statusText`, and an asynchronous `text()` method. The client sends `Accept: application/json` and adds `Content-Type: application/json` when it sends a JSON body.
+
+### Input Handling
+
+The client checks for a missing API key on authenticated calls. It does not validate batch sizes, chain/token support, addresses, filter ranges, or wallet payloads locally. The field constraints below describe the documented server contract. `Blockchain` and `Token` types provide known-name suggestions while accepting other strings; call [getChains()](#getchains) for the current inventory.
+
+Address path arguments are URL-encoded automatically. `blockchain`, `token`, `txHash`, and `walletId` path values are inserted as supplied. Use discovered chain/token keys and valid transaction or wallet identifiers; validate untrusted input before calling these methods. Reject path-control values such as `.` and `..`, and encode any permitted reserved characters before passing an otherwise valid identifier. Query fields set to `null` or `undefined` are omitted; zero values are retained.
+
+### Methods
+
+All methods return promises. Paths below are relative to `/api/v1`. Only `health()` and `getChains()` omit authentication, even when the client has an API key.
+
+| Method | HTTP request | Returns |
+| --- | --- | --- |
+| `health()` | `GET /health` | `Promise<HealthResponse>` |
+| `getChains()` | `GET /chains` | `Promise<ChainsResponse>` |
+| `getTokenTransfers(blockchain, token, address, options?)` | `GET /{blockchain}/{token}/{address}/token-transfers` | `Promise<TokenTransfersResponse>` |
+| `getTokenBalance(blockchain, token, address)` | `GET /{blockchain}/{token}/{address}/token-balances` | `Promise<TokenBalanceResponse>` |
+| `getTransactionTransfers(blockchain, token, txHash)` | `GET /blockchains/{blockchain}/{token}/token-transfers/{txHash}` | `Promise<TransactionTransfersResponse>` |
+| `getBatchTokenTransfers(requests)` | `POST /batch/token-transfers` | `Promise<BatchTokenTransfersItem[]>` |
+| `getBatchTokenBalances(requests)` | `POST /batch/token-balances` | `Promise<BatchTokenBalancesItem[]>` |
+| `registerWallets(wallets)` | `POST /wallets` | `Promise<RegisterWalletsResponse>` |
+| `listWallets()` | `GET /wallets` | `Promise<ListWalletsResponse>` |
+| `getWallet(walletId)` | `GET /wallets/{walletId}` | `Promise<Wallet>` |
+| `updateWallet(walletId, patch)` | `PATCH /wallets/{walletId}` | `Promise<Wallet>` |
+| `deleteWallet(walletId)` | `DELETE /wallets/{walletId}` | `Promise<DeleteWalletResponse>` |
+| `getWalletTransfers(walletId, filters?)` | `GET /wallets/{walletId}/transfers` | `Promise<WalletTransfersResponse>` |
+| `getTransfers(filters?)` | `GET /transfers` | `Promise<WalletTransfersResponse>` |
+
+#### health()
+
+Takes no arguments. Returns the service's `HealthResponse`, with `status` (`'healthy'`, `'degraded'`, or `'unhealthy'`) and ISO 8601 `timestamp`. Optional fields are `deployEnvironment`, `deployedVersion`, `summary` (healthy/unhealthy/total counts), and `checks` (dependency and per-indexer checks).
+
+HTTP 503 with a non-null JSON body resolves instead of throwing. Inspect `status` to detect degraded service. An empty, `null`, or malformed 503 body throws `WdkIndexerApiError`. The client does not validate the parsed body's shape.
+
+#### getChains()
+
+Takes no arguments. Returns `{ chains: ChainInfo[] }`. Each chain has `name`, `tokens`, and optional `caseSensitive` rules. Its `address` rule can be a boolean or regular-expression string; `tx` and `block` rules are optional booleans. Discover supported pairs at runtime instead of maintaining a static list.
+
+#### getTokenTransfers()
+
+Requires `blockchain: Blockchain`, `token: Token`, and `address: string`. Accepts optional [TokenTransferOptions](#tokentransferoptions) as the fourth argument. Returns `{ transfers: TokenTransfer[] }` for the address; see [response fields](#response-fields).
+
+#### getTokenBalance()
+
+Requires `blockchain: Blockchain`, `token: Token`, and `address: string`. Returns `{ tokenBalance: { blockchain, token, amount } }`. `amount` is a decimal string in token base units.
+
+#### getTransactionTransfers()
+
+Requires `blockchain: Blockchain`, `token: Token`, and `txHash: string`. The documented transaction-hash limit is 255 characters. Returns `{ transfers: TokenTransfer[] }`. The documented server behavior is HTTP 404 when the transaction is absent or has no transfers of that token; the client surfaces it as `WdkIndexerApiError`.
+
+#### getBatchTokenTransfers()
+
+Requires `requests: BatchTokenTransferRequest[]`: 1–10 items, each with `blockchain`, `token`, `address`, and optional [TokenTransferOptions](#tokentransferoptions) fields. Returns an array in request order; each item is `{ transfers: TokenTransfer[] }` or [ApiError](#apierror). Use [isApiError()](#isapierror) to narrow each result. Failed items do not automatically reject an otherwise successful HTTP request.
+
+#### getBatchTokenBalances()
+
+Requires `requests: BatchTokenBalanceRequest[]`: 1–10 items, each with `blockchain`, `token`, and `address`. Returns an array in request order; each item is `TokenBalanceResponse` or [ApiError](#apierror). Whole-request failures still reject. See [BATCH_LIMIT](#batch-limit) for application-side batching.
+
+#### registerWallets()
+
+Requires `wallets: WalletRegistration[]`: 1–10 [registration records](#walletregistration). Registers addresses for server-side transfer syncing. Returns `{ wallets: WalletRegistrationResult[] }`, with a numeric `status` for each record.
+
+The documented item statuses include `201` (created), `400` (invalid), and `429` (wallet quota reached). Inspect every item; the public type is `number`, not a closed status union. `id`, `name`, `type`, `enabled`, `addresses`, and `meta` are optional result fields. Failures can include `error`, and quota failures can include `limit` and `currentCount`. Do not assume an `id` exists merely because the HTTP call resolved.
+
+#### listWallets()
+
+Takes no arguments. Returns `{ wallets: Wallet[] }` for the authenticated account. Use a returned `id` with the single-wallet methods.
+
+#### getWallet()
+
+Requires `walletId: string`. Returns one [Wallet](#response-fields), without a `wallet` wrapper.
+
+#### updateWallet()
+
+Requires `walletId: string` and `patch: WalletUpdate`. The patch must contain `name: string` (1–100 characters), `enabled: boolean`, or both. Other fields are not part of the update contract. Returns the updated `Wallet`; `enabled` controls server-side syncing.
+
+#### deleteWallet()
+
+Requires `walletId: string`. Removes the registered wallet record and stops its syncing. Returns `{ success: boolean }`. This is an Indexer operation, not an on-chain deletion.
+
+#### getWalletTransfers()
+
+Requires `walletId: string`; accepts optional [TransferFilters](#transferfilters). Returns `{ transfers: WalletTransfer[] }` synced for that wallet. These records use `ts`, not the token-transfer endpoint's `timestamp` field.
+
+#### getTransfers()
+
+Accepts optional [TransferFilters](#transferfilters). Returns `{ transfers: WalletTransfer[] }` synced across the authenticated account's registered wallets.
+
+## Request Types
+
+### TokenTransferOptions
+
+Used by `getTokenTransfers()` and as fields of each `BatchTokenTransferRequest`:
+
+| Field | Type | Required | Server constraint/default |
+| --- | --- | --- | --- |
+| `limit` | `number` | No | Integer 1–1000; default `10` |
+| `fromTs` | `number` | No | Inclusive start, Unix milliseconds, integer ≥ 0; default `0` |
+| `toTs` | `number` | No | Inclusive end, Unix milliseconds, integer ≥ 0 |
+
+### TransferFilters
+
+Used by `getWalletTransfers()` and `getTransfers()`:
+
+| Field | Type | Required | Server constraint/default |
+| --- | --- | --- | --- |
+| `blockchain` | `Blockchain` | No | A blockchain route key |
+| `token` | `Token` | No | A token route key |
+| `type` | `TransferDirection` | No | `'sent'` or `'received'` |
+| `from`, `to` | `number` or `string` | No | Nonnegative integer Unix milliseconds or an ISO 8601 date-time string |
+| `limit` | `number` | No | Integer 1–100; default `10` |
+| `skip` | `number` | No | Nonnegative integer pagination offset; default `0` |
+| `sort` | `SortOrder` | No | `'asc'` or `'desc'`; default `'desc'` |
+
+### WalletRegistration
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `type` | `'client_wallet'` | Yes | Required registration discriminator |
+| `addresses` | `WalletAddresses` | Yes | Blockchain-to-address map with at least one entry |
+| `name` | `string` | No | 1–100 characters when supplied |
+| `meta` | `WalletMeta` | For a Spark address | Contains `spark: { sparkDepositAddress: string, sparkIdentityKey: string }` for Spark registration |
+
+## Response Fields
+
+These are declared response shapes. The client parses JSON without runtime schema validation. An empty successful response resolves to `null`, even though the declared return types do not include it. A nonempty, invalid JSON success body throws `WdkIndexerError`.
+
+| Type | Fields |
+| --- | --- |
+| `TokenBalance` | `blockchain`, `token`, and `amount` (decimal string in base units) |
+| `TokenTransfer` | `blockchain`, `blockNumber`, `transactionHash`, `transferIndex`, `token`, `amount`, `timestamp`; nullable `transactionIndex`, `logIndex`, `from`, `to`; optional `label` and nullable `metadata`; additional fields may be present |
+| `Wallet` | `id`, `type`, `enabled`, `addresses`, `createdAt`, `updatedAt`; optional `name`, `meta` |
+| `WalletTransfer` | `walletId`, `blockchain`, `token`, `transactionHash`, `transferIndex`, `blockNumber`, `amount`, `ts`, `type`; nullable `from`, `to`, `transactionIndex`, `logIndex`; optional `label` |
+
+`TokenTransfer.timestamp`, `WalletTransfer.ts`, `Wallet.createdAt`, and `Wallet.updatedAt` are Unix milliseconds. Transfer amounts are decimal strings in token base units. Keep them as strings or use `BigInt` for integer arithmetic. `WalletTransfer.type` is `'sent'` or `'received'`.
+
+### ApiError
+
+An item error has required `error: string` and optional `message: string` and `status: number`. It is returned inside a successful batch response; it is not an instance of `WdkIndexerApiError`.
+
+## Errors
+
+All package error classes extend `WdkIndexerError`, which extends `Error`. All methods can reject; missing keys, API errors, network failures, timeouts, and malformed responses are separate from batch-item errors.
+
+| Class | Trigger | Additional fields |
+| --- | --- | --- |
+| `WdkIndexerError` | Missing key on an authenticated call, or nonempty invalid JSON on a successful response | None |
+| `WdkIndexerApiError` | Unsuccessful HTTP status, except an accepted `health()` 503 body | `status: number`, `errorType: string` or `null`, `body: unknown` |
+| `WdkIndexerTimeoutError` | Configured timeout expires during fetch or body reading; the client also aborts the request | `timeout: number` |
+| `WdkIndexerNetworkError` | Fetch rejects or reading the response body fails | `cause: unknown` |
+
+For `WdkIndexerApiError`, `errorType` comes from a string `body.error`. The message uses a nonempty string `body.message`, otherwise the HTTP status and status text. `body` retains parsed JSON, raw text when parsing fails, or `null` for an empty body. The client does not retry automatically.
+
+## Helpers
+
+### isApiError()
+
+`isApiError(item: unknown): item is ApiError` returns true for a non-null object with a string `error` property. It narrows batch result types; it is not a complete response-schema validator.
+
+### Batch Limit
+
+`BATCH_LIMIT` is the number `10`, representing the documented maximum for batch requests and `registerWallets()`. It is a convenience for callers. The client does not split arrays or enforce that maximum locally.
+
+## Next Steps
+
+<Cards>
+  <Card title="Use the JavaScript SDK" href="/tools/indexer-api/sdk">
+    Configure a client and handle balances, batch results, and wallet registration
+  </Card>
+  <Card title="REST API Reference" href="/tools/indexer-api/api-reference">
+    Read the direct HTTP endpoint documentation
+  </Card>
+</Cards>
 
 ## Need Help?
 
@@ -56338,7 +56734,7 @@ Pricing utilities for WDK apps. Includes HTTP clients and providers to retrieve 
 
 Powered by [`@tetherto/wdk-pricing-bitfinex-http`](https://github.com/tetherto/wdk-pricing-bitfinex-http), compatible with [`@tetherto/wdk-pricing-provider`](https://github.com/tetherto/wdk-pricing-provider), and usable with [`@tetherto/wdk-pricing-coingecko-http`](/sdk/pricing-modules/pricing-coingecko-http/) as a CoinGecko fallback client.
 
-The current Bitfinex client release is `v1.0.0-beta.5`. Its public client API and runtime source are unchanged from beta.4; the release updates the declared Axios dependency to 1.18.0.
+The Bitfinex client in `v1.0.0-beta.6` translates common ticker symbols into Bitfinex currency codes for current prices, price data, and historical lookups. For example, pass `USDT` for USD₮; the client maps it to Bitfinex's `UST` code. You can also configure [currency-code overrides](/tools/price-rates/configuration#currency-code-overrides-optional).
 
 ## Features
 
@@ -56383,15 +56779,24 @@ Description: API for @tetherto/wdk-pricing-bitfinex-http
 
 ### Class: `BitfinexPricingClient`
 
-Simple HTTP pricing client for Bitfinex Public REST API.
+Simple HTTP pricing client for Bitfinex Public REST API. In beta.6, all four pricing methods accept common ticker symbols case-insensitively and translate them into Bitfinex codes before making price requests. For example, use `USDT` for USD₮; the client translates it to `UST`.
 
 #### Constructor
 
+Create a client with optional currency-code overrides:
+
 ```javascript title="Create Client"
-new BitfinexPricingClient(options?)
+import { BitfinexPricingClient } from '@tetherto/wdk-pricing-bitfinex-http'
+
+const client = new BitfinexPricingClient({
+  currencyCodes: { btc: 'btc', usd: 'usd' }
+})
 ```
 
-- `options` (optional): reserved for future use
+- `options` (`BitfinexPricingClientOptions`, optional): omit it to use the built-in mappings and remote aliases.
+- `options.currencyCodes` (`Record<string, string>`, optional): common-symbol-to-Bitfinex-code mappings, merged over the built-in defaults. Keys and values are uppercased. Explicit mappings take precedence over remote aliases.
+
+See [currency-code resolution and fallback behavior](/tools/price-rates/configuration#currency-code-overrides-optional) for details. The exported `BitfinexPricingClientOptions` type describes this option.
 
 #### Methods
 
@@ -56546,12 +56951,34 @@ Description: Configure HTTP pricing clients and providers
 
 ## Bitfinex HTTP Client
 
+In `@tetherto/wdk-pricing-bitfinex-http` beta.6, pass common ticker symbols to the client methods. Symbols are case-insensitive: `USDT` and `usdt` both use Bitfinex's `UST` currency code for USD₮. The same translation applies to current prices, batch price data, and historical lookups.
+
+Create a client to use the built-in mappings and Bitfinex's published aliases:
+
 ```javascript title="Create Client"
 import { BitfinexPricingClient } from '@tetherto/wdk-pricing-bitfinex-http'
 
 // Create the client (no options needed)
 const client = new BitfinexPricingClient()
 ```
+
+### Currency-Code Overrides (optional)
+
+Use the optional [`currencyCodes`](/tools/price-rates/api-reference#constructor) object to set explicit common-symbol-to-Bitfinex-code mappings. Entries take precedence over built-in mappings and remote aliases. Both keys and values are uppercased.
+
+For example, these explicit BTC and USD mappings let the client resolve that pair without fetching the remote alias map:
+
+```javascript title="Set Currency-Code Overrides"
+import { BitfinexPricingClient } from '@tetherto/wdk-pricing-bitfinex-http'
+
+const mappedClient = new BitfinexPricingClient({
+  currencyCodes: { btc: 'btc', usd: 'usd' }
+})
+
+const price = await mappedClient.getCurrentPrice('BTC', 'USD')
+```
+
+For symbols without an explicit or built-in mapping, the client looks up Bitfinex's aliases and caches a successful lookup for that client instance. An unknown or ambiguous alias falls back to the uppercased input symbol. If the alias lookup fails, the client uses that fallback and retries the alias lookup on a later request. Translation does not add support for pairs Bitfinex cannot quote, and errors from price requests can still reject the call.
 
 ### Current Price
 

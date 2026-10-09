@@ -128,6 +128,8 @@ All packages are under the `@tetherto` scope. **Always** `npm view <pkg> version
 | `@tetherto/wdk-indexer-http` | [npmjs.com/package/@tetherto/wdk-indexer-http](https://www.npmjs.com/package/@tetherto/wdk-indexer-http) |
 | `@tetherto/wdk-backup-cloud` | [npmjs.com/package/@tetherto/wdk-backup-cloud](https://www.npmjs.com/package/@tetherto/wdk-backup-cloud) |
 
+For the Indexer HTTP client 1.0.1, read the [JavaScript SDK guide](https://docs.wdk.tether.io/tools/indexer-api/sdk) and [SDK API reference](https://docs.wdk.tether.io/tools/indexer-api/sdk-api-reference). The client supports Node.js 22 or later and Bare with the documented optional peers; it exposes balance and transfer queries, per-item batch outcomes, registered-wallet lifecycle methods, and typed request errors.
+
 ## Quick Start
 
 **Docs**: https://docs.wallet.tether.io/sdk/get-started
@@ -176,6 +178,8 @@ Wallet accounts implement `IWalletAccount`. The table below describes standard a
 | `dispose()` | `void` | Run the concrete account's cleanup implementation; verify its installed-version guarantees |
 
 Concrete accounts can expose `index`, `path`, and `keyPair` (⚠️ sensitive — never log or expose). The base wallet beta.21 account contract does not require `index`, and its `path` and `keyPair` can be `null`; check the concrete implementation before relying on these fields.
+
+Base wallet beta.22 adds the required `IDisposable.disposed` getter and exports `DisposalError` from the root and protocols entrypoints. Its manager reports completed disposal and makes repeated completed disposal calls idempotent; this version still retains seed and signer references. These are base-package contracts, so verify the version used by each concrete wallet before relying on them. See the [disposal state reference](https://docs.wdk.tether.io/sdk/core-module/api-reference#disposal-state-in-base-wallet-beta22).
 
 ---
 

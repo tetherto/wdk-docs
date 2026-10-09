@@ -31,8 +31,6 @@ new WDK(seed, options?)
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `options` (`WdkOptions`, optional): Instance settings. `maxConditionTimeoutMs` is a finite positive number that caps every policy condition timeout on this WDK instance and defaults to `30000` milliseconds. `policyExclusions?: string[]` appends non-empty method names to the default policy exclusions.
 
-For base `WalletManager` implementations, `@tetherto/wdk-wallet@1.0.0-beta.20` clarifies that byte input is a raw BIP-32 master seed of 16–64 bytes. It need not have been generated from a BIP-39 mnemonic. This is a declaration clarification, not a new derivation algorithm; check each concrete wallet's seed and derivation requirements.
-
 **Throws:** `Error` if the seed is invalid. Throws `PolicyConfigurationError` if `options` fails the published options schema, such as an array or primitive value, if `maxConditionTimeoutMs` is not a finite positive number, or if `policyExclusions` is not an array of non-empty strings.
 
 **Example:**
@@ -445,18 +443,19 @@ The list matches exact names, not prefixes: a new `get*` or `quote*` method is n
 
 ## Base Wallet Signer Contracts
 
-These contracts belong to `@tetherto/wdk-wallet@1.0.0-beta.21`. They describe the base package used by module authors; a concrete wallet must implement the relevant signer support before applications can use it. Updating a direct base-wallet dependency does not upgrade the separate copy pinned by another wallet package.
+These contracts belong to `@tetherto/wdk-wallet@1.0.0-beta.22`. They describe the base package used by module authors; a concrete wallet must implement the relevant signer support before applications can use it. Updating a direct base-wallet dependency does not upgrade the separate copy pinned by another wallet package.
 
-Declare `@tetherto/wdk-wallet@1.0.0-beta.21` as a direct dependency before importing these contracts.
+Declare `@tetherto/wdk-wallet@1.0.0-beta.22` as a direct dependency before importing these contracts.
 
 ```javascript title="Import Base Wallet Contracts"
-import WalletManager, { IDisposable, ISigner } from '@tetherto/wdk-wallet'
+import WalletManager, { DisposalError, IDisposable, ISigner } from '@tetherto/wdk-wallet'
 ```
 
-`IDisposable` is a new root export declaring `dispose(): void`. Its base implementation throws `NotImplementedError`; implementations provide their own cleanup. `ISigner` extends this contract and now requires these capabilities in addition to `derive(path)` and `getAddress()`:
+`IDisposable`, introduced in beta.21, declares `dispose(): void`. Beta.22 adds a read-only `disposed: boolean` getter. Both base members throw `NotImplementedError`; implementations provide their own state and cleanup. `ISigner` extends this contract and requires these capabilities in addition to `derive(path)` and `getAddress()`:
 
 | Member | Contract |
 | --- | --- |
+| `disposed` | `boolean` indicating whether the implementation has been disposed. Added to `IDisposable` in beta.22. |
 | `isDerivable` | `boolean` indicating whether the signer supports child derivation. |
 | `keyPair` | `KeyPair \| null`; null when key material cannot be retrieved, for example from a hardware signer. |
 | `path` | `string \| null`; null when the signer is not bound to a derivation position. |
@@ -470,24 +469,34 @@ The base manager's `dispose()` calls `dispose()` on cached accounts only when `a
 
 Applications and module authors must manage signer resources and caller-owned seed buffers explicitly. Do not treat manager disposal as proof that a hardware session, signer, or all seed material has been cleared. Coordinate cleanup with other accounts that share the same signer, and see [seed lifecycle](/sdk/core-module/guides/error-handling#seed-lifecycle).
 
+### Disposal State In Base Wallet Beta.22
+
+`WalletManager.disposed` starts as `false`. After `dispose()` completes, it becomes `true`; subsequent calls to `dispose()` return immediately. The cached-account cleanup and retained seed and signer references described above remain unchanged.
+
+Beta.22 exports `DisposalError` from both `@tetherto/wdk-wallet` and `@tetherto/wdk-wallet/protocols`. It extends `WdkError` and identifies operations rejected because an object has been disposed. The signer, account, and protocol contracts describe disposal failures; concrete implementations supply the checks.
+
 ## IWalletAccount
 
 Base single-signer writable wallet account interface exposed by `@tetherto/wdk-wallet`. Blockchain modules implement this interface and may narrow the transaction type accepted by `signTransaction()` and `sendTransaction()`.
 
 In base wallet beta.21, `path` is `string | null` and `keyPair` is `KeyPair | null`. The base interface no longer requires `index`, and its TypeScript contract extends `IDisposable`. A concrete wallet can still expose an index or non-null key material; code written against the base interface must handle null values and cannot assume an index exists.
 
+Beta.22 adds `disposed: boolean` through that TypeScript contract. Its runtime `IWalletAccount` base class no longer inherits from `IWalletAccountReadOnly`, while the published TypeScript interface retains its read-only and disposable inheritance. Implementations must provide the declared read and write methods.
+
 ### Methods
+
+The Throws column summarizes the beta.22 contract; each concrete module implements its own checks.
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
 | `getAddress()` | Returns the account address | `Promise<string>` | - |
-| `sign(message)` | Signs a message using the account's signing implementation | `Promise<string>` | - |
-| `signTransaction(tx)` | Signs a transaction without broadcasting it | `Promise<unknown>` | If the transaction is invalid for the module |
+| `sign(message)` | Signs a message using the account's signing implementation | `Promise<string>` | `DisposalError` |
+| `signTransaction(tx)` | Signs a transaction without broadcasting it | `Promise<unknown>` | `DisposalError` or an invalid-transaction error |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
 | `getTransaction(hash)` | Returns a normalized transaction receipt | `Promise<TransactionReceipt>` | `ValueError`, `NoSuchElementError`, `ProviderRequiredError`, or `ProviderError` |
 | `waitForTransaction(hash, options?)` | Polls until the requested finality or a stable dropped state | `Promise<TransactionReceipt>` | Transaction lookup errors or `TimeoutError` |
-| `sendTransaction(tx)` | Signs, broadcasts, and returns the transaction result | `Promise<TransactionResult>` | If provider access or broadcast fails |
-| `transfer(options)` | Transfers a token where supported by the module | `Promise<TransferResult>` | If the module does not support token transfers |
+| `sendTransaction(tx)` | Signs, broadcasts, and returns the transaction result | `Promise<TransactionResult>` | `DisposalError`, provider, broadcast, or fee errors |
+| `transfer(options)` | Transfers a token where supported by the module | `Promise<TransferResult>` | `DisposalError` or a token-transfer error |
 | `toReadOnlyAccount()` | Returns a read-only account copy | `Promise<IWalletAccountReadOnly>` | - |
 | `dispose()` | Clears sensitive account material from memory | `void` | - |
 

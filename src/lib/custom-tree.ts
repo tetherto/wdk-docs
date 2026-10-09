@@ -510,7 +510,9 @@ export const customTree: Node[] = [
   separator('Tools and Infrastructure'),
   folder('Track balances and transactions', '/tools/indexer-api', 'Database', [
     page('Get Started', '/tools/indexer-api/get-started', 'Rocket'),
-    apiReference('/tools/indexer-api/api-reference'),
+    page('JavaScript SDK', '/tools/indexer-api/sdk', 'Code'),
+    page('SDK API Reference', '/tools/indexer-api/sdk-api-reference', 'Code'),
+    page('REST API Reference', '/tools/indexer-api/api-reference', 'Code'),
   ]),
   folder('Manage wallet secrets safely', '/tools/secret-manager', 'KeyRound', [
     configuration('/tools/secret-manager/configuration'),
