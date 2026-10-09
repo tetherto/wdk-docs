@@ -74,20 +74,24 @@ const priceData = await client.getMultiPriceData([
 
 ### Historical Series
 
-Downscales long histories to ≤ 100 points.
+Supply `start` and `end` as Unix timestamps in milliseconds; both fields are required by `HistoricalPriceOptions`. Keep `start` within the trailing 365 days to avoid the client's range error. Long histories are downscaled to ≤ 100 points. This example requests the last 24 hours:
 
 ```javascript title="Get Historical Prices"
+const end = Date.now()
+const start = end - 24 * 60 * 60 * 1000
 const series = await client.getHistoricalPrice('BTC', 'USD', {
-  start: 1709906400000, // optional (ms)
-  end:   1709913600000  // optional (ms)
+  start,
+  end
 })
 ```
+
+The concrete Bitfinex result uses `{ price, ts }`, with `ts` in Unix milliseconds. The inherited `HistoricalPriceResult` declaration instead names the time field `timestamp`; this is a declaration/runtime mismatch. See the [historical API notes](/tools/price-rates/api-reference#gethistoricalpricefrom-to-opts) before consuming the series in TypeScript.
 
 ## Provider Integration
 
 Works with `@tetherto/wdk-pricing-provider` as a `PricingClient` implementation.
 
-You can pass a single client or an array of clients. When an array is provided, connection errors trigger automatic failover to the next client in the list.
+You can pass a single client or an array of clients. With an array, failures matching `error instanceof Error` trigger failover within the configured `retries` limit, including application and HTTP errors. A resolved `null` does not trigger failover.
 
 ```javascript title="Single client"
 import { PricingProvider } from '@tetherto/wdk-pricing-provider'
@@ -102,13 +106,15 @@ const prices = await provider.getMultiLastPrices([
   { from: 'BTC', to: 'USD' },
   { from: 'ETH', to: 'USD' }
 ])
+const end = Date.now()
+const start = end - 24 * 60 * 60 * 1000
 const hist = await provider.getHistoricalPrice('BTC', 'USD', {
-  start: 1709906400000,
-  end: 1709913600000
+  start,
+  end
 })
 ```
 
-To enable failover, pass an ordered array of `PricingClient` instances. The provider tries each client in order when a connection error occurs.
+To enable failover, pass an ordered array of `PricingClient` instances. The provider advances through that array when a failure matches `error instanceof Error`, up to the `retries` limit.
 
 ```javascript title="Failover across multiple clients"
 import { PricingProvider } from '@tetherto/wdk-pricing-provider'
