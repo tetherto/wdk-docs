@@ -55,10 +55,11 @@ import WalletManagerEvm7702Gasless from '@tetherto/wdk-wallet-evm-7702-gasless'
 - **Supports**: ERC20 via `transfer()`, arbitrary calldata via `sendTransaction({data})`
 - ⚠️ **Ethereum USD₮** uses non-standard ERC20 (no bool return on `transfer()`). Use SafeERC20 in custom contracts.
 - ⚠️ `sendTransaction` accepts a `data` field (arbitrary hex calldata) — can execute **any** contract function. Extra scrutiny for non-empty `data`.
-- ⚠️ In wallet-evm `1.0.0-beta.16`, do not pass a serialized signed transaction to `sendTransaction()`. The declared string input is not broadcast as supplied and can produce a different populated transaction. Use a separate relay or provider for signed raw bytes.
-- `quoteSendTransaction(serializedTx)` is non-broadcasting, but calculates with current provider fee data rather than reproducing the serialized fee settings.
-- In wallet-evm beta.19, the runtime accepts and reuses an existing ethers `Provider`, and a manager shares one provider across its accounts. The published declaration still accepts only URLs and EIP-1193 providers, so this ethers-provider path is runtime-only for TypeScript consumers.
-- ⚠️ Do not pass a beta.19 manager-derived account to Velora beta.8, USD₮0 bridge beta.10, or Aave beta.7. These releases treat the shared ethers `Provider` as EIP-1193 and reject it. Construct `WalletAccountEvm` directly with the original RPC URL or genuine EIP-1193 provider; never mutate its internal provider field. Direct accounts are outside WDK Core policy and middleware decoration, so retain required application checks and account-level controls.
+- In wallet-evm beta.20, transfer and approval options accept gas overrides directly. Object fee quotes use supplied gas limits and fee rates before provider estimates; serialized quotes use their encoded execution-gas fields. Simulation still runs.
+- `transactionMaxFee` applies to sends and provider-backed signing, including sends from transfers and approvals; transfers additionally check `transferMaxFee`. Equality is allowed. The quoted execution-gas fee excludes transferred value and blob gas, is not the eventual fee paid, and does not lock unspecified object fields. Offline signing does not run the cap check.
+- Beta.20 broadcasts the exact supplied signed bytes after checking their encoded gas limit and fee rate. Independently review the recipient, value, data, chain ID, nonce, and every fee field. Type 4 transactions reject legacy `gasPrice`; blob fields are now declared but do not imply newly added runtime blob support.
+- In wallet-evm beta.20, the runtime accepts and reuses an existing ethers `Provider`, and a manager shares one provider across its accounts. The published declaration still accepts only URLs and EIP-1193 providers, so this ethers-provider path is runtime-only for TypeScript consumers.
+- ⚠️ Velora beta.8 and beta.9, USD₮0 bridge beta.10, and Aave beta.7 cannot initialize with accounts derived by standard EVM beta.19 or beta.20, ERC-4337 beta.21, or EIP-7702 beta.7 managers when their shared ethers provider lacks the EIP-1193 `request()` method. These protocols require an EIP-1193 `request()` method on non-string provider inputs. Use the corresponding direct account constructor with its original RPC URL or genuine EIP-1193 input; never mutate internal provider fields. Direct accounts do not receive WDK Core policies or middleware, so retain required application checks and account-level controls.
 
 ## Configuration — wallet-evm
 
@@ -72,6 +73,8 @@ const wallet = new WalletManagerEvm(seedPhrase, {
 
 ## Key Details — wallet-evm-erc-4337
 
+- Beta.21 accepts ethers providers and mixed provider lists, and shares the manager RPC client with its accounts and read-only conversions. A supplied ethers provider must support JSON-RPC `send(method, params)`; bundler and paymaster configuration remain separate.
+- Beta.21 moves transfer and approval gas overrides into their options. Follow https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm-erc-4337/api-reference for that version's signatures. Its EVM dependency remains beta.19; standard EVM beta.20 quote behavior does not apply to these UserOperation methods.
 - **Gasless** via UserOperations + Paymaster
 - Fees paid in **paymaster token** (e.g., USD₮) instead of native ETH
 - `getPaymasterTokenBalance()` for fee balance
@@ -103,6 +106,8 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
 
 ## Key Details — wallet-evm-7702-gasless
 
+- Beta.7 accepts ethers providers and mixed provider lists, and shares the manager RPC client with its accounts and read-only conversions. Supplied ethers providers must support JSON-RPC `send(method, params)`. Bundler and paymaster endpoints remain separate.
+- To wrap an existing EVM account in beta.7, use the same installed EVM beta.19 package instance as the gasless module. An EVM beta.20 account or a second package copy fails the class identity check. Standard EVM beta.20 transfer overrides and quote changes do not apply to these UserOperation methods.
 - Uses EIP-7702 delegation and ERC-4337 UserOperations while retaining the EOA address.
 - Supports sponsored mode and paymaster-token mode.
 - `entryPointVersion` accepts `'0.8'` (default) or `'0.9'`. Match the delegation implementation, bundler, and paymaster to that version.

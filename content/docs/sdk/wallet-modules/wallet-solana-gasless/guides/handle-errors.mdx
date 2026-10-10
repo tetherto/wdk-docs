@@ -7,109 +7,90 @@ schemaType: TechArticle
 
 This guide covers configuration errors, paymaster failures, fee caps, transaction message fee payer checks, and memory cleanup.
 
+Beta.5 exports public error classes from the package root. Use `instanceof` checks, rethrow unfamiliar errors, and avoid branching on message text. `ConfigurationError` was removed; missing required paymaster fields now raise `ValueError`.
+
 ## Handle Configuration Errors
 
-The module validates required paymaster fields when you create an account:
+Required paymaster fields are `paymasterUrl`, `paymasterAddress`, and `paymasterToken`. Missing fields raise `ValueError` when the account is created. An empty paymaster endpoint list also raises `ValueError`, including during manager construction in beta.6.
 
-```javascript title="Configuration error handling"
+You can handle invalid configuration when calling [`wallet.getAccount()`](/sdk/wallet-modules/wallet-solana-gasless/api-reference#getaccount):
+
+```javascript title="Handle invalid configuration"
+import { ValueError } from '@tetherto/wdk-wallet-solana-gasless'
+
 try {
   const account = await wallet.getAccount(0)
 } catch (error) {
-  if (error.name === 'ConfigurationError') {
-    console.error('Invalid paymaster config:', error.message)
-  }
+  if (!(error instanceof ValueError)) throw error
+  console.error('Check the paymaster configuration:', error.message)
 }
 ```
 
-Required paymaster fields are `paymasterUrl`, `paymasterAddress`, and `paymasterToken`.
-
-<Callout type="info">
-In `1.0.0-beta.4`, the published TypeScript declarations name `ConfigurationError`, but the JavaScript root entrypoint does not re-export the runtime class. Check `error.name` or `error.message` instead of importing the class from the package root.
-</Callout>
-
 ## Handle Transaction Fee Caps
 
-`sendTransaction()` and `signTransaction()` throw when the quoted fee is greater than `transactionMaxFee`:
+[`sendTransaction()`](/sdk/wallet-modules/wallet-solana-gasless/api-reference#sendtransaction) and [`signTransaction()`](/sdk/wallet-modules/wallet-solana-gasless/api-reference#signtransaction) raise `MaximumFeeExceededError` when the fee is greater than `transactionMaxFee`. A fee equal to the cap is allowed. Caps use the effective paymaster token's base units.
+
+Handle the new error class for a transaction your application has prepared and reviewed:
 
 ```javascript title="Transaction fee cap handling"
+import { MaximumFeeExceededError } from '@tetherto/wdk-wallet-solana-gasless'
+
 try {
-  const result = await account.sendTransaction({
-    to: 'Recipient1111111111111111111111111111111',
-    value: 1000000n
-  }, {
+  const result = await account.sendTransaction(transaction, {
     transactionMaxFee: 500000n
   })
   console.log('Transaction submitted:', result.hash)
 } catch (error) {
-  if (error.message.includes('Exceeded maximum fee cost for transaction operation')) {
-    console.error('Transaction cancelled because the paymaster fee exceeded the cap.')
-  }
+  if (!(error instanceof MaximumFeeExceededError)) throw error
+  console.error('The paymaster fee exceeded the approved cap')
 }
 ```
 
 ## Handle Transfer Fee Caps
 
-`transfer()` throws when its quoted fee is greater than `transferMaxFee`:
+[`transfer()`](/sdk/wallet-modules/wallet-solana-gasless/api-reference#transfer) raises `MaximumFeeExceededError` when the fee is greater than `transferMaxFee`. Pass your reviewed token, recipient and base-unit amount in `transferOptions`:
 
 ```javascript title="Transfer fee cap handling"
 try {
-  const result = await account.transfer({
-    token: 'TokenMint111111111111111111111111111111111',
-    recipient: 'Recipient1111111111111111111111111111111',
-    amount: 1000000n
-  }, {
+  const result = await account.transfer(transferOptions, {
     transferMaxFee: 500000n
   })
   console.log('Transfer submitted:', result.hash)
 } catch (error) {
-  if (error.message.includes('Exceeded maximum fee cost')) {
-    console.error('Transfer cancelled because the paymaster fee exceeded the cap.')
-  }
+  if (!(error instanceof MaximumFeeExceededError)) throw error
+  console.error('The paymaster fee exceeded the approved cap')
 }
 ```
 
 ## Handle Fee Payer Mismatches
 
-When you pass a prebuilt `TransactionMessage`, the explicit fee payer must match `paymasterAddress`:
+When you pass a prebuilt `TransactionMessage`, the explicit fee payer must match `paymasterAddress`. Beta.5 raises `ValueError` for a mismatch:
 
 ```javascript title="Fee payer mismatch handling"
 try {
   await account.sendTransaction(transactionMessage)
 } catch (error) {
-  if (error.message.includes('does not match paymaster address')) {
-    console.error('Set the TransactionMessage fee payer to the configured paymaster address.')
-  }
+  if (!(error instanceof ValueError)) throw error
+  console.error('Check the TransactionMessage fee payer and paymaster configuration')
 }
 ```
 
 ## Handle Paymaster Failures
 
-Paymaster calls can fail when the endpoint is unavailable, the paymaster cannot quote the transaction, or the paymaster token is not funded for the requested flow. Wrap quote and send calls in `try/catch` blocks:
-
-```javascript title="Paymaster error handling"
-try {
-  const quote = await account.quoteSendTransaction({
-    to: 'Recipient1111111111111111111111111111111',
-    value: 1000000n
-  })
-  console.log('Paymaster fee estimate:', quote.fee)
-} catch (error) {
-  console.error('Unable to quote paymaster fee:', error.message)
-}
-```
+Paymaster calls can fail when the endpoint is unavailable, the paymaster cannot quote the transaction, or the paymaster token is not funded for the requested flow. Wrap quote and send calls in `try/catch` blocks.
 
 Use ordered `paymasterUrl` arrays and `retries` when you need endpoint failover.
 
 ## Handle Invalid Payment Instructions
 
-For unsigned flows, the module does not trust the paymaster's separate `payment_amount` metadata. It derives the configured paymaster's associated token account, requires the returned instruction to be an SPL Token `Transfer` or `TransferChecked` to that account, and decodes the fee from the instruction before applying fee caps or requesting signatures. Keep trusted paymaster fees at or below `Number.MAX_SAFE_INTEGER`; beta.4 converts that decoded amount through `Number` before the owned account compares it.
+In beta.5, invalid payment instructions raise `ValueError`. For unsigned flows, the module does not trust the paymaster's separate `payment_amount` metadata. It derives the configured paymaster's associated token account, requires the returned instruction to be an SPL Token `Transfer` or `TransferChecked` to that account, and decodes the fee from the instruction before applying fee caps or requesting signatures. Keep trusted paymaster fees at or below `Number.MAX_SAFE_INTEGER`; beta.5 still converts that decoded amount through `Number` before the owned account compares it.
 
 ```javascript title="Reject an invalid paymaster payment"
 try {
   await account.signTransaction(transaction)
 } catch (error) {
-  if (error.message === 'Invalid payment instruction from paymaster.') {
-    console.error('The paymaster returned an unexpected token payment instruction')
+  if (error instanceof ValueError) {
+    console.error('Check the transaction and paymaster configuration:', error.message)
   } else {
     throw error
   }
@@ -124,48 +105,37 @@ Do not retry by accepting the returned destination or by disabling fee caps. Ver
 
 ## Handle Signed-Transaction Broadcasts
 
-`sendTransaction(signedTransaction)` bypasses the paymaster and sends the existing signed wire transaction directly through the configured Solana RPC. For the exact output from this account's `signTransaction()`, it finds the embedded payment fee and enforces `transactionMaxFee` before broadcast. Keep the original signed payload so that a timeout can be investigated without creating a second transaction:
+[`sendTransaction()`](/sdk/wallet-modules/wallet-solana-gasless/api-reference#sendtransaction) broadcasts a fully signed transaction through Solana RPC without contacting the paymaster again. Retain the `paymasterToken` used at signing in the quote and send overrides. The module decodes a matching embedded payment and reapplies `transactionMaxFee` before broadcast. A missing payment for that token raises `NoSuchElementError` instead of returning zero.
 
-```javascript title="Broadcast one signed transaction safely"
-const signedTransaction = await account.signTransaction(transactionMessage, {
-  transactionMaxFee: 500000n
-})
+1. Keep the signed output and the fee-token configuration together.
+2. Quote that signed payload with the same configuration.
+3. Broadcast it with the same token and approved cap.
+
+You can distinguish a missing embedded payment from an uncertain broadcast outcome:
+
+```javascript title="Handle a signed payment mismatch"
+import { NoSuchElementError } from '@tetherto/wdk-wallet-solana-gasless'
+
+const signedTransaction = await account.signTransaction(transactionMessage, feeConfig)
 
 try {
-  const result = await account.sendTransaction(signedTransaction, {
-    transactionMaxFee: 500000n
-  })
+  const quote = await account.quoteSendTransaction(signedTransaction, feeConfig)
+  console.log('Embedded paymaster fee:', quote.fee)
+  const result = await account.sendTransaction(signedTransaction, feeConfig)
   console.log('Transaction submitted:', result.hash)
 } catch (error) {
-  // Do not create and sign a replacement transaction until you have checked
-  // the original transaction's status and lifetime.
-  console.error('Signed transaction was not broadcast:', error.message)
+  if (!(error instanceof NoSuchElementError)) throw error
+  console.error('The signed payment does not match the effective fee token')
 }
 ```
 
 <Callout type="warn">
-The package does not refresh a signed transaction's blockhash, durable nonce, payment instruction, or signatures. Broadcast it while its existing transaction lifetime is valid, and avoid concurrent retries of the same signed payload. If the RPC outcome is uncertain, determine whether the existing transaction reached the network before deciding whether to rebuild and re-sign.
-</Callout>
-
-<Callout type="error">
-Do not pass an arbitrary signed payload to this method. Beta.4 returns `0n` when it cannot find a matching payment instruction, so a cap can pass before the payload is sent to RPC. Independently validate every intended instruction, the payment token and destination, fee payer, lifetime, and signatures if the payload did not come directly from the same account and configuration.
+This payment check does not validate every instruction or signature. Accept this account's exact signed output, or independently validate externally supplied payloads. The module does not refresh a signed blockhash, durable nonce, payment, or signature. After an uncertain RPC result, inspect the original transaction's status and lifetime before creating a replacement.
 </Callout>
 
 ## Dispose of Sensitive Data
 
-Call `dispose()` on owned accounts and wallet managers when private keys are no longer needed:
-
-```javascript title="Memory cleanup"
-try {
-  await account.sendTransaction({
-    to: 'Recipient1111111111111111111111111111111',
-    value: 1000000n
-  })
-} finally {
-  account.dispose()
-  wallet.dispose()
-}
-```
+Call `dispose()` on owned accounts and wallet managers when private keys are no longer needed.
 
 <Callout type="warn">
 Read-only accounts do not hold private keys, but owned accounts wrap a standard Solana account and should be disposed after use.

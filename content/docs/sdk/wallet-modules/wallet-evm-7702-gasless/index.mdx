@@ -9,13 +9,21 @@ Use the EIP-7702 wallet module when users should keep an EOA address while trans
 
 It handles EIP-7702 authorization, UserOperation construction, UserOperation signing, paymaster data, and receipt lookup behind the WDK wallet account interface.
 
+<Callout type="info">
+These pages reflect `@tetherto/wdk-wallet-evm-7702-gasless@1.0.0-beta.7`. This release accepts ethers providers and shares the manager's RPC client across derived accounts and their read-only views. Its underlying EVM dependency is beta.19; the EVM beta.20 transfer overrides and execution-gas quote changes do not apply to this module's UserOperation methods.
+</Callout>
+
+<Callout type="warn">
+Beta.7 manager-derived accounts are incompatible with Velora beta.9, USD₮0 bridge beta.10, and Aave beta.7 when their shared ethers provider lacks the EIP-1193 `request()` method these protocols require. See the [direct-account setup and its policy limits](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#provider-failover) before using these combinations.
+</Callout>
+
 ## What It Provides
 
 - **EOA-based EIP-7702 accounts**: `getAddress()` returns the EOA address. The account delegates execution to the configured `delegationAddress` when needed.
 - **Sponsored transactions**: Set `isSponsored: true` to use a sponsorship policy. Quotes return a zero fee in sponsored mode.
 - **Paymaster-token transactions**: Configure `paymasterToken` to pay UserOperation costs in an ERC-20 token.
 - **EntryPoint selection**: Use v0.8 by default or select v0.9 with a matching delegation implementation, bundler, and paymaster. See [configuration](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#entrypoint-version).
-- **Provider failover**: Pass one provider or an ordered list of RPC URLs / EIP-1193 providers. Provider arrays support `retries`.
+- **Provider failover**: Pass one provider or an ordered list of RPC URLs, ethers providers, and EIP-1193 providers. Provider arrays support `retries`.
 - **UserOperation finality**: Track a UserOperation from bundler acceptance through its EVM transaction's confirmed or final state with `getTransaction()` and `waitForTransaction()`.
 - **Non-broadcasting UserOperation signing**: Build and sign a self-contained `UserOperationV8` without submitting it, then quote or send that operation separately. Construction still uses the configured provider, bundler, and paymaster services.
 - **Independent nonce lanes**: Use named or one-time EntryPoint lanes for concurrent operations that do not require ordering.

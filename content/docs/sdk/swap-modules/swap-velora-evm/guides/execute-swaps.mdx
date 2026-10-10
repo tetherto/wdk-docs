@@ -11,36 +11,47 @@ Swaps spend tokens and gas on-chain. Before execution, approve the input token f
 
 ## Basic exact-input swap
 
-You can sell an exact amount of the input token using [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference):
+For beta.9 or later, carry an accepted output floor into [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference). This example allows at most 1% less output than the preview. Choose the tolerance for your application and obtain user approval before execution.
+
+1. Check the current spender allowance and obtain a quote.
+2. Review the recipient, input amount, output floor, and fee cap with the user.
+3. Execute the same request with `minAmountOut` and `swapMaxFee`.
+
+Use [`quoteSwap()`](/sdk/swap-modules/swap-velora-evm/api-reference) to prepare the request:
+
+```javascript title="Preview USDt to WETH"
+const ETHEREUM_USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+const ETHEREUM_WETH = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
+const request = {
+  tokenIn: ETHEREUM_USDT,
+  tokenOut: ETHEREUM_WETH,
+  tokenInAmount: 1000000n,
+  to: await account.getAddress()
+}
+const quote = await swapProtocol.quoteSwap(request)
+const minAmountOut = quote.tokenOutAmount * 9900n / 10000n
+const maxFee = 200000000000000n // Exclusive cap in wei for this standard EVM account.
+```
+
+After approval, pass the reviewed request and limits to [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference):
 
 ```javascript title="Exact input: USDt to WETH"
 const result = await swapProtocol.swap({
-  tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-  tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-  tokenInAmount: 1000000n
-})
+  ...request,
+  minAmountOut
+}, { swapMaxFee: maxFee })
 
 console.log('Swap transaction hash:', result.hash)
 console.log('Total fee (account units):', result.fee)
-console.log('Tokens sold (base units):', result.tokenInAmount)
-console.log('Tokens bought (base units):', result.tokenOutAmount)
+console.log('Quoted input (base units):', result.tokenInAmount)
+console.log('Quoted output (base units):', result.tokenOutAmount)
 ```
+
+Execution fetches a new rate and rejects a mismatched pair, mismatched input amount, or output below the floor before building the transaction. The returned token amounts are from that rate, not a settlement receipt. The earlier quote's route is not pinned.
 
 ## Exact output swap
 
-You can receive an exact amount of the output token by passing `tokenOutAmount` to [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference):
-
-```javascript title="Exact output amount"
-const result = await swapProtocol.swap({
-  tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-  tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-  tokenOutAmount: 500000000000000000n
-})
-
-console.log('Swap hash:', result.hash)
-console.log('Tokens sold (base units):', result.tokenInAmount)
-console.log('Tokens bought (base units):', result.tokenOutAmount)
-```
+BUY validates the requested exact output and retains it in the transaction build. An optional `minAmountOut` also rejects an output below that floor; it does not add an input-token spending cap.
 
 ## Swap with ERC-4337
 

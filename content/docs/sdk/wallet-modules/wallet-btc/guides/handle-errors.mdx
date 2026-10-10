@@ -11,6 +11,7 @@ Transactions sent via [`account.sendTransaction()`](/sdk/wallet-modules/wallet-b
 
 ```javascript title="Handle Transaction Errors"
 import {
+  AssertionError,
   MaximumFeeExceededError,
   TransactionError,
   TransactionErrorReason,
@@ -29,6 +30,8 @@ try {
     console.error('Not enough funds in wallet')
   } else if (error instanceof MaximumFeeExceededError) {
     console.error('Transaction fee exceeds transactionMaxFee')
+  } else if (error instanceof AssertionError) {
+    console.error('Transaction input validation failed; verify the Bitcoin provider data')
   } else if (error instanceof ValueError) {
     console.error('Transaction amount or input selection is invalid')
   } else {
@@ -37,7 +40,11 @@ try {
 }
 ```
 
+For legacy BIP-44 accounts, [`signTransaction()`](/sdk/wallet-modules/wallet-btc/api-reference#signtransactionoptions) and unsigned [`sendTransaction()`](/sdk/wallet-modules/wallet-btc/api-reference#sendtransactionoptions-timeoutms) compare selected inputs with their fetched previous transactions. A transaction-ID, output-script, or value mismatch raises `AssertionError` before signing. Verify the client data and endpoint; do not bypass the failure by signing the same reported UTXOs elsewhere.
+
 ## Connection Errors
+
+With the built-in mempool Electrum adapter, recognized TLS/SSL certificate failures are wrapped in `ProviderError` with `ProviderErrorReason.NETWORK_ERROR`; its `cause` retains the underlying error. Other connection failures can retain their underlying error type. Check the configured hostname, certificate expiry, and runtime trust store. Retrying the same invalid certificate will not repair it, and disabling verification is not a fix. This beta.16 change applies to the mempool adapter's TLS/SSL transports; it does not add certificate checks to TCP or to a caller-supplied client.
 
 Network and backend failures use `ProviderError`. Inspect `error.reason` instead of parsing a provider message. For `BlockbookClient`, HTTP 401 maps to `UNAUTHORIZED`, 403 to `FORBIDDEN`, 408 or 504 to `REQUEST_TIMEOUT`, other 5xx responses to `INTERNAL_SERVER_ERROR`, and other non-2xx responses to `NETWORK_ERROR`. WebSocket connection failures use `NETWORK_ERROR`; WebSocket server-response and fee-estimation failures use `INTERNAL_SERVER_ERROR`.
 
@@ -51,7 +58,7 @@ try {
   if (error instanceof ProviderError &&
       (error.reason === ProviderErrorReason.NETWORK_ERROR ||
        error.reason === ProviderErrorReason.REQUEST_TIMEOUT)) {
-    console.error('Provider unavailable or timed out; retry according to your policy')
+    console.error('Check connectivity and TLS certificate trust before retrying')
   } else if (error instanceof ProviderError &&
              (error.reason === ProviderErrorReason.UNAUTHORIZED ||
               error.reason === ProviderErrorReason.FORBIDDEN)) {

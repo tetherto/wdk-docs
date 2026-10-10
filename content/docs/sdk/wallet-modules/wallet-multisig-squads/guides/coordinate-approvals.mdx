@@ -1,0 +1,61 @@
+---
+title: Coordinate Squads approvals
+description: Implement an optional coordinator that collects member signatures for one shared approval transaction.
+docType: how-to
+schemaType: TechArticle
+---
+
+[Choose the approval path](#choose-the-approval-path), [implement the contract](#implement-the-contract), then [track partial approvals](#track-partial-approvals). See [Need Help](#need-help) for support.
+
+Prerequisites: an existing multisig integration and a backend able to construct, persist and distribute the exact compiled Solana transaction. Coordination is optional; ordinary on-chain votes work without it. The package supplies the interface, not a hosted service or transaction-builder backend.
+
+## Choose the Approval Path
+
+Without a coordinator, [`approveProposal()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#approveproposal) submits one member's vote as a transaction. A coordinator can gather several signatures over a single approval bundle; the member whose signature completes it broadcasts it.
+
+Configure `coordinator` as a factory receiving `{ signerAddress }`. It receives the member address, not its key. Every participant must receive the same compiled message and the correct signature slots. The coordinator chooses the bundle's fee payer, fee settings and lifetime; confirm these independently before signing.
+
+## Implement the Contract
+
+In TypeScript, implement the interface structurally; the declaration does not expose a constructor even though JavaScript exports a base class. Implement the two [`IMultisigCoordinator`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#imultisigcoordinator) methods:
+
+| Method | Responsibility |
+| --- | --- |
+| `getProposal(proposalId)` | Return the compiled Solana transaction for this member to sign, or null to use an ordinary on-chain vote. |
+| `confirmProposal(proposalId, signature)` | Verify this member's base58 signature against `signerAddress` and the held bundle's exact `messageBytes` before storing it in that member's slot. |
+
+Your backend must decode and verify each received signature before changing the held bundle. Reject invalid signatures, including signatures over different message bytes, without merging them. The package provides the coordinator interface; it does not implement this backend verification for you.
+
+The account validates that the bundle includes its own approval exactly once and limits supported instructions around the same proposal/multisig. That validation is not a replacement for reviewing the stored payment payload. Use access controls, immutable payload storage and an application review screen. A durable-nonce signature can remain usable until its nonce advances, so blockhash expiry alone is not a universal revocation mechanism.
+
+The compiled bundle fixes its actions: `memo`, `autoExecute` and `vaultIndex` passed to `approveProposal()` do not rewrite it. `approveMaxFee` checks the bundle quote before the member signs. A rejection always uses its own on-chain transaction.
+
+## Track Partial Approvals
+
+Inspect [`approveProposal()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#approveproposal) results without treating all signatures as votes already recorded on-chain:
+
+```javascript title="Handle a coordinated approval result"
+import { account, requiredEnv } from './squads-account.mjs'
+
+const result = await account.approveProposal(requiredEnv('PROPOSAL_ID'))
+if (result.transaction === undefined) {
+  console.log('Collected signatures awaiting broadcast:', result.pendingConfirmations)
+} else {
+  const receipt = await account.waitForTransaction(result.transaction.hash)
+  if (!receipt.success) throw new Error('Approval bundle failed')
+}
+```
+
+This snippet uses the account configured by your application with its coordinator factory. A partial result reports `transaction: undefined`, leaves `confirmations` at the on-chain count, and places collected signatures in `pendingConfirmations`. No on-chain transaction has been broadcast for that partial approval. A broadcast result resets pending confirmations to zero. When a bundle includes execution, its returned status can be `executed`; still verify the receipt and proposal state.
+
+## Next Steps
+
+- [Usage](/sdk/wallet-modules/wallet-multisig-squads/usage)
+- [Configuration](/sdk/wallet-modules/wallet-multisig-squads/configuration)
+- [API reference](/sdk/wallet-modules/wallet-multisig-squads/api-reference)
+
+---
+
+## Need Help?
+
+<SupportCards />

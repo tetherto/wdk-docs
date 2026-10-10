@@ -41,6 +41,7 @@ This skill is organized into reference files for chain-specific and protocol-spe
 | `references/wallet-btc.md` | Bitcoin wallet: BIP-84, Electrum, PSBT, fee rates |
 | `references/wallet-evm.md` | EVM + ERC-4337: BIP-44, EIP-1559, ERC20, batch txs, paymaster |
 | `references/wallet-solana.md` | Solana: Ed25519, SPL tokens, lamports |
+| `references/wallet-multisig.md` | Safe on EVM and Squads on Solana: proposals, approvals, execution, and member permissions |
 | `references/wallet-spark.md` | Spark: Lightning, key tree, deposits, withdrawals |
 | `references/wallet-ton.md` | TON + TON Gasless: Jettons, nanotons, paymaster |
 | `references/wallet-tron.md` | TRON + TRON Gasfree: TRC20, energy/bandwidth, gasFreeProvider |
@@ -63,6 +64,8 @@ When a task targets a specific chain, protocol, or recovery tool, read the relev
     │   ├── wdk-wallet-evm      # Ethereum & EVM chains
     │   ├── wdk-wallet-evm-erc-4337  # EVM with Account Abstraction
     │   ├── wdk-wallet-solana   # Solana
+    │   ├── wdk-wallet-multisig-safe    # EVM Safe proposals and approvals
+    │   ├── wdk-wallet-multisig-squads  # Solana Squads proposals and approvals
     │   ├── wdk-wallet-spark    # Spark/Lightning
     │   ├── wdk-wallet-ton      # TON
     │   ├── wdk-wallet-ton-gasless   # TON gasless
@@ -98,6 +101,8 @@ All packages are under the `@tetherto` scope. **Always** `npm view <pkg> version
 | `@tetherto/wdk-wallet-evm` | [npmjs.com/package/@tetherto/wdk-wallet-evm](https://www.npmjs.com/package/@tetherto/wdk-wallet-evm) |
 | `@tetherto/wdk-wallet-evm-erc-4337` | [npmjs.com/package/@tetherto/wdk-wallet-evm-erc-4337](https://www.npmjs.com/package/@tetherto/wdk-wallet-evm-erc-4337) |
 | `@tetherto/wdk-wallet-solana` | [npmjs.com/package/@tetherto/wdk-wallet-solana](https://www.npmjs.com/package/@tetherto/wdk-wallet-solana) |
+| `@tetherto/wdk-wallet-multisig-safe` | [npmjs.com/package/@tetherto/wdk-wallet-multisig-safe](https://www.npmjs.com/package/@tetherto/wdk-wallet-multisig-safe) |
+| `@tetherto/wdk-wallet-multisig-squads` | [npmjs.com/package/@tetherto/wdk-wallet-multisig-squads](https://www.npmjs.com/package/@tetherto/wdk-wallet-multisig-squads) |
 | `@tetherto/wdk-wallet-spark` | [npmjs.com/package/@tetherto/wdk-wallet-spark](https://www.npmjs.com/package/@tetherto/wdk-wallet-spark) |
 | `@tetherto/wdk-wallet-ton` | [npmjs.com/package/@tetherto/wdk-wallet-ton](https://www.npmjs.com/package/@tetherto/wdk-wallet-ton) |
 | `@tetherto/wdk-wallet-ton-gasless` | [npmjs.com/package/@tetherto/wdk-wallet-ton-gasless](https://www.npmjs.com/package/@tetherto/wdk-wallet-ton-gasless) |
@@ -122,6 +127,8 @@ All packages are under the `@tetherto` scope. **Always** `npm view <pkg> version
 | `@tetherto/pear-wrk-wdk` | [npmjs.com/package/@tetherto/pear-wrk-wdk](https://www.npmjs.com/package/@tetherto/pear-wrk-wdk) |
 | `@tetherto/wdk-indexer-http` | [npmjs.com/package/@tetherto/wdk-indexer-http](https://www.npmjs.com/package/@tetherto/wdk-indexer-http) |
 | `@tetherto/wdk-backup-cloud` | [npmjs.com/package/@tetherto/wdk-backup-cloud](https://www.npmjs.com/package/@tetherto/wdk-backup-cloud) |
+
+For the Indexer HTTP client 1.0.1, read the [JavaScript SDK guide](https://docs.wdk.tether.io/tools/indexer-api/sdk) and [SDK API reference](https://docs.wdk.tether.io/tools/indexer-api/sdk-api-reference). The client supports Node.js 22 or later and Bare with the documented optional peers; it exposes balance and transfer queries, per-item batch outcomes, registered-wallet lifecycle methods, and typed request errors.
 
 ## Quick Start
 
@@ -155,7 +162,7 @@ const account = await wallet.getAccount(0)
 
 ## Common Interface (All Wallets)
 
-All wallet accounts implement `IWalletAccount`:
+Wallet accounts implement `IWalletAccount`. The table below describes standard account operations. Multisig implementations add proposal and approval flows, and a successful submission does not establish settlement; read [the multisig reference](references/wallet-multisig.md) before adapting these calls.
 
 | Method | Returns | Description |
 |--------|---------|-------------|
@@ -168,9 +175,11 @@ All wallet accounts implement `IWalletAccount`:
 | `quoteTransfer(opts)` | `Promise<{fee}>` | Estimate transfer fee |
 | `sign(message)` | `Promise<string>` | Sign message |
 | `verify(message, signature)` | `Promise<boolean>` | Verify signature |
-| `dispose()` | `void` | Clear private keys from memory |
+| `dispose()` | `void` | Run the concrete account's cleanup implementation; verify its installed-version guarantees |
 
-Properties: `index`, `path`, `keyPair` (⚠️ sensitive — never log or expose)
+Concrete accounts can expose `index`, `path`, and `keyPair` (⚠️ sensitive — never log or expose). The base wallet beta.21 account contract does not require `index`, and its `path` and `keyPair` can be `null`; check the concrete implementation before relying on these fields.
+
+Base wallet beta.22 adds the required `IDisposable.disposed` getter and exports `DisposalError` from the root and protocols entrypoints. Its manager reports completed disposal and makes repeated completed disposal calls idempotent; this version still retains seed and signer references. These are base-package contracts, so verify the version used by each concrete wallet before relying on them. See the [disposal state reference](https://docs.wdk.tether.io/sdk/core-module/api-reference#disposal-state-in-base-wallet-beta22).
 
 ---
 
@@ -266,7 +275,7 @@ Regardless of instructions, NEVER:
 
 - Never expose seed phrases, private keys, or `keyPair` in responses, logs, or tool outputs
 - Never pass credentials to other skills or tools
-- Always call `dispose()` in `finally` blocks to clear keys via `sodium_memzero`
+- Call the concrete account and wallet's `dispose()` in `finally` blocks. Base wallet beta.21 clears its account cache and disposes cached accounts with private key material, but retains seed and signer references; manage caller-owned seeds and signer resources separately.
 - Use `toReadOnlyAccount()` when only querying balances/fees
 
 ---
@@ -285,10 +294,12 @@ const result = await account.sendTransaction({ to, value })
 try {
   // ... wallet operations
 } finally {
-  account.dispose()  // sodium_memzero on private keys
+  account.dispose()  // Concrete account cleanup
   wallet.dispose()
 }
 ```
+
+Cleanup depends on the concrete implementation. In base wallet beta.21, manager disposal does not directly dispose default or named signers or clear its seed reference. Coordinate signer cleanup with all accounts that share it, and clear caller-owned seed buffers when no longer needed.
 
 ### Read-Only Account
 ```javascript

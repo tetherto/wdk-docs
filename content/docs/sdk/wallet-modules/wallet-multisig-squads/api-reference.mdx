@@ -1,0 +1,493 @@
+---
+title: Squads multisig API reference
+description: Reference public Squads multisig classes, proposal methods, member permissions and result semantics.
+docType: reference
+schemaType: APIReference
+---
+
+This reference covers `@tetherto/wdk-wallet-multisig-squads` **1.0.0-beta.2**, checked against the [published revision](https://github.com/tetherto/wdk-wallet-multisig-squads/tree/35717e7d606ed120b0306b4d33acfca6eb4f22cd).
+
+## Imports
+
+Import JavaScript values from the public package root:
+
+```javascript
+import WalletManagerMultisigSquads, {
+  WalletAccountMultisigSquads,
+  WalletAccountReadOnlyMultisigSquads,
+  IMultisigCoordinator,
+  PERMISSION,
+  SQUADS_PROGRAM_ADDRESS,
+  ThresholdNotMetError,
+  MaximumFeeExceededError
+} from '@tetherto/wdk-wallet-multisig-squads'
+```
+
+Import TypeScript contracts separately:
+
+```typescript
+import type {
+  MultisigSquadsWalletConfig,
+  MultisigSquadsWalletReadOnlyConfig,
+  MultisigSquadsProposalResult,
+  MultisigSquadsTransactionOptions,
+  MultisigCoordinatorFactory
+} from '@tetherto/wdk-wallet-multisig-squads'
+```
+
+Tables use `or` for union alternatives. See [configuration](/sdk/wallet-modules/wallet-multisig-squads/configuration) for all config fields and fee units.
+
+## WalletManagerMultisigSquads
+
+The default export derives member accounts for one configured multisig.
+
+| Method | Returns |
+| --- | --- |
+| `new WalletManagerMultisigSquads(seed, config?)` | `WalletManagerMultisigSquads` |
+| `getAccount(index?)` | `Promise<WalletAccountMultisigSquads>` |
+| `getAccountByPath(path)` | `Promise<WalletAccountMultisigSquads>` |
+| `getFeeRates()` | `Promise<FeeRates>` |
+| `dispose()` | `void` |
+| `static getRandomSeedPhrase(wordCount?)` | `string` |
+| `static isValidSeedPhrase(seedPhrase)` | `boolean` |
+| `addSigner(name, signer)` | `WalletManager` |
+| `getSigner(name?)` | `ISigner` |
+| `getSigners()` | `Record<string, ISigner>` |
+
+The inherited `seed` getter returns seed bytes or undefined. Never log it. Registry APIs are inherited but do not enable named signers in this module.
+#### constructor
+
+`new WalletManagerMultisigSquads(seed, config?)` returns `WalletManagerMultisigSquads`. Accepts a BIP-39 mnemonic string or raw 16–64-byte BIP-32 master seed and optional wallet config. Supply an identity and RPC before network operations. Derives member signers for the same configured multisig.
+
+#### getAccount
+
+`getAccount(index?)` returns `Promise<WalletAccountMultisigSquads>`. Derives and caches `m/44'/501'/index'/0'`, default index zero. Although the declaration permits a string, named/external signers are rejected in beta.2.
+
+#### getAccountByPath
+
+`getAccountByPath(path)` returns `Promise<WalletAccountMultisigSquads>`. Derives a member from a relative hardened path such as `0'/0'`. Derivation does not establish membership.
+
+#### getFeeRates
+
+`getFeeRates()` returns `Promise<FeeRates>`. Returns normal and fast Solana fee-rate estimates from the provider. Requires a configured RPC.
+
+#### dispose
+
+`dispose()` returns `void`. Disposes cached member accounts and registered signers. Beta.2 retains the manager's seed bytes; this call does not erase all secret material. Release the manager when finished and clear caller-controlled mutable copies after their final use.
+
+#### getRandomSeedPhrase
+
+`static getRandomSeedPhrase(wordCount?)` returns `string`. Inherited helper accepts 12 or 24 words, default 12. Do not log production seed phrases.
+
+#### isValidSeedPhrase
+
+`static isValidSeedPhrase(seedPhrase)` returns `boolean`. Inherited mnemonic format/checksum check; does not establish membership or the correct derivation path.
+
+#### addSigner
+
+`addSigner(name, signer)` returns `WalletManager`. Inherited named-signers registry accepts an `ISigner`. Registering a signer does not enable external/hardware signing in the Squads manager.
+
+#### getSigner
+
+`getSigner(name?)` returns `ISigner`. Reads the inherited registry; throws when the requested or default signer is absent.
+
+#### getSigners
+
+`getSigners()` returns `Record<string, ISigner>`. Returns a shallow copy of named signers, excluding the default signer.
+
+## WalletAccountReadOnlyMultisigSquads
+
+Inspect the multisig and vault without a member seed.
+
+| Method | Returns |
+| --- | --- |
+| `new WalletAccountReadOnlyMultisigSquads(config)` | `WalletAccountReadOnlyMultisigSquads` |
+| `static toCreateKeySecretBytes(createKeySecret)` | `Uint8Array` |
+| `static getCreateKey(createKeySecret)` | `string` |
+| `static toMultisigPda(programId, multisigPdaOrCreateKey?)` | `Address or undefined` |
+| `static createRpc(config?)` | `SolanaRpc or undefined` |
+| `getAddress()` | `Promise<string>` |
+| `isDeployed()` | `Promise<boolean>` |
+| `getMultisigInfo()` | `Promise<MultisigSquadsInfo>` |
+| `getNonce()` | `Promise<bigint>` |
+| `getVaultAddress(vaultIndexOrAddress?)` | `Promise<string>` |
+| `getBalance(vaultIndexOrAddress?)` | `Promise<bigint>` |
+| `getTokenBalance(tokenAddress, vaultIndexOrAddress?)` | `Promise<bigint>` |
+| `getTransactionReceipt(hash)` | `Promise<SolanaTransactionReceipt or null>` |
+| `getTransaction(hash)` | `Promise<TransactionReceipt>` |
+| `waitForTransaction(hash, options?)` | `Promise<TransactionReceipt>` |
+| `verify(message, signature)` | `Promise<boolean>` |
+| `getProposals(proposalIds)` | `Promise<Record<string, MultisigSquadsProposal or null>>` |
+| `getProposal(proposalId)` | `Promise<MultisigSquadsProposal or null>` |
+| `isReadyToExecute(proposalId)` | `Promise<boolean>` |
+| `quoteSendTransaction(tx)` | `Promise<Omit<TransactionResult, "hash">>` |
+| `quoteDeploy(memberCount?)` | `Promise<Omit<TransactionResult, "hash">>` |
+| `quotePropose(tx, config?)` | `Promise<Omit<TransactionResult, "hash">>` |
+| `quoteTransfer(transferOptions, config?)` | `Promise<Omit<TransactionResult, "hash">>` |
+| `quoteExecuteProposal(proposalId)` | `Promise<Omit<TransactionResult, "hash">>` |
+
+Polling getters are `defaultWaitInterval: number` (400 ms) and inherited `defaultWaitTimeout: number` (60000 ms).
+#### constructor
+
+`new WalletAccountReadOnlyMultisigSquads(config)` returns `WalletAccountReadOnlyMultisigSquads`. Accepts read-only connection and identity config, without a member seed.
+
+#### toCreateKeySecretBytes
+
+`static toCreateKeySecretBytes(createKeySecret)` returns `Uint8Array`. Validates and normalizes base58 or raw secret bytes to a 32-byte private key or 64-byte keypair.
+
+#### getCreateKey
+
+`static getCreateKey(createKeySecret)` returns `string`. Derives the public create key synchronously. It does not deploy or fund a multisig.
+
+#### toMultisigPda
+
+`static toMultisigPda(programId, multisigPdaOrCreateKey?)` returns `Address or undefined`. Returns an off-curve identity directly or derives the multisig PDA from an on-curve create key. Returns undefined without an identity.
+
+#### createRpc
+
+`static createRpc(config?)` returns `SolanaRpc or undefined`. Constructs a single-URL or failover RPC client; returns undefined when the config has no provider.
+
+#### getAddress
+
+`getAddress()` returns `Promise<string>`. Inherited address getter returns the configured/derived multisig configuration address, not its vault. Supply an identity before using it.
+
+#### isDeployed
+
+`isDeployed()` returns `Promise<boolean>`. Checks whether the multisig exists through the RPC.
+
+#### getMultisigInfo
+
+`getMultisigInfo()` returns `Promise<MultisigSquadsInfo>`. Returns owners, threshold and aligned permission masks from on-chain state. It does not return the full raw multisig account.
+
+#### getNonce
+
+`getNonce()` returns `Promise<bigint>`. Returns the latest created transaction index. Proposal IDs are transaction indexes, not transaction signatures.
+
+#### getVaultAddress
+
+`getVaultAddress(vaultIndexOrAddress?)` returns `Promise<string>`. Defaults to vault index zero. Accepts an index 0–255 or an address belonging to this multisig; unrelated vaults are rejected.
+
+#### getBalance
+
+`getBalance(vaultIndexOrAddress?)` returns `Promise<bigint>`. Returns the selected vault native balance in lamports. Defaults to vault zero, not the member signer or multisig configuration account.
+
+#### getTokenBalance
+
+`getTokenBalance(tokenAddress, vaultIndexOrAddress?)` returns `Promise<bigint>`. Returns classic SPL token base units for the selected vault, default zero. Token-2022 is unsupported.
+
+#### getTransactionReceipt
+
+`getTransactionReceipt(hash)` returns `Promise<SolanaTransactionReceipt or null>`. Looks up a 64-byte base58 transaction signature. Returns null when absent; inspect receipt errors rather than assuming receipt presence means success.
+
+#### getTransaction
+
+`getTransaction(hash)` returns `Promise<TransactionReceipt>`. Returns a normalized transaction receipt with finality and success. Missing signatures raise `NoSuchElementError`; the signature alone cannot distinguish a dropped transaction from one never seen.
+
+#### waitForTransaction
+
+`waitForTransaction(hash, options?)` returns `Promise<TransactionReceipt>`. Inherited polling uses normalized lookup. Options are target (default confirmed), interval (default 400 ms), timeout (default 60000 ms), and maxPollErrors (default 3). Inspect success separately. Missing/dropped signatures can time out.
+
+#### verify
+
+`verify(message, signature)` returns `Promise<boolean>`. Always throws `UnsupportedOperationError`: the multisig PDA cannot provide an ordinary member signature.
+
+#### getProposals
+
+`getProposals(proposalIds)` returns `Promise<Record<string, MultisigSquadsProposal or null>>`. Accepts an array of number, bigint or decimal-string IDs. Returns canonical decimal keys and null for absent entries; RPC failures still reject. Empty input returns an empty object.
+
+#### getProposal
+
+`getProposal(proposalId)` returns `Promise<MultisigSquadsProposal or null>`. Accepts number, bigint or decimal string. Returns counts, generic status, Squads statusName and approved/rejected/cancelled member arrays; it does not include stored payment instructions.
+
+#### isReadyToExecute
+
+`isReadyToExecute(proposalId)` returns `Promise<boolean>`. Checks approved state, a supported vault/config transaction, non-stale configuration and elapsed time lock. Batch transactions return false. It does not check the current signer permission or guarantee execution success.
+
+#### quoteSendTransaction
+
+`quoteSendTransaction(tx)` returns `Promise<Omit<TransactionResult, "hash">>`. Always throws `UnsupportedOperationError`. Use quotePropose for a vault transaction.
+
+#### quoteDeploy
+
+`quoteDeploy(memberCount?)` returns `Promise<Omit<TransactionResult, "hash">>`. Defaults to one member; pass the actual count. Estimates program creation fee, multisig rent and network fee in lamports.
+
+#### quotePropose
+
+`quotePropose(tx, config?)` returns `Promise<Omit<TransactionResult, "hash">>`. Accepts native `{ to, value }` or an instruction message and optional wallet config override. Estimates network fee and proposal/transaction rent for vault zero. This argument is not per-call proposal options.
+
+#### quoteTransfer
+
+`quoteTransfer(transferOptions, config?)` returns `Promise<Omit<TransactionResult, "hash">>`. Accepts classic SPL `{ token, recipient, amount }` in mint base units. Quotes proposal fee/rent for vault zero, with optional wallet config override. Token-2022 is unsupported.
+
+#### quoteExecuteProposal
+
+`quoteExecuteProposal(proposalId)` returns `Promise<Omit<TransactionResult, "hash">>`. Checks that a proposal exists, then returns fixed base fee `5000n` lamports. Does not simulate full execution, enforce readiness or cap eventual costs.
+
+## WalletAccountMultisigSquads
+
+The signing account extends the read-only class. All public read-only members are repeated below.
+
+| Method | Returns |
+| --- | --- |
+| `new WalletAccountMultisigSquads(seed, path, config)` | `WalletAccountMultisigSquads` |
+| `static getCreateKeySigner(createKeySecret)` | `Promise<KeyPairSigner>` |
+| `getSignerAddress()` | `Promise<string>` |
+| `sign(message)` | `Promise<string>` |
+| `signTransaction(tx)` | `Promise<SolanaTransaction>` |
+| `sendTransaction(tx)` | `Promise<TransactionResult>` |
+| `deploy(owners?, threshold?)` | `Promise<Pick<TransactionResult, "hash">>` |
+| `propose(tx, options?)` | `Promise<MultisigSquadsProposalResult>` |
+| `proposeTransfer(transferOptions, options?)` | `Promise<MultisigSquadsProposalResult>` |
+| `approveProposal(proposalId, options?)` | `Promise<MultisigSquadsProposalResult>` |
+| `rejectProposal(proposalId, options?)` | `Promise<MultisigSquadsProposalResult>` |
+| `executeProposal(proposalId)` | `Promise<TransactionResult>` |
+| `addOwner(ownerAddress, options?)` | `Promise<MultisigSquadsProposalResult>` |
+| `removeOwner(ownerAddress, options?)` | `Promise<MultisigSquadsProposalResult>` |
+| `swapOwner(oldOwnerAddress, newOwnerAddress, options?)` | `Promise<MultisigSquadsProposalResult>` |
+| `changeThreshold(newThreshold)` | `Promise<MultisigSquadsProposalResult>` |
+| `toReadOnlyAccount()` | `Promise<WalletAccountReadOnlyMultisigSquads>` |
+| `dispose()` | `void` |
+| `static toCreateKeySecretBytes(createKeySecret)` | `Uint8Array` |
+| `static getCreateKey(createKeySecret)` | `string` |
+| `static toMultisigPda(programId, multisigPdaOrCreateKey?)` | `Address or undefined` |
+| `static createRpc(config?)` | `SolanaRpc or undefined` |
+| `getAddress()` | `Promise<string>` |
+| `isDeployed()` | `Promise<boolean>` |
+| `getMultisigInfo()` | `Promise<MultisigSquadsInfo>` |
+| `getNonce()` | `Promise<bigint>` |
+| `getVaultAddress(vaultIndexOrAddress?)` | `Promise<string>` |
+| `getBalance(vaultIndexOrAddress?)` | `Promise<bigint>` |
+| `getTokenBalance(tokenAddress, vaultIndexOrAddress?)` | `Promise<bigint>` |
+| `getTransactionReceipt(hash)` | `Promise<SolanaTransactionReceipt or null>` |
+| `getTransaction(hash)` | `Promise<TransactionReceipt>` |
+| `waitForTransaction(hash, options?)` | `Promise<TransactionReceipt>` |
+| `verify(message, signature)` | `Promise<boolean>` |
+| `getProposals(proposalIds)` | `Promise<Record<string, MultisigSquadsProposal or null>>` |
+| `getProposal(proposalId)` | `Promise<MultisigSquadsProposal or null>` |
+| `isReadyToExecute(proposalId)` | `Promise<boolean>` |
+| `quoteSendTransaction(tx)` | `Promise<Omit<TransactionResult, "hash">>` |
+| `quoteDeploy(memberCount?)` | `Promise<Omit<TransactionResult, "hash">>` |
+| `quotePropose(tx, config?)` | `Promise<Omit<TransactionResult, "hash">>` |
+| `quoteTransfer(transferOptions, config?)` | `Promise<Omit<TransactionResult, "hash">>` |
+| `quoteExecuteProposal(proposalId)` | `Promise<Omit<TransactionResult, "hash">>` |
+
+Properties `index: number`, `path: string` and `keyPair: KeyPair` belong to the member signer. Keep key material private. Polling getters retain the values above.
+#### constructor
+
+`new WalletAccountMultisigSquads(seed, path, config)` returns `WalletAccountMultisigSquads`. Accepts a BIP-39 mnemonic string or raw 16–64-byte BIP-32 master seed, relative hardened member path such as `0'/0'`, and wallet config.
+
+#### getCreateKeySigner
+
+`static getCreateKeySigner(createKeySecret)` returns `Promise<KeyPairSigner>`. Builds a Solana signer for the dedicated create key from base58 or 32/64-byte input. Do not confuse this with the member seed.
+
+#### getSignerAddress
+
+`getSignerAddress()` returns `Promise<string>`. Returns the member signer address, separate from the multisig and vault addresses.
+
+#### sign
+
+`sign(message)` returns `Promise<string>`. Signs a string as the individual member using its Solana signer. This is not a threshold or multisig signature; multisig verify remains unsupported.
+
+#### signTransaction
+
+`signTransaction(tx)` returns `Promise<SolanaTransaction>`. Always throws `UnsupportedOperationError`. The multisig PDA cannot sign directly.
+
+#### sendTransaction
+
+`sendTransaction(tx)` returns `Promise<TransactionResult>`. Always throws `UnsupportedOperationError`. Use the proposal lifecycle.
+
+#### deploy
+
+`deploy(owners?, threshold?)` returns `Promise<Pick<TransactionResult, "hash">>`. Defaults to the current member and threshold one. Requires createKeySecret, matching identity, unique members and a valid threshold. Initial members receive mask 7; configAuthority and rentCollector are null, timeLock zero. Checks createMaxFee before submission. Returns only the creation signature.
+
+#### propose
+
+`propose(tx, options?)` returns `Promise<MultisigSquadsProposalResult>`. Accepts native `{ to, value }` in lamports or an instruction message. Requires initiate permission. Options select vault index, memo and autoExecute; extra transaction signers beyond the vault are unsupported. The result transaction may only create the proposal.
+
+#### proposeTransfer
+
+`proposeTransfer(transferOptions, options?)` returns `Promise<MultisigSquadsProposalResult>`. Proposes a classic SPL token payment using token, recipient and amount. Uses the selected vault and checks transferMaxFee against its proposal estimate. The vault funds any recipient token-account creation. Token-2022 is unsupported.
+
+#### approveProposal
+
+`approveProposal(proposalId, options?)` returns `Promise<MultisigSquadsProposalResult>`. Requires vote permission and a votable, not-already-approved proposal. Normal votes may use memo and autoExecute. Coordinator bundles fix their own actions and are checked against approveMaxFee; a partial approval returns `transaction: undefined` and counts collected signatures in `pendingConfirmations` without broadcasting.
+
+#### rejectProposal
+
+`rejectProposal(proposalId, options?)` returns `Promise<MultisigSquadsProposalResult>`. Records a rejection vote in its own transaction. Only memo applies; never uses the coordinator and never executes. Duplicate rejection fails.
+
+#### executeProposal
+
+`executeProposal(proposalId)` returns `Promise<TransactionResult>`. Requires execute permission, approved non-stale state as applicable, elapsed time lock and an open supported transaction. Submits a vault/config execution; batch execution is unsupported. Check the receipt and proposal afterward.
+
+#### addOwner
+
+`addOwner(ownerAddress, options?)` returns `Promise<MultisigSquadsProposalResult>`. Creates an autonomous governance proposal. Optional mask defaults to all permissions; optional threshold adjusts the vote count. Requires initiate permission and a viable resulting member set.
+
+#### removeOwner
+
+`removeOwner(ownerAddress, options?)` returns `Promise<MultisigSquadsProposalResult>`. Proposes removal with an optional threshold. Review the resulting voting-member count and threshold before approval.
+
+#### swapOwner
+
+`swapOwner(oldOwnerAddress, newOwnerAddress, options?)` returns `Promise<MultisigSquadsProposalResult>`. Proposes a replacement that inherits the old member permission mask. Options accept threshold; addresses must differ and membership must be valid.
+
+#### changeThreshold
+
+`changeThreshold(newThreshold)` returns `Promise<MultisigSquadsProposalResult>`. Proposes a changed threshold for autonomous governance. The threshold must be valid and different from the current value.
+
+#### toReadOnlyAccount
+
+`toReadOnlyAccount()` returns `Promise<WalletAccountReadOnlyMultisigSquads>`. Asynchronously resolves the identity and returns a query-only copy without createKeySecret. Await it before use. Does not dispose the original signer.
+
+#### dispose
+
+`dispose()` returns `void`. Disposes the underlying member signer. Caller-held seed, create-key and config copies remain the application responsibility.
+
+#### toCreateKeySecretBytes
+
+`static toCreateKeySecretBytes(createKeySecret)` returns `Uint8Array`. Validates and normalizes base58 or raw secret bytes to a 32-byte private key or 64-byte keypair.
+
+#### getCreateKey
+
+`static getCreateKey(createKeySecret)` returns `string`. Derives the public create key synchronously. It does not deploy or fund a multisig.
+
+#### toMultisigPda
+
+`static toMultisigPda(programId, multisigPdaOrCreateKey?)` returns `Address or undefined`. Returns an off-curve identity directly or derives the multisig PDA from an on-curve create key. Returns undefined without an identity.
+
+#### createRpc
+
+`static createRpc(config?)` returns `SolanaRpc or undefined`. Constructs a single-URL or failover RPC client; returns undefined when the config has no provider.
+
+#### getAddress
+
+`getAddress()` returns `Promise<string>`. Inherited address getter returns the configured/derived multisig configuration address, not its vault. Supply an identity before using it.
+
+#### isDeployed
+
+`isDeployed()` returns `Promise<boolean>`. Checks whether the multisig exists through the RPC.
+
+#### getMultisigInfo
+
+`getMultisigInfo()` returns `Promise<MultisigSquadsInfo>`. Returns owners, threshold and aligned permission masks from on-chain state. It does not return the full raw multisig account.
+
+#### getNonce
+
+`getNonce()` returns `Promise<bigint>`. Returns the latest created transaction index. Proposal IDs are transaction indexes, not transaction signatures.
+
+#### getVaultAddress
+
+`getVaultAddress(vaultIndexOrAddress?)` returns `Promise<string>`. Defaults to vault index zero. Accepts an index 0–255 or an address belonging to this multisig; unrelated vaults are rejected.
+
+#### getBalance
+
+`getBalance(vaultIndexOrAddress?)` returns `Promise<bigint>`. Returns the selected vault native balance in lamports. Defaults to vault zero, not the member signer or multisig configuration account.
+
+#### getTokenBalance
+
+`getTokenBalance(tokenAddress, vaultIndexOrAddress?)` returns `Promise<bigint>`. Returns classic SPL token base units for the selected vault, default zero. Token-2022 is unsupported.
+
+#### getTransactionReceipt
+
+`getTransactionReceipt(hash)` returns `Promise<SolanaTransactionReceipt or null>`. Looks up a 64-byte base58 transaction signature. Returns null when absent; inspect receipt errors rather than assuming receipt presence means success.
+
+#### getTransaction
+
+`getTransaction(hash)` returns `Promise<TransactionReceipt>`. Returns a normalized transaction receipt with finality and success. Missing signatures raise `NoSuchElementError`; the signature alone cannot distinguish a dropped transaction from one never seen.
+
+#### waitForTransaction
+
+`waitForTransaction(hash, options?)` returns `Promise<TransactionReceipt>`. Inherited polling uses normalized lookup. Options are target (default confirmed), interval (default 400 ms), timeout (default 60000 ms), and maxPollErrors (default 3). Inspect success separately. Missing/dropped signatures can time out.
+
+#### verify
+
+`verify(message, signature)` returns `Promise<boolean>`. Always throws `UnsupportedOperationError`: the multisig PDA cannot provide an ordinary member signature.
+
+#### getProposals
+
+`getProposals(proposalIds)` returns `Promise<Record<string, MultisigSquadsProposal or null>>`. Accepts an array of number, bigint or decimal-string IDs. Returns canonical decimal keys and null for absent entries; RPC failures still reject. Empty input returns an empty object.
+
+#### getProposal
+
+`getProposal(proposalId)` returns `Promise<MultisigSquadsProposal or null>`. Accepts number, bigint or decimal string. Returns counts, generic status, Squads statusName and approved/rejected/cancelled member arrays; it does not include stored payment instructions.
+
+#### isReadyToExecute
+
+`isReadyToExecute(proposalId)` returns `Promise<boolean>`. Checks approved state, a supported vault/config transaction, non-stale configuration and elapsed time lock. Batch transactions return false. It does not check the current signer permission or guarantee execution success.
+
+#### quoteSendTransaction
+
+`quoteSendTransaction(tx)` returns `Promise<Omit<TransactionResult, "hash">>`. Always throws `UnsupportedOperationError`. Use quotePropose for a vault transaction.
+
+#### quoteDeploy
+
+`quoteDeploy(memberCount?)` returns `Promise<Omit<TransactionResult, "hash">>`. Defaults to one member; pass the actual count. Estimates program creation fee, multisig rent and network fee in lamports.
+
+#### quotePropose
+
+`quotePropose(tx, config?)` returns `Promise<Omit<TransactionResult, "hash">>`. Accepts native `{ to, value }` or an instruction message and optional wallet config override. Estimates network fee and proposal/transaction rent for vault zero. This argument is not per-call proposal options.
+
+#### quoteTransfer
+
+`quoteTransfer(transferOptions, config?)` returns `Promise<Omit<TransactionResult, "hash">>`. Accepts classic SPL `{ token, recipient, amount }` in mint base units. Quotes proposal fee/rent for vault zero, with optional wallet config override. Token-2022 is unsupported.
+
+#### quoteExecuteProposal
+
+`quoteExecuteProposal(proposalId)` returns `Promise<Omit<TransactionResult, "hash">>`. Checks that a proposal exists, then returns fixed base fee `5000n` lamports. Does not simulate full execution, enforce readiness or cap eventual costs.
+
+## IMultisigCoordinator
+
+The JavaScript export is an optional base class whose unimplemented methods throw. In TypeScript, `IMultisigCoordinator` is an interface-only export: implement it structurally instead of constructing it as a value. Configure a factory `(config: { signerAddress: string }) => IMultisigCoordinator`; no service implementation is included.
+
+| Method | Returns |
+| --- | --- |
+| `getProposal(proposalId)` | `Promise<Transaction or null>` |
+| `confirmProposal(proposalId, signature)` | `Promise<void>` |
+
+
+#### getProposal
+
+`getProposal(proposalId)` returns `Promise<Transaction or null>`. Return the compiled Solana transaction carrying this member approval, or null for an ordinary vote. Transaction here is the compiled type from @solana/transactions, not the module native-transfer input.
+
+#### confirmProposal
+
+`confirmProposal(proposalId, signature)` returns `Promise<void>`. Before merging a signature into the held bundle, decode it from base58 and verify it against the factory's `signerAddress` public key and the bundle's exact `messageBytes`. Reject invalid signatures, including signatures over different bytes, without changing the held bundle. This verification is your coordinator implementation's responsibility; the package supplies only the interface. Keep the same compiled message for every participant.
+
+## Proposal Results
+
+`MultisigSquadsInfo` extends `{ owners: string[], threshold: number }` with `masks: number[]`, aligned with owners.
+
+`MultisigSquadsProposal` adds `statusName: string` and `approved`, `rejected`, `cancelled` address arrays to the shared proposal fields `proposalId`, `confirmations`, `threshold` and string `status`. Beta.2 maps only the Squads `Executed` state to generic `executed`; all other states map to generic `pending`. Known Squads names are `Draft`, `Active`, `Rejected`, `Approved`, `Executing`, `Executed` and `Cancelled`. Do not narrow the public string type or assume a guaranteed state sequence. Use per-item state and handle missing entries as null.
+
+`MultisigSquadsProposalResult` additionally carries optional `transaction: { hash: string, fee: bigint }` from the shared interaction contract and `pendingConfirmations: number`. Broadcast calls populate transaction even if the proposal is still pending. A coordinator-only approval returns `transaction: undefined`: `confirmations` remains the on-chain count and `pendingConfirmations` counts signatures held off-chain. This replaces beta.1's empty-hash, zero-fee transaction object; check for a transaction before reading its hash or fee. A submitted bundle resets pendingConfirmations to zero. Always confirm a nonempty transaction hash before treating its actions as successful.
+
+## Constants and Additional Types
+
+| Export | Meaning |
+| --- | --- |
+| `PERMISSION` | `initiate: 1`, `vote: 2`, `execute: 4`; bitwise OR combines permissions. |
+| `SQUADS_PROGRAM_ADDRESS` | Default program address; verify the program deployment on your cluster rather than hardcoding an assumed network list. |
+| `TRANSACTION_KIND` | `vault`, `config`, `batch` string values. Exporting batch does not establish batch execution support. |
+| `PROPOSAL_DATA_MASK` | Low-level read masks: multisig 8, proposal 4, transaction 2, now 1, all 15. No public account method accepts this mask. |
+
+Root type exports include config/signing/read-only types; `MultisigSquadsInfo`, `MultisigSquadsProposal`, `MultisigSquadsProposalResult`, `MultisigSquadsTransactionOptions`, `MultisigSquadsAddOwnerOptions`, `MultisigCoordinatorFactory`; shared `MultisigInfo`, `MultisigProposal`, `MultisigInteractionResult`, `MultisigTransactionOptions`, `MultisigOptions`, `TransactionResult`; and `SimpleSolanaTransaction`, `SolanaTransactionReceipt`.
+
+Additional exported decoder contracts are `SquadsMember`, `SquadsMultisigAccount`, `SquadsProposalAccount`, `SquadsAddressTableLookup`, `SquadsTransactionMessage`, `SquadsTransactionKind`, `SquadsConfigActionKind`, `SquadsConfigAction`, `SquadsTransactionAccount`, `SquadsProgramConfig` and `SquadsProposalContext`. They describe internal decoded data; their export does not make underscore-prefixed account helpers public APIs. Use the public account methods rather than importing internal files.
+
+## Errors and Unsupported Operations
+
+Runtime error exports are `AccountNotOwnerError`, `ThresholdNotMetError`, `AssertionError`, `InvalidTokenError`, `MaximumFeeExceededError`, `NoSuchElementError`, `NotImplementedError`, `ProviderError`, `ProviderErrorReason`, `ProviderRequiredError`, `UnsupportedOperationError`, `ValueError` and `WdkError`. Provider/program failures may also propagate. See the [error guide](/sdk/wallet-modules/wallet-multisig-squads/guides/handle-errors).
+
+Direct sends, direct transaction signing, direct-send quotes and multisig message verification throw. Token-2022 is unsupported. Vault payloads cannot require extra signers beyond the vault; batch execution and named external signers are unsupported. Member management requires an autonomous multisig. The package does not expose generic account-closing/rent-reclaim or every Squads configuration operation.
+
+## Next Steps
+
+- [Usage](/sdk/wallet-modules/wallet-multisig-squads/usage)
+- [Configuration](/sdk/wallet-modules/wallet-multisig-squads/configuration)
+
+---
+
+## Need Help?
+
+<SupportCards />

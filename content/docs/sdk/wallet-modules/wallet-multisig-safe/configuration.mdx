@@ -1,0 +1,66 @@
+---
+title: Safe multisig configuration
+description: Configure Safe identities, RPC, coordination and native, sponsored or token-paid operations.
+docType: reference
+schemaType: TechArticle
+---
+
+Use `MultisigSafeWalletConfig` for the manager and writable account. The read-only class accepts `MultisigSafeWalletReadOnlyConfig`, declared as `Omit<MultisigSafeWalletConfig, 'transferMaxFee' | 'amountToApprove'>`.
+
+## Common Options
+
+| Option | Type | Requirement and behavior |
+| --- | --- | --- |
+| `provider` | `string` or EIP-1193 provider | Required. RPC for the Safe's chain; not an ethers Provider or URL array. |
+| `bundlerUrl` | `string` | Required. Bundler supporting the configured EntryPoint. |
+| `chainId` | `bigint` | Required. Chain used for signing and coordinator setup. |
+| `safeOptions` | `ExistingSafeOptions` or `PredictedSafeOptions` | Required. Existing `safeAddress`, or `owners`, `threshold`, optional `saltNonce`. |
+| `entryPointAddress` | `string` | Optional. Defaults to EntryPoint v0.6; changing an address does not change the supported Safe module implementation. |
+| `safeModulesVersion` | `string` | Optional. Only `0.2.0` is supported; also the default. |
+| `paymasterUrl` | `string` | Optional in the type; required for sponsored mode and for a token paymaster. |
+| `txServiceUrl` | `string` | Optional custom Safe Transaction Service endpoint. |
+| `safeApiKey` | `string` | Optional hosted Safe Transaction Service API key. Keep private service credentials on a backend. |
+| `coordinator` | `IMultisigCoordinator` | Optional instance. Replaces the default service coordinator and takes precedence over service URL/key. |
+
+`provider`, `bundlerUrl` and `chainId` must refer to the same chain. The package uses the configured chain ID for signatures; a valid address alone does not prove the Safe has the expected owners or module installed.
+
+`ExistingSafeOptions` contains `safeAddress: string`. `PredictedSafeOptions` contains `owners: string[]`, `threshold: number`, and optional hexadecimal `saltNonce: string`. Without an explicit salt, the package derives one from sorted, lowercase owners and the threshold. A predicted address is not a deployed or funded account. Safe version defaults to `1.4.1`.
+
+## Fee Modes
+
+| Mode | Fields | Quote units |
+| --- | --- | --- |
+| Native | `useNativeCoins: true`, `isSponsored` absent or false | Native wei |
+| Sponsored | `isSponsored: true`, `paymasterUrl`, optional `sponsorshipPolicyId` | Transaction/transfer quote returns `0n`; this does not prove sponsor acceptance |
+| Token paymaster | `paymasterTokenAddress`, `paymasterUrl`, both mode flags absent or false | Paymaster token base units |
+
+Do not enable native and sponsored modes together. In token mode, `paymasterAddress` is optional, but unknown paymaster providers require an explicit address. Confirm the provider, chain, EntryPoint and supported token before choosing it. This package uses `paymasterTokenAddress`, not the single-owner wallet's `paymasterToken` object.
+
+`amountToApprove?: number | bigint` controls the paymaster-token allowance placed into the proposed operation. Use a bounded amount appropriate to the reviewed operation. `transferMaxFee?: number | bigint` appears on token and native config types, but beta.1 enforces it only in non-sponsored, token-paid `proposeTransfer()`, against that call's estimate. Equality passes. It is not a general execution-time or native-fee cap. The module exposes no `transactionMaxFee` option.
+
+## Per-call Configuration
+
+The second argument to transaction/transfer quotes and the proposal options can override fields from the token, sponsored or native fee-mode config types. Keep the fee mode and paymaster settings consistent while reviewing and approving an operation. `propose()` and `proposeTransfer()` additionally accept `autoExecute`; owner-add/remove options additionally accept `threshold`.
+
+Changing a proposal's fee fields after owners sign changes the signed operation. A quote is an estimate, not a reservation or an execution cap.
+
+## Fee Results
+
+`quoteSendTransaction()` and `quoteTransfer()` use the mode-specific units above. In contrast, `quoteExecuteProposal()` and `executeProposal().fee` calculate a maximum native gas cost from the stored UserOperation. Do not compare that result directly with a token-denominated quote or display it as the actual charged token fee. Use the receipt for the observed outcome.
+
+Deployment fees are native wei paid by the signer's EOA. Fund the Safe separately for its payment payload and its selected operating fee mode.
+
+## Runtime Setup
+
+The package exports native ESM and a conditional Bare entrypoint. These examples use Node.js ESM. Browser, React Native and Bare applications need their own runtime configuration and secure secret storage.
+
+## Next Steps
+
+- [Usage](/sdk/wallet-modules/wallet-multisig-safe/usage)
+- [API reference](/sdk/wallet-modules/wallet-multisig-safe/api-reference)
+
+---
+
+## Need Help?
+
+<SupportCards />

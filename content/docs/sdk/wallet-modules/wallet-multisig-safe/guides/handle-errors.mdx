@@ -1,0 +1,66 @@
+---
+title: Handle Safe multisig errors
+description: Interpret configuration, coordinator, approval and submission failures and dispose of signing material.
+docType: how-to
+schemaType: TechArticle
+---
+
+[Handle failures](#handle-failures) and follow [best practices](#best-practices). See [Need Help](#need-help) for support.
+
+Prerequisites: an [initialized account](/sdk/wallet-modules/wallet-multisig-safe/guides/get-started). Keep proposal identifiers when an operation fails so you can inspect its state before trying again.
+
+## Handle Failures
+
+| Failure | Response |
+| --- | --- |
+| `ConfigurationError` | Check Safe module version, identity options and fee-mode requirements. |
+| `HashMismatchError` | Stop signing. Reconcile the coordinator payload with the reviewed proposal/message identifier. |
+| Owner validation failure | Verify the selected derivation path and current Safe owner set. |
+| Missing proposal/message | Confirm the identifier and coordinator; do not replace a failed lookup with approval. |
+| Insufficient confirmations | Collect the required owners' approvals before execution. |
+| Paymaster prefund / AA50 failure | Check Safe token funds and paymaster configuration. |
+| No receipt after submission | Inspect the existing UserOperation before creating or resubmitting a proposal. |
+
+Import public error classes before using them in handling logic:
+
+```javascript title="Recognize a coordinator mismatch"
+import { ConfigurationError, HashMismatchError } from '@tetherto/wdk-wallet-multisig-safe'
+import { account, requiredEnv } from './safe-account.mjs'
+
+try {
+  await account.approveProposal(requiredEnv('PROPOSAL_ID'))
+} catch (error) {
+  if (error instanceof HashMismatchError) {
+    throw new Error('Coordinator payload differs from the requested proposal', { cause: error })
+  }
+  if (error instanceof ConfigurationError) console.error('Check Safe configuration')
+  throw error
+}
+```
+
+Beta.1 also throws plain errors and WDK base errors. Do not infer every error class from a message fragment. A bundler response and a successful on-chain receipt are separate states.
+
+## Best Practices
+
+Keep native deployment gas, native maximum execution cost and token-denominated estimates separate. The [transfer cap](/sdk/wallet-modules/wallet-multisig-safe/configuration#fee-modes) is not a universal spending cap.
+
+Use [`dispose()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#dispose) on the manager when the session ends:
+
+```javascript title="Clear derived signing accounts"
+import { wallet } from './safe-account.mjs'
+wallet.dispose()
+```
+
+Manager disposal clears cached account signing material but retains the manager's seed bytes in beta.1. Release the manager when finished and clear caller-controlled mutable copies after their final use; disposal does not erase every retained copy. Do not log seeds or `keyPair`. Await [`toReadOnlyAccount()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#toreadonlyaccount) if you need a query-only account before clearing the signer.
+
+## Next Steps
+
+- [Usage](/sdk/wallet-modules/wallet-multisig-safe/usage)
+- [Configuration](/sdk/wallet-modules/wallet-multisig-safe/configuration)
+- [API reference](/sdk/wallet-modules/wallet-multisig-safe/api-reference)
+
+---
+
+## Need Help?
+
+<SupportCards />

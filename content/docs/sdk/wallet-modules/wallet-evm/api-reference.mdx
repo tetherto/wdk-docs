@@ -32,11 +32,11 @@ new WalletManagerEvm(seedOrSigner, config?)
   - `retries` (number, optional): Additional retry attempts when `provider` is an array
   - `chainId` (number, optional): Network chain ID. When provided, skips automatic chain ID detection.
   - `transferMaxFee` (number | bigint, optional): Maximum fee amount for transfer operations (in wei)
-  - `transactionMaxFee` (number | bigint, optional): Maximum fee amount for native `sendTransaction()` and provider-backed `signTransaction()` operations (in wei)
+  - `transactionMaxFee` (number | bigint, optional): Execution-gas fee cap for `sendTransaction()` and provider-backed `signTransaction()` (in wei), including sends made by `transfer()` and `approve()`
 
 The default signer must support derivation. Register non-derivable signers, such as private-key signers, with `addSigner()` and retrieve them by name.
 
-In beta.19, the runtime also accepts an already-built ethers `Provider` and reuses one provider object across every account created by this manager. The published TypeScript declaration still exposes only the provider types shown above, so this runtime input is not yet a fully typed configuration path.
+In beta.20, the runtime also accepts an already-built ethers `Provider` and reuses one provider object across every account created by this manager. The published TypeScript declaration still exposes only the provider types shown above, so this runtime input is not yet a fully typed configuration path.
 
 **Throws:**
 - `ValueError` if a string seed phrase is not a valid BIP-39 mnemonic.
@@ -47,7 +47,7 @@ In beta.19, the runtime also accepts an already-built ethers `Provider` and reus
 const wallet = new WalletManagerEvm(seedPhrase, {
   provider: 'https://rpc.mevblocker.io/fast',
   transferMaxFee: 100000000000000, // Maximum ERC-20 transfer fee in wei
-  transactionMaxFee: 100000000000000 // Maximum native send/sign fee in wei
+  transactionMaxFee: 100000000000000 // Execution-gas fee cap in wei
 })
 
 import { SeedSignerEvm } from '@tetherto/wdk-wallet-evm/signers'
@@ -250,7 +250,7 @@ new WalletAccountEvm(signer, config?)
   - `retries` (number, optional): Additional retry attempts when `provider` is an array
   - `chainId` (number, optional): Network chain ID. When provided, skips automatic chain ID detection.
   - `transferMaxFee` (number | bigint, optional): Maximum fee amount for transfer operations (in wei)
-  - `transactionMaxFee` (number | bigint, optional): Maximum fee amount for native `sendTransaction()` and `signTransaction()` operations (in wei)
+  - `transactionMaxFee` (number | bigint, optional): Execution-gas fee cap for `sendTransaction()` and provider-backed `signTransaction()` (in wei), including sends made by `transfer()` and `approve()`
 
 **Throws:**
 - `ValueError` if a string seed phrase is not a valid BIP-39 mnemonic.
@@ -400,6 +400,7 @@ Signs an EVM transaction and returns the signed raw transaction as a hex string.
   - `nonce` (number, optional): Transaction nonce
   - `chainId` (number | bigint, optional): Network chain ID
   - `authorizationList` (AuthorizationLike[], optional): ERC-7702 authorization list for type 4 transactions
+  - `maxFeePerBlobGas` (number | bigint, optional), `blobs` (BlobLike[], optional), `blobVersionedHashes` (string[], optional): [EIP-4844 transaction fields](#evmtransaction)
 
 **Returns:** `Promise<string>` - Signed raw transaction hex string
 
@@ -464,15 +465,16 @@ Builds, signs, and sends an EVM transaction object, or broadcasts a signed raw t
   - `nonce` (number, optional): Transaction nonce
   - `chainId` (number | bigint, optional): Network chain ID
   - `authorizationList` (AuthorizationLike[], optional): ERC-7702 authorization list for type 4 transactions
+  - `maxFeePerBlobGas` (number | bigint, optional), `blobs` (BlobLike[], optional), `blobVersionedHashes` (string[], optional): [EIP-4844 transaction fields](#evmtransaction)
 
-For a signed raw transaction string, WDK checks `transactionMaxFee` against a provider-current gas and fee-rate estimate, then passes the exact supplied hex to `eth_sendRawTransaction`. It does not repopulate or re-sign the transaction. The cap is not an upper bound on the gas price or maximum fee encoded in those signed bytes. Review the decoded recipient, value, data, chain ID, nonce, gas limit, and fee fields before submitting externally supplied bytes.
+For a signed raw transaction string, beta.20 checks `transactionMaxFee` against the encoded gas limit multiplied by the encoded `maxFeePerGas` (or `gasPrice`), then passes the exact supplied hex to `eth_sendRawTransaction`. It still simulates the transaction but does not repopulate or re-sign it. This checks execution gas, not transferred value or a separate blob-gas fee. Review the decoded recipient, value, data, chain ID, nonce, gas limit, and all fee fields before submitting externally supplied bytes.
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
 
 **Throws:**
 - `ProviderRequiredError` if no provider is configured.
 - `MaximumFeeExceededError` if the quoted fee exceeds `transactionMaxFee` when configured.
-- `ValueError` if an object transaction mixes incompatible fee fields or a type 3 transaction omits `maxFeePerBlobGas`.
+- `ValueError` if an object transaction mixes incompatible fee fields, an explicit or inferred type 4 transaction supplies `gasPrice`, or a type 3 transaction omits `maxFeePerBlobGas`.
 
 **Example:**
 ```javascript
@@ -502,7 +504,9 @@ Estimates the fee for an EVM transaction without sending it.
 **Parameters:**
 - `tx` (EvmTransaction | string): A transaction object or serialized transaction string
 
-For a serialized transaction, the method parses the transaction fields for gas estimation but uses the provider's current fee data to calculate the quote. The result is a current network estimate and does not necessarily reproduce the fee settings embedded in the serialized transaction.
+In beta.20, an object quote uses `gasLimit` when supplied, otherwise the estimated gas. It multiplies that by `maxFeePerGas` when supplied, otherwise `gasPrice`, otherwise the provider's current fee rate. For serialized bytes, it uses the encoded gas limit and encoded `maxFeePerGas` or `gasPrice`.
+
+Both forms still simulate the transaction, so a revert can reject the quote even with an explicit gas limit. The result covers execution gas only: it excludes transferred value and any separate EIP-4844 blob-gas fee. It is not the eventual fee paid. A quote does not lock unspecified fields; object transaction population or a later quote can use fresh estimates. See [fee-cap limits](/sdk/wallet-modules/wallet-evm/configuration#transaction-max-fee).
 
 **Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
@@ -521,16 +525,18 @@ console.log('Estimated fee:', quote.fee, 'wei')
 Transfers ERC20 tokens to another address using the standard transfer function.
 
 **Parameters:**
-- `options` (TransferOptions): Transfer options
+- `options` (EvmTransferOptions): Transfer options
   - `token` (string): Token contract address
   - `recipient` (string): Recipient address
   - `amount` (number | bigint): Amount in token base units
+  - `gasLimit`, `gasPrice`, `maxFeePerGas`, `maxPriorityFeePerGas` (number | bigint, optional): [Gas overrides](#evmgasoverrides), available in beta.20
+  - `authorizationList` (AuthorizationLike[], optional): ERC-7702 authorizations; do not combine with legacy `gasPrice`
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Transfer result
 
 **Throws:**
 - `ProviderRequiredError` if no provider is configured.
-- `MaximumFeeExceededError` if the fee exceeds `transferMaxFee` when configured.
+- `MaximumFeeExceededError` if the fee exceeds `transferMaxFee` or `transactionMaxFee` when configured.
 
 **Example:**
 ```javascript
@@ -547,7 +553,7 @@ console.log('Transfer fee:', result.fee, 'wei')
 Estimates the fee for an ERC20 token transfer.
 
 **Parameters:**
-- `options` (TransferOptions): Transfer options (same as transfer)
+- `options` (EvmTransferOptions): Transfer options, including the same gas overrides and authorization list as [`transfer()`](#transferoptions)
 
 **Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
@@ -620,10 +626,11 @@ console.log('XAUt:', balances['0x68749665FF8D2d112Fa859AA293F07A622782F38'])
 Approves a specific amount of tokens to a spender.
 
 **Parameters:**
-- `options` (ApproveOptions): Approve options
+- `options` (EvmApproveOptions): Approve options
   - `token` (string): Token contract address
   - `spender` (string): Spender address
   - `amount` (number | bigint): Amount to approve
+  - `gasLimit`, `gasPrice`, `maxFeePerGas`, `maxPriorityFeePerGas` (number | bigint, optional): [Gas overrides](#evmgasoverrides), available in beta.20
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
 
@@ -914,6 +921,8 @@ console.log('Balances:', balances)
 #### `quoteSendTransaction(tx)`
 Estimates the fee for an EVM transaction.
 
+The read-only method uses the same beta.20 [object quote calculation](#quotesendtransactiontx): supplied gas and fee fields take precedence over provider estimates, while simulation still runs. Its result covers execution gas only and is not the eventual fee paid. This read-only method does not accept serialized transaction bytes.
+
 **Parameters:**
 - `tx` (EvmTransaction): The transaction object
 
@@ -934,7 +943,7 @@ console.log('Estimated fee:', quote.fee, 'wei')
 Estimates the fee for an ERC20 token transfer.
 
 **Parameters:**
-- `options` (TransferOptions): Transfer options
+- `options` (EvmTransferOptions): Transfer options, including [gas overrides](#evmgasoverrides) and an optional authorization list
 
 **Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
@@ -1078,6 +1087,8 @@ The package re-exports these types.
 ### EvmTransaction
 
 ```typescript
+import type { BlobLike } from 'ethers'
+
 interface EvmTransaction {
   to?: string | null;                       // Recipient address; omit or pass null for contract creation
   value: number | bigint;                    // The amount of ethers to send (in wei)
@@ -1090,7 +1101,34 @@ interface EvmTransaction {
   nonce?: number;                            // Transaction nonce (optional)
   chainId?: number | bigint;                 // Network chain ID (optional)
   authorizationList?: AuthorizationLike[];   // ERC-7702 authorization list for type 4 transactions (optional)
+  maxFeePerBlobGas?: number | bigint;        // Maximum fee per blob gas (type 3)
+  blobs?: BlobLike[];                       // Blob data (type 3)
+  blobVersionedHashes?: string[];           // Blob versioned hashes (type 3)
 }
+```
+
+Beta.20 adds the three blob fields to the published declaration; blob transaction handling already existed. `BlobLike` comes from ethers and is not a root type export of this WDK package. Type 4 transactions, whether selected explicitly or inferred from `authorizationList`, use EIP-1559 fees and reject `gasPrice`. Missing EIP-1559 fee fields are populated from the provider.
+
+### EvmTransactionRequest
+
+`EvmTransactionRequest` is a type-only alias for ethers `TransactionRequest`, exported in beta.20. WDK transaction methods still accept the narrower [`EvmTransaction`](#evmtransaction) documented above.
+
+### EvmGasOverrides
+
+```typescript
+type EvmGasOverrides = Pick<
+  EvmTransaction,
+  'gasLimit' | 'gasPrice' | 'maxFeePerGas' | 'maxPriorityFeePerGas'
+>
+```
+
+Beta.20 accepts these optional fields directly on transfer and approval options. Use either legacy `gasPrice` or EIP-1559 `maxFeePerGas` / `maxPriorityFeePerGas`, not both. Fee rates are in wei per gas; `gasLimit` is a gas-unit count. Quotes use supplied gas limits and fee rates but still simulate the transaction.
+
+### EvmTransferOptions
+
+```typescript
+type EvmTransferOptions = TransferOptions & EvmGasOverrides &
+  Pick<EvmTransaction, 'authorizationList'>
 ```
 
 ### TransferOptions
@@ -1108,7 +1146,7 @@ interface TransferOptions {
 ```typescript
 interface TransactionResult {
   hash: string;                      // Transaction hash
-  fee: bigint;                       // Transaction fee paid in wei
+  fee: bigint;                       // Quoted execution-gas fee in wei
 }
 ```
 
@@ -1117,7 +1155,7 @@ interface TransactionResult {
 ```typescript
 interface TransferResult {
   hash: string;                      // Transfer transaction hash
-  fee: bigint;                       // Transfer fee paid in wei
+  fee: bigint;                       // Quoted execution-gas fee in wei
 }
 ```
 
@@ -1226,7 +1264,7 @@ interface EvmWalletConfig {
 }
 ```
 
-The declaration above is the exact beta.19 published type. The beta.19 runtime additionally accepts an ethers `Provider` directly or inside the provider array, but that input is missing from the package declaration.
+The declaration above is the exact beta.20 published type. The beta.20 runtime additionally accepts an ethers `Provider` directly or inside the provider array, but that input is missing from the package declaration.
 
 ### DelegationInfo
 
@@ -1235,6 +1273,12 @@ interface DelegationInfo {
   isDelegated: boolean;              // Whether the account has an active ERC-7702 delegation
   delegateAddress: string | null;    // Delegate contract address, or null when not delegated
 }
+```
+
+### EvmApproveOptions
+
+```typescript
+type EvmApproveOptions = ApproveOptions & EvmGasOverrides
 ```
 
 ### ApproveOptions

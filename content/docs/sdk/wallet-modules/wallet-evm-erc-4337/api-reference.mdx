@@ -34,13 +34,15 @@ These multipliers are internal (`protected static`) and cannot be imported or ov
 new WalletManagerEvmErc4337(seed, config)
 ```
 
+In beta.21, this manager builds one RPC client and shares it across derived accounts and their read-only views. See [provider configuration](/sdk/wallet-modules/wallet-evm-erc-4337/configuration#provider).
+
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `config` (EvmErc4337WalletConfig): Configuration object with common fields and a gas payment mode
 
 **Common config fields (required for all modes):**
   - `chainId` (number): The blockchain's ID (e.g., 1 for Ethereum mainnet)
-  - `provider` (string | Eip1193Provider | Array\<string | Eip1193Provider\>): RPC endpoint URL, EIP-1193 provider instance, or ordered failover list
+  - `provider` (string | Provider | Eip1193Provider | Array\<string | Provider | Eip1193Provider\>): RPC endpoint, ethers provider with JSON-RPC `send`, EIP-1193 provider, or mixed ordered failover list
   - `bundlerUrl` (string): The URL of the bundler service
   - `safeModulesVersion` (string): Must be `'0.3.0'`, the only Safe modules version supported by beta.20
 
@@ -225,7 +227,7 @@ wallet.dispose()
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `seed` | `Uint8Array` | The wallet's seed phrase as bytes |
+| `seed` | `Uint8Array` | Seed bytes |
 
 ## WalletAccountEvmErc4337
 
@@ -1162,6 +1164,8 @@ The package re-exports these types.
 
 ### EvmErc4337WalletConfig
 
+The beta.21 provider union includes ethers `Provider`. Import that type from `ethers`; supplied ethers providers must support JSON-RPC `send(method, params)` for the module's adapter.
+
 The constructor's `chainId` is checked against the provider's first `eth_chainId` response before building a UserOperation. A mismatch throws `ConfigurationError`; a successful lookup is cached. Sponsored quotes and already-signed operation quote/send paths do not perform this check. See [chain validation](/sdk/wallet-modules/wallet-evm-erc-4337/configuration#chain-id).
 
 The configuration is a union type combining common fields with one of three gas payment modes:
@@ -1170,7 +1174,7 @@ The configuration is a union type combining common fields with one of three gas 
 // Common fields (required for all modes)
 interface EvmErc4337WalletCommonConfig {
   chainId: number;                          // Blockchain ID
-  provider: string | Eip1193Provider | Array<string | Eip1193Provider>; // RPC provider or failover list
+  provider: string | Provider | Eip1193Provider | Array<string | Provider | Eip1193Provider>; // RPC provider or mixed failover list
   bundlerUrl: string;                       // Bundler service URL
   bundlerHeaders?: Record<string, string>;   // Optional headers sent to the bundler
   safeModulesVersion: string;               // Must be '0.3.0' in beta.20

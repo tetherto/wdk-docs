@@ -1,0 +1,51 @@
+---
+title: Manage Safe owners
+description: Propose Safe owner and threshold changes and complete their approval lifecycle.
+docType: how-to
+schemaType: TechArticle
+---
+
+[Review a governance change](#review-a-governance-change) and [complete its proposal](#complete-its-proposal). See [Need Help](#need-help) for support.
+
+Prerequisites: a deployed Safe, a configured owner and a shared coordinator. Changing owners or the threshold can remove access to funds. Verify the full resulting owner set and threshold before anyone signs.
+
+## Review a Governance Change
+
+Use [`getMultisigInfo()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#getmultisiginfo) to inspect the current configuration before creating a change:
+
+```javascript title="Inspect current owners"
+import { account, requiredEnv } from './safe-account.mjs'
+console.log(await account.getMultisigInfo())
+```
+
+Use [`addOwner()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#addowner) to create an addition proposal:
+
+```javascript title="Propose an owner addition"
+const change = await account.addOwner(requiredEnv('NEW_OWNER_ADDRESS'), {
+  threshold: Number(requiredEnv('NEW_THRESHOLD'))
+})
+console.log(change.proposalId)
+```
+
+[`removeOwner()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#removeowner), [`swapOwner()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#swapowner), [`changeThreshold()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#changethreshold) and [`updateOwners()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#updateowners) create proposals too. Omitting a removal threshold can lower it to fit the remaining owner count; explicitly review the resulting threshold.
+
+## Complete Its Proposal
+
+1. Share the proposal identifier and full proposed configuration through the coordinator.
+2. Obtain owner approvals with [`approveProposal()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#approveproposal).
+3. Submit with [`executeProposal()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#executeproposal) and check a successful receipt.
+4. Refresh the account and verify the resulting owners and threshold with [`getMultisigInfo()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#getmultisiginfo).
+
+Follow [Manage proposals](/sdk/wallet-modules/wallet-multisig-safe/guides/manage-proposals) for the submission and receipt steps. Read-only owners and threshold values are cached; recreate an account after externally executed changes to avoid relying on stale state.
+
+## Next Steps
+
+- [Usage](/sdk/wallet-modules/wallet-multisig-safe/usage)
+- [Configuration](/sdk/wallet-modules/wallet-multisig-safe/configuration)
+- [API reference](/sdk/wallet-modules/wallet-multisig-safe/api-reference)
+
+---
+
+## Need Help?
+
+<SupportCards />

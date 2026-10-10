@@ -48,9 +48,9 @@ const customAccount = await wallet.getAccountByPath("0'/0'/5'")
 
 ### provider
 
-The `provider` option specifies one Solana RPC endpoint or an ordered list of endpoints for blockchain interactions.
+The `provider` option accepts a Solana RPC URL, a client created with `createSolanaRpc()` from `@solana/rpc`, or an ordered list mixing both. A supplied client is reused as-is. The manager initializes one client and shares it across derived accounts and their read-only conversions, including failover state. Use separate managers for independent RPC settings.
 
-**Type:** `string | string[]` (optional)
+**Type:** `string | SolanaRpc | Array<string | SolanaRpc>` (optional)
 
 **Default:** If not provided, wallet functionality that requires RPC throws `ProviderRequiredError`
 
@@ -80,7 +80,19 @@ const config = {
 }
 ```
 
-When `provider` is an array, WDK initializes a failover provider and tries the next RPC when the current provider fails.
+When `provider` is an array, WDK initializes a failover provider and tries the next RPC when the current provider fails. Every URL and client must serve the same Solana network.
+
+Add `@solana/rpc` as a direct application dependency when importing its client factory. You can mix a constructed client with another endpoint for the same network:
+
+```javascript
+import { createSolanaRpc } from '@solana/rpc'
+
+const rpc = createSolanaRpc('https://api.mainnet-beta.solana.com')
+const config = {
+  provider: [rpc, 'https://rpc.ankr.com/solana'],
+  retries: 3
+}
+```
 
 ### rpcUrl
 
@@ -90,7 +102,7 @@ The `rpcUrl` option is a deprecated alias for `provider`. Existing apps can keep
 
 ### retries
 
-The `retries` option controls additional retry attempts after the initial failover request fails. It applies when `provider` is an ordered array of RPC endpoints. Total attempts are `1 + retries`; if retries exceeds the provider count, WDK loops back through the provider list in round-robin order.
+The `retries` option controls additional retry attempts after the initial failover request fails. It applies when `provider` is an ordered array of RPC URLs or clients. Total attempts are `1 + retries`; if retries exceeds the provider count, WDK loops back through the provider list in round-robin order.
 
 **Type:** `number` (optional)
 

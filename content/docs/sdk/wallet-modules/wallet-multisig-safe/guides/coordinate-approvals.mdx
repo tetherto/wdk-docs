@@ -1,0 +1,58 @@
+---
+title: Coordinate Safe approvals
+description: Choose a Safe Transaction Service or implement the proposal and message coordinator contract.
+docType: how-to
+schemaType: TechArticle
+---
+
+[Configure a service](#configure-a-service) or [implement a coordinator](#implement-a-coordinator). See [Need Help](#need-help) for support.
+
+Prerequisites: the [configuration](/sdk/wallet-modules/wallet-multisig-safe/configuration) shared by all owners and a backend that preserves signed operations and confirmations. Protect access to proposal data and any service credentials.
+
+## Configure a Service
+
+By default, the account constructs [`SafeTxServiceCoordinator`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#safetxservicecoordinator) using its chain ID, `txServiceUrl` and `safeApiKey`. A custom service URL takes precedence over a hosted API key.
+
+Use an explicit service coordinator when several accounts should share it:
+
+```javascript title="Construct a service coordinator"
+import { SafeTxServiceCoordinator } from '@tetherto/wdk-wallet-multisig-safe'
+import { config, requiredEnv } from './safe-account.mjs'
+
+const coordinator = new SafeTxServiceCoordinator({
+  chainId: config.chainId,
+  txServiceUrl: requiredEnv('SAFE_TX_SERVICE_URL')
+})
+```
+
+In JavaScript, pass this instance in account configuration as `coordinator`. Beta.1's published TypeScript declarations make `SafeTxServiceCoordinator` incompatible with the default `IMultisigCoordinator` type: its service response allows missing confirmations, while the interface requires them. In TypeScript, use `txServiceUrl` or `safeApiKey` on account config to select the default coordinator without assigning an instance. Constructing the service coordinator does not make a service request. Use a backend proxy when credentials must remain private.
+
+## Implement a Coordinator
+
+A custom [`IMultisigCoordinator`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#imultisigcoordinator) must implement six operations in the [API contract](/sdk/wallet-modules/wallet-multisig-safe/api-reference#imultisigcoordinator). It must retain the exact operation payload, confirmations and message data expected by the Safe adapter; the generic TypeScript response types are not a complete wire schema.
+
+1. Persist submitted proposal/message payloads without changing signed fields.
+2. Return `null` for missing identifiers; preserve genuine backend failures as failures.
+3. Attach owner confirmations and return Safe-service-compatible operation/message responses, including `preparedSignature` for combined messages.
+4. Authenticate owners and let each signer independently review the operation before signing.
+
+Use [`toJsonSafe()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#tojsonsafe) before JSON serialization of payloads containing bigints or byte arrays:
+
+```javascript title="Serialize a coordinator payload"
+import { toJsonSafe } from '@tetherto/wdk-wallet-multisig-safe'
+const serialized = JSON.stringify(toJsonSafe({ amount: 1000n }))
+```
+
+The helper turns bigints into decimal strings and byte arrays into hex strings. It does not authenticate or encrypt payloads. The account's operation-hash checks detect some mismatched payloads; they do not replace backend access controls or the owner's review screen.
+
+## Next Steps
+
+- [Usage](/sdk/wallet-modules/wallet-multisig-safe/usage)
+- [Configuration](/sdk/wallet-modules/wallet-multisig-safe/configuration)
+- [API reference](/sdk/wallet-modules/wallet-multisig-safe/api-reference)
+
+---
+
+## Need Help?
+
+<SupportCards />

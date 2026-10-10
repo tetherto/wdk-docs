@@ -14,13 +14,13 @@ schemaType: APIReference
 | Method | Signature | Description |
 | --- | --- | --- |
 | `log()` | `log(args: LogRequest): void` | Sends a log payload over the HRPC stream. |
-| `workletStart()` | `workletStart(args: WorkletStartRequest): Promise\<WorkletStartResponse\>` | Deprecated empty startup handshake. The published request type is stale in beta.15. |
+| `workletStart()` | `workletStart(args: WorkletStartRequest): Promise\<WorkletStartResponse\>` | Deprecated empty startup handshake. The published request type is stale in beta.16. |
 | `initializeWDK()` | `initializeWDK(args: WdkInitializeParams): Promise\<{ status: string }\>` | Creates or reinitializes the worklet WDK instance and registers wallets and optional protocols from `config`. |
 | `resetWdkWallets()` | `resetWdkWallets(args: WdkResetWalletParams): Promise\<{ status: string }\>` | Selectively disposes and re-registers only the wallets listed in `config.networks`. |
 | `generateEntropyAndEncrypt()` | `generateEntropyAndEncrypt(args: WdkGenerateEntropyParams): Promise\<WdkEntropyResult\>` | Generates encrypted seed and entropy buffers inside the worklet. |
 | `getMnemonicFromEntropy()` | `getMnemonicFromEntropy(args: WdkGetMnemonicParams): Promise\<{ mnemonic: string }\>` | Decrypts an encrypted entropy payload and returns the mnemonic. |
 | `getSeedAndEntropyFromMnemonic()` | `getSeedAndEntropyFromMnemonic(args: { mnemonic: string }): Promise\<WdkEntropyResult\>` | Converts a mnemonic into encrypted seed and entropy buffers. |
-| `dispose()` | `dispose(args: DisposeRequest): void` | Sends a one-way full-disposal request over HRPC. The declared selective field is not encoded in beta.15. |
+| `dispose()` | `dispose(args: DisposeRequest): void` | Sends a one-way full-disposal request over HRPC. The declared selective field is not encoded in beta.16. |
 | `callMethod()` | `callMethod(args: CallMethodRequest): Promise\<CallMethodResponse\>` | Looks up the target account and invokes one wallet or protocol method by name. |
 | `registerWallet()` | `registerWallet(args: { config: string }): Promise\<{ status: string, blockchains: string }\>` | Dynamically registers additional wallets from a JSON config string. |
 | `registerProtocol()` | `registerProtocol(args: { config: string }): Promise\<{ status: string }\>` | Dynamically registers additional protocols from a JSON config string. |
@@ -54,7 +54,7 @@ schemaType: APIReference
 
 Deprecated startup request retained in the shipped type surface. Its runtime payload is `{}`. JavaScript callers can use `workletStart({})`. The published TypeScript type cannot express the empty runtime request, so isolate the mismatch behind a local compatibility wrapper until the declaration is corrected.
 
-The beta.15 HRPC schema encodes an empty request and ignores `enableDebugLogs`, `seedPhrase`, `seedBuffer`, and `config`. The published `WorkletStartRequest` declaration still lists those obsolete fields and incorrectly requires `config`. JSON-RPC also treats `workletStart` as an empty handshake.
+The beta.16 HRPC schema encodes an empty request and ignores `enableDebugLogs`, `seedPhrase`, `seedBuffer`, and `config`. The published `WorkletStartRequest` declaration still lists those obsolete fields and incorrectly requires `config`. JSON-RPC also treats `workletStart` as an empty handshake.
 
 Returns:
 
@@ -111,7 +111,7 @@ These are live buffers returned to the HRPC caller. Overwrite them after their f
 
 #### `dispose`
 
-- `args` (`DisposeRequest`): Pass `{}` for HRPC full disposal. The declaration's optional `blockchains` field is stale for the beta.15 HRPC wire schema.
+- `args` (`DisposeRequest`): Pass `{}` for HRPC full disposal. The declaration's optional `blockchains` field is stale for the beta.16 HRPC wire schema.
 
 A full disposal closes all generic modules and clears the WDK instance. It also overwrites and releases `context.wdkSeedBuffer`. After module shutdown completes, this cleanup runs even if `wdk.dispose()` throws.
 
@@ -235,7 +235,7 @@ Import this helper from `@tetherto/pear-wrk-wdk/worklet`. It registers the packa
 
 ### Worklet utility exports
 
-The `@tetherto/pear-wrk-wdk/worklet` and `@tetherto/pear-wrk-wdk/jsonrpc` runtime entrypoints expose `utils.crypto` and `utils.validation`. The top-level runtime entrypoint exports only `HRPC`, even though its beta.15 declaration also lists utility members.
+The `@tetherto/pear-wrk-wdk/worklet` and `@tetherto/pear-wrk-wdk/jsonrpc` runtime entrypoints expose `utils.crypto` and `utils.validation`. The top-level runtime entrypoint exports only `HRPC`, even though its beta.16 declaration also lists utility members.
 
 #### `utils.crypto`
 
@@ -247,11 +247,11 @@ The `@tetherto/pear-wrk-wdk/worklet` and `@tetherto/pear-wrk-wdk/jsonrpc` runtim
 | `generateEntropy()` | `(wordCount: 12 \| 24) => Uint8Array` | Returns caller-owned entropy bytes. |
 | `encryptSecrets()` | `(seed: Uint8Array \| Buffer, entropy: Uint8Array \| Buffer) => WdkEntropyResult` | Leaves caller-owned inputs unchanged and returns caller-owned key, seed, and entropy buffers. |
 
-Beta.15 removes `generateEncryptionKey()` and replaces the base64-string inputs or results of `encrypt()`, `decrypt()`, and `encryptSecrets()` with buffers. `generateEntropy()` still returns `Uint8Array`, and `memzero()` still returns `void`. Overwrite caller-owned inputs and returned buffers after their final use. This cannot remove immutable strings or extra copies created elsewhere.
+Starting in beta.15, the package removed `generateEncryptionKey()` and replaced the base64-string inputs or results of `encrypt()`, `decrypt()`, and `encryptSecrets()` with buffers. `generateEntropy()` still returns `Uint8Array`, and `memzero()` still returns `void`. Overwrite caller-owned inputs and returned buffers after their final use. This cannot remove immutable strings or extra copies created elsewhere.
 
 #### `utils.validation`
 
-Beta.15 replaces `validateBase64(value, fieldName)` with `validateBuffer(value, fieldName)`. The new helper accepts only a non-empty `Buffer`.
+Starting in beta.15, the package replaced `validateBase64(value, fieldName)` with `validateBuffer(value, fieldName)`. The new helper accepts only a non-empty `Buffer`.
 
 ### Types
 
@@ -287,7 +287,7 @@ interface RpcContext {
 
 The four allowlist helper interfaces are exported types in beta.13. Every omitted level remains unrestricted. Use an explicit empty `methods` array to deny all dynamic calls on one exact surface.
 
-The runtime exposes `METHOD_NOT_ALLOWED` for denied calls, but the beta.15 published error-code declaration still does not include that member. Treat the literal runtime code as authoritative for this release.
+The runtime exposes `METHOD_NOT_ALLOWED` for denied calls, but the beta.16 published error-code declaration still does not include that member. Treat the literal runtime code as authoritative for this release.
 
 #### `WdkWorkletConfig`
 
@@ -408,10 +408,10 @@ registerJsonRpcHandlers(ipc, context)
 The server reads UTF-8 JSON-RPC 2.0 messages framed with a four-byte unsigned big-endian payload length. Every request requires an ID, and an ID cannot be reused while its earlier request is still in flight. Malformed frames are dropped without a response. The package does not export a JSON-RPC client or native-host helper.
 
 <Callout type="warn">
-Beta.15 decodes known base64 secret fields before it rejects a missing, `null`, or duplicate in-flight request ID. Those early-rejected requests do not explicitly overwrite the decoded request buffers. Validate and allocate a unique ID before sending secret-bearing requests; an error response is not cleanup confirmation.
+Beta.16 decodes known base64 secret fields before it rejects a missing, `null`, or duplicate in-flight request ID. Those early-rejected requests do not explicitly overwrite the decoded request buffers. Validate and allocate a unique ID before sending secret-bearing requests; an error response is not cleanup confirmation.
 </Callout>
 
-Beta.15 supports these JSON-RPC method names:
+Beta.16 supports these JSON-RPC method names:
 
 - `workletStart`
 - `generateEntropyAndEncrypt`
@@ -429,7 +429,7 @@ JSON-RPC does not support `resetWdkWallets` in this release. It does support sel
 The transports share the wallet/protocol handler and module runtime. Both support the `swidge` protocol type, enforce `RpcContext.allowedMethods`, and enforce `allowedModuleMethods` for generic-module calls. JSON-RPC `callModule` parameters match `CallModuleRequest`, including its JSON-string `args`. Results use `response.result.result`; events arrive as `moduleEvent` notifications with `params: { module, event, payload }` and a decoded payload. See the [JSON-RPC examples](/tools/pear-wrk-wdk/configuration#json-rpc-transport).
 
 <Callout type="warn">
-Beta.15 redacts named secret fields in object arguments to the package logger. It does not scrub raw strings, typed-array arguments, or formatted Error stacks. Production defaults to ERROR logging; see [logging configuration and limits](/tools/pear-wrk-wdk/configuration#configure-logging).
+Beta.16 redacts named secret fields in object arguments to the package logger. It does not scrub raw strings, typed-array arguments, or formatted Error stacks. Production defaults to ERROR logging; see [logging configuration and limits](/tools/pear-wrk-wdk/configuration#configure-logging).
 </Callout>
 
 HRPC returns secret payloads as live buffers owned by the caller. JSON-RPC sends the corresponding fields as base64 strings, and React Native Core also exposes base64 strings at its public wallet-hook boundary. Overwrite mutable buffers after use, discard string references promptly, and never log either form. These steps reduce retention but cannot prove that every runtime or application copy has been erased.

@@ -11,6 +11,7 @@ icon: Code
 | Class | Description | Methods |
 |-------|-------------|---------|
 | [WDK](#wdk) | Main class for managing wallets across multiple blockchains. Orchestrates wallet managers, protocols, middleware, and local transaction policies. | [Constructor](#constructor), [Methods](#methods) |
+| [Base wallet signer contracts](#base-wallet-signer-contracts) | Signer capabilities and disposal changes in base wallet beta.21. | Interfaces and migration notes |
 | [IWalletAccount](#iwalletaccount) | Base single-signer writable wallet account interface from `@tetherto/wdk-wallet`. | [Methods](#methods-1) |
 | [Multisig account contracts](#multisig-account-contracts) | Implementation contracts exported from `@tetherto/wdk-wallet/multisig`. | Interfaces and types |
 | [IWalletAccountWithProtocols](#iwalletaccountwithprotocols) | Protocol registration and access surface added to a wallet account. | [Methods](#methods-2) |
@@ -61,7 +62,7 @@ const policyWdk = new WDK(seedBytes, {
 | `getAccount(blockchain, index?)` | Returns a wallet account for a blockchain and index | `Promise<WdkAccount>` | If wallet not registered |
 | `getAccountByPath(blockchain, path)` | Returns a wallet account for a blockchain and derivation path | `Promise<WdkAccount>` | If wallet not registered |
 | `getFeeRates(blockchain)` | Returns current fee rates for a registered blockchain | `Promise<FeeRates>` | If wallet not registered |
-| `dispose(blockchains?)` | Disposes all registered wallets, or only the named blockchains, and clears keys and account state managed by WDK | `void` | - |
+| `dispose(blockchains?)` | Calls cleanup on all registered wallets, or only the named blockchains | `void` | - |
 
 #### `registerWallet(blockchain, wallet, config)`
 Registers a new wallet manager for a specific blockchain.
@@ -122,7 +123,7 @@ For swidge or Smart Deposit Address (SDA) integrations, pass a concrete provider
 Global registration stores the provider class and config without constructing or validating the provider. Provider-constructor errors therefore surface when an account retrieves the protocol. A global registration takes precedence over an account-scoped registration with the same type and label.
 
 <Callout type="warn">
-Do not register Velora beta.8, USD₮0 bridge beta.10, or Aave beta.7 for accounts derived by `WalletManagerEvm` beta.19. Each protocol treats the manager's shared ethers `Provider` as EIP-1193 and rejects it during construction. Use a directly constructed `WalletAccountEvm` with the original RPC URL or EIP-1193 provider for these exact combinations, and never mutate the account's internal provider field. Direct accounts do not receive WDK policy or middleware decoration, so retain the required application checks and account-level controls.
+Velora beta.8 and beta.9, USD₮0 bridge beta.10, and Aave beta.7 cannot initialize with accounts derived by standard EVM beta.19 or beta.20, ERC-4337 beta.21, or EIP-7702 beta.7 managers when their shared ethers provider lacks the EIP-1193 `request()` method. These protocols treat the shared ethers `Provider` as EIP-1193 and require `request()`. Use the corresponding direct account constructor with its original RPC URL or genuine EIP-1193 input; never mutate internal provider fields. Direct accounts do not receive WDK Core policies or middleware, so retain required application checks and account-level controls.
 </Callout>
 
 **Example:**
@@ -355,7 +356,7 @@ console.log('Fee rates:', feeRates)
 #### `dispose(blockchains?)`
 Disposes all registered wallets when called without arguments, or only the wallets for the named blockchains when you pass a string array.
 
-This clears keys and account state managed by WDK, including private keys held by registered wallets. It does not mutate or zero the seed value passed to `new WDK(seed)`. See [Seed Lifecycle](/sdk/core-module/guides/error-handling#seed-lifecycle) for the recommended cleanup pattern.
+Cleanup delegates to each concrete wallet manager. It does not guarantee removal of every retained seed or signer, and does not mutate or zero the seed value passed to `new WDK(seed)`. See [base wallet beta.21 disposal limits](#disposal-in-base-wallet-beta21) and [Seed Lifecycle](/sdk/core-module/guides/error-handling#seed-lifecycle) for the recommended cleanup pattern.
 
 **Parameters:**
 - `blockchains` (string[], optional): The blockchain identifiers to dispose. Omit this parameter to dispose every registered wallet.
@@ -440,27 +441,67 @@ The list matches exact names, not prefixes: a new `get*` or `quote*` method is n
 
 `PolicyViolationError.code` contains one of these values, and `PolicyViolationError.operation` names the blocked method. Compare `code` instead of parsing `reason`, because a matching rule can supply application-owned reason text. A simulation returns the same denial code without executing the governed method.
 
+## Base Wallet Signer Contracts
+
+These contracts belong to `@tetherto/wdk-wallet@1.0.0-beta.22`. They describe the base package used by module authors; a concrete wallet must implement the relevant signer support before applications can use it. Updating a direct base-wallet dependency does not upgrade the separate copy pinned by another wallet package.
+
+Declare `@tetherto/wdk-wallet@1.0.0-beta.22` as a direct dependency before importing these contracts.
+
+```javascript title="Import Base Wallet Contracts"
+import WalletManager, { DisposalError, IDisposable, ISigner } from '@tetherto/wdk-wallet'
+```
+
+`IDisposable`, introduced in beta.21, declares `dispose(): void`. Beta.22 adds a read-only `disposed: boolean` getter. Both base members throw `NotImplementedError`; implementations provide their own state and cleanup. `ISigner` extends this contract and requires these capabilities in addition to `derive(path)` and `getAddress()`:
+
+| Member | Contract |
+| --- | --- |
+| `disposed` | `boolean` indicating whether the implementation has been disposed. Added to `IDisposable` in beta.22. |
+| `isDerivable` | `boolean` indicating whether the signer supports child derivation. |
+| `keyPair` | `KeyPair \| null`; null when key material cannot be retrieved, for example from a hardware signer. |
+| `path` | `string \| null`; null when the signer is not bound to a derivation position. |
+| `sign(message)` | Signs a string message and returns `Promise<string>`. |
+
+The base `WalletManager` constructor rejects a default signer whose `isDerivable` is false with `InvalidSignerError`. Register non-derivable signers by name with `addSigner(name, signer)` in a supporting concrete wallet. `WalletManager<TSigner>` preserves the signer type through `getSigner()` and `getSigners()`, and `addSigner()` returns `this` for chaining.
+
+### Disposal In Base Wallet Beta.21
+
+The base manager's `dispose()` calls `dispose()` on cached accounts only when `account.keyPair?.privateKey` is present, then clears its account cache. It no longer directly disposes or removes its default or named signers. It also retains its seed reference. Account implementations may perform additional cleanup; confirm the concrete wallet's behavior.
+
+Applications and module authors must manage signer resources and caller-owned seed buffers explicitly. Do not treat manager disposal as proof that a hardware session, signer, or all seed material has been cleared. Coordinate cleanup with other accounts that share the same signer, and see [seed lifecycle](/sdk/core-module/guides/error-handling#seed-lifecycle).
+
+### Disposal State In Base Wallet Beta.22
+
+`WalletManager.disposed` starts as `false`. After `dispose()` completes, it becomes `true`; subsequent calls to `dispose()` return immediately. The cached-account cleanup and retained seed and signer references described above remain unchanged.
+
+Beta.22 exports `DisposalError` from both `@tetherto/wdk-wallet` and `@tetherto/wdk-wallet/protocols`. It extends `WdkError` and identifies operations rejected because an object has been disposed. The signer, account, and protocol contracts describe disposal failures; concrete implementations supply the checks.
+
 ## IWalletAccount
 
 Base single-signer writable wallet account interface exposed by `@tetherto/wdk-wallet`. Blockchain modules implement this interface and may narrow the transaction type accepted by `signTransaction()` and `sendTransaction()`.
 
+In base wallet beta.21, `path` is `string | null` and `keyPair` is `KeyPair | null`. The base interface no longer requires `index`, and its TypeScript contract extends `IDisposable`. A concrete wallet can still expose an index or non-null key material; code written against the base interface must handle null values and cannot assume an index exists.
+
+Beta.22 adds `disposed: boolean` through that TypeScript contract. Its runtime `IWalletAccount` base class no longer inherits from `IWalletAccountReadOnly`, while the published TypeScript interface retains its read-only and disposable inheritance. Implementations must provide the declared read and write methods.
+
 ### Methods
+
+The Throws column summarizes the beta.22 contract; each concrete module implements its own checks.
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
 | `getAddress()` | Returns the account address | `Promise<string>` | - |
-| `sign(message)` | Signs a message with the account private key | `Promise<string>` | - |
-| `signTransaction(tx)` | Signs a transaction without broadcasting it | `Promise<unknown>` | If the transaction is invalid for the module |
+| `sign(message)` | Signs a message using the account's signing implementation | `Promise<string>` | `DisposalError` |
+| `signTransaction(tx)` | Signs a transaction without broadcasting it | `Promise<unknown>` | `DisposalError` or an invalid-transaction error |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
 | `getTransaction(hash)` | Returns a normalized transaction receipt | `Promise<TransactionReceipt>` | `ValueError`, `NoSuchElementError`, `ProviderRequiredError`, or `ProviderError` |
 | `waitForTransaction(hash, options?)` | Polls until the requested finality or a stable dropped state | `Promise<TransactionReceipt>` | Transaction lookup errors or `TimeoutError` |
-| `sendTransaction(tx)` | Signs, broadcasts, and returns the transaction result | `Promise<TransactionResult>` | If provider access or broadcast fails |
-| `transfer(options)` | Transfers a token where supported by the module | `Promise<TransferResult>` | If the module does not support token transfers |
+| `sendTransaction(tx)` | Signs, broadcasts, and returns the transaction result | `Promise<TransactionResult>` | `DisposalError`, provider, broadcast, or fee errors |
+| `transfer(options)` | Transfers a token where supported by the module | `Promise<TransferResult>` | `DisposalError` or a token-transfer error |
 | `toReadOnlyAccount()` | Returns a read-only account copy | `Promise<IWalletAccountReadOnly>` | - |
 | `dispose()` | Clears sensitive account material from memory | `void` | - |
 
 ##### `signTransaction(tx)`
-Signs a transaction with the account private key and returns the signed transaction payload without broadcasting it. Use this when your app needs offline signing, external transaction submission, or a separate review step before broadcast.
+Signs a transaction and returns the signed transaction payload without broadcasting it. Use this when your app needs offline signing, external transaction submission, or a separate review step before broadcast.
 
 **Parameters:**
 - `tx` (Transaction): Module-specific transaction object. For example, EVM accounts accept `EvmTransaction`, and Bitcoin accounts accept `BtcTransaction`.
@@ -542,6 +583,8 @@ These exports do not retroactively normalize errors in a concrete wallet package
 ## Multisig Account Contracts
 
 `@tetherto/wdk-wallet/multisig` exports contracts for chain-specific multisig wallet implementations. The package does not include a concrete multisig account or add these methods to [`WdkAccount`](#wdkaccount). The `Transaction` and `TransactionResult` types remain type exports of the root `@tetherto/wdk-wallet` package.
+
+For concrete implementations, use [Multisig (Safe)](/sdk/wallet-modules/wallet-multisig-safe) on EVM or [Multisig (Squads)](/sdk/wallet-modules/wallet-multisig-squads) on Solana. Their supported operations, fees, coordination, and execution status differ; follow the implementation's guide before proposing or approving a transaction.
 
 ```javascript title="Import Multisig Contracts"
 import {
@@ -918,7 +961,7 @@ const swapResult = await swap.swap(swapOptions)
 wdk.dispose()
 ```
 
-`MySwapProtocol` is illustrative and must support the manager account's provider shape. Velora beta.8, USD₮0 bridge beta.10, and Aave beta.7 are intentionally excluded from this manager-derived beta.19 flow. Their direct standard-account guides cover [Velora setup](/sdk/swap-modules/swap-velora-evm/guides/get-started), [bridge setup](/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started), and [Aave setup](/sdk/lending-modules/lending-aave-evm/guides/get-started). Preserve application checks and account-level controls because WDK policies and middleware do not decorate those separate accounts.
+`MySwapProtocol` is illustrative and must support the manager account's provider shape. Velora beta.8 and beta.9, USD₮0 bridge beta.10, and Aave beta.7 are intentionally excluded from this manager-derived beta.19 flow. Their direct standard-account guides cover [Velora setup](/sdk/swap-modules/swap-velora-evm/guides/get-started), [bridge setup](/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started), and [Aave setup](/sdk/lending-modules/lending-aave-evm/guides/get-started). Preserve application checks and account-level controls because WDK policies and middleware do not decorate those separate accounts.
 
 ## Types
 

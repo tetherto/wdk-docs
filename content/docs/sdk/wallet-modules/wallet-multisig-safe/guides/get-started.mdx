@@ -1,0 +1,84 @@
+---
+title: Get started with a multisig Safe
+description: Install Safe beta.1 and connect a seed-derived owner to an existing Safe.
+docType: getting-started
+schemaType: TechArticle
+---
+
+[Install the package](#install-the-package), [configure the account](#configure-the-account), then [inspect its identity](#inspect-its-identity). See [Need Help](#need-help) for support.
+
+Prerequisites: [Node.js](https://nodejs.org/) with ESM, [npm](https://www.npmjs.com/), an existing Safe using modules 0.2.0, its owner seed, and matching RPC, EntryPoint v0.6 bundler and coordinator. This example uses native gas mode; the Safe needs native funds before execution. Store seeds outside source code and logs.
+
+## Install the Package
+
+Install the exact package used by this guide:
+
+```bash
+npm install --save-exact @tetherto/wdk-wallet-multisig-safe@1.0.0-beta.1
+```
+
+## Configure the Account
+
+1. Supply the RPC, chain ID, bundler URL, Safe address and Safe Transaction Service proxy URL through your application configuration.
+2. Load the owner's seed from secret storage. The environment variable below is a Node example, not a requirement to store browser secrets in environment files.
+3. Create a [`WalletManagerMultisigSafe`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#walletmanagermultisigsafe) and derive the known owner path.
+
+Save this setup as `safe-account.mjs`; subsequent guides import its account and configuration:
+
+```javascript title="safe-account.mjs"
+import WalletManagerMultisigSafe from '@tetherto/wdk-wallet-multisig-safe'
+
+export function requiredEnv(name) {
+  const value = process.env[name]
+  if (!value) throw new Error(`Missing ${name}`)
+  return value
+}
+
+export const config = {
+  provider: requiredEnv('EVM_RPC_URL'),
+  chainId: BigInt(requiredEnv('CHAIN_ID')),
+  bundlerUrl: requiredEnv('BUNDLER_URL'),
+  txServiceUrl: requiredEnv('SAFE_TX_SERVICE_URL'),
+  safeModulesVersion: '0.2.0',
+  safeOptions: { safeAddress: requiredEnv('SAFE_ADDRESS') },
+  useNativeCoins: true
+}
+export const wallet = new WalletManagerMultisigSafe(
+  requiredEnv('WDK_SEED_PHRASE'), config
+)
+export const account = await wallet.getAccountByPath("0'/0/0")
+```
+
+The full owner path is `m/44'/60'/0'/0/0`. Change the relative path if the Safe's owner uses a different one. Deriving an account does not add that address as a Safe owner.
+
+## Inspect Its Identity
+
+Use [`getAddress()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#getaddress) and [`getSignerAddress()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#getsigneraddress) to distinguish the asset-holding Safe from its owner:
+
+```javascript title="Inspect Safe and owner"
+import { account } from './safe-account.mjs'
+
+console.log('Safe:', await account.getAddress())
+console.log('Owner EOA:', await account.getSignerAddress())
+```
+
+Before signing, check [`getMultisigInfo()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#getmultisiginfo) and [`validateSignerIsOwner()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#validatesignerisowner):
+
+```javascript title="Check membership"
+console.log(await account.getMultisigInfo())
+await account.validateSignerIsOwner()
+```
+
+The expected result is your agreed Safe address, owner EOA, owner list and threshold. Stop if any differ. Continue with [proposal management](/sdk/wallet-modules/wallet-multisig-safe/guides/manage-proposals).
+
+## Next Steps
+
+- [Usage](/sdk/wallet-modules/wallet-multisig-safe/usage)
+- [Configuration](/sdk/wallet-modules/wallet-multisig-safe/configuration)
+- [API reference](/sdk/wallet-modules/wallet-multisig-safe/api-reference)
+
+---
+
+## Need Help?
+
+<SupportCards />

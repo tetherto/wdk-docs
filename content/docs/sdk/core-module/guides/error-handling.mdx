@@ -32,16 +32,16 @@ Always use `try/catch` blocks when initializing sessions or accessing dynamic fe
 
 ### Base Wallet Errors
 
-`@tetherto/wdk-wallet` v1.0.0-beta.19 exports a shared `WdkError` hierarchy so applications can distinguish invalid input, provider failures, transaction outcomes, and unsupported capabilities without matching message strings.
+`@tetherto/wdk-wallet` v1.0.0-beta.22 exports a shared `WdkError` hierarchy so applications can distinguish invalid input, disposal state, provider failures, transaction outcomes, and unsupported capabilities without matching message strings.
 
 Install the base wallet as a direct dependency before importing these contracts; do not rely on a transitive copy supplied by Core or a concrete wallet module:
 
 ```bash title="Install Base Wallet Error Contracts"
-npm install @tetherto/wdk-wallet@1.0.0-beta.19
+npm install @tetherto/wdk-wallet@1.0.0-beta.22
 ```
 
 <Callout type="info">
-These classes define the beta.19 base contract. Concrete wallet modules can depend on a different base version, so confirm the concrete package version and keep a fallback for unknown errors.
+These classes define the beta.22 base contract. Concrete wallet modules can depend on a different base version, so confirm the concrete package version and keep a fallback for unknown errors.
 </Callout>
 
 | Error | Meaning |
@@ -49,6 +49,7 @@ These classes define the beta.19 base contract. Concrete wallet modules can depe
 | `ValueError` | A method argument is invalid |
 | `NoSuchElementError` | A requested signer, transaction, proposal, or other identifier was not found |
 | `InvalidSignerError` | A signer is incompatible with the requested operation |
+| `DisposalError` | An implementation rejects an operation on a disposed object; also exported by the protocols subpath |
 | `InvalidTokenError` | An address does not resolve to a supported token |
 | `ProviderRequiredError` | The operation needs a configured provider |
 | `ProviderError` | The configured provider failed; inspect `reason` |
@@ -114,6 +115,8 @@ For security, clear wallet state from memory when a session is complete. The WDK
 
 WDK does not own the seed you pass to `new WDK(seed)`. The seed comes from your app, so your app is responsible for storing it, decrypting it, and clearing it when it is no longer needed.
 
+For modules based on `@tetherto/wdk-wallet@1.0.0-beta.21`, base manager disposal also retains default and named signer references. It disposes cached accounts only when they expose private key material. Manage signer resources separately according to the concrete module's ownership rules; see [base wallet disposal](/sdk/core-module/api-reference#disposal-in-base-wallet-beta21).
+
 Use this lifecycle for sessions that need explicit cleanup:
 
 1. Decrypt or load the seed into a mutable buffer.
@@ -155,7 +158,7 @@ async function runWalletSession(
 In this example, `decryptSeedBytes()` represents your app's secure storage or decryption layer. It should return seed bytes as a `Uint8Array`.
 
 <Callout type="warn">
-[`dispose()`](/sdk/core-module/api-reference#disposeblockchains) clears keys and account state managed by WDK, including private keys held by registered wallets. It does not mutate or zero the seed value you passed to WDK. If your app requires explicit seed cleanup, prefer a mutable `Uint8Array`; JavaScript strings cannot be reliably zeroed.
+[`dispose()`](/sdk/core-module/api-reference#disposeblockchains) delegates cleanup to the registered wallet managers. Their installed versions determine which account keys, seeds, and signers are cleared; see [base wallet beta.21 disposal limits](/sdk/core-module/api-reference#disposal-in-base-wallet-beta21). It does not mutate or zero the seed value you passed to WDK. If your app requires explicit seed cleanup, prefer a mutable `Uint8Array`; JavaScript strings cannot be reliably zeroed.
 </Callout>
 
 ### Disposing the Instance
@@ -164,13 +167,13 @@ You can dispose every registered wallet using [`dispose()`](/sdk/core-module/api
 
 ```typescript title="Dispose WDK"
 function endSession(wdk) {
-  // 1. Dispose registered wallets and account private keys
+  // 1. Delegate cleanup to registered wallets
   wdk.dispose()
   
   // 2. Modify app state to reflect logged-out status
   // ...
   
-  console.log('Session ended, wallet data cleared.')
+  console.log('Session ended, wallet cleanup requested.')
 }
 ```
 

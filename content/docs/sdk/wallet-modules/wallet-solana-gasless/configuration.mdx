@@ -8,7 +8,7 @@ icon: Settings
 
 ## Wallet Configuration
 
-`WalletManagerSolanaGasless` accepts a seed phrase or seed bytes plus a Solana gasless wallet configuration:
+`WalletManagerSolanaGasless` accepts a seed phrase or seed bytes plus a Solana gasless wallet configuration. Beta.6 shares one Solana RPC client and one Kora paymaster client across manager-derived accounts and their read-only conversions:
 
 ```javascript title="Create a gasless Solana wallet"
 import WalletManagerSolanaGasless from '@tetherto/wdk-wallet-solana-gasless'
@@ -58,9 +58,9 @@ Read-only accounts do not accept `transferMaxFee` or `transactionMaxFee` in thei
 
 ### provider
 
-Solana RPC endpoint, or an ordered list of RPC endpoints for failover. This is required for balance reads, blockhash lookup, quotes, signing transactions, sending transactions, and transfers.
+Solana RPC endpoint, an existing `SolanaRpc` client, or an ordered mixed list of URLs and clients for failover. This is required for balance reads, blockhash lookup, quotes, signing transactions, sending transactions, and transfers. A supplied client is reused as-is.
 
-**Type:** `string | string[]`
+**Type:** `string | SolanaRpc | Array<string | SolanaRpc>`
 
 **Example:**
 
@@ -87,9 +87,9 @@ Solana commitment level used for RPC reads such as balances, blockhashes, and re
 
 ### paymasterUrl
 
-Kora-compatible paymaster RPC endpoint, Kora client options object, or ordered failover list.
+Kora-compatible paymaster RPC endpoint, Kora client options object, an existing `KoraClient`, or an ordered mixed failover list. A supplied client is reused as-is, including an already configured failover wrapper.
 
-**Type:** `string | KoraClientOptions | Array<string | KoraClientOptions>`
+**Type:** `string | KoraClientOptions | KoraClient | Array<string | KoraClientOptions | KoraClient>`
 
 **Required:** Yes
 
@@ -104,7 +104,9 @@ const config = {
 }
 ```
 
-An empty `paymasterUrl` array throws an error.
+An empty `paymasterUrl` array raises `ValueError` while constructing a manager or account. `retries` configures lists built by this module; it does not reconfigure an existing client or wrapper. Use RPC and paymaster clients for the same network and keep the paymaster address and fee token consistent with those services.
+
+`SolanaRpc` is the return type of `createSolanaRpc()` from `@solana/rpc`. `KoraClient` is a runtime class from `@solana/kora`. If your application constructs either client, declare the corresponding direct dependency; beta.6 uses `@solana/rpc@3.0.3` and `@solana/kora@0.2.1`.
 
 ### paymasterAddress
 
@@ -131,7 +133,7 @@ type PaymasterTokenConfig = {
 The module passes `paymasterToken.address` to the paymaster as the fee token and returns fees in that token's base units. For an unsigned flow, it derives the paymaster's associated token account for this mint, requires the returned payment instruction to be an SPL Token `Transfer` or `TransferChecked` to that account, and reads the instruction's encoded `u64` amount instead of trusting separate quote metadata.
 
 <Callout type="warn">
-Beta.4 converts that decoded unsigned-flow `u64` through JavaScript `Number` before converting it back to `bigint`. Amounts above `Number.MAX_SAFE_INTEGER` can be rounded in quotes, cap comparisons, and returned fees. Constrain the trusted paymaster's fee policy to at most `9007199254740991` base units; using a `bigint` input alone does not remove this internal boundary.
+Beta.6 still converts that decoded unsigned-flow `u64` through JavaScript `Number` before converting it back to `bigint`. Amounts above `Number.MAX_SAFE_INTEGER` can be rounded in quotes, cap comparisons, and returned fees. Constrain the trusted paymaster's fee policy to at most `9007199254740991` base units; using a `bigint` input alone does not remove this internal boundary.
 </Callout>
 
 ### retries
@@ -166,7 +168,7 @@ const result = await account.transfer({
 
 Maximum allowed paymaster fee for `sendTransaction()` and `signTransaction()` calls, in the configured paymaster token's base units. For unsigned inputs, the module obtains the payment instruction and checks this cap before either the account or paymaster signs, subject to the `Number.MAX_SAFE_INTEGER` conversion boundary above. For the exact `FullySignedTransaction` produced by `signTransaction()`, it decodes a matching embedded payment amount and checks this cap before broadcasting through Solana RPC. A fee equal to the cap is allowed; only a greater fee is rejected.
 
-For arbitrary signed input, this is not a fail-closed validator: beta.4 returns `0n` when no matching payment instruction is found and can then broadcast because the cap comparison passes. Independently validate untrusted signed payloads or reject them before this API.
+Signed quote/send raises `NoSuchElementError` when the payload has no payment instruction matching the effective fee token and configured paymaster destination. This check is not a complete signed-transaction validator. Independently validate untrusted payloads or reject them before this API.
 
 **Type:** `number | bigint`
 
@@ -200,9 +202,11 @@ const quote = await account.quoteTransfer({
 })
 ```
 
-In `1.0.0-beta.4`, overrides support `paymasterToken`, `transferMaxFee`, and `transactionMaxFee`. Use `transferMaxFee` for `transfer()` fee protection and `transactionMaxFee` for `sendTransaction()` or `signTransaction()` fee protection. `quoteTransfer()` and `quoteSendTransaction()` return estimates without enforcing either cap.
+In `1.0.0-beta.6`, overrides support `paymasterToken`, `transferMaxFee`, and `transactionMaxFee`. Use `transferMaxFee` for `transfer()` fee protection and `transactionMaxFee` for `sendTransaction()` or `signTransaction()` fee protection. `quoteTransfer()` and `quoteSendTransaction()` return estimates without enforcing either cap.
 
-For an already signed transaction, its payment token and amount are fixed in the signed message. `quoteSendTransaction(signedTransaction)` searches for a matching embedded payment and does not use the per-call token override. On `sendTransaction(signedTransaction, { transactionMaxFee })`, only the fee cap is relevant before direct RPC broadcast; an override cannot replace the signed payment token. In beta.4, a missing match returns `0n` instead of rejecting, so restrict this path to exact locally produced output or perform independent signed-message validation.
+For an already signed transaction, its payment token and amount are fixed. Pass the same `paymasterToken` used at signing to both `quoteSendTransaction(signedTransaction, config)` and `sendTransaction(signedTransaction, config)`. The effective token selects the embedded payment to decode; it does not replace that payment. A missing match raises `NoSuchElementError`. Signed send also reapplies `transactionMaxFee` before direct RPC broadcast.
+
+Overrides whose value is `undefined` preserve the configured value. For example, `{ transactionMaxFee: undefined }` does not disable an existing cap. The merge is shallow: supply a complete `paymasterToken` object when overriding it.
 
 ## Security Considerations
 
@@ -210,10 +214,10 @@ For an already signed transaction, its payment token and amount are fixed in the
 - Use RPC endpoints that serve the same Solana network when enabling failover.
 - Keep paymaster tokens funded for the accounts that need sponsored transactions.
 - Set `transferMaxFee` for token transfers and `transactionMaxFee` for send/sign flows when your application needs fee protection.
-- Keep every trusted paymaster payment at or below `Number.MAX_SAFE_INTEGER` base units because beta.4's unsigned path converts the decoded `u64` through `Number`.
+- Keep every trusted paymaster payment at or below `Number.MAX_SAFE_INTEGER` base units because beta.6's unsigned path still converts the decoded `u64` through `Number`.
 - Validate the paymaster address and paymaster token address before using them in production configuration.
 - Treat `Invalid payment instruction from paymaster.` as a failed safety check. Do not sign, send, or retry by accepting a different destination automatically; verify the paymaster and token configuration first.
-- Do not accept arbitrary `FullySignedTransaction` input as validated by the signed send path; a missing matching payment instruction produces `0n` instead of an error in beta.4.
+- Reject untrusted `FullySignedTransaction` input unless you independently validate its instructions, fee payer, payment destination, lifetime, and signatures. A matching payment instruction alone does not validate the whole payload.
 - Call `dispose()` on owned accounts and wallet managers when private keys are no longer needed.
 
 <Cards>

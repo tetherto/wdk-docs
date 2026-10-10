@@ -31,12 +31,14 @@ Wallet modules provide blockchain-specific wallet functionality for managing add
 | [`@hinkal/wdk-wallet-evm-hinkal`](https://www.npmjs.com/package/@hinkal/wdk-wallet-evm-hinkal) | EVM | Community module for seed-derived Hinkal private sends and shielded-fund recovery; Node bundling required | [Docs](/sdk/wallet-modules/wallet-evm-hinkal/) |
 | [`@tetherto/wdk-wallet-evm-erc-4337`](https://github.com/tetherto/wdk-wallet-evm-erc-4337) | EVM | ERC-4337 Account Abstraction for EVM chains | [Docs](/sdk/wallet-modules/wallet-evm-erc-4337/) |
 | [`@tetherto/wdk-wallet-evm-7702-gasless`](https://github.com/tetherto/wdk-wallet-evm-7702-gasless) | EVM | EIP-7702 gasless account abstraction for EVM chains | [Docs](/sdk/wallet-modules/wallet-evm-7702-gasless/) |
+| [`@tetherto/wdk-wallet-multisig-safe`](https://github.com/tetherto/wdk-wallet-multisig-safe) | EVM | Safe multisig proposals, owner approvals, and ERC-4337 execution | [Docs](/sdk/wallet-modules/wallet-multisig-safe/) |
 | [`@tetherto/wdk-wallet-ton`](https://github.com/tetherto/wdk-wallet-ton) | TON | TON blockchain wallet | [Docs](/sdk/wallet-modules/wallet-ton/) |
 | [`@tetherto/wdk-wallet-ton-gasless`](https://github.com/tetherto/wdk-wallet-ton-gasless) | TON | Gasless Jetton transfers on TON | [Docs](/sdk/wallet-modules/wallet-ton-gasless/) |
 | [`@tetherto/wdk-wallet-tron`](https://github.com/tetherto/wdk-wallet-tron) | TRON | TRON blockchain wallet | [Docs](/sdk/wallet-modules/wallet-tron/) |
 | [`@tetherto/wdk-wallet-tron-gasfree`](https://github.com/tetherto/wdk-wallet-tron-gasfree) | TRON | Gas-free transactions on TRON | [Docs](/sdk/wallet-modules/wallet-tron-gasfree/) |
 | [`@tetherto/wdk-wallet-solana`](https://github.com/tetherto/wdk-wallet-solana) | Solana | Solana blockchain wallet | [Docs](/sdk/wallet-modules/wallet-solana/) |
 | [`@tetherto/wdk-wallet-solana-gasless`](https://github.com/tetherto/wdk-wallet-solana-gasless) | Solana | Gasless Solana transactions through a Kora-compatible paymaster | [Docs](/sdk/wallet-modules/wallet-solana-gasless/) |
+| [`@tetherto/wdk-wallet-multisig-squads`](https://github.com/tetherto/wdk-wallet-multisig-squads) | Solana | Squads multisig vaults with proposal, approval, and execution flows | [Docs](/sdk/wallet-modules/wallet-multisig-squads/) |
 | [`@tetherto/wdk-wallet-aptos`](https://github.com/tetherto/wdk-wallet-aptos) | Aptos | Aptos blockchain wallet with native APT and fungible asset support | [Docs](/sdk/wallet-modules/wallet-aptos/) |
 | [`@tetherto/wdk-wallet-spark`](https://github.com/tetherto/wdk-wallet-spark) | Spark | Spark/Lightning Bitcoin L2 wallet | [Docs](/sdk/wallet-modules/wallet-spark/) |
 
