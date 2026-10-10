@@ -14,6 +14,8 @@ icon: Code
 | [WalletAccountSolana](#walletaccountsolana) | Individual Solana wallet account implementation. Extends `WalletAccountReadOnlySolana` and implements `IWalletAccount`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties) |
 | [WalletAccountReadOnlySolana](#walletaccountreadonlysolana) | Read-only Solana wallet account. | [Constructor](#constructor-2), [Methods](#methods-2) |
 
+Starting in beta.15, the package root re-exports `AssertionError`, `MaximumFeeExceededError`, `NoSuchElementError`, `ProviderRequiredError`, `TimeoutError`, `ValueError`, and `WdkError` from `@tetherto/wdk-wallet`.
+
 ### WalletManagerSolana
 
 The main class for managing Solana wallets.
@@ -75,6 +77,8 @@ Returns a wallet account at the specified SLIP-0010 derivation path.
 
 **Returns:** `Promise<WalletAccountSolana>` - The wallet account
 
+**Throws:** `ValueError` if a derivation-path segment is not hardened.
+
 **Example:**
 ```javascript
 const account = await wallet.getAccountByPath("0'/0'/1'")
@@ -85,7 +89,7 @@ Returns current fee rates for transactions based on recent prioritization fees.
 
 **Returns:** `Promise<{normal: bigint, fast: bigint}>` - Object containing fee rates in lamports
 
-**Throws:** Error if wallet is not connected to a provider
+**Throws:** `ProviderRequiredError` if the wallet is not connected to a provider.
 
 **Example:**
 ```javascript
@@ -116,6 +120,8 @@ new WalletAccountSolana(seed, path, config)
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `path` (string): SLIP-0010 derivation path (e.g., "0'/0'/0'")
 - `config` (SolanaWalletConfig, optional): Configuration object
+
+**Throws:** `ValueError` if a string seed is not a valid BIP-39 mnemonic or a derivation-path segment is not hardened.
 
 <Callout type="info">
 In v1.0.0-beta.9 the constructor was made public. The static factory method `WalletAccountSolana.at()` still works but is deprecated; use the constructor directly instead.
@@ -161,6 +167,8 @@ Signs a message using the account's private key.
 
 **Returns:** `Promise<string>` - The message signature (hex-encoded)
 
+**Throws:** `AssertionError` if the account has been disposed.
+
 **Example:**
 ```javascript
 const signature = await account.sign('Hello, Solana!')
@@ -181,7 +189,12 @@ Treat serialized transactions from another service as untrusted. Decode and inde
 
 **Returns:** `Promise<FullySignedTransaction>` - The signed transaction
 
-**Throws:** Error if wallet is not connected to a provider or if the estimated fee is greater than `transactionMaxFee`
+**Throws:**
+- `AssertionError` if the account has been disposed.
+- `ProviderRequiredError` if the wallet is not connected to a provider.
+- `MaximumFeeExceededError` if the estimated fee is greater than `transactionMaxFee`.
+- `ValueError` if the transaction fee payer does not match the account or the provider cannot calculate the fee.
+- A Solana error with code `SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING` if required signatures remain missing after this account signs a serialized transaction.
 
 **Example:**
 ```javascript
@@ -223,7 +236,12 @@ When `tx` is a base64-encoded serialized transaction, WDK signs it with this acc
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Object containing transaction hash and fee (in lamports)
 
-**Throws:** Error if wallet is not connected to a provider or if the estimated fee is greater than `transactionMaxFee`
+**Throws:**
+- `AssertionError` if the account has been disposed.
+- `ProviderRequiredError` if the wallet is not connected to a provider.
+- `MaximumFeeExceededError` if the estimated fee is greater than `transactionMaxFee`.
+- `ValueError` if the transaction fee payer does not match the account or the provider cannot calculate the fee.
+- A Solana error with code `SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING` if required signatures remain missing after this account signs a serialized transaction.
 
 **Example:**
 ```javascript
@@ -243,6 +261,10 @@ Estimates the fee for a Solana transaction.
 For a base64-encoded serialized transaction, WDK decodes the transaction and quotes the compiled message without signing or broadcasting it.
 
 **Returns:** `Promise<{fee: bigint}>` - Object containing fee estimate (in lamports)
+
+**Throws:**
+- `ProviderRequiredError` if the wallet is not connected to a provider.
+- `ValueError` if the fee payer does not match this account or the provider cannot calculate the fee.
 
 **Example:**
 ```javascript
@@ -264,7 +286,11 @@ Transfers SPL tokens to another address.
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Object containing transaction hash and fee (in lamports)
 
-**Throws:** Error if wallet is not connected to a provider or if fee exceeds maximum
+**Throws:**
+- `AssertionError` if the account has been disposed.
+- `ProviderRequiredError` if the wallet is not connected to a provider.
+- `MaximumFeeExceededError` if the estimated fee is greater than `transferMaxFee`.
+- `ValueError` if the token amount exceeds the supported integer range or the provider cannot calculate the fee.
 
 **Example:**
 ```javascript
@@ -285,6 +311,10 @@ Estimates the fee for an SPL token transfer.
 
 **Returns:** `Promise<{fee: bigint}>` - Object containing fee estimate (in lamports)
 
+**Throws:**
+- `ProviderRequiredError` if the wallet is not connected to a provider.
+- `ValueError` if the token amount exceeds the supported integer range or the provider cannot calculate the fee.
+
 **Example:**
 ```javascript
 const quote = await account.quoteTransfer({
@@ -298,6 +328,8 @@ console.log('Transfer fee estimate:', quote.fee, 'lamports')
 Returns the native SOL balance (in lamports).
 
 **Returns:** `Promise<bigint>` - Balance in lamports
+
+**Throws:** `ProviderRequiredError` if the wallet is not connected to a provider.
 
 **Example:**
 ```javascript
@@ -313,6 +345,8 @@ Returns the balance of a specific SPL token.
 
 **Returns:** `Promise<bigint>` - Token balance in base units
 
+**Throws:** `ProviderRequiredError` if the wallet is not connected to a provider.
+
 **Example:**
 ```javascript
 const tokenBalance = await account.getTokenBalance('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB')
@@ -326,6 +360,8 @@ Returns balances for multiple SPL tokens. The wallet batches associated token ac
 - `tokenAddresses` (string[]): Token mint addresses (base58-encoded)
 
 **Returns:** `Promise<Record<string, bigint>>` - Mapping of token mint address to token balance in base units
+
+**Throws:** `ProviderRequiredError` if the wallet is not connected to a provider.
 
 **Example:**
 ```javascript
@@ -343,6 +379,10 @@ Gets the native transaction object for a signature. This method is deprecated; u
 - `hash` (string): Transaction hash
 
 **Returns:** `Promise<SolanaTransactionReceipt \| null>` - Transaction receipt details, or null if not found
+
+**Throws:**
+- `ProviderRequiredError` if the wallet is not connected to a provider.
+- `ValueError` if `hash` is not a valid Solana signature.
 
 **Example:**
 ```javascript
@@ -365,7 +405,7 @@ console.log(receipt.transaction)   // Native transaction object, or null
 
 Solana `processed` maps to `pending`, `confirmed` maps to `confirmed`, and `finalized` maps to `final`. The `block` field is the slot and `fee` is the native transaction fee when available. A settled transaction reports `success: false` when its status contains an error. The native `transaction` can still be `null` when the RPC does not return it at the configured commitment.
 
-An invalid signature throws `ValueError`; a well-formed signature absent from status history throws `NoSuchElementError`.
+No configured provider throws `ProviderRequiredError`. An invalid signature throws `ValueError`; a well-formed signature absent from status history throws `NoSuchElementError`.
 
 ##### `waitForTransaction(hash, options?)`
 
@@ -380,7 +420,7 @@ const receipt = await account.waitForTransaction(signature, {
 })
 ```
 
-The Solana implementation does not currently classify an evicted or never-landed signature as `dropped`; that case eventually throws `TimeoutError`. Reaching a finality target does not guarantee execution success, so inspect `success`.
+`waitForTransaction()` immediately propagates `ProviderRequiredError` and `ValueError`, treats `NoSuchElementError` as transient while the signature can still propagate, and throws `TimeoutError` if the target is not reached. The Solana implementation does not currently classify an evicted or never-landed signature as `dropped`. Reaching a finality target does not guarantee execution success, so inspect `success`.
 
 ##### `toReadOnlyAccount()`
 Returns a read-only copy of the account. After the first call, subsequent calls reuse the same read-only account instance.
@@ -455,6 +495,8 @@ Returns the native SOL balance (in lamports).
 
 **Returns:** `Promise<bigint>` - Balance in lamports
 
+**Throws:** `ProviderRequiredError` if the wallet is not connected to a provider.
+
 **Example:**
 ```javascript
 const balance = await readOnlyAccount.getBalance()
@@ -469,6 +511,8 @@ Returns the balance of a specific SPL token.
 
 **Returns:** `Promise<bigint>` - Token balance in base units
 
+**Throws:** `ProviderRequiredError` if the wallet is not connected to a provider.
+
 **Example:**
 ```javascript
 const tokenBalance = await readOnlyAccount.getTokenBalance('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB')
@@ -482,6 +526,8 @@ Returns balances for multiple SPL tokens from the read-only account address.
 - `tokenAddresses` (string[]): Token mint addresses (base58-encoded)
 
 **Returns:** `Promise<Record<string, bigint>>` - Mapping of token mint address to token balance in base units
+
+**Throws:** `ProviderRequiredError` if the wallet is not connected to a provider.
 
 **Example:**
 ```javascript
@@ -517,6 +563,10 @@ Estimates the fee for a transaction.
 
 **Returns:** `Promise<{fee: bigint}>` - Object containing fee estimate (in lamports)
 
+**Throws:**
+- `ProviderRequiredError` if the wallet is not connected to a provider.
+- `ValueError` if the fee payer does not match this account or the provider cannot calculate the fee.
+
 **Example:**
 ```javascript
 const quote = await readOnlyAccount.quoteSendTransaction({
@@ -539,6 +589,10 @@ Estimates the fee for an SPL token transfer.
 
 **Returns:** `Promise<{fee: bigint}>` - Object containing fee estimate (in lamports)
 
+**Throws:**
+- `ProviderRequiredError` if the wallet is not connected to a provider.
+- `ValueError` if the token amount exceeds the supported integer range or the provider cannot calculate the fee.
+
 **Example:**
 ```javascript
 const quote = await readOnlyAccount.quoteTransfer({
@@ -551,7 +605,7 @@ console.log('Transfer fee estimate:', quote.fee, 'lamports')
 
 ##### `getTransaction(hash)` and `waitForTransaction(hash, options?)`
 
-Read-only accounts expose the same normalized signature-status methods as owned accounts. `getTransaction()` maps `processed`, `confirmed`, and `finalized` to `pending`, `confirmed`, and `final`; `waitForTransaction()` defaults to a four-second interval and 60-second timeout. Inspect `success` after settlement. `getTransactionReceipt()` remains available for the native object but is deprecated.
+Read-only accounts expose the same normalized signature-status methods as owned accounts. `getTransaction()` maps `processed`, `confirmed`, and `finalized` to `pending`, `confirmed`, and `final`; it throws `ProviderRequiredError` without a provider, `ValueError` for an invalid signature, and `NoSuchElementError` when a valid signature is absent from history. `waitForTransaction()` propagates the provider and input errors, treats an absent history entry as transient, and throws `TimeoutError` if the target is not reached within its default 60 seconds. Inspect `success` after settlement. `getTransactionReceipt()` remains available for the native object but is deprecated.
 
 ## Types
 

@@ -7,14 +7,23 @@ This guide covers [prerequisites](#prerequisites), how to [create an ERC-4337 ac
 
 ## Prerequisites
 
-* `@tetherto/wdk-wallet-evm-erc-4337` installed alongside [@tetherto/wdk-protocol-bridge-usdt0-evm](https://www.npmjs.com/package/@tetherto/wdk-protocol-bridge-usdt0-evm).
 * Bundler and paymaster endpoints for your chain (example uses Arbitrum public URLs from the API reference).
 * An ERC-4337 source chain with a configured transaction-value helper: Ethereum, Arbitrum, Plasma, or Polygon.
-* An account recognized as the same ERC-4337 class instance used by the bridge package. In `1.0.0-beta.9`, the bridge depends on ERC-4337 wallet `1.0.0-beta.11` and still uses concrete class checks for its helper and batching flow. Separate package copies, including those introduced by differing versions, can miss this path. Verify deduplication and runtime class identity before using this guide. The new `sendTransaction()` capability check alone does not enable batching. See [account requirements](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements).
+
+Bridge beta.10 uses concrete classes from its exact ERC-4337 wallet beta.11 dependency. For this helper and approval-batching flow, install that pair in an isolated dependency boundary:
+
+```bash title="Install the exact ERC-4337 bridge pair"
+npm install --save-exact @tetherto/wdk-protocol-bridge-usdt0-evm@1.0.0-beta.10 @tetherto/wdk-wallet-evm-erc-4337@1.0.0-beta.11
+npm ls @tetherto/wdk-wallet-evm-erc-4337 --all
+```
+
+The dependency tree must contain only `@tetherto/wdk-wallet-evm-erc-4337@1.0.0-beta.11`, with the bridge's entry marked `deduped`. If it also shows beta.20 at the application root and beta.11 beneath the bridge, the beta.20 account is a different class instance. Bridge beta.10 then takes its non-batched standard path, skips the transaction-value helper and per-call ERC-4337 configuration, and does not combine approval with the bridge call.
+
+Do not override the bridge's dependency to beta.20 or downgrade an application that needs beta.20. Keep that application on the [standard account flow](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens), or isolate this exact beta.10/beta.11 pair in a separate package. The `sendTransaction()` capability check alone does not enable batching. See [account requirements](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements).
 
 ## Create a WalletAccountEvmErc4337 account
 
-You can construct an ERC-4337 signing account using [`new WalletAccountEvmErc4337(seed, path, config)`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#constructor-1) with chain, provider, bundler, and paymaster settings:
+The exact beta.11 package publicly exports `WalletAccountEvmErc4337` and accepts `seed`, `path`, and a configuration with chain, provider, bundler, Safe modules, and paymaster fields:
 
 ```javascript title="ERC-4337 account on Arbitrum"
 import { WalletAccountEvmErc4337 } from '@tetherto/wdk-wallet-evm-erc-4337'
@@ -42,7 +51,11 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account)
 
 ## Run a gasless bridge with paymaster options
 
-You can execute [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config) with a second argument that includes `paymasterToken` and an optional `bridgeMaxFee` override. Do not submit a separate `account.approve()` call for this flow. The normal ERC-4337 batch is an ERC20 approval to the source-chain transaction-value helper followed by the helper bridge call, submitted in one UserOperation. On Ethereum mainnet, when the resolved token is USD₮ at `0xdAC17F958D2ee523a2206206994597C13D831ec7`, the protocol queries the same ERC-4337 account's allowance for that token and helper spender. If the current allowance and computed `approveAmount` are both greater than zero, it prepends `approve(spender, 0)`, then `approve(spender, approveAmount)`, then the helper bridge call. `quoteBridge()` uses the same ordering for a `WalletAccountReadOnlyEvmErc4337`. Standard EVM accounts and every other chain/token path are unchanged.
+You can execute [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config) with a second argument that includes `paymasterToken`. Do not submit a separate `account.approve()` call for this flow. The normal ERC-4337 batch is an ERC20 approval to the source-chain transaction-value helper followed by the helper bridge call, submitted in one UserOperation. On Ethereum mainnet, when the resolved token is USD₮ at `0xdAC17F958D2ee523a2206206994597C13D831ec7`, the protocol queries the same ERC-4337 account's allowance for that token and helper spender. If the current allowance and computed `approveAmount` are both greater than zero, it prepends `approve(spender, 0)`, then `approve(spender, approveAmount)`, then the helper bridge call. `quoteBridge()` uses the same ordering for a `WalletAccountReadOnlyEvmErc4337`. Standard EVM accounts and every other chain/token path are unchanged.
+
+<Callout type="warn">
+In `1.0.0-beta.10`, `bridgeFee` for this helper flow is in source-native base units. Native-gas and sponsored flows use compatible units. Token-paid gas still returns the account `fee` in paymaster-token units, so `fee + bridgeFee` is not one currency and beta.10 cannot provide a meaningful single-currency `bridgeMaxFee` spending cap for that mode. `bridge()` requotes during execution, so a separate quote cannot bind a converted cap to the submitted operation.
+</Callout>
 
 ```javascript title="Gasless bridge with paymasterToken"
 const USDT_TOKEN_ADDRESS = process.env.USDT_SOURCE_TOKEN_ADDRESS
@@ -50,30 +63,30 @@ const USDT0_OFT_ADDRESS = process.env.USDT0_OFT_ADDRESS
 const amount = 1000000n
 const paymasterToken = { address: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9' }
 
-const result = await bridgeProtocol.bridge(
-  {
-    targetChain: 'polygon',
-    recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-    token: USDT_TOKEN_ADDRESS,
-    amount,
-    oftContractAddress: USDT0_OFT_ADDRESS
-  },
-  {
-    paymasterToken
-  }
-)
+try {
+  const result = await bridgeProtocol.bridge(
+    {
+      targetChain: 'polygon',
+      recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+      token: USDT_TOKEN_ADDRESS,
+      amount,
+      oftContractAddress: USDT0_OFT_ADDRESS
+    },
+    {
+      paymasterToken
+    }
+  )
 
-console.log('Bridge hash:', result.hash)
-console.log('Account fee:', result.fee)
-console.log('Bridge fee:', result.bridgeFee)
+  console.log('Bridge hash:', result.hash)
+  console.log('Account fee:', result.fee)
+  console.log('Bridge fee:', result.bridgeFee)
+} finally {
+  account.dispose()
+}
 ```
 
 <Callout type="info">
 The bundled approval sequence and helper call produce one UserOperation hash. For the Ethereum mainnet USD₮ reset case, the sequence is `approve(spender, 0)`, `approve(spender, approveAmount)`, then the helper call; otherwise it is `approve(spender, approveAmount)` followed by the helper call. The protocol approves enough source token for the amount plus its helper-calculated bridge fee and tolerance.
-</Callout>
-
-<Callout type="warn">
-In `1.0.0-beta.9`, `bridgeFee` for this helper flow is in bridged-token base units. The account's `fee` is in native base units for native gas, paymaster-token base units for token-paid gas, or zero for sponsored gas. The protocol numerically adds those values when enforcing `bridgeMaxFee`. Do not interpret the sum as one currency or set an ERC-4337 cap until your integration has confirmed compatible units for its payment mode.
 </Callout>
 
 <Callout type="warn">
@@ -83,3 +96,9 @@ Paymaster policies, token addresses, and URLs are service-specific. Confirm supp
 ## Next Steps
 
 Bridge to non-EVM chains in [Bridge cross-ecosystem](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-cross-ecosystem). For failure modes and cleanup, read [Handle errors](/sdk/bridge-modules/bridge-usdt0-evm/guides/handle-errors).
+
+---
+
+## Need Help?
+
+<SupportCards />

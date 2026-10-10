@@ -7,7 +7,7 @@ schemaType: TechArticle
 
 Use local transaction policies to evaluate account and protocol calls before execution. This guide covers [registering policies](#register-policies), [method coverage and migration](#supported-operations), and [simulating calls](#simulate-before-execution).
 
-Use `@tetherto/wdk` v1.0.0-beta.17 or later for method exclusions and coverage beyond the earlier fixed operation list. The examples assume you have loaded an app-owned `seedPhrase` and registered the relevant wallet modules.
+Use `@tetherto/wdk` v1.0.0-beta.18 or later for these examples because they import `DENIAL_CODES` and read the stable `error.code` and `error.operation` fields. Method exclusions and coverage beyond the earlier fixed operation list arrived in beta.17. The examples assume you have loaded an app-owned `seedPhrase` and registered the relevant wallet modules.
 
 <Callout type="warn">
 Transaction policies are local pre-execution controls. They do not enforce rules on-chain, replace smart-contract permissions, or validate live token metadata, balances, prices, or contract state.
@@ -49,7 +49,7 @@ To register and exercise the send limit:
 You can enforce this local limit before [`sendTransaction()`](/sdk/core-module/api-reference#iwalletaccount) reaches the wallet:
 
 ```typescript title="Register A Local Send Limit"
-import WDK, { PolicyViolationError } from '@tetherto/wdk'
+import WDK, { DENIAL_CODES, PolicyViolationError } from '@tetherto/wdk'
 
 const wdk = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
@@ -91,7 +91,11 @@ try {
   })
 } catch (error) {
   if (error instanceof PolicyViolationError) {
-    console.error(error.reason)
+    if (error.code === DENIAL_CODES.RULE_DENIED) {
+      console.error(error.operation, error.reason)
+    } else {
+      console.error(error.operation, error.code)
+    }
   }
 }
 ```
@@ -114,12 +118,12 @@ WDK evaluates policies in this order:
 
 1. If no registered policy applies to the account, WDK returns the original account. No policy proxy or `simulate` mirror is added.
 2. If at least one policy applies, the account is governed. WDK wraps its discovered public methods and registered protocol methods unless their names are in the exclusion set. See [Supported Operations](#supported-operations) for the discovery boundary.
-3. If no rule addresses the attempted operation, WDK blocks the call with `PolicyViolationError` and `reason: 'no-applicable-rule'`.
+3. If no rule addresses the attempted operation, WDK blocks the call with `PolicyViolationError.code: 'NO_APPLICABLE_RULE'`.
 4. Account-scoped policies run before project-scoped policies. Within each scope, policies and rules run in registration order.
 5. A matching account-scoped `DENY` blocks immediately. A matching account-scoped `ALLOW` is recorded unless it has `override_broader_scope: true`.
 6. A matching account-scoped `ALLOW` with `override_broader_scope: true` allows the call immediately and skips project-scoped policies. This option is only valid on account-scoped `ALLOW` rules.
 7. Project-scoped rules run after account-scoped rules. A matching project-scoped `DENY` blocks. If no `DENY` matches and at least one `ALLOW` matched, WDK allows the call.
-8. If rules addressed the operation but none matched, WDK blocks with `reason: 'governed-but-unmatched'`.
+8. If rules addressed the operation but none matched, WDK blocks with `PolicyViolationError.code: 'GOVERNED_BUT_UNMATCHED'`.
 
 Conditions run in array order and every condition must return truthy for the rule to match. If an `ALLOW` condition throws or times out, WDK treats that rule as unmatched. If a `DENY` condition throws or times out, WDK blocks the call.
 
@@ -211,7 +215,7 @@ Coverage comes from public string-named methods declared directly on the object 
 
 ### Migrate From The Fixed Operation List
 
-Default-deny evaluation already existed before beta.17. This release expands which methods reach it. A call that previously bypassed evaluation can now fail with `reason: 'no-applicable-rule'`.
+Default-deny evaluation already existed before beta.17. This release expands which methods reach it. In beta.18, a call that no rule addresses fails with `code: 'NO_APPLICABLE_RULE'` and identifies the blocked method through `operation`.
 
 1. Compare the methods your app calls with the resolved exclusions from [`getPolicyExclusions()`](/sdk/core-module/api-reference#getpolicyexclusions).
 2. Register an explicit `ALLOW` rule for each additional operation your app intends to permit, then verify its simulation and denial cases.
@@ -388,10 +392,10 @@ const result = await (account as any).simulate.sendTransaction({
   value: 2000000000000000n
 })
 
-console.log(result.decision, result.reason, result.trace)
+console.log(result.decision, result.code, result.reason, result.trace)
 ```
 
-Simulation results include `decision`, `policy_id`, `matched_rule`, `reason`, and `trace`. Protocol write methods are also mirrored, for example `account.simulate.getSwapProtocol(label).swap(...)` or `account.simulate.getSdaProtocol(label).createDepositAddress(...)`.
+Simulation results include `decision`, `code`, `policy_id`, `matched_rule`, `reason`, and `trace`. `code` is `null` on `ALLOW`, `RULE_DENIED` when a `DENY` rule matched, `NO_APPLICABLE_RULE` when no rule addressed the operation, or `GOVERNED_BUT_UNMATCHED` when addressed rules did not match. Protocol write methods are also mirrored, for example `account.simulate.getSwapProtocol(label).swap(...)` or `account.simulate.getSdaProtocol(label).createDepositAddress(...)`.
 
 <Callout type="info">
 In this beta, `simulate` is added at runtime but is not typed on the account return type. Use a local helper interface or a narrow `as any` cast at the call site.
@@ -401,7 +405,7 @@ In this beta, `simulate` is added at runtime but is not typed on the account ret
 
 `PolicyConfigurationError` means WDK rejected the policy setup or could not safely evaluate a governed call. Common causes include invalid scopes, actions, empty or non-string operation names, rules naming excluded methods, invalid condition functions or timeout options, missing account bindings, unknown wallet identifiers, or object arguments that cannot be cloned.
 
-`PolicyViolationError` means a governed call was blocked by a matching `DENY` rule or by default-deny when no `ALLOW` rule matched. Catch it around the write call and surface the `reason` to the user or approval workflow.
+`PolicyViolationError` means a governed call was blocked by a matching `DENY` rule or by default-deny when no `ALLOW` rule matched. Its `operation` names the blocked method. Branch on its stable `code` value rather than parsing `reason`, because `RULE_DENIED` can carry application-owned rule text. The exported `DENIAL_CODES` object provides the three values used by errors and simulations.
 
 ## Runtime Caveats
 

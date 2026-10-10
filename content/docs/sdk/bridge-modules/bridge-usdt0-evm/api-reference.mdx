@@ -48,10 +48,12 @@ The constructor accepts the shared `IWalletAccount` and `IWalletAccountReadOnly`
 
 The account must still implement EVM-compatible `getAddress()` and `quoteSendTransaction()` operations. Both bridge methods require an RPC URL or EIP-1193 provider in the wallet configuration. The constructor reads `account._config.provider`, an internal field absent from the shared interfaces. Implementing the interface alone does not establish runtime compatibility; an account without `_config` fails construction.
 
+Bridge beta.10 creates a `JsonRpcProvider` for a string and a `BrowserProvider` for every non-string value. A directly constructed `WalletAccountEvm` retains its original URL or EIP-1193 input and is compatible. A beta.19 `WalletManagerEvm` account instead contains the manager's ethers `Provider`; passing it to this constructor throws `INVALID_ARGUMENT: invalid EIP-1193 provider`. Do not mutate `_config` to work around this. Construct a separate standard account as shown in [Get Started](/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started).
+
 Read-only accounts can use `quoteBridge()`, subject to the same provider, route, balance, and allowance requirements. They cannot execute `bridge()` without `sendTransaction()`.
 
 <Callout type="warn">
-ERC-4337 helper selection and approval batching still depend on the concrete classes resolved by the bridge package: `WalletAccountReadOnlyEvmErc4337` for helper construction and quotes, and `WalletAccountEvmErc4337` for execution. A custom account or an account from a separate copy of the ERC-4337 package does not receive that path solely because it implements `sendTransaction()`. The bridge release depends on ERC-4337 wallet `1.0.0-beta.11`; verify package deduplication and runtime class identity when combining wallet versions. See [Bridge with ERC-4337](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337#prerequisites).
+ERC-4337 helper selection and approval batching still depend on the concrete classes resolved by the bridge package: `WalletAccountReadOnlyEvmErc4337` for helper construction and quotes, and `WalletAccountEvmErc4337` for execution. A custom account or an account from a separate copy of the ERC-4337 package does not receive that path solely because it implements `sendTransaction()`. Bridge beta.10 depends on ERC-4337 wallet beta.11. Use the exact isolated pairing and resolution check in [Bridge with ERC-4337](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337#prerequisites); a separately installed beta.20 account is a different class instance and falls through to the non-batched standard path.
 </Callout>
 
 ### Methods
@@ -84,6 +86,7 @@ With a standard EVM account, approve the source-chain bridge spender before call
 **Throws:**
 - Error if the account has no callable `sendTransaction()` method
 - Error if no provider is configured
+- Error if `recipient` is invalid for the target chain, resolves to a zero address, or uses a TON workchain other than `0`
 - Error if the combined fee value is equal to or greater than `bridgeMaxFee`
 
 **Example:**
@@ -138,7 +141,10 @@ For standard EVM accounts, some providers estimate the same bridge transaction t
 
 **Returns:** `Promise<Omit<BridgeResult, 'hash'>>` - Bridge cost estimate
 
-**Throws:** Error if no provider is configured
+**Throws:**
+- Error if no provider is configured
+- Error if `recipient` is invalid for the target chain, resolves to the zero address, or, for TRON, is the burn address
+- Error if a TON `recipient` uses a workchain other than `0`
 
 **Standard-account example:**
 ```javascript
@@ -223,7 +229,7 @@ interface BridgeOptions {
 interface BridgeResult {
   hash: string;                     // Main bridge transaction hash
   fee: bigint;                      // Account quote fee; unit depends on account gas-payment mode
-  bridgeFee: bigint;                // Standard: source native unit; ERC-4337 helper: bridged-token base units
+  bridgeFee: bigint;                // Source-chain native base units
 }
 ```
 
@@ -253,13 +259,17 @@ type Erc4337BridgeConfig = Erc4337QuoteConfig & {
 |---|---|---|
 | `WalletAccountEvm` | Source-chain native base units | Source-chain native base units |
 | Other compatible accounts using the single-transaction path | Account-specific `quoteSendTransaction()` fee units | Source-chain native base units |
-| ERC-4337 with native gas | Source-chain native base units | Bridged-token base units |
-| ERC-4337 with token-paid gas | Paymaster-token base units | Bridged-token base units |
-| ERC-4337 with sponsored gas | `0` | Bridged-token base units |
+| ERC-4337 with native gas | Source-chain native base units | Source-chain native base units |
+| ERC-4337 with token-paid gas | Paymaster-token base units | Source-chain native base units |
+| ERC-4337 with sponsored gas | `0` | Source-chain native base units |
 
 <Callout type="warn">
-In `1.0.0-beta.9`, `bridge()` numerically adds `fee + bridgeFee` when checking `bridgeMaxFee`, even when the fields have different denominations. This affects ERC-4337 helper flows and any compatible account whose quoted fee is not in source-chain native base units. Do not interpret that sum as a total monetary cost. Set a cap only after confirming that the selected account payment mode produces compatible units. The equality boundary is rejected.
+In `1.0.0-beta.10`, the ERC-4337 helper returns LayerZero's `nativeFee` as `bridgeFee`. Native-gas and sponsored flows therefore have compatible `fee` and `bridgeFee` units. Token-paid gas still mixes a paymaster-token `fee` with a source-native `bridgeFee`, and another compatible account can expose its own quote denomination. Do not interpret a mixed-unit sum as a total monetary cost. Beta.10 cannot provide a meaningful single-currency `bridgeMaxFee` spending cap for token-paid gas; a separate quote cannot bind a converted cap because `bridge()` requotes during execution. The equality boundary is rejected.
 </Callout>
+
+### Recipient validation
+
+Beta.10 validates `recipient` during both `quoteBridge()` and `bridge()`. It uses the target chain's EVM, Solana, TON, or TRON address validator, rejects an all-zero destination, rejects the TRON zero/burn address, and accepts TON workchain `0` only. A failure starts with `Invalid recipient address for target chain '<chain>'` and includes the validation reason.
 
 `Erc4337QuoteConfig` is a partial operation-level override of the wallet's token-paid, sponsored, or native-gas configuration. Sponsored gas uses `isSponsored: true` and can include `sponsorshipPolicyId`; native gas uses `useNativeCoins: true`. See the [ERC-4337 wallet configuration](/sdk/wallet-modules/wallet-evm-erc-4337/configuration) for the complete account requirements.
 
@@ -359,6 +369,15 @@ try {
   }
   if (error.message.includes('cannot be equal to the source chain')) {
     console.error('Cannot bridge to the same chain')
+  }
+  if (error.message.includes('Invalid recipient address')) {
+    console.error('Recipient is invalid for the target chain')
+  }
+  if (error.message.includes('ZERO_ADDRESS')) {
+    console.error('Recipient resolves to the zero address or the TRON burn address')
+  }
+  if (error.message.includes('UNSUPPORTED_WORKCHAIN')) {
+    console.error('TON recipients must use workchain 0')
   }
 }
 ```

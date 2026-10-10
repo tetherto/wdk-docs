@@ -7,7 +7,7 @@ This guide covers [prerequisites](#prerequisites), how to [verify the route](#ve
 
 ## Prerequisites
 
-A [`Usdt0ProtocolEvm`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#usdt0protocolevm) backed by a non-read-only EVM account, with enough source tokens and native gas where required. Standard EVM accounts must approve the source-chain bridge spender before calling [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config). Supported ERC-4337 accounts bundle approval into the bridge UserOperation. Recipient strings must match each network’s address encoding.
+A [`Usdt0ProtocolEvm`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#usdt0protocolevm) backed by a non-read-only EVM account, with enough source tokens and native gas where required. Standard EVM accounts must approve the source-chain bridge spender before calling [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config). Supported ERC-4337 accounts bundle approval into the bridge UserOperation. Beta.10 validates recipient strings for their target ecosystem and rejects zero destinations before quoting or executing.
 
 The examples below use a standard EVM account. For `USDT_BRIDGE_SPENDER_ADDRESS`, use a verified source-chain OFT or bridge contract that supports the selected destination. See [Bridge Tokens](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens#prerequisites) for address sources.
 
@@ -50,7 +50,7 @@ console.log('Bridge fee:', solanaResult.bridgeFee)
 ```
 
 <Callout type="warn">
-Validate Solana addresses (length and base58 alphabet) before bridging. A malformed `recipient` fails the operation.
+Beta.10 validates the Solana address and rejects the all-zero public key before quoting or bridging. Keep application validation before the write so the user can correct the recipient earlier.
 </Callout>
 
 ## Bridge to TON
@@ -79,6 +79,10 @@ const tonResult = await bridgeProtocol.bridge({
 console.log('TON bridge hash:', tonResult.hash)
 ```
 
+<Callout type="warn">
+Beta.10 accepts valid TON recipients on workchain `0`. It rejects other workchains, including `-1`, with `UNSUPPORTED_WORKCHAIN`, and rejects an all-zero destination.
+</Callout>
+
 ## Bridge to TRON
 
 You can set `targetChain` to `tron` and pass a base58Check TRON address (typically starting with `T`) to [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config):
@@ -105,6 +109,10 @@ const tronResult = await bridgeProtocol.bridge({
 console.log('TRON bridge hash:', tronResult.hash)
 ```
 
+<Callout type="warn">
+Beta.10 validates the TRON address and rejects its zero/burn address before quoting or bridging.
+</Callout>
+
 <Callout type="info">
 LayerZero endpoint IDs for these destinations are listed under [Supported chains](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#supported-chains) in the API reference.
 </Callout>
@@ -112,3 +120,9 @@ LayerZero endpoint IDs for these destinations are listed under [Supported chains
 ## Next Steps
 
 Harden integrations with [Handle errors](/sdk/bridge-modules/bridge-usdt0-evm/guides/handle-errors), or return to [Bridge tokens](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens) for EVM-only flows and quotes.
+
+---
+
+## Need Help?
+
+<SupportCards />
