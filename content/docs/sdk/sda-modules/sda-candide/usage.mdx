@@ -1,0 +1,256 @@
+---
+title: Candide Smart Deposit Addresses Usage
+description: Discover supported routes, estimate a deposit, activate and renew a Candide forwarding address, and track delivery.
+docType: how-to
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+This page explains [installation](#installation), [server setup](#1-prepare-the-server), [route discovery](#2-discover-a-route), [deposit estimates](#3-estimate-a-deposit), [activation](#4-activate-the-address), [renewal](#5-renew-before-displaying-the-address), [delivery tracking](#6-track-delivery), [reactivation](#reactivate-an-expired-address-optional), and [error handling](#handle-failures). See [Need Help?](#need-help) for support.
+
+The JavaScript snippets form one server-side example. They use Ethereum as the source and Arbitrum as the destination, subject to runtime route discovery. They do not send a deposit or guarantee that a route is currently available.
+
+## Installation
+
+Install [`@candidelabs/wdk-protocol-sda-candide@1.0.0-beta.1`](https://www.npmjs.com/package/@candidelabs/wdk-protocol-sda-candide/v/1.0.0-beta.1) with its declared minimum WDK wallet peer:
+
+```bash
+npm install @candidelabs/wdk-protocol-sda-candide@1.0.0-beta.1 @tetherto/wdk-wallet@1.0.0-beta.19
+```
+
+The package requires Node.js 20 or later. Keep the host application and module on one shared WDK wallet dependency matching `^1.0.0-beta.19`. The examples below use the published `1.0.0-beta.1` implementation; inspect its [source repository](https://github.com/candidelabs/wdk-protocol-sda-candide) for provider-specific behavior.
+
+<Callout type="info">
+With `@tetherto/wdk@1.0.0-beta.18`, passing this class to `wdk.registerProtocol()` fails TypeScript's constructor check because Candide requires `config`. Use direct construction as shown below; that flow works with the published declarations.
+</Callout>
+
+## 1. Prepare the Server
+
+Before running the example:
+
+1. Obtain the Forwarding Address API URL and a forwarding policy secret from the [Candide dashboard](https://dashboard.candide.dev).
+2. Set `CANDIDE_FORWARDING_API_URL` and `CANDIDE_FORWARDING_POLICY_SECRET` on your server. The URL itself carries a team API key. Protect both values.
+3. Set `CANDIDE_RECIPIENT` to an EVM address whose owner can receive funds on the destination chain. Authenticate that recipient through your application's account flow and establish their control of the address. Address syntax alone does not establish ownership or the ability to withdraw on a source chain.
+4. Set `CANDIDE_RECOVERY_WITHDRAWER` to the wallet chosen for time-delayed recovery, and `CANDIDE_DEPOSIT_AMOUNT` to a positive integer amount in the selected input token's base units.
+
+The [recovery model](/sdk/sda-modules/sda-candide/configuration#recipient-and-recovery-withdrawer) grants the recipient and recovery wallet different rights. Review it before activating an address.
+
+You can construct [`CandideForwardingProtocol`](/sdk/sda-modules/sda-candide/api-reference#constructor) using validated server settings:
+
+```javascript
+import CandideForwardingProtocol from '@candidelabs/wdk-protocol-sda-candide'
+
+const apiUrl = process.env.CANDIDE_FORWARDING_API_URL
+const policySecret = process.env.CANDIDE_FORWARDING_POLICY_SECRET
+const recipient = process.env.CANDIDE_RECIPIENT
+const recoveryWithdrawer = process.env.CANDIDE_RECOVERY_WITHDRAWER
+const amountText = process.env.CANDIDE_DEPOSIT_AMOUNT
+const isAddress = (value) => typeof value === 'string'
+  && /^0x[0-9a-fA-F]{40}$/.test(value)
+  && value.toLowerCase() !== '0x0000000000000000000000000000000000000000'
+
+if (!apiUrl || new URL(apiUrl).protocol !== 'https:') {
+  throw new Error('Configure the dashboard HTTPS API URL')
+}
+if (!policySecret) throw new Error('Configure the server policy secret')
+if (!isAddress(recipient) || !isAddress(recoveryWithdrawer)) {
+  throw new Error('Configure valid recipient and recovery wallets')
+}
+if (!amountText || !/^[1-9][0-9]*$/.test(amountText)) {
+  throw new Error('Configure a positive deposit amount in input-token base units')
+}
+
+const inputAmount = BigInt(amountText)
+const sourceChain = 1
+const destinationChain = 42161
+const sda = new CandideForwardingProtocol(undefined, {
+  apiUrl,
+  policySecret,
+  recoveryWithdrawer,
+  routesCacheTtlMs: 0,
+})
+```
+
+This instance is unbound: address creation supplies `destinationAddress` explicitly. The example disables route-cache reuse so later descriptors use a current provider response. Provider support can still change after a check. You can instead bind a full or read-only WDK account to use its EVM address as the default recipient. API operations do not require a signing account.
+
+## 2. Discover a Route
+
+Use current provider data for chain and token support. The following example selects a USD₮ or USD₮0 route token and fails if neither is available. In production, verify the returned token contract and decimals against your asset allowlist before showing it to users; a symbol alone does not authenticate a token.
+
+You can discover accepted tokens with [`getSupportedRoutes()`](/sdk/sda-modules/sda-candide/api-reference#getsupportedroutes):
+
+```javascript
+const routes = await sda.getSupportedRoutes({ sourceChain, destinationChain })
+const route = routes.find((candidate) => candidate.inputTokens.some(
+  (token) => token.symbol === 'USDT' || token.symbol === 'USDT0',
+))
+const token = route?.inputTokens.find(
+  (candidate) => candidate.symbol === 'USDT' || candidate.symbol === 'USDT0',
+)
+if (!token) throw new Error('No matching route token is currently available')
+```
+
+`token.token` is the source-chain ERC-20 contract address. A route delivers each input token as its equivalent on the destination chain; supplying `outputAsset` does not select another asset.
+
+You can request the route's current bridge minimum with [`getSupportedRoutes()`](/sdk/sda-modules/sda-candide/api-reference#getsupportedroutes) by supplying `sourceToken`:
+
+```javascript
+const [tokenRoute] = await sda.getSupportedRoutes({
+  sourceChain,
+  destinationChain,
+  sourceToken: token.token,
+})
+const minimum = tokenRoute?.limits?.min
+if (minimum !== undefined && inputAmount <= BigInt(minimum)) {
+  throw new Error('Choose an amount above the current bridge minimum')
+}
+```
+
+The minimum is in input-token base units and may be absent. It is the smallest minimum reported across bridges, rather than a guarantee that every bridge accepts the amount. Leave a margin and re-estimate before displaying instructions.
+
+## 3. Estimate a Deposit
+
+You can request a non-binding delivery estimate with [`quoteDeposit()`](/sdk/sda-modules/sda-candide/api-reference#quotedeposit):
+
+```javascript
+const quote = await sda.quoteDeposit({
+  sourceChain,
+  inputToken: token.token,
+  destinationChain,
+  inputAmount,
+})
+```
+
+Review `quote.outputAsset`, `quote.outputAmount`, `quote.fees`, and `quote.bridge`. `outputAsset` identifies the destination token contract; `outputAmount` uses that token's base units. Fees are in the input token's base units. Do not compare raw amounts across tokens with different decimals or subtract an included fee again.
+
+This initial estimate does not include a particular address's sponsorship policy. It does not create an address, submit a deposit, or bind the later forward to the displayed bridge or amounts.
+
+## 4. Activate the Address
+
+<Callout type="warn">
+Activation sends a provider request under your forwarding policy. Confirm the recipient, destination chain, recovery wallet, allowed input token, and amount before displaying deposit instructions. The contracts use an upgradeable beacon; address verification does not establish immutable contract code.
+</Callout>
+
+You can activate monitoring using [`createDepositAddress()`](/sdk/sda-modules/sda-candide/api-reference#createdepositaddress):
+
+```javascript
+const [deposit] = await sda.createDepositAddress({
+  sourceChains: [sourceChain],
+  destinationChain,
+  destinationAddress: recipient,
+})
+```
+
+The method returns one address descriptor. The destination chain is automatically added to its `sourceChains`. Store the descriptor's `address`, `id`, recipient, recovery wallet, destination chain, and `salt`. The descriptor's `id` equals its address. Only show supported chain and token pairs from `supportedInputTokens`.
+
+For a policy-aware preview, request a fresh estimate with [`quoteDeposit()`](/sdk/sda-modules/sda-candide/api-reference#quotedeposit) and the activated address:
+
+```javascript
+const addressQuote = await sda.quoteDeposit({
+  sourceChain,
+  inputToken: token.token,
+  destinationChain,
+  inputAmount,
+  depositAddress: deposit.address,
+})
+```
+
+Inspect `addressQuote.sponsored` and each fee's `included` flag. With sponsorship, the fees are paid under the policy rather than deducted from delivery. The estimate remains non-binding. Do not fund an address after an `ADDRESS_MISMATCH` or unexplained `DEPLOYMENT_CHANGED` error.
+
+## 5. Renew Before Displaying the Address
+
+Monitoring is time-limited. Refresh it when opening the deposit screen, including for an address previously created by this app. Do not show an address for funding if renewal fails or the refreshed expiry is missing or already past.
+
+You can refresh monitoring using [`renewDepositAddress()`](/sdk/sda-modules/sda-candide/api-reference#renewdepositaddress):
+
+```javascript
+const refreshed = await sda.renewDepositAddress(deposit.id)
+if (refreshed.expiry === undefined || refreshed.expiry * 1000 <= Date.now()) {
+  throw new Error('The address is not currently confirmed for monitoring')
+}
+if (refreshed.destinationChain !== destinationChain
+  || refreshed.destinationAddress.toLowerCase() !== recipient.toLowerCase()) {
+  throw new Error('The refreshed destination does not match the intended recipient')
+}
+const stillSupported = refreshed.supportedInputTokens.some((candidate) =>
+  candidate.chain === sourceChain && candidate.token.toLowerCase() === token.token.toLowerCase(),
+)
+if (!refreshed.sourceChains.includes(sourceChain) || !stillSupported) {
+  throw new Error('The selected source chain and token are no longer supported')
+}
+const activeUntil = new Date(refreshed.expiry * 1000).toISOString()
+```
+
+Show `refreshed.address`, supported chain and token choices, the recipient, destination, fresh estimate, and `activeUntil` together. The depositor then sends an ordinary transfer on a supported source chain. Sending is outside this SDK flow and requires that wallet's applicable gas and transfer controls.
+
+Renewal reuses stored address inputs and covers every recorded source chain, including expired ones. For a looked-up address, `expiry` is the earliest per-chain expiry. A past value means at least one monitored chain has expired.
+
+## 6. Track Delivery
+
+You can list forwards through an address using [`getTransfers()`](/sdk/sda-modules/sda-candide/api-reference#gettransfers):
+
+```javascript
+const transfers = await sda.getTransfers(refreshed.address, { limit: 20 })
+for (const transfer of transfers) {
+  console.log(transfer.id, transfer.status, transfer.destinationTxHash ?? null)
+}
+```
+
+Use bounded polling with a delay and cancellation in your application. An empty history is not proof that the depositor never sent funds: history contains detected forwards, rather than every raw deposit. Preserve the transfer's opaque `id` for [`getTransfer()`](/sdk/sda-modules/sda-candide/api-reference#gettransfer), and use [`getTransfersByRecipient()`](/sdk/sda-modules/sda-candide/api-reference#gettransfersbyrecipient) for history across that recipient's addresses.
+
+Candide's `pending` and `unknown` become WDK `processing`. An unrecognized provider value becomes WDK `pending`. Keep both `status` and `providerStatus`; do not assume a guaranteed transition sequence. `sourceTxHash` is the forwarding transaction on the source chain, rather than the depositor's original transaction. `sourceAddresses` can be absent, `null`, or contain a `"redacted"` dust entry.
+
+## Reactivate an Expired Address (optional)
+
+You can request reactivation through [`recoverDepositAddress()`](/sdk/sda-modules/sda-candide/api-reference#recoverdepositaddress):
+
+```javascript
+const recovery = await sda.recoverDepositAddress({ id: deposit.id })
+```
+
+`recovery.status === 'reindexed'` means monitoring was refreshed. It does not prove that funds were forwarded or recovered. Continue tracking delivery. The address must have prior activation history, and the server still needs `policySecret`.
+
+On-chain withdrawal is separate from this API operation. Candide provides a [recovery frontend](https://forwarding-address.candidelabs.com/) for that flow. Explicit [`disableDepositAddress()`](/sdk/sda-modules/sda-candide/api-reference#disabledepositaddress) is unsupported; monitoring expires on its own.
+
+## Handle Failures
+
+Import module-specific errors from the package and shared errors from the WDK protocols entrypoint before classifying failures:
+
+```javascript
+import { CandideForwardingError, CandideForwardingErrorReason } from '@candidelabs/wdk-protocol-sda-candide'
+import { InvalidTokenError, NoSuchElementError, ProviderError, SdaError, ValueError } from '@tetherto/wdk-wallet/protocols'
+```
+
+| Failure | Response |
+|---------|----------|
+| `InvalidTokenError` or `ValueError` | Correct the token, amount, chain, address, or missing secret. Refresh route and minimum data. |
+| `SdaError` with `ROUTE_NOT_SUPPORTED` | Select a currently supported route. |
+| `NoSuchElementError` | Check the opaque transfer ID or whether the address was activated. |
+| `ProviderError` with `UNAUTHORIZED` or `FORBIDDEN` | Check server credentials, policy state, and address limits in the dashboard. |
+| `ProviderError` with `NETWORK_ERROR` or `INTERNAL_SERVER_ERROR` | Back off, inspect provider availability, and reconcile address state before retrying activation. |
+| `CandideForwardingError` with `ADDRESS_MISMATCH` | Stop funding both addresses and investigate. The remote activation may already have happened. |
+| `CandideForwardingError` with `DEPLOYMENT_CHANGED` | Verify the new deployment and package release before changing overrides. |
+
+Do not log full API URLs, credentials, or raw error causes. A failed activation response does not establish that the provider performed no action. Use [`getDepositAddress()`](/sdk/sda-modules/sda-candide/api-reference#getdepositaddress) to reconcile known addresses; do not solve uncertainty by issuing a different salt.
+
+## Next Steps
+
+<Cards>
+<Card title="Configuration" href="/sdk/sda-modules/sda-candide/configuration">
+Review recovery rights, credential placement, and verification overrides.
+</Card>
+<Card title="API Reference" href="/sdk/sda-modules/sda-candide/api-reference">
+Check supported methods, result fields, status mappings, and errors.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

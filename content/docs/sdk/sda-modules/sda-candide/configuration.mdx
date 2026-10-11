@@ -1,0 +1,114 @@
+---
+title: Candide Smart Deposit Addresses Configuration
+description: Configure API access, recovery withdrawal, deployment verification, and caching for Candide forwarding addresses.
+docType: reference
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Configure [`CandideForwardingProtocol`](/sdk/sda-modules/sda-candide/api-reference#constructor) with an optional WDK account and the Forwarding Address API URL from the [Candide dashboard](https://dashboard.candide.dev). This page documents [`@candidelabs/wdk-protocol-sda-candide@1.0.0-beta.1`](https://www.npmjs.com/package/@candidelabs/wdk-protocol-sda-candide/v/1.0.0-beta.1); see [installation](/sdk/sda-modules/sda-candide/usage#installation).
+
+## Configuration Fields
+
+| Field | Type | Requirement | Default | Effect |
+|-------|------|-------------|---------|--------|
+| `apiUrl` | `string` | Required | None | Forwarding Address API URL shown in the Candide dashboard; used verbatim for JSON-RPC requests and contains the team API key. |
+| `policySecret` | `string` | Required for creation, renewal, and reactivation | None | Sent as a bearer token for activation requests. Keep it on the server. |
+| `recoveryWithdrawer` | `string` | Optional | Recipient | EVM wallet with time-delayed withdrawal rights. A per-call value overrides this default. |
+| `verifyAddresses` | `boolean` | Optional | `true` | Compare the created address with local derivation. Renewal also checks stored derivation inputs when the API supplies the relayer. |
+| `deployParams` | `Partial<CandideDeployParams>` | Optional | Package pins plus API-reported relayer | Override deployment inputs. Supplying `allowedRelayer` skips the deployment API call. |
+| `deployParamsTtlMs` | `number` | Optional | `600000` | Milliseconds to cache the API-reported deployment inputs and relayer. |
+| `routesCacheTtlMs` | `number` | Optional | `600000` | Milliseconds to cache routes separately for each source chain. |
+
+The module validates the API URL as a non-empty string, rather than checking its origin or scheme. Use the Forwarding Address HTTPS API URL shown in the dashboard and protect it according to your team's API-key policy. A cache TTL of `0` prevents reuse on subsequent calls. Cached route data does not make estimates binding.
+
+## Client and Server Credentials
+
+A client instance can discover routes, estimate deposits, derive addresses, and read forwarding history without a forwarding policy secret. The API URL still contains the team API key. Confirm with Candide which access and exposure model is appropriate for your app; do not describe this API URL as credential-free.
+
+Only your server should hold `policySecret`. Validate the requesting user and their intended recipient before calling creation or renewal endpoints, and do not accept an unrestricted recipient from an unauthenticated request. Check wallet control separately: EVM address syntax does not prove ownership or the ability to recover funds.
+
+You can construct a server instance using environment-backed credentials and a validated recovery wallet:
+
+```javascript
+import CandideForwardingProtocol from '@candidelabs/wdk-protocol-sda-candide'
+
+const apiUrl = process.env.CANDIDE_FORWARDING_API_URL
+const policySecret = process.env.CANDIDE_FORWARDING_POLICY_SECRET
+const recoveryWithdrawer = process.env.CANDIDE_RECOVERY_WITHDRAWER
+
+if (!apiUrl || new URL(apiUrl).protocol !== 'https:') {
+  throw new Error('Configure the dashboard HTTPS API URL')
+}
+if (!policySecret) throw new Error('Configure the server policy secret')
+if (!recoveryWithdrawer || !/^0x[0-9a-fA-F]{40}$/.test(recoveryWithdrawer)
+  || recoveryWithdrawer.toLowerCase() === '0x0000000000000000000000000000000000000000') {
+  throw new Error('Configure a valid recovery wallet')
+}
+
+const sda = new CandideForwardingProtocol(undefined, {
+  apiUrl,
+  policySecret,
+  recoveryWithdrawer,
+})
+```
+
+Do not embed either credential in source files, screenshots, client bundles, or logs. Route application requests through an authenticated backend when the dashboard key must remain private.
+
+## Recipient and Recovery Withdrawer
+
+The optional constructor account accepts a full or read-only WDK account. Its EVM address becomes the default recipient when `destinationAddress` is omitted. A full signing account is not required by the module's API operations.
+
+The recovery wallet selection follows this order:
+
+1. The call's `recoveryWithdrawer`.
+2. The constructor configuration's `recoveryWithdrawer`.
+3. The resolved recipient address.
+
+Candide calls the recovery withdrawer `custodialWithdrawer` in its API and contracts. The SDK handles that mapping. The recipient can withdraw immediately on the source chain; the recovery withdrawer acts after a timelock that the recipient can veto. The SDK does not expose withdrawal or veto methods.
+
+Store the recipient, destination chain, recovery withdrawer, salt, and returned descriptor. Changing those address inputs creates a different address. Renewal reuses the stored inputs rather than the current constructor defaults.
+
+## Deployment Verification
+
+[`getDeployParams()`](/sdk/sda-modules/sda-candide/api-reference#getdeployparams) returns the derivation inputs:
+
+| Field | Meaning |
+|-------|---------|
+| `factory` | Forwarding address factory contract. |
+| `singleton` | Delegate target embedded in the proxy; Candide uses a beacon. |
+| `proxyCreationCode` | Proxy creation bytecode. |
+| `allowedRelayer` | Relayer allowed to trigger forwarding. |
+| `version` | Optional provider deployment identifier. |
+
+The package pins `factory`, `singleton`, and `proxyCreationCode`. Without overrides, it compares those fields with the API before using the API's relayer. A mismatch throws `DEPLOYMENT_CHANGED`.
+
+<Callout type="warn">
+An overridden deployment field is no longer compared with the API. Supplying `allowedRelayer` skips the deployment API call entirely. Use overrides only after independently verifying the deployment; do not use them to silence an unexplained mismatch.
+</Callout>
+
+[`deriveDepositAddress()`](/sdk/sda-modules/sda-candide/api-reference#derivedepositaddress) becomes offline when `deployParams.allowedRelayer` is supplied. Creation still sends an activation request. `verifyAddresses: false` skips local derivation comparison during creation; renewal always rejects a different address returned by activation.
+
+Address verification does not inspect the beacon's current implementation code or prevent future upgrades. It also does not undo a remote activation: `ADDRESS_MISMATCH` can be thrown after the API has activated its returned address. Do not fund either address while investigating.
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/sda-modules/sda-candide/usage">
+Apply these settings to route discovery, activation, and monitoring.
+</Card>
+<Card title="API Reference" href="/sdk/sda-modules/sda-candide/api-reference">
+Check method-specific authentication, return values, and errors.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

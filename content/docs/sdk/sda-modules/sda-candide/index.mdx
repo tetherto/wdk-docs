@@ -1,0 +1,82 @@
+---
+title: Candide Smart Deposit Addresses Overview
+description: Use Candide forwarding addresses to receive supported EVM deposits and deliver them to a recipient through the WDK SDA interface.
+docType: explanation
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+<Callout type="info">
+These pages document [`@candidelabs/wdk-protocol-sda-candide@1.0.0-beta.1`](https://www.npmjs.com/package/@candidelabs/wdk-protocol-sda-candide/v/1.0.0-beta.1). See [installation](/sdk/sda-modules/sda-candide/usage#installation) for the required WDK peer and runtime.
+</Callout>
+
+Candide's [Forwarding Address](https://docs.candide.dev/forwarding-address/overview/) module implements WDK's `ISdaProtocol`. It creates one deterministic EVM address for deposits from the configured source chains, including the destination chain, and forwards supported tokens to a recipient on that destination chain.
+
+Use this module for an app deposit screen that discovers accepted tokens, displays an address and activation expiry, estimates delivery, and tracks forwards. The depositor sends an ordinary token transfer from their wallet or exchange. The module does not sign that deposit or require the depositor's private key.
+
+## Address and Activation Model
+
+A forwarding address depends on the recipient, recovery withdrawer, destination chain, salt, and deployment inputs. The same inputs derive the same address; changing the recipient, recovery withdrawer, destination chain, or salt produces a different address. Requested source chains determine monitoring coverage, rather than a separate address per chain.
+
+Derivation and activation are separate operations:
+
+- `deriveDepositAddress()` computes an address without enabling monitoring. It fetches deployment information unless the relayer is pinned in configuration.
+- `createDepositAddress()` activates monitoring and returns a one-element array. The address descriptor includes its accepted source chains, tokens, and `expiry` in Unix seconds.
+- `renewDepositAddress()` refreshes monitoring on every chain in the address's activation history, including expired chains.
+
+Show expiry beside the address and renew it when opening the deposit screen. A derived address alone does not establish that deposits are monitored. The contract address remains reusable after monitoring expires, but forwarding waits for monitoring to resume.
+
+## Routes and Estimates
+
+Discover routes per source chain using `getSupportedRoutes({ sourceChain })`. Candide controls the current EVM chain and token set. A route delivers each accepted input token as its corresponding destination token; `outputAsset` is not a token-selection filter in this implementation.
+
+Only tokens returned for the route are forwarded. If a route advertises native ETH, Candide identifies it with the zero-address sentinel; other tokens use their ERC-20 contract address. The sender pays the source wallet's applicable gas fee separately from forwarding fees. Unsupported tokens or deposits below the provider's minimum may require manual recovery.
+
+When a source token is specified, a route may include `limits.min` in that token's base units. This is the smallest minimum reported by a bridge, and it changes with market conditions. Leave a margin and request a fresh, non-binding `quoteDeposit()` estimate before displaying deposit instructions. An earlier estimate does not reserve a bridge, fee, or output amount.
+
+The quote's `outputAsset` identifies the destination token by contract address or native-token sentinel. The deposit descriptor's `destinationAddress` is the recipient. Keep these distinct in application state and confirmation screens.
+
+## Recovery and Provider Trust
+
+Candide documents recipient withdrawal rights on the source chain and an optional recovery withdrawer that can act after a timelock, subject to recipient veto. A depositor who funds the address from an exchange may not control the recipient's key on that source chain. Decide who can recover stuck funds before creating the address; the recovery withdrawer is a derivation input.
+
+<Callout type="warn">
+The forwarding contracts use an upgradeable beacon controlled by Candide. Client-side address verification compares derivation inputs and addresses; it does not prove that the implementation behind the beacon cannot change. Review Candide's contract and recovery model before accepting funds.
+</Callout>
+
+The module's `recoverDepositAddress()` reactivates monitoring. It does not sign a transaction, withdraw funds, or confirm that a deposit has arrived. On-chain withdrawal is a separate operation through Candide's [recovery frontend](https://forwarding-address.candidelabs.com/).
+
+## Requirements and Limits
+
+- Node.js 20 or later and a shared `@tetherto/wdk-wallet` peer matching the declared `^1.0.0-beta.19` range. The package also exports a Bare entrypoint.
+- A Forwarding Address API URL from the [Candide dashboard](https://dashboard.candide.dev). The URL carries a team API key; avoid exposing it in logs or public examples.
+- A server-held forwarding policy secret for creation, renewal, and reactivation. Route discovery, quotes, derivation, lookups, and history do not require that policy secret.
+- An EVM recipient address. Binding a WDK account supplies its address as the default recipient; an unbound instance requires an explicit recipient.
+- Explicit disabling is unsupported. Activations expire according to the provider's lifecycle.
+
+Transfer history tracks forwards, rather than every raw deposit transaction. Candide's `pending` and `unknown` provider statuses map to WDK `processing`; an unrecognized status maps to WDK `pending`. See [transfer fields and status mapping](/sdk/sda-modules/sda-candide/api-reference#transfer-fields-and-status) before using them for UI decisions.
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/sda-modules/sda-candide/usage">
+Discover a route, prepare a deposit address, refresh monitoring, and track delivery.
+</Card>
+<Card title="Configuration" href="/sdk/sda-modules/sda-candide/configuration">
+Separate client and server credentials and choose recovery and verification settings.
+</Card>
+<Card title="API Reference" href="/sdk/sda-modules/sda-candide/api-reference">
+Review method contracts, types, errors, and exported derivation helpers.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
