@@ -31185,71 +31185,234 @@ const tokenBalance = await readOnlyAccount.getTokenBalance('0xdAC17F958D2ee523a2
 URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm-7702-gasless/guides/get-started
 Description: Install @tetherto/wdk-wallet-evm-7702-gasless and create an EIP-7702 gasless account.
 
-This guide shows how to install the module, create a sponsored EIP-7702 gasless wallet, and get the account address.
+Create an Ethereum EIP-7702 wallet with Candide or Pimlico. Choose sponsored gas or pay UserOperation gas fees in USD₮.
 
 ## Install
 
-```bash
-npm install @tetherto/wdk-wallet-evm-7702-gasless
+Use Node.js 22 and npm for these examples. The package version below is pinned for this guide.
+
+```bash title="Install the wallet package"
+npm install @tetherto/wdk-wallet-evm-7702-gasless@1.0.0-beta.8
 ```
+
+## Choose a Bundler and Paymaster
+
+Both providers below use Ethereum mainnet (`chainId: 1`) and EntryPoint v0.8. Your chain RPC remains separate from the bundler and paymaster endpoints.
+
+<ProviderSelector key="7702-get-started">
+
+<ProviderContent value="candide">
+
+**Candide**
+
+Create a runtime API key in the [Candide dashboard](https://dashboard.candide.dev) and set `CANDIDE_API_KEY`. Use the [unified authenticated endpoint](https://docs.candide.dev/wallet/api/authenticated-endpoints/) for both bundler and paymaster requests.
+
+</ProviderContent>
+
+<ProviderContent value="pimlico">
+
+**Pimlico**
+
+Follow [Create a Pimlico API key](https://docs.pimlico.io/guides/create-api-key) and set `PIMLICO_API_KEY`. The examples use the same `/v2/1/rpc` endpoint for bundler and paymaster requests.
+
+</ProviderContent>
+
+<Callout type="warn">
+Set `EVM_7702_DELEGATION_ADDRESS` to a smart-account implementation address you have verified for Ethereum and EntryPoint v0.8; review the [delegation and EntryPoint prerequisites](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#entrypoint-version). The EOA delegates execution to this contract. To use v0.9 instead, configure a [matching EntryPoint and delegation implementation](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#entrypoint-version) and verify provider support and paymaster settings for that version.
+</Callout>
+
+Read `WALLET_SEED_PHRASE` from your application's secure seed storage. These Node.js examples read it from the environment. Keep seeds, API keys, and authenticated endpoint URLs out of source control and logs. Never use a publicly shared seed for real funds.
+
+Choose one of the following payment modes. Each code block is a separate example; save your chosen block in a `.mjs` file and run it with `node` after setting its environment variables. Switching the dropdown changes both examples on this page; recreate your wallet with the new configuration if you change providers in your application.
 
 ## Create a Sponsored Wallet
 
-<Callout type="warn">
-Replace `'<VERIFIED_DELEGATION_ADDRESS>'` with a smart-account implementation address that you have verified for the target chain and EntryPoint v0.8, the default. To use v0.9, configure a [matching EntryPoint and delegation implementation](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#entrypoint-version). The EOA delegates execution to this address.
-</Callout>
+<ProviderContent value="candide">
 
-```javascript title="Create a sponsored EIP-7702 gasless wallet"
+**Candide**
+
+Create and fund an active [Candide gas policy](https://docs.candide.dev/instagas/gas-policies/) for Ethereum in the [dashboard](https://dashboard.candide.dev). Configure its allowed operations and limits, then set `CANDIDE_SPONSORSHIP_POLICY_ID` to the policy ID for your runtime API key.
+
+```javascript title="Candide: sponsored EIP-7702 wallet"
 import WalletManagerEvm7702Gasless from '@tetherto/wdk-wallet-evm-7702-gasless'
 
+const seedPhrase = process.env.WALLET_SEED_PHRASE
+const apiKey = process.env.CANDIDE_API_KEY
+const delegationAddress = process.env.EVM_7702_DELEGATION_ADDRESS
+const sponsorshipPolicyId = process.env.CANDIDE_SPONSORSHIP_POLICY_ID
+
+if (!seedPhrase || !apiKey || !delegationAddress || !sponsorshipPolicyId) {
+  throw new Error('Set WALLET_SEED_PHRASE, CANDIDE_API_KEY, EVM_7702_DELEGATION_ADDRESS, CANDIDE_SPONSORSHIP_POLICY_ID before running this example')
+}
+
+const CHAIN_RPC = 'https://rpc.mevblocker.io/fast'
+const endpoint = `https://api.candide.dev/api/v3/1/${encodeURIComponent(apiKey)}`
+
 const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
-  provider: 'https://rpc.mevblocker.io/fast',
   chainId: 1,
-  delegationAddress: '<VERIFIED_DELEGATION_ADDRESS>',
-  bundlerUrl: 'https://api.candide.dev/api/v3/1/YOUR_API_KEY',
+  provider: CHAIN_RPC,
+  entryPointVersion: '0.8',
+  delegationAddress,
+  bundlerUrl: endpoint,
+  paymasterUrl: endpoint,
   isSponsored: true,
-  sponsorshipPolicyId: 'your_policy_id'
+  sponsorshipPolicyId
 })
 
 const account = await wallet.getAccount(0)
 const address = await account.getAddress()
-
 console.log('EOA address:', address)
 ```
 
-`getAddress()` returns the EOA address. The module signs EIP-7702 authorization only when the account is not already delegated to the configured `delegationAddress`.
+</ProviderContent>
+
+<ProviderContent value="pimlico">
+
+**Pimlico**
+
+Set up [Pimlico gas sponsorship](https://docs.pimlico.io/references/paymaster/verifying-paymaster/usage), including account funding or billing. Create a [sponsorship policy](https://docs.pimlico.io/guides/how-to/sponsorship-policies) for Ethereum with spending limits, and set `PIMLICO_SPONSORSHIP_POLICY_ID` to its ID.
+
+```javascript title="Pimlico: sponsored EIP-7702 wallet"
+import WalletManagerEvm7702Gasless from '@tetherto/wdk-wallet-evm-7702-gasless'
+
+const seedPhrase = process.env.WALLET_SEED_PHRASE
+const apiKey = process.env.PIMLICO_API_KEY
+const delegationAddress = process.env.EVM_7702_DELEGATION_ADDRESS
+const sponsorshipPolicyId = process.env.PIMLICO_SPONSORSHIP_POLICY_ID
+
+if (!seedPhrase || !apiKey || !delegationAddress || !sponsorshipPolicyId) {
+  throw new Error('Set WALLET_SEED_PHRASE, PIMLICO_API_KEY, EVM_7702_DELEGATION_ADDRESS, PIMLICO_SPONSORSHIP_POLICY_ID before running this example')
+}
+
+const CHAIN_RPC = 'https://rpc.mevblocker.io/fast'
+const endpoint = `https://api.pimlico.io/v2/1/rpc?apikey=${encodeURIComponent(apiKey)}`
+
+const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
+  chainId: 1,
+  provider: CHAIN_RPC,
+  entryPointVersion: '0.8',
+  delegationAddress,
+  bundlerUrl: endpoint,
+  paymasterUrl: endpoint,
+  isSponsored: true,
+  sponsorshipPolicyId
+})
+
+const account = await wallet.getAccount(0)
+const address = await account.getAddress()
+console.log('EOA address:', address)
+```
+
+</ProviderContent>
+
+`getAddress()` returns the EOA address without verifying sponsorship eligibility. Creating an account does not submit an EIP-7702 authorization; the module signs that authorization when building an operation if the account is not already delegated to the configured `delegationAddress`.
 
 ## Use Paymaster-token Mode
 
-If the user pays gas with an ERC-20 paymaster token, configure `paymasterToken` instead of `isSponsored: true`.
+If the user pays gas with an ERC-20 paymaster token, configure `paymasterToken` instead of `isSponsored: true`. Fund the EOA with enough USD₮ to cover the operation's fees before sending.
 
-```javascript title="Create a paymaster-token wallet"
+Confirm your selected endpoint supports Ethereum, EntryPoint v0.8, and Ethereum USD₮ at `0xdAC17F958D2ee523a2206206994597C13D831ec7`. Check token availability and the expected paymaster contract for your API key before using the pin below. The module rejects a returned paymaster address that differs from the configured pin. See [provider configuration](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#bundler-and-paymaster-providers).
+
+<ProviderContent value="candide">
+
+**Candide**
+
+```javascript title="Candide: EIP-7702 paymaster-token wallet"
+import WalletManagerEvm7702Gasless from '@tetherto/wdk-wallet-evm-7702-gasless'
+
+const seedPhrase = process.env.WALLET_SEED_PHRASE
+const apiKey = process.env.CANDIDE_API_KEY
+const delegationAddress = process.env.EVM_7702_DELEGATION_ADDRESS
+
+if (!seedPhrase || !apiKey || !delegationAddress) {
+  throw new Error('Set WALLET_SEED_PHRASE, CANDIDE_API_KEY, EVM_7702_DELEGATION_ADDRESS before running this example')
+}
+
+const CHAIN_RPC = 'https://rpc.mevblocker.io/fast'
+const endpoint = `https://api.candide.dev/api/v3/1/${encodeURIComponent(apiKey)}`
+const USDT_ETHEREUM = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+const CANDIDE_TOKEN_PAYMASTER = '0xa8151918eac3818deb713d3dbbb7930329fe86ed'
+
 const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
-  provider: 'https://rpc.mevblocker.io/fast',
   chainId: 1,
-  delegationAddress: '<VERIFIED_DELEGATION_ADDRESS>',
-  bundlerUrl: 'https://api.candide.dev/api/v3/1/YOUR_API_KEY',
-  paymasterToken: {
-    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
-  },
-  transferMaxFee: 100000n // 0.1 USDt when the token has 6 decimals
+  provider: CHAIN_RPC,
+  entryPointVersion: '0.8',
+  delegationAddress,
+  bundlerUrl: endpoint,
+  paymasterUrl: endpoint,
+  paymasterAddress: CANDIDE_TOKEN_PAYMASTER,
+  paymasterToken: { address: USDT_ETHEREUM },
+  transferMaxFee: 100000n // 0.1 USDt (6 decimals)
 })
+
+const account = await wallet.getAccount(0)
+const address = await account.getAddress()
+console.log('EOA address:', address)
 ```
+
+</ProviderContent>
+
+<ProviderContent value="pimlico">
+
+**Pimlico**
+
+```javascript title="Pimlico: EIP-7702 paymaster-token wallet"
+import WalletManagerEvm7702Gasless from '@tetherto/wdk-wallet-evm-7702-gasless'
+
+const seedPhrase = process.env.WALLET_SEED_PHRASE
+const apiKey = process.env.PIMLICO_API_KEY
+const delegationAddress = process.env.EVM_7702_DELEGATION_ADDRESS
+
+if (!seedPhrase || !apiKey || !delegationAddress) {
+  throw new Error('Set WALLET_SEED_PHRASE, PIMLICO_API_KEY, EVM_7702_DELEGATION_ADDRESS before running this example')
+}
+
+const CHAIN_RPC = 'https://rpc.mevblocker.io/fast'
+const endpoint = `https://api.pimlico.io/v2/1/rpc?apikey=${encodeURIComponent(apiKey)}`
+const USDT_ETHEREUM = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+const PIMLICO_TOKEN_PAYMASTER = '0x888888888888Ec68A58AB8094Cc1AD20Ba3D2402'
+
+const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
+  chainId: 1,
+  provider: CHAIN_RPC,
+  entryPointVersion: '0.8',
+  delegationAddress,
+  bundlerUrl: endpoint,
+  paymasterUrl: endpoint,
+  paymasterAddress: PIMLICO_TOKEN_PAYMASTER,
+  paymasterToken: { address: USDT_ETHEREUM },
+  transferMaxFee: 100000n // 0.1 USDt (6 decimals)
+})
+
+const account = await wallet.getAccount(0)
+const address = await account.getAddress()
+console.log('EOA address:', address)
+```
+
+</ProviderContent>
+
+`transferMaxFee` is in paymaster-token base units; `100000n` is 0.1 USD₮ with 6 decimals. It applies to `transfer()`, rather than every wallet operation. See [fee-mode configuration](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#paymaster-token) before sending.
 
 ## Clean Up
 
-Call `dispose()` when the account or wallet manager is no longer needed.
+After running either wallet example, call `dispose()` when the account and wallet manager are no longer needed.
 
 ```javascript title="Dispose account state"
 account.dispose()
 wallet.dispose()
 ```
 
+</ProviderSelector>
+
 ## Next Steps
 
 - Review [configuration](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration) for fee modes and provider failover.
-- Learn how to [send transactions](/sdk/wallet-modules/wallet-evm-7702-gasless/guides/send-transactions).
-- Learn how to [transfer ERC-20 tokens](/sdk/wallet-modules/wallet-evm-7702-gasless/guides/transfer-tokens).
+- [Send transactions](/sdk/wallet-modules/wallet-evm-7702-gasless/guides/send-transactions).
+- [Transfer ERC-20 tokens](/sdk/wallet-modules/wallet-evm-7702-gasless/guides/transfer-tokens).
+
+## Need Help?
+
+<SupportCards />
 
 ***
 
@@ -34098,72 +34261,147 @@ With balance checks in place, learn how to [send gasless transactions](/sdk/wall
 URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm-erc-4337/guides/get-started
 Description: Install and create your first ERC-4337 smart account wallet.
 
-This guide explains how to [install the package](#1-install-the-package), [create a wallet](#2-create-a-wallet), [get your first account](#3-get-your-first-account), and optionally [convert to read-only](#4-optional-convert-to-read-only).
+Create an Ethereum smart account with Candide or Pimlico and pay UserOperation gas fees in USD₮.
 
 ## 1. Install the Package
 
-### Prerequisites
+Use Node.js 22 and npm for these examples. The package version below is pinned for this guide.
 
-*   **[Node.js](https://nodejs.org/)**: version 18 or higher.
-*   **[npm](https://www.npmjs.com/)**: usually comes with Node.js.
-
-```bash title="Install wallet packages"
-npm install @tetherto/wdk-wallet-evm-erc-4337 @tetherto/wdk-wallet@1.0.0-beta.17
+```bash title="Install the wallet package"
+npm install @tetherto/wdk-wallet-evm-erc-4337@1.0.0-beta.21
 ```
 
-## 2. Create a Wallet
+## 2. Choose a Bundler and Paymaster
 
-You can create a new wallet instance using the [`WalletManagerEvmErc4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference) constructor with a BIP-39 seed phrase and ERC-4337 configuration:
+The examples use Ethereum mainnet (`chainId: 1`), Safe modules `0.3.0`, and EntryPoint v0.7. Your chain RPC must serve Ethereum; the dropdown selects the bundler and paymaster configuration separately.
 
-```javascript title="Create ERC-4337 Wallet"
+<ProviderSelector key="erc4337-get-started">
+
+<ProviderContent value="candide">
+
+**Candide**
+
+Create a runtime API key in the [Candide dashboard](https://dashboard.candide.dev) and set `CANDIDE_API_KEY`. Use the [unified authenticated endpoint](https://docs.candide.dev/wallet/api/authenticated-endpoints/) for both bundler and paymaster requests.
+
+</ProviderContent>
+
+<ProviderContent value="pimlico">
+
+**Pimlico**
+
+Follow [Create a Pimlico API key](https://docs.pimlico.io/guides/create-api-key) and set `PIMLICO_API_KEY`. The examples use the same `/v2/1/rpc` endpoint for bundler and paymaster requests.
+
+</ProviderContent>
+
+Before sending, confirm your selected endpoint supports EntryPoint v0.7 and Ethereum USD₮ at `0xdAC17F958D2ee523a2206206994597C13D831ec7`. Check the current token and paymaster contract with your provider: availability can depend on the API key. Use Candide’s [`pm_supportedERC20Tokens`](https://docs.candide.dev/wallet/paymaster/rpc-methods/) or Pimlico’s [`pimlico_getTokenQuotes`](https://docs.pimlico.io/references/paymaster/erc20-paymaster/endpoints/pimlico_getTokenQuotes), and review [paymaster configuration](/sdk/wallet-modules/wallet-evm-erc-4337/configuration#paymaster-address).
+
+## 3. Create a Wallet
+
+<Callout type="warn">
+Read `WALLET_SEED_PHRASE` from your application's secure seed storage. The Node.js examples below read it from the environment. Keep seeds and API keys out of source control and logs; an authenticated endpoint URL contains your API key. Never use a publicly shared seed for real funds.
+</Callout>
+
+Copy the complete example for your selected provider into a `.mjs` file and run it with `node` after setting its environment variables. Switching the dropdown changes the examples on this page; recreate your wallet with the new configuration if you change providers in your application.
+
+<ProviderContent value="candide">
+
+**Candide**
+
+```javascript title="Candide: ERC-4337 wallet"
 import WalletManagerEvmErc4337 from '@tetherto/wdk-wallet-evm-erc-4337'
 
-const seedPhrase = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
+const seedPhrase = process.env.WALLET_SEED_PHRASE
+const apiKey = process.env.CANDIDE_API_KEY
+
+if (!seedPhrase || !apiKey) {
+  throw new Error('Set WALLET_SEED_PHRASE, CANDIDE_API_KEY before running this example')
+}
+
+const CHAIN_RPC = 'https://rpc.mevblocker.io/fast'
+const endpoint = `https://api.candide.dev/api/v3/1/${encodeURIComponent(apiKey)}`
+const USDT_ETHEREUM = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+const CANDIDE_TOKEN_PAYMASTER = '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba'
 
 const wallet = new WalletManagerEvmErc4337(seedPhrase, {
   chainId: 1,
-  provider: 'https://rpc.mevblocker.io/fast',
-  bundlerUrl: 'https://api.candide.dev/public/v3/1',
-  paymasterUrl: 'https://api.candide.dev/public/v3/1',
-  paymasterAddress: '0x8b1f6cb5d062aa2ce8d581942bbb960420d875ba',
+  provider: CHAIN_RPC,
   safeModulesVersion: '0.3.0',
-  paymasterToken: {
-    address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' // USDt
-  }
+  bundlerUrl: endpoint,
+  paymasterUrl: endpoint,
+  paymasterAddress: CANDIDE_TOKEN_PAYMASTER,
+  paymasterToken: { address: USDT_ETHEREUM }
 })
 ```
 
-<Callout type="error">
-**Secure the Seed Phrase:** You must securely store this seed phrase immediately. If it is lost, the user will permanently lose access to their funds.
-</Callout>
+</ProviderContent>
 
-<Callout type="info">
-To use test/mock tokens instead of real funds, see the [testnet configuration section](/sdk/wallet-modules/wallet-evm-erc-4337/configuration#network-specific-configurations).
-</Callout>
+<ProviderContent value="pimlico">
 
-The provider must serve the configured `chainId`. A mismatch throws when the account first builds a UserOperation; account creation alone does not establish that the provider matches. Review [chain validation](/sdk/wallet-modules/wallet-evm-erc-4337/configuration#chain-id) before sending.
+**Pimlico**
 
-## 3. Get Your First Account
+```javascript title="Pimlico: ERC-4337 wallet"
+import WalletManagerEvmErc4337 from '@tetherto/wdk-wallet-evm-erc-4337'
 
-You can retrieve a smart account at a given index using [`wallet.getAccount()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference):
+const seedPhrase = process.env.WALLET_SEED_PHRASE
+const apiKey = process.env.PIMLICO_API_KEY
 
-```javascript title="Get Account"
+if (!seedPhrase || !apiKey) {
+  throw new Error('Set WALLET_SEED_PHRASE, PIMLICO_API_KEY before running this example')
+}
+
+const CHAIN_RPC = 'https://rpc.mevblocker.io/fast'
+const endpoint = `https://api.pimlico.io/v2/1/rpc?apikey=${encodeURIComponent(apiKey)}`
+const USDT_ETHEREUM = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+const PIMLICO_TOKEN_PAYMASTER = '0x777777777777AeC03fd955926DbF81597e66834C'
+
+const wallet = new WalletManagerEvmErc4337(seedPhrase, {
+  chainId: 1,
+  provider: CHAIN_RPC,
+  safeModulesVersion: '0.3.0',
+  bundlerUrl: endpoint,
+  paymasterUrl: endpoint,
+  paymasterAddress: PIMLICO_TOKEN_PAYMASTER,
+  paymasterToken: { address: USDT_ETHEREUM }
+})
+```
+
+</ProviderContent>
+
+Creating the wallet does not deploy or fund the smart account. Before submitting a token-paid operation, fund the smart account with enough USD₮ to cover its fees. The module includes the paymaster allowance in the UserOperation and rejects a returned paymaster address that differs from the configured pin.
+
+The chain RPC must serve the configured `chainId`. A mismatch throws when the account first builds a UserOperation; account creation alone does not establish that the RPC matches. Review [chain validation](/sdk/wallet-modules/wallet-evm-erc-4337/configuration#chain-id) before sending.
+
+For test tokens instead of real funds, use the [testnet configuration](/sdk/wallet-modules/wallet-evm-erc-4337/configuration#network-specific-configurations) with the corresponding chain, token, and paymaster settings.
+
+## 4. Get Your First Account
+
+Retrieve a smart account at a given index using [`wallet.getAccount()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference):
+
+```javascript title="Get your smart account address"
 const account = await wallet.getAccount(0)
 const address = await account.getAddress()
 console.log('Smart account address:', address)
 ```
 
-## 4. (optional) Convert to Read-Only
+## 5. Convert to Read-Only (Optional)
 
-You can convert an owned account to a read-only account using [`account.toReadOnlyAccount()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference):
+Convert an owned account using [`account.toReadOnlyAccount()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference):
 
-```javascript title="Convert to Read-Only"
+```javascript title="Convert to read-only"
 const readOnlyAccount = await account.toReadOnlyAccount()
 ```
 
+</ProviderSelector>
+
 ## Next Steps
 
-With your wallet ready, learn how to [manage multiple accounts](/sdk/wallet-modules/wallet-evm-erc-4337/guides/manage-accounts).
+- [Manage accounts](/sdk/wallet-modules/wallet-evm-erc-4337/guides/manage-accounts).
+- [Send transactions](/sdk/wallet-modules/wallet-evm-erc-4337/guides/send-transactions).
+- Review [configuration](/sdk/wallet-modules/wallet-evm-erc-4337/configuration) for other gas-payment modes.
+
+## Need Help?
+
+<SupportCards />
 
 ***
 
