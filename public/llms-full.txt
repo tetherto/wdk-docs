@@ -51511,21 +51511,42 @@ The compiled bundle fixes its actions: `memo`, `autoExecute` and `vaultIndex` pa
 
 ## Track Partial Approvals
 
-Inspect [`approveProposal()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#approveproposal) results without treating all signatures as votes already recorded on-chain:
+Implement and configure your backend client in `approval-coordinator.mjs`, exporting a `createCoordinator({ signerAddress })` factory that returns both methods described above. This is an application-owned module, not an SDK export; it must exist before running this example. Return a compiled bundle to use coordinated approval. Returning null submits an ordinary on-chain vote instead.
+
+Create a separate [`WalletManagerMultisigSquads`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#walletmanagermultisigsquads) with that factory; the shared `squads-account.mjs` setup has no coordinator. Use your member's [configured derivation path](/sdk/wallet-modules/wallet-multisig-squads/guides/get-started#configure-the-member), shown here as `0'/0'`, and inspect [`approveProposal()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#approveproposal) results without treating all signatures as votes already recorded on-chain:
 
 ```javascript title="Handle a coordinated approval result"
-import { account, requiredEnv } from './squads-account.mjs'
+import WalletManagerMultisigSquads from '@tetherto/wdk-wallet-multisig-squads'
+import { createCoordinator } from './approval-coordinator.mjs'
 
-const result = await account.approveProposal(requiredEnv('PROPOSAL_ID'))
-if (result.transaction === undefined) {
-  console.log('Collected signatures awaiting broadcast:', result.pendingConfirmations)
-} else {
-  const receipt = await account.waitForTransaction(result.transaction.hash)
-  if (!receipt.success) throw new Error('Approval bundle failed')
+function requiredEnv(name) {
+  const value = process.env[name]
+  if (!value) throw new Error(`Missing ${name}`)
+  return value
+}
+
+const wallet = new WalletManagerMultisigSquads(requiredEnv('WDK_SEED_PHRASE'), {
+  provider: requiredEnv('SOLANA_RPC_URL'),
+  multisigPdaOrCreateKey: requiredEnv('MULTISIG_ADDRESS'),
+  commitment: 'confirmed',
+  coordinator: createCoordinator
+})
+
+try {
+  const account = await wallet.getAccountByPath("0'/0'")
+  const result = await account.approveProposal(requiredEnv('PROPOSAL_ID'))
+  if (result.transaction === undefined) {
+    console.log('Collected signatures awaiting broadcast:', result.pendingConfirmations)
+  } else {
+    const receipt = await account.waitForTransaction(result.transaction.hash)
+    if (!receipt.success) throw new Error('Approval transaction failed')
+  }
+} finally {
+  wallet.dispose()
 }
 ```
 
-This snippet uses the account configured by your application with its coordinator factory. A partial result reports `transaction: undefined`, leaves `confirmations` at the on-chain count, and places collected signatures in `pendingConfirmations`. No on-chain transaction has been broadcast for that partial approval. A broadcast result resets pending confirmations to zero. When a bundle includes execution, its returned status can be `executed`; still verify the receipt and proposal state.
+A partial result reports `transaction: undefined`, leaves `confirmations` at the on-chain count, and places collected signatures in `pendingConfirmations`. No on-chain transaction has been broadcast for that partial approval. A broadcast result resets pending confirmations to zero. When a bundle includes execution, its returned status can be `executed`; still verify the receipt and proposal state. Follow the [cleanup guidance](/sdk/wallet-modules/wallet-multisig-squads/guides/handle-errors#best-practices) for caller-held secrets after the signing session ends.
 
 ## Next Steps
 
@@ -51709,13 +51730,14 @@ Prerequisites: an [initialized member account](/sdk/wallet-modules/wallet-multis
 | Error or condition | Response |
 | --- | --- |
 | `ProviderRequiredError` | Configure the correct cluster RPC for network operations. |
-| `AccountNotOwnerError` | Verify the signer path, current member list and required permission. |
-| `ValueError` for invalid status or time lock | Check the member mask and fresh proposal state; wait for the configured time lock when applicable. |
+| `AccountNotOwnerError` | Verify the signer path and current member list, then check that the member's mask includes the permission required by the operation. |
+| `ValueError` for invalid status or time lock | Check the fresh proposal state; wait for the configured time lock when applicable. |
 | `ThresholdNotMetError` | Collect the required on-chain approvals. |
 | `MaximumFeeExceededError` | Inspect the relevant quote and configured cap before changing it. |
 | `NoSuchElementError` | Verify the multisig/proposal exists; a missing transaction may also be pending, dropped or outside RPC history. |
 | Approval `transaction` is `undefined` | A coordinator has only collected signatures; wait for the completed bundle to be broadcast before checking its receipt. |
-| `UnsupportedOperationError` | Use supported proposal APIs and transaction kinds. |
+| `NotImplementedError` | Use a supported execution transaction kind. For a custom coordinator, implement both methods instead of calling the interface's base methods. |
+| `UnsupportedOperationError` | Use the proposal APIs instead of direct transaction signing, sending or send quotes. Multisig message verification and named external signers are also unsupported. |
 
 Import the runtime error classes you handle:
 
