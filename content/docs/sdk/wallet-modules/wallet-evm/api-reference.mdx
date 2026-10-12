@@ -71,13 +71,13 @@ const signerWallet = new WalletManagerEvm(signer, {
 | `getAccount(signerName)` | Returns the account associated with a registered signer | `Promise<WalletAccountEvm>` | If the named signer is unavailable |
 | `getAccountByPath(path, options?)` | Returns a wallet account at the specified BIP-44 derivation path, optionally from a named signer | `Promise<WalletAccountEvm>` | If the requested signer is unavailable or cannot derive |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` | `ProviderRequiredError` if no provider is set |
-| `dispose()` | Initiates cleanup of wallet accounts | `void` | - |
+| `dispose()` | Initiates cleanup of accounts and default/named signers, including supplied signers in beta.20 | `void` | - |
 
 ### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `seed` | `Uint8Array` | The wallet's seed bytes |
+| `seed` | `Uint8Array` (inherited declaration) | Always `undefined` at runtime in beta.20: the manager turns seed input into its default signer before calling the base constructor. Keep seed storage in your application. |
 
 #### `getRandomSeedPhrase(wordCount?)` (static)
 Returns a random BIP-39 seed phrase.
@@ -222,7 +222,7 @@ const result = await account.sendTransaction({
 ```
 
 #### `dispose()`
-Disposes all wallet accounts, clearing private keys from memory.
+Initiates cleanup of cached accounts and disposes the default signer and every named signer in beta.20, including signers supplied by your application. Coordinate their lifetime with every other consumer before disposing the manager; do not assume a shared signer remains usable.
 
 **Example:**
 ```javascript
@@ -303,7 +303,7 @@ const signerAccount = new WalletAccountEvm(
 | `signAuthorization(auth)` | Signs an ERC-7702 authorization tuple | `Promise<Authorization>` | If signing fails |
 | `delegate(delegateAddress)` | Delegates the EOA to a contract through an ERC-7702 type 4 transaction | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` |
 | `revokeDelegation()` | Revokes active ERC-7702 delegation by delegating to the zero address | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` |
-| `dispose()` | Initiates the account cleanup process | `void` | - |
+| `dispose()` | Initiates cleanup of the account's signer, including a supplied signer in beta.20 | `void` | - |
 
 #### `fromPrivateKey(privateKey, config?)` (static)
 Creates a standalone EVM account from a raw private key.
@@ -779,7 +779,7 @@ Revokes active ERC-7702 delegation by delegating to the zero address.
 **Throws:** `ProviderRequiredError` if no provider is configured.
 
 #### `dispose()`
-Disposes the wallet account, erasing the private key from memory.
+In beta.20, always calls `dispose()` on the account's signer, including a signer passed to `new WalletAccountEvm(signer)`. Do not dispose the account while another account or component still needs that signer. Cleanup does not guarantee removal of caller-held copies of secret material.
 
 **Example:**
 ```javascript
