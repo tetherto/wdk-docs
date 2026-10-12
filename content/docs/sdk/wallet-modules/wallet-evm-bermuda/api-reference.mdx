@@ -1,0 +1,286 @@
+---
+title: Wallet EVM Bermuda API Reference
+description: Reference for Bermuda manager and shielded account methods, parameters, options, results, and errors.
+docType: reference
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+These pages cover `@bermuda/wdk-wallet-evm-bermuda` source version `0.1.8` at [revision `6476ea5`](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/tree/6476ea5f79d669968b0d0fd0a1413b962f61129f), composed with both WDK wallet peers at `1.0.0-beta.17` and the SDK dependency `0.1.8-plasma1`. The wrapper is not yet published on npm. The maintainer-supported network is **Plasma testnet**, chain ID **9746**.
+
+## Exports
+
+Import runtime classes from the package root. The default and named `WalletManagerBermuda` exports refer to the same class:
+
+```javascript
+import WalletManagerBermuda, {
+  WalletAccountBermuda,
+  WalletAccountEvm,
+  WalletAccountReadOnlyEvm
+} from '@bermuda/wdk-wallet-evm-bermuda'
+
+import { ProviderRequiredError, ValueError, WdkError } from '@tetherto/wdk-wallet'
+```
+
+The wrapper re-exports the two EVM account classes from its peer package. It does not re-export WDK errors or the SDK initializer. `WalletAccountBermuda` is a separate class, rather than an EVM account subclass, and has no generic transaction-signing or read-only conversion methods.
+
+## WalletManagerBermuda
+
+Extends `WalletManagerEvm`. Its declared constructor accepts a BIP-39 mnemonic string or seed bytes, and optional [configuration](/sdk/wallet-modules/wallet-evm-bermuda/configuration):
+
+```typescript
+new WalletManagerBermuda(seed: string | Uint8Array, config?: BermudaWalletConfig)
+```
+
+`BermudaWalletConfig` describes the constructor's configuration type; it is not exported from the package root. Use an inferred configuration object or the [constructor-derived type](#typescript-types). The shielded derivation flow needs the seed-backed EVM account's private key; a custom signer is not an alternative documented shielded setup.
+
+### Methods and Properties
+
+| Member | Result | Purpose |
+|---|---|---|
+| `getBermudaAccount(bip44AccountIndex?, bermudaAccountIndex?)` | `Promise<WalletAccountBermuda>` | Retrieve a separate shielded account. Both indices default to `0`. |
+| `getAccount(index?, options?)` | `Promise<WalletAccountEvm>` | Inherited ordinary EVM account retrieval. |
+| `getAccountByPath(path, options?)` | `Promise<WalletAccountEvm>` | Inherited ordinary EVM account retrieval by relative path. |
+| `getFeeRates()` | `Promise<FeeRates>` | EVM network fee rates with `normal` and `fast` bigint values in wei per gas. |
+| `disposed` | `boolean` | Whether manager disposal has completed. |
+| `dispose()` | `void` | Dispose the manager's cached accounts and signers. |
+
+Inherited EVM account retrieval uses the pinned peer's public signatures, including named signer options for ordinary EVM accounts. `getBermudaAccount()` has no signer-name parameter or account-options object.
+
+### getBermudaAccount
+
+```typescript
+getBermudaAccount(
+  bip44AccountIndex?: number,
+  bermudaAccountIndex?: number
+): Promise<WalletAccountBermuda>
+```
+
+The first index selects the ordinary EVM account at relative path `0'/0/index` beneath `m/44'/60'/`. The second index selects a Bermuda subaccount derived from that EVM account's private key. Both inputs must be nonnegative integers.
+
+The method requires a provider. It reads the provider's chain and initializes the SDK with chain-specific defaults and any configured cache overrides. See [Bermuda SDK Services](/sdk/wallet-modules/wallet-evm-bermuda/configuration#bermuda-sdk-services) for the separate SDK provider boundary.
+
+Repeated calls with the same indices return the same cached account, and concurrent calls share the derivation. Disposing that account causes a later call to derive a fresh instance. Different indices select different derived accounts.
+
+### dispose (manager)
+
+`dispose(): void` is idempotent. It disposes cached ordinary EVM accounts and Bermuda accounts, clears the Bermuda account cache, and disposes the default signer created from seed material. Under the pinned WDK wallet `1.0.0-beta.17`, inherited cleanup also disposes registered signers and any caller-supplied default signer.
+
+After disposal, `getBermudaAccount()` rejects with `WdkError`. If disposal occurs during shielded derivation, the derived account is disposed and the request rejects. This does not establish cancellation of an already submitted operation; finish outstanding work before cleanup. See [account disposal](#dispose-account) for the fields it clears.
+
+## WalletAccountBermuda
+
+Normally obtain this account with `await wallet.getBermudaAccount()`. Its public constructor accepts an already initialized SDK, a public EVM account, and a Bermuda key pair:
+
+```typescript
+new WalletAccountBermuda(
+  bermudaSdk: BermudaSdk,
+  ethereumWallet: WalletAccountEvm,
+  bermudaKeyPair: BermudaKeyPair
+)
+```
+
+The constructor stores those references; it does not derive keys or validate that the SDK, EVM account, and key pair use matching network configuration. Manager-created accounts provide the documented seed-backed setup. Custom SDK construction needs separate configuration and lifecycle handling.
+
+### Methods and Properties
+
+| Member | Result | Purpose |
+|---|---|---|
+| `getAddress()` | `string` | Synchronous Bermuda address. |
+| `address` | `string` | The same Bermuda address. |
+| `getTokenBalance(tokenAddress)` | `Promise<bigint>` | Shielded balance for one token in base units. |
+| `getTokenBalances(tokenAddresses)` | `Promise<Record<string, bigint>>` | Shielded balances keyed by lowercase token address. |
+| `deposit(params, options?)` | `Promise<string>` | Hash of the deposit transaction submitted by the public EVM account. |
+| `transfer(params, options?)` | `Promise<string>` | Hash returned by the SDK relay for a shielded transfer. |
+| `withdraw(params, options?)` | `Promise<string>` | Hash returned by the SDK relay for a withdrawal. |
+| `disposed` | `boolean` | Whether account disposal has completed. |
+| `dispose()` | `void` | Clear this account's stored Bermuda key fields. |
+
+The Bermuda address getter is synchronous. Ordinary EVM account `getAddress()` and manager account retrieval remain asynchronous.
+
+### getAddress and address
+
+`getAddress(): string` and the `address: string` getter return this account's Bermuda address synchronously. Use that address for a shielded recipient; it is not a public EVM address.
+
+### getTokenBalance and getTokenBalances
+
+```typescript
+getTokenBalance(tokenAddress: string): Promise<bigint>
+getTokenBalances(tokenAddresses: string[]): Promise<Record<string, bigint>>
+```
+
+Both methods ask the SDK to discover owned UTXOs and total their amounts. They lowercase token inputs; the multi-token method returns lowercase address keys. A token with no returned UTXOs has a balance of `0n`. These values are shielded balances, rather than the public EVM account's ERC-20 balance.
+
+### Operation Parameters
+
+All amounts are token base units. The wrapper declares `number | bigint`, but the pinned SDK performs bigint arithmetic without normalizing numbers. **Use `bigint`**, including for every recipient amount. A value accepted by the wrapper's TypeScript declarations can still fail at runtime.
+
+#### Deposit Parameters
+
+| Field | Declared type | Required | Behavior |
+|---|---|---|---|
+| `token` | `string` | Yes | Token contract address supported by the selected pool. |
+| `amount` | `number` or `bigint` | Yes | Base-unit amount. Use `bigint`. |
+| `to` | `string` | No | Bermuda recipient address. Defaults to this account when no `recipients` array is supplied. |
+| `note` | `string` | No | Optional transaction note. |
+| `recipients` | `{ to: string; amount: number \| bigint; note?: string }[]` | No | Multiple Bermuda recipients. Use bigint amounts and see the batch restriction below. |
+
+#### Transfer Parameters
+
+| Field | Declared type | Required | Behavior |
+|---|---|---|---|
+| `token` | `string` | Yes | Shielded token contract address. |
+| `to` | `string` | Yes | Bermuda recipient address in the wrapper declaration. The SDK can use `recipients` for a batch. |
+| `amount` | `number` or `bigint` | Yes | Base-unit recipient amount. Use `bigint`. |
+| `note` | `string` | No | Optional transaction note. |
+| `recipients` | `{ to: string; amount: number \| bigint; note?: string }[]` | No | Multiple Bermuda recipients. |
+
+#### Withdrawal Parameters
+
+| Field | Declared type | Required | Behavior |
+|---|---|---|---|
+| `token` | `string` | Yes | Shielded token contract address. |
+| `amount` | `number` or `bigint` | Yes | Total shielded spend by default; exact-output mode changes its meaning. Use `bigint`. |
+| `to` | `string` | No | Public EVM destination. Defaults to the master EVM account's address. |
+
+The wrapper declarations require the top-level fields above even when the SDK's own declarations allow them to be omitted for a recipients array. For wrapped-native batch deposits, the wrapper uses top-level `amount` for its approval and transaction value while the SDK totals recipient amounts. Use the single-recipient deposit flow in the [operations guide](/sdk/wallet-modules/wallet-evm-bermuda/guides/shield-transfer-withdraw#deposit-into-bermuda); do not infer a correct wrapped-native batch total from the SDK declaration alone.
+
+### deposit
+
+```typescript
+deposit(
+  params: BermudaDepositParams,
+  options?: BermudaDepositOptions
+): Promise<string>
+```
+
+Builds the SDK deposit payload and submits it through the master public EVM account. The wrapper adds its signer to the **supplied parameter object** and adds the self recipient when appropriate. The SDK can also add a recipients array. Pass a fresh mutable object for each operation.
+
+For a self deposit, the wrapper copies the options and sets `topup` to this account's key pair, including when a recipients array contains this account. This replaces a caller-supplied `topup` option for that case.
+
+The wrapped-native path can submit an ERC-20 approval and wait for it before building the deposit. Other ERC-20 tokens need sufficient allowance or a supported permit; for the documented USD₮0 test token, approve the pool with the master public EVM account and wait for the approval first. See the [testnet prerequisites](/sdk/wallet-modules/wallet-evm-bermuda/guides/shield-transfer-withdraw#prerequisites) for the token and pool constants.
+
+When `token` equals the SDK's wrapped-native token, the wrapper sets the EVM transaction value from top-level `amount`; otherwise it sets value to `0n`. The public account needs native funds for gas as well as the deposit's funding requirements. `transactionMaxFee` covers the estimated EVM network fee, rather than pool token fees.
+
+### transfer
+
+```typescript
+transfer(
+  params: BermudaTransferParams,
+  options?: BermudaTransferOptions
+): Promise<string>
+```
+
+Sets `spender` on the supplied parameter object to this account's key pair, builds the shielded transfer payload, and submits it through the SDK relay. This is a shielded transfer between Bermuda addresses; it is distinct from the ordinary EVM account's `transfer()` method.
+
+The recipient amount is an exact output in the inspected SDK; a configured relay fee adds to the sender's shielded spend. `exactOutputAmounts` is ignored for transfers. Neither EVM fee cap applies.
+
+### withdraw
+
+```typescript
+withdraw(
+  params: BermudaWithdrawParams,
+  options?: BermudaWithdrawOptions
+): Promise<string>
+```
+
+Sets `spender` on the supplied parameter object and fills an omitted destination with the master public EVM address. It builds the SDK withdrawal payload and submits it through the relay. The returned hash does not itself confirm that funds arrived.
+
+By default, `amount` is the total shielded spend and the public recipient receives the remainder after protocol and relay fees. With `exactOutputAmounts: true`, `amount` names the recipient target and the SDK consumes extra shielded value for fees. Neither EVM fee cap constrains these token-denominated costs.
+
+### Operation Options
+
+Options are forwarded to the SDK, except for the self-deposit `topup` override described above. The following behavior is grounded in the pinned SDK dependency:
+
+| Operation | Option | Type | Behavior |
+|---|---|---|---|
+| Deposit | `topup` | `BermudaKeyPair` | Allows topping up an existing recipient UTXO. The wrapper supplies this account's key pair for a self deposit. |
+| Deposit | `deadline` | `number` or `bigint` | Absolute UNIX timestamp in seconds for a conditional deposit permit. Omission uses approximately seven minutes from the latest block. |
+| Transfer | `relayer` | `string` | Full Bermuda fee-recipient address, supplied together with a positive `relayFee` to create a shielded fee output. A 20-byte EVM address is not accepted by this transfer path. Does not set the relay service URL. |
+| Transfer | `relayFee` | `bigint` | Additional shielded spend in the transferred token. Defaults to `0n`. |
+| Transfer | `deadline` | `number` or `bigint` | Absolute UNIX spend deadline in seconds. Omission uses the SDK's no-deadline sentinel. |
+| Transfer | `exactOutputAmounts` | `boolean` | Declared but ignored; transfer recipient amounts are always exact outputs. |
+| Withdrawal | `unwrap` | `boolean` | Requests native-token output when withdrawing the configured wrapped-native token. |
+| Withdrawal | `relayer` | `string` | Public EVM fee recipient. An explicit address is required when a fee-bearing withdrawal needs multiple steps. |
+| Withdrawal | `relayFee` | `bigint` | Relay fee in the withdrawn token. Defaults to `0n`. |
+| Withdrawal | `deadline` | `number` or `bigint` | Absolute UNIX spend deadline in seconds. Omission uses the SDK's no-deadline sentinel. |
+| Withdrawal | `exactOutputAmounts` | `boolean` | Defaults to `false`. When true, adds fees to the sender's spend to target the requested recipient amount. |
+
+The SDK's deposit option type also includes `exactOutputAmounts`, but the inspected deposit implementation does not use that flag. It does not switch deposit accounting. The inspected ERC-20 path retains the supplied recipient output amounts and adds any protocol deposit fee to the external funding required. Successful settlement remains separate.
+
+### Transaction Confirmation
+
+The three operation methods return a **transaction hash string**, rather than an EVM `{ hash, fee }` result or a receipt. Use the public EVM account on the same chain to track the hash:
+
+```javascript
+// ethereumAccount is the master public EVM account; hash is an operation result.
+const result = await ethereumAccount.waitForTransaction(hash)
+if (result.success !== true || !['confirmed', 'final'].includes(result.finality)) {
+  throw new Error(`Transaction did not confirm successfully: ${hash}`)
+}
+```
+
+The pinned peers return a normalized result with `finality` and `success`; inspect both rather than treating it as a raw ethers receipt. Retain the hash and reconcile transaction state before retrying a submission. A later error does not reverse an earlier wrapped-native approval, deposit, or relay submission.
+
+### dispose (account)
+
+`dispose(): void` is idempotent. It sets the stored Bermuda scalar private key to `null` and fills the stored X25519 secret-key bytes with zero. It leaves the master EVM account untouched so other Bermuda accounts can continue using it.
+
+Disposal does not clear all JavaScript-held copies, delete cache files, stop SDK providers, or cancel submitted transactions. The address remains accessible and the other methods do not all have a disposed-state guard. Use `disposed` to track lifecycle state and stop using the account after cleanup.
+
+## TypeScript Types
+
+The parameter and option aliases are exported from the package root:
+
+```typescript
+import type {
+  BermudaDepositParams,
+  BermudaTransferParams,
+  BermudaWithdrawParams,
+  BermudaDepositOptions,
+  BermudaTransferOptions,
+  BermudaWithdrawOptions
+} from '@bermuda/wdk-wallet-evm-bermuda'
+```
+
+`BermudaSdk`, `BermudaKeyPair`, `EvmWalletConfig`, and `FeeRates` are also root type exports. The configuration aliases `BermudaWalletConfig` and `BermudaConfig` are not. Infer a local type from the public constructor when needed:
+
+```typescript
+import WalletManagerBermuda from '@bermuda/wdk-wallet-evm-bermuda'
+
+type ManagerConfig = NonNullable<ConstructorParameters<typeof WalletManagerBermuda>[1]>
+```
+
+## Errors
+
+Import the WDK errors from `@tetherto/wdk-wallet`, using the same dependency graph as the module:
+
+| Error | Wrapper behavior |
+|---|---|
+| `ValueError` | Invalid mnemonic string; a negative or noninteger Bermuda account index; an unmapped provider chain ID. |
+| `ProviderRequiredError` | No provider when retrieving a Bermuda account or requesting fee rates. |
+| `WdkError` | `getBermudaAccount()` called after manager disposal, including disposal during derivation. |
+
+An internally mapped chain can still lack an SDK configuration and fail with a plain SDK error. SDK, RPC, proof, balance, allowance, and relay failures can propagate without becoming one of these WDK error classes. Catching `WdkError` alone does not handle every operation failure.
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/wallet-modules/wallet-evm-bermuda/usage">
+Follow the source installation and public-to-shielded account examples.
+</Card>
+<Card title="Configuration" href="/sdk/wallet-modules/wallet-evm-bermuda/configuration">
+Review providers, SDK service dependencies, cache paths, and fee boundaries.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
