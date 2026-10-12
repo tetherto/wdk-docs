@@ -1,0 +1,80 @@
+---
+title: Wallet EVM Bermuda Overview
+description: Create Bermuda shielded accounts alongside public EVM accounts on Plasma testnet.
+docType: explanation
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Use [`@bermuda/wdk-wallet-evm-bermuda`](https://github.com/BermudaBay/wdk-wallet-evm-bermuda) to derive Bermuda shielded accounts from a WDK EVM wallet. A shielded account can deposit supported tokens into a Bermuda pool, transfer shielded balances to another Bermuda account, and withdraw to a public EVM address.
+
+<Callout type="warn">
+The module is in beta and supports **Plasma testnet**, chain ID `9746`. It is not published on npm. These pages use the GitHub revision `6476ea5f79d669968b0d0fd0a1413b962f61129f`, whose manifest declares version `0.1.8`. Follow the [pinned GitHub installation](/sdk/wallet-modules/wallet-evm-bermuda/usage#install).
+</Callout>
+
+## Choose This Module
+
+Use Bermuda when your application needs a separate shielded account on Plasma testnet and can handle token allowances, proof generation, SDK services, and confirmation after submission.
+
+For ordinary EVM transfers, use [Standard EVM](/sdk/wallet-modules/wallet-evm). Deposits are sent from a public EVM account, and withdrawals expose a public EVM recipient. Shielded-account support does not establish anonymity, production readiness, or availability on other EVM chains.
+
+## Two Account Roles
+
+`WalletManagerBermuda` extends the EVM wallet manager and adds `getBermudaAccount()`. Its ordinary account getters continue to return public EVM accounts.
+
+| Account | Retrieve with | Use for |
+|---|---|---|
+| Public EVM account | `await wallet.getAccount(0)` | Public balances, token allowances, ordinary EVM transactions, and transaction confirmation. This account funds Bermuda deposits. |
+| Bermuda shielded account | `await wallet.getBermudaAccount(0, 0)` | A separate Bermuda address, shielded token balances, deposits, shielded transfers, and withdrawals. |
+
+The Bermuda account is not an EVM account and does not implement the full generic WDK account interface. Its `getAddress()` returns a string synchronously. Use a Bermuda address for a shielded transfer and an EVM address for a withdrawal.
+
+## Account Capabilities
+
+| Task | Method |
+|---|---|
+| Read the shielded address | [`getAddress()`](/sdk/wallet-modules/wallet-evm-bermuda/api-reference#getaddress-and-address) |
+| Read one or several shielded token balances | [`getTokenBalance()`](/sdk/wallet-modules/wallet-evm-bermuda/api-reference#gettokenbalance-and-gettokenbalances), [`getTokenBalances()`](/sdk/wallet-modules/wallet-evm-bermuda/api-reference#gettokenbalance-and-gettokenbalances) |
+| Deposit from the public EVM account | [`deposit()`](/sdk/wallet-modules/wallet-evm-bermuda/api-reference#deposit) |
+| Send shielded funds to another Bermuda account | [`transfer()`](/sdk/wallet-modules/wallet-evm-bermuda/api-reference#transfer) |
+| Withdraw to a public EVM address | [`withdraw()`](/sdk/wallet-modules/wallet-evm-bermuda/api-reference#withdraw) |
+
+All three fund-moving methods return a transaction hash. A hash is not a successful receipt. Confirm the transaction and reconcile the relevant balances before displaying completion or retrying an interrupted operation.
+
+## Integration Requirements
+
+- An application-managed BIP-39 mnemonic or seed bytes. The examples use a seed-backed manager; do not infer shielded support for hardware or custom signers.
+- A Plasma testnet RPC endpoint, a supported testnet token, and the matching Bermuda pool. The [operations guide](/sdk/wallet-modules/wallet-evm-bermuda/guides/shield-transfer-withdraw) shows public-chain checks for the USD₮0 testnet example.
+- A Node.js or Bare runtime with network access and writable storage for the prover's downloaded setup data. WDK worklet bundles are unsupported. See [runtime setup](/sdk/wallet-modules/wallet-evm-bermuda/usage#runtime-requirements).
+- Access to the Bermuda SDK's configured RPC, relayer, chain-state, policy/compliance, and proof-artifact services. The manager's `provider` configures its public EVM account; it does not replace the SDK's endpoints.
+- Native gas for public EVM transactions and any required token allowance before a deposit. `transactionMaxFee` rejects an EVM operation when its estimated network fee exceeds the configured threshold; it does not bind final network fees or cap protocol token fees. EVM fee caps do not bound shielded transfer or withdrawal fees. See [Configuration](/sdk/wallet-modules/wallet-evm-bermuda/configuration#fee-boundaries).
+
+These pages use the standalone manager. Directly retrieved Bermuda accounts do not automatically pass through WDK core's registered policies or middleware. The SDK's separate issuer-policy checks are part of its own proof and service flow; they are not a substitute for application authorization.
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/wallet-modules/wallet-evm-bermuda/usage">
+Install the pinned source and create public and shielded accounts.
+</Card>
+<Card title="Shield, Transfer, and Withdraw" href="/sdk/wallet-modules/wallet-evm-bermuda/guides/shield-transfer-withdraw">
+Check the testnet deployment, handle allowances, and confirm each operation.
+</Card>
+<Card title="Configuration" href="/sdk/wallet-modules/wallet-evm-bermuda/configuration">
+Review providers, cache storage, fee boundaries, and cleanup.
+</Card>
+<Card title="API Reference" href="/sdk/wallet-modules/wallet-evm-bermuda/api-reference">
+Review imports, signatures, options, and return values.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

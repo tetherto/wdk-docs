@@ -1,0 +1,331 @@
+---
+title: Shield, Transfer, and Withdraw with Bermuda
+description: Approve a testnet token deposit, transfer shielded balances, and confirm a public withdrawal.
+docType: how-to
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+This guide uses the standalone Bermuda manager to [shield USD₮0](#deposit-into-bermuda), [transfer a shielded balance](#transfer-to-a-bermuda-address), and [withdraw to a public address](#withdraw-to-a-public-address) on Plasma testnet. Deposits use a public EVM account; transfers use a Bermuda address; withdrawals expose a public EVM recipient. These operations do not establish an anonymity guarantee.
+
+<Callout type="info">
+These examples target source manifest version `0.1.8` at [revision `6476ea5`](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/tree/6476ea5f79d669968b0d0fd0a1413b962f61129f), with both WDK wallet peers pinned to `1.0.0-beta.17`. The module is not yet published on npm. Follow the [source installation instructions](/sdk/wallet-modules/wallet-evm-bermuda/usage) before using the examples.
+</Callout>
+
+## Prerequisites
+
+- Complete the [installation and runtime setup](/sdk/wallet-modules/wallet-evm-bermuda/usage). The application code below also imports `ethers@6.17.0` directly.
+- Run this standalone example in Node.js 22 with the pinned peers above.
+- Supply an application-managed BIP-39 mnemonic or seed bytes. Keep these outside logs, analytics, operation records, and client configuration files.
+- Use a trusted Plasma testnet RPC reporting chain ID `9746`, and fund the master EVM account with testnet XPL for approvals and deposit gas.
+- Confirm Bermuda's testnet services and pool are available. The WDK `provider` handles public transactions; Bermuda uses separate SDK RPC, compliance, proof-artifact, and relayer endpoints. Setting `provider` does not replace those endpoints. See [Configuration](/sdk/wallet-modules/wallet-evm-bermuda/configuration).
+- Review each operation before submission and persist its intent. Serialize operations using the same account; a balance or allowance read is not a reservation.
+
+The examples use these deployment identifiers from the inspected SDK and Bermuda's [Plasma testnet deployment descriptor](https://api.tilapialabs.xyz/bermuda/v0.1.8-plasma0/plasma-testnet/artifacts/chain-config.json):
+
+| Item | Plasma testnet value |
+| --- | --- |
+| Chain ID | `9746` |
+| USD₮0 token | `0x502012b361AebCE43b26Ec812B74D9a51dB4D412` |
+| Token decimals | `6` |
+| Bermuda pool and approval spender | `0xfa3193AD6DEEcaF7D5586d40808E80ad2Ca5A007` |
+
+For this testnet token, `1_000_000n` represents one USD₮0 unit. These addresses are not Plasma mainnet addresses. Verify the deployment before enabling submissions; matching token metadata and nonempty pool code do not prove protocol security or service readiness.
+
+## Shared Setup and Confirmation
+
+Save the following blocks together as an application module. The exported functions accept `seed`, `rpcUrl`, and a positive bigint `transactionMaxFee` in wei. It rejects a public EVM approval or deposit when the checked fee estimate exceeds the threshold. The pinned peer later populates gas and fee fields separately without rechecking that liability, so this setting does not bind final fees, combined transaction costs, or Bermuda protocol and relay fees.
+
+The application supplies two callbacks: `confirm(details)` reviews the recipient, amount, and observed fees and returns `true` to continue; `recordHash({ kind, hash, chainId })` durably records each returned hash. Neither callback should include secrets in its records. A confirmed intent does not bind later pool fee changes.
+
+```javascript
+import WalletManagerBermuda from '@bermuda/wdk-wallet-evm-bermuda'
+import { Contract, JsonRpcProvider, ZeroAddress, isAddress } from 'ethers'
+
+const PLASMA_TESTNET_CHAIN_ID = 9746n
+const USDT0_PLASMA_TESTNET = '0x502012b361AebCE43b26Ec812B74D9a51dB4D412'
+const BERMUDA_POOL_PLASMA_TESTNET = '0xfa3193AD6DEEcaF7D5586d40808E80ad2Ca5A007'
+
+const TOKEN_ABI = [
+  'function symbol() view returns (string)',
+  'function decimals() view returns (uint8)'
+]
+const POOL_ABI = [
+  'function depositFee() view returns (uint256)',
+  'function withdrawFee() view returns (uint256)',
+  'function protocolFeeRecipient() view returns (address)'
+]
+
+function validateOperation(amount, confirm, recordHash) {
+  if (typeof amount !== 'bigint' || amount <= 0n) {
+    throw new Error('Amount must be a positive bigint in token base units')
+  }
+  if (typeof confirm !== 'function' || typeof recordHash !== 'function') {
+    throw new Error('Confirmation and durable hash recording are required')
+  }
+}
+
+async function withAccounts({ seed, rpcUrl, transactionMaxFee }, operation) {
+  if (typeof rpcUrl !== 'string' || !rpcUrl) {
+    throw new Error('A Plasma testnet RPC URL is required')
+  }
+  if (typeof transactionMaxFee !== 'bigint' || transactionMaxFee <= 0n) {
+    throw new Error('Set a positive estimated network fee threshold in wei')
+  }
+
+  const provider = new JsonRpcProvider(rpcUrl)
+  let wallet
+  try {
+    const { chainId } = await provider.getNetwork()
+    if (chainId !== PLASMA_TESTNET_CHAIN_ID) {
+      throw new Error('This example requires Plasma testnet, chain ID 9746')
+    }
+    const token = new Contract(USDT0_PLASMA_TESTNET, TOKEN_ABI, provider)
+    const [symbol, decimals, poolCode] = await Promise.all([
+      token.symbol(),
+      token.decimals(),
+      provider.getCode(BERMUDA_POOL_PLASMA_TESTNET)
+    ])
+    if (symbol !== 'USDT0' || decimals !== 6n || poolCode === '0x') {
+      throw new Error('The expected testnet token or pool is unavailable')
+    }
+
+    wallet = new WalletManagerBermuda(seed, {
+      provider: rpcUrl,
+      transactionMaxFee
+    })
+    const master = await wallet.getAccount(0)
+    const shielded = await wallet.getBermudaAccount(0, 0)
+    return await operation({ master, shielded, provider })
+  } finally {
+    wallet?.dispose()
+    provider.destroy()
+  }
+}
+
+async function readFeeSchedule(provider) {
+  const pool = new Contract(BERMUDA_POOL_PLASMA_TESTNET, POOL_ABI, provider)
+  const blockTag = await provider.getBlockNumber()
+  const [depositFeeBps, withdrawFeeBps, feeRecipient] = await Promise.all([
+    pool.depositFee({ blockTag }),
+    pool.withdrawFee({ blockTag }),
+    pool.protocolFeeRecipient({ blockTag })
+  ])
+  return {
+    depositFeeBps: feeRecipient === ZeroAddress ? 0n : depositFeeBps,
+    withdrawFeeBps: feeRecipient === ZeroAddress ? 0n : withdrawFeeBps,
+    feeRecipient,
+    blockTag
+  }
+}
+
+async function recordAndConfirm(master, kind, hash, recordHash) {
+  try {
+    await recordHash({ kind, hash, chainId: Number(PLASMA_TESTNET_CHAIN_ID) })
+  } catch (cause) {
+    throw new Error(`${kind} returned ${hash}, but recording failed; reconcile this hash before retrying`, { cause })
+  }
+  let result
+  try {
+    result = await master.waitForTransaction(hash, {
+      target: 'confirmed',
+      timeout: 120_000
+    })
+  } catch (cause) {
+    throw new Error(`${kind} has an unconfirmed outcome: ${hash}; reconcile before retrying`, { cause })
+  }
+  if (!['confirmed', 'final'].includes(result.finality) || result.success !== true) {
+    throw new Error(`${kind} did not confirm successfully: ${hash}`)
+  }
+  return result
+}
+```
+
+The pinned WDK peers return a normalized receipt from `waitForTransaction()`: inspect `finality` and `success`, rather than treating the returned object as a raw ethers receipt. A wait timeout does not cancel or reverse the transaction.
+
+## Deposit into Bermuda
+
+USD₮0 on this testnet does not provide the EIP-2612 permit required by the SDK's fallback path. Approve the pool from the matching master EVM account before depositing. In the inspected SDK, the ERC-20 recipient receives the supplied `amount`; the external funding also includes the current protocol deposit fee.
+
+<Callout type="warn">
+Approval authorizes the pool to spend tokens. The helper sets a bounded allowance using the observed fee schedule, and clears a different nonzero allowance before replacing it. Each approval requires gas. A fee read does not lock the pool's later fee configuration, and this helper is not an aggregate spending or gas cap. Stop and reconcile any error after submission before trying again.
+</Callout>
+
+```javascript
+async function setDepositAllowance(master, requiredAllowance, recordHash) {
+  const current = await master.getAllowance(
+    USDT0_PLASMA_TESTNET, BERMUDA_POOL_PLASMA_TESTNET
+  )
+  if (current === requiredAllowance) return
+
+  // Clear existing authorization before setting the reviewed amount.
+  if (current !== 0n) {
+    const { hash } = await master.approve({
+      token: USDT0_PLASMA_TESTNET,
+      spender: BERMUDA_POOL_PLASMA_TESTNET,
+      amount: 0n
+    })
+    await recordAndConfirm(master, 'allowance-reset', hash, recordHash)
+    if (await master.getAllowance(USDT0_PLASMA_TESTNET, BERMUDA_POOL_PLASMA_TESTNET) !== 0n) {
+      throw new Error('Pool allowance did not reset to zero')
+    }
+  }
+
+  const { hash } = await master.approve({
+    token: USDT0_PLASMA_TESTNET,
+    spender: BERMUDA_POOL_PLASMA_TESTNET,
+    amount: requiredAllowance
+  })
+  await recordAndConfirm(master, 'deposit-approval', hash, recordHash)
+  const allowance = await master.getAllowance(
+    USDT0_PLASMA_TESTNET, BERMUDA_POOL_PLASMA_TESTNET
+  )
+  if (allowance !== requiredAllowance) {
+    throw new Error('Pool allowance differs from the reviewed amount')
+  }
+}
+
+export async function shieldUsdT0({
+  seed, rpcUrl, transactionMaxFee, amount, confirm, recordHash
+}) {
+  validateOperation(amount, confirm, recordHash)
+  return withAccounts({ seed, rpcUrl, transactionMaxFee }, async ({ master, shielded, provider }) => {
+    const fees = await readFeeSchedule(provider)
+    const protocolFee = BigInt(amount) * BigInt(fees.depositFeeBps) / 10_000n
+    const requiredAllowance = amount + protocolFee
+    if (await master.getTokenBalance(USDT0_PLASMA_TESTNET) < requiredAllowance) {
+      throw new Error('Insufficient public USDt0 balance for amount and observed fee')
+    }
+    const to = shielded.getAddress()
+    if (await confirm({
+      kind: 'deposit', to, amount, protocolFee, requiredAllowance,
+      token: USDT0_PLASMA_TESTNET, pool: BERMUDA_POOL_PLASMA_TESTNET,
+      observedAtBlock: fees.blockTag
+    }) !== true) throw new Error('Deposit was not confirmed by the application')
+
+    await setDepositAllowance(master, requiredAllowance, recordHash)
+    const latest = await readFeeSchedule(provider)
+    if (latest.depositFeeBps !== fees.depositFeeBps ||
+        latest.feeRecipient !== fees.feeRecipient) {
+      throw new Error('Deposit fee configuration changed; review the operation again')
+    }
+
+    const hash = await shielded.deposit({ token: USDT0_PLASMA_TESTNET, amount, to })
+    const receipt = await recordAndConfirm(master, 'deposit', hash, recordHash)
+    return { hash, receipt, to }
+  })
+}
+```
+
+The reset is a deliberate application allowance policy, not a claim that this testnet token always requires zero-first approval. It also reduces a pre-existing allowance larger than the reviewed amount. The fee recheck detects some stale plans; the SDK reads fees again while building the deposit, so fees can still change after this check. An interrupted or reverted deposit can leave an allowance active. Inspect it before deciding whether to revoke or submit another operation.
+
+After successful on-chain execution, query the shielded account's `getTokenBalance(USDT0_PLASMA_TESTNET)` separately. It scans through the SDK provider and can fail or lag the RPC used for confirmation. Do not automatically submit another deposit because the balance has not appeared.
+
+## Transfer to a Bermuda Address
+
+Supply the intended recipient's full Bermuda address, obtained from their `getAddress()`. A Bermuda address is not a 20-byte EVM address. The shape check below does not verify ownership, intended recipient, or network binding; the SDK still validates the operation.
+
+The transfer `amount` is the recipient's exact token output. A positive `relayFee` adds to the sender's shielded spend and requires a corresponding `relayer` fee-recipient address. For a shielded transfer, that fee recipient must be a full Bermuda address, because the SDK creates a shielded fee output. The option is not a relay-service URL and does not replace the SDK's configured endpoint. `transferMaxFee` and `transactionMaxFee` do not cap these token-denominated relay fees.
+
+```javascript
+function relayOptions(relayFee, relayer, recipientKind) {
+  if (typeof relayFee !== 'bigint' || relayFee < 0n) {
+    throw new Error('Relay fee must be a nonnegative bigint in token base units')
+  }
+  if (relayFee === 0n) return {}
+  if (recipientKind === 'bermuda') {
+    if (typeof relayer !== 'string' || !/^0x[0-9a-fA-F]{448}$/.test(relayer)) {
+      throw new Error('A positive transfer fee requires a full Bermuda fee recipient')
+    }
+  } else if (!isAddress(relayer) || relayer.toLowerCase() === ZeroAddress) {
+    throw new Error('A positive withdrawal fee requires a nonzero EVM fee recipient')
+  }
+  return { relayFee, relayer }
+}
+
+export async function transferUsdT0({
+  seed, rpcUrl, transactionMaxFee,
+  to, amount, relayFee = 0n, relayer, confirm, recordHash
+}) {
+  validateOperation(amount, confirm, recordHash)
+  if (typeof to !== 'string' || !/^0x[0-9a-fA-F]{448}$/.test(to)) {
+    throw new Error('Supply the full recipient Bermuda address')
+  }
+  const options = relayOptions(relayFee, relayer, 'bermuda')
+  return withAccounts({ seed, rpcUrl, transactionMaxFee }, async ({ master, shielded }) => {
+    if (await shielded.getTokenBalance(USDT0_PLASMA_TESTNET) < amount + relayFee) {
+      throw new Error('The discovered shielded balance cannot cover this transfer')
+    }
+    if (await confirm({ kind: 'transfer', to, amount, relayFee, relayer }) !== true) {
+      throw new Error('Transfer was not confirmed by the application')
+    }
+    const hash = await shielded.transfer({ token: USDT0_PLASMA_TESTNET, to, amount }, options)
+    const receipt = await recordAndConfirm(master, 'transfer', hash, recordHash)
+    return { hash, receipt }
+  })
+}
+```
+
+The balance check is an observation, not a lock or a guarantee that the SDK can select spendable UTXOs. A returned relay hash does not prove on-chain success or that the recipient's scanning provider has indexed the transfer. Check the receipt and then reconcile the recipient's balance separately.
+
+## Withdraw to a Public Address
+
+Review the public EVM recipient explicitly. Omitting `to` in the wrapper defaults to the master EVM account; this helper requires `to` to avoid silently selecting that default.
+
+By default, withdrawal `amount` is **total shielded spend**: the recipient gets the remainder after protocol and relay fees. With `exactOutputAmounts: true`, `amount` is the requested recipient output and the SDK consumes additional shielded funds for both fees. For a positive withdrawal relay fee, supply a nonzero public EVM fee-recipient address. The current protocol rate can change, and neither WDK network-fee cap bounds the withdrawal's token fees.
+
+```javascript
+export async function withdrawUsdT0({
+  seed, rpcUrl, transactionMaxFee,
+  to, amount, exactOutputAmounts = false,
+  relayFee = 0n, relayer, confirm, recordHash
+}) {
+  validateOperation(amount, confirm, recordHash)
+  if (!isAddress(to) || to.toLowerCase() === ZeroAddress) {
+    throw new Error('Supply the intended nonzero public EVM recipient')
+  }
+  if (typeof exactOutputAmounts !== 'boolean') {
+    throw new Error('Select gross-spend or exact-recipient withdrawal accounting')
+  }
+  const options = { ...relayOptions(relayFee, relayer, 'evm'), exactOutputAmounts }
+  return withAccounts({ seed, rpcUrl, transactionMaxFee }, async ({ master, shielded, provider }) => {
+    const fees = await readFeeSchedule(provider)
+    if (await confirm({
+      kind: 'withdraw', to, amount, exactOutputAmounts, relayFee, relayer,
+      observedProtocolFeeBps: fees.withdrawFeeBps,
+      observedAtBlock: fees.blockTag
+    }) !== true) throw new Error('Withdrawal was not confirmed by the application')
+
+    const hash = await shielded.withdraw({ token: USDT0_PLASMA_TESTNET, to, amount }, options)
+    const receipt = await recordAndConfirm(master, 'withdraw', hash, recordHash)
+    return { hash, receipt }
+  })
+}
+```
+
+For example, `amount: 1_000_000n` with the default flag spends one testnet USD₮0 unit in total; it does not promise that the public recipient receives that full amount. With `exactOutputAmounts: true`, the requested output is one unit, with fees added to the shielded spend. The observed rate in `confirm()` is not a fixed quote, and insufficient or unavailable UTXOs can still make the SDK reject the operation.
+
+USD₮0 withdrawals remain ERC-20 transfers. The module also has a wrapped-native path: deposits naming WXPL attach native XPL transaction value, while withdrawal `unwrap` controls wrapped versus native output. The inspected wrapper cannot batch-deposit WXPL using `recipients` without `amount`. This guide does not use that path; do not generalize its ERC-20 approval and funding instructions to native deposits.
+
+## Lifetime and Interrupted Operations
+
+The helpers dispose their seed-backed manager in `finally`. This clears the stored Bermuda private scalar reference and zeroes its viewing-key byte array, and delegates EVM account and signer cleanup to the pinned peers. It does not erase caller-owned seed copies, delete persisted caches, close the SDK's providers, or establish process-wide memory zeroization. Disposing one Bermuda account separately leaves its shared master EVM account available.
+
+Persist returned hashes before waiting, and retain the operation intent even if no hash returns. A failure or timeout after submission can leave an approval, deposit, or relay transaction pending or included. Reconcile each recorded hash, sender nonce and allowance, and pool/shielded state before permitting another submission. Repeating a write is not a status check. If SDK scanning fails, inspect its service configuration and retry reads under an application-controlled schedule; do not infer an empty balance from a failed read.
+
+## Next Steps
+
+- [Review Provider and Fee Configuration](/sdk/wallet-modules/wallet-evm-bermuda/configuration)
+- [Review Method and Option Contracts](/sdk/wallet-modules/wallet-evm-bermuda/api-reference)
+- [Review Account Setup and Runtime Limits](/sdk/wallet-modules/wallet-evm-bermuda/usage)
+
+---
+
+## Need Help?
+
+<SupportCards />

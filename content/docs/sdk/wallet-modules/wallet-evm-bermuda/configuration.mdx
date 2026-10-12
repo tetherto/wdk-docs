@@ -1,0 +1,129 @@
+---
+title: Wallet EVM Bermuda Configuration
+description: Configure Bermuda account providers, persistent caches, fee boundaries, and runtime requirements.
+docType: reference
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Configure `WalletManagerBermuda` for public EVM accounts and the separate shielded accounts returned by `getBermudaAccount()`. These pages describe source version `0.1.8` at [revision `6476ea5`](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/tree/6476ea5f79d669968b0d0fd0a1413b962f61129f), with both WDK wallet peers pinned to `1.0.0-beta.17`. The wrapper is not yet published on npm; see [Usage](/sdk/wallet-modules/wallet-evm-bermuda/usage) for installation.
+
+The maintainer-supported network is **Plasma testnet**, chain ID **9746**. An internal chain-name mapping does not establish working pool, proof, or relay services on another network.
+
+## Provider Configuration
+
+The manager accepts an RPC URL, an EIP-1193 provider, or an array of either. A provider is required to retrieve a Bermuda account and obtain fee rates. Public EVM accounts can be derived without a provider; their network operations require one.
+
+```javascript
+import WalletManagerBermuda from '@bermuda/wdk-wallet-evm-bermuda'
+
+// Generate a new seed for this example. Persist it through your secure wallet setup.
+const seedPhrase = WalletManagerBermuda.getRandomSeedPhrase()
+const wallet = new WalletManagerBermuda(seedPhrase, {
+  provider: 'https://testnet-rpc.plasma.to',
+  transactionMaxFee: 100_000_000_000_000n,
+  transferMaxFee: 100_000_000_000_000n
+})
+
+// Finish account operations before disposing the manager.
+wallet.dispose()
+```
+
+| Field | Type | Default | Effect in the pinned peers |
+|---|---|---|---|
+| `provider` | `string`, `Eip1193Provider`, or an array of either | None | Connects public EVM accounts and supplies the chain ID used to select the Bermuda SDK configuration. An empty array leaves the manager without a provider. |
+| `retries` | `number` | `3` | Additional attempts after the first failure when using a provider array. |
+| `chainId` | `number` | Provider detection | Pins the network for public EVM account URL providers. The manager still detects its own provider's network when selecting the Bermuda SDK configuration. |
+| `transactionMaxFee` | `number` or `bigint` | None | Maximum estimated EVM network fee, in wei, for transaction sending and provider-connected signing. Includes Bermuda deposits and the wrapper's wrapped-native approval transactions. |
+| `transferMaxFee` | `number` or `bigint` | None | Maximum estimated EVM network fee, in wei, for ordinary EVM token transfers. |
+
+Keep every endpoint in a provider array on Plasma testnet. If you set `chainId`, independently verify the endpoint's actual network: the public account URL provider trusts the configured value, while the manager detects its chain separately. Omitting `chainId` lets both detect the network.
+
+## Bermuda SDK Services
+
+<Callout type="warn">
+The manager's `provider` configures its EVM operations and chain selection. It does **not** replace the Bermuda SDK's RPC provider or configure its relay, chain-state, compliance, or proof-artifact services.
+</Callout>
+
+After reading the chain ID, the manager initializes the SDK with that chain's defaults. Only the cache fields below are forwarded as SDK overrides. Adding SDK fields such as `relayer`, `chainState`, `artifacts`, or `policyEnforcement` to the manager configuration does not forward them.
+
+Shielded balances and operations depend on the SDK's own services. EVM RPC failover does not provide failover for those services. Follow the [maintainer's configuration source](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/blob/6476ea5f79d669968b0d0fd0a1413b962f61129f/src/wallet-manager-bermuda.js) when evaluating a custom SDK integration; the manager has no public SDK configuration setter.
+
+## Persistent Caches
+
+| Field | Type | Default | Effect |
+|---|---|---|---|
+| `utxoCache` | `string` | SDK default storage | File path for persisting discovered UTXOs. Enables forwarding of the cache overrides. |
+| `commitmentEventsCache` | `string` | Derived from `utxoCache` | File path for commitment events. Used only when `utxoCache` is set. |
+| `fs` | Filesystem implementation | None forwarded | `node:fs` or an equivalent implementation for file-backed storage. Used only when `utxoCache` is set. |
+
+Pass a filesystem implementation and **two distinct paths**. Create their parent directory before use. The implicit commitment-events path replaces a final `.json` suffix with `-commitment-events.json`; without that suffix, it equals the UTXO path. An explicit second path avoids that collision.
+
+For Node.js, add these fields to your configuration:
+
+```javascript
+import fs from 'node:fs'
+import { resolve } from 'node:path'
+
+const cacheDirectory = resolve('./bermuda-cache')
+fs.mkdirSync(cacheDirectory, { recursive: true })
+
+const cacheConfig = {
+  provider: 'https://testnet-rpc.plasma.to',
+  utxoCache: resolve(cacheDirectory, 'utxos.json'),
+  commitmentEventsCache: resolve(cacheDirectory, 'commitment-events.json'),
+  fs
+}
+```
+
+Protect persisted wallet data with application-appropriate filesystem permissions. `dispose()` does not delete cache files.
+
+## Fee Boundaries
+
+| Operation | Fee handling |
+|---|---|
+| Public EVM `sendTransaction()` or provider-connected `signTransaction()` | Uses `transactionMaxFee` for its estimated EVM network fee. |
+| Public EVM `transfer()` | Checks `transferMaxFee` against the transfer estimate, then also checks `transactionMaxFee` in its underlying transaction send. |
+| Bermuda `deposit()` | Sends through the public EVM account. `transactionMaxFee` applies to the deposit and any wrapped-native approval sent by the wrapper. A pool protocol fee in the deposited token is outside this cap. |
+| Bermuda `transfer()` | Submitted through the SDK relay. Both EVM fee caps are inapplicable; a configured relay fee is paid from shielded funds in the transferred token. |
+| Bermuda `withdraw()` | Submitted through the SDK relay. Both EVM fee caps are inapplicable; protocol and configured relay fees consume shielded funds in the withdrawn token. |
+
+`relayFee` and `relayer` are operation options, not manager settings. For transfers, provide them together using a full Bermuda fee-recipient address. Withdrawals use a public EVM fee recipient. The relayer option identifies the fee recipient; it does not change the SDK relay service URL. See the [operation options](/sdk/wallet-modules/wallet-evm-bermuda/api-reference#operation-options) for withdrawal amount semantics.
+
+These options are estimate guards in the pinned EVM peer. Transaction sending quotes the fee, checks the threshold, then separately populates gas and fee fields before signing. It does not recheck the populated transaction against that threshold, so the final network liability can differ from the checked estimate. These guards do not quote or cap the complete shielded operation. Reserve public native gas for deposits and ERC-20 approvals, and account for token fees separately.
+
+## Runtime Requirements
+
+The examples use Node.js 22. The repository's Node.js 22 floor applies to its development and test toolchain; it does not establish a tested minimum for every consuming application.
+
+The package also has a conditional **Bare** entry point. It loads the Node compatibility layer and patches process globals for the SDK's proof backend. Import the Bermuda wrapper before directly loading the SDK or its prover under Bare. Proof generation needs filesystem access and downloads CRS data on first use, using `CRS_PATH` when set or `~/.bb-crs` by default.
+
+The [maintainer documents Bare tests and constraints](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/blob/6476ea5f79d669968b0d0fd0a1413b962f61129f/README.md#-supported-runtimes). **WDK worklet bundles are unsupported** in this revision. Bare compatibility does not establish a working bundled mobile integration.
+
+## Resource Lifecycle
+
+Finish outstanding operations before calling [manager disposal](/sdk/wallet-modules/wallet-evm-bermuda/api-reference#dispose-manager). It disposes cached public EVM and Bermuda accounts and clears the manager-owned default signer. With the pinned WDK wallet `1.0.0-beta.17`, base cleanup also disposes any registered signers and any caller-supplied default signer.
+
+Disposing an individual Bermuda account clears its stored Bermuda key fields and leaves the master EVM account available to other shielded accounts. Neither form of disposal deletes persisted caches, clears caller-held seed copies, stops SDK providers, or reverses a submitted transaction. Release application references when finished; disposal is not a process-wide secret-erasure guarantee.
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/wallet-modules/wallet-evm-bermuda/usage">
+Install the source revision and distinguish public and shielded account flows.
+</Card>
+<Card title="API Reference" href="/sdk/wallet-modules/wallet-evm-bermuda/api-reference">
+Review method signatures, operation options, errors, and disposal behavior.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
