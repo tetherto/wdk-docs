@@ -11,7 +11,7 @@ icon: Code
 | Class | Description | Methods |
 |-------|-------------|---------|
 | [WDK](#wdk) | Main class for managing wallets across multiple blockchains. Orchestrates wallet managers, protocols, middleware, and local transaction policies. | [Constructor](#constructor), [Methods](#methods) |
-| [Base wallet signer contracts](#base-wallet-signer-contracts) | Signer capabilities and disposal changes in base wallet beta.21. | Interfaces and migration notes |
+| [Base wallet signer contracts](#base-wallet-signer-contracts) | Signer capabilities, ownership and disposal contracts in base wallet beta.21 and beta.22. | Interfaces and migration notes |
 | [IWalletAccount](#iwalletaccount) | Base single-signer writable wallet account interface from `@tetherto/wdk-wallet`. | [Methods](#methods-1) |
 | [Multisig account contracts](#multisig-account-contracts) | Implementation contracts exported from `@tetherto/wdk-wallet/multisig`. | Interfaces and types |
 | [IWalletAccountWithProtocols](#iwalletaccountwithprotocols) | Protocol registration and access surface added to a wallet account. | [Methods](#methods-2) |
@@ -62,7 +62,7 @@ const policyWdk = new WDK(seedBytes, {
 | `getAccount(blockchain, index?)` | Returns a wallet account for a blockchain and index | `Promise<WdkAccount>` | If wallet not registered |
 | `getAccountByPath(blockchain, path)` | Returns a wallet account for a blockchain and derivation path | `Promise<WdkAccount>` | If wallet not registered |
 | `getFeeRates(blockchain)` | Returns current fee rates for a registered blockchain | `Promise<FeeRates>` | If wallet not registered |
-| `dispose(blockchains?)` | Calls cleanup on all registered wallets, or only the named blockchains | `void` | - |
+| `dispose(blockchains?)` | Calls cleanup on selected wallets, unregisters them, and clears their policy state | `void` | Errors from wallet cleanup |
 
 #### `registerWallet(blockchain, wallet, config)`
 Registers a new wallet manager for a specific blockchain.
@@ -356,7 +356,9 @@ console.log('Fee rates:', feeRates)
 #### `dispose(blockchains?)`
 Disposes all registered wallets when called without arguments, or only the wallets for the named blockchains when you pass a string array.
 
-Cleanup delegates to each concrete wallet manager. It does not guarantee removal of every retained seed or signer, and does not mutate or zero the seed value passed to `new WDK(seed)`. See [base wallet beta.21 disposal limits](#disposal-in-base-wallet-beta21) and [Seed Lifecycle](/sdk/core-module/guides/error-handling#seed-lifecycle) for the recommended cleanup pattern.
+For each selected wallet, WDK beta.18 calls the manager's `dispose()`, unregisters the wallet, and clears its policy state. A later account lookup for that blockchain fails until a wallet is registered again. Calling without arguments also clears all policy state. If manager cleanup throws, the error propagates before that wallet is unregistered.
+
+Signer cleanup follows the installed concrete wallet's ownership behavior; the base contract alone does not establish which supplied signers survive disposal. WDK itself does not overwrite the seed passed to `new WDK(seed)`. See [disposal and signer ownership](#disposal-and-signer-ownership) and [Seed Lifecycle](/sdk/core-module/guides/error-handling#seed-lifecycle) before sharing signer or seed references.
 
 **Parameters:**
 - `blockchains` (string[], optional): The blockchain identifiers to dispose. Omit this parameter to dispose every registered wallet.
@@ -445,6 +447,15 @@ The list matches exact names, not prefixes: a new `get*` or `quote*` method is n
 
 These contracts belong to `@tetherto/wdk-wallet@1.0.0-beta.22`. They describe the base package used by module authors; a concrete wallet must implement the relevant signer support before applications can use it. Updating a direct base-wallet dependency does not upgrade the separate copy pinned by another wallet package.
 
+<Callout type="warn">
+The concrete wallet versions documented below pin older base packages. Installing base wallet beta.22 directly does not give these wallets its `disposed` or `DisposalError` behavior.
+
+| Base-wallet dependency | Concrete wallet versions |
+| --- | --- |
+| `1.0.0-beta.17` | EVM beta.20, Bitcoin beta.17, ERC-4337 beta.21, EIP-7702 beta.7, Spark beta.28, Aptos beta.3, TON beta.15, TON Gasless beta.13, TRON beta.15, TRON GasFree beta.10 |
+| `1.0.0-beta.19` | Solana beta.16, Solana Gasless beta.6, Safe beta.1, Squads beta.2 |
+</Callout>
+
 Declare `@tetherto/wdk-wallet@1.0.0-beta.22` as a direct dependency before importing these contracts.
 
 ```javascript title="Import Base Wallet Contracts"
@@ -463,15 +474,21 @@ import WalletManager, { DisposalError, IDisposable, ISigner } from '@tetherto/wd
 
 The base `WalletManager` constructor rejects a default signer whose `isDerivable` is false with `InvalidSignerError`. Register non-derivable signers by name with `addSigner(name, signer)` in a supporting concrete wallet. `WalletManager<TSigner>` preserves the signer type through `getSigner()` and `getSigners()`, and `addSigner()` returns `this` for chaining.
 
+### Disposal And Signer Ownership
+
+Distinguish signers created by a wallet from signers supplied by your app. A manager can create a default signer from a seed and derive child signers for its accounts; a signer passed to a constructor or registered with `addSigner()` is application-owned. Concrete managers and accounts implement that ownership boundary. The base interface does not guarantee that a particular wallet release preserves supplied signers when disposed.
+
+Before sharing a signer, check the concrete wallet's version and cleanup options. Arrange cleanup of application-owned signers after their final use, accounting for whether the wallet already disposes them, and keep any seed buffer alive until every wallet that retains it has finished. Do not treat disposal as proof that every secret copy or hardware session has been cleared.
+
 ### Disposal In Base Wallet Beta.21
 
-The base manager's `dispose()` calls `dispose()` on cached accounts only when `account.keyPair?.privateKey` is present, then clears its account cache. It no longer directly disposes or removes its default or named signers. It also retains its seed reference. Account implementations may perform additional cleanup; confirm the concrete wallet's behavior.
+The base manager's `dispose()` calls `dispose()` on cached accounts only when `account.keyPair?.privateKey` is present, then clears its account cache. It no longer directly disposes or removes its default or named signers. Concrete managers must provide any additional cleanup for a default signer they create; account implementations determine how derived or supplied signers are handled.
 
-Applications and module authors must manage signer resources and caller-owned seed buffers explicitly. Do not treat manager disposal as proof that a hardware session, signer, or all seed material has been cleared. Coordinate cleanup with other accounts that share the same signer, and see [seed lifecycle](/sdk/core-module/guides/error-handling#seed-lifecycle).
+When constructed from a mnemonic or raw seed bytes, the base manager retains seed bytes; with raw `Uint8Array` input, it retains that same buffer. A signer-based manager can consume the seed into a default signer before calling the base constructor, in which case `wallet.seed` is `undefined`. Do not use this getter as seed storage or recovery: store the seed securely in your application and follow [seed lifecycle](/sdk/core-module/guides/error-handling#seed-lifecycle).
 
 ### Disposal State In Base Wallet Beta.22
 
-`WalletManager.disposed` starts as `false`. After `dispose()` completes, it becomes `true`; subsequent calls to `dispose()` return immediately. The cached-account cleanup and retained seed and signer references described above remain unchanged.
+`WalletManager.disposed` starts as `false`. After the base `dispose()` completes, it becomes `true`; subsequent calls return immediately. This state describes the base manager. Its cached-account cleanup is unchanged from beta.21; concrete managers and accounts remain responsible for their [signer ownership behavior](#disposal-and-signer-ownership). A `true` value does not prove that caller-owned secrets or external signer resources were cleared.
 
 Beta.22 exports `DisposalError` from both `@tetherto/wdk-wallet` and `@tetherto/wdk-wallet/protocols`. It extends `WdkError` and identifies operations rejected because an object has been disposed. The signer, account, and protocol contracts describe disposal failures; concrete implementations supply the checks.
 
@@ -485,7 +502,7 @@ Beta.22 adds `disposed: boolean` through that TypeScript contract. Its runtime `
 
 ### Methods
 
-The Throws column summarizes the beta.22 contract; each concrete module implements its own checks.
+The Throws column summarizes the beta.22 contract; each concrete module implements its own checks. `DisposalError` is available only from base wallet beta.22 and later. The [concrete versions listed above](#base-wallet-signer-contracts) pin beta.17 or beta.19 and do not provide these beta.22 disposal checks.
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
