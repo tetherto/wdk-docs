@@ -9,11 +9,12 @@ These notes cover Safe `1.0.0-beta.1` and Squads `1.0.0-beta.2`. Verify the inst
 
 ## Safe
 
-- Configure the chain RPC, bundler, and coordinator for the same network. Keep owner keys separate and require the configured approval threshold.
+- Configure the chain RPC, bundler, and coordinator for the same network. For proposal/message coordination, provide a custom `coordinator`, a hosted `safeApiKey` on an API Kit 4.0.1-supported chain, or a self-hosted/proxy `txServiceUrl`. The default coordinator does not forward the key when a URL is set; a proxy must add required credentials. Keep owner keys separate and require the configured approval threshold.
+- Beta.1's default hosted coordinator rejects unknown proposal/message IDs with plain errors, including bulk and readiness lookups. Nullable missing-item results require a coordinator that returns null.
 - Review the complete proposal before approving it. Proposal submission, sufficient signatures, bundler acceptance, and on-chain confirmation are distinct states.
 - `sign(message)` proposes a message through the coordinator. It is not a local owner-signature helper.
 - `executeProposal()` returns a UserOperation hash and a native maximum gas estimate. Do not treat that hash or an `autoExecute` result as a confirmed transaction receipt.
-- The published TypeScript declarations do not accept the exported Safe transaction-service coordinator as the declared coordinator interface. Use the documented default `txServiceUrl` and `safeApiKey` configuration path for TypeScript.
+- The published TypeScript declarations do not accept the exported Safe transaction-service coordinator as the declared coordinator interface. Use the documented default `txServiceUrl` or `safeApiKey` configuration path for TypeScript.
 
 ## Squads
 

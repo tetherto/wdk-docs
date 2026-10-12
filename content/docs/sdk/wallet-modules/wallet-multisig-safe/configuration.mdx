@@ -18,9 +18,13 @@ Use `MultisigSafeWalletConfig` for the manager and writable account. The read-on
 | `entryPointAddress` | `string` | Optional. Defaults to EntryPoint v0.6; changing an address does not change the supported Safe module implementation. |
 | `safeModulesVersion` | `string` | Optional. Only `0.2.0` is supported; also the default. |
 | `paymasterUrl` | `string` | Optional in the type; required for sponsored mode and for a token paymaster. |
-| `txServiceUrl` | `string` | Optional custom Safe Transaction Service endpoint. |
-| `safeApiKey` | `string` | Optional hosted Safe Transaction Service API key. Keep private service credentials on a backend. |
+| `txServiceUrl` | `string` | Optional in the type. Self-hosted Safe Transaction Service or backend proxy URL; suppresses forwarding of `safeApiKey`. |
+| `safeApiKey` | `string` | Optional in the type. Hosted Safe Transaction Service API key; used only when `txServiceUrl` is absent. Keep private service credentials on a backend. |
 | `coordinator` | `IMultisigCoordinator` | Optional instance. Replaces the default service coordinator and takes precedence over service URL/key. |
+
+Provide at least one of `txServiceUrl`, `safeApiKey` or `coordinator` for proposal and message coordination. Construction does not enforce this requirement; with none set, the default coordinator fails on its first service call.
+
+For Safe's hosted service, set only `safeApiKey` and use a chain in [API Kit 4.0.1's network list](https://github.com/safe-global/safe-core-sdk/blob/2b8548a14d11f7b542691eb76e85d22a4c882338/packages/api-kit/src/utils/config.ts). Other chain IDs fail with `Network with chainId X not found`. Use `txServiceUrl` for a self-hosted service or a backend proxy that adds credentials. Combining a hosted URL with `safeApiKey` fails because the coordinator omits the key when a URL is set. A custom `coordinator` bypasses this default-service setup.
 
 `provider`, `bundlerUrl` and `chainId` must refer to the same chain. The package uses the configured chain ID for signatures; a valid address alone does not prove the Safe has the expected owners or module installed.
 
