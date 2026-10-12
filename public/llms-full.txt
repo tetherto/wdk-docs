@@ -6224,7 +6224,7 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 - **wallet-evm-7702-gasless** ([v1.0.0-beta.7](https://github.com/tetherto/wdk-wallet-evm-7702-gasless/releases/tag/v1.0.0-beta.7)): [Breaking] Accept ethers providers and share a manager RPC client across accounts. Current protocol modules require EIP-1193-compatible inputs; wrapping an existing account requires the module's exact EVM beta.19 package instance.
 - **wallet-evm-erc-4337** ([v1.0.0-beta.21](https://github.com/tetherto/wdk-wallet-evm-erc-4337/releases/tag/v1.0.0-beta.21)): [Breaking] Accept ethers providers and share the manager RPC client; move transfer/approval gas overrides into their options.
 - **wallet-ton-gasless** ([v1.0.0-beta.13](https://github.com/tetherto/wdk-wallet-ton-gasless/releases/tag/v1.0.0-beta.13)): [Breaking] Adopt TON domain-separated message signatures and Web Crypto query IDs, and share TON RPC and TON API clients across manager-derived accounts.
-- **wdk-wallet** ([v1.0.0-beta.21](https://github.com/tetherto/wdk-wallet/releases/tag/v1.0.0-beta.21)): [Breaking] Require derivable default signers, add nullable signer/account capabilities and IDisposable, and leave signer and seed cleanup to their owners when disposing the base manager.
+- **wdk-wallet** ([v1.0.0-beta.21](https://github.com/tetherto/wdk-wallet/releases/tag/v1.0.0-beta.21)): [Breaking] Require derivable default signers, add nullable signer/account capabilities and IDisposable, remove `index` from `IWalletAccount`, and stop the base manager from directly disposing default or named signers. Code using the base account type must no longer assume `index` exists; concrete implementations define signer cleanup.
 
 **Fixes**
 
@@ -13657,7 +13657,7 @@ Description: Complete API documentation for @tetherto/wdk
 | Class | Description | Methods |
 |-------|-------------|---------|
 | [WDK](#wdk) | Main class for managing wallets across multiple blockchains. Orchestrates wallet managers, protocols, middleware, and local transaction policies. | [Constructor](#constructor), [Methods](#methods) |
-| [Base wallet signer contracts](#base-wallet-signer-contracts) | Signer capabilities and disposal changes in base wallet beta.21. | Interfaces and migration notes |
+| [Base wallet signer contracts](#base-wallet-signer-contracts) | Signer capabilities, ownership and disposal contracts in base wallet beta.21 and beta.22. | Interfaces and migration notes |
 | [IWalletAccount](#iwalletaccount) | Base single-signer writable wallet account interface from `@tetherto/wdk-wallet`. | [Methods](#methods-1) |
 | [Multisig account contracts](#multisig-account-contracts) | Implementation contracts exported from `@tetherto/wdk-wallet/multisig`. | Interfaces and types |
 | [IWalletAccountWithProtocols](#iwalletaccountwithprotocols) | Protocol registration and access surface added to a wallet account. | [Methods](#methods-2) |
@@ -13710,7 +13710,7 @@ const policyWdk = new WDK(seedBytes, {
 | `getAccount(blockchain, index?)` | Returns a wallet account for a blockchain and index | `Promise<WdkAccount>` | If wallet not registered |
 | `getAccountByPath(blockchain, path)` | Returns a wallet account for a blockchain and derivation path | `Promise<WdkAccount>` | If wallet not registered |
 | `getFeeRates(blockchain)` | Returns current fee rates for a registered blockchain | `Promise<FeeRates>` | If wallet not registered |
-| `dispose(blockchains?)` | Calls cleanup on all registered wallets, or only the named blockchains | `void` | - |
+| `dispose(blockchains?)` | Calls cleanup on selected wallets, unregisters them, and clears their policy state | `void` | Errors from wallet cleanup |
 
 #### `registerWallet(blockchain, wallet, config)`
 Registers a new wallet manager for a specific blockchain.
@@ -14004,7 +14004,9 @@ console.log('Fee rates:', feeRates)
 #### `dispose(blockchains?)`
 Disposes all registered wallets when called without arguments, or only the wallets for the named blockchains when you pass a string array.
 
-Cleanup delegates to each concrete wallet manager. It does not guarantee removal of every retained seed or signer, and does not mutate or zero the seed value passed to `new WDK(seed)`. See [base wallet beta.21 disposal limits](#disposal-in-base-wallet-beta21) and [Seed Lifecycle](/sdk/core-module/guides/error-handling#seed-lifecycle) for the recommended cleanup pattern.
+For each selected wallet, WDK beta.18 calls the manager's `dispose()`, unregisters the wallet, and clears its policy state. A later account lookup for that blockchain fails until a wallet is registered again. Calling without arguments also clears all policy state. If manager cleanup throws, the error propagates before that wallet is unregistered.
+
+Signer cleanup follows the installed concrete wallet's ownership behavior; the base contract alone does not establish which supplied signers survive disposal. WDK itself does not overwrite the seed passed to `new WDK(seed)`. See [disposal and signer ownership](#disposal-and-signer-ownership) and [Seed Lifecycle](/sdk/core-module/guides/error-handling#seed-lifecycle) before sharing signer or seed references.
 
 **Parameters:**
 - `blockchains` (string[], optional): The blockchain identifiers to dispose. Omit this parameter to dispose every registered wallet.
@@ -14093,6 +14095,15 @@ The list matches exact names, not prefixes: a new `get*` or `quote*` method is n
 
 These contracts belong to `@tetherto/wdk-wallet@1.0.0-beta.22`. They describe the base package used by module authors; a concrete wallet must implement the relevant signer support before applications can use it. Updating a direct base-wallet dependency does not upgrade the separate copy pinned by another wallet package.
 
+<Callout type="warn">
+The concrete wallet versions documented below pin older base packages. Installing base wallet beta.22 directly does not give these wallets its `disposed` or `DisposalError` behavior.
+
+| Base-wallet dependency | Concrete wallet versions |
+| --- | --- |
+| `1.0.0-beta.17` | EVM beta.20, Bitcoin beta.17, ERC-4337 beta.21, EIP-7702 beta.7, Spark beta.28, Aptos beta.3, TON beta.15, TON Gasless beta.13, TRON beta.15, TRON GasFree beta.10 |
+| `1.0.0-beta.19` | Solana beta.16, Solana Gasless beta.6, Safe beta.1, Squads beta.2 |
+</Callout>
+
 Declare `@tetherto/wdk-wallet@1.0.0-beta.22` as a direct dependency before importing these contracts.
 
 ```javascript title="Import Base Wallet Contracts"
@@ -14111,15 +14122,21 @@ import WalletManager, { DisposalError, IDisposable, ISigner } from '@tetherto/wd
 
 The base `WalletManager` constructor rejects a default signer whose `isDerivable` is false with `InvalidSignerError`. Register non-derivable signers by name with `addSigner(name, signer)` in a supporting concrete wallet. `WalletManager<TSigner>` preserves the signer type through `getSigner()` and `getSigners()`, and `addSigner()` returns `this` for chaining.
 
+### Disposal And Signer Ownership
+
+Distinguish signers created by a wallet from signers supplied by your app. A manager can create a default signer from a seed and derive child signers for its accounts; a signer passed to a constructor or registered with `addSigner()` is application-owned. Concrete managers and accounts implement that ownership boundary. The base interface does not guarantee that a particular wallet release preserves supplied signers when disposed.
+
+Before sharing a signer, check the concrete wallet's version and cleanup options. Arrange cleanup of application-owned signers after their final use, accounting for whether the wallet already disposes them, and keep any seed buffer alive until every wallet that retains it has finished. Do not treat disposal as proof that every secret copy or hardware session has been cleared.
+
 ### Disposal In Base Wallet Beta.21
 
-The base manager's `dispose()` calls `dispose()` on cached accounts only when `account.keyPair?.privateKey` is present, then clears its account cache. It no longer directly disposes or removes its default or named signers. It also retains its seed reference. Account implementations may perform additional cleanup; confirm the concrete wallet's behavior.
+The base manager's `dispose()` calls `dispose()` on cached accounts only when `account.keyPair?.privateKey` is present, then clears its account cache. It no longer directly disposes or removes its default or named signers. Concrete managers must provide any additional cleanup for a default signer they create; account implementations determine how derived or supplied signers are handled.
 
-Applications and module authors must manage signer resources and caller-owned seed buffers explicitly. Do not treat manager disposal as proof that a hardware session, signer, or all seed material has been cleared. Coordinate cleanup with other accounts that share the same signer, and see [seed lifecycle](/sdk/core-module/guides/error-handling#seed-lifecycle).
+When constructed from a mnemonic or raw seed bytes, the base manager retains seed bytes; with raw `Uint8Array` input, it retains that same buffer. A signer-based manager can consume the seed into a default signer before calling the base constructor, in which case `wallet.seed` is `undefined`. Do not use this getter as seed storage or recovery: store the seed securely in your application and follow [seed lifecycle](/sdk/core-module/guides/error-handling#seed-lifecycle).
 
 ### Disposal State In Base Wallet Beta.22
 
-`WalletManager.disposed` starts as `false`. After `dispose()` completes, it becomes `true`; subsequent calls to `dispose()` return immediately. The cached-account cleanup and retained seed and signer references described above remain unchanged.
+`WalletManager.disposed` starts as `false`. After the base `dispose()` completes, it becomes `true`; subsequent calls return immediately. This state describes the base manager. Its cached-account cleanup is unchanged from beta.21; concrete managers and accounts remain responsible for their [signer ownership behavior](#disposal-and-signer-ownership). A `true` value does not prove that caller-owned secrets or external signer resources were cleared.
 
 Beta.22 exports `DisposalError` from both `@tetherto/wdk-wallet` and `@tetherto/wdk-wallet/protocols`. It extends `WdkError` and identifies operations rejected because an object has been disposed. The signer, account, and protocol contracts describe disposal failures; concrete implementations supply the checks.
 
@@ -14133,7 +14150,7 @@ Beta.22 adds `disposed: boolean` through that TypeScript contract. Its runtime `
 
 ### Methods
 
-The Throws column summarizes the beta.22 contract; each concrete module implements its own checks.
+The Throws column summarizes the beta.22 contract; each concrete module implements its own checks. `DisposalError` is available only from base wallet beta.22 and later. The [concrete versions listed above](#base-wallet-signer-contracts) pin beta.17 or beta.19 and do not provide these beta.22 disposal checks.
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
@@ -14146,7 +14163,7 @@ The Throws column summarizes the beta.22 contract; each concrete module implemen
 | `sendTransaction(tx)` | Signs, broadcasts, and returns the transaction result | `Promise<TransactionResult>` | `DisposalError`, provider, broadcast, or fee errors |
 | `transfer(options)` | Transfers a token where supported by the module | `Promise<TransferResult>` | `DisposalError` or a token-transfer error |
 | `toReadOnlyAccount()` | Returns a read-only account copy | `Promise<IWalletAccountReadOnly>` | - |
-| `dispose()` | Clears sensitive account material from memory | `void` | - |
+| `dispose()` | Initiates the account cleanup process | `void` | - |
 
 ##### `signTransaction(tx)`
 Signs a transaction and returns the signed transaction payload without broadcasting it. Use this when your app needs offline signing, external transaction submission, or a separate review step before broadcast.
@@ -15271,7 +15288,9 @@ For security, clear wallet state from memory when a session is complete. The WDK
 
 WDK does not own the seed you pass to `new WDK(seed)`. The seed comes from your app, so your app is responsible for storing it, decrypting it, and clearing it when it is no longer needed.
 
-For modules based on `@tetherto/wdk-wallet@1.0.0-beta.21`, base manager disposal also retains default and named signer references. It disposes cached accounts only when they expose private key material. Manage signer resources separately according to the concrete module's ownership rules; see [base wallet disposal](/sdk/core-module/api-reference#disposal-in-base-wallet-beta21).
+Signer cleanup depends on the concrete wallet release. Distinguish a default signer created from a seed and derived account signers from signers your app supplies. Check the installed wallet's behavior before sharing a signer: the base interfaces do not guarantee that disposal preserves supplied signers. Coordinate application-owned signer cleanup after final use, accounting for any cleanup the wallet already performs; see [disposal and signer ownership](/sdk/core-module/api-reference#disposal-and-signer-ownership).
+
+Do not recover the seed through `wallet.seed`. Signer-based managers can return `undefined`, while other managers retain the original bytes for later derivation. Store seeds encrypted in your application and clear decrypted mutable buffers only after their final dependent use, not automatically after construction.
 
 Use this lifecycle for sessions that need explicit cleanup:
 
@@ -15314,7 +15333,7 @@ async function runWalletSession(
 In this example, `decryptSeedBytes()` represents your app's secure storage or decryption layer. It should return seed bytes as a `Uint8Array`.
 
 <Callout type="warn">
-[`dispose()`](/sdk/core-module/api-reference#disposeblockchains) delegates cleanup to the registered wallet managers. Their installed versions determine which account keys, seeds, and signers are cleared; see [base wallet beta.21 disposal limits](/sdk/core-module/api-reference#disposal-in-base-wallet-beta21). It does not mutate or zero the seed value you passed to WDK. If your app requires explicit seed cleanup, prefer a mutable `Uint8Array`; JavaScript strings cannot be reliably zeroed.
+[`dispose()`](/sdk/core-module/api-reference#disposeblockchains) calls each selected manager's cleanup, unregisters it, and clears its policy state. Their installed versions determine signer cleanup; see [disposal and signer ownership](/sdk/core-module/api-reference#disposal-and-signer-ownership). WDK itself does not overwrite the seed argument. Clear caller-owned buffers after all consumers finish; prefer a mutable `Uint8Array` when explicit cleanup is required, because JavaScript strings cannot be reliably zeroed.
 </Callout>
 
 ### Disposing the Instance
@@ -27335,7 +27354,7 @@ Wallet modules can expose fee caps through their configuration objects. Use the 
 
 The base `@tetherto/wdk-wallet` package defines a cross-chain `ISigner` interface for wallet modules that support external signing. Signer-aware modules can be constructed from a default signer instead of a seed, can register named signers with `addSigner(name, signer)`, and can resolve accounts by passing `signerName` to account retrieval methods.
 
-In base wallet beta.21, a default signer must have `isDerivable: true`. Register a non-derivable signer by name in a supporting module. The interface also exposes nullable `keyPair` and `path` properties and message signing; see the [base-wallet contracts and disposal changes](/sdk/core-module/api-reference#base-wallet-signer-contracts).
+In base wallet beta.21, a default signer must have `isDerivable: true`. Register a non-derivable signer by name in a supporting module. The interface also exposes nullable `keyPair` and `path` properties and message signing; see the [base-wallet contracts and disposal changes](/sdk/core-module/api-reference#base-wallet-signer-contracts). Signers your app supplies remain its responsibility, but preservation during disposal depends on the concrete wallet version and its cleanup options. Check [signer ownership](/sdk/core-module/api-reference#disposal-and-signer-ownership) before sharing them.
 
 | Surface | Description |
 | --- | --- |
@@ -27344,7 +27363,8 @@ In base wallet beta.21, a default signer must have `isDerivable: true`. Register
 | `ISigner.derive(relPath)` | Derives a child signer from a relative derivation path, when the signer supports derivation. |
 | `ISigner.getAddress()` | Returns the address controlled by the signer. |
 | `ISigner.sign(message)` | Signs a message and returns `Promise<string>`. |
-| `ISigner.dispose()` | Clears signer-held secret material or external resources. |
+| `ISigner.dispose()` | Initiates signer cleanup. Call it for application-owned signers after their final use, according to the concrete wallet's ownership contract. |
+| `ISigner.disposed` | Read-only disposal-state contract added in base wallet beta.22; implementations supply the state. |
 | `WalletManager.addSigner(name, signer)` | Registers a named signer. Blank names throw an error. |
 | `WalletManager.getSigner(name?)` | Returns a named signer, or the default signer when called without a name. |
 | `WalletManager.getSigners()` | Returns a shallow copy of the named signer map. |
@@ -27549,7 +27569,7 @@ new WalletManagerAptos(
 | `getAccount(index?)` | Returns the account at `m/44'/637'/index'/0'/0'`. | `Promise<WalletAccountAptos>` |
 | `getAccountByPath(path)` | Returns an account at a relative hardened path. | `Promise<WalletAccountAptos>` |
 | `getFeeRates()` | Returns Aptos fee rates in octas per gas unit. | `Promise<FeeRates>` |
-| `dispose()` | Disposes cached accounts and signers and clears their manager caches. It does not erase the manager's `seed` buffer. | `void` |
+| `dispose()` | Initiates cleanup of cached accounts and signers and clears their manager caches. It does not erase the manager's `seed` buffer. | `void` |
 
 ## WalletAccountAptos
 
@@ -27589,7 +27609,7 @@ new WalletAccountAptos(
 | `sign(message)` | Signs a message with the account key. | `Promise<string>` |
 | `verify(message, signature)` | Verifies a message signature. | `Promise<boolean>` |
 | `toReadOnlyAccount()` | Returns a read-only account for the same address, public key, and REST client. | `Promise<WalletAccountReadOnlyAptos>` |
-| `dispose()` | Clears private key material from memory. | `void` |
+| `dispose()` | Initiates the account cleanup process. | `void` |
 
 ## WalletAccountReadOnlyAptos
 
@@ -28086,7 +28106,7 @@ account.dispose()
 wallet.dispose()
 ```
 
-`account.dispose()` clears the writable account's private-key material. `wallet.dispose()` disposes cached accounts and signers, but beta.3 leaves the manager's original `seed` buffer allocated and readable. For stronger cleanup, drop every reference to the manager and its input seed; keep seed-handling work isolated in a short-lived process or equivalent boundary when your threat model requires memory reclamation.
+`account.dispose()` initiates the cleanup process and clears the writable account's internal private-key buffer. `wallet.dispose()` initiates cleanup of cached accounts and signers, but beta.3 leaves the manager's original `seed` buffer allocated and readable. For stronger cleanup, drop every reference to the manager and its input seed; keep seed-handling work isolated in a short-lived process or equivalent boundary when your threat model requires memory reclamation.
 
 <Cards>
 <Card title="Configuration" href="/sdk/wallet-modules/wallet-aptos/configuration">
@@ -28229,7 +28249,7 @@ new WalletManagerBtc(seed, config)
 | `getAccount(index)` | Returns a wallet account at the specified index | `Promise<WalletAccountBtc>` |
 | `getAccountByPath(path)` | Returns a wallet account at the specified derivation path | `Promise<WalletAccountBtc>` |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` |
-| `dispose()` | Disposes all wallet accounts, clearing private keys from memory and closing internal Electrum connections | `void` |
+| `dispose()` | Initiates cleanup of wallet accounts and internal Electrum connections | `void` |
 
 ##### `getAccount(index)`
 Returns a wallet account at the specified index using BIP-84 (default) or BIP-44 derivation.
@@ -28328,7 +28348,7 @@ new WalletAccountBtc(seed, path, config)
 | `sign(message)` | Signs a message with the account's private key | `Promise<string>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `toReadOnlyAccount()` | Creates a read-only version of this account | `Promise<WalletAccountReadOnlyBtc>` |
-| `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
+| `dispose()` | Initiates the account cleanup process | `void` |
 
 ##### `getAddress()`
 Returns the account's Bitcoin address (Native SegWit bech32 by default, or legacy if using BIP-44).
@@ -31040,7 +31060,7 @@ In beta.7, the manager builds one RPC client and shares it across the accounts i
 | `getAccount(index?)` | `index?: number` | `Promise\<WalletAccountEvm7702Gasless\>` | Defaults to index `0` and derives `0'/0/{index}`. |
 | `getAccountByPath(path)` | `path: string` | `Promise\<WalletAccountEvm7702Gasless\>` | Returns a cached account for the derivation path suffix. |
 | `getFeeRates()` | - | `Promise\<{ normal: bigint, fast: bigint }\>` | Uses provider fee data. Throws if no provider is connected. |
-| `dispose()` | - | `void` | Inherited from `WalletManager`; disposes managed accounts. |
+| `dispose()` | - | `void` | Inherited from `WalletManager`; initiates cleanup of managed accounts. |
 
 `getFeeRates()` returns fee rates in wei. The `normal` value applies the EVM wallet normal multiplier, and `fast` applies the EVM wallet fast multiplier to the provider fee.
 
@@ -31101,7 +31121,7 @@ Treat the arrays returned through `keyPair` as read-only. Call `dispose()` when 
 | `getTransaction(hash)` | `hash: string` | `Promise\<TransactionReceipt & Evm7702GaslessTransactionDetails\>` | Returns normalized finality for a UserOperation hash. |
 | `waitForTransaction(hash, options?)` | UserOperation hash, `WaitForTransactionOptions` | `Promise\<TransactionReceipt & Evm7702GaslessTransactionDetails\>` | Waits for `confirmed` or `final`, or returns `dropped`. |
 | `toReadOnlyAccount()` | - | `Promise\<WalletAccountReadOnlyEvm7702Gasless\>` | Returns a cached read-only account that shares this account's provider. |
-| `dispose()` | - | `void` | Clears quote cache and disposes the wrapped EVM account. |
+| `dispose()` | - | `void` | Clears quote cache and initiates cleanup of the wrapped EVM account. |
 
 ### Quote and Send Behavior
 
@@ -32468,7 +32488,7 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
 | `getAccount(index?)` | Returns a wallet account at the specified index | `Promise\<WalletAccountEvmErc4337\>` | - |
 | `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise\<WalletAccountEvmErc4337\>` | - |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise\<{normal: bigint, fast: bigint}\>` | `ProviderRequiredError` if no provider |
-| `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` | - |
+| `dispose()` | Initiates cleanup of wallet accounts | `void` | - |
 
 #### `getRandomSeedPhrase(wordCount?)` (static)
 Returns a random BIP-39 seed phrase.
@@ -32629,7 +32649,7 @@ const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 | `verifyTypedData(typedData, signature)` | Verifies an EIP-712 typed data signature | `Promise\<boolean\>` | - |
 | `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise\<Record\<string, bigint\>\>` | - |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise\<WalletAccountReadOnlyEvmErc4337\>` | - |
-| `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` | - |
+| `dispose()` | Initiates the account cleanup process | `void` | - |
 
 #### `predictSafeAddress(owner, config)` (static)
 
@@ -35292,7 +35312,7 @@ const signerWallet = new WalletManagerEvm(signer, {
 | `getAccount(signerName)` | Returns the account associated with a registered signer | `Promise<WalletAccountEvm>` | If the named signer is unavailable |
 | `getAccountByPath(path, options?)` | Returns a wallet account at the specified BIP-44 derivation path, optionally from a named signer | `Promise<WalletAccountEvm>` | If the requested signer is unavailable or cannot derive |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` | `ProviderRequiredError` if no provider is set |
-| `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` | - |
+| `dispose()` | Initiates cleanup of wallet accounts | `void` | - |
 
 ### Properties
 
@@ -35524,7 +35544,7 @@ const signerAccount = new WalletAccountEvm(
 | `signAuthorization(auth)` | Signs an ERC-7702 authorization tuple | `Promise<Authorization>` | If signing fails |
 | `delegate(delegateAddress)` | Delegates the EOA to a contract through an ERC-7702 type 4 transaction | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` |
 | `revokeDelegation()` | Revokes active ERC-7702 delegation by delegating to the zero address | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` |
-| `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` | - |
+| `dispose()` | Initiates the account cleanup process | `void` | - |
 
 #### `fromPrivateKey(privateKey, config?)` (static)
 Creates a standalone EVM account from a raw private key.
@@ -37937,7 +37957,7 @@ new WalletAccountSolanaGasless(
 | `getTransaction(hash)` | Returns normalized finality for a Solana signature. | `Promise<TransactionReceipt & SolanaTransactionDetails>` |
 | `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final` finality. | `Promise<TransactionReceipt & SolanaTransactionDetails>` |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account. | `Promise<WalletAccountReadOnlySolanaGasless>` |
-| `dispose()` | Clears private key material held by the account. | `void` |
+| `dispose()` | Initiates the account cleanup process. | `void` |
 
 #### getAddress
 
@@ -39249,7 +39269,7 @@ const wallet = new WalletManagerSolana(seedPhrase, {
 | `getAccount(index)` | Returns a wallet account at the specified index | `Promise<WalletAccountSolana>` |
 | `getAccountByPath(path)` | Returns a wallet account at the specified SLIP-0010 derivation path | `Promise<WalletAccountSolana>` |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` |
-| `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
+| `dispose()` | Initiates cleanup of wallet accounts | `void` |
 
 ##### `getAccount(index)`
 Returns a wallet account at the specified index.
@@ -39341,7 +39361,7 @@ In v1.0.0-beta.9 the constructor was made public. The static factory method `Wal
 | `getTransaction(hash)` | Returns normalized finality for a Solana signature | `Promise<TransactionReceipt & SolanaTransactionDetails>` |
 | `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final` finality | `Promise<TransactionReceipt & SolanaTransactionDetails>` |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlySolana>` |
-| `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
+| `dispose()` | Initiates the account cleanup process | `void` |
 
 ##### `getAddress()`
 Returns the account's Solana address.
@@ -41032,7 +41052,7 @@ If HD-key derivation cannot produce the master key's private or public key, the 
 | `getAccount(index)` | Returns a wallet account at the specified index | `Promise<WalletAccountSpark>` |
 | `getAccountByPath(path)` | Always throws because Spark accounts are addressed by index | `Promise<WalletAccountSpark>` |
 | `getFeeRates()` | Returns current fee rates for transactions (always zero for Spark) | `Promise<{normal: bigint, fast: bigint}>` |
-| `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
+| `dispose()` | Initiates cleanup of wallet accounts | `void` |
 
 ##### `getAccount(index)`
 Returns a wallet account at the specified index using BIP-44 derivation path.
@@ -41151,7 +41171,7 @@ Represents an individual Spark wallet account. Implements `IWalletAccount` from 
 | `getSparkInvoices(params)` | Queries the status of Spark invoices | `Promise<{invoiceStatuses: InvoiceResponse[], offset: number}>` |
 | `toReadOnlyAccount()` | Creates a read-only version of this account | `Promise<WalletAccountReadOnlySpark>` |
 | `cleanupConnections()` | Cleans up network connections and resources | `Promise<void>` |
-| `dispose()` | Disposes the wallet account, clearing private keys | `void` |
+| `dispose()` | Initiates the account cleanup process | `void` |
 
 ##### `getAddress()`
 Returns the account's Spark network address.
@@ -43474,7 +43494,7 @@ const wallet = new WalletManagerTonGasless(seedPhrase, {
 | `getAccount(index)` | Returns a gasless wallet account at the specified index | `Promise\<WalletAccountTonGasless\>` |
 | `getAccountByPath(path)` | Returns a gasless wallet account at the specified BIP-44 derivation path | `Promise\<WalletAccountTonGasless\>` |
 | `getFeeRates()` | Returns fee rates from the mainnet TON API configuration | `Promise\<{normal: bigint, fast: bigint}\>` |
-| `dispose()` | Disposes cached accounts and signers; the manager seed remains in memory | `void` |
+| `dispose()` | Initiates cleanup of cached accounts and signers; the manager seed remains in memory | `void` |
 
 ##### `getAccount(index)`
 Returns a gasless wallet account at the specified index. Index `n` derives the account at `m/44'/607'/n'`.
@@ -43558,7 +43578,7 @@ new WalletAccountTonGasless(seed, path, config)
 | `waitForTransaction(hash, options?)` | Waits for the requested TON finality | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
 | `getTransactionReceipt(hash)` | Deprecated: returns the native TON transaction | `Promise\<TonTransactionReceipt \| null\>` |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise\<WalletAccountReadOnlyTonGasless\>` |
-| `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
+| `dispose()` | Initiates the account cleanup process | `void` |
 
 ##### `getAddress()`
 Returns the account's address.
@@ -45004,7 +45024,7 @@ const wallet = new WalletManagerTon(seedPhrase, {
 | `getAccount(index)` | Returns a wallet account at the specified index | `Promise\<WalletAccountTon\>` |
 | `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise\<WalletAccountTon\>` |
 | `getFeeRates()` | Returns fee rates from the mainnet TON API configuration | `Promise\<{normal: bigint, fast: bigint}\>` |
-| `dispose()` | Disposes cached accounts and signers; the manager seed remains in memory | `void` |
+| `dispose()` | Initiates cleanup of cached accounts and signers; the manager seed remains in memory | `void` |
 
 
 ##### `getAccount(index)`
@@ -45116,7 +45136,7 @@ const account = new WalletAccountTon(seedPhrase, "0'/0/0", {
 | `waitForTransaction(hash, options?)` | Waits for the requested TON finality | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
 | `getTransactionReceipt(hash)` | Deprecated: returns the native TON transaction | `Promise\<TonTransactionReceipt \| null\>` |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise\<WalletAccountReadOnlyTon\>` |
-| `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
+| `dispose()` | Initiates the account cleanup process | `void` |
 
 ##### `verify(message, signature)`
 Verifies a hex-encoded Ed25519 signature over the same domain-separated digest as [`sign()`](#signmessage). Beta.15 does not fall back to the raw-message scheme used by earlier versions.
@@ -46670,7 +46690,7 @@ const wallet = new WalletManagerTronGasfree(seedPhrase, {
 | `getAccount(index)` | Returns a wallet account at the specified index | `Promise\<WalletAccountTronGasfree\>` |
 | `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise\<WalletAccountTronGasfree\>` |
 | `getFeeRates()` | Returns current fee rates for normal and fast transactions | `Promise\<{normal: bigint, fast: bigint}\>` |
-| `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
+| `dispose()` | Initiates cleanup of wallet accounts | `void` |
 
 ##### `getAccount(index)`
 Returns a gas-free wallet account at the specified index.
@@ -46752,7 +46772,7 @@ new WalletAccountTronGasfree(seed, path, config)
 | `getTransaction(hash)` | Resolves a GasFree transfer ID and returns normalized TRON status | `Promise\<TransactionReceipt & TronGasfreeTransactionDetails\>` |
 | `waitForTransaction(hash, options?)` | Waits for the GasFree transfer's requested TRON finality | `Promise\<TransactionReceipt & TronGasfreeTransactionDetails\>` |
 | `getTransactionReceipt(hash)` | Deprecated: resolves a GasFree transfer ID to its native TRON receipt | `Promise\<TronTransactionReceipt \| null\>` |
-| `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
+| `dispose()` | Initiates the account cleanup process | `void` |
 
 ##### `getAddress()`
 Returns the account's gas-free Tron address.
@@ -48226,7 +48246,7 @@ const wallet3 = new WalletManagerTron(seedPhrase, {
 | `getAccount(index?)` | Returns a wallet account at the specified index | `Promise\<WalletAccountTron\>` | - |
 | `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise\<WalletAccountTron\>` | - |
 | `getFeeRates()` | Returns current fee rates from Tron network | `Promise\<{normal: bigint, fast: bigint}\>` | If no provider |
-| `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` | - |
+| `dispose()` | Initiates cleanup of wallet accounts | `void` | - |
 
 ##### `getAccount(index?)`
 Returns a wallet account at the specified index using Tron's BIP-44 derivation (m/44'/195').
@@ -48336,7 +48356,7 @@ const account = new WalletAccountTron(seedPhrase, "0'/0/0", {
 | `waitForTransaction(hash, options?)` | Waits for the requested TRON finality | `Promise\<TransactionReceipt & TronTransactionDetails\>` | If no provider, invalid ID, or timeout |
 | `getTransactionReceipt(hash)` | Deprecated: returns the native TRON receipt | `Promise\<TronTransactionReceipt \| null\>` | If no provider |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise\<WalletAccountReadOnlyTron\>` | - |
-| `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` | - |
+| `dispose()` | Initiates the account cleanup process | `void` | - |
 
 ##### `getAddress()`
 Returns the account's Tron address (starts with 'T').
@@ -49962,23 +49982,23 @@ Inherited polling getters are `defaultWaitInterval: number` (4000 ms) and `defau
 
 #### getProposal
 
-`getProposal(proposalId)` returns `Promise<MultisigProposal or null>`. Reads coordinator data and returns identifier, confirmations, threshold and status. Status is `executed` when the stored UserOperation has an Ethereum transaction hash, otherwise `pending`. This is not a receipt-success check and does not expose the full payment payload.
+`getProposal(proposalId)` returns `Promise<MultisigProposal or null>`. Reads coordinator data and returns identifier, confirmations, threshold and status. Status is `executed` when the stored UserOperation has an Ethereum transaction hash, otherwise `pending`. This is not a receipt-success check and does not expose the full payment payload. Returns null when the coordinator returns no item; beta.1's default hosted-service lookup rejects for an unknown identifier.
 
 #### getProposals
 
-`getProposals(proposalIds)` returns `Promise<Record<string, MultisigProposal or null>>`. Looks up the supplied string identifiers in parallel. Missing proposals produce null entries; an underlying service failure rejects the call.
+`getProposals(proposalIds)` returns `Promise<Record<string, MultisigProposal or null>>`. Looks up the supplied string identifiers in parallel. Missing proposals produce null entries only when the coordinator returns null. With beta.1's default hosted service, an unknown identifier rejects the whole batch.
 
 #### isReadyToExecute
 
-`isReadyToExecute(proposalId)` returns `Promise<boolean>`. Returns whether the coordinator reports enough confirmations; missing proposals return false. It does not check receipt success or guarantee executable on-chain state.
+`isReadyToExecute(proposalId)` returns `Promise<boolean>`. Returns whether the coordinator reports enough confirmations. Returns false when the coordinator returns no proposal; beta.1's default hosted service rejects unknown identifiers. It does not check receipt success or guarantee executable on-chain state.
 
 #### getMessageProposal
 
-`getMessageProposal(messageId)` returns `Promise<MultisigMessageProposal or null>`. Returns the message, confirmations, threshold and optional combined signature from coordinator data, or null when missing.
+`getMessageProposal(messageId)` returns `Promise<MultisigMessageProposal or null>`. Returns the message, confirmations, threshold and optional combined signature from coordinator data, or null when the coordinator returns no message. Beta.1's default hosted service rejects unknown identifiers.
 
 #### getMessageProposals
 
-`getMessageProposals(messageIds)` returns `Promise<Record<string, MultisigMessageProposal or null>>`. Looks up string message identifiers in parallel, preserving missing entries as null.
+`getMessageProposals(messageIds)` returns `Promise<Record<string, MultisigMessageProposal or null>>`. Looks up string message identifiers in parallel. Missing entries are null only when the coordinator returns null; an unknown identifier rejects the whole batch with beta.1's default hosted service.
 
 #### quoteDeploy
 
@@ -50185,23 +50205,23 @@ Properties: `index: number`, `path: string`, and `keyPair: KeyPair`. They descri
 
 #### getProposal
 
-`getProposal(proposalId)` returns `Promise<MultisigProposal or null>`. Reads coordinator data and returns identifier, confirmations, threshold and status. Status is `executed` when the stored UserOperation has an Ethereum transaction hash, otherwise `pending`. This is not a receipt-success check and does not expose the full payment payload.
+`getProposal(proposalId)` returns `Promise<MultisigProposal or null>`. Reads coordinator data and returns identifier, confirmations, threshold and status. Status is `executed` when the stored UserOperation has an Ethereum transaction hash, otherwise `pending`. This is not a receipt-success check and does not expose the full payment payload. Returns null when the coordinator returns no item; beta.1's default hosted-service lookup rejects for an unknown identifier.
 
 #### getProposals
 
-`getProposals(proposalIds)` returns `Promise<Record<string, MultisigProposal or null>>`. Looks up the supplied string identifiers in parallel. Missing proposals produce null entries; an underlying service failure rejects the call.
+`getProposals(proposalIds)` returns `Promise<Record<string, MultisigProposal or null>>`. Looks up the supplied string identifiers in parallel. Missing proposals produce null entries only when the coordinator returns null. With beta.1's default hosted service, an unknown identifier rejects the whole batch.
 
 #### isReadyToExecute
 
-`isReadyToExecute(proposalId)` returns `Promise<boolean>`. Returns whether the coordinator reports enough confirmations; missing proposals return false. It does not check receipt success or guarantee executable on-chain state.
+`isReadyToExecute(proposalId)` returns `Promise<boolean>`. Returns whether the coordinator reports enough confirmations. Returns false when the coordinator returns no proposal; beta.1's default hosted service rejects unknown identifiers. It does not check receipt success or guarantee executable on-chain state.
 
 #### getMessageProposal
 
-`getMessageProposal(messageId)` returns `Promise<MultisigMessageProposal or null>`. Returns the message, confirmations, threshold and optional combined signature from coordinator data, or null when missing.
+`getMessageProposal(messageId)` returns `Promise<MultisigMessageProposal or null>`. Returns the message, confirmations, threshold and optional combined signature from coordinator data, or null when the coordinator returns no message. Beta.1's default hosted service rejects unknown identifiers.
 
 #### getMessageProposals
 
-`getMessageProposals(messageIds)` returns `Promise<Record<string, MultisigMessageProposal or null>>`. Looks up string message identifiers in parallel, preserving missing entries as null.
+`getMessageProposals(messageIds)` returns `Promise<Record<string, MultisigMessageProposal or null>>`. Looks up string message identifiers in parallel. Missing entries are null only when the coordinator returns null; an unknown identifier rejects the whole batch with beta.1's default hosted service.
 
 #### quoteDeploy
 
@@ -50267,7 +50287,11 @@ The JavaScript export is an extendable base whose unimplemented operations throw
 
 ## SafeTxServiceCoordinator
 
-Construct with `SafeTxServiceCoordinatorConfig`: required bigint `chainId`, optional `txServiceUrl` and `apiKey`. URL takes precedence. Service initialization occurs on the first request. The beta.1 service response declarations allow optional confirmations, so this class does not assign to the default `IMultisigCoordinator` interface in TypeScript. Use account `txServiceUrl`/`safeApiKey` configuration for the default coordinator; the explicit instance path works at runtime in JavaScript.
+Construct with `SafeTxServiceCoordinatorConfig`: required bigint `chainId`, and either `txServiceUrl` or `apiKey`. Both fields are optional in the type, but service initialization fails on the first request if neither is provided.
+
+For Safe's hosted service, set only `apiKey`; the chain must appear in [API Kit 4.0.1's network list](https://github.com/safe-global/safe-core-sdk/blob/2b8548a14d11f7b542691eb76e85d22a4c882338/packages/api-kit/src/utils/config.ts). With `txServiceUrl`, the coordinator does not forward `apiKey`: use a self-hosted service or a backend proxy that adds credentials. Supplying a hosted `api.safe.global` or `api.5afe.dev` URL fails API Kit's key requirement, even if `apiKey` is also set.
+
+Service initialization occurs on the first request. The beta.1 service response declarations allow optional confirmations, so this class does not assign to the default `IMultisigCoordinator` interface in TypeScript. Use account `txServiceUrl`/`safeApiKey` configuration for the default coordinator; the explicit instance path works at runtime in JavaScript.
 
 | Method | Returns |
 | --- | --- |
@@ -50286,11 +50310,11 @@ Construct with `SafeTxServiceCoordinatorConfig`: required bigint `chainId`, opti
 
 #### submitProposal
 
-`submitProposal(proposalId, proposal)` returns `Promise<void>`. Persist the complete signed operation under its identifier.
+`submitProposal(proposalId, proposal)` returns `Promise<void>`. Submits the signed operation to the Safe Transaction Service, which stores it under its computed SafeOperation hash. This implementation does not use the supplied `proposalId` argument.
 
 #### getProposal
 
-`getProposal(proposalId)` returns `Promise<TProposalResponse or null>`. Return the stored Safe operation with its UserOperation and confirmations, or null when absent.
+`getProposal(proposalId)` returns `Promise<TProposalResponse or null>`. Returns the stored Safe operation with its UserOperation and confirmations. Beta.1 only maps errors containing `not found` to null. The hosted service's unknown-ID response, `No SafeOperation matches the given query.`, instead rejects with a plain `Error`.
 
 #### confirmProposal
 
@@ -50302,7 +50326,7 @@ Construct with `SafeTxServiceCoordinatorConfig`: required bigint `chainId`, opti
 
 #### getMessage
 
-`getMessage(messageId)` returns `Promise<TMessageResponse or null>`. Return the message, confirmations and assembled `preparedSignature` where available.
+`getMessage(messageId)` returns `Promise<TMessageResponse or null>`. Returns the message, confirmations and assembled `preparedSignature` where available. As with proposal lookups, beta.1 only maps errors containing `not found` to null; the hosted service's `No SafeMessage matches the given query.` response rejects with a plain `Error`.
 
 #### confirmMessage
 
@@ -50325,13 +50349,13 @@ Construct with `SafeTxServiceCoordinatorConfig`: required bigint `chainId`, opti
 
 `MultisigInfo` has owners and threshold. `MultisigProposal` has `proposalId`, `confirmations`, `threshold` and a string `status`; do not narrow the shared public type to a fixed enum. `MultisigInteractionResult` optionally contains `{ hash, fee }` under `transaction`. `MultisigMessageProposal` has `messageId`, `message`, counts and a nullable combined signature; `MultisigSignature` adds the current owner `signature`. `MultisigTransactionOptions` contains optional `autoExecute`; `MultisigOptions` contains optional `threshold`.
 
-Runtime Safe proposal statuses described above reflect coordinator/submission state. Always check the receipt for success. A missing item is null; a backend failure can reject a bulk lookup.
+Runtime Safe proposal statuses described above reflect coordinator/submission state. Always check the receipt for success. Missing-item results depend on the coordinator: a null response remains null, while beta.1's default hosted service rejects unknown identifiers and any bulk lookup containing one.
 
 `DEFAULT_SAFE_MODULES_VERSION` is `0.2.0`; `DEFAULT_SAFE_VERSION` is `1.4.1`. Only the documented root exports and `./package` metadata subpath are public; do not import internal helpers.
 
 ## Errors and Unsupported Operations
 
-The root exports `ConfigurationError` and `HashMismatchError`. Calls can also throw WDK base errors, plain errors and provider/coordinator failures. A hash mismatch must stop signing. Read-only accounts cannot sign or execute proposals. The writable account has no direct `sendTransaction()` or `transfer()` API: use proposals. Normalized `getTransaction()` and inherited `waitForTransaction()` are not implemented by this Safe release.
+The root exports `ConfigurationError` and `HashMismatchError`. Calls can also throw WDK base errors, plain errors and provider/coordinator failures. Hosted unknown-ID errors also propagate from approval, rejection and execution lookups as plain `Error`, rather than `NoSuchElementError`; the latter requires a coordinator that returns no item. A hash mismatch must stop signing. Read-only accounts cannot sign or execute proposals. The writable account has no direct `sendTransaction()` or `transfer()` API: use proposals. Normalized `getTransaction()` and inherited `waitForTransaction()` are not implemented by this Safe release.
 
 ## Next Steps
 
@@ -50363,9 +50387,13 @@ Use `MultisigSafeWalletConfig` for the manager and writable account. The read-on
 | `entryPointAddress` | `string` | Optional. Defaults to EntryPoint v0.6; changing an address does not change the supported Safe module implementation. |
 | `safeModulesVersion` | `string` | Optional. Only `0.2.0` is supported; also the default. |
 | `paymasterUrl` | `string` | Optional in the type; required for sponsored mode and for a token paymaster. |
-| `txServiceUrl` | `string` | Optional custom Safe Transaction Service endpoint. |
-| `safeApiKey` | `string` | Optional hosted Safe Transaction Service API key. Keep private service credentials on a backend. |
+| `txServiceUrl` | `string` | Optional in the type. Self-hosted Safe Transaction Service or backend proxy URL; suppresses forwarding of `safeApiKey`. |
+| `safeApiKey` | `string` | Optional in the type. Hosted Safe Transaction Service API key; used only when `txServiceUrl` is absent. Keep private service credentials on a backend. |
 | `coordinator` | `IMultisigCoordinator` | Optional instance. Replaces the default service coordinator and takes precedence over service URL/key. |
+
+Provide at least one of `txServiceUrl`, `safeApiKey` or `coordinator` for proposal and message coordination. Construction does not enforce this requirement; with none set, the default coordinator fails on its first service call.
+
+For Safe's hosted service, set only `safeApiKey` and use a chain in [API Kit 4.0.1's network list](https://github.com/safe-global/safe-core-sdk/blob/2b8548a14d11f7b542691eb76e85d22a4c882338/packages/api-kit/src/utils/config.ts). Other chain IDs fail with `Network with chainId X not found`. Use `txServiceUrl` for a self-hosted service or a backend proxy that adds credentials. Combining a hosted URL with `safeApiKey` fails because the coordinator omits the key when a URL is set. A custom `coordinator` bypasses this default-service setup.
 
 `provider`, `bundlerUrl` and `chainId` must refer to the same chain. The package uses the configured chain ID for signatures; a valid address alone does not prove the Safe has the expected owners or module installed.
 
@@ -50422,7 +50450,9 @@ Prerequisites: the [configuration](/sdk/wallet-modules/wallet-multisig-safe/conf
 
 ## Configure a Service
 
-By default, the account constructs [`SafeTxServiceCoordinator`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#safetxservicecoordinator) using its chain ID, `txServiceUrl` and `safeApiKey`. A custom service URL takes precedence over a hosted API key.
+By default, the account constructs [`SafeTxServiceCoordinator`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#safetxservicecoordinator) using its chain ID, `txServiceUrl` and `safeApiKey`. Provide at least one of `txServiceUrl`, `safeApiKey` or `coordinator`; the default coordinator initializes API Kit on first use.
+
+For Safe's hosted service, set only `safeApiKey` and use a chain in [API Kit 4.0.1's network list](https://github.com/safe-global/safe-core-sdk/blob/2b8548a14d11f7b542691eb76e85d22a4c882338/packages/api-kit/src/utils/config.ts). Use `txServiceUrl` for a self-hosted service or a backend proxy that adds credentials. The API key is not forwarded when a URL is set, so a hosted URL plus `safeApiKey` fails API Kit's key requirement.
 
 Use an explicit service coordinator when several accounts should share it:
 
@@ -50437,6 +50467,8 @@ const coordinator = new SafeTxServiceCoordinator({
 ```
 
 In JavaScript, pass this instance in account configuration as `coordinator`. Beta.1's published TypeScript declarations make `SafeTxServiceCoordinator` incompatible with the default `IMultisigCoordinator` type: its service response allows missing confirmations, while the interface requires them. In TypeScript, use `txServiceUrl` or `safeApiKey` on account config to select the default coordinator without assigning an instance. Constructing the service coordinator does not make a service request. Use a backend proxy when credentials must remain private.
+
+With this default coordinator, hosted lookups for unknown proposal or message identifiers reject with the service's error instead of returning null. A bulk lookup containing an unknown identifier rejects the whole call. See [error handling](/sdk/wallet-modules/wallet-multisig-safe/guides/handle-errors#handle-failures) before relying on nullable results.
 
 ## Implement a Coordinator
 
@@ -50576,7 +50608,7 @@ npm install --save-exact @tetherto/wdk-wallet-multisig-safe@1.0.0-beta.1
 
 ## Configure the Account
 
-1. Supply the RPC, chain ID, bundler URL, Safe address and Safe Transaction Service proxy URL through your application configuration.
+1. Supply the RPC, chain ID, bundler URL, Safe address and Safe Transaction Service proxy URL through your application configuration. The proxy must add any required service credentials. For Safe's hosted service, replace `txServiceUrl` with `safeApiKey`; do not set both. See [coordinator configuration](/sdk/wallet-modules/wallet-multisig-safe/configuration#common-options) for supported-chain requirements.
 2. Load the owner's seed from secret storage. The environment variable below is a Node example, not a requirement to store browser secrets in environment files.
 3. Create a [`WalletManagerMultisigSafe`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#walletmanagermultisigsafe) and derive the known owner path.
 
@@ -50657,7 +50689,8 @@ Prerequisites: an [initialized account](/sdk/wallet-modules/wallet-multisig-safe
 | `ConfigurationError` | Check Safe module version, identity options and fee-mode requirements. |
 | `HashMismatchError` | Stop signing. Reconcile the coordinator payload with the reviewed proposal/message identifier. |
 | Owner validation failure | Verify the selected derivation path and current Safe owner set. |
-| Missing proposal/message | Confirm the identifier and coordinator; do not replace a failed lookup with approval. |
+| Missing proposal/message | Beta.1's default hosted service rejects unknown identifiers with a plain `Error`, including bulk and readiness lookups. Approval, rejection and execution can surface that error instead of `NoSuchElementError`. Confirm the identifier and coordinator; do not replace a failed lookup with approval. |
+| Default service configuration error | Supply a hosted `safeApiKey` without a URL, or a self-hosted/proxy `txServiceUrl`. The key is not forwarded with a URL. Hosted mode also requires a chain supported by API Kit 4.0.1. |
 | Insufficient confirmations | Collect the required owners' approvals before execution. |
 | Paymaster prefund / AA50 failure | Check Safe token funds and paymaster configuration. |
 | No receipt after submission | Inspect the existing UserOperation before creating or resubmitting a proposal. |
@@ -51578,21 +51611,42 @@ The compiled bundle fixes its actions: `memo`, `autoExecute` and `vaultIndex` pa
 
 ## Track Partial Approvals
 
-Inspect [`approveProposal()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#approveproposal) results without treating all signatures as votes already recorded on-chain:
+Implement and configure your backend client in `approval-coordinator.mjs`, exporting a `createCoordinator({ signerAddress })` factory that returns both methods described above. This is an application-owned module, not an SDK export; it must exist before running this example. Return a compiled bundle to use coordinated approval. Returning null submits an ordinary on-chain vote instead.
+
+Create a separate [`WalletManagerMultisigSquads`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#walletmanagermultisigsquads) with that factory; the shared `squads-account.mjs` setup has no coordinator. Use your member's [configured derivation path](/sdk/wallet-modules/wallet-multisig-squads/guides/get-started#configure-the-member), shown here as `0'/0'`, and inspect [`approveProposal()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#approveproposal) results without treating all signatures as votes already recorded on-chain:
 
 ```javascript title="Handle a coordinated approval result"
-import { account, requiredEnv } from './squads-account.mjs'
+import WalletManagerMultisigSquads from '@tetherto/wdk-wallet-multisig-squads'
+import { createCoordinator } from './approval-coordinator.mjs'
 
-const result = await account.approveProposal(requiredEnv('PROPOSAL_ID'))
-if (result.transaction === undefined) {
-  console.log('Collected signatures awaiting broadcast:', result.pendingConfirmations)
-} else {
-  const receipt = await account.waitForTransaction(result.transaction.hash)
-  if (!receipt.success) throw new Error('Approval bundle failed')
+function requiredEnv(name) {
+  const value = process.env[name]
+  if (!value) throw new Error(`Missing ${name}`)
+  return value
+}
+
+const wallet = new WalletManagerMultisigSquads(requiredEnv('WDK_SEED_PHRASE'), {
+  provider: requiredEnv('SOLANA_RPC_URL'),
+  multisigPdaOrCreateKey: requiredEnv('MULTISIG_ADDRESS'),
+  commitment: 'confirmed',
+  coordinator: createCoordinator
+})
+
+try {
+  const account = await wallet.getAccountByPath("0'/0'")
+  const result = await account.approveProposal(requiredEnv('PROPOSAL_ID'))
+  if (result.transaction === undefined) {
+    console.log('Collected signatures awaiting broadcast:', result.pendingConfirmations)
+  } else {
+    const receipt = await account.waitForTransaction(result.transaction.hash)
+    if (!receipt.success) throw new Error('Approval transaction failed')
+  }
+} finally {
+  wallet.dispose()
 }
 ```
 
-This snippet uses the account configured by your application with its coordinator factory. A partial result reports `transaction: undefined`, leaves `confirmations` at the on-chain count, and places collected signatures in `pendingConfirmations`. No on-chain transaction has been broadcast for that partial approval. A broadcast result resets pending confirmations to zero. When a bundle includes execution, its returned status can be `executed`; still verify the receipt and proposal state.
+A partial result reports `transaction: undefined`, leaves `confirmations` at the on-chain count, and places collected signatures in `pendingConfirmations`. No on-chain transaction has been broadcast for that partial approval. A broadcast result resets pending confirmations to zero. When a bundle includes execution, its returned status can be `executed`; still verify the receipt and proposal state. Follow the [cleanup guidance](/sdk/wallet-modules/wallet-multisig-squads/guides/handle-errors#best-practices) for caller-held secrets after the signing session ends.
 
 ## Next Steps
 
@@ -51776,13 +51830,14 @@ Prerequisites: an [initialized member account](/sdk/wallet-modules/wallet-multis
 | Error or condition | Response |
 | --- | --- |
 | `ProviderRequiredError` | Configure the correct cluster RPC for network operations. |
-| `AccountNotOwnerError` | Verify the signer path, current member list and required permission. |
-| `ValueError` for invalid status or time lock | Check the member mask and fresh proposal state; wait for the configured time lock when applicable. |
+| `AccountNotOwnerError` | Verify the signer path and current member list, then check that the member's mask includes the permission required by the operation. |
+| `ValueError` for invalid status or time lock | Check the fresh proposal state; wait for the configured time lock when applicable. |
 | `ThresholdNotMetError` | Collect the required on-chain approvals. |
 | `MaximumFeeExceededError` | Inspect the relevant quote and configured cap before changing it. |
 | `NoSuchElementError` | Verify the multisig/proposal exists; a missing transaction may also be pending, dropped or outside RPC history. |
 | Approval `transaction` is `undefined` | A coordinator has only collected signatures; wait for the completed bundle to be broadcast before checking its receipt. |
-| `UnsupportedOperationError` | Use supported proposal APIs and transaction kinds. |
+| `NotImplementedError` | Use a supported execution transaction kind. For a custom coordinator, implement both methods instead of calling the interface's base methods. |
+| `UnsupportedOperationError` | Use the proposal APIs instead of direct transaction signing, sending or send quotes. Multisig message verification and named external signers are also unsupported. |
 
 Import the runtime error classes you handle:
 
