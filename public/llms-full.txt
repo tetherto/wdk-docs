@@ -14142,7 +14142,7 @@ The Throws column summarizes the beta.22 contract; each concrete module implemen
 | `sendTransaction(tx)` | Signs, broadcasts, and returns the transaction result | `Promise<TransactionResult>` | `DisposalError`, provider, broadcast, or fee errors |
 | `transfer(options)` | Transfers a token where supported by the module | `Promise<TransferResult>` | `DisposalError` or a token-transfer error |
 | `toReadOnlyAccount()` | Returns a read-only account copy | `Promise<IWalletAccountReadOnly>` | - |
-| `dispose()` | Clears sensitive account material from memory | `void` | - |
+| `dispose()` | Initiates the account cleanup process | `void` | - |
 
 ##### `signTransaction(tx)`
 Signs a transaction and returns the signed transaction payload without broadcasting it. Use this when your app needs offline signing, external transaction submission, or a separate review step before broadcast.
@@ -27531,7 +27531,7 @@ new WalletManagerAptos(
 | `getAccount(index?)` | Returns the account at `m/44'/637'/index'/0'/0'`. | `Promise<WalletAccountAptos>` |
 | `getAccountByPath(path)` | Returns an account at a relative hardened path. | `Promise<WalletAccountAptos>` |
 | `getFeeRates()` | Returns Aptos fee rates in octas per gas unit. | `Promise<FeeRates>` |
-| `dispose()` | Disposes cached accounts and signers and clears their manager caches. It does not erase the manager's `seed` buffer. | `void` |
+| `dispose()` | Initiates cleanup of cached accounts and signers and clears their manager caches. It does not erase the manager's `seed` buffer. | `void` |
 
 ## WalletAccountAptos
 
@@ -27571,7 +27571,7 @@ new WalletAccountAptos(
 | `sign(message)` | Signs a message with the account key. | `Promise<string>` |
 | `verify(message, signature)` | Verifies a message signature. | `Promise<boolean>` |
 | `toReadOnlyAccount()` | Returns a read-only account for the same address, public key, and REST client. | `Promise<WalletAccountReadOnlyAptos>` |
-| `dispose()` | Clears private key material from memory. | `void` |
+| `dispose()` | Initiates the account cleanup process. | `void` |
 
 ## WalletAccountReadOnlyAptos
 
@@ -28068,7 +28068,7 @@ account.dispose()
 wallet.dispose()
 ```
 
-`account.dispose()` clears the writable account's private-key material. `wallet.dispose()` disposes cached accounts and signers, but beta.3 leaves the manager's original `seed` buffer allocated and readable. For stronger cleanup, drop every reference to the manager and its input seed; keep seed-handling work isolated in a short-lived process or equivalent boundary when your threat model requires memory reclamation.
+`account.dispose()` initiates the cleanup process and clears the writable account's internal private-key buffer. `wallet.dispose()` initiates cleanup of cached accounts and signers, but beta.3 leaves the manager's original `seed` buffer allocated and readable. For stronger cleanup, drop every reference to the manager and its input seed; keep seed-handling work isolated in a short-lived process or equivalent boundary when your threat model requires memory reclamation.
 
 <Cards>
 <Card title="Configuration" href="/sdk/wallet-modules/wallet-aptos/configuration">
@@ -28211,7 +28211,7 @@ new WalletManagerBtc(seed, config)
 | `getAccount(index)` | Returns a wallet account at the specified index | `Promise<WalletAccountBtc>` |
 | `getAccountByPath(path)` | Returns a wallet account at the specified derivation path | `Promise<WalletAccountBtc>` |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` |
-| `dispose()` | Disposes all wallet accounts, clearing private keys from memory and closing internal Electrum connections | `void` |
+| `dispose()` | Initiates cleanup of wallet accounts and internal Electrum connections | `void` |
 
 ##### `getAccount(index)`
 Returns a wallet account at the specified index using BIP-84 (default) or BIP-44 derivation.
@@ -28310,7 +28310,7 @@ new WalletAccountBtc(seed, path, config)
 | `sign(message)` | Signs a message with the account's private key | `Promise<string>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` |
 | `toReadOnlyAccount()` | Creates a read-only version of this account | `Promise<WalletAccountReadOnlyBtc>` |
-| `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
+| `dispose()` | Initiates the account cleanup process | `void` |
 
 ##### `getAddress()`
 Returns the account's Bitcoin address (Native SegWit bech32 by default, or legacy if using BIP-44).
@@ -31022,7 +31022,7 @@ In beta.7, the manager builds one RPC client and shares it across the accounts i
 | `getAccount(index?)` | `index?: number` | `Promise\<WalletAccountEvm7702Gasless\>` | Defaults to index `0` and derives `0'/0/{index}`. |
 | `getAccountByPath(path)` | `path: string` | `Promise\<WalletAccountEvm7702Gasless\>` | Returns a cached account for the derivation path suffix. |
 | `getFeeRates()` | - | `Promise\<{ normal: bigint, fast: bigint }\>` | Uses provider fee data. Throws if no provider is connected. |
-| `dispose()` | - | `void` | Inherited from `WalletManager`; disposes managed accounts. |
+| `dispose()` | - | `void` | Inherited from `WalletManager`; initiates cleanup of managed accounts. |
 
 `getFeeRates()` returns fee rates in wei. The `normal` value applies the EVM wallet normal multiplier, and `fast` applies the EVM wallet fast multiplier to the provider fee.
 
@@ -31083,7 +31083,7 @@ Treat the arrays returned through `keyPair` as read-only. Call `dispose()` when 
 | `getTransaction(hash)` | `hash: string` | `Promise\<TransactionReceipt & Evm7702GaslessTransactionDetails\>` | Returns normalized finality for a UserOperation hash. |
 | `waitForTransaction(hash, options?)` | UserOperation hash, `WaitForTransactionOptions` | `Promise\<TransactionReceipt & Evm7702GaslessTransactionDetails\>` | Waits for `confirmed` or `final`, or returns `dropped`. |
 | `toReadOnlyAccount()` | - | `Promise\<WalletAccountReadOnlyEvm7702Gasless\>` | Returns a cached read-only account that shares this account's provider. |
-| `dispose()` | - | `void` | Clears quote cache and disposes the wrapped EVM account. |
+| `dispose()` | - | `void` | Clears quote cache and initiates cleanup of the wrapped EVM account. |
 
 ### Quote and Send Behavior
 
@@ -32450,7 +32450,7 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
 | `getAccount(index?)` | Returns a wallet account at the specified index | `Promise\<WalletAccountEvmErc4337\>` | - |
 | `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise\<WalletAccountEvmErc4337\>` | - |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise\<{normal: bigint, fast: bigint}\>` | `ProviderRequiredError` if no provider |
-| `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` | - |
+| `dispose()` | Initiates cleanup of wallet accounts | `void` | - |
 
 #### `getRandomSeedPhrase(wordCount?)` (static)
 Returns a random BIP-39 seed phrase.
@@ -32611,7 +32611,7 @@ const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 | `verifyTypedData(typedData, signature)` | Verifies an EIP-712 typed data signature | `Promise\<boolean\>` | - |
 | `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise\<Record\<string, bigint\>\>` | - |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise\<WalletAccountReadOnlyEvmErc4337\>` | - |
-| `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` | - |
+| `dispose()` | Initiates the account cleanup process | `void` | - |
 
 #### `predictSafeAddress(owner, config)` (static)
 
@@ -35274,7 +35274,7 @@ const signerWallet = new WalletManagerEvm(signer, {
 | `getAccount(signerName)` | Returns the account associated with a registered signer | `Promise<WalletAccountEvm>` | If the named signer is unavailable |
 | `getAccountByPath(path, options?)` | Returns a wallet account at the specified BIP-44 derivation path, optionally from a named signer | `Promise<WalletAccountEvm>` | If the requested signer is unavailable or cannot derive |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` | `ProviderRequiredError` if no provider is set |
-| `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` | - |
+| `dispose()` | Initiates cleanup of wallet accounts | `void` | - |
 
 ### Properties
 
@@ -35506,7 +35506,7 @@ const signerAccount = new WalletAccountEvm(
 | `signAuthorization(auth)` | Signs an ERC-7702 authorization tuple | `Promise<Authorization>` | If signing fails |
 | `delegate(delegateAddress)` | Delegates the EOA to a contract through an ERC-7702 type 4 transaction | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` |
 | `revokeDelegation()` | Revokes active ERC-7702 delegation by delegating to the zero address | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` |
-| `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` | - |
+| `dispose()` | Initiates the account cleanup process | `void` | - |
 
 #### `fromPrivateKey(privateKey, config?)` (static)
 Creates a standalone EVM account from a raw private key.
@@ -37899,7 +37899,7 @@ new WalletAccountSolanaGasless(
 | `getTransaction(hash)` | Returns normalized finality for a Solana signature. | `Promise<TransactionReceipt & SolanaTransactionDetails>` |
 | `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final` finality. | `Promise<TransactionReceipt & SolanaTransactionDetails>` |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account. | `Promise<WalletAccountReadOnlySolanaGasless>` |
-| `dispose()` | Clears private key material held by the account. | `void` |
+| `dispose()` | Initiates the account cleanup process. | `void` |
 
 #### getAddress
 
@@ -39212,7 +39212,7 @@ const wallet = new WalletManagerSolana(seedPhrase, {
 | `getAccount(index)` | Returns a wallet account at the specified index | `Promise<WalletAccountSolana>` |
 | `getAccountByPath(path)` | Returns a wallet account at the specified SLIP-0010 derivation path | `Promise<WalletAccountSolana>` |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` |
-| `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
+| `dispose()` | Initiates cleanup of wallet accounts | `void` |
 
 ##### `getAccount(index)`
 Returns a wallet account at the specified index.
@@ -39304,7 +39304,7 @@ In v1.0.0-beta.9 the constructor was made public. The static factory method `Wal
 | `getTransaction(hash)` | Returns normalized finality for a Solana signature | `Promise<TransactionReceipt & SolanaTransactionDetails>` |
 | `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final` finality | `Promise<TransactionReceipt & SolanaTransactionDetails>` |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlySolana>` |
-| `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
+| `dispose()` | Initiates the account cleanup process | `void` |
 
 ##### `getAddress()`
 Returns the account's Solana address.
@@ -40995,7 +40995,7 @@ If HD-key derivation cannot produce the master key's private or public key, the 
 | `getAccount(index)` | Returns a wallet account at the specified index | `Promise<WalletAccountSpark>` |
 | `getAccountByPath(path)` | Always throws because Spark accounts are addressed by index | `Promise<WalletAccountSpark>` |
 | `getFeeRates()` | Returns current fee rates for transactions (always zero for Spark) | `Promise<{normal: bigint, fast: bigint}>` |
-| `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
+| `dispose()` | Initiates cleanup of wallet accounts | `void` |
 
 ##### `getAccount(index)`
 Returns a wallet account at the specified index using BIP-44 derivation path.
@@ -41114,7 +41114,7 @@ Represents an individual Spark wallet account. Implements `IWalletAccount` from 
 | `getSparkInvoices(params)` | Queries the status of Spark invoices | `Promise<{invoiceStatuses: InvoiceResponse[], offset: number}>` |
 | `toReadOnlyAccount()` | Creates a read-only version of this account | `Promise<WalletAccountReadOnlySpark>` |
 | `cleanupConnections()` | Cleans up network connections and resources | `Promise<void>` |
-| `dispose()` | Disposes the wallet account, clearing private keys | `void` |
+| `dispose()` | Initiates the account cleanup process | `void` |
 
 ##### `getAddress()`
 Returns the account's Spark network address.
@@ -43427,7 +43427,7 @@ const wallet = new WalletManagerTonGasless(seedPhrase, {
 | `getAccount(index)` | Returns a gasless wallet account at the specified index | `Promise\<WalletAccountTonGasless\>` |
 | `getAccountByPath(path)` | Returns a gasless wallet account at the specified BIP-44 derivation path | `Promise\<WalletAccountTonGasless\>` |
 | `getFeeRates()` | Returns fee rates from the mainnet TON API configuration | `Promise\<{normal: bigint, fast: bigint}\>` |
-| `dispose()` | Disposes cached accounts and signers; the manager seed remains in memory | `void` |
+| `dispose()` | Initiates cleanup of cached accounts and signers; the manager seed remains in memory | `void` |
 
 ##### `getAccount(index)`
 Returns a gasless wallet account at the specified index. Index `n` derives the account at `m/44'/607'/n'`.
@@ -43511,7 +43511,7 @@ new WalletAccountTonGasless(seed, path, config)
 | `waitForTransaction(hash, options?)` | Waits for the requested TON finality | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
 | `getTransactionReceipt(hash)` | Deprecated: returns the native TON transaction | `Promise\<TonTransactionReceipt \| null\>` |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise\<WalletAccountReadOnlyTonGasless\>` |
-| `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
+| `dispose()` | Initiates the account cleanup process | `void` |
 
 ##### `getAddress()`
 Returns the account's address.
@@ -44957,7 +44957,7 @@ const wallet = new WalletManagerTon(seedPhrase, {
 | `getAccount(index)` | Returns a wallet account at the specified index | `Promise\<WalletAccountTon\>` |
 | `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise\<WalletAccountTon\>` |
 | `getFeeRates()` | Returns fee rates from the mainnet TON API configuration | `Promise\<{normal: bigint, fast: bigint}\>` |
-| `dispose()` | Disposes cached accounts and signers; the manager seed remains in memory | `void` |
+| `dispose()` | Initiates cleanup of cached accounts and signers; the manager seed remains in memory | `void` |
 
 
 ##### `getAccount(index)`
@@ -45069,7 +45069,7 @@ const account = new WalletAccountTon(seedPhrase, "0'/0/0", {
 | `waitForTransaction(hash, options?)` | Waits for the requested TON finality | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
 | `getTransactionReceipt(hash)` | Deprecated: returns the native TON transaction | `Promise\<TonTransactionReceipt \| null\>` |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise\<WalletAccountReadOnlyTon\>` |
-| `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
+| `dispose()` | Initiates the account cleanup process | `void` |
 
 ##### `verify(message, signature)`
 Verifies a hex-encoded Ed25519 signature over the same domain-separated digest as [`sign()`](#signmessage). Beta.15 does not fall back to the raw-message scheme used by earlier versions.
@@ -46622,7 +46622,7 @@ const wallet = new WalletManagerTronGasfree(seedPhrase, {
 | `getAccount(index)` | Returns a wallet account at the specified index | `Promise\<WalletAccountTronGasfree\>` |
 | `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise\<WalletAccountTronGasfree\>` |
 | `getFeeRates()` | Returns current fee rates for normal and fast transactions | `Promise\<{normal: bigint, fast: bigint}\>` |
-| `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` |
+| `dispose()` | Initiates cleanup of wallet accounts | `void` |
 
 ##### `getAccount(index)`
 Returns a gas-free wallet account at the specified index.
@@ -46704,7 +46704,7 @@ new WalletAccountTronGasfree(seed, path, config)
 | `getTransaction(hash)` | Resolves a GasFree transfer ID and returns normalized TRON status | `Promise\<TransactionReceipt & TronGasfreeTransactionDetails\>` |
 | `waitForTransaction(hash, options?)` | Waits for the GasFree transfer's requested TRON finality | `Promise\<TransactionReceipt & TronGasfreeTransactionDetails\>` |
 | `getTransactionReceipt(hash)` | Deprecated: resolves a GasFree transfer ID to its native TRON receipt | `Promise\<TronTransactionReceipt \| null\>` |
-| `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` |
+| `dispose()` | Initiates the account cleanup process | `void` |
 
 ##### `getAddress()`
 Returns the account's gas-free Tron address.
@@ -48159,7 +48159,7 @@ const wallet3 = new WalletManagerTron(seedPhrase, {
 | `getAccount(index?)` | Returns a wallet account at the specified index | `Promise\<WalletAccountTron\>` | - |
 | `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise\<WalletAccountTron\>` | - |
 | `getFeeRates()` | Returns current fee rates from Tron network | `Promise\<{normal: bigint, fast: bigint}\>` | If no provider |
-| `dispose()` | Disposes all wallet accounts, clearing private keys from memory | `void` | - |
+| `dispose()` | Initiates cleanup of wallet accounts | `void` | - |
 
 ##### `getAccount(index?)`
 Returns a wallet account at the specified index using Tron's BIP-44 derivation (m/44'/195').
@@ -48269,7 +48269,7 @@ const account = new WalletAccountTron(seedPhrase, "0'/0/0", {
 | `waitForTransaction(hash, options?)` | Waits for the requested TRON finality | `Promise\<TransactionReceipt & TronTransactionDetails\>` | If no provider, invalid ID, or timeout |
 | `getTransactionReceipt(hash)` | Deprecated: returns the native TRON receipt | `Promise\<TronTransactionReceipt \| null\>` | If no provider |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise\<WalletAccountReadOnlyTron\>` | - |
-| `dispose()` | Disposes the wallet account, clearing private keys from memory | `void` | - |
+| `dispose()` | Initiates the account cleanup process | `void` | - |
 
 ##### `getAddress()`
 Returns the account's Tron address (starts with 'T').
