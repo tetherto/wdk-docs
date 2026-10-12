@@ -2563,6 +2563,7 @@ Most users invoke `wdk`. The CLI and MCP integrations manage the other two binar
 | `wdk token` | Inspect built-in tokens and manage custom token entries |
 | `wdk method` | Discover and call chain-specific methods declared by built-in wallet modules |
 | `wdk module` | Inspect built-in module pins or add and remove custom module packages |
+| `wdk provider` | Inspect and manage service-provider registrations |
 | `wdk mcp` | Configure the bundled MCP server for Claude Desktop, Claude Code, or OpenClaw |
 
 Run `wdk --help` for the command map or append `--help` to a command:
@@ -2590,6 +2591,9 @@ Create an Ethereum mainnet wallet, fund it, and send ETH
 </Card>
 <Card title="Configuration" href="/cli/configuration">
 Configure paths, defaults, indexer access, wallet modules, and MoonPay
+</Card>
+<Card title="Migrate Indexer Providers" href="/cli/guides/migrate-indexer-providers">
+Move history credentials and review provider changes when upgrading to a build with Indexer-provider support
 </Card>
 <Card title="Manage Modules" href="/cli/guides/manage-modules">
 Inspect module versions and manage trusted custom wallet-module packages
@@ -2787,7 +2791,7 @@ Single-network balance results include the account `address`. Aggregate balance 
 
 ### `wdk get history`
 
-Reads token-transfer history through the configured indexer.
+Reads token-transfer history through the configured indexer. This reference describes beta.6; builds with Indexer-provider support use the [provider configuration and date conversion](/cli/guides/migrate-indexer-providers#read-transfer-history) described in the migration guide.
 
 | Option | Required | Default | Description |
 | --- | --- | --- | --- |
@@ -3243,6 +3247,10 @@ URL: https://docs.wdk.tether.io/cli/configuration
 Description: Configure WDK CLI paths, defaults, indexer access, wallet modules, routing protocols, and fiat ramps
 
 WDK CLI stores its configuration and wallet data under one local configuration directory. Use `wdk config` for supported changes instead of editing `config.json` directly.
+
+<Callout type="info">
+This page documents `1.0.0-beta.6`. For a CLI build with the `wdk-indexer` provider, follow [Migrate Indexer Providers](/cli/guides/migrate-indexer-providers) for the replacement settings, authenticated proxy setup, and changed file permissions.
+</Callout>
 
 ## Local Paths
 
@@ -4165,6 +4173,8 @@ The code set is not a closed protocol enum. The daemon and WDK dependencies can 
 
 ## Common Recovery Paths
 
+The table below describes beta.6. For a build with Indexer-provider support, use the [provider-specific history recovery steps](/cli/guides/migrate-indexer-providers#resolve-history-errors).
+
 | Code or symptom | Check |
 | --- | --- |
 | `WALLET_NOT_UNLOCKED` | Run `wdk wallet unlock --name NAME`; confirm that its TTL has not expired |
@@ -4401,7 +4411,7 @@ wdk token info --network ethereum --token usdt
 
 Use the lowercase registry key shown by these commands with `--token` on `get balance`, `send`, `buy`, and `sell`.
 
-`get history --token` is different: pass the exact `metadata.indexerSlug` value, which may differ from the registry key.
+`get history --token` is different: in beta.6, pass the exact `metadata.indexerSlug` value, which may differ from the registry key. Builds with Indexer-provider support use [the Indexer slug mapping](/cli/guides/migrate-indexer-providers#read-transfer-history) described in the migration guide.
 
 ## Token Spec
 
@@ -4800,6 +4810,194 @@ Environment variables can leak through process inspection, child-process inherit
 - [Architecture](/cli/reference/architecture)
 - [Storage format and manual recovery](/cli/reference/storage-format)
 - [Security model](/cli/reference/security-model)
+
+***
+
+## Migrate Indexer Providers
+URL: https://docs.wdk.tether.io/cli/guides/migrate-indexer-providers
+Description: Move WDK CLI history credentials into the provider registry and review the related configuration changes
+
+Use this guide when upgrading to a CLI build with the `wdk-indexer` provider. It covers the Indexer configuration change, history requests, provider configuration, and local file permissions.
+
+<Callout type="info">
+The installation and command reference pages document the published `1.0.0-beta.6` CLI. This guide applies to builds that include Indexer-provider support. Check for that provider before migrating; a beta.6 installation still uses the [standalone Indexer settings](/cli/configuration#indexer).
+</Callout>
+
+## Check The Installed Provider
+
+Run:
+
+```bash title="Terminal"
+wdk --version
+wdk provider list
+```
+
+The provider-based CLI includes `wdk-indexer`, with kind `indexer` and module `@tetherto/wdk-indexer-http`. If it is absent, check the installed release and [module status](/cli/guides/manage-modules#inspect-module-status) before changing credentials. A disabled backing module hides its providers from the list.
+
+<Callout type="warn">
+Provider inspection and `wdk config get --all` can print stored credentials. Use a private terminal and do not share the output or capture it in agent transcripts.
+</Callout>
+
+Inspect the effective configuration:
+
+```bash title="Terminal"
+wdk provider info --name wdk-indexer
+```
+
+History requires exactly one enabled Indexer provider. If the backing module is disabled, enable only that module:
+
+```bash title="Enable a disabled Indexer module"
+wdk module enable --name @tetherto/wdk-indexer-http
+```
+
+Inspect `wdk provider list` again. If `wdk-indexer` is still disabled, enable it:
+
+```bash title="Enable a disabled Indexer provider"
+wdk provider enable --name wdk-indexer
+```
+
+Do not run an enable command for an already-enabled entry; the CLI rejects it.
+
+`wdk provider add` does not accept `kind: "indexer"`; use the bundled registration. Provider mutations verify the default wallet's passphrase when a wallet exists and lock running wallet sessions.
+
+## Move The History Settings
+
+[Request an Indexer API key](/tools/indexer-api/get-started) before using the production endpoint.
+
+| Previous setting | Provider-based setting |
+| --- | --- |
+| `indexer.apiKey` | `providers.wdk-indexer.config.apiKey` |
+| `indexer.baseUrl` | `providers.wdk-indexer.config.baseUrl` |
+| `WDK_INDEXER_API_KEY` | No environment-variable override; set the provider's `apiKey` |
+
+Stored `indexer.*` values are not copied into the provider configuration. `WDK_INDEXER_API_KEY` and `WDK_INDEXER_BASE_URL` are not read by the provider-based CLI.
+
+<Callout type="warn">
+Configuration stores API keys in plaintext. Commands can also expose arguments through shell history or process inspection. Enter credentials only in a private local environment and keep them out of logs and transcripts.
+</Callout>
+
+Set the provider key:
+
+```bash title="Terminal"
+wdk config set --key providers.wdk-indexer.config.apiKey --value YOUR_INDEXER_API_KEY
+```
+
+The bundled provider defaults to `https://wdk-api.tether.io`. Change the endpoint only when needed:
+
+```bash title="Terminal"
+wdk config set --key providers.wdk-indexer.config.baseUrl --value https://indexer.example.com
+```
+
+The HTTP client defaults to a 30,000 ms request timeout; the previous CLI transport used 20,000 ms. Override it in milliseconds:
+
+```bash title="Terminal"
+wdk config set --key providers.wdk-indexer.config.timeout --value 45000
+```
+
+General configuration is shallow-merged: the provider's bundled `config`, then `providers.wdk-indexer.config`. Set individual keys to retain other overrides. Setting the whole `config` object replaces your earlier override object; omitted keys fall back to bundled defaults. Indexer history uses these general settings, so `providers.wdk-indexer.networks.NETWORK` does not override its requests.
+
+Changes under `providers` lock running wallet sessions. Unlock again before requesting history. Keep any old configuration you need for rollback private; an older beta.6 installation still needs its standalone settings.
+
+## Read Transfer History
+
+Use an existing local wallet named `dev`, or create one with [Manage Wallets](/cli/guides/manage-wallets#create-a-wallet). History lookup does not send a transaction or require funding the wallet.
+
+Inspect the network and token registration, then unlock the wallet:
+
+```bash title="Terminal"
+wdk network info --network ethereum
+wdk token info --network ethereum --token usdt
+wdk wallet unlock --name dev
+```
+
+The network needs an `indexerSlug`. The token needs an Indexer mapping under `metadata.slugs.indexer`. Pass the string mapping itself, or an object mapping's `slug`, to `get history --token`; that code can differ from the token's registry key. New token registrations must use `metadata.slugs`. Existing custom entries with `metadata.indexerSlug` are normalized when loaded; an explicit `metadata.slugs.indexer` value takes precedence.
+
+Query USD₮ transfers on Ethereum:
+
+```bash title="Terminal"
+wdk get history --network ethereum --token usdt --wallet dev --limit 10
+```
+
+Apply ISO 8601 date filters:
+
+```bash title="Terminal"
+wdk get history --network ethereum --token usdt --wallet dev \
+  --from-date 2026-01-01T00:00:00Z --to-date 2026-02-01T00:00:00Z
+```
+
+The flags are unchanged. The CLI now sends `fromTs` and `toTs` as Unix milliseconds, matching the HTTP client's contract. The MCP `get_history` tool uses the same provider and date conversion, with `fromDate` and `toDate` inputs.
+
+Omitting `--token` sends a batch request for the network's Indexer-supported tokens. Successful items are merged by timestamp and limited to `--limit`; failed batch items are omitted. An empty or partial result does not establish that every token lookup succeeded.
+
+Lock the wallet when finished:
+
+```bash title="Terminal"
+wdk wallet lock --name dev
+```
+
+## Use An Authenticated Proxy
+
+The client requires a non-empty API key before sending a history request, even when `baseUrl` points to a proxy. The earlier empty-key proxy recipe cannot be used with this client.
+
+Configure an endpoint you control and a credential that your proxy authenticates:
+
+```bash title="Terminal"
+wdk config set --key providers.wdk-indexer.config.baseUrl --value https://indexer-proxy.example.com
+wdk config set --key providers.wdk-indexer.config.apiKey --value YOUR_PROXY_CREDENTIAL
+```
+
+The client sends that credential in `X-API-KEY`. Your proxy must authenticate it and replace it with the protected Indexer key before forwarding upstream. Keep the upstream key on the proxy.
+
+Support both request forms:
+
+| Request | Used when |
+| --- | --- |
+| `GET /api/v1/{blockchain}/{token}/{address}/token-transfers` | `--token` selects one Indexer code |
+| `POST /api/v1/batch/token-transfers` | `--token` is omitted |
+
+Forward query parameters or the JSON body and return the Indexer response shape. Preserve millisecond date filters. CLI configuration accepts JSON values; it cannot supply the HTTP client's JavaScript `fetch` callback.
+
+## Review Provider And Storage Changes
+
+Packaged per-network provider defaults move from the catalog's `networks.NETWORK.providers.NAME` fields into each provider entry's `networks.NETWORK` object. User overrides remain under `providers.NAME.networks.NETWORK`; wallet-module settings under `networks.NETWORK` remain separate. For a network-specific provider, later layers win in this order:
+
+1. The provider entry's general `config`.
+2. Your `providers.NAME.config` overrides.
+3. The provider entry's `networks.NETWORK` defaults.
+4. Your `providers.NAME.networks.NETWORK` overrides.
+
+Use `wdk provider info --name NAME` to inspect the result. A provider can omit a backing module; such a direct-service entry is not a wallet-module installation. Provider listings include service kinds as well as routing kinds. Indexer resolution requires one enabled provider; pricing retains its separate one-enabled-feed requirement.
+
+Deleting a custom provider now clears its stored general and per-network overrides as well as its registration and enable/disable override. Registering another provider under the same name no longer inherits those settings. The module package remains installed, and built-in providers cannot be deleted.
+
+`wdk module list` includes Indexer packages. Its text table abbreviates Git specifications as `git#` followed by seven commit characters; JSON retains the full specification. For colon or Git specifications, status `ok` establishes that the package is installed, not that its content was verified against the requested commit.
+
+On macOS and Linux, configuration writes request mode `0600`, and initialization attempts to restrict the config directory to `0700`. Directory restriction is best effort; verify existing file and directory permissions after upgrading. Windows uses platform access controls. These restrictions do not encrypt `config.json` or prevent another process running as your OS user from reading it.
+
+## Resolve History Errors
+
+| Error | Next action |
+| --- | --- |
+| `MISSING_CONFIG` with no enabled Indexer | Inspect provider and module status; enable the bundled Indexer provider |
+| `MISSING_CONFIG` with a missing API key | Set `providers.wdk-indexer.config.apiKey`; an empty key fails locally before HTTP |
+| `INVALID_ARGUMENT` with multiple Indexers | Disable the extra enabled Indexer registrations; the CLI will not choose one |
+| `NETWORK_NOT_SUPPORTED` or `TOKEN_NOT_SUPPORTED` | Check the network's `indexerSlug` and token's Indexer code |
+| `NETWORK_ERROR` with HTTP 403 | Check the selected provider's key and endpoint; the error includes its configuration path |
+| Other `NETWORK_ERROR` | Check endpoint access, API response, and timeout; retry when safe |
+
+Indexer-provider availability is checked before the wallet-unlock requirement. Correct provider errors first, then unlock the wallet if needed. Inspect [structured errors](/cli/guides/handle-errors#handled-error-envelope) when using `--json`.
+
+## Next Steps
+
+- [Configuration](/cli/configuration) - Review configuration for the published beta.6 release
+- [Indexer JavaScript SDK](/tools/indexer-api/sdk) - Use the HTTP client directly in an application
+- [Use the MCP Server](/cli/guides/use-mcp-server) - Connect history lookup to an MCP-compatible client
+
+***
+
+## Need Help?
+
+<SupportCards />
 
 ***
 
@@ -5288,6 +5486,8 @@ A custom module runs in the wallet daemon and can access unlocked wallet account
 
 ## Protocol Routing
 
+For builds with Indexer-provider support, see the [provider configuration changes](/cli/guides/migrate-indexer-providers#review-provider-and-storage-changes); the beta.6 routing description below remains version-specific.
+
 Beta.6 reads the installed `providers` registry and user-added `customProviders`. A definition maps a short name to a module, declared kind, and configuration. General and per-network overrides are shallow-merged before the daemon constructs the provider; see [configuration precedence](/cli/configuration#swap-and-bridge-protocols).
 
 For a route preview, the daemon concurrently requests quotes from installed protocols whose declared kind matches the requested command, with swidge protocols admitted for both commands. Beta.6 does not also check route shape: a cross-network swap can admit a same-chain swap protocol, and the swap adapter omits the destination chain from that provider's options. An exact-input request selects the quote with the highest output; an exact-output request selects the quote with the lowest input. Separate gas and bridge fees are returned for review but excluded from ranking because their denomination and inclusion differ between protocol types. Quote failures do not discard successful quotes and are returned as `skipped`; the request fails with `QUOTE_REJECTED` if every candidate fails.
@@ -5514,6 +5714,8 @@ Use a private terminal, create an offline backup, and clear terminal scrollback 
 
 ## Configuration is not secret storage
 
+The configuration details below describe beta.6. For a build with Indexer-provider support, review the [credential and permission changes](/cli/guides/migrate-indexer-providers#review-provider-and-storage-changes).
+
 `config.json` is a normal plaintext file. It primarily contains public WDK-style configuration, but user-supplied values can include indexer keys or credentials embedded in provider and signing URLs.
 
 - Prefer `WDK_INDEXER_API_KEY` over storing the indexer key when your environment can protect it.
@@ -5600,7 +5802,7 @@ wdk config path
 
 ## Current file permissions
 
-The current permissions are intentional and protect the artifacts that enforce seed-at-rest and daemon access controls.
+The following permissions describe beta.6. Builds with Indexer-provider support request tighter configuration-file and directory permissions; see [the migration guide](/cli/guides/migrate-indexer-providers#review-provider-and-storage-changes).
 
 | Artifact | macOS and Linux | Purpose |
 | --- | --- | --- |
