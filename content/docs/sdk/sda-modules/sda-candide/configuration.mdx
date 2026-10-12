@@ -17,7 +17,7 @@ Configure [`CandideForwardingProtocol`](/sdk/sda-modules/sda-candide/api-referen
 
 | Field | Type | Requirement | Default | Effect |
 |-------|------|-------------|---------|--------|
-| `apiUrl` | `string` | Required | None | Forwarding Address API URL shown in the Candide dashboard; used verbatim for JSON-RPC requests and contains the team API key. |
+| `apiUrl` | `string` | Required | None | Forwarding Address API URL shown in the Candide dashboard; used verbatim for JSON-RPC requests and contains the team API key for usage and billing. |
 | `policySecret` | `string` | Required for creation, renewal, and reactivation | None | Sent as a bearer token for activation requests. Keep it on the server. |
 | `recoveryWithdrawer` | `string` | Optional | Recipient | EVM wallet with time-delayed withdrawal rights. A per-call value overrides this default. |
 | `verifyAddresses` | `boolean` | Optional | `true` | Compare the created address with local derivation. Renewal also checks stored derivation inputs when the API supplies the relayer. |
@@ -29,7 +29,7 @@ The module validates the API URL as a non-empty string, rather than checking its
 
 ## Client and Server Credentials
 
-A client instance can discover routes, estimate deposits, derive addresses, and read forwarding history without a forwarding policy secret. The API URL still contains the team API key. Confirm with Candide which access and exposure model is appropriate for your app; do not describe this API URL as credential-free.
+A client instance can discover routes, estimate deposits, derive addresses, and read forwarding history without a forwarding policy secret. The API URL identifies your team for usage and billing. Its team API key cannot activate addresses or move funds, so the URL can be used client-side. Rotate the key in the dashboard if it leaks. Keep the forwarding policy secret on the server.
 
 Only your server should hold `policySecret`. Validate the requesting user and their intended recipient before calling creation or renewal endpoints, and do not accept an unrestricted recipient from an unauthenticated request. Check wallet control separately: EVM address syntax does not prove ownership or the ability to recover funds.
 
@@ -58,7 +58,7 @@ const sda = new CandideForwardingProtocol(undefined, {
 })
 ```
 
-Do not embed either credential in source files, screenshots, client bundles, or logs. Route application requests through an authenticated backend when the dashboard key must remain private.
+Keep `policySecret` out of source files, screenshots, client bundles, and logs. Avoid logging the full API URL or using a real team key in public examples. Route application requests through an authenticated backend if your team's API-key policy requires the URL to remain private.
 
 ## Recipient and Recovery Withdrawer
 
@@ -70,9 +70,9 @@ The recovery wallet selection follows this order:
 2. The constructor configuration's `recoveryWithdrawer`.
 3. The resolved recipient address.
 
-Candide calls the recovery withdrawer `custodialWithdrawer` in its API and contracts. The SDK handles that mapping. The recipient can withdraw immediately on the source chain; the recovery withdrawer acts after a timelock that the recipient can veto. The SDK does not expose withdrawal or veto methods.
+Candide calls the recovery withdrawer `custodialWithdrawer` in its API and contracts. The SDK handles that mapping. The recipient can withdraw any token immediately by sending a transaction on the source chain. The recovery withdrawer can withdraw after a 48-hour timelock that the recipient can cancel. If the recipient cannot transact there, such as an exchange-controlled address or a smart account not deployed on that chain, configure a recovery withdrawer that can. The SDK does not expose withdrawal or cancellation methods.
 
-Store the recipient, destination chain, recovery withdrawer, salt, and returned descriptor. Changing those address inputs creates a different address. Renewal reuses the stored inputs rather than the current constructor defaults.
+Store the recipient, destination chain, recovery withdrawer, salt, and returned descriptor. Changing those address inputs creates a different address. Keep the salt stable for each user or order whose deposits you attribute to that address. Renewal reuses the stored inputs rather than the current constructor defaults.
 
 ## Deployment Verification
 
@@ -94,7 +94,7 @@ An overridden deployment field is no longer compared with the API. Supplying `al
 
 [`deriveDepositAddress()`](/sdk/sda-modules/sda-candide/api-reference#derivedepositaddress) becomes offline when `deployParams.allowedRelayer` is supplied. Creation still sends an activation request. `verifyAddresses: false` skips local derivation comparison during creation; renewal always rejects a different address returned by activation.
 
-Address verification does not inspect the beacon's current implementation code or prevent future upgrades. It also does not undo a remote activation: `ADDRESS_MISMATCH` can be thrown after the API has activated its returned address. Do not fund either address while investigating.
+Candide administers the upgradeable beacon. Address verification checks derivation inputs and the resulting address; it does not inspect the beacon's current implementation code or prevent future upgrades. It also does not undo a remote activation: `ADDRESS_MISMATCH` can be thrown after the API has activated its returned address. Do not fund either address while investigating.
 
 ## Next Steps
 

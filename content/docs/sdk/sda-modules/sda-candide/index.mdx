@@ -21,7 +21,7 @@ Use this module for an app deposit screen that discovers accepted tokens, displa
 
 ## Address and Activation Model
 
-A forwarding address depends on the recipient, recovery withdrawer, destination chain, salt, and deployment inputs. The same inputs derive the same address; changing the recipient, recovery withdrawer, destination chain, or salt produces a different address. Requested source chains determine monitoring coverage, rather than a separate address per chain.
+A forwarding address depends on the recipient, recovery withdrawer, destination chain, salt, and deployment inputs. The same inputs derive the same address; changing the recipient, recovery withdrawer, destination chain, or salt produces a different address. Requested source chains determine monitoring coverage, rather than a separate address per chain. Use different salts to give one recipient several addresses, such as one per user or order for attribution into a shared treasury.
 
 Derivation and activation are separate operations:
 
@@ -35,7 +35,7 @@ Show expiry beside the address and renew it when opening the deposit screen. A d
 
 Discover routes per source chain using `getSupportedRoutes({ sourceChain })`. Candide controls the current EVM chain and token set. A route delivers each accepted input token as its corresponding destination token; `outputAsset` is not a token-selection filter in this implementation.
 
-Only tokens returned for the route are forwarded. If a route advertises native ETH, Candide identifies it with the zero-address sentinel; other tokens use their ERC-20 contract address. The sender pays the source wallet's applicable gas fee separately from forwarding fees. Unsupported tokens or deposits below the provider's minimum may require manual recovery.
+Only tokens returned for the route are forwarded. If a route advertises native ETH, Candide identifies it with the zero-address sentinel; other tokens use their ERC-20 contract address. The sender pays the source wallet's applicable gas fee separately from forwarding fees. Unsupported tokens and supported-token balances below the current minimum stay in the forwarding contract. Later deposits of the same token to the same address on the same source chain can bring a supported balance to the minimum and allow forwarding, subject to active monitoring and current route support. The recipient can withdraw any token immediately; the recovery withdrawer can do so after the [recovery timelock](#recovery-and-provider-trust).
 
 When a source token is specified, a route may include `limits.min` in that token's base units. This is the smallest minimum reported by a bridge, and it changes with market conditions. Leave a margin and request a fresh, non-binding `quoteDeposit()` estimate before displaying deposit instructions. An earlier estimate does not reserve a bridge, fee, or output amount.
 
@@ -43,10 +43,10 @@ The quote's `outputAsset` identifies the destination token by contract address o
 
 ## Recovery and Provider Trust
 
-Candide documents recipient withdrawal rights on the source chain and an optional recovery withdrawer that can act after a timelock, subject to recipient veto. A depositor who funds the address from an exchange may not control the recipient's key on that source chain. Decide who can recover stuck funds before creating the address; the recovery withdrawer is a derivation input.
+The recipient can withdraw any token immediately by sending a transaction on the source chain. An optional recovery withdrawer can withdraw after a 48-hour timelock that the recipient can cancel. If the recipient cannot transact on the source chain, such as an exchange-controlled address or a smart account not deployed there, pair it with a recovery withdrawer that can. Decide who can recover stuck funds before creating the address; the recovery withdrawer is a derivation input.
 
 <Callout type="warn">
-The forwarding contracts use an upgradeable beacon controlled by Candide. Client-side address verification compares derivation inputs and addresses; it does not prove that the implementation behind the beacon cannot change. Review Candide's contract and recovery model before accepting funds.
+Forwarding addresses delegate to an upgradeable beacon administered by Candide. Address verification confirms derivation inputs and the resulting address, not the implementation behind the beacon or whether it will change. Review Candide's contract and recovery model before accepting funds.
 </Callout>
 
 The module's `recoverDepositAddress()` reactivates monitoring. It does not sign a transaction, withdraw funds, or confirm that a deposit has arrived. On-chain withdrawal is a separate operation through Candide's [recovery frontend](https://forwarding-address.candidelabs.com/).
@@ -54,12 +54,12 @@ The module's `recoverDepositAddress()` reactivates monitoring. It does not sign 
 ## Requirements and Limits
 
 - Node.js 20 or later and a shared `@tetherto/wdk-wallet` peer matching the declared `^1.0.0-beta.19` range. The package also exports a Bare entrypoint.
-- A Forwarding Address API URL from the [Candide dashboard](https://dashboard.candide.dev). The URL carries a team API key; avoid exposing it in logs or public examples.
+- A Forwarding Address API URL from the [Candide dashboard](https://dashboard.candide.dev). The URL carries a team API key for usage and billing and can be used client-side. It cannot activate addresses or move funds. Avoid exposing it in logs or public examples, and rotate it in the dashboard if it leaks.
 - A server-held forwarding policy secret for creation, renewal, and reactivation. Route discovery, quotes, derivation, lookups, and history do not require that policy secret.
 - An EVM recipient address. Binding a WDK account supplies its address as the default recipient; an unbound instance requires an explicit recipient.
 - Explicit disabling is unsupported. Activations expire according to the provider's lifecycle.
 
-Transfer history tracks forwards, rather than every raw deposit transaction. Candide's `pending` and `unknown` provider statuses map to WDK `processing`; an unrecognized status maps to WDK `pending`. See [transfer fields and status mapping](/sdk/sda-modules/sda-candide/api-reference#transfer-fields-and-status) before using them for UI decisions.
+Transfer history tracks forwards, rather than every raw deposit transaction. One forward can combine several deposits to the same address; `sourceAddresses` lists contributing senders and amounts when attribution is available. Candide's `pending` and `unknown` provider statuses map to WDK `processing`; an unrecognized status maps to WDK `pending`. See [transfer fields and status mapping](/sdk/sda-modules/sda-candide/api-reference#transfer-fields-and-status) before using them for UI decisions.
 
 ## Next Steps
 

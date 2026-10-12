@@ -69,7 +69,7 @@ Lists one route per source and destination chain pair. The declared options are 
 
 Each result contains `sourceChains`, `destinationChain`, `inputTokens`, and `reusable: true`. `outputAsset` is unset because each input is delivered as its own destination equivalent. Tokens also carry Candide's `destinationTokenAddress` and `feeBps` at runtime.
 
-With `sourceToken`, `limits.min` is the smallest reported bridge minimum as a `bigint` in input-token base units. It is omitted if no minimum is reported. `limits.max` is not supplied by this method. Re-estimate before displaying instructions, since minimums change. Routes use the per-source cache configured by `routesCacheTtlMs`.
+With `sourceToken`, `limits.min` is the smallest reported bridge minimum as a `bigint` in input-token base units. The reported minimum is inclusive. It is omitted if no minimum is reported. `limits.max` is not supplied by this method. Re-estimate before displaying instructions, since minimums change. Routes use the per-source cache configured by `routesCacheTtlMs`.
 
 #### quoteDeposit
 
@@ -88,7 +88,7 @@ The result includes standard quote fields and `bridge`, `outputAssetSymbol`, and
 
 Candide uses `0x0000000000000000000000000000000000000000` for native ETH when advertised by a route. Use native base units for that token and distinguish the sender's gas costs from forwarding fees. A normal native send and an ERC-20 token transfer have different wallet transaction requirements; this module performs neither send.
 
-The two fee entries are the Candide relayer fee (`type: 'protocol'`) and bridge fee (`type: 'network'`). Both use input-token base units. `included: true` means the fee is already reflected in the output estimate; sponsored fees have `included: false`.
+The two fee entries are the Candide relayer fee (`type: 'protocol'`) and bridge fee (`type: 'network'`). Both use input-token base units. `included: true` means the fee is already reflected in the output estimate; sponsored fees have `included: false`. Enable sponsorship on the forwarding policy in the [Candide dashboard](https://dashboard.candide.dev). Sponsored forwards deliver the full deposit and bill forwarding fees to the policy.
 
 The module uses an explicit provider `sponsored` flag when available. Otherwise it infers sponsorship by comparing full input and output amounts with known decimals; missing decimals are assumed equal. Treat it as estimate metadata, not proof of a policy commitment. The result does not reserve the amount, bridge, fees, or settlement time.
 
@@ -103,9 +103,11 @@ Accepts `CandideCreateDepositAddressOptions` and returns a one-element `CandideD
 | `destinationAddress` | `string` | Optional with a bound account | EVM recipient; required when no account is bound. |
 | `outputAsset` | `string` | Optional in shared type | Ignored; each supported token forwards as its own equivalent. |
 | `recoveryWithdrawer` | `string` | Optional | Override the configured recovery wallet. Defaults to the recipient if neither value is supplied. |
-| `salt` | `string` | Optional | 32-byte hex value; defaults to exported `ZERO_SALT`. |
+| `salt` | `string` | Optional | 32-byte hex value; defaults to exported `ZERO_SALT`. Different salts give one recipient distinct addresses, such as one per user or order for treasury attribution. |
 
 The address's `id` equals its lowercase `address`. Its descriptor includes `sourceChains`, `supportedInputTokens`, `destinationChain`, recipient `destinationAddress`, `reusable: true`, optional Unix-second `expiry`, `recoveryWithdrawer`, and `salt`. `outputAsset` and `limits` are not supplied in the descriptor.
+
+Persist the salt with the user or order and reuse it for the same logical address, including activation retries. Changing the salt derives a different address.
 
 With default verification, local derivation happens before activation and the returned address is compared afterward. `ADDRESS_MISMATCH` can therefore reject after the API has activated its address. Fetching supported tokens can also fail after activation. Reconcile state before retrying, and do not fund an address whose verification failed.
 
@@ -129,7 +131,7 @@ When verification is enabled and stored data includes the relayer, the module de
 
 #### getTransfers
 
-Accepts the forwarding address and optional `SdaTransfersOptions`. Resolves the address's recipient and destination chain, then filters the recipient's paginated forwards by `proxyAddress`. Returns newest-first forwards. It does not list every raw funding transaction.
+Accepts the forwarding address and optional `SdaTransfersOptions`. Resolves the address's recipient and destination chain, then filters the recipient's paginated forwards by `proxyAddress`. Returns newest-first forwards. One forward can combine several deposits to the same address. It does not list every raw funding transaction.
 
 | Option | Type | Default | Behavior |
 |--------|------|---------|----------|
@@ -178,7 +180,7 @@ By default, the resolver compares the API's factory, beacon, and bytecode with `
 | `recipient` | `string` | Destination recipient. |
 | `sourceChainId` | `number` | Forward's source chain. |
 | `sourceTxHash` | `string` | Forwarding transaction on the source chain, not the depositor's funding transaction. |
-| `sourceAddresses` | Optional array or `null` | Depositors and string base-unit amounts; an address may be the literal `"redacted"` for dust. Absent for records without this field. |
+| `sourceAddresses` | Optional array or `null` | Contributing senders and string amounts; an address may be the literal `"redacted"` for dust. Absent for records without this field. |
 | `destinationChainId` | Optional `number` | Destination chain when supplied. |
 | `destinationTxHash` | Optional `string` | Delivery transaction when supplied. |
 | `proxyAddress` | Optional `string` | Forwarding address associated with the record. |
@@ -187,7 +189,7 @@ By default, the resolver compares the API's factory, beacon, and bytecode with `
 | `failureReason` | Optional provider reason | `refunded`, `expired`, or `reverted` in the declared type. |
 | `refundTxHash` | Optional `string` | Refund transaction when supplied. |
 
-The `sourceAddresses` array contains `{ address: string, amount: string }` entries. `null` means attribution was unavailable. Treat provider extension fields as optional in application rendering even when a declared type expects a value.
+The `sourceAddresses` array contains `{ address: string, amount: string }` entries for contributing senders and their amounts. One forward can aggregate multiple deposits. `null` means attribution was unavailable. Treat provider extension fields as optional in application rendering even when a declared type expects a value.
 
 | Provider state | WDK `status` |
 |----------------|--------------|

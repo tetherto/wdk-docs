@@ -58671,13 +58671,13 @@ Discover routes at runtime rather than assuming a chain or asset is available. P
 <Card title="Rhino.fi" href="/sdk/sda-modules/sda-rhinofi/">
 Review Rhino.fi's custody model and deposit-routing limitations.
 </Card>
-<Card title="Usage" href="/sdk/sda-modules/sda-rhinofi/usage">
+<Card title="Rhino.fi Usage" href="/sdk/sda-modules/sda-rhinofi/usage">
 Install the module, discover routes, and create deposit addresses.
 </Card>
 <Card title="Candide" href="/sdk/sda-modules/sda-candide/">
 Review the forwarding address model, monitoring expiry, and recovery permissions.
 </Card>
-<Card title="Usage" href="/sdk/sda-modules/sda-candide/usage">
+<Card title="Candide Usage" href="/sdk/sda-modules/sda-candide/usage">
 Discover routes, activate and renew an address, and track delivery.
 </Card>
 <Card title="Protocol Integration" href="/sdk/core-module/guides/protocol-integration#smart-deposit-addresses">
@@ -58761,7 +58761,7 @@ Lists one route per source and destination chain pair. The declared options are 
 
 Each result contains `sourceChains`, `destinationChain`, `inputTokens`, and `reusable: true`. `outputAsset` is unset because each input is delivered as its own destination equivalent. Tokens also carry Candide's `destinationTokenAddress` and `feeBps` at runtime.
 
-With `sourceToken`, `limits.min` is the smallest reported bridge minimum as a `bigint` in input-token base units. It is omitted if no minimum is reported. `limits.max` is not supplied by this method. Re-estimate before displaying instructions, since minimums change. Routes use the per-source cache configured by `routesCacheTtlMs`.
+With `sourceToken`, `limits.min` is the smallest reported bridge minimum as a `bigint` in input-token base units. The reported minimum is inclusive. It is omitted if no minimum is reported. `limits.max` is not supplied by this method. Re-estimate before displaying instructions, since minimums change. Routes use the per-source cache configured by `routesCacheTtlMs`.
 
 #### quoteDeposit
 
@@ -58780,7 +58780,7 @@ The result includes standard quote fields and `bridge`, `outputAssetSymbol`, and
 
 Candide uses `0x0000000000000000000000000000000000000000` for native ETH when advertised by a route. Use native base units for that token and distinguish the sender's gas costs from forwarding fees. A normal native send and an ERC-20 token transfer have different wallet transaction requirements; this module performs neither send.
 
-The two fee entries are the Candide relayer fee (`type: 'protocol'`) and bridge fee (`type: 'network'`). Both use input-token base units. `included: true` means the fee is already reflected in the output estimate; sponsored fees have `included: false`.
+The two fee entries are the Candide relayer fee (`type: 'protocol'`) and bridge fee (`type: 'network'`). Both use input-token base units. `included: true` means the fee is already reflected in the output estimate; sponsored fees have `included: false`. Enable sponsorship on the forwarding policy in the [Candide dashboard](https://dashboard.candide.dev). Sponsored forwards deliver the full deposit and bill forwarding fees to the policy.
 
 The module uses an explicit provider `sponsored` flag when available. Otherwise it infers sponsorship by comparing full input and output amounts with known decimals; missing decimals are assumed equal. Treat it as estimate metadata, not proof of a policy commitment. The result does not reserve the amount, bridge, fees, or settlement time.
 
@@ -58795,9 +58795,11 @@ Accepts `CandideCreateDepositAddressOptions` and returns a one-element `CandideD
 | `destinationAddress` | `string` | Optional with a bound account | EVM recipient; required when no account is bound. |
 | `outputAsset` | `string` | Optional in shared type | Ignored; each supported token forwards as its own equivalent. |
 | `recoveryWithdrawer` | `string` | Optional | Override the configured recovery wallet. Defaults to the recipient if neither value is supplied. |
-| `salt` | `string` | Optional | 32-byte hex value; defaults to exported `ZERO_SALT`. |
+| `salt` | `string` | Optional | 32-byte hex value; defaults to exported `ZERO_SALT`. Different salts give one recipient distinct addresses, such as one per user or order for treasury attribution. |
 
 The address's `id` equals its lowercase `address`. Its descriptor includes `sourceChains`, `supportedInputTokens`, `destinationChain`, recipient `destinationAddress`, `reusable: true`, optional Unix-second `expiry`, `recoveryWithdrawer`, and `salt`. `outputAsset` and `limits` are not supplied in the descriptor.
+
+Persist the salt with the user or order and reuse it for the same logical address, including activation retries. Changing the salt derives a different address.
 
 With default verification, local derivation happens before activation and the returned address is compared afterward. `ADDRESS_MISMATCH` can therefore reject after the API has activated its address. Fetching supported tokens can also fail after activation. Reconcile state before retrying, and do not fund an address whose verification failed.
 
@@ -58821,7 +58823,7 @@ When verification is enabled and stored data includes the relayer, the module de
 
 #### getTransfers
 
-Accepts the forwarding address and optional `SdaTransfersOptions`. Resolves the address's recipient and destination chain, then filters the recipient's paginated forwards by `proxyAddress`. Returns newest-first forwards. It does not list every raw funding transaction.
+Accepts the forwarding address and optional `SdaTransfersOptions`. Resolves the address's recipient and destination chain, then filters the recipient's paginated forwards by `proxyAddress`. Returns newest-first forwards. One forward can combine several deposits to the same address. It does not list every raw funding transaction.
 
 | Option | Type | Default | Behavior |
 |--------|------|---------|----------|
@@ -58870,7 +58872,7 @@ By default, the resolver compares the API's factory, beacon, and bytecode with `
 | `recipient` | `string` | Destination recipient. |
 | `sourceChainId` | `number` | Forward's source chain. |
 | `sourceTxHash` | `string` | Forwarding transaction on the source chain, not the depositor's funding transaction. |
-| `sourceAddresses` | Optional array or `null` | Depositors and string base-unit amounts; an address may be the literal `"redacted"` for dust. Absent for records without this field. |
+| `sourceAddresses` | Optional array or `null` | Contributing senders and string amounts; an address may be the literal `"redacted"` for dust. Absent for records without this field. |
 | `destinationChainId` | Optional `number` | Destination chain when supplied. |
 | `destinationTxHash` | Optional `string` | Delivery transaction when supplied. |
 | `proxyAddress` | Optional `string` | Forwarding address associated with the record. |
@@ -58879,7 +58881,7 @@ By default, the resolver compares the API's factory, beacon, and bytecode with `
 | `failureReason` | Optional provider reason | `refunded`, `expired`, or `reverted` in the declared type. |
 | `refundTxHash` | Optional `string` | Refund transaction when supplied. |
 
-The `sourceAddresses` array contains `{ address: string, amount: string }` entries. `null` means attribution was unavailable. Treat provider extension fields as optional in application rendering even when a declared type expects a value.
+The `sourceAddresses` array contains `{ address: string, amount: string }` entries for contributing senders and their amounts. One forward can aggregate multiple deposits. `null` means attribution was unavailable. Treat provider extension fields as optional in application rendering even when a declared type expects a value.
 
 | Provider state | WDK `status` |
 |----------------|--------------|
@@ -58987,7 +58989,7 @@ Configure [`CandideForwardingProtocol`](/sdk/sda-modules/sda-candide/api-referen
 
 | Field | Type | Requirement | Default | Effect |
 |-------|------|-------------|---------|--------|
-| `apiUrl` | `string` | Required | None | Forwarding Address API URL shown in the Candide dashboard; used verbatim for JSON-RPC requests and contains the team API key. |
+| `apiUrl` | `string` | Required | None | Forwarding Address API URL shown in the Candide dashboard; used verbatim for JSON-RPC requests and contains the team API key for usage and billing. |
 | `policySecret` | `string` | Required for creation, renewal, and reactivation | None | Sent as a bearer token for activation requests. Keep it on the server. |
 | `recoveryWithdrawer` | `string` | Optional | Recipient | EVM wallet with time-delayed withdrawal rights. A per-call value overrides this default. |
 | `verifyAddresses` | `boolean` | Optional | `true` | Compare the created address with local derivation. Renewal also checks stored derivation inputs when the API supplies the relayer. |
@@ -58999,7 +59001,7 @@ The module validates the API URL as a non-empty string, rather than checking its
 
 ## Client and Server Credentials
 
-A client instance can discover routes, estimate deposits, derive addresses, and read forwarding history without a forwarding policy secret. The API URL still contains the team API key. Confirm with Candide which access and exposure model is appropriate for your app; do not describe this API URL as credential-free.
+A client instance can discover routes, estimate deposits, derive addresses, and read forwarding history without a forwarding policy secret. The API URL identifies your team for usage and billing. Its team API key cannot activate addresses or move funds, so the URL can be used client-side. Rotate the key in the dashboard if it leaks. Keep the forwarding policy secret on the server.
 
 Only your server should hold `policySecret`. Validate the requesting user and their intended recipient before calling creation or renewal endpoints, and do not accept an unrestricted recipient from an unauthenticated request. Check wallet control separately: EVM address syntax does not prove ownership or the ability to recover funds.
 
@@ -59028,7 +59030,7 @@ const sda = new CandideForwardingProtocol(undefined, {
 })
 ```
 
-Do not embed either credential in source files, screenshots, client bundles, or logs. Route application requests through an authenticated backend when the dashboard key must remain private.
+Keep `policySecret` out of source files, screenshots, client bundles, and logs. Avoid logging the full API URL or using a real team key in public examples. Route application requests through an authenticated backend if your team's API-key policy requires the URL to remain private.
 
 ## Recipient and Recovery Withdrawer
 
@@ -59040,9 +59042,9 @@ The recovery wallet selection follows this order:
 2. The constructor configuration's `recoveryWithdrawer`.
 3. The resolved recipient address.
 
-Candide calls the recovery withdrawer `custodialWithdrawer` in its API and contracts. The SDK handles that mapping. The recipient can withdraw immediately on the source chain; the recovery withdrawer acts after a timelock that the recipient can veto. The SDK does not expose withdrawal or veto methods.
+Candide calls the recovery withdrawer `custodialWithdrawer` in its API and contracts. The SDK handles that mapping. The recipient can withdraw any token immediately by sending a transaction on the source chain. The recovery withdrawer can withdraw after a 48-hour timelock that the recipient can cancel. If the recipient cannot transact there, such as an exchange-controlled address or a smart account not deployed on that chain, configure a recovery withdrawer that can. The SDK does not expose withdrawal or cancellation methods.
 
-Store the recipient, destination chain, recovery withdrawer, salt, and returned descriptor. Changing those address inputs creates a different address. Renewal reuses the stored inputs rather than the current constructor defaults.
+Store the recipient, destination chain, recovery withdrawer, salt, and returned descriptor. Changing those address inputs creates a different address. Keep the salt stable for each user or order whose deposits you attribute to that address. Renewal reuses the stored inputs rather than the current constructor defaults.
 
 ## Deployment Verification
 
@@ -59064,7 +59066,7 @@ An overridden deployment field is no longer compared with the API. Supplying `al
 
 [`deriveDepositAddress()`](/sdk/sda-modules/sda-candide/api-reference#derivedepositaddress) becomes offline when `deployParams.allowedRelayer` is supplied. Creation still sends an activation request. `verifyAddresses: false` skips local derivation comparison during creation; renewal always rejects a different address returned by activation.
 
-Address verification does not inspect the beacon's current implementation code or prevent future upgrades. It also does not undo a remote activation: `ADDRESS_MISMATCH` can be thrown after the API has activated its returned address. Do not fund either address while investigating.
+Candide administers the upgradeable beacon. Address verification checks derivation inputs and the resulting address; it does not inspect the beacon's current implementation code or prevent future upgrades. It also does not undo a remote activation: `ADDRESS_MISMATCH` can be thrown after the API has activated its returned address. Do not fund either address while investigating.
 
 ## Next Steps
 
@@ -59105,7 +59107,7 @@ Use this module for an app deposit screen that discovers accepted tokens, displa
 
 ## Address and Activation Model
 
-A forwarding address depends on the recipient, recovery withdrawer, destination chain, salt, and deployment inputs. The same inputs derive the same address; changing the recipient, recovery withdrawer, destination chain, or salt produces a different address. Requested source chains determine monitoring coverage, rather than a separate address per chain.
+A forwarding address depends on the recipient, recovery withdrawer, destination chain, salt, and deployment inputs. The same inputs derive the same address; changing the recipient, recovery withdrawer, destination chain, or salt produces a different address. Requested source chains determine monitoring coverage, rather than a separate address per chain. Use different salts to give one recipient several addresses, such as one per user or order for attribution into a shared treasury.
 
 Derivation and activation are separate operations:
 
@@ -59119,7 +59121,7 @@ Show expiry beside the address and renew it when opening the deposit screen. A d
 
 Discover routes per source chain using `getSupportedRoutes({ sourceChain })`. Candide controls the current EVM chain and token set. A route delivers each accepted input token as its corresponding destination token; `outputAsset` is not a token-selection filter in this implementation.
 
-Only tokens returned for the route are forwarded. If a route advertises native ETH, Candide identifies it with the zero-address sentinel; other tokens use their ERC-20 contract address. The sender pays the source wallet's applicable gas fee separately from forwarding fees. Unsupported tokens or deposits below the provider's minimum may require manual recovery.
+Only tokens returned for the route are forwarded. If a route advertises native ETH, Candide identifies it with the zero-address sentinel; other tokens use their ERC-20 contract address. The sender pays the source wallet's applicable gas fee separately from forwarding fees. Unsupported tokens and supported-token balances below the current minimum stay in the forwarding contract. Later deposits of the same token to the same address on the same source chain can bring a supported balance to the minimum and allow forwarding, subject to active monitoring and current route support. The recipient can withdraw any token immediately; the recovery withdrawer can do so after the [recovery timelock](#recovery-and-provider-trust).
 
 When a source token is specified, a route may include `limits.min` in that token's base units. This is the smallest minimum reported by a bridge, and it changes with market conditions. Leave a margin and request a fresh, non-binding `quoteDeposit()` estimate before displaying deposit instructions. An earlier estimate does not reserve a bridge, fee, or output amount.
 
@@ -59127,10 +59129,10 @@ The quote's `outputAsset` identifies the destination token by contract address o
 
 ## Recovery and Provider Trust
 
-Candide documents recipient withdrawal rights on the source chain and an optional recovery withdrawer that can act after a timelock, subject to recipient veto. A depositor who funds the address from an exchange may not control the recipient's key on that source chain. Decide who can recover stuck funds before creating the address; the recovery withdrawer is a derivation input.
+The recipient can withdraw any token immediately by sending a transaction on the source chain. An optional recovery withdrawer can withdraw after a 48-hour timelock that the recipient can cancel. If the recipient cannot transact on the source chain, such as an exchange-controlled address or a smart account not deployed there, pair it with a recovery withdrawer that can. Decide who can recover stuck funds before creating the address; the recovery withdrawer is a derivation input.
 
 <Callout type="warn">
-The forwarding contracts use an upgradeable beacon controlled by Candide. Client-side address verification compares derivation inputs and addresses; it does not prove that the implementation behind the beacon cannot change. Review Candide's contract and recovery model before accepting funds.
+Forwarding addresses delegate to an upgradeable beacon administered by Candide. Address verification confirms derivation inputs and the resulting address, not the implementation behind the beacon or whether it will change. Review Candide's contract and recovery model before accepting funds.
 </Callout>
 
 The module's `recoverDepositAddress()` reactivates monitoring. It does not sign a transaction, withdraw funds, or confirm that a deposit has arrived. On-chain withdrawal is a separate operation through Candide's [recovery frontend](https://forwarding-address.candidelabs.com/).
@@ -59138,12 +59140,12 @@ The module's `recoverDepositAddress()` reactivates monitoring. It does not sign 
 ## Requirements and Limits
 
 - Node.js 20 or later and a shared `@tetherto/wdk-wallet` peer matching the declared `^1.0.0-beta.19` range. The package also exports a Bare entrypoint.
-- A Forwarding Address API URL from the [Candide dashboard](https://dashboard.candide.dev). The URL carries a team API key; avoid exposing it in logs or public examples.
+- A Forwarding Address API URL from the [Candide dashboard](https://dashboard.candide.dev). The URL carries a team API key for usage and billing and can be used client-side. It cannot activate addresses or move funds. Avoid exposing it in logs or public examples, and rotate it in the dashboard if it leaks.
 - A server-held forwarding policy secret for creation, renewal, and reactivation. Route discovery, quotes, derivation, lookups, and history do not require that policy secret.
 - An EVM recipient address. Binding a WDK account supplies its address as the default recipient; an unbound instance requires an explicit recipient.
 - Explicit disabling is unsupported. Activations expire according to the provider's lifecycle.
 
-Transfer history tracks forwards, rather than every raw deposit transaction. Candide's `pending` and `unknown` provider statuses map to WDK `processing`; an unrecognized status maps to WDK `pending`. See [transfer fields and status mapping](/sdk/sda-modules/sda-candide/api-reference#transfer-fields-and-status) before using them for UI decisions.
+Transfer history tracks forwards, rather than every raw deposit transaction. One forward can combine several deposits to the same address; `sourceAddresses` lists contributing senders and amounts when attribution is available. Candide's `pending` and `unknown` provider statuses map to WDK `processing`; an unrecognized status maps to WDK `pending`. See [transfer fields and status mapping](/sdk/sda-modules/sda-candide/api-reference#transfer-fields-and-status) before using them for UI decisions.
 
 ## Next Steps
 
@@ -59200,8 +59202,8 @@ With `@tetherto/wdk@1.0.0-beta.18`, passing this class to `wdk.registerProtocol(
 Before running the example:
 
 1. Obtain the Forwarding Address API URL and a forwarding policy secret from the [Candide dashboard](https://dashboard.candide.dev).
-2. Set `CANDIDE_FORWARDING_API_URL` and `CANDIDE_FORWARDING_POLICY_SECRET` on your server. The URL itself carries a team API key. Protect both values.
-3. Set `CANDIDE_RECIPIENT` to an EVM address whose owner can receive funds on the destination chain. Authenticate that recipient through your application's account flow and establish their control of the address. Address syntax alone does not establish ownership or the ability to withdraw on a source chain.
+2. Set `CANDIDE_FORWARDING_API_URL` and `CANDIDE_FORWARDING_POLICY_SECRET` on your server. The URL carries a team API key for usage and billing and can also be used client-side; it cannot activate addresses or move funds. Keep the policy secret on the server.
+3. Set `CANDIDE_RECIPIENT` to an EVM address whose owner can receive funds on the destination chain. Authenticate that recipient through your application's account flow and establish their control of the address. Address syntax alone does not establish ownership or the ability to send a withdrawal transaction on a source chain. If the recipient cannot transact there, choose a recovery withdrawer that can.
 4. Set `CANDIDE_RECOVERY_WITHDRAWER` to the wallet chosen for time-delayed recovery, and `CANDIDE_DEPOSIT_AMOUNT` to a positive integer amount in the selected input token's base units.
 
 The [recovery model](/sdk/sda-modules/sda-candide/configuration#recipient-and-recovery-withdrawer) grants the recipient and recovery wallet different rights. Review it before activating an address.
@@ -59272,8 +59274,8 @@ const [tokenRoute] = await sda.getSupportedRoutes({
   sourceToken: token.token,
 })
 const minimum = tokenRoute?.limits?.min
-if (minimum !== undefined && inputAmount <= BigInt(minimum)) {
-  throw new Error('Choose an amount above the current bridge minimum')
+if (minimum !== undefined && inputAmount < BigInt(minimum)) {
+  throw new Error('Choose an amount at or above the current bridge minimum')
 }
 ```
 
@@ -59299,7 +59301,7 @@ This initial estimate does not include a particular address's sponsorship policy
 ## 4. Activate the Address
 
 <Callout type="warn">
-Activation sends a provider request under your forwarding policy. Confirm the recipient, destination chain, recovery wallet, allowed input token, and amount before displaying deposit instructions. The contracts use an upgradeable beacon; address verification does not establish immutable contract code.
+Activation sends a provider request under your forwarding policy. Confirm the recipient, destination chain, recovery wallet, allowed input token, and amount before displaying deposit instructions. Candide administers the upgradeable beacon; address verification checks derivation inputs and the address, not the implementation behind the beacon.
 </Callout>
 
 You can activate monitoring using [`createDepositAddress()`](/sdk/sda-modules/sda-candide/api-reference#createdepositaddress):
@@ -59326,7 +59328,7 @@ const addressQuote = await sda.quoteDeposit({
 })
 ```
 
-Inspect `addressQuote.sponsored` and each fee's `included` flag. With sponsorship, the fees are paid under the policy rather than deducted from delivery. The estimate remains non-binding. Do not fund an address after an `ADDRESS_MISMATCH` or unexplained `DEPLOYMENT_CHANGED` error.
+Enable sponsorship with the toggle on the forwarding policy in the [Candide dashboard](https://dashboard.candide.dev). Sponsored forwards deliver the full deposit, with forwarding fees billed to the policy rather than deducted from delivery. Inspect `addressQuote.sponsored` and each fee's `included` flag. Input and output tokens can have different decimals, so normalize amounts by their respective token decimals without rounding before comparing them. The estimate remains non-binding. Do not fund an address after an `ADDRESS_MISMATCH` or unexplained `DEPLOYMENT_CHANGED` error.
 
 ## 5. Renew Before Displaying the Address
 
@@ -59367,9 +59369,9 @@ for (const transfer of transfers) {
 }
 ```
 
-Use bounded polling with a delay and cancellation in your application. An empty history is not proof that the depositor never sent funds: history contains detected forwards, rather than every raw deposit. Preserve the transfer's opaque `id` for [`getTransfer()`](/sdk/sda-modules/sda-candide/api-reference#gettransfer), and use [`getTransfersByRecipient()`](/sdk/sda-modules/sda-candide/api-reference#gettransfersbyrecipient) for history across that recipient's addresses.
+Candide typically detects a deposit within seconds while monitoring is active. Delivery time then depends on the route. Use bounded polling with a delay and cancellation in your application, and track each forward until it completes or reaches another terminal outcome. An empty history is not proof that the depositor never sent funds: history contains detected forwards, which can combine several deposits to the same address, rather than every raw deposit. Preserve the transfer's opaque `id` for [`getTransfer()`](/sdk/sda-modules/sda-candide/api-reference#gettransfer), and use [`getTransfersByRecipient()`](/sdk/sda-modules/sda-candide/api-reference#gettransfersbyrecipient) for history across that recipient's addresses.
 
-Candide's `pending` and `unknown` become WDK `processing`. An unrecognized provider value becomes WDK `pending`. Keep both `status` and `providerStatus`; do not assume a guaranteed transition sequence. `sourceTxHash` is the forwarding transaction on the source chain, rather than the depositor's original transaction. `sourceAddresses` can be absent, `null`, or contain a `"redacted"` dust entry.
+Candide's `pending` and `unknown` become WDK `processing`. An unrecognized provider value becomes WDK `pending`. Keep both `status` and `providerStatus`; do not assume a guaranteed transition sequence. `sourceTxHash` is the forwarding transaction on the source chain, rather than the depositor's original transaction. `sourceAddresses` lists the contributing senders and amounts. It can be absent, `null`, or contain a `"redacted"` dust entry, so do not assume a complete one-to-one deposit ledger.
 
 ## Reactivate an Expired Address (optional)
 
@@ -59381,7 +59383,7 @@ const recovery = await sda.recoverDepositAddress({ id: deposit.id })
 
 `recovery.status === 'reindexed'` means monitoring was refreshed. It does not prove that funds were forwarded or recovered. Continue tracking delivery. The address must have prior activation history, and the server still needs `policySecret`.
 
-On-chain withdrawal is separate from this API operation. Candide provides a [recovery frontend](https://forwarding-address.candidelabs.com/) for that flow. Explicit [`disableDepositAddress()`](/sdk/sda-modules/sda-candide/api-reference#disabledepositaddress) is unsupported; monitoring expires on its own.
+On-chain withdrawal is separate from this API operation. The recipient can withdraw immediately on the source chain; a recovery withdrawer can act after the 48-hour timelock, subject to recipient cancellation. Review [recipient and recovery rights](/sdk/sda-modules/sda-candide/configuration#recipient-and-recovery-withdrawer) and use Candide's [recovery frontend](https://forwarding-address.candidelabs.com/) for that flow. Explicit [`disableDepositAddress()`](/sdk/sda-modules/sda-candide/api-reference#disabledepositaddress) is unsupported; monitoring expires on its own.
 
 ## Handle Failures
 
