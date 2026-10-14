@@ -16,12 +16,12 @@ This guide shows how to [install and configure](#install-and-configure) an accou
 
 ## Install and Configure
 
-Before starting, obtain a Rhino.fi project `SECRET_` API key with SDA access. This server-side guide includes history and pause operations that require it. Prepare an EVM depositor address on Arbitrum and a destination address on Ethereum that you control or have independently verified. The example checks live support before using that pair.
+Before starting, obtain a Rhino.fi project `SECRET_` API key with SDA access. This server-side guide includes address lookup, history, and pause operations that require it. Prepare an EVM depositor address on Arbitrum and a destination address on Ethereum that you control or have independently verified. The example checks live support before using that pair.
 
 Install the SDA package for the accountless flow:
 
 ```bash
-npm install @rhino.fi/wdk-protocol-sda-rhinofi@1.1.0
+npm install @rhino.fi/wdk-protocol-sda-rhinofi@1.2.0
 ```
 
 Create an accountless [`RhinofiProtocol`](/sdk/sda-modules/sda-rhinofi/api-reference#rhinofiprotocol) and load the confirmed addresses from your server environment:
@@ -29,6 +29,7 @@ Create an accountless [`RhinofiProtocol`](/sdk/sda-modules/sda-rhinofi/api-refer
 ```javascript
 import RhinofiProtocol, {
   NoSuchElementError,
+  ProviderErrorReason,
   SdaExecutionError
 } from '@rhino.fi/wdk-protocol-sda-rhinofi'
 
@@ -96,7 +97,7 @@ console.log(inputToken.decimals)
 console.log(inputToken.minDepositLimitUsd, inputToken.maxDepositLimitUsd)
 ```
 
-The example uses Rhino.fi's `USDT` machine identifier, which its 1.1.0 README uses for Arbitrum. The checks use the official [Arbitrum USD₮0 deployment](https://docs.usdt0.to/technical-documentation/deployments), [Ethereum USD₮ contract](https://tether.to/en/supported-protocols/), and [six-decimal token specification](https://docs.usdt0.to/technical-documentation/developer/). Stop if the provider returns different or missing token details; a ticker alone does not identify the asset. Preserve the returned identifier and decimals in subsequent calls. Deposit bounds are USD values, not token base units. Refresh discovery when presenting a route; an earlier response does not reserve it. Passing `sourceChain` avoids querying every deposit-enabled source chain.
+The example uses Rhino.fi's `USDT` machine identifier, which its 1.2.0 README uses for Arbitrum. The checks use the official [Arbitrum USD₮0 deployment](https://docs.usdt0.to/technical-documentation/deployments), [Ethereum USD₮ contract](https://tether.to/en/supported-protocols/), and [six-decimal token specification](https://docs.usdt0.to/technical-documentation/developer/). Stop if the provider returns different or missing token details; a ticker alone does not identify the asset. Preserve the returned identifier and decimals in subsequent calls. Deposit bounds are USD values, not token base units. Refresh discovery when presenting a route; an earlier response does not reserve it. Passing `sourceChain` avoids querying every deposit-enabled source chain.
 
 ## Estimate a Deposit (optional)
 
@@ -161,7 +162,9 @@ console.log(deposit.address, deposit.id, acceptedToken)
 console.log(acceptedToken.minDepositLimitUsd, acceptedToken.maxDepositLimitUsd)
 ```
 
-Use the created descriptor's token and USD limits in the funding instructions, and refresh the descriptor before a later deposit. This server-side example checks the returned destination to avoid showing a reused address for a different recipient; if the provider omits it, reconcile the address before funding. Keep `deposit.id` verbatim for lookups and lifecycle actions. With a standard API key, `deposit.destinationAddress` is omitted even though the requested destination controls settlement. See [Address Creation Options](/sdk/sda-modules/sda-rhinofi/configuration#address-creation-options) for labels, webhooks, refunds, and asset fallback.
+Use the created descriptor's token and USD limits in the funding instructions. Creation includes `destinationAddress` even with a standard key: the provider's returned value takes precedence, and an omitted value is filled from the request or bound account. That fallback does not independently confirm the provider's stored recipient; retain your confirmed creation destination and the checks above.
+
+Refresh and validate the descriptor with [`getDepositAddress()`](/sdk/sda-modules/sda-rhinofi/api-reference#getdepositaddress) before a later deposit. Lookup requires a `SECRET_` key with destination access and fails with `SdaExecutionError` (`reason: FORBIDDEN`) if the destination is withheld. Stop on a lookup failure or a descriptor that no longer matches the selected route. Keep `deposit.id` verbatim for lookups and lifecycle actions. See [Address Creation Options](/sdk/sda-modules/sda-rhinofi/configuration#address-creation-options) for labels, webhooks, refunds, and asset fallback.
 
 For a Stellar descriptor containing `chainMetadata`, a sender that cannot use the muxed address must send to `baseAddress` with the exact `memoId`. Omitting the memo prevents deposit attribution. Read these values from the descriptor rather than constructing them.
 
@@ -218,7 +221,7 @@ await sda.enableDepositAddress(deposit.id)
 Use this alternative when your application already manages the destination account through WDK. Install all three packages imported by the account-bound example:
 
 ```bash
-npm install @rhino.fi/wdk-protocol-sda-rhinofi@1.1.0 @tetherto/wdk@1.0.0-beta.18 @tetherto/wdk-wallet-evm@1.0.0-beta.20
+npm install @rhino.fi/wdk-protocol-sda-rhinofi@1.2.0 @tetherto/wdk@1.0.0-beta.19 @tetherto/wdk-wallet-evm@1.0.0-beta.20
 ```
 
 1. Register the destination wallet and the SDA protocol with [`registerProtocol()`](/sdk/core-module/api-reference#registerprotocolblockchain-label-protocol-config).
@@ -251,7 +254,7 @@ try {
 }
 ```
 
-The bound account supplies the default creation destination when omitted. Always pass `destinationChain` explicitly and match it to that account. The returned core interface is `ISdaProtocol`. The JavaScript registration flow works with the package combination above, but current `1.1.0` declarations still have [TypeScript compatibility limitations](/sdk/sda-modules/sda-rhinofi/api-reference#typescript-compatibility). A direct [`RhinofiProtocol`](/sdk/sda-modules/sda-rhinofi/api-reference#rhinofiprotocol) instance exposes provider-specific options, return fields, and [`enableDepositAddress()`](/sdk/sda-modules/sda-rhinofi/api-reference#enabledepositaddress); it does not repair the published declaration errors.
+The bound account supplies the default creation destination when omitted. Always pass `destinationChain` explicitly and match it to that account. The returned core interface is `ISdaProtocol`. The pinned JavaScript flow works; see [TypeScript Compatibility](/sdk/sda-modules/sda-rhinofi/api-reference#typescript-compatibility) for its separate EVM wallet-manager declaration mismatch. Rhino.fi's provider assignment and SDA registration checks pass with WDK beta.19. A direct [`RhinofiProtocol`](/sdk/sda-modules/sda-rhinofi/api-reference#rhinofiprotocol) instance exposes provider-specific options, return fields, and [`enableDepositAddress()`](/sdk/sda-modules/sda-rhinofi/api-reference#enabledepositaddress).
 
 ## Handle Errors
 
@@ -262,7 +265,11 @@ try {
   await sda.getDepositAddress(deposit.id)
 } catch (error) {
   if (error instanceof SdaExecutionError) {
-    console.error('Rhino.fi request failed', error.code)
+    if (error.reason === ProviderErrorReason.FORBIDDEN) {
+      console.error('Check SECRET_ key permissions and destination access')
+    } else {
+      console.error('Rhino.fi request failed', error.code)
+    }
   } else if (error instanceof NoSuchElementError) {
     console.error('Deposit address not found')
   } else {
