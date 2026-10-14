@@ -384,6 +384,14 @@ export const customTree: Node[] = [
     apiReference('/sdk/bridge-modules/bridge-usdt0-evm/api-reference'),
   ]),
 
+  separator('Smart Deposit Addresses'),
+  page('SDA modules', '/sdk/sda-modules', 'Inbox'),
+  folder('Rhino.fi', '/sdk/sda-modules/sda-rhinofi', 'Inbox', [
+    usage('/sdk/sda-modules/sda-rhinofi/usage'),
+    configuration('/sdk/sda-modules/sda-rhinofi/configuration'),
+    apiReference('/sdk/sda-modules/sda-rhinofi/api-reference'),
+  ]),
+
   separator('Lending'),
   page('Lending modules', '/sdk/lending-modules', 'Banknote'),
   folder('Aave', '/sdk/lending-modules/lending-aave-evm', 'Landmark', [
