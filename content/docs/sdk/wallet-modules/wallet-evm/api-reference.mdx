@@ -6,6 +6,10 @@ schemaType: APIReference
 icon: Code
 ---
 
+<Callout type="info">
+**Source preview — unreleased:** The changes highlighted on this page describe [EVM source `f2e3b00`](https://github.com/tetherto/wdk-wallet-evm/tree/f2e3b006052ab9eda2560d95790939d56a921f2c), containing approved, merged PRs [#118](https://github.com/tetherto/wdk-wallet-evm/pull/118) and [#136](https://github.com/tetherto/wdk-wallet-evm/pull/136). They are not part of the verified npm `1.0.0-beta.21` artifact. The target release version and installed-package validation are pending.
+</Callout>
+
 ## Table of Contents
 
 | Class | Description | Methods |
@@ -284,11 +288,11 @@ const signerAccount = new WalletAccountEvm(
 | `getAddress()` | Returns the account's address | `Promise<string>` | - |
 | `sign(message)` | Signs a message using the account's private key | `Promise<string>` | - |
 | `signTypedData(typedData)` | Signs typed data according to EIP-712 | `Promise<string>` | - |
-| `signTransaction(tx)` | Signs an EVM transaction without broadcasting it | `Promise<string>` | `MaximumFeeExceededError` if the configured fee cap is exceeded |
+| `signTransaction(tx)` | Signs an EVM transaction without broadcasting it | `Promise<string>` | `MaximumFeeExceededError`; source preview also rejects blob transactions with `ValueError` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies a typed data signature (EIP-712) | `Promise<boolean>` | - |
 | `sendTransaction(tx)` | Sends an EVM transaction object or signed raw transaction | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError`, `MaximumFeeExceededError`, or `ValueError` |
-| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction object or serialized transaction | `Promise<{fee: bigint}>` | `ProviderRequiredError` |
+| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction object or serialized transaction | `Promise<{fee: bigint}>` | `ProviderRequiredError`; source preview also rejects blob transactions with `ValueError` |
 | `transfer(options)` | Transfers ERC20 tokens to another address | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` or `MaximumFeeExceededError` |
 | `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | `ProviderRequiredError` |
 | `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | `ProviderRequiredError` |
@@ -396,14 +400,14 @@ Signs an EVM transaction and returns the signed raw transaction as a hex string.
   - `gasPrice` (number | bigint, optional): Legacy gas price in wei
   - `maxFeePerGas` (number | bigint, optional): EIP-1559 max fee per gas in wei
   - `maxPriorityFeePerGas` (number | bigint, optional): EIP-1559 max priority fee per gas in wei
-  - `type` (number, optional): Transaction type, such as `4` for ERC-7702
+  - `type` (number, optional): Transaction type, such as `4` for ERC-7702. The source preview rejects type `3`.
   - `nonce` (number, optional): Transaction nonce
   - `chainId` (number | bigint, optional): Network chain ID
   - `authorizationList` (AuthorizationLike[], optional): ERC-7702 authorization list for type 4 transactions
 
 **Returns:** `Promise<string>` - Signed raw transaction hex string
 
-**Throws:** `MaximumFeeExceededError` if a provider is configured and the estimated transaction fee exceeds `transactionMaxFee`.
+**Throws:** `MaximumFeeExceededError` if a provider is configured and the estimated transaction fee exceeds `transactionMaxFee`. **Source preview:** `ValueError` for an [EIP-4844 blob transaction](#evmtransaction), including when signing offline.
 
 **Example:**
 ```javascript
@@ -460,7 +464,7 @@ Builds, signs, and sends an EVM transaction object, or broadcasts a signed raw t
   - `gasPrice` (number | bigint, optional): Legacy gas price in wei
   - `maxFeePerGas` (number | bigint, optional): EIP-1559 max fee per gas in wei
   - `maxPriorityFeePerGas` (number | bigint, optional): EIP-1559 max priority fee per gas in wei
-  - `type` (number, optional): Transaction type, such as `4` for ERC-7702
+  - `type` (number, optional): Transaction type, such as `4` for ERC-7702. The source preview rejects type `3`.
   - `nonce` (number, optional): Transaction nonce
   - `chainId` (number | bigint, optional): Network chain ID
   - `authorizationList` (AuthorizationLike[], optional): ERC-7702 authorization list for type 4 transactions
@@ -472,7 +476,7 @@ For a signed raw transaction string, WDK checks `transactionMaxFee` against a pr
 **Throws:**
 - `ProviderRequiredError` if no provider is configured.
 - `MaximumFeeExceededError` if the quoted fee exceeds `transactionMaxFee` when configured.
-- `ValueError` if an object transaction mixes incompatible fee fields or a type 3 transaction omits `maxFeePerBlobGas`.
+- `ValueError` if an object transaction mixes incompatible fee fields. **Source preview:** EIP-4844 blob transactions are rejected, including signed raw type 3 transactions; adding `maxFeePerBlobGas` does not enable them.
 
 **Example:**
 ```javascript
@@ -506,7 +510,7 @@ For a serialized transaction, the method parses the transaction fields for gas e
 
 **Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
-**Throws:** `ProviderRequiredError` if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured. **Source preview:** `ValueError` for an [EIP-4844 blob transaction](#evmtransaction)
 
 **Example:**
 ```javascript
@@ -842,7 +846,7 @@ const readOnlyAccount = new WalletAccountReadOnlyEvm('0x742d35Cc6634C0532925a3b8
 | `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | `ProviderRequiredError` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<bigint>` | `ProviderRequiredError` |
 | `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise<Record<string, bigint>>` | `ProviderRequiredError` |
-| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction | `Promise<{fee: bigint}>` | `ProviderRequiredError` |
+| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction | `Promise<{fee: bigint}>` | `ProviderRequiredError`; source preview also rejects blob transactions with `ValueError` |
 | `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | `ProviderRequiredError` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies a typed data signature (EIP-712) | `Promise<boolean>` | - |
@@ -919,7 +923,7 @@ Estimates the fee for an EVM transaction.
 
 **Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
-**Throws:** `ProviderRequiredError` if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured. **Source preview:** `ValueError` for an [EIP-4844 blob transaction](#evmtransaction)
 
 **Example:**
 ```javascript
@@ -1077,6 +1081,10 @@ The package re-exports these types.
 
 ### EvmTransaction
 
+**Source preview:** `WalletAccountEvm.signTransaction()`, `sendTransaction()`, and `quoteSendTransaction()`, plus read-only account `quoteSendTransaction()`, reject EIP-4844 blob transactions with `ValueError('eip-4844 blob transactions are not supported')`. The guard checks `Number(type) === 3` or any non-null `blobs`, `blobVersionedHashes`, or `maxFeePerBlobGas` field; even an empty blob array is rejected. Owned-account quote and send also parse and reject signed raw type 3 transactions before gas simulation or broadcast. Quote and send still require a configured provider.
+
+The `type` field is typed as `number`; type `3` is rejected at runtime. The built-in `SeedSignerEvm` and `PrivateKeySignerEvm` `signTransaction()` methods accept ethers `TransactionLike` inputs and delegate to ethers without this account guard.
+
 ```typescript
 interface EvmTransaction {
   to?: string | null;                       // Recipient address; omit or pass null for contract creation
@@ -1086,7 +1094,7 @@ interface EvmTransaction {
   gasPrice?: number | bigint;                // Legacy gas price in wei (optional)
   maxFeePerGas?: number | bigint;            // EIP-1559 max fee per gas in wei (optional)
   maxPriorityFeePerGas?: number | bigint;    // EIP-1559 priority fee in wei (optional)
-  type?: number;                             // Transaction type, such as 4 for ERC-7702 (optional)
+  type?: number;                             // For example, 0, 1, 2, or 4; source preview rejects type 3
   nonce?: number;                            // Transaction nonce (optional)
   chainId?: number | bigint;                 // Network chain ID (optional)
   authorizationList?: AuthorizationLike[];   // ERC-7702 authorization list for type 4 transactions (optional)
@@ -1159,6 +1167,8 @@ interface EvmSignerLike extends ISigner {
 ```
 
 `SeedSignerEvm` and `PrivateKeySignerEvm` are exported from `@tetherto/wdk-wallet-evm/signers`. `SeedSignerEvm` supports derivation and can be used as a manager default signer. `PrivateKeySignerEvm` represents one private-key account, does not support derivation, and should be registered by name or used directly with `WalletAccountEvm`.
+
+**Source preview:** Successful seed-based HD root creation zeroes its temporary HMAC buffer. `SeedSignerEvm` then zeroes seed bytes it created from a mnemonic and disposes a temporary root if path derivation fails. Caller-supplied `Uint8Array` seeds are not overwritten. These construction changes do not establish complete removal of secret material or change supplied-signer ownership; see [construction cleanup limits](/sdk/wallet-modules/wallet-evm/guides/error-handling#source-preview-construction-cleanup).
 
 ### UnsignedEvmTransaction
 

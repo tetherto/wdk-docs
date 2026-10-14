@@ -5,6 +5,10 @@ docType: how-to
 schemaType: TechArticle
 ---
 
+<Callout type="info">
+**Source preview — unreleased:** The protocol construction and policy-context changes on this page describe [approved Core source `342fb4e`](https://github.com/tetherto/wdk/tree/342fb4edfb285811ecac8324475fd793e1ca8a99), from open PR [#117](https://github.com/tetherto/wdk/pull/117). They are not part of the verified npm `1.0.0-beta.19` artifact. The release version and installed-package validation are pending.
+</Callout>
+
 Use local transaction policies to evaluate account and protocol calls before execution. This guide covers [registering policies](#register-policies), [method coverage and migration](#supported-operations), and [simulating calls](#simulate-before-execution).
 
 Use `@tetherto/wdk` v1.0.0-beta.18 or later for these examples because they import `DENIAL_CODES` and read the stable `error.code` and `error.operation` fields. Method exclusions and coverage beyond the earlier fixed operation list arrived in beta.17. The examples assume you have loaded an app-owned `seedPhrase` and registered the relevant wallet modules.
@@ -395,6 +399,8 @@ const result = await (account as any).simulate.sendTransaction({
 console.log(result.decision, result.code, result.reason, result.trace)
 ```
 
+**Source preview:** A protocol simulation evaluates only the named protocol operation. Simulating `account.simulate.getSwapProtocol(label).swap(...)` does not evaluate an internal `sendTransaction` because it does not run `swap`. A real call through an account-scoped provider can pass the `swap` rule and still fail a nested account-method rule. Simulated protocol retrieval constructs the provider, so constructor errors and side effects remain possible.
+
 Simulation results include `decision`, `code`, `policy_id`, `matched_rule`, `reason`, and `trace`. `code` is `null` on `ALLOW`, `RULE_DENIED` when a `DENY` rule matched, `NO_APPLICABLE_RULE` when no rule addressed the operation, or `GOVERNED_BUT_UNMATCHED` when addressed rules did not match. Protocol write methods are also mirrored, for example `account.simulate.getSwapProtocol(label).swap(...)` or `account.simulate.getSdaProtocol(label).createDepositAddress(...)`.
 
 <Callout type="info">
@@ -410,10 +416,12 @@ In this beta, `simulate` is added at runtime but is not typed on the account ret
 ## Runtime Caveats
 
 - Policies wrap the WDK account/protocol proxy surface. On governed proxies, `keyPair` and string members beginning with `_` are absent from direct property access, membership checks, own-property descriptors, and own-key enumeration. The proxy also refuses `Object.preventExtensions()` and `Object.freeze()` with `TypeError` so those hiding rules remain valid.
-- This is not a complete sandbox. Prototype inspection, separately retained raw account or protocol references, and nested calls made inside a module remain outside the proxy interception path.
+- **Source preview:** Account-scoped providers retrieved from a governed account receive the account policy proxy. Their calls through that account are evaluated unless excluded. Global providers receive the raw account, so their internal account calls bypass account-method evaluation even where the outer protocol method is wrapped. Global registrations shadow account-scoped registrations with the same type and label.
+- This is not a complete sandbox. Prototype inspection, separately retained raw account or protocol references, and calls made within the underlying wallet implementation remain outside the proxy interception path. In the source preview, inherited `valueOf()` preserves the account or protocol proxy; it does not return its raw target.
 - The default exclusions contain specific read, quote, and lifecycle method names. A read or quote method absent from that list is governed until you explicitly exclude it; a `get` or `quote` prefix does not change coverage.
 - Policy conditions receive local method arguments. WDK does not decode calldata, fetch prices, validate token metadata, or calculate fiat value unless your condition function does that work.
 - Wallet accounts must expose a read-only account view when a policy applies, otherwise `getAccount()` fails with `PolicyConfigurationError`.
+- **Source preview:** Account-scoped provider construction is lazy. A provider constructor requiring `keyPair` or `_`-prefixed account members fails when retrieved through a governed account, including through a simulation getter. Verify the constructor against the public account interface before selecting this registration scope.
 - Pass plain data to governed methods. An object that cannot be structured-cloned, such as a plain object containing a callback, fails with `PolicyConfigurationError`. Class instances can become plain objects and lose their methods. A top-level function argument passes through unchanged in this release, so do not treat the snapshot as isolation for callback-driven state or side effects.
 - Method discovery is not a live monitor of account changes. Add module methods before obtaining a governed account; do not rely on mutating an account or its prototype after wrapping to update policy coverage.
 - Engine-managed state hooks are not active in this beta. The schema accepts `state` and `onSuccess`, but WDK does not pass `state` into conditions, update it after execution, persist it, or call `onSuccess`. Conditions can still use app-owned state through closures or external stores; keep that state outside `rule.state`, and have your app own durability, concurrency, and rollback behavior.

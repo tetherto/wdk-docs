@@ -6,6 +6,10 @@ schemaType: TechArticle
 icon: Settings
 ---
 
+<Callout type="info">
+**Source preview — unreleased:** The protocol construction and policy-context changes on this page describe [approved Core source `342fb4e`](https://github.com/tetherto/wdk/tree/342fb4edfb285811ecac8324475fd793e1ca8a99), from open PR [#117](https://github.com/tetherto/wdk/pull/117). They are not part of the verified npm `1.0.0-beta.19` artifact. The release version and installed-package validation are pending.
+</Callout>
+
 # Configuration
 
 ## WDK Manager Configuration
@@ -155,10 +159,12 @@ const wdk = new WDK(process.env.SEED_PHRASE)
 Registration does not validate every downstream module configuration:
 
 - **Wallet Registration**: WDK constructs the wallet manager during registration, so wallet-constructor validation errors surface immediately. Registering a second wallet under the same blockchain throws.
-- **Protocol Registration**: Global registration stores a supported protocol class and config for later construction. Reusing the same blockchain, protocol type, and label replaces the previous global registration. Provider-constructor and config errors surface when an account retrieves the protocol.
+- **Protocol Registration**: Global registration stores a supported protocol class and config for later construction. Reusing the same blockchain, protocol type, and label replaces the previous global registration. **Source preview:** Account-scoped registration also stores the class and constructor configuration arguments. WDK retains the supplied configuration arguments without snapshotting their objects. Every typed getter constructs a fresh instance, and constructor or config errors surface during retrieval, including retrieval through `simulate`.
 - **Middleware Registration**: WDK stores the middleware for later account decoration. Errors thrown by the middleware surface when an account is retrieved.
 
 In JavaScript, a protocol class that does not extend a supported WDK protocol base class is ignored rather than rejected. Keep protocol classes typed, use distinct labels, and test retrieval during application startup. A global registration shadows an account-scoped provider with the same type and label.
+
+**Source preview:** A global provider receives the raw account so constructors can read its configuration. An account-scoped provider retrieved from a governed account receives the policy proxy, which hides `keyPair` and `_`-prefixed members. Providers that require those members must not use account-scoped registration on governed accounts. When retrieved through a governed account, the global provider's governed methods are wrapped, but their internal raw-account calls bypass account-method evaluation. See [protocol registration boundaries](/sdk/core-module/guides/protocol-integration#source-preview-account-scoped-registration).
 
 ## Error Handling
 

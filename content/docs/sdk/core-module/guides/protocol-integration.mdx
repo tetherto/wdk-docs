@@ -5,6 +5,10 @@ docType: how-to
 schemaType: TechArticle
 ---
 
+<Callout type="info">
+**Source preview — unreleased:** The protocol construction and policy-context changes on this page describe [approved Core source `342fb4e`](https://github.com/tetherto/wdk/tree/342fb4edfb285811ecac8324475fd793e1ca8a99), from open PR [#117](https://github.com/tetherto/wdk/pull/117). They are not part of the verified npm `1.0.0-beta.19` artifact. The release version and installed-package validation are pending.
+</Callout>
+
 The WDK Core module supports registering external protocol providers. This lets you extend wallet accounts with protocol-specific discovery, quote, and write operations.
 
 ## Register Protocols
@@ -38,6 +42,28 @@ const wdk = new WDK(seedPhrase)
 <Callout type="warn">
 Do not register Velora beta.8, USD₮0 bridge beta.10, or Aave beta.7 on a wallet-evm beta.19 manager account. These protocol constructors treat the manager's shared ethers `Provider` as EIP-1193 and reject it. Use a direct standard account with its original RPC URL or EIP-1193 provider for these exact combinations; never replace the account's internal provider field. For Aave, follow the [direct-account configuration](/sdk/lending-modules/lending-aave-evm/configuration#service-setup).
 </Callout>
+
+## Source Preview: Account-Scoped Registration
+
+In the approved source preview, register a provider on one resolved account when its constructor supports the account's public interface:
+
+```javascript title="Preview Account-Scoped Registration"
+const account = await wdk.getAccount('ethereum', 0)
+
+// MySdaProtocol is an application-supplied class extending SdaProtocol.
+account.registerProtocol('deposits', MySdaProtocol, sdaProtocolConfig)
+
+// Registration stores the class and config; this getter constructs the provider.
+const deposits = account.getSdaProtocol('deposits')
+```
+
+WDK retains the supplied configuration arguments for later construction; it does not snapshot their objects. Avoid changing a config object between registration and retrieval. Each getter constructs a fresh provider, so retrieve it once when you need to retain instance-local state. Re-registering the same type and label changes future retrievals; it does not replace an instance your application already holds. A global registration with the same type and label takes precedence. Catch provider-constructor and configuration errors at retrieval rather than account-level registration.
+
+<Callout type="warn">
+On a governed account, account-scoped providers receive the policy proxy, which hides `keyPair` and `_`-prefixed members. A constructor that requires `account._config` is incompatible with this context. Global registration keeps the raw account available to the constructor, but the provider's internal calls on that account bypass account-method policies. This choice does not establish compatibility with the wallet's provider type; the exact-release compatibility warnings in this guide still apply.
+</Callout>
+
+For an account-scoped provider holding the governed account, a real governed protocol call evaluates its outer operation and any governed calls it makes through that account. For example, allowing `swap` does not also allow an internal `sendTransaction`: both need applicable rules. Calls within the underlying wallet implementation, or through separately retained raw references, remain outside that interception path. See [Transaction Policies](/sdk/core-module/guides/transaction-policies#simulate-before-execution) for simulation limits.
 
 ## Use Protocols
 
