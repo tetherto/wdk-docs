@@ -471,6 +471,7 @@ export const customTree: Node[] = [
       page('Get Started', '/cli/guides/get-started', 'Rocket'),
       page('Manage Wallets', '/cli/guides/manage-wallets', 'WalletCards'),
       page('Manage Tokens', '/cli/guides/manage-tokens', 'Coins'),
+      page('Migrate Indexer Providers', '/cli/guides/migrate-indexer-providers', 'Database'),
       page('Swap and Bridge', '/cli/guides/swap-and-bridge', 'ArrowLeftRight'),
       page('Manage Modules', '/cli/guides/manage-modules', 'Package'),
       page('Custom Networks', '/cli/guides/custom-networks', 'Network'),
