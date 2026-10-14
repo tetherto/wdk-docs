@@ -6,6 +6,10 @@ schemaType: APIReference
 icon: Code
 ---
 
+<Callout type="info">
+**Source preview — unreleased:** The protocol construction and policy-context changes on this page describe [approved Core source `342fb4e`](https://github.com/tetherto/wdk/tree/342fb4edfb285811ecac8324475fd793e1ca8a99), from open PR [#117](https://github.com/tetherto/wdk/pull/117). They are not part of the verified npm `1.0.0-beta.19` artifact. The release version and installed-package validation are pending.
+</Callout>
+
 ## Table of Contents
 
 | Class | Description | Methods |
@@ -120,6 +124,8 @@ For swidge or Smart Deposit Address (SDA) integrations, pass a concrete provider
 **Returns:** `WDK` - The WDK instance (supports method chaining)
 
 Global registration stores the provider class and config without constructing or validating the provider. Provider-constructor errors therefore surface when an account retrieves the protocol. A global registration takes precedence over an account-scoped registration with the same type and label.
+
+**Source preview:** Global providers continue to receive the raw wallet account, including when retrieved through a governed account. When retrieved through a governed account, the returned protocol has policy-wrapped methods, but its internal calls on that raw account bypass account-method evaluation. Account-scoped providers use a different [construction and policy context](#registerprotocollabel-protocol-config).
 
 <Callout type="warn">
 Do not register Velora beta.8, USD₮0 bridge beta.10, or Aave beta.7 for accounts derived by `WalletManagerEvm` beta.19. Each protocol treats the manager's shared ethers `Provider` as EIP-1193 and rejects it during construction. Use a directly constructed `WalletAccountEvm` with the original RPC URL or EIP-1193 provider for these exact combinations, and never mutate the account's internal provider field. Direct accounts do not receive WDK policy or middleware decoration, so retain the required application checks and account-level controls.
@@ -677,13 +683,13 @@ Protocol registration and access surface that WDK adds to a wallet account. The 
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
-| `registerProtocol(label, protocol, config)` | Registers a protocol for this specific account | `IWalletAccountWithProtocols` | - |
-| `getSwapProtocol(label)` | Returns the swap protocol with the given label | `ISwapProtocol` | If protocol not found |
-| `getBridgeProtocol(label)` | Returns the bridge protocol with the given label | `IBridgeProtocol` | If protocol not found |
-| `getLendingProtocol(label)` | Returns the lending protocol with the given label | `ILendingProtocol` | If protocol not found |
-| `getFiatProtocol(label)` | Returns the fiat protocol with the given label | `IFiatProtocol` | If protocol not found |
-| `getSwidgeProtocol(label)` | Returns the swidge protocol with the given label | `ISwidgeProtocol` | If protocol not found |
-| `getSdaProtocol(label)` | Returns the SDA protocol with the given label | `ISdaProtocol` | If protocol not found |
+| `registerProtocol(label, protocol, config)` | Stores a provider class and configuration for this account (source preview) | `IWalletAccountWithProtocols` | - |
+| `getSwapProtocol(label)` | Constructs the labeled swap provider (source preview) | `ISwapProtocol` | If protocol not found or construction fails |
+| `getBridgeProtocol(label)` | Constructs the labeled bridge provider (source preview) | `IBridgeProtocol` | If protocol not found or construction fails |
+| `getLendingProtocol(label)` | Constructs the labeled lending provider (source preview) | `ILendingProtocol` | If protocol not found or construction fails |
+| `getFiatProtocol(label)` | Constructs the labeled fiat provider (source preview) | `IFiatProtocol` | If protocol not found or construction fails |
+| `getSwidgeProtocol(label)` | Constructs the labeled swidge provider (source preview) | `ISwidgeProtocol` | If protocol not found or construction fails |
+| `getSdaProtocol(label)` | Constructs the labeled SDA provider (source preview) | `ISdaProtocol` | If protocol not found or construction fails |
 
 ##### `registerProtocol(label, protocol, config)`
 Registers a new protocol for this specific account.
@@ -692,11 +698,15 @@ Registers a new protocol for this specific account.
 - `P`: `typeof SwapProtocol | typeof BridgeProtocol | typeof LendingProtocol | typeof FiatProtocol | typeof SwidgeProtocol | typeof SdaProtocol` - A class that extends one of the `@tetherto/wdk-wallet/protocols` classes
 
 **Parameters:**
-- `label` (string): Registry label for the protocol. Registering the same protocol type and label again replaces the account-scoped instance.
+- `label` (string): Registry label for the protocol. In the source preview, registering the same protocol type and label again replaces the stored provider class and configuration for future retrievals.
 - `protocol` (P): The protocol class
 - `config` (`ConstructorParameters<P>[1]`): The protocol configuration
 
 **Returns:** `IWalletAccountWithProtocols` - The account instance (supports method chaining)
+
+**Source preview:** Account-scoped registration stores the provider class and its constructor configuration arguments without constructing it. Each typed getter constructs a fresh provider instance; constructor and configuration errors move to retrieval, including `account.simulate.getXProtocol(label)`. WDK retains the supplied configuration arguments for later construction without snapshotting their objects. Already retrieved instances are not replaced by a later registration.
+
+On a governed account, account-scoped providers receive the policy proxy. Calls they make through that account are evaluated unless the method is excluded. Providers that require hidden account members such as `_config` or `keyPair` are incompatible with this context; use global registration only with the [raw-account boundary](#registerprotocolblockchain-label-protocol-config) understood. Provider and wallet compatibility still requires separate verification.
 
 **Example:**
 ```javascript title="Register Protocol for Account"
@@ -720,7 +730,7 @@ Returns the swap protocol with the given label.
 
 **Returns:** `ISwapProtocol` - The swap protocol instance
 
-**Throws:** Error if no swap protocol with the given label has been registered
+**Throws:** Error if no swap protocol with the given label has been registered. In the source preview, provider-constructor errors also surface here.
 
 **Example:**
 ```javascript title="Get Swap Protocol"
@@ -755,7 +765,7 @@ Returns the bridge protocol with the given label.
 
 **Returns:** `IBridgeProtocol` - The bridge protocol instance
 
-**Throws:** Error if no bridge protocol with the given label has been registered
+**Throws:** Error if no bridge protocol with the given label has been registered. In the source preview, provider-constructor errors also surface here.
 
 **Example:**
 ```javascript title="Get Bridge Protocol"
@@ -784,7 +794,7 @@ Returns the lending protocol with the given label.
 
 **Returns:** `ILendingProtocol` - The lending protocol instance
 
-**Throws:** Error if no lending protocol with the given label has been registered
+**Throws:** Error if no lending protocol with the given label has been registered. In the source preview, provider-constructor errors also surface here.
 
 **Example:**
 ```javascript title="Get Lending Protocol"
@@ -811,7 +821,7 @@ Returns the fiat protocol with the given label.
 
 **Returns:** `IFiatProtocol` - The fiat protocol instance
 
-**Throws:** Error if no fiat protocol with the given label has been registered
+**Throws:** Error if no fiat protocol with the given label has been registered. In the source preview, provider-constructor errors also surface here.
 
 **Example:**
 ```javascript title="Get Fiat Protocol"
@@ -840,7 +850,7 @@ The examples below use `MySwidgeProtocol` as the concrete provider class supplie
 
 **Returns:** `ISwidgeProtocol` - The swidge protocol instance
 
-**Throws:** Error if no swidge protocol with the given label has been registered
+**Throws:** Error if no swidge protocol with the given label has been registered. In the source preview, provider-constructor errors also surface here.
 
 **Example:**
 ```javascript title="Get Swidge Protocol"
@@ -868,7 +878,7 @@ The example uses `MySdaProtocol` as an illustrative provider class extending `Sd
 
 **Returns:** `ISdaProtocol` - The SDA protocol instance
 
-**Throws:** `Error` with `No sda protocol registered for label: <label>.` if no SDA protocol has been registered under that label
+**Throws:** `Error` with `No sda protocol registered for label: <label>.` if no SDA protocol has been registered under that label. In the source preview, provider-constructor errors also surface here.
 
 **Example:**
 ```javascript title="Register And Retrieve An SDA Protocol"
@@ -880,7 +890,7 @@ const deposits = account.getSdaProtocol('deposits')
 const routes = await deposits.getSupportedRoutes({ outputAsset: 'USDT' })
 ```
 
-Global SDA registrations are constructed when retrieved. Account-scoped SDA registrations are constructed when registered. If both scopes use the same label, the global provider is returned.
+**Source preview:** Both global and account-scoped SDA registrations are constructed when retrieved, with a fresh instance on each getter call. If both scopes use the same label, the global provider is returned. The shared [registration and policy-context limits](#registerprotocollabel-protocol-config) apply to every protocol category.
 
 ## Complete Example
 
@@ -1058,7 +1068,7 @@ interface SimulationResult {
 
 `conditionTimeoutMs` belongs to the policies registered by one `registerPolicy()` call. Distinct policy IDs retain their earlier timeouts, while a repeated ID replaces the policy within its registry bucket and takes the new registration's timeout. All project-scoped policies share one bucket; account-scoped policies are bucketed by wallet. `maxConditionTimeoutMs` is the instance-wide ceiling set by `new WDK(seed, options)`. Both timeout settings default to `30000` milliseconds, and a per-policy request above the ceiling is capped.
 
-Simulation results returned by the runtime `account.simulate.<method>(...)` mirrors include `decision`, `code`, `policy_id`, `matched_rule`, `reason`, and a `trace` array that records evaluated rules. `code` is `null` for an allowed call and matches the `PolicyViolationError.code` that execution would produce for a denied call. `reason` can include application-owned rule text or one of the engine outcomes, so branch on `code` when handling denials.
+Simulation results returned by the runtime `account.simulate.<method>(...)` mirrors include `decision`, `code`, `policy_id`, `matched_rule`, `reason`, and a `trace` array that records evaluated rules. `code` is `null` for an allowed call and matches the denial code for that simulated operation. In the source preview, a protocol simulation does not evaluate the account calls the operation would make internally; real account-scoped protocol execution can fail on a separately evaluated nested operation. See [simulation limits](/sdk/core-module/guides/transaction-policies#simulate-before-execution). `reason` can include application-owned rule text or one of the engine outcomes, so branch on `code` when handling denials.
 
 ### Protocol Types
 

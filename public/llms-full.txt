@@ -13381,10 +13381,14 @@ Handle ambiguous history, fee, network, and cleanup failures.
 URL: https://docs.wdk.tether.io/sdk/core-module
 Description: Register wallet, protocol, middleware, and transaction policy modules through the WDK core runtime.
 
+<Callout type="info">
+**Source preview — unreleased:** The protocol construction and policy-context changes on this page describe [approved Core source `342fb4e`](https://github.com/tetherto/wdk/tree/342fb4edfb285811ecac8324475fd793e1ca8a99), from open PR [#117](https://github.com/tetherto/wdk/pull/117). They are not part of the verified npm `1.0.0-beta.19` artifact. The release version and installed-package validation are pending.
+</Callout>
+
 WDK Core is the main runtime for registering and managing wallet, protocol, middleware, and transaction policy modules through one interface.
 
 <Callout type="info">
-These pages reflect `@tetherto/wdk@1.0.0-beta.18`. This release adds machine-readable policy denial codes; integrations can branch on `DENIAL_CODES`, `PolicyViolationError.code`, or `SimulationResult.code` instead of parsing `reason`.
+The published documentation baseline on these pages is `@tetherto/wdk@1.0.0-beta.18`. This release adds machine-readable policy denial codes; integrations can branch on `DENIAL_CODES`, `PolicyViolationError.code`, or `SimulationResult.code` instead of parsing `reason`.
 </Callout>
 
 Use WDK Core to:
@@ -13428,6 +13432,10 @@ Allow, deny, and simulate local write operations before execution
 ## WDK Core API Reference
 URL: https://docs.wdk.tether.io/sdk/core-module/api-reference
 Description: Complete API documentation for @tetherto/wdk
+
+<Callout type="info">
+**Source preview — unreleased:** The protocol construction and policy-context changes on this page describe [approved Core source `342fb4e`](https://github.com/tetherto/wdk/tree/342fb4edfb285811ecac8324475fd793e1ca8a99), from open PR [#117](https://github.com/tetherto/wdk/pull/117). They are not part of the verified npm `1.0.0-beta.19` artifact. The release version and installed-package validation are pending.
+</Callout>
 
 ## Table of Contents
 
@@ -13543,6 +13551,8 @@ For swidge or Smart Deposit Address (SDA) integrations, pass a concrete provider
 **Returns:** `WDK` - The WDK instance (supports method chaining)
 
 Global registration stores the provider class and config without constructing or validating the provider. Provider-constructor errors therefore surface when an account retrieves the protocol. A global registration takes precedence over an account-scoped registration with the same type and label.
+
+**Source preview:** Global providers continue to receive the raw wallet account, including when retrieved through a governed account. When retrieved through a governed account, the returned protocol has policy-wrapped methods, but its internal calls on that raw account bypass account-method evaluation. Account-scoped providers use a different [construction and policy context](#registerprotocollabel-protocol-config).
 
 <Callout type="warn">
 Do not register Velora beta.8, USD₮0 bridge beta.10, or Aave beta.7 for accounts derived by `WalletManagerEvm` beta.19. Each protocol treats the manager's shared ethers `Provider` as EIP-1193 and rejects it during construction. Use a directly constructed `WalletAccountEvm` with the original RPC URL or EIP-1193 provider for these exact combinations, and never mutate the account's internal provider field. Direct accounts do not receive WDK policy or middleware decoration, so retain the required application checks and account-level controls.
@@ -14100,13 +14110,13 @@ Protocol registration and access surface that WDK adds to a wallet account. The 
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
-| `registerProtocol(label, protocol, config)` | Registers a protocol for this specific account | `IWalletAccountWithProtocols` | - |
-| `getSwapProtocol(label)` | Returns the swap protocol with the given label | `ISwapProtocol` | If protocol not found |
-| `getBridgeProtocol(label)` | Returns the bridge protocol with the given label | `IBridgeProtocol` | If protocol not found |
-| `getLendingProtocol(label)` | Returns the lending protocol with the given label | `ILendingProtocol` | If protocol not found |
-| `getFiatProtocol(label)` | Returns the fiat protocol with the given label | `IFiatProtocol` | If protocol not found |
-| `getSwidgeProtocol(label)` | Returns the swidge protocol with the given label | `ISwidgeProtocol` | If protocol not found |
-| `getSdaProtocol(label)` | Returns the SDA protocol with the given label | `ISdaProtocol` | If protocol not found |
+| `registerProtocol(label, protocol, config)` | Stores a provider class and configuration for this account (source preview) | `IWalletAccountWithProtocols` | - |
+| `getSwapProtocol(label)` | Constructs the labeled swap provider (source preview) | `ISwapProtocol` | If protocol not found or construction fails |
+| `getBridgeProtocol(label)` | Constructs the labeled bridge provider (source preview) | `IBridgeProtocol` | If protocol not found or construction fails |
+| `getLendingProtocol(label)` | Constructs the labeled lending provider (source preview) | `ILendingProtocol` | If protocol not found or construction fails |
+| `getFiatProtocol(label)` | Constructs the labeled fiat provider (source preview) | `IFiatProtocol` | If protocol not found or construction fails |
+| `getSwidgeProtocol(label)` | Constructs the labeled swidge provider (source preview) | `ISwidgeProtocol` | If protocol not found or construction fails |
+| `getSdaProtocol(label)` | Constructs the labeled SDA provider (source preview) | `ISdaProtocol` | If protocol not found or construction fails |
 
 ##### `registerProtocol(label, protocol, config)`
 Registers a new protocol for this specific account.
@@ -14115,11 +14125,15 @@ Registers a new protocol for this specific account.
 - `P`: `typeof SwapProtocol | typeof BridgeProtocol | typeof LendingProtocol | typeof FiatProtocol | typeof SwidgeProtocol | typeof SdaProtocol` - A class that extends one of the `@tetherto/wdk-wallet/protocols` classes
 
 **Parameters:**
-- `label` (string): Registry label for the protocol. Registering the same protocol type and label again replaces the account-scoped instance.
+- `label` (string): Registry label for the protocol. In the source preview, registering the same protocol type and label again replaces the stored provider class and configuration for future retrievals.
 - `protocol` (P): The protocol class
 - `config` (`ConstructorParameters<P>[1]`): The protocol configuration
 
 **Returns:** `IWalletAccountWithProtocols` - The account instance (supports method chaining)
+
+**Source preview:** Account-scoped registration stores the provider class and its constructor configuration arguments without constructing it. Each typed getter constructs a fresh provider instance; constructor and configuration errors move to retrieval, including `account.simulate.getXProtocol(label)`. WDK retains the supplied configuration arguments for later construction without snapshotting their objects. Already retrieved instances are not replaced by a later registration.
+
+On a governed account, account-scoped providers receive the policy proxy. Calls they make through that account are evaluated unless the method is excluded. Providers that require hidden account members such as `_config` or `keyPair` are incompatible with this context; use global registration only with the [raw-account boundary](#registerprotocolblockchain-label-protocol-config) understood. Provider and wallet compatibility still requires separate verification.
 
 **Example:**
 ```javascript title="Register Protocol for Account"
@@ -14143,7 +14157,7 @@ Returns the swap protocol with the given label.
 
 **Returns:** `ISwapProtocol` - The swap protocol instance
 
-**Throws:** Error if no swap protocol with the given label has been registered
+**Throws:** Error if no swap protocol with the given label has been registered. In the source preview, provider-constructor errors also surface here.
 
 **Example:**
 ```javascript title="Get Swap Protocol"
@@ -14178,7 +14192,7 @@ Returns the bridge protocol with the given label.
 
 **Returns:** `IBridgeProtocol` - The bridge protocol instance
 
-**Throws:** Error if no bridge protocol with the given label has been registered
+**Throws:** Error if no bridge protocol with the given label has been registered. In the source preview, provider-constructor errors also surface here.
 
 **Example:**
 ```javascript title="Get Bridge Protocol"
@@ -14207,7 +14221,7 @@ Returns the lending protocol with the given label.
 
 **Returns:** `ILendingProtocol` - The lending protocol instance
 
-**Throws:** Error if no lending protocol with the given label has been registered
+**Throws:** Error if no lending protocol with the given label has been registered. In the source preview, provider-constructor errors also surface here.
 
 **Example:**
 ```javascript title="Get Lending Protocol"
@@ -14234,7 +14248,7 @@ Returns the fiat protocol with the given label.
 
 **Returns:** `IFiatProtocol` - The fiat protocol instance
 
-**Throws:** Error if no fiat protocol with the given label has been registered
+**Throws:** Error if no fiat protocol with the given label has been registered. In the source preview, provider-constructor errors also surface here.
 
 **Example:**
 ```javascript title="Get Fiat Protocol"
@@ -14263,7 +14277,7 @@ The examples below use `MySwidgeProtocol` as the concrete provider class supplie
 
 **Returns:** `ISwidgeProtocol` - The swidge protocol instance
 
-**Throws:** Error if no swidge protocol with the given label has been registered
+**Throws:** Error if no swidge protocol with the given label has been registered. In the source preview, provider-constructor errors also surface here.
 
 **Example:**
 ```javascript title="Get Swidge Protocol"
@@ -14291,7 +14305,7 @@ The example uses `MySdaProtocol` as an illustrative provider class extending `Sd
 
 **Returns:** `ISdaProtocol` - The SDA protocol instance
 
-**Throws:** `Error` with `No sda protocol registered for label: <label>.` if no SDA protocol has been registered under that label
+**Throws:** `Error` with `No sda protocol registered for label: <label>.` if no SDA protocol has been registered under that label. In the source preview, provider-constructor errors also surface here.
 
 **Example:**
 ```javascript title="Register And Retrieve An SDA Protocol"
@@ -14303,7 +14317,7 @@ const deposits = account.getSdaProtocol('deposits')
 const routes = await deposits.getSupportedRoutes({ outputAsset: 'USDT' })
 ```
 
-Global SDA registrations are constructed when retrieved. Account-scoped SDA registrations are constructed when registered. If both scopes use the same label, the global provider is returned.
+**Source preview:** Both global and account-scoped SDA registrations are constructed when retrieved, with a fresh instance on each getter call. If both scopes use the same label, the global provider is returned. The shared [registration and policy-context limits](#registerprotocollabel-protocol-config) apply to every protocol category.
 
 ## Complete Example
 
@@ -14481,7 +14495,7 @@ interface SimulationResult {
 
 `conditionTimeoutMs` belongs to the policies registered by one `registerPolicy()` call. Distinct policy IDs retain their earlier timeouts, while a repeated ID replaces the policy within its registry bucket and takes the new registration's timeout. All project-scoped policies share one bucket; account-scoped policies are bucketed by wallet. `maxConditionTimeoutMs` is the instance-wide ceiling set by `new WDK(seed, options)`. Both timeout settings default to `30000` milliseconds, and a per-policy request above the ceiling is capped.
 
-Simulation results returned by the runtime `account.simulate.<method>(...)` mirrors include `decision`, `code`, `policy_id`, `matched_rule`, `reason`, and a `trace` array that records evaluated rules. `code` is `null` for an allowed call and matches the `PolicyViolationError.code` that execution would produce for a denied call. `reason` can include application-owned rule text or one of the engine outcomes, so branch on `code` when handling denials.
+Simulation results returned by the runtime `account.simulate.<method>(...)` mirrors include `decision`, `code`, `policy_id`, `matched_rule`, `reason`, and a `trace` array that records evaluated rules. `code` is `null` for an allowed call and matches the denial code for that simulated operation. In the source preview, a protocol simulation does not evaluate the account calls the operation would make internally; real account-scoped protocol execution can fail on a separately evaluated nested operation. See [simulation limits](/sdk/core-module/guides/transaction-policies#simulate-before-execution). `reason` can include application-owned rule text or one of the engine outcomes, so branch on `code` when handling denials.
 
 ### Protocol Types
 
@@ -14601,6 +14615,10 @@ Cross-chain USD₮0 bridges
 ## WDK Core Configuration
 URL: https://docs.wdk.tether.io/sdk/core-module/configuration
 Description: Configuration options and settings for @tetherto/wdk
+
+<Callout type="info">
+**Source preview — unreleased:** The protocol construction and policy-context changes on this page describe [approved Core source `342fb4e`](https://github.com/tetherto/wdk/tree/342fb4edfb285811ecac8324475fd793e1ca8a99), from open PR [#117](https://github.com/tetherto/wdk/pull/117). They are not part of the verified npm `1.0.0-beta.19` artifact. The release version and installed-package validation are pending.
+</Callout>
 
 # Configuration
 
@@ -14751,10 +14769,12 @@ const wdk = new WDK(process.env.SEED_PHRASE)
 Registration does not validate every downstream module configuration:
 
 - **Wallet Registration**: WDK constructs the wallet manager during registration, so wallet-constructor validation errors surface immediately. Registering a second wallet under the same blockchain throws.
-- **Protocol Registration**: Global registration stores a supported protocol class and config for later construction. Reusing the same blockchain, protocol type, and label replaces the previous global registration. Provider-constructor and config errors surface when an account retrieves the protocol.
+- **Protocol Registration**: Global registration stores a supported protocol class and config for later construction. Reusing the same blockchain, protocol type, and label replaces the previous global registration. **Source preview:** Account-scoped registration also stores the class and constructor configuration arguments. WDK retains the supplied configuration arguments without snapshotting their objects. Every typed getter constructs a fresh instance, and constructor or config errors surface during retrieval, including retrieval through `simulate`.
 - **Middleware Registration**: WDK stores the middleware for later account decoration. Errors thrown by the middleware surface when an account is retrieved.
 
 In JavaScript, a protocol class that does not extend a supported WDK protocol base class is ignored rather than rejected. Keep protocol classes typed, use distinct labels, and test retrieval during application startup. A global registration shadows an account-scoped provider with the same type and label.
+
+**Source preview:** A global provider receives the raw account so constructors can read its configuration. An account-scoped provider retrieved from a governed account receives the policy proxy, which hides `keyPair` and `_`-prefixed members. Providers that require those members must not use account-scoped registration on governed accounts. When retrieved through a governed account, the global provider's governed methods are wrapped, but their internal raw-account calls bypass account-method evaluation. See [protocol registration boundaries](/sdk/core-module/guides/protocol-integration#source-preview-account-scoped-registration).
 
 ## Error Handling
 
@@ -15222,6 +15242,10 @@ Learn about [error handling and best practices](/sdk/core-module/guides/error-ha
 URL: https://docs.wdk.tether.io/sdk/core-module/guides/protocol-integration
 Description: Register and access WDK protocol providers from wallet accounts.
 
+<Callout type="info">
+**Source preview — unreleased:** The protocol construction and policy-context changes on this page describe [approved Core source `342fb4e`](https://github.com/tetherto/wdk/tree/342fb4edfb285811ecac8324475fd793e1ca8a99), from open PR [#117](https://github.com/tetherto/wdk/pull/117). They are not part of the verified npm `1.0.0-beta.19` artifact. The release version and installed-package validation are pending.
+</Callout>
+
 The WDK Core module supports registering external protocol providers. This lets you extend wallet accounts with protocol-specific discovery, quote, and write operations.
 
 ## Register Protocols
@@ -15255,6 +15279,28 @@ const wdk = new WDK(seedPhrase)
 <Callout type="warn">
 Do not register Velora beta.8, USD₮0 bridge beta.10, or Aave beta.7 on a wallet-evm beta.19 manager account. These protocol constructors treat the manager's shared ethers `Provider` as EIP-1193 and reject it. Use a direct standard account with its original RPC URL or EIP-1193 provider for these exact combinations; never replace the account's internal provider field. For Aave, follow the [direct-account configuration](/sdk/lending-modules/lending-aave-evm/configuration#service-setup).
 </Callout>
+
+## Source Preview: Account-Scoped Registration
+
+In the approved source preview, register a provider on one resolved account when its constructor supports the account's public interface:
+
+```javascript title="Preview Account-Scoped Registration"
+const account = await wdk.getAccount('ethereum', 0)
+
+// MySdaProtocol is an application-supplied class extending SdaProtocol.
+account.registerProtocol('deposits', MySdaProtocol, sdaProtocolConfig)
+
+// Registration stores the class and config; this getter constructs the provider.
+const deposits = account.getSdaProtocol('deposits')
+```
+
+WDK retains the supplied configuration arguments for later construction; it does not snapshot their objects. Avoid changing a config object between registration and retrieval. Each getter constructs a fresh provider, so retrieve it once when you need to retain instance-local state. Re-registering the same type and label changes future retrievals; it does not replace an instance your application already holds. A global registration with the same type and label takes precedence. Catch provider-constructor and configuration errors at retrieval rather than account-level registration.
+
+<Callout type="warn">
+On a governed account, account-scoped providers receive the policy proxy, which hides `keyPair` and `_`-prefixed members. A constructor that requires `account._config` is incompatible with this context. Global registration keeps the raw account available to the constructor, but the provider's internal calls on that account bypass account-method policies. This choice does not establish compatibility with the wallet's provider type; the exact-release compatibility warnings in this guide still apply.
+</Callout>
+
+For an account-scoped provider holding the governed account, a real governed protocol call evaluates its outer operation and any governed calls it makes through that account. For example, allowing `swap` does not also allow an internal `sendTransaction`: both need applicable rules. Calls within the underlying wallet implementation, or through separately retained raw references, remain outside that interception path. See [Transaction Policies](/sdk/core-module/guides/transaction-policies#simulate-before-execution) for simulation limits.
 
 ## Use Protocols
 
@@ -15396,6 +15442,10 @@ Learn how to [configure middleware](/sdk/core-module/guides/middleware) to add l
 ## Transaction Policies
 URL: https://docs.wdk.tether.io/sdk/core-module/guides/transaction-policies
 Description: Register local ALLOW and DENY rules for WDK account and protocol write methods.
+
+<Callout type="info">
+**Source preview — unreleased:** The protocol construction and policy-context changes on this page describe [approved Core source `342fb4e`](https://github.com/tetherto/wdk/tree/342fb4edfb285811ecac8324475fd793e1ca8a99), from open PR [#117](https://github.com/tetherto/wdk/pull/117). They are not part of the verified npm `1.0.0-beta.19` artifact. The release version and installed-package validation are pending.
+</Callout>
 
 Use local transaction policies to evaluate account and protocol calls before execution. This guide covers [registering policies](#register-policies), [method coverage and migration](#supported-operations), and [simulating calls](#simulate-before-execution).
 
@@ -15787,6 +15837,8 @@ const result = await (account as any).simulate.sendTransaction({
 console.log(result.decision, result.code, result.reason, result.trace)
 ```
 
+**Source preview:** A protocol simulation evaluates only the named protocol operation. Simulating `account.simulate.getSwapProtocol(label).swap(...)` does not evaluate an internal `sendTransaction` because it does not run `swap`. A real call through an account-scoped provider can pass the `swap` rule and still fail a nested account-method rule. Simulated protocol retrieval constructs the provider, so constructor errors and side effects remain possible.
+
 Simulation results include `decision`, `code`, `policy_id`, `matched_rule`, `reason`, and `trace`. `code` is `null` on `ALLOW`, `RULE_DENIED` when a `DENY` rule matched, `NO_APPLICABLE_RULE` when no rule addressed the operation, or `GOVERNED_BUT_UNMATCHED` when addressed rules did not match. Protocol write methods are also mirrored, for example `account.simulate.getSwapProtocol(label).swap(...)` or `account.simulate.getSdaProtocol(label).createDepositAddress(...)`.
 
 <Callout type="info">
@@ -15802,10 +15854,12 @@ In this beta, `simulate` is added at runtime but is not typed on the account ret
 ## Runtime Caveats
 
 - Policies wrap the WDK account/protocol proxy surface. On governed proxies, `keyPair` and string members beginning with `_` are absent from direct property access, membership checks, own-property descriptors, and own-key enumeration. The proxy also refuses `Object.preventExtensions()` and `Object.freeze()` with `TypeError` so those hiding rules remain valid.
-- This is not a complete sandbox. Prototype inspection, separately retained raw account or protocol references, and nested calls made inside a module remain outside the proxy interception path.
+- **Source preview:** Account-scoped providers retrieved from a governed account receive the account policy proxy. Their calls through that account are evaluated unless excluded. Global providers receive the raw account, so their internal account calls bypass account-method evaluation even where the outer protocol method is wrapped. Global registrations shadow account-scoped registrations with the same type and label.
+- This is not a complete sandbox. Prototype inspection, separately retained raw account or protocol references, and calls made within the underlying wallet implementation remain outside the proxy interception path. In the source preview, inherited `valueOf()` preserves the account or protocol proxy; it does not return its raw target.
 - The default exclusions contain specific read, quote, and lifecycle method names. A read or quote method absent from that list is governed until you explicitly exclude it; a `get` or `quote` prefix does not change coverage.
 - Policy conditions receive local method arguments. WDK does not decode calldata, fetch prices, validate token metadata, or calculate fiat value unless your condition function does that work.
 - Wallet accounts must expose a read-only account view when a policy applies, otherwise `getAccount()` fails with `PolicyConfigurationError`.
+- **Source preview:** Account-scoped provider construction is lazy. A provider constructor requiring `keyPair` or `_`-prefixed account members fails when retrieved through a governed account, including through a simulation getter. Verify the constructor against the public account interface before selecting this registration scope.
 - Pass plain data to governed methods. An object that cannot be structured-cloned, such as a plain object containing a callback, fails with `PolicyConfigurationError`. Class instances can become plain objects and lose their methods. A top-level function argument passes through unchanged in this release, so do not treat the snapshot as isolation for callback-driven state or side effects.
 - Method discovery is not a live monitor of account changes. Add module methods before obtaining a governed account; do not rely on mutating an account or its prototype after wrapping to update policy coverage.
 - Engine-managed state hooks are not active in this beta. The schema accepts `state` and `onSuccess`, but WDK does not pass `state` into conditions, update it after execution, persist it, or call `onSuccess`. Conditions can still use app-owned state through closures or external stores; keep that state outside `rule.state`, and have your app own durability, concurrency, and rollback behavior.
@@ -30508,10 +30562,14 @@ Review exact methods, options, results, and errors.
 URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm
 Description: Create and manage EVM wallets for native transfers, ERC-20 balances, token transfers, and signing.
 
+<Callout type="info">
+**Source preview — unreleased:** The changes highlighted on this page describe [EVM source `f2e3b00`](https://github.com/tetherto/wdk-wallet-evm/tree/f2e3b006052ab9eda2560d95790939d56a921f2c), containing approved, merged PRs [#118](https://github.com/tetherto/wdk-wallet-evm/pull/118) and [#136](https://github.com/tetherto/wdk-wallet-evm/pull/136). They are not part of the verified npm `1.0.0-beta.21` artifact. The target release version and installed-package validation are pending.
+</Callout>
+
 Use the EVM wallet module for standard Ethereum-compatible accounts where users pay gas with the chain native token.
 
 <Callout type="info">
-These pages reflect `@tetherto/wdk-wallet-evm@1.0.0-beta.19`. The runtime accepts and reuses an ethers `Provider`, including for manager-derived accounts; the published configuration type still omits that input.
+The published documentation baseline on these pages is `@tetherto/wdk-wallet-evm@1.0.0-beta.19`. The runtime accepts and reuses an ethers `Provider`, including for manager-derived accounts; the published configuration type still omits that input.
 </Callout>
 
 <Callout type="warn">
@@ -35086,6 +35144,10 @@ Get started with WDK's EVM ERC-4337 Wallet API
 URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm/api-reference
 Description: Complete API documentation for @tetherto/wdk-wallet-evm
 
+<Callout type="info">
+**Source preview — unreleased:** The changes highlighted on this page describe [EVM source `f2e3b00`](https://github.com/tetherto/wdk-wallet-evm/tree/f2e3b006052ab9eda2560d95790939d56a921f2c), containing approved, merged PRs [#118](https://github.com/tetherto/wdk-wallet-evm/pull/118) and [#136](https://github.com/tetherto/wdk-wallet-evm/pull/136). They are not part of the verified npm `1.0.0-beta.21` artifact. The target release version and installed-package validation are pending.
+</Callout>
+
 ## Table of Contents
 
 | Class | Description | Methods |
@@ -35364,11 +35426,11 @@ const signerAccount = new WalletAccountEvm(
 | `getAddress()` | Returns the account's address | `Promise<string>` | - |
 | `sign(message)` | Signs a message using the account's private key | `Promise<string>` | - |
 | `signTypedData(typedData)` | Signs typed data according to EIP-712 | `Promise<string>` | - |
-| `signTransaction(tx)` | Signs an EVM transaction without broadcasting it | `Promise<string>` | `MaximumFeeExceededError` if the configured fee cap is exceeded |
+| `signTransaction(tx)` | Signs an EVM transaction without broadcasting it | `Promise<string>` | `MaximumFeeExceededError`; source preview also rejects blob transactions with `ValueError` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies a typed data signature (EIP-712) | `Promise<boolean>` | - |
 | `sendTransaction(tx)` | Sends an EVM transaction object or signed raw transaction | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError`, `MaximumFeeExceededError`, or `ValueError` |
-| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction object or serialized transaction | `Promise<{fee: bigint}>` | `ProviderRequiredError` |
+| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction object or serialized transaction | `Promise<{fee: bigint}>` | `ProviderRequiredError`; source preview also rejects blob transactions with `ValueError` |
 | `transfer(options)` | Transfers ERC20 tokens to another address | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` or `MaximumFeeExceededError` |
 | `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | `ProviderRequiredError` |
 | `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | `ProviderRequiredError` |
@@ -35476,14 +35538,14 @@ Signs an EVM transaction and returns the signed raw transaction as a hex string.
   - `gasPrice` (number | bigint, optional): Legacy gas price in wei
   - `maxFeePerGas` (number | bigint, optional): EIP-1559 max fee per gas in wei
   - `maxPriorityFeePerGas` (number | bigint, optional): EIP-1559 max priority fee per gas in wei
-  - `type` (number, optional): Transaction type, such as `4` for ERC-7702
+  - `type` (number, optional): Transaction type, such as `4` for ERC-7702. The source preview rejects type `3`.
   - `nonce` (number, optional): Transaction nonce
   - `chainId` (number | bigint, optional): Network chain ID
   - `authorizationList` (AuthorizationLike[], optional): ERC-7702 authorization list for type 4 transactions
 
 **Returns:** `Promise<string>` - Signed raw transaction hex string
 
-**Throws:** `MaximumFeeExceededError` if a provider is configured and the estimated transaction fee exceeds `transactionMaxFee`.
+**Throws:** `MaximumFeeExceededError` if a provider is configured and the estimated transaction fee exceeds `transactionMaxFee`. **Source preview:** `ValueError` for an [EIP-4844 blob transaction](#evmtransaction), including when signing offline.
 
 **Example:**
 ```javascript
@@ -35540,7 +35602,7 @@ Builds, signs, and sends an EVM transaction object, or broadcasts a signed raw t
   - `gasPrice` (number | bigint, optional): Legacy gas price in wei
   - `maxFeePerGas` (number | bigint, optional): EIP-1559 max fee per gas in wei
   - `maxPriorityFeePerGas` (number | bigint, optional): EIP-1559 max priority fee per gas in wei
-  - `type` (number, optional): Transaction type, such as `4` for ERC-7702
+  - `type` (number, optional): Transaction type, such as `4` for ERC-7702. The source preview rejects type `3`.
   - `nonce` (number, optional): Transaction nonce
   - `chainId` (number | bigint, optional): Network chain ID
   - `authorizationList` (AuthorizationLike[], optional): ERC-7702 authorization list for type 4 transactions
@@ -35552,7 +35614,7 @@ For a signed raw transaction string, WDK checks `transactionMaxFee` against a pr
 **Throws:**
 - `ProviderRequiredError` if no provider is configured.
 - `MaximumFeeExceededError` if the quoted fee exceeds `transactionMaxFee` when configured.
-- `ValueError` if an object transaction mixes incompatible fee fields or a type 3 transaction omits `maxFeePerBlobGas`.
+- `ValueError` if an object transaction mixes incompatible fee fields. **Source preview:** EIP-4844 blob transactions are rejected, including signed raw type 3 transactions; adding `maxFeePerBlobGas` does not enable them.
 
 **Example:**
 ```javascript
@@ -35586,7 +35648,7 @@ For a serialized transaction, the method parses the transaction fields for gas e
 
 **Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
-**Throws:** `ProviderRequiredError` if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured. **Source preview:** `ValueError` for an [EIP-4844 blob transaction](#evmtransaction)
 
 **Example:**
 ```javascript
@@ -35922,7 +35984,7 @@ const readOnlyAccount = new WalletAccountReadOnlyEvm('0x742d35Cc6634C0532925a3b8
 | `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | `ProviderRequiredError` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<bigint>` | `ProviderRequiredError` |
 | `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise<Record<string, bigint>>` | `ProviderRequiredError` |
-| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction | `Promise<{fee: bigint}>` | `ProviderRequiredError` |
+| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction | `Promise<{fee: bigint}>` | `ProviderRequiredError`; source preview also rejects blob transactions with `ValueError` |
 | `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | `ProviderRequiredError` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies a typed data signature (EIP-712) | `Promise<boolean>` | - |
@@ -35999,7 +36061,7 @@ Estimates the fee for an EVM transaction.
 
 **Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
-**Throws:** `ProviderRequiredError` if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured. **Source preview:** `ValueError` for an [EIP-4844 blob transaction](#evmtransaction)
 
 **Example:**
 ```javascript
@@ -36157,6 +36219,10 @@ The package re-exports these types.
 
 ### EvmTransaction
 
+**Source preview:** `WalletAccountEvm.signTransaction()`, `sendTransaction()`, and `quoteSendTransaction()`, plus read-only account `quoteSendTransaction()`, reject EIP-4844 blob transactions with `ValueError('eip-4844 blob transactions are not supported')`. The guard checks `Number(type) === 3` or any non-null `blobs`, `blobVersionedHashes`, or `maxFeePerBlobGas` field; even an empty blob array is rejected. Owned-account quote and send also parse and reject signed raw type 3 transactions before gas simulation or broadcast. Quote and send still require a configured provider.
+
+The `type` field is typed as `number`; type `3` is rejected at runtime. The built-in `SeedSignerEvm` and `PrivateKeySignerEvm` `signTransaction()` methods accept ethers `TransactionLike` inputs and delegate to ethers without this account guard.
+
 ```typescript
 interface EvmTransaction {
   to?: string | null;                       // Recipient address; omit or pass null for contract creation
@@ -36166,7 +36232,7 @@ interface EvmTransaction {
   gasPrice?: number | bigint;                // Legacy gas price in wei (optional)
   maxFeePerGas?: number | bigint;            // EIP-1559 max fee per gas in wei (optional)
   maxPriorityFeePerGas?: number | bigint;    // EIP-1559 priority fee in wei (optional)
-  type?: number;                             // Transaction type, such as 4 for ERC-7702 (optional)
+  type?: number;                             // For example, 0, 1, 2, or 4; source preview rejects type 3
   nonce?: number;                            // Transaction nonce (optional)
   chainId?: number | bigint;                 // Network chain ID (optional)
   authorizationList?: AuthorizationLike[];   // ERC-7702 authorization list for type 4 transactions (optional)
@@ -36239,6 +36305,8 @@ interface EvmSignerLike extends ISigner {
 ```
 
 `SeedSignerEvm` and `PrivateKeySignerEvm` are exported from `@tetherto/wdk-wallet-evm/signers`. `SeedSignerEvm` supports derivation and can be used as a manager default signer. `PrivateKeySignerEvm` represents one private-key account, does not support derivation, and should be registered by name or used directly with `WalletAccountEvm`.
+
+**Source preview:** Successful seed-based HD root creation zeroes its temporary HMAC buffer. `SeedSignerEvm` then zeroes seed bytes it created from a mnemonic and disposes a temporary root if path derivation fails. Caller-supplied `Uint8Array` seeds are not overwritten. These construction changes do not establish complete removal of secret material or change supplied-signer ownership; see [construction cleanup limits](/sdk/wallet-modules/wallet-evm/guides/error-handling#source-preview-construction-cleanup).
 
 ### UnsignedEvmTransaction
 
@@ -36804,6 +36872,10 @@ With balance checks in place, learn how to [send transactions](/sdk/wallet-modul
 URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm/guides/error-handling
 Description: Handle errors, manage fees, and dispose of sensitive data in EVM wallets.
 
+<Callout type="info">
+**Source preview — unreleased:** The changes highlighted on this page describe [EVM source `f2e3b00`](https://github.com/tetherto/wdk-wallet-evm/tree/f2e3b006052ab9eda2560d95790939d56a921f2c), containing approved, merged PRs [#118](https://github.com/tetherto/wdk-wallet-evm/pull/118) and [#136](https://github.com/tetherto/wdk-wallet-evm/pull/136). They are not part of the verified npm `1.0.0-beta.21` artifact. The target release version and installed-package validation are pending.
+</Callout>
+
 This guide covers best practices for handling transaction errors, managing fee limits, and cleaning up sensitive data from memory.
 
 ## Handle Transaction Errors
@@ -36835,6 +36907,8 @@ try {
   }
 }
 ```
+
+**Source preview:** A `ValueError` also rejects EIP-4844 blob transactions in account signing, quote, and send methods. Do not retry them by adding blob fee fields. See [Unsupported Blob Transactions](/sdk/wallet-modules/wallet-evm/guides/send-transactions#source-preview-unsupported-blob-transactions).
 
 ## Handle Token Transfer Errors
 
@@ -36899,6 +36973,12 @@ try {
   }
 }
 ```
+
+## Source Preview: Construction Cleanup
+
+After successful seed-based HD root creation, the implementation zeroes the temporary 64-byte HMAC buffer used to create it. `SeedSignerEvm` also zeroes the seed bytes it created from a mnemonic once root creation succeeds. If subsequent path derivation throws, its `finally` block disposes the temporary root.
+
+Caller-supplied `Uint8Array` seeds remain unchanged, and the original mnemonic string is not overwritten. Retain app-owned seed buffers until every consumer that needs them has finished, then clear them in your application. This preview addresses those specific construction buffers and the path-derivation failure; it does not promise erasure for every constructor failure or complete removal of all secret material. Runtime account and signer disposal remains a separate lifecycle step.
 
 ## Dispose of Sensitive Data
 
@@ -37091,11 +37171,21 @@ Now that you can access your accounts, learn how to [check balances](/sdk/wallet
 URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm/guides/send-transactions
 Description: Send native tokens on EVM chains with EIP-1559 or legacy gas settings.
 
+<Callout type="info">
+**Source preview — unreleased:** The changes highlighted on this page describe [EVM source `f2e3b00`](https://github.com/tetherto/wdk-wallet-evm/tree/f2e3b006052ab9eda2560d95790939d56a921f2c), containing approved, merged PRs [#118](https://github.com/tetherto/wdk-wallet-evm/pull/118) and [#136](https://github.com/tetherto/wdk-wallet-evm/pull/136). They are not part of the verified npm `1.0.0-beta.21` artifact. The target release version and installed-package validation are pending.
+</Callout>
+
 This guide explains how to [send EVM transactions with EIP-1559 gas parameters](#send-with-eip-1559-gas-parameters), [send legacy gas transactions](#send-with-legacy-gas-parameters), [deploy contracts](#deploy-a-contract), [sign without broadcasting](#sign-without-broadcasting), [estimate fees](#estimate-transaction-fees), [cap transaction fees](#cap-transaction-fees), [use dynamic fee rates](#use-dynamic-fee-rates), and [wait for finality](#wait-for-finality).
 
 <Callout type="warn">
 **BigInt Usage:** Always use `BigInt` (the `n` suffix) for monetary values to avoid precision loss with large numbers.
 </Callout>
+
+## Source Preview: Unsupported Blob Transactions
+
+The approved source preview rejects EIP-4844 blob transactions in account `signTransaction()`, `quoteSendTransaction()`, and `sendTransaction()`, and in read-only account quotes. Rejection uses `ValueError('eip-4844 blob transactions are not supported')` for type `3` or a non-null `blobs`, `blobVersionedHashes`, or `maxFeePerBlobGas` field, including empty arrays. Supplying blob fee fields does not enable support.
+
+Offline account signing also applies this guard. With a configured provider, owned-account quote and send parse and reject signed raw type 3 transactions before gas simulation or broadcast. Standalone signer methods have a separate lower-level contract; this account limitation does not describe every signer. See the [transaction reference](/sdk/wallet-modules/wallet-evm/api-reference#evmtransaction).
 
 ## Send with EIP-1559 Gas Parameters
 

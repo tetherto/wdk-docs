@@ -5,6 +5,10 @@ docType: how-to
 schemaType: TechArticle
 ---
 
+<Callout type="info">
+**Source preview — unreleased:** The changes highlighted on this page describe [EVM source `f2e3b00`](https://github.com/tetherto/wdk-wallet-evm/tree/f2e3b006052ab9eda2560d95790939d56a921f2c), containing approved, merged PRs [#118](https://github.com/tetherto/wdk-wallet-evm/pull/118) and [#136](https://github.com/tetherto/wdk-wallet-evm/pull/136). They are not part of the verified npm `1.0.0-beta.21` artifact. The target release version and installed-package validation are pending.
+</Callout>
+
 This guide covers best practices for handling transaction errors, managing fee limits, and cleaning up sensitive data from memory.
 
 ## Handle Transaction Errors
@@ -36,6 +40,8 @@ try {
   }
 }
 ```
+
+**Source preview:** A `ValueError` also rejects EIP-4844 blob transactions in account signing, quote, and send methods. Do not retry them by adding blob fee fields. See [Unsupported Blob Transactions](/sdk/wallet-modules/wallet-evm/guides/send-transactions#source-preview-unsupported-blob-transactions).
 
 ## Handle Token Transfer Errors
 
@@ -100,6 +106,12 @@ try {
   }
 }
 ```
+
+## Source Preview: Construction Cleanup
+
+After successful seed-based HD root creation, the implementation zeroes the temporary 64-byte HMAC buffer used to create it. `SeedSignerEvm` also zeroes the seed bytes it created from a mnemonic once root creation succeeds. If subsequent path derivation throws, its `finally` block disposes the temporary root.
+
+Caller-supplied `Uint8Array` seeds remain unchanged, and the original mnemonic string is not overwritten. Retain app-owned seed buffers until every consumer that needs them has finished, then clear them in your application. This preview addresses those specific construction buffers and the path-derivation failure; it does not promise erasure for every constructor failure or complete removal of all secret material. Runtime account and signer disposal remains a separate lifecycle step.
 
 ## Dispose of Sensitive Data
 
