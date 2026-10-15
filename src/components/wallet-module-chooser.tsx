@@ -112,7 +112,7 @@ const walletModules: WalletModule[] = [
       "Your app can manage token allowances, shielded balances, fees, and transaction confirmation.",
       "Your runtime can load the SDK and provide its proof artifacts and storage.",
     ],
-    note: "Community beta; installed from a pinned GitHub revision while npm publication is pending.",
+    note: "Community beta; installed from a pinned GitHub revision.",
   },
   {
     id: "evm-4337",

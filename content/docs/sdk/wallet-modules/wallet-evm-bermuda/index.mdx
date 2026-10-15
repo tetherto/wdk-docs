@@ -14,8 +14,16 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 Use [`@bermuda/wdk-wallet-evm-bermuda`](https://github.com/BermudaBay/wdk-wallet-evm-bermuda) to derive Bermuda shielded accounts from a WDK EVM wallet. A shielded account can deposit supported tokens into a Bermuda pool, transfer shielded balances to another Bermuda account, and withdraw to a public EVM address.
 
 <Callout type="warn">
-The module is in beta and supports **Plasma testnet**, chain ID `9746`. It is not published on npm. These pages use the GitHub revision `6476ea5f79d669968b0d0fd0a1413b962f61129f`, whose manifest declares version `0.1.8`. Follow the [pinned GitHub installation](/sdk/wallet-modules/wallet-evm-bermuda/usage#install).
+The module is in beta and supports **Plasma testnet**, chain ID `9746`. These pages use GitHub revision `59c711af9d5c348db740a37f19d96414fc6750f6`, whose manifest declares version `0.3.2`, with Bermuda SDK `0.3.2`. Installation uses the GitHub repository, rather than an npm registry release. Follow the [pinned installation](/sdk/wallet-modules/wallet-evm-bermuda/usage#install).
 </Callout>
+
+## Upgrading from 0.1.x
+
+<Callout type="warn">
+Version 0.3.2 uses a new pool and a new shielded address format. Shielded balances from 0.1.x stay in the previous pool; use the matching 0.1.x installation to withdraw them before upgrading. The same spending-key source does not preserve the old full Bermuda address, and changing the package version does not migrate funds.
+</Callout>
+
+The current address is `0x` followed by 2,496 hex characters. Replace stored recipient addresses, change transaction `note` fields to `memo`, and review native versus wrapped deposits and fee accounting. Withdrawal now defaults to targeting the requested recipient amount, with fees added to the sender's spend. See the [maintainer's migration guidance](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/blob/59c711af9d5c348db740a37f19d96414fc6750f6/README.md#-upgrading-from-01x) and the updated [operations guide](/sdk/wallet-modules/wallet-evm-bermuda/guides/shield-transfer-withdraw).
 
 ## Choose This Module
 
@@ -51,8 +59,8 @@ All three fund-moving methods return a transaction hash. A hash is not a success
 - An application-managed BIP-39 mnemonic or seed bytes. The examples use a seed-backed manager; do not infer shielded support for hardware or custom signers.
 - A Plasma testnet RPC endpoint, a supported testnet token, and the matching Bermuda pool. The [operations guide](/sdk/wallet-modules/wallet-evm-bermuda/guides/shield-transfer-withdraw) shows public-chain checks for the USD₮0 testnet example.
 - A Node.js or Bare runtime with network access and writable storage for the prover's downloaded setup data. WDK worklet bundles are unsupported. See [runtime setup](/sdk/wallet-modules/wallet-evm-bermuda/usage#runtime-requirements).
-- Access to the Bermuda SDK's configured RPC, relayer, chain-state, policy/compliance, and proof-artifact services. The manager's `provider` configures its public EVM account; it does not replace the SDK's endpoints.
-- Native gas for public EVM transactions and any required token allowance before a deposit. `transactionMaxFee` rejects an EVM operation when its estimated network fee exceeds the configured threshold; it does not bind final network fees or cap protocol token fees. EVM fee caps do not bound shielded transfer or withdrawal fees. See [Configuration](/sdk/wallet-modules/wallet-evm-bermuda/configuration#fee-boundaries).
+- Access to the Bermuda SDK's relayer, chain-state, policy/compliance, and proof-artifact services. The manager forwards the wallet RPC to the SDK by default; a nested `bermuda` configuration can override SDK routing. RPC configuration alone does not replace the other service endpoints.
+- Native gas for public EVM transactions and any required token allowance covering the deposit and its applicable protocol and lifetime fees. `transactionMaxFee` rejects an EVM operation when its estimated network fee exceeds the configured threshold; it does not bind final network fees or cap protocol token fees. EVM fee caps do not bound shielded transfer or withdrawal fees. See [Configuration](/sdk/wallet-modules/wallet-evm-bermuda/configuration#fee-boundaries).
 
 These pages use the standalone manager. Directly retrieved Bermuda accounts do not automatically pass through WDK core's registered policies or middleware. The SDK's separate issuer-policy checks are part of its own proof and service flow; they are not a substitute for application authorization.
 

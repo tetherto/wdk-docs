@@ -15,44 +15,46 @@ Install the module, create its two account types, and read a shielded address or
 
 ## Prerequisites
 
-Use Node.js 22 and npm 10 for the examples below, with a Plasma testnet RPC endpoint that reports chain ID `9746`. Node 22 is the example runtime and the module's development/test toolchain floor; it is not a verified minimum for every library consumer.
+Use Node.js 22 and npm 10 for the examples below, with a Plasma testnet RPC endpoint that reports chain ID `9746`. The package declares Node.js `>=20.19.0`; Node 22 is the example runtime and development/test toolchain floor. The example pins are not a claim that every declared peer version behaves identically.
 
 Your application supplies a BIP-39 mnemonic or `Uint8Array` seed from its secret storage. Keep it out of source code, logs, analytics, and error reports. These examples use seed-backed derivation rather than a hardware or custom signer.
 
-Creating the shielded account reads the chain from the wallet provider. Balance queries and operations also need the SDK's configured services. A custom wallet RPC does not redirect the SDK's own RPC, relayer, chain-state, policy/compliance, or proof-artifact endpoints.
+Creating the shielded account reads the wallet provider's chain and requires an SDK pool configuration for it. The wallet provider also supplies SDK chain reads by default. Balance queries and operations still need the SDK's other services; a wallet RPC does not configure relayer, chain-state, policy/compliance, or proof-artifact URLs. See [provider precedence](/sdk/wallet-modules/wallet-evm-bermuda/configuration#bermuda-sdk-services).
+
+If upgrading from 0.1.x, read the [pool and address migration warning](/sdk/wallet-modules/wallet-evm-bermuda#upgrading-from-01x) before creating or funding a new account.
 
 ## Install
 
-The package is not on the npm registry. Install this exact GitHub revision, plus the WDK peer versions used by these examples. `ethers` supplies the operations guide's public RPC and contract checks.
+The maintainer's command, `npm i bermudabay/wdk-wallet-evm-bermuda`, installs from GitHub. It does not select a published npm registry version. These examples pin the exact repository revision for source version **0.3.2**, plus the WDK peer versions used below. `ethers` supplies the guide's public RPC and token checks.
 
 With npm 10:
 
 ```bash
 npm install --save-exact \
-  'git+https://github.com/BermudaBay/wdk-wallet-evm-bermuda.git#6476ea5f79d669968b0d0fd0a1413b962f61129f' \
+  'git+https://github.com/BermudaBay/wdk-wallet-evm-bermuda.git#59c711af9d5c348db740a37f19d96414fc6750f6' \
   @tetherto/wdk-wallet@1.0.0-beta.17 \
   @tetherto/wdk-wallet-evm@1.0.0-beta.17 \
   ethers@6.17.0
 ```
 
-The source manifest declares version `0.1.8`; that is not an npm release. Import the installed package as `@bermuda/wdk-wallet-evm-bermuda`, regardless of its GitHub repository name.
+Import the installed package as `@bermuda/wdk-wallet-evm-bermuda`. The source manifest version is `0.3.2`, and its SDK dependency is the maintainer-hosted `@bermuda/sdk` artifact at version `0.3.2`.
 
-The module declares both WDK peers in the range `>=1.0.0-beta.17 <2.0.0`. The commands save exact `1.0.0-beta.17` versions for these examples. Retain your generated lockfile so subsequent installs reuse the same dependency graph. A declared peer range does not establish that every version in it has identical behavior.
+The module declares both WDK peers in the range `>=1.0.0-beta.17 <2.0.0`. The command saves exact beta.17 peers for these examples; retain the generated lockfile to reuse that dependency graph. These are example pins, rather than a compatibility guarantee for every version in the declared range.
 
 ### npm 12 and Later
 
-The [upstream installation instructions](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/blob/6476ea5f79d669968b0d0fd0a1413b962f61129f/README.md#-installation) require admission flags for the Git dependency and its transitive HTTPS SDK dependency:
+The [upstream installation instructions](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/blob/59c711af9d5c348db740a37f19d96414fc6750f6/README.md#-installation) require admission flags for the Git dependency and its transitive HTTPS SDK dependency:
 
 ```bash
 npm install --save-exact \
-  'git+https://github.com/BermudaBay/wdk-wallet-evm-bermuda.git#6476ea5f79d669968b0d0fd0a1413b962f61129f' \
+  'git+https://github.com/BermudaBay/wdk-wallet-evm-bermuda.git#59c711af9d5c348db740a37f19d96414fc6750f6' \
   @tetherto/wdk-wallet@1.0.0-beta.17 \
   @tetherto/wdk-wallet-evm@1.0.0-beta.17 \
   ethers@6.17.0 \
   --allow-git=root --allow-remote=all
 ```
 
-`--allow-git=root` admits Git dependencies declared by your project. `--allow-remote=all` admits remote dependencies throughout the installation, including the Bermuda SDK declared by this package. These flags control dependency admission; they do not verify the dependencies' code or services.
+`--allow-git=root` admits your project's Git dependencies. `--allow-remote=all` admits remote dependencies throughout installation, including the SDK declared by this module. These flags control dependency admission; they do not verify dependency code or service behavior.
 
 ## Create the Accounts
 
@@ -82,7 +84,7 @@ export async function createBermudaSession(seed, rpcUrl) {
 
 `ethereumAccount` is an ordinary public EVM account. `bermudaAccount` is a separate shielded account derived from the EVM account's private key. The first `getBermudaAccount()` argument selects the EVM account at relative path `0'/0/index`; the second selects a Bermuda subaccount. Both default to `0` and must be non-negative integers.
 
-Unlike the EVM account's asynchronous address getter, `bermudaAccount.getAddress()` returns its address synchronously. It is a Bermuda address, not an EVM recipient address.
+Unlike the EVM account's asynchronous address getter, `bermudaAccount.getAddress()` returns its address synchronously. In this source version it is `0x` plus 2,496 hex characters, not an EVM recipient address. Its format differs from the address produced by 0.1.x.
 
 For another shielded subaccount under the same EVM account:
 
@@ -117,17 +119,19 @@ export async function readShieldedBalance(seed, rpcUrl, tokenAddress) {
 
 The balance is a `bigint` in the token's base units. The [testnet operations guide](/sdk/wallet-modules/wallet-evm-bermuda/guides/shield-transfer-withdraw) supplies the scoped USD₮0 address and verifies its six decimals. Use `bigint` base-unit amounts in fund-moving calls.
 
-To read several tokens in an existing session, call `getTokenBalances(tokenAddresses)`. Its result is a record keyed by lowercase token addresses, with `bigint` balances. An absent token UTXO set totals `0n`.
+To read several tokens in an existing session, call `getTokenBalances(tokenAddresses)`. Its result is a record keyed by lowercase token addresses, with `bigint` values; an empty input returns `{}` and an absent balance is `0n`.
+
+These methods use the SDK balance calculation, including vaulted holdings valued in the underlying token. A displayed balance is not a guarantee that the SDK can select inputs for a particular operation. SDK reads can be cached for a block time, so confirmation does not imply that the next balance query is already fresh. The examples use default storage without enabling file-backed UTXO persistence.
 
 ## Runtime Requirements
 
 The Bermuda SDK generates proofs and accesses its configured services. Supply outbound network access and writable storage for the prover's common reference string (CRS), its setup data. First use downloads about 38 MB and stores about 105 MB unpacked in `~/.bb-crs`, or the directory configured by `CRS_PATH`.
 
-The wallet RPC and the SDK's configured provider must refer to the intended Plasma testnet deployment. An account derivation or successful import does not establish that balance scanning, proof generation, or relay submission is available.
+Keep the wallet RPC and any explicit SDK provider override on the intended Plasma testnet deployment. A successful import, account derivation, or configured pool address does not establish that balance discovery, proof generation, or relay submission is available.
 
 ### Bare
 
-Bare selects the package's conditional `bare` entrypoint. It loads `bare-node-runtime`, supplies the SDK prover's missing stream/worker interfaces, and patches `TextDecoder` and WebAssembly compilation/instantiation globals for the process.
+Bare selects the package's conditional `bare` entrypoint. It loads `bare-node-runtime`, supplies stream/worker interfaces, and patches `TextDecoder` and WebAssembly globals. It also replaces the process-wide Bare HTTP/HTTPS agents to remove an in-flight socket timeout. These effects apply to the process, not just this wallet instance.
 
 Import `@bermuda/wdk-wallet-evm-bermuda` before anything that loads `@bermuda/sdk` or `@aztec/bb.js`, so those dependencies receive the package's import mappings. Under Bare, the prover uses a single-thread WebAssembly backend; under Node it uses the native backend.
 
@@ -143,7 +147,7 @@ Do not assume WDK core's registered policies or middleware govern shielded accou
 
 ## Dispose the Session
 
-Call `wallet.dispose()` after all operations have finished, as the reader's `finally` block does. The manager disposes its EVM accounts, signers, and cached Bermuda accounts with the pinned WDK peers. Account disposal clears its stored Bermuda private-key fields and leaves the shared master EVM account to its owner.
+Call `wallet.dispose()` to initiate cleanup after all operations have finished, as the reader's `finally` block does. With the pinned peers, the manager invokes cleanup for its EVM accounts, signers, and cached Bermuda accounts. Shielded-account cleanup nulls its stored spending scalar and zeroes its X-Wing secret-key bytes; disposing that account alone leaves the shared master EVM account available.
 
 Disposal does not delete persisted cache files, stop the SDK provider, erase every JavaScript or caller-held seed copy, or confirm/cancel a submitted transaction. Release application references when the session is finished. See [resource lifecycle](/sdk/wallet-modules/wallet-evm-bermuda/configuration#resource-lifecycle).
 
