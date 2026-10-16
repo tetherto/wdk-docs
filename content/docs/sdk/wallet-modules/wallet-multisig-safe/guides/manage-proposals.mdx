@@ -1,0 +1,89 @@
+---
+title: Manage Safe proposals
+description: Quote, propose, approve and submit payments with explicit receipt and fee handling.
+docType: how-to
+schemaType: TechArticle
+---
+
+[Prepare a proposal](#prepare-a-proposal), [collect approvals](#collect-approvals), then [submit and confirm](#submit-and-confirm). See [Need Help](#need-help) for support.
+
+Prerequisites: a deployed Safe, [configured owner accounts](/sdk/wallet-modules/wallet-multisig-safe/guides/get-started), a shared coordinator and enough funds for the payload and fees. The examples use native gas and a native transfer. `RECIPIENT_ADDRESS` and `SEND_WEI` must be values reviewed by the owners.
+
+## Prepare a Proposal
+
+1. Verify the Safe, recipient, chain and value in your application's review screen.
+2. Estimate the operation with [`quoteSendTransaction()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#quotesendtransaction).
+3. Submit the reviewed request using [`propose()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#propose).
+
+Prepare the request and its estimate:
+
+```javascript title="Review a native transfer"
+import { account, requiredEnv } from './safe-account.mjs'
+
+const tx = {
+  to: requiredEnv('RECIPIENT_ADDRESS'),
+  value: BigInt(requiredEnv('SEND_WEI'))
+}
+const quote = await account.quoteSendTransaction(tx)
+console.log('Estimated native wei:', quote.fee)
+```
+
+After application confirmation, create the proposal:
+
+```javascript title="Propose the reviewed request"
+const proposal = await account.propose(tx)
+console.log('Proposal ID:', proposal.proposalId)
+```
+
+A proposal is not a transfer receipt. For ERC-20 transfers, use [`proposeTransfer()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#proposetransfer) with `token`, `recipient` and `amount` in token base units. Token-paymaster fees and native execution-cost estimates are [different quantities](/sdk/wallet-modules/wallet-multisig-safe/configuration#fee-results).
+
+## Collect Approvals
+
+Each other owner must independently inspect the proposed operation in the coordinator or application. The compact [`getProposal()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#getproposal) result contains status/counts, not the full payment payload; it is insufficient as a payment-review screen.
+
+From another owner's process, use [`approveProposal()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#approveproposal) with the same Safe/coordinator configuration:
+
+```javascript title="Approve a reviewed proposal"
+const approved = await account.approveProposal(requiredEnv('PROPOSAL_ID'))
+console.log(approved.confirmations, approved.threshold)
+```
+
+The account must represent a different approving owner. Approval returns `status: 'pending'`, even when the threshold is reached. It does not auto-execute. [`rejectProposal()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#rejectproposal) creates a competing zero-value proposal at the same nonce; rejection also needs approvals and execution.
+
+## Submit and Confirm
+
+Check the stored proposal, then call [`executeProposal()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#executeproposal) only after owners approve its contents:
+
+```javascript title="Submit the approved operation"
+const proposalId = requiredEnv('PROPOSAL_ID')
+if (!await account.isReadyToExecute(proposalId)) {
+  throw new Error('Approval threshold has not been met')
+}
+const submitted = await account.executeProposal(proposalId)
+console.log('UserOperation hash:', submitted.hash)
+```
+
+`submitted.fee` is the stored operation's maximum native gas cost, not a measured token charge. Readiness checks count confirmations; they do not guarantee successful execution or fresh coordinator state.
+
+Use [`getTransactionReceipt()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#gettransactionreceipt) to inspect inclusion:
+
+```javascript title="Inspect submission receipt"
+const receipt = await account.getTransactionReceipt(submitted.hash)
+console.log(receipt)
+```
+
+A missing receipt is not success. Apply a bounded retry policy and inspect the returned UserOperation `success` and underlying receipt; an EVM receipt uses its EVM status. The method first queries the EVM provider, so provider errors can interrupt its bundler fallback. Do not use inherited [`waitForTransaction()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#waitfortransaction) in beta.1.
+
+`autoExecute: true` on [`propose()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#propose) or [`proposeTransfer()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#proposetransfer) submits only when the initial proposal already meets the threshold. Its returned `status: 'executed'` means this submission branch ran, not that a successful receipt was observed. Always confirm receipts.
+
+## Next Steps
+
+- [Usage](/sdk/wallet-modules/wallet-multisig-safe/usage)
+- [Configuration](/sdk/wallet-modules/wallet-multisig-safe/configuration)
+- [API reference](/sdk/wallet-modules/wallet-multisig-safe/api-reference)
+
+---
+
+## Need Help?
+
+<SupportCards />

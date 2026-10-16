@@ -21,6 +21,7 @@ type GoalFilter =
   | "standard"
   | "private"
   | "gasless"
+  | "multisig"
   | "lightning"
   | "assets"
   | "cosmos";
@@ -57,6 +58,7 @@ const goalOptions: Array<{ value: GoalFilter; label: string }> = [
   { value: "standard", label: "Standard wallet" },
   { value: "private", label: "Private transfers" },
   { value: "gasless", label: "Gasless or smart account" },
+  { value: "multisig", label: "Multisig approvals" },
   { value: "lightning", label: "Lightning payments" },
   { value: "assets", label: "RGB assets" },
   { value: "cosmos", label: "Cosmos chains" },
@@ -124,6 +126,21 @@ const walletModules: WalletModule[] = [
       "You need the user to keep an EOA address.",
       "Your target chain supports the required EIP-7702 and ERC-4337 flow.",
       "You can provide RPC, bundler, paymaster, and delegation configuration.",
+    ],
+  },
+  {
+    id: "evm-multisig-safe",
+    label: "Multisig (Safe)",
+    chain: "evm",
+    goals: ["multisig"],
+    packageName: "@tetherto/wdk-wallet-multisig-safe",
+    docsHref: "/sdk/wallet-modules/wallet-multisig-safe",
+    apiHref: "/sdk/wallet-modules/wallet-multisig-safe/api-reference",
+    bestFor: "EVM Safe accounts that require approvals from multiple owners.",
+    chooseWhen: [
+      "You need owner thresholds, coordinated proposals, and ERC-4337 execution.",
+      "You can provide compatible RPC, bundler, and coordinator services.",
+      "You can fund the signer address with native gas for deployment.",
     ],
   },
   {
@@ -244,6 +261,21 @@ const walletModules: WalletModule[] = [
       "You need paymaster-funded SOL or SPL token transfers.",
       "Your app can provide the required Solana RPC and paymaster configuration.",
       "You want Solana support without requiring users to fund fees directly.",
+    ],
+  },
+  {
+    id: "solana-multisig-squads",
+    label: "Multisig (Squads)",
+    chain: "solana",
+    goals: ["multisig"],
+    packageName: "@tetherto/wdk-wallet-multisig-squads",
+    docsHref: "/sdk/wallet-modules/wallet-multisig-squads",
+    apiHref: "/sdk/wallet-modules/wallet-multisig-squads/api-reference",
+    bestFor: "Solana vaults governed by Squads proposals, member permissions, and thresholds.",
+    chooseWhen: [
+      "You need on-chain proposals and approval votes before vault execution.",
+      "You can fund the vault and provide member SOL for transaction fees and rent.",
+      "Your app can track proposal status and any configured timelock.",
     ],
   },
   {

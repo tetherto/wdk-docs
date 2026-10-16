@@ -30,7 +30,7 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 The constructor accepts `IWalletAccount` or `IWalletAccountReadOnly` from `@tetherto/wdk-wallet`. Execution requires EVM transaction support and a callable `sendTransaction()` method; read-only accounts can quote. See [account requirements](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements) for custom accounts and ERC-4337 class identity.
 
 <Callout type="warn">
-Use a directly constructed account with bridge beta.10. Accounts derived by `WalletManagerEvm` beta.19 contain an ethers `Provider`, which the bridge passes to `BrowserProvider` as though it were EIP-1193. Construction then fails before a quote or transaction. Keep the original URL or EIP-1193 input in the direct account configuration; do not mutate internal account fields.
+Bridge beta.10 cannot initialize with accounts derived by standard EVM beta.19 or beta.20, ERC-4337 beta.21, or EIP-7702 beta.7 managers when their shared ethers provider lacks the EIP-1193 `request()` method. The shared ethers `Provider` does not supply the EIP-1193 `request()` method expected by this protocol. Use the corresponding direct account constructor with its original RPC URL or genuine EIP-1193 input; never mutate internal provider fields. Direct accounts do not receive WDK Core policies or middleware, so retain required application checks and account-level controls.
 </Callout>
 
 The bridge protocol reads the provider from the wallet account's internal configuration for blockchain access:
@@ -127,7 +127,7 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 
 ```
 
-Pass either an RPC URL string or a genuine EIP-1193 provider. Although wallet-evm beta.19 can reuse an ethers `Provider`, bridge beta.10 cannot consume that provider shape.
+Pass either an RPC URL string or a genuine EIP-1193 provider. Although wallet-evm beta.19 or beta.20 can reuse an ethers `Provider`, bridge beta.10 cannot consume that provider shape.
 
 ## ERC-4337 Configuration
 

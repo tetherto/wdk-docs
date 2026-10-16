@@ -27,6 +27,8 @@ import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 - **Key type**: Ed25519
 - **Fee unit**: lamports (1 SOL = 1,000,000,000 lamports)
 - **Token standard**: SPL tokens via `transfer()`
+- In beta.16, standard SPL `transfer(options, { memo })` and `quoteTransfer(options, { memo })` accept an optional memo string. Use the same memo when quoting and sending. This does not add a native-SOL memo option or memo support to the separate gasless wrapper.
+- Beta.16 accepts constructed RPC clients as well as URL strings and mixed provider arrays. Manager accounts and read-only conversions share the initialized provider.
 - **Rent-exempt minimum**: ~890,880 lamports for new accounts
 - **USD₮ mint**: `Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB`
 - `signTransaction()` returns a `FullySignedTransaction` from `@solana/transactions`; WDK does not re-export that type.
@@ -36,6 +38,14 @@ import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
 - A base64 serialized transaction whose required signatures remain incomplete after this account signs throws a Solana error with code `SOLANA_ERROR__TRANSACTION__SIGNATURES_MISSING`; that Solana error class is not re-exported by WDK.
 
 ## Configuration
+
+### Gasless Beta.6
+
+`@tetherto/wdk-wallet-solana-gasless@1.0.0-beta.6` accepts RPC URLs, existing `SolanaRpc` clients, or mixed provider lists. Its `paymasterUrl` accepts a URL, `KoraClientOptions`, an existing `KoraClient`, or a mixed list. The manager shares these initialized clients with its derived accounts and their read-only conversions; existing clients retain their settings. An empty paymaster list can fail during manager construction. See https://docs.wdk.tether.io/sdk/wallet-modules/wallet-solana-gasless/configuration.
+
+This release does not forward the standard Solana module's SPL memo option. Preserve signed-fee payment-token checks and configured fee caps; a later quote can differ from an earlier preview.
+
+### Standard Solana
 
 ```javascript
 const wallet = new WalletManagerSolana(seedPhrase, {

@@ -29,9 +29,11 @@ On-chain Spark transfers report `fee` as `0`. Memos are not supported on [`sendT
 [`account.signTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference#signtransactiontx) is exposed for `IWalletAccount` compatibility, but it always throws on Spark. Spark transfers are collaboratively signed with Spark operators, so a standalone signed payload cannot be produced for separate broadcast. Use [`account.sendTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference#sendtransactionto-value) for Spark sends.
 </Callout>
 
-If you enable [`syncAndRetry`](/sdk/wallet-modules/wallet-spark/configuration#automatic-retry), the wallet syncs its state and retries [`account.sendTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference#sendtransactionto-value) once after a failure:
+If you enable [`syncAndRetry`](/sdk/wallet-modules/wallet-spark/configuration#automatic-retry), [`account.sendTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference#sendtransactionto-value) submits at most once. After a failed response it syncs state and looks for the submitted transfer in history instead of sending again. A failed initial history read prevents submission. Avoid concurrent sends with the same recipient and amount from one wallet, because history matching cannot tell them apart.
 
-```javascript title="Retry Failed Sends Once"
+You can enable this recovery behavior when constructing the wallet:
+
+```javascript title="Recover a Send From History"
 const wallet = new WalletManagerSpark(seedPhrase, {
   network: 'MAINNET',
   syncAndRetry: true,
@@ -101,11 +103,13 @@ console.log('Fast:', feeRates.fast)
 Spark network fees for native sends and token transfers are zero; [`wallet.getFeeRates()`](/sdk/wallet-modules/wallet-spark/api-reference#getfeerates) returns `{ normal: 0n, fast: 0n }`. Lightning flows can still incur fees; see [Lightning payments](/sdk/wallet-modules/wallet-spark/guides/lightning-payments).
 </Callout>
 
-If you want to reconcile wallet state before retrying manually, call [`account.syncWalletBalance()`](/sdk/wallet-modules/wallet-spark/api-reference#syncwalletbalance):
+To refresh wallet state, call [`account.syncWalletBalance()`](/sdk/wallet-modules/wallet-spark/api-reference#syncwalletbalance):
 
 ```javascript title="Sync Wallet Balance"
 await account.syncWalletBalance()
 ```
+
+A sync does not establish that an earlier payment failed. Check transfer history before deciding whether to send again.
 
 ## Next Steps
 

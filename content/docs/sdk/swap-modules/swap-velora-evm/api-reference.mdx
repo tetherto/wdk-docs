@@ -46,7 +46,12 @@ Options:
 - `tokenOut` (`string`): Address of the ERC‑20 token to buy
 - `tokenInAmount` (`bigint`, optional): Exact input amount (base units)
 - `tokenOutAmount` (`bigint`, optional): Exact output amount (base units)
+- `minAmountOut` (`bigint`, optional): Minimum output in the destination token's base units
 - `to` (`string`, optional): Recipient address (defaults to account address)
+
+Pass exactly one of `tokenInAmount` (SELL) or `tokenOutAmount` (BUY). Since beta.9, both quote and execution reject a rate whose token pair or exact amount differs from the request. Both reject a quoted output below `minAmountOut`. For SELL, the transaction builder receives that floor as its destination amount; without a floor it receives the quoted output. BUY keeps the requested exact output, which must also satisfy any supplied floor.
+
+Each call fetches a fresh rate. Passing an earlier quote's accepted minimum to `swap()` constrains the new request; it does not retain the earlier route or quote.
 
 Config (optional; wallet gas-payment fields depend on the account):
 - `paymasterToken` (`{ address: string }`, optional): Paymaster token override for this swap
@@ -62,6 +67,8 @@ The per-call cap overrides the constructor cap. A quote equal to or above that c
 Returns:
 - Standard account: `{ hash, fee, tokenInAmount, tokenOutAmount }`
 - ERC‑4337 account: `{ hash, fee, tokenInAmount, tokenOutAmount }`
+
+The token amounts come from the rate used to build the transaction. They are quoted amounts, not measured settlement amounts. Confirm the transaction and inspect its result before reporting tokens received.
 
 Notes:
 - Approve the input token with the account's `approve()` method before swapping if the spender does not already have enough allowance.
@@ -115,12 +122,15 @@ Common errors include:
 - Quoted fee is equal to or greater than `swapMaxFee`
 - Read‑only account cannot send swaps
 - Provider/RPC errors (invalid endpoint, network mismatch)
+- `Velora quote does not match the requested swap.`: The rate has a different pair or exact input/output amount; transaction building and submission do not proceed
+- `Velora quote is below the minimum output amount.`: The rate fails the caller's `minAmountOut`; obtain a new acceptable quote before retrying
 
 ---
 
 ## Types
 
 - `swapMaxFee: bigint`: Exclusive cap in the account quote's fee units
+- `minAmountOut: bigint`: Inclusive output floor in destination-token base units, available through shared `SwapOptions`
 - `tokenInAmount/tokenOutAmount: bigint` — ERC‑20 base units
 - `paymasterToken: { address: string }` — ERC‑4337 paymaster token override
 

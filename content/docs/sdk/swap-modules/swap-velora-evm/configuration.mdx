@@ -29,9 +29,9 @@ const swapProtocol = new VeloraProtocolEvm(account, {
 
 The swap service reads `account._config.provider` for network access. The account must expose an EVM-compatible JSON-RPC URL or EIP-1193 provider, plus `getAddress()` and `quoteSendTransaction()`. Execution also requires a callable `sendTransaction()`. A shared interface type alone does not make a non-EVM account compatible.
 
-Velora beta.8 cannot use accounts derived by `WalletManagerEvm` beta.19: their shared ethers provider is not a URL or EIP-1193 input. Use the direct `WalletAccountEvm` setup above with its original provider value. Direct accounts do not receive WDK Core policies or middleware, so retain required application checks before approval and execution.
+Velora beta.8 and beta.9 cannot initialize with accounts derived by standard EVM beta.19 or beta.20, ERC-4337 beta.21, or EIP-7702 beta.7 managers when their shared ethers provider lacks the EIP-1193 `request()` method. The shared ethers `Provider` does not supply the EIP-1193 `request()` method expected by this protocol. Use the corresponding direct account constructor with its original RPC URL or genuine EIP-1193 input; never mutate internal provider fields. Direct accounts do not receive WDK Core policies or middleware, so retain required application checks and account-level controls.
 
-For a compatible wallet version, policy-governed integrations use [`wdk.registerProtocol()`](/sdk/core-module/api-reference#registerprotocolblockchain-label-protocol-config) and the account's protocol getter. That registration path does not fix the beta.19 incompatibility. Do not pass a governed account proxy directly to this constructor: the proxy hides `_config`.
+For a compatible wallet version, policy-governed integrations use [`wdk.registerProtocol()`](/sdk/core-module/api-reference#registerprotocolblockchain-label-protocol-config) and the account's protocol getter. That registration path does not fix the shared-provider incompatibility. Do not pass a governed account proxy directly to this constructor: the proxy hides `_config`.
 
 ```javascript
 import { WalletAccountEvm, WalletAccountReadOnlyEvm } from '@tetherto/wdk-wallet-evm'

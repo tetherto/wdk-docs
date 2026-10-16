@@ -30,6 +30,9 @@ Requires peer dependency: `@buildonspark/spark-sdk`
 - **Zero fees** for Spark-to-Spark transactions
 - **Lightning Network** integration for invoices and payments
 - **Derivation errors**: In beta.26, HD-key derivation errors retain the `hdkey` field identifier without seed bytes; other validation-error context can still be sensitive.
+- **Send recovery (beta.27)**: With `syncAndRetry: true` (default: `false`), sends submit once and reconcile history after a failure. Identical concurrent sends from one wallet cannot be distinguished by that history match; serialize them and reconcile before retrying at the application layer.
+- **Lightning failures (beta.27)**: With `syncAndRetry: true` (default: `false`), only stale-leaf errors trigger an internal payment retry, reusing the transfer ID. The exported `LightningPaymentError.transferId` supports reconciliation on this path; do not blindly send a second payment after an uncertain result.
+- **Read client (beta.28)**: A manager shares one `SparkReadonlyClient` across its derived accounts and read-only conversions; every owned account retains its own signing wallet. Optional `client` reuses an existing read client as-is, including its network and logging settings. Import the runtime class from `@buildonspark/spark-sdk@0.10.0`; WDK exports its type only.
 
 ### Key Tree
 

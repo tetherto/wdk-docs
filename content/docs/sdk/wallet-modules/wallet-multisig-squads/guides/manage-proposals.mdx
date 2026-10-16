@@ -1,0 +1,93 @@
+---
+title: Manage Squads proposals
+description: Quote, propose, approve and execute Solana vault payments while tracking transaction and proposal status.
+docType: how-to
+schemaType: TechArticle
+---
+
+[Prepare a proposal](#prepare-a-proposal), [collect votes](#collect-votes), then [execute and confirm](#execute-and-confirm). See [Need Help](#need-help) for support.
+
+Prerequisites: a deployed multisig, [configured members](/sdk/wallet-modules/wallet-multisig-squads/guides/get-started), member funds for fees/rent, and vault funds for the payload. This example uses vault 0 and no coordinator. Review the recipient, cluster and amount on every signing device.
+
+## Prepare a Proposal
+
+1. Check the initiate permission for the proposing member.
+2. Quote the native transfer with [`quotePropose()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#quotepropose).
+3. After user review, create it with [`propose()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#propose).
+
+Prepare the exact request:
+
+```javascript title="Quote a vault payment"
+import { account, requiredEnv } from './squads-account.mjs'
+
+const tx = {
+  to: requiredEnv('RECIPIENT_ADDRESS'),
+  value: BigInt(requiredEnv('SEND_LAMPORTS'))
+}
+const quote = await account.quotePropose(tx)
+console.log('Proposal fee and rent in lamports:', quote.fee)
+```
+
+After confirming the request, submit the proposal:
+
+```javascript title="Create the reviewed proposal"
+const proposal = await account.propose(tx)
+console.log('Proposal ID:', proposal.proposalId)
+if (!proposal.transaction?.hash) throw new Error('No proposal transaction returned')
+const creation = await account.waitForTransaction(proposal.transaction.hash)
+if (!creation.success) throw new Error('Proposal creation failed')
+```
+
+This transaction creates a proposal; it does not necessarily execute the payment. The compact proposal result does not expose the stored payment instructions. Your review screen must retrieve and show the full stored payload independently before other members approve it.
+
+For a classic SPL token payment, use [`quoteTransfer()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#quotetransfer) and [`proposeTransfer()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#proposetransfer) with `token`, `recipient` and `amount` in mint base units. Confirm the mint and decimals from a primary source. Token-2022 is unsupported. The selected vault must also fund any recipient token-account creation.
+
+## Collect Votes
+
+From each approving member's process, use [`approveProposal()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#approveproposal) after independently reviewing the stored payload:
+
+```javascript title="Approve the reviewed proposal"
+const vote = await account.approveProposal(requiredEnv('PROPOSAL_ID'))
+if (vote.transaction?.hash) {
+  const receipt = await account.waitForTransaction(vote.transaction.hash)
+  if (!receipt.success) throw new Error('Approval transaction failed')
+}
+console.log(vote.confirmations, vote.pendingConfirmations, vote.threshold)
+```
+
+Without a coordinator, a vote is its own transaction and requires vote permission. [`rejectProposal()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#rejectproposal) records a rejection vote; it does not undo an already executed transaction. A [coordinator](/sdk/wallet-modules/wallet-multisig-squads/guides/coordinate-approvals) can instead return `transaction: undefined` while collecting signatures. Those pending signatures are not yet on-chain confirmations.
+
+Inspect [`getProposal()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#getproposal) for `statusName` and approved/rejected/cancelled member lists. Its generic `status` reports `pending` for every state except `Executed`, including rejected or cancelled states. Do not use that generic field alone to decide whether voting remains possible.
+
+## Execute and Confirm
+
+Use a member with execute permission. [`isReadyToExecute()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#isreadytoexecute) checks proposal state, supported transaction kind and elapsed time lock, but does not establish this member's permission or guarantee submission success.
+
+Submit and confirm the payment:
+
+```javascript title="Execute an approved proposal"
+const proposalId = requiredEnv('PROPOSAL_ID')
+if (!await account.isReadyToExecute(proposalId)) {
+  throw new Error('Proposal is not ready for this module to execute')
+}
+const submitted = await account.executeProposal(proposalId)
+const receipt = await account.waitForTransaction(submitted.hash)
+if (!receipt.success) throw new Error('Execution transaction failed')
+console.log(await account.getProposal(proposalId))
+```
+
+Verify both a successful receipt and the resulting proposal state before reporting completion. `quoteExecuteProposal()` returns only a base-fee estimate; it does not simulate the full payment or cap its cost.
+
+`autoExecute: true` can combine proposal/approval and execution in one transaction under the [documented conditions](/sdk/wallet-modules/wallet-multisig-squads/configuration#proposal-options). Otherwise it stays pending. Even when the returned status is `executed`, verify the transaction receipt. This package executes vault and supported configuration proposals, not batch proposals or payloads that require additional signers beyond the vault.
+
+## Next Steps
+
+- [Usage](/sdk/wallet-modules/wallet-multisig-squads/usage)
+- [Configuration](/sdk/wallet-modules/wallet-multisig-squads/configuration)
+- [API reference](/sdk/wallet-modules/wallet-multisig-squads/api-reference)
+
+---
+
+## Need Help?
+
+<SupportCards />
