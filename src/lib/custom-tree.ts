@@ -418,6 +418,11 @@ export const customTree: Node[] = [
     configuration('/sdk/sda-modules/sda-rhinofi/configuration'),
     apiReference('/sdk/sda-modules/sda-rhinofi/api-reference'),
   ]),
+  folder('Candide', '/sdk/sda-modules/sda-candide', 'Inbox', [
+    usage('/sdk/sda-modules/sda-candide/usage'),
+    configuration('/sdk/sda-modules/sda-candide/configuration'),
+    apiReference('/sdk/sda-modules/sda-candide/api-reference'),
+  ]),
 
   separator('Lending'),
   page('Lending modules', '/sdk/lending-modules', 'Banknote'),

@@ -75,6 +75,7 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 | Module | Provider | Ownership | Description | Documentation |
 |--------|----------|-----------|-------------|---------------|
 | [`@rhino.fi/wdk-protocol-sda-rhinofi`](https://www.npmjs.com/package/@rhino.fi/wdk-protocol-sda-rhinofi) | Rhino.fi | Community | Provider-issued deposit addresses with trusted-operator routing and deposit-history access | [Docs](/sdk/sda-modules/sda-rhinofi/) |
+| [`@candidelabs/wdk-protocol-sda-candide`](https://www.npmjs.com/package/@candidelabs/wdk-protocol-sda-candide/v/1.0.0-beta.1) | Candide | Community | Deterministic EVM forwarding addresses with expiring monitoring and recovery permissions | [Docs](/sdk/sda-modules/sda-candide/) |
 
 ## Pricing Modules
 
@@ -145,6 +146,7 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 | [`wdk-protocol-swidge-orchestra`](https://github.com/flashnetxyz/wdk-protocol-swidge-orchestra) | Swidge | Flashnet Orchestra BTC and stablecoin route integration | [Docs](/sdk/swidge-modules/swidge-orchestra/) |
 | [`@rhino.fi/wdk-protocol-swidge-rhinofi`](https://www.npmjs.com/package/@rhino.fi/wdk-protocol-swidge-rhinofi) | Swidge | Rhino.fi cross-chain route integration | [Docs](/sdk/swidge-modules/swidge-rhinofi/) |
 | [`@rhino.fi/wdk-protocol-sda-rhinofi`](https://www.npmjs.com/package/@rhino.fi/wdk-protocol-sda-rhinofi) | SDA | Provider-issued deposit addresses with trusted-operator routing and deposit-history access | [Docs](/sdk/sda-modules/sda-rhinofi/) |
+| [`@candidelabs/wdk-protocol-sda-candide`](https://www.npmjs.com/package/@candidelabs/wdk-protocol-sda-candide/v/1.0.0-beta.1) | SDA | Deterministic EVM forwarding addresses | [Docs](/sdk/sda-modules/sda-candide/) |
 | [`@symbiosis-finance/wdk-protocol-swidge-symbiosis`](https://www.npmjs.com/package/@symbiosis-finance/wdk-protocol-swidge-symbiosis) | Swidge | Same-chain and cross-chain exact-input routes through Symbiosis | [Docs](/sdk/swidge-modules/swidge-symbiosis/) |
 | [`@lifi/wdk-protocol-swidge-lifi`](https://www.npmjs.com/package/@lifi/wdk-protocol-swidge-lifi) | Swidge | LI.FI swap and bridge route integration | [Docs](/sdk/swidge-modules/swidge-lifi/) |
 | [`@0x/wdk-protocol-swidge-0x`](https://www.npmjs.com/package/@0x/wdk-protocol-swidge-0x) | Swidge | 0x same-chain EVM route integration | [Docs](/sdk/swidge-modules/swidge-0x/) |
