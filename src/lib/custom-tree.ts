@@ -101,6 +101,14 @@ export const customTree: Node[] = [
       configuration('/sdk/wallet-modules/wallet-evm-hinkal/configuration'),
       apiReference('/sdk/wallet-modules/wallet-evm-hinkal/api-reference'),
     ]),
+    folder('Shielded accounts (Bermuda)', '/sdk/wallet-modules/wallet-evm-bermuda', 'Shield', [
+      usage('/sdk/wallet-modules/wallet-evm-bermuda/usage'),
+      guides([
+        page('Deposit, Transfer, and Withdraw', '/sdk/wallet-modules/wallet-evm-bermuda/guides/shield-transfer-withdraw'),
+      ]),
+      configuration('/sdk/wallet-modules/wallet-evm-bermuda/configuration'),
+      apiReference('/sdk/wallet-modules/wallet-evm-bermuda/api-reference'),
+    ]),
     folder('Smart accounts (ERC-4337)', '/sdk/wallet-modules/wallet-evm-erc-4337', 'ShieldCheck', [
       usage('/sdk/wallet-modules/wallet-evm-erc-4337/usage'),
       guides([
@@ -409,6 +417,19 @@ export const customTree: Node[] = [
     ]),
     configuration('/sdk/bridge-modules/bridge-usdt0-evm/configuration'),
     apiReference('/sdk/bridge-modules/bridge-usdt0-evm/api-reference'),
+  ]),
+
+  separator('Smart Deposit Addresses'),
+  page('SDA modules', '/sdk/sda-modules', 'Inbox'),
+  folder('Rhino.fi', '/sdk/sda-modules/sda-rhinofi', 'Inbox', [
+    usage('/sdk/sda-modules/sda-rhinofi/usage'),
+    configuration('/sdk/sda-modules/sda-rhinofi/configuration'),
+    apiReference('/sdk/sda-modules/sda-rhinofi/api-reference'),
+  ]),
+  folder('Candide', '/sdk/sda-modules/sda-candide', 'Inbox', [
+    usage('/sdk/sda-modules/sda-candide/usage'),
+    configuration('/sdk/sda-modules/sda-candide/configuration'),
+    apiReference('/sdk/sda-modules/sda-candide/api-reference'),
   ]),
 
   separator('Lending'),
