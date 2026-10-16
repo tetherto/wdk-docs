@@ -516,7 +516,7 @@ export const customTree: Node[] = [
   folder('React Native Core', '/tools/react-native-core', 'Smartphone', [
     apiReference('/tools/react-native-core/api-reference'),
   ]),
-  folder('React Native Secure Storage', '/tools/react-native-secure-storage', 'LockKeyhole', [
+  folder('React Native Secure Storage (Deprecated)', '/tools/react-native-secure-storage', 'LockKeyhole', [
     configuration('/tools/react-native-secure-storage/configuration'),
     apiReference('/tools/react-native-secure-storage/api-reference'),
   ]),

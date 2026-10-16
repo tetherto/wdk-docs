@@ -5,6 +5,8 @@ docType: reference
 schemaType: APIReference
 ---
 
+This reference covers `@tetherto/wdk-react-native-core@1.0.0-beta.21`.
+
 | Export | Type | Description |
 |--------|------|-------------|
 | [`WdkAppProvider`](#wdkappprovider) | Component | Root provider for WDK initialization |
@@ -53,9 +55,7 @@ Must be placed at the root of your component tree. All hooks in this library req
 | `wdkConfigs` | [`WdkConfigs`](#wdkconfigs) | **required** | Network and protocol configurations |
 | `children` | `React.ReactNode` | **required** | Child components |
 
-<Callout type="warn">
-Starting in `v1.0.0-beta.17`, `enableAutoInitialization`, `currentUserId`, and `clearSensitiveDataOnBackground` are no longer provider props. `requireBiometrics`, which was removed earlier, is also not accepted by beta.21. The app owns wallet identity, background-locking behavior, and biometric or other authentication checks.
-</Callout>
+The app owns wallet identity, background-locking behavior, and biometric or other authentication checks.
 
 ### Example
 
@@ -119,12 +119,6 @@ The `state` property is a discriminated union on the `status` field:
 | `'LOCKED'` | `walletId?: string` | No wallet is unlocked; the optional ID is a hint when a specific wallet is being targeted |
 | `'READY'` | `walletId: string` | The active wallet identity matches the wallet loaded in the worklet |
 | `'ERROR'` | `error: Error` | Worklet initialization or a wallet lifecycle operation failed |
-
-#### Startup failure recovery
-
-<Callout type="warn">
-If beta.21 reports an `ERROR` before the worklet starts, do not rely on an in-process retry. An asynchronous startup failure can retrigger initialization while the singleton readiness promise remains rejected, and remounting `WdkAppProvider` in the same JavaScript runtime does not recreate that promise. Fix the reported bundle, configuration, or native startup cause, then restart the application so it creates a fresh JavaScript runtime before retrying.
-</Callout>
 
 ### Example
 
@@ -190,23 +184,17 @@ Hook for wallet lifecycle operations: create, restore, lock, unlock, delete, and
 | `clearTemporaryWallet` | `() => void` | Clear the temporary wallet session. If it is active, also send a one-way full WDK disposal request and clear shared initialization and address state |
 | `clearCache` | `() => void` | Clear cached balance data |
 
-Only one wallet can be active. Call and await `lock()` before creating or restoring a different identity. To select a wallet that is already stored, use `switchWallet()` or lock and then unlock that wallet explicitly. `createWallet()`, `restoreWallet()`, `deleteWallet()`, `lock()`, `unlock()`, `switchWallet()`, and `createTemporaryWallet()` use a fail-fast mutex, so an overlapping guarded call rejects instead of queuing. The mutex timeout does not cancel an already-running underlying operation. `switchWallet()` is serialized, but it is not transactional: it locks first and does not restore the previous wallet if the new unlock fails.
+Only one wallet can be active. Await `lock()` before creating or restoring a different identity. To select an existing wallet, use `switchWallet()` or lock and then unlock it explicitly. Switching locks the previous wallet first; a failed unlock leaves it locked.
 
-<Callout type="error">
-Beta.21 protects `deleteWallet()` with the lifecycle mutex; `clearTemporaryWallet()` remains unguarded. Clearing the active temporary wallet resets shared worklet lifecycle state and sends the same one-way full disposal request as `lock()`. Serialize `clearTemporaryWallet()` with lifecycle operations in the app to avoid racing a guarded call. Deleting even an inactive wallet deletes its secure-storage records and then resets shared worklet lifecycle state. A storage failure can leave a partial deletion and prevent the reset from running. Authenticate and explicitly confirm destructive deletion, verify another recovery path first, and verify the stored wallet inventory afterward.
-</Callout>
+`createWallet()`, `restoreWallet()`, `deleteWallet()`, `lock()`, `unlock()`, `switchWallet()`, and `createTemporaryWallet()` share a fail-fast mutex: overlapping calls reject instead of queuing, and a timeout does not cancel the operation. `clearTemporaryWallet()` is unguarded; serialize it with lifecycle calls because clearing an active temporary wallet also resets shared lifecycle state.
 
-<Callout type="error">
-When a wallet is active, `lock()` sends `hrpc.dispose({})` before clearing local state. The reset performed after a successful `deleteWallet()` also sends that request. HRPC disposal is one-way, so neither method waits for worklet cleanup or confirms that every copy was overwritten. The Bare worklet and IPC connection keep running. Treat these methods as application-state boundaries, not zeroization proof.
-</Callout>
+Core does not prompt for authentication. Authenticate in your app before lifecycle or key-access calls. When backgrounding, close the authenticated UI immediately. If an in-flight operation makes `lock()` reject, wait for it to settle and retry the lock before treating the SDK session as locked.
 
 <Callout type="warn">
-React Native Core beta.21 does not enforce biometrics before wallet lifecycle or key-access methods. Authenticate in the app before invoking these methods. For app-background locking, close the authenticated UI boundary immediately and retry `lock()` after any in-flight guarded operation settles; a mutex rejection does not queue or cancel that operation.
+Deleting even an inactive wallet resets shared lifecycle state after deleting its credentials. A storage failure can leave partial deletion and skip that reset. Check the target's remaining credentials before retrying; a rejected deletion does not mean the wallet was left intact.
 </Callout>
 
-<Callout type="warn">
-A rejected create, restore, unlock, or temporary-wallet initialization is not cleanup confirmation. If the worklet constructs WDK and a later wallet or protocol registration fails, it can retain a partial instance and its seed buffer. Beta.21 exposes no public worklet teardown method. Do not retry a sensitive flow in the same session on the assumption that rejection removed that state; restart the application or hosting environment so it creates a new worklet before retrying.
-</Callout>
+Locking an active wallet, successfully deleting a wallet, and clearing an active temporary wallet request full WDK disposal without waiting for worklet cleanup. The worklet and IPC keep running, so completion is not proof that every secret copy was erased. If wallet initialization fails, restart the app before retrying; a rejected initialization does not confirm cleanup.
 
 #### Advanced Crypto Methods
 
@@ -221,7 +209,7 @@ These methods provide lower-level access to wallet cryptographic operations. Mos
 | `getMnemonicFromEntropy` | `(encryptedEntropy: string, encryptionKey: string) => Promise<{ mnemonic: string }>` | Derive a mnemonic from base64 encrypted entropy and key strings |
 | `getSeedAndEntropyFromMnemonic` | `(mnemonic: string) => Promise<{ encryptionKey: string, encryptedSeedBuffer: string, encryptedEntropyBuffer: string }>` | Get encrypted seed and entropy from a mnemonic phrase; all returned strings are base64 |
 
-Beta.21 converts these base64 strings to native buffers only at its internal HRPC boundary and overwrites several owned temporary buffers after use. Public hook results and storage values remain immutable JavaScript strings, and conversion can create additional copies. Discard references promptly and do not treat method completion as proof that every copy was erased.
+Returned secret values are immutable JavaScript strings. Discard references when finished; method completion does not confirm that every copy was erased.
 
 ### Example
 
@@ -324,7 +312,10 @@ Extends `UseAccountResponse`:
 
 ### Example
 
+This example uses Ethereum mainnet. Configure the `ethereum` wallet for that chain and pass your intended, validated destination as `recipientAddress` before quoting or sending.
+
 ```tsx
+import { Button, Text, View } from 'react-native'
 import { useAccount, BaseAsset } from '@tetherto/wdk-react-native-core'
 
 const usdt = new BaseAsset({
@@ -337,7 +328,7 @@ const usdt = new BaseAsset({
   address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
 })
 
-function SendScreen() {
+function SendScreen({ recipientAddress }: { recipientAddress: string }) {
   const { address, isLoading, send, estimateFee } = useAccount({ network: 'ethereum', accountIndex: 0 })
 
   if (isLoading) return <Text>Deriving address...</Text>
@@ -345,7 +336,7 @@ function SendScreen() {
 
   const handleSend = async () => {
     const txParams = {
-      to: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+      to: recipientAddress,
       asset: usdt,
       amount: '1000000', // 1 USDt (6 decimals)
     }
@@ -409,9 +400,9 @@ Hook to call configured protocol modules through the active WDK worklet account.
 
 Returns `T`, a proxy for the protocol methods you type with the hook generic. Each method returns a promise from the worklet call.
 
-If no active account is available, protocol method calls log an error and return `undefined`. A successfully called protocol method can return `null` when that is its underlying contract; Core no longer rejects that result during JSON parsing.
+If no active account is available, protocol method calls log an error and return `undefined`. A successfully called protocol method can return `null` when that is its underlying contract.
 
-The `swidge` protocol type is available in `v1.0.0-beta.15`. It requires a non-empty `protocolName` and forwards calls through the matching Swidge protocol wrapper on the selected account.
+The `swidge` protocol type requires a non-empty `protocolName` and forwards calls through the matching Swidge protocol wrapper on the selected account.
 
 ### Example
 
@@ -453,10 +444,6 @@ function SwapQuoteScreen() {
 ## useModule
 
 Hook that creates a typed proxy for one named generic module in the active HRPC worklet. Every method access is forwarded through `ModuleService.callModule()`. The proxy also exposes `on(event, listener)` for module events.
-
-<Callout type="info">
-React Native Core `v1.0.0-beta.14` and later pin a Pear Worklet version with the HRPC methods required by this API.
-</Callout>
 
 ### Parameters
 
@@ -1009,49 +996,13 @@ Each credential method requires a wallet `identifier`. Normal identifiers are tr
 | `getAllEncrypted(identifier)` | `Promise<{ encryptedSeed: string \| null, encryptedEntropy: string \| null, encryptionKey: string \| null }>` | Read all three values |
 | `hasWallet(identifier)` | `Promise<boolean>` | Check for the encrypted-seed entry |
 | `deleteWallet(identifier)` | `Promise<void>` | Delete the three credential entries |
-| `cleanup()` | `void` | No operation in beta.21 |
+| `cleanup()` | `void` | No operation; does not delete stored credentials or clear returned values |
 
 All setter values and identifiers above are `string`. The storage layer does not encrypt an input seed for you or verify its encoding. Core's wallet hooks store base64 strings here; preserve that format when interoperating with them.
 
-#### setEncryptionKey
-
-`setEncryptionKey(key: string, identifier: string): Promise<void>` stores the supplied key using keychain `WHEN_UNLOCKED` accessibility. It does not prompt for biometric authentication.
-
-#### getEncryptionKey
-
-`getEncryptionKey(identifier: string): Promise<string | null>` returns the stored key, or `null` when no non-empty keychain value exists. Treat the result as secret material.
-
-#### setEncryptedSeed
-
-`setEncryptedSeed(encryptedSeed: string, identifier: string): Promise<void>` stores an already-encrypted seed. On iOS it uses `WHEN_UNLOCKED_THIS_DEVICE_ONLY`, which prevents migration of that entry to another device through an encrypted backup restore.
-
-#### getEncryptedSeed
-
-`getEncryptedSeed(identifier: string): Promise<string | null>` returns the stored encrypted seed, or `null` when absent.
-
-#### setEncryptedEntropy
-
-`setEncryptedEntropy(encryptedEntropy: string, identifier: string): Promise<void>` stores already-encrypted entropy with the same iOS device-only accessibility as the encrypted seed.
-
-#### getEncryptedEntropy
-
-`getEncryptedEntropy(identifier: string): Promise<string | null>` returns the stored encrypted entropy, or `null` when absent.
-
-#### getAllEncrypted
-
-`getAllEncrypted(identifier: string)` reads the three values concurrently and returns the nullable object shown in the table. The object includes the encryption key, so do not log it or treat it as an encrypted backup. These separate reads are not an atomic snapshot; serialize credential mutations in your app when consistency matters.
-
-#### hasWallet
-
-`hasWallet(identifier: string): Promise<boolean>` checks for the encrypted-seed entry without reading its value. `true` does not prove that the encryption key and entropy are present or that recovery will succeed.
-
-#### deleteWallet
-
-`deleteWallet(identifier: string): Promise<void>` deletes the encryption key and encrypted entropy first, then deletes the seed only if both preceding deletions succeed. Deletion is not atomic; failure can leave partial data. Authenticate, confirm the target identifier, and verify an independent recovery path before deletion. A rejected call is not deletion confirmation. This direct method does not reset Core's wallet state or dispose its worklet.
-
-#### cleanup
-
-`cleanup(): void` is a no-op. It does not delete keychain entries or clear copies of values returned to your app.
+- **Keychain accessibility:** encryption keys use `WHEN_UNLOCKED`. On iOS, encrypted seeds and entropy use `WHEN_UNLOCKED_THIS_DEVICE_ONLY`, so those entries do not transfer to another device through an encrypted backup restore.
+- **Reading credentials:** `getAllEncrypted()` includes the raw encryption key; do not log it or treat the object as an encrypted backup. Its separate reads are not an atomic snapshot, so serialize credential mutations when consistency matters. `hasWallet()` checks only for an encrypted-seed entry; it does not prove that the other credentials exist or recovery will succeed.
+- **Deleting credentials:** deletion is not atomic and can leave partial data. Check remaining credentials after a failure before retrying. Direct deletion does not update Core's wallet inventory or reset its worklet.
 
 ### Storage Errors
 
@@ -1069,7 +1020,7 @@ Errors expose `message`, `code`, and optional `cause`. The timeout rejects the c
 
 ### Legacy Storage Compatibility
 
-Core beta.21 replaces its dependency on `@tetherto/wdk-react-native-secure-storage`. Existing normalized per-identifier keychain names remain compatible. The new direct API requires an identifier and omits the predecessor's biometric/cache configuration options; do not forward those options to it.
+When migrating from `@tetherto/wdk-react-native-secure-storage`, existing normalized named-identifier slots are compatible with Core and need no credential copy. Update imports to Core and provide app-owned authentication. Core requires an explicit identifier and accepts no biometric or cache configuration options; do not forward the standalone package's options.
 
 `DEFAULT_IDENTIFIER` is the reserved string `__default__`. It selects the predecessor's bare keychain service names used when no identifier was supplied. Use it only to inspect or migrate that legacy slot, never as the identifier for a new user's wallet.
 
@@ -1085,7 +1036,7 @@ const storage = createSecureStorage()
 const hasLegacyWallet = await storage.hasWallet(DEFAULT_IDENTIFIER)
 ```
 
-For a migration, serialize writes, retain the same complete set of credentials, write under the new unique identifier, and verify the new wallet can be recovered before explicitly deleting the old slot. A timeout or partial write must stop the migration; do not delete the source merely because some destination entries exist. Migrating keychain values alone does not migrate Core's wallet inventory.
+Copy credentials only when moving the legacy default slot or intentionally changing identifiers. Serialize writes and preserve every available credential field. Verify recovery from the destination before deleting the source; a timeout or partial write must stop the migration. Moving keychain values does not populate Core's wallet inventory.
 
 ---
 
