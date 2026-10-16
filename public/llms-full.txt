@@ -27349,7 +27349,7 @@ Review exact methods, result fields, statuses, fee mapping, and typed errors.
 URL: https://docs.wdk.tether.io/sdk/wallet-modules
 Description: Explore WDK wallet modules for building self-custodial wallets across supported chains.
 
-The Wallet Development Kit (WDK) provides modules for multiple blockchain networks and account models. Shared interfaces provide common operations, while each module defines its supported methods, fee units, and transaction flow. Multisig wallets use proposals and approvals instead of the standard direct-send flow.
+The Wallet Development Kit (WDK) provides modules for multiple blockchain networks and account models. Shared interfaces provide common operations, while each module defines its supported methods, fee units, and transaction flow. Multisig wallets use proposals and approvals instead of the standard direct-send flow. Bermuda also exposes a separate shielded-account class.
 
 ## Shared Fee Limits
 
@@ -27359,6 +27359,8 @@ Wallet modules can expose fee caps through their configuration objects. Use the 
 |--------|------------|-------------|
 | `transferMaxFee` | `transfer()` | Caps token transfer fees in the module's base fee unit. |
 | `transactionMaxFee` | `sendTransaction()` and `signTransaction()` | Caps native transaction send/sign flows separately from token transfers when the module supports that base wallet option. |
+
+[Bermuda shielded accounts](/sdk/wallet-modules/wallet-evm-bermuda/configuration#fee-boundaries) use separate `transfer()` and `withdraw()` operations. These EVM wallet fee caps do not cover their relay or protocol token fees.
 
 ## Shared Signer Interface
 
@@ -27425,6 +27427,7 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 |--------|------------|--------|---------------|
 | [`@tetherto/wdk-wallet-evm`](https://github.com/tetherto/wdk-wallet-evm) | EVM | ✅ Ready | [Documentation](/sdk/wallet-modules/wallet-evm) |
 | [`@hinkal/wdk-wallet-evm-hinkal`](https://www.npmjs.com/package/@hinkal/wdk-wallet-evm-hinkal) | EVM, Hinkal private sends | Community, seed-only, Node bundling required | [Documentation](/sdk/wallet-modules/wallet-evm-hinkal) |
+| [`@bermuda/wdk-wallet-evm-bermuda`](https://github.com/BermudaBay/wdk-wallet-evm-bermuda) | Plasma testnet, Bermuda shielded accounts | Community beta; GitHub installation | [Documentation](/sdk/wallet-modules/wallet-evm-bermuda) |
 | [`@tetherto/wdk-wallet-ton`](https://github.com/tetherto/wdk-wallet-ton) | TON | ✅ Ready | [Documentation](/sdk/wallet-modules/wallet-ton) |
 | [`@tetherto/wdk-wallet-btc`](https://github.com/tetherto/wdk-wallet-btc) | Bitcoin | ✅ Ready | [Documentation](/sdk/wallet-modules/wallet-btc) |
 | [`@tetherto/wdk-wallet-spark`](https://github.com/tetherto/wdk-wallet-spark) | Spark | ✅ Ready | [Documentation](/sdk/wallet-modules/wallet-spark) |
@@ -32454,6 +32457,1018 @@ Review classes, methods, config types, and return values.
 ***
 
 ### Need Help?
+
+<SupportCards />
+
+***
+
+## Wallet EVM Bermuda Overview
+URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm-bermuda
+Description: Create Bermuda shielded accounts alongside public EVM accounts on Plasma testnet.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Use [`@bermuda/wdk-wallet-evm-bermuda`](https://github.com/BermudaBay/wdk-wallet-evm-bermuda) to derive Bermuda shielded accounts from a WDK EVM wallet. A shielded account can deposit supported tokens into a Bermuda pool, transfer shielded balances to another Bermuda account, and withdraw to a public EVM address.
+
+<Callout type="warn">
+The module is in beta and supports **Plasma testnet**, chain ID `9746`. These pages use GitHub revision `59c711af9d5c348db740a37f19d96414fc6750f6`, whose manifest declares version `0.3.2`, with Bermuda SDK `0.3.2`. Installation uses the GitHub repository, rather than an npm registry release. Follow the [pinned installation](/sdk/wallet-modules/wallet-evm-bermuda/usage#install).
+</Callout>
+
+## Upgrading from 0.1.x
+
+<Callout type="warn">
+Version 0.3.2 uses a new pool and a new shielded address format. Shielded balances from 0.1.x stay in the previous pool; use the matching 0.1.x installation to withdraw them before upgrading. The same spending-key source does not preserve the old full Bermuda address, and changing the package version does not migrate funds.
+</Callout>
+
+The current address is `0x` followed by 2,496 hex characters. Replace stored recipient addresses, change transaction `note` fields to `memo`, and review native versus wrapped deposits and fee accounting. Withdrawal now defaults to targeting the requested recipient amount, with fees added to the sender's spend. See the [maintainer's migration guidance](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/blob/59c711af9d5c348db740a37f19d96414fc6750f6/README.md#-upgrading-from-01x) and the updated [operations guide](/sdk/wallet-modules/wallet-evm-bermuda/guides/shield-transfer-withdraw).
+
+## Choose This Module
+
+Use Bermuda when your application needs a separate shielded account on Plasma testnet and can handle token allowances, proof generation, SDK services, and confirmation after submission.
+
+For ordinary EVM transfers, use [Standard EVM](/sdk/wallet-modules/wallet-evm). Deposits are sent from a public EVM account, and withdrawals expose a public EVM recipient. Shielded-account support does not establish anonymity, production readiness, or availability on other EVM chains.
+
+## Two Account Roles
+
+`WalletManagerBermuda` extends the EVM wallet manager and adds `getBermudaAccount()`. Its ordinary account getters continue to return public EVM accounts.
+
+| Account | Retrieve with | Use for |
+|---|---|---|
+| Public EVM account | `await wallet.getAccount(0)` | Public balances, token allowances, ordinary EVM transactions, and transaction confirmation. This account funds Bermuda deposits. |
+| Bermuda shielded account | `await wallet.getBermudaAccount(0, 0)` | A separate Bermuda address, shielded token balances, deposits, shielded transfers, and withdrawals. |
+
+The Bermuda account is not an EVM account and does not implement the full generic WDK account interface. Its `getAddress()` returns a string synchronously. Use a Bermuda address for a shielded transfer and an EVM address for a withdrawal.
+
+## Account Capabilities
+
+| Task | Method |
+|---|---|
+| Read the shielded address | [`getAddress()`](/sdk/wallet-modules/wallet-evm-bermuda/api-reference#getaddress-and-address) |
+| Read one or several shielded token balances | [`getTokenBalance()`](/sdk/wallet-modules/wallet-evm-bermuda/api-reference#gettokenbalance-and-gettokenbalances), [`getTokenBalances()`](/sdk/wallet-modules/wallet-evm-bermuda/api-reference#gettokenbalance-and-gettokenbalances) |
+| Deposit from the public EVM account | [`deposit()`](/sdk/wallet-modules/wallet-evm-bermuda/api-reference#deposit) |
+| Send shielded funds to another Bermuda account | [`transfer()`](/sdk/wallet-modules/wallet-evm-bermuda/api-reference#transfer) |
+| Withdraw to a public EVM address | [`withdraw()`](/sdk/wallet-modules/wallet-evm-bermuda/api-reference#withdraw) |
+
+All three fund-moving methods return a transaction hash. A hash is not a successful receipt. Confirm the transaction and reconcile the relevant balances before displaying completion or retrying an interrupted operation.
+
+## Integration Requirements
+
+- An application-managed BIP-39 mnemonic or seed bytes. The examples use a seed-backed manager; do not infer shielded support for hardware or custom signers.
+- A Plasma testnet RPC endpoint, a supported testnet token, and the matching Bermuda pool. The [operations guide](/sdk/wallet-modules/wallet-evm-bermuda/guides/shield-transfer-withdraw) shows public-chain checks for the USD₮0 testnet example.
+- A Node.js or Bare runtime with network access and writable storage for the prover's downloaded setup data. WDK worklet bundles are unsupported. See [runtime setup](/sdk/wallet-modules/wallet-evm-bermuda/usage#runtime-requirements).
+- Access to the Bermuda SDK's relayer, chain-state, policy/compliance, and proof-artifact services. The manager forwards the wallet RPC to the SDK by default; a nested `bermuda` configuration can override SDK routing. RPC configuration alone does not replace the other service endpoints.
+- Native gas for public EVM transactions and any required token allowance covering the deposit and its applicable protocol and lifetime fees. `transactionMaxFee` rejects an EVM operation when its estimated network fee exceeds the configured threshold; it does not bind final network fees or cap protocol token fees. EVM fee caps do not bound shielded transfer or withdrawal fees. See [Configuration](/sdk/wallet-modules/wallet-evm-bermuda/configuration#fee-boundaries).
+
+These pages use the standalone manager. Directly retrieved Bermuda accounts do not automatically pass through WDK core's registered policies or middleware. The SDK's separate issuer-policy checks are part of its own proof and service flow; they are not a substitute for application authorization.
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/wallet-modules/wallet-evm-bermuda/usage">
+Install the pinned source and create public and shielded accounts.
+</Card>
+<Card title="Shield, Transfer, and Withdraw" href="/sdk/wallet-modules/wallet-evm-bermuda/guides/shield-transfer-withdraw">
+Check the testnet deployment, handle allowances, and confirm each operation.
+</Card>
+<Card title="Configuration" href="/sdk/wallet-modules/wallet-evm-bermuda/configuration">
+Review providers, cache storage, fee boundaries, and cleanup.
+</Card>
+<Card title="API Reference" href="/sdk/wallet-modules/wallet-evm-bermuda/api-reference">
+Review imports, signatures, options, and return values.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
+
+***
+
+## Wallet EVM Bermuda API Reference
+URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm-bermuda/api-reference
+Description: Reference for Bermuda manager and shielded account methods, parameters, options, results, and errors.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+This reference describes [GitHub revision `59c711a`](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/tree/59c711af9d5c348db740a37f19d96414fc6750f6) of `@bermuda/wdk-wallet-evm-bermuda`, whose manifest declares `0.3.2` and uses SDK `0.3.2`. The examples pin both WDK wallet peers to `1.0.0-beta.17` and `ethers` to `6.17.0`. Follow [Usage](/sdk/wallet-modules/wallet-evm-bermuda/usage) for the GitHub installation. The maintainer-supported network is **Plasma testnet**, chain ID **9746**.
+
+## Exports
+
+Import runtime classes and the native-deposit sentinel from the package root. The default and named `WalletManagerBermuda` exports refer to the same class:
+
+```javascript
+import WalletManagerBermuda, {
+  WalletAccountBermuda,
+  WalletAccountEvm,
+  WalletAccountReadOnlyEvm,
+  NATIVE_DEPOSIT_TOKEN
+} from '@bermuda/wdk-wallet-evm-bermuda'
+
+import {
+  ProviderRequiredError,
+  ValueError,
+  WdkError,
+  TransactionError,
+  TransactionErrorReason
+} from '@tetherto/wdk-wallet'
+```
+
+The wrapper re-exports the two EVM account classes from its peer. It does not re-export WDK errors or the SDK initializer. `WalletAccountBermuda` is a separate class with no generic EVM signing or read-only conversion methods. `NATIVE_DEPOSIT_TOKEN` is the zero-address sentinel for depositing native currency; it is not the address used to query the resulting wrapped-token balance.
+
+## WalletManagerBermuda
+
+Extends `WalletManagerEvm`. Its declared constructor accepts a BIP-39 mnemonic string or seed bytes, and optional [configuration](/sdk/wallet-modules/wallet-evm-bermuda/configuration):
+
+```typescript
+new WalletManagerBermuda(seed: string | Uint8Array, config?: BermudaWalletConfig)
+```
+
+`BermudaWalletConfig` is now a root type export. It combines EVM options with cache fields and the nested `bermuda` SDK configuration. These examples use seed-backed derivation: the shielded flow reads the derived EVM account's private key. Do not infer shielded compatibility for a hardware or arbitrary custom signer.
+
+### Methods and Properties
+
+| Member | Result | Purpose |
+|---|---|---|
+| `getBermudaAccount(bip44AccountIndex?, bermudaAccountIndex?)` | `Promise<WalletAccountBermuda>` | Retrieve a separate shielded account. Both indices default to `0`. |
+| `getAccount(index?, options?)` | `Promise<WalletAccountEvm>` | Inherited ordinary EVM account retrieval. |
+| `getAccountByPath(path, options?)` | `Promise<WalletAccountEvm>` | Inherited ordinary EVM account retrieval by relative path. |
+| `getFeeRates()` | `Promise<FeeRates>` | EVM network rates with `normal` and `fast` bigint values in wei per gas. |
+| `disposed` | `boolean` | Whether manager cleanup has completed. |
+| `dispose()` | `void` | Initiate cleanup of cached accounts and signers. |
+
+Inherited EVM retrieval retains the pinned peer's signatures, including named signer options for ordinary EVM accounts. `getBermudaAccount()` has no signer-name parameter or account-options object.
+
+### getBermudaAccount
+
+```typescript
+getBermudaAccount(
+  bip44AccountIndex?: number,
+  bermudaAccountIndex?: number
+): Promise<WalletAccountBermuda>
+```
+
+The first index selects the ordinary EVM account at relative path `0'/0/index` beneath `m/44'/60'/`. The second selects a Bermuda subaccount derived from its private key. Both inputs must be nonnegative integers.
+
+The method requires a provider. It detects the chain, forwards the wallet RPC configuration to the SDK by default, applies nested `bermuda` overrides, and rejects a missing SDK pool configuration with `ValueError`. See [SDK configuration precedence](/sdk/wallet-modules/wallet-evm-bermuda/configuration#bermuda-sdk-services). A configured pool does not prove that its contracts and services are available.
+
+Repeated calls with the same indices return the same live cached account; concurrent calls share derivation. A disposed cached account is replaced on the next request. The 0.3.2 address format and pool differ from 0.1.x, so matching indices do not migrate old shielded balances. Review the [module overview](/sdk/wallet-modules/wallet-evm-bermuda) before upgrading.
+
+### dispose (manager)
+
+`dispose(): void` initiates cleanup. Normal completion disposes cached ordinary EVM and Bermuda accounts, clears the shielded account cache, and disposes the manager-owned default signer. Under the pinned WDK wallet `1.0.0-beta.17`, base cleanup also disposes registered signers and a caller-supplied default signer. A thrown cleanup error can prevent later cleanup steps and the final `disposed` flag from being reached. After successful completion, repeated disposal does nothing.
+
+`getBermudaAccount()` rejects with `WdkError` after manager disposal. If cleanup occurs during derivation, the derived shielded account is cleaned up and its request rejects. This does not establish cancellation of submitted transactions; finish outstanding work before cleanup.
+
+## WalletAccountBermuda
+
+Normally obtain this account with `await wallet.getBermudaAccount()`. Its public constructor accepts an initialized SDK, a public EVM account, and a Bermuda key pair:
+
+```typescript
+new WalletAccountBermuda(
+  bermudaSdk: BermudaSdk,
+  ethereumWallet: WalletAccountEvm,
+  bermudaKeyPair: BermudaKeyPair
+)
+```
+
+The constructor stores the references without deriving keys or validating matching network configuration. Prefer manager-created accounts for the documented seed-backed setup. A custom SDK integration needs separate provider, signer and lifecycle verification.
+
+### Methods and Properties
+
+| Member | Result | Purpose |
+|---|---|---|
+| `getAddress()` | `string` | Synchronous Bermuda address. |
+| `address` | `string` | The same Bermuda address. |
+| `getTokenBalance(tokenAddress)` | `Promise<bigint>` | Shielded token value in underlying base units. |
+| `getTokenBalances(tokenAddresses)` | `Promise<Record<string, bigint>>` | Shielded values keyed by lowercase token address. |
+| `deposit(params, options?)` | `Promise<string>` | Hash of a deposit submitted by the master EVM account. |
+| `transfer(params, options?)` | `Promise<string>` | Hash returned by the SDK relay. |
+| `withdraw(params, options?)` | `Promise<string>` | Hash returned by the SDK relay. |
+| `disposed` | `boolean` | Whether this account's cleanup has completed. |
+| `dispose()` | `void` | Initiate cleanup of stored Bermuda key fields. |
+
+### getAddress and address
+
+`getAddress(): string` and `address: string` are synchronous. The 0.3.2 address is `0x` followed by **2,496 hex characters**, representing an owner commitment and an X-Wing viewing public key. It is not a 20-byte EVM recipient address. Ordinary EVM account `getAddress()` and manager retrieval remain asynchronous.
+
+Addresses from 0.1.x have a different format. Do not reuse them as new-deployment recipients or assume old pool balances are visible through the new account.
+
+### getTokenBalance and getTokenBalances
+
+```typescript
+getTokenBalance(tokenAddress: string): Promise<bigint>
+getTokenBalances(tokenAddresses: string[]): Promise<Record<string, bigint>>
+```
+
+Both methods use SDK balance discovery. They lowercase inputs and return `0n` for an absent token result; multi-token results use lowercase address keys. An empty token array returns `{}`. These are shielded values, distinct from public ERC-20 balances.
+
+Tokens can occupy idle and vaulted classes. Vaulted holdings count at their value in the underlying token, rather than as raw share counts. Deposits use the vaulted class while it accepts them unless a class is pinned. The SDK can reuse chain reads for a block time, so a balance read just after confirmation can still predate the transaction. A failed or stale read is not a reason to repeat the write.
+
+### Operation Parameters
+
+Unless an operation explicitly selects share units, amounts use underlying token base units. The wrapper accepts `number | bigint` and converts supplied top-level and recipient amounts with `BigInt()`. Prefer **`bigint`** for exact integer arithmetic: fractional numbers fail conversion, and unsafe numbers can already have lost precision.
+
+The wrapper copies operation objects and recipient objects before adding its signer, spender or default destination. It does not add those fields to the caller's parameter object. Use `memo`, replacing the 0.1.x `note` field.
+
+#### Deposit Parameters
+
+| Field | Type | Required | Behavior |
+|---|---|---|---|
+| `token` | `string` | Yes | Supported ERC-20 address, or `NATIVE_DEPOSIT_TOKEN` for native currency. |
+| `amount` | `number` or `bigint` | Single recipient | Requested underlying amount; optional when using `recipients`. |
+| `to` | `string` | No | Bermuda recipient. Defaults to this account when no recipients array is supplied. |
+| `memo` | `string` | No | Optional payment memo. |
+| `recipients` | `{ to: string; amount: number \| bigint; memo?: string }[]` | No | Batch recipients, including wrapped-token batches without a top-level amount. |
+
+#### Transfer Parameters
+
+| Field | Type | Required | Behavior |
+|---|---|---|---|
+| `token` | `string` | Yes | Shielded token contract address. |
+| `to` | `string` | Single recipient | Full Bermuda destination; optional for a recipients array. |
+| `amount` | `number` or `bigint` | Single recipient | Requested underlying amount, or selected share count. |
+| `memo` | `string` | No | Optional payment memo. |
+| `recipients` | `{ to: string; amount: number \| bigint; memo?: string }[]` | No | Batch Bermuda recipients. |
+
+#### Withdrawal Parameters
+
+| Field | Type | Required | Behavior |
+|---|---|---|---|
+| `token` | `string` | Yes | Shielded token contract address. |
+| `amount` | `number` or `bigint` | Yes | Recipient target by default; false exact-output mode selects total shielded spend. |
+| `to` | `string` | No | Public EVM recipient. Defaults to the master EVM address. |
+
+SDK-only parameter features do not extend these wrapper declarations. For example, the wrapper's public withdrawal type does not declare a recipients array.
+
+### deposit
+
+```typescript
+deposit(
+  params: BermudaDepositParams,
+  options?: BermudaDepositOptions
+): Promise<string>
+```
+
+Builds a deposit payload using the master EVM signer and submits it through that EVM account. For a self deposit, the wrapper copies options and sets `topup` to its own key pair, replacing a supplied value; this also applies when a recipients array contains this account.
+
+By default, `exactOutputAmounts` is `true`: the requested underlying output is the target, with protocol deposit fees and any applicable one-off lifetime fee added to the depositor's spend. The selected class determines the UTXO/share representation. A single-recipient deposit can set the flag to `false` to make `amount` a total-spend budget. The SDK fits an output within it; rounding can leave one base unit unspent. This is separate from gas and from confirmation of settlement.
+
+Before any approval or deposit transaction is sent, the wrapper checks the master public account's token or native balance against the built payload's total spend. Equality is accepted. Insufficiency raises `TransactionError` with reason `INSUFFICIENT_BALANCE`; the check does not reserve funds or include network gas.
+
+- **WXPL deposit:** the pool pulls actual WXPL. If necessary, the wrapper approves the full payload spend, waits for that approval and uses the next nonce for the deposit. Funding only native XPL does not fund this token deposit.
+- **Native XPL deposit:** use `NATIVE_DEPOSIT_TOKEN`. The pool wraps native value supplied by the SDK payload, including applicable fees. Query the resulting shielded balance with the wrapped-token address.
+- **Other ERC-20 deposits:** need sufficient allowance or a supported permit. USD₮0 on the documented testnet lacks that permit; approval must cover amount and applicable deposit fees. See the [operations prerequisites](/sdk/wallet-modules/wallet-evm-bermuda/guides/shield-transfer-withdraw#prerequisites).
+
+The wrapper can reprove a payload when its proof period becomes stale before submission. A prior approval may already exist if later work fails. This behavior does not provide an application-level write retry or a binding fee quote. `transactionMaxFee` checks estimated EVM network costs separately from these token fees.
+
+### transfer
+
+```typescript
+transfer(
+  params: BermudaTransferParams,
+  options?: BermudaTransferOptions
+): Promise<string>
+```
+
+Adds the shielded spender to its copied params, builds the SDK payload and submits it through the relay. This transfers between Bermuda addresses, distinct from the public EVM account's `transfer()`.
+
+Sender spend includes recipient outputs, any relay fee and any protocol transfer fee. `exactOutputAmounts` is ignored. With default underlying units, vaulted recipient amounts are converted to shares at the class index and rounded to cover at least the requested value; they are not necessarily identical raw share counts. Neither EVM network-fee threshold constrains these token fees.
+
+### withdraw
+
+```typescript
+withdraw(
+  params: BermudaWithdrawParams,
+  options?: BermudaWithdrawOptions
+): Promise<string>
+```
+
+Adds the spender and an omitted master-account destination to copied params, builds the SDK payload and submits through the relay. To select another public recipient, supply `to` explicitly before reviewing the operation.
+
+The default is **`exactOutputAmounts: true`**: `amount` names the recipient target, with protocol and relay fees added to the sender's spend. With `false`, amount is total shielded spend and the recipient gets the remainder after fees. Vaulted classes and explicit share units affect amount conversion. Neither EVM network-fee threshold caps these token costs; a returned hash does not confirm recipient receipt.
+
+### Operation Options
+
+The wrapper forwards options to the SDK, with the self-deposit `topup` override above. These are the principal options for the documented flows:
+
+| Operation | Option | Type | Behavior |
+|---|---|---|---|
+| Deposit | `topup` | `BermudaKeyPair` | May top up a recipient UTXO; wrapper supplies its key for a self deposit. |
+| Deposit | `deadline` | `number` or `bigint` | Absolute UNIX seconds for a conditional permit; default is approximately seven minutes from the latest block. |
+| Deposit | `exactOutputAmounts` | `boolean` | Defaults to `true`. False budgets gross spend for one recipient, subject to fee rounding. |
+| Deposit | `depositClass` | `'idle'` or `'vaulted'` | Pins a class; a different compliance decision rejects instead of choosing another class. |
+| Deposit | `waitUntilValid` | `boolean` | Defaults to `true`; SDK waits for the signed deposit window before returning its payload. |
+| Deposit | `validityPollMs` | `number` | Poll interval while waiting for that window; defaults to `1000` ms. |
+| Transfer | `relayer` | `string` | Full Bermuda fee-recipient address, supplied with a positive relayFee. A 20-byte EVM address is not a shielded fee recipient. |
+| Transfer | `relayFee` | `bigint` | Additional fee in underlying token units by default; default `0n`. |
+| Transfer | `exactOutputAmounts` | `boolean` | Ignored; recipient amounts remain output targets in the selected units. |
+| Transfer | `deadline` | `number` or `bigint` | Absolute UNIX spend deadline in seconds; omission uses the SDK's no-deadline sentinel. |
+| Transfer | `units` | `'shares'` | Interprets recipient amounts and relayFee as vaulted-class share counts. |
+| Withdrawal | `unwrap` | `boolean` | Requests native output for the configured wrapped-native token. |
+| Withdrawal | `relayer` | `string` | Public EVM fee recipient; explicit nonzero recipient needed for a fee-bearing multi-step withdrawal. |
+| Withdrawal | `relayFee` | `bigint` | Fee in underlying token units by default; default `0n`. |
+| Withdrawal | `exactOutputAmounts` | `boolean` | Defaults to `true`; false selects gross shielded spend. |
+| Withdrawal | `deadline` | `number` or `bigint` | Absolute UNIX spend deadline in seconds; omission uses the SDK's no-deadline sentinel. |
+| Withdrawal | `units` | `'shares'` | Interprets amount and relayFee as vaulted-class share counts. |
+
+Operation `relayer` identifies a fee recipient, rather than a service URL. Configure the SDK's relay service separately with `bermuda.relayer`. The SDK option aliases include additional advanced integration fields; their presence is not a wrapper workflow example. In particular, wrapper deposit self-submits and does not become a relay submission merely by passing the SDK's relayed-deposit options.
+
+### Transaction Confirmation
+
+All three methods return a **transaction hash string**, rather than `{ hash, fee }` or a receipt. Track it through the matching public EVM account:
+
+```javascript
+// ethereumAccount is the master public EVM account; hash is an operation result.
+const result = await ethereumAccount.waitForTransaction(hash)
+if (result.success !== true || !['confirmed', 'final'].includes(result.finality)) {
+  throw new Error(`Transaction did not confirm successfully: ${hash}`)
+}
+```
+
+The pinned peers return normalized `finality` and `success`. Record the hash before waiting and reconcile transaction state before another submission. Balance discovery may remain stale after confirmation, and a later failure does not reverse an approval, deposit or relay submission.
+
+### dispose (account)
+
+`dispose(): void` initiates cleanup. Normal completion sets the stored private scalar to `null`, zeroes stored X-Wing secret bytes and marks the account disposed. The master EVM account is left untouched. Repeated disposal after completion does nothing.
+
+Cleanup does not erase every JavaScript-held copy, delete caches, close providers or cancel transactions. The address remains accessible and other methods do not all have a disposed guard. Stop using the account after cleanup and observe the [storage and lifecycle limits](/sdk/wallet-modules/wallet-evm-bermuda/configuration#resource-lifecycle).
+
+## TypeScript Types
+
+Runtime imports appear above. Import parameter, option and configuration types separately:
+
+```typescript
+import type {
+  BermudaDepositParams,
+  BermudaTransferParams,
+  BermudaWithdrawParams,
+  BermudaDepositOptions,
+  BermudaTransferOptions,
+  BermudaWithdrawOptions,
+  BermudaWalletConfig,
+  BermudaSdkConfig
+} from '@bermuda/wdk-wallet-evm-bermuda'
+```
+
+`BermudaSdk`, `BermudaKeyPair`, `EvmWalletConfig`, and `FeeRates` are also root type exports. `BermudaConfig` is an internal declaration type, not a root export. The SDK input and option types describe more features than the basic examples; use the selected source and SDK dependency together when extending a flow.
+
+## Errors
+
+Import WDK errors from `@tetherto/wdk-wallet` in the same dependency graph as the module:
+
+| Error | Runtime guard |
+|---|---|
+| `ValueError` | Invalid mnemonic string; negative/noninteger shielded index; an unmapped chain; SDK configuration has no pool. |
+| `ProviderRequiredError` | No provider when retrieving a Bermuda account or requesting fee rates. |
+| `WdkError` | Shielded retrieval after manager disposal, including disposal during derivation. |
+| `TransactionError` | Deposit's public token/native balance is below payload total spend before any send; `reason` is `TransactionErrorReason.INSUFFICIENT_BALANCE`. Network gas is outside this check. |
+
+Fractional numeric amounts can throw during `BigInt` conversion. SDK validity-window/class/policy, RPC, proof, balance, allowance and relay errors can propagate independently. Catching only `WdkError` does not handle every failure. A deposit rejection does not establish that an earlier approval or submission was reversed.
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/wallet-modules/wallet-evm-bermuda/usage">
+Follow the GitHub installation and public-to-shielded account examples.
+</Card>
+<Card title="Configuration" href="/sdk/wallet-modules/wallet-evm-bermuda/configuration">
+Review provider precedence, storage, fee boundaries, and cleanup limits.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
+
+***
+
+## Wallet EVM Bermuda Configuration
+URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm-bermuda/configuration
+Description: Configure Bermuda providers, SDK overrides, storage, fee boundaries, and runtime requirements.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Configure `WalletManagerBermuda` for public EVM accounts and the separate shielded accounts returned by `getBermudaAccount()`. These pages describe [GitHub revision `59c711a`](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/tree/59c711af9d5c348db740a37f19d96414fc6750f6), whose manifest declares `0.3.2` and uses Bermuda SDK `0.3.2`. The examples pin both WDK wallet peers to `1.0.0-beta.17` and `ethers` to `6.17.0`; these pins do not establish identical behavior across the full declared peer range. Follow [Usage](/sdk/wallet-modules/wallet-evm-bermuda/usage) for the GitHub installation.
+
+The maintainer-supported network is **Plasma testnet**, chain ID **9746**. The 0.3.2 SDK uses a new pool and address format; old shielded balances do not carry over. See the [module overview](/sdk/wallet-modules/wallet-evm-bermuda) before migrating an existing integration.
+
+## Provider Configuration
+
+The manager accepts an RPC URL, an EIP-1193 provider, or an array of either. A provider is required to retrieve a Bermuda account and obtain fee rates. Public EVM accounts can be derived without a provider; their network operations require one.
+
+```javascript
+import WalletManagerBermuda from '@bermuda/wdk-wallet-evm-bermuda'
+
+// Generate a new seed for this example. Persist it through your secure wallet setup.
+const seedPhrase = WalletManagerBermuda.getRandomSeedPhrase()
+const wallet = new WalletManagerBermuda(seedPhrase, {
+  provider: 'https://testnet-rpc.plasma.to',
+  transactionMaxFee: 100_000_000_000_000n,
+  transferMaxFee: 100_000_000_000_000n
+})
+
+// Finish account operations before initiating cleanup.
+wallet.dispose()
+```
+
+| Field | Type | Default | Effect in the pinned peers |
+|---|---|---|---|
+| `provider` | `string`, `Eip1193Provider`, or an array of either | None | Connects public EVM accounts and supplies the chain ID used to select the SDK configuration. An empty array leaves the manager without a provider. Also supplies the SDK's RPC by default. |
+| `retries` | `number` | `3` | Additional attempts after the first failure when the EVM wallet uses a provider array. |
+| `chainId` | `number` | Provider detection | Pins the network for public EVM account URL providers. The manager still detects its own provider's network when selecting the SDK configuration. |
+| `transactionMaxFee` | `number` or `bigint` | None | Estimated EVM network-fee threshold, in wei, for transaction sending and provider-connected signing. Includes deposits and the wrapper's wrapped-token approvals. |
+| `transferMaxFee` | `number` or `bigint` | None | Estimated EVM network-fee threshold, in wei, for ordinary EVM token transfers. |
+| `bermuda` | `BermudaSdkConfig` | Chain preset plus forwarded wallet settings | SDK input options applied last, including RPC overrides and `depositClass`. |
+
+Keep every endpoint in a provider array on Plasma testnet. If you set `chainId`, independently verify the endpoint's actual network: the public account URL provider trusts the configured value, while the manager detects its chain separately. Omitting `chainId` lets both detect the network.
+
+## Bermuda SDK Services
+
+By default, the SDK reads the chain through the wallet's provider configuration:
+
+- A URL is forwarded as a URL; an all-URL array is forwarded as SDK `rpcUrls`.
+- The SDK builds its own pool of nodes from those URLs, splitting overly wide log queries and spacing requests.
+- An EIP-1193 provider, or a mixed provider array, is forwarded as the wallet's wrapped provider. It must handle the SDK's log queries; it does not gain the SDK URL pool's query-splitting behavior.
+
+Use `bermuda` to override SDK settings. An explicit `bermuda.provider` or `bermuda.rpcUrls` replaces default RPC forwarding. The nested options are applied after the chain ID and top-level cache settings:
+
+```javascript
+const config = {
+  provider: walletProvider, // Your EIP-1193 provider on Plasma testnet.
+  bermuda: {
+    rpcUrls: ['https://testnet-rpc.plasma.to'],
+    depositClass: 'idle'
+  }
+}
+```
+
+Here `walletProvider` is supplied by the application. Public EVM transactions use it; SDK chain reads use the explicit URLs. Keep both on the same intended deployment. `depositClass: 'idle'` pins that class rather than following the default class selection; a compliance decision for another class can reject the deposit.
+
+The SDK also depends on its configured relay, chain-state, compliance, and proof-artifact services. RPC forwarding does not establish those services' availability. SDK settings such as `relayer`, `chainState`, and `artifacts` belong inside `bermuda`, rather than beside `provider`. A manager rejects a missing SDK pool configuration during account retrieval; this check does not verify deployed code or service readiness.
+
+## Storage and Caches
+
+The examples omit file-cache options. In Node.js without `localStorage` or custom SDK storage, the SDK uses memory. A runtime that provides `localStorage` can persist data through that default instead.
+
+| Field | Type | Default | Effect |
+|---|---|---|---|
+| `utxoCache` | `string` | SDK default storage | Top-level file path for discovered UTXOs. Enables forwarding of the top-level cache fields. |
+| `commitmentEventsCache` | `string` | Derived from `utxoCache` | Top-level path for persisted chain-sync state, including commitment events. Forwarded only when top-level `utxoCache` is set. |
+| `fs` | Filesystem implementation | None forwarded | `node:fs` or equivalent for file-backed storage. Forwarded only when top-level `utxoCache` is set. |
+
+The nested `bermuda` configuration can override SDK storage and cache inputs independently. If you opt into filesystem persistence, supply the filesystem implementation and two distinct paths with existing parent directories. The implicit commitment-events path replaces a final `.json` suffix with `-commitment-events.json`; without that suffix, it equals the UTXO path.
+
+Treat caches as sensitive wallet data. They can contain decrypted amounts, memos, ownership and UTXO metadata, including blinding and nullifier secrets. The SDK 0.3.2 UTXO-cache codec records an owner address instead of serializing the live owner's signing or viewing private keys; that does not make the cached transaction data public. Protect persistent storage through the application's storage policy. Existing files are not sanitized by an upgrade or deleted by `dispose()`; do not reuse old pool cache files for the new deployment.
+
+## Fee Boundaries
+
+| Operation | Fee handling |
+|---|---|
+| Public EVM `sendTransaction()` or provider-connected `signTransaction()` | Checks `transactionMaxFee` against an estimated EVM network fee. |
+| Public EVM `transfer()` | Checks `transferMaxFee` against its estimate, then also checks `transactionMaxFee` in its underlying transaction send. |
+| Bermuda `deposit()` | Sends through the public EVM account. The EVM threshold covers its estimated network fee and any wrapper approval separately. Protocol deposit fees and any one-off lifetime fee in the deposited token are outside it. |
+| Bermuda `transfer()` | Uses the SDK relay. Protocol transfer fees and any configured relay fee consume shielded value; neither EVM fee threshold applies. |
+| Bermuda `withdraw()` | Uses the SDK relay. Protocol withdrawal fees and any configured relay fee consume shielded value; neither EVM fee threshold applies. |
+
+Deposits default to recipient-target accounting: protocol and applicable lifetime fees come on top. A single-recipient deposit can instead use `exactOutputAmounts: false` to budget total spend. Withdrawals also default to `exactOutputAmounts: true`; false selects gross-spend accounting. See [operation options](/sdk/wallet-modules/wallet-evm-bermuda/api-reference#operation-options) for class and rounding limits.
+
+For transfers, a positive `relayFee` needs a full Bermuda `relayer` fee-recipient address. Withdrawal relay fees use a public EVM fee recipient. These operation options identify who receives the fee; the SDK relay-service URL is configured separately as `bermuda.relayer`.
+
+The pinned EVM peer quotes a fee, checks the threshold, then separately populates gas and fee fields before signing. It does not recheck the populated transaction against the threshold, so final network liability can differ. These estimate guards do not quote or cap a complete shielded operation. Fund the deposited token or native value for the amount and applicable token fees, and reserve native gas separately for deposits and approvals.
+
+## Runtime Requirements
+
+The module declares **Node.js 20.19.0 or later** for the library. Its development/test toolchain requires Node.js 22 or later; these examples use Node.js 22. A declared engine floor is separate from the exact runtime used for example validation.
+
+The conditional **Bare** entry point loads Node compatibility support and patches process globals: `TextDecoder`, WebAssembly compilation/instantiation, and the global HTTP/HTTPS agents. The agent replacements remove Bare's five-second socket timeout that can terminate an RPC request while it is still running. These changes affect the process, rather than only one wallet.
+
+Import the Bermuda wrapper before anything else loads its SDK or prover under Bare. Proof generation needs outbound network and writable storage for CRS setup data, using `CRS_PATH` when set or `~/.bb-crs` by default. The [maintainer's runtime notes](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/blob/59c711af9d5c348db740a37f19d96414fc6750f6/README.md#-supported-runtimes) describe platform tests and constraints. **WDK worklet bundles remain unsupported**; Bare support does not establish a working browser or bundled mobile integration.
+
+## Resource Lifecycle
+
+Finish outstanding operations before [initiating manager cleanup](/sdk/wallet-modules/wallet-evm-bermuda/api-reference#dispose-manager). Normal cleanup traverses cached EVM and Bermuda accounts and the manager-owned default signer. With the pinned WDK wallet `1.0.0-beta.17`, inherited cleanup also disposes registered signers and any caller-supplied default signer. A cleanup exception can interrupt the remaining work.
+
+Individual Bermuda-account cleanup nulls its stored private scalar and zeroes its stored X-Wing secret bytes, leaving the shared master EVM account untouched. Cleanup does not delete caches, clear caller-held seed copies, close SDK providers, or reverse transactions. Keep caller-owned seed buffers available until all consumers finish, then release application references. Do not use disposal as a process-wide secret-erasure guarantee.
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/wallet-modules/wallet-evm-bermuda/usage">
+Install the source revision and distinguish public and shielded account flows.
+</Card>
+<Card title="API Reference" href="/sdk/wallet-modules/wallet-evm-bermuda/api-reference">
+Review methods, operation options, errors, and cleanup behavior.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
+
+***
+
+## Shield, Transfer, and Withdraw with Bermuda
+URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm-bermuda/guides/shield-transfer-withdraw
+Description: Approve a testnet token deposit, transfer shielded balances, and confirm a public withdrawal.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+This guide uses the standalone Bermuda manager to [shield USD₮0](#deposit-into-bermuda), [transfer a shielded balance](#transfer-to-a-bermuda-address), and [withdraw to a public address](#withdraw-to-a-public-address) on Plasma testnet. Deposits use a public EVM account; transfers use a Bermuda address; withdrawals expose a public EVM recipient. These operations do not establish an anonymity guarantee.
+
+<Callout type="info">
+These examples target Git source manifest version `0.3.2` at [revision `59c711a`](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/tree/59c711af9d5c348db740a37f19d96414fc6750f6), with both WDK wallet peers pinned to `1.0.0-beta.17`. Follow the [pinned Git installation instructions](/sdk/wallet-modules/wallet-evm-bermuda/usage) before using the examples. If you used `0.1.x`, read the [migration warning](/sdk/wallet-modules/wallet-evm-bermuda#upgrading-from-01x) before depositing.
+</Callout>
+
+## Prerequisites
+
+- Complete the [installation and runtime setup](/sdk/wallet-modules/wallet-evm-bermuda/usage). The application code below also imports `ethers@6.17.0` directly.
+- Run this standalone example in Node.js 22 with the pinned peers above.
+- Supply an application-managed BIP-39 mnemonic or seed bytes. Keep these outside logs, analytics, operation records, and client configuration files.
+- Use a trusted Plasma testnet RPC reporting chain ID `9746`, and fund the master EVM account with testnet XPL for approvals and deposit gas.
+- Confirm Bermuda's testnet services and pool are available. The wallet RPC supplies SDK chain reads by default. Compliance, chain-state, proof-artifact, and relayer services have separate endpoints and trust requirements. See [Configuration](/sdk/wallet-modules/wallet-evm-bermuda/configuration).
+- Review each operation before submission and persist its intent. Serialize operations using the same account; a balance or allowance read is not a reservation.
+
+The examples use these deployment identifiers from the inspected SDK and Bermuda's [Plasma testnet deployment descriptor](https://api.tilapialabs.xyz/bermuda/v0.3.2/plasma-testnet/artifacts/chain-config.json):
+
+| Item | Plasma testnet value |
+| --- | --- |
+| Chain ID | `9746` |
+| USD₮0 token | `0x502012b361AebCE43b26Ec812B74D9a51dB4D412` |
+| Token decimals | `6` |
+| Bermuda pool and approval spender | `0x5D4948111Ba7f37A8f67141E6B7d0EC27B7d4310` |
+
+For this testnet token, `1_000_000n` represents one USD₮0 unit. These addresses are not Plasma mainnet addresses. Verify the deployment before enabling submissions; matching token metadata and nonempty pool code do not prove protocol security or service readiness.
+
+## Shared Setup and Confirmation
+
+Save the following blocks together as an application module. The exported functions accept `seed`, `rpcUrl`, and a positive bigint `transactionMaxFee` in wei. It rejects a public EVM approval or deposit when the checked fee estimate exceeds the threshold. The pinned peer later populates gas and fee fields separately without rechecking that liability, so this setting does not bind final fees, combined transaction costs, or Bermuda protocol and relay fees.
+
+The application supplies two callbacks: `confirm(details)` reviews the submitted inputs and returns `true` to continue; `recordHash({ kind, hash, chainId })` durably records each returned hash. Neither callback should include secrets in its records. Confirmation is not a fee quote or a cap on later shielded transfer or withdrawal costs. The deposit helper uses the SDK's fixed token spend mode and an allowance bounded to that budget; public gas remains separate.
+
+```javascript
+import WalletManagerBermuda from '@bermuda/wdk-wallet-evm-bermuda'
+import { TransactionError, TransactionErrorReason } from '@tetherto/wdk-wallet'
+import { Contract, JsonRpcProvider, ZeroAddress, isAddress } from 'ethers'
+
+const PLASMA_TESTNET_CHAIN_ID = 9746n
+const USDT0_PLASMA_TESTNET = '0x502012b361AebCE43b26Ec812B74D9a51dB4D412'
+const BERMUDA_POOL_PLASMA_TESTNET = '0x5D4948111Ba7f37A8f67141E6B7d0EC27B7d4310'
+
+const TOKEN_ABI = [
+  'function symbol() view returns (string)',
+  'function decimals() view returns (uint8)'
+]
+
+function validateOperation(amount, confirm, recordHash) {
+  if (typeof amount !== 'bigint' || amount <= 0n) {
+    throw new Error('Amount must be a positive bigint in token base units')
+  }
+  if (typeof confirm !== 'function' || typeof recordHash !== 'function') {
+    throw new Error('Confirmation and durable hash recording are required')
+  }
+}
+
+async function withAccounts({ seed, rpcUrl, transactionMaxFee }, operation) {
+  if (typeof rpcUrl !== 'string' || !rpcUrl) {
+    throw new Error('A Plasma testnet RPC URL is required')
+  }
+  if (typeof transactionMaxFee !== 'bigint' || transactionMaxFee <= 0n) {
+    throw new Error('Set a positive estimated network fee threshold in wei')
+  }
+
+  const provider = new JsonRpcProvider(rpcUrl)
+  let wallet
+  try {
+    const { chainId } = await provider.getNetwork()
+    if (chainId !== PLASMA_TESTNET_CHAIN_ID) {
+      throw new Error('This example requires Plasma testnet, chain ID 9746')
+    }
+    const token = new Contract(USDT0_PLASMA_TESTNET, TOKEN_ABI, provider)
+    const [symbol, decimals, poolCode] = await Promise.all([
+      token.symbol(),
+      token.decimals(),
+      provider.getCode(BERMUDA_POOL_PLASMA_TESTNET)
+    ])
+    if (symbol !== 'USDT0' || decimals !== 6n || poolCode === '0x') {
+      throw new Error('The expected testnet token or pool is unavailable')
+    }
+
+    wallet = new WalletManagerBermuda(seed, {
+      provider: rpcUrl,
+      transactionMaxFee
+    })
+    const master = await wallet.getAccount(0)
+    const shielded = await wallet.getBermudaAccount(0, 0)
+    return await operation({ master, shielded, provider })
+  } finally {
+    try {
+      wallet?.dispose()
+    } finally {
+      provider.destroy()
+    }
+  }
+}
+
+async function recordAndConfirm(master, kind, hash, recordHash) {
+  try {
+    await recordHash({ kind, hash, chainId: Number(PLASMA_TESTNET_CHAIN_ID) })
+  } catch (cause) {
+    throw new Error(`${kind} returned ${hash}, but recording failed; reconcile this hash before retrying`, { cause })
+  }
+  let result
+  try {
+    result = await master.waitForTransaction(hash, {
+      target: 'confirmed',
+      timeout: 120_000
+    })
+  } catch (cause) {
+    throw new Error(`${kind} has an unconfirmed outcome: ${hash}; reconcile before retrying`, { cause })
+  }
+  if (!['confirmed', 'final'].includes(result.finality) || result.success !== true) {
+    throw new Error(`${kind} did not confirm successfully: ${hash}`)
+  }
+  return result
+}
+```
+
+The pinned WDK peers return a normalized receipt from `waitForTransaction()`: inspect `finality` and `success`, rather than treating the returned object as a raw ethers receipt. A wait timeout does not cancel or reverse the transaction.
+
+## Deposit into Bermuda
+
+USD₮0 on this testnet does not provide the EIP-2612 permit required by the SDK's fallback path. Approve the pool from the matching master EVM account before depositing. By default, a deposit requests an output amount and adds protocol and any one-off compliance lifetime fee on top. This helper instead supplies `exactOutputAmounts: false`: `tokenSpendBudget` is the maximum token funding for this single-recipient deposit, with fees deducted from it. The SDK may leave a base unit unspent or reject a budget that cannot cover the fees; the received amount is variable.
+
+<Callout type="warn">
+Approval authorizes the pool to spend tokens. The helper sets the allowance to the selected token budget and clears a different nonzero allowance before replacing it. Each approval requires native gas. The budget does not cap gas or other operations. Any allowance left active continues to authorize the pool after this call. The SDK can reject a deposit after approval; stop and reconcile any error after submission before trying again.
+</Callout>
+
+```javascript
+async function setDepositAllowance(master, requiredAllowance, recordHash) {
+  const current = await master.getAllowance(
+    USDT0_PLASMA_TESTNET, BERMUDA_POOL_PLASMA_TESTNET
+  )
+  if (current === requiredAllowance) return
+
+  // Clear existing authorization before setting the reviewed amount.
+  if (current !== 0n) {
+    const { hash } = await master.approve({
+      token: USDT0_PLASMA_TESTNET,
+      spender: BERMUDA_POOL_PLASMA_TESTNET,
+      amount: 0n
+    })
+    await recordAndConfirm(master, 'allowance-reset', hash, recordHash)
+    if (await master.getAllowance(USDT0_PLASMA_TESTNET, BERMUDA_POOL_PLASMA_TESTNET) !== 0n) {
+      throw new Error('Pool allowance did not reset to zero')
+    }
+  }
+
+  const { hash } = await master.approve({
+    token: USDT0_PLASMA_TESTNET,
+    spender: BERMUDA_POOL_PLASMA_TESTNET,
+    amount: requiredAllowance
+  })
+  await recordAndConfirm(master, 'deposit-approval', hash, recordHash)
+  const allowance = await master.getAllowance(
+    USDT0_PLASMA_TESTNET, BERMUDA_POOL_PLASMA_TESTNET
+  )
+  if (allowance !== requiredAllowance) {
+    throw new Error('Pool allowance differs from the reviewed amount')
+  }
+}
+
+export async function shieldUsdT0({
+  seed, rpcUrl, transactionMaxFee, tokenSpendBudget, confirm, recordHash
+}) {
+  validateOperation(tokenSpendBudget, confirm, recordHash)
+  return withAccounts({ seed, rpcUrl, transactionMaxFee }, async ({ master, shielded }) => {
+    if (await master.getTokenBalance(USDT0_PLASMA_TESTNET) < tokenSpendBudget) {
+      throw new Error('The public USDt0 balance is below the selected token budget')
+    }
+    const to = shielded.getAddress()
+    if (await confirm({
+      kind: 'deposit', to, tokenSpendBudget, exactOutputAmounts: false,
+      token: USDT0_PLASMA_TESTNET, pool: BERMUDA_POOL_PLASMA_TESTNET
+    }) !== true) throw new Error('Deposit was not confirmed by the application')
+
+    await setDepositAllowance(master, tokenSpendBudget, recordHash)
+    let hash
+    try {
+      hash = await shielded.deposit(
+        { token: USDT0_PLASMA_TESTNET, amount: tokenSpendBudget, to },
+        { exactOutputAmounts: false }
+      )
+    } catch (error) {
+      if (error instanceof TransactionError &&
+          error.reason === TransactionErrorReason.INSUFFICIENT_BALANCE) {
+        throw new Error('Insufficient current deposit funding; reconcile recorded operations before retrying', { cause: error })
+      }
+      throw error
+    }
+    const receipt = await recordAndConfirm(master, 'deposit', hash, recordHash)
+    return { hash, receipt, to }
+  })
+}
+```
+
+For example, `tokenSpendBudget: 1_000_000n` permits funding of at most one testnet USD₮0 unit for this deposit, including its token fees. It does not request one unit of shielded output. The SDK builds the output using current deposit terms; a change in fees can reduce the output or make the operation fail within that budget.
+
+The reset is an application allowance policy, not a claim that this testnet token always requires zero-first approval. It also reduces a pre-existing allowance larger than the budget. An interrupted or reverted deposit can leave an allowance active. Inspect it before deciding whether to revoke or submit another operation.
+
+After successful on-chain execution, query a newly retrieved shielded account's `getTokenBalance(USDT0_PLASMA_TESTNET)` separately. Its scan can fail or lag, and vaulted balances are valued in the underlying token. Do not automatically submit another deposit because the balance has not appeared.
+
+## Transfer to a Bermuda Address
+
+Supply the intended recipient's full Bermuda address, obtained from their `getAddress()`: `0x` followed by 2,496 hex characters. A Bermuda address is not a 20-byte EVM address and does not encode the chain. The shape check below does not verify ownership, intended recipient, or payment readiness; the SDK still validates the operation.
+
+The transfer `amount` requests the recipient output. A positive `relayFee` adds to the sender's shielded spend and requires a full Bermuda `relayer` fee-recipient address, because the SDK creates a shielded fee output. The pool can also charge a transfer fee on third-party outflow. Vaulted transfers convert underlying amounts to shares with rounding, so the requested amount is not a guarantee of an exact underlying balance change.
+
+The `relayer` option is not a relay-service URL and does not replace the SDK's configured endpoint. `transferMaxFee` and `transactionMaxFee` do not cap token fees, and confirming these inputs does not approve a fixed total shielded spend.
+
+```javascript
+function relayOptions(relayFee, relayer, recipientKind) {
+  if (typeof relayFee !== 'bigint' || relayFee < 0n) {
+    throw new Error('Relay fee must be a nonnegative bigint in token base units')
+  }
+  if (relayFee === 0n) return {}
+  if (recipientKind === 'bermuda') {
+    if (typeof relayer !== 'string' || !/^0x[0-9a-fA-F]{2496}$/.test(relayer)) {
+      throw new Error('A positive transfer fee requires a full Bermuda fee recipient')
+    }
+  } else if (!isAddress(relayer) || relayer.toLowerCase() === ZeroAddress) {
+    throw new Error('A positive withdrawal fee requires a nonzero EVM fee recipient')
+  }
+  return { relayFee, relayer }
+}
+
+export async function transferUsdT0({
+  seed, rpcUrl, transactionMaxFee,
+  to, amount, relayFee = 0n, relayer, confirm, recordHash
+}) {
+  validateOperation(amount, confirm, recordHash)
+  if (typeof to !== 'string' || !/^0x[0-9a-fA-F]{2496}$/.test(to)) {
+    throw new Error('Supply the full recipient Bermuda address')
+  }
+  const options = relayOptions(relayFee, relayer, 'bermuda')
+  return withAccounts({ seed, rpcUrl, transactionMaxFee }, async ({ master, shielded }) => {
+    if (await confirm({
+      kind: 'transfer', to, amount, relayFee, relayer, token: USDT0_PLASMA_TESTNET
+    }) !== true) {
+      throw new Error('Transfer was not confirmed by the application')
+    }
+    const hash = await shielded.transfer({ token: USDT0_PLASMA_TESTNET, to, amount }, options)
+    const receipt = await recordAndConfirm(master, 'transfer', hash, recordHash)
+    return { hash, receipt }
+  })
+}
+```
+
+The SDK selects UTXOs and computes protocol fees while building the transfer. A balance read is not a lock, and can include value that cannot cover this operation because of class, policy, liquidity, or circuit limits. A returned relay hash does not establish successful confirmation or recipient indexing by itself. Check the receipt and then reconcile the recipient's balance separately.
+
+## Withdraw to a Public Address
+
+Review the public EVM recipient explicitly. Omitting `to` in the wrapper defaults to the master EVM account; this helper requires `to` to avoid silently selecting that default.
+
+By default, `exactOutputAmounts: true` treats withdrawal `amount` as the requested recipient output, with protocol and relay fees added to shielded spend. Set `exactOutputAmounts: false` explicitly to treat it as gross shielded spend and pay the recipient the remainder after fees. This guide uses one public recipient. For a positive withdrawal relay fee, supply a nonzero public EVM fee-recipient address. Neither WDK network-fee cap bounds these token fees.
+
+```javascript
+export async function withdrawUsdT0({
+  seed, rpcUrl, transactionMaxFee,
+  to, amount, exactOutputAmounts = true,
+  relayFee = 0n, relayer, confirm, recordHash
+}) {
+  validateOperation(amount, confirm, recordHash)
+  if (!isAddress(to) || to.toLowerCase() === ZeroAddress) {
+    throw new Error('Supply the intended nonzero public EVM recipient')
+  }
+  if (typeof exactOutputAmounts !== 'boolean') {
+    throw new Error('Select gross-spend or exact-recipient withdrawal accounting')
+  }
+  const options = { ...relayOptions(relayFee, relayer, 'evm'), exactOutputAmounts }
+  return withAccounts({ seed, rpcUrl, transactionMaxFee }, async ({ master, shielded }) => {
+    if (await confirm({
+      kind: 'withdraw', to, amount, exactOutputAmounts, relayFee, relayer,
+      token: USDT0_PLASMA_TESTNET
+    }) !== true) throw new Error('Withdrawal was not confirmed by the application')
+
+    const hash = await shielded.withdraw({ token: USDT0_PLASMA_TESTNET, to, amount }, options)
+    const receipt = await recordAndConfirm(master, 'withdraw', hash, recordHash)
+    return { hash, receipt }
+  })
+}
+```
+
+For example, `amount: 1_000_000n` with the default flag requests one testnet USD₮0 unit of recipient output, with fees added to shielded spend. With `exactOutputAmounts: false`, that amount instead includes the fees. Vaulted withdrawals also depend on share valuation and available liquidity; the SDK can reject insufficient or unavailable UTXOs. Confirmation reviews inputs, not a fixed fee quote or a guaranteed total spend.
+
+USD₮0 withdrawals remain ERC-20 transfers. For the separate native path, deposit `NATIVE_DEPOSIT_TOKEN` to send native XPL as transaction value, including deposit token fees; the pool wraps it into WXPL. Depositing WXPL instead pulls the ERC-20 token and the wrapper handles its approval. Withdrawal `unwrap` controls wrapped versus native output. See the [native-token options](/sdk/wallet-modules/wallet-evm-bermuda/api-reference#operation-options) before adapting this ERC-20 example.
+
+## Lifetime and Interrupted Operations
+
+The helpers initiate manager cleanup in `finally` and destroy their separately created receipt/metadata provider. The manager delegates EVM cleanup to the pinned peers, then clears cached Bermuda accounts' stored private scalar references and zeroes their X-Wing viewing-key byte arrays. Cleanup can stop on an exception; it does not erase caller-owned seed copies, delete persisted caches, close every SDK provider, or establish process-wide memory zeroization. Keep seed buffers alive until every consumer has finished, then release application references. Disposing one Bermuda account separately leaves its shared master EVM account available.
+
+Persist returned hashes before waiting, and retain the operation intent even if no hash returns. A failure or timeout after submission can leave an approval, deposit, or relay transaction pending or included. Reconcile each recorded hash, sender nonce and allowance, and pool/shielded state before permitting another submission. Repeating a write is not a status check. If SDK scanning fails, inspect its service configuration and retry reads under an application-controlled schedule; do not infer an empty balance from a failed read.
+
+## Next Steps
+
+- [Review Provider and Fee Configuration](/sdk/wallet-modules/wallet-evm-bermuda/configuration)
+- [Review Method and Option Contracts](/sdk/wallet-modules/wallet-evm-bermuda/api-reference)
+- [Review Account Setup and Runtime Limits](/sdk/wallet-modules/wallet-evm-bermuda/usage)
+
+---
+
+## Need Help?
+
+<SupportCards />
+
+***
+
+## Wallet EVM Bermuda Usage
+URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm-bermuda/usage
+Description: Install the pinned Bermuda source and create public EVM and shielded accounts on Plasma testnet.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Install the module, create its two account types, and read a shielded address or balance. This setup does not submit a transaction. To move testnet funds, follow [Shield, Transfer, and Withdraw](/sdk/wallet-modules/wallet-evm-bermuda/guides/shield-transfer-withdraw).
+
+## Prerequisites
+
+Use Node.js 22 and npm 10 for the examples below, with a Plasma testnet RPC endpoint that reports chain ID `9746`. The package declares Node.js `>=20.19.0`; Node 22 is the example runtime and development/test toolchain floor. The example pins are not a claim that every declared peer version behaves identically.
+
+Your application supplies a BIP-39 mnemonic or `Uint8Array` seed from its secret storage. Keep it out of source code, logs, analytics, and error reports. These examples use seed-backed derivation rather than a hardware or custom signer.
+
+Creating the shielded account reads the wallet provider's chain and requires an SDK pool configuration for it. The wallet provider also supplies SDK chain reads by default. Balance queries and operations still need the SDK's other services; a wallet RPC does not configure relayer, chain-state, policy/compliance, or proof-artifact URLs. See [provider precedence](/sdk/wallet-modules/wallet-evm-bermuda/configuration#bermuda-sdk-services).
+
+If upgrading from 0.1.x, read the [pool and address migration warning](/sdk/wallet-modules/wallet-evm-bermuda#upgrading-from-01x) before creating or funding a new account.
+
+## Install
+
+The maintainer's command, `npm i bermudabay/wdk-wallet-evm-bermuda`, installs from GitHub. It does not select a published npm registry version. These examples pin the exact repository revision for source version **0.3.2**, plus the WDK peer versions used below. `ethers` supplies the guide's public RPC and token checks.
+
+With npm 10:
+
+```bash
+npm install --save-exact \
+  'git+https://github.com/BermudaBay/wdk-wallet-evm-bermuda.git#59c711af9d5c348db740a37f19d96414fc6750f6' \
+  @tetherto/wdk-wallet@1.0.0-beta.17 \
+  @tetherto/wdk-wallet-evm@1.0.0-beta.17 \
+  ethers@6.17.0
+```
+
+Import the installed package as `@bermuda/wdk-wallet-evm-bermuda`. The source manifest version is `0.3.2`, and its SDK dependency is the maintainer-hosted `@bermuda/sdk` artifact at version `0.3.2`.
+
+The module declares both WDK peers in the range `>=1.0.0-beta.17 <2.0.0`. The command saves exact beta.17 peers for these examples; retain the generated lockfile to reuse that dependency graph. These are example pins, rather than a compatibility guarantee for every version in the declared range.
+
+### npm 12 and Later
+
+The [upstream installation instructions](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/blob/59c711af9d5c348db740a37f19d96414fc6750f6/README.md#-installation) require admission flags for the Git dependency and its transitive HTTPS SDK dependency:
+
+```bash
+npm install --save-exact \
+  'git+https://github.com/BermudaBay/wdk-wallet-evm-bermuda.git#59c711af9d5c348db740a37f19d96414fc6750f6' \
+  @tetherto/wdk-wallet@1.0.0-beta.17 \
+  @tetherto/wdk-wallet-evm@1.0.0-beta.17 \
+  ethers@6.17.0 \
+  --allow-git=root --allow-remote=all
+```
+
+`--allow-git=root` admits your project's Git dependencies. `--allow-remote=all` admits remote dependencies throughout installation, including the SDK declared by this module. These flags control dependency admission; they do not verify dependency code or service behavior.
+
+## Create the Accounts
+
+Save this factory as `wallet.mjs`. The application passes its seed and a verified Plasma testnet RPC URL:
+
+```javascript
+import WalletManagerBermuda from '@bermuda/wdk-wallet-evm-bermuda'
+
+export async function createBermudaSession(seed, rpcUrl) {
+  if (!rpcUrl) throw new Error('A Plasma testnet RPC URL is required')
+
+  const wallet = new WalletManagerBermuda(seed, {
+    provider: rpcUrl
+  })
+
+  try {
+    const ethereumAccount = await wallet.getAccount(0)
+    const bermudaAccount = await wallet.getBermudaAccount(0, 0)
+
+    return { wallet, ethereumAccount, bermudaAccount }
+  } catch (error) {
+    wallet.dispose()
+    throw error
+  }
+}
+```
+
+`ethereumAccount` is an ordinary public EVM account. `bermudaAccount` is a separate shielded account derived from the EVM account's private key. The first `getBermudaAccount()` argument selects the EVM account at relative path `0'/0/index`; the second selects a Bermuda subaccount. Both default to `0` and must be non-negative integers.
+
+Unlike the EVM account's asynchronous address getter, `bermudaAccount.getAddress()` returns its address synchronously. In this source version it is `0x` plus 2,496 hex characters, not an EVM recipient address. Its format differs from the address produced by 0.1.x.
+
+For another shielded subaccount under the same EVM account:
+
+```javascript
+const anotherBermudaAccount = await wallet.getBermudaAccount(0, 1)
+const recipient = anotherBermudaAccount.getAddress()
+```
+
+Repeated calls with the same indices reuse the same live account. See [API Reference](/sdk/wallet-modules/wallet-evm-bermuda/api-reference#getbermudaaccount) for disposal and error behavior.
+
+## Read a Shielded Balance
+
+Save this reader as `read-balance.mjs`. The caller supplies the verified token address for Plasma testnet:
+
+```javascript
+import { createBermudaSession } from './wallet.mjs'
+
+export async function readShieldedBalance(seed, rpcUrl, tokenAddress) {
+  const session = await createBermudaSession(seed, rpcUrl)
+
+  try {
+    const publicAddress = await session.ethereumAccount.getAddress()
+    const shieldedAddress = session.bermudaAccount.getAddress()
+    const balance = await session.bermudaAccount.getTokenBalance(tokenAddress)
+
+    return { publicAddress, shieldedAddress, balance }
+  } finally {
+    session.wallet.dispose()
+  }
+}
+```
+
+The balance is a `bigint` in the token's base units. The [testnet operations guide](/sdk/wallet-modules/wallet-evm-bermuda/guides/shield-transfer-withdraw) supplies the scoped USD₮0 address and verifies its six decimals. Use `bigint` base-unit amounts in fund-moving calls.
+
+To read several tokens in an existing session, call `getTokenBalances(tokenAddresses)`. Its result is a record keyed by lowercase token addresses, with `bigint` values; an empty input returns `{}` and an absent balance is `0n`.
+
+These methods use the SDK balance calculation, including vaulted holdings valued in the underlying token. A displayed balance is not a guarantee that the SDK can select inputs for a particular operation. SDK reads can be cached for a block time, so confirmation does not imply that the next balance query is already fresh. The examples use default storage without enabling file-backed UTXO persistence.
+
+## Runtime Requirements
+
+The Bermuda SDK generates proofs and accesses its configured services. Supply outbound network access and writable storage for the prover's common reference string (CRS), its setup data. First use downloads about 38 MB and stores about 105 MB unpacked in `~/.bb-crs`, or the directory configured by `CRS_PATH`.
+
+Keep the wallet RPC and any explicit SDK provider override on the intended Plasma testnet deployment. A successful import, account derivation, or configured pool address does not establish that balance discovery, proof generation, or relay submission is available.
+
+### Bare
+
+Bare selects the package's conditional `bare` entrypoint. It loads `bare-node-runtime`, supplies stream/worker interfaces, and patches `TextDecoder` and WebAssembly globals. It also replaces the process-wide Bare HTTP/HTTPS agents to remove an in-flight socket timeout. These effects apply to the process, not just this wallet instance.
+
+Import `@bermuda/wdk-wallet-evm-bermuda` before anything that loads `@bermuda/sdk` or `@aztec/bb.js`, so those dependencies receive the package's import mappings. Under Bare, the prover uses a single-thread WebAssembly backend; under Node it uses the native backend.
+
+<Callout type="warn">
+WDK worklet bundles are unsupported for this revision. The prover dependencies load WebAssembly files from disk, so a bundle that builds can still fail to load. Bare support alone does not establish support for a browser or React Native worklet integration.
+</Callout>
+
+## Use with WDK Core
+
+The examples use the standalone manager because its shielded getter is separate from ordinary EVM account retrieval. Registering the manager with WDK core does not turn `getAccount()` into a Bermuda-account getter.
+
+Do not assume WDK core's registered policies or middleware govern shielded accounts retrieved directly from this manager. The SDK has its own issuer-policy and compliance dependencies for its proof flow. Keep application authorization and confirmation around each fund-moving operation.
+
+## Dispose the Session
+
+Call `wallet.dispose()` to initiate cleanup after all operations have finished, as the reader's `finally` block does. With the pinned peers, the manager invokes cleanup for its EVM accounts, signers, and cached Bermuda accounts. Shielded-account cleanup nulls its stored spending scalar and zeroes its X-Wing secret-key bytes; disposing that account alone leaves the shared master EVM account available.
+
+Disposal does not delete persisted cache files, stop the SDK provider, erase every JavaScript or caller-held seed copy, or confirm/cancel a submitted transaction. Release application references when the session is finished. See [resource lifecycle](/sdk/wallet-modules/wallet-evm-bermuda/configuration#resource-lifecycle).
+
+## Next Steps
+
+<Cards>
+<Card title="Shield, Transfer, and Withdraw" href="/sdk/wallet-modules/wallet-evm-bermuda/guides/shield-transfer-withdraw">
+Verify the testnet contracts, approve a bounded allowance, and confirm operations.
+</Card>
+<Card title="Configuration" href="/sdk/wallet-modules/wallet-evm-bermuda/configuration">
+Review provider routing, persistent caches, and fee limits.
+</Card>
+<Card title="API Reference" href="/sdk/wallet-modules/wallet-evm-bermuda/api-reference">
+Review the exact method, parameter, and result contracts.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
 
 <SupportCards />
 
@@ -49930,6 +50945,7 @@ Start with the chain your app needs to support. Then choose the account model:
 |---|---|
 | Standard EVM accounts | [Standard EVM](/sdk/wallet-modules/wallet-evm) |
 | Hinkal private sends from seed-derived EVM accounts, with asynchronous settlement and Node bundling | [Private transfers (Hinkal)](/sdk/wallet-modules/wallet-evm-hinkal) |
+| Bermuda shielded deposits, pool transfers, and withdrawals on Plasma testnet | [Shielded accounts (Bermuda)](/sdk/wallet-modules/wallet-evm-bermuda) |
 | EVM smart accounts with ERC-4337 | [Smart accounts (ERC-4337)](/sdk/wallet-modules/wallet-evm-erc-4337) |
 | EVM EOA addresses with EIP-7702 delegation | [EIP-7702 accounts](/sdk/wallet-modules/wallet-evm-7702-gasless) |
 | EVM Safe accounts with multiple owners and an approval threshold | [Multisig (Safe)](/sdk/wallet-modules/wallet-multisig-safe) |
@@ -64881,6 +65897,7 @@ Wallet modules provide blockchain-specific wallet functionality for managing add
 | [`@tetherto/wdk-wallet-btc`](https://github.com/tetherto/wdk-wallet-btc) | Bitcoin | Bitcoin SegWit wallet with BIP-39/BIP-44 support | [Docs](/sdk/wallet-modules/wallet-btc/) |
 | [`@tetherto/wdk-wallet-evm`](https://github.com/tetherto/wdk-wallet-evm) | EVM | Ethereum and EVM-compatible chains wallet | [Docs](/sdk/wallet-modules/wallet-evm/) |
 | [`@hinkal/wdk-wallet-evm-hinkal`](https://www.npmjs.com/package/@hinkal/wdk-wallet-evm-hinkal) | EVM | Community module for seed-derived Hinkal private sends and shielded-fund recovery; Node bundling required | [Docs](/sdk/wallet-modules/wallet-evm-hinkal/) |
+| [`@bermuda/wdk-wallet-evm-bermuda`](https://github.com/BermudaBay/wdk-wallet-evm-bermuda) | Plasma testnet | Community beta for Bermuda shielded deposits, pool transfers, and withdrawals; GitHub installation | [Docs](/sdk/wallet-modules/wallet-evm-bermuda/) |
 | [`@tetherto/wdk-wallet-evm-erc-4337`](https://github.com/tetherto/wdk-wallet-evm-erc-4337) | EVM | ERC-4337 Account Abstraction for EVM chains | [Docs](/sdk/wallet-modules/wallet-evm-erc-4337/) |
 | [`@tetherto/wdk-wallet-evm-7702-gasless`](https://github.com/tetherto/wdk-wallet-evm-7702-gasless) | EVM | EIP-7702 gasless account abstraction for EVM chains | [Docs](/sdk/wallet-modules/wallet-evm-7702-gasless/) |
 | [`@tetherto/wdk-wallet-multisig-safe`](https://github.com/tetherto/wdk-wallet-multisig-safe) | EVM | Safe multisig proposals, owner approvals, and ERC-4337 execution | [Docs](/sdk/wallet-modules/wallet-multisig-safe/) |
@@ -64990,6 +66007,7 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 
 | Module | Category | Description | Documentation |
 |--------|----------|-------------|---------------|
+| [`@bermuda/wdk-wallet-evm-bermuda`](https://github.com/BermudaBay/wdk-wallet-evm-bermuda) | Wallet | Bermuda shielded-account beta on Plasma testnet; GitHub installation | [Docs](/sdk/wallet-modules/wallet-evm-bermuda/) |
 | [`@utexo/wdk-wallet-rgb`](https://github.com/UTEXO-Protocol/wdk-wallet-rgb) | Wallet | RGB protocol wallet integration | [Docs](/sdk/community-modules/wdk-wallet-rgb/) |
 | [`@utexo/wdk-rgb-lightning`](https://www.npmjs.com/package/@utexo/wdk-rgb-lightning) | Wallet | RGB Lightning node and wallet integration | [Docs](/sdk/community-modules/wdk-rgb-lightning/) |
 | [`@arkade-os/wdk`](https://www.npmjs.com/package/@arkade-os/wdk) | Wallet | Bitcoin wallet module built on the Arkade SDK | [README](https://github.com/arkade-os/arkade-wdk#readme) |
