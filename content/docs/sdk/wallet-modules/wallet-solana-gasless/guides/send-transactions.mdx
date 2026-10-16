@@ -8,7 +8,7 @@ schemaType: TechArticle
 This guide explains how to send native SOL, track transaction finality, sign without broadcasting, quote paymaster fees, send an already signed transaction, and use prebuilt transaction messages.
 
 <Callout type="warn">
-Use `BigInt` values for token and lamport inputs. Separately, keep paymaster payment amounts at or below `Number.MAX_SAFE_INTEGER`: beta.4 internally converts the unsigned-flow `u64` payment through `Number`, so larger fee quotes, cap comparisons, and returned fees can round despite `bigint` inputs.
+Use `BigInt` values for token and lamport inputs. Separately, keep paymaster payment amounts at or below `Number.MAX_SAFE_INTEGER`: beta.6 still converts the unsigned-flow `u64` payment through `Number`, so larger fee quotes, cap comparisons, and returned fees can round despite `bigint` inputs.
 </Callout>
 
 ## Send Native SOL
@@ -91,7 +91,7 @@ The module adds the payment instruction, checks `transactionMaxFee`, signs with 
 
 ## Quote and Send a Signed Transaction
 
-In `1.0.0-beta.4`, owned accounts accept the `FullySignedTransaction` returned by `signTransaction()` in both `quoteSendTransaction()` and `sendTransaction()`:
+In `1.0.0-beta.6`, owned accounts accept the `FullySignedTransaction` returned by `signTransaction()` in both `quoteSendTransaction()` and `sendTransaction()`:
 
 ```javascript title="Inspect then broadcast a signed transaction"
 const signedTransaction = await account.signTransaction({
@@ -110,12 +110,12 @@ const result = await account.sendTransaction(signedTransaction, {
 console.log('Transaction hash:', result.hash)
 ```
 
-For the exact signed output produced above, `quoteSendTransaction()` does not request a new paymaster quote or broadcast anything. It searches the signed message for an SPL token payment to the configured paymaster token account; when found, the result is an exact decoded `bigint` in the configured paymaster token's base units.
+For the exact signed output produced above, `quoteSendTransaction()` does not request a new paymaster quote or broadcast anything. It searches for an SPL payment to the configured paymaster's associated token account for the effective `paymasterToken`, including a per-call override. It decodes the fee as an exact `bigint` in that token's base units. A missing match raises `NoSuchElementError`; it no longer returns zero.
 
 `sendTransaction(signedTransaction)` searches for that same fee, enforces `transactionMaxFee`, base64-encodes the fully signed wire transaction, and submits it through the configured Solana RPC with `encoding: 'base64'`. It does not call the paymaster's `signAndSendTransaction()` again.
 
 <Callout type="error">
-This path is not a general signed-transaction validator in beta.4. If no matching payment instruction exists, quote/send returns `fee: 0n`; a configured cap can then pass before direct broadcast. Accept only the exact output of this account's `signTransaction()` for the same account and configuration. For any other source, independently decode and verify the intended instructions, configured payment token and destination, fee payer, transaction lifetime, and both account and paymaster signatures before calling `sendTransaction()`.
+Missing-payment rejection is not a general signed-transaction validator. Accept the exact output of this account's `signTransaction()` with the same fee-token configuration. For any other source, independently decode and verify the intended instructions, payment token and destination, fee payer, transaction lifetime, and account and paymaster signatures before calling `sendTransaction()`.
 </Callout>
 
 <Callout type="warn">
@@ -176,7 +176,18 @@ const result = await account.sendTransaction(tx, feeConfig)
 
 `confirmFeeTokenAndAmount()` represents an application-owned confirmation boundary. The quote itself does not enforce the cap; `sendTransaction()` does.
 
-For an already signed transaction, the payment token is already embedded in the signed message. Do not use `paymasterToken` as an override to try to change it; only `transactionMaxFee` is applied before direct broadcast, and the beta.4 missing-instruction `0n` caveat still applies.
+For an already signed transaction, the payment token is embedded in the signed message. Retain the same `feeConfig` when signing, quoting the signed result, and broadcasting. Its `paymasterToken` tells the module which payment to decode; it cannot change the signed payment. Undefined override fields retain configured defaults.
+
+You can use the same fee-token configuration throughout the signed flow:
+
+```javascript title="Preserve the signed fee token"
+const signedTransaction = await account.signTransaction(tx, feeConfig)
+const signedQuote = await account.quoteSendTransaction(signedTransaction, feeConfig)
+console.log('Embedded fee:', signedQuote.fee)
+
+const result = await account.sendTransaction(signedTransaction, feeConfig)
+console.log('Transaction hash:', result.hash)
+```
 
 ## Next Steps
 

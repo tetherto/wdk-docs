@@ -8,12 +8,34 @@ icon: Settings
 
 ## Bitfinex HTTP Client
 
+In `@tetherto/wdk-pricing-bitfinex-http` beta.6, pass common ticker symbols to the client methods. Symbols are case-insensitive: `USDT` and `usdt` both use Bitfinex's `UST` currency code for USD₮. The same translation applies to current prices, batch price data, and historical lookups.
+
+Create a client to use the built-in mappings and Bitfinex's published aliases:
+
 ```javascript title="Create Client"
 import { BitfinexPricingClient } from '@tetherto/wdk-pricing-bitfinex-http'
 
 // Create the client (no options needed)
 const client = new BitfinexPricingClient()
 ```
+
+### Currency-Code Overrides (optional)
+
+Use the optional [`currencyCodes`](/tools/price-rates/api-reference#constructor) object to set explicit common-symbol-to-Bitfinex-code mappings. Entries take precedence over built-in mappings and remote aliases. Both keys and values are uppercased.
+
+For example, these explicit BTC and USD mappings let the client resolve that pair without fetching the remote alias map:
+
+```javascript title="Set Currency-Code Overrides"
+import { BitfinexPricingClient } from '@tetherto/wdk-pricing-bitfinex-http'
+
+const mappedClient = new BitfinexPricingClient({
+  currencyCodes: { btc: 'btc', usd: 'usd' }
+})
+
+const price = await mappedClient.getCurrentPrice('BTC', 'USD')
+```
+
+For symbols without an explicit or built-in mapping, the client looks up Bitfinex's aliases and caches a successful lookup for that client instance. An unknown or ambiguous alias falls back to the uppercased input symbol. If the alias lookup fails, the client uses that fallback and retries the alias lookup on a later request. Translation does not add support for pairs Bitfinex cannot quote, and errors from price requests can still reject the call.
 
 ### Current Price
 
