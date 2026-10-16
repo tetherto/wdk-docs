@@ -101,6 +101,14 @@ export const customTree: Node[] = [
       configuration('/sdk/wallet-modules/wallet-evm-hinkal/configuration'),
       apiReference('/sdk/wallet-modules/wallet-evm-hinkal/api-reference'),
     ]),
+    folder('Shielded accounts (Bermuda)', '/sdk/wallet-modules/wallet-evm-bermuda', 'Shield', [
+      usage('/sdk/wallet-modules/wallet-evm-bermuda/usage'),
+      guides([
+        page('Deposit, Transfer, and Withdraw', '/sdk/wallet-modules/wallet-evm-bermuda/guides/shield-transfer-withdraw'),
+      ]),
+      configuration('/sdk/wallet-modules/wallet-evm-bermuda/configuration'),
+      apiReference('/sdk/wallet-modules/wallet-evm-bermuda/api-reference'),
+    ]),
     folder('Smart accounts (ERC-4337)', '/sdk/wallet-modules/wallet-evm-erc-4337', 'ShieldCheck', [
       usage('/sdk/wallet-modules/wallet-evm-erc-4337/usage'),
       guides([
@@ -114,6 +122,20 @@ export const customTree: Node[] = [
       ]),
       configuration('/sdk/wallet-modules/wallet-evm-erc-4337/configuration'),
       apiReference('/sdk/wallet-modules/wallet-evm-erc-4337/api-reference'),
+    ]),
+    folder('Multisig (Safe)', '/sdk/wallet-modules/wallet-multisig-safe', 'Users', [
+      usage('/sdk/wallet-modules/wallet-multisig-safe/usage'),
+      guides([
+        page('Get Started', '/sdk/wallet-modules/wallet-multisig-safe/guides/get-started'),
+        page('Deploy a Safe', '/sdk/wallet-modules/wallet-multisig-safe/guides/deploy-safe'),
+        page('Manage Proposals', '/sdk/wallet-modules/wallet-multisig-safe/guides/manage-proposals'),
+        page('Manage Owners', '/sdk/wallet-modules/wallet-multisig-safe/guides/manage-owners'),
+        page('Sign Messages', '/sdk/wallet-modules/wallet-multisig-safe/guides/sign-messages'),
+        page('Coordinate Approvals', '/sdk/wallet-modules/wallet-multisig-safe/guides/coordinate-approvals'),
+        page('Handle Errors', '/sdk/wallet-modules/wallet-multisig-safe/guides/handle-errors'),
+      ]),
+      configuration('/sdk/wallet-modules/wallet-multisig-safe/configuration'),
+      apiReference('/sdk/wallet-modules/wallet-multisig-safe/api-reference'),
     ]),
     folder('EIP-7702 accounts', '/sdk/wallet-modules/wallet-evm-7702-gasless', 'BadgeCheck', [
       usage('/sdk/wallet-modules/wallet-evm-7702-gasless/usage'),
@@ -232,6 +254,19 @@ export const customTree: Node[] = [
       ]),
       configuration('/sdk/wallet-modules/wallet-solana/configuration'),
       apiReference('/sdk/wallet-modules/wallet-solana/api-reference'),
+    ]),
+    folder('Multisig (Squads)', '/sdk/wallet-modules/wallet-multisig-squads', 'Users', [
+      usage('/sdk/wallet-modules/wallet-multisig-squads/usage'),
+      guides([
+        page('Get Started', '/sdk/wallet-modules/wallet-multisig-squads/guides/get-started'),
+        page('Deploy a Multisig', '/sdk/wallet-modules/wallet-multisig-squads/guides/deploy-multisig'),
+        page('Manage Proposals', '/sdk/wallet-modules/wallet-multisig-squads/guides/manage-proposals'),
+        page('Manage Owners', '/sdk/wallet-modules/wallet-multisig-squads/guides/manage-owners'),
+        page('Coordinate Approvals', '/sdk/wallet-modules/wallet-multisig-squads/guides/coordinate-approvals'),
+        page('Handle Errors', '/sdk/wallet-modules/wallet-multisig-squads/guides/handle-errors'),
+      ]),
+      configuration('/sdk/wallet-modules/wallet-multisig-squads/configuration'),
+      apiReference('/sdk/wallet-modules/wallet-multisig-squads/api-reference'),
     ]),
     folder('Gasless Solana', '/sdk/wallet-modules/wallet-solana-gasless', 'Fuel', [
       usage('/sdk/wallet-modules/wallet-solana-gasless/usage'),
@@ -384,6 +419,19 @@ export const customTree: Node[] = [
     apiReference('/sdk/bridge-modules/bridge-usdt0-evm/api-reference'),
   ]),
 
+  separator('Smart Deposit Addresses'),
+  page('SDA modules', '/sdk/sda-modules', 'Inbox'),
+  folder('Rhino.fi', '/sdk/sda-modules/sda-rhinofi', 'Inbox', [
+    usage('/sdk/sda-modules/sda-rhinofi/usage'),
+    configuration('/sdk/sda-modules/sda-rhinofi/configuration'),
+    apiReference('/sdk/sda-modules/sda-rhinofi/api-reference'),
+  ]),
+  folder('Candide', '/sdk/sda-modules/sda-candide', 'Inbox', [
+    usage('/sdk/sda-modules/sda-candide/usage'),
+    configuration('/sdk/sda-modules/sda-candide/configuration'),
+    apiReference('/sdk/sda-modules/sda-candide/api-reference'),
+  ]),
+
   separator('Lending'),
   page('Lending modules', '/sdk/lending-modules', 'Banknote'),
   folder('Aave', '/sdk/lending-modules/lending-aave-evm', 'Landmark', [
@@ -483,7 +531,9 @@ export const customTree: Node[] = [
   separator('Tools and Infrastructure'),
   folder('Track balances and transactions', '/tools/indexer-api', 'Database', [
     page('Get Started', '/tools/indexer-api/get-started', 'Rocket'),
-    apiReference('/tools/indexer-api/api-reference'),
+    page('JavaScript SDK', '/tools/indexer-api/sdk', 'Code'),
+    page('SDK API Reference', '/tools/indexer-api/sdk-api-reference', 'Code'),
+    page('REST API Reference', '/tools/indexer-api/api-reference', 'Code'),
   ]),
   folder('Manage wallet secrets safely', '/tools/secret-manager', 'KeyRound', [
     configuration('/tools/secret-manager/configuration'),

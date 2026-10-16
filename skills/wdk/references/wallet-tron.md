@@ -61,6 +61,7 @@ const wallet = new WalletManagerTron(seedPhrase, {
 
 - Same derivation and key type as wallet-tron
 - **Gas-free**: Service provider covers transaction fees for TRC20 transfers
+- GasFree beta.10 accepts TRON RPC URL/`TronWeb` arrays and `retries`, sharing the initialized provider across manager-derived accounts. This is RPC failover, not an array of GasFree relay endpoints. Standard TRON beta.14 also shares its manager provider.
 - Requires `gasFreeProvider`, `gasFreeApiKey`, `serviceProvider`, `verifyingContract`
 - **TRC20 transfers only**: `sendTransaction()` **throws** — use `transfer()` only
 

@@ -1,6 +1,6 @@
 ## All Modules
 URL: https://wdk.tether.io/developers/blocks
-Description: Complete list of available WDK wallet, backup, pricing, swidge, swap, bridge, lending, and fiat interfaces and modules.
+Description: Complete list of available WDK wallet, backup, pricing, swidge, smart deposit address, swap, bridge, lending, and fiat interfaces and modules.
 
 A comprehensive list of all available WDK modules. Each module is designed to be modular and can be used independently or combined with others.
 
@@ -29,14 +29,17 @@ Wallet modules provide blockchain-specific wallet functionality for managing add
 | [`@tetherto/wdk-wallet-btc`](https://github.com/tetherto/wdk-wallet-btc) | Bitcoin | Bitcoin SegWit wallet with BIP-39/BIP-44 support | [Docs](/sdk/wallet-modules/wallet-btc/) |
 | [`@tetherto/wdk-wallet-evm`](https://github.com/tetherto/wdk-wallet-evm) | EVM | Ethereum and EVM-compatible chains wallet | [Docs](/sdk/wallet-modules/wallet-evm/) |
 | [`@hinkal/wdk-wallet-evm-hinkal`](https://www.npmjs.com/package/@hinkal/wdk-wallet-evm-hinkal) | EVM | Community module for seed-derived Hinkal private sends and shielded-fund recovery; Node bundling required | [Docs](/sdk/wallet-modules/wallet-evm-hinkal/) |
+| [`@bermuda/wdk-wallet-evm-bermuda`](https://github.com/BermudaBay/wdk-wallet-evm-bermuda) | Plasma testnet | Community beta for Bermuda shielded deposits, pool transfers, and withdrawals; GitHub installation | [Docs](/sdk/wallet-modules/wallet-evm-bermuda/) |
 | [`@tetherto/wdk-wallet-evm-erc-4337`](https://github.com/tetherto/wdk-wallet-evm-erc-4337) | EVM | ERC-4337 Account Abstraction for EVM chains | [Docs](/sdk/wallet-modules/wallet-evm-erc-4337/) |
 | [`@tetherto/wdk-wallet-evm-7702-gasless`](https://github.com/tetherto/wdk-wallet-evm-7702-gasless) | EVM | EIP-7702 gasless account abstraction for EVM chains | [Docs](/sdk/wallet-modules/wallet-evm-7702-gasless/) |
+| [`@tetherto/wdk-wallet-multisig-safe`](https://github.com/tetherto/wdk-wallet-multisig-safe) | EVM | Safe multisig proposals, owner approvals, and ERC-4337 execution | [Docs](/sdk/wallet-modules/wallet-multisig-safe/) |
 | [`@tetherto/wdk-wallet-ton`](https://github.com/tetherto/wdk-wallet-ton) | TON | TON blockchain wallet | [Docs](/sdk/wallet-modules/wallet-ton/) |
 | [`@tetherto/wdk-wallet-ton-gasless`](https://github.com/tetherto/wdk-wallet-ton-gasless) | TON | Gasless Jetton transfers on TON | [Docs](/sdk/wallet-modules/wallet-ton-gasless/) |
 | [`@tetherto/wdk-wallet-tron`](https://github.com/tetherto/wdk-wallet-tron) | TRON | TRON blockchain wallet | [Docs](/sdk/wallet-modules/wallet-tron/) |
 | [`@tetherto/wdk-wallet-tron-gasfree`](https://github.com/tetherto/wdk-wallet-tron-gasfree) | TRON | Gas-free transactions on TRON | [Docs](/sdk/wallet-modules/wallet-tron-gasfree/) |
 | [`@tetherto/wdk-wallet-solana`](https://github.com/tetherto/wdk-wallet-solana) | Solana | Solana blockchain wallet | [Docs](/sdk/wallet-modules/wallet-solana/) |
 | [`@tetherto/wdk-wallet-solana-gasless`](https://github.com/tetherto/wdk-wallet-solana-gasless) | Solana | Gasless Solana transactions through a Kora-compatible paymaster | [Docs](/sdk/wallet-modules/wallet-solana-gasless/) |
+| [`@tetherto/wdk-wallet-multisig-squads`](https://github.com/tetherto/wdk-wallet-multisig-squads) | Solana | Squads multisig vaults with proposal, approval, and execution flows | [Docs](/sdk/wallet-modules/wallet-multisig-squads/) |
 | [`@tetherto/wdk-wallet-aptos`](https://github.com/tetherto/wdk-wallet-aptos) | Aptos | Aptos blockchain wallet with native APT and fungible asset support | [Docs](/sdk/wallet-modules/wallet-aptos/) |
 | [`@tetherto/wdk-wallet-spark`](https://github.com/tetherto/wdk-wallet-spark) | Spark | Spark/Lightning Bitcoin L2 wallet | [Docs](/sdk/wallet-modules/wallet-spark/) |
 
@@ -59,6 +62,21 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 | [`@0x/wdk-protocol-swidge-0x`](https://www.npmjs.com/package/@0x/wdk-protocol-swidge-0x) | 0x | Community | Same-chain EVM token swaps through the 0x Swap API v2 | [Docs](/sdk/swidge-modules/swidge-0x/) |
 | [`@moonpay/wdk-protocol-swidge-moonpay-trade`](https://www.npmjs.com/package/@moonpay/wdk-protocol-swidge-moonpay-trade) | MoonPay Trade | Community | Provider route discovery, indicative quotes, and source-deposit execution through writable WDK accounts | [Docs](/sdk/swidge-modules/swidge-moonpay-trade/) |
 | [`@butternetwork/wdk-protocol-swidge-butter`](https://www.npmjs.com/package/@butternetwork/wdk-protocol-swidge-butter) | Butter Network | Community | Exact-input quotes and capability-dependent execution through Butter | [Docs](/sdk/swidge-modules/swidge-butter/) |
+
+## Smart Deposit Address Modules
+
+SDA modules discover provider deposit routes, issue deposit addresses, and expose provider-specific tracking operations. Check each provider's custody model and limitations.
+
+<Callout type="warn">
+Rows marked Community are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+| Module | Provider | Ownership | Description | Documentation |
+|--------|----------|-----------|-------------|---------------|
+| [`@rhino.fi/wdk-protocol-sda-rhinofi`](https://www.npmjs.com/package/@rhino.fi/wdk-protocol-sda-rhinofi) | Rhino.fi | Community | Provider-issued deposit addresses with trusted-operator routing and deposit-history access | [Docs](/sdk/sda-modules/sda-rhinofi/) |
+| [`@candidelabs/wdk-protocol-sda-candide`](https://www.npmjs.com/package/@candidelabs/wdk-protocol-sda-candide/v/1.0.0-beta.1) | Candide | Community | Deterministic EVM forwarding addresses with expiring monitoring and recovery permissions | [Docs](/sdk/sda-modules/sda-candide/) |
 
 ## Pricing Modules
 
@@ -121,6 +139,7 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 
 | Module | Category | Description | Documentation |
 |--------|----------|-------------|---------------|
+| [`@bermuda/wdk-wallet-evm-bermuda`](https://github.com/BermudaBay/wdk-wallet-evm-bermuda) | Wallet | Bermuda shielded-account beta on Plasma testnet; GitHub installation | [Docs](/sdk/wallet-modules/wallet-evm-bermuda/) |
 | [`@utexo/wdk-wallet-rgb`](https://github.com/UTEXO-Protocol/wdk-wallet-rgb) | Wallet | RGB protocol wallet integration | [Docs](/sdk/community-modules/wdk-wallet-rgb/) |
 | [`@utexo/wdk-rgb-lightning`](https://www.npmjs.com/package/@utexo/wdk-rgb-lightning) | Wallet | RGB Lightning node and wallet integration | [Docs](/sdk/community-modules/wdk-rgb-lightning/) |
 | [`@arkade-os/wdk`](https://www.npmjs.com/package/@arkade-os/wdk) | Wallet | Bitcoin wallet module built on the Arkade SDK | [README](https://github.com/arkade-os/arkade-wdk#readme) |
@@ -128,6 +147,8 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 | [`@morpho-org/wdk-protocol-lending-morpho-evm`](https://www.npmjs.com/package/@morpho-org/wdk-protocol-lending-morpho-evm) | Lending | Morpho Vault V2 and Morpho Blue lending integration | [Docs](/sdk/lending-modules/lending-morpho-evm/) |
 | [`wdk-protocol-swidge-orchestra`](https://github.com/flashnetxyz/wdk-protocol-swidge-orchestra) | Swidge | Flashnet Orchestra BTC and stablecoin route integration | [Docs](/sdk/swidge-modules/swidge-orchestra/) |
 | [`@rhino.fi/wdk-protocol-swidge-rhinofi`](https://www.npmjs.com/package/@rhino.fi/wdk-protocol-swidge-rhinofi) | Swidge | Rhino.fi cross-chain route integration | [Docs](/sdk/swidge-modules/swidge-rhinofi/) |
+| [`@rhino.fi/wdk-protocol-sda-rhinofi`](https://www.npmjs.com/package/@rhino.fi/wdk-protocol-sda-rhinofi) | SDA | Provider-issued deposit addresses with trusted-operator routing and deposit-history access | [Docs](/sdk/sda-modules/sda-rhinofi/) |
+| [`@candidelabs/wdk-protocol-sda-candide`](https://www.npmjs.com/package/@candidelabs/wdk-protocol-sda-candide/v/1.0.0-beta.1) | SDA | Deterministic EVM forwarding addresses | [Docs](/sdk/sda-modules/sda-candide/) |
 | [`@symbiosis-finance/wdk-protocol-swidge-symbiosis`](https://www.npmjs.com/package/@symbiosis-finance/wdk-protocol-swidge-symbiosis) | Swidge | Same-chain and cross-chain exact-input routes through Symbiosis | [Docs](/sdk/swidge-modules/swidge-symbiosis/) |
 | [`@lifi/wdk-protocol-swidge-lifi`](https://www.npmjs.com/package/@lifi/wdk-protocol-swidge-lifi) | Swidge | LI.FI swap and bridge route integration | [Docs](/sdk/swidge-modules/swidge-lifi/) |
 | [`@0x/wdk-protocol-swidge-0x`](https://www.npmjs.com/package/@0x/wdk-protocol-swidge-0x) | Swidge | 0x same-chain EVM route integration | [Docs](/sdk/swidge-modules/swidge-0x/) |

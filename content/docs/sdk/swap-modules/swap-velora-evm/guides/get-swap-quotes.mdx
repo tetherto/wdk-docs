@@ -65,7 +65,7 @@ const maxFee = 200000000000000n
 console.log('Quoted fee (wei):', quote.fee, 'cap:', maxFee)
 ```
 
-Compare the estimate with an exclusive cap and pass the same cap to [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference). Execution obtains a fresh fee quote and rejects a fee equal to or above `swapMaxFee`:
+Compare the estimate with an exclusive cap and pass that cap plus an accepted output floor to [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference). Execution obtains a fresh quote and rejects a fee equal to or above `swapMaxFee`. With beta.9, `minAmountOut` also rejects an output below your floor. The following example allows a 1% reduction in the previewed output; obtain the user's approval of that tolerance and recipient before sending:
 
 ```javascript title="Swap when fee is under cap"
 const maxFee = 200000000000000n
@@ -79,14 +79,15 @@ if (quote.fee < maxFee) {
   const result = await swapProtocol.swap({
     tokenIn: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
     tokenOut: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-    tokenInAmount: 1000000n
+    tokenInAmount: 1000000n,
+    minAmountOut: quote.tokenOutAmount * 9900n / 10000n
   }, { swapMaxFee: maxFee })
   console.log('Swap hash:', result.hash)
 }
 ```
 
 <Callout type="info">
-On-chain conditions can change between quote and execution. The executed [`swap()`](/sdk/swap-modules/swap-velora-evm/api-reference) may still differ slightly from the last [`quoteSwap()`](/sdk/swap-modules/swap-velora-evm/api-reference) result.
+Each call obtains a fresh rate. There is no retained quote or route, and a fee cap alone does not constrain token output. For SELL, the builder receives `minAmountOut` as its destination amount. BUY retains its requested exact output. Returned token amounts describe the new rate rather than settled balance changes; confirm the transaction before reporting receipt.
 </Callout>
 
 ## Next Steps

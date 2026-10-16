@@ -1,0 +1,190 @@
+---
+title: Use the JavaScript SDK
+description: Install the WDK Indexer HTTP client, query balances and transfers, and register wallets for transfer syncing.
+docType: how-to
+schemaType: TechArticle
+icon: Code
+---
+
+Use `@tetherto/wdk-indexer-http` to call the Indexer API from Node.js or Bare. This guide covers [installation](#install-the-client), [configuration](#configure-the-client), [balance and transfer queries](#query-balances-and-transfers), [batch results](#handle-batch-results), [wallet registration](#register-wallets-for-syncing), and [request errors](#handle-request-errors). See [Need Help](#need-help) for support.
+
+The examples use published version `1.0.1`. The client reads indexed blockchain data and manages server-side wallet records; it does not generate keys or sign transactions.
+
+## Install the Client
+
+1. Use Node.js 22 or later. For Bare, the package documents Bare 1.27 or later and requires the optional peers below.
+2. Install the version used in this guide:
+
+```bash
+npm install @tetherto/wdk-indexer-http@1.0.1
+```
+
+3. For Bare only, install its fetch, abort-controller, and URL peers:
+
+```bash
+npm install bare-fetch@^3.4.0 bare-abort-controller@^1.1.2 bare-url@^2.5.4
+```
+
+Use named imports in an ES module, such as an `.mjs` file:
+
+```javascript
+import { WdkIndexerClient, isApiError } from '@tetherto/wdk-indexer-http';
+```
+
+CommonJS uses the same package entrypoint:
+
+```javascript
+const { WdkIndexerClient, isApiError } = require('@tetherto/wdk-indexer-http');
+```
+
+The package selects the Bare peers automatically on Bare. The `/bare` subpath is an alias of the root entrypoint. See the [SDK API reference](/tools/indexer-api/sdk-api-reference#exports) for the complete export list.
+
+## Configure the Client
+
+1. [Request an API key](/tools/indexer-api/get-started#getting-started) for authenticated operations.
+2. Supply the key through your application's secret configuration. For these Node.js examples, set `WDK_INDEXER_API_KEY` in the process environment.
+3. Create a [WdkIndexerClient](/tools/indexer-api/sdk-api-reference#wdkindexerclient) with that key:
+
+```javascript
+const apiKey = process.env.WDK_INDEXER_API_KEY;
+if (!apiKey) throw new Error('Set WDK_INDEXER_API_KEY');
+
+const client = new WdkIndexerClient({ apiKey, timeout: 30_000 });
+```
+
+Version `1.0.1` defaults to `https://wdk-api.tether.su` and appends `/api/v1` to request paths. Set `baseUrl` to the origin of another Indexer deployment when needed; do not include `/api/v1`. The optional `fetch` setting replaces the runtime fetch, for example in an offline test. See all [configuration fields](/tools/indexer-api/sdk-api-reference#configuration).
+
+Only [health()](/tools/indexer-api/sdk-api-reference#health) and [getChains()](/tools/indexer-api/sdk-api-reference#getchains) work without a key. They never send it. Other methods reject before sending a request when `apiKey` is missing.
+
+## Query Balances and Transfers
+
+1. Call [getChains()](/tools/indexer-api/sdk-api-reference#getchains) to discover the current blockchain and token route keys. Preserve those values rather than deriving them from display names.
+2. Set `WDK_INDEXER_ADDRESS` to an Ethereum account address you want to query, and validate its format in your application.
+3. Confirm the selected pair is available, then call [getTokenBalance()](/tools/indexer-api/sdk-api-reference#gettokenbalance):
+
+```javascript
+const address = process.env.WDK_INDEXER_ADDRESS;
+if (!address) throw new Error('Set WDK_INDEXER_ADDRESS');
+
+const { chains } = await client.getChains();
+const ethereum = chains.find((chain) => chain.name === 'ethereum');
+if (!ethereum?.tokens.includes('usdt')) {
+  throw new Error('This deployment does not advertise the selected token');
+}
+
+const { tokenBalance } = await client.getTokenBalance('ethereum', 'usdt', address);
+console.log('USDt balance in base units:', tokenBalance.amount);
+```
+
+The returned amount is a decimal string in the token's base units. Keep it as a string or convert it to `BigInt` for integer arithmetic; converting it to `Number` can lose precision. This example selects USD₮ on Ethereum, using the API's exact `usdt` route key.
+
+Use [getTokenTransfers()](/tools/indexer-api/sdk-api-reference#gettokentransfers) to retrieve up to 50 recent transfers for the same address:
+
+```javascript
+const { transfers } = await client.getTokenTransfers('ethereum', 'usdt', address, {
+  limit: 50,
+  fromTs: Date.now() - 7 * 24 * 60 * 60 * 1000,
+});
+
+for (const transfer of transfers) {
+  console.log(transfer.transactionHash, transfer.amount, transfer.timestamp);
+}
+```
+
+The time bounds and returned `timestamp` use Unix milliseconds. [getTransactionTransfers()](/tools/indexer-api/sdk-api-reference#gettransactiontransfers) retrieves a token's transfers within a specific transaction. Validate application-supplied path values: only address arguments are automatically URL-encoded. See [input handling](/tools/indexer-api/sdk-api-reference#input-handling).
+
+## Handle Batch Results
+
+[getBatchTokenBalances()](/tools/indexer-api/sdk-api-reference#getbatchtokenbalances) and [getBatchTokenTransfers()](/tools/indexer-api/sdk-api-reference#getbatchtokentransfers) return results in request order. A successful HTTP request can contain failed items. Check each item with [isApiError()](/tools/indexer-api/sdk-api-reference#isapierror) before using its success fields:
+
+```javascript
+const results = await client.getBatchTokenBalances([
+  { blockchain: 'ethereum', token: 'usdt', address },
+]);
+
+for (const item of results) {
+  if (isApiError(item)) {
+    console.error(item.error, item.message);
+    continue;
+  }
+  console.log(item.tokenBalance.amount);
+}
+```
+
+The server's documented batch size is 1–10 items. The exported [BATCH_LIMIT](/tools/indexer-api/sdk-api-reference#batch-limit) is `10`; use it to split larger inputs in your application. The client neither splits requests nor rejects oversized arrays locally. Transport errors and unsuccessful HTTP responses still reject the whole call; handle them as described below.
+
+## Register Wallets for Syncing
+
+[registerWallets()](/tools/indexer-api/sdk-api-reference#registerwallets) stores address records so the server can sync their transfers. This changes your Indexer account's wallet records; it does not create an on-chain wallet.
+
+1. Choose the addresses you want the service to monitor.
+2. Send 1–10 registrations with `type: 'client_wallet'` and at least one address each.
+3. Check every result's numeric `status` and optional `error` before using its `id`:
+
+```javascript
+const { wallets } = await client.registerWallets([
+  { type: 'client_wallet', name: 'Treasury', addresses: { ethereum: address } },
+]);
+
+for (const result of wallets) {
+  if (result.status !== 201 || typeof result.id !== 'string') {
+    console.error('Wallet registration failed:', result.status, result.error);
+    continue;
+  }
+  const synced = await client.getWalletTransfers(result.id, { limit: 50 });
+  console.log(result.id, synced.transfers);
+}
+```
+
+Registration can succeed for some items and fail for others, including validation or quota failures. Do not treat the top-level HTTP status as proof that every wallet was created. A Spark registration also needs `meta.spark`; see [registration fields](/tools/indexer-api/sdk-api-reference#walletregistration).
+
+Use [listWallets()](/tools/indexer-api/sdk-api-reference#listwallets) to find existing records and [getWallet()](/tools/indexer-api/sdk-api-reference#getwallet) to inspect one. [updateWallet()](/tools/indexer-api/sdk-api-reference#updatewallet) changes its name or enables/disables syncing. [deleteWallet()](/tools/indexer-api/sdk-api-reference#deletewallet) removes the record and stops syncing. [getTransfers()](/tools/indexer-api/sdk-api-reference#gettransfers) queries synced transfers across your registered wallets.
+
+Synced transfer results use `ts` for Unix milliseconds, whereas token-transfer results use `timestamp`.
+
+## Handle Request Errors
+
+Import the error classes as JavaScript values before checking failures:
+
+```javascript
+import {
+  WdkIndexerApiError,
+  WdkIndexerTimeoutError,
+  WdkIndexerNetworkError,
+} from '@tetherto/wdk-indexer-http';
+```
+
+Distinguish API responses, timeouts, and fetch or body-read failures:
+
+```javascript
+try {
+  await client.getTokenBalance('ethereum', 'usdt', address);
+} catch (error) {
+  if (error instanceof WdkIndexerApiError) {
+    console.error(error.status, error.errorType, error.message);
+  } else if (error instanceof WdkIndexerTimeoutError) {
+    console.error('Request timed out after', error.timeout, 'ms');
+  } else if (error instanceof WdkIndexerNetworkError) {
+    console.error('Request or response-body read failed');
+  } else {
+    throw error;
+  }
+}
+```
+
+All package errors extend [WdkIndexerError](/tools/indexer-api/sdk-api-reference#errors). The timeout covers both fetching the response and reading its body. The client does not retry requests automatically. After a wallet mutation times out, inspect the server's wallet records before deciding whether to repeat it: a client timeout does not establish whether the server applied the request.
+
+## Next Steps
+
+<Cards>
+  <Card title="SDK API Reference" href="/tools/indexer-api/sdk-api-reference">
+    Configuration, all 14 methods, response types, and error fields
+  </Card>
+  <Card title="REST API Reference" href="/tools/indexer-api/api-reference">
+    Call the Indexer endpoints directly over HTTP
+  </Card>
+</Cards>
+
+## Need Help?
+
+<SupportCards />

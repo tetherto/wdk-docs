@@ -21,16 +21,25 @@ try {
 }
 ```
 
-You can isolate Lightning failures by wrapping [`account.payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference):
+With `syncAndRetry` enabled, payment failures that are not recovered raise [`LightningPaymentError`](/sdk/wallet-modules/wallet-spark/api-reference#lightningpaymenterror). Keep its `transferId` with the original invoice and options. If you later decide to retry, pass that same ID; do not create a second payment with a new ID. Other failures, including setup or sync failures, may use different error types.
+
+You can preserve the ID while handling [`account.payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference#paylightninginvoiceoptions):
 
 ```javascript title="Handle Lightning Errors"
+import { LightningPaymentError } from '@tetherto/wdk-wallet-spark'
+
+const paymentOptions = {
+  invoice: 'lnbc500u1p...',
+  maxFeeSats: 1000
+}
+
 try {
-  const payment = await account.payLightningInvoice({
-    encodedInvoice: 'lnbc500u1p...',
-    maxFeeSats: 1000
-  })
+  const payment = await account.payLightningInvoice(paymentOptions)
   console.log('Payment id:', payment.id)
 } catch (error) {
+  if (!(error instanceof LightningPaymentError)) throw error
+  paymentOptions.transferId = error.transferId
+  // Keep paymentOptions for a deliberate retry of this same payment.
   console.error('Lightning payment failed:', error.message)
 }
 ```
