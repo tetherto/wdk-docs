@@ -1,0 +1,237 @@
+---
+title: SDK API Reference
+description: Configuration, methods, types, and errors for the WDK Indexer HTTP client 1.0.1.
+docType: reference
+schemaType: APIReference
+icon: Code
+---
+
+This reference describes `@tetherto/wdk-indexer-http@1.0.1`. Start with the [JavaScript SDK guide](/tools/indexer-api/sdk) for installation and a complete request flow. The existing [REST API reference](/tools/indexer-api/api-reference) documents direct HTTP access separately.
+
+## Exports
+
+The package root exports these JavaScript values on Node.js and Bare:
+
+```javascript
+import {
+  WdkIndexerClient,
+  WdkIndexerError,
+  WdkIndexerApiError,
+  WdkIndexerTimeoutError,
+  WdkIndexerNetworkError,
+  isApiError,
+  BATCH_LIMIT,
+} from '@tetherto/wdk-indexer-http';
+```
+
+CommonJS can access the same named exports with `require('@tetherto/wdk-indexer-http')`. The `/bare` export is an alias of the root. Node.js requires version 22 or later; Bare requires the [optional peers](/tools/indexer-api/sdk#install-the-client).
+
+TypeScript definitions ship with the package. Import types separately from JavaScript values:
+
+```typescript
+import type {
+  WdkIndexerClientConfig,
+  TokenTransferOptions,
+  BatchTokenBalanceRequest,
+  BatchTokenTransferRequest,
+  TransferFilters,
+  WalletRegistration,
+  WalletUpdate,
+} from '@tetherto/wdk-indexer-http';
+```
+
+## WdkIndexerClient
+
+Construct a client with optional configuration:
+
+```javascript
+const client = new WdkIndexerClient({ timeout: 30_000 });
+```
+
+### Configuration
+
+| Option | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `apiKey` | `string` | No at construction; required for authenticated methods | None | Sent as `X-API-KEY`. Missing keys reject authenticated calls before a request is sent. |
+| `baseUrl` | `string` | No | `https://wdk-api.tether.su` | Deployment origin. Trailing slashes are removed; the client appends `/api/v1`. |
+| `timeout` | `number` | No | `30000` | Per-request timeout in milliseconds, covering fetch and response-body reading. |
+| `fetch` | `FetchLike` | No | Runtime fetch | Custom fetch implementation, such as an offline mock. Bare selects `bare-fetch`. |
+
+`FetchLike` receives a URL string and `FetchInitLike` containing `method`, `headers`, optional `body`, and `signal`. It returns a promise of `FetchResponseLike` with `ok`, `status`, `statusText`, and an asynchronous `text()` method. The client sends `Accept: application/json` and adds `Content-Type: application/json` when it sends a JSON body.
+
+### Input Handling
+
+The client checks for a missing API key on authenticated calls. It does not validate batch sizes, chain/token support, addresses, filter ranges, or wallet payloads locally. The field constraints below describe the documented server contract. `Blockchain` and `Token` types provide known-name suggestions while accepting other strings; call [getChains()](#getchains) for the current inventory.
+
+Address path arguments are URL-encoded automatically. `blockchain`, `token`, `txHash`, and `walletId` path values are inserted as supplied. Use discovered chain/token keys and valid transaction or wallet identifiers; validate untrusted input before calling these methods. Reject path-control values such as `.` and `..`, and encode any permitted reserved characters before passing an otherwise valid identifier. Query fields set to `null` or `undefined` are omitted; zero values are retained.
+
+### Methods
+
+All methods return promises. Paths below are relative to `/api/v1`. Only `health()` and `getChains()` omit authentication, even when the client has an API key.
+
+| Method | HTTP request | Returns |
+| --- | --- | --- |
+| `health()` | `GET /health` | `Promise<HealthResponse>` |
+| `getChains()` | `GET /chains` | `Promise<ChainsResponse>` |
+| `getTokenTransfers(blockchain, token, address, options?)` | `GET /{blockchain}/{token}/{address}/token-transfers` | `Promise<TokenTransfersResponse>` |
+| `getTokenBalance(blockchain, token, address)` | `GET /{blockchain}/{token}/{address}/token-balances` | `Promise<TokenBalanceResponse>` |
+| `getTransactionTransfers(blockchain, token, txHash)` | `GET /blockchains/{blockchain}/{token}/token-transfers/{txHash}` | `Promise<TransactionTransfersResponse>` |
+| `getBatchTokenTransfers(requests)` | `POST /batch/token-transfers` | `Promise<BatchTokenTransfersItem[]>` |
+| `getBatchTokenBalances(requests)` | `POST /batch/token-balances` | `Promise<BatchTokenBalancesItem[]>` |
+| `registerWallets(wallets)` | `POST /wallets` | `Promise<RegisterWalletsResponse>` |
+| `listWallets()` | `GET /wallets` | `Promise<ListWalletsResponse>` |
+| `getWallet(walletId)` | `GET /wallets/{walletId}` | `Promise<Wallet>` |
+| `updateWallet(walletId, patch)` | `PATCH /wallets/{walletId}` | `Promise<Wallet>` |
+| `deleteWallet(walletId)` | `DELETE /wallets/{walletId}` | `Promise<DeleteWalletResponse>` |
+| `getWalletTransfers(walletId, filters?)` | `GET /wallets/{walletId}/transfers` | `Promise<WalletTransfersResponse>` |
+| `getTransfers(filters?)` | `GET /transfers` | `Promise<WalletTransfersResponse>` |
+
+#### health()
+
+Takes no arguments. Returns the service's `HealthResponse`, with `status` (`'healthy'`, `'degraded'`, or `'unhealthy'`) and ISO 8601 `timestamp`. Optional fields are `deployEnvironment`, `deployedVersion`, `summary` (healthy/unhealthy/total counts), and `checks` (dependency and per-indexer checks).
+
+HTTP 503 with a non-null JSON body resolves instead of throwing. Inspect `status` to detect degraded service. An empty, `null`, or malformed 503 body throws `WdkIndexerApiError`. The client does not validate the parsed body's shape.
+
+#### getChains()
+
+Takes no arguments. Returns `{ chains: ChainInfo[] }`. Each chain has `name`, `tokens`, and optional `caseSensitive` rules. Its `address` rule can be a boolean or regular-expression string; `tx` and `block` rules are optional booleans. Discover supported pairs at runtime instead of maintaining a static list.
+
+#### getTokenTransfers()
+
+Requires `blockchain: Blockchain`, `token: Token`, and `address: string`. Accepts optional [TokenTransferOptions](#tokentransferoptions) as the fourth argument. Returns `{ transfers: TokenTransfer[] }` for the address; see [response fields](#response-fields).
+
+#### getTokenBalance()
+
+Requires `blockchain: Blockchain`, `token: Token`, and `address: string`. Returns `{ tokenBalance: { blockchain, token, amount } }`. `amount` is a decimal string in token base units.
+
+#### getTransactionTransfers()
+
+Requires `blockchain: Blockchain`, `token: Token`, and `txHash: string`. The documented transaction-hash limit is 255 characters. Returns `{ transfers: TokenTransfer[] }`. The documented server behavior is HTTP 404 when the transaction is absent or has no transfers of that token; the client surfaces it as `WdkIndexerApiError`.
+
+#### getBatchTokenTransfers()
+
+Requires `requests: BatchTokenTransferRequest[]`: 1–10 items, each with `blockchain`, `token`, `address`, and optional [TokenTransferOptions](#tokentransferoptions) fields. Returns an array in request order; each item is `{ transfers: TokenTransfer[] }` or [ApiError](#apierror). Use [isApiError()](#isapierror) to narrow each result. Failed items do not automatically reject an otherwise successful HTTP request.
+
+#### getBatchTokenBalances()
+
+Requires `requests: BatchTokenBalanceRequest[]`: 1–10 items, each with `blockchain`, `token`, and `address`. Returns an array in request order; each item is `TokenBalanceResponse` or [ApiError](#apierror). Whole-request failures still reject. See [BATCH_LIMIT](#batch-limit) for application-side batching.
+
+#### registerWallets()
+
+Requires `wallets: WalletRegistration[]`: 1–10 [registration records](#walletregistration). Registers addresses for server-side transfer syncing. Returns `{ wallets: WalletRegistrationResult[] }`, with a numeric `status` for each record.
+
+The documented item statuses include `201` (created), `400` (invalid), and `429` (wallet quota reached). Inspect every item; the public type is `number`, not a closed status union. `id`, `name`, `type`, `enabled`, `addresses`, and `meta` are optional result fields. Failures can include `error`, and quota failures can include `limit` and `currentCount`. Do not assume an `id` exists merely because the HTTP call resolved.
+
+#### listWallets()
+
+Takes no arguments. Returns `{ wallets: Wallet[] }` for the authenticated account. Use a returned `id` with the single-wallet methods.
+
+#### getWallet()
+
+Requires `walletId: string`. Returns one [Wallet](#response-fields), without a `wallet` wrapper.
+
+#### updateWallet()
+
+Requires `walletId: string` and `patch: WalletUpdate`. The patch must contain `name: string` (1–100 characters), `enabled: boolean`, or both. Other fields are not part of the update contract. Returns the updated `Wallet`; `enabled` controls server-side syncing.
+
+#### deleteWallet()
+
+Requires `walletId: string`. Removes the registered wallet record and stops its syncing. Returns `{ success: boolean }`. This is an Indexer operation, not an on-chain deletion.
+
+#### getWalletTransfers()
+
+Requires `walletId: string`; accepts optional [TransferFilters](#transferfilters). Returns `{ transfers: WalletTransfer[] }` synced for that wallet. These records use `ts`, not the token-transfer endpoint's `timestamp` field.
+
+#### getTransfers()
+
+Accepts optional [TransferFilters](#transferfilters). Returns `{ transfers: WalletTransfer[] }` synced across the authenticated account's registered wallets.
+
+## Request Types
+
+### TokenTransferOptions
+
+Used by `getTokenTransfers()` and as fields of each `BatchTokenTransferRequest`:
+
+| Field | Type | Required | Server constraint/default |
+| --- | --- | --- | --- |
+| `limit` | `number` | No | Integer 1–1000; default `10` |
+| `fromTs` | `number` | No | Inclusive start, Unix milliseconds, integer ≥ 0; default `0` |
+| `toTs` | `number` | No | Inclusive end, Unix milliseconds, integer ≥ 0 |
+
+### TransferFilters
+
+Used by `getWalletTransfers()` and `getTransfers()`:
+
+| Field | Type | Required | Server constraint/default |
+| --- | --- | --- | --- |
+| `blockchain` | `Blockchain` | No | A blockchain route key |
+| `token` | `Token` | No | A token route key |
+| `type` | `TransferDirection` | No | `'sent'` or `'received'` |
+| `from`, `to` | `number` or `string` | No | Nonnegative integer Unix milliseconds or an ISO 8601 date-time string |
+| `limit` | `number` | No | Integer 1–100; default `10` |
+| `skip` | `number` | No | Nonnegative integer pagination offset; default `0` |
+| `sort` | `SortOrder` | No | `'asc'` or `'desc'`; default `'desc'` |
+
+### WalletRegistration
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `type` | `'client_wallet'` | Yes | Required registration discriminator |
+| `addresses` | `WalletAddresses` | Yes | Blockchain-to-address map with at least one entry |
+| `name` | `string` | No | 1–100 characters when supplied |
+| `meta` | `WalletMeta` | For a Spark address | Contains `spark: { sparkDepositAddress: string, sparkIdentityKey: string }` for Spark registration |
+
+## Response Fields
+
+These are declared response shapes. The client parses JSON without runtime schema validation. An empty successful response resolves to `null`, even though the declared return types do not include it. A nonempty, invalid JSON success body throws `WdkIndexerError`.
+
+| Type | Fields |
+| --- | --- |
+| `TokenBalance` | `blockchain`, `token`, and `amount` (decimal string in base units) |
+| `TokenTransfer` | `blockchain`, `blockNumber`, `transactionHash`, `transferIndex`, `token`, `amount`, `timestamp`; nullable `transactionIndex`, `logIndex`, `from`, `to`; optional `label` and nullable `metadata`; additional fields may be present |
+| `Wallet` | `id`, `type`, `enabled`, `addresses`, `createdAt`, `updatedAt`; optional `name`, `meta` |
+| `WalletTransfer` | `walletId`, `blockchain`, `token`, `transactionHash`, `transferIndex`, `blockNumber`, `amount`, `ts`, `type`; nullable `from`, `to`, `transactionIndex`, `logIndex`; optional `label` |
+
+`TokenTransfer.timestamp`, `WalletTransfer.ts`, `Wallet.createdAt`, and `Wallet.updatedAt` are Unix milliseconds. Transfer amounts are decimal strings in token base units. Keep them as strings or use `BigInt` for integer arithmetic. `WalletTransfer.type` is `'sent'` or `'received'`.
+
+### ApiError
+
+An item error has required `error: string` and optional `message: string` and `status: number`. It is returned inside a successful batch response; it is not an instance of `WdkIndexerApiError`.
+
+## Errors
+
+All package error classes extend `WdkIndexerError`, which extends `Error`. All methods can reject; missing keys, API errors, network failures, timeouts, and malformed responses are separate from batch-item errors.
+
+| Class | Trigger | Additional fields |
+| --- | --- | --- |
+| `WdkIndexerError` | Missing key on an authenticated call, or nonempty invalid JSON on a successful response | None |
+| `WdkIndexerApiError` | Unsuccessful HTTP status, except an accepted `health()` 503 body | `status: number`, `errorType: string` or `null`, `body: unknown` |
+| `WdkIndexerTimeoutError` | Configured timeout expires during fetch or body reading; the client also aborts the request | `timeout: number` |
+| `WdkIndexerNetworkError` | Fetch rejects or reading the response body fails | `cause: unknown` |
+
+For `WdkIndexerApiError`, `errorType` comes from a string `body.error`. The message uses a nonempty string `body.message`, otherwise the HTTP status and status text. `body` retains parsed JSON, raw text when parsing fails, or `null` for an empty body. The client does not retry automatically.
+
+## Helpers
+
+### isApiError()
+
+`isApiError(item: unknown): item is ApiError` returns true for a non-null object with a string `error` property. It narrows batch result types; it is not a complete response-schema validator.
+
+### Batch Limit
+
+`BATCH_LIMIT` is the number `10`, representing the documented maximum for batch requests and `registerWallets()`. It is a convenience for callers. The client does not split arrays or enforce that maximum locally.
+
+## Next Steps
+
+<Cards>
+  <Card title="Use the JavaScript SDK" href="/tools/indexer-api/sdk">
+    Configure a client and handle balances, batch results, and wallet registration
+  </Card>
+  <Card title="REST API Reference" href="/tools/indexer-api/api-reference">
+    Read the direct HTTP endpoint documentation
+  </Card>
+</Cards>
+
+## Need Help?
+
+<SupportCards />

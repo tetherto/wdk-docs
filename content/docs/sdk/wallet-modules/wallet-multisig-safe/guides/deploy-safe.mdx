@@ -1,0 +1,88 @@
+---
+title: Deploy a multisig Safe
+description: Predict and deploy a Safe while separating owner deployment gas from Safe operating funds.
+docType: how-to
+schemaType: TechArticle
+---
+
+[Agree on the owners](#agree-on-the-owners), [fund deployment](#fund-deployment), then [deploy and verify](#deploy-and-verify). See [Need Help](#need-help) for support.
+
+Prerequisites: complete [setup](/sdk/wallet-modules/wallet-multisig-safe/guides/get-started), an agreed owner list and threshold, and a chain with the required Safe factory and modules. Use test funds while validating a new integration.
+
+## Agree on the Owners
+
+1. Each owner independently derives and verifies their own EOA address.
+2. Agree on the entire owner list, threshold and optional salt before predicting the Safe.
+3. Keep the same chain, modules and owner configuration on every device.
+
+Use [`WalletAccountMultisigSafe`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#walletaccountmultisigsafe) with predicted options rather than an existing address:
+
+```javascript title="Predict a Safe"
+import { WalletAccountMultisigSafe } from '@tetherto/wdk-wallet-multisig-safe'
+function requiredEnv(name) {
+  const value = process.env[name]
+  if (!value) throw new Error(`Missing ${name}`)
+  return value
+}
+
+const config = {
+  provider: requiredEnv('EVM_RPC_URL'),
+  chainId: BigInt(requiredEnv('CHAIN_ID')),
+  bundlerUrl: requiredEnv('BUNDLER_URL'),
+  txServiceUrl: requiredEnv('SAFE_TX_SERVICE_URL'),
+  safeModulesVersion: '0.2.0',
+  useNativeCoins: true
+}
+
+const predicted = new WalletAccountMultisigSafe(
+  requiredEnv('WDK_SEED_PHRASE'), "0'/0/0", {
+    ...config,
+    safeOptions: {
+      owners: requiredEnv('SAFE_OWNERS').split(',').map(value => value.trim()),
+      threshold: Number(requiredEnv('SAFE_THRESHOLD'))
+    }
+  }
+)
+console.log('Predicted Safe:', await predicted.getAddress())
+```
+
+Threshold must be at least one and no greater than the owner count. Independently validate owner uniqueness and address accuracy before deployment.
+
+## Fund Deployment
+
+The owner's EOA pays for deployment, even when future operations will be sponsored or token-paid. The Safe address and owner address have separate balances.
+
+Use [`getSignerAddress()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#getsigneraddress) and [`quoteDeploy()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#quotedeploy) to identify the payer and estimate native gas:
+
+```javascript title="Identify deployment payer"
+console.log('Fund owner EOA:', await predicted.getSignerAddress())
+console.log('Estimated native wei:', (await predicted.quoteDeploy()).fee)
+```
+
+Fund that EOA on the configured chain and leave enough for fee changes. The quote does not cap the later transaction.
+
+## Deploy and Verify
+
+Deploying spends native funds and creates the Safe. Review the predicted address and owner configuration before this step.
+
+Use [`deploy()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#deploy) after confirming the Safe is not already deployed:
+
+```javascript title="Submit deployment"
+if (await predicted.isDeployed()) throw new Error('Safe already exists')
+const deployment = await predicted.deploy()
+console.log('Deployment transaction:', deployment.hash)
+```
+
+Wait for the EVM deployment receipt before continuing. Then use [`isDeployed()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#isdeployed) and [`getMultisigInfo()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#getmultisiginfo) to verify the deployed state. Fund the Safe for its intended payments and operating fee mode. Never treat the returned hash alone as confirmation.
+
+## Next Steps
+
+- [Usage](/sdk/wallet-modules/wallet-multisig-safe/usage)
+- [Configuration](/sdk/wallet-modules/wallet-multisig-safe/configuration)
+- [API reference](/sdk/wallet-modules/wallet-multisig-safe/api-reference)
+
+---
+
+## Need Help?
+
+<SupportCards />

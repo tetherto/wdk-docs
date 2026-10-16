@@ -1,0 +1,76 @@
+---
+title: Get started with a Squads multisig
+description: Install beta.2 and connect a member to an existing Solana multisig vault.
+docType: getting-started
+schemaType: TechArticle
+---
+
+[Install the package](#install-the-package), [configure the member](#configure-the-member), then [inspect the multisig and vault](#inspect-the-multisig-and-vault). See [Need Help](#need-help) for support.
+
+Prerequisites: [Node.js](https://nodejs.org/) with ESM, [npm](https://www.npmjs.com/), a Solana RPC endpoint, a deployed Squads multisig, and the seed/path of one of its members. Fund the member for transaction fees and rent before using write operations.
+
+## Install the Package
+
+Install the exact package used in these guides:
+
+```bash
+npm install --save-exact @tetherto/wdk-wallet-multisig-squads@1.0.0-beta.2
+```
+
+## Configure the Member
+
+1. Supply the RPC URL and agreed multisig address from application configuration.
+2. Load the member seed from secret storage.
+3. Derive the member's known Solana path with [`WalletManagerMultisigSquads`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#walletmanagermultisigsquads).
+
+Save this setup as `squads-account.mjs`:
+
+```javascript title="squads-account.mjs"
+import WalletManagerMultisigSquads from '@tetherto/wdk-wallet-multisig-squads'
+
+export function requiredEnv(name) {
+  const value = process.env[name]
+  if (!value) throw new Error(`Missing ${name}`)
+  return value
+}
+
+export const config = {
+  provider: requiredEnv('SOLANA_RPC_URL'),
+  multisigPdaOrCreateKey: requiredEnv('MULTISIG_ADDRESS'),
+  commitment: 'confirmed'
+}
+export const wallet = new WalletManagerMultisigSquads(
+  requiredEnv('WDK_SEED_PHRASE'), config
+)
+export const account = await wallet.getAccountByPath("0'/0'")
+```
+
+This relative path derives `m/44'/501'/0'/0'`. Change it to the path that actually controls the member address. The Node environment example is not a requirement to store browser secrets in environment files.
+
+## Inspect the Multisig and Vault
+
+Use [`getAddress()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#getaddress), [`getSignerAddress()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#getsigneraddress) and [`getVaultAddress()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#getvaultaddress) to identify all three addresses:
+
+```javascript title="Inspect account roles"
+import { account } from './squads-account.mjs'
+
+console.log('Multisig configuration:', await account.getAddress())
+console.log('Member signer:', await account.getSignerAddress())
+console.log('Vault 0:', await account.getVaultAddress())
+console.log('Members and permissions:', await account.getMultisigInfo())
+console.log('Vault balance in lamports:', await account.getBalance())
+```
+
+The expected result is your agreed multisig, member and vault. `owners` and `masks` from [`getMultisigInfo()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#getmultisiginfo) align by array index. Verify the member has the permission required for your next action; deriving a signer does not make it a member. Fund the vault for payments, not the multisig configuration address.
+
+## Next Steps
+
+- [Usage](/sdk/wallet-modules/wallet-multisig-squads/usage)
+- [Configuration](/sdk/wallet-modules/wallet-multisig-squads/configuration)
+- [API reference](/sdk/wallet-modules/wallet-multisig-squads/api-reference)
+
+---
+
+## Need Help?
+
+<SupportCards />

@@ -84,7 +84,7 @@ CLI and MCP callers use the same signing path. A send dry run estimates fees thr
 
 ## Module catalog and loading
 
-Beta.5's bundled `wdk.config.json` separates unversioned network-to-module mappings from exact built-in module pins and selected chain-specific method schemas. Built-in modules are normal dependencies of `@tetherto/wdk-cli`; the package no longer installs them through a postinstall script.
+Beta.6's bundled `wdk.config.json` separates unversioned network-to-module mappings from exact built-in module pins and selected chain-specific method schemas. Built-in modules are normal dependencies of `@tetherto/wdk-cli`; the package no longer installs them through a postinstall script.
 
 `wdk module add` installs a custom package under the CLI installation and records its exact version in the user's `customModules` configuration. A custom network can then reference that unversioned package name. The daemon imports the wallet manager lazily the first time that network is used and caches the constructor for the session.
 
@@ -96,13 +96,13 @@ A custom module runs in the wallet daemon and can access unlocked wallet account
 
 ## Protocol Routing
 
-Beta.5 reads swap and bridge protocol definitions from the installed `wdk.config.json`. A definition maps a short protocol name to a package and configuration. General configuration is shallow-merged with any per-network override before the daemon constructs the protocol.
+Beta.6 reads the installed `providers` registry and user-added `customProviders`. A definition maps a short name to a module, declared kind, and configuration. General and per-network overrides are shallow-merged before the daemon constructs the provider; see [configuration precedence](/cli/configuration#swap-and-bridge-protocols).
 
-For a route preview, the daemon concurrently requests quotes from installed protocols whose detected kind matches the requested command, with swidge protocols admitted for both commands. Beta.5 does not also check route shape: a cross-network swap can admit a same-chain swap protocol, and the swap adapter omits the destination chain from that provider's options. An exact-input request selects the quote with the highest output; an exact-output request selects the quote with the lowest input. Separate gas and bridge fees are returned for review but excluded from ranking because their denomination and inclusion differ between protocol types. Quote failures do not discard successful quotes and are returned as `skipped`; the request fails with `QUOTE_REJECTED` if every candidate fails.
+For a route preview, the daemon concurrently requests quotes from installed protocols whose declared kind matches the requested command, with swidge protocols admitted for both commands. Beta.6 does not also check route shape: a cross-network swap can admit a same-chain swap protocol, and the swap adapter omits the destination chain from that provider's options. An exact-input request selects the quote with the highest output; an exact-output request selects the quote with the lowest input. Separate gas and bridge fees are returned for review but excluded from ranking because their denomination and inclusion differ between protocol types. Quote failures do not discard successful quotes and are returned as `skipped`; the request fails with `QUOTE_REJECTED` if every candidate fails.
 
-Execution is a separate request that quotes the candidates again and executes only that request's winner. Unless the caller supplies `protocol`, it can select a different provider; amounts and fees can change even when the provider is restricted. Beta.5 exposes no CLI or MCP minimum output, maximum input, fee, or expiry bound relative to the preview. An omitted recipient resolves to the destination-network account derived from the same wallet and account index, but swap and bridge preview results omit that recipient, wallet name, and index.
+Execution is a separate request that quotes the candidates again and executes only that request's winner. Unless the caller supplies `protocol`, it can select a different provider; amounts and fees can change even when the provider is restricted. Beta.6 exposes no CLI or MCP minimum output, maximum input, fee, or expiry bound relative to the preview. An omitted recipient resolves to the destination-network account derived from the same wallet and account index, but swap and bridge preview results omit that recipient, wallet name, and index.
 
-`wdk module add` installs and records a custom wallet-module package. It does not add a routing protocol definition and rejects built-in catalog packages. A missing built-in dependency requires reinstalling the exact CLI version.
+`wdk module add` installs a custom module or an explicit version override of a built-in module. It does not register a routing provider; use `wdk provider add` separately. See [Manage Modules](/cli/guides/manage-modules) for restore and repair limitations. Provider registration imports the installed module to validate its declared kind, so it requires the same package trust review.
 
 ## IPC and operating systems
 
@@ -146,7 +146,7 @@ On a normal lock, TTL expiry, `SIGINT`, or `SIGTERM`, the daemon disposes the af
 
 ## Configuration changes
 
-Network configuration is captured by WDK instances when they are created. `wdk config set` and `wdk config reset` changes under `networks.*` lock the current wallet sessions so the next unlock creates fresh instances with the new settings. `wdk module add` and `wdk module remove` also lock a running daemon before changing installed packages. `wdk network create` and `wdk network delete` change the registry without automatically locking current sessions.
+Network configuration is captured by WDK instances when they are created. `wdk config set` and `wdk config reset` changes under `networks.*` or `providers.*` lock the current wallet sessions so the next unlock creates fresh instances with the new settings. `wdk module add` and `wdk module remove` also lock a running daemon before changing installed packages. Registry enable/disable commands and provider add/delete also lock running sessions. `wdk network create` and `wdk network delete` change the registry without automatically locking current sessions.
 
 Configuration and storage locations are covered in [Configuration](/cli/configuration) and [Storage format](/cli/reference/storage-format).
 

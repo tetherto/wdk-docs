@@ -5,7 +5,7 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-This guide explains how to transfer SPL tokens (such as USD₮), estimate fees, and validate inputs before executing.
+This guide explains how to [transfer SPL tokens](#transfer-tokens), [estimate fees](#estimate-transfer-fees), [add a memo](#add-a-memo-optional), and [validate a transfer](#transfer-with-validation). These methods support the original SPL Token program; Token-2022 mints remain unsupported.
 
 ## Transfer Tokens
 
@@ -33,6 +33,28 @@ const transferQuote = await account.quoteTransfer({
 })
 console.log('Transfer fee estimate:', transferQuote.fee, 'lamports')
 ```
+
+## Add a Memo (optional)
+
+Pass `{ memo }` as the second argument to [`quoteTransfer()`](/sdk/wallet-modules/wallet-solana/api-reference#quotetransferoptions) and [`transfer()`](/sdk/wallet-modules/wallet-solana/api-reference#transferoptions). The memo is a public, on-chain payment reference; keep secrets and personal data out of it.
+
+1. Prepare the same transfer fields and memo for both calls.
+2. Inspect the quote before sending; configure `transferMaxFee` to enforce a fee cap during execution.
+3. Submit the transfer with the same memo.
+
+You can quote and send a transfer using your reviewed mint, recipient, and amount:
+
+```javascript title="Attach an SPL transfer memo"
+const transferOptions = { token: splTokenMint, recipient, amount }
+const solanaOptions = { memo: 'Invoice 1042' }
+const quote = await account.quoteTransfer(transferOptions, solanaOptions)
+console.log('Estimated fee:', quote.fee, 'lamports')
+
+const result = await account.transfer(transferOptions, solanaOptions)
+console.log('Transfer hash:', result.hash)
+```
+
+The memo must be a string; an empty string adds no memo instruction. Both calls throw `ValueError` for a non-string memo or a memo that makes the transaction exceed Solana's transaction-size limit. The limit applies to the complete transaction, so there is no fixed character allowance. The second argument applies to SPL transfers, not native SOL sends. This feature does not enable Token-2022 memo-transfer extensions.
 
 ## Transfer with Validation
 

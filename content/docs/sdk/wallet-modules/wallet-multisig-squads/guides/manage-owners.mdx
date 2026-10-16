@@ -1,0 +1,60 @@
+---
+title: Manage Squads members
+description: Propose member, permission and threshold changes for an autonomous Squads multisig.
+docType: how-to
+schemaType: TechArticle
+---
+
+[Review member permissions](#review-member-permissions), [propose a change](#propose-a-change), then [verify the result](#verify-the-result). See [Need Help](#need-help) for support.
+
+Prerequisites: a deployed autonomous multisig (`configAuthority: null`), a member with initiate permission, and enough funds for proposal fees/rent. These methods create governance proposals; they do not change membership immediately.
+
+## Review Member Permissions
+
+Use [`getMultisigInfo()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#getmultisiginfo) to inspect `owners`, `masks` and `threshold`. Each mask aligns with the owner at the same index.
+
+| Permission | Exported value | Allows |
+| --- | --- | --- |
+| Initiate | `PERMISSION.initiate` (`1`) | Create proposals |
+| Vote | `PERMISSION.vote` (`2`) | Approve or reject proposals |
+| Execute | `PERMISSION.execute` (`4`) | Execute an approved proposal |
+
+Combine permissions with bitwise OR. Keep enough voting members to reach the threshold, and retain a route to proposal creation and execution. The module rejects changes that make the member configuration unviable.
+
+## Propose a Change
+
+Use [`addOwner()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#addowner) to propose a new member and explicit permissions:
+
+```javascript title="Propose a member addition"
+import { PERMISSION } from '@tetherto/wdk-wallet-multisig-squads'
+import { account, requiredEnv } from './squads-account.mjs'
+
+const change = await account.addOwner(requiredEnv('NEW_MEMBER_ADDRESS'), {
+  mask: PERMISSION.initiate | PERMISSION.vote | PERMISSION.execute,
+  threshold: Number(requiredEnv('NEW_THRESHOLD'))
+})
+console.log(change.proposalId)
+```
+
+[`removeOwner()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#removeowner) accepts an optional threshold. [`swapOwner()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#swapowner) gives the new member the old member's permissions. [`changeThreshold()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#changethreshold) changes only the required vote count. Review the complete resulting member set and threshold, including removals that could affect access to funds.
+
+## Verify the Result
+
+1. Confirm the governance proposal's creation transaction.
+2. Have eligible members review and approve it.
+3. Execute it after any time lock and confirm the execution receipt.
+4. Read [`getMultisigInfo()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#getmultisiginfo) again and compare the actual members, masks and threshold with the approved change.
+
+Follow [Manage proposals](/sdk/wallet-modules/wallet-multisig-squads/guides/manage-proposals) for receipts and votes. Configuration changes can make earlier proposals stale; recheck readiness rather than assuming an old approval remains executable. Externally managed multisigs with a non-null configuration authority cannot use these autonomous governance methods.
+
+## Next Steps
+
+- [Usage](/sdk/wallet-modules/wallet-multisig-squads/usage)
+- [Configuration](/sdk/wallet-modules/wallet-multisig-squads/configuration)
+- [API reference](/sdk/wallet-modules/wallet-multisig-squads/api-reference)
+
+---
+
+## Need Help?
+
+<SupportCards />

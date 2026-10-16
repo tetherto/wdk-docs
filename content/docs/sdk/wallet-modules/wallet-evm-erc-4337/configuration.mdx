@@ -98,10 +98,16 @@ const config = { chainId: 43114 }
 
 ### Provider
 
-The `provider` option specifies the RPC endpoint or EIP-1193 provider instance for blockchain interactions. **Required** by the configuration type and used for network operations. Creating a read-only account or calling `getAddress()` does not make an RPC request. You can also pass an array of endpoints or providers to enable automatic failover: when a request to one provider fails, the wallet retries the next provider in the list.
+The `provider` option specifies an RPC endpoint, ethers provider, or EIP-1193 provider for blockchain interactions. **Required** by the configuration type and used for network operations. Creating a read-only account or calling `getAddress()` does not make an RPC request. You can also pass a mixed array of these inputs for automatic failover on connectivity failures.
 
-**Type:** `string | Eip1193Provider | Array<string | Eip1193Provider>`
+**Type:** `string | Provider | Eip1193Provider | Array<string | Provider | Eip1193Provider>`
 **Required:** Yes
+
+In beta.21, the manager shares one RPC client with every account it derives and with their read-only views. Direct constructors create their own client unless you supply the same ethers provider. `Provider` is the ethers type; the supplied object must support JSON-RPC `send(method, params)` for the abstractionkit adapter. Bundler and paymaster endpoints remain separately configured.
+
+<Callout type="warn">
+Velora beta.9, USD₮0 bridge beta.10, and Aave beta.7 cannot initialize with beta.21 manager-derived accounts when their shared ethers provider lacks EIP-1193 `request()`. Direct accounts configured with an ethers provider lacking `request()` have the same limitation. For these exact protocol releases, construct `WalletAccountEvmErc4337` directly with an RPC URL or genuine EIP-1193 provider, retaining all required chain, Safe modules, bundler, and gas-payment settings. Do not mutate internal provider fields. A direct account bypasses WDK Core policy and middleware decoration, so preserve application checks and account-level controls.
+</Callout>
 
 **Examples:**
 ```javascript
@@ -115,13 +121,11 @@ const config = {
   provider: window.ethereum
 }
 
-// Adapt an ethers provider to EIP-1193
+// Reuse an ethers provider (beta.21)
 import { JsonRpcProvider } from 'ethers'
 const rpc = new JsonRpcProvider('https://rpc.mevblocker.io/fast')
 const config = {
-  provider: {
-    request: ({ method, params }) => rpc.send(method, params ?? [])
-  }
+  provider: rpc
 }
 
 // Using multiple providers for automatic failover
