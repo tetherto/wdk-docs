@@ -35,14 +35,19 @@ new RhinofiProtocol(account?, config)
 |---------|----------------------|
 | `WalletAccountEvm` | Discovery, quote, status, and execution. |
 | `WalletAccountEvmErc4337` | Discovery, quote, status, and execution through a smart account. |
-| `WalletAccountReadOnlyEvm` | Discovery and quotes for routes that do not need signing. |
-| `undefined` | Discovery and account-independent setup when route context allows it. |
+| `WalletAccountSolana` | Discovery, quote, status, and execution from Solana. |
+| `WalletAccountTron` | Discovery, quote, status, and execution from Tron. |
+| `WalletAccountReadOnlyEvm` | Discovery, quotes, and status lookups without signing. |
+| `WalletAccountReadOnlyEvmErc4337` | Discovery, quotes, and status lookups without signing. |
+| `WalletAccountReadOnlySolana` | Discovery, quotes, and status lookups without signing. |
+| `WalletAccountReadOnlyTron` | Discovery, quotes, and status lookups without signing. |
+| `undefined` | Discovery and status lookups; quotes and execution require an account. |
 
 ## Methods
 
 | Method | Description |
 |--------|-------------|
-| `quoteSwidge(options)` | Returns a non-binding Rhino.fi route quote. |
+| `quoteSwidge(options)` | Returns a Rhino.fi route quote and the raw provider quote. |
 | `swidge(options, config?)` | Executes a route and returns when the source deposit is broadcast. |
 | `getSwidgeStatus(id, options?)` | Maps Rhino.fi operation state to WDK `SwidgeStatus`. |
 | `getSupportedChains()` | Returns chains supported by Rhino.fi config. |
@@ -51,21 +56,21 @@ new RhinofiProtocol(account?, config)
 ### `quoteSwidge(options)`
 
 ```typescript
-quoteSwidge(options: SwidgeOptions): Promise<SwidgeQuote>
+quoteSwidge(options: SwidgeOptions): Promise<SwidgeQuote & { quote: object }>
 ```
 
-The source chain is derived from the account when required by the route.
+The source chain is derived from the account when required by the route. Pass the returned `quote` field to `swidge()` when execution must use this exact provider quote.
 
 ### `swidge(options, config?)`
 
 ```typescript
 swidge(
   options: SwidgeOptions,
-  config?: RhinofiProtocolConfig
+  config?: SwidgeCallConfig
 ): Promise<SwidgeResult>
 ```
 
-Requires a writable WDK EVM account. The method submits the source-chain deposit and returns the operation ID and source transaction hash.
+Requires a supported writable WDK source account. The method submits the source-chain deposit and returns the operation ID and source transaction hash.
 
 ### `getSwidgeStatus(id, options?)`
 
@@ -89,6 +94,23 @@ type RhinofiProtocolConfig = {
   configTtlMs?: number
 }
 ```
+
+## Per-Call Config Type
+
+```typescript
+type DepositSubmission =
+  | { type: 'transaction'; txHash: string }
+  | { type: 'user-operation'; userOpHash: string }
+
+type SwidgeCallConfig = {
+  maxNetworkFeeBps?: number | bigint
+  maxProtocolFeeBps?: number | bigint
+  quote?: object
+  onDepositSubmitted?: (submission: DepositSubmission) => void
+}
+```
+
+Use `quote` to execute the exact provider quote returned by `quoteSwidge()`. `onDepositSubmitted` reports that the deposit has left the device before a settled transaction hash is available; callback errors do not abort execution.
 
 ## Status Mapping
 
