@@ -535,10 +535,6 @@ export const customTree: Node[] = [
     page('SDK API Reference', '/tools/indexer-api/sdk-api-reference', 'Code'),
     page('REST API Reference', '/tools/indexer-api/api-reference', 'Code'),
   ]),
-  folder('Manage wallet secrets safely', '/tools/secret-manager', 'KeyRound', [
-    configuration('/tools/secret-manager/configuration'),
-    apiReference('/tools/secret-manager/api-reference'),
-  ]),
   folder('Back up encrypted wallet keys', '/tools/backup-cloud', 'CloudUpload', [
     usage('/tools/backup-cloud/usage'),
     guides([
