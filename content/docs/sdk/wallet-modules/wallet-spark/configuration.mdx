@@ -53,6 +53,29 @@ const config = {
 }
 ```
 
+### Read-Only Client
+
+`client` optionally accepts an existing `SparkReadonlyClient`. Without it, the manager creates one from `network` and `enableLogging` and shares it across derived accounts and their read-only conversions. This shares the client used for reads; each owned account still creates its own Spark signing wallet.
+
+A supplied client is reused as-is. Match its network to the wallet's `network`; those network and logging options do not reconfigure it. SparkScan remains a separate, optional balance source.
+
+To construct the client yourself, install the Spark SDK version used by beta.28:
+
+```bash
+npm install @tetherto/wdk-wallet-spark@1.0.0-beta.28 @buildonspark/spark-sdk@0.10.0
+```
+
+Pass the client through the wallet configuration:
+
+```javascript
+import WalletManagerSpark from '@tetherto/wdk-wallet-spark'
+import { SparkReadonlyClient } from '@buildonspark/spark-sdk'
+
+const network = 'REGTEST'
+const client = SparkReadonlyClient.createPublic({ network, log: false })
+const wallet = new WalletManagerSpark(seedPhrase, { network, client })
+```
+
 ### SparkScan Balance Polling
 
 The `sparkscan` option configures SparkScan-backed balance polling for [`getBalance()`](/sdk/wallet-modules/wallet-spark/api-reference).
@@ -78,7 +101,12 @@ When `sparkscan` is configured, [`getBalance()`](/sdk/wallet-modules/wallet-spar
 
 ### Automatic Retry
 
-The `syncAndRetry` option tells [`sendTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference) and [`payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference) to sync wallet state and retry once after a failure.
+The `syncAndRetry` option controls two different recovery flows:
+
+- [`sendTransaction()`](/sdk/wallet-modules/wallet-spark/api-reference#sendtransactionto-value) reads transfer history before submitting once. If submission fails, it syncs wallet state and returns a matching new transfer when one appears in history. It never resubmits the native send. If the initial history read fails, it does not submit.
+- [`payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference#paylightninginvoiceoptions) syncs after a payment failure and retries once only for a stale-leaf error. Both attempts use the same transfer ID. Other payment failures raise [`LightningPaymentError`](/sdk/wallet-modules/wallet-spark/api-reference#lightningpaymenterror) with that ID.
+
+Do not run native sends with the same recipient and amount concurrently from one wallet: history matching cannot distinguish them. These recovery flows do not apply to token `transfer()` calls.
 
 **Type:** `boolean` (optional)
 
@@ -92,7 +120,7 @@ const config = {
 }
 ```
 
-You can also call [`syncWalletBalance()`](/sdk/wallet-modules/wallet-spark/api-reference) directly when you want to reconcile wallet state before retrying an operation.
+You can also call [`syncWalletBalance()`](/sdk/wallet-modules/wallet-spark/api-reference) directly to reconcile wallet state. A failed response alone does not prove a payment was not submitted; inspect its status before deciding whether to pay again.
 
 ### Spark SDK Logging
 

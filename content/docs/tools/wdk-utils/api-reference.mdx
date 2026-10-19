@@ -23,7 +23,7 @@ schemaType: APIReference
 | `decode(invoice)` | Decode a BOLT11 Lightning invoice into structured invoice data. | `LightningInvoiceDecodingResult` |
 | `getHashToSign(invoiceData)` | Return the SHA-256 hash that must be signed for a BOLT11 invoice. | `LightningInvoiceHashingResult` |
 | `sign(invoiceData, privateKey)` | Sign BOLT11 invoice data with a hex string or `Uint8Array` private key. | `LightningInvoiceSigningResult` |
-| `encode(invoiceData)` | Encode BOLT11 invoice data into an invoice string. | `LightningInvoiceEncodingResult` |
+| `encode(invoiceData)` | Encode BOLT11 data while preserving metadata and retained unknown tags. | `LightningInvoiceEncodingResult` |
 | `validateLnurl(address)` | Validate an LNURL string. | `LnurlValidationResult` |
 | `decodeLnurl(address)` | Decode an LNURL string into its original URL. | `LnurlDecodingResult` |
 | `validateLightningAddress(address)` | Validate a Lightning Address in `user@domain.tld` form. | `LightningAddressValidationResult` |
@@ -188,6 +188,8 @@ const result = decodeBolt11(
 
 `DecodedLightningInvoice` includes the invoice `network` (`bitcoin`, `testnet`, `regtest`, or `signet`), optional `millisatoshis`, optional `timestamp`, optional `timeExpireDate`, optional `payeeNodeKey`, optional `signature`, optional `recoveryFlag`, required `tags`, and optional `paymentRequest`.
 
+Each tag is `{ tagName: string, data: TagData }`, where `TagData` is `string | number | Uint8Array | number[]`. Known BOLT11 metadata uses `tagName: 'metadata'` and hex-string data. Unrecognized tag codes are retained as `unknown_<code>` with the original five-bit words in a `number[]`; do not interpret those arrays as decoded bytes or discard them during a round trip.
+
 #### `getHashToSign(invoiceData)`
 
 Return the SHA-256 hash that must be signed for a BOLT11 invoice.
@@ -220,7 +222,9 @@ const signed = signBolt11(invoiceData, privateKey)
 
 #### `encode(invoiceData)`
 
-Encode BOLT11 invoice data into an invoice string.
+Encode BOLT11 invoice data into an invoice string. Beta.13 accepts retained `metadata` and unknown tags. An unknown tag must use `unknown_<code>` with an unrecognized code from `0` through `31`, and its data must be an array of fewer than 1,024 integers from `0` through `31`. Known codes must use their named tags. Invalid names or data return a failed result.
+
+Keep the complete decoded tag list when re-encoding a signed invoice. When a decoded invoice has only the implicit 3,600-second expiry, the encoder does not insert a new explicit expiry tag; this preserves the signed fields. Changing a signed field requires a new signature.
 
 ```javascript title="Encode A BOLT11 Invoice"
 import { encode as encodeBolt11 } from '@tetherto/wdk-utils'

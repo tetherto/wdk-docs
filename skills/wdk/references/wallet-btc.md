@@ -26,6 +26,8 @@ import WalletManagerBtc from '@tetherto/wdk-wallet-btc'
 - **Derivation**: BIP-84 (Native SegWit only, `bc1...` addresses)
 - **Path**: `m/84'/0'/0'/0/{index}`
 - **Provider**: Electrum servers (TCP/TLS/SSL, NOT HTTP RPC)
+- In beta.16, the mempool Electrum TLS/SSL adapter verifies certificate trust and the configured hostname. Recognized certificate failures are wrapped in `ProviderError` with `NETWORK_ERROR` and a cause; other connection failures can retain their underlying error type. Repair trust or hostname configuration; do not disable verification. This change does not secure plain TCP.
+- Beta.17 checks each legacy BIP-44 input's previous transaction ID, output script, and value before signing an unsigned transaction. A mismatch throws `AssertionError`; reconcile the input instead of bypassing the check. This does not revalidate signed-hex broadcasts or fee-only quotes.
 - **Fee unit**: sat/vB (satoshis per virtual byte)
 - **Balance unit**: satoshis (1 BTC = 100,000,000 sats)
 - **Dust**: 546 sats (P2PKH), 294 sats (P2WPKH)

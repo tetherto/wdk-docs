@@ -204,6 +204,10 @@ const config = {
 
 The `protocol` value belongs inside an `electrum` descriptor's `clientConfig`. It is not a top-level wallet config option.
 
+For `tls` and `ssl`, the built-in `MempoolElectrumClient` adapter (including `ElectrumTls` and `ElectrumSsl`) requires a certificate trusted by the runtime and valid for the configured `host`. Beta.16 rejects expired, untrusted, and hostname-mismatched certificates. Use the certificate's hostname and configure the runtime's trust store for a private CA when needed; do not disable certificate verification. TCP does not provide TLS certificate verification.
+
+Recognized certificate failures are wrapped in `ProviderError` with `reason: ProviderErrorReason.NETWORK_ERROR` and the original error in `cause`; other connection failures can retain their underlying error type. Check trust, hostname, and certificate validity before retrying; see [connection errors](/sdk/wallet-modules/wallet-btc/guides/handle-errors#connection-errors).
+
 **Type:** `string`
 
 **Values:**
@@ -301,6 +305,8 @@ const config = {
   bip: 44
 }
 ```
+
+With `bip: 44`, beta.17 checks selected UTXOs against raw previous transactions fetched by the configured client before signing. A mismatched transaction ID, output script, or output value raises `AssertionError`. This applies to `signTransaction()` and unsigned `sendTransaction()` inputs; it does not add validation to signed-hex broadcasts or to fee-only quotes.
 
 ## Electrum Server Configuration
 

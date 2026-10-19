@@ -1,0 +1,79 @@
+---
+title: Deploy a Squads multisig
+description: Create a Solana multisig with agreed members and locate its asset-holding vault.
+docType: how-to
+schemaType: TechArticle
+---
+
+[Prepare the identity and members](#prepare-the-identity-and-members), [quote deployment](#quote-deployment), then [deploy and verify](#deploy-and-verify). See [Need Help](#need-help) for support.
+
+Prerequisites: [installation](/sdk/wallet-modules/wallet-multisig-squads/guides/get-started), a funded member signer, and an independently generated create key secret from secure storage. The configured Squads program must exist on the chosen cluster. Use test funds while validating a new integration.
+
+## Prepare the Identity and Members
+
+1. Agree on all member addresses and the approval threshold.
+2. Supply a dedicated create key secret as base58 or bytes. It is not the member's mnemonic.
+3. Derive the multisig and vault addresses before funding either.
+
+Use [`WalletAccountMultisigSquads`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#walletaccountmultisigsquads) to construct the deployment account:
+
+```javascript title="Prepare a new multisig"
+import { WalletAccountMultisigSquads } from '@tetherto/wdk-wallet-multisig-squads'
+function requiredEnv(name) {
+  const value = process.env[name]
+  if (!value) throw new Error(`Missing ${name}`)
+  return value
+}
+
+const deploymentAccount = new WalletAccountMultisigSquads(
+  requiredEnv('WDK_SEED_PHRASE'), "0'/0'", {
+    provider: requiredEnv('SOLANA_RPC_URL'),
+    createKeySecret: requiredEnv('CREATE_KEY_SECRET'),
+    createMaxFee: BigInt(requiredEnv('CREATE_MAX_FEE_LAMPORTS'))
+  }
+)
+const owners = requiredEnv('MEMBER_ADDRESSES').split(',').map(value => value.trim())
+const threshold = Number(requiredEnv('APPROVAL_THRESHOLD'))
+console.log('Multisig:', await deploymentAccount.getAddress())
+console.log('Vault 0:', await deploymentAccount.getVaultAddress())
+```
+
+Members must be unique and nonempty; threshold must be at least one and no greater than the eligible member count. Deployment grants every initial member all three permissions. It creates an autonomous multisig (`configAuthority: null`) with no time lock and no rent collector. Beta.2 does not expose deployment options to change those choices or an account-closing API to reclaim the locked rent.
+
+## Quote Deployment
+
+Use [`quoteDeploy()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#quotedeploy) with the actual member count:
+
+```javascript title="Review creation costs"
+console.log('Member paying fees and rent:', await deploymentAccount.getSignerAddress())
+const quote = await deploymentAccount.quoteDeploy(owners.length)
+console.log('Estimated total lamports:', quote.fee)
+```
+
+The quote includes the Squads creation fee, account rent and network fee. Keep the default rent payer: another payer requires an extra signature that the package does not collect. `createMaxFee` checks the deployment estimate before submission; the quote is not a reserved price.
+
+## Deploy and Verify
+
+After reviewing the addresses, members, threshold and costs, call [`deploy()`](/sdk/wallet-modules/wallet-multisig-squads/api-reference#deploy):
+
+```javascript title="Create and confirm the multisig"
+if (await deploymentAccount.isDeployed()) throw new Error('Multisig already exists')
+const submitted = await deploymentAccount.deploy(owners, threshold)
+const receipt = await deploymentAccount.waitForTransaction(submitted.hash)
+if (!receipt.success) throw new Error('Multisig deployment failed')
+console.log(await deploymentAccount.getMultisigInfo())
+```
+
+`deploy()` returns only a transaction hash. Confirm a successful receipt and the exact on-chain member configuration before continuing. Share the public multisig address with other members, then fund the intended vault for payments. Existing members do not need the create key secret to operate the deployed multisig.
+
+## Next Steps
+
+- [Usage](/sdk/wallet-modules/wallet-multisig-squads/usage)
+- [Configuration](/sdk/wallet-modules/wallet-multisig-squads/configuration)
+- [API reference](/sdk/wallet-modules/wallet-multisig-squads/api-reference)
+
+---
+
+## Need Help?
+
+<SupportCards />
