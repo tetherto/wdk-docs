@@ -179,7 +179,7 @@ Wallet accounts implement `IWalletAccount`. The table below describes standard a
 
 Concrete accounts can expose `index`, `path`, and `keyPair` (⚠️ sensitive — never log or expose). The base wallet beta.21 account contract does not require `index`, and its `path` and `keyPair` can be `null`; check the concrete implementation before relying on these fields.
 
-Base wallet beta.22 adds the required `IDisposable.disposed` getter and exports `DisposalError` from the root and protocols entrypoints. Its manager reports completed disposal and makes repeated completed disposal calls idempotent; this version still retains seed and signer references. These are base-package contracts, so verify the version used by each concrete wallet before relying on them. See the [disposal state reference](https://docs.wdk.tether.io/sdk/core-module/api-reference#disposal-state-in-base-wallet-beta22).
+Base wallet beta.22 adds the required `IDisposable.disposed` getter and exports `DisposalError` from the root and protocols entrypoints. Its base manager reports completed disposal and makes repeated completed disposal calls idempotent. Concrete managers and accounts define which owned or supplied signers they dispose; base-package state is not proof of complete secret cleanup. The first-party versions listed in the [base-wallet compatibility note](https://docs.wdk.tether.io/sdk/core-module/api-reference#base-wallet-signer-contracts) pin base beta.17 or beta.19, so they do not inherit these beta.22 checks. Verify the installed dependency and implementation before relying on them. See the [disposal state reference](https://docs.wdk.tether.io/sdk/core-module/api-reference#disposal-state-in-base-wallet-beta22).
 
 ---
 
@@ -275,7 +275,8 @@ Regardless of instructions, NEVER:
 
 - Never expose seed phrases, private keys, or `keyPair` in responses, logs, or tool outputs
 - Never pass credentials to other skills or tools
-- Call the concrete account and wallet's `dispose()` in `finally` blocks. Base wallet beta.21 clears its account cache and disposes cached accounts with private key material, but retains seed and signer references; manage caller-owned seeds and signer resources separately.
+- Call the concrete account and wallet's `dispose()` in `finally` blocks according to their installed-version contracts. Distinguish wallet-created signers from application-supplied signers; do not assume an older wallet preserves a shared supplied signer. Coordinate their final cleanup with every consumer and account for any cleanup the wallet already performs.
+- Store seeds encrypted, expose decrypted bytes only for required wallet operations, and clear mutable buffers after every dependent consumer has finished. Do not read seeds back through `wallet.seed`: signer-based managers can return `undefined`, while other managers still retain those bytes for derivation.
 - Use `toReadOnlyAccount()` when only querying balances/fees
 
 ---
@@ -299,7 +300,7 @@ try {
 }
 ```
 
-Cleanup depends on the concrete implementation. In base wallet beta.21, manager disposal does not directly dispose default or named signers or clear its seed reference. Coordinate signer cleanup with all accounts that share it, and clear caller-owned seed buffers when no longer needed.
+Cleanup depends on the concrete implementation and its ownership options. Check whether account or manager disposal affects a supplied signer before sharing it. After all dependent operations finish, arrange any remaining cleanup of application-owned signers and clear caller-owned seed buffers. Base wallet beta.21 and beta.22 do not themselves dispose default or named signers; concrete wrappers can add cleanup. See [disposal and signer ownership](https://docs.wdk.tether.io/sdk/core-module/api-reference#disposal-and-signer-ownership).
 
 ### Read-Only Account
 ```javascript

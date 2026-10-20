@@ -99,6 +99,22 @@ const walletModules: WalletModule[] = [
     ],
   },
   {
+    id: "evm-bermuda",
+    label: "Shielded accounts (Bermuda)",
+    chain: "evm",
+    goals: ["private"],
+    packageName: "@bermuda/wdk-wallet-evm-bermuda",
+    docsHref: "/sdk/wallet-modules/wallet-evm-bermuda",
+    apiHref: "/sdk/wallet-modules/wallet-evm-bermuda/api-reference",
+    bestFor: "Separate Bermuda shielded accounts for deposits, pool transfers, and withdrawals on Plasma testnet.",
+    chooseWhen: [
+      "You need the Bermuda beta on Plasma testnet.",
+      "Your app can manage token allowances, shielded balances, fees, and transaction confirmation.",
+      "Your runtime can load the SDK and provide its proof artifacts and storage.",
+    ],
+    note: "Community beta; installed from a pinned GitHub revision.",
+  },
+  {
     id: "evm-4337",
     label: "Smart accounts (ERC-4337)",
     chain: "evm",

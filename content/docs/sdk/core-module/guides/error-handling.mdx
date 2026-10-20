@@ -115,7 +115,9 @@ For security, clear wallet state from memory when a session is complete. The WDK
 
 WDK does not own the seed you pass to `new WDK(seed)`. The seed comes from your app, so your app is responsible for storing it, decrypting it, and clearing it when it is no longer needed.
 
-For modules based on `@tetherto/wdk-wallet@1.0.0-beta.21`, base manager disposal also retains default and named signer references. It disposes cached accounts only when they expose private key material. Manage signer resources separately according to the concrete module's ownership rules; see [base wallet disposal](/sdk/core-module/api-reference#disposal-in-base-wallet-beta21).
+Signer cleanup depends on the concrete wallet release. Distinguish a default signer created from a seed and derived account signers from signers your app supplies. Check the installed wallet's behavior before sharing a signer: the base interfaces do not guarantee that disposal preserves supplied signers. Coordinate application-owned signer cleanup after final use, accounting for any cleanup the wallet already performs; see [disposal and signer ownership](/sdk/core-module/api-reference#disposal-and-signer-ownership).
+
+Do not recover the seed through `wallet.seed`. Signer-based managers can return `undefined`, while other managers retain the original bytes for later derivation. Store seeds encrypted in your application and clear decrypted mutable buffers only after their final dependent use, not automatically after construction.
 
 Use this lifecycle for sessions that need explicit cleanup:
 
@@ -158,7 +160,7 @@ async function runWalletSession(
 In this example, `decryptSeedBytes()` represents your app's secure storage or decryption layer. It should return seed bytes as a `Uint8Array`.
 
 <Callout type="warn">
-[`dispose()`](/sdk/core-module/api-reference#disposeblockchains) delegates cleanup to the registered wallet managers. Their installed versions determine which account keys, seeds, and signers are cleared; see [base wallet beta.21 disposal limits](/sdk/core-module/api-reference#disposal-in-base-wallet-beta21). It does not mutate or zero the seed value you passed to WDK. If your app requires explicit seed cleanup, prefer a mutable `Uint8Array`; JavaScript strings cannot be reliably zeroed.
+[`dispose()`](/sdk/core-module/api-reference#disposeblockchains) calls each selected manager's cleanup, unregisters it, and clears its policy state. Their installed versions determine signer cleanup; see [disposal and signer ownership](/sdk/core-module/api-reference#disposal-and-signer-ownership). WDK itself does not overwrite the seed argument. Clear caller-owned buffers after all consumers finish; prefer a mutable `Uint8Array` when explicit cleanup is required, because JavaScript strings cannot be reliably zeroed.
 </Callout>
 
 ### Disposing the Instance

@@ -36,19 +36,20 @@ wdk config path
 
 ## Current file permissions
 
-The following permissions describe beta.6. Builds with Indexer-provider support request tighter configuration-file and directory permissions; see [the migration guide](/cli/guides/migrate-indexer-providers#review-provider-and-storage-changes).
+The following permissions describe beta.7. Verify existing file and directory modes after upgrading; see [the upgrade section](/cli/configuration#upgrading-from-beta6).
 
 | Artifact | macOS and Linux | Purpose |
 | --- | --- | --- |
 | `wallets/NAME/seed.enc` | `0600` | Owner read and write only |
 | `daemon.pid` | `0600` | Owner read and write only |
 | `daemon.sock` | `0700` | Owner-only daemon endpoint |
-| `config.json` | No owner-only mode is set by WDK CLI | Ordinary plaintext configuration; its resulting mode follows the config library and process environment and may be `0644` |
-| Storage and wallet directories | No explicit mode is set by WDK CLI | Resulting modes depend on the process umask |
+| `config.json` writes | `0600` requested | Plaintext provider credentials and configuration; verify an existing file after upgrading |
+| Configuration root directory | `0700` attempted | Restriction is best effort; initialization continues if chmod fails |
+| Wallet subdirectories | No explicit mode is set by WDK CLI | Resulting modes depend on the process umask; the restricted root also gates access |
 
 POSIX modes do not apply on Windows. The CLI uses a named pipe for daemon IPC and relies on Windows access controls.
 
-`config.json` is not seed storage. However, values that you add can still be sensitive, including API keys and provider URLs containing credentials. Do not treat the absence of seed material as permission to publish the file. Prefer supported environment-variable overrides for secrets, and review output from `wdk config get --all` before sharing it.
+`config.json` is not seed storage. However, values that you add can still be sensitive, including API keys and provider URLs containing credentials. Do not treat the absence of seed material as permission to publish the file. Indexer and fiat credentials have no environment override in beta.7. Review output from `wdk config get --all` and `wdk provider info` before sharing it.
 
 The Unix socket's owner-only mode excludes other operating-system users. It does not distinguish between programs running as the owner. See the [same-user trust boundary](/cli/reference/security-model#same-user-daemon-access).
 

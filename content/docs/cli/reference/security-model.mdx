@@ -25,7 +25,7 @@ Treat an unlocked WDK CLI wallet as a local hot wallet. Use a dedicated wallet w
 | Message signing | Caller can display the message and request approval | Signing is immediate, with no dry run or daemon-enforced confirmation |
 | Chain-specific methods | Built-in catalog allowlists method names and validates declared parameters | A `write` label does not enforce confirmation, a dry run, or a fee limit |
 | Custom modules | User-configured version string and literal installed-version status | Tags or ranges, warn-only version mismatch, npm lifecycle scripts, inherited environment secrets, malicious package code, dependency compromise, or incompatible wallet-manager behavior |
-| General configuration | Separate from `seed.enc` | `config.json` has no owner-only guarantee and may contain user-added credentials |
+| General configuration | Plaintext writes request mode `0600`; root directory restriction to `0700` is best effort | Verify existing permissions; another process running as the owner can read credentials |
 
 These controls reduce accidental exposure and cross-user access. They do not make a general-purpose computer a hardware wallet or isolate an unlocked wallet from malware running under the same account.
 
@@ -50,7 +50,7 @@ The interactive passphrase prompt hides input. For automation, `WDK_PASSPHRASE` 
 
 Environment variables can be inherited by child processes and may be visible through process inspection, crash reports, shell tooling, or automation logs. Prefer the interactive prompt for manual use. If automation requires `WDK_PASSPHRASE`, scope it to one trusted process, prevent command tracing, and remove it immediately after use.
 
-Beta.6 provides `wallet import --seed-stdin` and `wallet change-passphrase --new-passphrase-stdin` for human-operated scripts. Standard input avoids command-line arguments, but it is not a secure enclave: the secret still enters JavaScript process memory and can leak through an input file, pipeline, parent process, or automation environment. Do not expose these flags to an agent or untrusted script.
+Beta.7 provides `wallet import --seed-stdin` and `wallet change-passphrase --new-passphrase-stdin` for human-operated scripts. Standard input avoids command-line arguments, but it is not a secure enclave: the secret still enters JavaScript process memory and can leak through an input file, pipeline, parent process, or automation environment. Do not expose these flags to an agent or untrusted script.
 
 The current CLI accepts an empty passphrase. The file is still AES-GCM ciphertext, but an empty passphrase provides no meaningful confidentiality because anyone who obtains the file knows the value required to derive its key.
 
@@ -75,14 +75,14 @@ For stronger practical separation, run WDK CLI under a dedicated non-administrat
 
 ## Custom module, protocol, and method trust
 
-Beta.6 installs built-in wallet modules as normal `@tetherto/wdk-cli` dependencies and does not need a postinstall lifecycle-script allowlist. This does not make `wdk module add` a safe package verifier.
+Beta.7 installs built-in wallet modules as normal `@tetherto/wdk-cli` dependencies and does not need a postinstall lifecycle-script allowlist. This does not make `wdk module add` a safe package verifier.
 
-Provider registration also imports executable module code to check its declared `swap`, `bridge`, or `swidge` kind. It requires passphrase confirmation when a wallet exists, but does not sandbox the package or prove chain and asset compatibility. Apply the same review before `wdk provider add` and before overriding a built-in module version.
+Provider registration also imports executable module code to check its declared `swap`, `bridge`, `swidge`, `fiat`, or `pricing` kind. It requires passphrase confirmation when a wallet exists, but does not sandbox the package or prove chain and asset compatibility. Apply the same review before `wdk provider add` and before overriding a built-in module version.
 
 Adding a custom module:
 
 - resolves npm's current version when no version is supplied, then records the resolved exact pin
-- accepts and stores an explicit tag or range verbatim; use a reviewed literal version because beta.6 does not enforce exact semver
+- accepts and stores an explicit tag or range verbatim; use a reviewed literal version because beta.7 does not enforce exact semver
 - runs npm installation inside the CLI package, including lifecycle scripts allowed by the user's npm policy
 - stores the pin in plaintext `config.json`
 - locks a running daemon before changing its module graph
@@ -100,9 +100,9 @@ Chain-specific `wdk method call` and MCP `call_method` requests are limited to m
 
 Message signing has the same authorization boundary. CLI `wdk message sign` and MCP `sign_message` sign immediately against an unlocked account. Show the exact wallet, network, account index, and message and require approval before signing.
 
-Swap and bridge previews are observations, not execution commitments. Execution requotes; unless the caller restricts `protocol`, it can select a different provider, and amounts or fees can change even when the provider is fixed. Beta.6 exposes no CLI or MCP output, input, fee, slippage, or expiry limit bound to the preview. Preview output also omits the selected wallet, account index, and resolved recipient; select them explicitly and verify the destination address with `wdk get address` or MCP `get_address` before quoting. Route ranking compares token input or output amounts and excludes separate gas and bridge fees.
+Swap and bridge previews are observations, not execution commitments. Execution requotes; unless the caller restricts `protocol`, it can select a different provider, and amounts or fees can change even when the provider is fixed. Beta.7 exposes no CLI or MCP output, input, fee, slippage, or expiry limit bound to the preview. Preview output also omits the selected wallet, account index, and resolved recipient; select them explicitly and verify the destination address with `wdk get address` or MCP `get_address` before quoting. Route ranking compares token input or output amounts and excludes separate gas and bridge fees.
 
-Do not use the beta.6 cross-network swap option. Candidate selection can admit a same-chain swap provider, and the adapter then omits the destination network from that provider's calls. A Velora route with an ERC-20 input also requires a prior, bounded allowance to the chain-specific spender returned by Velora SDK 9's [`swap.getSpender()`](https://github.com/VeloraDEX/sdk/blob/86679ae70686ad3f01ee29baba9033be0a1b742b/src/methods/swap/spender.ts#L33-L63) lookup; beta.6 does not expose that lookup or approve automatically. Native-token input has no ERC-20 allowance, and other protocols can manage approval differently.
+Do not use the beta.7 cross-network swap option. Candidate selection can admit a same-chain swap provider, and the adapter then omits the destination network from that provider's calls. A Velora route with an ERC-20 input also requires a prior, bounded allowance to the chain-specific spender returned by Velora SDK 9's [`swap.getSpender()`](https://github.com/VeloraDEX/sdk/blob/86679ae70686ad3f01ee29baba9033be0a1b742b/src/methods/swap/spender.ts#L33-L63) lookup; beta.7 does not expose that lookup or approve automatically. Native-token input has no ERC-20 allowance, and other protocols can manage approval differently.
 
 See [Manage Modules](/cli/guides/manage-modules) and [Call Module Methods](/cli/guides/call-module-methods).
 
@@ -162,14 +162,14 @@ Use a private terminal, create an offline backup, and clear terminal scrollback 
 
 ## Configuration is not secret storage
 
-The configuration details below describe beta.6. For a build with Indexer-provider support, review the [credential and permission changes](/cli/guides/migrate-indexer-providers#review-provider-and-storage-changes).
+The configuration details below describe beta.7. Review the [credential and permission migration](/cli/configuration#upgrading-from-beta6) when upgrading from beta.6.
 
 `config.json` is a normal plaintext file. It primarily contains public WDK-style configuration, but user-supplied values can include indexer keys or credentials embedded in provider and signing URLs.
 
-- Prefer `WDK_INDEXER_API_KEY` over storing the indexer key when your environment can protect it.
+- Indexer and fiat-provider credentials are stored under `providers.NAME.config`; `WDK_INDEXER_API_KEY` is no longer read.
 - Protect any credentials embedded in custom provider URLs separately.
-- Review `wdk config get --all` before copying its output.
-- Do not assume `config.json` has the same `0600` mode as `seed.enc`.
+- Review `wdk config get --all` and `wdk provider info` before copying their output.
+- Configuration writes request `0600`, and the root directory attempts `0700`; verify permissions on existing files and directories after upgrading.
 
 See [Configuration](/cli/configuration) for supported settings and precedence.
 

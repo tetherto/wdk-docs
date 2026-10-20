@@ -101,6 +101,14 @@ export const customTree: Node[] = [
       configuration('/sdk/wallet-modules/wallet-evm-hinkal/configuration'),
       apiReference('/sdk/wallet-modules/wallet-evm-hinkal/api-reference'),
     ]),
+    folder('Shielded accounts (Bermuda)', '/sdk/wallet-modules/wallet-evm-bermuda', 'Shield', [
+      usage('/sdk/wallet-modules/wallet-evm-bermuda/usage'),
+      guides([
+        page('Deposit, Transfer, and Withdraw', '/sdk/wallet-modules/wallet-evm-bermuda/guides/shield-transfer-withdraw'),
+      ]),
+      configuration('/sdk/wallet-modules/wallet-evm-bermuda/configuration'),
+      apiReference('/sdk/wallet-modules/wallet-evm-bermuda/api-reference'),
+    ]),
     folder('Smart accounts (ERC-4337)', '/sdk/wallet-modules/wallet-evm-erc-4337', 'ShieldCheck', [
       usage('/sdk/wallet-modules/wallet-evm-erc-4337/usage'),
       guides([
@@ -411,6 +419,19 @@ export const customTree: Node[] = [
     apiReference('/sdk/bridge-modules/bridge-usdt0-evm/api-reference'),
   ]),
 
+  separator('Smart Deposit Addresses'),
+  page('SDA modules', '/sdk/sda-modules', 'Inbox'),
+  folder('Rhino.fi', '/sdk/sda-modules/sda-rhinofi', 'Inbox', [
+    usage('/sdk/sda-modules/sda-rhinofi/usage'),
+    configuration('/sdk/sda-modules/sda-rhinofi/configuration'),
+    apiReference('/sdk/sda-modules/sda-rhinofi/api-reference'),
+  ]),
+  folder('Candide', '/sdk/sda-modules/sda-candide', 'Inbox', [
+    usage('/sdk/sda-modules/sda-candide/usage'),
+    configuration('/sdk/sda-modules/sda-candide/configuration'),
+    apiReference('/sdk/sda-modules/sda-candide/api-reference'),
+  ]),
+
   separator('Lending'),
   page('Lending modules', '/sdk/lending-modules', 'Banknote'),
   folder('Aave', '/sdk/lending-modules/lending-aave-evm', 'Landmark', [
@@ -463,7 +484,6 @@ export const customTree: Node[] = [
       page('Get Started', '/cli/guides/get-started', 'Rocket'),
       page('Manage Wallets', '/cli/guides/manage-wallets', 'WalletCards'),
       page('Manage Tokens', '/cli/guides/manage-tokens', 'Coins'),
-      page('Migrate Indexer Providers', '/cli/guides/migrate-indexer-providers', 'Database'),
       page('Swap and Bridge', '/cli/guides/swap-and-bridge', 'ArrowLeftRight'),
       page('Manage Modules', '/cli/guides/manage-modules', 'Package'),
       page('Custom Networks', '/cli/guides/custom-networks', 'Network'),

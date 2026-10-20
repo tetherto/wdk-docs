@@ -11,7 +11,7 @@ icon: Code
 | Class | Description | Methods |
 |-------|-------------|---------|
 | [WDK](#wdk) | Main class for managing wallets across multiple blockchains. Orchestrates wallet managers, protocols, middleware, and local transaction policies. | [Constructor](#constructor), [Methods](#methods) |
-| [Base wallet signer contracts](#base-wallet-signer-contracts) | Signer capabilities and disposal changes in base wallet beta.21. | Interfaces and migration notes |
+| [Base wallet signer contracts](#base-wallet-signer-contracts) | Signer capabilities, ownership and disposal contracts in base wallet beta.21 and beta.22. | Interfaces and migration notes |
 | [IWalletAccount](#iwalletaccount) | Base single-signer writable wallet account interface from `@tetherto/wdk-wallet`. | [Methods](#methods-1) |
 | [Multisig account contracts](#multisig-account-contracts) | Implementation contracts exported from `@tetherto/wdk-wallet/multisig`. | Interfaces and types |
 | [IWalletAccountWithProtocols](#iwalletaccountwithprotocols) | Protocol registration and access surface added to a wallet account. | [Methods](#methods-2) |
@@ -62,7 +62,7 @@ const policyWdk = new WDK(seedBytes, {
 | `getAccount(blockchain, index?)` | Returns a wallet account for a blockchain and index | `Promise<WdkAccount>` | If wallet not registered |
 | `getAccountByPath(blockchain, path)` | Returns a wallet account for a blockchain and derivation path | `Promise<WdkAccount>` | If wallet not registered |
 | `getFeeRates(blockchain)` | Returns current fee rates for a registered blockchain | `Promise<FeeRates>` | If wallet not registered |
-| `dispose(blockchains?)` | Calls cleanup on all registered wallets, or only the named blockchains | `void` | - |
+| `dispose(blockchains?)` | Calls cleanup on selected wallets, unregisters them, and clears their policy state | `void` | Errors from wallet cleanup |
 
 #### `registerWallet(blockchain, wallet, config)`
 Registers a new wallet manager for a specific blockchain.
@@ -161,16 +161,6 @@ wdk.registerMiddleware('ethereum', async (account) => {
   console.log('New account:', await account.getAddress())
 })
 
-// Failover cascade middleware
-import { getFailoverCascadeMiddleware } from '@tetherto/wdk-wrapper-failover-cascade'
-
-wdk.registerMiddleware('ethereum', getFailoverCascadeMiddleware({
-  fallbackOptions: {
-    retries: 3,
-    delay: 1000
-  }
-}))
-
 // Method chaining
 const wdk2 = new WDK(seedPhrase)
   .registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
@@ -178,6 +168,8 @@ const wdk2 = new WDK(seedPhrase)
     console.log('New account:', await account.getAddress())
   })
 ```
+
+Provider failover is not a middleware. Use [`@tetherto/wdk-failover-provider`](/sdk/core-module/guides/middleware#use-provider-failover) instead.
 
 #### `getPolicyExclusions()`
 
@@ -197,6 +189,10 @@ console.log(excludedMethods.includes('getBalance')) // true
 #### `registerPolicy(policies, options?)`
 Registers one or more local transaction policies on the WDK instance.
 
+<Callout type="warn">
+The transaction policy engine is experimental and not production ready. Local policy evaluation does not provide isolation from a compromised agent environment. See the [security boundary](/sdk/core-module/guides/transaction-policies#security-boundary) for enforcement scope and limits.
+</Callout>
+
 Policies are evaluated before governed account and protocol methods execute. In beta.17, the proxy discovers public string-named methods on the account or protocol and its prototype chain, then wraps those absent from the resolved exclusion set. This replaces the earlier fixed write-method list; see [coverage and limits](/sdk/core-module/guides/transaction-policies#supported-operations). Matching `DENY` rules and governed-account default-deny outcomes throw `PolicyViolationError`; matching `ALLOW` rules permit the call only when no higher-priority `DENY` rule applies. Governed runtime accounts also expose `account.simulate.<method>(...)` mirrors so you can dry-run policy evaluation without sending, signing, or broadcasting.
 
 Evaluation order:
@@ -204,7 +200,7 @@ Evaluation order:
 1. Account-scoped policies run before project-scoped policies.
 2. Policies and rules run in registration order within their scope.
 3. A matching account-scoped `DENY` blocks immediately.
-4. A matching account-scoped `ALLOW` with `override_broader_scope: true` allows immediately and skips project-scoped policies.
+4. In Core beta.20, a matching account-scoped `ALLOW` with `override_broader_scope: true` skips project-scoped policies after remaining account-scoped `DENY` rules have been checked. A matching account-scoped `DENY` still blocks.
 5. Project-scoped `DENY` rules block after account-scoped rules unless an override allow already matched.
 6. If no `DENY` matches and at least one `ALLOW` matched, WDK allows the call.
 7. Governed wrapped operations deny by default when no rule addresses the operation or no addressed rule matches.
@@ -217,16 +213,26 @@ For policy scoping, default-deny behavior, account-level overrides, and protocol
 
 Distinct policy IDs keep their original per-registration timeouts. A repeated ID replaces the stored policy within its registry bucket and takes the timeout from the new registration call. All project-scoped policies share one bucket; account-scoped policies are bucketed by wallet.
 
+Register policies before retrieving accounts. Registration does not retrofit raw references returned when no policy applied; retrieve a new governed reference and stop using the old one. Existing governed proxies consult the current policy registry on each call.
+
 **Returns:** `WDK` - The WDK instance (supports method chaining)
 
 **Throws:** `PolicyConfigurationError` if a policy or option fails validation, if an account-scoped policy omits its account binding, if a policy references a wallet identifier that has not been registered, or if a rule names an excluded method. Governed calls also throw `PolicyConfigurationError` when WDK cannot snapshot a method argument safely.
 
-**Example:**
+**Example:** Install the [example dependencies and save `eth-send-policy.js`](/sdk/core-module/guides/transaction-policies#register-policies) first. This helper permits only Ethereum type-2 objects with no calldata, bounded value, and explicit bounded gas fields. It rejects serialized transactions and unsupported fields. This setup has no `ALLOW` rule for signing or other governed methods. `seedPhrase` and `ethereumWalletConfig` are app-owned inputs; use a trusted Ethereum mainnet RPC because the wallet derives the execution chain from its provider.
+
 ```typescript title="Register A Send Policy"
 import WDK, { DENIAL_CODES, PolicyViolationError } from '@tetherto/wdk'
+import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
+import { isAllowedEthSend, MAX_EXECUTION_FEE } from './eth-send-policy.js'
+
+const RECIPIENT = '0x71C7656EC7ab88b098defB751B7401B5f6d8976F'
 
 const wdk = new WDK(seedPhrase)
-  .registerWallet('ethereum', WalletManagerEvm, ethereumWalletConfig)
+  .registerWallet('ethereum', WalletManagerEvm, {
+    ...ethereumWalletConfig,
+    transactionMaxFee: MAX_EXECUTION_FEE
+  })
   .registerPolicy({
     id: 'eth-send-limit',
     name: 'ETH send limit',
@@ -234,54 +240,48 @@ const wdk = new WDK(seedPhrase)
     wallet: 'ethereum',
     rules: [
       {
-        name: 'allow-normal-operations',
-        operation: '*',
-        action: 'ALLOW',
-        reason: 'Default local approval',
-        conditions: [() => true]
-      },
-      {
-        name: 'block-large-send',
+        name: 'allow-bounded-eth-send',
         operation: 'sendTransaction',
-        action: 'DENY',
-        reason: 'Transaction value exceeds local policy',
-        conditions: [
-          ({ args }) => {
-            const tx = args[0] as { value?: bigint } | undefined
-            const value = tx?.value
-            return typeof value === 'bigint' && value > 1000000000000000000n
-          }
-        ]
+        action: 'ALLOW',
+        conditions: [({ args }) => args.length === 1 && isAllowedEthSend(args[0])]
       }
     ]
   })
 
 const account = await wdk.getAccount('ethereum', 0)
 
-const simulation = await (account as any).simulate.sendTransaction({
-  to: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
-  value: 2000000000000000000n
-})
+const overLimitTransaction = {
+  to: RECIPIENT,
+  value: 2000000000000000000n,
+  chainId: 1,
+  type: 2,
+  gasLimit: 21000n,
+  maxFeePerGas: 20000000000n,
+  maxPriorityFeePerGas: 1000000000n
+}
+
+const simulation = await (account as any).simulate.sendTransaction(overLimitTransaction)
 
 if (simulation.decision === 'DENY') {
   console.warn(simulation.code, simulation.reason)
 }
 
 try {
-  await account.sendTransaction({
-    to: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
-    value: 2000000000000000000n
-  })
+  await account.sendTransaction(overLimitTransaction)
 } catch (error) {
   if (error instanceof PolicyViolationError) {
-    if (error.code === DENIAL_CODES.NO_APPLICABLE_RULE) {
-      console.error(`No rule addresses ${error.operation}`)
+    if (error.code === DENIAL_CODES.GOVERNED_BUT_UNMATCHED) {
+      console.error(`No allow condition matched ${error.operation}`)
     } else {
       console.error(error.code, error.reason)
     }
+  } else {
+    throw error
   }
 }
 ```
+
+The helper caps `gasLimit * maxFeePerGas` separately from transaction value. In the documented EVM beta.22 example, `transactionMaxFee` checks the execution-gas quote using explicit request fields when supplied. It does not cap transferred value, cumulative spending, or other fee components. See [Bound Transaction Fees](/sdk/core-module/guides/transaction-policies#bound-transaction-fees).
 
 `PolicyOperation` is a string. A rule accepts one non-empty method name, a non-empty array of names, or `*` for all governed methods. Use the method's exact spelling: an unknown name registers but never matches a different method. Explicitly naming an excluded method fails registration; a wildcard does not include excluded methods.
 
@@ -294,7 +294,7 @@ Returns a wallet account for a specific blockchain and index using BIP-44 deriva
 - `blockchain` (string): The name of the blockchain (e.g., "ethereum")
 - `index` (number, optional): The index of the account to get (default: 0)
 
-**Returns:** `Promise<WdkAccount>` - The writable wallet account with protocol support. When a registered policy targets the account, the returned runtime account is policy-enforced and exposes matching `simulate` helpers.
+**Returns:** `Promise<WdkAccount>` - The writable wallet account with protocol support. When a registered policy targets the account, WDK returns a proxy that evaluates [governed methods](/sdk/core-module/guides/transaction-policies#security-boundary) and exposes matching `simulate` helpers. Otherwise, WDK returns the original account without adding policy enforcement. Later policy registration does not change that retained raw reference; retrieve the account again to obtain a governed proxy.
 
 **Throws:** Error if no wallet has been registered for the given blockchain. Throws `PolicyConfigurationError` if a registered policy applies but the wallet account does not expose a read-only account view.
 
@@ -324,7 +324,7 @@ Returns a wallet account for a specific blockchain and BIP-44 derivation path.
 - `blockchain` (string): The name of the blockchain (e.g., "ethereum")
 - `path` (string): The derivation path (e.g., "0'/0/0")
 
-**Returns:** `Promise<WdkAccount>` - The writable wallet account with protocol support. When a registered policy targets the account, the returned runtime account is policy-enforced and exposes matching `simulate` helpers.
+**Returns:** `Promise<WdkAccount>` - The writable wallet account with protocol support. When a registered policy targets the account, WDK returns a proxy that evaluates [governed methods](/sdk/core-module/guides/transaction-policies#security-boundary) and exposes matching `simulate` helpers. Otherwise, WDK returns the original account without adding policy enforcement. Later policy registration does not change that retained raw reference; retrieve the account again to obtain a governed proxy.
 
 **Throws:** Error if no wallet has been registered for the given blockchain. Throws `PolicyConfigurationError` if a registered policy applies but the wallet account does not expose a read-only account view.
 
@@ -356,7 +356,9 @@ console.log('Fee rates:', feeRates)
 #### `dispose(blockchains?)`
 Disposes all registered wallets when called without arguments, or only the wallets for the named blockchains when you pass a string array.
 
-Cleanup delegates to each concrete wallet manager. It does not guarantee removal of every retained seed or signer, and does not mutate or zero the seed value passed to `new WDK(seed)`. See [base wallet beta.21 disposal limits](#disposal-in-base-wallet-beta21) and [Seed Lifecycle](/sdk/core-module/guides/error-handling#seed-lifecycle) for the recommended cleanup pattern.
+For each selected wallet, WDK beta.18 calls the manager's `dispose()`, unregisters the wallet, and clears its policy state. A later account lookup for that blockchain fails until a wallet is registered again. Calling without arguments also clears all policy state. If manager cleanup throws, the error propagates before that wallet is unregistered.
+
+Signer cleanup follows the installed concrete wallet's ownership behavior; the base contract alone does not establish which supplied signers survive disposal. WDK itself does not overwrite the seed passed to `new WDK(seed)`. See [disposal and signer ownership](#disposal-and-signer-ownership) and [Seed Lifecycle](/sdk/core-module/guides/error-handling#seed-lifecycle) before sharing signer or seed references.
 
 **Parameters:**
 - `blockchains` (string[], optional): The blockchain identifiers to dispose. Omit this parameter to dispose every registered wallet.
@@ -445,6 +447,15 @@ The list matches exact names, not prefixes: a new `get*` or `quote*` method is n
 
 These contracts belong to `@tetherto/wdk-wallet@1.0.0-beta.22`. They describe the base package used by module authors; a concrete wallet must implement the relevant signer support before applications can use it. Updating a direct base-wallet dependency does not upgrade the separate copy pinned by another wallet package.
 
+<Callout type="warn">
+The concrete wallet versions documented below pin older base packages. Installing base wallet beta.22 directly does not give these wallets its `disposed` or `DisposalError` behavior.
+
+| Base-wallet dependency | Concrete wallet versions |
+| --- | --- |
+| `1.0.0-beta.17` | EVM beta.20, Bitcoin beta.17, ERC-4337 beta.21, EIP-7702 beta.7, Spark beta.28, Aptos beta.3, TON beta.15, TON Gasless beta.13, TRON beta.15, TRON GasFree beta.10 |
+| `1.0.0-beta.19` | Solana beta.16, Solana Gasless beta.6, Safe beta.1, Squads beta.2 |
+</Callout>
+
 Declare `@tetherto/wdk-wallet@1.0.0-beta.22` as a direct dependency before importing these contracts.
 
 ```javascript title="Import Base Wallet Contracts"
@@ -463,15 +474,21 @@ import WalletManager, { DisposalError, IDisposable, ISigner } from '@tetherto/wd
 
 The base `WalletManager` constructor rejects a default signer whose `isDerivable` is false with `InvalidSignerError`. Register non-derivable signers by name with `addSigner(name, signer)` in a supporting concrete wallet. `WalletManager<TSigner>` preserves the signer type through `getSigner()` and `getSigners()`, and `addSigner()` returns `this` for chaining.
 
+### Disposal And Signer Ownership
+
+Distinguish signers created by a wallet from signers supplied by your app. A manager can create a default signer from a seed and derive child signers for its accounts; a signer passed to a constructor or registered with `addSigner()` is application-owned. Concrete managers and accounts implement that ownership boundary. The base interface does not guarantee that a particular wallet release preserves supplied signers when disposed.
+
+Before sharing a signer, check the concrete wallet's version and cleanup options. Arrange cleanup of application-owned signers after their final use, accounting for whether the wallet already disposes them, and keep any seed buffer alive until every wallet that retains it has finished. Do not treat disposal as proof that every secret copy or hardware session has been cleared.
+
 ### Disposal In Base Wallet Beta.21
 
-The base manager's `dispose()` calls `dispose()` on cached accounts only when `account.keyPair?.privateKey` is present, then clears its account cache. It no longer directly disposes or removes its default or named signers. It also retains its seed reference. Account implementations may perform additional cleanup; confirm the concrete wallet's behavior.
+The base manager's `dispose()` calls `dispose()` on cached accounts only when `account.keyPair?.privateKey` is present, then clears its account cache. It no longer directly disposes or removes its default or named signers. Concrete managers must provide any additional cleanup for a default signer they create; account implementations determine how derived or supplied signers are handled.
 
-Applications and module authors must manage signer resources and caller-owned seed buffers explicitly. Do not treat manager disposal as proof that a hardware session, signer, or all seed material has been cleared. Coordinate cleanup with other accounts that share the same signer, and see [seed lifecycle](/sdk/core-module/guides/error-handling#seed-lifecycle).
+When constructed from a mnemonic or raw seed bytes, the base manager retains seed bytes; with raw `Uint8Array` input, it retains that same buffer. A signer-based manager can consume the seed into a default signer before calling the base constructor, in which case `wallet.seed` is `undefined`. Do not use this getter as seed storage or recovery: store the seed securely in your application and follow [seed lifecycle](/sdk/core-module/guides/error-handling#seed-lifecycle).
 
 ### Disposal State In Base Wallet Beta.22
 
-`WalletManager.disposed` starts as `false`. After `dispose()` completes, it becomes `true`; subsequent calls to `dispose()` return immediately. The cached-account cleanup and retained seed and signer references described above remain unchanged.
+`WalletManager.disposed` starts as `false`. After the base `dispose()` completes, it becomes `true`; subsequent calls return immediately. This state describes the base manager. Its cached-account cleanup is unchanged from beta.21; concrete managers and accounts remain responsible for their [signer ownership behavior](#disposal-and-signer-ownership). A `true` value does not prove that caller-owned secrets or external signer resources were cleared.
 
 Beta.22 exports `DisposalError` from both `@tetherto/wdk-wallet` and `@tetherto/wdk-wallet/protocols`. It extends `WdkError` and identifies operations rejected because an object has been disposed. The signer, account, and protocol contracts describe disposal failures; concrete implementations supply the checks.
 
@@ -485,7 +502,7 @@ Beta.22 adds `disposed: boolean` through that TypeScript contract. Its runtime `
 
 ### Methods
 
-The Throws column summarizes the beta.22 contract; each concrete module implements its own checks.
+The Throws column summarizes the beta.22 contract; each concrete module implements its own checks. `DisposalError` is available only from base wallet beta.22 and later. The [concrete versions listed above](#base-wallet-signer-contracts) pin beta.17 or beta.19 and do not provide these beta.22 disposal checks.
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
@@ -498,7 +515,7 @@ The Throws column summarizes the beta.22 contract; each concrete module implemen
 | `sendTransaction(tx)` | Signs, broadcasts, and returns the transaction result | `Promise<TransactionResult>` | `DisposalError`, provider, broadcast, or fee errors |
 | `transfer(options)` | Transfers a token where supported by the module | `Promise<TransferResult>` | `DisposalError` or a token-transfer error |
 | `toReadOnlyAccount()` | Returns a read-only account copy | `Promise<IWalletAccountReadOnly>` | - |
-| `dispose()` | Clears sensitive account material from memory | `void` | - |
+| `dispose()` | Initiates the account cleanup process | `void` | - |
 
 ##### `signTransaction(tx)`
 Signs a transaction and returns the signed transaction payload without broadcasting it. Use this when your app needs offline signing, external transaction submission, or a separate review step before broadcast.
@@ -735,7 +752,7 @@ Registers a new protocol for this specific account.
 - `P`: `typeof SwapProtocol | typeof BridgeProtocol | typeof LendingProtocol | typeof FiatProtocol | typeof SwidgeProtocol | typeof SdaProtocol` - A class that extends one of the `@tetherto/wdk-wallet/protocols` classes
 
 **Parameters:**
-- `label` (string): Registry label for the protocol. Registering the same protocol type and label again replaces the account-scoped instance.
+- `label` (string): Registry label for the protocol. Registering the same protocol type and label again replaces the account-scoped registration.
 - `protocol` (P): The protocol class
 - `config` (`ConstructorParameters<P>[1]`): The protocol configuration
 
@@ -754,6 +771,8 @@ const account2 = (await wdk.getAccount('ethereum', 1))
 ```
 
 `MySdaProtocol` is an illustrative class that extends `SdaProtocol`; replace it with the concrete provider used by your application.
+
+In Core beta.20, per-account protocols are constructed when retrieved. A governed account passes its policy proxy to the constructor, so nested calls through that account need their own policy permissions. Constructors that require protected account internals may be incompatible. Global registrations with the same protocol category and label take precedence and construct against the raw account. See [Runtime Caveats](/sdk/core-module/guides/transaction-policies#runtime-caveats) before choosing a registration path.
 
 ##### `getSwapProtocol(label)`
 Returns the swap protocol with the given label.
@@ -1091,9 +1110,9 @@ interface SimulationResult {
 }
 ```
 
-`scope: 'project'` can apply across all registered wallets or only the wallets named in `wallet`. `scope: 'account'` requires both `wallet` and `accounts`; account entries can be a derivation path string or an account index number.
+`scope: 'project'` can apply across all registered wallets or only the wallets named in `wallet`. `scope: 'account'` requires both `wallet` and `accounts`. Numeric entries match indexed `getAccount()` retrieval only. String entries must equal the returned `account.path` exactly for either retrieval method; a relative `getAccountByPath()` input is not normalized for policy matching. See [policy scopes](/sdk/core-module/guides/transaction-policies#scope-policies) for the full-path example.
 
-`override_broader_scope` is valid only on account-scoped `ALLOW` rules. When that rule matches, WDK allows the call without evaluating project-scoped policies.
+`override_broader_scope` is valid only on account-scoped `ALLOW` rules. In Core beta.20, a match skips project-scoped policies only if no remaining account-scoped `DENY` blocks the call. Later non-`DENY` rules in the account scope are skipped after an override match.
 
 `state` and `onSuccess` are reserved for future engine-managed state and are ignored at runtime in this beta. Conditions can use app-owned state through closures or external stores, but keep that state outside `rule.state`; WDK does not persist or update `state`, run `onSuccess`, or provide built-in counters or cumulative spend accounting.
 
