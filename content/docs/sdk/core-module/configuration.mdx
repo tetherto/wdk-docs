@@ -77,6 +77,8 @@ const wdk = new WDK(seedPhrase)
 
 `MySwapProtocol` is an illustrative class that extends `SwapProtocol`. Replace it with a provider whose constructor supports the account and provider shape used by your registered wallet.
 
+Core beta.19 and later forward every argument after the protocol class to that provider's constructor after the account. A provider accepting one config object uses the call above; if it requires multiple arguments, pass them separately and in constructor order. The same argument forwarding applies to account-scoped registration. See the [`registerProtocol()` reference](/sdk/core-module/api-reference#registerprotocolblockchain-label-protocol-config).
+
 ## Configuration Options
 
 ### Wallet Configuration
@@ -111,7 +113,7 @@ wdk.registerWallet('ton', WalletManagerTon, tonWalletConfig)
 
 ### Protocol Configuration
 
-Protocols also require their own configuration objects when registered.
+Protocol constructor arguments depend on the provider. Pass any required arguments after its class in constructor order; a provider can require zero, one, or multiple arguments.
 
 #### Swap Protocol Configuration
 
@@ -159,6 +161,8 @@ Registration does not validate every downstream module configuration:
 - **Middleware Registration**: WDK stores the middleware for later account decoration. Errors thrown by the middleware surface when an account is retrieved.
 
 In JavaScript, a protocol class that does not extend a supported WDK protocol base class is ignored rather than rejected. Keep protocol classes typed, use distinct labels, and test retrieval during application startup. A global registration shadows an account-scoped provider with the same type and label.
+
+Core beta.20 also defers account-scoped protocol construction until retrieval. Each getter creates a fresh instance; retain that returned instance when its local state is needed later. Governed account-scoped protocols receive the policy proxy, while global protocols receive the raw account. Review the [protocol policy boundary](/sdk/core-module/guides/transaction-policies#runtime-caveats) before choosing the registration scope.
 
 ## Error Handling
 
