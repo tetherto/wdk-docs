@@ -35,8 +35,12 @@ const wdk = new WDK(seedPhrase)
 
 `MySwapProtocol` is an illustrative class that extends `SwapProtocol`. Replace it with a provider whose constructor supports the manager account's provider shape.
 
+In Core beta.19 and later, [`registerProtocol()`](/sdk/core-module/api-reference#registerprotocolblockchain-label-protocol-config) accepts the provider's remaining constructor arguments in order after its class. A single configuration object keeps the call shape above. Pass multiple constructor arguments separately when the provider requires them; Core supplies the account as the first constructor argument. This also applies to [`account.registerProtocol()`](/sdk/core-module/api-reference#registerprotocollabel-protocol-config).
+
+In Core beta.20, account-scoped registration also defers construction until a getter is called and creates a fresh instance for each retrieval. Retain a retrieved instance when its local state is needed later. Governed account-scoped protocols receive the policy proxy; globally registered protocols receive the raw account. Review the [policy runtime caveats](/sdk/core-module/guides/transaction-policies#runtime-caveats) before selecting a scope.
+
 <Callout type="warn">
-Velora beta.8 and beta.9, USD₮0 bridge beta.10, and Aave beta.7 cannot initialize with accounts derived by standard EVM beta.19 or beta.20, ERC-4337 beta.21, or EIP-7702 beta.7 managers when their shared ethers provider lacks the EIP-1193 `request()` method. Their constructors treat the shared ethers `Provider` as EIP-1193. Use the corresponding direct account constructor with its original RPC URL or genuine EIP-1193 input; never mutate internal provider fields. Direct accounts do not receive WDK Core policies or middleware, so retain required application checks and account-level controls. For Aave, follow the [direct-account configuration](/sdk/lending-modules/lending-aave-evm/configuration#service-setup).
+Velora beta.8 and beta.9, USD₮0 bridge beta.10 and beta.11, and Aave beta.7 cannot initialize with accounts derived by standard EVM beta.19 through beta.22, ERC-4337 beta.21, or EIP-7702 beta.7 through beta.9 managers when their shared ethers provider lacks the EIP-1193 `request()` method. Their constructors treat the shared ethers `Provider` as EIP-1193. Use the corresponding direct account constructor with its original RPC URL or genuine EIP-1193 input; never mutate internal provider fields. Direct accounts do not receive WDK Core policies or middleware, so retain required application checks and account-level controls. For Aave, follow the [direct-account configuration](/sdk/lending-modules/lending-aave-evm/configuration#service-setup).
 </Callout>
 
 ## Use Protocols
@@ -106,7 +110,7 @@ Existing swap and bridge modules keep their current accessors for released modul
 
 ### Swapping Tokens
 
-Velora beta.8 and beta.9 require a directly constructed standard account that retains its RPC URL or EIP-1193 provider when paired with wallet-evm beta.19 or beta.20. Approve the input token for the current Velora spender before running this example; see [Execute Swaps](/sdk/swap-modules/swap-velora-evm/guides/execute-swaps).
+Velora beta.8 and beta.9 require a directly constructed standard account that retains its RPC URL or EIP-1193 provider when paired with wallet-evm beta.19 through beta.22. Approve the input token for the current Velora spender before running this example; see [Execute Swaps](/sdk/swap-modules/swap-velora-evm/guides/execute-swaps).
 
 <Callout type="warn">
 This compatibility path does not use `wdk.getAccount()`, so WDK transaction policies and middleware do not decorate `swapAccount`. Keep required application checks before approval and swap execution. The account-level `transactionMaxFee` and protocol-level `swapMaxFee` caps remain available, but they do not replace WDK policy rules.
