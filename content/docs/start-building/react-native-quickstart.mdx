@@ -1,6 +1,6 @@
 ---
 title: React Native Quickstart
-description: Get started with WDK in React Native in under 3 minutes
+description: Run the React Native wallet starter or integrate WDK into an existing app
 docType: getting-started
 schemaType: TechArticle
 icon: Smartphone
@@ -8,21 +8,12 @@ icon: Smartphone
 
 ## What You'll Build
 
-In this quickstart, you'll integrate WDK into a React Native app to create a multi-chain wallet that:
+Use the starter to create or import a wallet, view balances and transfers, and explore optional cloud backup. Or integrate React Native Core into an existing app using the second path below.
 
-- [ ] Supports multiple blockchains (Bitcoin, Ethereum, Polygon, Arbitrum, TON, Tron)
-- [ ] Manages multiple tokens (BTC, USD₮, XAU₮, and more)
-- [ ] Provides secure seed generation and encrypted storage
-- [ ] Shows real-time balances and transaction history
-- [ ] Includes wallet creation, import, and unlock flows
+The starter's configured networks and assets are listed on its [overview](/examples-and-starters/react-native-starter#features). Network support in your own app depends on the wallet modules and providers you configure.
 
-<Callout type="info">
-You can try all features without real funds required. You can use the Pimlico or Candide faucets to get some Sepolia USD₮.
-
-- [Get mock/test USD₮ on Pimlico](https://dashboard.pimlico.io/test-erc20-faucet)
-- [Get mock/test USD₮ on Candide](https://dashboard.candide.dev/faucet)
-
-See the [ERC-4337 configuration](/sdk/wallet-modules/wallet-evm-erc-4337/configuration) for quick setup and Sepolia testnet configuration.
+<Callout type="warn">
+The starter is not configured entirely for testnets. Ethereum uses Sepolia, while Arbitrum and Polygon use mainnet. Before funding or sending, review `.env` and `src/wdk/networks.ts`. For Bitcoin, align `btcNetwork` with the Blockbook endpoint; setting a testnet endpoint alone does not change address derivation.
 </Callout>
 
 ## Prerequisites
@@ -32,8 +23,8 @@ Before we start, make sure you have:
 | Tool             | Version | Why You Need It             |
 | ---------------- | ------- | --------------------------- |
 | **Node.js**      | 22+     | To run JavaScript code      |
-| **npm**          | Latest  | To install packages         |
-| **React Native** | 0.81.0+ | Framework version           |
+| **npm**          | 11.10.1+ (starter) | To install starter dependencies |
+| **React Native** | 0.83.6 (starter) | Match your Expo SDK in existing apps |
 | **Android SDK**  | API 29+ | Android minimum SDK version |
 | **iOS**          | 15.1+   | iOS deployment target       |
 
@@ -41,11 +32,11 @@ Before we start, make sure you have:
 
 ## Quickstart Paths
 
-You have 2 options for using WDK in a React Native. Choose your preferred starting point:
+Choose a starting point:
 
-<Tabs items={["Use Starter Template (Fastest)", "Add to Existing App"]}>
-<Tab value="Use Starter Template (Fastest)">
-Get up and running in 3 minutes with our pre-configured starter template.
+<Tabs items={["Use Starter Template", "Add to Existing App"]}>
+<Tab value="Use Starter Template">
+Run the starter with its existing wallet configuration and app screens.
 
 [**→ Jump to Starter Template Setup**](#option-1-starter-template)
 </Tab>
@@ -60,7 +51,7 @@ Integrate WDK into your existing React Native or Expo app.
 
 ## Option 1: Starter Template
 
-The fastest way to get started is with our starter template. Note: this is still in alpha, and may be subject to breaking changes.
+The starter is an alpha app and may introduce breaking changes. It currently uses Expo SDK 55 and React Native 0.83.6. Use Node.js 22+ and npm 11.10.1+; Android builds also require JDK 17. Check its [environment guide](https://github.com/tetherto/wdk-starter-react-native/blob/main/docs/ENVIRONMENT.md) for native-toolchain setup.
 
 ### Step 1: Clone the Starter
 
@@ -75,29 +66,39 @@ cd wdk-starter-react-native
 npm install
 ```
 
+The starter installs Cloud Backup `1.0.0-beta.1` and Indexer `1.0.1` from npm. Its `postinstall` script generates the WDK worklet bundle; keep the repository's dependency pins when following this path.
+
 ### Step 3: Configure Environment
 
-Create an environment file for the WDK Indexer API:
+Copy the environment template for the network providers and optional integrations:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and add your WDK Indexer API key:
+To load the Activity tab, add a production WDK Indexer API key:
 
 ```bash
-EXPO_PUBLIC_WDK_INDEXER_BASE_URL=https://wdk-api.tether.io
 EXPO_PUBLIC_WDK_INDEXER_API_KEY=your_actual_api_key_here
-# Optional: For Tron network support
-EXPO_PUBLIC_TRON_API_KEY=your_tron_api_key
-EXPO_PUBLIC_TRON_API_SECRET=your_tron_api_secret
 ```
 
+The starter explicitly selects `https://wdk-api.tether.io` in `src/wdk/indexer.ts`; it does not read `EXPO_PUBLIC_WDK_INDEXER_BASE_URL`. Indexer `1.0.1` defaults to staging (`https://wdk-api.tether.su`), so retain the explicit production `baseUrl` if you modify the client setup.
+
 <Callout type="info">
-**Where do I get an Indexer API key?** The WDK Indexer is required for transaction history and balance indexing. Get your free API key from the [Indexer API setup guide](/tools/indexer-api/get-started).
+Get your API key from the [Indexer setup guide](/tools/indexer-api/get-started). The Indexer supplies transfer history. Balances and transfers use the network providers configured in [`.env.example`](https://github.com/tetherto/wdk-starter-react-native/blob/main/.env.example), including EVM bundler and paymaster settings. TON and Tron are not wired into this starter.
 </Callout>
 
+Cloud backup is optional and needs separate Google/CloudKit configuration. Follow the starter's [cloud backup setup](https://github.com/tetherto/wdk-starter-react-native/blob/main/docs/CLOUD_BACKUP.md) before testing it. The [starter overview](/examples-and-starters/react-native-starter#features) explains its storage and backup roles.
+
 ### Step 4: Run Your App
+
+Generate native project files on the first run:
+
+```bash
+npx expo prebuild
+```
+
+Then build and launch the app:
 
 <Tabs items={["iOS Simulator", "Android Emulator"]}>
 <Tab value="iOS Simulator">
@@ -112,7 +113,7 @@ npm run android
 </Tab>
 </Tabs>
 
-**Congratulations!** You now have a multi-chain wallet running.
+After the native build completes, create or import a wallet. Balances and Activity require the integrations configured in Step 3.
 
 [**→ Skip to What's Next**](#whats-next)
 
@@ -569,7 +570,7 @@ Ready to dive deeper? Check out these resources:
 ### Examples & Starters
 
 - [**React Native Starter**](/examples-and-starters/react-native-starter) - Full-featured starter app
-- [**React Native UI Kit**](/ui-kits/react-native-ui-kit/) - Pre-built wallet components
+- [**Customize the starter UI**](/examples-and-starters/react-native-starter#next-steps) - Edit its app-owned components and theme
 
 ### **Need Help?**
 

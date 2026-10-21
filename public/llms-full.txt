@@ -5956,27 +5956,29 @@ Always keep an independently tested recovery backup before deleting or changing 
 URL: https://docs.wdk.tether.io/examples-and-starters/react-native-starter
 Description: Multi-chain wallet starter built with WDK, Expo, and React Native
 
-The React Native Starter Alpha is an Expo + React Native app showing how to build a multi-chain wallet using WDK via BareKit worklets and secure secret management. This starter includes wallet creation/import flows, balances, transactions, and a modular service layer.
+The React Native Starter Alpha is an Expo + React Native app with wallet creation/import, balances, transfers, and optional cloud backup. It runs WDK through React Native Core and BareKit worklets, with app-owned components and theming.
 
 <Embed url="/assets/starter-react-native-demo.mp4" />
 
 ***
 
 <Callout type="warn">
-**Prerequisites:** Node.js 22+, and either Xcode (iOS) or Android SDK API 29+ (Android). See the [React Native Quickstart](/start-building/react-native-quickstart#prerequisites) for details.
+**Prerequisites:** Node.js 22+, npm 11.10.1+, and either Xcode (iOS) or Android SDK API 29+ with JDK 17 (Android). The starter uses Expo SDK 55 and React Native 0.83.6. Check the repository's [environment guide](https://github.com/tetherto/wdk-starter-react-native/blob/main/docs/ENVIRONMENT.md) before installing.
 </Callout>
 
 ### Quickstart
-
-Get your React Native wallet running in minutes with these simple steps:
 
 <Steps>
 <Step>
 #### Clone and Install
 
 ```bash
-git clone https://github.com/tetherto/wdk-starter-react-native.git && cd wdk-starter-react-native && npm install
+git clone https://github.com/tetherto/wdk-starter-react-native.git
+cd wdk-starter-react-native
+npm install
 ```
+
+The install's `postinstall` script generates the WDK worklet bundle.
 </Step>
 
 <Step>
@@ -5986,16 +5988,15 @@ git clone https://github.com/tetherto/wdk-starter-react-native.git && cd wdk-sta
 cp .env.example .env
 ```
 
-Get your free WDK Indexer API key [here](/tools/indexer-api/get-started) and add it to your `.env` file:
+To load the Activity tab, obtain a production WDK Indexer API key from the [Indexer setup guide](/tools/indexer-api/get-started) and set:
 
 ```bash
-EXPO_PUBLIC_WDK_INDEXER_BASE_URL=https://wdk-api.tether.io
 EXPO_PUBLIC_WDK_INDEXER_API_KEY=your_actual_api_key_here
-# Optional: For Tron network support
-EXPO_PUBLIC_TRON_API_KEY=your_tron_api_key
-EXPO_PUBLIC_TRON_API_SECRET=your_tron_api_secret
 ```
 
+The starter selects `https://wdk-api.tether.io` in `src/wdk/indexer.ts`. It does not read an `EXPO_PUBLIC_WDK_INDEXER_BASE_URL` variable. Balance reads and transfers use the network providers configured in `.env`; review the RPC, bundler, and paymaster settings in [`.env.example`](https://github.com/tetherto/wdk-starter-react-native/blob/main/.env.example).
+
+Cloud backup has separate Google/CloudKit credentials and can be skipped during initial setup. Follow the starter's [cloud backup setup](https://github.com/tetherto/wdk-starter-react-native/blob/main/docs/CLOUD_BACKUP.md) before enabling it.
 </Step>
 
 <Step>
@@ -6016,124 +6017,119 @@ npm run android # Android Emulator
 </Step>
 </Steps>
 
+<Callout type="warn">
+The starter mixes testnet and mainnet configuration: Ethereum is configured for Sepolia, while Arbitrum and Polygon use mainnet. Before funding or sending, verify the selected network, token, and provider in `.env` and `src/wdk/networks.ts`. For Bitcoin, align the wallet's `btcNetwork` with its Blockbook endpoint; the example testnet endpoint does not change the current `btcNetwork: 'bitcoin'` address derivation.
+</Callout>
+
 ***
 
 <Callout type="info">
-**Need detailed instructions?** Check out the complete [React Native Quickstart](/start-building/react-native-quickstart) guide for step-by-step setup, configuration, and troubleshooting.
+**Need detailed instructions?** Follow the [React Native Quickstart](/start-building/react-native-quickstart#option-1-starter-template) for the starter setup, or its separate path for integrating WDK into an existing app.
 </Callout>
 
 ### Features
 
-**Multi-Token & Chain Support**
-* **BTC**: Native SegWit transfers on Bitcoin network
-* **USD₮ / USD₮0**: Gasless transactions on EVM (USD₮ on Ethereum; USD₮0 on Polygon and Arbitrum), native USD₮ transfers on TON and Tron
-* **XAU₮**: Gasless transactions on Ethereum network
+**Networks and assets**
 
-**Wallet Management**
+The current app configures Bitcoin and EVM networks, including Sepolia, Arbitrum, and Polygon. Assets include BTC and Tether-family tokens. Check [`src/wdk/networks.ts`](https://github.com/tetherto/wdk-starter-react-native/blob/main/src/wdk/networks.ts) for the current assets and network mappings. TON and Tron are not wired into this starter.
 
-* **Secure Seed Generation**: Cryptographically secure entropy generation
-* **Seed Import**: Import existing 12-word mnemonic phrases
-* **Encrypted Storage**: Secure key storage via [`@tetherto/wdk-secret-manager`](https://github.com/tetherto/wdk-secret-manager)
-* **Multi-Account Support**: Derive multiple accounts from single seed
+**Wallet management**
 
-**Asset Management**
+* **Seed generation and import**: Create or import 12- or 24-word mnemonic phrases through React Native Core.
+* **Seed persistence**: Handled by React Native Core's secure-storage layer.
+* **App password vault**: Uses `wdk-utils` encryption and Expo SecureStore; this is separate from seed persistence.
+* **Multi-account support**: Derive and switch accounts from a wallet's seed.
+* **Optional cloud backup**: Upload encrypted wallet material through `@tetherto/wdk-backup-cloud@1.0.0-beta.1` from npm, using Google Drive or CloudKit. The starter's restore screen is not implemented yet; review its [cloud backup guide](https://github.com/tetherto/wdk-starter-react-native/blob/main/docs/CLOUD_BACKUP.md) and the [Cloud Backup SDK usage](/tools/backup-cloud/usage) before relying on a recovery flow.
 
-* **Real-Time Balances**: Live balance updates via [WDK Indexer](/tools/indexer-api/)
-* **Transaction History**: Complete transaction tracking and history via [WDK Indexer](/tools/indexer-api/)
-* **Price Conversion**: Real-time fiat pricing via [Pricing Provider](/tools/price-rates/)
+**Asset management**
 
-**User Experience**
+* **Balances**: Read through React Native Core wallet hooks and the configured network providers.
+* **Transaction history**: Fetch recent transfers for configured assets through [WDK Indexer](/tools/indexer-api/); an API key is required.
+* **Price conversion**: Fetch fiat prices through the pricing provider.
 
-* **QR Code Scanner**: Scan addresses and payment requests via camera
-* **Send/Receive Flows**: Intuitive transfer interfaces
-* **Network Selection**: Choose optimal network for each transaction
-* **Token Selection**: Multi-token transfer support
-* **Activity Feed**: Real-time transaction monitoring
+**User experience**
+
+* **Receive QR codes**: Display the selected account's address as a QR code.
+* **Send/receive flows**: Select an asset and account for transfers.
+* **Network and token selection**: Choose from the app's configured registry.
+* **Activity feed**: View the transfer history returned by the Indexer.
+
+### Indexer Client
+
+The starter installs `@tetherto/wdk-indexer-http@1.0.1` from npm. This client requires Node.js 22+ and defaults to the staging endpoint, `https://wdk-api.tether.su`. The starter explicitly sets the production endpoint to match its API-key registration:
+
+```typescript
+import { WdkIndexerClient } from '@tetherto/wdk-indexer-http'
+
+const apiKey = process.env.EXPO_PUBLIC_WDK_INDEXER_API_KEY
+if (!apiKey) throw new Error('Set EXPO_PUBLIC_WDK_INDEXER_API_KEY')
+
+const client = new WdkIndexerClient({
+  apiKey,
+  baseUrl: 'https://wdk-api.tether.io'
+})
+```
+
+Its batch transfer handling uses `isApiError()` to skip failed items before reading `transfers`. The earlier `isTokenTransfersResponse()` helper is no longer exported by the 1.0.1 client. See [`src/wdk/indexer.ts`](https://github.com/tetherto/wdk-starter-react-native/blob/main/src/wdk/indexer.ts) for the integration.
 
 ***
 
 ### Project Structure
 
-The starter includes a modular architecture designed for scalability and maintainability:
-
 ```text title="Project Structure"
 src/
-├── app/                    # Expo Router screens (file-based routing)
-│   ├── onboarding/         # First-time user flows
-│   ├── wallet-setup/       # Create/import wallet screens
-│   ├── send/ & receive/    # Transaction flows
-│   ├── settings.tsx        # Configuration & preferences
-│   └── token-details.tsx   # Individual asset views
-├── components/             # Reusable UI components
-├── config/                 # Network, asset, and chain settings
-├── services/               # Business logic (pricing integration)
-├── hooks/                  # Custom React hooks
-└── utils/                  # Formatting & helper functions
+├── app/                    # Expo Router screens
+├── components/             # App-owned UI components
+├── data/                   # Data adapters
+├── domain/                 # App models and interfaces
+├── state/                  # Account and session state
+├── theme/                  # Palettes, tokens, ThemeProvider
+└── wdk/                    # Networks, wallet hooks, Indexer, cloud backup
 ```
 
-Detailed project structure can be found in the [Github Repository](https://github.com/tetherto/wdk-starter-react-native/tree/main?tab=readme-ov-file#-project-structure).
+See the repository's [architecture guide](https://github.com/tetherto/wdk-starter-react-native/blob/main/docs/ARCHITECTURE.md) for the wallet and worklet integration.
 
 ***
 
 ### Available Scripts
 
-| Script                   | Description                                   |
-| ------------------------ | --------------------------------------------- |
-| `npm start`              | Start Expo development server with dev client |
-| `npm run android`        | Run on Android emulator/device                |
-| `npm run ios`            | Run on iOS simulator                          |
-| `npm run web`            | Start web development server                  |
-| `npm run prebuild`       | Generate native project files                 |
-| `npm run prebuild:clean` | Clean and regenerate native project files     |
-| `npm run lint`           | Run ESLint                                    |
-| `npm run lint:fix`       | Fix ESLint errors                             |
-| `npm run format`         | Format code with Prettier                     |
-| `npm run format:check`   | Check code formatting                         |
-| `npm run typecheck`      | Run TypeScript type checking                  |
+| Script | Description |
+| --- | --- |
+| `npm start` | Start the Expo development server |
+| `npm run android` | Build and run the Android app |
+| `npm run ios` | Build and run the iOS app |
+| `npm run prebuild` | Regenerate native projects with `expo prebuild --clean`; preserve any manual native changes first |
+| `npm run lint` | Run Expo's lint command |
+| `npm run typecheck` | Run TypeScript without emitting files |
 
 ***
 
 ### Technology Stack
 
-#### Core Technologies
+* **Expo**: SDK 55
+* **React Native**: 0.83.6
+* **React**: 19.2.0
+* **Wallet runtime**: React Native Core with BareKit worklets
+* **UI**: Local components in `src/components` and theme definitions in `src/theme`
+* **Cloud backup**: `@tetherto/wdk-backup-cloud@1.0.0-beta.1`
+* **Indexer client**: `@tetherto/wdk-indexer-http@1.0.1`
 
-* **Expo**: \~54.0.8 with development client
-* **React Native**: 0.81.4
-* **React**: 19.1.0
-* **TypeScript**: \~5.9.2
-* **Reanimated**: \~4.1.0
-* **New Architecture**: Enabled
-
-#### Build Configuration
-
-* **Android**: minSdkVersion 29
-* **iOS**: Latest Xcode toolchain
-* **Build Properties**: Configured via `expo-build-properties`
+The versions above describe this starter's dependencies. Follow its [package manifest](https://github.com/tetherto/wdk-starter-react-native/blob/main/package.json) when upgrading.
 
 ***
 
 ### Next Steps
 
-**Customizing the UI**
+**Customize the UI**
 
-This starter uses components from the [WDK React Native UI Kit](/ui-kits/react-native-ui-kit/). To customize the look and feel:
+Edit the starter's [`src/components`](https://github.com/tetherto/wdk-starter-react-native/tree/main/src/components) and [`src/theme`](https://github.com/tetherto/wdk-starter-react-native/tree/main/src/theme). The local `ThemeProvider` supplies palettes and design tokens; it does not use the WDK React Native UI Kit.
 
-* [**Theming Guide**](/ui-kits/react-native-ui-kit/theming) - Deep dive into theming capabilities
-* [**Component Reference**](/ui-kits/react-native-ui-kit/api-reference) - Complete component documentation
+**Add functionality**
 
-**Add new functionality**
-
-This starter provides a solid foundation that you can extend with additional functionality:
-
-* **Add support for other tokens** using wallet modules in the [WDK SDK](/sdk/get-started)
-* **Add DeFi protocols** like swaps, bridges, and lending using [protocol modules](/sdk/get-started)
-
-**Or explore documentation**
-
-* [**WDK SDK Documentation**](/sdk/get-started) - Learn about the underlying SDK
-* [**UI Kit Documentation**](/ui-kits/react-native-ui-kit/get-started) - Customize the interface
-* [**WDK Indexer**](/tools/indexer-api/) - Understand data fetching
-* [**Secret Manager**](/tools/secret-manager/) - Learn about secure key management
+* [**React Native Core**](/tools/react-native-core/) - Work with wallet hooks and providers
+* [**WDK SDK**](/sdk/get-started) - Add wallet and protocol modules
+* [**Cloud Backup**](/tools/backup-cloud/) - Configure encrypted cloud storage
+* [**WDK Indexer**](/tools/indexer-api/) - Understand the data API
 
 ***
 
@@ -54038,25 +54034,16 @@ Velora beta.8 and beta.9, USD₮0 bridge beta.10, and Aave beta.7 cannot be init
 
 ## React Native Quickstart
 URL: https://docs.wdk.tether.io/start-building/react-native-quickstart
-Description: Get started with WDK in React Native in under 3 minutes
+Description: Run the React Native wallet starter or integrate WDK into an existing app
 
 ## What You'll Build
 
-In this quickstart, you'll integrate WDK into a React Native app to create a multi-chain wallet that:
+Use the starter to create or import a wallet, view balances and transfers, and explore optional cloud backup. Or integrate React Native Core into an existing app using the second path below.
 
-- [ ] Supports multiple blockchains (Bitcoin, Ethereum, Polygon, Arbitrum, TON, Tron)
-- [ ] Manages multiple tokens (BTC, USD₮, XAU₮, and more)
-- [ ] Provides secure seed generation and encrypted storage
-- [ ] Shows real-time balances and transaction history
-- [ ] Includes wallet creation, import, and unlock flows
+The starter's configured networks and assets are listed on its [overview](/examples-and-starters/react-native-starter#features). Network support in your own app depends on the wallet modules and providers you configure.
 
-<Callout type="info">
-You can try all features without real funds required. You can use the Pimlico or Candide faucets to get some Sepolia USD₮.
-
-- [Get mock/test USD₮ on Pimlico](https://dashboard.pimlico.io/test-erc20-faucet)
-- [Get mock/test USD₮ on Candide](https://dashboard.candide.dev/faucet)
-
-See the [ERC-4337 configuration](/sdk/wallet-modules/wallet-evm-erc-4337/configuration) for quick setup and Sepolia testnet configuration.
+<Callout type="warn">
+The starter is not configured entirely for testnets. Ethereum uses Sepolia, while Arbitrum and Polygon use mainnet. Before funding or sending, review `.env` and `src/wdk/networks.ts`. For Bitcoin, align `btcNetwork` with the Blockbook endpoint; setting a testnet endpoint alone does not change address derivation.
 </Callout>
 
 ## Prerequisites
@@ -54066,8 +54053,8 @@ Before we start, make sure you have:
 | Tool             | Version | Why You Need It             |
 | ---------------- | ------- | --------------------------- |
 | **Node.js**      | 22+     | To run JavaScript code      |
-| **npm**          | Latest  | To install packages         |
-| **React Native** | 0.81.0+ | Framework version           |
+| **npm**          | 11.10.1+ (starter) | To install starter dependencies |
+| **React Native** | 0.83.6 (starter) | Match your Expo SDK in existing apps |
 | **Android SDK**  | API 29+ | Android minimum SDK version |
 | **iOS**          | 15.1+   | iOS deployment target       |
 
@@ -54075,11 +54062,11 @@ Before we start, make sure you have:
 
 ## Quickstart Paths
 
-You have 2 options for using WDK in a React Native. Choose your preferred starting point:
+Choose a starting point:
 
-<Tabs items={["Use Starter Template (Fastest)", "Add to Existing App"]}>
-<Tab value="Use Starter Template (Fastest)">
-Get up and running in 3 minutes with our pre-configured starter template.
+<Tabs items={["Use Starter Template", "Add to Existing App"]}>
+<Tab value="Use Starter Template">
+Run the starter with its existing wallet configuration and app screens.
 
 [**→ Jump to Starter Template Setup**](#option-1-starter-template)
 </Tab>
@@ -54094,7 +54081,7 @@ Integrate WDK into your existing React Native or Expo app.
 
 ## Option 1: Starter Template
 
-The fastest way to get started is with our starter template. Note: this is still in alpha, and may be subject to breaking changes.
+The starter is an alpha app and may introduce breaking changes. It currently uses Expo SDK 55 and React Native 0.83.6. Use Node.js 22+ and npm 11.10.1+; Android builds also require JDK 17. Check its [environment guide](https://github.com/tetherto/wdk-starter-react-native/blob/main/docs/ENVIRONMENT.md) for native-toolchain setup.
 
 ### Step 1: Clone the Starter
 
@@ -54109,29 +54096,39 @@ cd wdk-starter-react-native
 npm install
 ```
 
+The starter installs Cloud Backup `1.0.0-beta.1` and Indexer `1.0.1` from npm. Its `postinstall` script generates the WDK worklet bundle; keep the repository's dependency pins when following this path.
+
 ### Step 3: Configure Environment
 
-Create an environment file for the WDK Indexer API:
+Copy the environment template for the network providers and optional integrations:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and add your WDK Indexer API key:
+To load the Activity tab, add a production WDK Indexer API key:
 
 ```bash
-EXPO_PUBLIC_WDK_INDEXER_BASE_URL=https://wdk-api.tether.io
 EXPO_PUBLIC_WDK_INDEXER_API_KEY=your_actual_api_key_here
-# Optional: For Tron network support
-EXPO_PUBLIC_TRON_API_KEY=your_tron_api_key
-EXPO_PUBLIC_TRON_API_SECRET=your_tron_api_secret
 ```
 
+The starter explicitly selects `https://wdk-api.tether.io` in `src/wdk/indexer.ts`; it does not read `EXPO_PUBLIC_WDK_INDEXER_BASE_URL`. Indexer `1.0.1` defaults to staging (`https://wdk-api.tether.su`), so retain the explicit production `baseUrl` if you modify the client setup.
+
 <Callout type="info">
-**Where do I get an Indexer API key?** The WDK Indexer is required for transaction history and balance indexing. Get your free API key from the [Indexer API setup guide](/tools/indexer-api/get-started).
+Get your API key from the [Indexer setup guide](/tools/indexer-api/get-started). The Indexer supplies transfer history. Balances and transfers use the network providers configured in [`.env.example`](https://github.com/tetherto/wdk-starter-react-native/blob/main/.env.example), including EVM bundler and paymaster settings. TON and Tron are not wired into this starter.
 </Callout>
 
+Cloud backup is optional and needs separate Google/CloudKit configuration. Follow the starter's [cloud backup setup](https://github.com/tetherto/wdk-starter-react-native/blob/main/docs/CLOUD_BACKUP.md) before testing it. The [starter overview](/examples-and-starters/react-native-starter#features) explains its storage and backup roles.
+
 ### Step 4: Run Your App
+
+Generate native project files on the first run:
+
+```bash
+npx expo prebuild
+```
+
+Then build and launch the app:
 
 <Tabs items={["iOS Simulator", "Android Emulator"]}>
 <Tab value="iOS Simulator">
@@ -54146,7 +54143,7 @@ npm run android
 </Tab>
 </Tabs>
 
-**Congratulations!** You now have a multi-chain wallet running.
+After the native build completes, create or import a wallet. Balances and Activity require the integrations configured in Step 3.
 
 [**→ Skip to What's Next**](#whats-next)
 
@@ -54603,7 +54600,7 @@ Ready to dive deeper? Check out these resources:
 ### Examples & Starters
 
 - [**React Native Starter**](/examples-and-starters/react-native-starter) - Full-featured starter app
-- [**React Native UI Kit**](/ui-kits/react-native-ui-kit/) - Pre-built wallet components
+- [**Customize the starter UI**](/examples-and-starters/react-native-starter#next-steps) - Edit its app-owned components and theme
 
 ### **Need Help?**
 
@@ -60311,277 +60308,6 @@ Call `cleanup()` when the storage instance is no longer needed. Use `deleteWalle
 
 ***
 
-## Secret Manager
-URL: https://docs.wdk.tether.io/tools/secret-manager
-Description: Toolkit for secure handling of seed phrases and encrypted payloads
-
-The Secret Manager is a secure, in‑memory system for generating, encrypting, decrypting, and managing wallet seed phrases (mnemonics) and sessions. It is designed for wallet applications where user secrets must be protected and never stored in plaintext. Generates, encrypts, decrypts, and converts BIP39 mnemonics using strong, modern cryptography.
-
-Powered by [`@tetherto/wdk-secret-manager`](https://github.com/tetherto/wdk-secret-manager).
-
-## Features
-
-- **Seed & Entropy Protection**: Generate and encrypt BIP39 seed (64‑byte) and entropy (16‑byte)
-- **Strong Key Derivation**: PBKDF2‑SHA256 with configurable iterations (default 100,000)
-- **Authenticated Encryption**: libsodium secretbox (XSalsa20‑Poly1305) with versioned, self‑describing headers
-- **Mnemonic Utilities**: 16‑byte entropy ↔ 12‑word BIP39 mnemonic helpers
-- **Secure Randoms**: Cryptographically secure salt and entropy generators
-- **Master‑Key Mode**: Optional 32‑byte key to skip PBKDF2 when you already have a derived key
-- **Memory Safety**: In‑memory operation, explicit zeroization, and `dispose()` to wipe secrets
-- **Cross‑Runtime**: Works in Node and Bare environments
-
-## Why this matters
-
-- Seed phrases grant full control over funds and must never be exposed
-- Best practice: never persist plaintext; always encrypt with a user passkey
-- Memory‑only handling and prompt zeroization reduce attack surface
-
-<Cards>
-<Card title="Secret Manager Configuration" href="/tools/secret-manager/configuration">
-Get started with WDK Secret Manager
-</Card>
-<Card title="Secret Manager API Reference" href="/tools/secret-manager/api-reference">
-Check the API Reference and examples
-</Card>
-</Cards>
-
-***
-
-## Need Help?
-
-<SupportCards />
-
-***
-
-## API Reference
-URL: https://docs.wdk.tether.io/tools/secret-manager/api-reference
-Description: API for @tetherto/wdk-secret-manager
-
-## Package: `@tetherto/wdk-secret-manager`
-
-### Class: `WdkSecretManager`
-
-#### Constructor
-
-```javascript title="Create Secret Manager"
-new WdkSecretManager(passKey, salt, kdfParams?)
-// passKey: string | Buffer | Uint8Array  (min 12 chars/bytes)
-// salt:    Buffer (16 bytes)
-// kdfParams?: { iterations?: number }  // default: 100_000
-```
-
-- `passKey`: User password/device secret (string or binary). Must be at least 12 characters/bytes.
-- `salt`: 16‑byte random Buffer. Store alongside encrypted payloads; salt is not secret but must be unique per user/session.
-- `kdfParams.iterations`: PBKDF2 iterations (defaults to 100,000).
-
-#### Static Methods
-
-- `generateSalt()` → `Buffer`
-  - Returns a cryptographically secure, random 16‑byte salt Buffer.
-
-```javascript title="Generate Salt"
-import WdkSecretManager from '@tetherto/wdk-secret-manager'
-const salt = WdkSecretManager.generateSalt()
-```
-
-#### Methods
-
-- `generateAndEncrypt(entropyOpt?, masterKeyOpt?)` → `{ encryptedSeed: Buffer, encryptedEntropy: Buffer }`
-  - Generates 16‑byte entropy (or uses `entropyOpt`), converts to 12‑word mnemonic, derives 64‑byte BIP39 seed, and encrypts both.
-  - `masterKeyOpt` (optional): 32‑byte key (Buffer) to skip PBKDF2.
-
-- `encrypt(data, masterKeyOpt?)` → `Buffer`
-  - Encrypts arbitrary data with authenticated encryption and a self‑describing header.
-  - Constraints: `data` must be a Buffer of length 16–64 bytes.
-  - `masterKeyOpt` (optional): 32‑byte key to skip PBKDF2.
-
-- `decrypt(payload, masterKeyOpt?)` → `Buffer`
-  - Decrypts a payload produced by `encrypt`. Validates header and MAC.
-
-- `generateRandomBuffer()` → `Buffer`
-  - Returns a 16‑byte cryptographically secure random buffer.
-
-- `entropyToMnemonic(entropy)` → `string`
-  - Converts 16‑byte entropy to a 12‑word BIP39 mnemonic.
-
-- `mnemonicToEntropy(mnemonic)` → `Buffer`
-  - Converts a 12‑word mnemonic back to its 16‑byte entropy buffer.
-
-- `dispose()` → `void`
-  - Securely wipes internal state (passkey, salt, iterations). The instance should not be used afterwards.
-
-#### Header & Payload (for `encrypt`)
-
-- Header layout: `[version(1), kdf_alg(1), iterations(u32le), reserved(u32le=0), salt(16), nonce(24)]`
-- Ciphertext: `secretbox([len(1) | data(16..64)], nonce, key)`
-
-#### Examples
-
-```javascript title="Generate, Encrypt, Decrypt"
-import WdkSecretManager from '@tetherto/wdk-secret-manager'
-
-const passkey = 'correct horse battery staple'
-const salt = WdkSecretManager.generateSalt()
-const sm = new WdkSecretManager(passkey, salt, { iterations: 100_000 })
-
-// Generate and encrypt new seed + entropy
-const { encryptedSeed, encryptedEntropy } = await sm.generateAndEncrypt()
-
-// Decrypt entropy and recover mnemonic
-const entropy = sm.decrypt(encryptedEntropy)
-const mnemonic = sm.entropyToMnemonic(entropy)
-
-// Wipe sensitive memory and internal state when done
-sm.dispose()
-```
-
-```javascript title="Encrypt/Decrypt Arbitrary Data (16–64 bytes)"
-const data = sm.generateRandomBuffer()                // 16 bytes
-const payload = sm.encrypt(data)                      // Buffer with header + ciphertext
-const out = sm.decrypt(payload)                       // Buffer(16)
-```
-
-```javascript title="Use Pre‑Derived 32‑byte Master Key (skip PBKDF2)"
-import { pbkdf2Sync } from 'crypto'
-import b4a from 'b4a'
-
-const masterKey = b4a.from(pbkdf2Sync(b4a.from(passkey), b4a.from(salt), 100_000, 32, 'sha256'))
-
-const cipher = sm.encrypt(Buffer.from('0123456789abcdef0123456789abcdef'), masterKey)
-const plain  = sm.decrypt(cipher, masterKey)
-```
-
-## Security Notes
-
-- Use strong, unique passkeys; never store them in plaintext
-- Salts must be unique per user/session; store them with encrypted payloads
-- No plaintext persistence; all operations are done in memory
-- Call `dispose()` to zeroize internal secrets when done
-
-***
-
-## Need Help?
-
-<SupportCards />
-
-***
-
-## Configuration
-URL: https://docs.wdk.tether.io/tools/secret-manager/configuration
-Description: Configure passkey, salt, KDF iterations and runtime options for @tetherto/wdk-secret-manager
-
-This page shows how to configure the Secret Manager instance, what parameters matter for security, and how to use environment/runtime options.
-
-## Constructor
-
-```javascript title="Create Secret Manager"
-import WdkSecretManager from '@tetherto/wdk-secret-manager'
-
-const passkey = 'correct horse battery staple'   // ≥ 12 chars (or Buffer/Uint8Array ≥ 12 bytes)
-const salt    = WdkSecretManager.generateSalt()  // 16‑byte Buffer
-
-// Optional: PBKDF2 iterations (default 100,000)
-const sm = new WdkSecretManager(passkey, salt, { iterations: 100_000 })
-```
-
-### Parameters
-
-- `passkey` (`string | Buffer | Uint8Array`): User secret used to derive the encryption key. Must be at least 12 characters/bytes. Prefer a strong, user‑specific passkey from secure storage (e.g., Keychain/Keystore).
-- `salt` (`Buffer`): 16‑byte random Buffer. The salt is not secret but must be unique per user/session. Store the salt alongside the encrypted payload.
-- `kdfParams.iterations` (`number`, optional): PBKDF2 iterations (default `100_000`). Increase for stronger resistance (with performance trade‑off).
-
-## Static Utilities
-
-### `generateSalt()`
-
-```javascript title="Generate Salt"
-const salt = WdkSecretManager.generateSalt() // Buffer(16)
-```
-
-## Recommended Settings
-
-- Use at least `100_000` PBKDF2 iterations in mobile/desktop; consider higher values on powerful backends.
-- Enforce passkeys ≥ 12 characters with mixed entropy (or binary secrets of similar strength).
-- Generate a fresh 16‑byte salt per user/session; never reuse salts with the same passkey.
-- Store salt with the encrypted payload; never store plaintext passkeys or mnemonics.
-
-## Runtime Notes
-
-- Node.js: Uses `sodium-native` and Node `crypto` (PBKDF2).
-- Bare runtime: A bare build is provided; PBKDF2 is handled by the bare crypto shim.
-
-## Examples
-
-### Generate and Encrypt Seed + Entropy
-
-```javascript title="Generate & Encrypt"
-const { encryptedEntropy, encryptedSeed } = await sm.generateAndEncrypt()
-
-// Decrypt later
-const entropy = sm.decrypt(encryptedEntropy) // Buffer(16)
-const seed    = sm.decrypt(encryptedSeed)    // Buffer(64)
-```
-
-### Encrypt/Decrypt Arbitrary Data (16–64 bytes)
-
-```javascript title="Encrypt/Decrypt Data"
-// Data length must be between 16 and 64 bytes
-import { randomBytes } from 'crypto'
-const data    = randomBytes(32)              // Buffer(32)
-const payload = sm.encrypt(data)             // Buffer(header + ciphertext)
-const out     = sm.decrypt(payload)          // Buffer(32)
-```
-
-### Skip PBKDF2 with a Master Key
-
-If you already have a 32‑byte key (e.g., derived via a KMS), you can skip PBKDF2:
-
-```javascript title="Master Key Mode"
-import { pbkdf2Sync } from 'crypto'
-import b4a from 'b4a'
-
-const masterKey = b4a.from(pbkdf2Sync(b4a.from(passkey), b4a.from(salt), 100_000, 32, 'sha256'))
-
-const cipher = sm.encrypt(Buffer.from('0123456789abcdef0123456789abcdef'), masterKey)
-const plain  = sm.decrypt(cipher, masterKey)
-```
-
-### Mnemonic Helpers
-
-```javascript title="Entropy ↔ Mnemonic"
-const entropy16 = sm.generateRandomBuffer()         // Buffer(16)
-const mnemonic  = sm.entropyToMnemonic(entropy16)   // 12 words
-const entropy2  = sm.mnemonicToEntropy(mnemonic)    // Buffer(16)
-```
-
-### Memory Management
-
-```javascript title="Dispose"
-// Wipes internal passkey/salt/iteration state from memory
-sm.dispose()
-```
-
-## Constraints & Validation
-
-- `encrypt(data)` requires `data` to be a Buffer of length 16–64 bytes.
-- `mnemonicToEntropy` expects a 12‑word BIP39 mnemonic; throws on invalid input.
-- Constructor validates passkey length/type and salt length (16 bytes).
-
-## Security Checklist
-
-- Use strong, unique passkeys per user; never persist them in plaintext
-- Generate a fresh 16‑byte salt per user/session
-- Tune PBKDF2 iterations appropriate to your platform
-- Encrypt before storing/sending secrets; keep operations in memory and call `dispose()` when done
-
-***
-
-## Need Help?
-
-<SupportCards />
-
-***
-
 ## WDK Utils
 URL: https://docs.wdk.tether.io/tools/wdk-utils
 Description: Chain-aware address validation, mnemonic sharing, seed encryption, deterministic key derivation, and payment-request helpers for @tetherto/wdk-utils
@@ -60590,6 +60316,10 @@ WDK Utils provides CAIP-2-aware and chain-specific validation helpers for Bitcoi
 
 <Callout type="info">
 These pages reflect `@tetherto/wdk-utils@1.0.0-beta.13`. BOLT11 decoding and encoding preserve metadata and unknown tags; see the [BOLT11 reference](/tools/wdk-utils/api-reference#decodeinvoice).
+</Callout>
+
+<Callout type="info">
+`@tetherto/wdk-secret-manager` is deprecated and its repository is archived. For new integrations, use the [seed encryption helpers](/tools/wdk-utils/api-reference#seed-encryption-helpers). These helpers in `@tetherto/wdk-utils@1.0.0-beta.13` cannot directly decrypt payloads from `@tetherto/wdk-secret-manager@1.0.0-beta.3`; their APIs and encrypted payload formats differ.
 </Callout>
 
 ## Features
