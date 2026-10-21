@@ -22,9 +22,19 @@ console.log('Lightning invoice:', invoice.invoice)
 
 ## Pay a Lightning Invoice
 
-1. Obtain a BOLT11 `encodedInvoice` string.
+1. Obtain a BOLT11 string from your intended recipient as `recipientInvoice`.
 2. Set `maxFeeSats` to cap routing fees.
 3. Call [`account.payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference).
+
+Use the BOLT11 string supplied by your intended recipient as `recipientInvoice`, separate from the receive-request object returned by `createLightningInvoice()`. Review its amount and the fee cap before calling [`account.payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference):
+
+```javascript title="Pay Lightning Invoice"
+const payment = await account.payLightningInvoice({
+  invoice: recipientInvoice,
+  maxFeeSats: 1000
+})
+console.log('Payment result:', payment)
+```
 
 If you enable [`syncAndRetry`](/sdk/wallet-modules/wallet-spark/configuration#automatic-retry), the wallet syncs state after a payment failure and retries [`account.payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference#paylightninginvoiceoptions) once only for a stale-leaf error. Both attempts reuse the same `transferId`. The wallet generates an ID when you omit it.
 
@@ -37,8 +47,8 @@ const wallet = new WalletManagerSpark(seedPhrase, {
 })
 
 const account = await wallet.getAccount(0)
-const payment = await account.payLightningInvoice({
-  invoice: 'lnbc500u1p...',
+await account.payLightningInvoice({
+  invoice: recipientInvoice,
   maxFeeSats: 1000,
 })
 ```
@@ -51,7 +61,7 @@ You can estimate the routing fee before paying using [`account.quotePayLightning
 
 ```javascript title="Quote Lightning Payment Fee"
 const feeEstimate = await account.quotePayLightningInvoice({
-  encodedInvoice: 'lnbc500u1p...'
+  encodedInvoice: recipientInvoice
 })
 console.log('Fee estimate:', Number(feeEstimate), 'satoshis')
 ```
