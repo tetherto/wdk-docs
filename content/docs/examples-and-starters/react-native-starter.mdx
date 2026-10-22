@@ -5,27 +5,29 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-The React Native Starter Alpha is an Expo + React Native app showing how to build a multi-chain wallet using WDK via BareKit worklets and secure secret management. This starter includes wallet creation/import flows, balances, transactions, and a modular service layer.
+The React Native Starter Alpha is an Expo + React Native app with wallet creation/import, balances, transfers, and optional cloud backup. It runs WDK through React Native Core and BareKit worklets, with app-owned components and theming.
 
 <Embed url="/assets/starter-react-native-demo.mp4" />
 
 ***
 
 <Callout type="warn">
-**Prerequisites:** Node.js 22+, and either Xcode (iOS) or Android SDK API 29+ (Android). See the [React Native Quickstart](/start-building/react-native-quickstart#prerequisites) for details.
+**Prerequisites:** Node.js 22+, npm 11.10.1+, and either Xcode (iOS) or Android SDK API 29+ with JDK 17 (Android). The starter uses Expo SDK 55 and React Native 0.83.6. Check the repository's [environment guide](https://github.com/tetherto/wdk-starter-react-native/blob/main/docs/ENVIRONMENT.md) before installing.
 </Callout>
 
 ### Quickstart
-
-Get your React Native wallet running in minutes with these simple steps:
 
 <Steps>
 <Step>
 #### Clone and Install
 
 ```bash
-git clone https://github.com/tetherto/wdk-starter-react-native.git && cd wdk-starter-react-native && npm install
+git clone https://github.com/tetherto/wdk-starter-react-native.git
+cd wdk-starter-react-native
+npm install
 ```
+
+The install's `postinstall` script generates the WDK worklet bundle.
 </Step>
 
 <Step>
@@ -35,16 +37,15 @@ git clone https://github.com/tetherto/wdk-starter-react-native.git && cd wdk-sta
 cp .env.example .env
 ```
 
-Get your free WDK Indexer API key [here](/tools/indexer-api/get-started) and add it to your `.env` file:
+To load the Activity tab, obtain a production WDK Indexer API key from the [Indexer setup guide](/tools/indexer-api/get-started) and set:
 
 ```bash
-EXPO_PUBLIC_WDK_INDEXER_BASE_URL=https://wdk-api.tether.io
 EXPO_PUBLIC_WDK_INDEXER_API_KEY=your_actual_api_key_here
-# Optional: For Tron network support
-EXPO_PUBLIC_TRON_API_KEY=your_tron_api_key
-EXPO_PUBLIC_TRON_API_SECRET=your_tron_api_secret
 ```
 
+The starter selects `https://wdk-api.tether.io` in `src/wdk/indexer.ts`. It does not read an `EXPO_PUBLIC_WDK_INDEXER_BASE_URL` variable. Balance reads and transfers use the network providers configured in `.env`; review the RPC, bundler, and paymaster settings in [`.env.example`](https://github.com/tetherto/wdk-starter-react-native/blob/main/.env.example).
+
+Cloud backup has separate Google/CloudKit credentials and can be skipped during initial setup. Follow the starter's [cloud backup setup](https://github.com/tetherto/wdk-starter-react-native/blob/main/docs/CLOUD_BACKUP.md) before enabling it.
 </Step>
 
 <Step>
@@ -65,124 +66,119 @@ npm run android # Android Emulator
 </Step>
 </Steps>
 
+<Callout type="warn">
+The starter mixes testnet and mainnet configuration: Ethereum is configured for Sepolia, while Arbitrum and Polygon use mainnet. Before funding or sending, verify the selected network, token, and provider in `.env` and `src/wdk/networks.ts`. For Bitcoin, align the wallet's `btcNetwork` with its Blockbook endpoint; the example testnet endpoint does not change the current `btcNetwork: 'bitcoin'` address derivation.
+</Callout>
+
 ***
 
 <Callout type="info">
-**Need detailed instructions?** Check out the complete [React Native Quickstart](/start-building/react-native-quickstart) guide for step-by-step setup, configuration, and troubleshooting.
+**Need detailed instructions?** Follow the [React Native Quickstart](/start-building/react-native-quickstart#option-1-starter-template) for the starter setup, or its separate path for integrating WDK into an existing app.
 </Callout>
 
 ### Features
 
-**Multi-Token & Chain Support**
-* **BTC**: Native SegWit transfers on Bitcoin network
-* **USD₮ / USD₮0**: Gasless transactions on EVM (USD₮ on Ethereum; USD₮0 on Polygon and Arbitrum), native USD₮ transfers on TON and Tron
-* **XAU₮**: Gasless transactions on Ethereum network
+**Networks and assets**
 
-**Wallet Management**
+The current app configures Bitcoin and EVM networks, including Sepolia, Arbitrum, and Polygon. Assets include BTC and Tether-family tokens. Check [`src/wdk/networks.ts`](https://github.com/tetherto/wdk-starter-react-native/blob/main/src/wdk/networks.ts) for the current assets and network mappings. TON and Tron are not wired into this starter.
 
-* **Secure Seed Generation**: Cryptographically secure entropy generation
-* **Seed Import**: Import existing 12-word mnemonic phrases
-* **Encrypted Storage**: Secure key storage via [`@tetherto/wdk-secret-manager`](https://github.com/tetherto/wdk-secret-manager)
-* **Multi-Account Support**: Derive multiple accounts from single seed
+**Wallet management**
 
-**Asset Management**
+* **Seed generation and import**: Create or import 12- or 24-word mnemonic phrases through React Native Core.
+* **Seed persistence**: Handled by React Native Core's secure-storage layer.
+* **App password vault**: Uses `wdk-utils` encryption and Expo SecureStore; this is separate from seed persistence.
+* **Multi-account support**: Derive and switch accounts from a wallet's seed.
+* **Optional cloud backup**: Upload encrypted wallet material through `@tetherto/wdk-backup-cloud@1.0.0-beta.1` from npm, using Google Drive or CloudKit. The starter's restore screen is not implemented yet; review its [cloud backup guide](https://github.com/tetherto/wdk-starter-react-native/blob/main/docs/CLOUD_BACKUP.md) and the [Cloud Backup SDK usage](/tools/backup-cloud/usage) before relying on a recovery flow.
 
-* **Real-Time Balances**: Live balance updates via [WDK Indexer](/tools/indexer-api/)
-* **Transaction History**: Complete transaction tracking and history via [WDK Indexer](/tools/indexer-api/)
-* **Price Conversion**: Real-time fiat pricing via [Pricing Provider](/tools/price-rates/)
+**Asset management**
 
-**User Experience**
+* **Balances**: Read through React Native Core wallet hooks and the configured network providers.
+* **Transaction history**: Fetch recent transfers for configured assets through [WDK Indexer](/tools/indexer-api/); an API key is required.
+* **Price conversion**: Fetch fiat prices through the pricing provider.
 
-* **QR Code Scanner**: Scan addresses and payment requests via camera
-* **Send/Receive Flows**: Intuitive transfer interfaces
-* **Network Selection**: Choose optimal network for each transaction
-* **Token Selection**: Multi-token transfer support
-* **Activity Feed**: Real-time transaction monitoring
+**User experience**
+
+* **Receive QR codes**: Display the selected account's address as a QR code.
+* **Send/receive flows**: Select an asset and account for transfers.
+* **Network and token selection**: Choose from the app's configured registry.
+* **Activity feed**: View the transfer history returned by the Indexer.
+
+### Indexer Client
+
+The starter installs `@tetherto/wdk-indexer-http@1.0.1` from npm. This client requires Node.js 22+. The starter sets `baseUrl` to `https://wdk-api.tether.io` explicitly, the deployment its API key is registered with:
+
+```typescript
+import { WdkIndexerClient } from '@tetherto/wdk-indexer-http'
+
+const apiKey = process.env.EXPO_PUBLIC_WDK_INDEXER_API_KEY
+if (!apiKey) throw new Error('Set EXPO_PUBLIC_WDK_INDEXER_API_KEY')
+
+const client = new WdkIndexerClient({
+  apiKey,
+  baseUrl: 'https://wdk-api.tether.io'
+})
+```
+
+Its batch transfer handling uses `isApiError()` to skip failed items before reading `transfers`. The earlier `isTokenTransfersResponse()` helper is no longer exported by the 1.0.1 client. See [`src/wdk/indexer.ts`](https://github.com/tetherto/wdk-starter-react-native/blob/main/src/wdk/indexer.ts) for the integration.
 
 ***
 
 ### Project Structure
 
-The starter includes a modular architecture designed for scalability and maintainability:
-
 ```text title="Project Structure"
 src/
-├── app/                    # Expo Router screens (file-based routing)
-│   ├── onboarding/         # First-time user flows
-│   ├── wallet-setup/       # Create/import wallet screens
-│   ├── send/ & receive/    # Transaction flows
-│   ├── settings.tsx        # Configuration & preferences
-│   └── token-details.tsx   # Individual asset views
-├── components/             # Reusable UI components
-├── config/                 # Network, asset, and chain settings
-├── services/               # Business logic (pricing integration)
-├── hooks/                  # Custom React hooks
-└── utils/                  # Formatting & helper functions
+├── app/                    # Expo Router screens
+├── components/             # App-owned UI components
+├── data/                   # Data adapters
+├── domain/                 # App models and interfaces
+├── state/                  # Account and session state
+├── theme/                  # Palettes, tokens, ThemeProvider
+└── wdk/                    # Networks, wallet hooks, Indexer, cloud backup
 ```
 
-Detailed project structure can be found in the [Github Repository](https://github.com/tetherto/wdk-starter-react-native/tree/main?tab=readme-ov-file#-project-structure).
+See the repository's [architecture guide](https://github.com/tetherto/wdk-starter-react-native/blob/main/docs/ARCHITECTURE.md) for the wallet and worklet integration.
 
 ***
 
 ### Available Scripts
 
-| Script                   | Description                                   |
-| ------------------------ | --------------------------------------------- |
-| `npm start`              | Start Expo development server with dev client |
-| `npm run android`        | Run on Android emulator/device                |
-| `npm run ios`            | Run on iOS simulator                          |
-| `npm run web`            | Start web development server                  |
-| `npm run prebuild`       | Generate native project files                 |
-| `npm run prebuild:clean` | Clean and regenerate native project files     |
-| `npm run lint`           | Run ESLint                                    |
-| `npm run lint:fix`       | Fix ESLint errors                             |
-| `npm run format`         | Format code with Prettier                     |
-| `npm run format:check`   | Check code formatting                         |
-| `npm run typecheck`      | Run TypeScript type checking                  |
+| Script | Description |
+| --- | --- |
+| `npm start` | Start the Expo development server |
+| `npm run android` | Build and run the Android app |
+| `npm run ios` | Build and run the iOS app |
+| `npm run prebuild` | Regenerate native projects with `expo prebuild --clean`; preserve any manual native changes first |
+| `npm run lint` | Run Expo's lint command |
+| `npm run typecheck` | Run TypeScript without emitting files |
 
 ***
 
 ### Technology Stack
 
-#### Core Technologies
+* **Expo**: SDK 55
+* **React Native**: 0.83.6
+* **React**: 19.2.0
+* **Wallet runtime**: React Native Core with BareKit worklets
+* **UI**: Local components in `src/components` and theme definitions in `src/theme`
+* **Cloud backup**: `@tetherto/wdk-backup-cloud@1.0.0-beta.1`
+* **Indexer client**: `@tetherto/wdk-indexer-http@1.0.1`
 
-* **Expo**: \~54.0.8 with development client
-* **React Native**: 0.81.4
-* **React**: 19.1.0
-* **TypeScript**: \~5.9.2
-* **Reanimated**: \~4.1.0
-* **New Architecture**: Enabled
-
-#### Build Configuration
-
-* **Android**: minSdkVersion 29
-* **iOS**: Latest Xcode toolchain
-* **Build Properties**: Configured via `expo-build-properties`
+The versions above describe this starter's dependencies. Follow its [package manifest](https://github.com/tetherto/wdk-starter-react-native/blob/main/package.json) when upgrading.
 
 ***
 
 ### Next Steps
 
-**Customizing the UI**
+**Customize the UI**
 
-This starter uses components from the [WDK React Native UI Kit](/ui-kits/react-native-ui-kit/). To customize the look and feel:
+Edit the starter's [`src/components`](https://github.com/tetherto/wdk-starter-react-native/tree/main/src/components) and [`src/theme`](https://github.com/tetherto/wdk-starter-react-native/tree/main/src/theme). The local `ThemeProvider` supplies palettes and design tokens; it does not use the WDK React Native UI Kit.
 
-* [**Theming Guide**](/ui-kits/react-native-ui-kit/theming) - Deep dive into theming capabilities
-* [**Component Reference**](/ui-kits/react-native-ui-kit/api-reference) - Complete component documentation
+**Add functionality**
 
-**Add new functionality**
-
-This starter provides a solid foundation that you can extend with additional functionality:
-
-* **Add support for other tokens** using wallet modules in the [WDK SDK](/sdk/get-started)
-* **Add DeFi protocols** like swaps, bridges, and lending using [protocol modules](/sdk/get-started)
-
-**Or explore documentation**
-
-* [**WDK SDK Documentation**](/sdk/get-started) - Learn about the underlying SDK
-* [**UI Kit Documentation**](/ui-kits/react-native-ui-kit/get-started) - Customize the interface
-* [**WDK Indexer**](/tools/indexer-api/) - Understand data fetching
-* [**Secret Manager**](/tools/secret-manager/) - Learn about secure key management
+* [**React Native Core**](/tools/react-native-core/) - Work with wallet hooks and providers
+* [**WDK SDK**](/sdk/get-started) - Add wallet and protocol modules
+* [**Cloud Backup**](/tools/backup-cloud/) - Configure encrypted cloud storage
+* [**WDK Indexer**](/tools/indexer-api/) - Understand the data API
 
 ***
 
