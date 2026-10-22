@@ -449,7 +449,7 @@ function LockButton() {
 }
 ```
 
-When a wallet is active, `lock()` sends a one-way full WDK disposal request and then resets local lifecycle flags. The Bare worklet and IPC connection stay running, and the call does not wait for worklet cleanup acknowledgement. Treat it as an application access boundary, not evidence that every seed or key copy was erased from memory.
+When a wallet is active, `lock()` sends a one-way full WDK disposal request and then resets local lifecycle flags. The Bare worklet and IPC connection stay running, and the call does not wait for worklet cleanup acknowledgement. Your app still controls authentication and access; completing `lock()` does not confirm that every seed or key copy was erased from memory.
 
 ### Refresh Balances
 
@@ -508,7 +508,7 @@ Ensure your component is rendered inside `WdkAppProvider`. The provider must be 
 
 Core does not prompt for biometrics or enforce another authentication policy. Authenticate in your app before wallet operations or key access.
 
-For background locking, revoke your app's authenticated state immediately and call `lock()`. If a guarded wallet operation is in progress, catch the rejection and retry `lock()` after it settles; a rejected call does not confirm that the SDK session is locked. Require authentication again on foreground. See the [wallet lifecycle contract](/tools/react-native-core/api-reference#usewalletmanager).
+Close app access immediately on backgrounding using your app's authentication state, and require authentication before restoring access on foreground. Calling `lock()` is optional lifecycle cleanup. If you also call it while a guarded operation is in progress, catch the rejection and retry after that operation settles. See the [wallet lifecycle contract](/tools/react-native-core/api-reference#usewalletmanager).
 
 **Worklet startup reports an error**
 

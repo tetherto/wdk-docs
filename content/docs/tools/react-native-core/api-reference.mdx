@@ -188,10 +188,10 @@ Only one wallet can be active. Await `lock()` before creating or restoring a dif
 
 `createWallet()`, `restoreWallet()`, `deleteWallet()`, `lock()`, `unlock()`, `switchWallet()`, and `createTemporaryWallet()` share a fail-fast mutex: overlapping calls reject instead of queuing, and a timeout does not cancel the operation. `clearTemporaryWallet()` is unguarded; serialize it with lifecycle calls because clearing an active temporary wallet also resets shared lifecycle state.
 
-Core does not prompt for authentication. Authenticate in your app before lifecycle or key-access calls. When backgrounding, close the authenticated UI immediately. If an in-flight operation makes `lock()` reject, wait for it to settle and retry the lock before treating the SDK session as locked.
+Core does not prompt for authentication. Authenticate in your app before wallet operations or key access. Close app access on backgrounding and authenticate again before restoring it; calling `lock()` is optional. If your app also calls `lock()`, catch any rejection caused by an in-flight guarded operation and retry after that operation settles.
 
 <Callout type="warn">
-Deleting even an inactive wallet resets shared lifecycle state after deleting its credentials. A storage failure can leave partial deletion and skip that reset. Check the target's remaining credentials before retrying; a rejected deletion does not mean the wallet was left intact.
+Deleting a wallet, even an inactive one, removes its credentials and then resets shared lifecycle state. If credential deletion fails partway, the reset and Core's wallet inventory update are skipped, so the wallet can stay listed with some credentials already gone. You can retry deletion for the same wallet identifier.
 </Callout>
 
 Locking an active wallet, successfully deleting a wallet, and clearing an active temporary wallet request full WDK disposal without waiting for worklet cleanup. The worklet and IPC keep running, so completion is not proof that every secret copy was erased. If wallet initialization fails, restart the app before retrying; a rejected initialization does not confirm cleanup.
