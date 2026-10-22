@@ -6,7 +6,7 @@ schemaType: APIReference
 icon: Code
 ---
 
-This reference covers `@tetherto/wdk-wallet-evm@1.0.0-beta.22`.
+This reference covers `@tetherto/wdk-wallet-evm@1.0.0-beta.23`.
 
 ## Table of Contents
 
@@ -28,11 +28,11 @@ new WalletManagerEvm(seedOrSigner, config?)
 ```
 
 **Parameters:**
-- `seedOrSigner` (`string | Uint8Array | ISignerEvm`): BIP-39 mnemonic seed phrase, seed bytes, or a derivable root signer
+- `seedOrSigner` (`string | Uint8Array | ISignerEvm`): BIP-39 mnemonic seed phrase, raw BIP-32 master seed (16–64 bytes), or a derivable root signer
 - `config` (object, optional): Configuration object
   - `provider` (`string | Provider | Eip1193Provider | Array<string | Provider | Eip1193Provider>`, optional): RPC endpoint URL, ethers provider, EIP-1193 provider, or ordered failover list
   - `retries` (number, optional): Additional retry attempts when `provider` is an array
-  - `chainId` (number, optional): Network chain ID. When provided, skips automatic chain ID detection.
+  - `chainId` (number, optional): Nonzero chain ID for module-built URL and EIP-1193 providers. Existing ethers providers keep their own settings; see [chain configuration](/sdk/wallet-modules/wallet-evm/configuration#chain-id).
   - `transferMaxFee` (number | bigint, optional): Maximum fee amount for transfer operations (in wei)
   - `transactionMaxFee` (number | bigint, optional): Execution-gas fee cap for `sendTransaction()` and provider-backed `signTransaction()` (in wei), including sends made by `transfer()` and `approve()`
 
@@ -73,13 +73,13 @@ const signerWallet = new WalletManagerEvm(signer, {
 | `getAccount(signerName)` | Returns the account associated with a registered signer | `Promise<WalletAccountEvm>` | If the named signer is unavailable |
 | `getAccountByPath(path, options?)` | Returns a wallet account at the specified BIP-44 derivation path, optionally from a named signer | `Promise<WalletAccountEvm>` | If the requested signer is unavailable or cannot derive |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` | `ProviderRequiredError` if no provider is set |
-| `dispose()` | Initiates cleanup of wallet accounts | `void` | - |
+| `dispose()` | Initiates cleanup of accounts and default/named signers, including supplied signers in beta.20 | `void` | - |
 
 ### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `seed` | `Uint8Array` | The wallet's seed bytes |
+| `seed` | `Uint8Array \| undefined` (inherited declaration) | Always `undefined` at runtime in beta.20: the manager turns seed input into its default signer before calling the base constructor. Keep seed storage in your application. |
 
 #### `getRandomSeedPhrase(wordCount?)` (static)
 Returns a random BIP-39 seed phrase.
@@ -245,13 +245,13 @@ new WalletAccountEvm(signer, config?)
 ```
 
 **Parameters:**
-- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
+- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or raw BIP-32 master seed (16–64 bytes)
 - `path` (string, optional for the seed overload): Path relative to `m/44'/60'`, defaulting to `0'/0/0`
 - `signer` (`ISignerEvm`): EVM signer; import the interface from `@tetherto/wdk-wallet-evm/signers`
 - `config` (object, optional): Configuration object
   - `provider` (`string | Provider | Eip1193Provider | Array<string | Provider | Eip1193Provider>`, optional): RPC endpoint URL, ethers provider, EIP-1193 provider, or ordered failover list
   - `retries` (number, optional): Additional retry attempts when `provider` is an array
-  - `chainId` (number, optional): Network chain ID. When provided, skips automatic chain ID detection.
+  - `chainId` (number, optional): Nonzero chain ID for module-built URL and EIP-1193 providers. Existing ethers providers keep their own settings; see [chain configuration](/sdk/wallet-modules/wallet-evm/configuration#chain-id).
   - `transferMaxFee` (number | bigint, optional): Maximum fee amount for transfer operations (in wei)
   - `transactionMaxFee` (number | bigint, optional): Execution-gas fee cap for `sendTransaction()` and provider-backed `signTransaction()` (in wei), including sends made by `transfer()` and `approve()`
 - `config.shouldWipeSignerOnDisposal` (boolean, signer overload only): Dispose the supplied signer when the account is disposed. Defaults to `false`; seed-created and `fromPrivateKey()` accounts own their signers.
@@ -828,7 +828,7 @@ new WalletAccountReadOnlyEvm(address, config?)
 - `config` (`Omit<EvmWalletConfig, 'transferMaxFee' | 'transactionMaxFee'>`, optional): Configuration object (same as `EvmWalletConfig` but without send-only fee caps, since read-only accounts cannot send transactions)
   - `provider` (`string | Provider | Eip1193Provider | Array<string | Provider | Eip1193Provider>`, optional): RPC endpoint URL, ethers provider, EIP-1193 provider, or ordered failover list
   - `retries` (number, optional): Additional retry attempts when `provider` is an array
-  - `chainId` (number, optional): Network chain ID. When provided, skips automatic chain ID detection.
+  - `chainId` (number, optional): Nonzero chain ID for module-built URL and EIP-1193 providers. Existing ethers providers keep their own settings; see [chain configuration](/sdk/wallet-modules/wallet-evm/configuration#chain-id).
 
 **Example:**
 ```javascript
@@ -1169,7 +1169,7 @@ interface FeeRates {
 
 ```typescript
 interface KeyPair {
-  privateKey: Uint8Array | null;     // Private key as Uint8Array (32 bytes, null after dispose)
+  privateKey: Uint8Array | null;     // Private key as Uint8Array (32 bytes, null when unavailable)
   publicKey: Uint8Array;             // Public key as Uint8Array (65 bytes)
 }
 ```
@@ -1227,7 +1227,7 @@ interface TypedDataField {
 interface EvmWalletConfig {
   provider?: string | Provider | Eip1193Provider | Array<string | Provider | Eip1193Provider>; // RPC URL, ethers/EIP-1193 provider, or ordered failover list
   retries?: number;                                                  // Additional retry attempts for provider arrays
-  chainId?: number;                                                  // Network chain ID. Skips automatic detection when provided.
+  chainId?: number;                                                  // Nonzero pins module-built URL/EIP-1193 providers.
   transferMaxFee?: number | bigint;                                  // Maximum ERC-20 transfer fee in wei
   transactionMaxFee?: number | bigint;                               // Maximum native send/sign fee in wei
 }

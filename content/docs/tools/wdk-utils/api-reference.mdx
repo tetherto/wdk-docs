@@ -408,7 +408,7 @@ const encrypted = encrypt(seedPhrase, passphrase)
 - `scryptR?: number`
 - `scryptP?: number`
 
-Pass optional scrypt cost parameters as `{ N, r, p }`. Defaults are `N: 65536`, `r: 8`, and `p: 1`.
+Pass optional scrypt cost parameters as `{ N, r, p }`, within the [supported limits](#supported-scrypt-parameters). Defaults are `N: 65536`, `r: 8`, and `p: 1`.
 
 #### `decrypt(payload, password)`
 
@@ -420,11 +420,11 @@ import { decrypt } from '@tetherto/wdk-utils'
 const seedPhrase = decrypt(encrypted, passphrase)
 ```
 
-`decrypt()` throws if the payload version is unsupported, the password is wrong, or the authentication tag does not verify.
+`decrypt()` throws if the payload version or [scrypt parameters](#supported-scrypt-parameters) are unsupported, the password is wrong, or the authentication tag does not verify.
 
 #### `deriveKey(password, salt, scryptParams?)`
 
-Derive a 32-byte AES key from a passphrase and salt. Use this when your app needs to manage the derived key explicitly before calling `decryptWithKey()`.
+Derive a 32-byte AES key from a passphrase and salt, using the [supported scrypt parameters](#supported-scrypt-parameters). Use this when your app needs to manage the derived key explicitly before calling `decryptWithKey()`.
 
 ```javascript title="Derive An Encryption Key"
 import { deriveKey } from '@tetherto/wdk-utils'
@@ -445,6 +445,22 @@ const plaintext = decryptWithKey(encrypted, key)
 #### `DEFAULT_SCRYPT_PARAMS`
 
 The exported default cost parameters are `{ N: 65536, r: 8, p: 1 }`. The encryption helpers use these values for omitted scrypt parameters.
+
+#### Supported scrypt parameters
+
+`encrypt()`, `deriveKey()`, and `decrypt()` accept these scrypt costs. For decryption, the payload fields `scryptN`, `scryptR`, and `scryptP` supply the corresponding values.
+
+| Parameter | Default | Requirement |
+| --- | --- | --- |
+| `N` | `65536` | A power of two greater than `1`, within the memory bound below. |
+| `r` | `8` | An integer from `1` through `32`. |
+| `p` | `1` | An integer from `1` through `4`. |
+
+The combination must satisfy `128 * r * N <= 268435456` bytes (256 MiB), including equality. This bounds that component of scrypt's memory budget, not total process memory: the implementation allows an additional `128 * r * (p + 1)` bytes of scrypt overhead. Unsupported costs throw before key derivation. `decryptWithKey()` uses an existing key and does not derive it or validate scrypt costs.
+
+<Callout type="warn">
+Before upgrading, migrate encrypted backups whose stored costs exceed these limits through your trusted recovery process: decrypt with their original parameters, re-encrypt with supported parameters, and verify recovery before replacing the backup. Do not edit the stored cost fields to make an existing ciphertext pass validation; that changes the derived key.
+</Callout>
 
 ### Seed Key Derivation Helpers
 
@@ -544,9 +560,9 @@ const restored = await combineMnemonic([
 ])
 ```
 
-The helper accepts 2 through 255 case-insensitive hex shares and returns the normalized English BIP-39 mnemonic. Shares must have the same length and unique coordinates. `combineMnemonic()` does not receive or recover the original threshold, so the application must retain and enforce it.
+The helper accepts 2 through 255 case-insensitive hex shares and returns the normalized English BIP-39 mnemonic. Shares must have the same length and unique, nonzero coordinates. A share whose final byte is `00` rejects the entire call, even if the other supplied shares meet the threshold. `combineMnemonic()` does not receive or recover the original threshold, so the application must retain and enforce it.
 
-Both helpers return Promises that reject with `Error` objects. For `combineMnemonic()`, non-array input, fewer than two shares, non-string entries, and malformed hex retain specific messages. Duplicate coordinates, mixed lengths, more than 255 shares, reconstruction failures, and checksum failures collapse to `Invalid shares: could not reconstruct a valid mnemonic`.
+Both helpers return Promises that reject with `Error` objects. For `combineMnemonic()`, non-array input, fewer than two shares, non-string entries, malformed hex, and zero index bytes retain specific messages. Duplicate coordinates, mixed lengths, more than 255 shares, reconstruction failures, and checksum failures collapse to `Invalid shares: could not reconstruct a valid mnemonic`.
 
 <Callout type="warn">
 Each share is sensitive recovery material. Store shares in separate trusted locations and never log or transmit them through analytics. The embedded 32-bit checksum normally detects accidental corruption, but it can collide and does not authenticate shares or protect against maliciously crafted input. Authenticate the exact share bytes against a tamper-evident record before combining them, then verify the recovered wallet against an independently protected, collision-resistant public identifier.

@@ -6,6 +6,8 @@ schemaType: APIReference
 icon: Code
 ---
 
+This reference documents `@tetherto/wdk@1.0.0-beta.21`. The [base-wallet contracts](#base-wallet-signer-contracts) identify their separate package versions.
+
 ## Table of Contents
 
 | Class | Description | Methods |
@@ -30,6 +32,8 @@ new WDK(seed, options?)
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or seed bytes
 - `options` (`WdkOptions`, optional): Instance settings. `maxConditionTimeoutMs` is a finite positive number that caps every policy condition timeout on this WDK instance and defaults to `30000` milliseconds. `policyExclusions?: string[]` appends non-empty method names to the default policy exclusions.
+
+For base `WalletManager` implementations, `@tetherto/wdk-wallet@1.0.0-beta.20` clarifies that byte input is a raw BIP-32 master seed of 16–64 bytes. It need not have been generated from a BIP-39 mnemonic. This is a declaration clarification, not a new derivation algorithm; check each concrete wallet's seed and derivation requirements.
 
 **Throws:** `Error` if the seed is invalid. Throws `PolicyConfigurationError` if `options` fails the published options schema, such as an array or primitive value, if `maxConditionTimeoutMs` is not a finite positive number, or if `policyExclusions` is not an array of non-empty strings.
 
@@ -57,7 +61,7 @@ const policyWdk = new WDK(seedBytes, {
 | `registerWallet(blockchain, wallet, config)` | Registers a new wallet manager for a blockchain | `WDK` | If a wallet is already registered for that blockchain |
 | `registerProtocol(blockchain, label, protocol, ...config)` | Registers a protocol globally for a blockchain | `WDK` | - |
 | `registerMiddleware(blockchain, middleware)` | Registers middleware for account decoration | `WDK` | - |
-| `getPolicyExclusions()` | Returns the resolved method names that bypass policy evaluation | `readonly string[]` | - |
+| `getPolicyExclusions()` | Returns the resolved method-exclusion names | `readonly string[]` | - |
 | `registerPolicy(policies, options?)` | Registers local transaction policies for governed wallet account and protocol methods | `WDK` | If policy configuration is invalid |
 | `getAccount(blockchain, index?)` | Returns a wallet account for a blockchain and index | `Promise<WdkAccount>` | If wallet not registered |
 | `getAccountByPath(blockchain, path)` | Returns a wallet account for a blockchain and derivation path | `Promise<WdkAccount>` | If wallet not registered |
@@ -125,7 +129,7 @@ Global registration stores the provider class and config without constructing or
 Starting in Core beta.19, registration accepts zero, one, or multiple constructor arguments after the protocol class, as required by that class. A provider taking one configuration object keeps the same call shape. Pass multiple arguments separately; an array passed as one argument is not spread automatically. See [`ProtocolConstructor<A>`](#protocol-constructor-types).
 
 <Callout type="warn">
-Velora beta.8 and beta.9, USD₮0 bridge beta.10 and beta.11, and Aave beta.7 cannot initialize with accounts derived by standard EVM beta.19 through beta.22, ERC-4337 beta.21, or EIP-7702 beta.7 through beta.9 managers when their shared ethers provider lacks the EIP-1193 `request()` method. These protocols treat the shared ethers `Provider` as EIP-1193 and require `request()`. Use the corresponding direct account constructor with its original RPC URL or genuine EIP-1193 input; never mutate internal provider fields. Direct accounts do not receive WDK Core policies or middleware, so retain required application checks and account-level controls.
+The documented Velora, USD₮0 bridge, and Aave adapters require EIP-1193 `request()` on non-string provider inputs. An account whose manager supplies a shared ethers provider without `request()` cannot initialize these adapters. Use the corresponding direct account constructor with its original RPC URL or genuine EIP-1193 input; never mutate internal provider fields. Direct accounts do not receive WDK Core policies or middleware, so retain required application checks and account-level controls.
 </Callout>
 
 **Example:**
@@ -152,7 +156,7 @@ Registers middleware for account decoration and enhanced functionality.
 
 **Parameters:**
 - `blockchain` (string): The name of the blockchain
-- `middleware` (`<A extends IWalletAccount>(account: A) => Promise<A | void>`): Middleware function called when deriving accounts
+- `middleware` (`<A extends IWalletAccount>(account: A) => Promise<A | void>`): Middleware function called on each account retrieval before policy wrapping
 
 **Returns:** `WDK` - The WDK instance (supports method chaining)
 
@@ -181,7 +185,7 @@ Returns a frozen array containing [`DEFAULT_POLICY_EXCLUSIONS`](#default-policy-
 
 **Returns:** `readonly string[]`. The returned array cannot be mutated, and it is not a setter for the engine's exclusions. Defaults remain present even when the constructor receives an empty array.
 
-You can check whether a named method bypasses policy evaluation:
+Inspect the exclusion names used during method discovery:
 
 ```javascript title="Inspect Policy Exclusions"
 const excludedMethods = wdk.getPolicyExclusions()
@@ -196,6 +200,8 @@ The transaction policy engine is experimental and not production ready. Local po
 </Callout>
 
 Policies are evaluated before governed account and protocol methods execute. In beta.17, the proxy discovers public string-named methods on the account or protocol and its prototype chain, then wraps those absent from the resolved exclusion set. This replaces the earlier fixed write-method list; see [coverage and limits](/sdk/core-module/guides/transaction-policies#supported-operations). Matching `DENY` rules and governed-account default-deny outcomes throw `PolicyViolationError`; matching `ALLOW` rules permit the call only when no higher-priority `DENY` rule applies. Governed runtime accounts also expose `account.simulate.<method>(...)` mirrors so you can dry-run policy evaluation without sending, signing, or broadcasting.
+
+Configure custom methods before retrieving governed references. Assigning a function, defining a function or accessor property, or changing the prototype through a governed account or protocol throws `TypeError`. Plain data assignments remain permitted. Previously unrecognized methods added as configurable properties through a separate raw reference are governed when read through the proxy or its property descriptors; calls they make through `this` re-enter policy checks. See [method customization](/sdk/core-module/guides/transaction-policies#customize-before-retrieval).
 
 Evaluation order:
 
@@ -421,7 +427,7 @@ console.log('Seed phrase valid:', isInvalid) // false
 
 ### Default Policy Exclusions
 
-A root export with type `readonly string[]`. This frozen array lists method names that bypass policy evaluation by default, including `getBalance`, `quoteSendTransaction`, `dispose`, and `toReadOnlyAccount`.
+A root export with type `readonly string[]`. This frozen array lists names excluded during initial method discovery, including `getBalance`, `quoteSendTransaction`, `dispose`, and `toReadOnlyAccount`.
 
 You can inspect the defaults without creating a wallet:
 
@@ -454,9 +460,9 @@ The concrete wallet versions documented below pin older base packages. Installin
 
 | Base-wallet dependency | Concrete wallet versions |
 | --- | --- |
-| `1.0.0-beta.17` | Bitcoin beta.17, ERC-4337 beta.21, EIP-7702 beta.9, Spark beta.28, Aptos beta.3, TON beta.16, TON Gasless beta.13, TRON beta.15, TRON GasFree beta.11 |
-| `1.0.0-beta.19` | Solana beta.18, Solana Gasless beta.6, Safe beta.2, Squads beta.2 |
-| `1.0.0-beta.21` | EVM beta.22 |
+| `1.0.0-beta.17` | Bitcoin beta.17, ERC-4337 beta.22, EIP-7702 beta.10, Spark beta.29, Aptos beta.4, TON beta.16, TON Gasless beta.13, TRON beta.15, TRON GasFree beta.11 |
+| `1.0.0-beta.19` | Solana beta.19, Solana Gasless beta.7, Safe beta.2, Squads beta.3 |
+| `1.0.0-beta.21` | EVM beta.23 |
 </Callout>
 
 Declare `@tetherto/wdk-wallet@1.0.0-beta.24` as a direct dependency to use all contracts shown here.
@@ -988,7 +994,7 @@ const swapResult = await swap.swap(swapOptions)
 wdk.dispose()
 ```
 
-`MySwapProtocol` is illustrative and must support the manager account's provider shape. Velora beta.8 and beta.9, USD₮0 bridge beta.10, and Aave beta.7 are intentionally excluded from this manager-derived beta.19 flow. Their direct standard-account guides cover [Velora setup](/sdk/swap-modules/swap-velora-evm/guides/get-started), [bridge setup](/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started), and [Aave setup](/sdk/lending-modules/lending-aave-evm/guides/get-started). Preserve application checks and account-level controls because WDK policies and middleware do not decorate those separate accounts.
+`MySwapProtocol` is illustrative and must support the manager account's provider shape. Do not substitute the documented Velora, USD₮0 bridge, or Aave adapters when the manager account's shared ethers provider lacks their required EIP-1193 `request()` method. Their direct standard-account guides cover [Velora setup](/sdk/swap-modules/swap-velora-evm/guides/get-started), [bridge setup](/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started), and [Aave setup](/sdk/lending-modules/lending-aave-evm/guides/get-started). Preserve application checks and account-level controls because WDK policies and middleware do not decorate those separate accounts.
 
 ## Types
 
@@ -1128,7 +1134,9 @@ interface SimulationResult {
 }
 ```
 
-`scope: 'project'` can apply across all registered wallets or only the wallets named in `wallet`. `scope: 'account'` requires both `wallet` and `accounts`. Numeric entries match indexed `getAccount()` retrieval only. String entries must equal the returned `account.path` exactly for either retrieval method; a relative `getAccountByPath()` input is not normalized for policy matching. See [policy scopes](/sdk/core-module/guides/transaction-policies#scope-policies) for the full-path example.
+`scope: 'project'` can apply across all registered wallets or only the wallets named in `wallet`. `scope: 'account'` requires both `wallet` and `accounts`. Numeric entries match indexed `getAccount()` retrieval only. String entries must equal the account's captured full path; a relative `getAccountByPath()` input is not normalized for policy matching.
+
+A defined `path` value remains captured for execution and simulation across later retrievals, including `null`. An `undefined` path is read again on a later retrieval. Use an account that supplies its intended full path before applying string-scoped policies: an absent or mismatched path can leave it without an applicable policy. See [policy scopes](/sdk/core-module/guides/transaction-policies#scope-policies) for the full-path example.
 
 `override_broader_scope` is valid only on account-scoped `ALLOW` rules. In Core beta.20, a match skips project-scoped policies only if no remaining account-scoped `DENY` blocks the call. Later non-`DENY` rules in the account scope are skipped after an override match.
 

@@ -31,7 +31,7 @@ See [currency-code resolution and fallback behavior](/tools/price-rates/configur
 
 #### Methods
 
-| Method | Description | Returns |
+| Method | Description | Returns (declared) |
 |--------|-------------|---------|
 | `getCurrentPrice(base, quote)` | Fetch latest price for base/quote pair | `Promise\<number \| null\>` |
 | `getMultiCurrentPrices(pairs)` | Fetch latest prices for multiple pairs in one batch | `Promise\<Array\<number \| null\>\>` |
@@ -71,14 +71,20 @@ const data = await client.getMultiPriceData([
 
 ##### `getHistoricalPrice(from, to, opts?)`
 
-If the returned series exceeds 100 points, it is downscaled by powers of two until ≤ 100.
+Supply `start` and `end` as Unix timestamps in milliseconds; both fields are required by `HistoricalPriceOptions`. Keep `start` within the trailing 365 days to avoid the client's range error. If the returned series exceeds 100 points, it is downscaled by powers of two until ≤ 100.
+
+Request the last 24 hours:
 
 ```javascript title="Historical Prices"
+const end = Date.now()
+const start = end - 24 * 60 * 60 * 1000
 const series = await client.getHistoricalPrice('BTC', 'USD', {
-  start: 1709906400000, // optional
-  end:   1709913600000  // optional
+  start,
+  end
 })
 ```
+
+The concrete Bitfinex beta.6 implementation returns `{ price, ts }`, with `ts` in Unix milliseconds. Its inherited `HistoricalPriceResult` declaration still defines `{ price, timestamp }`. This is a declaration/runtime mismatch: `timestamp` is not the runtime field returned by this client. Validate or adapt the concrete result before using it through that declared type; `PricingProvider` forwards the client's historical result without renaming fields.
 
 ## Package: `@tetherto/wdk-pricing-provider`
 
@@ -96,13 +102,15 @@ new PricingProvider({
 })
 ```
 
-- `client` (`PricingClient | PricingClient[]`): a single client instance or an ordered array of client instances. When an array is provided, connection errors trigger automatic failover to the next client in the list.
-- `retries` (number, optional): number of additional retry attempts after the initial call fails. Total attempts = `1 + retries`. When `retries` exceeds the number of provided clients, the failover loops back in round-robin order. Default: `3`. Only applies when `client` is an array.
+- `client` (`PricingClient | PricingClient[]`): a single client instance or an ordered array of client instances. With an array, failures matching `error instanceof Error` can trigger failover within the `retries` limit, including application and HTTP errors. A resolved `null` does not trigger failover.
+- `retries` (number, optional): number of additional retry attempts after the initial call fails. Total attempts = `1 + retries`. When the total attempt budget exceeds the number of clients, attempts can wrap in round-robin order. Default: `3`. Only applies when `client` is an array.
 - `priceCacheDurationMs` (number, optional): cache TTL for last price in ms (default 3,600,000)
 
 #### Methods
 
-| Method | Description | Returns |
+The table shows the published Provider beta.7 declarations. At runtime, current-price and price-data methods can forward and cache `null` from a client, including individual `null` entries in batch results. Handle unavailable values even though the wrapper's declared return types do not include `null`.
+
+| Method | Description | Returns (declared) |
 |--------|-------------|---------|
 | `getLastPrice(base, quote)` | Returns cached last price; refreshes when TTL expires | `Promise\<number\>` |
 | `getMultiLastPrices(pairs)` | Returns cached last prices for multiple pairs | `Promise\<number[]\>` |
@@ -128,9 +136,15 @@ const prices = await provider.getMultiLastPrices([
 
 ##### `getLastPriceData(base, quote)`
 
+Check for an unavailable result before reading its fields:
+
 ```javascript title="Cached Price Data"
 const data = await provider.getLastPriceData('BTC', 'USD')
-console.log(data.lastPrice, data.dailyChange, data.dailyChangeRelative)
+if (data === null) {
+  console.log('Price data unavailable')
+} else {
+  console.log(data.lastPrice, data.dailyChange, data.dailyChangeRelative)
+}
 ```
 
 ##### `getMultiLastPriceData(pairs)`
@@ -143,10 +157,14 @@ const data = await provider.getMultiLastPriceData([
 
 ##### `getHistoricalPrice(from, to, opts?)`
 
+Request the last 24 hours through the provider. When its client is Bitfinex, the result retains the concrete `ts` field described [above](#gethistoricalpricefrom-to-opts); the wrapper does not convert it to the declared `timestamp` field.
+
 ```javascript title="Historical via Provider"
+const end = Date.now()
+const start = end - 24 * 60 * 60 * 1000
 const hist = await provider.getHistoricalPrice('BTC', 'USD', {
-  start: 1709906400000,
-  end: 1709913600000
+  start,
+  end
 })
 ```
 
