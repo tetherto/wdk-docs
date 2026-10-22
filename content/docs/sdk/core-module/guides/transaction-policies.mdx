@@ -7,7 +7,7 @@ schemaType: TechArticle
 
 Use local transaction policies to evaluate account and protocol calls before execution. This guide covers [registering policies](#register-policies), [method coverage and migration](#supported-operations), and [simulating calls](#simulate-before-execution).
 
-These examples use `@tetherto/wdk@1.0.0-beta.20`, `@tetherto/wdk-wallet-evm@1.0.0-beta.22`, and `ethers@6.17.0`. They assume you have loaded an app-owned `seedPhrase` and an `ethereumWalletConfig` using a trusted Ethereum mainnet RPC. The EVM module derives the execution chain from its provider; checking the caller's `chainId` does not verify that provider's network.
+These examples use `@tetherto/wdk@1.0.0-beta.21`, `@tetherto/wdk-wallet-evm@1.0.0-beta.22`, and `ethers@6.17.0`. They assume you have loaded an app-owned `seedPhrase` and an `ethereumWalletConfig` using a trusted Ethereum mainnet RPC. The EVM module derives the execution chain from its provider; checking the caller's `chainId` does not verify that provider's network.
 
 <Callout type="warn">
 The transaction policy engine is experimental and not production ready. Its local checks do not provide a security boundary against a compromised agent environment. Read the [security boundary](#security-boundary) before giving an agent wallet access.
@@ -15,7 +15,7 @@ The transaction policy engine is experimental and not production ready. Its loca
 
 ## Security Boundary
 
-The policy engine in `@tetherto/wdk@1.0.0-beta.20` provides these local controls and limits:
+The policy engine provides these local controls and limits:
 
 - **Governed calls only.** Register policies before retrieving accounts. If no policy applies at retrieval, WDK returns the original account without adding policy enforcement. Later registration does not retrofit that reference; retrieve a new governed reference and stop using the old one. Existing governed proxies evaluate the current policy registry on each call. Default-deny applies only to intercepted methods on governed accounts; excluded methods bypass evaluation. See [Evaluation Rules](#evaluation-rules).
 - **Method arguments, not final signing validation.** Conditions inspect the method name and argument snapshots before the wallet or protocol method runs. The policy engine does not independently validate the final transaction bytes or decode calldata. It does not enforce rules on-chain, replace smart-contract permissions, or validate live token metadata, balances, prices, or contract state for you.
@@ -46,7 +46,7 @@ Register wallets before policies. [`wdk.registerPolicy()`](/sdk/core-module/api-
 Install the versions used in this example, including the direct `ethers` import:
 
 ```bash title="Install Policy Example Dependencies"
-npm install @tetherto/wdk@1.0.0-beta.20 @tetherto/wdk-wallet-evm@1.0.0-beta.22 ethers@6.17.0
+npm install @tetherto/wdk@1.0.0-beta.21 @tetherto/wdk-wallet-evm@1.0.0-beta.22 ethers@6.17.0
 ```
 
 This example permits only Ethereum type-2 `sendTransaction` objects with no calldata and explicit value and gas fields. It rejects serialized transactions, unsupported fields, and invalid numeric inputs. Other governed methods, including transaction and message signing, have no `ALLOW` rule and are denied.
@@ -164,7 +164,9 @@ Policies can target a whole project, selected wallets, or selected accounts.
 | `project` with `wallet` | `scope`, `wallet`, `rules` | One wallet identifier or a list of wallet identifiers |
 | `account` | `scope`, `wallet`, `accounts`, `rules` | Specific account indices or derivation paths for one wallet |
 
-Account entries can be non-negative account indices or derivation-path strings. Index entries match only the index passed to `getAccount(wallet, index)`; they do not match `getAccountByPath()`. String entries match the returned `account.path` exactly for either retrieval method. With the default EVM seed signer, `getAccountByPath("0'/0/0")` returns an account whose path is `m/44'/60'/0'/0/0`; bind that full path rather than the relative input. A mismatched binding can leave the account without an applicable policy.
+Account entries can be non-negative account indices or derivation-path strings. Index entries match only the index passed to `getAccount(wallet, index)`; they do not match `getAccountByPath()`. String entries match the account's captured full path. With the default EVM seed signer, `getAccountByPath("0'/0/0")` returns an account whose path is `m/44'/60'/0'/0/0`; bind that full path rather than the relative input. An absent or mismatched path can leave the account without an applicable policy.
+
+A defined `path` value stays captured for execution, simulation, and later retrievals of the same cached account, even if that property changes. This includes `null`; an `undefined` path is read again on a later retrieval. Ensure the account supplies its intended full path before relying on a string-scoped policy, then bind that path instead of changing the account property.
 
 ## Evaluation Rules
 
@@ -265,7 +267,13 @@ In beta.17, `PolicyRule.operation` accepts any non-empty method-name string, an 
 
 Use the exact method name implemented by your wallet or protocol. For example, a rule for `payLightningInvoice` can now govern that Spark method. [`waitForTransaction()`](/sdk/core-module/api-reference#waitfortransactionhash-options) is also governed by default, so transaction polling needs a matching `ALLOW` rule on a governed account. A name that matches nothing still registers, but cannot allow the real call; a typo can leave that call denied. `signMessage` and `signHash` are accepted strings, but only affect methods with those names.
 
-Coverage comes from public string-named methods declared directly on the object or inherited from its class. The proxy skips names in [`getPolicyExclusions()`](/sdk/core-module/api-reference#getpolicyexclusions), `constructor`, protected members, symbol-named methods, and `Object.prototype` methods. Accessor-only properties are not intercepted; defining a getter does not add a governed method. An unfamiliar method is governed even when its name starts with `get` or `quote`. Governed methods return Promises; always `await` them even when the original method is synchronous.
+Initial method discovery covers public string-named methods declared directly on the object or inherited from its class. It skips names in [`getPolicyExclusions()`](/sdk/core-module/api-reference#getpolicyexclusions), `constructor`, protected members, symbol-named methods, and `Object.prototype` methods. Accessors are not part of that method inventory. An unfamiliar method is governed even when its name starts with `get` or `quote`. Governed methods return Promises; always `await` them even when the original method is synchronous.
+
+### Customize Before Retrieval
+
+Configure custom methods in the wallet implementation or [registered middleware](/sdk/core-module/guides/middleware#register-middleware) before retrieving an account. Assigning functions, defining function or accessor properties, or changing the prototype through a governed account or protocol throws `TypeError`. Plain data assignments remain permitted.
+
+A previously unrecognized method added as a configurable property through a separate raw reference is governed when read through the proxy or its property descriptors, even if it uses an excluded method name. Calls it makes through `this` also go through the proxy. This does not govern calls made through the raw reference itself. Simulation mirrors retain their discovered method inventory; they do not gain a matching helper for a method added afterward.
 
 ### Migrate From The Fixed Operation List
 
@@ -273,7 +281,7 @@ Default-deny evaluation already existed before beta.17. This release expands whi
 
 1. Compare the methods your app calls with the resolved exclusions from [`getPolicyExclusions()`](/sdk/core-module/api-reference#getpolicyexclusions).
 2. Register an explicit `ALLOW` rule for each additional operation your app intends to permit, then verify its simulation and denial cases.
-3. For a method that should bypass evaluation, review its behavior across every applicable wallet and protocol before adding a [constructor exclusion](/sdk/core-module/configuration#policy-method-exclusions). Exclusions apply globally by name and also remove policy simulation for that method.
+3. For a method that should bypass evaluation, review its behavior across every applicable wallet and protocol before adding a [constructor exclusion](/sdk/core-module/configuration#policy-method-exclusions). Exclusions apply globally by name to methods present at retrieval and also remove policy simulation for those methods.
 
 You can inspect the resolved exclusions on an existing WDK instance:
 
@@ -283,7 +291,7 @@ console.log(exclusions.includes('getBalance')) // true by default
 console.log(exclusions.includes('payLightningInvoice')) // false by default
 ```
 
-Default exclusions cannot be removed. [`registerPolicy()`](/sdk/core-module/api-reference#registerpolicypolicies-options) rejects rules naming an excluded method because those rules could never run. Adding a wildcard `ALLOW` permits every governed method and is not a substitute for reviewing the expanded method surface.
+Default exclusions cannot be removed. [`registerPolicy()`](/sdk/core-module/api-reference#registerpolicypolicies-options) rejects rules that explicitly name a method in the resolved exclusion set. Adding a wildcard `ALLOW` permits every governed method and is not a substitute for reviewing the expanded method surface.
 
 ## Common Policy Patterns
 
@@ -476,7 +484,7 @@ In this beta, `simulate` is added at runtime but is not typed on the account ret
 - Policy conditions receive local method arguments. WDK does not decode calldata, fetch prices, validate token metadata, or calculate fiat value unless your condition function does that work.
 - Wallet accounts must expose a read-only account view when a policy applies, otherwise `getAccount()` fails with `PolicyConfigurationError`.
 - Pass plain data to governed methods. An object that cannot be structured-cloned, such as a plain object containing a callback, fails with `PolicyConfigurationError`. Class instances can become plain objects and lose their methods. A top-level function argument passes through unchanged in this release, so do not treat the snapshot as isolation for callback-driven state or side effects.
-- Method discovery is not a live monitor of account changes. Add module methods before obtaining a governed account; do not rely on mutating an account or its prototype after wrapping to update policy coverage.
+- Customize methods before retrieval and keep the returned governed references. See [method customization](#customize-before-retrieval) for rejected mutations and the limits of simulation mirrors.
 - Policy registration does not retrofit previously returned raw references. Retrieve an account again after registering a policy that applies to it and stop using the raw reference. A governed proxy consults the current policy registry for subsequent calls, so policy replacement affects that proxy's later decisions.
 - Engine-managed state hooks are not active in this beta. The schema accepts `state` and `onSuccess`, but WDK does not pass `state` into conditions, update it after execution, persist it, or call `onSuccess`. Conditions can still use app-owned state through closures or external stores; keep that state outside `rule.state`, and have your app own durability, concurrency, and rollback behavior.
 

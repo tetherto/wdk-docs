@@ -128,7 +128,7 @@ All packages are under the `@tetherto` scope. **Always** `npm view <pkg> version
 | `@tetherto/wdk-indexer-http` | [npmjs.com/package/@tetherto/wdk-indexer-http](https://www.npmjs.com/package/@tetherto/wdk-indexer-http) |
 | `@tetherto/wdk-backup-cloud` | [npmjs.com/package/@tetherto/wdk-backup-cloud](https://www.npmjs.com/package/@tetherto/wdk-backup-cloud) |
 
-For the Indexer HTTP client 1.0.1, read the [JavaScript SDK guide](https://docs.wdk.tether.io/tools/indexer-api/sdk) and [SDK API reference](https://docs.wdk.tether.io/tools/indexer-api/sdk-api-reference). The client supports Node.js 22 or later and Bare with the documented optional peers; it exposes balance and transfer queries, per-item batch outcomes, registered-wallet lifecycle methods, and typed request errors.
+For the Indexer HTTP client 1.0.3, read the [JavaScript SDK guide](https://docs.wdk.tether.io/tools/indexer-api/sdk) and [SDK API reference](https://docs.wdk.tether.io/tools/indexer-api/sdk-api-reference). The client supports Node.js 22 or later and Bare with the documented optional peers; it exposes balance and transfer queries, per-item batch outcomes, registered-wallet lifecycle methods, and typed request errors.
 
 ## Quick Start
 
@@ -179,7 +179,7 @@ Wallet accounts implement `IWalletAccount`. The table below describes standard a
 
 Concrete accounts can expose `index`, `path`, and `keyPair` (⚠️ sensitive — never log or expose). The base wallet beta.21 account contract does not require `index`, and its `path` and `keyPair` can be `null`; check the concrete implementation before relying on these fields.
 
-Base wallet beta.22 adds the required `IDisposable.disposed` getter and exports `DisposalError` from the root and protocols entrypoints. Its base manager reports completed disposal and makes repeated completed disposal calls idempotent. Concrete managers and accounts define which owned or supplied signers they dispose; base-package state is not proof of complete secret cleanup. The first-party versions listed in the [base-wallet compatibility note](https://docs.wdk.tether.io/sdk/core-module/api-reference#base-wallet-signer-contracts) pin base beta.17 or beta.19, so they do not inherit these beta.22 checks. Verify the installed dependency and implementation before relying on them. See the [disposal state reference](https://docs.wdk.tether.io/sdk/core-module/api-reference#disposal-state-in-base-wallet-beta22).
+Base wallet beta.22 adds the required `IDisposable.disposed` getter and exports `DisposalError` from the root and protocols entrypoints. Its base manager reports completed disposal and makes repeated completed disposal calls idempotent. Concrete managers and accounts define which owned or supplied signers they dispose; base-package state is not proof of complete secret cleanup. The first-party versions listed in the [base-wallet compatibility note](https://docs.wdk.tether.io/sdk/core-module/api-reference#base-wallet-signer-contracts) pin base beta.17, beta.19 or beta.21, so they do not inherit these beta.22 checks. Verify the installed dependency and implementation before relying on them. See the [disposal state reference](https://docs.wdk.tether.io/sdk/core-module/api-reference#disposal-state-in-base-wallet-beta22).
 
 ---
 
