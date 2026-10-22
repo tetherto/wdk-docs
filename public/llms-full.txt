@@ -54040,6 +54040,8 @@ Velora beta.8 and beta.9, USD₮0 bridge beta.10, and Aave beta.7 cannot be init
 URL: https://docs.wdk.tether.io/start-building/react-native-quickstart
 Description: Get started with WDK in React Native in under 3 minutes
 
+The existing-app examples use `@tetherto/wdk-react-native-core@1.0.0-beta.21`. The starter path uses the dependency versions in its own repository lockfile.
+
 ## What You'll Build
 
 In this quickstart, you'll integrate WDK into a React Native app to create a multi-chain wallet that:
@@ -54158,16 +54160,22 @@ Integrate WDK into your existing React Native or Expo project using `@tetherto/w
 
 ### Step 1: Install
 
+Core requires `expo-crypto` `>=55.0.0 <57.0.0` and `react-native-bare-kit` `>=0.14.5` as peer dependencies. Use an Expo SDK whose `expo-crypto` version satisfies that range. In a bare React Native app, [install and configure Expo modules](https://docs.expo.dev/bare/installing-expo-modules/) before installing `expo-crypto`.
+
+Install Core and its peer dependencies:
+
 ```bash
-npm install @tetherto/wdk-react-native-core@1.0.0-beta.21 react-native-bare-kit react-native-keychain@^10.0.0
+npm install @tetherto/wdk-react-native-core@1.0.0-beta.21 react-native-bare-kit
 npx expo install expo-crypto
 ```
 
-<Callout type="info">
-Beta.21 points `main`, `types`, and all root export conditions to the included `src/index.ts`. Use the React Native/Metro TypeScript toolchain; this package does not provide a precompiled Node.js entrypoint. Its secure storage is now included in Core and uses `react-native-keychain`. Rebuild the native app after installing dependencies, including iOS pods for bare React Native projects. Expo apps need a development build with the native modules included.
-</Callout>
+[Expo autolinking](https://docs.expo.dev/modules/autolinking/) discovers transitive native dependencies by default in SDK 54 and later. If your app uses React Native Community CLI autolinking or Expo's `legacy_shallowReactNativeLinking`, also add Keychain to the app's dependencies so it can be linked:
 
-Beta.21 requires `expo-crypto` `>=55.0.0 <57.0.0` and `react-native-bare-kit` `>=0.14.5` as peer dependencies. Confirm that the version selected by `npx expo install` is both inside the package range and compatible with the app's Expo SDK. If the SDK requires a version outside that range, do not force the peer installation; use compatible releases instead. Bare React Native apps must [install and configure Expo modules](https://docs.expo.dev/bare/installing-expo-modules/) before installing `expo-crypto`.
+```bash
+npm install 'react-native-keychain@^10.0.0'
+```
+
+Rebuild the native app after installing dependencies, including iOS pods for bare React Native projects. Expo apps need a development build with the native modules included.
 
 ### Step 2: Configure Android minSdkVersion
 
@@ -54240,9 +54248,7 @@ This generates a `.wdk/` directory in your project. Import it:
 import { bundle } from './.wdk'
 ```
 
-<Callout type="info">
 **Which WDK modules do I need?** Each blockchain requires its own wallet module (e.g., `wdk-wallet-evm-erc-4337` for Ethereum/Polygon, `wdk-wallet-btc` for Bitcoin). See the full list of available modules in the [wdk-worklet-bundler documentation](https://github.com/tetherto/wdk-worklet-bundler).
-</Callout>
 
 `@tetherto/pear-wrk-wdk` provides worklet transport and runtime handlers; it does not export a pre-built WDK bundle.
 
@@ -54342,7 +54348,7 @@ export default function App() {
 
 Now you can use the WDK hooks in any component inside `WdkAppProvider`:
 
-React Native Core beta.17 and later never guesses which wallet to unlock. Keep the selected wallet ID in your authenticated application state and pass it explicitly. `LOCKED.walletId` is only an optional hint while a specific wallet is already being targeted.
+Keep the selected wallet ID in your authenticated application state and pass it explicitly to Core. `LOCKED.walletId` is only an optional hint while a specific wallet is already being targeted.
 
 ```tsx
 import { useWdkApp, useWalletManager, useAccount } from '@tetherto/wdk-react-native-core'
@@ -54477,7 +54483,7 @@ function LockButton() {
 }
 ```
 
-When a wallet is active, `lock()` sends a one-way full WDK disposal request and then resets local lifecycle flags. The Bare worklet and IPC connection stay running, and the call does not wait for worklet cleanup acknowledgement. Treat it as an application access boundary, not evidence that every seed or key copy was erased from memory.
+When a wallet is active, `lock()` sends a one-way full WDK disposal request and then resets local lifecycle flags. The Bare worklet and IPC connection stay running, and the call does not wait for worklet cleanup acknowledgement. Your app still controls authentication and access; completing `lock()` does not confirm that every seed or key copy was erased from memory.
 
 ### Refresh Balances
 
@@ -54534,13 +54540,13 @@ Ensure your component is rendered inside `WdkAppProvider`. The provider must be 
 
 **No biometric prompt appears before a wallet operation**
 
-React Native Core beta.21 does not enforce biometrics and does not accept a `requireBiometrics` provider prop. Run your app's biometric, passcode, or other authentication flow before calling `createWallet()`, `restoreWallet()`, `unlock()`, `switchWallet()`, or key-access methods. The inlined storage API also leaves authentication to the app; standalone Secure Storage biometric options do not carry over.
+Core does not prompt for biometrics or enforce another authentication policy. Authenticate in your app before wallet operations or key access.
 
-For background locking, revoke the app's authenticated UI state synchronously, then call and catch `lock()`. The lifecycle mutex rejects instead of queuing when another guarded operation is running, so track a pending lock and retry it after the in-flight guarded operation settles. Require authentication again on foreground and do not treat the SDK session as locked until a retry succeeds.
+Close app access immediately on backgrounding using your app's authentication state, and require authentication before restoring access on foreground. Calling `lock()` is optional lifecycle cleanup. If you also call it while a guarded operation is in progress, catch the rejection and retry after that operation settles. See the [wallet lifecycle contract](/tools/react-native-core/api-reference#usewalletmanager).
 
 **Worklet startup reports an error**
 
-After fixing the reported bundle, configuration, or native startup cause, restart the application so it creates a fresh JavaScript runtime. React Native Core beta.21 has [no supported in-process recovery from a failed worklet start](/tools/react-native-core/api-reference#startup-failure-recovery); remounting `WdkAppProvider` in the same runtime does not reset its readiness state.
+Fix the reported bundle, configuration, or native startup cause, then restart the app before retrying.
 
 **Metro cache issues**
 
@@ -54551,20 +54557,6 @@ npx expo start --clear
 # or
 npx react-native start --reset-cache
 ```
-
-**TypeScript cannot resolve React Native Core**
-
-Beta.21 resolves all entrypoints to included TypeScript source. Use the app's React Native or Expo TypeScript configuration, including bundler resolution:
-
-```json
-{
-  "compilerOptions": {
-    "moduleResolution": "bundler"
-  }
-}
-```
-
-Use a current React Native or Expo Metro configuration that honors package exports and transpiles TypeScript. If an error still mentions a missing Core `dist/` file, inspect the installed version and lockfile for an older artifact. `skipLibCheck` does not repair module resolution.
 
 ### Complete Setup Checklist
 
@@ -58718,9 +58710,7 @@ Description: Hooks-based React Native library for building multi-chain wallet ap
 
 **React Native Core** provides a hooks-based API for wallet management, balance fetching, account operations inside any React Native app.
 
-<Callout type="info">
-These pages reflect `@tetherto/wdk-react-native-core@1.0.0-beta.21`. Beta.21 includes keychain storage directly, exports an advanced storage API, and points every package entry condition to its included TypeScript source.
-</Callout>
+This page documents `@tetherto/wdk-react-native-core@1.0.0-beta.21`.
 
 ## Features
 
@@ -58731,28 +58721,23 @@ These pages reflect `@tetherto/wdk-react-native-core@1.0.0-beta.21`. Beta.21 inc
 - **Worklet runtime** - runs WDK in an isolated Bare worklet
 - **Explicit wallet identity** - your app chooses which wallet ID to create, restore, unlock, or switch to
 - **Multi-wallet support** - create, restore, lock, unlock, switch, and delete wallets; guarded lifecycle operations use a fail-fast mutex
-- **Typed React Native source API** - exported hooks, services, and storage types resolve from the included TypeScript source
 
-<Callout type="info">
-Starting in `v1.0.0-beta.17`, wallet identity is caller-owned and the library no longer auto-unlocks a persisted wallet. Beta.21 does not enforce biometrics or another authentication policy. Pass an explicit wallet ID to `unlock()`, and perform your app's authentication check before calling lifecycle or key-access methods.
-</Callout>
-
-<Callout type="warn">
-Beta.21 fixes the missing `dist` entrypoints from beta.20: `main`, `types`, and all root export conditions now point to the included `src/index.ts`. Use your React Native or Expo TypeScript/Metro toolchain to compile this source; a custom `react-native` condition is no longer needed to work around missing files.
-</Callout>
+Core does not enforce biometrics or another authentication policy. Wallet identity is caller-owned. Pass an explicit wallet ID to `unlock()` and authenticate in your app before wallet operations or key access.
 
 ## Quick Start
 
 ### 1. Install
 
+Core requires `expo-crypto` `>=55.0.0 <57.0.0` and `react-native-bare-kit` `>=0.14.5` as peer dependencies. Use an Expo SDK whose `expo-crypto` version satisfies that range. In a bare React Native app, [install and configure Expo modules](https://docs.expo.dev/bare/installing-expo-modules/) before installing `expo-crypto`.
+
+Install Core and its peer dependencies:
+
 ```bash
-npm install @tetherto/wdk-react-native-core@1.0.0-beta.21 react-native-bare-kit 'react-native-keychain@^10.0.0'
+npm install @tetherto/wdk-react-native-core@1.0.0-beta.21 react-native-bare-kit
 npx expo install expo-crypto
 ```
 
-Beta.21 requires `expo-crypto` `>=55.0.0 <57.0.0` and `react-native-bare-kit` `>=0.14.5` as peer dependencies. Confirm that the version selected by `npx expo install` is inside the package range and matches the app's Expo SDK. If the SDK requires a version outside the range, do not force the peer installation; use compatible releases instead. In a bare React Native app, [install and configure Expo modules](https://docs.expo.dev/bare/installing-expo-modules/) before installing `expo-crypto`.
-
-The package includes `react-native-keychain` `^10.0.0` as a native dependency. Rebuild the native app after installing. Core no longer depends on `@tetherto/wdk-react-native-secure-storage`; direct users of that package can use the [storage migration guidance](/tools/react-native-core/api-reference#legacy-storage-compatibility). Core beta.21 still pins Pear Worklet beta.15.
+For Community CLI or shallow Expo autolinking, follow the [conditional Keychain installation step](/start-building/react-native-quickstart#step-1-install). Rebuild the native app after installing, including iOS pods for bare React Native projects. Expo apps need a development build with the native modules included.
 
 ### 2. Wrap Your App
 
@@ -58809,7 +58794,7 @@ function WalletScreen({
 }
 ```
 
-If startup reaches `ERROR` before the worklet starts, follow the [beta.21 startup failure recovery guidance](/tools/react-native-core/api-reference#startup-failure-recovery). Remounting `WdkAppProvider` in the same JavaScript runtime is not a recovery path.
+If startup reports an error, follow the [quickstart troubleshooting steps](/start-building/react-native-quickstart#troubleshooting).
 
 For a full integration guide, see the [React Native Quickstart](/start-building/react-native-quickstart).
 
@@ -58911,6 +58896,8 @@ Step-by-step integration guide for new and existing apps
 URL: https://docs.wdk.tether.io/tools/react-native-core/api-reference
 Description: Complete API reference for @tetherto/wdk-react-native-core
 
+This reference covers `@tetherto/wdk-react-native-core@1.0.0-beta.21`.
+
 | Export | Type | Description |
 |--------|------|-------------|
 | [`WdkAppProvider`](#wdkappprovider) | Component | Root provider for WDK initialization |
@@ -58959,9 +58946,7 @@ Must be placed at the root of your component tree. All hooks in this library req
 | `wdkConfigs` | [`WdkConfigs`](#wdkconfigs) | **required** | Network and protocol configurations |
 | `children` | `React.ReactNode` | **required** | Child components |
 
-<Callout type="warn">
-Starting in `v1.0.0-beta.17`, `enableAutoInitialization`, `currentUserId`, and `clearSensitiveDataOnBackground` are no longer provider props. `requireBiometrics`, which was removed earlier, is also not accepted by beta.21. The app owns wallet identity, background-locking behavior, and biometric or other authentication checks.
-</Callout>
+The app owns wallet identity, background-locking behavior, and biometric or other authentication checks.
 
 ### Example
 
@@ -59025,12 +59010,6 @@ The `state` property is a discriminated union on the `status` field:
 | `'LOCKED'` | `walletId?: string` | No wallet is unlocked; the optional ID is a hint when a specific wallet is being targeted |
 | `'READY'` | `walletId: string` | The active wallet identity matches the wallet loaded in the worklet |
 | `'ERROR'` | `error: Error` | Worklet initialization or a wallet lifecycle operation failed |
-
-#### Startup failure recovery
-
-<Callout type="warn">
-If beta.21 reports an `ERROR` before the worklet starts, do not rely on an in-process retry. An asynchronous startup failure can retrigger initialization while the singleton readiness promise remains rejected, and remounting `WdkAppProvider` in the same JavaScript runtime does not recreate that promise. Fix the reported bundle, configuration, or native startup cause, then restart the application so it creates a fresh JavaScript runtime before retrying.
-</Callout>
 
 ### Example
 
@@ -59096,23 +59075,17 @@ Hook for wallet lifecycle operations: create, restore, lock, unlock, delete, and
 | `clearTemporaryWallet` | `() => void` | Clear the temporary wallet session. If it is active, also send a one-way full WDK disposal request and clear shared initialization and address state |
 | `clearCache` | `() => void` | Clear cached balance data |
 
-Only one wallet can be active. Call and await `lock()` before creating or restoring a different identity. To select a wallet that is already stored, use `switchWallet()` or lock and then unlock that wallet explicitly. `createWallet()`, `restoreWallet()`, `deleteWallet()`, `lock()`, `unlock()`, `switchWallet()`, and `createTemporaryWallet()` use a fail-fast mutex, so an overlapping guarded call rejects instead of queuing. The mutex timeout does not cancel an already-running underlying operation. `switchWallet()` is serialized, but it is not transactional: it locks first and does not restore the previous wallet if the new unlock fails.
+Only one wallet can be active. Await `lock()` before creating or restoring a different identity. To select an existing wallet, use `switchWallet()` or lock and then unlock it explicitly. Switching locks the previous wallet first; a failed unlock leaves it locked.
 
-<Callout type="error">
-Beta.21 protects `deleteWallet()` with the lifecycle mutex; `clearTemporaryWallet()` remains unguarded. Clearing the active temporary wallet resets shared worklet lifecycle state and sends the same one-way full disposal request as `lock()`. Serialize `clearTemporaryWallet()` with lifecycle operations in the app to avoid racing a guarded call. Deleting even an inactive wallet deletes its secure-storage records and then resets shared worklet lifecycle state. A storage failure can leave a partial deletion and prevent the reset from running. Authenticate and explicitly confirm destructive deletion, verify another recovery path first, and verify the stored wallet inventory afterward.
-</Callout>
+`createWallet()`, `restoreWallet()`, `deleteWallet()`, `lock()`, `unlock()`, `switchWallet()`, and `createTemporaryWallet()` share a fail-fast mutex: overlapping calls reject instead of queuing, and a timeout does not cancel the operation. `clearTemporaryWallet()` is unguarded; serialize it with lifecycle calls because clearing an active temporary wallet also resets shared lifecycle state.
 
-<Callout type="error">
-When a wallet is active, `lock()` sends `hrpc.dispose({})` before clearing local state. The reset performed after a successful `deleteWallet()` also sends that request. HRPC disposal is one-way, so neither method waits for worklet cleanup or confirms that every copy was overwritten. The Bare worklet and IPC connection keep running. Treat these methods as application-state boundaries, not zeroization proof.
-</Callout>
+Core does not prompt for authentication. Authenticate in your app before wallet operations or key access. Close app access on backgrounding and authenticate again before restoring it; calling `lock()` is optional. If your app also calls `lock()`, catch any rejection caused by an in-flight guarded operation and retry after that operation settles.
 
 <Callout type="warn">
-React Native Core beta.21 does not enforce biometrics before wallet lifecycle or key-access methods. Authenticate in the app before invoking these methods. For app-background locking, close the authenticated UI boundary immediately and retry `lock()` after any in-flight guarded operation settles; a mutex rejection does not queue or cancel that operation.
+Deleting a wallet, even an inactive one, removes its credentials and then resets shared lifecycle state. If credential deletion fails partway, the reset and Core's wallet inventory update are skipped, so the wallet can stay listed with some credentials already gone. You can retry deletion for the same wallet identifier.
 </Callout>
 
-<Callout type="warn">
-A rejected create, restore, unlock, or temporary-wallet initialization is not cleanup confirmation. If the worklet constructs WDK and a later wallet or protocol registration fails, it can retain a partial instance and its seed buffer. Beta.21 exposes no public worklet teardown method. Do not retry a sensitive flow in the same session on the assumption that rejection removed that state; restart the application or hosting environment so it creates a new worklet before retrying.
-</Callout>
+Locking an active wallet, successfully deleting a wallet, and clearing an active temporary wallet request full WDK disposal without waiting for worklet cleanup. The worklet and IPC keep running, so completion is not proof that every secret copy was erased. If wallet initialization fails, restart the app before retrying; a rejected initialization does not confirm cleanup.
 
 #### Advanced Crypto Methods
 
@@ -59127,7 +59100,7 @@ These methods provide lower-level access to wallet cryptographic operations. Mos
 | `getMnemonicFromEntropy` | `(encryptedEntropy: string, encryptionKey: string) => Promise<{ mnemonic: string }>` | Derive a mnemonic from base64 encrypted entropy and key strings |
 | `getSeedAndEntropyFromMnemonic` | `(mnemonic: string) => Promise<{ encryptionKey: string, encryptedSeedBuffer: string, encryptedEntropyBuffer: string }>` | Get encrypted seed and entropy from a mnemonic phrase; all returned strings are base64 |
 
-Beta.21 converts these base64 strings to native buffers only at its internal HRPC boundary and overwrites several owned temporary buffers after use. Public hook results and storage values remain immutable JavaScript strings, and conversion can create additional copies. Discard references promptly and do not treat method completion as proof that every copy was erased.
+Returned secret values are immutable JavaScript strings. Discard references when finished; method completion does not confirm that every copy was erased.
 
 ### Example
 
@@ -59230,7 +59203,10 @@ Extends `UseAccountResponse`:
 
 ### Example
 
+This example uses Ethereum mainnet. Configure the `ethereum` wallet for that chain and pass your intended, validated destination as `recipientAddress` before quoting or sending.
+
 ```tsx
+import { Button, Text, View } from 'react-native'
 import { useAccount, BaseAsset } from '@tetherto/wdk-react-native-core'
 
 const usdt = new BaseAsset({
@@ -59243,7 +59219,7 @@ const usdt = new BaseAsset({
   address: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
 })
 
-function SendScreen() {
+function SendScreen({ recipientAddress }: { recipientAddress: string }) {
   const { address, isLoading, send, estimateFee } = useAccount({ network: 'ethereum', accountIndex: 0 })
 
   if (isLoading) return <Text>Deriving address...</Text>
@@ -59251,7 +59227,7 @@ function SendScreen() {
 
   const handleSend = async () => {
     const txParams = {
-      to: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+      to: recipientAddress,
       asset: usdt,
       amount: '1000000', // 1 USDt (6 decimals)
     }
@@ -59315,9 +59291,9 @@ Hook to call configured protocol modules through the active WDK worklet account.
 
 Returns `T`, a proxy for the protocol methods you type with the hook generic. Each method returns a promise from the worklet call.
 
-If no active account is available, protocol method calls log an error and return `undefined`. A successfully called protocol method can return `null` when that is its underlying contract; Core no longer rejects that result during JSON parsing.
+If no active account is available, protocol method calls log an error and return `undefined`. A successfully called protocol method can return `null` when that is its underlying contract.
 
-The `swidge` protocol type is available in `v1.0.0-beta.15`. It requires a non-empty `protocolName` and forwards calls through the matching Swidge protocol wrapper on the selected account.
+The `swidge` protocol type requires a non-empty `protocolName` and forwards calls through the matching Swidge protocol wrapper on the selected account.
 
 ### Example
 
@@ -59359,10 +59335,6 @@ function SwapQuoteScreen() {
 ## useModule
 
 Hook that creates a typed proxy for one named generic module in the active HRPC worklet. Every method access is forwarded through `ModuleService.callModule()`. The proxy also exposes `on(event, listener)` for module events.
-
-<Callout type="info">
-React Native Core `v1.0.0-beta.14` and later pin a Pear Worklet version with the HRPC methods required by this API.
-</Callout>
 
 ### Parameters
 
@@ -59915,49 +59887,13 @@ Each credential method requires a wallet `identifier`. Normal identifiers are tr
 | `getAllEncrypted(identifier)` | `Promise<{ encryptedSeed: string \| null, encryptedEntropy: string \| null, encryptionKey: string \| null }>` | Read all three values |
 | `hasWallet(identifier)` | `Promise<boolean>` | Check for the encrypted-seed entry |
 | `deleteWallet(identifier)` | `Promise<void>` | Delete the three credential entries |
-| `cleanup()` | `void` | No operation in beta.21 |
+| `cleanup()` | `void` | No operation; does not delete stored credentials or clear returned values |
 
 All setter values and identifiers above are `string`. The storage layer does not encrypt an input seed for you or verify its encoding. Core's wallet hooks store base64 strings here; preserve that format when interoperating with them.
 
-#### setEncryptionKey
-
-`setEncryptionKey(key: string, identifier: string): Promise<void>` stores the supplied key using keychain `WHEN_UNLOCKED` accessibility. It does not prompt for biometric authentication.
-
-#### getEncryptionKey
-
-`getEncryptionKey(identifier: string): Promise<string | null>` returns the stored key, or `null` when no non-empty keychain value exists. Treat the result as secret material.
-
-#### setEncryptedSeed
-
-`setEncryptedSeed(encryptedSeed: string, identifier: string): Promise<void>` stores an already-encrypted seed. On iOS it uses `WHEN_UNLOCKED_THIS_DEVICE_ONLY`, which prevents migration of that entry to another device through an encrypted backup restore.
-
-#### getEncryptedSeed
-
-`getEncryptedSeed(identifier: string): Promise<string | null>` returns the stored encrypted seed, or `null` when absent.
-
-#### setEncryptedEntropy
-
-`setEncryptedEntropy(encryptedEntropy: string, identifier: string): Promise<void>` stores already-encrypted entropy with the same iOS device-only accessibility as the encrypted seed.
-
-#### getEncryptedEntropy
-
-`getEncryptedEntropy(identifier: string): Promise<string | null>` returns the stored encrypted entropy, or `null` when absent.
-
-#### getAllEncrypted
-
-`getAllEncrypted(identifier: string)` reads the three values concurrently and returns the nullable object shown in the table. The object includes the encryption key, so do not log it or treat it as an encrypted backup. These separate reads are not an atomic snapshot; serialize credential mutations in your app when consistency matters.
-
-#### hasWallet
-
-`hasWallet(identifier: string): Promise<boolean>` checks for the encrypted-seed entry without reading its value. `true` does not prove that the encryption key and entropy are present or that recovery will succeed.
-
-#### deleteWallet
-
-`deleteWallet(identifier: string): Promise<void>` deletes the encryption key and encrypted entropy first, then deletes the seed only if both preceding deletions succeed. Deletion is not atomic; failure can leave partial data. Authenticate, confirm the target identifier, and verify an independent recovery path before deletion. A rejected call is not deletion confirmation. This direct method does not reset Core's wallet state or dispose its worklet.
-
-#### cleanup
-
-`cleanup(): void` is a no-op. It does not delete keychain entries or clear copies of values returned to your app.
+- **Keychain accessibility:** encryption keys use `WHEN_UNLOCKED`. On iOS, encrypted seeds and entropy use `WHEN_UNLOCKED_THIS_DEVICE_ONLY`, so those entries do not transfer to another device through an encrypted backup restore.
+- **Reading credentials:** `getAllEncrypted()` includes the raw encryption key; do not log it or treat the object as an encrypted backup. Its separate reads are not an atomic snapshot, so serialize credential mutations when consistency matters. `hasWallet()` checks only for an encrypted-seed entry; it does not prove that the other credentials exist or recovery will succeed.
+- **Deleting credentials:** deletion is not atomic and can leave partial data. Check remaining credentials after a failure before retrying. Direct deletion does not update Core's wallet inventory or reset its worklet.
 
 ### Storage Errors
 
@@ -59975,7 +59911,7 @@ Errors expose `message`, `code`, and optional `cause`. The timeout rejects the c
 
 ### Legacy Storage Compatibility
 
-Core beta.21 replaces its dependency on `@tetherto/wdk-react-native-secure-storage`. Existing normalized per-identifier keychain names remain compatible. The new direct API requires an identifier and omits the predecessor's biometric/cache configuration options; do not forward those options to it.
+When migrating from `@tetherto/wdk-react-native-secure-storage`, existing normalized named-identifier slots are compatible with Core and need no credential copy. Update imports to Core and provide app-owned authentication. Core requires an explicit identifier and accepts no biometric or cache configuration options; do not forward the standalone package's options.
 
 `DEFAULT_IDENTIFIER` is the reserved string `__default__`. It selects the predecessor's bare keychain service names used when no identifier was supplied. Use it only to inspect or migrate that legacy slot, never as the identifier for a new user's wallet.
 
@@ -59991,7 +59927,7 @@ const storage = createSecureStorage()
 const hasLegacyWallet = await storage.hasWallet(DEFAULT_IDENTIFIER)
 ```
 
-For a migration, serialize writes, retain the same complete set of credentials, write under the new unique identifier, and verify the new wallet can be recovered before explicitly deleting the old slot. A timeout or partial write must stop the migration; do not delete the source merely because some destination entries exist. Migrating keychain values alone does not migrate Core's wallet inventory.
+Copy credentials only when moving the legacy default slot or intentionally changing identifiers. Serialize writes and preserve every available credential field. Verify recovery from the destination before deleting the source; a timeout or partial write must stop the migration. Moving keychain values does not populate Core's wallet inventory.
 
 ---
 
@@ -60053,21 +59989,17 @@ queryClient.invalidateQueries({
 
 ***
 
-## React Native Secure Storage
+## React Native Secure Storage (Deprecated)
 URL: https://docs.wdk.tether.io/tools/react-native-secure-storage
-Description: Secure wallet credential storage for React Native apps
-
-<Callout type="info">
-These pages describe the standalone `@tetherto/wdk-react-native-secure-storage` package. React Native Core beta.21 includes its own storage implementation; import its factory and errors from `@tetherto/wdk-react-native-core` and follow the [Core storage migration](/tools/react-native-core/api-reference#legacy-storage-compatibility). Its explicit identifiers and app-owned authentication differ from the standalone API.
-</Callout>
-
-React Native Secure Storage provides a typed wrapper for storing encrypted wallet seed material and encryption keys with `react-native-keychain`. It is designed for React Native wallet apps that need app-scoped encrypted storage with optional biometric access.
-
-Powered by [`@tetherto/wdk-react-native-secure-storage`](https://www.npmjs.com/package/@tetherto/wdk-react-native-secure-storage).
+Description: Deprecated standalone wallet credential storage, retained for existing React Native apps
 
 <Callout type="warn">
-The `v1.0.0-beta.5` npm artifact includes the React Native source entry at `src/index.ts`, but it does not include the `dist/` files declared by `main`, `types`, and `exports.default`. Pin beta.4 when the consumer needs those compiled JavaScript and declaration files; use beta.5 only with a React Native resolver configuration you have verified against its source entry.
+`@tetherto/wdk-react-native-secure-storage` is [deprecated and no longer maintained](https://github.com/tetherto/wdk-react-native-secure-storage/blob/54a7b7e3e1dee109cacd55ef4d298ccee91f38ba/README.md#L5-L9). Use [React Native Core](/tools/react-native-core) for new integrations. For existing apps, follow [Legacy Storage Compatibility](/tools/react-native-core/api-reference#legacy-storage-compatibility) before changing imports or storage options.
 </Callout>
+
+This legacy reference covers the standalone wrapper for storing encrypted wallet seed material and encryption keys with `react-native-keychain`. Its optional identifiers and authentication options differ from Core's API.
+
+Powered by [`@tetherto/wdk-react-native-secure-storage`](https://www.npmjs.com/package/@tetherto/wdk-react-native-secure-storage).
 
 ## Features
 
@@ -60079,11 +60011,11 @@ The `v1.0.0-beta.5` npm artifact includes the React Native source entry at `src/
 
 ## When to use it
 
-Use this package for local encrypted storage in React Native wallet apps. It does not generate wallet seeds, encrypt plaintext seed material by itself, or provide cloud backup. Pair it with WDK wallet modules and [Cloud Backup](/tools/backup-cloud) when you need recovery across devices, while keeping plaintext encryption and recovery validation in the application.
+Use these pages to maintain an existing standalone integration. The package does not generate wallet seeds, encrypt plaintext seed material by itself, or provide cloud backup. Keep plaintext encryption and recovery validation in the application.
 
 <Cards>
 <Card title="Configuration" href="/tools/react-native-secure-storage/configuration">
-Install dependencies, configure authentication prompts, and create a storage instance.
+Review legacy setup, authentication options, and the beta.5 packaging limitation.
 </Card>
 <Card title="API Reference" href="/tools/react-native-secure-storage/api-reference">
 Review `createSecureStorage`, storage methods, options, constants, and errors.
@@ -60098,12 +60030,12 @@ Review `createSecureStorage`, storage methods, options, constants, and errors.
 
 ***
 
-## React Native Secure Storage API Reference
+## React Native Secure Storage API Reference (Deprecated)
 URL: https://docs.wdk.tether.io/tools/react-native-secure-storage/api-reference
-Description: API surface for @tetherto/wdk-react-native-secure-storage
+Description: Legacy API reference for deprecated @tetherto/wdk-react-native-secure-storage
 
-<Callout type="info">
-These pages describe the standalone `@tetherto/wdk-react-native-secure-storage` package. React Native Core beta.21 includes its own storage implementation; import its factory and errors from `@tetherto/wdk-react-native-core` and follow the [Core storage migration](/tools/react-native-core/api-reference#legacy-storage-compatibility). Its explicit identifiers and app-owned authentication differ from the standalone API.
+<Callout type="warn">
+`@tetherto/wdk-react-native-secure-storage` is [deprecated and no longer maintained](https://github.com/tetherto/wdk-react-native-secure-storage/blob/54a7b7e3e1dee109cacd55ef4d298ccee91f38ba/README.md#L5-L9). Use [React Native Core](/tools/react-native-core) for new integrations. For existing apps, follow [Legacy Storage Compatibility](/tools/react-native-core/api-reference#legacy-storage-compatibility) before changing imports or storage options.
 </Callout>
 
 ## Exports
@@ -60214,19 +60146,19 @@ try {
 
 ***
 
-## React Native Secure Storage Configuration
+## React Native Secure Storage Configuration (Deprecated)
 URL: https://docs.wdk.tether.io/tools/react-native-secure-storage/configuration
-Description: Install and configure @tetherto/wdk-react-native-secure-storage
+Description: Legacy setup and authentication options for deprecated React Native Secure Storage
 
-<Callout type="info">
-These pages describe the standalone `@tetherto/wdk-react-native-secure-storage` package. React Native Core beta.21 includes its own storage implementation; import its factory and errors from `@tetherto/wdk-react-native-core` and follow the [Core storage migration](/tools/react-native-core/api-reference#legacy-storage-compatibility). Its explicit identifiers and app-owned authentication differ from the standalone API.
+<Callout type="warn">
+`@tetherto/wdk-react-native-secure-storage` is [deprecated and no longer maintained](https://github.com/tetherto/wdk-react-native-secure-storage/blob/54a7b7e3e1dee109cacd55ef4d298ccee91f38ba/README.md#L5-L9). Use [React Native Core](/tools/react-native-core) for new integrations. For existing apps, follow [Legacy Storage Compatibility](/tools/react-native-core/api-reference#legacy-storage-compatibility) before changing imports or storage options.
 </Callout>
 
-This page shows how to install `@tetherto/wdk-react-native-secure-storage`, create a storage instance, and configure authentication behavior.
+This page retains the setup and authentication options for existing standalone integrations.
 
 ## Install the package
 
-```bash title="Install React Native Secure Storage"
+```bash title="Install legacy React Native Secure Storage"
 npm install @tetherto/wdk-react-native-secure-storage@1.0.0-beta.4 react-native-keychain expo-crypto expo-local-authentication
 ```
 
@@ -60236,9 +60168,7 @@ The `v1.0.0-beta.5` npm artifact includes the React Native source entry at `src/
 
 The package declares `react-native` as a peer dependency and uses native modules through `react-native-keychain`.
 
-<Callout type="info">
 Use this package in a React Native app or development build with native modules available. Expo Go is not enough for all keychain-backed flows.
-</Callout>
 
 ## Create a storage instance
 
