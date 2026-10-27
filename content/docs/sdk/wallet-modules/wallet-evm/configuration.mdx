@@ -17,7 +17,7 @@ const config = {
   // Recommended: RPC endpoint URL, EIP-1193 provider, or ordered failover list
   provider: 'https://eth.drpc.org',
 
-  // Optional: Skip automatic chain ID detection when the network is known
+  // Optional: Pin this RPC endpoint to a known chain without detecting it
   chainId: 1,
 
   // Optional: Additional failover attempts when provider is an array
@@ -35,7 +35,7 @@ const wallet = new WalletManagerEvm(seedPhrase, config)
 
 ## Signer Configuration
 
-`WalletManagerEvm` accepts either a BIP-39 seed phrase/seed bytes or a derivable EVM signer as its first argument. Use the `@tetherto/wdk-wallet-evm/signers` entrypoint when you need explicit signer objects:
+`WalletManagerEvm` accepts a BIP-39 mnemonic, raw BIP-32 master seed bytes (16–64 bytes), or a derivable EVM signer as its first argument. Raw seed bytes do not have to originate from BIP-39. Use the `@tetherto/wdk-wallet-evm/signers` entrypoint when you need explicit signer objects:
 
 ```javascript title="Create A Manager From A Seed Signer"
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
@@ -125,7 +125,7 @@ The `provider` option accepts an RPC URL, an ethers `Provider`, an EIP-1193 prov
 `WalletManagerEvm` builds or accepts its provider once and shares the same provider object with every account it derives. Direct account constructors process their configurations independently, but they can share a caller-supplied ethers `Provider` object.
 
 <Callout type="warn">
-When the shared ethers provider lacks EIP-1193 `request()`, beta.19 through beta.22 manager-derived accounts cannot initialize Velora beta.8 and beta.9, USD₮0 bridge beta.10 and beta.11, or Aave beta.7. These releases wrap every non-string provider in `BrowserProvider`, which requires an EIP-1193 `request()` method. Use a directly constructed `WalletAccountEvm` that retains its original RPC URL or EIP-1193 provider for these exact combinations; do not replace the account's internal provider field. Direct accounts do not receive WDK Core policy or middleware decoration, so preserve the required application checks and account-level controls.
+The documented Velora, USD₮0 bridge, and Aave adapters require EIP-1193 `request()` on non-string provider inputs. An account whose manager supplies a shared ethers provider without `request()` cannot initialize these adapters. Use a directly constructed `WalletAccountEvm` that retains its original RPC URL or genuine EIP-1193 provider for these adapters; do not replace the account's internal provider field. Direct accounts do not receive WDK Core policy or middleware decoration, so preserve the required application checks and account-level controls.
 </Callout>
 
 **Examples:**
@@ -210,7 +210,15 @@ const config = {
 
 ### Chain ID
 
-The `chainId` option pins the provider to a known EVM chain ID. Use it when you already know the target network and want to skip automatic chain ID detection during provider setup.
+A nonzero `chainId` pins URL and EIP-1193 providers created by this module, including entries in a failover list. They use that chain ID without sending `eth_chainId` requests. Omit the option for automatic network detection; `chainId: 0` does not enable pinning.
+
+An existing ethers `Provider` retains its own network configuration. Passing `chainId` alongside it does not reconfigure that provider.
+
+<Callout type="warn">
+Pin only providers that stay on the intended network. Pinning does not verify the endpoint's chain or detect a browser wallet's network switch. If the network changes, stop using the pinned wallet and recreate it with the intended configuration before continuing.
+</Callout>
+
+This option configures provider network identity, not every signing input. [`signTransaction()`](/sdk/wallet-modules/wallet-evm/api-reference#signtransactiontx) forwards the transaction's supplied chain ID to the signer without populating it from this option. An explicit `chainId: 0` passed to [`signAuthorization()`](/sdk/wallet-modules/wallet-evm/api-reference#signauthorizationauth) remains a separate opt-in to authorization across chains.
 
 **Type:** `number` (optional)
 

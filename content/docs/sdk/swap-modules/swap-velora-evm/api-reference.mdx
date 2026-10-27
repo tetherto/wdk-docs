@@ -8,7 +8,7 @@ icon: Code
 
 ## Class: VeloraProtocolEvm
 
-Main class for velora token swaps on EVM.
+Main class for Velora token swaps on EVM. This reference covers `1.0.0-beta.10`.
 
 ### Constructor
 
@@ -115,6 +115,23 @@ const quote = await swap.quoteSwap({
 
 ---
 
+## Transaction validation
+
+Both `quoteSwap()` and `swap()` check the API responses before asking the account to quote fees or send the transaction. The quoted token pair and exact SELL input or BUY output must match the request, and both quoted amounts must be positive integers. An output below `minAmountOut` is rejected before transaction building.
+
+The built transaction must satisfy all of these checks:
+
+- The quote's API version is exactly `6.2`.
+- The target is the Augustus v6.2 router, `0x6a000f20005980200259b80c5102003040001068` (case-insensitive comparison).
+- Calldata is a `0x`-prefixed hexadecimal string with a four-byte selector followed by zero or more whole bytes.
+- Native value equals the quoted input amount when `tokenIn` is Velora's native-coin identifier, `0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee`; otherwise it is zero. An absent or `null` value is treated as zero.
+
+Only `to`, `data`, and `value` are forwarded from the built transaction. The router address is normalized to the address above and `value` becomes a bigint; extra API fields are discarded. Wallet fee estimation still uses the account's own configuration.
+
+<Callout type="warn">
+Calldata is checked for format, not decoded. These checks do not verify its encoded recipient, token amounts, or swap route against the request. The integration still trusts Velora to build those parameters correctly.
+</Callout>
+
 ## Errors
 
 Common errors include:
@@ -122,8 +139,14 @@ Common errors include:
 - Quoted fee is equal to or greater than `swapMaxFee`
 - Read‑only account cannot send swaps
 - Provider/RPC errors (invalid endpoint, network mismatch)
-- `Velora quote does not match the requested swap.`: The rate has a different pair or exact input/output amount; transaction building and submission do not proceed
+- `Velora quote does not match the requested swap.`: The rate has a different pair or exact input/output amount, or an amount is invalid or non-positive; transaction building and submission do not proceed
 - `Velora quote is below the minimum output amount.`: The rate fails the caller's `minAmountOut`; obtain a new acceptable quote before retrying
+- `Velora quote is not for API version 6.2.`: The quote does not declare the pinned API version
+- `Velora transaction does not target the Augustus router.`: The transaction target is missing or differs from the expected router
+- `Velora transaction data is malformed.`: Calldata fails the selector and whole-byte format check
+- `Velora transaction value does not match the requested swap.`: Native value is invalid, differs from the quoted input amount, or is nonzero for a non-native input
+
+These validation failures are ordinary `Error` instances. The last four checks run after the API builds a transaction, but before account fee estimation or submission.
 
 ---
 

@@ -84,12 +84,12 @@ The account caches a successful lookup. It does not detect a later network switc
 
 ### Provider Failover
 
-In beta.7, `provider` accepts an ethers `Provider`, such as `JsonRpcProvider`, as well as RPC URLs and EIP-1193 providers. Import ethers provider classes from `ethers`. A supplied ethers provider must support JSON-RPC `send(method, params)` for the module's abstractionkit adapter.
+The `provider` option accepts an ethers `Provider`, such as `JsonRpcProvider`, as well as RPC URLs and EIP-1193 providers. Import ethers provider classes from `ethers`. A supplied ethers provider must support JSON-RPC `send(method, params)` for the module's abstractionkit adapter.
 
 The manager creates one RPC client and shares it with derived accounts and their read-only views. Direct account constructors create their own client unless you pass the same existing ethers provider. This shares the blockchain RPC connection; bundler and paymaster endpoints remain separately configured.
 
 <Callout type="warn">
-Velora beta.9, USD₮0 bridge beta.10, and Aave beta.7 cannot initialize with beta.7 manager-derived accounts when their shared ethers provider lacks EIP-1193 `request()`. Direct accounts configured with an ethers provider lacking `request()` have the same limitation. For these exact protocol releases, construct `WalletAccountEvm7702Gasless` directly with an RPC URL or genuine EIP-1193 provider, retaining all required bundler, paymaster, and delegation settings. Do not mutate internal provider fields. A direct account bypasses WDK Core policy and middleware decoration, so preserve application checks and account-level controls.
+The documented Velora, USD₮0 bridge, and Aave adapters require EIP-1193 `request()` on non-string provider inputs. Direct and manager-derived accounts configured with an ethers provider lacking `request()` have the same limitation. Construct `WalletAccountEvm7702Gasless` directly with an RPC URL or genuine EIP-1193 provider for these adapters, retaining all required bundler, paymaster, and delegation settings. Do not mutate internal provider fields. A direct account bypasses WDK Core policy and middleware decoration, so preserve application checks and account-level controls.
 </Callout>
 
 Pass an ordered array when you want read and quote calls to retry connectivity failures against multiple RPC providers:
@@ -160,17 +160,18 @@ Use paymaster-token mode when the account pays UserOperation fees with an ERC-20
 |-------|------|----------|-------------|
 | `isSponsored` | `false` | No | Omit this field or set it to `false`. |
 | `paymasterToken.address` | `string` | Yes | ERC-20 token address used for fee payment. |
-| `paymasterAddress` | `string` | No | Pins the expected paymaster contract address. |
+| `paymasterAddress` | `string` | Yes | Pins the expected paymaster contract address for token-paymaster mode. |
 | `transactionMaxFee` | `number \| bigint` | No | Maximum fee for wallet-built `sendTransaction()`, `signTransaction()`, and `approve()` operations, in paymaster-token base units. |
 | `transferMaxFee` | `number \| bigint` | No | Maximum fee for `transfer()` operations, in paymaster-token base units. Choose the value using the token's decimals. |
 
-If `isSponsored` is omitted or `false`, `paymasterToken` is required.
+If `isSponsored` is omitted or `false`, both `paymasterToken` and `paymasterAddress` are required. Supply `verifiedPaymasterAddress` below with the provider's confirmed contract for the selected endpoint, chain and EntryPoint.
 
 ```javascript title="Paymaster token mode"
 const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
   provider: 'https://rpc.mevblocker.io/fast',
   delegationAddress: '<VERIFIED_DELEGATION_ADDRESS>',
   bundlerUrl: 'https://api.candide.dev/api/v3/1/YOUR_API_KEY',
+  paymasterAddress: verifiedPaymasterAddress,
   paymasterToken: {
     address: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
   },
@@ -185,7 +186,9 @@ For wallet-built sends, signing, and approvals, the operation is rejected only w
 Passing an already-signed `UserOperationV8` to `sendTransaction()` bypasses `transactionMaxFee`. Its gas fields can yield a native-wei ceiling, but the module cannot reconstruct the token-denominated paymaster fee needed for comparison. Apply your fee policy before signing, and accept signed operations only from a trusted, reviewed source.
 </Callout>
 
-When `paymasterAddress` is set, the account checks the paymaster address returned by the RPC response and throws `ConfigurationError` if it does not match.
+Set `paymasterAddress` to the provider's verified contract for the selected chain and EntryPoint before constructing a token-paymaster wallet or account. Per-call overrides use the merged configuration; switching into token mode requires both this address and `paymasterToken`. Sponsored mode does not require the address.
+
+While building a token-paid UserOperation, a different returned paymaster address throws `ConfigurationError` before the UserOperation is signed or submitted. An owned account may already have signed an EIP-7702 delegation authorization while preparing that operation. Submitting an already-signed UserOperation does not rebuild it or repeat this paymaster check.
 
 ## Bundler and Paymaster Providers
 
@@ -224,7 +227,7 @@ const wallet = new WalletManagerEvm7702Gasless(seedPhrase, {
 ```
 
 <Callout type="info">
-`paymasterAddress` is specific to a provider, chain, and EntryPoint version. The addresses used on this page are the Ethereum mainnet token paymasters on EntryPoint v0.8: `0xa8151918eac3818deb713d3dbbb7930329fe86ed` for Candide and `0x888888888888Ec68A58AB8094Cc1AD20Ba3D2402` for Pimlico. Omit the field to accept the paymaster address the provider's RPC reports, or confirm the expected contract with your provider before pinning it.
+`paymasterAddress` is specific to a provider, chain, and EntryPoint version. The addresses used on this page are the Ethereum mainnet token paymasters on EntryPoint v0.8: `0xa8151918eac3818deb713d3dbbb7930329fe86ed` for Candide and `0x888888888888Ec68A58AB8094Cc1AD20Ba3D2402` for Pimlico. Confirm the expected contract with your provider before using either pin; token-paymaster configuration cannot omit this field.
 </Callout>
 
 If a provider serves its paymaster from a different URL than the bundler, set `paymasterUrl` to that endpoint; otherwise it defaults to `bundlerUrl`.
@@ -241,6 +244,7 @@ const tx = {
 }
 const feeConfig = {
   isSponsored: false,
+  paymasterAddress: verifiedPaymasterAddress,
   paymasterToken: {
     address: '0x68749665FF8D2d112Fa859AA293F07A622782F38'
   },
@@ -254,7 +258,7 @@ const result = await account.sendTransaction(tx, feeConfig)
 
 When an override is provided, the merged config is validated before the operation runs. `confirmFeeTokenAndAmount()` represents the application's explicit review of the changed fee token and quoted amount; the quote itself does not enforce `transactionMaxFee`, while the wallet-built send does.
 
-The beta.7 JavaScript runtime also reads `parallel` and `nonceKey` from per-call overrides for `signTransaction()`, `sendTransaction()`, and `transfer()`. The published second-argument TypeScript declarations include only fee-mode fields, so constructor-level lane configuration is the typed path in this release.
+The JavaScript runtime also reads `parallel` and `nonceKey` from per-call overrides for `signTransaction()`, `sendTransaction()`, and `transfer()`. The published second-argument TypeScript declarations include only fee-mode fields, so use constructor-level lane configuration in typed code.
 
 <Callout type="info">
 The two-minute quote cache key includes the transaction, sponsorship mode, paymaster token, expected paymaster address, and sponsorship policy ID. A matching operation also rechecks the current EntryPoint nonce before reuse. Changing any keyed fee-mode field causes a fresh quote.

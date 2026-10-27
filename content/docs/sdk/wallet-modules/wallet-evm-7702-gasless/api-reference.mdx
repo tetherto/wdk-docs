@@ -6,6 +6,8 @@ schemaType: APIReference
 icon: Code
 ---
 
+This reference covers `@tetherto/wdk-wallet-evm-7702-gasless@1.0.0-beta.10`.
+
 ## Table of Contents
 
 | Export | Description |
@@ -32,10 +34,10 @@ new WalletManagerEvm7702Gasless(seed, config)
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `seed` | `string \| Uint8Array` | BIP-39 mnemonic seed phrase or seed bytes. |
+| `seed` | `string \| Uint8Array` | BIP-39 mnemonic or raw BIP-32 master seed (16–64 bytes). |
 | `config` | `Evm7702GaslessWalletConfig` | Wallet configuration with common fields and one fee mode. |
 
-In beta.7, the manager builds one RPC client and shares it across the accounts it derives. A supplied ethers provider is reused; see [provider configuration](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#provider-failover).
+The manager builds one RPC client and shares it across the accounts it derives. A supplied ethers provider is reused; see [provider configuration](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#provider-failover).
 
 ### Methods
 
@@ -65,7 +67,7 @@ new WalletAccountEvm7702Gasless(walletAccountEvm, config)
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `seed` | `string \| Uint8Array` | BIP-39 mnemonic seed phrase or seed bytes. |
+| `seed` | `string \| Uint8Array` | BIP-39 mnemonic or raw BIP-32 master seed (16–64 bytes). |
 | `path` | `string` | EVM derivation path suffix, for example `"0'/0/0"`. |
 | `walletAccountEvm` | `WalletAccountEvm` | Existing EVM account from the same beta.19 package instance used by this module; see [wrapping an account](/sdk/wallet-modules/wallet-evm-7702-gasless/guides/manage-accounts#wrap-an-existing-evm-account). |
 | `config` | `Evm7702GaslessWalletConfig` | Wallet configuration. |
@@ -127,7 +129,7 @@ Treat the arrays returned through `keyPair` as read-only. Call `dispose()` when 
 - A string `nonceKey` is hashed to a deterministic 192-bit key. Numeric keys must be within the uint192 range; use bigint or string form above JavaScript's safe integer range.
 - Let the first delegation reach the chain before using concurrent lanes. Overlapping operations on the same lane can return hashes even when one can never receive a receipt.
 - A fresh `parallel` lane creates a permanent EntryPoint nonce slot. Reuse a bounded set of named lanes for sustained workloads.
-- The runtime accepts lane fields in per-call overrides for signing, sending, and transfers, but the beta.7 second-argument declarations still omit them. Constructor-level lane fields are correctly typed.
+- The runtime accepts lane fields in per-call overrides for signing, sending, and transfers, but the second-argument declarations omit them. Constructor-level lane fields are correctly typed.
 
 ### Transfer Fee Cap
 
@@ -194,11 +196,11 @@ Known configuration errors include:
 - missing `provider`;
 - missing `bundlerUrl`;
 - missing `delegationAddress`;
-- missing `paymasterToken` when `isSponsored` is absent or `false`;
+- missing `paymasterToken` or `paymasterAddress` when `isSponsored` is absent or `false`;
 - empty provider array;
 - unsupported `entryPointVersion` or a reference delegation address paired with the wrong version;
 - the provider chain differs from configured `chainId` during the first UserOperation chain lookup;
-- configured `paymasterAddress` does not match the paymaster returned by the RPC.
+- a returned paymaster address differs from configured `paymasterAddress` while building a token-paid UserOperation; see the [check's scope](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#paymaster-token).
 
 ## Config Types
 
@@ -228,7 +230,7 @@ Known configuration errors include:
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `isSponsored` | `false` | No | Omit or set to `false` for paymaster-token mode. |
-| `paymasterAddress` | `string` | No | Expected paymaster contract address. |
+| `paymasterAddress` | `string` | Yes | Expected paymaster contract address for token-paymaster mode. |
 | `paymasterToken.address` | `string` | Yes | ERC-20 token used for fee payment. |
 | `transactionMaxFee` | `number \| bigint` | No | Maximum fee for wallet-built send, sign, and approve operations in token base units. |
 | `transferMaxFee` | `number \| bigint` | No | Maximum fee for `transfer()` in token base units. |

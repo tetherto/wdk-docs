@@ -10,7 +10,7 @@ This package does not have constructor options or runtime configuration. This pa
 You can install `@tetherto/wdk-utils` from npm:
 
 ```bash title="Install @tetherto/wdk-utils"
-npm install @tetherto/wdk-utils@1.0.0-beta.13
+npm install @tetherto/wdk-utils@1.0.0-beta.14
 ```
 
 React Native runtimes without `globalThis.crypto.getRandomValues` also need a secure random-values polyfill:
@@ -129,13 +129,13 @@ import {
 - `validateTonAddress()` accepts raw TON addresses and user-friendly base64/base64url addresses. It checks the checksum only for user-friendly inputs and does not enforce mainnet/testnet compatibility. See [TON validation](/tools/wdk-utils/api-reference#validatetonaddressaddress) for result types and failures.
 - `validateSolanaAddress()` accepts base58-encoded 32-byte public keys, including off-curve program-derived addresses. Solana has no address checksum, so the helper cannot detect every mistyped address.
 - `splitMnemonic()` accepts valid 12-, 15-, 18-, 21-, or 24-word English BIP-39 phrases. It returns hex-encoded Shamir shares and supports threshold schemes from 2-of-2 through 255-of-255.
-- `combineMnemonic()` verifies an embedded 32-bit integrity checksum before returning the reconstructed phrase. The checksum normally detects accidental corruption, but it can collide and does not authenticate shares.
+- `combineMnemonic()` rejects any supplied share with a zero index byte, even when other shares meet the recovery threshold. It verifies an embedded 32-bit integrity checksum before returning the reconstructed phrase. The checksum normally detects accidental corruption, but it can collide and does not authenticate shares.
 - `encrypt()` requires `globalThis.crypto.getRandomValues`. In Node.js, `splitMnemonic()` uses the dependency's `node:crypto` implementation; browser and React Native paths require `globalThis.crypto.getRandomValues`. In React Native, load `react-native-get-random-values` before importing `@tetherto/wdk-utils` when the runtime does not provide secure random bytes. In Bare, import from the package root so the Bare entrypoint provides the Node-compatible crypto path; do not load the React Native polyfill.
 - `parseBip21Request()` accepts `bitcoin:` URIs with a validated Bitcoin address and optional `amount`, `label`, and `message` parameters.
 - `parseBip21Request()` and `parseEip681Request()` reject raw non-ASCII query text with `INVALID_FORMAT`. Percent-encode query values, for example `Caf%C3%A9` for `Café`. The BIP-21 encoder handles encoding for its `label` and `message` fields.
 - `encodeBip21Request()` validates the Bitcoin address and amount before returning a `bitcoin:` URI.
 - `encrypt()` returns a versioned payload with hex-encoded `salt`, `iv`, `tag`, and `ciphertext` fields plus the scrypt cost parameters used for key derivation.
-- `decrypt()` reads the scrypt cost parameters from the encrypted payload when they are present.
+- `encrypt()`, `deriveKey()`, and `decrypt()` enforce the [supported scrypt parameters](/tools/wdk-utils/api-reference#supported-scrypt-parameters). `decrypt()` reads these parameters from the encrypted payload when present; migrate backups that exceed the limits before upgrading.
 - `deriveKey()` returns a 32-byte `Uint8Array` key, and `decryptWithKey()` can reuse that key for decrypting a payload.
 - `deriveSeedKey()` uses HKDF-SHA256 and defaults to a 32-byte output. Both `salt` and `info` are required and are chosen by the caller; the package provides no built-in domain labels.
 - Pass high-entropy BIP-39 seed bytes to the seed key derivation helpers, not a mnemonic phrase. Accepted string inputs are consumed literally as UTF-8 and are not converted from mnemonic words into seed bytes.
