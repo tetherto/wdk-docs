@@ -6,6 +6,8 @@ schemaType: TechArticle
 icon: Smartphone
 ---
 
+The existing-app examples use `@tetherto/wdk-react-native-core@1.0.0-beta.21`. The starter path uses the dependency versions in its own repository lockfile.
+
 ## What You'll Build
 
 Use the starter to create or import a wallet, view balances and transfers, and explore optional cloud backup. Or integrate React Native Core into an existing app using the second path below.
@@ -13,7 +15,9 @@ Use the starter to create or import a wallet, view balances and transfers, and e
 The starter's configured networks and assets are listed on its [overview](/examples-and-starters/react-native-starter#features). Network support in your own app depends on the wallet modules and providers you configure.
 
 <Callout type="warn">
+
 The starter is not configured entirely for testnets. Ethereum uses Sepolia, while Arbitrum and Polygon use mainnet. Before funding or sending, review `.env` and `src/wdk/networks.ts`. For Bitcoin, align `btcNetwork` with the Blockbook endpoint; setting a testnet endpoint alone does not change address derivation.
+
 </Callout>
 
 ## Prerequisites
@@ -82,11 +86,9 @@ To load the Activity tab, add a production WDK Indexer API key:
 EXPO_PUBLIC_WDK_INDEXER_API_KEY=your_actual_api_key_here
 ```
 
-The starter explicitly selects `https://wdk-api.tether.io` in `src/wdk/indexer.ts`; it does not read `EXPO_PUBLIC_WDK_INDEXER_BASE_URL`. Indexer `1.0.1` defaults to staging (`https://wdk-api.tether.su`), so retain the explicit production `baseUrl` if you modify the client setup.
+The starter explicitly selects `https://wdk-api.tether.io` in `src/wdk/indexer.ts`; it does not read `EXPO_PUBLIC_WDK_INDEXER_BASE_URL`. Keep the explicit `baseUrl` if you modify the client setup.
 
-<Callout type="info">
 Get your API key from the [Indexer setup guide](/tools/indexer-api/get-started). The Indexer supplies transfer history. Balances and transfers use the network providers configured in [`.env.example`](https://github.com/tetherto/wdk-starter-react-native/blob/main/.env.example), including EVM bundler and paymaster settings. TON and Tron are not wired into this starter.
-</Callout>
 
 Cloud backup is optional and needs separate Google/CloudKit configuration. Follow the starter's [cloud backup setup](https://github.com/tetherto/wdk-starter-react-native/blob/main/docs/CLOUD_BACKUP.md) before testing it. The [starter overview](/examples-and-starters/react-native-starter#features) explains its storage and backup roles.
 
@@ -125,16 +127,22 @@ Integrate WDK into your existing React Native or Expo project using `@tetherto/w
 
 ### Step 1: Install
 
+Core requires `expo-crypto` `>=55.0.0 <57.0.0` and `react-native-bare-kit` `>=0.14.5` as peer dependencies. Use an Expo SDK whose `expo-crypto` version satisfies that range. In a bare React Native app, [install and configure Expo modules](https://docs.expo.dev/bare/installing-expo-modules/) before installing `expo-crypto`.
+
+Install Core and its peer dependencies:
+
 ```bash
-npm install @tetherto/wdk-react-native-core@1.0.0-beta.21 react-native-bare-kit react-native-keychain@^10.0.0
+npm install @tetherto/wdk-react-native-core@1.0.0-beta.21 react-native-bare-kit
 npx expo install expo-crypto
 ```
 
-<Callout type="info">
-Beta.21 points `main`, `types`, and all root export conditions to the included `src/index.ts`. Use the React Native/Metro TypeScript toolchain; this package does not provide a precompiled Node.js entrypoint. Its secure storage is now included in Core and uses `react-native-keychain`. Rebuild the native app after installing dependencies, including iOS pods for bare React Native projects. Expo apps need a development build with the native modules included.
-</Callout>
+[Expo autolinking](https://docs.expo.dev/modules/autolinking/) discovers transitive native dependencies by default in SDK 54 and later. If your app uses React Native Community CLI autolinking or Expo's `legacy_shallowReactNativeLinking`, also add Keychain to the app's dependencies so it can be linked:
 
-Beta.21 requires `expo-crypto` `>=55.0.0 <57.0.0` and `react-native-bare-kit` `>=0.14.5` as peer dependencies. Confirm that the version selected by `npx expo install` is both inside the package range and compatible with the app's Expo SDK. If the SDK requires a version outside that range, do not force the peer installation; use compatible releases instead. Bare React Native apps must [install and configure Expo modules](https://docs.expo.dev/bare/installing-expo-modules/) before installing `expo-crypto`.
+```bash
+npm install 'react-native-keychain@^10.0.0'
+```
+
+Rebuild the native app after installing dependencies, including iOS pods for bare React Native projects. Expo apps need a development build with the native modules included.
 
 ### Step 2: Configure Android minSdkVersion
 
@@ -207,9 +215,7 @@ This generates a `.wdk/` directory in your project. Import it:
 import { bundle } from './.wdk'
 ```
 
-<Callout type="info">
 **Which WDK modules do I need?** Each blockchain requires its own wallet module (e.g., `wdk-wallet-evm-erc-4337` for Ethereum/Polygon, `wdk-wallet-btc` for Bitcoin). See the full list of available modules in the [wdk-worklet-bundler documentation](https://github.com/tetherto/wdk-worklet-bundler).
-</Callout>
 
 `@tetherto/pear-wrk-wdk` provides worklet transport and runtime handlers; it does not export a pre-built WDK bundle.
 
@@ -309,7 +315,7 @@ export default function App() {
 
 Now you can use the WDK hooks in any component inside `WdkAppProvider`:
 
-React Native Core beta.17 and later never guesses which wallet to unlock. Keep the selected wallet ID in your authenticated application state and pass it explicitly. `LOCKED.walletId` is only an optional hint while a specific wallet is already being targeted.
+Keep the selected wallet ID in your authenticated application state and pass it explicitly to Core. `LOCKED.walletId` is only an optional hint while a specific wallet is already being targeted.
 
 ```tsx
 import { useWdkApp, useWalletManager, useAccount } from '@tetherto/wdk-react-native-core'
@@ -444,7 +450,7 @@ function LockButton() {
 }
 ```
 
-When a wallet is active, `lock()` sends a one-way full WDK disposal request and then resets local lifecycle flags. The Bare worklet and IPC connection stay running, and the call does not wait for worklet cleanup acknowledgement. Treat it as an application access boundary, not evidence that every seed or key copy was erased from memory.
+When a wallet is active, `lock()` sends a one-way full WDK disposal request and then resets local lifecycle flags. The Bare worklet and IPC connection stay running, and the call does not wait for worklet cleanup acknowledgement. Your app still controls authentication and access; completing `lock()` does not confirm that every seed or key copy was erased from memory.
 
 ### Refresh Balances
 
@@ -501,13 +507,13 @@ Ensure your component is rendered inside `WdkAppProvider`. The provider must be 
 
 **No biometric prompt appears before a wallet operation**
 
-React Native Core beta.21 does not enforce biometrics and does not accept a `requireBiometrics` provider prop. Run your app's biometric, passcode, or other authentication flow before calling `createWallet()`, `restoreWallet()`, `unlock()`, `switchWallet()`, or key-access methods. The inlined storage API also leaves authentication to the app; standalone Secure Storage biometric options do not carry over.
+Core does not prompt for biometrics or enforce another authentication policy. Authenticate in your app before wallet operations or key access.
 
-For background locking, revoke the app's authenticated UI state synchronously, then call and catch `lock()`. The lifecycle mutex rejects instead of queuing when another guarded operation is running, so track a pending lock and retry it after the in-flight guarded operation settles. Require authentication again on foreground and do not treat the SDK session as locked until a retry succeeds.
+Close app access immediately on backgrounding using your app's authentication state, and require authentication before restoring access on foreground. Calling `lock()` is optional lifecycle cleanup. If you also call it while a guarded operation is in progress, catch the rejection and retry after that operation settles. See the [wallet lifecycle contract](/tools/react-native-core/api-reference#usewalletmanager).
 
 **Worklet startup reports an error**
 
-After fixing the reported bundle, configuration, or native startup cause, restart the application so it creates a fresh JavaScript runtime. React Native Core beta.21 has [no supported in-process recovery from a failed worklet start](/tools/react-native-core/api-reference#startup-failure-recovery); remounting `WdkAppProvider` in the same runtime does not reset its readiness state.
+Fix the reported bundle, configuration, or native startup cause, then restart the app before retrying.
 
 **Metro cache issues**
 
@@ -518,20 +524,6 @@ npx expo start --clear
 # or
 npx react-native start --reset-cache
 ```
-
-**TypeScript cannot resolve React Native Core**
-
-Beta.21 resolves all entrypoints to included TypeScript source. Use the app's React Native or Expo TypeScript configuration, including bundler resolution:
-
-```json
-{
-  "compilerOptions": {
-    "moduleResolution": "bundler"
-  }
-}
-```
-
-Use a current React Native or Expo Metro configuration that honors package exports and transpiles TypeScript. If an error still mentions a missing Core `dist/` file, inspect the installed version and lockfile for an older artifact. `skipLibCheck` does not repair module resolution.
 
 ### Complete Setup Checklist
 
