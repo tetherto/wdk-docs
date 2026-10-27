@@ -502,12 +502,6 @@ export const customTree: Node[] = [
 
   separator('AI'),
   page('Build with AI', '/start-building/build-with-ai', 'Bot'),
-  folder('MCP Toolkit', '/ai/mcp-toolkit', 'Wand', [
-    page('Get Started', '/ai/mcp-toolkit/get-started', 'Rocket'),
-    configuration('/ai/mcp-toolkit/configuration'),
-    apiReference('/ai/mcp-toolkit/api-reference'),
-    page('LangChain Integration', '/ai/mcp-toolkit/langchain', 'Link'),
-  ]),
   page('Agent Skills', '/ai/agent-skills', 'Brain'),
   page('OpenClaw', '/ai/openclaw', 'Cat'),
   page('x402', '/ai/x402', 'CreditCard'),
