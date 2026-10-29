@@ -6261,7 +6261,7 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 
 **Changes**
 
-- **wallet-evm-bermuda** ([source 0.3.3](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/tree/c61ea036c6bf427420d9215a819cf9db95cb0164)): [Breaking] Use Bermuda SDK 0.3.3 and the new Plasma testnet pool. Regenerate Bermuda addresses, withdraw previous-pool balances with their matching SDK, and rename the nested SDK service option from `chainState` to `indexer`. See the [migration guidance](/sdk/wallet-modules/wallet-evm-bermuda#upgrading-from-032).
+- **wallet-evm-bermuda** ([source 0.3.3](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/tree/c61ea036c6bf427420d9215a819cf9db95cb0164)): Document Bermuda SDK 0.3.3, the Plasma testnet pool, installation, `indexer` configuration, and deposit, transfer, and withdrawal examples.
 
 ---
 
@@ -32648,26 +32648,6 @@ Use [`@bermuda/wdk-wallet-evm-bermuda`](https://github.com/BermudaBay/wdk-wallet
 
 The module is in beta and supports **Plasma testnet**, chain ID `9746`. These pages use GitHub revision `c61ea036c6bf427420d9215a819cf9db95cb0164`, whose manifest declares version `0.3.3`, with Bermuda SDK `0.3.3`. Installation uses the GitHub repository, rather than an npm registry release. Follow the [pinned installation](/sdk/wallet-modules/wallet-evm-bermuda/usage#install).
 
-## Upgrading from 0.3.2
-
-<Callout type="warn">
-Shielded balances stay in the previous pool. Keep your working 0.3.2 installation and its lockfile until you have withdrawn those funds with the matching SDK. Installing 0.3.3 does not move them to the new pool.
-</Callout>
-
-The previous Plasma testnet pool is `0x5D4948111Ba7f37A8f67141E6B7d0EC27B7d4310`; the current pool is `0xa1F6bB903B994d4eeBE77867947EaE422D2D34DB`. If you no longer have a working 0.3.2 installation and its SDK download is unavailable, ask the [Bermuda maintainers](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/issues) for a compatible artifact before attempting recovery.
-
-Regenerate and share Bermuda recipient and relay-fee addresses. For the same seed and account indices, the owner commitment stays the same, but the X-Wing viewing key changes. The address length stays the same, so a shape check cannot establish compatibility. The new account cannot read payments sealed to its 0.3.2 viewing key.
-
-Rename `bermuda.chainState` to `bermuda.indexer` if you override that SDK service. Use fresh cache paths for the new pool and retain the previous environment for recovery. See the [maintainer's migration guidance](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/blob/c61ea036c6bf427420d9215a819cf9db95cb0164/README.md#️-upgrading-from-032).
-
-## Upgrading from 0.1.x
-
-<Callout type="warn">
-Version 0.3.2 introduced a new pool and shielded address format. Shielded balances from 0.1.x stay in their original pool; use the matching 0.1.x installation to withdraw them before upgrading. The same spending-key source does not preserve the old full Bermuda address, and changing the package version does not migrate funds.
-</Callout>
-
-The current address is `0x` followed by 2,496 hex characters. Replace stored recipient addresses, change transaction `note` fields to `memo`, and review native versus wrapped deposits and fee accounting. Withdrawal defaults to targeting the requested recipient amount, with fees added to the sender's spend. The [0.3.2 migration guidance](#upgrading-from-032) also applies. See the [maintainer's earlier migration notes](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/blob/c61ea036c6bf427420d9215a819cf9db95cb0164/README.md#️-upgrading-from-01x) and the [operations guide](/sdk/wallet-modules/wallet-evm-bermuda/guides/shield-transfer-withdraw).
-
 ## Choose This Module
 
 Use Bermuda when your application needs a separate shielded account on Plasma testnet and can handle token allowances, proof generation, SDK services, and confirmation after submission.
@@ -32803,7 +32783,7 @@ The first index selects the ordinary EVM account at relative path `0'/0/index` b
 
 The method requires a provider. It detects the chain, forwards the wallet RPC configuration to the SDK by default, applies nested `bermuda` overrides, and rejects a missing SDK pool configuration with `ValueError`. See [SDK configuration precedence](/sdk/wallet-modules/wallet-evm-bermuda/configuration#bermuda-sdk-services). A configured pool does not prove that its contracts and services are available.
 
-Repeated calls with the same indices return the same live cached account; concurrent calls share derivation. A disposed cached account is replaced on the next request. Matching indices do not migrate balances from an earlier pool or preserve its full shielded addresses. Read the [migration guidance](/sdk/wallet-modules/wallet-evm-bermuda#upgrading-from-032) before upgrading.
+Repeated calls with the same indices return the same live cached account; concurrent calls share derivation. A disposed cached account is replaced on the next request.
 
 ### dispose (manager)
 
@@ -32843,8 +32823,6 @@ The constructor stores the references without deriving keys or validating matchi
 
 `getAddress(): string` and `address: string` are synchronous. A Bermuda address is `0x` followed by **2,496 hex characters**, representing an owner commitment and an X-Wing viewing public key. It is not a 20-byte EVM recipient address. Ordinary EVM account `getAddress()` and manager retrieval remain asynchronous.
 
-The length does not distinguish addresses generated for earlier deployments. Retrieve and share the current account address after upgrading; do not reuse older recipient addresses or assume old pool balances are visible through the new account.
-
 ### getTokenBalance and getTokenBalances
 
 ```typescript
@@ -32860,7 +32838,7 @@ Tokens can occupy idle and vaulted classes. Vaulted holdings count at their valu
 
 Unless an operation explicitly selects share units, amounts use underlying token base units. The wrapper accepts `number | bigint` and converts supplied top-level and recipient amounts with `BigInt()`. Prefer **`bigint`** for exact integer arithmetic: fractional numbers fail conversion, and unsafe numbers can already have lost precision.
 
-The wrapper copies operation objects and recipient objects before adding its signer, spender or default destination. It does not add those fields to the caller's parameter object. Use `memo`, replacing the 0.1.x `note` field.
+The wrapper copies operation objects and recipient objects before adding its signer, spender or default destination. It does not add those fields to the caller's parameter object. Use `memo` for transaction and recipient messages.
 
 #### Deposit Parameters
 
@@ -33048,7 +33026,7 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 
 Configure `WalletManagerBermuda` for public EVM accounts and the separate shielded accounts returned by `getBermudaAccount()`. These pages describe [GitHub revision `c61ea03`](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/tree/c61ea036c6bf427420d9215a819cf9db95cb0164), whose manifest declares `0.3.3` and uses Bermuda SDK `0.3.3`. The examples pin both WDK wallet peers to `1.0.0-beta.17` and `ethers` to `6.17.0`; these pins do not establish identical behavior across the full declared peer range. Follow [Usage](/sdk/wallet-modules/wallet-evm-bermuda/usage) for the GitHub installation.
 
-The maintainer-supported network is **Plasma testnet**, chain ID **9746**. The pool and shielded viewing keys differ from the previous deployment; old balances and recipient addresses do not carry over. Read the [migration guidance](/sdk/wallet-modules/wallet-evm-bermuda#upgrading-from-032) before upgrading an existing integration.
+The maintainer-supported network is **Plasma testnet**, chain ID **9746**.
 
 ## Provider Configuration
 
@@ -33116,7 +33094,7 @@ The examples omit file-cache options. In Node.js without `localStorage` or custo
 
 The nested `bermuda` configuration can override SDK storage and cache inputs independently. If you opt into filesystem persistence, supply the filesystem implementation and two distinct paths with existing parent directories. The implicit commitment-events path replaces a final `.json` suffix with `-commitment-events.json`; without that suffix, it equals the UTXO path.
 
-Treat caches as sensitive wallet data. They can contain decrypted amounts, memos, ownership and UTXO metadata, including blinding and nullifier secrets. The UTXO-cache codec records an owner address instead of serializing the live owner's signing or viewing private keys; that does not make the cached transaction data public. Protect persistent storage through the application's storage policy. Existing files are not sanitized by an upgrade or deleted by `dispose()`; do not reuse old pool cache files for the new deployment.
+Treat caches as sensitive wallet data. They can contain decrypted amounts, memos, ownership and UTXO metadata, including blinding and nullifier secrets. The UTXO-cache codec records an owner address instead of serializing the live owner's signing or viewing private keys; that does not make the cached transaction data public. Protect persistent storage through the application's storage policy. `dispose()` does not delete persisted caches. Keep separate cache files for each wallet and pool.
 
 ## Fee Boundaries
 
@@ -33179,7 +33157,7 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 
 This guide uses the standalone Bermuda manager to [shield USD₮0](#deposit-into-bermuda), [transfer a shielded balance](#transfer-to-a-bermuda-address), and [withdraw to a public address](#withdraw-to-a-public-address) on Plasma testnet. Deposits use a public EVM account; transfers use a Bermuda address; withdrawals expose a public EVM recipient. These operations do not establish an anonymity guarantee.
 
-These examples target Git source manifest version `0.3.3` at [revision `c61ea036`](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/tree/c61ea036c6bf427420d9215a819cf9db95cb0164), with both WDK wallet peers pinned to `1.0.0-beta.17`. Follow the [pinned Git installation instructions](/sdk/wallet-modules/wallet-evm-bermuda/usage) before using the examples. If you used an earlier deployment, read the [migration guidance](/sdk/wallet-modules/wallet-evm-bermuda#upgrading-from-032) before depositing.
+These examples target Git source manifest version `0.3.3` at [revision `c61ea036`](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/tree/c61ea036c6bf427420d9215a819cf9db95cb0164), with both WDK wallet peers pinned to `1.0.0-beta.17`. Follow the [pinned Git installation instructions](/sdk/wallet-modules/wallet-evm-bermuda/usage) before using the examples.
 
 ## Prerequisites
 
@@ -33381,8 +33359,6 @@ After successful on-chain execution, query a newly retrieved shielded account's 
 
 Supply the intended recipient's full Bermuda address, obtained from their `getAddress()`: `0x` followed by 2,496 hex characters. A Bermuda address is not a 20-byte EVM address and does not encode the chain. The shape check below does not verify ownership, intended recipient, or payment readiness; the SDK still validates the operation.
 
-Use recipient and relay-fee addresses regenerated for this deployment. Addresses from 0.3.2 have the same length, so the shape check cannot distinguish them.
-
 The transfer `amount` requests the recipient output. A positive `relayFee` adds to the sender's shielded spend and requires a full Bermuda `relayer` fee-recipient address, because the SDK creates a shielded fee output. The pool can also charge a transfer fee on third-party outflow. Vaulted transfers convert underlying amounts to shares with rounding, so the requested amount is not a guarantee of an exact underlying balance change.
 
 The `relayer` option is not a relay-service URL and does not replace the SDK's configured endpoint. `transferMaxFee` and `transactionMaxFee` do not cap token fees, and confirming these inputs does not approve a fixed total shielded spend.
@@ -33504,8 +33480,6 @@ Your application supplies a BIP-39 mnemonic or `Uint8Array` seed from its secret
 
 Creating the shielded account reads the wallet provider's chain and requires an SDK pool configuration for it. The wallet provider also supplies SDK chain reads by default. Balance queries and operations still need the SDK's other services; a wallet RPC does not configure relayer, policy/compliance, or proof-artifact URLs. An indexer is optional. See [provider precedence](/sdk/wallet-modules/wallet-evm-bermuda/configuration#bermuda-sdk-services).
 
-If upgrading from 0.3.2 or 0.1.x, read the [pool and address migration guidance](/sdk/wallet-modules/wallet-evm-bermuda#upgrading-from-032) before creating or funding a new account.
-
 ## Install
 
 The maintainer's command, `npm i bermudabay/wdk-wallet-evm-bermuda`, installs from GitHub. It does not select a published npm registry version. These examples pin the exact repository revision for source version **0.3.3**, plus the WDK peer versions used below. `ethers` supplies the guide's public RPC and token checks.
@@ -33567,7 +33541,7 @@ export async function createBermudaSession(seed, rpcUrl) {
 
 `ethereumAccount` is an ordinary public EVM account. `bermudaAccount` is a separate shielded account derived from the EVM account's private key. The first `getBermudaAccount()` argument selects the EVM account at relative path `0'/0/index`; the second selects a Bermuda subaccount. Both default to `0` and must be non-negative integers.
 
-Unlike the EVM account's asynchronous address getter, `bermudaAccount.getAddress()` returns its address synchronously. In this source version it is `0x` plus 2,496 hex characters, not an EVM recipient address. Its format differs from the address produced by 0.1.x.
+Unlike the EVM account's asynchronous address getter, `bermudaAccount.getAddress()` returns its address synchronously. In this source version it is `0x` plus 2,496 hex characters, not an EVM recipient address.
 
 For another shielded subaccount under the same EVM account:
 
