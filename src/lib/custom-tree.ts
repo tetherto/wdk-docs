@@ -502,12 +502,6 @@ export const customTree: Node[] = [
 
   separator('AI'),
   page('Build with AI', '/start-building/build-with-ai', 'Bot'),
-  folder('MCP Toolkit', '/ai/mcp-toolkit', 'Wand', [
-    page('Get Started', '/ai/mcp-toolkit/get-started', 'Rocket'),
-    configuration('/ai/mcp-toolkit/configuration'),
-    apiReference('/ai/mcp-toolkit/api-reference'),
-    page('LangChain Integration', '/ai/mcp-toolkit/langchain', 'Link'),
-  ]),
   page('Agent Skills', '/ai/agent-skills', 'Brain'),
   page('OpenClaw', '/ai/openclaw', 'Cat'),
   page('x402', '/ai/x402', 'CreditCard'),
@@ -534,10 +528,6 @@ export const customTree: Node[] = [
     page('JavaScript SDK', '/tools/indexer-api/sdk', 'Code'),
     page('SDK API Reference', '/tools/indexer-api/sdk-api-reference', 'Code'),
     page('REST API Reference', '/tools/indexer-api/api-reference', 'Code'),
-  ]),
-  folder('Manage wallet secrets safely', '/tools/secret-manager', 'KeyRound', [
-    configuration('/tools/secret-manager/configuration'),
-    apiReference('/tools/secret-manager/api-reference'),
   ]),
   folder('Back up encrypted wallet keys', '/tools/backup-cloud', 'CloudUpload', [
     usage('/tools/backup-cloud/usage'),
