@@ -67,6 +67,10 @@ Once a wallet is unlocked:
 
 This same-user signing capability is an accepted design trade-off: the daemon provides a reusable local wallet session, and the operating-system user is the session's trust boundary.
 
+Local configuration and wallet storage are inside that boundary. A same-user process can change or replace these files, so a check against an owner-writable file does not establish a separate trust boundary. Treat passphrase prompts on configuration commands as intent confirmation, not authorization between programs running as the same user.
+
+The built-in daemon protocol has no seed-export action. `wdk wallet export` runs in the CLI process and still needs the wallet passphrase to decrypt the stored mnemonic, even while the wallet is unlocked. A process does not need to export a key to use an unlocked wallet for signing or spending.
+
 <Callout type="warn">
 Do not run downloaded scripts, unreviewed packages, browser automation, plugins, or AI agents under the wallet owner's account while a valuable wallet is unlocked. Owner-only socket permissions do not protect against code that you run as the owner.
 </Callout>
@@ -124,6 +128,10 @@ Each wallet has its own absolute unlock timer:
 An absolute timer limits the maximum duration from unlock without silently extending the session on every operation. It can also expire during a longer workflow because activity does not refresh it. Re-unlock explicitly when more time is needed.
 
 Use `--ttl 0` only in a controlled environment where you accept an unlocked session that lasts until explicit lock, daemon shutdown, process failure, or machine restart. It is not appropriate as a convenience default.
+
+### Effects after locking
+
+Locking removes that wallet's active session. Locking or deleting the wallet does not revoke previously issued message signatures or ERC-20 allowances already granted on-chain. Allowances can remain until used up or revoked by setting the allowance to `0`, whether granted through a module method such as `approve` or a protocol's approval step.
 
 ## Seed and passphrase lifetime
 
