@@ -11,7 +11,7 @@ Community modules are developed and maintained independently by third-party cont
 Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
 </Callout>
 
-This reference describes [GitHub revision `59c711a`](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/tree/59c711af9d5c348db740a37f19d96414fc6750f6) of `@bermuda/wdk-wallet-evm-bermuda`, whose manifest declares `0.3.2` and uses SDK `0.3.2`. The examples pin both WDK wallet peers to `1.0.0-beta.17` and `ethers` to `6.17.0`. Follow [Usage](/sdk/wallet-modules/wallet-evm-bermuda/usage) for the GitHub installation. The maintainer-supported network is **Plasma testnet**, chain ID **9746**.
+This reference describes [GitHub revision `c61ea03`](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/tree/c61ea036c6bf427420d9215a819cf9db95cb0164) of `@bermuda/wdk-wallet-evm-bermuda`, whose manifest declares `0.3.3` and uses SDK `0.3.3`. The examples pin both WDK wallet peers to `1.0.0-beta.17` and `ethers` to `6.17.0`. Follow [Usage](/sdk/wallet-modules/wallet-evm-bermuda/usage) for the GitHub installation. The maintainer-supported network is **Plasma testnet**, chain ID **9746**.
 
 ## Exports
 
@@ -44,7 +44,7 @@ Extends `WalletManagerEvm`. Its declared constructor accepts a BIP-39 mnemonic s
 new WalletManagerBermuda(seed: string | Uint8Array, config?: BermudaWalletConfig)
 ```
 
-`BermudaWalletConfig` is now a root type export. It combines EVM options with cache fields and the nested `bermuda` SDK configuration. These examples use seed-backed derivation: the shielded flow reads the derived EVM account's private key. Do not infer shielded compatibility for a hardware or arbitrary custom signer.
+`BermudaWalletConfig` is a root type export. It combines EVM options with cache fields and the nested `bermuda` SDK configuration. These examples use seed-backed derivation: the shielded flow reads the derived EVM account's private key. Do not infer shielded compatibility for a hardware or arbitrary custom signer.
 
 ### Methods and Properties
 
@@ -72,7 +72,7 @@ The first index selects the ordinary EVM account at relative path `0'/0/index` b
 
 The method requires a provider. It detects the chain, forwards the wallet RPC configuration to the SDK by default, applies nested `bermuda` overrides, and rejects a missing SDK pool configuration with `ValueError`. See [SDK configuration precedence](/sdk/wallet-modules/wallet-evm-bermuda/configuration#bermuda-sdk-services). A configured pool does not prove that its contracts and services are available.
 
-Repeated calls with the same indices return the same live cached account; concurrent calls share derivation. A disposed cached account is replaced on the next request. The 0.3.2 address format and pool differ from 0.1.x, so matching indices do not migrate old shielded balances. Review the [module overview](/sdk/wallet-modules/wallet-evm-bermuda) before upgrading.
+Repeated calls with the same indices return the same live cached account; concurrent calls share derivation. A disposed cached account is replaced on the next request. Matching indices do not migrate balances from an earlier pool or preserve its full shielded addresses. Read the [migration guidance](/sdk/wallet-modules/wallet-evm-bermuda#upgrading-from-032) before upgrading.
 
 ### dispose (manager)
 
@@ -110,9 +110,9 @@ The constructor stores the references without deriving keys or validating matchi
 
 ### getAddress and address
 
-`getAddress(): string` and `address: string` are synchronous. The 0.3.2 address is `0x` followed by **2,496 hex characters**, representing an owner commitment and an X-Wing viewing public key. It is not a 20-byte EVM recipient address. Ordinary EVM account `getAddress()` and manager retrieval remain asynchronous.
+`getAddress(): string` and `address: string` are synchronous. A Bermuda address is `0x` followed by **2,496 hex characters**, representing an owner commitment and an X-Wing viewing public key. It is not a 20-byte EVM recipient address. Ordinary EVM account `getAddress()` and manager retrieval remain asynchronous.
 
-Addresses from 0.1.x have a different format. Do not reuse them as new-deployment recipients or assume old pool balances are visible through the new account.
+The length does not distinguish addresses generated for earlier deployments. Retrieve and share the current account address after upgrading; do not reuse older recipient addresses or assume old pool balances are visible through the new account.
 
 ### getTokenBalance and getTokenBalances
 
