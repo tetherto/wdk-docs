@@ -2092,7 +2092,7 @@ The examples auto-detect which provider to use based on which API key is set. If
 </Callout>
 
 <Callout type="info">
-**Full examples** -- See the complete interactive agent examples with conversation loops on GitHub: [`mcp-toolkit/langchain/python/`](https://github.com/tetherto/wdk-examples/tree/main/mcp-toolkit/langchain/python) and [`mcp-toolkit/langchain/typescript/`](https://github.com/tetherto/wdk-examples/tree/main/mcp-toolkit/langchain/typescript).
+**Historical examples** -- These complete interactive agent examples with conversation loops are from the revision before the standalone MCP Toolkit examples were removed from `main`: [`mcp-toolkit/langchain/python/`](https://github.com/tetherto/wdk-examples/tree/91d665abaab0e02b03f90c858bf1fbcb0511f961/mcp-toolkit/langchain/python) and [`mcp-toolkit/langchain/typescript/`](https://github.com/tetherto/wdk-examples/tree/91d665abaab0e02b03f90c858bf1fbcb0511f961/mcp-toolkit/langchain/typescript).
 </Callout>
 
 ***
@@ -34075,7 +34075,7 @@ console.log('Fast fee rate:', feeRates.fast, 'wei')     // base fee × 2.0
 ```
 
 #### `dispose()`
-Disposes all wallet accounts, clearing private keys from memory.
+Initiates cleanup of cached wallet accounts but retains the manager's seed, so accounts can still be derived. Once you have finished using the manager, its accounts, and every other consumer of those seed bytes, overwrite them with `wallet.seed.fill(0)`. Do not reuse the manager afterward.
 
 **Example:**
 ```javascript
@@ -34648,7 +34648,7 @@ console.log('Account path:', account.path) // m/44'/60'/0'/0/0
 
 // ⚠️ SENSITIVE: Handle with care
 const { privateKey, publicKey } = account.keyPair
-console.log('Public key length:', publicKey.length) // 65 bytes
+console.log('Public key length:', publicKey.length) // 33 bytes
 console.log('Private key length:', privateKey?.length) // 32 bytes (null after dispose)
 ```
 
@@ -36897,13 +36897,13 @@ const signerWallet = new WalletManagerEvm(signer, {
 | `getAccount(signerName)` | Returns the account associated with a registered signer | `Promise<WalletAccountEvm>` | If the named signer is unavailable |
 | `getAccountByPath(path, options?)` | Returns a wallet account at the specified BIP-44 derivation path, optionally from a named signer | `Promise<WalletAccountEvm>` | If the requested signer is unavailable or cannot derive |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` | `ProviderRequiredError` if no provider is set |
-| `dispose()` | Initiates cleanup of accounts and default/named signers, including supplied signers in beta.20 | `void` | - |
+| `dispose()` | Initiates cleanup of cached accounts and the seed-created default signer; app-supplied default and named signers remain app-owned | `void` | - |
 
 ### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `seed` | `Uint8Array \| undefined` (inherited declaration) | Always `undefined` at runtime in beta.20: the manager turns seed input into its default signer before calling the base constructor. Keep seed storage in your application. |
+| `seed` | `Uint8Array \| undefined` (inherited declaration) | Always `undefined` at runtime from beta.20 onward: the manager turns seed input into its default signer before calling the base constructor. Keep seed storage in your application. |
 
 #### `getRandomSeedPhrase(wordCount?)` (static)
 Returns a random BIP-39 seed phrase.
@@ -38144,7 +38144,8 @@ const config = {
   // Recommended: RPC endpoint URL, EIP-1193 provider, or ordered failover list
   provider: 'https://eth.drpc.org',
 
-  // Optional: Pin this RPC endpoint to a known chain without detecting it
+  // Optional: trust this chain ID instead of asking the RPC (1 = Ethereum mainnet).
+  // It must match the endpoint; mismatches are not detected.
   chainId: 1,
 
   // Optional: Additional failover attempts when provider is an array
@@ -38175,7 +38176,7 @@ const wallet = new WalletManagerEvm(signer, {
 })
 ```
 
-`SeedSignerEvm(seed)` starts at the coin node `m/44'/60'`. Its `derive()` method uses a path relative to the signer's current node. The manager's default signer must support derivation. Non-derivable signers, such as private-key signers, can be registered by name and used to retrieve signer-backed accounts:
+`SeedSignerEvm(seed, absolutePath?)` defaults to the coin node `m/44'/60'`; the optional second argument selects an absolute BIP-32 path. Its `derive()` method uses a path relative to the signer's current node. The manager's default signer must support derivation. Non-derivable signers, such as private-key signers, can be registered by name and used to retrieve signer-backed accounts:
 
 ```javascript title="Register A Private-Key Signer"
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
@@ -38719,7 +38720,7 @@ Before you begin, ensure you have the following installed:
 ### Install Package
 
 ```bash title="Install wallet packages"
-npm install @tetherto/wdk-wallet-evm @tetherto/wdk-wallet@1.0.0-beta.17
+npm install @tetherto/wdk-wallet-evm@1.0.0-beta.23
 ```
 
 ## 2. Create a Wallet
@@ -58090,7 +58091,7 @@ Install the exact Pear release and a `bare-crypto` version satisfying its peer r
 npm install @tetherto/pear-wrk-wdk@1.0.0-beta.16 'bare-crypto@>=1.13.1'
 ```
 
-Beta.16 adds this peer requirement without changing the beta.15 RPC or crypto APIs. Confirm your resolved dependency tree satisfies the floor before generating and rebuilding the native worklet. React Native Core beta.21 still declares Pear beta.15; installing beta.16 for a generated bundle does not rewrite Core's dependency pin. Keep both sides' HRPC schema compatible.
+Beta.16 adds this peer requirement without changing the beta.15 RPC or crypto APIs. Confirm your resolved dependency tree satisfies the floor before generating and rebuilding the native worklet. React Native Core beta.22 still declares Pear beta.15; installing beta.16 for a generated bundle does not rewrite Core's dependency pin. Keep both sides' HRPC schema compatible.
 
 ## Worklet Context
 
@@ -58267,7 +58268,7 @@ const workletConfig = {
 - `modules` is optional and contains runtime config for named generic modules. Each key must match a `moduleManagers` key in the worklet context and the corresponding build-time Worklet Bundler module name.
 - `resetWdkWallets()` reads only the `networks` portion of the decoded config.
 
-JSON-RPC generic-module support was introduced in Pear Worklet beta.13. Supply the same `moduleManagers`, `allowedModuleMethods`, and runtime `modules` config used by HRPC. For generated entrypoints, use [Worklet Bundler beta.14 with Pear Worklet beta.16](/tools/worklet-bundler/configuration#install-the-packages).
+JSON-RPC generic-module support was introduced in Pear Worklet beta.13. Supply the same `moduleManagers`, `allowedModuleMethods`, and runtime `modules` config used by HRPC. For generated entrypoints, use [Worklet Bundler beta.15 with Pear Worklet beta.16](/tools/worklet-bundler/configuration#install-the-packages).
 
 ## Secret Payload Representations
 
@@ -58967,11 +58968,11 @@ The WDK engine runs inside a Bare worklet. Generate an HRPC bundle with `@tether
 Use the `@tetherto/wdk-worklet-bundler` CLI to generate a bundle with only the blockchain modules you need:
 
 ```bash
-# 1. Install the bundler CLI
-npm install -g @tetherto/wdk-worklet-bundler@1.0.0-beta.14
+# 1. Install the bundler as a development dependency
+npm install --save-dev @tetherto/wdk-worklet-bundler@1.0.0-beta.15
 
 # 2. Initialize configuration in your React Native project
-wdk-worklet-bundler init
+npx wdk-worklet-bundler init
 
 # 3. Edit wdk.config.js to configure your networks (see example below)
 
@@ -58979,7 +58980,7 @@ wdk-worklet-bundler init
 npm install @tetherto/wdk @tetherto/wdk-wallet-evm-erc-4337
 
 # 5. Generate the bundle
-wdk-worklet-bundler generate
+npx wdk-worklet-bundler generate
 ```
 
 Example `wdk.config.js`:
@@ -59000,7 +59001,7 @@ module.exports = {
 
 This file selects packages at build time. Pass chain IDs, providers, protocol settings, and any per-module runtime config through `wdkConfigs` on `WdkAppProvider`. The optional build-time `modules` map in the bundler is distinct from runtime `wdkConfigs.modules`; their names must match when generic-module support is available.
 
-After running `wdk-worklet-bundler generate`, import and use the bundle:
+After running `npx wdk-worklet-bundler generate`, import and use the bundle:
 
 ```typescript
 import { bundle } from './.wdk'
@@ -62011,10 +62012,10 @@ interface WdkBundleConfig {
 
 Every omitted map, level, or `methods` field remains unrestricted. An explicit `methods: []` denies every method on that exact surface. Both generated contexts receive `allowedMethods` and `allowedModuleMethods`.
 
-Beta.15 generates `modules` for both transports. Pair it with Pear Worklet beta.16 and its `bare-crypto >=1.13.1` peer for the HRPC schema and JSON-RPC module calls and events. JSON-RPC defaults addon linking to `true`; HRPC defaults it to `false`. `options.convertEsmToCjs` defaults to `false` for both transports and must be enabled explicitly for targets whose Bare engine cannot load ESM.
+Beta.15 generates `modules` for both transports. Pair it with Pear Worklet beta.16 and its `bare-crypto >=1.13.1` peer for the HRPC schema and JSON-RPC module calls and events. JSON-RPC defaults addon linking to `true`; HRPC defaults it to `false`. `config.options.convertEsmToCjs` defaults to `false` for both transports and must be enabled explicitly for targets whose Bare engine cannot load ESM.
 
 <Callout type="warn">
-Beta.15 declares `output.types`, `options.minify`, and `options.sourceMaps`, but its bundle generator does not honor those fields. Declarations are always written to `./.wdk/index.d.ts`; `minify` and `sourceMaps` do not control `bare-pack` output. ESM-to-CJS conversion minifies independently.
+Beta.15 declares `output.types`, `options.minify`, and `options.sourceMaps`, but its bundle generator does not honor those fields. Declarations are always written to `./.wdk/index.d.ts`; `minify` and `sourceMaps` do not control `bare-pack` output (tracked in [#74](https://github.com/tetherto/wdk-worklet-bundler/issues/74) and [#75](https://github.com/tetherto/wdk-worklet-bundler/issues/75), respectively). ESM-to-CJS conversion minifies independently.
 </Callout>
 
 `options.handleLeakCheck` is optional and applies only to generated HRPC entrypoints. Set `true` to use Pear Worklet beta.16's default `1000` ms interval, or a positive number to pass as `tickIntervalMs`. Omit it to disable diagnostics; `false`, zero, negative numbers, and strings fail `loadConfig()` validation. The interval controls repeated sampling after an immediate suspend snapshot, not a one-time delay.
@@ -62172,19 +62173,19 @@ const result = await generateBundle(config, { verbose: true })
 
 #### `generateSourceFiles(config, options?)`
 
-Use `generateSourceFiles()` when you want the generated entrypoint without the final `bare-pack` step.
+Use `generateSourceFiles()` when you want the generated entrypoint without the final `bare-pack` step. The second `options` argument accepts only `verbose`.
 
-`options.convertEsmToCjs: true` adds the runtime `.mjs` CommonJS-loader patch to that entrypoint, but this function does not pack or convert a bundle. If you run `bare-pack` yourself, call `convertBundleEsmToCjs()` on its output and keep the same conversion setting used to generate the entrypoint.
+`config.options.convertEsmToCjs: true` adds the runtime `.mjs` CommonJS-loader patch to that entrypoint, but this function does not pack or convert a bundle. If you run `bare-pack` yourself, call `convertBundleEsmToCjs()` on its output and keep the same conversion setting used to generate the entrypoint.
 
 #### `generateEntryPoint(config, outputDir)`
 
 Use `generateEntryPoint()` when you need the generated HRPC Bare entrypoint written to a chosen output directory. This path includes configured generic modules, both method-allowlist maps, module lifecycle/event wiring, and the optional `handleLeakCheck` diagnostic.
 
-The beta.15 HRPC entrypoint scans `require.cache` for every loaded `bare-http1` and `bare-https` module, deduplicates their `globalAgent` objects, and invokes each agent's `suspend()` or `resume()` method. It also invokes `context.moduleRuntime.suspendAll()` or `resumeAll()` when present. Each call is fire-and-forget; synchronous throws and rejected promises are logged without stopping the other lifecycle calls. When `options.convertEsmToCjs` is enabled, the entrypoint also emits the matching runtime `.mjs`-as-CommonJS loader patch.
+The beta.15 HRPC entrypoint scans `require.cache` for every loaded `bare-http1` and `bare-https` module, deduplicates their `globalAgent` objects, and invokes each agent's `suspend()` or `resume()` method. It also invokes `context.moduleRuntime.suspendAll()` or `resumeAll()` when present. Each call is fire-and-forget; synchronous throws and rejected promises are logged without stopping the other lifecycle calls. When `config.options.convertEsmToCjs` is enabled, the entrypoint also emits the matching runtime `.mjs`-as-CommonJS loader patch.
 
 #### `generateJsonRpcEntryPoint(config, outputDir)`
 
-Generate the framed JSON-RPC entrypoint used by native hosts. Beta.15 includes wallet, protocol, and generic-module managers plus both method-allowlist maps. It generates the same fire-and-forget HTTP-agent and module-runtime lifecycle wiring as HRPC. `options.handleLeakCheck` remains HRPC-only, so JSON-RPC does not emit diagnostic registration. When `options.convertEsmToCjs` is enabled, JSON-RPC emits the same `.mjs` loader patch as HRPC.
+Generate the framed JSON-RPC entrypoint used by native hosts. Beta.15 includes wallet, protocol, and generic-module managers plus both method-allowlist maps. It generates the same fire-and-forget HTTP-agent and module-runtime lifecycle wiring as HRPC. `options.handleLeakCheck` remains HRPC-only, so JSON-RPC does not emit diagnostic registration. When `config.options.convertEsmToCjs` is enabled, JSON-RPC emits the same `.mjs` loader patch as HRPC.
 
 #### `linkAddons(config, options?)`
 
@@ -62225,7 +62226,7 @@ convertBundleEsmToCjs('./.wdk-bundle/wdk-worklet.bundle.js', {
 
 The beta.15 converter accepts raw `.bundle` data and the default UTF-8 CommonJS, ESM, or JSON string wrappers produced by bare-pack. Wrappers created with a non-UTF-8 `--encoding`, such as Base64, are not supported. The converter transforms `.js`, `.mjs`, and `.cjs` files, lowers dynamic imports, removes `"type": "module"` from bundled package manifests, recomputes offsets with `bare-bundle`, restores the original wrapper, and calls `validateBundle()` before returning. It throws if any source transformation or final validation fails.
 
-This helper rewrites only the packed bundle. For `.mjs` files to load as CommonJS at runtime, generate the HRPC or JSON-RPC entrypoint with `options.convertEsmToCjs: true` before packing, or provide equivalent loader behavior yourself. Do not convert a bundle while reusing an entrypoint generated with conversion disabled.
+This helper rewrites only the packed bundle. For `.mjs` files to load as CommonJS at runtime, generate the HRPC or JSON-RPC entrypoint with `config.options.convertEsmToCjs: true` before packing, or provide equivalent loader behavior yourself. Do not convert a bundle while reusing an entrypoint generated with conversion disabled.
 
 The inline `options` shape has `minify?: boolean` and `verbose?: boolean`. `ConvertOptions` appears in the generated declaration as the parameter shape but is not a named export from the beta.15 package entrypoint.
 
@@ -62286,7 +62287,7 @@ npm install @tetherto/pear-wrk-wdk@1.0.0-beta.16 'bare-crypto@>=1.13.1'
 npm install --save-dev @tetherto/wdk-worklet-bundler@1.0.0-beta.15
 ```
 
-Worklet Bundler beta.15 generates entrypoints that import Pear Worklet. These examples pair it with Pear Worklet beta.16, which retains beta.15's runtime API and requires the `bare-crypto >=1.13.1` peer. The bundler checks whether the runtime package is installed; it does not enforce this version pairing. React Native Core beta.21 still depends on Pear Worklet beta.15; upgrading Core alone does not select this newer direct-install version.
+Worklet Bundler beta.15 generates entrypoints that import Pear Worklet. These examples pair it with Pear Worklet beta.16, which retains beta.15's runtime API and requires the `bare-crypto >=1.13.1` peer. The bundler checks whether the runtime package is installed; it does not enforce this version pairing. React Native Core beta.22 still depends on Pear Worklet beta.15; upgrading Core alone does not select this newer direct-install version.
 
 ## Create `wdk.config.js`
 
@@ -62527,7 +62528,7 @@ In the normal `generate` or `generateBundle()` path, beta.15 uses one flag for b
 - It validates the rewritten file map, offsets, lengths, CommonJS syntax, entrypoint, package manifests, and absence of dynamic imports before generation succeeds.
 - The generated HRPC or JSON-RPC entrypoint routes `.mjs` files through the CommonJS loader only when conversion is enabled.
 
-There is no beta.15 CLI flag that overrides this setting. Set `options.convertEsmToCjs` in the config used for the build.
+There is no beta.15 CLI flag that overrides this setting. Set `config.options.convertEsmToCjs` in the config used for the build.
 
 ## Configure JSON-RPC and native addons
 
@@ -62605,11 +62606,11 @@ npx wdk-worklet-bundler generate --install
 
 `generate --install` can auto-install missing configured wallet, protocol, generic, preload, and Pear Worklet runtime dependencies after the package manager is detected from the project root. In beta.15, the Pear Worklet runtime is included for both HRPC and JSON-RPC, so the generated entrypoint's runtime dependency is surfaced during validation and installation instead of failing later in `bare-pack`.
 
-Use `--source-only` when you want the generated `.wdk/wdk-worklet.generated.js` entrypoint and related artifacts without running `bare-pack`. This mode also skips bundle conversion. If `options.convertEsmToCjs` is `true` and you run `bare-pack` yourself, convert the packed bundle with `convertBundleEsmToCjs()` before deployment; the source-only entrypoint already contains the matching `.mjs` loader patch. Keep the same conversion setting when generating the entrypoint and converting the bundle.
+Use `--source-only` when you want the generated `.wdk/wdk-worklet.generated.js` entrypoint and related artifacts without running `bare-pack`. This mode also skips bundle conversion. If `config.options.convertEsmToCjs` is `true` and you run `bare-pack` yourself, convert the packed bundle with `convertBundleEsmToCjs()` before deployment; the source-only entrypoint already contains the matching `.mjs` loader patch. Keep the same conversion setting when generating the entrypoint and converting the bundle.
 
 The `generate` command also accepts `--transport hrpc|jsonrpc`, `--link-addons`, `--skip-link-addons`, and `--no-defer-optional-peers`. Select addon hosts with `options.targets` in the config; `--platforms` is no longer accepted. Set `transport` in `wdk.config.js` when you rely on its transport-specific default bundle path. The `--transport` override is applied after output paths are resolved, so it does not switch `.js` HRPC output to the extensionless JSON-RPC default, or vice versa. If you use the flag, set `output.bundle` explicitly to the intended path.
 
-`--skip-generation` reuses an existing generated entrypoint. If `options.convertEsmToCjs` changed since that entrypoint was created, regenerate without `--skip-generation` before building so the runtime `.mjs` loader matches the bundle conversion setting.
+`--skip-generation` reuses an existing generated entrypoint. If `config.options.convertEsmToCjs` changed since that entrypoint was created, regenerate without `--skip-generation` before building so the runtime `.mjs` loader matches the bundle conversion setting.
 
 ## Suspend and resume behavior
 

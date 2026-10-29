@@ -59,10 +59,10 @@ interface WdkBundleConfig {
 
 Every omitted map, level, or `methods` field remains unrestricted. An explicit `methods: []` denies every method on that exact surface. Both generated contexts receive `allowedMethods` and `allowedModuleMethods`.
 
-Beta.15 generates `modules` for both transports. Pair it with Pear Worklet beta.16 and its `bare-crypto >=1.13.1` peer for the HRPC schema and JSON-RPC module calls and events. JSON-RPC defaults addon linking to `true`; HRPC defaults it to `false`. `options.convertEsmToCjs` defaults to `false` for both transports and must be enabled explicitly for targets whose Bare engine cannot load ESM.
+Beta.15 generates `modules` for both transports. Pair it with Pear Worklet beta.16 and its `bare-crypto >=1.13.1` peer for the HRPC schema and JSON-RPC module calls and events. JSON-RPC defaults addon linking to `true`; HRPC defaults it to `false`. `config.options.convertEsmToCjs` defaults to `false` for both transports and must be enabled explicitly for targets whose Bare engine cannot load ESM.
 
 <Callout type="warn">
-Beta.15 declares `output.types`, `options.minify`, and `options.sourceMaps`, but its bundle generator does not honor those fields. Declarations are always written to `./.wdk/index.d.ts`; `minify` and `sourceMaps` do not control `bare-pack` output. ESM-to-CJS conversion minifies independently.
+Beta.15 declares `output.types`, `options.minify`, and `options.sourceMaps`, but its bundle generator does not honor those fields. Declarations are always written to `./.wdk/index.d.ts`; `minify` and `sourceMaps` do not control `bare-pack` output (tracked in [#74](https://github.com/tetherto/wdk-worklet-bundler/issues/74) and [#75](https://github.com/tetherto/wdk-worklet-bundler/issues/75), respectively). ESM-to-CJS conversion minifies independently.
 </Callout>
 
 `options.handleLeakCheck` is optional and applies only to generated HRPC entrypoints. Set `true` to use Pear Worklet beta.16's default `1000` ms interval, or a positive number to pass as `tickIntervalMs`. Omit it to disable diagnostics; `false`, zero, negative numbers, and strings fail `loadConfig()` validation. The interval controls repeated sampling after an immediate suspend snapshot, not a one-time delay.
@@ -220,19 +220,19 @@ const result = await generateBundle(config, { verbose: true })
 
 #### `generateSourceFiles(config, options?)`
 
-Use `generateSourceFiles()` when you want the generated entrypoint without the final `bare-pack` step.
+Use `generateSourceFiles()` when you want the generated entrypoint without the final `bare-pack` step. The second `options` argument accepts only `verbose`.
 
-`options.convertEsmToCjs: true` adds the runtime `.mjs` CommonJS-loader patch to that entrypoint, but this function does not pack or convert a bundle. If you run `bare-pack` yourself, call `convertBundleEsmToCjs()` on its output and keep the same conversion setting used to generate the entrypoint.
+`config.options.convertEsmToCjs: true` adds the runtime `.mjs` CommonJS-loader patch to that entrypoint, but this function does not pack or convert a bundle. If you run `bare-pack` yourself, call `convertBundleEsmToCjs()` on its output and keep the same conversion setting used to generate the entrypoint.
 
 #### `generateEntryPoint(config, outputDir)`
 
 Use `generateEntryPoint()` when you need the generated HRPC Bare entrypoint written to a chosen output directory. This path includes configured generic modules, both method-allowlist maps, module lifecycle/event wiring, and the optional `handleLeakCheck` diagnostic.
 
-The beta.15 HRPC entrypoint scans `require.cache` for every loaded `bare-http1` and `bare-https` module, deduplicates their `globalAgent` objects, and invokes each agent's `suspend()` or `resume()` method. It also invokes `context.moduleRuntime.suspendAll()` or `resumeAll()` when present. Each call is fire-and-forget; synchronous throws and rejected promises are logged without stopping the other lifecycle calls. When `options.convertEsmToCjs` is enabled, the entrypoint also emits the matching runtime `.mjs`-as-CommonJS loader patch.
+The beta.15 HRPC entrypoint scans `require.cache` for every loaded `bare-http1` and `bare-https` module, deduplicates their `globalAgent` objects, and invokes each agent's `suspend()` or `resume()` method. It also invokes `context.moduleRuntime.suspendAll()` or `resumeAll()` when present. Each call is fire-and-forget; synchronous throws and rejected promises are logged without stopping the other lifecycle calls. When `config.options.convertEsmToCjs` is enabled, the entrypoint also emits the matching runtime `.mjs`-as-CommonJS loader patch.
 
 #### `generateJsonRpcEntryPoint(config, outputDir)`
 
-Generate the framed JSON-RPC entrypoint used by native hosts. Beta.15 includes wallet, protocol, and generic-module managers plus both method-allowlist maps. It generates the same fire-and-forget HTTP-agent and module-runtime lifecycle wiring as HRPC. `options.handleLeakCheck` remains HRPC-only, so JSON-RPC does not emit diagnostic registration. When `options.convertEsmToCjs` is enabled, JSON-RPC emits the same `.mjs` loader patch as HRPC.
+Generate the framed JSON-RPC entrypoint used by native hosts. Beta.15 includes wallet, protocol, and generic-module managers plus both method-allowlist maps. It generates the same fire-and-forget HTTP-agent and module-runtime lifecycle wiring as HRPC. `options.handleLeakCheck` remains HRPC-only, so JSON-RPC does not emit diagnostic registration. When `config.options.convertEsmToCjs` is enabled, JSON-RPC emits the same `.mjs` loader patch as HRPC.
 
 #### `linkAddons(config, options?)`
 
@@ -273,7 +273,7 @@ convertBundleEsmToCjs('./.wdk-bundle/wdk-worklet.bundle.js', {
 
 The beta.15 converter accepts raw `.bundle` data and the default UTF-8 CommonJS, ESM, or JSON string wrappers produced by bare-pack. Wrappers created with a non-UTF-8 `--encoding`, such as Base64, are not supported. The converter transforms `.js`, `.mjs`, and `.cjs` files, lowers dynamic imports, removes `"type": "module"` from bundled package manifests, recomputes offsets with `bare-bundle`, restores the original wrapper, and calls `validateBundle()` before returning. It throws if any source transformation or final validation fails.
 
-This helper rewrites only the packed bundle. For `.mjs` files to load as CommonJS at runtime, generate the HRPC or JSON-RPC entrypoint with `options.convertEsmToCjs: true` before packing, or provide equivalent loader behavior yourself. Do not convert a bundle while reusing an entrypoint generated with conversion disabled.
+This helper rewrites only the packed bundle. For `.mjs` files to load as CommonJS at runtime, generate the HRPC or JSON-RPC entrypoint with `config.options.convertEsmToCjs: true` before packing, or provide equivalent loader behavior yourself. Do not convert a bundle while reusing an entrypoint generated with conversion disabled.
 
 The inline `options` shape has `minify?: boolean` and `verbose?: boolean`. `ConvertOptions` appears in the generated declaration as the parameter shape but is not a named export from the beta.15 package entrypoint.
 
