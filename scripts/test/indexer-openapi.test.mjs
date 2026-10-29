@@ -249,3 +249,23 @@ test('rejects lossy numeric literals before rendering nested schema examples whi
   }
   assert.deepEqual(parseJson('[0.1,-0.001,1.25e2,9007199254740991]'), [0.1, -0.001, 125, Number.MAX_SAFE_INTEGER]);
 });
+
+test('rejects decimal rounding and underflow in constraints before schema validation can normalize them', () => {
+  const document = fixture();
+  const properties = document.paths[endpoint].get.responses['200'].content['application/json'].schema.properties;
+  for (const [type, keyword, literals] of [
+    ['number', 'minimum', ['1e-999', '-1e-999', '0.10000000000000001', '-0.10000000000000001', '1e-999999999999999999999']],
+    ['string', 'minLength', ['1.0000000000000001']],
+  ]) {
+    properties.precision = { type, [keyword]: 'RAW_NUMBER' };
+    for (const literal of literals) {
+      const input = JSON.stringify(document).replace('"RAW_NUMBER"', literal);
+      assert.throws(() => renderReference(input, { ...provenance, sha256: digest(input) }),
+        new RegExp(`lossy JSON number at /paths/.*?/properties/precision/${keyword}`));
+    }
+  }
+  assert.deepEqual(parseJson('[1.000e0,0.10,125e-3,-0.00100,1E+02,1e-7,0e99999999999999999999,-0]'),
+    [1, 0.1, 0.125, -0.001, 100, 1e-7, 0, -0]);
+  assert.throws(() => parseJson('{"a/b~c":[0.10000000000000001]}'), /lossy JSON number at \/a~1b~0c\/0/);
+  assert.throws(() => parseJson(`1.${'0'.repeat(50_000)}1`), /lossy JSON number at \//);
+});

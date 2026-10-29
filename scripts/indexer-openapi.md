@@ -15,13 +15,15 @@ The generator covers every supported HTTP operation in the snapshot, including i
 
 ## Validation boundary
 
-`indexer-openapi.mjs` is a bounded contract validator and lossless renderer, not a complete OpenAPI implementation. It rejects duplicate JSON keys, non-finite numbers and unsafe integral numeric literals, unsupported dialects, malformed known structures, unrecognized features, external references, unexpected servers, unsupported security and incomplete path parameters. API requests are not executed by these checks.
+`indexer-openapi.mjs` is a bounded contract validator and renderer, not a complete OpenAPI implementation. It rejects duplicate JSON keys, non-finite numbers, unsafe integral numeric literals and numbers that would change mathematical value when rendered. Equivalent decimal/exponent spelling is accepted; finite rounding and underflow fail with a JSON pointer. It also rejects unsupported dialects, malformed known structures, unrecognized features, external references, unexpected servers, unsupported security and incomplete path parameters. API requests are not executed by these checks.
 
 The production export declares OpenAPI 3.0.0 but contains 23 `type: "null"` declarations and one `propertyNames` declaration outside that dialect. `indexer-openapi-compatibility.json` records the exact JSON pointers and offending values. Those reviewed defects remain unchanged in the raw snapshot and generated schemas. A new or changed defect fails generation; an upstream fix can remove a defect. Do not convert nullability, rewrite the source, or describe this compatibility allowance as passing formal OpenAPI validation. Update the allowlist only after reviewing an authoritative source change.
 
 New paths and supported parameter/schema constraints generate automatically. New OpenAPI features fail with their source location until validation, rendering and regression coverage support them. The current scope uses inline schemas and a single header API key. Add reusable references or other authentication only when the upstream contract requires them.
 
 The pure renderer does not write files. The sync command validates and prepares its outputs before publishing them under a filesystem lock with rollback. Normal builds consume the checked-in artifacts and run the offline freshness check. The workflow checks daily at 05:17 UTC, checks out `develop`, and proposes a draft PR from `automation/indexer-openapi` into `develop`. GitHub schedules run only when the workflow exists on the repository's default branch; merging it into `develop` alone does not activate the daily schedule when the default branch is `main`. Promote the workflow through the normal release path to activate scheduling. The workflow does not establish production API behavior or automatically approve a change.
+
+An open automation PR is resumed normally. After merge, a retained branch must either be an ancestor of `develop` or have its exact head recorded on a merged PR into `develop`. Only PRs from this repository count as evidence. For squash/rebase merges, an ancestry-only merge keeps the current `develop` contents and allows the next push to fast-forward. An unmerged or altered head without an open PR still requires manual review; unexpected files are rejected before branch reuse.
 
 ## Review and verification
 

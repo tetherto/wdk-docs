@@ -37,11 +37,6 @@ jobs:
           git ls-remote --heads origin "refs/heads/$SYNC_BRANCH" > "$RUNNER_TEMP/indexer-remote-head"
           if [ -s "$RUNNER_TEMP/indexer-remote-head" ]; then
             git fetch origin "$SYNC_BRANCH"
-            existing=$(gh pr list --base develop --head "$SYNC_BRANCH" --state open --json number --jq '.[0].number // empty')
-            if [ -z "$existing" ] && ! git merge-base --is-ancestor "origin/$SYNC_BRANCH" origin/develop; then
-              echo 'The previous automation branch has unmerged work without an open PR; review it before reusing the branch.'
-              exit 1
-            fi
             git diff --name-only "origin/develop...origin/$SYNC_BRANCH" > "$RUNNER_TEMP/indexer-branch-files"
             while IFS= read -r file; do
               case "$file" in
@@ -49,8 +44,24 @@ jobs:
                 *) echo "Unexpected change on the automation branch: $file"; exit 1 ;;
               esac
             done < "$RUNNER_TEMP/indexer-branch-files"
-            git switch -c "$SYNC_BRANCH" --track "origin/$SYNC_BRANCH"
-            git merge --no-edit origin/develop
+            existing=$(gh pr list --base develop --head "$SYNC_BRANCH" --state open --json number,isCrossRepository --jq 'map(select(.isCrossRepository == false)) | .[0].number // empty')
+            if [ -n "$existing" ]; then
+              git switch -c "$SYNC_BRANCH" --track "origin/$SYNC_BRANCH"
+              git merge --no-edit origin/develop
+            else
+              remote_head=$(git rev-parse "origin/$SYNC_BRANCH")
+              if ! git merge-base --is-ancestor "$remote_head" origin/develop; then
+                gh pr list --base develop --head "$SYNC_BRANCH" --state merged --limit 100 --json headRefOid,isCrossRepository --jq '.[] | select(.isCrossRepository == false) | .headRefOid' > "$RUNNER_TEMP/indexer-merged-heads"
+                if ! grep -Fxq "$remote_head" "$RUNNER_TEMP/indexer-merged-heads"; then
+                  echo 'The previous automation head has not been merged into develop; review it before reusing the branch.'
+                  exit 1
+                fi
+              fi
+              git switch -c "$SYNC_BRANCH"
+              # A reviewed squash/rebase head may not be an ancestor of develop.
+              # Retain it for fast-forward pushes while keeping develop's current tree.
+              git merge --no-ff --no-edit -s ours "$remote_head"
+            fi
           else
             git switch -c "$SYNC_BRANCH"
           fi
@@ -77,7 +88,7 @@ jobs:
             git commit -m 'docs: sync Indexer production OpenAPI reference'
           fi
           git push origin "HEAD:refs/heads/$SYNC_BRANCH"
-          existing=$(gh pr list --base develop --head "$SYNC_BRANCH" --state open --json number --jq '.[0].number // empty')
+          existing=$(gh pr list --base develop --head "$SYNC_BRANCH" --state open --json number,isCrossRepository --jq 'map(select(.isCrossRepository == false)) | .[0].number // empty')
           if [ -z "$existing" ]; then
             cat > "$RUNNER_TEMP/indexer-openapi-pr.md" <<'BODY'
           Updates the Indexer REST reference from the production OpenAPI export, including endpoint details, schemas and the LLM feed. The provenance artifact records the source, content hash and observed deployment version.

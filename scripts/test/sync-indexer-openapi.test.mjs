@@ -104,10 +104,13 @@ test('deployment advance with unchanged export fails closed without changing fil
 test('download, size, invalid contract and health failures leave all artifacts unchanged', async () => {
   const root = await fixture();
   const before = await snapshot(root);
+  const rounded = JSON.parse(RAW);
+  rounded.paths['/api/v1/chains'].get.responses['200'].content['application/json'].schema.example = 'RAW_NUMBER';
   const cases = [
     fetcher('unavailable', { specStatus: 503 }),
     fetcher(' '.repeat(2 * 1024 * 1024 + 1)),
     fetcher('{"openapi":"3.0.0","paths":{}}'),
+    fetcher(JSON.stringify(rounded).replace('"RAW_NUMBER"', '0.10000000000000001')),
     fetcher(RAW, { healthStatus: 500 }),
     { fetchImpl: async () => { throw new Error('network failure'); } },
   ];

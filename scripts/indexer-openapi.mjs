@@ -10,13 +10,27 @@ const isObject = (value) => value !== null && typeof value === 'object' && !Arra
 const fail = (message) => { throw new Error(message); };
 const pointer = (base, key) => `${base}/${String(key).replaceAll('~', '~0').replaceAll('/', '~1')}`;
 
-// JSON.parse validates syntax; this second pass rejects keys it would silently overwrite.
+// Compare decimal values without expanding exponents or requiring exact binary fractions.
+function decimalValue(literal) {
+  const [, sign, whole, fraction = '', exponent = '0'] = /^(-?)(\d+)(?:\.(\d+))?(?:e([+-]?\d+))?$/i.exec(literal);
+  const digits = whole + fraction;
+  let start = 0;
+  let end = digits.length;
+  while (digits[start] === '0') start += 1;
+  if (start === end) return '0';
+  while (digits[end - 1] === '0') end -= 1;
+  const power = Number(exponent);
+  if (!Number.isSafeInteger(power)) return null;
+  return `${sign}${digits.slice(start, end)}e${power - fraction.length + digits.length - end}`;
+}
+
+// JSON.parse validates syntax; this pass rejects overwritten keys and rounded numeric values.
 export function parseJson(raw) {
   if (typeof raw !== 'string' || Buffer.byteLength(raw) > 2_000_000) fail('Expected JSON text below 2 MB');
   const value = JSON.parse(raw);
   const tokens = raw.match(/"(?:\\.|[^"\\])*"|[{}\[\],:]|[^\s{}\[\],:]+/g) ?? [];
   let index = 0;
-  function visit(depth = 0) {
+  function visit(depth = 0, location = '') {
     if (depth > 100) fail('JSON nesting exceeds 100 levels');
     const token = tokens[index++];
     if (token === '{') {
@@ -26,13 +40,14 @@ export function parseJson(raw) {
         if (keys.has(key)) fail(`Duplicate JSON key: ${key}`);
         keys.add(key);
         index += 1;
-        visit(depth + 1);
+        visit(depth + 1, pointer(location, key));
         if (tokens[index] === ',') index += 1;
       }
       index += 1;
     } else if (token === '[') {
+      let item = 0;
       while (tokens[index] !== ']') {
-        visit(depth + 1);
+        visit(depth + 1, pointer(location, item++));
         if (tokens[index] === ',') index += 1;
       }
       index += 1;
@@ -40,6 +55,9 @@ export function parseJson(raw) {
       const number = Number(token);
       if (!Number.isFinite(number) || (Number.isInteger(number) && !Number.isSafeInteger(number))) {
         fail('Unsupported non-finite or unsafe integer JSON number');
+      }
+      if (decimalValue(token) !== decimalValue(JSON.stringify(number))) {
+        fail(`Unsupported lossy JSON number at ${location || '/'}`);
       }
     }
   }
