@@ -20,6 +20,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       SYNC_BRANCH: automation/indexer-openapi
+      CHECKPOINT_BRANCH: automation/indexer-openapi-validated
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,36 +35,85 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git ls-remote --heads origin "refs/heads/$SYNC_BRANCH" > "$RUNNER_TEMP/indexer-remote-head"
-          if [ -s "$RUNNER_TEMP/indexer-remote-head" ]; then
-            git fetch origin "$SYNC_BRANCH"
-            git diff --name-only "origin/develop...origin/$SYNC_BRANCH" > "$RUNNER_TEMP/indexer-branch-files"
+          gh api --method GET --paginate --slurp "repos/$GH_REPO/pulls" -f state=all -f "head=${GH_REPO%/*}:$SYNC_BRANCH" -f base=develop -f per_page=100 | jq 'add | map(select(.head.repo.full_name == .base.repo.full_name))' > "$RUNNER_TEMP/indexer-prs.json"
+          existing=$(jq -r 'map(select(.state == "open")) | .[0].number // empty' "$RUNNER_TEMP/indexer-prs.json")
+          if [ -z "$existing" ]; then
+            latest=$(jq -r 'max_by([.closed_at, (.merged_at == null), .number]) | if . == null then empty elif .state != "closed" then "UNKNOWN" elif .merged_at != null then "MERGED" else "CLOSED" end' "$RUNNER_TEMP/indexer-prs.json")
+            case "$latest" in
+              ''|MERGED) ;;
+              CLOSED) echo 'The latest upstream automation PR was closed without merging; review it before resuming.'; exit 1 ;;
+              *) echo 'The upstream PR state changed or is unknown; retry after reviewing it.'; exit 1 ;;
+            esac
+          fi
+          git ls-remote --heads origin "refs/heads/$SYNC_BRANCH" "refs/heads/$CHECKPOINT_BRANCH" > "$RUNNER_TEMP/indexer-remote-heads"
+          remote_head=$(awk -v ref="refs/heads/$SYNC_BRANCH" '$2 == ref { print $1 }' "$RUNNER_TEMP/indexer-remote-heads")
+          checkpoint_head=$(awk -v ref="refs/heads/$CHECKPOINT_BRANCH" '$2 == ref { print $1 }' "$RUNNER_TEMP/indexer-remote-heads")
+          for ref in "$SYNC_BRANCH" "$CHECKPOINT_BRANCH"; do
+            advertised=$(awk -v ref="refs/heads/$ref" '$2 == ref { print $1 }' "$RUNNER_TEMP/indexer-remote-heads")
+            if [ -z "$advertised" ]; then continue; fi
+            git fetch origin "$ref"
+            if [ "$(git rev-parse "origin/$ref")" != "$advertised" ]; then echo 'The automation refs changed while being read; retry.'; exit 1; fi
+            git diff --name-only "origin/develop...origin/$ref" > "$RUNNER_TEMP/indexer-branch-files"
             while IFS= read -r file; do
               case "$file" in
                 public/assets/indexer-api/openapi.json|public/assets/indexer-api/openapi.provenance.json|content/docs/tools/indexer-api/api-reference.mdx|public/llms-full.txt) ;;
-                *) echo "Unexpected change on the automation branch: $file"; exit 1 ;;
+                *) echo "Unexpected change on $ref: $file"; exit 1 ;;
               esac
             done < "$RUNNER_TEMP/indexer-branch-files"
-            existing=$(gh pr list --base develop --head "$SYNC_BRANCH" --state open --json number,isCrossRepository --jq 'map(select(.isCrossRepository == false)) | .[0].number // empty')
+          done
+          is_merged() {
+            if git merge-base --is-ancestor "$1" origin/develop; then return 0; else status=$?; fi
+            if [ "$status" -ne 1 ]; then exit "$status"; fi
+            if [ ! -f "$RUNNER_TEMP/indexer-merged-heads" ]; then
+              jq -r 'map(select(.merged_at != null)) | sort_by([.merged_at, .number]) | .[] | [.number, .head.sha] | @tsv' "$RUNNER_TEMP/indexer-prs.json" > "$RUNNER_TEMP/indexer-merged-heads" || exit 1
+            fi
+            if awk -v head="$1" '$2 == head { found=1 } END { exit !found }' "$RUNNER_TEMP/indexer-merged-heads"; then return 0; fi
+            latest_merged=$(tail -n 1 "$RUNNER_TEMP/indexer-merged-heads")
+            if [ -z "$latest_merged" ]; then return 1; fi
+            read -r number merged_head <<< "$latest_merged"
+            if ! git cat-file -e "$merged_head^{commit}" 2>/dev/null; then
+              git fetch origin "refs/pull/$number/head" || exit 1
+              fetched=$(git rev-parse FETCH_HEAD) || exit 1
+              if [ "$fetched" != "$merged_head" ]; then echo 'The merged PR head changed while being read; review it before resuming.'; exit 1; fi
+            fi
+            if git merge-base --is-ancestor "$1" "$merged_head"; then return 0; else status=$?; fi
+            if [ "$status" -ne 1 ]; then exit "$status"; fi
+            return 1
+          }
+          if [ -n "$remote_head" ]; then
             if [ -n "$existing" ]; then
               git switch -c "$SYNC_BRANCH" --track "origin/$SYNC_BRANCH"
               git merge --no-edit origin/develop
             else
-              remote_head=$(git rev-parse "origin/$SYNC_BRANCH")
-              if ! git merge-base --is-ancestor "$remote_head" origin/develop; then
-                gh pr list --base develop --head "$SYNC_BRANCH" --state merged --limit 100 --json headRefOid,isCrossRepository --jq '.[] | select(.isCrossRepository == false) | .headRefOid' > "$RUNNER_TEMP/indexer-merged-heads"
-                if ! grep -Fxq "$remote_head" "$RUNNER_TEMP/indexer-merged-heads"; then
-                  echo 'The previous automation head has not been merged into develop; review it before reusing the branch.'
+              if is_merged "$remote_head"; then
+                git switch -c "$SYNC_BRANCH"
+                # Keep current develop content while retaining a reviewed squash/rebase head.
+                git merge --no-ff --no-edit -s ours "$remote_head"
+              else
+                if [ "$remote_head" != "$checkpoint_head" ]; then
+                  echo 'The previous automation head has not been merged or checkpointed; review it before reusing the branch.'
                   exit 1
                 fi
+                # Recover the pending update without discarding its validated content.
+                git switch -c "$SYNC_BRANCH" --track "origin/$SYNC_BRANCH"
+                git merge --no-edit origin/develop
               fi
-              git switch -c "$SYNC_BRANCH"
-              # A reviewed squash/rebase head may not be an ancestor of develop.
-              # Retain it for fast-forward pushes while keeping develop's current tree.
-              git merge --no-ff --no-edit -s ours "$remote_head"
             fi
           else
+            if [ -n "$existing" ]; then echo 'An open upstream PR has no automation branch; review it before resuming.'; exit 1; fi
+            if [ -n "$checkpoint_head" ] && ! is_merged "$checkpoint_head"; then echo 'The deleted automation branch has an unmerged checkpoint; review it before resuming.'; exit 1; fi
             git switch -c "$SYNC_BRANCH"
+          fi
+          if [ -n "$checkpoint_head" ]; then
+            if git merge-base --is-ancestor "$checkpoint_head" HEAD; then
+              :
+            elif is_merged "$checkpoint_head"; then
+              # Preserve the validated ref's ancestry without restoring old content.
+              git merge --no-ff --no-edit -s ours "$checkpoint_head"
+            else
+              echo 'The checkpoint contains unmerged work outside the chosen automation head; review it before resuming.'
+              exit 1
+            fi
           fi
       - run: npm ci
       - run: npm run sync:indexer
@@ -84,11 +134,24 @@ jobs:
         if: steps.changes.outputs.changed == 'true'
         shell: bash
         run: |
+          assert_creation_allowed() {
+            gh api --method GET --paginate --slurp "repos/$GH_REPO/pulls" -f state=all -f "head=${GH_REPO%/*}:$SYNC_BRANCH" -f base=develop -f per_page=100 | jq 'add | map(select(.head.repo.full_name == .base.repo.full_name))' > "$RUNNER_TEMP/indexer-prs.json"
+            existing=$(jq -r 'map(select(.state == "open")) | .[0].number // empty' "$RUNNER_TEMP/indexer-prs.json")
+            if [ -n "$existing" ]; then return; fi
+            latest=$(jq -r 'max_by([.closed_at, (.merged_at == null), .number]) | if . == null then empty elif .state != "closed" then "UNKNOWN" elif .merged_at != null then "MERGED" else "CLOSED" end' "$RUNNER_TEMP/indexer-prs.json")
+            case "$latest" in
+              ''|MERGED) ;;
+              CLOSED) echo 'The latest upstream automation PR was closed without merging; review it before publishing.'; exit 1 ;;
+              *) echo 'The upstream PR state changed or is unknown; retry after reviewing it.'; exit 1 ;;
+            esac
+          }
+          git diff --exit-code
+          assert_creation_allowed
           if ! git diff --cached --quiet; then
             git commit -m 'docs: sync Indexer production OpenAPI reference'
           fi
-          git push origin "HEAD:refs/heads/$SYNC_BRANCH"
-          existing=$(gh pr list --base develop --head "$SYNC_BRANCH" --state open --json number,isCrossRepository --jq 'map(select(.isCrossRepository == false)) | .[0].number // empty')
+          git push --atomic origin "HEAD:refs/heads/$SYNC_BRANCH" "HEAD:refs/heads/$CHECKPOINT_BRANCH"
+          assert_creation_allowed
           if [ -z "$existing" ]; then
             cat > "$RUNNER_TEMP/indexer-openapi-pr.md" <<'BODY'
           Updates the Indexer REST reference from the production OpenAPI export, including endpoint details, schemas and the LLM feed. The provenance artifact records the source, content hash and observed deployment version.
