@@ -56,7 +56,7 @@ function NoPrefetchLink({ prefetch: _prefetch, href, onClick, ...props }: NoPref
   };
 
   // Work around static-export navigation edge cases by disabling prefetch globally.
-  // Raw text artifacts are not application routes and must use a browser document request.
+  // Raw documentation artifacts must use a browser document request.
   if (!href) return <a onClick={handleClick} {...props} />;
   if (shouldUseNativeDocumentNavigation(href)) {
     return <a href={href} onClick={handleClick} {...props} />;

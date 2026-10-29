@@ -1,4 +1,4 @@
-const NATIVE_DOCUMENT_EXTENSIONS = [".txt"];
+const NATIVE_DOCUMENT_EXTENSIONS = [".txt", ".json"];
 
 export function shouldUseNativeDocumentNavigation(href: string | undefined): boolean {
   if (!href) return false;

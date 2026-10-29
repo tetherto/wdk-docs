@@ -31,34 +31,29 @@ Use your API key to query blockchain data via the REST API.
 
 ## Quick Example
 
-Here's a quick example of how to query a token balance.
+Query the USD₮ balance of your intended Ethereum wallet. Replace `YOUR_WALLET_ADDRESS` with that wallet's address and set `WDK_INDEXER_API_KEY` in your environment.
 
 <Tabs items={["curl", "JavaScript"]}>
 <Tab value="curl">
 ```bash
-curl -X GET "https://wdk-api.tether.io/api/v1/ethereum/usdt/0xdac17f958d2ee523a2206206994597c13d831ec7/token-balances" \
-     -H "x-api-key: your-api-key-here"
+WALLET_ADDRESS='YOUR_WALLET_ADDRESS'
+curl --fail-with-body "https://wdk-api.tether.io/api/v1/ethereum/usdt/${WALLET_ADDRESS}/token-balances" \
+     -H "x-api-key: ${WDK_INDEXER_API_KEY}"
 ```
 </Tab>
 <Tab value="JavaScript">
 ```javascript
-const axios = require('axios');
+// Run as a Node.js ES module using its built-in fetch.
+const address = 'YOUR_WALLET_ADDRESS';
+const apiKey = process.env.WDK_INDEXER_API_KEY;
+if (!apiKey) throw new Error('Set WDK_INDEXER_API_KEY before making a request');
 
-async function getTokenBalance(blockchain, token, address) {
-  const response = await axios.get(
-    `https://wdk-api.tether.io/api/v1/${blockchain}/${token}/${address}/token-balances`,
-    {
-      headers: {
-        'x-api-key': 'your-api-key-here'
-      }
-    }
-  );
-  
-  return response.data.tokenBalance;
-}
-
-const balance = await getTokenBalance('ethereum', 'usdt', '0xdac17f958d2ee523a2206206994597c13d831ec7');
-console.log(`Balance: ${balance.amount} ${balance.token.toUpperCase()}`);
+const response = await fetch(
+  `https://wdk-api.tether.io/api/v1/ethereum/usdt/${encodeURIComponent(address)}/token-balances`,
+  { headers: { 'x-api-key': apiKey } },
+);
+if (!response.ok) throw new Error(`Indexer request failed: HTTP ${response.status}`);
+console.log(await response.json());
 ```
 </Tab>
 </Tabs>

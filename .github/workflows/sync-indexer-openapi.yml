@@ -1,0 +1,92 @@
+name: Sync Indexer OpenAPI
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 5 * * *'
+
+concurrency:
+  group: indexer-openapi-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.repository == 'tetherto/wdk-docs'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      SYNC_BRANCH: automation/indexer-openapi
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.23.4'
+          cache: npm
+      - name: Resume the documentation update branch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git ls-remote --heads origin "refs/heads/$SYNC_BRANCH" > "$RUNNER_TEMP/indexer-remote-head"
+          if [ -s "$RUNNER_TEMP/indexer-remote-head" ]; then
+            git fetch origin "$SYNC_BRANCH"
+            existing=$(gh pr list --base develop --head "$SYNC_BRANCH" --state open --json number --jq '.[0].number // empty')
+            if [ -z "$existing" ] && ! git merge-base --is-ancestor "origin/$SYNC_BRANCH" origin/develop; then
+              echo 'The previous automation branch has unmerged work without an open PR; review it before reusing the branch.'
+              exit 1
+            fi
+            git diff --name-only "origin/develop...origin/$SYNC_BRANCH" > "$RUNNER_TEMP/indexer-branch-files"
+            while IFS= read -r file; do
+              case "$file" in
+                public/assets/indexer-api/openapi.json|public/assets/indexer-api/openapi.provenance.json|content/docs/tools/indexer-api/api-reference.mdx|public/llms-full.txt) ;;
+                *) echo "Unexpected change on the automation branch: $file"; exit 1 ;;
+              esac
+            done < "$RUNNER_TEMP/indexer-branch-files"
+            git switch -c "$SYNC_BRANCH" --track "origin/$SYNC_BRANCH"
+            git merge --no-edit origin/develop
+          else
+            git switch -c "$SYNC_BRANCH"
+          fi
+      - run: npm ci
+      - run: npm run sync:indexer
+      - name: Detect contract changes
+        id: changes
+        shell: bash
+        run: |
+          git add public/assets/indexer-api/openapi.json public/assets/indexer-api/openapi.provenance.json content/docs/tools/indexer-api/api-reference.mdx public/llms-full.txt
+          if git diff --quiet origin/develop -- public/assets/indexer-api/openapi.json public/assets/indexer-api/openapi.provenance.json content/docs/tools/indexer-api/api-reference.mdx public/llms-full.txt; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Validate documentation
+        if: steps.changes.outputs.changed == 'true'
+        run: npm run quality
+      - name: Open or update a draft documentation PR
+        if: steps.changes.outputs.changed == 'true'
+        shell: bash
+        run: |
+          if ! git diff --cached --quiet; then
+            git commit -m 'docs: sync Indexer production OpenAPI reference'
+          fi
+          git push origin "HEAD:refs/heads/$SYNC_BRANCH"
+          existing=$(gh pr list --base develop --head "$SYNC_BRANCH" --state open --json number --jq '.[0].number // empty')
+          if [ -z "$existing" ]; then
+            cat > "$RUNNER_TEMP/indexer-openapi-pr.md" <<'BODY'
+          Updates the Indexer REST reference from the production OpenAPI export, including endpoint details, schemas and the LLM feed. The provenance artifact records the source, content hash and observed deployment version.
+
+          The raw contract is preserved. Known upstream schema-format limitations remain documented; unexpected changes fail validation.
+
+          Validation: `npm run quality` passed in the sync workflow. GitHub may require a maintainer to approve PR workflow runs. Review is required before merge.
+
+          Refs #288.
+          BODY
+            gh pr create --base develop --head "$SYNC_BRANCH" --draft --title 'docs: sync Indexer production OpenAPI reference' --body-file "$RUNNER_TEMP/indexer-openapi-pr.md"
+          fi
