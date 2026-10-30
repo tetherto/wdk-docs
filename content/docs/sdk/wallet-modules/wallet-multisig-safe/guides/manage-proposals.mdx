@@ -35,7 +35,7 @@ const proposal = await account.propose(tx)
 console.log('Proposal ID:', proposal.proposalId)
 ```
 
-A proposal is not a transfer receipt. For ERC-20 transfers, use [`proposeTransfer()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#proposetransfer) with `token`, `recipient` and `amount` in token base units. Token-paymaster fees and native execution-cost estimates are [different quantities](/sdk/wallet-modules/wallet-multisig-safe/configuration#fee-results).
+A proposal is not a transfer receipt. For ERC-20 transfers, use [`proposeTransfer()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#proposetransfer) with `token`, `recipient` and `amount` in token base units. Token-paymaster and native fees use [different units](/sdk/wallet-modules/wallet-multisig-safe/configuration#fee-results).
 
 ## Collect Approvals
 
@@ -63,7 +63,7 @@ const submitted = await account.executeProposal(proposalId)
 console.log('UserOperation hash:', submitted.hash)
 ```
 
-`submitted.fee` is the stored operation's maximum native gas cost, not a measured token charge. Readiness checks count confirmations; they do not guarantee successful execution or fresh coordinator state.
+`submitted.fee` is an upper bound in the operation's gas-payment asset: native wei, paymaster-token base units, or zero for recognized sponsorship. Display it as "up to" and see [fee decoding requirements](/sdk/wallet-modules/wallet-multisig-safe/configuration#fee-results). Readiness checks count confirmations; they do not guarantee successful execution or fresh coordinator state.
 
 Use [`getTransactionReceipt()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#gettransactionreceipt) to inspect inclusion:
 
@@ -72,7 +72,7 @@ const receipt = await account.getTransactionReceipt(submitted.hash)
 console.log(receipt)
 ```
 
-A missing receipt is not success. Apply a bounded retry policy and inspect the returned UserOperation `success` and underlying receipt; an EVM receipt uses its EVM status. The method first queries the EVM provider, so provider errors can interrupt its bundler fallback. Do not use inherited [`waitForTransaction()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#waitfortransaction) in beta.1.
+A missing receipt is not success. Apply a bounded retry policy and inspect the returned UserOperation `success` and underlying receipt; an EVM receipt uses its EVM status. The method first queries the EVM provider, so provider errors can interrupt its bundler fallback. Do not use inherited [`waitForTransaction()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#waitfortransaction) in beta.2.
 
 `autoExecute: true` on [`propose()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#propose) or [`proposeTransfer()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#proposetransfer) submits only when the initial proposal already meets the threshold. Its returned `status: 'executed'` means this submission branch ran, not that a successful receipt was observed. Always confirm receipts.
 

@@ -6,6 +6,8 @@ schemaType: APIReference
 icon: Code
 ---
 
+This reference covers `@tetherto/wdk-wallet-evm@1.0.0-beta.23`.
+
 ## Table of Contents
 
 | Class | Description | Methods |
@@ -26,17 +28,17 @@ new WalletManagerEvm(seedOrSigner, config?)
 ```
 
 **Parameters:**
-- `seedOrSigner` (`string | Uint8Array | ISigner`): BIP-39 mnemonic, raw BIP-32 master seed (16–64 bytes), or a derivable root signer
+- `seedOrSigner` (`string | Uint8Array | ISignerEvm`): BIP-39 mnemonic seed phrase, raw BIP-32 master seed (16–64 bytes), or a derivable root signer
 - `config` (object, optional): Configuration object
-  - `provider` (`string | Eip1193Provider | Array<string | Eip1193Provider>`, optional): RPC endpoint URL, EIP-1193 provider instance, or ordered failover list
+  - `provider` (`string | Provider | Eip1193Provider | Array<string | Provider | Eip1193Provider>`, optional): RPC endpoint URL, ethers provider, EIP-1193 provider, or ordered failover list
   - `retries` (number, optional): Additional retry attempts when `provider` is an array
-  - `chainId` (number, optional): Network chain ID. When provided, skips automatic chain ID detection.
+  - `chainId` (number, optional): Nonzero chain ID for module-built URL and EIP-1193 providers. Existing ethers providers keep their own settings; see [chain configuration](/sdk/wallet-modules/wallet-evm/configuration#chain-id).
   - `transferMaxFee` (number | bigint, optional): Maximum fee amount for transfer operations (in wei)
   - `transactionMaxFee` (number | bigint, optional): Execution-gas fee cap for `sendTransaction()` and provider-backed `signTransaction()` (in wei), including sends made by `transfer()` and `approve()`
 
 The default signer must support derivation. Register non-derivable signers, such as private-key signers, with `addSigner()` and retrieve them by name.
 
-In beta.20, the runtime also accepts an already-built ethers `Provider` and reuses one provider object across every account created by this manager. The published TypeScript declaration still exposes only the provider types shown above, so this runtime input is not yet a fully typed configuration path.
+The runtime and published configuration type accept an ethers `Provider`. The manager reuses one provider object across its accounts.
 
 **Throws:**
 - `ValueError` if a string seed phrase is not a valid BIP-39 mnemonic.
@@ -65,19 +67,19 @@ const signerWallet = new WalletManagerEvm(signer, {
 | `getRandomSeedPhrase(wordCount?)` | (static) Returns a random BIP-39 seed phrase | `string` | - |
 | `isValidSeedPhrase(seedPhrase)` | (static) Checks if a seed phrase is valid | `boolean` | - |
 | `addSigner(signerName, signer)` | Registers a named signer on the manager | `WalletManagerEvm` | If `signerName` is empty |
-| `getSigner(signerName?)` | Returns the default signer or a named signer | `ISigner` | If the requested signer is unavailable |
-| `getSigners()` | Returns registered named signers | `Record<string, ISigner>` | - |
+| `getSigner(signerName?)` | Returns the default signer or a named signer | `ISignerEvm` | If the requested signer is unavailable |
+| `getSigners()` | Returns registered named signers | `Record<string, ISignerEvm>` | - |
 | `getAccount(index?, options?)` | Returns a wallet account at the specified index, optionally from a named signer | `Promise<WalletAccountEvm>` | If the requested signer is unavailable or cannot derive |
 | `getAccount(signerName)` | Returns the account associated with a registered signer | `Promise<WalletAccountEvm>` | If the named signer is unavailable |
 | `getAccountByPath(path, options?)` | Returns a wallet account at the specified BIP-44 derivation path, optionally from a named signer | `Promise<WalletAccountEvm>` | If the requested signer is unavailable or cannot derive |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` | `ProviderRequiredError` if no provider is set |
-| `dispose()` | Initiates cleanup of accounts and default/named signers, including supplied signers in beta.20 | `void` | - |
+| `dispose()` | Initiates cleanup of cached accounts and the seed-created default signer; app-supplied default and named signers remain app-owned | `void` | - |
 
 ### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `seed` | `Uint8Array \| undefined` (inherited declaration) | Always `undefined` at runtime in beta.20: the manager turns seed input into its default signer before calling the base constructor. Keep seed storage in your application. |
+| `seed` | `Uint8Array \| undefined` (inherited declaration) | Always `undefined` at runtime from beta.20 onward: the manager turns seed input into its default signer before calling the base constructor. Keep seed storage in your application. |
 
 #### `getRandomSeedPhrase(wordCount?)` (static)
 Returns a random BIP-39 seed phrase.
@@ -115,7 +117,7 @@ Registers a signer under a name. Use this for external or non-default signers th
 
 **Parameters:**
 - `signerName` (string): Name used for lookup
-- `signer` (ISigner): Signer instance
+- `signer` (ISignerEvm): Signer instance
 
 **Returns:** `WalletManagerEvm` - The wallet manager
 
@@ -132,12 +134,12 @@ Returns the default signer when called with no argument, or a registered named s
 **Parameters:**
 - `signerName` (string, optional): Name registered with `addSigner()`
 
-**Returns:** `ISigner` - The signer
+**Returns:** `ISignerEvm` - The signer
 
 #### `getSigners()`
 Returns a shallow copy of the named signers registered with `addSigner()`. The default signer is not included.
 
-**Returns:** `Record<string, ISigner>` - Registered named signers
+**Returns:** `Record<string, ISignerEvm>` - Registered named signers
 
 #### `getAccount(index?)`
 Returns a wallet account at the specified index following BIP-44 standard. Pass `options.signerName` to derive the account from a registered derivable signer.
@@ -164,7 +166,7 @@ const signerAccount = await wallet.getAccount(2, { signerName: 'hardware-root' }
 ```
 
 #### `getAccount(signerName)`
-Returns the wallet account associated with a registered signer. Non-derivable signers return their single account.
+Returns an account wrapping the registered signer exactly at its current path, without deriving. This also applies to derivable named signers. Use the numeric or path overload with `options.signerName` to derive a child instead.
 
 **Parameters:**
 - `signerName` (string): Name registered with `addSigner()`
@@ -222,7 +224,7 @@ const result = await account.sendTransaction({
 ```
 
 #### `dispose()`
-Initiates cleanup of cached accounts and disposes the default signer and every named signer in beta.20, including signers supplied by your application. Coordinate their lifetime with every other consumer before disposing the manager; do not assume a shared signer remains usable.
+Initiates cleanup of the seed-created default signer, then delegates to base-wallet beta.21. Cached accounts are disposed only when reading `account.keyPair?.privateKey` yields a truthy value. Derived external accounts without exposed private-key bytes are skipped; dispose them explicitly. A throwing key getter or disposal can interrupt later cleanup. App-supplied default and named signers remain app-owned.
 
 **Example:**
 ```javascript
@@ -238,19 +240,21 @@ Represents an individual wallet account. Extends `WalletAccountReadOnlyEvm` and 
 
 ```javascript
 new WalletAccountEvm(seed, path, config?)
+new WalletAccountEvm(seed, config?)
 new WalletAccountEvm(signer, config?)
 ```
 
 **Parameters:**
-- `seed` (string | Uint8Array): BIP-39 mnemonic or raw BIP-32 master seed (16–64 bytes)
-- `path` (string): BIP-44 derivation path (e.g., "0'/0/0")
-- `signer`: Object implementing the EVM signer shape
+- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or raw BIP-32 master seed (16–64 bytes)
+- `path` (string, optional for the seed overload): Path relative to `m/44'/60'`, defaulting to `0'/0/0`
+- `signer` (`ISignerEvm`): EVM signer; import the interface from `@tetherto/wdk-wallet-evm/signers`
 - `config` (object, optional): Configuration object
-  - `provider` (`string | Eip1193Provider | Array<string | Eip1193Provider>`, optional): RPC endpoint URL, EIP-1193 provider instance, or ordered failover list
+  - `provider` (`string | Provider | Eip1193Provider | Array<string | Provider | Eip1193Provider>`, optional): RPC endpoint URL, ethers provider, EIP-1193 provider, or ordered failover list
   - `retries` (number, optional): Additional retry attempts when `provider` is an array
-  - `chainId` (number, optional): Network chain ID. When provided, skips automatic chain ID detection.
+  - `chainId` (number, optional): Nonzero chain ID for module-built URL and EIP-1193 providers. Existing ethers providers keep their own settings; see [chain configuration](/sdk/wallet-modules/wallet-evm/configuration#chain-id).
   - `transferMaxFee` (number | bigint, optional): Maximum fee amount for transfer operations (in wei)
   - `transactionMaxFee` (number | bigint, optional): Execution-gas fee cap for `sendTransaction()` and provider-backed `signTransaction()` (in wei), including sends made by `transfer()` and `approve()`
+- `config.shouldWipeSignerOnDisposal` (boolean, signer overload only): Dispose the supplied signer when the account is disposed. Defaults to `false`; seed-created and `fromPrivateKey()` accounts own their signers.
 
 **Throws:**
 - `ValueError` if a string seed phrase is not a valid BIP-39 mnemonic.
@@ -284,13 +288,13 @@ const signerAccount = new WalletAccountEvm(
 | `getAddress()` | Returns the account's address | `Promise<string>` | - |
 | `sign(message)` | Signs a message using the account's private key | `Promise<string>` | - |
 | `signTypedData(typedData)` | Signs typed data according to EIP-712 | `Promise<string>` | - |
-| `signTransaction(tx)` | Signs an EVM transaction without broadcasting it | `Promise<string>` | `MaximumFeeExceededError` if the configured fee cap is exceeded |
+| `signTransaction(tx)` | Signs an EVM transaction without broadcasting it | `Promise<string>` | `MaximumFeeExceededError` or `ValueError` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies a typed data signature (EIP-712) | `Promise<boolean>` | - |
 | `sendTransaction(tx)` | Sends an EVM transaction object or signed raw transaction | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError`, `MaximumFeeExceededError`, or `ValueError` |
-| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction object or serialized transaction | `Promise<{fee: bigint}>` | `ProviderRequiredError` |
-| `transfer(options)` | Transfers ERC20 tokens to another address | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` or `MaximumFeeExceededError` |
-| `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | `ProviderRequiredError` |
+| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction object or serialized transaction | `Promise<{fee: bigint}>` | `ProviderRequiredError` or `ValueError` |
+| `transfer(options)` | Transfers ERC20 tokens to another address | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError`, `MaximumFeeExceededError`, or `ValueError` |
+| `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | `ProviderRequiredError` or `ValueError` |
 | `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | `ProviderRequiredError` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<bigint>` | `ProviderRequiredError` |
 | `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise<Record<string, bigint>>` | `ProviderRequiredError` |
@@ -300,10 +304,10 @@ const signerAccount = new WalletAccountEvm(
 | `getTransaction(hash)` | Returns normalized finality and the native receipt | `Promise<TransactionReceipt & EvmTransactionDetails>` | `ProviderRequiredError`, `ValueError`, or `NoSuchElementError` |
 | `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final`, or returns `dropped` | `Promise<TransactionReceipt & EvmTransactionDetails>` | `TimeoutError` |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlyEvm>` | - |
-| `signAuthorization(auth)` | Signs an ERC-7702 authorization tuple | `Promise<Authorization>` | If signing fails |
-| `delegate(delegateAddress)` | Delegates the EOA to a contract through an ERC-7702 type 4 transaction | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` |
-| `revokeDelegation()` | Revokes active ERC-7702 delegation by delegating to the zero address | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` |
-| `dispose()` | Initiates cleanup of the account's signer, including a supplied signer in beta.20 | `void` | - |
+| `signAuthorization(auth)` | Signs an ERC-7702 authorization tuple | `Promise<Authorization>` | `ProviderRequiredError` or `AssertionError` |
+| `delegate(delegateAddress)` | Delegates the EOA to a contract through an ERC-7702 type 4 transaction | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` or `AssertionError` |
+| `revokeDelegation()` | Revokes active ERC-7702 delegation by delegating to the zero address | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` or `AssertionError` |
+| `dispose()` | Initiates the account cleanup process | `void` | - |
 
 #### `fromPrivateKey(privateKey, config?)` (static)
 Creates a standalone EVM account from a raw private key.
@@ -400,11 +404,10 @@ Signs an EVM transaction and returns the signed raw transaction as a hex string.
   - `nonce` (number, optional): Transaction nonce
   - `chainId` (number | bigint, optional): Network chain ID
   - `authorizationList` (AuthorizationLike[], optional): ERC-7702 authorization list for type 4 transactions
-  - `maxFeePerBlobGas` (number | bigint, optional), `blobs` (BlobLike[], optional), `blobVersionedHashes` (string[], optional): [EIP-4844 transaction fields](#evmtransaction)
 
 **Returns:** `Promise<string>` - Signed raw transaction hex string
 
-**Throws:** `MaximumFeeExceededError` if a provider is configured and the estimated transaction fee exceeds `transactionMaxFee`.
+**Throws:** `ValueError` for type 3 or non-null blob fields; `MaximumFeeExceededError` if a provider is configured and the estimated transaction fee exceeds `transactionMaxFee`.
 
 **Example:**
 ```javascript
@@ -465,16 +468,15 @@ Builds, signs, and sends an EVM transaction object, or broadcasts a signed raw t
   - `nonce` (number, optional): Transaction nonce
   - `chainId` (number | bigint, optional): Network chain ID
   - `authorizationList` (AuthorizationLike[], optional): ERC-7702 authorization list for type 4 transactions
-  - `maxFeePerBlobGas` (number | bigint, optional), `blobs` (BlobLike[], optional), `blobVersionedHashes` (string[], optional): [EIP-4844 transaction fields](#evmtransaction)
 
-For a signed raw transaction string, beta.20 checks `transactionMaxFee` against the encoded gas limit multiplied by the encoded `maxFeePerGas` (or `gasPrice`), then passes the exact supplied hex to `eth_sendRawTransaction`. It still simulates the transaction but does not repopulate or re-sign it. This checks execution gas, not transferred value or a separate blob-gas fee. Review the decoded recipient, value, data, chain ID, nonce, gas limit, and all fee fields before submitting externally supplied bytes.
+For a signed raw transaction string, the wallet checks `transactionMaxFee` against the encoded gas limit multiplied by the encoded `maxFeePerGas` (or `gasPrice`), then passes the exact supplied hex to `eth_sendRawTransaction`. It still simulates the transaction but does not repopulate or re-sign it. This checks execution gas, not transferred value. Blob transactions are rejected. Review the decoded recipient, value, data, chain ID, nonce, gas limit, and all fee fields before submitting externally supplied bytes.
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
 
 **Throws:**
 - `ProviderRequiredError` if no provider is configured.
 - `MaximumFeeExceededError` if the quoted fee exceeds `transactionMaxFee` when configured.
-- `ValueError` if an object transaction mixes incompatible fee fields, an explicit or inferred type 4 transaction supplies `gasPrice`, or a type 3 transaction omits `maxFeePerBlobGas`.
+- `ValueError` if an object transaction mixes incompatible fee fields, an explicit or inferred type 4 transaction supplies `gasPrice`, or it has type 3 or any non-null blob field.
 
 **Example:**
 ```javascript
@@ -504,13 +506,13 @@ Estimates the fee for an EVM transaction without sending it.
 **Parameters:**
 - `tx` (EvmTransaction | string): A transaction object or serialized transaction string
 
-In beta.20, an object quote uses `gasLimit` when supplied, otherwise the estimated gas. It multiplies that by `maxFeePerGas` when supplied, otherwise `gasPrice`, otherwise the provider's current fee rate. For serialized bytes, it uses the encoded gas limit and encoded `maxFeePerGas` or `gasPrice`.
+In the documented release, an object quote uses `gasLimit` when supplied, otherwise the estimated gas. It multiplies that by `maxFeePerGas` when supplied, otherwise `gasPrice`, otherwise the provider's current fee rate. For serialized bytes, it uses the encoded gas limit and encoded `maxFeePerGas` or `gasPrice`.
 
-Both forms still simulate the transaction, so a revert can reject the quote even with an explicit gas limit. The result covers execution gas only: it excludes transferred value and any separate EIP-4844 blob-gas fee. It is not the eventual fee paid. A quote does not lock unspecified fields; object transaction population or a later quote can use fresh estimates. See [fee-cap limits](/sdk/wallet-modules/wallet-evm/configuration#transaction-max-fee).
+Both forms still simulate the transaction, so a revert can reject the quote even with an explicit gas limit. The result covers execution gas only: it excludes transferred value. Blob transactions are rejected. It is not the eventual fee paid. A quote does not lock unspecified fields; object transaction population or a later quote can use fresh estimates. See [fee-cap limits](/sdk/wallet-modules/wallet-evm/configuration#transaction-max-fee).
 
 **Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
-**Throws:** `ProviderRequiredError` if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured; `ValueError` for incompatible fee fields or a type-3/blob request
 
 **Example:**
 ```javascript
@@ -537,6 +539,7 @@ Transfers ERC20 tokens to another address using the standard transfer function.
 **Throws:**
 - `ProviderRequiredError` if no provider is configured.
 - `MaximumFeeExceededError` if the fee exceeds `transferMaxFee` or `transactionMaxFee` when configured.
+- `ValueError` if gas overrides mix incompatible legacy, EIP-1559, or authorization fee fields.
 
 **Example:**
 ```javascript
@@ -557,7 +560,7 @@ Estimates the fee for an ERC20 token transfer.
 
 **Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
-**Throws:** `ProviderRequiredError` if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured, or `ValueError` if gas overrides mix incompatible fee fields
 
 **Example:**
 ```javascript
@@ -745,12 +748,14 @@ const balance = await readOnlyAccount.getBalance()
 ```
 
 #### `signAuthorization(auth)`
-Signs an ERC-7702 authorization tuple.
+Signs an ERC-7702 authorization tuple. Missing `chainId` or `nonce` is populated through the provider. A provider-reported chain ID of zero throws `AssertionError`; an explicit `chainId: 0` opts into an authorization valid across chains.
 
 **Parameters:**
 - `auth` (AuthorizationRequest): ERC-7702 authorization request
 
 **Returns:** `Promise<Authorization>` - The signed authorization
+
+**Throws:** `ProviderRequiredError` when a missing chain ID or nonce requires a provider; `AssertionError` when the provider supplies chain ID zero.
 
 **Example:**
 ```javascript
@@ -769,17 +774,17 @@ Delegates the EOA to a smart contract through an ERC-7702 type 4 transaction.
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
 
-**Throws:** `ProviderRequiredError` if no provider is configured.
+**Throws:** `ProviderRequiredError` if no provider is configured; `AssertionError` if the provider supplies chain ID zero during authorization.
 
 #### `revokeDelegation()`
 Revokes active ERC-7702 delegation by delegating to the zero address.
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
 
-**Throws:** `ProviderRequiredError` if no provider is configured.
+**Throws:** `ProviderRequiredError` if no provider is configured; `AssertionError` if the provider supplies chain ID zero during authorization.
 
 #### `dispose()`
-In beta.20, always calls `dispose()` on the account's signer, including a signer passed to `new WalletAccountEvm(signer)`. Do not dispose the account while another account or component still needs that signer. Cleanup does not guarantee removal of caller-held copies of secret material.
+Initiates cleanup of the account-owned signer. A supplied signer is preserved unless the account was configured with `shouldWipeSignerOnDisposal: true`. See [signer ownership](/sdk/wallet-modules/wallet-evm/configuration#signer-migration).
 
 **Example:**
 ```javascript
@@ -791,21 +796,18 @@ account.dispose()
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `index` | `number` | The derivation path's index of this account |
-| `path` | `string` | The full BIP-44 derivation path of this account |
-| `keyPair` | `{privateKey: Uint8Array \| null, publicKey: Uint8Array}` | The account's key pair (⚠️ Contains sensitive data). The returned arrays are bound to the account — treat them as a read-only view and do not modify their contents. `privateKey` is `null` after `dispose()` is called. |
-| `address` | `string` | The account's Ethereum address (inherited from `WalletAccountReadOnlyEvm`) |
+| `path` | `string \| null` | Full path for a seed signer; `null` for a private-key signer |
+| `keyPair` | `KeyPair \| null` | The account's key pair (⚠️ Contains sensitive data). The returned arrays are bound to the account — treat them as a read-only view and do not modify their contents. `privateKey` becomes `null` when its signer is disposed; disposing an account that preserves a supplied signer does not erase that signer. |
+| `address` | `string \| undefined` | Deprecated synchronous address; use `getAddress()` |
 
 **Example:**
 ```javascript
-console.log('Account index:', account.index) // 0, 1, 2, etc.
 console.log('Account path:', account.path) // m/44'/60'/0'/0/0
 
 // ⚠️ SENSITIVE: Handle with care
-const { privateKey, publicKey } = account.keyPair
-console.log('Public key length:', publicKey.length) // 65 bytes
-if (privateKey !== null) {
-  console.log('Private key length:', privateKey.length) // 32 bytes
+const keys = account.keyPair
+if (keys !== null) {
+  console.log('Public key length:', keys.publicKey.length) // 65 bytes
 }
 ```
 
@@ -824,9 +826,9 @@ new WalletAccountReadOnlyEvm(address, config?)
 **Parameters:**
 - `address` (string): The account's Ethereum address
 - `config` (`Omit<EvmWalletConfig, 'transferMaxFee' | 'transactionMaxFee'>`, optional): Configuration object (same as `EvmWalletConfig` but without send-only fee caps, since read-only accounts cannot send transactions)
-  - `provider` (`string | Eip1193Provider | Array<string | Eip1193Provider>`, optional): RPC endpoint URL, EIP-1193 provider instance, or ordered failover list
+  - `provider` (`string | Provider | Eip1193Provider | Array<string | Provider | Eip1193Provider>`, optional): RPC endpoint URL, ethers provider, EIP-1193 provider, or ordered failover list
   - `retries` (number, optional): Additional retry attempts when `provider` is an array
-  - `chainId` (number, optional): Network chain ID. When provided, skips automatic chain ID detection.
+  - `chainId` (number, optional): Nonzero chain ID for module-built URL and EIP-1193 providers. Existing ethers providers keep their own settings; see [chain configuration](/sdk/wallet-modules/wallet-evm/configuration#chain-id).
 
 **Example:**
 ```javascript
@@ -839,7 +841,7 @@ const readOnlyAccount = new WalletAccountReadOnlyEvm('0x742d35Cc6634C0532925a3b8
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `address` | `string` | The account's Ethereum address |
+| `address` | `string \| undefined` | Deprecated synchronous address; use `getAddress()` |
 
 ### Methods
 
@@ -849,8 +851,8 @@ const readOnlyAccount = new WalletAccountReadOnlyEvm('0x742d35Cc6634C0532925a3b8
 | `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | `ProviderRequiredError` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<bigint>` | `ProviderRequiredError` |
 | `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise<Record<string, bigint>>` | `ProviderRequiredError` |
-| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction | `Promise<{fee: bigint}>` | `ProviderRequiredError` |
-| `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | `ProviderRequiredError` |
+| `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction | `Promise<{fee: bigint}>` | `ProviderRequiredError` or `ValueError` |
+| `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | `ProviderRequiredError` or `ValueError` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies a typed data signature (EIP-712) | `Promise<boolean>` | - |
 | `getDelegation()` | Checks active ERC-7702 delegation status | `Promise<DelegationInfo>` | `ProviderRequiredError` |
@@ -921,14 +923,14 @@ console.log('Balances:', balances)
 #### `quoteSendTransaction(tx)`
 Estimates the fee for an EVM transaction.
 
-The read-only method uses the same beta.20 [object quote calculation](#quotesendtransactiontx): supplied gas and fee fields take precedence over provider estimates, while simulation still runs. Its result covers execution gas only and is not the eventual fee paid. This read-only method does not accept serialized transaction bytes.
+The read-only method uses the same [object quote calculation](#quotesendtransactiontx): supplied gas and fee fields take precedence over provider estimates, while simulation still runs. Its result covers execution gas only and is not the eventual fee paid. This read-only method does not accept serialized transaction bytes.
 
 **Parameters:**
 - `tx` (EvmTransaction): The transaction object
 
 **Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
-**Throws:** `ProviderRequiredError` if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured; `ValueError` for incompatible fee fields or a type-3/blob request
 
 **Example:**
 ```javascript
@@ -947,7 +949,7 @@ Estimates the fee for an ERC20 token transfer.
 
 **Returns:** `Promise<{fee: bigint}>` - Fee estimate in wei
 
-**Throws:** `ProviderRequiredError` if no provider is configured
+**Throws:** `ProviderRequiredError` if no provider is configured, or `ValueError` if gas overrides mix incompatible fee fields
 
 **Example:**
 ```javascript
@@ -1087,8 +1089,6 @@ The package re-exports these types.
 ### EvmTransaction
 
 ```typescript
-import type { BlobLike } from 'ethers'
-
 interface EvmTransaction {
   to?: string | null;                       // Recipient address; omit or pass null for contract creation
   value: number | bigint;                    // The amount of ethers to send (in wei)
@@ -1101,13 +1101,10 @@ interface EvmTransaction {
   nonce?: number;                            // Transaction nonce (optional)
   chainId?: number | bigint;                 // Network chain ID (optional)
   authorizationList?: AuthorizationLike[];   // ERC-7702 authorization list for type 4 transactions (optional)
-  maxFeePerBlobGas?: number | bigint;        // Maximum fee per blob gas (type 3)
-  blobs?: BlobLike[];                       // Blob data (type 3)
-  blobVersionedHashes?: string[];           // Blob versioned hashes (type 3)
 }
 ```
 
-Beta.20 adds the three blob fields to the published declaration; blob transaction handling already existed. `BlobLike` comes from ethers and is not a root type export of this WDK package. Type 4 transactions, whether selected explicitly or inferred from `authorizationList`, use EIP-1559 fees and reject `gasPrice`. Missing EIP-1559 fee fields are populated from the provider.
+Type 3 and any non-null `blobs`, `blobVersionedHashes`, or `maxFeePerBlobGas` field are rejected with `ValueError`, including in serialized transactions. These blob fields are absent from the current `EvmTransaction` declaration. Type 4 transactions, whether selected explicitly or inferred from `authorizationList`, use EIP-1559 fees and reject `gasPrice`. Missing EIP-1559 fee fields are populated from the provider.
 
 ### EvmTransactionRequest
 
@@ -1172,54 +1169,26 @@ interface FeeRates {
 
 ```typescript
 interface KeyPair {
-  privateKey: Uint8Array | null;     // Private key as Uint8Array (32 bytes, null after dispose)
+  privateKey: Uint8Array | null;     // Private key as Uint8Array (32 bytes, null when unavailable)
   publicKey: Uint8Array;             // Public key as Uint8Array (65 bytes)
 }
 ```
 
-### EVM signer structural shape
+### EVM Signers
+
+Import the EVM signer interface and its transaction type from the signers subpath:
 
 ```typescript
-interface EvmSignerLike extends ISigner {
-  readonly isDerivable: boolean;
-  readonly index?: number;
-  readonly path?: string;
-  readonly address?: string;
-  readonly keyPair: KeyPair;
-  derive(relPath: string): Promise<EvmSignerLike>;
-  getAddress(): Promise<string>;
-  sign(message: string): Promise<string>;
-  signTransaction(unsignedTx: UnsignedEvmTransaction): Promise<string>;
-  signTypedData(typedData: TypedData): Promise<string>;
-  signAuthorization(auth: AuthorizationRequest): Promise<Authorization>;
-  dispose(): void;
-}
+import type { ISignerEvm, TransactionLike } from '@tetherto/wdk-wallet-evm/signers'
 ```
 
-`SeedSignerEvm` and `PrivateKeySignerEvm` are exported from `@tetherto/wdk-wallet-evm/signers`. `SeedSignerEvm` supports derivation and can be used as a manager default signer. `PrivateKeySignerEvm` represents one private-key account, does not support derivation, and should be registered by name or used directly with `WalletAccountEvm`.
+`ISignerEvm` extends the base `ISigner` with `signTransaction(tx: TransactionLike)`, `signTypedData()`, and `signAuthorization()`. `ISigner` is a root runtime export; `ISignerEvm` is a runtime export of `@tetherto/wdk-wallet-evm/signers`, alongside `SeedSignerEvm` and `PrivateKeySignerEvm`. The signers subpath supports Bare.
 
-### UnsignedEvmTransaction
+`SeedSignerEvm(seed, absolutePath?)` defaults to `m/44'/60'`, supports self-relative derivation, and keeps independent keys for derived signers. `PrivateKeySignerEvm` copies a raw key and cannot derive; `derive()` throws `UnsupportedOperationError`. Neither exposes an `index` property. See [signer migration](/sdk/wallet-modules/wallet-evm/configuration#signer-migration) for the changed constructors and cleanup rules.
 
-```typescript
-interface UnsignedEvmTransaction {
-  chainId: number;
-  nonce: number;
-  from: string;
-  to: string | null;
-  data: string;
-  value: number | bigint;
-  type: number;
-  gasLimit: number | bigint;
-  gasPrice?: number | bigint;
-  maxFeePerGas?: number | bigint;
-  maxPriorityFeePerGas?: number | bigint;
-  accessList?: any[];
-  maxFeePerBlobGas?: number | bigint;
-  blobs?: any[];
-  blobVersionedHashes?: string[];
-  authorizationList?: AuthorizationLike[];
-}
-```
+### TransactionLike
+
+`TransactionLike` is a type-only export from `@tetherto/wdk-wallet-evm/signers`, backed by ethers. It replaces `UnsignedEvmTransaction` in signer method signatures. Object sends use ethers transaction population before signing. The account APIs retain the narrower [`EvmTransaction`](#evmtransaction) contract and reject blob transactions.
 
 ### TypedData
 
@@ -1256,15 +1225,15 @@ interface TypedDataField {
 
 ```typescript
 interface EvmWalletConfig {
-  provider?: string | Eip1193Provider | Array<string | Eip1193Provider>; // RPC URL, EIP-1193 provider, or ordered failover list
+  provider?: string | Provider | Eip1193Provider | Array<string | Provider | Eip1193Provider>; // RPC URL, ethers/EIP-1193 provider, or ordered failover list
   retries?: number;                                                  // Additional retry attempts for provider arrays
-  chainId?: number;                                                  // Network chain ID. Skips automatic detection when provided.
+  chainId?: number;                                                  // Nonzero pins module-built URL/EIP-1193 providers.
   transferMaxFee?: number | bigint;                                  // Maximum ERC-20 transfer fee in wei
   transactionMaxFee?: number | bigint;                               // Maximum native send/sign fee in wei
 }
 ```
 
-The declaration above is the exact beta.20 published type. The beta.20 runtime additionally accepts an ethers `Provider` directly or inside the provider array, but that input is missing from the package declaration.
+The published configuration type and runtime both accept an ethers `Provider` directly or inside the provider array.
 
 ### DelegationInfo
 

@@ -69,7 +69,7 @@ Resolution means the provider accepted the broadcast; it does not prove inclusio
 
 ## Manage Fee Limits
 
-Set [`transactionMaxFee`](/sdk/wallet-modules/wallet-evm/configuration#transaction-max-fee) to reject `sendTransaction()` and provider-backed `signTransaction()` when the quoted execution-gas fee exceeds the configured value; equality is allowed. In beta.20, quotes use supplied gas limits and fee rates, including those encoded in signed raw bytes. The cap excludes transferred value and blob gas, and unspecified object fields can change during later population. Review external signed bytes independently. Offline signing does not run this check. ERC-20 transfers and approvals also send through this cap; transfers additionally check `transferMaxFee`.
+Set [`transactionMaxFee`](/sdk/wallet-modules/wallet-evm/configuration#transaction-max-fee) to reject `sendTransaction()` and provider-backed `signTransaction()` when the quoted execution-gas fee exceeds the configured value; equality is allowed. In the documented release, quotes use supplied gas limits and fee rates, including those encoded in signed raw bytes. The cap excludes transferred value. Blob transactions are rejected; unspecified object fields can change during later population. Review external signed bytes independently. Offline signing does not run this check. ERC-20 transfers and approvals also send through this cap; transfers additionally check `transferMaxFee`.
 
 ```javascript title="Fee Management"
 const feeRates = await wallet.getFeeRates()
@@ -83,17 +83,19 @@ console.log('Fast fee rate:', feeRates.fast, 'wei')
 
 Do not treat finality as execution success. A mined EVM transaction can be `confirmed` or `final` with `success: false` when it reverted.
 
+Type 3/blob requests fail with `ValueError`. Authorization, delegation, and revocation fail with `AssertionError` when a provider supplies chain ID zero; explicitly supplying `chainId: 0` remains an opt-in.
+
 ## Handle Non-derivable Signers
 
-In `1.0.0-beta.18`, `PrivateKeySignerEvm.derive()` throws `InvalidSignerError` from `@tetherto/wdk-wallet`. The package also uses this error when a non-derivable signer is supplied as the wallet manager's default signer.
+`PrivateKeySignerEvm.derive()` throws `UnsupportedOperationError`. The manager throws `InvalidSignerError` when its default signer cannot derive or numeric/path account retrieval selects a non-derivable signer.
 
 ```javascript title="Handle a Non-derivable Signer"
-import { InvalidSignerError } from '@tetherto/wdk-wallet'
+import { UnsupportedOperationError } from '@tetherto/wdk-wallet'
 
 try {
   await privateKeySigner.derive("0'/0/1")
 } catch (error) {
-  if (error instanceof InvalidSignerError) {
+  if (error instanceof UnsupportedOperationError) {
     console.error('Register this private-key signer by name instead of deriving it')
   } else {
     throw error
@@ -103,7 +105,7 @@ try {
 
 ## Dispose of Sensitive Data
 
-Call [`dispose()`](/sdk/wallet-modules/wallet-evm/api-reference) on accounts and wallet managers to clear private keys and sensitive data from memory when they are no longer needed.
+Call [`dispose()`](/sdk/wallet-modules/wallet-evm/api-reference#dispose) to initiate wallet cleanup. Manager cleanup skips cached accounts without exposed private-key bytes and can stop when a key getter or disposal throws; dispose derived external accounts explicitly. Default and named signers supplied by your app remain app-owned; dispose them after their final consumer finishes. Accounts preserve a supplied signer unless `shouldWipeSignerOnDisposal: true` is set. See [signer ownership](/sdk/wallet-modules/wallet-evm/configuration#signer-migration).
 
 ```javascript title="Memory Cleanup"
 account.dispose()
@@ -112,5 +114,5 @@ wallet.dispose()
 ```
 
 <Callout type="warn">
-Always call [`dispose()`](/sdk/wallet-modules/wallet-evm/api-reference) in a `finally` block or cleanup handler to ensure sensitive data is cleared even if an error occurs.
+Always call [`dispose()`](/sdk/wallet-modules/wallet-evm/api-reference) in a `finally` block or cleanup handler to initiate cleanup on failure paths. Cleanup does not establish complete erasure of secret copies.
 </Callout>
