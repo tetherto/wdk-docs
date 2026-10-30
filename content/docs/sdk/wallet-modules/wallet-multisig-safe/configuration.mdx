@@ -38,9 +38,9 @@ For Safe's hosted service, set only `safeApiKey` and use a chain in [API Kit 4.0
 | Sponsored | `isSponsored: true`, `paymasterUrl`, optional `sponsorshipPolicyId` | Transaction/transfer quote returns `0n`; this does not prove sponsor acceptance |
 | Token paymaster | `paymasterTokenAddress`, `paymasterUrl`, both mode flags absent or false | Paymaster token base units |
 
-Do not enable native and sponsored modes together. In token mode, `paymasterAddress` is optional, but unknown paymaster providers require an explicit address. Confirm the provider, chain, EntryPoint and supported token before choosing it. This package uses `paymasterTokenAddress`, not the single-owner wallet's `paymasterToken` object.
+Do not enable native and sponsored modes together. `paymasterAddress` is optional and identifies a custom deployment of a supported paymaster for fee decoding; it does not enable arbitrary paymasters. Confirm the provider, chain, EntryPoint and supported token before choosing it. This package uses `paymasterTokenAddress`, not the single-owner wallet's `paymasterToken` object.
 
-`amountToApprove?: number | bigint` controls the paymaster-token allowance placed into the proposed operation. Use a bounded amount appropriate to the reviewed operation. `transferMaxFee?: number | bigint` appears on token and native config types, but beta.1 enforces it only in non-sponsored, token-paid `proposeTransfer()`, against that call's estimate. Equality passes. It is not a general execution-time or native-fee cap. The module exposes no `transactionMaxFee` option.
+`amountToApprove?: number | bigint` controls the paymaster-token allowance placed into the proposed operation. Use a bounded amount appropriate to the reviewed operation. `transferMaxFee?: number | bigint` appears on token and native config types, but beta.2 enforces it only in non-sponsored, token-paid `proposeTransfer()`, against that call's estimate. Equality passes. It is not a general execution-time or native-fee cap. The module exposes no `transactionMaxFee` option.
 
 ## Per-call Configuration
 
@@ -50,7 +50,9 @@ Changing a proposal's fee fields after owners sign changes the signed operation.
 
 ## Fee Results
 
-`quoteSendTransaction()` and `quoteTransfer()` use the mode-specific units above. In contrast, `quoteExecuteProposal()` and `executeProposal().fee` calculate a maximum native gas cost from the stored UserOperation. Do not compare that result directly with a token-denominated quote or display it as the actual charged token fee. Use the receipt for the observed outcome.
+`quoteSendTransaction()`, `quoteTransfer()`, `quoteExecuteProposal()`, and `executeProposal().fee` report a maximum cost in the asset the Safe pays for gas. Display it as "up to", rather than an observed charge. Stored operations without a paymaster report native wei; token-paymaster operations report the maximum token cost decoded from their paymaster data. Recognized sponsorship reports zero. Decoding can need an RPC request to identify the token.
+
+An undecodable paymaster rejects with `AbstractionKitError`. A `PAYMASTER_ERROR` falls back to zero only when the effective configuration marks the account sponsored. It does not hide other failures. `quoteExecuteProposal()` and explicit `executeProposal()` use the account configuration; immediate auto-execution uses the merged per-call configuration from the proposal. Keep that fee mode consistent when another owner executes a stored operation. Use receipts for the observed outcome.
 
 Deployment fees are native wei paid by the signer's EOA. Fund the Safe separately for its payment payload and its selected operating fee mode.
 

@@ -17,7 +17,8 @@ const config = {
   // Recommended: RPC endpoint URL, EIP-1193 provider, or ordered failover list
   provider: 'https://eth.drpc.org',
 
-  // Optional: Skip automatic chain ID detection when the network is known
+  // Optional: trust this chain ID instead of asking the RPC (1 = Ethereum mainnet).
+  // It must match the endpoint; mismatches are not detected.
   chainId: 1,
 
   // Optional: Additional failover attempts when provider is an array
@@ -35,7 +36,7 @@ const wallet = new WalletManagerEvm(seedPhrase, config)
 
 ## Signer Configuration
 
-`WalletManagerEvm` accepts either a BIP-39 seed phrase/seed bytes or a derivable EVM signer as its first argument. Use the `@tetherto/wdk-wallet-evm/signers` entrypoint when you need explicit signer objects:
+`WalletManagerEvm` accepts a BIP-39 mnemonic, raw BIP-32 master seed bytes (16–64 bytes), or a derivable EVM signer as its first argument. Raw seed bytes do not have to originate from BIP-39. Use the `@tetherto/wdk-wallet-evm/signers` entrypoint when you need explicit signer objects:
 
 ```javascript title="Create A Manager From A Seed Signer"
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
@@ -48,7 +49,7 @@ const wallet = new WalletManagerEvm(signer, {
 })
 ```
 
-The manager's default signer must support derivation. Non-derivable signers, such as private-key signers, can be registered by name and used to retrieve signer-backed accounts:
+`SeedSignerEvm(seed, absolutePath?)` defaults to the coin node `m/44'/60'`; the optional second argument selects an absolute BIP-32 path. Its `derive()` method uses a path relative to the signer's current node. The manager's default signer must support derivation. Non-derivable signers, such as private-key signers, can be registered by name and used to retrieve signer-backed accounts:
 
 ```javascript title="Register A Private-Key Signer"
 import WalletManagerEvm from '@tetherto/wdk-wallet-evm'
@@ -72,6 +73,20 @@ const account = WalletAccountEvm.fromPrivateKey(privateKey, {
   provider: 'https://eth.drpc.org'
 })
 ```
+
+## Signer Migration
+
+When upgrading from beta.20:
+
+- Replace `new SeedSignerEvm(seed, options)` with `new SeedSignerEvm(seed, absolutePath)`. The default is `m/44'/60'`, rather than the account leaf. Use `new WalletAccountEvm(seed, config)` for the standard `m/44'/60'/0'/0/0` account, or `signer.derive("0'/0/0")` from the default coin node.
+- Use `account.path` instead of the removed `account.index`. A private-key signer has `path: null`.
+- Use `getAddress()` instead of deprecated synchronous `address` getters, which can be `undefined` for external signers.
+- `getAccount('name')` wraps the registered signer at its current path without deriving. Use `getAccount(index, { signerName: 'name' })` or `getAccountByPath(path, { signerName: 'name' })` to derive from a named signer.
+- A manager initiates cleanup of its seed-created default signer, then delegates cached-account cleanup to its pinned base-wallet beta.21. That implementation calls `account.dispose()` only when `account.keyPair?.privateKey` is truthy. It skips derived external signers without exposed private-key bytes, and a throwing key getter or disposal can interrupt later cleanup. Dispose such derived accounts explicitly. Default and named signers supplied by your app remain app-owned. An account created from a supplied signer preserves that signer unless `shouldWipeSignerOnDisposal: true` is set. Accounts created from a seed or through `fromPrivateKey()` own their signers.
+
+Dispose app-owned signers only after their last consumer finishes. `PrivateKeySignerEvm` copies an input key; its cleanup does not erase the caller's input. Mnemonic construction clears temporary seed and master-key buffers, but preserves caller-owned seed bytes and the derived signer needed by the wallet. This does not establish complete erasure of secret copies.
+
+`@tetherto/wdk-wallet-evm/signers` exports the runtime `ISignerEvm`, `SeedSignerEvm`, and `PrivateKeySignerEvm` classes, including a Bare entrypoint. Import `TransactionLike` as a type from that subpath when implementing a signer; it replaces the removed `UnsignedEvmTransaction` type. The root exports the base `ISigner`, while `ISignerEvm` is available from the signers subpath.
 
 ## Account Configuration
 
@@ -104,16 +119,14 @@ const readOnlyAccount = new WalletAccountReadOnlyEvm(
 
 ### Provider
 
-The `provider` option specifies how to connect to the blockchain. The published beta.20 declaration accepts a URL string, an EIP-1193 compatible provider instance, or an ordered array of those values for automatic failover.
+The `provider` option accepts an RPC URL, an ethers `Provider`, an EIP-1193 provider, or an ordered array of those values for failover. Existing ethers providers are reused.
 
-**Type:** `string | Eip1193Provider | Array<string | Eip1193Provider>`
-
-At runtime, beta.20 also accepts an already-built ethers `Provider`, such as `JsonRpcProvider`, either directly or in the failover array. The runtime reuses that object instead of wrapping it. The published beta.20 TypeScript declaration does not include ethers `Provider`. JavaScript can use this runtime-only path directly; TypeScript projects that require the published type must use one of the declared provider inputs until the declaration is corrected.
+**Type:** `string | Provider | Eip1193Provider | Array<string | Provider | Eip1193Provider>`
 
 `WalletManagerEvm` builds or accepts its provider once and shares the same provider object with every account it derives. Direct account constructors process their configurations independently, but they can share a caller-supplied ethers `Provider` object.
 
 <Callout type="warn">
-When the shared ethers provider lacks EIP-1193 `request()`, beta.19 and beta.20 manager-derived accounts cannot initialize Velora beta.8 and beta.9, USD₮0 bridge beta.10, or Aave beta.7. These releases wrap every non-string provider in `BrowserProvider`, which requires an EIP-1193 `request()` method. Use a directly constructed `WalletAccountEvm` that retains its original RPC URL or EIP-1193 provider for these exact combinations; do not replace the account's internal provider field. Direct accounts do not receive WDK Core policy or middleware decoration, so preserve the required application checks and account-level controls.
+The documented Velora, USD₮0 bridge, and Aave adapters require EIP-1193 `request()` on non-string provider inputs. An account whose manager supplies a shared ethers provider without `request()` cannot initialize these adapters. Use a directly constructed `WalletAccountEvm` that retains its original RPC URL or genuine EIP-1193 provider for these adapters; do not replace the account's internal provider field. Direct accounts do not receive WDK Core policy or middleware decoration, so preserve the required application checks and account-level controls.
 </Callout>
 
 **Examples:**
@@ -167,7 +180,7 @@ const config = {
 }
 ```
 
-In JavaScript, you can also reuse an existing ethers provider:
+You can reuse an existing ethers provider:
 
 ```javascript
 import { JsonRpcProvider } from 'ethers'
@@ -198,7 +211,15 @@ const config = {
 
 ### Chain ID
 
-The `chainId` option pins the provider to a known EVM chain ID. Use it when you already know the target network and want to skip automatic chain ID detection during provider setup.
+A nonzero `chainId` pins URL and EIP-1193 providers created by this module, including entries in a failover list. They use that chain ID without sending `eth_chainId` requests. Omit the option for automatic network detection; `chainId: 0` does not enable pinning.
+
+An existing ethers `Provider` retains its own network configuration. Passing `chainId` alongside it does not reconfigure that provider.
+
+<Callout type="warn">
+Pin only providers that stay on the intended network. Pinning does not verify the endpoint's chain or detect a browser wallet's network switch. If the network changes, stop using the pinned wallet and recreate it with the intended configuration before continuing.
+</Callout>
+
+This option configures provider network identity, not every signing input. [`signTransaction()`](/sdk/wallet-modules/wallet-evm/api-reference#signtransactiontx) forwards the transaction's supplied chain ID to the signer without populating it from this option. An explicit `chainId: 0` passed to [`signAuthorization()`](/sdk/wallet-modules/wallet-evm/api-reference#signauthorizationauth) remains a separate opt-in to authorization across chains.
 
 **Type:** `number` (optional)
 
@@ -247,9 +268,11 @@ try {
 
 The `transactionMaxFee` option rejects `sendTransaction()` and provider-backed `signTransaction()` when the quoted execution-gas fee exceeds the configured value. Equality is allowed. ERC-20 transfers and approvals also send through `sendTransaction()`, so this cap applies to them; transfers additionally check `transferMaxFee`.
 
-In beta.20, the quote uses the supplied `gasLimit` (or an estimate) multiplied by `maxFeePerGas`, then `gasPrice`, then the provider's current fee rate, in that order. For signed raw bytes, it uses the encoded gas limit and encoded fee rate. The quote still simulates the transaction and can reject a revert even when a gas limit is supplied. See [fee quoting](/sdk/wallet-modules/wallet-evm/api-reference#quotesendtransactiontx).
+In the documented release, the quote uses the supplied `gasLimit` (or an estimate) multiplied by `maxFeePerGas`, then `gasPrice`, then the provider's current fee rate, in that order. For signed raw bytes, it uses the encoded gas limit and encoded fee rate. The quote still simulates the transaction and can reject a revert even when a gas limit is supplied. See [fee quoting](/sdk/wallet-modules/wallet-evm/api-reference#quotesendtransactiontx).
 
-This cap covers execution gas, not transferred value or the separate EIP-4844 blob-gas fee. Unspecified fields can change when an object transaction is populated after the check; a quote does not lock those fields or report the eventual fee paid. Review all signed fields before submitting external bytes. Offline signing without a provider does not run the fee-cap check.
+This cap covers execution gas, not transferred value. Blob transactions are rejected. Unspecified fields can change when an object transaction is populated after the check; a quote does not lock those fields or report the eventual fee paid. Review all signed fields before submitting external bytes. Offline signing without a provider does not run the fee-cap check.
+
+For a policy example that separately validates Ethereum type-2 transaction fields and execution-gas liability, see [Bound Transaction Fees](/sdk/core-module/guides/transaction-policies#bound-transaction-fees).
 
 **Type:** `number | bigint` (optional)
 **Unit:** Wei (1 ETH = 1000000000000000000 Wei)

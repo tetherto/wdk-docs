@@ -32,7 +32,7 @@ const wdk = new WDK(seedPhrase, {
 
 Starting in `@tetherto/wdk` v1.0.0-beta.17, `policyExclusions` optionally adds method names that bypass policy evaluation on this WDK instance. It accepts an array of non-empty strings. The resolved set always includes [`DEFAULT_POLICY_EXCLUSIONS`](/sdk/core-module/api-reference#default-policy-exclusions); passing `[]` does not remove the defaults.
 
-An exclusion applies to the exact method name across every governed account and protocol on the instance. Review the method's behavior on each applicable module before excluding it. To permit a write while retaining evaluation and simulation, register an `ALLOW` rule instead.
+An exclusion applies to existing methods with that exact name across every governed account and protocol on the instance. Configure custom methods before account retrieval; a previously unrecognized function introduced later is not exempt merely because it uses an excluded name. Review the method's behavior on each applicable module before excluding it. To permit a write while retaining evaluation and simulation, register an `ALLOW` rule instead.
 
 You can opt out of evaluating Spark's local balance synchronization using the constructor option:
 
@@ -77,6 +77,8 @@ const wdk = new WDK(seedPhrase)
 
 `MySwapProtocol` is an illustrative class that extends `SwapProtocol`. Replace it with a provider whose constructor supports the account and provider shape used by your registered wallet.
 
+Core beta.19 and later forward every argument after the protocol class to that provider's constructor after the account. A provider accepting one config object uses the call above; if it requires multiple arguments, pass them separately and in constructor order. The same argument forwarding applies to account-scoped registration. See the [`registerProtocol()` reference](/sdk/core-module/api-reference#registerprotocolblockchain-label-protocol-config).
+
 ## Configuration Options
 
 ### Wallet Configuration
@@ -111,7 +113,7 @@ wdk.registerWallet('ton', WalletManagerTon, tonWalletConfig)
 
 ### Protocol Configuration
 
-Protocols also require their own configuration objects when registered.
+Protocol constructor arguments depend on the provider. Pass any required arguments after its class in constructor order; a provider can require zero, one, or multiple arguments.
 
 #### Swap Protocol Configuration
 
@@ -159,6 +161,8 @@ Registration does not validate every downstream module configuration:
 - **Middleware Registration**: WDK stores the middleware for later account decoration. Errors thrown by the middleware surface when an account is retrieved.
 
 In JavaScript, a protocol class that does not extend a supported WDK protocol base class is ignored rather than rejected. Keep protocol classes typed, use distinct labels, and test retrieval during application startup. A global registration shadows an account-scoped provider with the same type and label.
+
+Core beta.20 also defers account-scoped protocol construction until retrieval. Each getter creates a fresh instance; retain that returned instance when its local state is needed later. Governed account-scoped protocols receive the policy proxy, while global protocols receive the raw account. Review the [protocol policy boundary](/sdk/core-module/guides/transaction-policies#runtime-caveats) before choosing the registration scope.
 
 ## Error Handling
 

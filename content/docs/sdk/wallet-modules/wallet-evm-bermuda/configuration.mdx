@@ -11,9 +11,9 @@ Community modules are developed and maintained independently by third-party cont
 Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
 </Callout>
 
-Configure `WalletManagerBermuda` for public EVM accounts and the separate shielded accounts returned by `getBermudaAccount()`. These pages describe [GitHub revision `59c711a`](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/tree/59c711af9d5c348db740a37f19d96414fc6750f6), whose manifest declares `0.3.2` and uses Bermuda SDK `0.3.2`. The examples pin both WDK wallet peers to `1.0.0-beta.17` and `ethers` to `6.17.0`; these pins do not establish identical behavior across the full declared peer range. Follow [Usage](/sdk/wallet-modules/wallet-evm-bermuda/usage) for the GitHub installation.
+Configure `WalletManagerBermuda` for public EVM accounts and the separate shielded accounts returned by `getBermudaAccount()`. These pages describe [GitHub revision `c61ea03`](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/tree/c61ea036c6bf427420d9215a819cf9db95cb0164), whose manifest declares `0.3.3` and uses Bermuda SDK `0.3.3`. The examples pin both WDK wallet peers to `1.0.0-beta.17` and `ethers` to `6.17.0`; these pins do not establish identical behavior across the full declared peer range. Follow [Usage](/sdk/wallet-modules/wallet-evm-bermuda/usage) for the GitHub installation.
 
-The maintainer-supported network is **Plasma testnet**, chain ID **9746**. The 0.3.2 SDK uses a new pool and address format; old shielded balances do not carry over. See the [module overview](/sdk/wallet-modules/wallet-evm-bermuda) before migrating an existing integration.
+The maintainer-supported network is **Plasma testnet**, chain ID **9746**.
 
 ## Provider Configuration
 
@@ -67,7 +67,7 @@ const config = {
 
 Here `walletProvider` is supplied by the application. Public EVM transactions use it; SDK chain reads use the explicit URLs. Keep both on the same intended deployment. `depositClass: 'idle'` pins that class rather than following the default class selection; a compliance decision for another class can reject the deposit.
 
-The SDK also depends on its configured relay, chain-state, compliance, and proof-artifact services. RPC forwarding does not establish those services' availability. SDK settings such as `relayer`, `chainState`, and `artifacts` belong inside `bermuda`, rather than beside `provider`. A manager rejects a missing SDK pool configuration during account retrieval; this check does not verify deployed code or service readiness.
+The SDK also uses its configured relay, compliance, and proof-artifact services. RPC forwarding does not establish those services' availability. SDK settings such as `relayer`, `indexer`, and `artifacts` belong inside `bermuda`, rather than beside `provider`. `indexer` overrides the preset's deployment base URL; the SDK appends `indexer/…` to it. If the resolved SDK configuration has no indexer URL, chain state is read over RPC. A manager rejects a missing SDK pool configuration during account retrieval; this check does not verify deployed code or service readiness.
 
 ## Storage and Caches
 
@@ -81,7 +81,7 @@ The examples omit file-cache options. In Node.js without `localStorage` or custo
 
 The nested `bermuda` configuration can override SDK storage and cache inputs independently. If you opt into filesystem persistence, supply the filesystem implementation and two distinct paths with existing parent directories. The implicit commitment-events path replaces a final `.json` suffix with `-commitment-events.json`; without that suffix, it equals the UTXO path.
 
-Treat caches as sensitive wallet data. They can contain decrypted amounts, memos, ownership and UTXO metadata, including blinding and nullifier secrets. The SDK 0.3.2 UTXO-cache codec records an owner address instead of serializing the live owner's signing or viewing private keys; that does not make the cached transaction data public. Protect persistent storage through the application's storage policy. Existing files are not sanitized by an upgrade or deleted by `dispose()`; do not reuse old pool cache files for the new deployment.
+Treat caches as sensitive wallet data. They can contain decrypted amounts, memos, ownership and UTXO metadata, including blinding and nullifier secrets. The UTXO-cache codec records an owner address instead of serializing the live owner's signing or viewing private keys; that does not make the cached transaction data public. Protect persistent storage through the application's storage policy. `dispose()` does not delete persisted caches. Keep separate cache files for each wallet and pool.
 
 ## Fee Boundaries
 
@@ -105,7 +105,7 @@ The module declares **Node.js 20.19.0 or later** for the library. Its developmen
 
 The conditional **Bare** entry point loads Node compatibility support and patches process globals: `TextDecoder`, WebAssembly compilation/instantiation, and the global HTTP/HTTPS agents. The agent replacements remove Bare's five-second socket timeout that can terminate an RPC request while it is still running. These changes affect the process, rather than only one wallet.
 
-Import the Bermuda wrapper before anything else loads its SDK or prover under Bare. Proof generation needs outbound network and writable storage for CRS setup data, using `CRS_PATH` when set or `~/.bb-crs` by default. The [maintainer's runtime notes](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/blob/59c711af9d5c348db740a37f19d96414fc6750f6/README.md#-supported-runtimes) describe platform tests and constraints. **WDK worklet bundles remain unsupported**; Bare support does not establish a working browser or bundled mobile integration.
+Import the Bermuda wrapper before anything else loads its SDK or prover under Bare. Proof generation needs outbound network and writable storage for CRS setup data, using `CRS_PATH` when set or `~/.bb-crs` by default. The [maintainer's runtime notes](https://github.com/BermudaBay/wdk-wallet-evm-bermuda/blob/c61ea036c6bf427420d9215a819cf9db95cb0164/README.md#️-supported-runtimes) describe platform tests and constraints. **WDK worklet bundles remain unsupported**; Bare support does not establish a working browser or bundled mobile integration.
 
 ## Resource Lifecycle
 
