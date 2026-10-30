@@ -17,22 +17,17 @@ The docs site is a static Next.js application built with [Fumadocs](https://fuma
 
 - Node.js 22 or newer.
 - npm.
-- A GitHub token with `read:packages` access for installing `@tetherto/docs-seo-*` from GitHub Packages.
 
 ## Setup
 
-Copy the local environment template and add your package-read token:
+Install dependencies from the lockfile:
 
 ```bash
-cp .env.example .env.local
+npm ci
 ```
 
-Set `GITHUB_TOKEN` in `.env.local`, then export it before installing dependencies:
-
-```bash
-set -a && . ./.env.local && set +a
-npm install
-```
+Copy `.env.example` to `.env.local` to customize the local environment. The SEO
+packages are vendored in this repository and do not require a GitHub package token.
 
 ## Local Preview
 
@@ -114,13 +109,12 @@ use the public docs origin.
 
 ## SEO
 
-The docs site uses `@tetherto/docs-seo-*` for centralized SEO state, metadata,
+The docs site uses the vendored [`@tetherto/docs-seo-*` packages](vendor/docs-template/README.md) for centralized SEO state, metadata,
 robots, sitemap, JSON-LD, frontmatter validation, and Takumi-generated Open
 Graph images.
 
 Important environment variables:
 
-- `GITHUB_TOKEN`: required for `npm install`; classic PAT or CI token with `read:packages`.
 - `NEXT_PUBLIC_DOCS_ORIGIN`: production docs origin for absolute SEO URLs.
 - `NEXT_PUBLIC_DOCS_PUBLISHER_LOGO_URL`: optional HTTPS logo for JSON-LD publisher data.
 - `SKIP_OG_BUILD=1`: skip the Takumi prebuild and use `/og-default.png`.

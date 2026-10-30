@@ -89,6 +89,31 @@ const expectedRedirects = [
     status: '301',
   },
   {
+    source: '/tools/secret-manager',
+    target: '/tools/wdk-utils',
+    status: '301',
+  },
+  {
+    source: '/tools/secret-manager/',
+    target: '/tools/wdk-utils',
+    status: '301',
+  },
+  {
+    source: '/tools/secret-manager.md',
+    target: '/tools/wdk-utils',
+    status: '301',
+  },
+  {
+    source: '/tools/secret-manager/configuration',
+    target: '/tools/wdk-utils',
+    status: '301',
+  },
+  {
+    source: '/tools/secret-manager/api-reference.md',
+    target: '/tools/wdk-utils',
+    status: '301',
+  },
+  {
     source: '/__missing-sevalla-404-check',
     target: '/404.html',
     status: '404',
