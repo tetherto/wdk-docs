@@ -8,6 +8,33 @@ icon: Settings
 
 WDK CLI stores its configuration and wallet data under one local configuration directory. Use `wdk config` for supported changes instead of editing `config.json` directly.
 
+This page documents `1.0.0-beta.7`.
+
+## Upgrading from beta.6
+
+The CLI does not copy old Indexer or MoonPay configuration keys. Set their provider-scoped replacements before using history or fiat commands:
+
+| Previous setting or input | beta.7 replacement |
+| --- | --- |
+| `indexer.apiKey` | `providers.wdk-indexer.config.apiKey` |
+| `indexer.baseUrl` | `providers.wdk-indexer.config.baseUrl` |
+| `WDK_INDEXER_API_KEY` | Set `providers.wdk-indexer.config.apiKey`; there is no environment override |
+| `ramp.moonpay.apiKey` | `providers.moonpay.config.apiKey` |
+| `ramp.moonpay.signUrl` | `providers.moonpay.config.signUrl` |
+| `ramp.moonpay.environment` | `providers.moonpay.config.environment` |
+| `wdk buy` / `wdk sell --module NAME` | Use `--provider NAME`; selection is required when multiple usable fiat providers are enabled |
+| New-token `metadata.indexerSlug`, `metadata.moonpaySlug`, `metadata.bitfinexSlug` | Use `metadata.slugs.indexer`, `metadata.slugs.moonpay`, `metadata.slugs.bitfinex` |
+
+Use [`wdk config set`](#set-configuration) for the new keys, then unlock the wallet again because provider changes lock running wallet sessions. Keep credentials and any rollback configuration private: `config.json` is plaintext, and command arguments or inspection output can expose its values.
+
+MoonPay and Transak ship enabled. Configure the selected [fiat provider](#fiat-providers) and pass `--provider moonpay` or `--provider transak`, or disable the unused provider. [Pricing](#pricing) also uses registered providers; custom pricing providers can be added through `wdk provider add`.
+
+New token registrations reject the old `metadata.*Slug` fields. Existing stored entries are normalized when loaded, with an explicit `metadata.slugs` mapping taking precedence. See [provider mappings](/cli/guides/manage-tokens#provider-metadata).
+
+Configuration writes request file mode `0600` on macOS and Linux, and initialization attempts directory mode `0700`. Directory restriction is best effort; verify existing file and directory permissions after upgrading. These modes do not encrypt configuration or prevent other processes running as your OS user from reading it. Windows uses platform access controls.
+
+Review [Indexer setup and history dates](#indexer) and [provider configuration](#swap-and-bridge-protocols) after moving the keys. History date flags retain their ISO 8601 input format; the client now receives Unix milliseconds. General and network-specific provider settings remain separate.
+
 ## Local Paths
 
 The default configuration directory is `~/.config/wdk-cli`. If `XDG_CONFIG_HOME` is a non-empty environment variable, WDK CLI uses `$XDG_CONFIG_HOME/wdk-cli` instead.
@@ -47,7 +74,7 @@ WDK CLI resolves runtime values in this order:
 | Configuration directory | Non-empty `XDG_CONFIG_HOME`, then `~/.config` |
 | Wallet | Command `--wallet`, then `defaultWallet` |
 | Account index | Command `--index`, then `defaultIndex`, then `0` |
-| Indexer API key | Non-empty `WDK_INDEXER_API_KEY`, then stored `indexer.apiKey`, then an empty value |
+| Indexer API key | `providers.wdk-indexer.config.apiKey`, then the bundled empty value |
 | Wallet passphrase | Non-empty `WDK_PASSPHRASE`, then a hidden interactive prompt |
 
 `--wallet` and `--index` are options on wallet-dependent commands; they are not root flags.
@@ -59,10 +86,9 @@ An empty `WDK_PASSPHRASE` value does not override the prompt. To use an empty pa
 | Variable | Effect |
 | --- | --- |
 | `XDG_CONFIG_HOME` | Changes the parent directory used for WDK CLI data |
-| `WDK_INDEXER_API_KEY` | Overrides `indexer.apiKey` for the current process |
 | `WDK_PASSPHRASE` | Supplies a non-empty passphrase instead of opening a prompt |
 
-There are no beta.6 environment-variable mappings for `indexer.baseUrl`, wallet defaults, account defaults, network configuration, custom modules, or MoonPay configuration.
+There are no beta.7 environment-variable mappings for Indexer or fiat-provider settings, wallet defaults, account defaults, network configuration, or custom modules. `WDK_INDEXER_API_KEY` and `WDK_INDEXER_BASE_URL` are not read.
 
 <Callout type="warn">
 Environment variables can be inherited by child processes and may be visible to other processes running as the same OS user. Limit their lifetime and do not print them in shell history, CI logs, or agent transcripts.
@@ -74,11 +100,14 @@ Environment variables can be inherited by child processes and may be visible to 
 | --- | --- | --- |
 | `defaultWallet` | Wallet name | The first created or imported wallet becomes the default; use `wdk wallet default` to change it |
 | `defaultIndex` | Non-negative integer | `0` |
-| `indexer.baseUrl` | Indexer base URL | `https://wdk-api.tether.io` |
-| `indexer.apiKey` | Indexer API key | Empty; `WDK_INDEXER_API_KEY` overrides it |
-| `ramp.moonpay.apiKey` | MoonPay publishable key (`pk_test_...` or `pk_live_...`) | Empty; do not use a MoonPay secret key |
-| `ramp.moonpay.signUrl` | URL of an HTTP service that signs MoonPay widget URLs | Empty; the service must return a `signedUrl` |
-| `ramp.moonpay.environment` | `sandbox` or `production` | Empty; required by `wdk buy` and `wdk sell` |
+| `providers.wdk-indexer.config.baseUrl` | Indexer base URL | Bundled provider uses `https://wdk-api.tether.io` |
+| `providers.wdk-indexer.config.apiKey` | Non-empty API key | Required before a history request; no environment override |
+| `providers.wdk-indexer.config.timeout` | Milliseconds | HTTP client defaults to `30000` |
+| `providers.moonpay.config.apiKey` | MoonPay publishable key (`pk_test_...` or `pk_live_...`) | Empty; keep secret keys in your backend |
+| `providers.moonpay.config.signUrl` | Your signing endpoint URL | Converted to the module's signing callback; omitted when empty |
+| `providers.moonpay.config.environment` | `sandbox` or `production` | Bundled value is empty; configure the intended environment |
+| `providers.transak.config` | Transak module configuration | `apiKey`, `widgetUrl`, `getOrder`, and `environment`; backend callback URLs are application-owned |
+| `providers.bitfinex.config` | Pricing-client configuration | Bundled Bitfinex feed uses an empty configuration object |
 | `networks.NETWORK` | Wallet-module configuration object | Defaults come from the installed `wdk.config.json` |
 | `networks.NETWORK.KEY` | One wallet-module configuration value | Depends on the selected wallet module |
 | `customModules.PACKAGE.version` | Exact npm version | Created and removed by `wdk module`; do not manage it with `wdk config set` |
@@ -118,17 +147,17 @@ wdk config get --all
 `config get --all` excludes the custom-token registry. Use `wdk token list` to read tokens.
 
 <Callout type="warn">
-`config.json` is plaintext. The CLI does not request an owner-only mode for this file, so its effective permissions follow the operating system and runtime defaults and may be `0644`. `config get --all` can reveal stored API keys, signing URLs, and credentials embedded in provider URLs. Do not publish the file or command output.
+`config.json` is plaintext. Writes request mode `0600` on macOS and Linux, and initialization attempts directory mode `0700`; directory restriction is best effort. Verify existing permissions after upgrading. `config get --all` and `provider info` can reveal stored API keys, signing URLs, and credentials embedded in provider URLs. Do not publish the file or command output.
 </Callout>
 
-Prefer `WDK_INDEXER_API_KEY` when you do not want to persist the indexer key. No environment override is available for MoonPay configuration in beta.6.
+If your application uses an Indexer proxy, configure a credential that the proxy authenticates; an empty key is rejected before history HTTP requests. See [authenticated proxy setup](#use-an-indexer-proxy).
 
 ## Set Configuration
 
 Set a string:
 
 ```bash title="Terminal"
-wdk config set --key indexer.baseUrl --value https://indexer.example.com
+wdk config set --key providers.wdk-indexer.config.baseUrl --value https://indexer.example.com
 ```
 
 Set a number:
@@ -141,7 +170,7 @@ Set a JSON object:
 
 ```bash title="Terminal"
 wdk config set \
-  --key ramp.moonpay \
+  --key providers.moonpay.config \
   --value '{"apiKey":"pk_test_...","signUrl":"https://example.com/sign","environment":"sandbox"}'
 ```
 
@@ -171,7 +200,7 @@ Network configuration is passed to the selected WDK wallet module. Use only keys
 Reset one global key:
 
 ```bash title="Terminal"
-wdk config reset --key indexer.baseUrl
+wdk config reset --key providers.wdk-indexer.config.baseUrl
 ```
 
 Reset one network key:
@@ -186,9 +215,13 @@ Reset configuration defaults:
 wdk config reset --all
 ```
 
-`config reset --all` preserves the default-wallet selection, custom networks, custom tokens, and custom providers. It resets the remaining values to their installed defaults, including removing `customModules` registrations. It also clears registry overrides and does not uninstall packages. Beta.6 rejects unregistered packages when loading wallet managers or providers, so preserved custom networks/providers can stop working until their modules are registered again. Record module pins, network specs, and provider specs before a full reset.
+`config reset --all` preserves the default-wallet selection, custom networks, custom tokens, and custom providers. It resets the remaining values to their installed defaults, including removing `customModules` registrations. It also clears registry overrides and does not uninstall packages. Beta.7 rejects unregistered packages when loading wallet managers or providers, so preserved custom networks/providers can stop working until their modules are registered again. Record module pins, network specs, and provider specs before a full reset.
 
-## Authorization and Wallet Locking
+<span id="authorization-and-wallet-locking" />
+
+## Passphrase Confirmation and Wallet Locking
+
+Passphrase checks confirm the requested CLI change; they do not protect local state from another process running as the same operating-system user. See the [same-user trust boundary](/cli/reference/security-model#same-user-daemon-access).
 
 When at least one wallet exists, these configuration mutations verify the current default wallet's passphrase:
 
@@ -211,7 +244,7 @@ Changing or resetting a key under `networks` or `providers` locks a running daem
 
 ## Module Packages
 
-Beta.6 records built-in module pins in the installed catalog, custom pins under `customModules`, and user overrides under `overrides.modules` in `config.json`. Use module enable/disable to control availability without uninstalling a package.
+Beta.7 records built-in module pins in the installed catalog, custom pins under `customModules`, and user overrides under `overrides.modules` in `config.json`. Use module enable/disable to control availability without uninstalling a package.
 
 ```bash title="Terminal"
 wdk module list
@@ -240,6 +273,8 @@ Use [`wdk provider add`](/cli/api-reference#wdk-provider-add) to register a revi
 
 Configuration is shallow-merged in this order: the provider's general config, `providers.NAME.config`, its packaged per-network config (or the custom registration's `networks.NETWORK`), then `providers.NAME.networks.NETWORK`. Inspect `provider info` after changes. Keys under `providers` lock running wallet sessions so the next unlock reloads the configuration.
 
+The same registry also contains `fiat`, `pricing`, and `indexer` services. These do not become swap candidates. Indexer and pricing use general configuration without network overrides; fiat providers can use all four layers. Deleting a custom provider removes its stored general and per-network configuration and its availability override, while leaving the module installed.
+
 The MCP server has no provider-management or provider-listing tools. Discover names through the CLI before passing `protocol` to an MCP transaction tool. See [Swap and Bridge](/cli/guides/swap-and-bridge) for execution behavior and [Manage Modules](/cli/guides/manage-modules) for package overrides and repair limits.
 
 ## Indexer
@@ -248,29 +283,24 @@ Within the CLI command set, only `wdk get history` uses the WDK Indexer API. The
 
 ### Connect Directly
 
-The default `indexer.baseUrl` is `https://wdk-api.tether.io`. Store your API key:
+The bundled `wdk-indexer` provider explicitly sets `baseUrl` to `https://wdk-api.tether.io`. Store your API key:
 
 ```bash title="Terminal"
-wdk config set --key indexer.apiKey --value YOUR_INDEXER_API_KEY
+wdk config set --key providers.wdk-indexer.config.apiKey --value YOUR_INDEXER_API_KEY
 ```
 
-Alternatively, supply it to the current process without writing it to `config.json`:
-
-```bash title="Terminal"
-WDK_INDEXER_API_KEY=YOUR_INDEXER_API_KEY \
-  wdk get history --network ethereum --wallet dev
-```
+History requires exactly one enabled Indexer provider and a non-empty key. The CLI no longer reads `indexer.*` or the `WDK_INDEXER_API_KEY` environment variable, and does not copy old settings. The client timeout defaults to 30,000 ms. Set `providers.wdk-indexer.config.timeout` to override it.
 
 ### Use an Indexer Proxy
 
 Point the CLI at your own endpoint when you do not want Indexer API keys on developer machines:
 
 ```bash title="Terminal"
-wdk config reset --key indexer.apiKey
-wdk config set --key indexer.baseUrl --value https://indexer-proxy.example.com
+wdk config set --key providers.wdk-indexer.config.baseUrl --value https://indexer-proxy.example.com
+wdk config set --key providers.wdk-indexer.config.apiKey --value YOUR_PROXY_CREDENTIAL
 ```
 
-Also ensure `WDK_INDEXER_API_KEY` is not set in the CLI process. A non-empty environment value overrides the stored empty value and causes the CLI to send an `x-api-key` header.
+The client requires a non-empty key even for a proxy, and sends it in `X-API-KEY`. Authenticate this proxy credential and replace it with your protected upstream Indexer key before forwarding.
 
 The proxy must accept both history request forms:
 
@@ -279,29 +309,62 @@ The proxy must accept both history request forms:
 | `GET /api/v1/{blockchain}/{token}/{address}/token-transfers` with optional `limit`, `fromTs`, and `toTs` query parameters | `wdk get history` includes `--token` |
 | `POST /api/v1/batch/token-transfers` | The command queries all Indexer-supported tokens |
 
-Forward the query parameters or JSON request body and the Indexer response unchanged. Add the Indexer `x-api-key` header when forwarding the request upstream.
+Forward the query parameters or JSON request body and the Indexer response unchanged. `fromTs` and `toTs` use Unix milliseconds. Failed items in an all-token history batch are omitted from the CLI's merged transfer list; empty or partial output does not prove every item succeeded.
 
-`WDK_INDEXER_BASE_URL` is not read by beta.6.
+`WDK_INDEXER_BASE_URL` is not read by beta.7.
+
+### Read Transfer History
+
+Use an existing local wallet, unlock it with `wdk wallet unlock --name NAME`, and check its network and token with `wdk network info` and `wdk token info` before querying history. History reads do not require funding or send a transaction.
+
+The network needs an `indexerSlug`. For `get history --token`, pass the string at `metadata.slugs.indexer`, or its `slug` when the mapping is an object. This provider code can differ from the token's registry key.
+
+```bash title="Query USDt history with date filters"
+wdk get history --network ethereum --token usdt --wallet dev \
+  --from-date 2026-01-01T00:00:00Z --to-date 2026-02-01T00:00:00Z
+```
+
+Replace `dev` with your unlocked wallet's name. The flags accept ISO 8601 dates; the CLI sends `fromTs` and `toTs` as Unix milliseconds. The MCP `get_history` tool uses the same provider and conversion with `fromDate` and `toDate` inputs.
+
+Omitting `--token` batches the network's Indexer-supported tokens, merges successful items by timestamp, and applies `--limit`. Failed items are omitted, so empty or partial output does not establish that every token query succeeded. Lock the wallet when finished with `wdk wallet lock --name NAME`.
+
+See [history errors](/cli/guides/handle-errors#common-recovery-paths) for provider, credential, and network failures. Provider availability is checked before the wallet-unlock requirement.
+
+## Fiat Providers
+
+`wdk buy` and `wdk sell` select enabled `fiat` providers whose modules are installed. MoonPay and Transak are bundled and enabled, so pass `--provider moonpay` or `--provider transak` until only one is usable. Inspect their settings with `wdk provider info --name NAME` in a private terminal.
+
+The commands require `--token` and exactly one of `--fiat-amount` and `--crypto-amount`. Token support comes from `metadata.slugs.PROVIDER`, with decimals resolved from the provider's own asset and currency listings. There is no symbol fallback for fiat mappings. See [Manage Tokens](/cli/guides/manage-tokens#provider-metadata).
+
+Both commands return a URL for the user to open; they do not open a browser or complete a fiat transaction. JSON includes the selected `provider`. If a provider cannot quote a pair, a URL can still be returned with `quoteUnavailable`; `receiveAmount`, `fee`, and `rate` are absent without a quote. Credential rejection remains an error.
+
+The bundled [Transak 1.0.2](https://www.npmjs.com/package/@transak/wdk-protocol-fiat-transak/v/1.0.2) configuration has `apiKey`, `environment`, `widgetUrl`, and `getOrder`. Set `environment` to `PRODUCTION` or `STAGING`; the catalog's empty value is not a usable environment. `widgetUrl` is required for buy/sell and must point to your backend, which creates a session URL with Transak's Create Widget URL API using your API secret. `getOrder` supports the module's order lookup and is not used by CLI buy/sell.
+
+`widgetUrl` and `getOrder` are application-owned HTTP endpoint URLs, not dashboard URLs or JavaScript functions entered as JSON. The registration's `endpointKeys` converts them to callbacks: object payloads are posted as JSON, while string payloads are wrapped as `{ "urlForSignature": "..." }`. A widget response can be a URL string or an object with `widgetUrl`, `url`, or `signedUrl`. Keep API secrets in the backend. See the exact module's API for its payload and backend requirements.
+
+## Pricing
+
+USD estimates use the enabled installed `pricing` provider, with Bitfinex bundled. Only one pricing provider can be enabled; provider add/enable rejects a second one. A token uses `metadata.slugs.PROVIDER` when present, otherwise its display symbol. Missing prices do not establish that an asset has no value: balance output may show `0` for unavailable USD estimates while retaining the on-chain amount.
 
 ## MoonPay
 
-`wdk buy` and `wdk sell` derive the selected wallet address and build a signed MoonPay widget URL. The CLI prints the URL, or returns it in JSON output; it does not open the browser or execute the fiat transaction. Open the URL to continue on MoonPay, which processes the transaction through the integration associated with your MoonPay account.
+With `--provider moonpay`, the CLI derives the selected wallet address and passes it as the buy recipient or sell refund address. It returns the provider URL to continue the flow in a browser.
 
 Get a publishable key from **Developers → API Keys** in the [MoonPay dashboard](https://dashboard.moonpay.com/). Use a `pk_test_...` or `pk_live_...` publishable key here, never the `sk_test_...` or `sk_live_...` secret key.
 
-The commands require all three MoonPay values:
+Configure the MoonPay provider, including your application-owned signing endpoint:
 
 ```bash title="Terminal"
-wdk config set --key ramp.moonpay.apiKey --value pk_test_...
-wdk config set --key ramp.moonpay.signUrl --value https://example.com/moonpay/sign
-wdk config set --key ramp.moonpay.environment --value sandbox
+wdk config set --key providers.moonpay.config.apiKey --value pk_test_...
+wdk config set --key providers.moonpay.config.signUrl --value https://example.com/moonpay/sign
+wdk config set --key providers.moonpay.config.environment --value sandbox
 ```
 
 ### Sign Widget URLs
 
 Because the CLI includes a wallet address in the MoonPay widget URL, it sends the unsigned URL to your signing service. That service signs the URL with your MoonPay secret key and returns the complete signed URL. See MoonPay's [on-ramp URL signing](https://dev.moonpay.com/widget/on-ramp/customization/url-signing) and [off-ramp URL signing](https://dev.moonpay.com/widget/off-ramp/customization/url-signing) guides.
 
-The CLI sends this request to `ramp.moonpay.signUrl`:
+The CLI sends this request to `providers.moonpay.config.signUrl`:
 
 ```http
 POST /moonpay/sign HTTP/1.1
@@ -318,8 +381,10 @@ Return a successful JSON response with the complete signed URL:
 
 Returning only the signature is not supported.
 
+If `signUrl` is empty, the CLI omits the callback and MoonPay beta.3 can return an unsigned widget URL. This does not establish that MoonPay will accept that URL for your integration; configure the signing service when its flow requires signing.
+
 <Callout type="warn">
-Keep the MoonPay secret key in the signing service. Beta.6 does not send configurable authentication headers to `signUrl`, so bind the service locally, keep it on a private network, or restrict access with network-level controls. Do not expose an unauthenticated public signing endpoint.
+Keep the MoonPay secret key in the signing service. Beta.7 does not send configurable authentication headers to `signUrl`, so bind the service locally, keep it on a private network, or restrict access with network-level controls. Do not expose an unauthenticated public signing endpoint.
 </Callout>
 
 ### Select an Environment
@@ -329,7 +394,7 @@ Keep the MoonPay secret key in the signing service. Beta.6 does not send configu
 | `sandbox` | `pk_test_...` | Testnet |
 | `production` | `pk_live_...` | Mainnet |
 
-The CLI rejects a sandbox/mainnet or production/testnet mismatch. It does not validate the publishable-key prefix, so configure the matching key yourself.
+The generic beta.7 fiat path no longer enforces the earlier CLI sandbox/mainnet mismatch check or validates the key prefix. Configure a matching environment, credential, asset mapping, and wallet network yourself. The bundled empty environment value must be replaced with the environment you intend to use.
 
 ***
 

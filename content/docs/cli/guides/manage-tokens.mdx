@@ -5,7 +5,7 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-WDK CLI resolves token names such as `usdt` through a local registry. Each entry defines how the CLI formats amounts, selects a native or contract transfer, and connects the token to optional indexer, MoonPay, and price-provider features.
+WDK CLI resolves token names such as `usdt` through a local registry. Each entry defines how the CLI formats amounts, selects a native or contract transfer, and connects the token to Indexer, fiat, and pricing providers.
 
 Use this guide to [inspect the registry](#inspect-the-registry), [add a custom token](#add-a-custom-token), [override a built-in entry](#override-a-built-in-entry), or [enable and disable tokens](#enable-or-disable-a-token).
 
@@ -28,7 +28,7 @@ wdk token info --network ethereum --token usdt
 
 Use the lowercase registry key shown by these commands with `--token` on `get balance`, `send`, `buy`, and `sell`.
 
-`get history --token` is different: pass the exact `metadata.indexerSlug` value, which may differ from the registry key.
+`get history --token` is different: pass the string at `metadata.slugs.indexer`, or its `slug` field when the mapping is an object. This code may differ from the registry key. See [history lookup](/cli/configuration#read-transfer-history).
 
 ## Token Spec
 
@@ -50,11 +50,15 @@ A network can have at most one effective entry with `isNative: true`.
 
 | Field | Used by | Effect when omitted |
 | --- | --- | --- |
-| `metadata.indexerSlug` | `wdk get history` | Pass this exact value to `--token`. Without it, a token-specific history request cannot use the token and an all-token history request skips it. The network also needs its own `indexerSlug`. |
-| `metadata.moonpaySlug` | `wdk buy` and `wdk sell` | MoonPay operations do not support that token. |
-| `metadata.bitfinexSlug` | USD price conversion | Balance and preview operations can continue without that provider's USD estimate. |
+| `metadata.slugs.indexer` | `wdk get history` | Pass its slug to `--token`. Without it, token-specific history cannot use the token and all-token history skips it. The network also needs its own `indexerSlug`. |
+| `metadata.slugs.PROVIDER` | `wdk buy` and `wdk sell` | The selected fiat provider does not support that token through this registry. Examples of provider names are `moonpay` and `transak`. |
+| `metadata.slugs.bitfinex` | USD price conversion with the bundled feed | The pricing client tries the token's display symbol instead. A missing price can leave balance output without a USD estimate. |
 
-Only `indexerSlug`, `moonpaySlug`, and `bitfinexSlug` are retained inside `metadata`.
+New token registrations accept only `slugs` inside `metadata`. Each system mapping must be a non-empty string or an object containing a non-empty `slug`; other object fields carry provider-specific inputs, such as Transak's `network`.
+
+Stored custom entries using `indexerSlug`, `moonpaySlug`, or `bitfinexSlug` are normalized when loaded, and an explicit `metadata.slugs` entry wins. New `token add` requests with those legacy fields are rejected. Inspect an existing provider mapping with [`wdk token info`](/cli/api-reference#wdk-token-info) before recreating it.
+
+Use [`wdk config set`](/cli/api-reference#wdk-config-set) with `overrides.tokens.NETWORK/TOKEN.metadata.slugs.PROVIDER` to add a mapping without replacing the complete token entry. The registry ignores overrides without a usable slug. Each provider mapping is merged separately, preserving mappings for other providers.
 
 ## Add A Custom Token
 

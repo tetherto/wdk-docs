@@ -1,12 +1,12 @@
 ---
 title: API Reference
-description: Complete WDK CLI beta.6 command and option reference
+description: Complete WDK CLI beta.7 command and option reference
 docType: reference
 schemaType: TechArticle
 icon: ListChecks
 ---
 
-This page documents the 54 leaf commands in `@tetherto/wdk-cli@1.0.0-beta.6`. Run `wdk COMMAND --help` to inspect the installed command surface.
+This page documents the 54 leaf commands in `@tetherto/wdk-cli@1.0.0-beta.7`. Run `wdk COMMAND --help` to inspect the installed command surface.
 
 ## Root Options
 
@@ -56,7 +56,7 @@ Without `--seed-stdin`, the command prompts for the seed phrase and a new storag
 
 ### `wdk wallet export`
 
-Decrypts and prints a wallet's seed phrase.
+Decrypts and prints a wallet's seed phrase in the CLI process. The wallet passphrase is required even if the wallet is already unlocked; the daemon has no seed-export action.
 
 | Option | Required | Description |
 | --- | --- | --- |
@@ -102,7 +102,7 @@ Locks one wallet or every wallet.
 | `--name <name>` | One selector required | Wallet to lock |
 | `--all` | One selector required | Lock every wallet |
 
-If both selectors are present, beta.6 applies `--all`.
+If both selectors are present, beta.7 applies `--all`.
 
 ### `wdk wallet default`
 
@@ -146,7 +146,7 @@ Derives an address for one network or for a network group.
 | `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
 | `--testnet` | No | Off | With `--all`, select testnets instead of mainnets |
 
-When both `--network` and `--all` are supplied, beta.6 runs the single-network path. In aggregate mode, networks that fail address derivation are omitted from the result.
+When both `--network` and `--all` are supplied, beta.7 runs the single-network path. In aggregate mode, networks that fail address derivation are omitted from the result.
 
 ### `wdk get balance`
 
@@ -167,19 +167,21 @@ Single-network balance results include the account `address`. Aggregate balance 
 
 ### `wdk get history`
 
-Reads token-transfer history through the configured indexer.
+Reads token-transfer history through the enabled Indexer provider. See [provider configuration and date conversion](/cli/configuration#read-transfer-history) when migrating from beta.6.
 
 | Option | Required | Default | Description |
 | --- | --- | --- | --- |
 | `--network <network>` | Yes | — | Network to query |
-| `--token <token>` | No | All indexer-supported tokens | Exact `metadata.indexerSlug` code; the installed registry yields `btc`, `usdt`, and `xaut`, while custom entries can add other codes |
+| `--token <token>` | No | All Indexer-supported tokens | Exact `metadata.slugs.indexer` string, or its `slug` when the mapping is an object; custom entries can add other codes |
 | `--limit <n>` | No | `30` | Positive maximum number of transfers |
 | `--from-date <date>` | No | — | ISO 8601 start date |
 | `--to-date <date>` | No | — | ISO 8601 end date |
 | `--wallet <name>` | No | Default wallet | Wallet selection |
 | `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
 
-When `--token` is omitted, beta.6 batches the network's supported token requests, ignores failed batch items, merges successful transfers by timestamp, and then applies `--limit`.
+When `--token` is omitted, beta.7 batches the network's supported token requests, ignores failed batch items, merges successful transfers by timestamp, and then applies `--limit`.
+
+The result includes `network`, `index`, `address`, `token`, `transfers`, and `count`. `token` is a string for a token-specific request or an array for a batch. Transfer `decimals` is omitted when the token is unknown to the registry. Empty or partial batch output does not establish that all token queries succeeded.
 
 ### `wdk get transaction`
 
@@ -225,7 +227,7 @@ wdk send \
 
 Without `--dry-run`, the command broadcasts immediately. There is no additional interactive confirmation.
 
-Before either fee estimation or broadcast, beta.6 validates the recipient against the selected built-in network's CAIP-2 address rules. A format or mainnet/testnet mismatch fails with `INVALID_ADDRESS` after the unlocked-wallet check but before the estimate or send request. A custom network without a supported CAIP-2 validator is left to its wallet module for final validation.
+Before either fee estimation or broadcast, beta.7 validates the recipient against the selected built-in network's CAIP-2 address rules. A format or mainnet/testnet mismatch fails with `INVALID_ADDRESS` after the unlocked-wallet check but before the estimate or send request. A custom network without a supported CAIP-2 validator is left to its wallet module for final validation.
 
 Send previews and execution results include `from`, the sender address.
 
@@ -266,7 +268,7 @@ Message verification results include the checked account `address` alongside `va
 
 ### `wdk swap`
 
-Quotes or executes a token swap. Same-network swaps are the documented beta.6 path; see the warning below before using the accepted cross-network option.
+Quotes or executes a token swap. Same-network swaps are the documented beta.7 path; see the warning below before using the accepted cross-network option.
 
 | Option | Required | Default | Description |
 | --- | --- | --- | --- |
@@ -275,7 +277,7 @@ Quotes or executes a token swap. Same-network swaps are the documented beta.6 pa
 | `--to-token <token>` | Yes | None | Registered destination token |
 | `--amount-in <value>` | One amount required | None | Exact decimal amount to sell |
 | `--amount-out <value>` | One amount required | None | Exact decimal amount to receive |
-| `--to-network <network>` | No | Source network | Accepted destination network; unsafe in beta.6 because same-chain candidates can receive no destination |
+| `--to-network <network>` | No | Source network | Accepted destination network; unsafe in beta.7 because same-chain candidates can receive no destination |
 | `--recipient <address>` | No | Selected account | Destination-network recipient |
 | `--protocol <name>` | No | Best route | Restrict quoting to one enabled provider name from `wdk provider list` |
 | `--wallet <name>` | No | Default wallet | Wallet selection |
@@ -285,16 +287,16 @@ Quotes or executes a token swap. Same-network swaps are the documented beta.6 pa
 Provide exactly one of `--amount-in` and `--amount-out`. Exact-input routing selects the successful quote with the highest output. Exact-output routing selects the quote with the lowest input. Separate gas and bridge fees are displayed but excluded from ranking because their denomination and inclusion differ between protocol types. Failed quote attempts appear under `skipped` when another protocol succeeds.
 
 <Callout type="error">
-Without `--dry-run`, `wdk swap` executes immediately. Execution requests fresh quotes. Unless `--protocol` is set, the provider can change; amounts and fees can change even when it is set. Beta.6 exposes no CLI option that binds a minimum output, maximum input, fee, slippage limit, or expiry to the preview, and there is no daemon confirmation step.
+Without `--dry-run`, `wdk swap` executes immediately. Execution requests fresh quotes. Unless `--protocol` is set, the provider can change; amounts and fees can change even when it is set. Beta.7 exposes no CLI option that binds a minimum output, maximum input, fee, slippage limit, or expiry to the preview, and there is no daemon confirmation step.
 </Callout>
 
 <Callout type="error">
-Do not use `--to-network` for a beta.6 swap. Candidate selection can admit a same-chain swap provider, and the swap adapter omits the destination network from that provider's quote and execution options.
+Do not use `--to-network` for a beta.7 swap. Candidate selection can admit a same-chain swap provider, and the swap adapter omits the destination network from that provider's quote and execution options.
 </Callout>
 
 If `--recipient` is omitted, the daemon derives an address on the destination network from the selected wallet and the same account index. The preview includes the sender in `from`, but does not include that recipient, wallet, or index. Select all three explicitly and verify the destination address with `wdk get address --network NETWORK --wallet WALLET --index INDEX` before previewing.
 
-Velora beta.6 requires a prior allowance when the input is an ERC-20 token. Beta.6 does not approve automatically or expose the provider spender. Resolve the chain-specific spender with Velora SDK 9's [`swap.getSpender()`](https://github.com/VeloraDEX/sdk/blob/86679ae70686ad3f01ee29baba9033be0a1b742b/src/methods/swap/spender.ts#L33-L63) lookup, approve a bounded base-unit amount through the catalog-declared wallet method, verify a confirmed receipt with `success: true`, and read the allowance again. Native-token input has no ERC-20 allowance, and other protocols can manage approval differently. See [Call Module Methods](/cli/guides/call-module-methods#call-a-write-method).
+Velora beta.6 requires a prior allowance when the input is an ERC-20 token. Beta.7 does not approve automatically or expose the provider spender. Resolve the chain-specific spender with Velora SDK 9's [`swap.getSpender()`](https://github.com/VeloraDEX/sdk/blob/86679ae70686ad3f01ee29baba9033be0a1b742b/src/methods/swap/spender.ts#L33-L63) lookup, approve a bounded base-unit amount through the catalog-declared wallet method, verify a confirmed receipt with `success: true`, and read the allowance again. Native-token input has no ERC-20 allowance, and other protocols can manage approval differently. See [Call Module Methods](/cli/guides/call-module-methods#call-a-write-method).
 
 Use [`wdk provider list`](#wdk-provider-list) to discover provider names and [`wdk provider info`](#wdk-provider-info) to inspect effective configuration. Package installation with `wdk module add` and provider registration with `wdk provider add` are separate operations. See [Swap and Bridge](/cli/guides/swap-and-bridge) for the complete workflow.
 
@@ -320,7 +322,7 @@ The source and destination networks must differ. The omitted-recipient behavior,
 
 ## Fiat Ramp Commands
 
-`wdk buy` and `wdk sell` derive the selected wallet address and print a signed provider URL to open in a browser. Both require an unlocked wallet and valid [MoonPay configuration](/cli/configuration#moonpay).
+`wdk buy` and `wdk sell` derive the selected wallet address and print a provider URL to open in a browser. Both require an unlocked wallet and valid [fiat-provider configuration](/cli/configuration#fiat-providers). The CLI does not open the browser or complete the fiat transaction.
 
 ### `wdk buy`
 
@@ -331,7 +333,7 @@ The source and destination networks must differ. The omitted-recipient behavior,
 | `--fiat-amount <value>` | One amount required | — | Fiat amount to spend |
 | `--crypto-amount <value>` | One amount required | — | Crypto amount to buy |
 | `--fiat-currency <currency>` | No | `usd` | Fiat currency code |
-| `--module <module>` | No | `moonpay` | Fiat provider module |
+| `--provider <name>` | When multiple providers are usable | Sole usable fiat provider | Registered fiat provider name, such as `moonpay` or `transak` |
 | `--wallet <name>` | No | Default wallet | Wallet selection |
 | `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
 
@@ -344,11 +346,13 @@ The source and destination networks must differ. The omitted-recipient behavior,
 | `--fiat-amount <value>` | One amount required | — | Target fiat amount |
 | `--crypto-amount <value>` | One amount required | — | Crypto amount to sell |
 | `--fiat-currency <currency>` | No | `usd` | Fiat currency code |
-| `--module <module>` | No | `moonpay` | Fiat provider module |
+| `--provider <name>` | When multiple providers are usable | Sole usable fiat provider | Registered fiat provider name, such as `moonpay` or `transak` |
 | `--wallet <name>` | No | Default wallet | Wallet selection |
 | `--index <n>` | No | Configured index, initially `0` | Non-negative account index |
 
-For each command, provide exactly one of `--fiat-amount` and `--crypto-amount`. Beta.6 supports only the `moonpay` module.
+For each command, provide exactly one of `--fiat-amount` and `--crypto-amount`. MoonPay and Transak ship enabled, so select one with `--provider` unless you have disabled the other. `--module` is no longer accepted.
+
+JSON returns `direction`, `network`, `address`, `token`, `provider`, `fiatCurrency`, `payAmount`, and `url`. With a quote it also includes `receiveAmount`, `fee`, and `rate`. A provider that cannot price the pair can still return a URL with `quoteUnavailable`; those quote fields are omitted. Credential-looking quote failures produce `INVALID_CONFIG` instead of this fallback.
 
 ## Configuration Commands
 
@@ -395,7 +399,7 @@ Prints the resolved `config.json` path. This command has no command-specific opt
 | `--testnet` | Off | Show only testnets |
 | `--mainnet` | Off | Show only mainnets |
 
-With neither option, the command shows enabled networks and networks disabled directly. Networks hidden by a disabled module are omitted; re-enable their module first. If both are provided, beta.6 applies `--testnet`. JSON entries include `enabled`.
+With neither option, the command shows enabled networks and networks disabled directly. Networks hidden by a disabled module are omitted; re-enable their module first. If both are provided, beta.7 applies `--testnet`. JSON entries include `enabled`.
 
 ### `wdk network create <data>`
 
@@ -502,6 +506,8 @@ See [Call Module Methods](/cli/guides/call-module-methods) for examples and the 
 
 Lists built-in and custom modules with their pinned version, installed version, status, and source. Statuses are `ok`, `not installed`, `version mismatch`, `disabled`, and `stale override`. A version override also exposes `defaultVersion`. This command has no command-specific options and does not require an unlocked wallet.
 
+The catalog includes wallet, protocol, pricing-client, and Indexer implementations. Text output abbreviates Git specifications to `git#` plus seven commit characters; JSON retains the full pin. For any pin containing a colon, status `ok` only confirms that a package is installed; the comparison does not verify its commit or content.
+
 ### `wdk module add`
 
 | Option | Required | Description |
@@ -521,11 +527,11 @@ The command verifies the default wallet passphrase when a wallet exists, locks a
 The command verifies the default wallet passphrase when a wallet exists, locks a running daemon, removes the custom-module record, and runs `npm uninstall --no-save`. For a built-in package with a version override, it instead clears the override and reinstalls the catalog version. It rejects a built-in package with no version override.
 
 <Callout type="warn">
-Adding or removing a package runs npm and can execute package lifecycle scripts; an added default export can later run inside the wallet daemon with access to unlocked accounts. Audit the exact package and version before adding it. Beta.6 only warns about a configured/installed version mismatch and still loads the installed package. Delete custom networks that depend on a module before removing that module.
+Adding or removing a package runs npm and can execute package lifecycle scripts; an added default export can later run inside the wallet daemon with access to unlocked accounts. Audit the exact package and version before adding it. Beta.7 only warns about a configured/installed version mismatch and still loads the installed package. Delete custom networks that depend on a module before removing that module.
 </Callout>
 
 <Callout type="error">
-Unset `WDK_PASSPHRASE` before `module add` or `module remove` and use the hidden interactive prompt. Beta.6 passes its environment to npm, so install or uninstall lifecycle scripts can otherwise inherit the wallet passphrase.
+Unset `WDK_PASSPHRASE` before `module add` or `module remove` and use the hidden interactive prompt. Beta.7 passes its environment to npm, so install or uninstall lifecycle scripts can otherwise inherit the wallet passphrase.
 </Callout>
 
 See [Manage Modules](/cli/guides/manage-modules) for the trust boundary, repair behavior, and custom-network workflow.
@@ -540,11 +546,11 @@ Disable a module with required `--name <package>`. Its networks and providers be
 
 ## Provider Commands
 
-Providers register installed modules for swap, bridge, or Swidge routing. These commands are available through the CLI, not as MCP tools.
+Providers describe swap, bridge, Swidge, fiat, pricing, and Indexer services. A direct-service registry entry can omit `module`. These commands are available through the CLI, not as MCP tools.
 
 ### `wdk provider list`
 
-List names, `kind`, backing `module`, `source`, and `enabled` status. JSON output is `{ providers, count }`. Providers disabled directly remain listed; providers hidden by a disabled module are omitted.
+List names, `kind`, optional backing `module`, `source`, and `enabled` status. JSON output is `{ providers, count }`. Providers disabled directly remain listed; providers hidden by a disabled module are omitted.
 
 ### `wdk provider info`
 
@@ -557,16 +563,17 @@ Register a provider from an inline JSON object or JSON file path. The `<data>` a
 | Field | Required | Description |
 | --- | --- | --- |
 | `name` | Yes | Unused lowercase alphanumeric name with optional hyphens; must start with a letter or digit |
-| `kind` | Yes | `swap`, `bridge`, or `swidge` |
+| `kind` | Yes | `swap`, `bridge`, `swidge`, `fiat`, or `pricing`; `indexer` cannot be added |
 | `module` | Yes | Registered and installed module package |
 | `config` | No | General module configuration object |
 | `networks` | No | Map of network names to configuration overrides |
+| `endpointKeys` | No | Non-empty configuration-key names that the fiat module takes as callbacks; store an HTTP endpoint URL for each |
 
-The command verifies the default wallet passphrase when a wallet exists, imports the module to check its declared kind, saves the provider, and locks a running daemon. Importing executes package code: register only a package you have reviewed. The kind check is not a safety or chain-compatibility check. Adding a provider does not install its module.
+The command verifies the default wallet passphrase when a wallet exists, imports the module to check its declared kind, saves the provider, and locks a running daemon. Importing executes package code: register only a package you have reviewed. The kind check is not a safety or chain-compatibility check. Adding a provider does not install its module. Only one pricing provider may be enabled; disable the current feed before registering another enabled feed.
 
 ### `wdk provider delete`
 
-Delete a custom provider with required `--name <name>`. Built-in providers cannot be deleted. This removes the registration and its enable/disable override; the module package remains installed. Values set under `providers.NAME` with `wdk config set` are not removed. Reset them with `wdk config reset --key providers.NAME`.
+Delete a custom provider with required `--name <name>`. Built-in providers cannot be deleted. This removes the registration, its stored `providers.NAME` general and per-network configuration, and its enable/disable override. The module package remains installed.
 
 ### `wdk provider enable`
 
