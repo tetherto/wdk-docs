@@ -114,6 +114,31 @@ const expectedRedirects = [
     status: '301',
   },
   {
+    source: '/ai/mcp-toolkit',
+    target: '/cli/guides/use-mcp-server',
+    status: '301',
+  },
+  {
+    source: '/ai/mcp-toolkit/',
+    target: '/cli/guides/use-mcp-server',
+    status: '301',
+  },
+  {
+    source: '/ai/mcp-toolkit.md',
+    target: '/cli/guides/use-mcp-server',
+    status: '301',
+  },
+  {
+    source: '/ai/mcp-toolkit/get-started',
+    target: '/cli/guides/use-mcp-server',
+    status: '301',
+  },
+  {
+    source: '/ai/mcp-toolkit/api-reference.md',
+    target: '/cli/guides/use-mcp-server',
+    status: '301',
+  },
+  {
     source: '/__missing-sevalla-404-check',
     target: '/404.html',
     status: '404',
