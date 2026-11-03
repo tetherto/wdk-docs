@@ -1,0 +1,145 @@
+---
+title: Bridge USD₮0 Solana Configuration
+description: Configuration options and settings for @tetherto/wdk-protocol-bridge-usdt0-solana
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+## Bridge Protocol Configuration
+
+The `Usdt0ProtocolSolana` accepts a configuration object with one option, `bridgeMaxFee`:
+
+```javascript
+import Usdt0ProtocolSolana from '@tetherto/wdk-protocol-bridge-usdt0-solana'
+import { WalletAccountSolana } from '@tetherto/wdk-wallet-solana'
+
+const account = new WalletAccountSolana(process.env.SEED_PHRASE, "0'/0'", {
+  provider: 'https://api.mainnet-beta.solana.com'
+})
+
+const bridgeProtocol = new Usdt0ProtocolSolana(account, {
+  bridgeMaxFee: 10_000_000n // Optional cap, 0.01 SOL
+})
+```
+
+The deployment addresses are built into the package and cannot be overridden: the Legacy Mesh OFT program, the OFT store, and the native SPL USD₮ mint. They are listed in the package [`src/config.js`](https://github.com/tetherto/wdk-protocol-bridge-usdt0-solana/blob/main/src/config.js).
+
+## Account Configuration
+
+The bridge reads its RPC connection from the wallet account. Set the `provider` on the [Solana wallet configuration](/sdk/wallet-modules/wallet-solana/configuration), pointing at Solana mainnet. It accepts the same inputs as the wallet, including a list of endpoints for failover.
+
+```javascript
+import { WalletAccountSolana, WalletAccountReadOnlySolana } from '@tetherto/wdk-wallet-solana'
+
+// Full access account
+const account = new WalletAccountSolana(process.env.SEED_PHRASE, "0'/0'", {
+  provider: 'https://api.mainnet-beta.solana.com'
+})
+
+// Read-only account, for quotes
+const readOnlyAccount = new WalletAccountReadOnlySolana('<solana address>', {
+  provider: 'https://api.mainnet-beta.solana.com'
+})
+```
+
+See [account requirements](/sdk/bridge-modules/bridge-usdt0-solana/api-reference#account-requirements) for custom accounts and for accounts governed by Core policies.
+
+## Configuration Options
+
+### Bridge Max Fee
+
+The `bridgeMaxFee` option rejects `bridge()` when the fees are greater than the cap. A value equal to the cap is allowed. `quoteBridge()` does not enforce it. Override it per call in the second argument of `bridge()`.
+
+**Type:** `number | bigint` (optional)
+**Unit:** Lamports
+
+| Account | `bridgeMaxFee` compares against |
+|---|---|
+| `WalletAccountSolana` | `fee + bridgeFee` |
+| `WalletAccountSolanaGasless` | `bridgeFee` alone |
+
+The LayerZero fee differs widely by destination, so choose the value per route. See the [sampled fees](/sdk/bridge-modules/bridge-usdt0-solana/guides/bridge-tokens#cap-fees-with-bridgemaxfee).
+
+## Gasless Configuration
+
+For `WalletAccountSolanaGasless` accounts, the second argument of `bridge()` can also override two paymaster options. `quoteBridge()` accepts `paymasterToken` only. See [Bridge with a gasless account](/sdk/bridge-modules/bridge-usdt0-solana/guides/bridge-gasless).
+
+### Paymaster Token
+
+The `paymasterToken` option selects the token used to pay the paymaster.
+
+**Type:** `{ address: string }` (optional)
+
+### Transaction Max Fee
+
+The `transactionMaxFee` option caps `fee`, the payment to the paymaster, which includes the LayerZero fee it fronts.
+
+**Type:** `number | bigint` (optional)
+**Unit:** Paymaster token base units
+
+```javascript
+const result = await bridgeProtocol.bridge(options, {
+  paymasterToken: { address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB' },
+  transactionMaxFee: 1_000_000n,
+  bridgeMaxFee: 2_000_000n
+})
+```
+
+## Bridge Options
+
+`bridge()` and `quoteBridge()` take the same options. There are no route overrides: `oftContractAddress` and `dstEid` from the EVM module do not exist here.
+
+```javascript
+const bridgeOptions = {
+  targetChain: 'arbitrum',
+  recipient: '0x...',
+  token: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+  amount: 1000000n
+}
+```
+
+### Target Chain
+
+The destination chain's key. A chain ID or endpoint ID is rejected.
+
+**Type:** `string`
+**Supported values:** `'ethereum'`, `'arbitrum'`, `'celo'`, `'ton'`, `'tron'`
+
+### Recipient
+
+The address that receives the tokens on the destination. It is validated before quoting or sending. See [recipient formats](/sdk/bridge-modules/bridge-usdt0-solana/guides/bridge-tokens#recipient-formats).
+
+**Type:** `string`
+
+### Token
+
+The SPL mint of the token to bridge. The only accepted value is the native USD₮ mint.
+
+**Type:** `string`
+**Value:** `'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'`
+
+### Amount
+
+The amount to send, before the [Legacy Mesh fee](/sdk/bridge-modules/bridge-usdt0-solana#what-moves) is deducted.
+
+**Type:** `number | bigint`
+**Unit:** Base units, with 6 decimals, so 1 USD₮ is `1000000n`. A `number` must be a safe integer.
+
+<Cards>
+<Card title="Node.js Quickstart" href="/start-building/nodejs-bare-quickstart">
+Get started with WDK in a Node.js environment
+</Card>
+<Card title="WDK Bridge USD₮0 Solana Protocol API" href="/sdk/bridge-modules/bridge-usdt0-solana/api-reference">
+Constructor, methods, types, and error behavior
+</Card>
+<Card title="WDK Bridge USD₮0 Solana Protocol Usage" href="/sdk/bridge-modules/bridge-usdt0-solana/usage">
+Task-focused guides for this bridge
+</Card>
+</Cards>
+
+***
+
+### Need Help?
+
+<SupportCards />

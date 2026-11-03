@@ -1,0 +1,107 @@
+---
+title: Bridge with a Gasless Account
+description: Bridge USD₮ from Solana without holding SOL, using WalletAccountSolanaGasless and a Kora paymaster.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide covers [prerequisites](#prerequisites), how to [create a gasless account](#create-a-gasless-account), [read the fees](#read-the-fees), [bridge with paymaster options](#bridge-with-paymaster-options), and what the [Kora node must allow](#kora-node-requirements).
+
+## Prerequisites
+
+* A Kora-compatible paymaster endpoint and fee payer address. See the [gasless wallet configuration](/sdk/wallet-modules/wallet-solana-gasless/configuration).
+* A node configured for this bridge, as described in [Kora node requirements](#kora-node-requirements). A paymaster that only sponsors ordinary transfers rejects it.
+
+```bash title="Install the bridge and the gasless wallet"
+npm install @tetherto/wdk-protocol-bridge-usdt0-solana @tetherto/wdk-wallet-solana-gasless
+```
+
+## Create a gasless account
+
+Create a [`WalletAccountSolanaGasless`](/sdk/wallet-modules/wallet-solana-gasless/api-reference#walletaccountsolanagasless) and wrap it with the same bridge class. The bridge recognizes the gasless flow from the account's `paymasterAddress`:
+
+```javascript title="Bridge from a gasless account"
+import { WalletAccountSolanaGasless } from '@tetherto/wdk-wallet-solana-gasless'
+import Usdt0ProtocolSolana from '@tetherto/wdk-protocol-bridge-usdt0-solana'
+
+const account = new WalletAccountSolanaGasless(process.env.SEED_PHRASE, "0'/0'", {
+  provider: 'https://api.mainnet-beta.solana.com',
+  paymasterUrl: 'https://your-kora-paymaster.example',
+  paymasterAddress: process.env.PAYMASTER_ADDRESS,
+  paymasterToken: { address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB' }
+})
+
+const bridgeProtocol = new Usdt0ProtocolSolana(account)
+```
+
+The account needs USD₮ for the amount and paymaster tokens for the fee. It does not need SOL. For quotes without signing, use `WalletAccountReadOnlySolanaGasless` with the same configuration. The paymaster is the simulated fee payer, so the source address does not have to hold SOL.
+
+## Read the fees
+
+The paymaster pays the Solana transaction, fronts the LayerZero fee, and charges both back in the paymaster token through the wallet's payment instruction. The two fields returned by `quoteBridge()` and `bridge()` therefore use different units:
+
+| Field | Unit | Meaning | Capped by |
+|---|---|---|---|
+| `fee` | Paymaster token base units | The payment to the paymaster, which includes the LayerZero fee | `transactionMaxFee` |
+| `bridgeFee` | Lamports | The LayerZero fee the paymaster fronts | `bridgeMaxFee` |
+
+<Callout type="warn">
+Do not add `fee` and `bridgeFee`. They are different currencies, and `fee` already includes the cost of `bridgeFee`.
+</Callout>
+
+## Bridge with paymaster options
+
+You can pass overrides as the second argument of [`bridge()`](/sdk/bridge-modules/bridge-usdt0-solana/api-reference#bridgeoptions-config):
+
+```javascript title="Bridge with paymaster overrides"
+const options = {
+  targetChain: 'arbitrum',
+  recipient: process.env.ARBITRUM_RECIPIENT,
+  token: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+  amount: 1000000n
+}
+
+const quote = await bridgeProtocol.quoteBridge(options)
+
+const result = await bridgeProtocol.bridge(options, {
+  bridgeMaxFee: 2_000_000n, // Lamports, checked before contacting the paymaster
+  transactionMaxFee: 1_000_000n, // Paymaster token base units
+  paymasterToken: { address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB' }
+})
+
+console.log('Solana transaction hash:', result.hash)
+console.log('Paid to the paymaster:', result.fee)
+console.log('LayerZero fee fronted:', result.bridgeFee, 'lamports')
+```
+
+[`quoteBridge()`](/sdk/bridge-modules/bridge-usdt0-solana/api-reference#quotebridgeoptions-config) accepts only the `paymasterToken` override.
+
+## Kora node requirements
+
+The bridge needs more from the node than an ordinary sponsored transfer. Your Kora node must have:
+
+- **Margin pricing**, so the LayerZero fee it pays is charged back.
+- **`fee_payer_policy.system.allow_transfer = true`**, because the LayerZero message library pays its workers from the fee payer.
+- **`max_allowed_lamports` above the LayerZero fee**, which follows destination gas prices. See the [sampled fees](/sdk/bridge-modules/bridge-usdt0-solana/guides/bridge-tokens#cap-fees-with-bridgemaxfee). TRON was above 0.1 SOL when sampled.
+- **The programs below on its allowlist.**
+
+| Program | Address |
+|---|---|
+| Legacy Mesh OFT | `Fuww9mfc8ntAwxPUzFia7VJFAdvLppyZwhPJoXySZXf7` |
+| LayerZero endpoint | `76y77prsiCMvXMjuoZ5VRrhG5qYBrUMYTE5WgHqgjEn6` |
+| LayerZero ULN | `7a4WjyR8VZ7yZz5XJAKm39BUGn5iT9CKcv2pmG9tdXVH` |
+| Executor and DVNs | Resolved on-chain for each destination |
+
+<Callout type="info">
+The endpoint is read from the OFT store, and the executor and DVN programs from the LayerZero send configuration of each route. They can change on-chain, so test each route you enable against your node.
+</Callout>
+
+## Next Steps
+
+Harden integrations with [Handle errors](/sdk/bridge-modules/bridge-usdt0-solana/guides/handle-errors), or review the [gasless wallet module](/sdk/wallet-modules/wallet-solana-gasless/).
+
+---
+
+## Need Help?
+
+<SupportCards />

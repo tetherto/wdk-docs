@@ -1,0 +1,135 @@
+---
+title: Bridge Tokens
+description: Quote and send USD₮ from Solana to EVM, TON, and TRON recipients, confirm the transaction, and cap fees.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide covers standard Solana accounts: [prerequisites](#prerequisites), how to [quote bridge fees](#quote-bridge-fees), [send the bridge](#send-the-bridge), [confirm it](#confirm-the-bridge), use the right [recipient format](#recipient-formats), and [set `bridgeMaxFee`](#cap-fees-with-bridgemaxfee). For an account that holds no SOL, see [Bridge with a gasless account](/sdk/bridge-modules/bridge-usdt0-solana/guides/bridge-gasless).
+
+## Prerequisites
+
+Complete [Get Started](/sdk/bridge-modules/bridge-usdt0-solana/guides/get-started): an account from [`new WalletAccountSolana(seed, path, config?)`](/sdk/wallet-modules/wallet-solana/api-reference#walletaccountsolana) and a bridge from [`new Usdt0ProtocolSolana(account, config?)`](/sdk/bridge-modules/bridge-usdt0-solana/api-reference#constructor). The account's RPC must point at Solana mainnet.
+
+The account needs two balances:
+
+- **USD₮** for the amount. The quote does not read this balance, so check it with [`getTokenBalance()`](/sdk/wallet-modules/wallet-solana/api-reference#gettokenbalancetokenmint) first.
+- **SOL** for `fee` and `bridgeFee`, both paid from this account.
+
+There is no approval step. Do not look for a spender address, because the bridge transaction moves the tokens directly.
+
+## Quote bridge fees
+
+You can estimate fees without sending a transaction using [`quoteBridge()`](/sdk/bridge-modules/bridge-usdt0-solana/api-reference#quotebridgeoptions-config). A quote also confirms that the route has capacity for the amount:
+
+```javascript title="Quote before bridging"
+const USDT_MINT = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'
+
+const options = {
+  targetChain: 'arbitrum',
+  recipient: process.env.ARBITRUM_RECIPIENT,
+  token: USDT_MINT,
+  amount: 1000000n // 1 USDt, 6 decimals
+}
+
+const quote = await bridgeProtocol.quoteBridge(options)
+
+console.log('Solana transaction fee:', quote.fee, 'lamports')
+console.log('LayerZero fee:', quote.bridgeFee, 'lamports')
+```
+
+`bridgeFee` does not depend on the amount. It does depend on the destination, as the [table below](#cap-fees-with-bridgemaxfee) shows.
+
+## Send the bridge
+
+You can send the transfer by calling [`bridge()`](/sdk/bridge-modules/bridge-usdt0-solana/api-reference#bridgeoptions-config) with the same options. Amount `1000000n` is 1 USD₮:
+
+```javascript title="Bridge USDt to Arbitrum"
+const result = await bridgeProtocol.bridge(options)
+
+console.log('Solana transaction hash:', result.hash)
+console.log('Solana transaction fee:', result.fee, 'lamports')
+console.log('LayerZero fee:', result.bridgeFee, 'lamports')
+```
+
+`bridge()` builds and quotes the transaction again when it runs, so an earlier quote does not bind the fee. Use `bridgeMaxFee` to bound it.
+
+The recipient receives the amount less the [Legacy Mesh fee](/sdk/bridge-modules/bridge-usdt0-solana#what-moves), which neither method reports.
+
+## Confirm the bridge
+
+`bridge()` returns once the transaction is submitted. Wait for it on Solana with [`waitForTransaction()`](/sdk/wallet-modules/wallet-solana/api-reference#waitfortransactionhash-options):
+
+```javascript title="Confirm on Solana"
+const receipt = await account.waitForTransaction(result.hash)
+
+if (receipt.success !== true) {
+  throw new Error('Bridge transaction did not succeed')
+}
+```
+
+A timeout does not prove that the transaction failed. Check the hash before retrying, so you do not bridge twice.
+
+Solana confirmation does not prove settlement on the destination. Verify the destination balance before spending the bridged funds.
+
+## Recipient formats
+
+`quoteBridge()` and `bridge()` validate `recipient` against the target chain before any fee is paid. A failure reads `Invalid recipient address for target chain '<chain>': <REASON>`.
+
+| `targetChain` | Format | Common reasons |
+|---|---|---|
+| `ethereum`, `arbitrum`, `celo` | Hex address. Mixed case must carry a valid checksum. | `INVALID_FORMAT`, `INVALID_CHECKSUM`, `ZERO_ADDRESS` |
+| `ton` | User-friendly or raw address on workchain `0` | `INVALID_FORMAT`, `INVALID_CHECKSUM`, `UNSUPPORTED_WORKCHAIN`, `ZERO_ADDRESS` |
+| `tron` | Base58Check address, starting with `T` | `INVALID_FORMAT`, `INVALID_PREFIX`, `INVALID_CHECKSUM`, `ZERO_ADDRESS` |
+
+```javascript title="Bridge USDt to TON and TRON"
+const tonResult = await bridgeProtocol.bridge({
+  targetChain: 'ton',
+  recipient: process.env.TON_RECIPIENT,
+  token: USDT_MINT,
+  amount: 1000000n
+})
+
+const tronResult = await bridgeProtocol.bridge({
+  targetChain: 'tron',
+  recipient: process.env.TRON_RECIPIENT,
+  token: USDT_MINT,
+  amount: 1000000n
+})
+```
+
+## Cap fees with bridgeMaxFee
+
+You can pass `bridgeMaxFee` to the constructor, or per call as the second argument of `bridge()`. On a standard account, `bridge()` rejects when `fee + bridgeFee` is greater than the cap, in lamports. A total equal to the cap is allowed. `quoteBridge()` does not enforce it.
+
+```javascript title="Cap fees for one bridge"
+const result = await bridgeProtocol.bridge(options, {
+  bridgeMaxFee: 2_000_000n // 0.002 SOL
+})
+```
+
+The LayerZero fee differs widely by destination, so size the cap per route. These mainnet quotes were sampled on November 2, 2026, and they move with destination gas prices:
+
+| Destination | `bridgeFee` in lamports | About |
+|---|---:|---:|
+| Arbitrum | 799,031 | 0.0008 SOL |
+| Celo | 809,980 | 0.0008 SOL |
+| TON | 1,157,418 | 0.0012 SOL |
+| Ethereum | 6,614,031 | 0.0066 SOL |
+| TRON | 119,003,228 | 0.119 SOL |
+
+`fee` was 5,000 lamports on each route.
+
+<Callout type="warn">
+A single cap of `10_000_000n` (0.01 SOL) accepts the first four routes and rejects TRON. An account also needs that much SOL available, so check its balance against the quote for the route you use.
+</Callout>
+
+## Next Steps
+
+Bridge without holding SOL in [Bridge with a gasless account](/sdk/bridge-modules/bridge-usdt0-solana/guides/bridge-gasless), or harden your integration with [Handle errors](/sdk/bridge-modules/bridge-usdt0-solana/guides/handle-errors).
+
+---
+
+## Need Help?
+
+<SupportCards />

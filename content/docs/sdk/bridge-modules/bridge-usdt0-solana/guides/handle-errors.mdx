@@ -1,0 +1,92 @@
+---
+title: Handle Errors
+description: Catch Solana bridge failures, interpret messages, and dispose of signing accounts safely.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide describes [errors thrown by the bridge](#errors-from-the-bridge-protocol), [how to catch and branch on them](#catch-and-branch-on-errors), and [best practices](#best-practices) for clearing sensitive material from memory.
+
+## Errors from the bridge protocol
+
+Validation runs before any network call. The OFT program's checks run during the quote simulation, which `bridge()` also performs before sending, so both methods surface them without spending fees.
+
+| `error.name` | Message | Cause |
+|---|---|---|
+| `ProviderRequiredError` | `The wallet must be connected to a provider ...` | No RPC on the account, or a [governed account](/sdk/bridge-modules/bridge-usdt0-solana/guides/get-started#register-through-wdk-core) used outside global registration |
+| `AccountRequiredError` | `The 'bridge(options)' method requires the protocol to be initialized with a non read-only account.` | `bridge()` on a read-only account |
+| `MaximumFeeExceededError` | `Exceeded maximum fee cost for bridge operation.` | Fees above `bridgeMaxFee` |
+| `MaximumFeeExceededError` | `Exceeded maximum fee cost for transaction operation.` | Paymaster fee above `transactionMaxFee` on a gasless account |
+| `ValueError` | `Target chain '<chain>' not supported.` | Unknown `targetChain`, or a chain ID instead of a key |
+| `ValueError` | `The target chain cannot be equal to the source chain.` | `targetChain` is `solana` |
+| `ValueError` | `Token '<token>' not supported on this chain.` | `token` is not the native SPL USD₮ mint |
+| `ValueError` | `The bridge amount must be a positive integer in base units that fits in 64 bits.` | Zero, negative, or fractional amount |
+| `ValueError` | `Invalid recipient address for target chain '<chain>': <REASON>.` | See [recipient formats](/sdk/bridge-modules/bridge-usdt0-solana/guides/bridge-tokens#recipient-formats) |
+| `ValueError` | `The amount is too small to bridge.` | Rejected by the OFT program |
+| `ValueError` | `The amount after fees exceeds the remaining capacity of the route to the target chain.` | The route's pool cannot cover the amount right now |
+| `Error` | `Cannot quote from an unfunded account: fund it with SOL first.` | The fee payer holds no SOL |
+| `Error` | `Invalid OFT store account.` | The RPC is not on Solana mainnet |
+
+## Catch and branch on errors
+
+Branch on `error.name` instead of importing the error classes. Your application and the bridge can resolve different copies of `@tetherto/wdk-wallet`, and `instanceof` is false across copies:
+
+```javascript title="Handle bridge errors"
+try {
+  const result = await bridgeProtocol.bridge({
+    targetChain: 'arbitrum',
+    recipient: process.env.ARBITRUM_RECIPIENT,
+    token: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+    amount: 1000000n
+  })
+  console.log('Bridge submitted:', result.hash)
+} catch (error) {
+  console.error('Bridge failed:', error.message)
+
+  if (error.name === 'MaximumFeeExceededError') {
+    console.error('Fees above the configured cap')
+  }
+  if (error.name === 'ProviderRequiredError') {
+    console.error('Wallet not connected to Solana')
+  }
+  if (error.name === 'AccountRequiredError') {
+    console.error('Cannot bridge with a read-only account')
+  }
+  if (error.name === 'ValueError') {
+    console.error('Check the target chain, token, amount, and recipient')
+  }
+  if (error.message.includes('unfunded account')) {
+    console.error('Fund the account with SOL before quoting')
+  }
+}
+```
+
+An insufficient USD₮ balance is not one of the errors above, because the quote does not read it. It fails when the RPC processes the transaction. Check [`getTokenBalance()`](/sdk/wallet-modules/wallet-solana/api-reference#gettokenbalancetokenmint) first.
+
+<Callout type="info">
+Prefer [`quoteBridge()`](/sdk/bridge-modules/bridge-usdt0-solana/api-reference#quotebridgeoptions-config) before [`bridge()`](/sdk/bridge-modules/bridge-usdt0-solana/api-reference#bridgeoptions-config) when you want to fail early on route or fee issues without broadcasting.
+</Callout>
+
+## Best practices
+
+You can clear private key material from memory when a session ends by calling `account.dispose()` on [`WalletAccountSolana`](/sdk/wallet-modules/wallet-solana/api-reference#walletaccountsolana) or [`WalletAccountSolanaGasless`](/sdk/wallet-modules/wallet-solana-gasless/api-reference#walletaccountsolanagasless):
+
+```javascript title="Dispose Solana account after use"
+account.dispose()
+```
+
+<Callout type="warn">
+Call dispose only when you no longer need signing for that account instance. Create a new account object for later sessions.
+</Callout>
+
+If `waitForTransaction()` times out after a submitted bridge, check the hash before retrying. A timeout does not prove that the transaction failed.
+
+## Next Steps
+
+Review fee caps and options in [Configuration](/sdk/bridge-modules/bridge-usdt0-solana/configuration), or return to [Get Started](/sdk/bridge-modules/bridge-usdt0-solana/guides/get-started) for setup.
+
+---
+
+## Need Help?
+
+<SupportCards />

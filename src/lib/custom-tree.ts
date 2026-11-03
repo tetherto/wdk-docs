@@ -406,17 +406,30 @@ export const customTree: Node[] = [
     configuration('/sdk/swap-modules/swap-velora-evm/configuration'),
     apiReference('/sdk/swap-modules/swap-velora-evm/api-reference'),
   ]),
-  folder('USD₮0 bridge', '/sdk/bridge-modules/bridge-usdt0-evm', 'Waypoints', [
-    usage('/sdk/bridge-modules/bridge-usdt0-evm/usage'),
-    guides([
-      page('Get Started', '/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started'),
-      page('Bridge Tokens', '/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens'),
-      page('Bridge with ERC-4337', '/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337'),
-      page('Bridge Cross-Ecosystem', '/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-cross-ecosystem'),
-      page('Handle Errors', '/sdk/bridge-modules/bridge-usdt0-evm/guides/handle-errors'),
+  group('USD₮0 bridge', 'Waypoints', [
+    folder('From EVM', '/sdk/bridge-modules/bridge-usdt0-evm', 'Waypoints', [
+      usage('/sdk/bridge-modules/bridge-usdt0-evm/usage'),
+      guides([
+        page('Get Started', '/sdk/bridge-modules/bridge-usdt0-evm/guides/get-started'),
+        page('Bridge Tokens', '/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens'),
+        page('Bridge with ERC-4337', '/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-with-4337'),
+        page('Bridge Cross-Ecosystem', '/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-cross-ecosystem'),
+        page('Handle Errors', '/sdk/bridge-modules/bridge-usdt0-evm/guides/handle-errors'),
+      ]),
+      configuration('/sdk/bridge-modules/bridge-usdt0-evm/configuration'),
+      apiReference('/sdk/bridge-modules/bridge-usdt0-evm/api-reference'),
     ]),
-    configuration('/sdk/bridge-modules/bridge-usdt0-evm/configuration'),
-    apiReference('/sdk/bridge-modules/bridge-usdt0-evm/api-reference'),
+    folder('From Solana', '/sdk/bridge-modules/bridge-usdt0-solana', 'Sun', [
+      usage('/sdk/bridge-modules/bridge-usdt0-solana/usage'),
+      guides([
+        page('Get Started', '/sdk/bridge-modules/bridge-usdt0-solana/guides/get-started'),
+        page('Bridge Tokens', '/sdk/bridge-modules/bridge-usdt0-solana/guides/bridge-tokens'),
+        page('Bridge with a Gasless Account', '/sdk/bridge-modules/bridge-usdt0-solana/guides/bridge-gasless'),
+        page('Handle Errors', '/sdk/bridge-modules/bridge-usdt0-solana/guides/handle-errors'),
+      ]),
+      configuration('/sdk/bridge-modules/bridge-usdt0-solana/configuration'),
+      apiReference('/sdk/bridge-modules/bridge-usdt0-solana/api-reference'),
+    ]),
   ]),
 
   separator('Smart Deposit Addresses'),
