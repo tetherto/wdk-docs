@@ -1,0 +1,251 @@
+---
+title: Bridge USD₮0 Solana API Reference
+description: Complete API documentation for @tetherto/wdk-protocol-bridge-usdt0-solana
+docType: reference
+schemaType: APIReference
+icon: Code
+---
+
+## Table of Contents
+
+| Class | Description | Methods |
+|-------|-------------|---------|
+| [Usdt0ProtocolSolana](#usdt0protocolsolana) | Main class for bridging native USD₮ from Solana. Extends `BridgeProtocol` from `@tetherto/wdk-wallet/protocols`. | [Constructor](#constructor), [Methods](#methods) |
+
+## Usdt0ProtocolSolana
+
+The main class for bridging native USD₮ from Solana to other blockchains through the USD₮0 Legacy Mesh.
+Extends `BridgeProtocol` from `@tetherto/wdk-wallet/protocols`.
+
+### Constructor
+
+```javascript
+new Usdt0ProtocolSolana(account, config?)
+```
+
+**Parameters:**
+- `account` (`WalletAccountSolana`, `WalletAccountReadOnlySolana`, `WalletAccountSolanaGasless`, or `WalletAccountReadOnlySolanaGasless`): The wallet account to use. See [account requirements](#account-requirements).
+- `config` (`BridgeProtocolConfig`, optional): Configuration object
+  - `bridgeMaxFee` (number | bigint, optional): Rejects `bridge()` when the fees are greater than this cap, in lamports
+
+**Example:**
+```javascript
+import Usdt0ProtocolSolana from '@tetherto/wdk-protocol-bridge-usdt0-solana'
+import { WalletAccountSolana } from '@tetherto/wdk-wallet-solana'
+
+const account = new WalletAccountSolana(process.env.SEED_PHRASE, "0'/0'", {
+  provider: 'https://api.mainnet-beta.solana.com'
+})
+
+const bridgeProtocol = new Usdt0ProtocolSolana(account, {
+  bridgeMaxFee: 10_000_000n
+})
+```
+
+### Account requirements
+
+The bridge reads internal fields of the WDK Solana accounts: `_rpc` for the connection, `_commitment` for reads, and `_config.paymasterAddress` to select the gasless flow. Implementing the shared wallet interface alone does not make a custom account compatible.
+
+An account governed by a Core [transaction policy](/sdk/core-module/guides/transaction-policies) hides these fields. See [Register through WDK Core](/sdk/bridge-modules/bridge-usdt0-solana/guides/get-started#register-through-wdk-core).
+
+Read-only accounts can use `quoteBridge()` and the discovery methods. They cannot execute `bridge()`.
+
+### Methods
+
+| Method | Description | Returns | Throws |
+|--------|-------------|---------|--------|
+| `bridge(options, config?)` | Bridges USD₮ to another blockchain | `Promise<BridgeResult>` | If read-only, no provider, invalid options, or a fee cap is exceeded |
+| `quoteBridge(options, config?)` | Estimates the cost of a bridge operation | `Promise<Omit<BridgeResult, 'hash'>>` | If no provider or invalid options |
+| `getSupportedChains()` | Returns chain descriptors from bundled configuration | `Promise<SwidgeSupportedChain[]>` | None |
+| `getSupportedTokens(options?)` | Returns token descriptors from bundled configuration, with optional filters | `Promise<SwidgeSupportedToken[]>` | None |
+
+#### `bridge(options, config?)`
+Bridges native USD₮ from Solana to a different blockchain. The account does not approve anything first. The method builds the transaction, quotes the LayerZero fee, checks the caps, and submits. It returns once the transaction is submitted, not when it is confirmed.
+
+**Parameters:**
+- `options` (`BridgeOptions`): Bridge operation options
+  - `targetChain` (string): Destination chain key: `ethereum`, `arbitrum`, `celo`, `ton`, or `tron`
+  - `recipient` (string): Address on the destination chain
+  - `token` (string): The native SPL USD₮ mint, the only accepted value
+  - `amount` (number | bigint): Amount in base units, positive and fitting in 64 bits
+- `config` (`PaymasterConfigOverrides & Pick<BridgeProtocolConfig, 'bridgeMaxFee'>`, optional): Per-call overrides
+  - `bridgeMaxFee` (number | bigint, optional): Overrides the protocol's cap
+  - `paymasterToken` (`{ address: string }`, optional): Gasless accounts only
+  - `transactionMaxFee` (number | bigint, optional): Gasless accounts only
+
+**Returns:** `Promise<BridgeResult>` - Bridge operation result
+
+**Throws:**
+- `AccountRequiredError` if the account is read-only
+- `ProviderRequiredError` if no provider is available
+- `ValueError` if the target chain, token, amount, or recipient is invalid, or if the OFT program rejects the amount or the target chain
+- `MaximumFeeExceededError` if the fees exceed `bridgeMaxFee`, or a gasless account's paymaster fee exceeds `transactionMaxFee`
+
+**Example:**
+```javascript
+const result = await bridgeProtocol.bridge({
+  targetChain: 'arbitrum',
+  recipient: '0x...', // Recipient address
+  token: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+  amount: 1000000n
+})
+
+console.log('Solana transaction hash:', result.hash)
+console.log('Transaction fee:', result.fee)
+console.log('LayerZero fee:', result.bridgeFee)
+```
+
+#### `quoteBridge(options, config?)`
+Estimates the cost of a bridge operation without executing it. It simulates the OFT program's quote on the RPC, so it also surfaces route errors such as insufficient capacity. It does not read the USD₮ balance and does not enforce `bridgeMaxFee`. On a standard account, the source address must hold SOL.
+
+**Parameters:**
+- `options` (`BridgeOptions`): Same as `bridge()`
+- `config` (`Pick<PaymasterConfigOverrides, 'paymasterToken'>`, optional): Overrides a gasless account's paymaster token
+
+**Returns:** `Promise<Omit<BridgeResult, 'hash'>>` - Bridge cost estimate
+
+**Throws:**
+- `ProviderRequiredError` if no provider is available
+- `ValueError` if the target chain, token, amount, or recipient is invalid, or if the OFT program rejects the amount or the target chain
+
+**Example:**
+```javascript
+const quote = await bridgeProtocol.quoteBridge({
+  targetChain: 'ton',
+  recipient: 'EQ...', // TON address
+  token: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+  amount: 1000000n
+})
+
+console.log('Transaction fee:', quote.fee)
+console.log('LayerZero fee:', quote.bridgeFee)
+```
+
+#### `getSupportedChains()`
+
+Returns the chain descriptors from the package's bundled configuration. The list includes `solana` itself, which is the source and not a valid `targetChain`. This method does not make a network request.
+
+```javascript
+const chains = await bridgeProtocol.getSupportedChains()
+// [{ id: 'ethereum', name: 'Ethereum', type: 'evm', nativeToken: 'ETH' }, ...]
+```
+
+The `type` values are `evm`, `svm` for Solana, `ton`, and `tvm` for TRON.
+
+#### `getSupportedTokens(options?)`
+
+Returns token descriptors from bundled configuration. Optional `fromChain` and `toChain` filters accept a chain key, chain ID, or endpoint ID. `fromToken` compares against the symbol `USDT0`, ignoring case, so the mint address or `USDT` returns an empty list.
+
+```javascript
+const tokens = await bridgeProtocol.getSupportedTokens()
+// [{ token: 'USDT0', chain: 'solana', symbol: 'USDT0', decimals: 6, name: 'USDT0',
+//    address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB' }]
+
+const onArbitrum = await bridgeProtocol.getSupportedTokens({ toChain: 42161 })
+// [{ token: 'USDT0', chain: 'arbitrum', symbol: 'USDT0', decimals: 6, name: 'USDT0' }]
+```
+
+<Callout type="warn">
+The descriptor's symbol is `USDT0`, while its `address` is the native SPL USD₮ mint. Pass that `address` as `token`. A `toChain` filter returns a descriptor for the destination, without an `address`. A `fromChain` other than Solana, or a `toChain` of Solana, returns an empty list.
+</Callout>
+
+## Types
+
+### BridgeOptions
+
+```typescript
+interface BridgeOptions {
+  targetChain: string;              // Destination chain key
+  recipient: string;                // Address on the destination chain
+  token: string;                    // The native SPL USDt mint
+  amount: number | bigint;          // Amount in base units
+}
+```
+
+### BridgeResult
+
+```typescript
+interface BridgeResult {
+  hash: string;                     // Solana transaction hash
+  fee: bigint;                      // Unit depends on the account, see below
+  bridgeFee: bigint;                // LayerZero fee, in lamports
+}
+```
+
+### BridgeProtocolConfig
+
+```typescript
+interface BridgeProtocolConfig {
+  bridgeMaxFee?: number | bigint;   // Lamports. Rejects above this value
+}
+```
+
+### PaymasterConfigOverrides
+
+```typescript
+type PaymasterConfigOverrides = {
+  paymasterToken?: { address: string };
+  transactionMaxFee?: number | bigint;  // Paymaster token base units
+}
+```
+
+### Fee units and caps
+
+| Account | `fee` | `bridgeFee` | `bridgeMaxFee` caps | `transactionMaxFee` caps |
+|---|---|---|---|---|
+| `WalletAccountSolana` | Lamports | Lamports | `fee + bridgeFee` | Not used |
+| `WalletAccountSolanaGasless` | Paymaster token base units, includes the LayerZero fee | Lamports | `bridgeFee` | `fee` |
+
+Neither field includes the [Legacy Mesh fee](/sdk/bridge-modules/bridge-usdt0-solana#what-moves), which is deducted from the transferred amount.
+
+### Recipient validation
+
+`quoteBridge()` and `bridge()` validate `recipient` before any network call. A failure reads `Invalid recipient address for target chain '<chain>': <REASON>`, with a reason such as `INVALID_FORMAT`, `INVALID_CHECKSUM`, `ZERO_ADDRESS`, or `UNSUPPORTED_WORKCHAIN`. TON accepts workchain `0` only. See [recipient formats](/sdk/bridge-modules/bridge-usdt0-solana/guides/bridge-tokens#recipient-formats).
+
+### Discovery types
+
+```typescript
+type SwidgeSupportedChain = {
+  id: string | number
+  name: string
+  type: string
+  nativeToken: string
+}
+
+type SwidgeSupportedToken = {
+  token: string
+  chain: string | number
+  symbol: string
+  decimals: number
+  address?: string
+  name?: string
+}
+
+type SwidgeSupportedTokensOptions = {
+  fromChain?: string | number
+  fromToken?: string
+  toChain?: string | number
+}
+```
+
+## Error Handling
+
+The errors and their messages are listed in [Handle Errors](/sdk/bridge-modules/bridge-usdt0-solana/guides/handle-errors#errors-from-the-bridge-protocol).
+
+<Cards>
+<Card title="Node.js Quickstart" href="/start-building/nodejs-bare-quickstart">
+Get started with WDK in a Node.js environment
+</Card>
+<Card title="WDK Bridge USD₮0 Solana Protocol Configuration" href="/sdk/bridge-modules/bridge-usdt0-solana/configuration">
+Configure fee caps, providers, and paymaster options
+</Card>
+<Card title="WDK Bridge USD₮0 Solana Protocol Usage" href="/sdk/bridge-modules/bridge-usdt0-solana/usage">
+Task-focused guides for this bridge
+</Card>
+</Cards>
+
+***
+
+### Need Help?
+
+<SupportCards />
