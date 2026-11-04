@@ -7880,7 +7880,7 @@ const onArbitrum = await bridgeProtocol.getSupportedTokens({ toChain: 42161 })
 ```
 
 <Callout type="warn">
-The descriptor's symbol is `USDT0`, while its `address` is the native SPL USD₮ mint. Pass that `address` as `token`. A `toChain` filter returns a descriptor for the destination, without an `address`. A `fromChain` other than Solana, or a `toChain` of Solana, returns an empty list.
+The descriptor's symbol is `USDT0`, while its `address` is the native SPL USD₮ mint. Pass that `address` as `token`. A `toChain` filter without `fromChain` returns a descriptor for the destination, without an `address`. A `fromChain` other than Solana, or a `toChain` of Solana, returns an empty list.
 </Callout>
 
 ## Types
@@ -7927,7 +7927,7 @@ type PaymasterConfigOverrides = {
 
 | Account | `fee` | `bridgeFee` | `bridgeMaxFee` caps | `transactionMaxFee` caps |
 |---|---|---|---|---|
-| `WalletAccountSolana` | Lamports | Lamports | `fee + bridgeFee` | Not used |
+| `WalletAccountSolana` | Lamports | Lamports | `fee + bridgeFee` | `fee`, from the wallet configuration. Per-call overrides are ignored |
 | `WalletAccountSolanaGasless` | Paymaster token base units, includes the LayerZero fee | Lamports | `bridgeFee` | `fee` |
 
 Neither field includes the [Legacy Mesh fee](/sdk/bridge-modules/bridge-usdt0-solana#what-moves), which is deducted from the transferred amount.
@@ -8011,7 +8011,7 @@ The deployment addresses are built into the package and cannot be overridden: th
 
 ## Account Configuration
 
-The bridge reads its RPC connection from the wallet account. Set the `provider` on the [Solana wallet configuration](/sdk/wallet-modules/wallet-solana/configuration), pointing at Solana mainnet. It accepts the same inputs as the wallet, including a list of endpoints for failover.
+The bridge reads its RPC connection from the wallet account. Set the `provider` on the [Solana wallet configuration](/sdk/wallet-modules/wallet-solana/configuration), pointing at Solana mainnet.
 
 ```javascript
 import { WalletAccountSolana, WalletAccountReadOnlySolana } from '@tetherto/wdk-wallet-solana'
@@ -8517,7 +8517,7 @@ Validation runs before any network call. The OFT program's checks run during the
 | `ProviderRequiredError` | `The wallet must be connected to a provider ...` | No RPC on the account, or a [governed account](/sdk/bridge-modules/bridge-usdt0-solana/guides/get-started#register-through-wdk-core) used outside global registration |
 | `AccountRequiredError` | `The 'bridge(options)' method requires the protocol to be initialized with a non read-only account.` | `bridge()` on a read-only account |
 | `MaximumFeeExceededError` | `Exceeded maximum fee cost for bridge operation.` | Fees above `bridgeMaxFee` |
-| `MaximumFeeExceededError` | `Exceeded maximum fee cost for transaction operation.` | Paymaster fee above `transactionMaxFee` on a gasless account |
+| `MaximumFeeExceededError` | `Exceeded maximum fee cost for transaction operation.` | `fee` above `transactionMaxFee`: the paymaster fee on a gasless account, or the wallet's cap on a standard account |
 | `ValueError` | `Target chain '<chain>' not supported.` | Unknown `targetChain`, or a chain ID instead of a key |
 | `ValueError` | `The target chain cannot be equal to the source chain.` | `targetChain` is `solana` |
 | `ValueError` | `Token '<token>' not supported on this chain.` | `token` is not the native SPL USD₮ mint |
