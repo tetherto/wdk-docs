@@ -22,7 +22,7 @@ function label(name: string, status?: string): ReactNode {
     name,
     createElement(
       'span',
-      { className: 'rounded border px-1 py-px text-[0.625rem] font-medium leading-none text-fd-muted-foreground' },
+      { className: 'shrink-0 whitespace-nowrap rounded border px-1 py-px text-[0.625rem] font-medium leading-none text-fd-muted-foreground' },
       STATUS_LABELS[status],
     ),
   );
