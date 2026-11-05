@@ -527,11 +527,6 @@ export const customTree: Node[] = [
     configuration('/tools/react-native-secure-storage/configuration'),
     apiReference('/tools/react-native-secure-storage/api-reference'),
   ]),
-  folder('React Native UI Kit (Deprecated)', '/ui-kits/react-native-ui-kit', 'PanelsTopLeft', [
-    page('Get Started', '/ui-kits/react-native-ui-kit/get-started', 'Rocket'),
-    apiReference('/ui-kits/react-native-ui-kit/api-reference'),
-    page('Theming', '/ui-kits/react-native-ui-kit/theming', 'Palette'),
-  ]),
 
   separator('Tools and Infrastructure'),
   folder('Track balances and transactions', '/tools/indexer-api', 'Database', [
