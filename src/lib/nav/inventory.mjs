@@ -535,7 +535,7 @@ export const inventory = {
   ]),
   'create-wdk-module': page('Contribute a module to WDK', '/tools/create-wdk-module', 'Hammer'),
   concepts: page('Concepts', '/resources/concepts', 'GraduationCap'),
-  support: page('Get Support', '/overview/support', 'CircleQuestionMark'),
+  support: page('Support', '/overview/support', 'CircleQuestionMark'),
   changelog: page('Changelog', '/overview/changelog', 'History'),
 };
 
