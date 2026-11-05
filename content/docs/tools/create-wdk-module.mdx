@@ -18,6 +18,8 @@ Read this page before you write code. It covers the CLI, the contract, what we c
 
 Every module starts from [`create-wdk-module`](https://github.com/tetherto/create-wdk-module). It generates the package name, initial version, types, Bare entry, and CI workflows.
 
+If you are building a wallet, check the [existing wallet modules](/sdk/wallet-modules/) first. `wdk-wallet-evm` already covers Ethereum-compatible chains, for example. If your chain is covered, build a variant: enter `<chain>-<variant>` as the chain name to get `wdk-wallet-<chain>-<variant>`.
+
 ```bash title="Scaffold a module"
 npx @tetherto/create-wdk-module@latest
 ```
@@ -70,14 +72,15 @@ The latest [`@tetherto/wdk-wallet`](https://github.com/tetherto/wdk-wallet/relea
 
 Type checking passes without any of these, so test them yourself.
 
-### Every module
+### All modules
 
 - **Run on Bare.** WDK applications can run wallet operations in a Bare thread, so your Bare entry must work there, dependencies included. The CLI generates the entry, and [`wdk-wallet-btc`](https://github.com/tetherto/wdk-wallet-btc/blob/main/bare.js) shows a released one. If you are blocked, send us the failing dependency, a reproducer, and the affected operations. Only an approved waiver lifts this rule, and it goes in your README.
 - **Resolve one copy of `@tetherto/wdk-wallet`.** Core recognizes protocols with `instanceof`. With a second copy, `registerProtocol()` ignores your module without an error, and `getSwapProtocol()` throws later. Keep the version range the CLI generates.
-- **Keep failures distinct.** Invalid input, unsupported operations, missing configuration, and provider failures are never an empty or successful result. Reuse [WDK errors](https://github.com/tetherto/wdk-wallet/blob/main/src/errors.js) and [protocol errors](https://github.com/tetherto/wdk-wallet/blob/main/src/protocols/errors.js) first, extend `WdkError` for your own, and mark each one with `@throws`. Export the errors you throw from your package root, or document their import path.
+- **Keep failures distinct.** Invalid input, unsupported operations, missing configuration, and provider failures are never an empty or successful result. Reuse [WDK errors](https://github.com/tetherto/wdk-wallet/blob/main/src/errors.js) and [protocol errors](https://github.com/tetherto/wdk-wallet/blob/main/src/protocols/errors.js) first, extend `WdkError` for your own, and mark each one with `@throws`.
 - **Never lose a transaction.** Return transaction identifiers and partial-execution details in results or errors so callers can recover. Keep a failed submission distinct from an unknown broadcast outcome.
 - **Add, don't redefine.** Never change the meaning or return shape of an inherited method.
-- **Leave secrets and logs to the host.** No keys or credentials in source, fixtures, logs, or examples. No `console.log`, because hosts log through [Core middleware](/sdk/core-module/guides/middleware/#logging). Disclose provider requests and telemetry.
+- **Export what callers need.** Re-export public types and parent module types from `index.js`, with declarations in `types/`. Do the same for the errors you throw, or document their import path.
+- **Leave secrets and logs to the host.** No real keys or credentials in source, fixtures, logs, or examples. No `console.log`, because hosts log through [Core middleware](/sdk/core-module/guides/middleware/#logging). Disclose provider requests and telemetry.
 
 ### Protocol modules
 
@@ -87,30 +90,43 @@ Type checking passes without any of these, so test them yourself.
 
 ### Wallet modules
 
-- **Override both account factories.** A variant that changes the account class overrides [`getAccount()` and `getAccountByPath()`](https://github.com/tetherto/wdk-wallet-evm/blob/main/src/wallet-manager-evm.js). Name it `wdk-wallet-<chain>-<variant>`.
-- **Clear your own state.** Extra keys or sessions are yours to clear in `dispose()`, after `super.dispose()`.
+- **Override both account factories.** A variant that changes the account class overrides [`getAccount()` and `getAccountByPath()`](https://github.com/tetherto/wdk-wallet-evm/blob/main/src/wallet-manager-evm.js).
+- **Clear their own state.** Extra keys or sessions are yours to clear in `dispose()`, after `super.dispose()`.
 
 ---
 
 ## Pre-Review Checklist
 
-Copy this list into your review request and tick only what you actually ran. Explain any box you leave empty. The review skills run in your coding agent:
+Copy this list into your review request and tick only what you actually ran. Explain any box you leave empty.
+
+Three review skills check your JSDoc, declarations, and tests from your coding agent. Install them once, outside your repository. This needs Node.js 22.20 or later:
 
 ```bash title="Install the review skills"
-npx skills add tetherto/wdk-agent-skills
+npx skills add tetherto/wdk-agent-skills -g \
+  --skill wdk-review-jsdocs \
+  --skill wdk-review-dts \
+  --skill wdk-review-tests
+```
+
+Then run each one from your module's root. If your agent has no slash commands, ask for the skill by name. These skills don't replace the rest of the list.
+
+```text title="Run the reviews"
+/wdk-review-jsdocs src/
+/wdk-review-dts types/
+/wdk-review-tests tests/
 ```
 
 **Package**
 
 - [ ] The name from `create-wdk-module` is unchanged and free on npm.
-- [ ] `npm run lint` passes, and `npm run build:types` leaves `types/` unchanged.
+- [ ] `npm run lint` passes, and the declarations in `types/` match the code.
 - [ ] Every direct dependency is used, and nothing needed at runtime sits in `devDependencies`.
 - [ ] The `npm pack` output installs in a new project with `@tetherto/wdk`, and `npm ls @tetherto/wdk-wallet` shows one version.
 
 **Behavior**
 
 - [ ] `npm test` passes with no `test.todo` left, and covers every documented error.
-- [ ] The main flow runs end to end through Core and a real WDK wallet package, with no mocks or sender stubs. Where a transaction applies, the request lists its network and hash, or the fork block height.
+- [ ] The main flow runs end to end through Core and a real WDK wallet package, with no mocks or sender stubs, on a fork at a known block. If your provider can't run on a fork, add a live run. The request lists the block height, or the network and transaction hash.
 - [ ] The same flow runs from the packed Bare entry ([how to run a test under Bare](https://github.com/tetherto/wdk-p2p-address-book/blob/main/tests/bare-runtime.test.mjs)), or an approved waiver is in the README.
 - [ ] If you hold extra state, disposal is tested through both the account and the manager.
 - [ ] `wdk-review-jsdocs`, `wdk-review-dts`, and `wdk-review-tests` have run, with findings fixed or listed.
