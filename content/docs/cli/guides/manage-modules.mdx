@@ -6,7 +6,7 @@ schemaType: TechArticle
 icon: Package
 ---
 
-WDK CLI beta.6 installs its built-in wallet modules as normal dependencies and records their exact versions in its bundled catalog. Use `wdk module` to inspect those pins or to manage a custom package that a custom network needs.
+WDK CLI beta.7 installs its built-in wallet, protocol, pricing-client, and Indexer implementations as normal dependencies and records their exact versions in its bundled catalog. Use `wdk module` to inspect those pins or to manage a custom package that a custom network needs.
 
 Use this guide to [Inspect Module Status](#inspect-module-status), [Override A Built-In Version](#override-a-built-in-version), [Enable Or Disable A Module](#enable-or-disable-a-module), [Add A Custom Module](#add-a-custom-module), [Bind The Module To A Network](#bind-the-module-to-a-network), [Repair A Missing Module](#repair-a-missing-module), [Remove A Custom Module](#remove-a-custom-module), [Operational Checklist](#operational-checklist).
 
@@ -15,7 +15,7 @@ A custom module is executable npm code. Install and uninstall lifecycle scripts 
 </Callout>
 
 <Callout type="error">
-Do not run either mutation with `WDK_PASSPHRASE` set. Beta.6 uses that variable for wallet confirmation and then launches npm with the inherited environment, so a package lifecycle script can read the wallet passphrase. Unset it and use the hidden interactive confirmation prompt. The CLI should be run from a shell that does not contain other wallet secrets needed by neither npm nor the package.
+Do not run either mutation with `WDK_PASSPHRASE` set. Beta.7 uses that variable for wallet confirmation and then launches npm with the inherited environment, so a package lifecycle script can read the wallet passphrase. Unset it and use the hidden interactive confirmation prompt. The CLI should be run from a shell that does not contain other wallet secrets needed by neither npm nor the package.
 </Callout>
 
 ## Inspect Module Status
@@ -28,7 +28,7 @@ The output compares each catalog or user-configured pin with the package install
 
 | Status | Meaning |
 | --- | --- |
-| `ok` | The installed concrete version string exactly equals the configured value. |
+| `ok` | The installed version equals a plain version pin, or a package is present for a pin containing a colon. The latter does not verify commit or content. |
 | `not installed` | The module is registered but its package is missing. |
 | `version mismatch` | The installed package version differs from the pin. |
 | `disabled` | An availability override prevents use of the module. |
@@ -40,7 +40,9 @@ Use JSON output for automation:
 wdk --json module list
 ```
 
-Built-in modules ship with the CLI. Beta.6 supports [version overrides](#override-a-built-in-version) and [availability toggles](#enable-or-disable-a-module) without editing the catalog.
+Built-in modules ship with the CLI. Beta.7 supports [version overrides](#override-a-built-in-version) and [availability toggles](#enable-or-disable-a-module) without editing the catalog.
+
+Text output abbreviates Git specifications as `git#` plus seven commit characters; JSON retains the full specification. Verify Git or other colon-based pins independently rather than treating status `ok` as artifact verification.
 
 ## Override A Built-In Version
 
@@ -84,7 +86,7 @@ Pass a literal version that you have already reviewed:
 wdk module add --name @example/wdk-wallet-example@1.2.3
 ```
 
-If you omit the version, beta.6 resolves npm's current version and pins the resolved value once:
+If you omit the version, beta.7 resolves npm's current version and pins the resolved value once:
 
 ```bash title="Terminal"
 wdk module add --name @example/wdk-wallet-example
@@ -93,7 +95,7 @@ wdk module add --name @example/wdk-wallet-example
 The command shows the package and version, verifies the current default wallet's passphrase when a wallet exists, locks a running daemon, installs the package with npm, and then stores the supplied version string under `customModules` in `config.json`.
 
 <Callout type="warn">
-An exact literal is caller discipline, not a beta.6 validation rule. The parser also accepts npm tags and ranges such as `latest` or `^1.2.3` and stores them verbatim. Status uses literal equality, so an installed concrete version then reports `version mismatch`; the daemon prints a warning but still imports and executes that installed package. Do not use a tag or range, and do not treat a warning as a load block.
+An exact literal is caller discipline, not a beta.7 validation rule. The parser also accepts npm tags and ranges such as `latest` or `^1.2.3` and stores them verbatim. Status uses literal equality, so an installed concrete version then reports `version mismatch`; the daemon prints a warning but still imports and executes that installed package. Do not use a tag or range, and do not treat a warning as a load block.
 </Callout>
 
 <Callout type="warn">
@@ -125,7 +127,7 @@ Review the provider, chain identifier, native-token metadata, and module-specifi
 
 ## Repair A Missing Module
 
-A later npm operation against the global CLI installation can prune a custom package because beta.6 installs custom modules with `--no-save`. If `wdk module list` reports `not installed` or `version mismatch`, run:
+A later npm operation against the global CLI installation can prune a custom package because beta.7 installs custom modules with `--no-save`. If `wdk module list` reports `not installed` or `version mismatch`, run:
 
 ```bash title="Terminal"
 wdk module add --name @example/wdk-wallet-example
@@ -145,7 +147,7 @@ wdk module remove --name @example/wdk-wallet-example
 Removal verifies the default wallet's passphrase when a wallet exists, locks a running daemon, deletes the custom-module registration, and uninstalls the package. It cannot remove a built-in module.
 
 <Callout type="warn">
-`wdk config reset --all` preserves custom networks, tokens, and providers but removes `customModules` and registry overrides. A package can remain installed after its registration disappears, but beta.6 rejects unregistered packages when loading wallet managers or providers. Record module pins, network specs, and provider specs before resetting, then re-register and verify each trusted package.
+`wdk config reset --all` preserves custom networks, tokens, and providers but removes `customModules` and registry overrides. A package can remain installed after its registration disappears, but beta.7 rejects unregistered packages when loading wallet managers or providers. Record module pins, network specs, and provider specs before resetting, then re-register and verify each trusted package.
 </Callout>
 
 ## Operational Checklist
@@ -155,7 +157,7 @@ Removal verifies the default wallet's passphrase when a wallet exists, locks a r
 - Lock valuable wallets and stop unrelated same-user processes.
 - Treat npm install and uninstall lifecycle output as part of the review.
 - Confirm `wdk module list` reports the expected installed version.
-- Stop if status reports a mismatch; beta.6 still loads mismatched code after warning.
+- Stop if status reports a mismatch; beta.7 still loads mismatched code after warning.
 - Test the module and network with a dedicated wallet and limited funds.
 - Delete dependent custom networks before removing their module.
 
