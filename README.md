@@ -9,7 +9,7 @@ Live at: [docs.wdk.tether.io](https://docs.wdk.tether.io)
 The docs site is a static Next.js application built with [Fumadocs](https://fumadocs.dev).
 
 - Docs content lives in `content/docs/**/*.mdx`.
-- Sidebar navigation is defined in `src/lib/custom-tree.ts`.
+- Navigation is split in two: `src/lib/nav/inventory.mjs` lists every page and `src/lib/nav/disposition.mjs` sets the tabs, categories and order. A new page goes in `inventory.mjs`; a new module also needs its key in `disposition.mjs`. `npm run check:nav` checks that every page appears exactly once, and runs in `npm run quality`.
 - Generated Fumadocs artifacts live under `.source/` and should not be edited directly.
 - Generated search output at `public/api/search.json` is created by dev/build scripts and should not be committed unless the project intentionally starts tracking it.
 
