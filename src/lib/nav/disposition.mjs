@@ -3,9 +3,7 @@
 //
 // Entries are keys from ./inventory.mjs. Use { key, name } to change a row's label and
 // { group, icon, entries } for a collapsible row. Each page must appear exactly once;
-// run `npm run ia:check` after changing this file.
-//
-// This arrangement came out of the test loop in ia-loop/ (see ia-loop/README.md).
+// run `npm run check:nav` after changing this file.
 
 const named = (key, name) => ({ key, name });
 

@@ -1,5 +1,5 @@
 // Turns a disposition (tabs > categories > entries) into a plain navigation tree.
-// Used by the site (via src/lib/custom-tree.ts) and by ia-loop/ for scoring.
+// Used by the site (via src/lib/custom-tree.ts) and by scripts/check-nav.mjs.
 import { hubUsagePages, inventory } from './inventory.mjs';
 
 // One wording per guide type. Slugs and page titles are untouched.

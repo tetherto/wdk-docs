@@ -1,6 +1,6 @@
 // Every docs page, grouped into the units the navigation can place.
 // This file says what exists. src/lib/nav/disposition.mjs says where it appears.
-// Pure data with no imports, so `ia-loop/` can load it without a build step.
+// Pure data with no imports, so scripts can load it without a build step.
 
 const page = (name, url, icon, status) => ({ type: 'page', name, url, icon, status });
 
