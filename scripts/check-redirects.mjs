@@ -139,6 +139,31 @@ const expectedRedirects = [
     status: '301',
   },
   {
+    source: '/ui-kits/react-native-ui-kit',
+    target: '/examples-and-starters/react-native-starter',
+    status: '301',
+  },
+  {
+    source: '/ui-kits/react-native-ui-kit/',
+    target: '/examples-and-starters/react-native-starter',
+    status: '301',
+  },
+  {
+    source: '/ui-kits/react-native-ui-kit.md',
+    target: '/examples-and-starters/react-native-starter',
+    status: '301',
+  },
+  {
+    source: '/ui-kits/react-native-ui-kit/get-started',
+    target: '/examples-and-starters/react-native-starter',
+    status: '301',
+  },
+  {
+    source: '/ui-kits/react-native-ui-kit/api-reference.md',
+    target: '/examples-and-starters/react-native-starter',
+    status: '301',
+  },
+  {
     source: '/__missing-sevalla-404-check',
     target: '/404.html',
     status: '404',
