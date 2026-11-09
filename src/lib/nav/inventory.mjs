@@ -24,8 +24,6 @@ export const inventory = {
   home: page('Welcome', '/', 'Rocket'),
   about: page('About WDK', '/overview/about', 'Info'),
   vision: page('Our Vision', '/overview/vision', 'Lightbulb'),
-  'partner-program': page('Partner with WDK', '/overview/partner-program', 'Handshake'),
-  showcase: page('Showcase', '/overview/showcase', 'Trophy'),
   'nodejs-bare-quickstart': page('Node.js and Bare Quickstart', '/start-building/nodejs-bare-quickstart', 'Terminal'),
   'react-native-quickstart': page('React Native Quickstart', '/start-building/react-native-quickstart', 'Smartphone'),
   'react-native-starter': page('React Native Starter', '/examples-and-starters/react-native-starter', 'Smartphone', 'alpha'),

@@ -22,7 +22,7 @@ export default {
       categories: [
         { name: 'Quickstarts', entries: ['home', 'nodejs-bare-quickstart', 'react-native-quickstart', 'react-native-starter', 'which-wallet-module'] },
         { name: 'Understand WDK', entries: [named('get-started', 'Architecture'), 'concepts'] },
-        { name: 'About WDK', entries: ['about', 'vision', 'showcase', 'partner-program', 'support', 'changelog'] },
+        { name: 'About WDK', entries: ['about', 'vision', 'support', 'changelog'] },
       ],
     },
     {
