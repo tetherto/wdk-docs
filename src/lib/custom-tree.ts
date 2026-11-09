@@ -49,8 +49,6 @@ export const customTree: Node[] = [
   page('Welcome', '/', 'Rocket'),
   page('About WDK', '/overview/about', 'Info'),
   page('Our Vision', '/overview/vision', 'Lightbulb'),
-  page('Partner with WDK', '/overview/partner-program', 'Handshake'),
-  page('Showcase', '/overview/showcase', 'Trophy'),
 
   separator('Start Building'),
   page('Node.js and Bare Quickstart', '/start-building/nodejs-bare-quickstart', 'Terminal'),
