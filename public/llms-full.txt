@@ -4353,6 +4353,7 @@ Stay up to date with the latest improvements, new features, and bug fixes across
 **Changes**
 
 - **React Native UI Kit**: Retire the deprecated `@tetherto/wdk-uikit-react-native` package and its documentation. It has no replacement package. For new apps, build your own components, as the [React Native Starter](/examples-and-starters/react-native-starter) does. Existing apps can refer to the [archived repository](https://github.com/tetherto/wdk-uikit-react-native).
+- **Contribute a module**: Publish the external module contribution guide on the [Contribute a Module to WDK](/tools/create-wdk-module/) page, with the architecture, the contract, the rules types can't express, a pre-review checklist, and the review scope, and link it from the [partner program](/overview/partner-program/#wdk-tech-contributors).
 
 ---
 
@@ -5624,6 +5625,8 @@ Tech Contributors are protocol teams, service providers, and developer organizat
 - An **open-source developer or team** contributing new wallet modules, protocol integrations, or developer tooling to the WDK ecosystem.
 
 As a Tech Contributor, you'll work closely with our SDK team to build, test, and publish modules that reach every WDK-powered wallet. You'll get early access to unreleased APIs, architecture guidance, co-marketing exposure through our documentation and community channels, and the opportunity to shape how your protocol integrates across the ecosystem.
+
+Before you start building, read [Contribute a Module to WDK](/tools/create-wdk-module/).
 
 [Become a Technology Partner](https://forms.monday.com/forms/8672578dbc8e26fdf4766cc073270769?r=euc1)
 
@@ -54988,63 +54991,168 @@ Deletion is idempotent when the item is already missing. A successful delete can
 
 ***
 
-## Create WDK Module
+## Contribute a Module to WDK
 URL: https://docs.wdk.tether.io/tools/create-wdk-module
-Description: CLI scaffolding tool to generate new WDK wallet and protocol modules with a single command.
+Description: Scaffold a wallet or protocol module, meet the WDK contract, pass the pre-review checklist, and request a review.
 
-Scaffold new WDK modules with a single command. The CLI generates a fully configured project with source files, tests, TypeScript type definitions, and CI workflows — ready for you to add your blockchain or protocol integration logic.
+Read this page before you write code. It covers the CLI, the contract, what we check, and how to request a review.
 
-Powered by [`create-wdk-module`](https://github.com/tetherto/create-wdk-module).
+<Mermaid
+  chart={`flowchart LR
+  A["1. Scaffold"] --> B["2. Implement"] --> C["3. Self-review"] --> D["4. WDK review"] --> E["5. Publish and document"]`}
+/>
 
 ---
 
-## Quickstart
+## Start With the CLI
 
-<Steps>
-<Step>
-### Run the scaffolding command
+Every module starts from [`create-wdk-module`](https://github.com/tetherto/create-wdk-module). It generates the package name, initial version, types, Bare entry, and CI workflows.
 
-```bash title="Scaffold a new module"
+If you are building a wallet, check the [existing wallet modules](/sdk/wallet-modules/) first. `wdk-wallet-evm` already covers Ethereum-compatible chains, for example. If your chain is covered, build a variant: enter `<chain>-<variant>` as the chain name to get `wdk-wallet-<chain>-<variant>`.
+
+```bash title="Scaffold a module"
 npx @tetherto/create-wdk-module@latest
 ```
 
-You can also pass arguments directly to skip the interactive prompts:
+Enter your module type, name, and npm scope, then keep what it generates. The generated tests are `test.todo` placeholders, so a passing `npm test` means nothing until you replace them.
 
-```bash title="Scaffold with arguments"
-npx @tetherto/create-wdk-module@latest wallet stellar
-```
-</Step>
-
-<Step>
-### Install and run tests
-
-```bash title="Set up the generated project"
-cd wdk-wallet-stellar
-npm install
-npm test
-```
-</Step>
-</Steps>
+<Callout type="warn">
+**Settle the name before you publish.** Check that it is free on npm. If you have any doubt, ask us first, because a rename means publishing again.
+</Callout>
 
 ---
 
-## Module Types
+## Where Your Module Sits
 
-The CLI supports seven WDK module categories. The generated package name follows WDK naming conventions automatically.
+An application registers your module with WDK Core. Your module extends the base classes in `@tetherto/wdk-wallet` and talks to your chain or provider.
 
-| Type | Description | Generated Package Example |
-|------|-------------|---------------------------|
-| `wallet` | Blockchain wallet integration | `wdk-wallet-stellar` |
-| `swap` | DEX/token swap protocol | `wdk-protocol-swap-jupiter-solana` |
-| `bridge` | Cross-chain bridge protocol | `wdk-protocol-bridge-wormhole-evm` |
-| `lending` | DeFi lending protocol | `wdk-protocol-lending-compound-evm` |
-| `fiat` | Fiat on/off-ramp provider | `wdk-protocol-fiat-moonpay` |
-| `swidge` | Cross-chain swap (swap + bridge combined) | `wdk-protocol-swidge-lifi` |
-| `sda` | Smart Deposit Address provider | `wdk-protocol-sda-rhino` |
+<Mermaid
+  chart={`flowchart LR
+  App["Application"] -->|"registers"| Core["WDK Core"]
+  Core -->|"loads"| Module["Your module"]
+  Module -->|"extends"| Base["@tetherto/wdk-wallet"]
+  Module -->|"calls"| Ext["Your chain or provider"]`}
+/>
+
+| You own | WDK owns |
+|---------|----------|
+| The package, your npm scope, and its releases | The interfaces in `@tetherto/wdk-wallet` |
+| The chain or provider integration, including routing and pricing | WDK Core and how it loads modules |
+| Tests, README, changelog, support, and security fixes | The CLI, the review skills, and the source review |
 
 ---
 
-## CLI Options
+## Implement the Contract
+
+The latest [`@tetherto/wdk-wallet`](https://github.com/tetherto/wdk-wallet/releases) release is the contract. Its source defines every method, type, and documented error, so this page does not repeat them. If a reference implementation disagrees with the interface, the interface wins. JavaScript and TypeScript are both fine, as long as you publish executable JavaScript and type declarations.
+
+| Type | For | Extend | Reference |
+|------|-----|--------|-----------|
+| `wallet` | A blockchain | [`WalletManager`](https://github.com/tetherto/wdk-wallet/blob/main/src/wallet-manager.js), [`WalletAccountReadOnly`](https://github.com/tetherto/wdk-wallet/blob/main/src/wallet-account-read-only.js), [`IWalletAccount`](https://github.com/tetherto/wdk-wallet/blob/main/src/wallet-account.js) | [Solana](https://github.com/tetherto/wdk-wallet-solana) |
+| `swap` | DEX or token swap | [`SwapProtocol`](https://github.com/tetherto/wdk-wallet/blob/main/src/protocols/swap-protocol.js) | [Velora](https://github.com/tetherto/wdk-protocol-swap-velora-evm) |
+| `bridge` | Cross-chain bridge | [`BridgeProtocol`](https://github.com/tetherto/wdk-wallet/blob/main/src/protocols/bridge-protocol.js) | [USD₮0](https://github.com/tetherto/wdk-protocol-bridge-usdt0-evm) |
+| `lending` | DeFi lending | [`LendingProtocol`](https://github.com/tetherto/wdk-wallet/blob/main/src/protocols/lending-protocol.js) | [Aave](https://github.com/tetherto/wdk-protocol-lending-aave-evm) |
+| `fiat` | On-ramp and off-ramp | [`FiatProtocol`](https://github.com/tetherto/wdk-wallet/blob/main/src/protocols/fiat-protocol.js) | [MoonPay](https://github.com/tetherto/wdk-protocol-fiat-moonpay) |
+| `swidge` | Swap plus bridge | [`SwidgeProtocol`](https://github.com/tetherto/wdk-wallet/blob/main/src/protocols/swidge-protocol.js) | [LI.FI](/sdk/swidge-modules/swidge-lifi/) |
+| `sda` | Smart deposit address | [`SdaProtocol`](https://github.com/tetherto/wdk-wallet/blob/main/src/protocols/sda-protocol.js) | [Rhino.fi](/sdk/sda-modules/sda-rhinofi/) |
+
+---
+
+## Rules the Types Can't Express
+
+Type checking passes without any of these, so test them yourself.
+
+### All modules
+
+- **Run on Bare.** WDK applications can run wallet operations in a Bare thread, so your Bare entry must work there, dependencies included. The CLI generates the entry, and [`wdk-wallet-btc`](https://github.com/tetherto/wdk-wallet-btc/blob/main/bare.js) shows a released one. If you are blocked, send us the failing dependency, a reproducer, and the affected operations. Only an approved waiver lifts this rule, and it goes in your README.
+- **Resolve one copy of `@tetherto/wdk-wallet`.** Core recognizes protocols with `instanceof`. With a second copy, `registerProtocol()` ignores your module without an error, and `getSwapProtocol()` throws later. Keep the version range the CLI generates.
+- **Keep failures distinct.** Invalid input, unsupported operations, missing configuration, and provider failures are never an empty or successful result. Reuse [WDK errors](https://github.com/tetherto/wdk-wallet/blob/main/src/errors.js) and [protocol errors](https://github.com/tetherto/wdk-wallet/blob/main/src/protocols/errors.js) first, extend `WdkError` for your own, and mark each one with `@throws`.
+- **Never lose a transaction.** Return transaction identifiers and partial-execution details in results or errors so callers can recover. Keep a failed submission distinct from an unknown broadcast outcome.
+- **Add, don't redefine.** Never change the meaning or return shape of an inherited method.
+- **Export what callers need.** Re-export public types and parent module types from `index.js`, with declarations in `types/`. Do the same for the errors you throw, or document their import path.
+- **Leave secrets and logs to the host.** No real keys or credentials in source, fixtures, logs, or examples. No `console` output, because hosts log through [Core middleware](/sdk/core-module/guides/middleware/#logging). Disclose provider requests and telemetry.
+
+### Protocol modules
+
+- **Sign with the host's account.** Never ask for a seed phrase or create a second signer. Use chain module types where they specialize the base ones: EVM calldata goes through [`EvmTransaction`](https://github.com/tetherto/wdk-wallet-evm/blob/main/src/wallet-account-read-only-evm.js).
+- **Report status honestly.** An unrecognized status in a valid response maps to `pending` for swidge and SDA, or `in_progress` for fiat. Invalid identifiers, missing records, and failed requests are errors.
+- **Be clear about fee caps.** If you support a fee cap the interface defines, such as `swapMaxFee` or `bridgeMaxFee`, throw `MaximumFeeExceededError` when it's exceeded. If you don't, say so in your README, so callers who pass a cap don't assume it protects them.
+
+### Wallet modules
+
+- **Override both account factories.** A variant that changes the account class overrides [`getAccount()` and `getAccountByPath()`](https://github.com/tetherto/wdk-wallet-evm/blob/main/src/wallet-manager-evm.js).
+- **Clear their own state.** Extra keys or sessions are yours to clear in `dispose()`, after `super.dispose()`.
+
+---
+
+## Pre-Review Checklist
+
+Copy this list into your review request and tick only what you actually ran. Explain any box you leave empty.
+
+Three review skills check your JSDoc, declarations, and tests from your coding agent. Install them once, outside your repository. This needs Node.js 22.20 or later:
+
+```bash title="Install the review skills"
+npx skills add tetherto/wdk-agent-skills -g \
+  --skill wdk-review-jsdocs \
+  --skill wdk-review-dts \
+  --skill wdk-review-tests
+```
+
+Then run each one from your module's root. If your agent has no slash commands, ask for the skill by name. These skills don't replace the rest of the list.
+
+```text title="Run the reviews"
+/wdk-review-jsdocs src/
+/wdk-review-dts types/
+/wdk-review-tests tests/
+```
+
+**Package**
+
+- [ ] The name from `create-wdk-module` is unchanged and free on npm.
+- [ ] `npm run lint` passes, and the declarations in `types/` match the code.
+- [ ] Every direct dependency is used, and nothing needed at runtime sits in `devDependencies`.
+- [ ] The `npm pack` output installs in a new project with `@tetherto/wdk`, and `npm ls @tetherto/wdk-wallet` shows one version.
+
+**Behavior**
+
+- [ ] `npm test` passes with no `test.todo` left, and covers every documented error.
+- [ ] The main flow runs end to end through Core and a real WDK wallet package, with no mocks or sender stubs, on a fork at a known block. If your provider can't run on a fork, add a live run. The request lists the block height, or the network and transaction hash.
+- [ ] The same flow runs from the packed Bare entry ([how to run a test under Bare](https://github.com/tetherto/wdk-p2p-address-book/blob/main/tests/bare-runtime.test.mjs)), or an approved waiver is in the README.
+- [ ] If you hold extra state, disposal is tested through both the account and the manager.
+- [ ] `wdk-review-jsdocs`, `wdk-review-dts`, and `wdk-review-tests` have run, with findings fixed or listed.
+
+**Documentation**
+
+- [ ] The README has install steps, a runnable example, configuration, supported chains and operations, errors with caller actions, fees and fee cap support, known limitations, supported WDK versions, and support contacts.
+- [ ] `CHANGELOG.md` records each release, with migration steps for breaking changes.
+- [ ] `SECURITY.md` says how to report a vulnerability privately.
+- [ ] Bundler, Bare, credential, and real-funds caveats sit next to the run commands, not only in example comments.
+- [ ] The repository holds no real credentials, and `.env.example` lists every variable that tests and examples read.
+- [ ] Examples use Tether assets or neutral placeholders.
+
+---
+
+## Request a Review
+
+Send the repository, a reviewable PR, the full commit SHA, the package name and version, your checklist, and your test results through the [WDK Tech Contributors](/overview/partner-program/#wdk-tech-contributors) track. If we request changes, fix them and run the checklist again.
+
+| We check | We don't check |
+|----------|----------------|
+| Conformance to the WDK contract | Code style beyond lint and build |
+| Integration behavior and test evidence | Routing, pricing, liquidity, and other business logic |
+| Packaging and runtime compatibility | Security, cryptography, smart contract, or dependency audits |
+| Documentation | External APIs, custody, compliance, availability, or load |
+
+We don't test every network, asset, or edge case. Approval applies to one commit, the way an audit does. Anything you change afterwards needs a new review before you describe it as approved. We may flag obvious defects, but approval is not an audit of the right-hand column.
+
+After approval, prepare a docs PR on [`wdk-docs`](https://github.com/tetherto/wdk-docs) and keep it in draft. Publish to npm under your scope, confirm the version matches the approved commit, then mark the PR ready for review.
+
+---
+
+## CLI Reference
+
+<Accordions>
+<Accordion title="Options">
 
 | Option | Alias | Description | Default |
 |--------|-------|-------------|---------|
@@ -55059,10 +55167,11 @@ The CLI supports seven WDK module categories. The generated package name follows
 | `--help` | `-h` | Show help | |
 
 <Callout type="warn">
-In `1.0.0-beta.3`, `--version` still prints the hard-coded beta.1 value. Use npm or the installed package metadata when you need the actual installed version.
+Through `1.0.0-beta.4`, `--version` still prints the hard-coded beta.1 value. Use npm or the installed package metadata when you need the actual installed version.
 </Callout>
 
-### Examples
+</Accordion>
+<Accordion title="Examples">
 
 ```bash title="Common CLI usage patterns"
 # Create a wallet module with an npm scope
@@ -55078,56 +55187,8 @@ npx @tetherto/create-wdk-module@latest sda rhino
 npx @tetherto/create-wdk-module@latest wallet stellar --yes
 ```
 
----
-
-## Interactive Mode
-
-When run without arguments, the CLI guides you through module setup step by step:
-
-```bash title="Interactive session"
-$ npx @tetherto/create-wdk-module@latest
-
-  Create WDK Module
-
-? What type of module do you want to create?
-  > Wallet Module (blockchain wallet integration)
-    Swap Module (DEX/token swap integration)
-    Bridge Module (cross-chain bridging)
-    Lending Module (DeFi lending protocol)
-    Fiat Module (fiat on/off-ramp)
-    Swidge Module (cross-chain swap (swidge = swap + bridge))
-    SDA Module (smart deposit address)
-
-? What is the blockchain name? (e.g., "stellar", "solana")
-  > stellar
-
-? npm scope (leave empty for none, e.g., @myorg):
-  >
-
-? Initialize git repository?
-  > Yes
-
-Creating wdk-wallet-stellar...
-
-✓ Template files copied
-✓ Initialized git repository
-
-Success! Created wdk-wallet-stellar at ./wdk-wallet-stellar
-
-Next steps:
-  cd wdk-wallet-stellar
-  npm install
-  npm test
-```
-
----
-
-## Generated Project Structure
-
-The scaffolded project includes source files, tests, TypeScript definitions, and GitHub CI workflows out of the box.
-
-<Accordions>
-<Accordion title="Wallet Module structure">
+</Accordion>
+<Accordion title="Wallet module structure">
 
 ```text title="Wallet module project tree"
 wdk-wallet-stellar/
@@ -55172,10 +55233,7 @@ Wallet modules generate three core files that correspond to the WDK wallet archi
 | `wallet-account-read-only-*.js` | Read-only account for balance checks and transaction history |
 
 </Accordion>
-</Accordions>
-
-<Accordions>
-<Accordion title="Protocol Module structure (swap, bridge, lending, fiat, swidge, sda)">
+<Accordion title="Protocol module structure">
 
 ```text title="Protocol module project tree"
 wdk-protocol-swap-jupiter-solana/
@@ -55213,23 +55271,6 @@ The beta.3 SDA scaffold is a starting point, not an operational provider. Implem
 
 </Accordion>
 </Accordions>
-
----
-
-## Next Steps
-
-<Cards>
-<Card title="Wallet Modules" href="/sdk/wallet-modules">
-See how official wallet modules are structured and documented
-</Card>
-<Card title="Building Blocks" href="https://wdk.tether.io/developers/blocks">
-Explore official and community-built WDK modules
-</Card>
-</Cards>
-
-<Callout type="info">
-**Reference implementation**: The [`wdk-wallet-solana`](https://github.com/tetherto/wdk-wallet-solana) module is a good reference for understanding how a production wallet module implements the WDK interfaces. The [`wdk-wallet`](https://github.com/tetherto/wdk-wallet) package defines the base classes your module must extend.
-</Callout>
 
 ---
 
