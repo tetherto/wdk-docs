@@ -6,6 +6,8 @@ schemaType: APIReference
 icon: Code
 ---
 
+This reference covers `@tetherto/wdk-wallet-ton-gasless@1.0.0-beta.17`.
+
 ## Table of Contents
 
 | Class | Description | Methods |
@@ -39,7 +41,7 @@ new WalletManagerTonGasless(seed, config)
   - `transferMaxFee` (number | bigint, optional): Maximum fee for gasless transfer operations
   - `transactionMaxFee` (number | bigint, optional): Shared wallet config option; native `sendTransaction()`, `quoteSendTransaction()`, and `signTransaction()` are unsupported on this module
 
-Beta.13 initializes TON RPC and TON API clients once per manager and shares them across derived accounts and their read-only conversions. Supplied client instances are reused as-is.
+The manager initializes TON RPC and TON API clients once and shares them across derived accounts and their read-only conversions. Supplied client instances are reused as-is.
 
 **Example:**
 ```javascript
@@ -145,8 +147,8 @@ new WalletAccountTonGasless(seed, path, config)
 | `transfer(options, config?)` | Transfers tokens using gasless transactions | `Promise\<{hash: string, fee: bigint}\>` |
 | `quoteTransfer(options, config?)` | Estimates the fee for a token transfer | `Promise\<{fee: bigint}\>` |
 | `getBalance()` | Returns the native TON balance (in nanotons) | `Promise\<bigint\>` |
-| `getTokenBalance(tokenAddress)` | Returns the balance of a specific token | `Promise\<bigint\>` |
-| `getPaymasterTokenBalance()` | Returns the balance of the paymaster token | `Promise\<bigint\>` |
+| `getTokenBalance(tokenAddress)` | Returns a verified Jetton wallet's balance, or zero when undeployed | `Promise\<bigint\>` |
+| `getPaymasterTokenBalance()` | Returns the wallet-level paymaster token balance | `Promise\<bigint\>` |
 | `getTransaction(hash)` | Returns a normalized receipt for a message-body hash | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
 | `waitForTransaction(hash, options?)` | Waits for the requested TON finality | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
 | `getTransactionReceipt(hash)` | Deprecated: returns the native TON transaction | `Promise\<TonTransactionReceipt \| null\>` |
@@ -165,7 +167,7 @@ console.log('Account address:', address)
 ```
 
 ##### `sign(message)`
-Signs the TON domain-separated message digest using the account's private key. Beta.13 uses Ed25519 over `SHA-256(0xffff || UTF-8("ton-safe-sign-magic") || UTF-8(message))`, inherited from TON beta.15. Signatures from earlier gasless releases are incompatible with this scheme; update external verifiers before upgrading.
+Signs the TON domain-separated message digest using Ed25519 over `SHA-256(0xffff || UTF-8("ton-safe-sign-magic") || UTF-8(message))`. See [signature compatibility](/sdk/wallet-modules/wallet-ton-gasless/guides/sign-verify-messages) when verifying stored signatures.
 
 **Parameters:**
 - `message` (string): The message to sign
@@ -238,21 +240,29 @@ console.log('Signature valid:', isValid)
 ##### `transfer(options, config?)`
 Transfers a Jetton using a gasless transaction, paying the fee with the configured paymaster token. This is the only way to move funds on the gasless module: `sendTransaction()`, `quoteSendTransaction()`, and `signTransaction()` are not supported and reject or throw.
 
+The account must have deployed sender wallets for both the transferred Jetton and the selected paymaster Jetton. The wallet checks each deployed wallet's code, owner and master; an undeployed wallet or a failed check stops the operation.
+
 Before signing or submitting, the wallet validates the TON API estimate against the requested Jetton transfer. It rejects an altered transfer body, sender, relay, destination, amount, payload, state initialization, expiry, commission, message count, or paymaster commission transfer. Validation resolves the configured paymaster token's Jetton wallet through `tonClient`, so this flow includes an additional TON RPC lookup and can fail if that provider is unavailable.
 
-Beta.13 requires `globalThis.crypto.getRandomValues()` when constructing Jetton transfer messages, including `quoteTransfer()` on owned or read-only accounts. Query IDs are random 64-bit values; they are not caller-supplied idempotency keys.
+The runtime must provide `globalThis.crypto.getRandomValues()` when constructing Jetton transfer messages, including `quoteTransfer()` on owned or read-only accounts. Query IDs are random 64-bit values; they are not caller-supplied idempotency keys.
 
 **Parameters:**
 - `options` (TransferOptions): Transfer options
   - `token` (string): Token contract address
   - `recipient` (string): Recipient TON address
   - `amount` (number | bigint): Amount in token's base units
-- `config` (object, optional): Per-call configuration. When supplied, it replaces the wallet-level transfer configuration for this call.
-  - `paymasterToken` (object, required when `config` is supplied): Paymaster token for this transfer
+- `config` (object, optional): Override individual options. An omitted or `undefined` `paymasterToken` or `transferMaxFee` retains the wallet-level value.
+  - `paymasterToken` (object, optional): Paymaster token for this transfer
     - `address` (string): Paymaster token address
   - `transferMaxFee` (number | bigint, optional): Override maximum fee. Transfers throw only when the estimated fee is greater than this cap, so an equal estimate is allowed.
 
+A paymaster-only override preserves the configured numeric fee cap without converting token units. Set any cap in the selected paymaster Jetton's base units. A supplied `transferMaxFee` replaces the default for this call.
+
+The signed wallet body uses a 120-second timeout, including the first transfer at sequence number `0`. The relay estimate's expiry is validated separately and does not set the signed body's expiry.
+
 **Returns:** `Promise\<{hash: string, fee: bigint}\>` - The signed transfer body hash as lowercase hex and the fee in paymaster Jetton base units
+
+**Throws:** Error if either sender Jetton wallet is undeployed or fails verification, relay validation fails, an RPC request fails, or the commission exceeds the effective `transferMaxFee`.
 
 **Example:**
 ```javascript
@@ -261,7 +271,6 @@ const result = await account.transfer({
   recipient: 'EQ...',
   amount: 1000000000
 }, {
-  paymasterToken: { address: 'EQ...' },
   transferMaxFee: 2000000000
 })
 ```
@@ -269,20 +278,20 @@ const result = await account.transfer({
 ##### `quoteTransfer(options, config?)`
 Estimates the fee for a Jetton (TON token) transfer.
 
-The quote is returned only after the same relay-estimate validation used by `transfer()`. A rejected estimate is not signed or submitted.
+The quote is returned only after the same deployed sender-wallet and relay-estimate checks used by `transfer()`. Both the transfer and paymaster Jetton wallets must be deployed; an undeployed wallet or a failed check rejects the quote. A rejected estimate is not signed or submitted.
 
 **Parameters:**
 - `options` (TransferOptions): Transfer options
   - `token` (string): Token contract address
   - `recipient` (string): Recipient TON address
   - `amount` (number | bigint): Amount in token's base units
-- `config` (object, optional): Per-call configuration. When supplied, it replaces the wallet-level quote configuration for this call.
-  - `paymasterToken` (object, required when `config` is supplied): Paymaster token for this quote
+- `config` (object, optional): Override the paymaster token. An omitted or `undefined` `paymasterToken` retains the wallet-level value.
+  - `paymasterToken` (object, optional): Paymaster token for this quote
     - `address` (string): Paymaster token address
 
 **Returns:** `Promise\<{fee: bigint}\>` - Object containing fee estimate (in paymaster token base units)
 
-`quoteTransfer()` returns a fee estimate only. It does not submit a transfer or return a transaction hash.
+`quoteTransfer()` returns a fee estimate only. It does not enforce `transferMaxFee`, submit a transfer or return a transaction hash.
 
 **Example:**
 ```javascript
@@ -306,7 +315,7 @@ console.log('Balance:', balance, 'nanotons');
 ```
 
 ##### `getTokenBalance(tokenAddress)`
-Returns the balance of a specific Jetton (TON token).
+Returns the balance of a specific Jetton (TON token). For a deployed wallet, verifies its code, owner and master. If the account's Jetton-wallet address has no deployed code, returns `0n`; RPC and verification failures throw.
 
 **Parameters:**
 - `tokenAddress` (string): The token contract address
@@ -320,7 +329,7 @@ console.log('Token balance:', tokenBalance, 'token base units');
 ```
 
 ##### `getPaymasterTokenBalance()`
-Returns the balance of the paymaster Jetton (used for gasless fees).
+Returns the wallet-level paymaster Jetton balance using the same verification and undeployed-wallet behavior as `getTokenBalance()`. Per-call paymaster overrides do not change this lookup.
 
 **Returns:** `Promise\<bigint\>` - Paymaster Jetton balance in base units
 
@@ -412,8 +421,8 @@ new WalletAccountReadOnlyTonGasless(publicKey, config)
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's TON address | `Promise\<string\>` |
 | `getBalance()` | Returns the native TON balance | `Promise\<bigint\>` |
-| `getTokenBalance(tokenAddress)` | Returns the balance of a specific token | `Promise\<bigint\>` |
-| `getPaymasterTokenBalance()` | Returns the balance of the paymaster token | `Promise\<bigint\>` |
+| `getTokenBalance(tokenAddress)` | Returns a verified Jetton wallet's balance, or zero when undeployed | `Promise\<bigint\>` |
+| `getPaymasterTokenBalance()` | Returns the wallet-level paymaster token balance | `Promise\<bigint\>` |
 | `quoteSendTransaction(tx)` | Not supported on gasless; always rejects | `Promise\<Omit\<TransactionResult, 'hash'\>\>` |
 | `quoteTransfer(options, config?)` | Estimates the fee for a token transfer | `Promise\<{fee: bigint}\>` |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` |
@@ -444,7 +453,7 @@ console.log('TON balance:', balance, 'nanotons')
 ```
 
 ##### `getTokenBalance(tokenAddress)`
-Returns the balance of a specific token.
+Returns the balance of a specific token with the same [wallet verification and undeployed-wallet behavior](#gettokenbalancetokenaddress) as the writable account.
 
 **Parameters:**
 - `tokenAddress` (string): The token contract address
@@ -458,7 +467,7 @@ console.log('Token balance:', tokenBalance, 'token base units')
 ```
 
 ##### `getPaymasterTokenBalance()`
-Returns the balance of the paymaster token (used for gasless fees).
+Returns the wallet-level paymaster token balance with the same [verification and undeployed-wallet behavior](#getpaymastertokenbalance) as the writable account.
 
 **Returns:** `Promise\<bigint\>` - Paymaster token balance in base units
 
@@ -483,20 +492,20 @@ await readOnlyAccount.quoteSendTransaction({ to: 'EQ...', value: 1000000000n })
 ```
 
 ##### `quoteTransfer(options, config?)`
-Estimates the fee for a token transfer.
+Estimates the fee for a token transfer using the same [deployed sender-wallet and relay-estimate checks](#quotetransferoptions-config) as the writable account. Both the transfer and paymaster Jetton wallets must be deployed.
 
 **Parameters:**
 - `options` (TransferOptions): Transfer options
   - `token` (string): Token contract address
   - `recipient` (string): Recipient TON address
   - `amount` (number | bigint): Amount in token's base units
-- `config` (object, optional): Per-call configuration. When supplied, it replaces the account's wallet-level quote configuration for this call.
-  - `paymasterToken` (object, required when `config` is supplied): Paymaster token for this quote
+- `config` (object, optional): Override the paymaster token. An omitted or `undefined` `paymasterToken` retains the wallet-level value.
+  - `paymasterToken` (object, optional): Paymaster token for this quote
     - `address` (string): Paymaster token address
 
 **Returns:** `Promise\<{fee: bigint}\>` - Object containing fee estimate (in paymaster token base units)
 
-`quoteTransfer()` returns a fee estimate only. It does not submit a transfer or return a transaction hash.
+`quoteTransfer()` returns a fee estimate only. It does not enforce `transferMaxFee`, submit a transfer or return a transaction hash.
 
 **Example:**
 ```javascript

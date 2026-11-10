@@ -32,6 +32,7 @@ new WalletManagerSpark(seed, config)
   - `sparkscan` (`SparkScanConfig`, optional): SparkScan configuration for balance polling. SparkScan accepts `MAINNET` and `REGTEST`; an unsupported network raises `ValueError` when the account is created.
   - `syncAndRetry` (boolean, optional): When true, native sends reconcile failures against history without resubmission; Lightning payments retry stale-leaf failures once with the same transfer ID
   - `enableLogging` (boolean, optional): When true, forwards logging to the underlying Spark SDK (default: false)
+  - `withdrawMaxFee` (`number | bigint`, optional): Maximum quoted cooperative withdrawal fee, in satoshis. Fees equal to the limit are allowed.
 
 If HD-key derivation cannot produce the master key's private or public key, the wallet raises the Spark SDK `ValidationError` with `field: 'hdkey'`. If a derived child key is incomplete, it uses `field: 'derivedKeys'`. In beta.26 these derivation errors do not include seed bytes in their context; validation errors elsewhere may still contain sensitive context.
 
@@ -75,7 +76,7 @@ console.log('Fast fee rate:', feeRates.fast)     // Always 0n
 ```
 
 ##### `dispose()`
-Disposes all wallet accounts and clears sensitive data from memory.
+Initiates cleanup of the wallet's accounts. See [account disposal](#dispose-1) for which key copies it clears.
 
 **Returns:** `void`
 
@@ -479,10 +480,14 @@ console.log('Claimed deposit:', leaves)
 ##### `claimStaticDeposit(txId)`
 Claims a static Bitcoin deposit to add funds to the Spark wallet.
 
+The credit quoted by the Spark Service Provider (SSP) must be a safe positive integer number of satoshis. This checks the amount's representation, not whether it matches the deposit's on-chain value. Claiming hands the deposit's secret key to the SSP and cannot be undone.
+
 **Parameters:**
 - `txId` (string): Bitcoin transaction ID of the deposit
 
 **Returns:** `Promise<WalletLeaf[] | undefined>` - Wallet leaves created from the deposit
+
+**Throws:** `ValueError` if the quoted credit is not a safe positive integer number of satoshis.
 
 **Example:**
 ```javascript
@@ -540,8 +545,17 @@ Initiates a withdrawal to move funds from the Spark network to an on-chain Bitco
 - `options` (WithdrawOptions): Withdrawal options object (`Omit<WithdrawParams, 'feeQuote'>`)
   - `onchainAddress` (string): Bitcoin address to withdraw to
   - `amountSats` (number): Amount in satoshis to withdraw
+  - `exitSpeed` (`ExitSpeed`): Selects the quote's fee components: `FAST`, `MEDIUM`, or `SLOW`. The TypeScript type requires this field; JavaScript defaults to `MEDIUM` when it is omitted.
 
 **Returns:** `Promise<CoopExitRequest | null | undefined>` - The withdrawal request details, or null/undefined if the request cannot be completed
+
+When `withdrawMaxFee` is configured, the account fetches a quote and compares its selected-speed L1 broadcast fee plus user fee with that limit. Only a greater sum is rejected; equality is allowed. The check uses the returned quote without independently validating its fee fields.
+
+**Throws:**
+- `MaximumFeeExceededError` if the selected quote's fee sum exceeds `withdrawMaxFee`
+- `ValueError` if `withdrawMaxFee` is configured and `exitSpeed` is unrecognized
+
+For TypeScript, import `ExitSpeed` from `@buildonspark/spark-sdk/types` and pass an enum member such as `ExitSpeed.MEDIUM`.
 
 **Example:**
 ```javascript
@@ -774,14 +788,14 @@ await account.cleanupConnections()
 ```
 
 ##### `dispose()`
-Disposes the wallet account, securely erasing private keys from memory.
+Starts connection cleanup and zeroes signer-held private-key bytes. Derivation copies, including the master key and bigint forms of keys, are left to garbage collection. This does not guarantee complete erasure of secret material.
 
 **Returns:** `void`
 
 **Example:**
 ```javascript
 account.dispose()
-// Private keys are now cleared from memory
+// Signer-held private-key bytes are cleared.
 ```
 
 #### Properties
@@ -1037,6 +1051,7 @@ interface SparkWalletConfig {
   sparkscan?: SparkScanConfig  // Optional SparkScan configuration for balance polling
   syncAndRetry?: boolean       // Native send recovery and stale-leaf Lightning retry
   enableLogging?: boolean     // Logging for newly constructed SDK clients/wallets
+  withdrawMaxFee?: number | bigint // Maximum quoted withdrawal fee in satoshis
 }
 ```
 

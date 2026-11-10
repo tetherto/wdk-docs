@@ -8,7 +8,7 @@ icon: Settings
 
 ## Wallet Configuration
 
-Beta.13 shares one TON RPC client and one TON API client across manager-derived accounts and their read-only conversions. Existing client instances are reused as-is; supplied configuration objects and failover lists are initialized once per manager.
+The manager shares one TON RPC client and one TON API client across derived accounts and their read-only conversions. Existing client instances are reused as-is; supplied configuration objects and failover lists are initialized once per manager.
 
 Gasless `quoteTransfer()` and `transfer()` require `globalThis.crypto.getRandomValues()` to generate a random 64-bit Jetton query ID. This runtime prerequisite also applies to read-only quotes.
 
@@ -180,6 +180,10 @@ const config = {
 ### transferMaxFee
 
 The `transferMaxFee` option sets the maximum allowed fee in paymaster Jetton base units for transfer operations. A transfer throws if its estimated fee is greater than this limit, so an estimate equal to the configured cap is allowed.
+
+Per-call `transfer()` options override individual fields. An omitted or `undefined` `transferMaxFee` retains this wallet-level cap, including when the call changes only `paymasterToken`. A supplied cap replaces the default for that call; `0n` rejects any positive commission.
+
+Changing the paymaster token does not convert the numeric cap between tokens. Set the cap in the selected paymaster Jetton's base units. `quoteTransfer()` reports the commission without enforcing this cap.
 
 **Type:** `number | bigint`
 

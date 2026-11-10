@@ -6,14 +6,14 @@ schemaType: APIReference
 icon: Code
 ---
 
-This reference documents `@tetherto/wdk@1.0.0-beta.21`. The [base-wallet contracts](#base-wallet-signer-contracts) identify their separate package versions.
+This reference documents `@tetherto/wdk@1.0.0-beta.22`. The [base-wallet contracts](#base-wallet-signer-contracts) identify their separate package versions.
 
 ## Table of Contents
 
 | Class | Description | Methods |
 |-------|-------------|---------|
 | [WDK](#wdk) | Main class for managing wallets across multiple blockchains. Orchestrates wallet managers, protocols, middleware, and local transaction policies. | [Constructor](#constructor), [Methods](#methods) |
-| [Base wallet signer contracts](#base-wallet-signer-contracts) | Signer capabilities, ownership and disposal contracts through base wallet beta.24. | Interfaces and migration notes |
+| [Base wallet signer contracts](#base-wallet-signer-contracts) | Signer capabilities, account configuration, ownership and disposal contracts. | Interfaces and migration notes |
 | [IWalletAccount](#iwalletaccount) | Base single-signer writable wallet account interface from `@tetherto/wdk-wallet`. | [Methods](#methods-1) |
 | [Multisig account contracts](#multisig-account-contracts) | Implementation contracts exported from `@tetherto/wdk-wallet/multisig`. | Interfaces and types |
 | [IWalletAccountWithProtocols](#iwalletaccountwithprotocols) | Protocol registration and access surface added to a wallet account. | [Methods](#methods-2) |
@@ -453,19 +453,19 @@ The list matches exact names, not prefixes: a new `get*` or `quote*` method is n
 
 ## Base Wallet Signer Contracts
 
-These contracts cover `@tetherto/wdk-wallet@1.0.0-beta.24`, with the release-specific changes identified below. They describe the base package used by module authors; a concrete wallet must implement the relevant signer support before applications can use it. Updating a direct base-wallet dependency does not upgrade the separate copy pinned by another wallet package.
+These contracts cover `@tetherto/wdk-wallet@1.0.0-beta.26`, with the release-specific changes identified below. They describe the base package used by module authors; a concrete wallet must implement the relevant support before applications can use it. Updating a direct base-wallet dependency does not upgrade the separate copy pinned by another wallet package.
 
 <Callout type="warn">
-The concrete wallet versions documented below pin older base packages. Installing base wallet beta.24 directly does not give these wallets the newer base package's `disposed` or `DisposalError` behavior.
+The concrete wallet versions below use separate base-package versions. Installing base wallet directly does not add its `config` getter to a wallet pinned to an older base package. Disposal checks also depend on the concrete module's implementation.
 
 | Base-wallet dependency | Concrete wallet versions |
 | --- | --- |
-| `1.0.0-beta.17` | Bitcoin beta.17, ERC-4337 beta.22, EIP-7702 beta.10, Spark beta.29, Aptos beta.4, TON beta.16, TON Gasless beta.13, TRON beta.15, TRON GasFree beta.11 |
-| `1.0.0-beta.19` | Solana beta.19, Solana Gasless beta.7, Safe beta.2, Squads beta.3 |
-| `1.0.0-beta.21` | EVM beta.23 |
+| `1.0.0-beta.17` | Bitcoin beta.17, ERC-4337 beta.24, EIP-7702 beta.12, Spark beta.31, Aptos beta.6, TON beta.20, TON Gasless beta.17, TRON beta.17, TRON GasFree beta.13 |
+| `1.0.0-beta.19` | Solana beta.20, Solana Gasless beta.8, Safe beta.3, Squads beta.4 |
+| `1.0.0-beta.25` | EVM beta.26 |
 </Callout>
 
-Declare `@tetherto/wdk-wallet@1.0.0-beta.24` as a direct dependency to use all contracts shown here.
+Module authors can declare `@tetherto/wdk-wallet@1.0.0-beta.26` directly for the base contracts below. Applications using a concrete wallet should use its documented dependencies.
 
 ```javascript title="Import Base Wallet Contracts"
 import WalletManager, { DisposalError, IDisposable, ISigner } from '@tetherto/wdk-wallet'
@@ -482,6 +482,19 @@ import WalletManager, { DisposalError, IDisposable, ISigner } from '@tetherto/wd
 | `sign(message)` | Signs a string message and returns `Promise<string>`. |
 
 The base `WalletManager` constructor rejects a default signer whose `isDerivable` is false with `InvalidSignerError`. Register non-derivable signers by name with `addSigner(name, signer)` in a supporting concrete wallet. `WalletManager<TSigner>` preserves the signer type through `getSigner()` and `getSigners()`, and `addSigner()` returns `this` for chaining.
+
+### Account Configuration
+
+The exported abstract `WalletAccountReadOnly` base class exposes the configuration supplied by a module implementation:
+
+| Member | Contract |
+| --- | --- |
+| `constructor(address?, config?)` | Accepts `address?: string` and `config?: Record<string, unknown>`. Omitted configuration defaults to an empty object. |
+| `config` | Getter returning `Readonly<Record<string, unknown>>`. |
+
+Subclass constructors can pass their configuration with `super(address, config)`. The getter returns the supplied object without cloning or freezing it; treat the returned value as read-only.
+
+Module implementations of `IWalletAccountReadOnly` must expose a read-only `config` property. The writable `IWalletAccount` TypeScript interface inherits that requirement; the multisig interfaces do not. When upgrading an implementation that provides its own read-only methods rather than extending `WalletAccountReadOnly`, add a compatible property or getter.
 
 ### Disposal And Signer Ownership
 
@@ -515,7 +528,7 @@ Beta.22 adds `disposed: boolean` through that TypeScript contract. Its runtime `
 
 ### Methods
 
-The Throws column summarizes the beta.22 contract; each concrete module implements its own checks. `DisposalError` is available only from base wallet beta.22 and later. The [concrete versions listed above](#base-wallet-signer-contracts) pin base versions preceding beta.22 and do not provide these beta.22 disposal checks.
+The Throws column summarizes the base interface contract; each concrete module implements its own checks. `DisposalError` is available from base wallet beta.22. Concrete modules [pinned to earlier base releases](#base-wallet-signer-contracts) do not gain these checks from a direct base-wallet upgrade.
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
