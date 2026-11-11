@@ -594,4 +594,5 @@ export const customTree: Node[] = [
   page('Concepts', '/resources/concepts', 'GraduationCap'),
   page('Get Support', '/overview/support', 'CircleQuestionMark'),
   page('Changelog', '/overview/changelog', 'History'),
+  page('Legal and Disclaimers', '/resources/legal', 'Scale'),
 ];
