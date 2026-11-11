@@ -1,0 +1,68 @@
+---
+title: BOB Gateway Swidge Overview
+description: Discover exact-input routes, request quotes and execute through BOB Gateway with compatible WDK accounts.
+docType: explanation
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+BOB Gateway connects WDK accounts to a routing service for Bitcoin, EVM and TRON asset routes. You can discover chains and tokens, preview an exact-input quote, submit the source transaction and track the resulting order.
+
+These draft pages target `@gobob/wdk-protocol-swidge-gateway@0.5.0`, which is pending publication. See [release availability](/sdk/swidge-modules/swidge-bob/usage#installation) before using the examples.
+
+## Choose a starting point
+
+| Goal | Start here |
+| --- | --- |
+| Discover tokens and preview a route without a signing account | [Usage](/sdk/swidge-modules/swidge-bob/usage) |
+| Send from an EVM or TRON account | [Execute a Swidge](/sdk/swidge-modules/swidge-bob/guides/execute-swidge) |
+| Send or receive native BTC | [Bitcoin Routes](/sdk/swidge-modules/swidge-bob/guides/bitcoin-routes) |
+| Track payouts, refunds or uncertain submissions | [Track Settlement](/sdk/swidge-modules/swidge-bob/guides/track-settlement) |
+| Set providers, request timeouts and fee controls | [Configuration](/sdk/swidge-modules/swidge-bob/configuration) |
+
+## How a route runs
+
+1. Discover the gateway's chain and token identifiers, then request a quote for an input amount and destination.
+2. Show the input, destination token, recipient, output estimate and fees to the user.
+3. Complete any token approval required by the source account.
+4. Call `swidge()`. It requests a fresh quote, checks the configured bounds and creates an order before submitting the source transaction.
+5. Retain the order ID and transaction hashes, then query settlement separately.
+
+The earlier quote is a preview, not a route reserved for execution. Set `minAmountOut` and the applicable fee limits on the execution request to constrain the fresh quote. See [execution boundaries](/sdk/swidge-modules/swidge-bob/guides/execute-swidge#confirm-and-handle-approvals) for what those checks establish.
+
+## Capabilities and limits
+
+- Only exact-input requests are supported. Use `fromTokenAmount`; `toTokenAmount` is rejected.
+- Discovery reports gateway routes, not guaranteed execution support for every returned chain. Source execution uses Bitcoin, EVM or TRON account methods.
+- An accountless instance can discover routes, quote with an explicit recipient and retrieve status. Executing, checking allowances and simulating require the relevant account methods.
+- `getRequiredApproval()` may create an unfunded order and returns an unbounded allowance when approval is needed. The application submits and confirms approval transactions.
+- `simulateSwidge()` creates an unfunded order; on Bitcoin it also signs a transaction without returning its signed bytes. It does not broadcast.
+- A source transaction hash does not establish destination delivery. Reconcile an uncertain submission before sending again.
+- The package's source-transaction checks bound the source token, amount and certain native charges. Provider routing and destination execution still depend on BOB Gateway.
+
+Use [runtime discovery](/sdk/swidge-modules/swidge-bob/usage#discover-chains-and-tokens) instead of maintaining a fixed network or token inventory. A token's presence does not establish liquidity or an executable route for a particular amount.
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-bob/usage">
+Discover routes and request a first quote.
+</Card>
+<Card title="Execute a Swidge" href="/sdk/swidge-modules/swidge-bob/guides/execute-swidge">
+Handle approvals and submit through an EVM or TRON account.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-bob/api-reference">
+Check methods, return values and errors.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
