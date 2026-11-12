@@ -5,6 +5,7 @@ import test from 'node:test';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
+import { structure } from 'fumadocs-core/mdx-plugins/remark-structure';
 import { validateTokenSymbols } from '../check-token-symbols.mjs';
 import { END, parseJson, renderReference, replaceReference, SOURCE_URL, START, validateReference } from '../indexer-openapi.mjs';
 
@@ -19,7 +20,23 @@ function render(document, receipt = provenance) {
   return renderReference(input, { ...receipt, sha256: digest(input) });
 }
 function jsonBlocks(output) {
-  return [...output.matchAll(/(`{3,})json\n([\s\S]*?)\n\1(?=\n)/g)].map((match) => parseJson(match[2]));
+  return [...output.matchAll(/(`{3,})json(?:[ \t]+[^\n]*)?\n([\s\S]*?)\n\1(?=\n)/g)]
+    .map((match) => parseJson(match[2]));
+}
+function withoutFences(output) {
+  return output.replace(/(`{3,})[^\n]*\n[\s\S]*?\n\1(?=\n)/g, '')
+    .replace(/\\([\\`*_{}[\]|#$])/g, '$1');
+}
+function definitions(output) {
+  return [...output.matchAll(/^<details>\n[\s\S]*?\n<\/details>$/gm)].map(([details]) => {
+    assert.match(details, /^`{3,}json plain$/m);
+    const blocks = jsonBlocks(details);
+    assert.equal(blocks.length, 1, 'each disclosure contains one complete endpoint definition');
+    return blocks[0];
+  });
+}
+function definition(output, path, method = 'GET') {
+  return definitions(output).find((block) => block.path === path && block.method === method);
 }
 
 test('all source operations, request bodies, parameters and response media are represented without mutation', () => {
@@ -27,16 +44,21 @@ test('all source operations, request bodies, parameters and response media are r
   const expected = [];
   let count = 0;
   for (const [path, item] of Object.entries(snapshot.paths)) for (const [method, operation] of Object.entries(item)) {
+    if (method === 'parameters') continue;
     count += 1;
     const heading = `### ${method.toUpperCase()} ${path.replace(/[{}]/g, '\\$&')}`;
     assert.equal(output.split('\n').filter((line) => line === heading).length, 1, heading);
-    if (operation.security?.length) expected.push(snapshot.components.securitySchemes.ApiKeyAuth);
-    expected.push(...(operation.parameters ?? []));
-    if (operation.requestBody) expected.push(...Object.values(operation.requestBody.content));
-    for (const response of Object.values(operation.responses)) expected.push(...Object.values(response.content ?? {}));
+    const security = operation.security ?? snapshot.security ?? [];
+    expected.push({
+      method: method.toUpperCase(), path, operation, pathParameters: item.parameters ?? [], security,
+      securitySchemes: Object.fromEntries(security.flatMap((requirement) => Object.keys(requirement))
+        .map((name) => [name, snapshot.components.securitySchemes[name]])),
+    });
   }
-  assert.match(output, new RegExp(`all ${count} operations`));
-  assert.deepEqual(jsonBlocks(output), expected);
+  assert.deepEqual(definitions(output), expected);
+  assert.equal((output.match(/^<details>$/gm) ?? []).length, count);
+  assert.equal((output.match(/^<\/details>$/gm) ?? []).length, count);
+  assert.doesNotMatch(output, /^#{4,6} /m);
   assert.equal(digest(raw), provenance.sha256);
   assert.ok(validateReference(raw, provenance).issues.length <= 24);
   assert.match(output, /sparkIdentityKey/);
@@ -45,13 +67,61 @@ test('all source operations, request bodies, parameters and response media are r
   assert.match(output, /HTTP 503/);
 });
 
-test('schema field tables expose nested names, constraints and optionality outside code fences', () => {
-  const output = renderReference(raw, provenance).replace(/(`{3,})json\n[\s\S]*?\n\1(?=\n)/g, '')
-    .replace(/\\([\\`*_{}[\]|#$])/g, '$1');
-  assert.match(output, /\$\[\]\.meta\.spark\.sparkIdentityKey \| string \| Yes/);
-  assert.match(output, /\$\.tokenBalance\.amount \| string \| Not listed/);
-  assert.ok(output.includes('` "maxItems" `: ` 10 `'));
-  assert.match(output, /oneOf 2\) \| null/);
+test('compact field tables retain searchable nested names and plain-language constraints', () => {
+  const output = withoutFences(renderReference(raw, provenance));
+  const required = output.split('\n').find((line) => line.startsWith('|') && line.includes('meta.spark.sparkIdentityKey'));
+  assert.ok(required);
+  assert.match(required, /\| string \|[^\n]*\*\*Required\.\*\*/);
+  const amount = output.split('\n').find((line) => line.startsWith('|') && line.includes('tokenBalance.amount'));
+  assert.ok(amount);
+  assert.match(amount, /\| string \|/);
+  assert.match(output, /Max items[^\n]*` 10 `/i);
+  assert.match(output, /walletId/);
+  assert.doesNotMatch(output, /Listed in local required|Not listed|Constraints \|/);
+});
+
+test('request templates cover every operation without inventing complete payload examples', () => {
+  const output = renderReference(raw, provenance);
+  const tree = unified().use(remarkParse).use(remarkGfm).parse(output);
+  const code = tree.children.filter((node) => node.type === 'code');
+  const requests = code.filter((node) => /^curl\b/.test(node.value));
+  const operations = validateReference(raw, provenance).operations;
+  assert.equal(requests.length, operations.length);
+  const expectedExamples = [];
+  for (const { method, endpoint: path, operation, auth } of operations) {
+    const request = requests.find((node) => node.value.includes(path) && node.value.includes(method.toUpperCase()));
+    assert.ok(request, `${method.toUpperCase()} ${path} needs a request template`);
+    assert.ok(request.value.includes(`https://wdk-api.tether.io${path}`));
+    assert.equal(request.value.includes('X-API-KEY'), Boolean(auth));
+    assert.equal(/--data-binary\s+['"]?@request\.json/.test(request.value), Boolean(operation.requestBody));
+    assert.ok(request.value.includes(`'https://wdk-api.tether.io${path}'`), 'request URL is shell-quoted');
+    assert.ok(!request.value.includes('\\n'), 'line continuations use real newlines');
+    if (auth) {
+      assert.ok(request.value.includes("--header 'X-API-KEY: <api-key>'"));
+      assert.ok(request.value.includes(' \\\n  --header'), 'multiline request remains one shell command');
+    }
+    const success = Object.entries(operation.responses).find(([status]) => /^2/.test(status))?.[1];
+    for (const media of [...Object.values(operation.requestBody?.content ?? {}), ...Object.values(success?.content ?? {})]) {
+      if (Object.hasOwn(media, 'example')) expectedExamples.push(media.example);
+      else if (Object.hasOwn(media.schema, 'example')) expectedExamples.push(media.schema.example);
+    }
+  }
+  const examples = jsonBlocks(output.replace(/^<details>\n[\s\S]*?\n<\/details>$/gm, ''));
+  assert.deepEqual(examples, expectedExamples, 'complete payload examples must come from the export');
+});
+
+test('renders source-provided media and schema examples while preserving their exact definitions', () => {
+  const document = fixture();
+  const request = document.paths['/api/v1/wallets/{walletId}'].patch.requestBody.content['application/json'];
+  const response = document.paths[endpoint].get.responses['200'].content['application/json'];
+  request.example = { name: 'Wallet label' };
+  request.schema.example = { name: 'Schema fallback' };
+  response.schema.example = { tokenBalance: { amount: '17' } };
+  const output = render(document);
+  const examples = jsonBlocks(output.replace(/^<details>\n[\s\S]*?\n<\/details>$/gm, ''));
+  assert.deepEqual(examples, [response.schema.example, request.example]);
+  assert.deepEqual(definition(output, endpoint).operation.responses['200'].content['application/json'], response);
+  assert.deepEqual(definition(output, '/api/v1/wallets/{walletId}', 'PATCH').operation.requestBody.content['application/json'], request);
 });
 
 test('duplicate JSON keys including escaped keys fail before overwrite, while separate scopes are valid', () => {
@@ -97,7 +167,11 @@ test('inherits path parameters and lets the operation override the same paramete
   const operation = validated.operations.find((item) => item.endpoint === endpoint);
   assert.equal(operation.params.filter((item) => item.name === 'blockchain').length, 1);
   assert.deepEqual(operation.params[0].schema, snapshot.paths[endpoint].get.parameters[0].schema);
-  assert.ok(render(document).includes('cursor (query)'));
+  const output = render(document);
+  assert.match(withoutFences(output), /\|[^\n]*cursor[^\n]*query[^\n]*\| string \|/i);
+  const exact = definition(output, endpoint);
+  assert.deepEqual(exact.pathParameters, document.paths[endpoint].parameters);
+  assert.deepEqual(exact.operation.parameters, document.paths[endpoint].get.parameters);
   document.paths[endpoint].get.parameters.push(document.paths[endpoint].get.parameters[0]);
   assert.throws(() => render(document), /Duplicate parameter/);
   const missing = fixture();
@@ -112,9 +186,13 @@ test('security inheritance and explicit anonymous override remain distinct; unsu
   delete document.paths[endpoint].get.security;
   const output = render(document);
   const health = output.slice(output.indexOf('### GET /api/v1/health'), output.indexOf('### GET /api/v1/chains'));
-  assert.match(health, /no authentication requirement/);
+  assert.match(health, /Public endpoint/);
   const validated = validateReference(JSON.stringify(document), { ...provenance, sha256: digest(JSON.stringify(document)) });
   assert.equal(validated.operations.find((item) => item.endpoint === endpoint).auth.name, 'ApiKeyAuth');
+  assert.deepEqual(definition(output, endpoint).security, document.security);
+  assert.deepEqual(definition(output, endpoint).securitySchemes, document.components.securitySchemes);
+  assert.deepEqual(definition(output, '/api/v1/health').security, []);
+  assert.deepEqual(definition(output, '/api/v1/health').securitySchemes, {});
   for (const security of [null, [{ ApiKeyAuth: ['scope'] }], [{ ApiKeyAuth: [] }, {}], [{ UnknownAuth: [] }]]) {
     const invalid = fixture(); invalid.paths[endpoint].get.security = security;
     assert.throws(() => render(invalid));
@@ -148,8 +226,8 @@ test('escapes contract prose, table fields and fence-like examples without losin
   document.paths[endpoint].get.parameters[0].schema.description = '``` </details> $math$';
   const output = render(document);
   assert.ok(output.includes('\\# &lt;script&gt;\\{run()\\}&lt;/script&gt;'));
-  assert.ok(output.includes('````json'));
-  assert.deepEqual(jsonBlocks(output).find((value) => value.name === 'blockchain' && value.schema.description)?.schema.description,
+  assert.ok(output.includes('````json plain'));
+  assert.deepEqual(definition(output, endpoint).operation.parameters[0].schema.description,
     '``` </details> $math$');
 });
 
@@ -159,8 +237,26 @@ test('allows additive supported operations and changed request constraints witho
   document.paths['/api/v1/batch/token-balances'].post.requestBody.content['application/json'].schema.maxItems = 20;
   const output = render(document);
   assert.match(output, /### GET \/api\/v1\/new-operation/);
-  assert.ok(output.includes('` "maxItems" `: ` 20 `'));
-  assert.match(output, /No response content is declared/);
+  assert.match(withoutFences(output), /Max items[^\n]*` 20 `/i);
+  assert.deepEqual(definition(output, '/api/v1/new-operation').operation.responses,
+    { '204': { description: 'No content' } });
+  assert.match(withoutFences(output), /204/);
+});
+
+test('endpoint index links follow actual heading anchors when valid paths have duplicate slugs', () => {
+  const document = fixture();
+  const paths = ['/api/v1/a/b', '/api/v1/ab', '/api/v1/ab-1'];
+  for (const [index, path] of paths.entries()) document.paths[path] = {
+    get: { summary: `Duplicate slug ${index}`, responses: { '204': { description: 'No content' } } },
+  };
+  const output = render(document);
+  const headings = structure(output).headings;
+  const anchors = paths.map((path) => headings.find((heading) => heading.content === `GET ${path}`)?.id);
+  assert.equal(new Set(anchors).size, paths.length);
+  for (const [index, anchor] of anchors.entries()) {
+    assert.ok(anchor);
+    assert.ok(output.includes(`[Duplicate slug ${index}](#${anchor})`));
+  }
 });
 
 test('replacement preserves curated page content and fails on ambiguous markers', () => {
@@ -181,10 +277,9 @@ test('renders one Base URL and preserves the prior endpoint index and operation 
   assert.equal(output.split('\n').filter((line) => line === '## Base URL').length, 1);
   assert.ok(output.includes('## Base URL\n\n```text\nhttps://wdk-api.tether.io\n```'));
   assert.ok(output.includes('## API Endpoints\n'));
-  assert.ok(output.indexOf('## Authentication\n') < output.indexOf('#### Authentication\n'));
-  assert.ok(output.includes('Deployment version observed separately:'));
-  const aligned = fixture(); aligned.info.version = provenance.health.deployedVersion;
-  assert.ok(!render(aligned).includes('has not yet been aligned'));
+  assert.ok(output.indexOf('## Authentication\n') < output.indexOf('### GET /api/v1/health'));
+  assert.doesNotMatch(output, /Deployment version observed separately|schema-format incompatibilities|full OpenAPI conformance|Listed in local required/);
+  assert.ok(output.includes('/assets/indexer-api/openapi.provenance.json'));
   for (const servers of [[], [{ url: '/' }], [{ url: 'https://wdk-api.tether.io/' }]]) {
     const document = fixture(); document.servers = servers;
     assert.ok(render(document).includes('```text\nhttps://wdk-api.tether.io\n```'));
@@ -197,10 +292,13 @@ test('schema composition retains branch constraints without claiming global opti
     type: 'object', properties: { name: { type: 'string' } }, allOf: [{ required: ['name'] }],
   };
   const output = render(document);
-  assert.ok(output.includes('Listed in local required'));
-  assert.ok(output.includes('composition branches may add requirements'));
-  assert.ok(output.includes('allOf 1'));
-  assert.ok(jsonBlocks(output).some((value) => value.schema?.allOf?.[0].required[0] === 'name'));
+  const exact = definition(output, '/api/v1/wallets/{walletId}', 'PATCH');
+  assert.deepEqual(exact.operation.requestBody, document.paths['/api/v1/wallets/{walletId}'].patch.requestBody);
+  const visible = withoutFences(output).split('### PATCH /api/v1/wallets/{walletId}')[1].split('\n### ')[0];
+  const row = visible.split('\n').find((line) => /\|[^\n]*name[^\n]*\| string \|/.test(line));
+  assert.ok(row, 'composed request property remains searchable');
+  assert.doesNotMatch(row, /optional|Required: No|\*\*Required\.\*\*/i);
+  assert.doesNotMatch(visible, /Listed in local required|Not listed/);
 });
 
 test('rejects malformed enums and unrecognized top-level, info and parameter features', () => {
@@ -232,11 +330,11 @@ test('GFM tables preserve injected constraint literals as code without creating 
   const all = nodes(tree);
   const row = all.find((node) => node.type === 'tableRow' && nodes(node.children[0]).some((child) => child.value?.includes('unsafe | <b>')));
   assert.ok(row);
-  assert.equal(row.children.length, 5);
-  const code = nodes(row.children[4]).filter((node) => node.type === 'inlineCode').map((node) => node.value);
+  assert.equal(row.children.length, 3);
+  const code = nodes(row.children[2]).filter((node) => node.type === 'inlineCode').map((node) => node.value);
   assert.ok(code.includes(JSON.stringify(value)));
   assert.ok(!all.some((node) => node.type === 'html' && node.value.includes('onerror')));
-  assert.ok(jsonBlocks(output).some((block) => block.schema?.properties?.['unsafe | <b>{run()}</b>']?.default === value));
+  assert.equal(definition(output, endpoint).operation.responses['200'].content['application/json'].schema.properties['unsafe | <b>{run()}</b>'].default, value);
 });
 
 

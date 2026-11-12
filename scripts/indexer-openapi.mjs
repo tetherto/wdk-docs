@@ -83,23 +83,19 @@ function text(value) {
   return String(value).replace(/[&<>]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[character])
     .replace(/[\\`*_{}[\]|#$]/g, '\\$&').replace(/\s+/g, ' ').trim();
 }
-function jsonBlock(value) {
+function jsonBlock(value, language = 'json') {
   const json = JSON.stringify(value, null, 2);
   const length = Array.from(json.matchAll(/`+/g)).reduce((longest, match) => Math.max(longest, match[0].length), 2) + 1;
   const fence = '`'.repeat(length);
-  return `${fence}json\n${json}\n${fence}`;
+  return `${fence}${language}\n${json}\n${fence}`;
 }
 function inlineCode(value) {
   const fence = '`'.repeat(Array.from(value.matchAll(/`+/g)).reduce((longest, match) => Math.max(longest, match[0].length), 0) + 1);
   return `${fence} ${value.replaceAll('|', '\\|')} ${fence}`;
 }
-function constraintJson(value) {
-  if (Array.isArray(value)) return `\\[${value.map(constraintJson).join(', ')}\\]`;
-  if (isObject(value)) return `\\{${Object.entries(value).map(([key, child]) => `${inlineCode(JSON.stringify(key))}: ${constraintJson(child)}`).join(', ')}\\}`;
-  return inlineCode(JSON.stringify(value));
-}
 function rawDetails(label, value) {
-  return `<details>\n<summary>${text(label)}</summary>\n\n${jsonBlock(value)}\n\n</details>`;
+  // Large exact schemas need no token highlighting; keep their JSON intact for exports.
+  return `<details>\n<summary>${text(label)}</summary>\n\n${jsonBlock(value, 'json plain')}\n\n</details>`;
 }
 
 function validateProvenance(raw, provenance) {
@@ -281,65 +277,121 @@ export function validateReference(raw, provenance) {
   return { document, operations, issues, server: origin };
 }
 
-function schemaRows(schema, field = '$', required = '—') {
-  const nested = new Set(['properties', 'items', 'additionalProperties', 'oneOf', 'anyOf', 'allOf']);
-  const constraints = Object.fromEntries(Object.entries(schema).filter(([key]) => !nested.has(key) && !['type', 'description', 'title'].includes(key)));
-  if (typeof schema.additionalProperties === 'boolean') constraints.additionalProperties = schema.additionalProperties;
-  const type = schema.type ?? (['oneOf', 'anyOf', 'allOf'].filter((key) => schema[key]).join(', ') || 'Not declared');
-  const rows = [`| ${text(field)} | ${text(type)} | ${required} | ${text(schema.description ?? '')} | ${Object.keys(constraints).length ? constraintJson(constraints) : '—'} |`];
-  for (const [name, child] of Object.entries(schema.properties ?? {})) rows.push(...schemaRows(child, `${field}.${name}`, schema.required?.includes(name) ? 'Yes' : 'Not listed'));
-  if (schema.items) rows.push(...schemaRows(schema.items, `${field}[]`));
-  if (isObject(schema.additionalProperties)) rows.push(...schemaRows(schema.additionalProperties, `${field}.*`));
-  for (const key of ['oneOf', 'anyOf', 'allOf']) for (const [index, child] of (schema[key] ?? []).entries()) rows.push(...schemaRows(child, `${field} (${key} ${index + 1})`));
-  return rows;
-}
-function schemaTable(schema) {
-  return ['| Field | Type | Listed in local required | Description | Constraints |',
-    '| --- | --- | --- | --- | --- |', ...schemaRows(schema), ''];
-}
-function renderMedia(content) {
-  const lines = [];
-  for (const [type, value] of Object.entries(content)) {
-    lines.push(`Media type: ${text(type)}.`, '', ...schemaTable(value.schema), rawDetails('Exact media definition', value), '');
-  }
-  return lines;
+function schemaType(schema) {
+  return schema.type ?? (['oneOf', 'anyOf', 'allOf'].filter((key) => schema[key]).join(', ') || 'See schema');
 }
 
+function constraints(schema) {
+  const labels = {
+    enum: 'Allowed values', default: 'Default', example: 'Example', format: 'Format',
+    minLength: 'Min length', maxLength: 'Max length', pattern: 'Pattern',
+    minimum: 'Minimum', maximum: 'Maximum', minItems: 'Min items', maxItems: 'Max items',
+    minProperties: 'Min properties', maxProperties: 'Max properties', multipleOf: 'Multiple of',
+    exclusiveMinimum: 'Exclusive minimum', exclusiveMaximum: 'Exclusive maximum',
+    uniqueItems: 'Unique items', nullable: 'Nullable', readOnly: 'Read only', writeOnly: 'Write only', deprecated: 'Deprecated',
+  };
+  return Object.entries(schema).filter(([key, value]) => labels[key] && !isObject(value))
+    .map(([key, value]) => `${labels[key]}: ${Array.isArray(value) ? value.map((item) => inlineCode(JSON.stringify(item))).join(', ') : inlineCode(JSON.stringify(value))}.`).join(' ');
+}
+
+function schemaFields(schema, field = '$', required = false) {
+  const details = [required ? '**Required.**' : '', text(schema.description ?? ''), constraints(schema)].filter(Boolean).join(' ');
+  const fields = [{ field, type: schemaType(schema), details }];
+  for (const [name, child] of Object.entries(schema.properties ?? {})) {
+    fields.push(...schemaFields(child, `${field}.${name}`, schema.required?.includes(name)));
+  }
+  if (schema.items) fields.push(...schemaFields(schema.items, `${field}[]`));
+  if (isObject(schema.additionalProperties)) fields.push(...schemaFields(schema.additionalProperties, `${field}.*`));
+  for (const key of ['oneOf', 'anyOf', 'allOf']) {
+    for (const [index, child] of (schema[key] ?? []).entries()) fields.push(...schemaFields(child, `${field} (${key} ${index + 1})`));
+  }
+  return fields;
+}
+
+function fieldTable(schema) {
+  return ['<div className="indexer-fields">', '', '| Field | Type | Details |', '| --- | --- | --- |',
+    ...schemaFields(schema).map(({ field, type, details }) => `| ${inlineCode(field)} | ${text(type)} | ${details || '—'} |`), '', '</div>', ''];
+}
+
+function mediaExample(media) {
+  if (Object.hasOwn(media, 'example')) return media.example;
+  if (Object.hasOwn(media.schema, 'example')) return media.schema.example;
+  return undefined;
+}
+
+function operationAnchor(method, endpoint) {
+  return `${method}-${endpoint.toLowerCase().replaceAll('/', '').replace(/[{}]/g, '')}`;
+}
+
+const shellQuote = (value) => `'${value.replaceAll("'", "'\\''")}'`;
+
 export function renderReference(raw, provenance) {
-  const { document, operations, issues, server } = validateReference(raw, provenance);
-  const lines = [START, '', '## Base URL', '', `\`\`\`text\n${server}\n\`\`\``, '', '## API contract', '',
-    `Generated from the production OpenAPI snapshot. Deployment version observed separately: ${text(provenance.health.deployedVersion)}. The export currently declares document version ${text(document.info.version)}.${document.info.version === provenance.health.deployedVersion ? '' : ' Its version metadata has not yet been aligned with the deployed API.'}`, '',
-    `[Download OpenAPI](/assets/indexer-api/openapi.json) · [Snapshot provenance](/assets/indexer-api/openapi.provenance.json)`, '',
-    `This reference includes all ${operations.length} operations in the snapshot. Required-list labels describe only the local object schema; composition branches may add requirements. Consult exact schemas for combined constraints. Use chain discovery for current chain and token combinations.`, '',
-    issues.length ? `The upstream export declares OpenAPI ${text(document.openapi)} and contains ${issues.length} known schema-format incompatibilities. They are preserved below, including null branches and property-name constraints. These docs do not establish full OpenAPI conformance or authenticated runtime verification.` : `The export declares OpenAPI ${text(document.openapi)}. This generator checks its supported contract structure; it does not establish full OpenAPI conformance or authenticated runtime verification.`, '',
-    '## Authentication', '', 'Authentication is specified for each operation below. Where required, supply the API key in the documented header. [Request an API key](/tools/indexer-api/get-started/).', '',
-    '## API Endpoints', '', '| Method | Path | Summary |', '| --- | --- | --- |',
-    ...operations.map(({ method, endpoint, operation }) => `| ${method.toUpperCase()} | ${text(endpoint)} | ${text(operation.summary)} |`), ''];
+  const { document, operations, server } = validateReference(raw, provenance);
+  const usedAnchors = new Set();
+  const endpointLinks = operations.map(({ method, endpoint, operation }) => {
+    const base = operationAnchor(method, endpoint);
+    let anchor = base;
+    let suffix = 0;
+    while (usedAnchors.has(anchor)) anchor = `${base}-${++suffix}`;
+    usedAnchors.add(anchor);
+    return `| ${method.toUpperCase()} | [${text(operation.summary)}](#${anchor}) |`;
+  });
+  const lines = [START, '', '## Base URL', '', `\`\`\`text\n${server}\n\`\`\``, '',
+    `Explore all ${operations.length} operations below. Use chain discovery to find current blockchain and token identifiers.`, '',
+    '[Download OpenAPI](/assets/indexer-api/openapi.json) · [Snapshot provenance](/assets/indexer-api/openapi.provenance.json)', '',
+    '## Authentication', '',
+    'Authentication requirements are listed under each endpoint. Send your API key in the documented header for protected endpoints. [Request an API key](/tools/indexer-api/get-started/).', '',
+    '## API Endpoints', '', '| Method | Endpoint |', '| --- | --- |',
+    ...endpointLinks, ''];
   for (const { method, endpoint, operation, params, auth } of operations) {
-    lines.push(`### ${method.toUpperCase()} ${text(endpoint)}`, '', text(operation.summary), '');
+    lines.push(`### ${method.toUpperCase()} ${text(endpoint)}`, '', `**${text(operation.summary)}**`, '');
     if (operation.description) lines.push(text(operation.description), '');
-    if (operation.tags?.length) lines.push(`Tags: ${operation.tags.map(text).join(', ')}.`, '');
-    if (operation.operationId) lines.push(`Operation ID: ${text(operation.operationId)}.`, '');
-    if (operation.deprecated !== undefined) lines.push(`Deprecated: ${operation.deprecated ? 'Yes' : 'No'}.`, '');
-    lines.push('#### Authentication', '');
-    if (auth) lines.push(`Required header: ${text(auth.scheme.name)}. Security scheme: ${text(auth.name)}.`, '', rawDetails('Exact security scheme', auth.scheme), '');
-    else lines.push('This operation declares no authentication requirement.', '');
-    lines.push('#### Parameters', '');
-    if (!params.length) lines.push('No parameters are declared.', '');
-    for (const parameter of params) lines.push(`##### ${text(parameter.name)} (${text(parameter.in)})`, '',
-      `Required: ${parameter.required === true ? 'Yes' : 'No'}. ${text(parameter.description ?? '')}`, '',
-      ...schemaTable(parameter.schema), rawDetails('Exact parameter definition', parameter), '');
+    if (operation.deprecated) lines.push('**Deprecated.**', '');
+    lines.push(auth ? `**Authentication:** ${inlineCode(auth.scheme.name)} header required.` : '**Authentication:** Public endpoint.', '');
+    if (params.length) {
+      lines.push('**Parameters**', '', '<div className="indexer-fields">', '', '| Name | Type | Details |', '| --- | --- | --- |');
+      for (const parameter of params) {
+        lines.push(`| ${inlineCode(parameter.name)} (${text(parameter.in)}) | ${text(schemaType(parameter.schema))} | Required: ${parameter.required === true ? 'Yes' : 'No'}. ${text(parameter.description ?? '')} ${constraints(parameter.schema)} |`);
+      }
+      lines.push('', '</div>', '');
+    }
+    const command = [`curl --request ${method.toUpperCase()} ${shellQuote(`${server}${endpoint}`)}`];
+    if (auth) command.push(`  --header ${shellQuote(`${auth.scheme.name}: <api-key>`)}`);
     if (operation.requestBody) {
-      lines.push('#### Request body', '', `Required: ${operation.requestBody.required === true ? 'Yes' : 'No'}.`, '');
-      if (operation.requestBody.description) lines.push(text(operation.requestBody.description), '');
-      lines.push(...renderMedia(operation.requestBody.content));
+      const content = operation.requestBody.content;
+      for (const [type, media] of Object.entries(content)) {
+        lines.push(`**Request body · ${text(type)} · ${operation.requestBody.required === true ? 'Required' : 'Optional'}**`, '');
+        if (operation.requestBody.description) lines.push(text(operation.requestBody.description), '');
+        lines.push(...fieldTable(media.schema));
+        const example = mediaExample(media);
+        if (example !== undefined) lines.push('**Example request body**', '', jsonBlock(example), '');
+      }
+      command.push(`  --header ${shellQuote(`Content-Type: ${Object.keys(content)[0]}`)}`, '  --data-binary @request.json');
     }
-    lines.push('#### Responses', '');
+    lines.push('**Example request**', '', 'Replace path placeholders and the API key before running.' + (operation.requestBody ? ' Save your request body in `request.json` using the fields above.' : ''), '',
+      `\`\`\`bash\n${command.join(' \\' + '\n')}\n\`\`\``, '', '**Responses**', '', '| Status | Description |', '| --- | --- |');
+    const responseFields = new Set();
+    const success = Object.entries(operation.responses).find(([status]) => /^2/.test(status));
     for (const [status, response] of Object.entries(operation.responses)) {
-      lines.push(`##### HTTP ${status}`, '', text(response.description), '');
-      if (response.content) lines.push(...renderMedia(response.content));
-      else lines.push('No response content is declared.', '');
+      lines.push(`| ${inlineCode(status)} | ${text(response.description)}${response.content ? '' : ' No response content declared.'} |`);
+      for (const media of Object.values(response.content ?? {})) for (const { field } of schemaFields(media.schema)) responseFields.add(field);
     }
+    lines.push('');
+    if (success?.[1].content) {
+      for (const [type, media] of Object.entries(success[1].content)) {
+        lines.push(`**Response fields · HTTP ${text(success[0])} · ${text(type)}**`, '', ...fieldTable(media.schema));
+        for (const { field } of schemaFields(media.schema)) responseFields.delete(field);
+        const example = mediaExample(media);
+        if (example !== undefined) lines.push('**Example response**', '', jsonBlock(example), '');
+      }
+    }
+    if (responseFields.size) lines.push(`**Other response fields:** ${[...responseFields].map(inlineCode).join(', ')}. See the full schema for each status.`, '');
+    lines.push(rawDetails('Full endpoint schema (JSON)', {
+      method: method.toUpperCase(), path: endpoint, operation,
+      pathParameters: document.paths[endpoint].parameters ?? [],
+      security: operation.security ?? document.security ?? [],
+      securitySchemes: auth ? { [auth.name]: auth.scheme } : {},
+    }), '');
   }
   lines.push(END);
   return lines.join('\n');
