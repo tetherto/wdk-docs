@@ -34,3 +34,11 @@ The checkpoint is workflow-owned recovery state and advances by fast-forward. It
 ## Review and verification
 
 Run the generator tests, repository quality build, external-link check and source/export parity checks. Verify actual schema-field search results and ordinary downloads against a locally served production static build. Keep authenticated runtime compatibility and the backend-hosted `/docs` redirect as separate validation and deployment actions. `wdk-indexer-http` JavaScript package reference generation is a separate contract.
+
+## Browser presentation
+
+The REST reference uses Scalar on its existing documentation route, with a native endpoint selector showing one complete operation at a time. Its build-time input passes the same snapshot/provenance validation, retains the complete contract, and adds only production server context and the generator's authenticated cURL templates as presentation metadata. Generated request snippets are hidden in favor of those templates. Request execution and telemetry remain disabled.
+
+The generated MDX remains the source for static search, Markdown downloads and the LLM feed. It is also server-rendered as an initially open text fallback before the interactive viewer. Successful viewer loading collapses that fallback only when the reader has not followed an existing anchor or scrolled into it. Existing endpoint bookmarks and field-search results reveal the native text at the same anchor; Scalar keeps its own navigation IDs and does not write the host URL. The fallback precedes asynchronously rendered content so its anchors do not move during viewer loading. A JavaScript or viewer-loading failure leaves the text available.
+
+The Scalar integration is pinned independently of the existing Fumadocs renderer. For upgrades, repeat theme, navigation, disabled-execution, source/export parity and mobile performance checks. Keep screenshot evidence in the PR description rather than committing image files.

@@ -1,10 +1,10 @@
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import compatibility from './indexer-openapi-compatibility.json' with { type: 'json' };
+import { operationAnchors } from '../src/lib/indexer-operation-anchor.mjs';
 
 export const SOURCE_URL = 'https://wdk-api.tether.io/docs/json';
 export const START = '{/* indexer-openapi:start */}';
 export const END = '{/* indexer-openapi:end */}';
-const compatibility = JSON.parse(readFileSync(new URL('./indexer-openapi-compatibility.json', import.meta.url), 'utf8'));
 const METHODS = new Set(['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace']);
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const fail = (message) => { throw new Error(message); };
@@ -319,23 +319,22 @@ function mediaExample(media) {
   return undefined;
 }
 
-function operationAnchor(method, endpoint) {
-  return `${method}-${endpoint.toLowerCase().replaceAll('/', '').replace(/[{}]/g, '')}`;
-}
-
 const shellQuote = (value) => `'${value.replaceAll("'", "'\\''")}'`;
+
+export function curlTemplate({ method, endpoint, operation, auth }, server) {
+  const command = [`curl --request ${method.toUpperCase()} ${shellQuote(`${server}${endpoint}`)}`];
+  if (auth) command.push(`  --header ${shellQuote(`${auth.scheme.name}: <api-key>`)}`);
+  if (operation.requestBody) {
+    command.push(`  --header ${shellQuote(`Content-Type: ${Object.keys(operation.requestBody.content)[0]}`)}`, '  --data-binary @request.json');
+  }
+  return command.join(' \\' + '\n');
+}
 
 export function renderReference(raw, provenance) {
   const { document, operations, server } = validateReference(raw, provenance);
-  const usedAnchors = new Set();
-  const endpointLinks = operations.map(({ method, endpoint, operation }) => {
-    const base = operationAnchor(method, endpoint);
-    let anchor = base;
-    let suffix = 0;
-    while (usedAnchors.has(anchor)) anchor = `${base}-${++suffix}`;
-    usedAnchors.add(anchor);
-    return `| ${method.toUpperCase()} | [${text(operation.summary)}](#${anchor}) |`;
-  });
+  const anchors = operationAnchors(operations);
+  const endpointLinks = operations.map(({ method, operation }, index) =>
+    `| ${method.toUpperCase()} | [${text(operation.summary)}](#${anchors[index]}) |`);
   const lines = [START, '', '## Base URL', '', `\`\`\`text\n${server}\n\`\`\``, '',
     `Explore all ${operations.length} operations below. Use chain discovery to find current blockchain and token identifiers.`, '',
     '[Download OpenAPI](/assets/indexer-api/openapi.json) · [Snapshot provenance](/assets/indexer-api/openapi.provenance.json)', '',
@@ -355,8 +354,6 @@ export function renderReference(raw, provenance) {
       }
       lines.push('', '</div>', '');
     }
-    const command = [`curl --request ${method.toUpperCase()} ${shellQuote(`${server}${endpoint}`)}`];
-    if (auth) command.push(`  --header ${shellQuote(`${auth.scheme.name}: <api-key>`)}`);
     if (operation.requestBody) {
       const content = operation.requestBody.content;
       for (const [type, media] of Object.entries(content)) {
@@ -366,10 +363,9 @@ export function renderReference(raw, provenance) {
         const example = mediaExample(media);
         if (example !== undefined) lines.push('**Example request body**', '', jsonBlock(example), '');
       }
-      command.push(`  --header ${shellQuote(`Content-Type: ${Object.keys(content)[0]}`)}`, '  --data-binary @request.json');
     }
     lines.push('**Example request**', '', 'Replace path placeholders and the API key before running.' + (operation.requestBody ? ' Save your request body in `request.json` using the fields above.' : ''), '',
-      `\`\`\`bash\n${command.join(' \\' + '\n')}\n\`\`\``, '', '**Responses**', '', '| Status | Description |', '| --- | --- |');
+      `\`\`\`bash\n${curlTemplate({ method, endpoint, operation, auth }, server)}\n\`\`\``, '', '**Responses**', '', '| Status | Description |', '| --- | --- |');
     const responseFields = new Set();
     const success = Object.entries(operation.responses).find(([status]) => /^2/.test(status));
     for (const [status, response] of Object.entries(operation.responses)) {

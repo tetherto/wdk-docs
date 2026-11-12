@@ -11,6 +11,7 @@ import {
   type SharedProps,
 } from 'fumadocs-ui/components/dialog/search';
 import { useDocsSearch } from 'fumadocs-core/search/client';
+import { revealIndexerReference } from '@/lib/indexer-reference-navigation';
 
 const SEARCH_INDEX_PATH = '/api/search.json';
 
@@ -26,6 +27,9 @@ export default function DefaultSearchDialog(props: SharedProps) {
       onSearchChange={setSearch}
       isLoading={query.isLoading}
       {...props}
+      onSelect={(item) => {
+        if (item.type !== 'action') revealIndexerReference(item.url);
+      }}
     >
       <SearchDialogOverlay />
       <SearchDialogContent>
