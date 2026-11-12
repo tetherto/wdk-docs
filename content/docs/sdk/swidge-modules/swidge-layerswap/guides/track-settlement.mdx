@@ -1,0 +1,86 @@
+---
+title: Track LayerSwap Settlement
+description: Persist a LayerSwap swap ID and distinguish source submission, destination payout and refunds.
+docType: how-to
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+`swidge()` returns after the source deposit has been submitted. Keep the provider swap ID and source hash separately. A completed source transaction does not prove that the destination recipient has received the payout.
+
+## Persist the result
+
+Store `id`, `hash`, `transactions`, source/destination network names, selected token identifiers, recipient and refund address with the application's transfer record. Persist the accepted input and limits so a later status view can explain the same operation.
+
+Use `id` with `getSwidgeStatus()`. Use `hash` with `getTransactionStatus()` for the source-deposit assessment and read the returned object's `status` field, including [TON's message tracing](/sdk/swidge-modules/swidge-layerswap/guides/ton-deposits#track-the-ton-deposit).
+
+## Read settlement once
+
+```javascript
+export async function readLayerswapSettlement(protocol, record) {
+  return protocol.getSwidgeStatus(record.id, {
+    fromChain: record.sourceNetwork,
+    toChain: record.destinationNetwork
+  })
+}
+```
+
+The chain hints constrain lookup rather than select a new route. They accept a provider network name or chain ID; an incorrect hint can produce `NoSuchElementError` even for an existing swap.
+
+## Interpret status and transactions
+
+| Status | Application interpretation |
+| --- | --- |
+| `action-required` | The provider reports a user-transfer step pending. Reconcile any existing deposit before requesting another action. |
+| `pending` | The provider has no mapped terminal result. Unknown future provider states also map here. |
+| `completed` | The first output transaction is completed, or the swap state maps to completion after the transaction precedence below is applied. |
+| `refund-pending` | A refund is reported but is not completed. |
+| `refunded` | The provider reports a completed refund. |
+| `failed`, `cancelled`, `expired` | A reported terminal swap condition. Inspect the source and refund records before deciding what funds remain recoverable. |
+
+The mapper selects the first output transaction and gives it precedence when it is completed. Otherwise the first refund transaction determines refund status, and a non-completed first output yields `pending` before the swap-level status is consulted. A status fallback is not a guarantee that the operation is progressing.
+
+Returned `transactions` contain entries with a hash and optional chain and type. The mapper uses `source`, `destination`, `refund` or `other`; transactions without hashes are omitted. Keep the full list rather than assuming one transaction for each stage or a fixed event sequence.
+
+These are provider observations. An application that needs destination-chain verification must check the reported destination transaction and intended token/recipient separately.
+
+## Poll and handle failures
+
+Choose a bounded polling interval and a stopping or escalation policy appropriate to your application. The SDK does not run a background settlement poller or retry loop.
+
+- `NoSuchElementError` from transaction lookup can be indexing delay or incorrect identifiers. Verify the saved network and hash rather than treating every not-found result as a safe retry.
+- `ProviderError` can indicate credentials, rate limiting, timeout, network failure or a malformed response. Preserve the transfer record while recovering access.
+- An execution error can occur after a provider swap exists, before its ID is returned. A source broadcast can also succeed despite a transport error observed by the application.
+
+<Callout type="warn">
+Do not repeat `swidge()` to recover a failed status query or an uncertain source send. First reconcile the source wallet and existing provider swap. A second call creates another provider swap and may send another deposit.
+</Callout>
+
+If no swap ID was returned, `getSwidgeStatus()` cannot identify the swap. Preserve the original intent and any known source hash, reconcile the source wallet and chain, and seek LayerSwap assistance if you cannot identify the existing swap. The SDK has no hash-based swap recovery method.
+
+Provider notification after broadcasting is best effort. Its failure does not undo the source send. Likewise, a failure to save local state after a successful call does not undo the returned submission.
+
+## Next Steps
+
+<Cards>
+<Card title="Execute a Swidge" href="/sdk/swidge-modules/swidge-layerswap/guides/execute-swidge">
+Review the source-send boundary and preserved intent.
+</Card>
+<Card title="TON Deposits" href="/sdk/swidge-modules/swidge-layerswap/guides/ton-deposits">
+Understand external-message hashes and indexing.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-layerswap/api-reference">
+Check mapped statuses and error contracts.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

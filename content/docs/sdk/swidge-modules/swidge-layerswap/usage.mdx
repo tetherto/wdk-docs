@@ -1,0 +1,147 @@
+---
+title: LayerSwap Swidge Usage
+description: Select a LayerSwap adapter, bind the matching source account and preview an exact-input route.
+docType: how-to
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Release availability
+
+The four source adapters and shared core are unpublished. The examples below describe their source API; wait for the matching npm artifacts and a version-pinned installation command before running them. Do not install the private monorepo root as a substitute.
+
+The source dependency graph pins base Wallet `1.0.0-beta.25` and these concrete wallets:
+
+| Adapter | Wallet dependency |
+| --- | --- |
+| EVM | `@tetherto/wdk-wallet-evm@1.0.0-beta.24` and `@tetherto/wdk-wallet-evm-erc-4337@1.0.0-beta.23` |
+| Solana | `@tetherto/wdk-wallet-solana@1.0.0-beta.20` |
+| Bitcoin | `@tetherto/wdk-wallet-btc@1.0.0-beta.17` |
+| TON | `@tetherto/wdk-wallet-ton@1.0.0-beta.17` |
+
+These are dependency pins, not minimum-version promises. The packages expose ESM, TypeScript declarations and a Bare entry. The default HTTP client requires global `fetch` and `AbortController`; a Bare entry alone does not configure a native application or its wallet providers.
+
+## Bind the matching account
+
+Use the import for your source wallet. Each function accepts an account your application has already initialized and optional [protocol configuration](/sdk/swidge-modules/swidge-layerswap/configuration).
+
+### EVM or ERC-4337
+
+```javascript
+import LayerswapProtocolEvm from '@layerswap/wdk-protocol-swidge-layerswap-evm'
+
+export function bindEvmAccount(account, config = {}) {
+  return new LayerswapProtocolEvm(account, config)
+}
+```
+
+Use an [EVM account](/sdk/wallet-modules/wallet-evm/guides/getting-started) connected to the intended source network. The EVM adapter also accepts the matching ERC-4337 account.
+
+### Solana
+
+```javascript
+import LayerswapProtocolSolana from '@layerswap/wdk-protocol-swidge-layerswap-solana'
+
+export function bindSolanaAccount(account, config = {}) {
+  return new LayerswapProtocolSolana(account, config)
+}
+```
+
+Use a [Solana account](/sdk/wallet-modules/wallet-solana/guides/getting-started) with its RPC provider. Execution needs the writable transaction interface and the account's public key.
+
+### Bitcoin
+
+```javascript
+import LayerswapProtocolBitcoin from '@layerswap/wdk-protocol-swidge-layerswap-bitcoin'
+
+export function bindBitcoinAccount(account, config = {}) {
+  return new LayerswapProtocolBitcoin(account, config)
+}
+```
+
+Use the pinned [Bitcoin wallet account](/sdk/wallet-modules/wallet-btc/guides/get-started). The adapter builds a signed deposit through that wallet's HD-signing and client implementation; an arbitrary address-only account cannot execute it.
+
+### TON
+
+```javascript
+import LayerswapProtocolTon from '@layerswap/wdk-protocol-swidge-layerswap-ton'
+
+export function bindTonAccount(account, config = {}) {
+  return new LayerswapProtocolTon(account, config)
+}
+```
+
+Use a [TON account](/sdk/wallet-modules/wallet-ton/guides/get-started) connected to TON Center. Jetton deposits also need access to the sender's jetton wallet.
+
+## Discover identifiers
+
+```javascript
+export async function discoverLayerswap(protocol, sourceNetwork, destinationNetwork) {
+  const chains = await protocol.getSupportedChains()
+  const sourceTokens = await protocol.getSupportedTokens({ fromChain: sourceNetwork })
+  const destinationTokens = await protocol.getSupportedTokens({ toChain: destinationNetwork })
+
+  return { chains, sourceTokens, destinationTokens }
+}
+```
+
+Use a returned chain's `id`, which is the provider network name, for execution's `fromChain` and `toChain`. Use a selected token's `token` field. Pair it with `chain` and `decimals`; its optional `address` is metadata and is not a universal substitute for the accepted token identifier.
+
+`getSupportedTokens()` scopes to `toChain` when present, otherwise `fromChain`. It ignores `fromToken` and does not test a route pair. A returned destination can belong to another account family; that does not make it a valid source for the adapter you chose.
+
+## Preview an exact-input route
+
+The function accepts selected provider identifiers and a positive amount in source-token base units. Supplying a `bigint` avoids precision loss from large JavaScript numbers.
+
+```javascript
+export async function previewLayerswap({
+  protocol,
+  sourceNetwork,
+  destinationNetwork,
+  sourceToken,
+  destinationToken,
+  amount
+}) {
+  if (typeof amount !== 'bigint' || amount <= 0n) {
+    throw new RangeError('Supply a positive bigint amount in source-token base units')
+  }
+
+  return protocol.quoteSwidge({
+    fromChain: sourceNetwork,
+    toChain: destinationNetwork,
+    fromToken: sourceToken,
+    toToken: destinationToken,
+    fromTokenAmount: amount,
+    slippage: 0.005
+  })
+}
+```
+
+`slippage: 0.005` means 0.5%. Quote discovery can also run without a bound account when `fromChain` is supplied. It does not create a provider swap or sign a deposit. It also does not validate a destination recipient, refund address or minimum output; those are application and execution concerns. Source gas can be absent when estimation is unavailable or fails, so the fee list is not a guaranteed complete total cost.
+
+Before execution, collect the intended destination recipient, a source-chain refund address and your application-selected output and fee limits. The [execution guide](/sdk/swidge-modules/swidge-layerswap/guides/execute-swidge) keeps these inputs stable while the user reviews them.
+
+## Next Steps
+
+<Cards>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-layerswap/configuration">
+Set the API endpoint, timeouts and fee controls.
+</Card>
+<Card title="Execute a Swidge" href="/sdk/swidge-modules/swidge-layerswap/guides/execute-swidge">
+Confirm a source deposit and preserve its identifiers.
+</Card>
+<Card title="Track Settlement" href="/sdk/swidge-modules/swidge-layerswap/guides/track-settlement">
+Follow a payout or refund after source submission.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

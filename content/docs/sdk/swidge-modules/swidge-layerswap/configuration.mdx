@@ -1,0 +1,93 @@
+---
+title: LayerSwap Swidge Configuration
+description: Configure LayerSwap API access, source networks, request behavior and fee limits.
+docType: reference
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Each source adapter accepts `(account, config?)`. The protocol reads the provider configuration when it constructs its HTTP client. The sending account keeps its own chain provider.
+
+## Protocol fields
+
+| Field | Default | Meaning |
+| --- | --- | --- |
+| `apiKey` | Omitted | A nonempty string is sent as `X-LS-APIKEY`. An empty string is omitted. |
+| `apiUrl` | `https://api.layerswap.io` | LayerSwap API base URL; trailing slashes are removed. Use a trusted HTTPS endpoint. |
+| `requestTimeoutMs` | `30000` | Timeout around fetching an API response. It is not an end-to-end operation deadline. |
+| `bridgeMaxFee` | Unset | Rejects execution when included provider fees are greater than or equal to this source-token base-unit amount. |
+| `maxNetworkFeeBps` | Unset | Guards mapped network fees denominated in the source token. |
+| `maxProtocolFeeBps` | Unset | Guards mapped protocol fees denominated in the source token. |
+| `confirmationTarget` | `1` | Bitcoin adapter only: target block count used to obtain a fee-rate estimate. |
+
+A nonempty API key is forwarded to `apiUrl`; choose that destination before supplying credentials. The HTTP client does not enforce HTTPS for an overridden endpoint.
+
+The request timer is cleared after `fetch` returns, before the body is read. The client has no automatic retry loop. An execution request that fails ambiguously must be reconciled before creating or sending another deposit.
+
+## Source network and providers
+
+`fromChain` is an operation option, not a constructor configuration field. With it omitted, the adapter detects a network from its bound account. With it supplied, use a provider network name from discovery.
+
+Account, provider and selected network must agree. Source network identity is cached on adapter instances. Create a new instance after switching the account's provider or network. Some checks are skipped when a provider is absent, and Solana's explicit-network check cannot identify every cluster. An explicit `fromChain` is not independent proof of the account's network.
+
+## Amounts, slippage and addresses
+
+- Use positive integer amounts in the source token's base units. The examples choose `bigint`; declared amount fields accept `number | bigint`.
+- `minAmountOut` is in destination-token base units. Set a positive value appropriate to your accepted output.
+- Swidge `slippage` is a fraction: `0.005` means 0.5%. The legacy `bridge()` adapter instead takes a percentage string such as `'0.5'`.
+- Supply `recipient` for the intended destination address and `refundAddress` for an address you control on the source network. Validate both address formats and chains in your application.
+- `refuel` requests a provider-supported native-gas drop on the destination. Availability depends on the selected route.
+- `referenceId` is an application-supplied reference included when the provider swap is created.
+
+Without an explicit recipient, execution uses the account's address only when source and destination networks have the same provider VM type. The refund address defaults to the source account's address.
+
+## Fee limits and units
+
+The provider's service fee and destination network fee are deducted from the source amount. Their entries have `included: true` and use source-token units. Separate source gas has `included: false` and uses the source chain's native units. Do not add amounts across different tokens.
+
+| Control | Evaluation |
+| --- | --- |
+| `bridgeMaxFee` | Sums included fees, then rejects `includedFee >= bridgeMaxFee` before deposit preparation. Equality is rejected. |
+| `maxProtocolFeeBps` | Sums `protocol` fees whose `token` matches the source token, computes integer-floor basis points and rejects `>` the cap. |
+| `maxNetworkFeeBps` | Applies the same calculation to matching-token `network` fees. Native gas in another token is excluded. |
+
+Execution configuration overrides the constructor's fee fields for that call. For ERC-4337 accounts, the EVM adapter also forwards the supported wallet configuration overrides when estimating and sending the deposit.
+
+To inherit a constructor fee limit, omit that property from the per-call configuration. Passing it as `undefined` overwrites the constructor value and removes that limit for the call.
+
+<Callout type="warn">
+The provider swap is created before the later quote, fee and deposit checks. A rejected limit can leave an unfunded swap. Bitcoin also signs during deposit preparation before the basis-point checks; TON source gas may become known only after sending. These limits do not guarantee that every possible native charge is checked before signing or broadcast.
+</Callout>
+
+If the create-swap response lacks a quote, execution uses empty fees and zero output fields. A positive `minAmountOut` rejects that response before broadcast. Without such a minimum, missing quote data does not itself stop execution. Empty fees do not prove a zero-cost route.
+
+## Chain-specific settings
+
+Bitcoin accepts `options.feeRate` in sat/vB for one operation. It overrides fee-rate estimation for PSBT construction. The resulting transaction includes the required reference output, which contributes to its fee. See [Bitcoin Deposits](/sdk/swidge-modules/swidge-layerswap/guides/bitcoin-deposits).
+
+EVM standard accounts receive one transaction. ERC-4337 accounts receive a one-item transaction array and applicable per-call wallet configuration. Solana uses a decoded provider transaction template with a refreshed blockhash. TON uses a message built from the provider action and has [separate hash tracking](/sdk/swidge-modules/swidge-layerswap/guides/ton-deposits).
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-layerswap/usage">
+Select the source adapter and discover route identifiers.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-layerswap/api-reference">
+Check operation options, return values and errors.
+</Card>
+<Card title="Execute a Swidge" href="/sdk/swidge-modules/swidge-layerswap/guides/execute-swidge">
+Apply consent and limits to one execution intent.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

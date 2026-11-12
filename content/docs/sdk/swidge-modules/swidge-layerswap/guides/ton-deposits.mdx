@@ -1,0 +1,81 @@
+---
+title: LayerSwap TON Deposits
+description: Send native TON or jetton deposits and trace the returned external-message hash.
+docType: how-to
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Use `LayerswapProtocolTon` with a matching [TON account](/sdk/wallet-modules/wallet-ton/guides/get-started) connected to TON Center. The provider network, wallet account and TON Center endpoint must agree. See [release availability](/sdk/swidge-modules/swidge-layerswap/usage#release-availability) before running the examples.
+
+## Deposit messages
+
+Select the source token through discovery, retaining its provider `token` identifier and decimals. For native TON, use nanotons as source base units. For jettons, use that jetton's base units and preserve the sender's access to its jetton wallet.
+
+The adapter parses the provider's `call_data` for the amount and reference comment, checks the deposit amount, and builds the native or jetton message. Your application supplies the destination recipient and source refund address through the [shared execution flow](/sdk/swidge-modules/swidge-layerswap/guides/execute-swidge).
+
+Provider instructions and settlement are still a trust boundary. Correctly building a TON message does not independently verify destination payout.
+
+## Source gas
+
+Quote-time TON gas is an approximation. Deposit preparation does not supply a pre-broadcast gas amount; when the wallet returns a fee, the module appends it after sending.
+
+<Callout type="warn">
+The module's basis-point guards do not bound an unknown actual TON source fee before broadcast. A native gas fee also uses different units from a jetton input. Explain this separate native-gas liability before obtaining consent to send.
+</Callout>
+
+`bridgeMaxFee` limits included provider fees in source-token units. It is not a cap on all native TON gas.
+
+## Track the TON deposit
+
+For TON, `result.hash` is the external-message body hash returned by the wallet. It is not automatically the final transaction ID the provider tracks.
+
+```javascript
+import { NoSuchElementError } from '@layerswap/wdk-protocol-swidge-layerswap-ton'
+
+export async function readTonSubmission(protocol, submission, sourceNetwork) {
+  const settlement = await protocol.getSwidgeStatus(submission.id)
+  try {
+    const deposit = await protocol.getTransactionStatus(submission.hash, {
+      sourceChain: sourceNetwork
+    })
+    return { settlement, deposit }
+  } catch (error) {
+    if (error instanceof NoSuchElementError) {
+      return { settlement, deposit: null, depositLookup: 'not-found' }
+    }
+    throw error
+  }
+}
+```
+
+The adapter traces a hexadecimal hash through the account's TON Center connection. For a native transfer it resolves the wallet's first outgoing message. For a jetton deposit it selects the first trace message with the transfer-notification opcode, without matching that message's recipient to the deposit address. This lookup is not independent verification that the intended deposit address received the funds. A nonhexadecimal identifier is passed through as an existing provider transaction ID.
+
+`NoSuchElementError` can mean that TON Center or LayerSwap has not indexed the deposit yet. It can also indicate a wrong identifier or network. Retain the original hash and swap ID, wait according to your application's polling policy and inspect the source state before considering a new send.
+
+Settlement can be read independently with `getSwidgeStatus(submission.id)`, even while source hash tracing is not ready. On a successful deposit lookup, `deposit` is an object and `deposit.status` contains its assessment. The example retains the settlement observation when the separate deposit lookup reports not found. That result is not permission to repeat the deposit.
+
+## Next Steps
+
+<Cards>
+<Card title="Track Settlement" href="/sdk/swidge-modules/swidge-layerswap/guides/track-settlement">
+Handle payout, refund and indexing states.
+</Card>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-layerswap/configuration">
+Separate provider fee guards from source gas.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-layerswap/api-reference">
+Review source-transaction and swap-status methods.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

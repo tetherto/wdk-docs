@@ -1,0 +1,70 @@
+---
+title: LayerSwap Bitcoin Deposits
+description: Send native BTC with its provider reference and understand signing, fees and uncertain broadcasts.
+docType: how-to
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Use `LayerswapProtocolBitcoin` with the matching [Bitcoin account](/sdk/wallet-modules/wallet-btc/guides/get-started). Begin with [Usage](/sdk/swidge-modules/swidge-layerswap/usage#release-availability) for package availability and the selected dependency versions.
+
+## Prepare a native BTC route
+
+Bitcoin sources accept native BTC. Tokens with a contract identifier are rejected before a provider swap is created. Supply the source amount in satoshis and choose an amount greater than the account's dust limit; equality is rejected.
+
+Use discovery's source token and network identifiers. Supply the intended destination recipient and a Bitcoin refund address you control. The destination asset and amount limits remain provider- and route-dependent.
+
+The [shared execution helper](/sdk/swidge-modules/swidge-layerswap/guides/execute-swidge#confirm-a-stable-intent) accepts a Bitcoin-bound protocol. Use its positive destination minimum and fee limits rather than assuming the preview reserves a payout.
+
+## Reference and transaction construction
+
+The provider supplies a deposit address, decimal deposit amount and reference. The adapter builds a transaction containing:
+
+- the native BTC deposit output;
+- an `OP_RETURN` reference output required to associate the deposit with its swap;
+- a change output when applicable.
+
+The adapter reads the decimal provider amount for Bitcoin because this flow can report zero in `amount_in_base_units`. It checks the parsed deposit amount against the requested input. Do not replace the generated transaction with a plain transfer to the deposit address or omit its reference.
+
+This path uses the concrete Bitcoin wallet's HD-signing and client implementation. Its protected members are not application APIs, and an address-only or unrelated account implementation does not provide the necessary execution capabilities.
+
+## Fees and signing order
+
+Constructor `confirmationTarget` defaults to one block for fee-rate estimation. Per-operation `feeRate` overrides the estimate in sat/vB. The reference output contributes to transaction size and fee.
+
+<Callout type="warn">
+The adapter signs its PSBT during deposit preparation, before shared basis-point guards run. A later fee rejection prevents this module's broadcast but does not mean signing never happened. Obtain consent before calling `swidge()`.
+</Callout>
+
+The preview's approximate source fee does not reserve a fee rate or the UTXOs later used. Execution builds the transaction from current wallet state. Keep native BTC input, included provider fees and the separate source transaction fee distinct when presenting the breakdown.
+
+## After submission
+
+The source hash is the Bitcoin transaction ID. Persist it together with the provider swap ID. Use `getSwidgeStatus(result.id)` for payout/refund status and `getTransactionStatus(result.hash)` for the provider's source-deposit assessment.
+
+A broadcast transport error can leave the outcome uncertain. Reconcile wallet transaction history and the provider swap before constructing another deposit. The provider notification after broadcast is best effort; its failure is not evidence that the source transaction failed.
+
+## Next Steps
+
+<Cards>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-layerswap/configuration">
+Set confirmation targets and understand fee caps.
+</Card>
+<Card title="Track Settlement" href="/sdk/swidge-modules/swidge-layerswap/guides/track-settlement">
+Track the provider swap and source deposit separately.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-layerswap/api-reference">
+Check Bitcoin operation fields and common results.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
