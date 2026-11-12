@@ -89,10 +89,11 @@ See [Configuration](/sdk/swidge-modules/swidge-bob/configuration) for all constr
 
 ### Swidge options
 
-`quoteSwidge()` and `swidge()` accept WDK `SwidgeOptions`. The relevant options are:
+`quoteSwidge()`, `swidge()`, `simulateSwidge()` and `getRequiredApproval()` use WDK `SwidgeOptions` plus the provider's runtime `fromChain` extension. The relevant options are:
 
 | Option | Behavior |
 | --- | --- |
+| `fromChain` | Source chain identifier as a string. A nonempty value overrides the constructor's `fromChain`; use the gateway identifier returned by discovery. |
 | `fromToken`, `toToken` | Chain-specific token identifiers. Use `BTC` for native Bitcoin and a contract identifier for ERC-20/TRC-20 tokens. |
 | `fromTokenAmount` | Required, nonnegative integer source amount in base units. Use bigint, a safe integer or a plain decimal string. |
 | `toChain` | Destination chain; defaults to the source when absent or empty. |
@@ -103,7 +104,9 @@ See [Configuration](/sdk/swidge-modules/swidge-bob/configuration) for all constr
 
 For TypeScript, the re-exported `SwidgeOptions` admits `number | bigint` for `fromTokenAmount` and `minAmountOut`. Decimal strings are accepted by JavaScript runtime validation, but not by those declarations. The provider-specific `maxNativeFee` declaration includes strings.
 
-`toTokenAmount` is rejected: this module supports exact input only. Set the source chain in the constructor's `fromChain`; the source account and its provider must match it.
+The exported `SwidgeOptions` omits `fromChain`; only `simulateSwidge()` declares that extension directly. For a per-call source in TypeScript, use a variable typed as `SwidgeOptions & { fromChain?: string }`, or keep `fromChain` in constructor configuration.
+
+`toTokenAmount` is rejected: this module supports exact input only. The source account and its provider must match the effective `fromChain`. A constructor `maxNativeFee` applies only when the call's source chain matches the constructor's chain; otherwise supply a per-call native-fee cap or use that source chain's default. See [fee controls](/sdk/swidge-modules/swidge-bob/configuration#fee-controls).
 
 ### quoteSwidge
 
@@ -214,12 +217,12 @@ The client's configuration is `apiUrl`, `bearerToken`, `http`, `timeoutMs`, `all
 
 | Error | When to handle it |
 | --- | --- |
-| `ValueError` | Invalid or missing route input, unsupported exact-output request, or invalid constructor/native-fee configuration. |
+| `ValueError` | Missing source chain, amount or required recipient; invalid route amounts, unsupported exact-output request, or invalid constructor/native-fee configuration. |
 | `AccountRequiredError` | The source account lacks a required signing, estimation or allowance-reading method. |
 | `SwidgeError` | A fresh quote fails `minAmountOut`, with `SwidgeErrorReason.COULD_NOT_MET_THRESHOLD`. |
 | `MaximumFeeExceededError` | A percentage fee exceeds its limit, or the required fee data cannot verify that limit. |
 | `GatewaySwidgeError` | Gateway/chain-node failure, unsupported operation or failed input/transaction validation; inspect `code`. |
-| `SwapError`, `BridgeError` | The inherited alias wraps an error from its delegated operation. |
+| `SwapError`, `BridgeError` | An inherited alias wraps only a delegated `SwidgeError`. Other errors propagate unchanged. |
 | Other errors | Account/provider failures, malformed data or a custom transport can propagate their own error. |
 
 `GatewaySwidgeError` exposes `code: string`, optional `status` and `cause: unknown`. Do not display or log unfiltered causes, which can contain request or transaction details.
@@ -227,7 +230,7 @@ The client's configuration is `apiUrl`, `bearerToken`, `http`, `timeoutMs`, `all
 | `ERR` property | Value | Behavior |
 | --- | --- | --- |
 | `HTTP` | `GATEWAY_HTTP_ERROR` | Non-2xx responses after retries, unusable order/status data, timeout or chain-node failure. |
-| `VALIDATION` | `VALIDATION_ERROR` | Invalid affiliate data, unverifiable output floor or mismatched order/source transaction. |
+| `VALIDATION` | `VALIDATION_ERROR` | Missing refund address before order creation, invalid affiliate data, unverifiable output floor or mismatched order/source transaction. |
 | `NOT_SUPPORTED` | `NOT_SUPPORTED` | Missing runtime/provider capability or unsupported transaction type. |
 | `UNSUPPORTED_ROUTE` | `UNSUPPORTED_ROUTE` | Exported constant; this implementation reports unavailable routes through gateway HTTP errors instead. |
 | `APPROVAL_REQUIRED` | `APPROVAL_REQUIRED` | Exported constant; use `getRequiredApproval()` rather than expecting this code. |

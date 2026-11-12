@@ -60,7 +60,7 @@ Gateway HTTP error responses become `GatewaySwidgeError` after retry handling. A
 
 | Field | Type | Default and behavior |
 | --- | --- | --- |
-| `fromChain` | `string` | Unset. Source chain for calls that do not supply one. A source chain must resolve before quoting or executing. |
+| `fromChain` | `string` | Unset. Default source chain; a nonempty per-call `options.fromChain` overrides it. A source chain must resolve before quoting or executing. |
 | `refundAddress` | `string` | The bound account's address. Used when the call does not supply a refund address. It must belong to the source chain. |
 | `slippage` | `number` | Unset. Fractional slippage tolerance: `0.01` means 1%. Used when the call does not set `slippage`; otherwise the gateway chooses and echoes a value. |
 | `feeRate` | `number` | The Bitcoin account's estimate. Fee rate in sat/vB for Bitcoin-source signing. |
@@ -84,6 +84,8 @@ Use the exported `BTC` constant only for native Bitcoin. For token contracts, us
 
 The basis-point caps accept finite nonnegative values, including fractional numeric basis points. They are checked against the execution quote before an order is created. A set cap fails closed when an onramp or offramp lacks the needed fee breakdown or USD valuations. The valuations come from the gateway, not an independent price oracle.
 
+Because the gateway rounds USD values to cents, the check adds $0.005 to each covered fee's reported value and subtracts $0.005 from the input's reported value. This makes the rounding allowance stricter, never looser.
+
 Affiliate fees are excluded from both caps. Token-swap quotes contain no fee breakdown to constrain; their costs are reflected in output amounts. Use `minAmountOut` or slippage to limit the quoted output rather than treating a percentage cap as complete protection.
 
 `swidge()` and `simulateSwidge()` accept per-call basis-point limits that override the corresponding instance limits, preserving an explicit zero. Quote previews do not enforce these caps. `getRequiredApproval()` does not check basis-point limits or `minAmountOut`.
@@ -106,13 +108,15 @@ Token-swap requests do not send affiliates. The quote's `affiliateApplied` repor
 
 ## TRON source accounts
 
+TRON source routes require `@tetherto/wdk-wallet-tron >=1.0.0-beta.8` to sign the gateway's arbitrary contract calls.
+
 | Field | Type | Default and behavior |
 | --- | --- | --- |
 | `tronWeb` | `TronWebLike` | The account's own instance. Supplies transaction construction and allowance reads. |
 | `tronProvider` | `string` | Unset. Full-node endpoint used to construct a tronweb client when `tronWeb` is absent. |
 | `tronConfirmTimeoutMs` | `number` | `20000`. Finite, nonnegative period for the broadcast transaction to appear on the node. |
 
-The provider resolution order is `tronWeb`, then `tronProvider`, then the account's provider. These settings do not replace the account's own broadcast provider. Execution also needs transaction readback through `trx.getTransaction`.
+For building contract calls and reading allowances, resolution is `tronWeb`, then `tronProvider`, then the account's provider. These settings do not replace the account's own broadcast provider. Broadcast readback uses the account's provider first when it exposes `trx.getTransaction`, otherwise the resolved `tronWeb` or `tronProvider` client. Execution requires that readback capability.
 
 The module builds a pre-encoded contract transaction, validates it, sends it through the account, checks the returned hash and reads that transaction back from the node. Node visibility is not mining or destination settlement. A readback timeout can occur after submission.
 

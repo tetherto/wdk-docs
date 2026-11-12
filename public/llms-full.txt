@@ -21783,10 +21783,11 @@ See [Configuration](/sdk/swidge-modules/swidge-bob/configuration) for all constr
 
 ### Swidge options
 
-`quoteSwidge()` and `swidge()` accept WDK `SwidgeOptions`. The relevant options are:
+`quoteSwidge()`, `swidge()`, `simulateSwidge()` and `getRequiredApproval()` use WDK `SwidgeOptions` plus the provider's runtime `fromChain` extension. The relevant options are:
 
 | Option | Behavior |
 | --- | --- |
+| `fromChain` | Source chain identifier as a string. A nonempty value overrides the constructor's `fromChain`; use the gateway identifier returned by discovery. |
 | `fromToken`, `toToken` | Chain-specific token identifiers. Use `BTC` for native Bitcoin and a contract identifier for ERC-20/TRC-20 tokens. |
 | `fromTokenAmount` | Required, nonnegative integer source amount in base units. Use bigint, a safe integer or a plain decimal string. |
 | `toChain` | Destination chain; defaults to the source when absent or empty. |
@@ -21797,7 +21798,9 @@ See [Configuration](/sdk/swidge-modules/swidge-bob/configuration) for all constr
 
 For TypeScript, the re-exported `SwidgeOptions` admits `number | bigint` for `fromTokenAmount` and `minAmountOut`. Decimal strings are accepted by JavaScript runtime validation, but not by those declarations. The provider-specific `maxNativeFee` declaration includes strings.
 
-`toTokenAmount` is rejected: this module supports exact input only. Set the source chain in the constructor's `fromChain`; the source account and its provider must match it.
+The exported `SwidgeOptions` omits `fromChain`; only `simulateSwidge()` declares that extension directly. For a per-call source in TypeScript, use a variable typed as `SwidgeOptions & { fromChain?: string }`, or keep `fromChain` in constructor configuration.
+
+`toTokenAmount` is rejected: this module supports exact input only. The source account and its provider must match the effective `fromChain`. A constructor `maxNativeFee` applies only when the call's source chain matches the constructor's chain; otherwise supply a per-call native-fee cap or use that source chain's default. See [fee controls](/sdk/swidge-modules/swidge-bob/configuration#fee-controls).
 
 ### quoteSwidge
 
@@ -21908,12 +21911,12 @@ The client's configuration is `apiUrl`, `bearerToken`, `http`, `timeoutMs`, `all
 
 | Error | When to handle it |
 | --- | --- |
-| `ValueError` | Invalid or missing route input, unsupported exact-output request, or invalid constructor/native-fee configuration. |
+| `ValueError` | Missing source chain, amount or required recipient; invalid route amounts, unsupported exact-output request, or invalid constructor/native-fee configuration. |
 | `AccountRequiredError` | The source account lacks a required signing, estimation or allowance-reading method. |
 | `SwidgeError` | A fresh quote fails `minAmountOut`, with `SwidgeErrorReason.COULD_NOT_MET_THRESHOLD`. |
 | `MaximumFeeExceededError` | A percentage fee exceeds its limit, or the required fee data cannot verify that limit. |
 | `GatewaySwidgeError` | Gateway/chain-node failure, unsupported operation or failed input/transaction validation; inspect `code`. |
-| `SwapError`, `BridgeError` | The inherited alias wraps an error from its delegated operation. |
+| `SwapError`, `BridgeError` | An inherited alias wraps only a delegated `SwidgeError`. Other errors propagate unchanged. |
 | Other errors | Account/provider failures, malformed data or a custom transport can propagate their own error. |
 
 `GatewaySwidgeError` exposes `code: string`, optional `status` and `cause: unknown`. Do not display or log unfiltered causes, which can contain request or transaction details.
@@ -21921,7 +21924,7 @@ The client's configuration is `apiUrl`, `bearerToken`, `http`, `timeoutMs`, `all
 | `ERR` property | Value | Behavior |
 | --- | --- | --- |
 | `HTTP` | `GATEWAY_HTTP_ERROR` | Non-2xx responses after retries, unusable order/status data, timeout or chain-node failure. |
-| `VALIDATION` | `VALIDATION_ERROR` | Invalid affiliate data, unverifiable output floor or mismatched order/source transaction. |
+| `VALIDATION` | `VALIDATION_ERROR` | Missing refund address before order creation, invalid affiliate data, unverifiable output floor or mismatched order/source transaction. |
 | `NOT_SUPPORTED` | `NOT_SUPPORTED` | Missing runtime/provider capability or unsupported transaction type. |
 | `UNSUPPORTED_ROUTE` | `UNSUPPORTED_ROUTE` | Exported constant; this implementation reports unavailable routes through gateway HTTP errors instead. |
 | `APPROVAL_REQUIRED` | `APPROVAL_REQUIRED` | Exported constant; use `getRequiredApproval()` rather than expecting this code. |
@@ -22009,7 +22012,7 @@ Gateway HTTP error responses become `GatewaySwidgeError` after retry handling. A
 
 | Field | Type | Default and behavior |
 | --- | --- | --- |
-| `fromChain` | `string` | Unset. Source chain for calls that do not supply one. A source chain must resolve before quoting or executing. |
+| `fromChain` | `string` | Unset. Default source chain; a nonempty per-call `options.fromChain` overrides it. A source chain must resolve before quoting or executing. |
 | `refundAddress` | `string` | The bound account's address. Used when the call does not supply a refund address. It must belong to the source chain. |
 | `slippage` | `number` | Unset. Fractional slippage tolerance: `0.01` means 1%. Used when the call does not set `slippage`; otherwise the gateway chooses and echoes a value. |
 | `feeRate` | `number` | The Bitcoin account's estimate. Fee rate in sat/vB for Bitcoin-source signing. |
@@ -22033,6 +22036,8 @@ Use the exported `BTC` constant only for native Bitcoin. For token contracts, us
 
 The basis-point caps accept finite nonnegative values, including fractional numeric basis points. They are checked against the execution quote before an order is created. A set cap fails closed when an onramp or offramp lacks the needed fee breakdown or USD valuations. The valuations come from the gateway, not an independent price oracle.
 
+Because the gateway rounds USD values to cents, the check adds $0.005 to each covered fee's reported value and subtracts $0.005 from the input's reported value. This makes the rounding allowance stricter, never looser.
+
 Affiliate fees are excluded from both caps. Token-swap quotes contain no fee breakdown to constrain; their costs are reflected in output amounts. Use `minAmountOut` or slippage to limit the quoted output rather than treating a percentage cap as complete protection.
 
 `swidge()` and `simulateSwidge()` accept per-call basis-point limits that override the corresponding instance limits, preserving an explicit zero. Quote previews do not enforce these caps. `getRequiredApproval()` does not check basis-point limits or `minAmountOut`.
@@ -22055,13 +22060,15 @@ Token-swap requests do not send affiliates. The quote's `affiliateApplied` repor
 
 ## TRON source accounts
 
+TRON source routes require `@tetherto/wdk-wallet-tron >=1.0.0-beta.8` to sign the gateway's arbitrary contract calls.
+
 | Field | Type | Default and behavior |
 | --- | --- | --- |
 | `tronWeb` | `TronWebLike` | The account's own instance. Supplies transaction construction and allowance reads. |
 | `tronProvider` | `string` | Unset. Full-node endpoint used to construct a tronweb client when `tronWeb` is absent. |
 | `tronConfirmTimeoutMs` | `number` | `20000`. Finite, nonnegative period for the broadcast transaction to appear on the node. |
 
-The provider resolution order is `tronWeb`, then `tronProvider`, then the account's provider. These settings do not replace the account's own broadcast provider. Execution also needs transaction readback through `trx.getTransaction`.
+For building contract calls and reading allowances, resolution is `tronWeb`, then `tronProvider`, then the account's provider. These settings do not replace the account's own broadcast provider. Broadcast readback uses the account's provider first when it exposes `trx.getTransaction`, otherwise the resolved `tronWeb` or `tronProvider` client. Execution requires that readback capability.
 
 The module builds a pre-encoded contract transaction, validates it, sends it through the account, checks the returned hash and reads that transaction back from the node. Node visibility is not mining or destination settlement. A readback timeout can occur after submission.
 
@@ -22483,9 +22490,11 @@ For Node.js 24, use 24.22.1 or later in the 24.x line to satisfy the packaged Tr
 npm install @gobob/wdk-protocol-swidge-gateway@0.5.0 @tetherto/wdk-wallet@1.0.0-beta.25
 ```
 
-The package uses ESM imports. The command pins the WDK Wallet peer used by these examples; the declared peer range is `>=1.0.0-beta.17 <2.0.0`. Add WDK Core and concrete wallet packages only when your application imports them.
+The package uses ESM imports. The command pins the WDK Wallet peer used by these examples; the declared peer range is `>=1.0.0-beta.17 <2.0.0`. Add WDK Core and concrete wallet packages only when your application imports them. TRON source routes require `@tetherto/wdk-wallet-tron >=1.0.0-beta.8`, which can sign the gateway's arbitrary contract calls.
 
-Provide global `fetch`, or inject an HTTP transport or gateway client. The Bare package entry initializes its compatibility layer; this alone does not establish that every wallet or route works in a native host. See [transport configuration](/sdk/swidge-modules/swidge-bob/configuration) for the available overrides.
+Node.js, Bare and React Native are supported. For React Native, configure the native host with the [React Native Quickstart](/start-building/react-native-quickstart#option-2-add-to-existing-app) and include the protocol and required wallet modules in your [worklet bundle](/tools/worklet-bundler/configuration#create-wdkconfigjs). The package's Bare entry initializes its compatibility layer.
+
+Provide global `fetch`, or inject an HTTP transport or gateway client. See [transport configuration](/sdk/swidge-modules/swidge-bob/configuration) for the available overrides.
 
 ## Discover chains and tokens
 
