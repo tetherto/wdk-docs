@@ -55,6 +55,8 @@ DOCS_SEO_QUIET_GENERATED=1 NODE_OPTIONS='--import tsx/esm' npx next dev --turbo 
 
 ## Validation
 
+Workflow regression tests use Git and `jq`, which are available on the Ubuntu CI runner.
+
 Run these checks before opening or updating a PR:
 
 ```bash
