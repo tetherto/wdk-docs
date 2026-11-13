@@ -393,6 +393,16 @@ export const customTree: Node[] = [
     configuration('/sdk/swidge-modules/swidge-butter/configuration'),
     apiReference('/sdk/swidge-modules/swidge-butter/api-reference'),
   ]),
+  folder('BOB Gateway', '/sdk/swidge-modules/swidge-bob', 'Waypoints', [
+    usage('/sdk/swidge-modules/swidge-bob/usage'),
+    guides([
+      page('Execute a Swidge', '/sdk/swidge-modules/swidge-bob/guides/execute-swidge'),
+      page('Bitcoin Routes', '/sdk/swidge-modules/swidge-bob/guides/bitcoin-routes'),
+      page('Track Settlement', '/sdk/swidge-modules/swidge-bob/guides/track-settlement'),
+    ]),
+    configuration('/sdk/swidge-modules/swidge-bob/configuration'),
+    apiReference('/sdk/swidge-modules/swidge-bob/api-reference'),
+  ]),
   folder('Velora', '/sdk/swap-modules/swap-velora-evm', 'ArrowLeftRight', [
     usage('/sdk/swap-modules/swap-velora-evm/usage'),
     guides([
