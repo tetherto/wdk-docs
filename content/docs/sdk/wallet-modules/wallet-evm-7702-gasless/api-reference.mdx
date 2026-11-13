@@ -6,7 +6,7 @@ schemaType: APIReference
 icon: Code
 ---
 
-This reference covers `@tetherto/wdk-wallet-evm-7702-gasless@1.0.0-beta.10`.
+This reference covers `@tetherto/wdk-wallet-evm-7702-gasless@1.0.0-beta.12`.
 
 ## Table of Contents
 
@@ -97,7 +97,7 @@ Treat the arrays returned through `keyPair` as read-only. Call `dispose()` when 
 | `verifyTypedData(typedData, signature)` | `TypedData`, `signature: string` | `Promise\<boolean\>` | Verifies EIP-712 typed data. |
 | `signTransaction(tx, config?)` | `EvmTransaction \| EvmTransaction[]`, partial fee-mode config | `Promise\<UserOperationV8\>` | Signs a self-contained UserOperation without broadcasting it. |
 | `approve(options)` | `ApproveOptions` | `Promise\<TransactionResult\>` | Sends an ERC-20 approval as a UserOperation. |
-| `quoteSendTransaction(tx, config?)` | `EvmTransaction \| EvmTransaction[] \| UserOperationV8`, partial fee-mode config | `Promise\<Omit\<TransactionResult, 'hash'\>\>` | Returns `{ fee }`; owned accounts cache paymaster-token quotes for up to 2 minutes and validate the nonce before reuse. |
+| `quoteSendTransaction(tx, config?)` | `EvmTransaction \| EvmTransaction[] \| UserOperationV8`, partial fee-mode config | `Promise\<Omit\<TransactionResult, 'hash'\>\>` | Returns `{ fee }` without signing an authorization; caches only when already delegated to the configured contract and validates the nonce before reuse. |
 | `sendTransaction(tx, config?)` | `EvmTransaction \| EvmTransaction[] \| UserOperationV8`, partial fee-mode config | `Promise\<TransactionResult\>` | Builds and signs an operation, or broadcasts an already-signed UserOperation. |
 | `quoteTransfer(options, config?)` | `EvmTransferOptions`, partial fee-mode config | `Promise\<Omit\<TransferResult, 'hash'\>\>` | Quotes an ERC-20 transfer. |
 | `transfer(options, config?)` | `EvmTransferOptions`, partial fee-mode config | `Promise\<TransferResult\>` | Sends an ERC-20 transfer as a UserOperation. |
@@ -117,10 +117,11 @@ Treat the arrays returned through `keyPair` as read-only. Call `dispose()` when 
 - `signTransaction()` returns a signed `UserOperationV8` without broadcasting it. The type comes from `abstractionkit` and is not re-exported from this package's root.
 - Quoting a signed UserOperation avoids paymaster calls. Sponsorship mode returns `fee: 0n`; paymaster-token mode derives a native-gas ceiling in wei from its existing gas fields rather than returning the token amount established by the paymaster.
 - Sending a signed UserOperation broadcasts its supplied nonce, authorization, gas fields, and signature unchanged, without rebuilding or signing it. This path does not enforce `transactionMaxFee` because its token-paymaster fee cannot be reconstructed from the signed operation.
-- Owned account paymaster-token quotes are cached for up to 2 minutes for the same serialized transaction. Before reusing a cached UserOperation, the account reads the current EntryPoint nonce and re-quotes if it has moved.
+- Owned account paymaster-token quotes are cached for up to 2 minutes only when the EOA is already delegated to the configured contract. Before reusing a cached UserOperation for the same transaction, the account reads the current EntryPoint nonce and re-quotes if it has moved. Undelegated quotes do not enter this cache.
 - The cache key includes transaction data, sponsorship mode, paymaster token, expected paymaster address, and sponsorship policy ID. Changing one of those fields produces a distinct quote.
 - Unsigned transaction inputs are built and signed before submission. A `UserOperationV8` input is broadcast with its supplied signature unchanged.
-- If the account is already delegated to `delegationAddress`, the send path does not include a new EIP-7702 authorization. For an undelegated owned EOA in paymaster-token mode, quoting includes the signed authorization used by the later sign or send path. Sponsored quotes return `0n` without estimating it. A send that needs a fresh authorization rebuilds the UserOperation instead of reusing the cached one.
+- Quotes do not sign an EIP-7702 authorization. For an EOA not delegated to the configured `delegationAddress`, a paymaster-token quote uses an unsigned estimation-only tuple with the chain ID and delegation address. Sponsored quotes return `0n` without estimating an authorization.
+- Signing and sending obtain a signed authorization when the EOA is not delegated to the configured contract, then build the operation with it. If the EOA is already delegated to that contract, no new authorization is needed; a send that needs a fresh authorization rebuilds the UserOperation.
 - In paymaster-token mode, `transactionMaxFee` applies to wallet-built send, sign, and approve operations. A fee equal to the cap is allowed; only a greater fee is rejected. Sponsored operations ignore this cap.
 
 ### Nonce Lane Behavior
@@ -247,4 +248,17 @@ type Evm7702GaslessWalletConfig =
 
 The package also re-exports EVM wallet types from `@tetherto/wdk-wallet-evm`, including `FeeRates`, `KeyPair`, `EvmTransaction`, `TransactionResult`, `EvmTransferOptions`, `TransferResult`, `EvmTransactionReceipt`, `ApproveOptions`, `TypedData`, `TypedDataDomain`, and `TypedDataField`. It re-exports the shared `Finality`, `TransactionReceipt`, `WaitForTransactionTarget`, and `WaitForTransactionOptions` types from `@tetherto/wdk-wallet`.
 
-Module-specific exported types include `UserOperationReceipt`, `Evm7702GaslessTransactionDetails`, `Eip7702AuthorizationOverride`, `BuildSponsoredUserOperationOverrides`, and `SponsoredUserOperation`. `Evm7702GaslessTransactionDetails` adds `confirmations`, the native EVM `receipt`, and `userOperationReceipt` to the normalized receipt. In beta.5, `BuildSponsoredUserOperationOverrides` includes optional `nonce?: bigint` for explicitly selecting the EntryPoint nonce in lower-level builder typing; it does not expose the protected builder as a public method.
+Module-specific exported types include `UserOperationReceipt`, `Evm7702GaslessTransactionDetails`, `Eip7702AuthorizationOverride`, `BuildSponsoredUserOperationOverrides`, and `SponsoredUserOperation`. `Evm7702GaslessTransactionDetails` adds `confirmations`, the native EVM `receipt`, and `userOperationReceipt` to the normalized receipt. In beta.5, `BuildSponsoredUserOperationOverrides` includes optional `nonce?: bigint` for explicitly selecting the EntryPoint nonce in lower-level builder typing.
+
+`Eip7702AuthorizationOverride` has the following fields:
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `chainId` | `bigint` | Yes | Authorization chain ID. |
+| `address` | `string` | Yes | Delegation contract address. |
+| `nonce` | `bigint` | No | EOA transaction nonce for a signed authorization. |
+| `yParity` | `string` | No | Signature parity as `'0x0'` or `'0x1'`. |
+| `r` | `string` | No | 32-byte hex signature component. |
+| `s` | `string` | No | 32-byte hex signature component. |
+
+For an unsigned estimation tuple, omit `nonce`, `yParity`, `r`, and `s` together. `BuildSponsoredUserOperationOverrides.eip7702Auth` accepts this tuple or a signed tuple; AbstractionKit supplies placeholder signature fields for estimation. These type exports do not make the protected builder a public method.
