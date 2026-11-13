@@ -13,6 +13,7 @@ export function createIndexerReference(raw, provenance) {
     }];
   }
   return {
+    server,
     document: reference,
     operations: operations.map(({ method, endpoint, operation }, index) => ({
       method, endpoint, summary: operation.summary, anchor: anchors[index],

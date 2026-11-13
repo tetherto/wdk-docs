@@ -9,6 +9,6 @@ export async function IndexerApiReference({ children }: { children: ReactNode })
     readFile(path.join(process.cwd(), 'public/assets/indexer-api/openapi.json'), 'utf8'),
     readFile(path.join(process.cwd(), 'public/assets/indexer-api/openapi.provenance.json'), 'utf8'),
   ]);
-  const { operations } = createIndexerReference(raw, JSON.parse(provenance));
-  return <IndexerApiReferenceClient operations={operations}>{children}</IndexerApiReferenceClient>;
+  const { operations, server } = createIndexerReference(raw, JSON.parse(provenance));
+  return <IndexerApiReferenceClient operations={operations} baseUrl={server}>{children}</IndexerApiReferenceClient>;
 }

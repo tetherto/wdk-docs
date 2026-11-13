@@ -9,7 +9,7 @@ import '@scalar/api-reference-react/style.css';
 
 const ApiReference = dynamic(
   () => import('@scalar/api-reference-react').then((module) => module.ApiReferenceReact),
-  { ssr: false, loading: () => <p role="status">Loading API reference. The text reference is available.</p> },
+  { ssr: false, loading: () => <p role="status">Loading API reference. The text reference is available below.</p> },
 );
 
 class ReferenceBoundary extends Component<{ children: ReactNode; onError: () => void }, { failed: boolean }> {
@@ -18,12 +18,13 @@ class ReferenceBoundary extends Component<{ children: ReactNode; onError: () => 
   componentDidCatch() { this.props.onError(); }
   render() {
     return this.state.failed
-      ? <p role="status">The interactive reference could not load. Use the text reference.</p>
+      ? <p role="status">The interactive reference could not load. Use the text reference below.</p>
       : this.props.children;
   }
 }
 
-export function IndexerApiReferenceClient({ operations, children }: {
+export function IndexerApiReferenceClient({ operations, baseUrl, children }: {
+  baseUrl: string;
   operations: { anchor: string; method: string; endpoint: string; summary: string; document: Record<string, unknown> }[];
   children: ReactNode;
 }) {
@@ -45,6 +46,7 @@ export function IndexerApiReferenceClient({ operations, children }: {
 
   return (
     <>
+      <p>Base URL: <code>{baseUrl}</code></p>
       <p>
         <a href="/assets/indexer-api/openapi.json">Download OpenAPI</a>{' · '}
         <a href="/assets/indexer-api/openapi.provenance.json">Snapshot provenance</a>{' · '}
@@ -54,10 +56,6 @@ export function IndexerApiReferenceClient({ operations, children }: {
         Replace placeholders in the cURL templates before running. For requests with a body, save your
         payload in <code>request.json</code>. Response examples illustrate the schema and are not captured API responses.
       </p>
-      <details ref={fallback} data-indexer-reference open className="mt-8">
-        <summary className="cursor-pointer font-medium">{loaded ? 'Text reference and complete schemas' : 'Text reference and complete schemas (available while the viewer loads)'}</summary>
-        {children}
-      </details>
       <label htmlFor="indexer-operation" className="mt-6 mb-2 block font-medium">Choose an endpoint</label>
       <select id="indexer-operation" className="indexer-operation w-full rounded-md border bg-fd-background px-3 py-2 pr-10" value={selected}
         onChange={(event) => {
@@ -104,6 +102,10 @@ export function IndexerApiReferenceClient({ operations, children }: {
           />
         </ReferenceBoundary>
       </div>
+      <details ref={fallback} data-indexer-reference open className="mt-8">
+        <summary className="cursor-pointer font-medium">{loaded ? 'Text reference and complete schemas' : 'Text reference and complete schemas (available while the viewer loads)'}</summary>
+        {children}
+      </details>
     </>
   );
 }

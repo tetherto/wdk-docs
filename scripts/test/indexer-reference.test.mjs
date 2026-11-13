@@ -11,7 +11,8 @@ const provenance = JSON.parse(await readFile(new URL('../../public/assets/indexe
 test('Scalar presentation preserves every contract definition and uses the existing cURL templates', () => {
   const original = JSON.parse(raw);
   const { operations, server, issues } = validateReference(raw, provenance);
-  const { document: reference, operations: views } = createIndexerReference(raw, provenance);
+  const { document: reference, operations: views, server: visibleServer } = createIndexerReference(raw, provenance);
+  assert.equal(visibleServer, server);
   assert.equal(views.length, operations.length);
   const native = renderReference(raw, provenance);
   assert.equal(operations.length, 14);
