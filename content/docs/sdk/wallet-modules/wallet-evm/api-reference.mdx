@@ -6,7 +6,7 @@ schemaType: APIReference
 icon: Code
 ---
 
-This reference covers `@tetherto/wdk-wallet-evm@1.0.0-beta.23`.
+This reference covers `@tetherto/wdk-wallet-evm@1.0.0-beta.26`.
 
 ## Table of Contents
 
@@ -34,7 +34,7 @@ new WalletManagerEvm(seedOrSigner, config?)
   - `retries` (number, optional): Additional retry attempts when `provider` is an array
   - `chainId` (number, optional): Nonzero chain ID for module-built URL and EIP-1193 providers. Existing ethers providers keep their own settings; see [chain configuration](/sdk/wallet-modules/wallet-evm/configuration#chain-id).
   - `transferMaxFee` (number | bigint, optional): Maximum fee amount for transfer operations (in wei)
-  - `transactionMaxFee` (number | bigint, optional): Execution-gas fee cap for `sendTransaction()` and provider-backed `signTransaction()` (in wei), including sends made by `transfer()` and `approve()`
+  - `transactionMaxFee` (number | bigint, optional): Execution-gas fee cap for `sendTransaction()` and provider-backed `signTransaction()` (in wei), including sends made by `approve()`
 
 The default signer must support derivation. Register non-derivable signers, such as private-key signers, with `addSigner()` and retrieve them by name.
 
@@ -69,9 +69,9 @@ const signerWallet = new WalletManagerEvm(signer, {
 | `addSigner(signerName, signer)` | Registers a named signer on the manager | `WalletManagerEvm` | If `signerName` is empty |
 | `getSigner(signerName?)` | Returns the default signer or a named signer | `ISignerEvm` | If the requested signer is unavailable |
 | `getSigners()` | Returns registered named signers | `Record<string, ISignerEvm>` | - |
-| `getAccount(index?, options?)` | Returns a wallet account at the specified index, optionally from a named signer | `Promise<WalletAccountEvm>` | If the requested signer is unavailable or cannot derive |
-| `getAccount(signerName)` | Returns the account associated with a registered signer | `Promise<WalletAccountEvm>` | If the named signer is unavailable |
-| `getAccountByPath(path, options?)` | Returns a wallet account at the specified BIP-44 derivation path, optionally from a named signer | `Promise<WalletAccountEvm>` | If the requested signer is unavailable or cannot derive |
+| `getAccount(index?, options?)` | Returns a wallet account at the specified index, optionally from a named signer | `Promise<WalletAccountEvm>` | If the requested signer is unavailable or cannot derive; `DisposalError` for a disposed manager, or a disposed signer on cache miss |
+| `getAccount(signerName)` | Returns the account associated with a registered signer | `Promise<WalletAccountEvm>` | If the named signer is unavailable; `DisposalError` for a disposed manager, or a disposed signer on cache miss |
+| `getAccountByPath(path, options?)` | Returns a wallet account at the specified BIP-44 derivation path, optionally from a named signer | `Promise<WalletAccountEvm>` | If the requested signer is unavailable or cannot derive; `DisposalError` for a disposed manager, or a disposed signer on cache miss |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` | `ProviderRequiredError` if no provider is set |
 | `dispose()` | Initiates cleanup of cached accounts and the seed-created default signer; app-supplied default and named signers remain app-owned | `void` | - |
 
@@ -79,7 +79,10 @@ const signerWallet = new WalletManagerEvm(signer, {
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `disposed` | `boolean` | Whether manager cleanup has completed. Account retrieval rejects a disposed manager. |
 | `seed` | `Uint8Array \| undefined` (inherited declaration) | Always `undefined` at runtime from beta.20 onward: the manager turns seed input into its default signer before calling the base constructor. Keep seed storage in your application. |
+
+`getAccount()` and `getAccountByPath()` reject a disposed manager with `DisposalError`, including cached lookups. When constructing an uncached account, they also reject a disposed selected signer. A cached account is returned as-is; retrieving it does not reset its own `disposed` state.
 
 #### `getRandomSeedPhrase(wordCount?)` (static)
 Returns a random BIP-39 seed phrase.
@@ -224,7 +227,7 @@ const result = await account.sendTransaction({
 ```
 
 #### `dispose()`
-Initiates cleanup of the seed-created default signer, then delegates to base-wallet beta.21. Cached accounts are disposed only when reading `account.keyPair?.privateKey` yields a truthy value. Derived external accounts without exposed private-key bytes are skipped; dispose them explicitly. A throwing key getter or disposal can interrupt later cleanup. App-supplied default and named signers remain app-owned.
+Initiates cleanup of the seed-created default signer, then delegates to base-wallet beta.25. Cached accounts are disposed only when reading `account.keyPair?.privateKey` yields a truthy value. Derived external accounts without exposed private-key bytes are skipped; dispose them explicitly. A throwing key getter or disposal can interrupt later cleanup. App-supplied default and named signers remain app-owned.
 
 **Example:**
 ```javascript
@@ -253,7 +256,7 @@ new WalletAccountEvm(signer, config?)
   - `retries` (number, optional): Additional retry attempts when `provider` is an array
   - `chainId` (number, optional): Nonzero chain ID for module-built URL and EIP-1193 providers. Existing ethers providers keep their own settings; see [chain configuration](/sdk/wallet-modules/wallet-evm/configuration#chain-id).
   - `transferMaxFee` (number | bigint, optional): Maximum fee amount for transfer operations (in wei)
-  - `transactionMaxFee` (number | bigint, optional): Execution-gas fee cap for `sendTransaction()` and provider-backed `signTransaction()` (in wei), including sends made by `transfer()` and `approve()`
+  - `transactionMaxFee` (number | bigint, optional): Execution-gas fee cap for `sendTransaction()` and provider-backed `signTransaction()` (in wei), including sends made by `approve()`
 - `config.shouldWipeSignerOnDisposal` (boolean, signer overload only): Dispose the supplied signer when the account is disposed. Defaults to `false`; seed-created and `fromPrivateKey()` accounts own their signers.
 
 **Throws:**
@@ -286,27 +289,27 @@ const signerAccount = new WalletAccountEvm(
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
 | `getAddress()` | Returns the account's address | `Promise<string>` | - |
-| `sign(message)` | Signs a message using the account's private key | `Promise<string>` | - |
-| `signTypedData(typedData)` | Signs typed data according to EIP-712 | `Promise<string>` | - |
-| `signTransaction(tx)` | Signs an EVM transaction without broadcasting it | `Promise<string>` | `MaximumFeeExceededError` or `ValueError` |
+| `sign(message)` | Signs a message using the account's private key | `Promise<string>` | `DisposalError` |
+| `signTypedData(typedData)` | Signs typed data according to EIP-712 | `Promise<string>` | `DisposalError` |
+| `signTransaction(tx)` | Signs an EVM transaction without broadcasting it | `Promise<string>` | `MaximumFeeExceededError` or `ValueError`; `DisposalError` |
 | `verify(message, signature)` | Verifies a message signature | `Promise<boolean>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies a typed data signature (EIP-712) | `Promise<boolean>` | - |
-| `sendTransaction(tx)` | Sends an EVM transaction object or signed raw transaction | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError`, `MaximumFeeExceededError`, or `ValueError` |
+| `sendTransaction(tx)` | Sends an EVM transaction object or signed raw transaction | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError`, `MaximumFeeExceededError`, or `ValueError`; `DisposalError` |
 | `quoteSendTransaction(tx)` | Estimates the fee for an EVM transaction object or serialized transaction | `Promise<{fee: bigint}>` | `ProviderRequiredError` or `ValueError` |
-| `transfer(options)` | Transfers ERC20 tokens to another address | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError`, `MaximumFeeExceededError`, or `ValueError` |
+| `transfer(options)` | Transfers ERC20 tokens to another address | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError`, `MaximumFeeExceededError`, or `ValueError`; `DisposalError` |
 | `quoteTransfer(options)` | Estimates the fee for an ERC20 transfer | `Promise<{fee: bigint}>` | `ProviderRequiredError` or `ValueError` |
 | `getBalance()` | Returns the native token balance (in wei) | `Promise<bigint>` | `ProviderRequiredError` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise<bigint>` | `ProviderRequiredError` |
 | `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise<Record<string, bigint>>` | `ProviderRequiredError` |
-| `approve(options)` | Approves a spender to spend tokens | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` or `ValueError` |
+| `approve(options)` | Approves a spender to spend tokens | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError`, `MaximumFeeExceededError`, `ValueError`, or `DisposalError` |
 | `getAllowance(token, spender)` | Returns current allowance for a spender | `Promise<bigint>` | `ProviderRequiredError` |
 | `getTransactionReceipt(hash)` | Returns a native receipt; deprecated in favor of `getTransaction()` | `Promise<EvmTransactionReceipt \| null>` | `ProviderRequiredError` |
 | `getTransaction(hash)` | Returns normalized finality and the native receipt | `Promise<TransactionReceipt & EvmTransactionDetails>` | `ProviderRequiredError`, `ValueError`, or `NoSuchElementError` |
 | `waitForTransaction(hash, options?)` | Waits for `confirmed` or `final`, or returns `dropped` | `Promise<TransactionReceipt & EvmTransactionDetails>` | `TimeoutError` |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise<WalletAccountReadOnlyEvm>` | - |
-| `signAuthorization(auth)` | Signs an ERC-7702 authorization tuple | `Promise<Authorization>` | `ProviderRequiredError` or `AssertionError` |
-| `delegate(delegateAddress)` | Delegates the EOA to a contract through an ERC-7702 type 4 transaction | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` or `AssertionError` |
-| `revokeDelegation()` | Revokes active ERC-7702 delegation by delegating to the zero address | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` or `AssertionError` |
+| `signAuthorization(auth)` | Signs an ERC-7702 authorization tuple | `Promise<Authorization>` | `ProviderRequiredError` or `AssertionError`; `DisposalError` |
+| `delegate(delegateAddress)` | Delegates the EOA to a contract through an ERC-7702 type 4 transaction | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` or `AssertionError`; `DisposalError` |
+| `revokeDelegation()` | Revokes active ERC-7702 delegation by delegating to the zero address | `Promise<{hash: string, fee: bigint}>` | `ProviderRequiredError` or `AssertionError`; `DisposalError` |
 | `dispose()` | Initiates the account cleanup process | `void` | - |
 
 #### `fromPrivateKey(privateKey, config?)` (static)
@@ -344,6 +347,8 @@ Signs a message using the account's private key.
 
 **Returns:** `Promise<string>` - The message signature
 
+**Throws:** `DisposalError` if the account or its signer has been disposed.
+
 **Example:**
 ```javascript
 const message = 'Hello, Ethereum!'
@@ -361,6 +366,8 @@ Signs typed data according to [EIP-712](https://eips.ethereum.org/EIPS/eip-712).
   - `message` (Record\<string, unknown\>): The message data
 
 **Returns:** `Promise<string>` - The typed data signature
+
+**Throws:** `DisposalError` if the account or its signer has been disposed.
 
 **Example:**
 ```javascript
@@ -407,7 +414,7 @@ Signs an EVM transaction and returns the signed raw transaction as a hex string.
 
 **Returns:** `Promise<string>` - Signed raw transaction hex string
 
-**Throws:** `ValueError` for type 3 or non-null blob fields; `MaximumFeeExceededError` if a provider is configured and the estimated transaction fee exceeds `transactionMaxFee`.
+**Throws:** `ValueError` for type 3 or non-null blob fields; `MaximumFeeExceededError` if a provider is configured and the estimated transaction fee exceeds `transactionMaxFee`; `DisposalError` if the account or its signer has been disposed.
 
 **Example:**
 ```javascript
@@ -453,7 +460,7 @@ console.log('Typed data signature valid:', isValid) // true
 ```
 
 #### `sendTransaction(tx)`
-Builds, signs, and sends an EVM transaction object, or broadcasts a signed raw transaction, then returns its hash and quoted fee.
+Populates, signs, and sends an EVM transaction object, or broadcasts a signed raw transaction. The returned `fee` is the maximum execution-gas cost computed from the populated transaction or supplied signed bytes, not the eventual fee paid.
 
 **Parameters:**
 - `tx` (EvmTransaction | string): A transaction object or signed raw transaction hex.
@@ -469,13 +476,16 @@ Builds, signs, and sends an EVM transaction object, or broadcasts a signed raw t
   - `chainId` (number | bigint, optional): Network chain ID
   - `authorizationList` (AuthorizationLike[], optional): ERC-7702 authorization list for type 4 transactions
 
+For an object request, the wallet simulates it, populates missing transaction fields, then checks the populated gas limit multiplied by its fee cap against `transactionMaxFee` before signing that same populated transaction.
+
 For a signed raw transaction string, the wallet checks `transactionMaxFee` against the encoded gas limit multiplied by the encoded `maxFeePerGas` (or `gasPrice`), then passes the exact supplied hex to `eth_sendRawTransaction`. It still simulates the transaction but does not repopulate or re-sign it. This checks execution gas, not transferred value. Blob transactions are rejected. Review the decoded recipient, value, data, chain ID, nonce, gas limit, and all fee fields before submitting externally supplied bytes.
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
 
 **Throws:**
 - `ProviderRequiredError` if no provider is configured.
-- `MaximumFeeExceededError` if the quoted fee exceeds `transactionMaxFee` when configured.
+- `MaximumFeeExceededError` if the populated object transaction or supplied signed bytes exceed `transactionMaxFee` when configured.
+- `DisposalError` if the account has been disposed, or its signer rejects a signing call after disposal.
 - `ValueError` if an object transaction mixes incompatible fee fields, an explicit or inferred type 4 transaction supplies `gasPrice`, or it has type 3 or any non-null blob field.
 
 **Example:**
@@ -524,7 +534,7 @@ console.log('Estimated fee:', quote.fee, 'wei')
 ```
 
 #### `transfer(options)`
-Transfers ERC20 tokens to another address using the standard transfer function.
+Transfers ERC20 tokens to another address using the standard transfer function. The wallet checks `transferMaxFee` against the populated transfer before signing; it does not apply `transactionMaxFee`. The returned `fee` is the populated transfer's maximum execution-gas cost.
 
 **Parameters:**
 - `options` (EvmTransferOptions): Transfer options
@@ -538,7 +548,8 @@ Transfers ERC20 tokens to another address using the standard transfer function.
 
 **Throws:**
 - `ProviderRequiredError` if no provider is configured.
-- `MaximumFeeExceededError` if the fee exceeds `transferMaxFee` or `transactionMaxFee` when configured.
+- `MaximumFeeExceededError` if the populated transfer exceeds `transferMaxFee` when configured. `transactionMaxFee` does not apply to `transfer()`.
+- `DisposalError` if the account has been disposed, or its signer rejects the signing call after disposal.
 - `ValueError` if gas overrides mix incompatible legacy, EIP-1559, or authorization fee fields.
 
 **Example:**
@@ -640,6 +651,8 @@ Approves a specific amount of tokens to a spender.
 **Throws:**
 - `ProviderRequiredError` if no provider is configured.
 - `ValueError` if an Ethereum mainnet USD₮ allowance is already nonzero and the requested amount is also nonzero. Approve `0` first.
+- `MaximumFeeExceededError` if the approval transaction exceeds `transactionMaxFee`.
+- `DisposalError` if the account or its signer has been disposed.
 
 **Example:**
 ```javascript
@@ -748,14 +761,14 @@ const balance = await readOnlyAccount.getBalance()
 ```
 
 #### `signAuthorization(auth)`
-Signs an ERC-7702 authorization tuple. Missing `chainId` or `nonce` is populated through the provider. A provider-reported chain ID of zero throws `AssertionError`; an explicit `chainId: 0` opts into an authorization valid across chains.
+Signs an ERC-7702 authorization tuple. The chain ID comes from `auth.chainId`, then a nonzero configured `chainId`, then the provider. A missing nonce uses the account's pending transaction count. A provider is needed only for missing values. A provider-reported chain ID of zero throws `AssertionError`; only an explicit `auth.chainId: 0` opts into an authorization valid across chains.
 
 **Parameters:**
 - `auth` (AuthorizationRequest): ERC-7702 authorization request
 
 **Returns:** `Promise<Authorization>` - The signed authorization
 
-**Throws:** `ProviderRequiredError` when a missing chain ID or nonce requires a provider; `AssertionError` when the provider supplies chain ID zero.
+**Throws:** `ProviderRequiredError` when a value must be fetched without a provider; `AssertionError` when the provider supplies chain ID zero; `DisposalError` for a disposed account or signer.
 
 **Example:**
 ```javascript
@@ -767,24 +780,24 @@ const authorization = await account.signAuthorization({
 ```
 
 #### `delegate(delegateAddress)`
-Delegates the EOA to a smart contract through an ERC-7702 type 4 transaction.
+Delegates the EOA to a smart contract through an ERC-7702 type 4 transaction. A nonzero configured chain ID is checked against the provider before signing; a mismatch throws `AssertionError`. The transaction uses the account's pending nonce, and its authorization uses the next nonce. Nodes that allow a delegated account only one in-flight transaction can reject another delegation until the pending transaction is mined.
 
 **Parameters:**
 - `delegateAddress` (string): Contract address to delegate to
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
 
-**Throws:** `ProviderRequiredError` if no provider is configured; `AssertionError` if the provider supplies chain ID zero during authorization.
+**Throws:** `ProviderRequiredError` without a provider; `AssertionError` for a configured/provider chain mismatch or provider-reported chain ID zero; `DisposalError` for a disposed account or signer.
 
 #### `revokeDelegation()`
-Revokes active ERC-7702 delegation by delegating to the zero address.
+Revokes active ERC-7702 delegation by delegating to the zero address. It uses the same chain check and pending-nonce behavior as [`delegate()`](#delegatedelegateaddress).
 
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Transaction result
 
-**Throws:** `ProviderRequiredError` if no provider is configured; `AssertionError` if the provider supplies chain ID zero during authorization.
+**Throws:** `ProviderRequiredError` without a provider; `AssertionError` for a configured/provider chain mismatch or provider-reported chain ID zero; `DisposalError` for a disposed account or signer.
 
 #### `dispose()`
-Initiates cleanup of the account-owned signer. A supplied signer is preserved unless the account was configured with `shouldWipeSignerOnDisposal: true`. See [signer ownership](/sdk/wallet-modules/wallet-evm/configuration#signer-migration).
+Initiates cleanup of the account-owned signer, then sets `disposed` to `true`. Repeated disposal returns without repeating cleanup. A supplied signer is preserved unless the account was configured with `shouldWipeSignerOnDisposal: true`. If signer cleanup throws, the account has not completed disposal. See [signer ownership](/sdk/wallet-modules/wallet-evm/configuration#signer-migration).
 
 **Example:**
 ```javascript
@@ -792,10 +805,13 @@ Initiates cleanup of the account-owned signer. A supplied signer is preserved un
 account.dispose()
 ```
 
+Account signing, sending, token transfer/approval, authorization, delegation and revocation reject a disposed account with `DisposalError`. Reads and quotes do not use that account guard. A supplied signer disposed separately can reject calls that invoke it even while the account's `disposed` flag is `false`.
+
 ### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
+| `disposed` | `boolean` | Whether this account has completed its own disposal. Disposing an app-owned signer separately does not change this flag. |
 | `path` | `string \| null` | Full path for a seed signer; `null` for a private-key signer |
 | `keyPair` | `KeyPair \| null` | The account's key pair (⚠️ Contains sensitive data). The returned arrays are bound to the account — treat them as a read-only view and do not modify their contents. `privateKey` becomes `null` when its signer is disposed; disposing an account that preserves a supplied signer does not erase that signer. |
 | `address` | `string \| undefined` | Deprecated synchronous address; use `getAddress()` |
@@ -1184,7 +1200,7 @@ import type { ISignerEvm, TransactionLike } from '@tetherto/wdk-wallet-evm/signe
 
 `ISignerEvm` extends the base `ISigner` with `signTransaction(tx: TransactionLike)`, `signTypedData()`, and `signAuthorization()`. `ISigner` is a root runtime export; `ISignerEvm` is a runtime export of `@tetherto/wdk-wallet-evm/signers`, alongside `SeedSignerEvm` and `PrivateKeySignerEvm`. The signers subpath supports Bare.
 
-`SeedSignerEvm(seed, absolutePath?)` defaults to `m/44'/60'`, supports self-relative derivation, and keeps independent keys for derived signers. `PrivateKeySignerEvm` copies a raw key and cannot derive; `derive()` throws `UnsupportedOperationError`. Neither exposes an `index` property. See [signer migration](/sdk/wallet-modules/wallet-evm/configuration#signer-migration) for the changed constructors and cleanup rules.
+`SeedSignerEvm(seed, absolutePath?)` defaults to `m/44'/60'`, supports self-relative derivation, and keeps independent keys for derived signers. `PrivateKeySignerEvm` copies a raw key and cannot derive; `derive()` throws `UnsupportedOperationError` while the signer is active. Both signer implementations expose `disposed`; after cleanup completes, derivation and signing methods throw `DisposalError`, and repeated disposal returns without repeating cleanup. Neither exposes an `index` property. See [signer migration](/sdk/wallet-modules/wallet-evm/configuration#signer-migration) for the changed constructors and cleanup rules.
 
 ### TransactionLike
 

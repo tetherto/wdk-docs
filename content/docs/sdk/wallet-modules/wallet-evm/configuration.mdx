@@ -82,7 +82,7 @@ When upgrading from beta.20:
 - Use `account.path` instead of the removed `account.index`. A private-key signer has `path: null`.
 - Use `getAddress()` instead of deprecated synchronous `address` getters, which can be `undefined` for external signers.
 - `getAccount('name')` wraps the registered signer at its current path without deriving. Use `getAccount(index, { signerName: 'name' })` or `getAccountByPath(path, { signerName: 'name' })` to derive from a named signer.
-- A manager initiates cleanup of its seed-created default signer, then delegates cached-account cleanup to its pinned base-wallet beta.21. That implementation calls `account.dispose()` only when `account.keyPair?.privateKey` is truthy. It skips derived external signers without exposed private-key bytes, and a throwing key getter or disposal can interrupt later cleanup. Dispose such derived accounts explicitly. Default and named signers supplied by your app remain app-owned. An account created from a supplied signer preserves that signer unless `shouldWipeSignerOnDisposal: true` is set. Accounts created from a seed or through `fromPrivateKey()` own their signers.
+- A manager initiates cleanup of its seed-created default signer, then delegates cached-account cleanup to its pinned base-wallet beta.25. That implementation calls `account.dispose()` only when `account.keyPair?.privateKey` is truthy. It skips derived external signers without exposed private-key bytes, and a throwing key getter or disposal can interrupt later cleanup. Dispose such derived accounts explicitly. Default and named signers supplied by your app remain app-owned. An account created from a supplied signer preserves that signer unless `shouldWipeSignerOnDisposal: true` is set. Accounts created from a seed or through `fromPrivateKey()` own their signers.
 
 Dispose app-owned signers only after their last consumer finishes. `PrivateKeySignerEvm` copies an input key; its cleanup does not erase the caller's input. Mnemonic construction clears temporary seed and master-key buffers, but preserves caller-owned seed bytes and the derived signer needed by the wallet. This does not establish complete erasure of secret copies.
 
@@ -219,7 +219,7 @@ An existing ethers `Provider` retains its own network configuration. Passing `ch
 Pin only providers that stay on the intended network. Pinning does not verify the endpoint's chain or detect a browser wallet's network switch. If the network changes, stop using the pinned wallet and recreate it with the intended configuration before continuing.
 </Callout>
 
-This option configures provider network identity, not every signing input. [`signTransaction()`](/sdk/wallet-modules/wallet-evm/api-reference#signtransactiontx) forwards the transaction's supplied chain ID to the signer without populating it from this option. An explicit `chainId: 0` passed to [`signAuthorization()`](/sdk/wallet-modules/wallet-evm/api-reference#signauthorizationauth) remains a separate opt-in to authorization across chains.
+This option configures provider network identity, not every signing input. [`signTransaction()`](/sdk/wallet-modules/wallet-evm/api-reference#signtransactiontx) forwards the transaction's supplied chain ID to the signer without populating it from this option. `signAuthorization()` uses an explicit request chain ID first, then this nonzero configured value, then the provider. `delegate()` checks a configured chain ID against the provider before signing, including when an existing ethers provider is reused. An explicit `chainId: 0` passed to [`signAuthorization()`](/sdk/wallet-modules/wallet-evm/api-reference#signauthorizationauth) remains a separate opt-in to authorization across chains.
 
 **Type:** `number` (optional)
 
@@ -233,7 +233,7 @@ const config = {
 
 ### Transfer Max Fee
 
-The `transferMaxFee` option sets a maximum fee limit for ERC-20 `transfer()` operations.
+The `transferMaxFee` option caps the populated ERC-20 transfer's gas limit multiplied by its fee cap before signing. Equality is allowed. `transactionMaxFee` does not apply to `transfer()`.
 
 **Type:** `number | bigint` (optional)
 **Unit:** Wei (1 ETH = 1000000000000000000 Wei)
@@ -266,11 +266,13 @@ try {
 
 ### Transaction Max Fee
 
-The `transactionMaxFee` option rejects `sendTransaction()` and provider-backed `signTransaction()` when the quoted execution-gas fee exceeds the configured value. Equality is allowed. ERC-20 transfers and approvals also send through `sendTransaction()`, so this cap applies to them; transfers additionally check `transferMaxFee`.
+The `transactionMaxFee` option caps execution gas for `sendTransaction()` and provider-backed `signTransaction()`. Equality is allowed. `approve()` sends through `sendTransaction()` and uses this cap. ERC-20 `transfer()` uses `transferMaxFee` instead; configure that limit separately.
 
-In the documented release, the quote uses the supplied `gasLimit` (or an estimate) multiplied by `maxFeePerGas`, then `gasPrice`, then the provider's current fee rate, in that order. For signed raw bytes, it uses the encoded gas limit and encoded fee rate. The quote still simulates the transaction and can reject a revert even when a gas limit is supplied. See [fee quoting](/sdk/wallet-modules/wallet-evm/api-reference#quotesendtransactiontx).
+For an object `sendTransaction()`, the wallet simulates and populates the transaction, checks its populated gas limit multiplied by its `maxFeePerGas` or `gasPrice`, then sends those same populated fields to the signer. For signed raw bytes, it checks the encoded gas limit and fee rate before broadcasting the supplied bytes. Object requests above the cap do not reach the signer; signed bytes above the cap are not broadcast.
 
-This cap covers execution gas, not transferred value. Blob transactions are rejected. Unspecified fields can change when an object transaction is populated after the check; a quote does not lock those fields or report the eventual fee paid. Review all signed fields before submitting external bytes. Offline signing without a provider does not run the fee-cap check.
+`signTransaction()` uses a separate quote check when a provider and cap are configured; it does not populate missing transaction fields. Quotes use supplied gas limits and fee rates when available, then estimates/provider fee data. Simulation can reject a revert even when a gas limit is supplied. See [fee quoting](/sdk/wallet-modules/wallet-evm/api-reference#quotesendtransactiontx).
+
+This cap covers execution gas, not transferred value or the eventual fee paid. Blob transactions are rejected. A separate quote does not reserve estimates for a later operation. Offline signing without a provider does not run the fee-cap check.
 
 For a policy example that separately validates Ethereum type-2 transaction fields and execution-gas liability, see [Bound Transaction Fees](/sdk/core-module/guides/transaction-policies#bound-transaction-fees).
 

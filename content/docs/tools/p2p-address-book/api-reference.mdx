@@ -40,13 +40,13 @@ Prefer `fromSeed()`. The low-level constructor permits replication without an en
 | `name` | No | Label stored for the enrolling device writer. |
 | `bootstrap`, `swarm`, `relayThrough` | No | Advanced networking hooks whose concrete types are not declared stable. `close()` destroys a supplied swarm. |
 
-The declared low-level `optimistic` option is ignored in `1.0.0-beta.3`; Autobase optimistic mode is always enabled.
+The declared low-level `optimistic` option is ignored; Autobase optimistic mode is always enabled.
 
 ## Lifecycle and identity
 
 | Surface | Description |
 |---|---|
-| `ready()` | Opens the local book. In beta.3, initial swarm flush and peering continue in the background. |
+| `ready()` | Opens the local book. Initial swarm flush and peering continue in the background. |
 | `create()` | Enrolls the local writer for a new book without attempting restoration. |
 | `close()` | Closes book-owned Autobase, peering, and swarm resources. |
 | `suspend()` / `resume()` | `suspend()` pauses peering, an active swarm, and the book's Corestore in that order. `resume()` resumes the Corestore, swarm, and peering in reverse order. Local-only books also suspend and resume their Corestore. The recommended `fromSeed()` path operates on its namespaced Corestore. |
@@ -74,6 +74,10 @@ ADDRESS_TYPES.UMA
 ADDRESS_TYPES.LIGHTNING_ADDRESS
 ADDRESS_TYPES.LNURL
 ADDRESS_TYPES.SPARK
+ADDRESS_TYPES.SOLANA
+ADDRESS_TYPES.TON
+ADDRESS_TYPES.APTOS
+ADDRESS_TYPES.OTHER
 ```
 
 The package trims text fields and lowercases `network`, but it does not validate destination syntax. An address and normalized network pair must be unique; UMA values must also be unique across UMA records. Address comparisons are case-sensitive.
@@ -115,10 +119,10 @@ Writer-management methods are not included in the exported worklet bridge interf
 | `addMirror(key)` | Registers one mirror, peers with it, and enrolls a deferred local writer. Returns the selected key in an array. |
 | `addMirror(pool, n?)` | Selects up to `n` entries, then registers and peers with them. |
 | `listMirrors()` | Returns persisted mirror records. |
-| `removeMirror(key)` | Removes a persisted mirror record. See the beta limitation below. |
+| `removeMirror(key)` | Removes the persisted mirror record and the key from this instance's peering configuration. |
 
 <Callout type="warn">
-In `1.0.0-beta.3`, `removeMirror()` leaves the key active in the current in-memory peering instance. Close and reopen the book without that key before treating peering as stopped. The method does not delete blocks already held by the server.
+`removeMirror()` updates in-memory peering after the record is saved. It does not delete blocks already held by the server.
 </Callout>
 
 ## Worklet API

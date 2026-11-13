@@ -114,6 +114,86 @@ const expectedRedirects = [
     status: '301',
   },
   {
+    source: '/ai/mcp-toolkit',
+    target: '/cli/guides/use-mcp-server',
+    status: '301',
+  },
+  {
+    source: '/ai/mcp-toolkit/',
+    target: '/cli/guides/use-mcp-server',
+    status: '301',
+  },
+  {
+    source: '/ai/mcp-toolkit.md',
+    target: '/cli/guides/use-mcp-server',
+    status: '301',
+  },
+  {
+    source: '/ai/mcp-toolkit/get-started',
+    target: '/cli/guides/use-mcp-server',
+    status: '301',
+  },
+  {
+    source: '/ai/mcp-toolkit/api-reference.md',
+    target: '/cli/guides/use-mcp-server',
+    status: '301',
+  },
+  {
+    source: '/ui-kits/react-native-ui-kit',
+    target: '/examples-and-starters/react-native-starter',
+    status: '301',
+  },
+  {
+    source: '/ui-kits/react-native-ui-kit/',
+    target: '/examples-and-starters/react-native-starter',
+    status: '301',
+  },
+  {
+    source: '/ui-kits/react-native-ui-kit.md',
+    target: '/examples-and-starters/react-native-starter',
+    status: '301',
+  },
+  {
+    source: '/ui-kits/react-native-ui-kit/get-started',
+    target: '/examples-and-starters/react-native-starter',
+    status: '301',
+  },
+  {
+    source: '/ui-kits/react-native-ui-kit/api-reference.md',
+    target: '/examples-and-starters/react-native-starter',
+    status: '301',
+  },
+  {
+    source: '/overview/partner-program',
+    target: 'https://wdk.tether.io/partners',
+    status: '301',
+  },
+  {
+    source: '/overview/partner-program/',
+    target: 'https://wdk.tether.io/partners',
+    status: '301',
+  },
+  {
+    source: '/overview/partner-program.md',
+    target: 'https://wdk.tether.io/partners',
+    status: '301',
+  },
+  {
+    source: '/overview/showcase',
+    target: 'https://wdk.tether.io/',
+    status: '301',
+  },
+  {
+    source: '/overview/showcase/',
+    target: 'https://wdk.tether.io/',
+    status: '301',
+  },
+  {
+    source: '/overview/showcase.md',
+    target: 'https://wdk.tether.io/',
+    status: '301',
+  },
+  {
     source: '/__missing-sevalla-404-check',
     target: '/404.html',
     status: '404',
