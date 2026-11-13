@@ -21781,6 +21781,10 @@ These modules implement the Swidge interface for routes returned by their provid
 | [`@0x/wdk-protocol-swidge-0x`](https://www.npmjs.com/package/@0x/wdk-protocol-swidge-0x) | 0x | Community | [Documentation](/sdk/swidge-modules/swidge-0x/) |
 | [`@moonpay/wdk-protocol-swidge-moonpay-trade`](https://www.npmjs.com/package/@moonpay/wdk-protocol-swidge-moonpay-trade) | MoonPay Trade | Community | [Documentation](/sdk/swidge-modules/swidge-moonpay-trade/) |
 | [`@butternetwork/wdk-protocol-swidge-butter`](https://www.npmjs.com/package/@butternetwork/wdk-protocol-swidge-butter) | Butter Network | Community | [Documentation](/sdk/swidge-modules/swidge-butter/) |
+| [`@layerswap/wdk-protocol-swidge-layerswap-evm`](https://github.com/layerswap/wdk-protocol-swidge-layerswap) | LayerSwap (EVM source) | Community | [Draft documentation (release pending)](/sdk/swidge-modules/swidge-layerswap/) |
+| [`@layerswap/wdk-protocol-swidge-layerswap-solana`](https://github.com/layerswap/wdk-protocol-swidge-layerswap) | LayerSwap (Solana source) | Community | [Draft documentation (release pending)](/sdk/swidge-modules/swidge-layerswap/) |
+| [`@layerswap/wdk-protocol-swidge-layerswap-bitcoin`](https://github.com/layerswap/wdk-protocol-swidge-layerswap) | LayerSwap (Bitcoin source) | Community | [Draft documentation (release pending)](/sdk/swidge-modules/swidge-layerswap/) |
+| [`@layerswap/wdk-protocol-swidge-layerswap-ton`](https://github.com/layerswap/wdk-protocol-swidge-layerswap) | LayerSwap (TON source) | Community | [Draft documentation (release pending)](/sdk/swidge-modules/swidge-layerswap/) |
 
 ## Standalone protocol modules
 
@@ -21816,6 +21820,9 @@ Discover provider routes, preview quotes, and submit source deposits through a w
 <Card title="Butter Network" href="/sdk/swidge-modules/swidge-butter/">
 Discover exact-input routes and execute through a compatible wallet account.
 </Card>
+<Card title="LayerSwap" href="/sdk/swidge-modules/swidge-layerswap/">
+Preview the source-account packages and deposit flows while their npm release is pending.
+</Card>
 <Card title="Velora" href="/sdk/swap-modules/swap-velora-evm/">
 Use the Tether-maintained Velora module for standalone EVM token swaps.
 </Card>
@@ -21825,6 +21832,858 @@ Use the Tether-maintained USD₮0 module for standalone cross-chain transfers.
 </Cards>
 
 ***
+
+## Need Help?
+
+<SupportCards />
+
+***
+
+## LayerSwap Swidge Overview
+URL: https://docs.wdk.tether.io/sdk/swidge-modules/swidge-layerswap
+Description: Choose a LayerSwap source-account package, discover routes and track provider-managed settlement.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+[LayerSwap](https://github.com/layerswap/wdk-protocol-swidge-layerswap) connects a source wallet account to its HTTP routing service. The module creates a provider swap, sends the source deposit through the selected account, and exposes the provider's payout or refund status.
+
+These draft pages cover the `1.0.0-beta.1` source versions of the four LayerSwap adapters and their shared core. The packages are unpublished. See [release availability](/sdk/swidge-modules/swidge-layerswap/usage#release-availability) before running the examples.
+
+## Choose the source package
+
+Choose by the account that sends the deposit. Destination networks come from the provider's catalog and a successful route quote.
+
+| Source account | Package | Default class |
+| --- | --- | --- |
+| EVM or ERC-4337 | `@layerswap/wdk-protocol-swidge-layerswap-evm` | `LayerswapProtocolEvm` |
+| Solana | `@layerswap/wdk-protocol-swidge-layerswap-solana` | `LayerswapProtocolSolana` |
+| Bitcoin | `@layerswap/wdk-protocol-swidge-layerswap-bitcoin` | `LayerswapProtocolBitcoin` |
+| TON | `@layerswap/wdk-protocol-swidge-layerswap-ton` | `LayerswapProtocolTon` |
+
+`@layerswap/wdk-protocol-swidge-layerswap-core` supplies their shared client and protocol implementation. Applications normally use a source adapter. The monorepo root is private and is not an aggregate installation package.
+
+## Follow a route
+
+1. Initialize the matching wallet account and provider.
+2. Discover provider network names and token identifiers.
+3. Preview an exact-input quote and confirm the destination, recipient, refund address and limits.
+4. Call `swidge()`. It creates a provider swap and prepares the source deposit before broadcasting it.
+5. Keep both the swap ID and source hash, then query settlement separately.
+
+A preview quote does not reserve execution terms. `swidge()` uses the quote returned when it creates the provider swap. The source transaction hash does not establish destination delivery.
+
+## Responsibilities and boundaries
+
+| Area | Responsible component |
+| --- | --- |
+| Account keys and source-chain signing | The source wallet account |
+| Route catalog, deposit instructions and destination payout | LayerSwap |
+| Input validation, consent, selected fee limits, persistence and retry decisions | Your application |
+
+The module checks source-specific deposit formats, but it does not independently verify every effect of provider-supplied EVM calldata or Solana instructions. Provider status also remains separate from your own destination-chain verification.
+
+Only exact-input operations are supported. Catalog membership does not guarantee an executable pair or source-adapter capability. There is no implemented local `simulateSwidge()` flow in this family.
+
+Bitcoin preparation signs before the shared basis-point fee checks; broadcast follows those checks. TON source gas may be reported only after sending. Read the chain-specific guides before enabling those sources.
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-layerswap/usage">
+Bind an account, discover identifiers and preview a route.
+</Card>
+<Card title="Execute a Swidge" href="/sdk/swidge-modules/swidge-layerswap/guides/execute-swidge">
+Confirm an intent and understand the source-deposit boundary.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-layerswap/api-reference">
+Review methods, result fields and error behavior.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
+
+***
+
+## LayerSwap Swidge API Reference
+URL: https://docs.wdk.tether.io/sdk/swidge-modules/swidge-layerswap/api-reference
+Description: Reference the LayerSwap source adapters, shared methods, result fields and errors.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Imports and construction
+
+Each source package exports its adapter class as the default. The common methods below apply to all four adapters.
+
+```javascript
+import LayerswapProtocolEvm, {
+  LayerswapApiClient,
+  ProviderError,
+  SwidgeError
+} from '@layerswap/wdk-protocol-swidge-layerswap-evm'
+```
+
+The other default classes are `LayerswapProtocolSolana`, `LayerswapProtocolBitcoin` and `LayerswapProtocolTon` from their corresponding source packages. Use `new Protocol(account, config?)` with the matching account. An omitted account supports discovery and explicit-`fromChain` quotes; sending requires a writable account with that adapter's capabilities.
+
+Type-only imports are separate:
+
+```typescript
+import type {
+  LayerswapProtocolConfig,
+  LayerswapSwidgeOptions,
+  LayerswapSwidgeConfig
+} from '@layerswap/wdk-protocol-swidge-layerswap-evm'
+```
+
+## Main methods
+
+| Method | Result | Side effects and constraints |
+| --- | --- | --- |
+| `quoteSwidge(options)` | `Promise<SwidgeQuote>` | Exact-input quote without creating a provider swap. It does not validate recipient, refund address or minimum output. Source gas estimation can be omitted on failure. |
+| `swidge(options, config?)` | `Promise<SwidgeResult>` | Creates a provider swap, prepares and sends the source deposit. Returns before destination settlement. |
+| `getSwidgeStatus(id, options?)` | `Promise<SwidgeStatusResult>` | Reads the provider swap. Use the returned swap `id`, not its source `hash`. |
+| `getSupportedChains()` | `Promise<SwidgeSupportedChain[]>` | Reads the cached provider catalog. Chain `id` is a provider network name. |
+| `getSupportedTokens(options?)` | `Promise<SwidgeSupportedToken[]>` | Filters by `toChain`, otherwise `fromChain`; `fromToken` is ignored. |
+| `getTransactionStatus(hash, options?)` | `Promise<LayerswapTransactionStatus>` | Returns `{ status }`, where `status` is `'completed'`, `'failed'` or `'pending'`. TON first resolves its message hash through TON Center. |
+| `getApiClient()` | `LayerswapApiClient` | Returns the raw client described below. |
+
+There is no implemented local simulation method in these adapters. Discovery is a catalog query, not a route-capability or liquidity check.
+
+## Swidge options
+
+| Field | Meaning |
+| --- | --- |
+| `fromToken` | Required source token identifier. Prefer discovery's `token` field, which is a provider symbol. |
+| `toToken` | Destination identifier required by the exported types. JavaScript runtime falls back to the source token's symbol when it is absent. |
+| `fromChain` | Optional provider source network name; otherwise detected from the account. |
+| `toChain` | Optional provider destination network name; omission selects the source network. |
+| `fromTokenAmount` | Required exact-input base-unit integer. Use `bigint` for large values. |
+| `toTokenAmount` | Unsupported; supplying it rejects an exact-output request. |
+| `minAmountOut` | Accepted minimum in destination-token base units. Compared with the execution quote's minimum output. |
+| `slippage` | Non-negative finite fraction; `0.005` means 0.5%. |
+| `recipient` | Destination address. Fallback to the source account's address requires matching source/destination VM types. |
+| `refundAddress` | Source-network refund address; defaults to the source account address. |
+| `refuel` | Optional request for a destination native-gas drop. |
+| `referenceId` | Optional reference for the provider swap. |
+| `feeRate` | Bitcoin adapter only: fee rate in sat/vB. |
+
+Execution resolves `fromChain` and `toChain` by provider network name, even though some declarations admit numeric values. `getSwidgeStatus()` chain hints separately accept provider network names or chain IDs; `getTransactionStatus()` uses a provider network name for `sourceChain`. Use discovered names for operation options.
+
+Token contract lookup recognizes a lowercase-`0x` prefix with 42 characters; other identifiers are matched as symbols. A non-EVM mint or contract address from the token's `address` metadata is not a universal accepted option value.
+
+Constructor fields and per-call fee configuration are listed in [Configuration](/sdk/swidge-modules/swidge-layerswap/configuration). Amount and fee declarations use `number | bigint`; runtime conversion of integer options also accepts values convertible by `BigInt`. Prefer the declared types rather than depending on wider runtime coercion.
+
+## Quotes and execution results
+
+| Field | Quote | Execution | Meaning |
+| --- | --- | --- | --- |
+| `fromTokenAmount` | Yes | Yes | Source-token base units. A preview uses the caller's requested amount. |
+| `toTokenAmount` | Yes | Yes | Provider-reported destination output in destination-token base units. |
+| `toTokenAmountMin` | Yes | Yes | Provider minimum, falling back to receive amount when absent in a quote. |
+| `fees` | Yes | Yes | Itemized fees with their own token, chain and inclusion context. |
+| `estimatedDuration` | Optional | No | Provider completion-time estimate converted to seconds. |
+| `id` | No | Yes | Provider swap ID for settlement polling. |
+| `hash` | No | Yes | Source deposit hash; for TON, an external-message body hash. |
+| `transactions` | No | Yes | Initially the source hash, chain and `type: 'source'`. |
+
+Execution with no quote in the create-swap response uses `fees: []`, `toTokenAmount: 0n` and `toTokenAmountMin: 0n`. A positive minimum output prevents broadcast in that case. Those placeholders are missing data, not independent verification of cost or settlement.
+
+Each fee has `type`, `amount` and `token`, with optional `chain`, `included` and `description`. Included service/destination fees are in source-token units; separate source gas is in native units. See [fee-limit behavior](/sdk/swidge-modules/swidge-layerswap/configuration#fee-limits-and-units) before interpreting a cap.
+
+## Status methods
+
+`getSwidgeStatus(id, { fromChain?, toChain? })` returns `{ status, transactions }`. Hints constrain the lookup; a mismatch can produce `NoSuchElementError`.
+
+The mapper recognizes `action-required`, `pending`, `completed`, `failed`, `expired`, `cancelled`, `refund-pending` and `refunded`. Unknown provider swap states fall back to `pending`. Do not interpret that fallback as proof the provider is making progress.
+
+The first output transaction takes precedence when completed. Otherwise the first refund transaction determines `refunded` or `refund-pending`, and a non-completed first output is `pending`. Transactions without a hash are omitted; mapped transaction types are `source`, `destination`, `refund` and `other`.
+
+`getTransactionStatus(hash, { sourceChain? })` queries the source transaction separately and returns `{ status: 'completed' | 'failed' | 'pending' }`. Read `result.status`, rather than comparing the whole result with a status string. `NoSuchElementError` can mean that the provider has not indexed it yet or that the lookup identifiers are wrong. See [TON hash handling](/sdk/swidge-modules/swidge-layerswap/guides/ton-deposits#track-the-ton-deposit).
+
+## Swap and bridge adapters
+
+Prefer the Swidge methods for new integrations. The explicit bridge adapter keeps the source hash in `hash` and returns the provider swap ID as `swapId`. Its `fee` is source gas in native units; `bridgeFee` is included provider cost in source-token units. Do not sum them across different assets.
+
+`bridge()` and `quoteBridge()` take legacy fields: `targetChain`, `recipient`, `token`, `amount`, optional `destinationToken`, `sourceChain`, `refundAddress`, `referenceId`, `refuel` and percentage-string `slippage`. For 0.5%, Swidge takes `0.005` while bridge takes `'0.5'`.
+
+`bridge()` and `quoteBridge()` wrap only `SwidgeError` as `BridgeError`; other errors pass through unchanged.
+
+Inherited `swap()` and `quoteSwap()` are same-chain adapters. They use the provider swap ID as their `hash` and aggregate fee amounts, which does not preserve the full Swidge denomination breakdown.
+
+## Raw client
+
+`getApiClient()` returns the same `LayerswapApiClient` instance used by the protocol. Its values are LayerSwap wire-format responses rather than WDK result shapes.
+
+| Method | HTTP request | Purpose |
+| --- | --- | --- |
+| `getNetworks()` | `GET /api/v2/networks` | Cached network/token catalog. |
+| `getQuote(params)` | `GET /api/v2/quote` | Read a prospective quote. |
+| `getSwap(swapId)` | `GET /api/v2/swaps/{id}` | Read provider swap state. |
+| `getTransactionStatus(networkName, transactionId)` | `GET /api/v2/transaction_status` | Read source deposit assessment. |
+| `createSwap(params)` | `POST /api/v2/swaps` | Create a real provider swap. |
+| `speedUpDeposit(swapId, transactionId)` | `POST /api/v2/swaps/{id}/deposit_speedup` | Notify the provider of a broadcast deposit. |
+
+The core package also exports pure mapping and unit-conversion helpers for adapter authors; they are separate from the protected protocol hooks.
+
+The last two methods mutate provider state. Direct client calls bypass the protocol's route, amount, deposit and fee checks; they are not a replacement execution tutorial.
+
+## Errors
+
+Import runtime error classes from the same adapter package used by your protocol.
+
+| Error | Common trigger |
+| --- | --- |
+| `AccountRequiredError` | No writable account for execution. |
+| `DisposalError` | The bound account is disposed. |
+| `ValueError` | Unsupported exact-output request, invalid integer option, invalid route/network or missing required recipient. |
+| `InvalidTokenError` | Token lookup fails, or Bitcoin source is not native BTC. |
+| `ProviderRequiredError` | The operation requires an account provider that is unavailable. |
+| `ProviderError` | API/RPC failure, malformed provider response or deposit instructions, or a wallet error normalized to provider failure. It can carry `code`, `status` and `reason`. |
+| `SwidgeError` | Minimum output is not met or a wallet error indicates insufficient funds. |
+| `MaximumFeeExceededError` | A provider fee guard or the source wallet's fee policy rejects the operation. |
+| `NoSuchElementError` | Swap/transaction is not found, not indexed yet, or does not match lookup hints. |
+
+A `ValueError` raised while selecting or preparing the provider's deposit instructions is normalized to `ProviderError`; it is not exposed as caller-input validation. A thrown error after source submission does not prove the deposit was absent; reconcile it before retrying.
+
+## Next Steps
+
+<Cards>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-layerswap/configuration">
+Review each limit and its unit and evaluation point.
+</Card>
+<Card title="Execute a Swidge" href="/sdk/swidge-modules/swidge-layerswap/guides/execute-swidge">
+Use stable caller-owned intent during confirmation.
+</Card>
+<Card title="Track Settlement" href="/sdk/swidge-modules/swidge-layerswap/guides/track-settlement">
+Distinguish source acceptance, payout and refund.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
+
+***
+
+## LayerSwap Swidge Configuration
+URL: https://docs.wdk.tether.io/sdk/swidge-modules/swidge-layerswap/configuration
+Description: Configure LayerSwap API access, source networks, request behavior and fee limits.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Each source adapter accepts `(account, config?)`. The protocol reads the provider configuration when it constructs its HTTP client. The sending account keeps its own chain provider.
+
+## Protocol fields
+
+| Field | Default | Meaning |
+| --- | --- | --- |
+| `apiKey` | Omitted | A nonempty string is sent as `X-LS-APIKEY`. An empty string is omitted. |
+| `apiUrl` | `https://api.layerswap.io` | LayerSwap API base URL; trailing slashes are removed. Use a trusted HTTPS endpoint. |
+| `requestTimeoutMs` | `30000` | Timeout around fetching an API response. It is not an end-to-end operation deadline. |
+| `bridgeMaxFee` | Unset | Rejects execution when included provider fees are greater than or equal to this source-token base-unit amount. |
+| `maxNetworkFeeBps` | Unset | Guards mapped network fees denominated in the source token. |
+| `maxProtocolFeeBps` | Unset | Guards mapped protocol fees denominated in the source token. |
+| `confirmationTarget` | `1` | Bitcoin adapter only: target block count used to obtain a fee-rate estimate. |
+
+A nonempty API key is forwarded to `apiUrl`; choose that destination before supplying credentials. The HTTP client does not enforce HTTPS for an overridden endpoint.
+
+The request timer is cleared after `fetch` returns, before the body is read. The client has no automatic retry loop. An execution request that fails ambiguously must be reconciled before creating or sending another deposit.
+
+## Source network and providers
+
+`fromChain` is an operation option, not a constructor configuration field. With it omitted, the adapter detects a network from its bound account. With it supplied, use a provider network name from discovery.
+
+Account, provider and selected network must agree. Source network identity is cached on adapter instances. Create a new instance after switching the account's provider or network. Some checks are skipped when a provider is absent, and Solana's explicit-network check cannot identify every cluster. An explicit `fromChain` is not independent proof of the account's network.
+
+## Amounts, slippage and addresses
+
+- Use positive integer amounts in the source token's base units. The examples choose `bigint`; declared amount fields accept `number | bigint`.
+- `minAmountOut` is in destination-token base units. Set a positive value appropriate to your accepted output.
+- Swidge `slippage` is a fraction: `0.005` means 0.5%. The legacy `bridge()` adapter instead takes a percentage string such as `'0.5'`.
+- Supply `recipient` for the intended destination address and `refundAddress` for an address you control on the source network. Validate both address formats and chains in your application.
+- `refuel` requests a provider-supported native-gas drop on the destination. Availability depends on the selected route.
+- `referenceId` is an application-supplied reference included when the provider swap is created.
+
+Without an explicit recipient, execution uses the account's address only when source and destination networks have the same provider VM type. The refund address defaults to the source account's address.
+
+## Fee limits and units
+
+The provider's service fee and destination network fee are deducted from the source amount. Their entries have `included: true` and use source-token units. Separate source gas has `included: false` and uses the source chain's native units. Do not add amounts across different tokens.
+
+| Control | Evaluation |
+| --- | --- |
+| `bridgeMaxFee` | Sums included fees, then rejects `includedFee >= bridgeMaxFee` before deposit preparation. Equality is rejected. |
+| `maxProtocolFeeBps` | Sums `protocol` fees whose `token` matches the source token, computes integer-floor basis points and rejects `>` the cap. |
+| `maxNetworkFeeBps` | Applies the same calculation to matching-token `network` fees. Native gas in another token is excluded. |
+
+Execution configuration overrides the constructor's fee fields for that call. For ERC-4337 accounts, the EVM adapter also forwards the supported wallet configuration overrides when estimating and sending the deposit.
+
+To inherit a constructor fee limit, omit that property from the per-call configuration. Passing it as `undefined` overwrites the constructor value and removes that limit for the call.
+
+<Callout type="warn">
+The provider swap is created before the later quote, fee and deposit checks. A rejected limit can leave an unfunded swap. Bitcoin also signs during deposit preparation before the basis-point checks; TON source gas may become known only after sending. These limits do not guarantee that every possible native charge is checked before signing or broadcast.
+</Callout>
+
+If the create-swap response lacks a quote, execution uses empty fees and zero output fields. A positive `minAmountOut` rejects that response before broadcast. Without such a minimum, missing quote data does not itself stop execution. Empty fees do not prove a zero-cost route.
+
+## Chain-specific settings
+
+Bitcoin accepts `options.feeRate` in sat/vB for one operation. It overrides fee-rate estimation for PSBT construction. The resulting transaction includes the required reference output, which contributes to its fee. See [Bitcoin Deposits](/sdk/swidge-modules/swidge-layerswap/guides/bitcoin-deposits).
+
+EVM standard accounts receive one transaction. ERC-4337 accounts receive a one-item transaction array and applicable per-call wallet configuration. Solana uses a decoded provider transaction template with a refreshed blockhash. TON uses a message built from the provider action and has [separate hash tracking](/sdk/swidge-modules/swidge-layerswap/guides/ton-deposits).
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-layerswap/usage">
+Select the source adapter and discover route identifiers.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-layerswap/api-reference">
+Check operation options, return values and errors.
+</Card>
+<Card title="Execute a Swidge" href="/sdk/swidge-modules/swidge-layerswap/guides/execute-swidge">
+Apply consent and limits to one execution intent.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
+
+***
+
+## LayerSwap Bitcoin Deposits
+URL: https://docs.wdk.tether.io/sdk/swidge-modules/swidge-layerswap/guides/bitcoin-deposits
+Description: Send native BTC with its provider reference and understand signing, fees and uncertain broadcasts.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Use `LayerswapProtocolBitcoin` with the matching [Bitcoin account](/sdk/wallet-modules/wallet-btc/guides/get-started). Begin with [Usage](/sdk/swidge-modules/swidge-layerswap/usage#release-availability) for package availability and the selected dependency versions.
+
+## Prepare a native BTC route
+
+Bitcoin sources accept native BTC. Tokens with a contract identifier are rejected before a provider swap is created. Supply the source amount in satoshis and choose an amount greater than the account's dust limit; equality is rejected.
+
+Use discovery's source token and network identifiers. Supply the intended destination recipient and a Bitcoin refund address you control. The destination asset and amount limits remain provider- and route-dependent.
+
+The [shared execution helper](/sdk/swidge-modules/swidge-layerswap/guides/execute-swidge#confirm-a-stable-intent) accepts a Bitcoin-bound protocol. Use its positive destination minimum and fee limits rather than assuming the preview reserves a payout.
+
+## Reference and transaction construction
+
+The provider supplies a deposit address, decimal deposit amount and reference. The adapter builds a transaction containing:
+
+- the native BTC deposit output;
+- an `OP_RETURN` reference output required to associate the deposit with its swap;
+- a change output when applicable.
+
+The adapter reads the decimal provider amount for Bitcoin because this flow can report zero in `amount_in_base_units`. It checks the parsed deposit amount against the requested input. Do not replace the generated transaction with a plain transfer to the deposit address or omit its reference.
+
+This path uses the concrete Bitcoin wallet's HD-signing and client implementation. Its protected members are not application APIs, and an address-only or unrelated account implementation does not provide the necessary execution capabilities.
+
+## Fees and signing order
+
+Constructor `confirmationTarget` defaults to one block for fee-rate estimation. Per-operation `feeRate` overrides the estimate in sat/vB. The reference output contributes to transaction size and fee.
+
+<Callout type="warn">
+The adapter signs its PSBT during deposit preparation, before shared basis-point guards run. A later fee rejection prevents this module's broadcast but does not mean signing never happened. Obtain consent before calling `swidge()`.
+</Callout>
+
+The preview's approximate source fee does not reserve a fee rate or the UTXOs later used. Execution builds the transaction from current wallet state. Keep native BTC input, included provider fees and the separate source transaction fee distinct when presenting the breakdown.
+
+## After submission
+
+The source hash is the Bitcoin transaction ID. Persist it together with the provider swap ID. Use `getSwidgeStatus(result.id)` for payout/refund status and `getTransactionStatus(result.hash)` for the provider's source-deposit assessment.
+
+A broadcast transport error can leave the outcome uncertain. Reconcile wallet transaction history and the provider swap before constructing another deposit. The provider notification after broadcast is best effort; its failure is not evidence that the source transaction failed.
+
+## Next Steps
+
+<Cards>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-layerswap/configuration">
+Set confirmation targets and understand fee caps.
+</Card>
+<Card title="Track Settlement" href="/sdk/swidge-modules/swidge-layerswap/guides/track-settlement">
+Track the provider swap and source deposit separately.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-layerswap/api-reference">
+Check Bitcoin operation fields and common results.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
+
+***
+
+## Execute a LayerSwap Swidge
+URL: https://docs.wdk.tether.io/sdk/swidge-modules/swidge-layerswap/guides/execute-swidge
+Description: Confirm an exact-input intent and submit its source deposit through the selected account.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Start with a protocol bound to the matching initialized account, as shown in [Usage](/sdk/swidge-modules/swidge-layerswap/usage#bind-the-matching-account). Match that account's provider to the chosen source network. These examples remain subject to [release availability](/sdk/swidge-modules/swidge-layerswap/usage#release-availability).
+
+## Confirm a stable intent
+
+Select network names and token identifiers from discovery. Validate the destination recipient and source refund address for their intended networks. Choose a positive minimum destination amount and all three fee limits before requesting consent.
+
+```javascript
+export async function executeLayerswap({
+  protocol,
+  sourceNetwork,
+  destinationNetwork,
+  sourceToken,
+  destinationToken,
+  amount,
+  recipientAddress,
+  refundAddress,
+  minAmountOut,
+  limits,
+  confirm
+}) {
+  if (typeof amount !== 'bigint' || amount <= 0n ||
+      typeof minAmountOut !== 'bigint' || minAmountOut <= 0n) {
+    throw new RangeError('Supply positive bigint input and minimum-output amounts')
+  }
+  if (typeof recipientAddress !== 'string' || recipientAddress.length === 0 ||
+      typeof refundAddress !== 'string' || refundAddress.length === 0) {
+    throw new TypeError('Supply the intended recipient and source refund address')
+  }
+
+  const identifiers = [sourceNetwork, destinationNetwork, sourceToken, destinationToken]
+  if (identifiers.some(value => typeof value !== 'string' || value.length === 0)) {
+    throw new TypeError('Supply discovered network names and token identifiers as strings')
+  }
+
+  const intent = Object.freeze({
+    fromChain: sourceNetwork,
+    toChain: destinationNetwork,
+    fromToken: sourceToken,
+    toToken: destinationToken,
+    fromTokenAmount: amount,
+    recipient: recipientAddress,
+    refundAddress,
+    minAmountOut,
+    slippage: 0.005
+  })
+  const caps = {
+    bridgeMaxFee: limits?.bridgeMaxFee,
+    maxNetworkFeeBps: limits?.maxNetworkFeeBps,
+    maxProtocolFeeBps: limits?.maxProtocolFeeBps
+  }
+  for (const value of Object.values(caps)) {
+    if (typeof value !== 'bigint' || value < 0n) {
+      throw new RangeError('Supply all three fee limits as non-negative bigint values')
+    }
+  }
+  Object.freeze(caps)
+
+  const quote = await protocol.quoteSwidge(intent)
+  if (!await confirm({ intent, caps, quote })) return null
+
+  return protocol.swidge(intent, caps)
+}
+```
+
+`confirm` is your application callback. Show the source amount/token, destination token, recipient, refund address, minimum output and each fee with its denomination. The helper copies the primitive intent and limit values before awaiting consent. It requires all three limits as non-negative `bigint` values even though the SDK also declares numeric limits. These explicit per-call values override the constructor's fee limits; missing values are rejected before quoting or asking for consent.
+
+Keep the bound account and its provider fixed through confirmation. If either changes, cancel the intent and construct a new matching protocol instance.
+
+`quoteSwidge()` resolves the route and input amount but does not validate `recipient`, `refundAddress` or `minAmountOut`. Your application validates those inputs before consent, and execution applies its minimum-output check.
+
+The preview does not lock execution terms. `swidge()` creates its own provider swap and evaluates the quote attached to that response. It does not expose a second application-confirmation callback between receiving those instructions and sending the source deposit.
+
+## What execution can do
+
+1. Check the account, route and supplied integer options.
+2. Create a provider swap and receive its deposit instruction and execution quote.
+3. Check the minimum output and included-fee cap.
+4. Prepare the source deposit and check applicable basis-point limits.
+5. Submit through the source adapter, then notify the provider on a best-effort basis.
+
+<Callout type="warn">
+A limit failure after swap creation may leave an unfunded provider swap. Bitcoin signs during preparation before the basis-point checks. TON gas can be reported after sending, and gas in a different token is excluded from source-token basis-point checks. Review the [fee boundaries](/sdk/swidge-modules/swidge-layerswap/configuration#fee-limits-and-units) for the selected source.
+</Callout>
+
+## Source-specific behavior
+
+| Source | Deposit path |
+| --- | --- |
+| Standard EVM | Sends the provider's transaction as one wallet transaction. |
+| ERC-4337 | Estimates and sends a one-item transaction array, forwarding applicable wallet configuration overrides. |
+| Solana | Decodes the provider template, drops template signatures, obtains a fresh blockhash and sends the reconstructed message. |
+| Bitcoin | Builds and signs a PSBT containing deposit, reference output and optional change; broadcasts after the remaining guards. |
+| TON | Builds a native or jetton message and sends it through the TON wallet. |
+
+EVM calldata receives syntax checks, but its complete effects are not decoded and independently verified. Solana reconstructs the transaction rather than independently reviewing every instruction's business intent. The provider remains responsible for its routing instructions and destination payout.
+
+This family does not expose a separate `getRequiredApproval()` application flow. Follow the selected adapter's deposit path rather than copying an allowance workflow from another provider.
+
+## Keep the submission identifiers
+
+On success, persist `result.id`, `result.hash`, the selected networks and `result.transactions` before starting other application work. If persistence fails after success, use the result already held by your application to reconcile the deposit; do not call execution again as a storage retry.
+
+A source hash confirms only that the send path returned it. Destination payout or refund is separate. On an ambiguous send error, inspect source-chain state and the provider's swap before deciding whether another deposit is necessary. See [Track Settlement](/sdk/swidge-modules/swidge-layerswap/guides/track-settlement).
+
+## Next Steps
+
+<Cards>
+<Card title="Bitcoin Deposits" href="/sdk/swidge-modules/swidge-layerswap/guides/bitcoin-deposits">
+Understand the reference output and signing order.
+</Card>
+<Card title="TON Deposits" href="/sdk/swidge-modules/swidge-layerswap/guides/ton-deposits">
+Handle post-send gas and message-hash tracing.
+</Card>
+<Card title="Track Settlement" href="/sdk/swidge-modules/swidge-layerswap/guides/track-settlement">
+Persist and query the swap ID after submission.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
+
+***
+
+## LayerSwap TON Deposits
+URL: https://docs.wdk.tether.io/sdk/swidge-modules/swidge-layerswap/guides/ton-deposits
+Description: Send native TON or jetton deposits and trace the returned external-message hash.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Use `LayerswapProtocolTon` with a matching [TON account](/sdk/wallet-modules/wallet-ton/guides/get-started) connected to TON Center. The provider network, wallet account and TON Center endpoint must agree. See [release availability](/sdk/swidge-modules/swidge-layerswap/usage#release-availability) before running the examples.
+
+## Deposit messages
+
+Select the source token through discovery, retaining its provider `token` identifier and decimals. For native TON, use nanotons as source base units. For jettons, use that jetton's base units and preserve the sender's access to its jetton wallet.
+
+The adapter parses the provider's `call_data` for the amount and reference comment, checks the deposit amount, and builds the native or jetton message. Your application supplies the destination recipient and source refund address through the [shared execution flow](/sdk/swidge-modules/swidge-layerswap/guides/execute-swidge).
+
+Provider instructions and settlement are still a trust boundary. Correctly building a TON message does not independently verify destination payout.
+
+## Source gas
+
+Quote-time TON gas is an approximation. Deposit preparation does not supply a pre-broadcast gas amount; when the wallet returns a fee, the module appends it after sending.
+
+<Callout type="warn">
+The module's basis-point guards do not bound an unknown actual TON source fee before broadcast. A native gas fee also uses different units from a jetton input. Explain this separate native-gas liability before obtaining consent to send.
+</Callout>
+
+`bridgeMaxFee` limits included provider fees in source-token units. It is not a cap on all native TON gas.
+
+## Track the TON deposit
+
+For TON, `result.hash` is the external-message body hash returned by the wallet. It is not automatically the final transaction ID the provider tracks.
+
+```javascript
+import { NoSuchElementError } from '@layerswap/wdk-protocol-swidge-layerswap-ton'
+
+export async function readTonSubmission(protocol, submission, sourceNetwork) {
+  const settlement = await protocol.getSwidgeStatus(submission.id)
+  try {
+    const deposit = await protocol.getTransactionStatus(submission.hash, {
+      sourceChain: sourceNetwork
+    })
+    return { settlement, deposit }
+  } catch (error) {
+    if (error instanceof NoSuchElementError) {
+      return { settlement, deposit: null, depositLookup: 'not-found' }
+    }
+    throw error
+  }
+}
+```
+
+The adapter traces a hexadecimal hash through the account's TON Center connection. For a native transfer it resolves the wallet's first outgoing message. For a jetton deposit it selects the first trace message with the transfer-notification opcode, without matching that message's recipient to the deposit address. This lookup is not independent verification that the intended deposit address received the funds. A nonhexadecimal identifier is passed through as an existing provider transaction ID.
+
+`NoSuchElementError` can mean that TON Center or LayerSwap has not indexed the deposit yet. It can also indicate a wrong identifier or network. Retain the original hash and swap ID, wait according to your application's polling policy and inspect the source state before considering a new send.
+
+Settlement can be read independently with `getSwidgeStatus(submission.id)`, even while source hash tracing is not ready. On a successful deposit lookup, `deposit` is an object and `deposit.status` contains its assessment. The example retains the settlement observation when the separate deposit lookup reports not found. That result is not permission to repeat the deposit.
+
+## Next Steps
+
+<Cards>
+<Card title="Track Settlement" href="/sdk/swidge-modules/swidge-layerswap/guides/track-settlement">
+Handle payout, refund and indexing states.
+</Card>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-layerswap/configuration">
+Separate provider fee guards from source gas.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-layerswap/api-reference">
+Review source-transaction and swap-status methods.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
+
+***
+
+## Track LayerSwap Settlement
+URL: https://docs.wdk.tether.io/sdk/swidge-modules/swidge-layerswap/guides/track-settlement
+Description: Persist a LayerSwap swap ID and distinguish source submission, destination payout and refunds.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+`swidge()` returns after the source deposit has been submitted. Keep the provider swap ID and source hash separately. A completed source transaction does not prove that the destination recipient has received the payout.
+
+## Persist the result
+
+Store `id`, `hash`, `transactions`, source/destination network names, selected token identifiers, recipient and refund address with the application's transfer record. Persist the accepted input and limits so a later status view can explain the same operation.
+
+Use `id` with `getSwidgeStatus()`. Use `hash` with `getTransactionStatus()` for the source-deposit assessment and read the returned object's `status` field, including [TON's message tracing](/sdk/swidge-modules/swidge-layerswap/guides/ton-deposits#track-the-ton-deposit).
+
+## Read settlement once
+
+```javascript
+export async function readLayerswapSettlement(protocol, record) {
+  return protocol.getSwidgeStatus(record.id, {
+    fromChain: record.sourceNetwork,
+    toChain: record.destinationNetwork
+  })
+}
+```
+
+The chain hints constrain lookup rather than select a new route. They accept a provider network name or chain ID; an incorrect hint can produce `NoSuchElementError` even for an existing swap.
+
+## Interpret status and transactions
+
+| Status | Application interpretation |
+| --- | --- |
+| `action-required` | The provider reports a user-transfer step pending. Reconcile any existing deposit before requesting another action. |
+| `pending` | The provider has no mapped terminal result. Unknown future provider states also map here. |
+| `completed` | The first output transaction is completed, or the swap state maps to completion after the transaction precedence below is applied. |
+| `refund-pending` | A refund is reported but is not completed. |
+| `refunded` | The provider reports a completed refund. |
+| `failed`, `cancelled`, `expired` | A reported terminal swap condition. Inspect the source and refund records before deciding what funds remain recoverable. |
+
+The mapper selects the first output transaction and gives it precedence when it is completed. Otherwise the first refund transaction determines refund status, and a non-completed first output yields `pending` before the swap-level status is consulted. A status fallback is not a guarantee that the operation is progressing.
+
+Returned `transactions` contain entries with a hash and optional chain and type. The mapper uses `source`, `destination`, `refund` or `other`; transactions without hashes are omitted. Keep the full list rather than assuming one transaction for each stage or a fixed event sequence.
+
+These are provider observations. An application that needs destination-chain verification must check the reported destination transaction and intended token/recipient separately.
+
+## Poll and handle failures
+
+Choose a bounded polling interval and a stopping or escalation policy appropriate to your application. The SDK does not run a background settlement poller or retry loop.
+
+- `NoSuchElementError` from transaction lookup can be indexing delay or incorrect identifiers. Verify the saved network and hash rather than treating every not-found result as a safe retry.
+- `ProviderError` can indicate credentials, rate limiting, timeout, network failure or a malformed response. Preserve the transfer record while recovering access.
+- An execution error can occur after a provider swap exists, before its ID is returned. A source broadcast can also succeed despite a transport error observed by the application.
+
+<Callout type="warn">
+Do not repeat `swidge()` to recover a failed status query or an uncertain source send. First reconcile the source wallet and existing provider swap. A second call creates another provider swap and may send another deposit.
+</Callout>
+
+If no swap ID was returned, `getSwidgeStatus()` cannot identify the swap. Preserve the original intent and any known source hash, reconcile the source wallet and chain, and seek LayerSwap assistance if you cannot identify the existing swap. The SDK has no hash-based swap recovery method.
+
+Provider notification after broadcasting is best effort. Its failure does not undo the source send. Likewise, a failure to save local state after a successful call does not undo the returned submission.
+
+## Next Steps
+
+<Cards>
+<Card title="Execute a Swidge" href="/sdk/swidge-modules/swidge-layerswap/guides/execute-swidge">
+Review the source-send boundary and preserved intent.
+</Card>
+<Card title="TON Deposits" href="/sdk/swidge-modules/swidge-layerswap/guides/ton-deposits">
+Understand external-message hashes and indexing.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-layerswap/api-reference">
+Check mapped statuses and error contracts.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
+
+***
+
+## LayerSwap Swidge Usage
+URL: https://docs.wdk.tether.io/sdk/swidge-modules/swidge-layerswap/usage
+Description: Select a LayerSwap adapter, bind the matching source account and preview an exact-input route.
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+## Release availability
+
+The four source adapters and shared core are unpublished. The examples below describe their source API; wait for the matching npm artifacts and a version-pinned installation command before running them. Do not install the private monorepo root as a substitute.
+
+The source dependency graph pins base Wallet `1.0.0-beta.25` and these concrete wallets:
+
+| Adapter | Wallet dependency |
+| --- | --- |
+| EVM | `@tetherto/wdk-wallet-evm@1.0.0-beta.24` and `@tetherto/wdk-wallet-evm-erc-4337@1.0.0-beta.23` |
+| Solana | `@tetherto/wdk-wallet-solana@1.0.0-beta.20` |
+| Bitcoin | `@tetherto/wdk-wallet-btc@1.0.0-beta.17` |
+| TON | `@tetherto/wdk-wallet-ton@1.0.0-beta.17` |
+
+These are dependency pins, not minimum-version promises. The packages expose ESM, TypeScript declarations and a Bare entry. The default HTTP client requires global `fetch` and `AbortController`; a Bare entry alone does not configure a native application or its wallet providers.
+
+## Bind the matching account
+
+Use the import for your source wallet. Each function accepts an account your application has already initialized and optional [protocol configuration](/sdk/swidge-modules/swidge-layerswap/configuration).
+
+### EVM or ERC-4337
+
+```javascript
+import LayerswapProtocolEvm from '@layerswap/wdk-protocol-swidge-layerswap-evm'
+
+export function bindEvmAccount(account, config = {}) {
+  return new LayerswapProtocolEvm(account, config)
+}
+```
+
+Use an [EVM account](/sdk/wallet-modules/wallet-evm/guides/getting-started) connected to the intended source network. The EVM adapter also accepts the matching ERC-4337 account.
+
+### Solana
+
+```javascript
+import LayerswapProtocolSolana from '@layerswap/wdk-protocol-swidge-layerswap-solana'
+
+export function bindSolanaAccount(account, config = {}) {
+  return new LayerswapProtocolSolana(account, config)
+}
+```
+
+Use a [Solana account](/sdk/wallet-modules/wallet-solana/guides/getting-started) with its RPC provider. Execution needs the writable transaction interface and the account's public key.
+
+### Bitcoin
+
+```javascript
+import LayerswapProtocolBitcoin from '@layerswap/wdk-protocol-swidge-layerswap-bitcoin'
+
+export function bindBitcoinAccount(account, config = {}) {
+  return new LayerswapProtocolBitcoin(account, config)
+}
+```
+
+Use the pinned [Bitcoin wallet account](/sdk/wallet-modules/wallet-btc/guides/get-started). The adapter builds a signed deposit through that wallet's HD-signing and client implementation; an arbitrary address-only account cannot execute it.
+
+### TON
+
+```javascript
+import LayerswapProtocolTon from '@layerswap/wdk-protocol-swidge-layerswap-ton'
+
+export function bindTonAccount(account, config = {}) {
+  return new LayerswapProtocolTon(account, config)
+}
+```
+
+Use a [TON account](/sdk/wallet-modules/wallet-ton/guides/get-started) connected to TON Center. Jetton deposits also need access to the sender's jetton wallet.
+
+## Discover identifiers
+
+```javascript
+export async function discoverLayerswap(protocol, sourceNetwork, destinationNetwork) {
+  const chains = await protocol.getSupportedChains()
+  const sourceTokens = await protocol.getSupportedTokens({ fromChain: sourceNetwork })
+  const destinationTokens = await protocol.getSupportedTokens({ toChain: destinationNetwork })
+
+  return { chains, sourceTokens, destinationTokens }
+}
+```
+
+Use a returned chain's `id`, which is the provider network name, for execution's `fromChain` and `toChain`. Use a selected token's `token` field. Pair it with `chain` and `decimals`; its optional `address` is metadata and is not a universal substitute for the accepted token identifier.
+
+`getSupportedTokens()` scopes to `toChain` when present, otherwise `fromChain`. It ignores `fromToken` and does not test a route pair. A returned destination can belong to another account family; that does not make it a valid source for the adapter you chose.
+
+## Preview an exact-input route
+
+The function accepts selected provider identifiers and a positive amount in source-token base units. Supplying a `bigint` avoids precision loss from large JavaScript numbers.
+
+```javascript
+export async function previewLayerswap({
+  protocol,
+  sourceNetwork,
+  destinationNetwork,
+  sourceToken,
+  destinationToken,
+  amount
+}) {
+  if (typeof amount !== 'bigint' || amount <= 0n) {
+    throw new RangeError('Supply a positive bigint amount in source-token base units')
+  }
+
+  return protocol.quoteSwidge({
+    fromChain: sourceNetwork,
+    toChain: destinationNetwork,
+    fromToken: sourceToken,
+    toToken: destinationToken,
+    fromTokenAmount: amount,
+    slippage: 0.005
+  })
+}
+```
+
+`slippage: 0.005` means 0.5%. Quote discovery can also run without a bound account when `fromChain` is supplied. It does not create a provider swap or sign a deposit. It also does not validate a destination recipient, refund address or minimum output; those are application and execution concerns. Source gas can be absent when estimation is unavailable or fails, so the fee list is not a guaranteed complete total cost.
+
+Before execution, collect the intended destination recipient, a source-chain refund address and your application-selected output and fee limits. The [execution guide](/sdk/swidge-modules/swidge-layerswap/guides/execute-swidge) keeps these inputs stable while the user reviews them.
+
+## Next Steps
+
+<Cards>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-layerswap/configuration">
+Set the API endpoint, timeouts and fee controls.
+</Card>
+<Card title="Execute a Swidge" href="/sdk/swidge-modules/swidge-layerswap/guides/execute-swidge">
+Confirm a source deposit and preserve its identifiers.
+</Card>
+<Card title="Track Settlement" href="/sdk/swidge-modules/swidge-layerswap/guides/track-settlement">
+Follow a payout or refund after source submission.
+</Card>
+</Cards>
+
+---
 
 ## Need Help?
 
@@ -64432,6 +65291,10 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 | [`@0x/wdk-protocol-swidge-0x`](https://www.npmjs.com/package/@0x/wdk-protocol-swidge-0x) | 0x | Community | Same-chain EVM token swaps through the 0x Swap API v2 | [Docs](/sdk/swidge-modules/swidge-0x/) |
 | [`@moonpay/wdk-protocol-swidge-moonpay-trade`](https://www.npmjs.com/package/@moonpay/wdk-protocol-swidge-moonpay-trade) | MoonPay Trade | Community | Provider route discovery, indicative quotes, and source-deposit execution through writable WDK accounts | [Docs](/sdk/swidge-modules/swidge-moonpay-trade/) |
 | [`@butternetwork/wdk-protocol-swidge-butter`](https://www.npmjs.com/package/@butternetwork/wdk-protocol-swidge-butter) | Butter Network | Community | Exact-input quotes and capability-dependent execution through Butter | [Docs](/sdk/swidge-modules/swidge-butter/) |
+| [`@layerswap/wdk-protocol-swidge-layerswap-evm`](https://github.com/layerswap/wdk-protocol-swidge-layerswap) | LayerSwap (EVM source) | Community | Draft documentation for EVM source deposits and provider settlement; package release pending | [Draft docs](/sdk/swidge-modules/swidge-layerswap/) |
+| [`@layerswap/wdk-protocol-swidge-layerswap-solana`](https://github.com/layerswap/wdk-protocol-swidge-layerswap) | LayerSwap (Solana source) | Community | Draft documentation for Solana source deposits and provider settlement; package release pending | [Draft docs](/sdk/swidge-modules/swidge-layerswap/) |
+| [`@layerswap/wdk-protocol-swidge-layerswap-bitcoin`](https://github.com/layerswap/wdk-protocol-swidge-layerswap) | LayerSwap (Bitcoin source) | Community | Draft documentation for Bitcoin source deposits and provider settlement; package release pending | [Draft docs](/sdk/swidge-modules/swidge-layerswap/) |
+| [`@layerswap/wdk-protocol-swidge-layerswap-ton`](https://github.com/layerswap/wdk-protocol-swidge-layerswap) | LayerSwap (TON source) | Community | Draft documentation for TON source deposits and provider settlement; package release pending | [Draft docs](/sdk/swidge-modules/swidge-layerswap/) |
 
 ## Smart Deposit Address Modules
 
@@ -64525,6 +65388,10 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 | [`@0x/wdk-protocol-swidge-0x`](https://www.npmjs.com/package/@0x/wdk-protocol-swidge-0x) | Swidge | 0x same-chain EVM route integration | [Docs](/sdk/swidge-modules/swidge-0x/) |
 | [`@moonpay/wdk-protocol-swidge-moonpay-trade`](https://www.npmjs.com/package/@moonpay/wdk-protocol-swidge-moonpay-trade) | Swidge | Provider route discovery, indicative quotes, and source-deposit execution | [Docs](/sdk/swidge-modules/swidge-moonpay-trade/) |
 | [`@butternetwork/wdk-protocol-swidge-butter`](https://www.npmjs.com/package/@butternetwork/wdk-protocol-swidge-butter) | Swidge | Exact-input quotes and capability-dependent execution through Butter | [Docs](/sdk/swidge-modules/swidge-butter/) |
+| [`@layerswap/wdk-protocol-swidge-layerswap-evm`](https://github.com/layerswap/wdk-protocol-swidge-layerswap) | Swidge | Draft documentation for EVM source deposits and provider settlement; package release pending | [Draft docs](/sdk/swidge-modules/swidge-layerswap/) |
+| [`@layerswap/wdk-protocol-swidge-layerswap-solana`](https://github.com/layerswap/wdk-protocol-swidge-layerswap) | Swidge | Draft documentation for Solana source deposits and provider settlement; package release pending | [Draft docs](/sdk/swidge-modules/swidge-layerswap/) |
+| [`@layerswap/wdk-protocol-swidge-layerswap-bitcoin`](https://github.com/layerswap/wdk-protocol-swidge-layerswap) | Swidge | Draft documentation for Bitcoin source deposits and provider settlement; package release pending | [Draft docs](/sdk/swidge-modules/swidge-layerswap/) |
+| [`@layerswap/wdk-protocol-swidge-layerswap-ton`](https://github.com/layerswap/wdk-protocol-swidge-layerswap) | Swidge | Draft documentation for TON source deposits and provider settlement; package release pending | [Draft docs](/sdk/swidge-modules/swidge-layerswap/) |
 | [`@swapdk/wdk-protocol-swidge-swapdk`](https://www.npmjs.com/package/@swapdk/wdk-protocol-swidge-swapdk) | Swidge | Routes through SwapDK | [README](https://github.com/Swap-DK/wdk-protocol-bridges-swapdk#readme) |
 | [`@gobob/wdk-protocol-swidge-gateway`](https://www.npmjs.com/package/@gobob/wdk-protocol-swidge-gateway) | Swidge | Routes through the BOB Gateway | [README](https://github.com/bob-collective/wdk-protocol-swidge-gateway#readme) |
 | [`@transak/wdk-protocol-fiat-transak`](https://github.com/Transak/wdk-protocol-fiat-transak) | Fiat | Transak integration for fiat on-ramp and off-ramp | [Docs](/sdk/fiat-modules/fiat-transak/) |

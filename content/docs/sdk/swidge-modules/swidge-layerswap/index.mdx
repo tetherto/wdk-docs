@@ -1,0 +1,73 @@
+---
+title: LayerSwap Swidge Overview
+description: Choose a LayerSwap source-account package, discover routes and track provider-managed settlement.
+docType: explanation
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+[LayerSwap](https://github.com/layerswap/wdk-protocol-swidge-layerswap) connects a source wallet account to its HTTP routing service. The module creates a provider swap, sends the source deposit through the selected account, and exposes the provider's payout or refund status.
+
+These draft pages cover the `1.0.0-beta.1` source versions of the four LayerSwap adapters and their shared core. The packages are unpublished. See [release availability](/sdk/swidge-modules/swidge-layerswap/usage#release-availability) before running the examples.
+
+## Choose the source package
+
+Choose by the account that sends the deposit. Destination networks come from the provider's catalog and a successful route quote.
+
+| Source account | Package | Default class |
+| --- | --- | --- |
+| EVM or ERC-4337 | `@layerswap/wdk-protocol-swidge-layerswap-evm` | `LayerswapProtocolEvm` |
+| Solana | `@layerswap/wdk-protocol-swidge-layerswap-solana` | `LayerswapProtocolSolana` |
+| Bitcoin | `@layerswap/wdk-protocol-swidge-layerswap-bitcoin` | `LayerswapProtocolBitcoin` |
+| TON | `@layerswap/wdk-protocol-swidge-layerswap-ton` | `LayerswapProtocolTon` |
+
+`@layerswap/wdk-protocol-swidge-layerswap-core` supplies their shared client and protocol implementation. Applications normally use a source adapter. The monorepo root is private and is not an aggregate installation package.
+
+## Follow a route
+
+1. Initialize the matching wallet account and provider.
+2. Discover provider network names and token identifiers.
+3. Preview an exact-input quote and confirm the destination, recipient, refund address and limits.
+4. Call `swidge()`. It creates a provider swap and prepares the source deposit before broadcasting it.
+5. Keep both the swap ID and source hash, then query settlement separately.
+
+A preview quote does not reserve execution terms. `swidge()` uses the quote returned when it creates the provider swap. The source transaction hash does not establish destination delivery.
+
+## Responsibilities and boundaries
+
+| Area | Responsible component |
+| --- | --- |
+| Account keys and source-chain signing | The source wallet account |
+| Route catalog, deposit instructions and destination payout | LayerSwap |
+| Input validation, consent, selected fee limits, persistence and retry decisions | Your application |
+
+The module checks source-specific deposit formats, but it does not independently verify every effect of provider-supplied EVM calldata or Solana instructions. Provider status also remains separate from your own destination-chain verification.
+
+Only exact-input operations are supported. Catalog membership does not guarantee an executable pair or source-adapter capability. There is no implemented local `simulateSwidge()` flow in this family.
+
+Bitcoin preparation signs before the shared basis-point fee checks; broadcast follows those checks. TON source gas may be reported only after sending. Read the chain-specific guides before enabling those sources.
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-layerswap/usage">
+Bind an account, discover identifiers and preview a route.
+</Card>
+<Card title="Execute a Swidge" href="/sdk/swidge-modules/swidge-layerswap/guides/execute-swidge">
+Confirm an intent and understand the source-deposit boundary.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-layerswap/api-reference">
+Review methods, result fields and error behavior.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

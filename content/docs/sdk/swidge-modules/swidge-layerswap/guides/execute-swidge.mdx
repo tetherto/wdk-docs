@@ -1,0 +1,136 @@
+---
+title: Execute a LayerSwap Swidge
+description: Confirm an exact-input intent and submit its source deposit through the selected account.
+docType: how-to
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Start with a protocol bound to the matching initialized account, as shown in [Usage](/sdk/swidge-modules/swidge-layerswap/usage#bind-the-matching-account). Match that account's provider to the chosen source network. These examples remain subject to [release availability](/sdk/swidge-modules/swidge-layerswap/usage#release-availability).
+
+## Confirm a stable intent
+
+Select network names and token identifiers from discovery. Validate the destination recipient and source refund address for their intended networks. Choose a positive minimum destination amount and all three fee limits before requesting consent.
+
+```javascript
+export async function executeLayerswap({
+  protocol,
+  sourceNetwork,
+  destinationNetwork,
+  sourceToken,
+  destinationToken,
+  amount,
+  recipientAddress,
+  refundAddress,
+  minAmountOut,
+  limits,
+  confirm
+}) {
+  if (typeof amount !== 'bigint' || amount <= 0n ||
+      typeof minAmountOut !== 'bigint' || minAmountOut <= 0n) {
+    throw new RangeError('Supply positive bigint input and minimum-output amounts')
+  }
+  if (typeof recipientAddress !== 'string' || recipientAddress.length === 0 ||
+      typeof refundAddress !== 'string' || refundAddress.length === 0) {
+    throw new TypeError('Supply the intended recipient and source refund address')
+  }
+
+  const identifiers = [sourceNetwork, destinationNetwork, sourceToken, destinationToken]
+  if (identifiers.some(value => typeof value !== 'string' || value.length === 0)) {
+    throw new TypeError('Supply discovered network names and token identifiers as strings')
+  }
+
+  const intent = Object.freeze({
+    fromChain: sourceNetwork,
+    toChain: destinationNetwork,
+    fromToken: sourceToken,
+    toToken: destinationToken,
+    fromTokenAmount: amount,
+    recipient: recipientAddress,
+    refundAddress,
+    minAmountOut,
+    slippage: 0.005
+  })
+  const caps = {
+    bridgeMaxFee: limits?.bridgeMaxFee,
+    maxNetworkFeeBps: limits?.maxNetworkFeeBps,
+    maxProtocolFeeBps: limits?.maxProtocolFeeBps
+  }
+  for (const value of Object.values(caps)) {
+    if (typeof value !== 'bigint' || value < 0n) {
+      throw new RangeError('Supply all three fee limits as non-negative bigint values')
+    }
+  }
+  Object.freeze(caps)
+
+  const quote = await protocol.quoteSwidge(intent)
+  if (!await confirm({ intent, caps, quote })) return null
+
+  return protocol.swidge(intent, caps)
+}
+```
+
+`confirm` is your application callback. Show the source amount/token, destination token, recipient, refund address, minimum output and each fee with its denomination. The helper copies the primitive intent and limit values before awaiting consent. It requires all three limits as non-negative `bigint` values even though the SDK also declares numeric limits. These explicit per-call values override the constructor's fee limits; missing values are rejected before quoting or asking for consent.
+
+Keep the bound account and its provider fixed through confirmation. If either changes, cancel the intent and construct a new matching protocol instance.
+
+`quoteSwidge()` resolves the route and input amount but does not validate `recipient`, `refundAddress` or `minAmountOut`. Your application validates those inputs before consent, and execution applies its minimum-output check.
+
+The preview does not lock execution terms. `swidge()` creates its own provider swap and evaluates the quote attached to that response. It does not expose a second application-confirmation callback between receiving those instructions and sending the source deposit.
+
+## What execution can do
+
+1. Check the account, route and supplied integer options.
+2. Create a provider swap and receive its deposit instruction and execution quote.
+3. Check the minimum output and included-fee cap.
+4. Prepare the source deposit and check applicable basis-point limits.
+5. Submit through the source adapter, then notify the provider on a best-effort basis.
+
+<Callout type="warn">
+A limit failure after swap creation may leave an unfunded provider swap. Bitcoin signs during preparation before the basis-point checks. TON gas can be reported after sending, and gas in a different token is excluded from source-token basis-point checks. Review the [fee boundaries](/sdk/swidge-modules/swidge-layerswap/configuration#fee-limits-and-units) for the selected source.
+</Callout>
+
+## Source-specific behavior
+
+| Source | Deposit path |
+| --- | --- |
+| Standard EVM | Sends the provider's transaction as one wallet transaction. |
+| ERC-4337 | Estimates and sends a one-item transaction array, forwarding applicable wallet configuration overrides. |
+| Solana | Decodes the provider template, drops template signatures, obtains a fresh blockhash and sends the reconstructed message. |
+| Bitcoin | Builds and signs a PSBT containing deposit, reference output and optional change; broadcasts after the remaining guards. |
+| TON | Builds a native or jetton message and sends it through the TON wallet. |
+
+EVM calldata receives syntax checks, but its complete effects are not decoded and independently verified. Solana reconstructs the transaction rather than independently reviewing every instruction's business intent. The provider remains responsible for its routing instructions and destination payout.
+
+This family does not expose a separate `getRequiredApproval()` application flow. Follow the selected adapter's deposit path rather than copying an allowance workflow from another provider.
+
+## Keep the submission identifiers
+
+On success, persist `result.id`, `result.hash`, the selected networks and `result.transactions` before starting other application work. If persistence fails after success, use the result already held by your application to reconcile the deposit; do not call execution again as a storage retry.
+
+A source hash confirms only that the send path returned it. Destination payout or refund is separate. On an ambiguous send error, inspect source-chain state and the provider's swap before deciding whether another deposit is necessary. See [Track Settlement](/sdk/swidge-modules/swidge-layerswap/guides/track-settlement).
+
+## Next Steps
+
+<Cards>
+<Card title="Bitcoin Deposits" href="/sdk/swidge-modules/swidge-layerswap/guides/bitcoin-deposits">
+Understand the reference output and signing order.
+</Card>
+<Card title="TON Deposits" href="/sdk/swidge-modules/swidge-layerswap/guides/ton-deposits">
+Handle post-send gas and message-hash tracing.
+</Card>
+<Card title="Track Settlement" href="/sdk/swidge-modules/swidge-layerswap/guides/track-settlement">
+Persist and query the swap ID after submission.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
