@@ -7,9 +7,11 @@ schemaType: TechArticle
 
 This guide explains how to [transfer Jetton tokens gaslessly](#transfer-tokens-gasless), [override paymaster configuration](#override-paymaster-configuration), [estimate transfer fees](#estimate-transfer-fees), and [run preflight checks](#preflight-transfer-checks).
 
-In beta.13, both [`transfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#transferoptions-config) and [`quoteTransfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#quotetransferoptions-config) require `globalThis.crypto.getRandomValues()` to create a random 64-bit Jetton query ID. Check that your runtime exposes Web Crypto before either call.
+Both [`transfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#transferoptions-config) and [`quoteTransfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#quotetransferoptions-config) require `globalThis.crypto.getRandomValues()` to create a random 64-bit Jetton query ID. Check that your runtime exposes Web Crypto before either call.
 
 ## Transfer Tokens (Gasless)
+
+The sending account needs deployed Jetton wallets for both the transferred token and the selected paymaster token. Quotes and transfers check each wallet's code, owner and Jetton master; an undeployed wallet or a failed check stops the operation.
 
 You can send Jetton tokens gaslessly using [`account.transfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#transferoptions-config). Fees are deducted from the configured paymaster token:
 
@@ -23,9 +25,11 @@ console.log('Signed transfer body hash:', result.hash)
 console.log('Transfer fee:', result.fee, 'paymaster token units')
 ```
 
+The signed wallet body uses a 120-second timeout, including the first transfer at sequence number `0`. The relay estimate's expiry is checked separately; it does not set the signed body's expiry.
+
 ## Override Paymaster Configuration
 
-You can override the default paymaster token and maximum fee on a per-transfer basis by passing a second configuration argument to [`account.transfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#transferoptions-config):
+The second argument to [`account.transfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#transferoptions-config) overrides individual fields. An omitted or `undefined` `paymasterToken` or `transferMaxFee` retains its wallet-level value. For example, override only the fee cap while keeping the configured paymaster:
 
 ```javascript title="Transfer with Config Override"
 const result = await account.transfer({
@@ -33,9 +37,6 @@ const result = await account.transfer({
   recipient: 'EQ...',
   amount: 1000000000
 }, {
-  paymasterToken: {
-    address: 'EQ...' // Override default paymaster token
-  },
   transferMaxFee: 2000000000 // Override maximum allowed fee
 })
 console.log('Signed transfer body hash:', result.hash)
@@ -44,7 +45,9 @@ console.log('Transfer fee:', result.fee, 'paymaster token units')
 
 `transferMaxFee` rejects estimates greater than the configured cap. A fee estimate equal to the cap is allowed.
 
-Before signing or relaying, beta.10 and later verify that the relay estimate preserves the requested Jetton transfer and contains only the expected paymaster commission message. The validation also resolves the paymaster token's Jetton wallet through the configured TON client. Treat validation or provider errors as a failed preflight; do not reconstruct and submit the relay messages yourself.
+Passing only `{ paymasterToken }` retains the wallet's numeric `transferMaxFee`; it does not convert the cap to the new token's units. Set an explicit cap in the selected paymaster Jetton's base units when changing tokens.
+
+Before signing or relaying, the wallet verifies that the estimate preserves the requested Jetton transfer and contains only the expected paymaster commission message. The validation checks the paymaster token's deployed Jetton wallet through the configured TON client. Treat validation or provider errors as a failed preflight; do not reconstruct and submit the relay messages yourself.
 
 ## Estimate Transfer Fees
 
@@ -59,7 +62,7 @@ const quote = await account.quoteTransfer({
 console.log('Transfer fee estimate:', quote.fee, 'paymaster token units')
 ```
 
-`quoteTransfer()` performs the same estimate validation and paymaster-wallet lookup as `transfer()` before returning the commission.
+[`quoteTransfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#quotetransferoptions-config) performs the same estimate validation and deployed-wallet checks as `transfer()` before returning the commission. An omitted or `undefined` per-call paymaster uses the wallet-level token. The quote does not enforce `transferMaxFee`.
 
 ## Preflight Transfer Checks
 
@@ -69,7 +72,7 @@ Inspect balances and fees before transferring:
 2. Use [`account.quoteTransfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#quotetransferoptions-config) with the intended paymaster to estimate the fee.
 3. Query that paymaster Jetton explicitly with `getTokenBalance(paymasterJettonAddress)`. `getPaymasterTokenBalance()` always reads the wallet-level paymaster, so do not use it to preflight a per-call override.
 4. If the transferred Jetton is also the paymaster Jetton, require one balance to cover the transfer amount plus the fee. Compare parsed TON addresses because different string encodings can identify the same Jetton master.
-5. Reject a quote above your application's fee policy, then execute [`account.transfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#transferoptions-config) with `transferMaxFee` set to that quote. The method obtains a fresh estimate and aborts before relay if it has risen. This explicit policy check matters because a per-call configuration replaces, rather than merges with, the wallet-level transfer configuration:
+5. Reject a quote above your application's fee policy, then execute [`account.transfer()`](/sdk/wallet-modules/wallet-ton-gasless/api-reference#transferoptions-config) with `transferMaxFee` set to that quote. The method obtains a fresh estimate and aborts before relay if it has risen. This explicit cap bounds the new estimate even when the wallet-level cap allows a higher fee:
 
 This example imports `Address` from `@ton/ton` for canonical address comparison. Add `@ton/ton` as a direct dependency in your application before using it.
 

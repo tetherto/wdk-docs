@@ -99,11 +99,11 @@ const result = await account.sendTransaction(tx)
 console.log('UserOperation hash:', result.hash)
 ```
 
-For paymaster-token mode, the fee is returned in the paymaster token's base units. For an undelegated owned EOA, this quote includes the signed EIP-7702 authorization that the later sign or send uses. For sponsorship mode, the quote returns `fee: 0n` without estimating that authorization.
+For paymaster-token mode, the fee is returned in the paymaster token's base units. If the EOA is not delegated to the configured contract, the quote uses an unsigned authorization tuple for estimation without signing it. Signing or sending builds the operation with a signed authorization when needed. Sponsorship quotes return `fee: 0n` without estimating an authorization.
 
 ## Quote Reuse
 
-Owned accounts cache a recently quoted paymaster-token transaction for up to 2 minutes. If `sendTransaction()` receives the same transaction during that window, the account first reads the current EntryPoint nonce. It reuses the built UserOperation only when the nonce still matches; if the nonce moved, it quotes again. A send that needs a fresh EIP-7702 authorization also rebuilds the UserOperation before submission.
+Owned accounts cache a recently quoted paymaster-token transaction for up to 2 minutes only when already delegated to the configured contract. Undelegated estimation quotes are not cached. If `sendTransaction()` receives the same transaction during that window, the account first reads the current EntryPoint nonce. It reuses the built UserOperation only when the nonce still matches; if the nonce moved, it quotes again. A send that needs a fresh EIP-7702 authorization also rebuilds the UserOperation before submission.
 
 Sends that set `parallel` or `nonceKey` build against that explicit lane and do not reuse the default-lane quote cache.
 

@@ -10,7 +10,7 @@ This package does not have constructor options or runtime configuration. This pa
 You can install `@tetherto/wdk-utils` from npm:
 
 ```bash title="Install @tetherto/wdk-utils"
-npm install @tetherto/wdk-utils@1.0.0-beta.15
+npm install @tetherto/wdk-utils@1.0.0-beta.16
 ```
 
 React Native runtimes without `globalThis.crypto.getRandomValues` also need a secure random-values polyfill:
@@ -132,6 +132,7 @@ import {
 - `combineMnemonic()` rejects any supplied share with a zero index byte, even when other shares meet the recovery threshold. It verifies an embedded 32-bit integrity checksum before returning the reconstructed phrase. The checksum normally detects accidental corruption, but it can collide and does not authenticate shares.
 - `encrypt()` requires `globalThis.crypto.getRandomValues`. In Node.js, `splitMnemonic()` uses the dependency's `node:crypto` implementation; browser and React Native paths require `globalThis.crypto.getRandomValues`. In React Native, load `react-native-get-random-values` before importing `@tetherto/wdk-utils` when the runtime does not provide secure random bytes. In Bare, import from the package root so the Bare entrypoint provides the Node-compatible crypto path; do not load the React Native polyfill.
 - `parseBip21Request()` accepts `bitcoin:` URIs with a validated Bitcoin address and optional `amount`, `label`, and `message` parameters.
+- Repeated BIP-21 `amount`, `label`, `message`, or `req-*` keys return `DUPLICATE_PARAM`; repeated ignored keys do not.
 - `parseBip21Request()` and `parseEip681Request()` reject raw non-ASCII query text with `INVALID_FORMAT`. Percent-encode query values, for example `Caf%C3%A9` for `Café`. The BIP-21 encoder handles encoding for its `label` and `message` fields.
 - `encodeBip21Request()` validates the Bitcoin address and amount before returning a `bitcoin:` URI.
 - `encrypt()` returns a versioned payload with hex-encoded `salt`, `iv`, `tag`, and `ciphertext` fields plus the scrypt cost parameters used for key derivation.
@@ -143,9 +144,9 @@ import {
 - BIP-21 amounts are decimal BTC strings with up to eight decimal places and a maximum value of `21000000`.
 - BOLT11 helpers support invoices for `bitcoin`, `testnet`, `regtest`, and `signet` networks.
 - `decode()` returns user-provided invoice descriptions when they are present. Sanitize descriptions before rendering them in HTML or storing them.
-- `decodeLnurl()` returns the decoded URL string when parsing succeeds.
+- `decodeLnurl()` returns the normalized URL when parsing succeeds. It and `validateLnurl()` accept HTTPS targets or HTTP targets with an `.onion` host; other targets return `UNSUPPORTED_URL`. The application that fetches the URL must still reject private, loopback and link-local destinations, including through DNS and redirects.
 - `parseEip681Request()` currently supports transfer requests for the schemes implemented in the published runtime: `ethereum`, `pol`, `matic`, `polygon`, `arbitrum`, and `plasma`.
-- `parseEip681Request()` accepts both `uint256` and `value` query parameters for the amount field and normalizes the parsed amount into `amountSmallest`.
+- `parseEip681Request()` accepts `uint256` or its `value` alias and normalizes the amount into `amountSmallest`, bounded to a non-negative uint256. Repeated recipient or amount keys return `DUPLICATE_PARAM`. With `uint256` present, a simultaneous `value` must normalize to zero. Invalid token addresses return `INVALID_TOKEN_ADDRESS`.
 
 ## Examples
 
