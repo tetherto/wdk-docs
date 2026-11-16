@@ -141,3 +141,40 @@ Route availability also depends on a matching USD₮0 or XAU₮0 deployment. Ver
 | `getSupportedTokens(options?)` | Return configured USD₮0 or XAU₮0 token descriptors, optionally filtered by chain or token symbol. |
 
 Beta.10 validates EVM, Solana, TON, and TRON recipients during quote and execution. It rejects zero destinations, the TRON zero/burn address, and TON workchains other than `0`. Keep application validation before the write, verify route contracts and endpoint overrides, and keep approvals bounded to the intended standard-account transfer.
+
+## Bridging from Solana
+
+A separate package, with its own class and options. Do not reuse the EVM steps: there is no `approve()`, no `oftContractAddress` and no `dstEid`.
+
+| Resource | URL |
+|----------|-----|
+| **npm** | https://www.npmjs.com/package/@tetherto/wdk-protocol-bridge-usdt0-solana |
+| **GitHub** | https://github.com/tetherto/wdk-protocol-bridge-usdt0-solana |
+| **Docs** | https://docs.wdk.tether.io/sdk/bridge-modules/bridge-usdt0-solana |
+
+```javascript
+import Usdt0ProtocolSolana from '@tetherto/wdk-protocol-bridge-usdt0-solana'
+import { WalletAccountSolana } from '@tetherto/wdk-wallet-solana'
+
+const account = new WalletAccountSolana(process.env.SEED_PHRASE, "0'/0'", {
+  provider: 'https://api.mainnet-beta.solana.com'
+})
+const bridge = new Usdt0ProtocolSolana(account, { bridgeMaxFee: 10_000_000n })
+
+const options = {
+  targetChain: 'arbitrum', // ethereum, arbitrum, celo, ton, tron. Keys only, no chain IDs
+  recipient: '0x...',
+  token: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // Native SPL USDt, the only accepted mint
+  amount: 1000000n
+}
+
+const quote = await bridge.quoteBridge(options)
+const { hash, fee, bridgeFee } = await bridge.bridge(options)
+```
+
+- Mainnet only. There is no devnet deployment.
+- `fee` and `bridgeFee` are lamports on a standard account. `bridgeMaxFee` caps their sum and allows a total equal to the cap.
+- `bridgeFee` differs widely by destination. TRON is far above the other routes, so size the cap per route.
+- The Legacy Mesh also deducts a fee from the amount, which the result does not report.
+- On `WalletAccountSolanaGasless`, `fee` is in paymaster token units and includes the LayerZero fee. `bridgeFee` stays in lamports. Do not add them. `transactionMaxFee` caps `fee` and `bridgeMaxFee` caps `bridgeFee`.
+- To use `wdk.registerProtocol()`, install `@tetherto/wdk-wallet@1.0.0-beta.22` at the project root. Otherwise `getBridgeProtocol()` throws `No bridge protocol registered`.

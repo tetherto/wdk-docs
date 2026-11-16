@@ -5,7 +5,7 @@ docType: reference
 schemaType: APIReference
 ---
 
-This reference covers `@tetherto/wdk-react-native-core@1.0.0-beta.22`.
+This reference covers `@tetherto/wdk-react-native-core@1.0.0-beta.24`.
 
 | Export | Type | Description |
 |--------|------|-------------|
@@ -185,6 +185,8 @@ Hook for wallet lifecycle operations: create, restore, lock, unlock, delete, and
 | `clearCache` | `() => void` | Clear cached balance data |
 
 Only one wallet can be active. Await `lock()` before creating or restoring a different identity. To select an existing wallet, use `switchWallet()` or lock and then unlock it explicitly. Switching locks the previous wallet first; a failed unlock leaves it locked.
+
+Wallet identifiers and network names cannot use reserved object-property names such as `__proto__`, `prototype`, or `constructor`. Derived addresses are session-only state: they are not persisted and are cleared when stored state is rehydrated.
 
 `createWallet()`, `restoreWallet()`, `deleteWallet()`, `lock()`, `unlock()`, `switchWallet()`, and `createTemporaryWallet()` share a fail-fast mutex: overlapping calls reject instead of queuing, and a timeout does not cancel the operation. `clearTemporaryWallet()` is unguarded; serialize it with lifecycle calls because clearing an active temporary wallet also resets shared lifecycle state.
 
@@ -985,7 +987,7 @@ import type { SecureStorage } from '@tetherto/wdk-react-native-core'
 const storage: SecureStorage = createSecureStorage()
 ```
 
-Each credential method requires a wallet `identifier`. Normal identifiers are trimmed and lowercased before hashing into the keychain service name, so case or surrounding whitespace does not create a separate slot. Use a stable unique identifier of at most 256 characters containing letters, digits, `.`, `-`, `_`, `+`, or the supported email format. Values must be non-empty strings of at most 10,240 characters.
+Each credential method requires a wallet `identifier`. Normal identifiers are trimmed and lowercased before hashing into the keychain service name, so case or surrounding whitespace does not create a separate slot. Use a stable unique identifier of at most 256 characters containing letters, digits, `.`, `-`, `_`, `+`, or the supported email format. Reserved object-property names such as `__proto__`, `prototype`, and `constructor` are rejected. Values must be non-empty strings of at most 10,240 characters.
 
 | Method | Return | Purpose |
 | --- | --- | --- |
@@ -1002,7 +1004,7 @@ Each credential method requires a wallet `identifier`. Normal identifiers are tr
 
 All setter values and identifiers above are `string`. The storage layer does not encrypt an input seed for you or verify its encoding. Core's wallet hooks store base64 strings here; preserve that format when interoperating with them.
 
-- **Keychain accessibility:** encryption keys use `WHEN_UNLOCKED`. On iOS, encrypted seeds and entropy use `WHEN_UNLOCKED_THIS_DEVICE_ONLY`, so those entries do not transfer to another device through an encrypted backup restore.
+- **Keychain accessibility:** encryption keys, encrypted seeds and entropy are written with `WHEN_UNLOCKED_THIS_DEVICE_ONLY`. On iOS, these writes stay on the current device and do not transfer through an encrypted backup restore.
 - **Reading credentials:** `getAllEncrypted()` includes the raw encryption key; do not log it or treat the object as an encrypted backup. Its separate reads are not an atomic snapshot, so serialize credential mutations when consistency matters. `hasWallet()` checks only for an encrypted-seed entry; it does not prove that the other credentials exist or recovery will succeed.
 - **Deleting credentials:** deletion is not atomic and can leave partial data. Check remaining credentials after a failure before retrying. Direct deletion does not update Core's wallet inventory or reset its worklet.
 

@@ -1,0 +1,258 @@
+---
+title: BOB Gateway Swidge API Reference
+description: Reference for BOB Gateway exports, Swidge methods, approval and simulation results, HTTP client and errors.
+docType: reference
+schemaType: APIReference
+icon: Code
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Use `GatewaySwidge` to discover routes, obtain exact-input quotes, submit source transactions and track gateway orders. See [installation availability](/sdk/swidge-modules/swidge-bob/usage#installation) before using this API.
+
+## Package exports
+
+Import runtime values from the package root:
+
+```javascript
+import GatewaySwidge, {
+  BTC,
+  GatewayClient,
+  GatewaySwidgeError,
+  ERR,
+  buildTronApproval
+} from '@gobob/wdk-protocol-swidge-gateway'
+```
+
+`GatewaySwidge` is also a named export. `BTC` is the string `'BTC'`, normalized to the gateway's native-Bitcoin identifier; it is rejected when used for a chain other than Bitcoin.
+
+The root also exports WDK's `AccountRequiredError`, `BridgeError`, `MaximumFeeExceededError`, `SwapError`, `SwidgeError`, `SwidgeErrorReason` and `ValueError`. Internal adapter, mapper and transport source files are not package subpaths.
+
+Import declarations separately:
+
+```typescript
+import type {
+  GatewaySwidgeConfig,
+  GatewayClientConfig,
+  GatewaySwidgeQuote,
+  SwidgeOptions,
+  SwidgeSimulation,
+  EvmRequiredApproval,
+  HttpTransport,
+  TronApprovalCall,
+  TronWebLike
+} from '@gobob/wdk-protocol-swidge-gateway'
+```
+
+Additional exported types are `Affiliate`, `BtcSimulateResult`, `EvmSimulateResult`, `TronSimulateResult`, `IWalletAccount`, `IWalletAccountReadOnly`, and the WDK `SwidgeCommonOptions`, `SwidgeExactInOptions`, `SwidgeExactOutOptions`, `SwidgeFee`, `SwidgeFeeType`, `SwidgeProtocolConfig`, `SwidgeQuote`, `SwidgeResult`, `SwidgeStatus`, `SwidgeStatusOptions`, `SwidgeStatusResult`, `SwidgeSupportedChain`, `SwidgeSupportedToken`, `SwidgeSupportedTokensOptions` and `SwidgeTransaction`. The exported exact-output type does not mean this provider accepts exact-output requests.
+
+The package has an ESM entry and a conditional Bare entry that initializes its runtime compatibility layer. The default HTTP path requires fetch and abort support. See [Configuration](/sdk/swidge-modules/swidge-bob/configuration#gateway-access) for custom transport requirements.
+
+## GatewaySwidge
+
+### Constructor
+
+```typescript
+new GatewaySwidge(
+  account?: IWalletAccountReadOnly | IWalletAccount,
+  config?: GatewaySwidgeConfig
+)
+```
+
+An account is optional for discovery, status and quotes with an explicit recipient. Construction performs no gateway request. Source chain and destination settings must resolve when an operation is called.
+
+| Source | Execution | Simulation | Token allowance reads |
+| --- | --- | --- | --- |
+| Bitcoin | `signTransaction()` | `signTransaction()` | Not required. |
+| EVM | `sendTransaction()` | `quoteSendTransaction()` | `getAllowance()` for token inputs. |
+| TRON | `sendTransaction()`, `getAddress()` and a node capable of transaction readback | `getAddress()` and a provider that can build the call; fee estimation is optional | `getAddress()` and the resolved tronweb provider. |
+
+The signing/estimation capability guards run before gateway calls. Structural account types alone do not establish chain compatibility. Discovery can include chains for which the package has no source-transaction adapter.
+
+See [Configuration](/sdk/swidge-modules/swidge-bob/configuration) for all constructor fields, precedence and provider prerequisites.
+
+### Methods
+
+| Method | Returns | Purpose |
+| --- | --- | --- |
+| `quoteSwidge(options)` | `Promise<GatewaySwidgeQuote>` | Request an indicative exact-input quote. |
+| `swidge(options, config?)` | `Promise<SwidgeResult>` | Fetch a quote, validate and submit the source transaction. |
+| `simulateSwidge(options, config?)` | `Promise<SwidgeSimulation>` | Create an order and inspect the source operation without broadcasting. |
+| `getRequiredApproval(options, config?)` | `Promise<EvmRequiredApproval \| null>` | Read the token allowance and return an approval descriptor if needed. |
+| `getSwidgeStatus(id, options?)` | `Promise<SwidgeStatusResult>` | Map an order's status and available transaction hashes. |
+| `getSupportedChains()` | `Promise<SwidgeSupportedChain[]>` | Read chains appearing as source or destination in gateway routes. |
+| `getSupportedTokens(options?)` | `Promise<SwidgeSupportedToken[]>` | Read discovered tokens with known metadata. |
+
+### Swidge options
+
+`quoteSwidge()`, `swidge()`, `simulateSwidge()` and `getRequiredApproval()` use WDK `SwidgeOptions` plus the provider's runtime `fromChain` extension. The relevant options are:
+
+| Option | Behavior |
+| --- | --- |
+| `fromChain` | Source chain identifier as a string. A nonempty value overrides the constructor's `fromChain`; use the gateway identifier returned by discovery. |
+| `fromToken`, `toToken` | Chain-specific token identifiers. Use `BTC` for native Bitcoin and a contract identifier for ERC-20/TRC-20 tokens. |
+| `fromTokenAmount` | Required, nonnegative integer source amount in base units. Use bigint, a safe integer or a plain decimal string. |
+| `toChain` | Destination chain; defaults to the source when absent or empty. |
+| `recipient` | Required for cross-chain routes. Same-chain routes can default to the account address. |
+| `refundAddress` | Source-chain refund address; overrides constructor and account defaults. Required to resolve before order creation. |
+| `slippage` | Fraction, such as `0.01` for 1%; overrides the constructor default. |
+| `minAmountOut` | Optional nonnegative integer destination floor, checked against the fresh execution quote. |
+
+For TypeScript, the re-exported `SwidgeOptions` admits `number | bigint` for `fromTokenAmount` and `minAmountOut`. Decimal strings are accepted by JavaScript runtime validation, but not by those declarations. The provider-specific `maxNativeFee` declaration includes strings.
+
+The exported `SwidgeOptions` omits `fromChain`; only `simulateSwidge()` declares that extension directly. For a per-call source in TypeScript, use a variable typed as `SwidgeOptions & { fromChain?: string }`, or keep `fromChain` in constructor configuration.
+
+`toTokenAmount` is rejected: this module supports exact input only. The source account and its provider must match the effective `fromChain`. A constructor `maxNativeFee` applies only when the call's source chain matches the constructor's chain; otherwise supply a per-call native-fee cap or use that source chain's default. See [fee controls](/sdk/swidge-modules/swidge-bob/configuration#fee-controls).
+
+### quoteSwidge
+
+The returned quote contains:
+
+| Field | Meaning |
+| --- | --- |
+| `fromTokenAmount` | Provider-reported source amount, as bigint. |
+| `toTokenAmount` | Estimated destination amount, as bigint. |
+| `toTokenAmountMin` | Estimated output less the gateway's echoed slippage, rounded down; `0n` if no usable slippage is echoed. |
+| `fees` | Nonzero fee entries, each in its own token and base units. |
+| `estimatedDuration` | Optional provider estimate in seconds. |
+| `priceImpact` | Optional numeric fraction; negative means a loss. |
+| `affiliateApplied` | Whether configured affiliates were sent in the quote request. |
+
+Mapped fees are included in the quoted output. Do not sum amounts across different tokens. A successful preview does not enforce execution fee caps or bind the later `swidge()` call to the same quote.
+
+### swidge
+
+The second argument accepts `maxNetworkFeeBps`, `maxProtocolFeeBps`, `maxNativeFee` and `paymasterToken`. The first two override their constructor limits; `maxNativeFee` is a source-native amount and `paymasterToken` is forwarded only on the ERC-4337 EVM send path.
+
+Execution fetches a fresh quote, checks output and applicable fee limits, creates an order, validates its source transaction, then signs and submits it. On EVM and TRON, the pre-sign checks constrain the source chain, pinned AllowanceHolder, source token, amount and extra native value. They do not independently verify every nested routing instruction or destination payout.
+
+The result contains `id` (gateway order ID), `hash` (source transaction hash), quote amounts and `fees`, and a source entry in `transactions`. The destination amount is still a quote, not a settlement receipt.
+
+On Bitcoin, the gateway broadcasts the locally signed transaction. EVM and TRON execution send through the account. Errors can follow a submitted transaction; [reconcile the order and chain](/sdk/swidge-modules/swidge-bob/guides/track-settlement) before retrying.
+
+### simulateSwidge
+
+The second argument accepts basis-point caps and `maxNativeFee`, as for execution. The return value always contains `variant`, `orderId`, `quote` and `broadcast: false`, plus one source result:
+
+| Source result | Fields and interpretation |
+| --- | --- |
+| `onramp` | `txid`, `paidToDeposit` (satoshis), `valid`. Bitcoin signing occurs; validity checks an exact payment to the order's deposit address. The signed transaction is not returned. |
+| `evm` | `tx`, `gasEstimate`, `requiredApproval`, `valid`, optional `reason`. `gasEstimate` uses the account's returned `fee`, otherwise `gas`, otherwise `null`; interpret it according to that account's quote contract. |
+| `tron` | `tx`, `feeEstimate`, `requiredApproval`, `valid`, optional `reason`. A valid built call can have `feeEstimate: null` when the account cannot estimate a fee. |
+
+Simulation creates a real, unfunded gateway order. EVM estimation or allowance-read failures and TRON build/read failures can be returned as `valid: false` with a reason; earlier input, quote or order-validation failures still reject. A valid result does not guarantee later execution or settlement.
+
+See [Bitcoin Routes](/sdk/swidge-modules/swidge-bob/guides/bitcoin-routes) before using Bitcoin simulation.
+
+### getRequiredApproval
+
+Requires `fromToken`, `toToken` and `fromTokenAmount` together with the route's other options. The second argument accepts only `maxNativeFee`; it does not enforce `minAmountOut` or the percentage fee caps.
+
+Returns `null` for a Bitcoin-source route, native source token, or sufficient existing allowance. Otherwise it returns:
+
+| Field | Meaning |
+| --- | --- |
+| `token` | Source token contract. |
+| `spender` | Validated AllowanceHolder on the source chain. |
+| `amount` | Unbounded allowance: `2²⁵⁶ − 1`, as bigint. |
+| `resetRequired` | Optional `true` when the current Ethereum USD₮ allowance must first be reset to zero. |
+
+On a spender-cache miss, this method creates an unfunded gateway order, validates its source transaction and caches the spender for that route on the instance. It then reads allowance. It does not send an approval.
+
+The returned amount is not the requested trade amount. Obtain approval for the allowance being granted and wait for each approval transaction before executing. When `resetRequired` is true, reset to `0n` first. Follow [Execute a Swidge](/sdk/swidge-modules/swidge-bob/guides/execute-swidge) for EVM and TRON approval flows.
+
+### getSwidgeStatus
+
+Takes the order `id` returned by execution. Its optional WDK status options are accepted but unused.
+
+Possible mapped values are `pending`, `refund-pending`, `completed`, `refunded` and `failed`. These are not a guaranteed sequence. The result includes every available source, destination and refund hash in `transactions`. An unrecognized provider status throws instead of being assumed pending.
+
+See [Track Settlement](/sdk/swidge-modules/swidge-bob/guides/track-settlement) for polling and submission recovery.
+
+### getSupportedChains
+
+Reads both source and destination chains from gateway routes, returning each chain's ID, name, type and native token. This does not prove a route exists for a particular amount or that this package can sign from every returned chain.
+
+### getSupportedTokens
+
+Accepts optional WDK `SwidgeSupportedTokensOptions`; the implementation reads only `fromChain`. When supplied, it keeps token entries whose own `chain` exactly matches that value, including entries found on the destination side of a route. It does not select all destinations reachable from that source.
+
+Each returned token has `token`, `chain`, `address` and shipped metadata including symbol and decimals. Tokens absent from that metadata table are omitted. Use live discovery rather than an exhaustive static asset list.
+
+### Inherited swap and bridge methods
+
+`swap()`, `quoteSwap()`, `bridge()` and `quoteBridge()` delegate through the WDK base protocol. Swap aliases use same-chain options. Bridge aliases reuse the same token identifier for source and destination, so they cannot map different token contracts across chains.
+
+Use `swidge()` with explicit source and destination token identifiers for those routes. A shared native sentinel between chains with different native assets can describe a swap rather than a transfer of the same asset, and a bridge result does not identify the delivered token.
+
+## buildTronApproval
+
+`buildTronApproval(approval, { feeLimit? })` returns a `TronApprovalCall` descriptor for `approve(address,uint256)`. It does not submit a transaction. The input has `token`, `spender` and `amount`; `feeLimit` defaults to `100000000` sun (100 TRX).
+
+Send the descriptor with the TRON account's `sendTransaction()` and confirm the approval before the swidge. This helper constructs the requested allowance; it does not reduce an unbounded amount automatically.
+
+## GatewayClient
+
+The low-level client accepts `GatewayClientConfig` and exposes gateway wire responses without WDK quote, status or transaction validation. Each method returns `Promise<unknown>`.
+
+| Method | Gateway operation |
+| --- | --- |
+| `getQuote(params)` | `GET /v4/get-quote`; params are string values or undefined. |
+| `createOrder(quote)` | `POST /v4/create-order`; creates an order from the wire quote. |
+| `registerTx(body)` | `PATCH /v4/register-tx`; submits an onramp's signed Bitcoin transaction for gateway broadcasting. |
+| `getOrder(id)` | `GET /v4/get-order/{id}`. |
+| `getOrders(address, params?)` | `GET /v4/get-orders/{address}`. |
+| `getRoutes()` | `GET /v4/get-routes`. |
+| `getMaxSpendable(address)` | `GET /v4/get-max-spendable/{address}`; gateway estimate for a Bitcoin address. |
+
+For `registerTx()`, the wire body is `{ onramp: { order_id, bitcoin_tx_hex } }`. It contains a broadcastable transaction and must not be logged or exposed. Prefer `GatewaySwidge` for validated wallet flows.
+
+The client's configuration is `apiUrl`, `bearerToken`, `http`, `timeoutMs`, `allowInsecureApiUrl` and `maxRetries`. Defaults and retry/transport boundaries are described in [Configuration](/sdk/swidge-modules/swidge-bob/configuration#gateway-access).
+
+## Errors
+
+| Error | When to handle it |
+| --- | --- |
+| `ValueError` | Missing source chain, amount or required recipient; invalid route amounts, unsupported exact-output request, or invalid constructor/native-fee configuration. |
+| `AccountRequiredError` | The source account lacks a required signing, estimation or allowance-reading method. |
+| `SwidgeError` | A fresh quote fails `minAmountOut`, with `SwidgeErrorReason.COULD_NOT_MET_THRESHOLD`. |
+| `MaximumFeeExceededError` | A percentage fee exceeds its limit, or the required fee data cannot verify that limit. |
+| `GatewaySwidgeError` | Gateway/chain-node failure, unsupported operation or failed input/transaction validation; inspect `code`. |
+| `SwapError`, `BridgeError` | An inherited alias wraps only a delegated `SwidgeError`. Other errors propagate unchanged. |
+| Other errors | Account/provider failures, malformed data or a custom transport can propagate their own error. |
+
+`GatewaySwidgeError` exposes `code: string`, optional `status` and `cause: unknown`. Do not display or log unfiltered causes, which can contain request or transaction details.
+
+| `ERR` property | Value | Behavior |
+| --- | --- | --- |
+| `HTTP` | `GATEWAY_HTTP_ERROR` | Non-2xx responses after retries, unusable order/status data, timeout or chain-node failure. |
+| `VALIDATION` | `VALIDATION_ERROR` | Missing refund address before order creation, invalid affiliate data, unverifiable output floor or mismatched order/source transaction. |
+| `NOT_SUPPORTED` | `NOT_SUPPORTED` | Missing runtime/provider capability or unsupported transaction type. |
+| `UNSUPPORTED_ROUTE` | `UNSUPPORTED_ROUTE` | Exported constant; this implementation reports unavailable routes through gateway HTTP errors instead. |
+| `APPROVAL_REQUIRED` | `APPROVAL_REQUIRED` | Exported constant; use `getRequiredApproval()` rather than expecting this code. |
+
+An exception is not proof that no transaction was submitted. Keep order and transaction identifiers and use the [settlement guide](/sdk/swidge-modules/swidge-bob/guides/track-settlement) before repeating a send.
+
+## Next Steps
+
+<Cards>
+<Card title="Usage" href="/sdk/swidge-modules/swidge-bob/usage">
+Discover a route and request a quote.
+</Card>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-bob/configuration">
+Set account, transport and fee controls.
+</Card>
+<Card title="Track Settlement" href="/sdk/swidge-modules/swidge-bob/guides/track-settlement">
+Handle pending orders, refunds and ambiguous submissions.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

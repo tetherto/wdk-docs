@@ -1,0 +1,91 @@
+---
+title: Bridge from Solana with USD₮0
+description: Bridge native USD₮ from WDK Solana accounts to Ethereum, Arbitrum, Celo, TON, and TRON over the USD₮0 Legacy Mesh.
+docType: explanation
+schemaType: TechArticle
+---
+
+Use the USD₮0 bridge module for Solana to move native USD₮ out of WDK Solana accounts. It is the Solana counterpart of the [EVM bridge module](/sdk/bridge-modules/bridge-usdt0-evm/) and implements the same `BridgeProtocol` interface.
+
+<Callout type="info">
+These pages reflect `@tetherto/wdk-protocol-bridge-usdt0-solana@1.0.0-beta.1`. Solana is the only source chain. To bridge toward Solana, use the [EVM bridge module](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-cross-ecosystem).
+</Callout>
+
+<Callout type="warn">
+The package contains the Solana mainnet deployment only, so there is no devnet path. Against devnet, `quoteBridge()` fails with `Invalid OFT store account.` Start with a read-only quote, then bridge a small amount on mainnet.
+</Callout>
+
+## Features
+
+- **Legacy Mesh Routes**: Send to Ethereum, Arbitrum, Celo, TON, and TRON
+- **Standard and Gasless Accounts**: Works with `WalletAccountSolana` and with Kora-backed `WalletAccountSolanaGasless`
+- **No Approval Step**: The bridge transaction moves the tokens directly, so there is no allowance to prepare
+- **Fee Management**: Quote fees before sending and cap them with `bridgeMaxFee` and, on gasless accounts, `transactionMaxFee`
+- **Recipient Validation**: Rejects malformed, zero, and bad-checksum addresses before quoting or sending
+- **Route Discovery**: List chains and tokens with `getSupportedChains()` and `getSupportedTokens()`
+- **Bare Runtime Support**: Runs on Node.js and Bare
+- **TypeScript Support**: Type declarations included
+
+## What moves
+
+The module accepts one token: native SPL USD₮, mint `Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB`. It transfers that token through the [USD₮0 Legacy Mesh](https://docs.usdt0.to/overview/the-legacy-mesh), which connects pools of existing USD₮ across chains. The USD₮0 documentation describes the destination token as native USD₮ on Ethereum, Celo, TON, and TRON, and USD₮0 on Arbitrum.
+
+<Callout type="warn">
+The Legacy Mesh takes a fee from the transferred amount, set by `feeBps` on the on-chain OFT store. It was 3 basis points (0.03%) when read on November 2, 2026, so bridging 1 USD₮ delivers 0.9997 USD₮. Neither `quoteBridge()` nor `bridge()` returns this fee. It is separate from `fee` and `bridgeFee`.
+</Callout>
+
+## Supported Networks
+
+### Source Chain
+
+| Chain | Endpoint ID (EID) |
+|-------|-------------------|
+| Solana mainnet | 30168 |
+
+### Destination Chains
+
+| Chain | `targetChain` | Chain ID | Endpoint ID (EID) |
+|-------|---------------|----------|-------------------|
+| Ethereum | `ethereum` | 1 | 30101 |
+| Arbitrum | `arbitrum` | 42161 | 30110 |
+| Celo | `celo` | 42220 | 30125 |
+| TON | `ton` | Not applicable | 30343 |
+| TRON | `tron` | 728126428 | 30420 |
+
+Pass the `targetChain` key to `bridge()` and `quoteBridge()`. They do not accept a chain ID or endpoint ID.
+
+## How this differs from the EVM module
+
+| | [EVM module](/sdk/bridge-modules/bridge-usdt0-evm/) | Solana module |
+|---|---|---|
+| Class | `Usdt0ProtocolEvm` | `Usdt0ProtocolSolana` |
+| Source | 22 EVM chains | Solana mainnet |
+| Destinations | 25 configured keys | 5 chains |
+| Token | Configured USD₮0 and XAU₮0 routes | Native SPL USD₮ |
+| Allowance | `approve()` first on standard accounts | Not needed |
+| Route overrides | `oftContractAddress`, `dstEid` | Not available |
+| Gas abstraction | ERC-4337 | Kora paymaster |
+| `bridgeMaxFee` at an equal value | Rejected | Allowed |
+
+## Next Steps
+
+<Cards>
+<Card title="Get Started" href="/sdk/bridge-modules/bridge-usdt0-solana/guides/get-started">
+Install the package and create a bridge from a Solana account
+</Card>
+<Card title="Usage" href="/sdk/bridge-modules/bridge-usdt0-solana/usage">
+Task-focused guides for quoting, bridging, and gasless accounts
+</Card>
+<Card title="Configuration" href="/sdk/bridge-modules/bridge-usdt0-solana/configuration">
+Configure fee caps, providers, and paymaster options
+</Card>
+<Card title="API Reference" href="/sdk/bridge-modules/bridge-usdt0-solana/api-reference">
+Complete API documentation for the bridge protocol
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

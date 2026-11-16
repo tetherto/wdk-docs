@@ -62,6 +62,7 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 | [`@0x/wdk-protocol-swidge-0x`](https://www.npmjs.com/package/@0x/wdk-protocol-swidge-0x) | 0x | Community | Same-chain EVM token swaps through the 0x Swap API v2 | [Docs](/sdk/swidge-modules/swidge-0x/) |
 | [`@moonpay/wdk-protocol-swidge-moonpay-trade`](https://www.npmjs.com/package/@moonpay/wdk-protocol-swidge-moonpay-trade) | MoonPay Trade | Community | Provider route discovery, indicative quotes, and source-deposit execution through writable WDK accounts | [Docs](/sdk/swidge-modules/swidge-moonpay-trade/) |
 | [`@butternetwork/wdk-protocol-swidge-butter`](https://www.npmjs.com/package/@butternetwork/wdk-protocol-swidge-butter) | Butter Network | Community | Exact-input quotes and capability-dependent execution through Butter | [Docs](/sdk/swidge-modules/swidge-butter/) |
+| [`@gobob/wdk-protocol-swidge-gateway`](https://www.npmjs.com/package/@gobob/wdk-protocol-swidge-gateway) | BOB Gateway | Community | Exact-input quotes, Bitcoin/EVM/TRON source execution and order tracking through BOB Gateway | [Docs](/sdk/swidge-modules/swidge-bob/) |
 
 ## Smart Deposit Address Modules
 
@@ -102,6 +103,7 @@ Cross-chain bridge functionality for token transfers between blockchains.
 | Module | Route | Description | Documentation |
 |--------|-------|-------------|---------------|
 | [`@tetherto/wdk-protocol-bridge-usdt0-evm`](https://github.com/tetherto/wdk-protocol-bridge-usdt0-evm) | EVM → EVM + Non-EVM | USD₮0 bridging from EVM source chains to EVM and non-EVM destinations | [Docs](/sdk/bridge-modules/bridge-usdt0-evm/) |
+| [`@tetherto/wdk-protocol-bridge-usdt0-solana`](https://github.com/tetherto/wdk-protocol-bridge-usdt0-solana) | Solana → EVM + Non-EVM | Native USD₮ bridging from Solana to Ethereum, Arbitrum, Celo, TON, and TRON | [Docs](/sdk/bridge-modules/bridge-usdt0-solana/) |
 
 ## Lending Modules
 
@@ -155,5 +157,5 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 | [`@moonpay/wdk-protocol-swidge-moonpay-trade`](https://www.npmjs.com/package/@moonpay/wdk-protocol-swidge-moonpay-trade) | Swidge | Provider route discovery, indicative quotes, and source-deposit execution | [Docs](/sdk/swidge-modules/swidge-moonpay-trade/) |
 | [`@butternetwork/wdk-protocol-swidge-butter`](https://www.npmjs.com/package/@butternetwork/wdk-protocol-swidge-butter) | Swidge | Exact-input quotes and capability-dependent execution through Butter | [Docs](/sdk/swidge-modules/swidge-butter/) |
 | [`@swapdk/wdk-protocol-swidge-swapdk`](https://www.npmjs.com/package/@swapdk/wdk-protocol-swidge-swapdk) | Swidge | Routes through SwapDK | [README](https://github.com/Swap-DK/wdk-protocol-bridges-swapdk#readme) |
-| [`@gobob/wdk-protocol-swidge-gateway`](https://www.npmjs.com/package/@gobob/wdk-protocol-swidge-gateway) | Swidge | Routes through the BOB Gateway | [README](https://github.com/bob-collective/wdk-protocol-swidge-gateway#readme) |
+| [`@gobob/wdk-protocol-swidge-gateway`](https://www.npmjs.com/package/@gobob/wdk-protocol-swidge-gateway) | Swidge | Exact-input quotes, Bitcoin/EVM/TRON source execution and order tracking through BOB Gateway | [Docs](/sdk/swidge-modules/swidge-bob/) |
 | [`@transak/wdk-protocol-fiat-transak`](https://github.com/Transak/wdk-protocol-fiat-transak) | Fiat | Transak integration for fiat on-ramp and off-ramp | [Docs](/sdk/fiat-modules/fiat-transak/) |

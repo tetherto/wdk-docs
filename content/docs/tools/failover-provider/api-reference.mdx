@@ -25,7 +25,7 @@ new FailoverProvider({
 ```
 
 - `retries` (`number`, optional): Number of additional attempts after the first failure. Total attempts are `1 + retries`.
-- `shouldRetryOn` (`(error: unknown) =\> boolean`, optional): Predicate that decides whether the proxy should switch to the next provider after a failure.
+- `shouldRetryOn` (`(error: unknown, context: RetryContext) =\> boolean`, optional): Predicate that decides whether the proxy should switch to the next provider after a failure.
 
 #### Methods
 
@@ -69,16 +69,27 @@ The package exports the `FailoverProviderConfig` type through its top-level type
 | Field | Description |
 | --- | --- |
 | `retries?` | Additional retry attempts after the first failure. Defaults to `3`. |
-| `shouldRetryOn?` | Retry predicate for thrown errors and rejected promises. Defaults to retrying any `Error` instance. |
+| `shouldRetryOn?` | `(error: unknown, context: RetryContext) => boolean`. Defaults to retrying any `Error` instance. |
+
+#### `RetryContext`
+
+The package exports `RetryContext` as a TypeScript type. The retry predicate receives:
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `method` | `string \| symbol` | Property or method whose access or call failed. |
+| `args?` | `unknown[]` | Method arguments; absent when reading a property fails. |
+
+Use the context to exclude calls that your application cannot safely replay. A predicate that accepts only the error remains valid.
 
 ## Runtime behavior
 
 - `initialize()` returns a JavaScript `Proxy` with a neutral target whose property reads are delegated to the active provider.
 - Non-function properties are forwarded from the currently active provider.
 - Getters and methods run with the underlying provider as `this`, so instance state and private fields remain available.
-- If a property getter throws and `shouldRetryOn(error)` returns `true`, the runtime advances to the next provider before retrying the property access.
-- If a synchronous method throws and `shouldRetryOn(error)` returns `true`, the runtime advances to the next provider and retries the method call.
-- If an asynchronous method rejects and `shouldRetryOn(error)` returns `true`, the runtime advances to the next provider and retries the method call.
+- If a property getter throws and `shouldRetryOn(error, context)` returns `true`, the runtime advances to the next provider before retrying the property access.
+- If a synchronous method throws and `shouldRetryOn(error, context)` returns `true`, the runtime advances to the next provider and retries the method call.
+- If an asynchronous method rejects and `shouldRetryOn(error, context)` returns `true`, the runtime advances to the next provider and retries the method call.
 - A result is treated as promise-like only when its `then` property is a function. An object with a non-function `then` property is returned synchronously.
 - Provider switching is round-robin. If the active provider already changed while another call was failing, the runtime keeps the newer active provider instead of advancing twice.
 

@@ -1,6 +1,6 @@
 ---
 name: wdk
-description: Tether Wallet Development Kit (WDK) for building non-custodial multi-chain wallets. Use when working with @tetherto/wdk, wallet modules (wdk-wallet-aptos, wdk-wallet-btc, wdk-wallet-evm, wdk-wallet-evm-erc-4337, wdk-wallet-solana, wdk-wallet-spark, wdk-wallet-ton, wdk-wallet-tron, ton-gasless, tron-gasfree), protocol modules including swidge, swap (wdk-protocol-swap-velora-evm), bridge (wdk-protocol-bridge-usdt0-evm), lending (wdk-protocol-lending-aave-evm), and fiat (wdk-protocol-fiat-moonpay), and Cloud Backup. Covers wallet creation, transactions, token transfers, swidge asset routes, DEX swaps, cross-chain bridges, DeFi lending/borrowing, fiat on/off ramps, and caller-encrypted cloud recovery.
+description: Tether Wallet Development Kit (WDK) for building non-custodial multi-chain wallets. Use when working with @tetherto/wdk, wallet modules (wdk-wallet-aptos, wdk-wallet-btc, wdk-wallet-evm, wdk-wallet-evm-erc-4337, wdk-wallet-solana, wdk-wallet-spark, wdk-wallet-ton, wdk-wallet-tron, ton-gasless, tron-gasfree), protocol modules including swidge, swap (wdk-protocol-swap-velora-evm), bridge (wdk-protocol-bridge-usdt0-evm, wdk-protocol-bridge-usdt0-solana), lending (wdk-protocol-lending-aave-evm), and fiat (wdk-protocol-fiat-moonpay), and Cloud Backup. Covers wallet creation, transactions, token transfers, swidge asset routes, DEX swaps, cross-chain bridges, DeFi lending/borrowing, fiat on/off ramps, and caller-encrypted cloud recovery.
 ---
 
 # Tether WDK
@@ -75,6 +75,7 @@ When a task targets a specific chain, protocol, or recovery tool, read the relev
         ├── swidge provider modules               # Provider implementations for swap, bridge, or combined routes
         ├── wdk-protocol-swap-velora-evm   # DEX swaps on EVM
         ├── wdk-protocol-bridge-usdt0-evm  # Cross-chain USDt0 bridge
+        ├── wdk-protocol-bridge-usdt0-solana  # USDt bridge from Solana
         ├── wdk-protocol-lending-aave-evm  # Aave V3 lending
         └── wdk-protocol-fiat-moonpay      # Fiat on/off ramp
 
@@ -115,14 +116,14 @@ All packages are under the `@tetherto` scope. **Always** `npm view <pkg> version
 |---------|-----|
 | `@tetherto/wdk-protocol-swap-velora-evm` | [npmjs.com/package/@tetherto/wdk-protocol-swap-velora-evm](https://www.npmjs.com/package/@tetherto/wdk-protocol-swap-velora-evm) |
 | `@tetherto/wdk-protocol-bridge-usdt0-evm` | [npmjs.com/package/@tetherto/wdk-protocol-bridge-usdt0-evm](https://www.npmjs.com/package/@tetherto/wdk-protocol-bridge-usdt0-evm) |
+| `@tetherto/wdk-protocol-bridge-usdt0-solana` | [npmjs.com/package/@tetherto/wdk-protocol-bridge-usdt0-solana](https://www.npmjs.com/package/@tetherto/wdk-protocol-bridge-usdt0-solana) |
 | `@tetherto/wdk-protocol-lending-aave-evm` | [npmjs.com/package/@tetherto/wdk-protocol-lending-aave-evm](https://www.npmjs.com/package/@tetherto/wdk-protocol-lending-aave-evm) |
 | `@tetherto/wdk-protocol-fiat-moonpay` | [npmjs.com/package/@tetherto/wdk-protocol-fiat-moonpay](https://www.npmjs.com/package/@tetherto/wdk-protocol-fiat-moonpay) |
 
-### UI Kits & Tools
+### Tools
 
 | Package | npm |
 |---------|-----|
-| `@tetherto/wdk-uikit-react-native` | [npmjs.com/package/@tetherto/wdk-uikit-react-native](https://www.npmjs.com/package/@tetherto/wdk-uikit-react-native) |
 | `@tetherto/wdk-react-native-core` | [npmjs.com/package/@tetherto/wdk-react-native-core](https://www.npmjs.com/package/@tetherto/wdk-react-native-core) |
 | `@tetherto/pear-wrk-wdk` | [npmjs.com/package/@tetherto/pear-wrk-wdk](https://www.npmjs.com/package/@tetherto/pear-wrk-wdk) |
 | `@tetherto/wdk-indexer-http` | [npmjs.com/package/@tetherto/wdk-indexer-http](https://www.npmjs.com/package/@tetherto/wdk-indexer-http) |

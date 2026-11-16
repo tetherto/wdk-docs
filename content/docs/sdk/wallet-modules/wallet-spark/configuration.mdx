@@ -62,7 +62,7 @@ A supplied client is reused as-is. Match its network to the wallet's `network`; 
 To construct the client yourself, install the Spark SDK version used by this package:
 
 ```bash
-npm install @tetherto/wdk-wallet-spark@1.0.0-beta.29 @buildonspark/spark-sdk@0.10.0
+npm install @tetherto/wdk-wallet-spark@1.0.0-beta.31 @buildonspark/spark-sdk@0.10.0
 ```
 
 Pass the client through the wallet configuration:
@@ -121,6 +121,23 @@ const config = {
 ```
 
 You can also call [`syncWalletBalance()`](/sdk/wallet-modules/wallet-spark/api-reference) directly to reconcile wallet state. A failed response alone does not prove a payment was not submitted; inspect its status before deciding whether to pay again.
+
+### Withdrawal Fee Limit
+
+`withdrawMaxFee` optionally limits the fee quoted during [`withdraw()`](/sdk/wallet-modules/wallet-spark/api-reference#withdrawoptions), in satoshis. It accepts `number` or `bigint`; omitting it disables this check.
+
+The account adds the quote's L1 broadcast fee and user fee for the selected `exitSpeed`: `FAST`, `MEDIUM`, or `SLOW` (default: `MEDIUM`). It throws `MaximumFeeExceededError` if that sum exceeds the limit; an equal fee is allowed. With the limit configured, an unrecognized speed throws `ValueError`.
+
+Set the limit when creating the wallet:
+
+```javascript
+const config = {
+  network: 'MAINNET',
+  withdrawMaxFee: 1000n
+}
+```
+
+This checks the returned quote; it does not independently verify its fee fields.
 
 ### Spark SDK Logging
 

@@ -1,0 +1,130 @@
+---
+title: Get Started
+description: Install the Solana bridge package, wire a Solana account, and register the protocol through WDK Core.
+docType: how-to
+schemaType: TechArticle
+---
+
+This guide shows how to [install the package](#install-the-package), [create a Solana account](#create-a-solana-account), [instantiate the bridge protocol](#instantiate-the-bridge-protocol), [use a read-only account](#use-a-read-only-account-optional), [register through WDK Core](#register-through-wdk-core), and review [supported chains](#supported-chains).
+
+## Install the package
+
+### Prerequisites
+
+* **[Node.js](https://nodejs.org/)**: version 20.18 or higher, as required by the package's `@solana/*` dependencies.
+* **[npm](https://www.npmjs.com/)**: usually bundled with Node.js.
+
+You can add the published package to your project from npm: [@tetherto/wdk-protocol-bridge-usdt0-solana](https://www.npmjs.com/package/@tetherto/wdk-protocol-bridge-usdt0-solana).
+
+```bash title="Install @tetherto/wdk-protocol-bridge-usdt0-solana"
+npm install @tetherto/wdk-protocol-bridge-usdt0-solana @tetherto/wdk-wallet-solana
+```
+
+## Create a Solana account
+
+You can construct a signing account using [`new WalletAccountSolana(seed, path, config?)`](/sdk/wallet-modules/wallet-solana/api-reference#walletaccountsolana) from `@tetherto/wdk-wallet-solana` with a mainnet RPC `provider`:
+
+```javascript title="Create WalletAccountSolana"
+import { WalletAccountSolana } from '@tetherto/wdk-wallet-solana'
+
+const account = new WalletAccountSolana(process.env.SEED_PHRASE, "0'/0'", {
+  provider: 'https://api.mainnet-beta.solana.com'
+})
+```
+
+<Callout type="error">
+**Seed phrase:** Store the mnemonic securely. Anyone with the phrase controls the funds on derived accounts. This module runs on mainnet only, so never use a sample mnemonic from documentation.
+</Callout>
+
+## Instantiate the bridge protocol
+
+You can create a [`Usdt0ProtocolSolana`](/sdk/bridge-modules/bridge-usdt0-solana/api-reference#usdt0protocolsolana) instance with the [`new Usdt0ProtocolSolana(account, config?)`](/sdk/bridge-modules/bridge-usdt0-solana/api-reference#constructor) constructor. Optional `bridgeMaxFee` rejects a bridge whose combined fees exceed the cap, in lamports:
+
+```javascript title="Construct Usdt0ProtocolSolana"
+import Usdt0ProtocolSolana from '@tetherto/wdk-protocol-bridge-usdt0-solana'
+
+const bridgeProtocol = new Usdt0ProtocolSolana(account, {
+  bridgeMaxFee: 10_000_000n // 0.01 SOL
+})
+```
+
+The LayerZero fee differs widely by destination. Read [Cap fees with bridgeMaxFee](/sdk/bridge-modules/bridge-usdt0-solana/guides/bridge-tokens#cap-fees-with-bridgemaxfee) before choosing a value, because the cap above rejected TRON when those fees were sampled.
+
+## Use a read-only account (optional)
+
+For quotes without signing, create a [`WalletAccountReadOnlySolana`](/sdk/wallet-modules/wallet-solana/api-reference#walletaccountreadonlysolana) for the source address and pass it to the constructor:
+
+```javascript title="Create a read-only bridge"
+import { WalletAccountReadOnlySolana } from '@tetherto/wdk-wallet-solana'
+
+const readOnlyAccount = new WalletAccountReadOnlySolana(await account.getAddress(), {
+  provider: 'https://api.mainnet-beta.solana.com'
+})
+const readOnlyBridge = new Usdt0ProtocolSolana(readOnlyAccount)
+```
+
+You can now call [`quoteBridge()`](/sdk/bridge-modules/bridge-usdt0-solana/api-reference#quotebridgeoptions-config). The source address must already hold SOL, because the quote simulates a transaction with that address as the fee payer. Otherwise it fails with `Cannot quote from an unfunded account: fund it with SOL first.` Calling [`bridge()`](/sdk/bridge-modules/bridge-usdt0-solana/api-reference#bridgeoptions-config) on this instance rejects before sending a transaction.
+
+When the signing session ends, clear the directly constructed account's key material:
+
+```javascript title="Dispose the signing account"
+account.dispose()
+```
+
+## Register through WDK Core
+
+Core decides that a protocol is a bridge with `instanceof`, against its own copy of `@tetherto/wdk-wallet`. Bridge beta.1 pins `@tetherto/wdk-wallet@1.0.0-beta.22`, while a default install resolves a newer copy for Core. The two classes then differ, registration does nothing and reports no error, and the getter throws `No bridge protocol registered for label: <label>.`
+
+To register through Core, install that exact `@tetherto/wdk-wallet` version at the root of your project so Core and the bridge share one copy:
+
+```bash title="Install Core and the bridge with one wallet interface copy"
+npm install --save-exact @tetherto/wdk @tetherto/wdk-wallet-solana @tetherto/wdk-protocol-bridge-usdt0-solana@1.0.0-beta.1 @tetherto/wdk-wallet@1.0.0-beta.22
+npm ls @tetherto/wdk-wallet
+```
+
+In the tree, the entries under `@tetherto/wdk` and the bridge must read `@tetherto/wdk-wallet@1.0.0-beta.22 deduped`. A separate copy under the wallet module does not affect registration.
+
+```javascript title="Register the bridge with WDK Core"
+import WDK from '@tetherto/wdk'
+import WalletManagerSolana from '@tetherto/wdk-wallet-solana'
+import Usdt0ProtocolSolana from '@tetherto/wdk-protocol-bridge-usdt0-solana'
+
+const wdk = new WDK(process.env.SEED_PHRASE)
+  .registerWallet('solana', WalletManagerSolana, {
+    provider: 'https://api.mainnet-beta.solana.com'
+  })
+  .registerProtocol('solana', 'usdt0', Usdt0ProtocolSolana, {
+    bridgeMaxFee: 10_000_000n
+  })
+
+const account = await wdk.getAccount('solana', 0)
+const bridgeProtocol = account.getBridgeProtocol('usdt0')
+```
+
+If you do not need Core registration, skip the pin and pass the account from `wdk.getAccount()` to `new Usdt0ProtocolSolana(account, config?)` directly.
+
+<Callout type="warn">
+With a [transaction policy](/sdk/core-module/guides/transaction-policies) registered, `wdk.getAccount()` returns a governed account that hides the provider the bridge reads. Direct construction and account-scoped `account.registerProtocol()` then fail with `ProviderRequiredError`. Use the global `wdk.registerProtocol()` shown above.
+</Callout>
+
+## Supported chains
+
+`bridge()` and `quoteBridge()` take these `targetChain` keys:
+
+| Network | `targetChain` | Endpoint ID |
+| --- | --- | --- |
+| Ethereum | `ethereum` | 30101 |
+| Arbitrum | `arbitrum` | 30110 |
+| Celo | `celo` | 30125 |
+| TON | `ton` | 30343 |
+| TRON | `tron` | 30420 |
+
+## Next Steps
+
+Run your first transfer with [Bridge tokens](/sdk/bridge-modules/bridge-usdt0-solana/guides/bridge-tokens), or use [Bridge with a gasless account](/sdk/bridge-modules/bridge-usdt0-solana/guides/bridge-gasless) if the account holds no SOL.
+
+---
+
+## Need Help?
+
+<SupportCards />
