@@ -99,7 +99,7 @@ console.log('Fast fee rate:', feeRates.fast, 'nanotons')
 
 ## Prepare a Signed Transaction Body
 
-You can build a signed transaction body without broadcasting it using [`account.signTransaction()`](/sdk/wallet-modules/wallet-ton/api-reference#signtransactiontx). The method still requires the configured TON client to read the current sequence number and, when a fee cap is configured, estimate the fee. It returns the body `Cell` accepted by the matching opened `WalletContractV5R1.send()` call, not a complete external-message BOC.
+You can build a signed transaction body without broadcasting it using [`account.signTransaction()`](/sdk/wallet-modules/wallet-ton/api-reference#signtransactiontx). The method requires the configured TON client to read the current sequence number and, when a fee cap is configured, estimate the fee. The body expires 60 seconds after creation by default, including the first transfer with sequence number `0`. It returns the body `Cell` accepted by the matching opened `WalletContractV5R1.send()` call, not a complete external-message BOC.
 
 ```javascript title="Prepare Signed Transaction Body"
 const cell = await account.signTransaction({
@@ -128,8 +128,10 @@ console.log('Signed transfer body hash:', result.hash)
 ```
 
 <Callout type="warning">
-The signed body contains the wallet sequence number read during signing. Submit it through the same matching account before that sequence number changes. WDK sends the `Cell` unchanged and does not rebuild or re-sign it; `sendTransaction()` estimates its fee again and enforces `transactionMaxFee`. The returned hash identifies the signed transfer body, not a network transaction hash. Pass that body hash to [`getTransaction()`](/sdk/wallet-modules/wallet-ton/api-reference#gettransactionhash) or [`waitForTransaction()`](/sdk/wallet-modules/wallet-ton/api-reference#waitfortransactionhash-options) to follow block inclusion.
+The signed body contains its original sequence number and expiry. Submit it through the same matching account before either becomes invalid. If it expires, build and sign a fresh body from the intended transaction. WDK sends a supplied `Cell` unchanged and does not refresh or re-sign it; [`sendTransaction()`](/sdk/wallet-modules/wallet-ton/api-reference#sendtransactiontx) estimates its fee again and enforces `transactionMaxFee`.
 </Callout>
+
+The returned hash identifies the signed transfer body, not a network transaction hash. Pass it to [`getTransaction()`](/sdk/wallet-modules/wallet-ton/api-reference#gettransactionhash) or [`waitForTransaction()`](/sdk/wallet-modules/wallet-ton/api-reference#waitfortransactionhash-options) to follow block inclusion.
 
 ## Next Steps
 

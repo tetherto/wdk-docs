@@ -7,7 +7,7 @@ import {
   frontmatterSchema,
   metaSchema,
 } from 'fumadocs-mdx/config';
-import { remarkMdxMermaid } from 'fumadocs-core/mdx-plugins';
+import { rehypeCodeDefaultOptions, remarkMdxMermaid } from 'fumadocs-core/mdx-plugins';
 import lastModified from 'fumadocs-mdx/plugins/last-modified';
 import { tetherSeoFrontmatterSchema } from '@tetherto/docs-seo-schema';
 import { z } from "zod";
@@ -75,6 +75,21 @@ export const docs = defineDocs({
 export default defineConfig({
   plugins: [lastModified({ versionControl: gitLastModified })],
   mdxOptions: {
+    rehypeCodeOptions: {
+      ...rehypeCodeDefaultOptions,
+      transformers: [
+        ...(rehypeCodeDefaultOptions.transformers ?? []),
+        {
+          name: 'plain-json',
+          code(node) {
+            // Full schemas retain their JSON and copy button without thousands of token spans.
+            if (this.options.lang === 'json' && this.options.meta?.__raw === 'plain') {
+              node.children = [{ type: 'text', value: this.source }];
+            }
+          },
+        },
+      ],
+    },
     remarkPlugins: [remarkMath, remarkMdxMermaid],
     rehypePlugins: (v) => [rehypeKatex, ...v],
   },

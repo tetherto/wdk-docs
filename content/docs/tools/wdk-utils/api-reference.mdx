@@ -24,8 +24,8 @@ schemaType: APIReference
 | `getHashToSign(invoiceData)` | Return the SHA-256 hash that must be signed for a BOLT11 invoice. | `LightningInvoiceHashingResult` |
 | `sign(invoiceData, privateKey)` | Sign BOLT11 invoice data with a hex string or `Uint8Array` private key. | `LightningInvoiceSigningResult` |
 | `encode(invoiceData)` | Encode BOLT11 data while preserving metadata and retained unknown tags. | `LightningInvoiceEncodingResult` |
-| `validateLnurl(address)` | Validate an LNURL string. | `LnurlValidationResult` |
-| `decodeLnurl(address)` | Decode an LNURL string into its original URL. | `LnurlDecodingResult` |
+| `validateLnurl(address)` | Validate an LNURL string and its target URL scheme. | `LnurlValidationResult` |
+| `decodeLnurl(address)` | Decode an LNURL string into its normalized target URL. | `LnurlDecodingResult` |
 | `validateLightningAddress(address)` | Validate a Lightning Address in `user@domain.tld` form. | `LightningAddressValidationResult` |
 | `validateSparkAddress(address)` | Validate a Spark address or a Bitcoin L1 deposit address accepted by Spark flows. | `SparkAddressValidationResult` |
 | `validateTonAddress(address)` | Validate raw TON address structure or a user-friendly address and its checksum. | `TonAddressValidationResult` |
@@ -239,7 +239,7 @@ const encoded = encodeBolt11(signed.data)
 
 #### `validateLnurl(address)`
 
-Validate an LNURL string that begins with `lnurl1`.
+Validate an LNURL string that begins with `lnurl1`. Its encoded target must be HTTPS, or HTTP with an `.onion` host; other targets return `UNSUPPORTED_URL`. This helper does not accept a `lightning:` prefix.
 
 ```javascript title="Validate An LNURL"
 import { validateLnurl } from '@tetherto/wdk-utils'
@@ -256,7 +256,9 @@ const result = validateLnurl(
 
 #### `decodeLnurl(address)`
 
-Decode an LNURL string into its original URL. The helper also accepts a leading `lightning:` URI prefix.
+Decode an LNURL string into its normalized target URL. The helper also accepts a leading `lightning:` URI prefix. It applies the same target-scheme check as `validateLnurl()` and returns `UNSUPPORTED_URL` for disallowed targets.
+
+Neither helper checks destination hosts. Before fetching, the application must block private, loopback and link-local targets, including through DNS resolution and redirects.
 
 ```javascript title="Decode An LNURL"
 import { decodeLnurl } from '@tetherto/wdk-utils'
@@ -605,7 +607,7 @@ const result = parseBip21Request(
 `Bip21ParseResult` is one of these shapes:
 
 - `{ success: true, type: 'bip21', value: Bip21Request }`
-- `{ success: false, reason: 'INVALID_FORMAT' | 'INVALID_ADDRESS' | 'INVALID_AMOUNT' | 'UNSUPPORTED_REQUIRED_PARAM' }`
+- `{ success: false, reason: 'INVALID_FORMAT' | 'INVALID_ADDRESS' | 'INVALID_AMOUNT' | 'UNSUPPORTED_REQUIRED_PARAM' | 'DUPLICATE_PARAM' }`
 
 `Bip21Request` contains:
 
@@ -615,6 +617,8 @@ const result = parseBip21Request(
 - `message?: string`
 
 `amount` is a decimal BTC string with up to eight decimal places and a maximum value of `21000000`.
+
+Repeated percent-decoded `amount`, `label`, `message`, or `req-*` keys return `DUPLICATE_PARAM`. Repeated ignored keys are accepted.
 
 #### `encodeBip21Request(request)`
 
@@ -656,6 +660,8 @@ const looksLikeRequest = isEip681Request(
 
 Parse a supported EIP-681 transfer request. The published runtime supports `transfer` requests, accepts `value` as an alias for `uint256`, and normalizes scientific-notation amounts into integer `amountSmallest` strings.
 
+The amount must be a non-negative integer no greater than `2^256 - 1`. Repeated `address`, `uint256`, or `value` keys return `DUPLICATE_PARAM`. If both amount keys are present, `value` must normalize to zero; `uint256` supplies the token amount. Token and recipient addresses are checksum-validated without changing their casing.
+
 Raw non-ASCII characters anywhere in the query return `INVALID_FORMAT`, including in parameters the parser otherwise ignores. Percent-encode non-ASCII query text before parsing. `isEip681Request()` only checks the request shape; a positive detection result does not prove that the query is valid.
 
 ```javascript title="Parse An EIP-681 Request"
@@ -669,7 +675,7 @@ const result = parseEip681Request(
 `Eip681ParseResult` is one of these shapes:
 
 - `{ success: true, type: 'eip681-transfer', value: Eip681TransferRequest }`
-- `{ success: false, reason: 'INVALID_FORMAT' | 'UNSUPPORTED_METHOD' | 'MISSING_REQUIRED_PARAM' | 'INVALID_RECIPIENT' | 'INVALID_AMOUNT' }`
+- `{ success: false, reason: 'INVALID_FORMAT' | 'UNSUPPORTED_METHOD' | 'MISSING_REQUIRED_PARAM' | 'INVALID_RECIPIENT' | 'INVALID_TOKEN_ADDRESS' | 'INVALID_AMOUNT' | 'DUPLICATE_PARAM' }`
 
 `Eip681TransferRequest` contains:
 

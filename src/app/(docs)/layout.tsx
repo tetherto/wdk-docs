@@ -1,13 +1,28 @@
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import { baseOptions } from '@/lib/layout.shared';
-import { customTree } from '@/lib/custom-tree';
+import { customTree, navTabs } from '@/lib/custom-tree';
 import type { LinkItemType } from 'fumadocs-ui/layouts/shared';
 import { FaGithub, FaDiscord } from 'react-icons/fa6';
+import { CircleQuestionMark, History } from 'lucide-react';
 import { ContentFirstSidebar } from '@/components/content-first-sidebar';
 
 export default function Layout({ children }: LayoutProps<'/'>) {
 
   const linkItems: LinkItemType[] = [
+    {
+      type: 'icon',
+      url: '/overview/changelog',
+      icon: <History />,
+      label: 'Changelog',
+      text: 'Changelog',
+    },
+    {
+      type: 'icon',
+      url: '/overview/support',
+      icon: <CircleQuestionMark />,
+      label: 'Support',
+      text: 'Support',
+    },
     {
       type: 'icon',
       url: 'https://github.com/tetherto/wdk',
@@ -30,6 +45,8 @@ export default function Layout({ children }: LayoutProps<'/'>) {
     <DocsLayout
       {...baseOptions()}
       sidebar={{ enabled: false }}
+      tabs={navTabs}
+      tabMode="top"
       tree={{
           name: 'docs',
           children: customTree

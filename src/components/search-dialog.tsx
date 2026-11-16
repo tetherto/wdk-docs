@@ -11,29 +11,14 @@ import {
   type SharedProps,
 } from 'fumadocs-ui/components/dialog/search';
 import { useDocsSearch } from 'fumadocs-core/search/client';
-import { create } from '@orama/orama';
+import { revealIndexerReference } from '@/lib/indexer-reference-navigation';
 
 const SEARCH_INDEX_PATH = '/api/search.json';
-
-function initOrama() {
-  return create({
-    schema: {
-      url: 'string',
-      title: 'string',
-      breadcrumbs: 'string[]',
-      description: 'string',
-      content: 'string',
-      keywords: 'string',
-    },
-    language: 'english',
-  });
-}
 
 export default function DefaultSearchDialog(props: SharedProps) {
   const { search, setSearch, query } = useDocsSearch({
     type: 'static',
     from: SEARCH_INDEX_PATH,
-    initOrama,
   });
 
   return (
@@ -42,6 +27,9 @@ export default function DefaultSearchDialog(props: SharedProps) {
       onSearchChange={setSearch}
       isLoading={query.isLoading}
       {...props}
+      onSelect={(item) => {
+        if (item.type !== 'action') revealIndexerReference(item.url);
+      }}
     >
       <SearchDialogOverlay />
       <SearchDialogContent>
