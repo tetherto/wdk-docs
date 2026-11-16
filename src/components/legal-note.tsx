@@ -7,6 +7,7 @@ const LEGAL_PAGE = '/resources/legal';
 type LegalNoteProps =
   | { kind: 'community' }
   | { kind: 'community-rows' }
+  | { kind: 'community-marked' }
   | { kind: 'service'; provider: string; terms: string };
 
 const linkClass = 'underline underline-offset-2 hover:text-fd-foreground';
@@ -40,6 +41,13 @@ export function LegalNote(props: LegalNoteProps) {
     body = (
       <>
         Rows marked Community are maintained independently by third-party contributors. See{' '}
+        <LegalLink section="community-modules" />.
+      </>
+    );
+  } else if (props.kind === 'community-marked') {
+    body = (
+      <>
+        Modules marked Community are maintained independently by third-party contributors. See{' '}
         <LegalLink section="community-modules" />.
       </>
     );
