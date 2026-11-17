@@ -393,7 +393,7 @@ export const customTree: Node[] = [
     configuration('/sdk/swidge-modules/swidge-butter/configuration'),
     apiReference('/sdk/swidge-modules/swidge-butter/api-reference'),
   ]),
-  folder('LayerSwap', '/sdk/swidge-modules/swidge-layerswap', 'Waypoints', [
+  folder('Layerswap', '/sdk/swidge-modules/swidge-layerswap', 'Waypoints', [
     usage('/sdk/swidge-modules/swidge-layerswap/usage'),
     guides([
       page('Execute a Swidge', '/sdk/swidge-modules/swidge-layerswap/guides/execute-swidge'),
