@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { glob } from 'glob';
 import { structure } from 'fumadocs-core/mdx-plugins/remark-structure';
 import { createSearchAPI } from 'fumadocs-core/search/server';
@@ -134,7 +135,7 @@ function buildBreadcrumbs(relativePath, directoryTitles) {
   return breadcrumbs.length > 0 ? breadcrumbs : undefined;
 }
 
-function getSearchableContent(data) {
+function getSearchableData(data) {
   const ignoredHeadingIds = new Set(
     data.headings
       .filter((heading) => heading.content.trim().toLowerCase() === 'table of contents')
@@ -149,32 +150,27 @@ function getSearchableContent(data) {
     if (normalized.length === 0) continue;
 
     const key = item.heading ?? '';
-    const existing = contentByHeading.get(key);
-    if (!existing) {
-      contentByHeading.set(key, [normalized]);
-      continue;
-    }
-
-    if (!existing.includes(normalized)) {
-      existing.push(normalized);
-    }
+    const existing = contentByHeading.get(key) ?? [];
+    if (!existing.includes(normalized)) existing.push(normalized);
+    contentByHeading.set(key, existing);
   }
 
-  const headings = data.headings
-    .filter((heading) => !ignoredHeadingIds.has(heading.id))
-    .map((heading) => heading.content);
-  const contents = Array.from(contentByHeading.values()).flat();
-
-  return Array.from(new Set([...headings, ...contents])).join(' ');
+  return {
+    headings: data.headings.filter((heading) => !ignoredHeadingIds.has(heading.id)),
+    contents: Array.from(contentByHeading, ([heading, contents]) => ({
+      ...(heading ? { heading } : {}),
+      content: contents.join(' '),
+    })),
+  };
 }
 
-async function main() {
-  const docFiles = (await glob('**/*.mdx', { cwd: CONTENT_ROOT, nodir: true })).sort();
+export async function createSearchIndex(contentRoot = CONTENT_ROOT) {
+  const docFiles = (await glob('**/*.mdx', { cwd: contentRoot, nodir: true })).sort();
   const parsedFiles = [];
   const directoryTitles = new Map();
 
   for (const relativePath of docFiles) {
-    const absolutePath = path.join(CONTENT_ROOT, relativePath);
+    const absolutePath = path.join(contentRoot, relativePath);
     const raw = await readFile(absolutePath, 'utf8');
     const parsed = extractFrontmatter(raw);
 
@@ -189,20 +185,26 @@ async function main() {
   }
 
   const indexes = parsedFiles.map(({ body, frontmatter, relativePath }) => ({
+    id: urlFromPath(relativePath),
     title: frontmatter.title ?? titleFromPath(relativePath),
     description: frontmatter.description || undefined,
     breadcrumbs: buildBreadcrumbs(relativePath, directoryTitles),
-    content: getSearchableContent(structure(body)),
+    structuredData: getSearchableData(structure(body)),
     url: urlFromPath(relativePath),
   }));
 
-  const searchApi = createSearchAPI('simple', { indexes });
-  const payload = await searchApi.export();
+  const searchApi = createSearchAPI('advanced', { indexes });
+  return { payload: await searchApi.export(), pageCount: indexes.length };
+}
 
+async function main() {
+  const { payload, pageCount } = await createSearchIndex();
   await mkdir(path.dirname(OUTPUT_FILE), { recursive: true });
   await writeFile(OUTPUT_FILE, JSON.stringify(payload));
 
-  console.log(`generated ${path.relative(process.cwd(), OUTPUT_FILE)} for ${indexes.length} pages`);
+  console.log(`generated ${path.relative(process.cwd(), OUTPUT_FILE)} for ${pageCount} pages`);
 }
 
-await main();
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((error) => { console.error(error); process.exitCode = 1; });
+}

@@ -1,0 +1,146 @@
+---
+title: Execute a Swidge with BOB Gateway
+description: Confirm an exact-input route, handle EVM or TRON approvals, and submit the source transaction.
+docType: how-to
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Use a send-capable account on the route's source chain. This guide covers token approvals and execution; use [Bitcoin Routes](/sdk/swidge-modules/swidge-bob/guides/bitcoin-routes) when Bitcoin is the source. See [installation availability](/sdk/swidge-modules/swidge-bob/usage#installation) before using these APIs.
+
+## Prepare the route
+
+Create a `GatewaySwidge` instance bound to the sending account and its source chain, as shown in [Usage](/sdk/swidge-modules/swidge-bob/usage). Supply source and destination token identifiers selected through discovery, an exact input amount, and your intended recipient. Use the source token's base units for `fromTokenAmount` and the destination token's base units for `minAmountOut`.
+
+Cross-chain routes require `recipient`. A `refundAddress` must resolve on the source chain before an order is created; it defaults to the bound account's address when neither the call nor constructor supplies one. The example makes both addresses explicit.
+
+Choose `limits.maxNativeFee` in the source chain's native base units and any `maxNetworkFeeBps` or `maxProtocolFeeBps` your application requires. The native cap bounds extra transaction value, not EVM gas. Percentage caps do not cover affiliate fees and have no fee breakdown to check on token-swap routes. See [fee controls](/sdk/swidge-modules/swidge-bob/configuration#fee-controls).
+
+## Confirm and handle approvals
+
+`quoteSwidge()` returns an indicative quote. `swidge()` fetches a fresh quote, so confirming the preview does not fix the execution rate. Keep the same intent and a user-chosen `minAmountOut`; a positive minimum is checked against the fresh quote before the order is created. The package's source-transaction checks do not independently verify destination settlement or all nested routing calldata.
+
+<Callout type="warn">
+`getRequiredApproval()` can create an unfunded gateway order to obtain the spender. Its returned `amount` is an unlimited allowance, not the trade amount. Show that allowance and obtain consent before sending it; `swidge()` does not approve tokens for you.
+</Callout>
+
+The following application function uses an existing account and protocol instance. Its callbacks are application-owned, not package exports:
+
+- `confirmQuote({ intent, quote, limits })` displays both chains, tokens, input, recipient, refund address, minimum output, fee denominations and limits, then resolves to a boolean.
+- `confirmApproval(approval)` displays the token, spender, allowance and any zero-reset requirement, then resolves to a boolean.
+- `sendApproval({ token, spender, amount })` submits one approval and returns its transaction hash as a string.
+- `waitForApproval({ hash, token, spender, amount })` records the hash, waits for a successful transaction and verifies the resulting allowance. It must throw on failure or timeout; retain the hash for reconciliation.
+- `recordSubmission({ id, hash, transactions })` durably saves the gateway order and source transaction after submission.
+
+Serialize approval changes for the same account, token and spender. Use the same `maxNativeFee` for approval lookup and execution.
+
+```javascript title="Application-Owned Token Route Execution"
+async function executeTokenRoute({
+  gateway, sourceChain, route, recipientAddress, refundAddress, minAmountOut, limits,
+  confirmQuote, confirmApproval, sendApproval, waitForApproval,
+  recordSubmission,
+}) {
+  const intent = Object.freeze({
+    fromChain: sourceChain,
+    fromToken: route.fromToken,
+    toToken: route.toToken,
+    toChain: route.toChain,
+    fromTokenAmount: route.fromTokenAmount,
+    slippage: route.slippage,
+    recipient: recipientAddress,
+    refundAddress,
+    minAmountOut,
+  })
+  const feeLimits = Object.freeze({ ...limits })
+  const quote = await gateway.quoteSwidge(intent)
+  if (!await confirmQuote({ intent, quote, limits: feeLimits })) return null
+
+  const requiredApproval = await gateway.getRequiredApproval(intent, feeLimits)
+  if (requiredApproval) {
+    const approval = Object.freeze({
+      token: requiredApproval.token,
+      spender: requiredApproval.spender,
+      amount: requiredApproval.amount,
+      resetRequired: requiredApproval.resetRequired
+    })
+    if (!await confirmApproval(approval)) return null
+    const amounts = approval.resetRequired ? [0n, approval.amount] : [approval.amount]
+    for (const amount of amounts) {
+      const request = Object.freeze({ token: approval.token, spender: approval.spender, amount })
+      const hash = await sendApproval(request)
+      await waitForApproval({ hash, ...request })
+    }
+  }
+
+  const result = await gateway.swidge(intent, feeLimits)
+  await recordSubmission({ id: result.id, hash: result.hash, transactions: result.transactions })
+  return result
+}
+```
+
+`route` above contains discovery-selected token IDs, a destination chain, an exact input amount and optional fractional slippage. `sourceChain` must name the chain of the account bound to `gateway`; the application must verify that binding when it constructs the instance. The function borrows that account; its owner controls its lifetime.
+
+If `recordSubmission()` fails, the source transaction has already been submitted. Preserve the returned details inside that callback and reconcile the account before trying again. Earlier approvals also remain submitted if a later step fails.
+
+### EVM approval sender
+
+For an EVM account exposing `approve()`, supply this `sendApproval` callback. The application must implement the confirmation and receipt/allowance callbacks described above.
+
+```javascript title="Send An EVM Approval"
+const sendApproval = async ({ token, spender, amount }) => {
+  const result = await evmAccount.approve({ token, spender, amount })
+  return result.hash
+}
+```
+
+`evmAccount` is the same account bound to `gateway`. When `resetRequired` is present, the function confirms a zero approval before submitting the returned allowance. This handles Ethereum USD₮'s nonzero-to-nonzero approval restriction. A native source token needs no token approval.
+
+Account-abstraction accounts need an approval sender appropriate to their transaction API. Do not assume that the EVM `approve()` callback applies to every account class. Configure paymaster settings and gas limits on the account as described in [Configuration](/sdk/swidge-modules/swidge-bob/configuration).
+
+### TRON approval sender
+
+TRON accounts use `sendTransaction()` with the exported approval builder. Supply this callback instead of the EVM one:
+
+```javascript title="Send A TRON Approval"
+import { buildTronApproval } from '@gobob/wdk-protocol-swidge-gateway'
+
+const sendApproval = async ({ token, spender, amount }) => {
+  const result = await tronAccount.sendTransaction(
+    buildTronApproval({ token, spender, amount })
+  )
+  return result.hash
+}
+```
+
+`tronAccount` is the same account bound to `gateway`. Its provider broadcasts the transaction. `tronWeb` or `tronProvider` on the protocol selects the node used to build contract calls and read allowance; it does not replace the account's broadcasting provider. Fund the account for the required TRON energy/bandwidth costs. The approval builder defaults to a `100000000` sun fee limit; the order transaction is separately limited to at most 100 TRX by the module.
+
+## Interpret the result
+
+Execution returns the gateway order `id`, source transaction `hash`, quoted amounts and fee entries, and a `transactions` array. The output amounts remain quote values; a source hash does not establish that the destination has received funds.
+
+Continue with [Track Settlement](/sdk/swidge-modules/swidge-bob/guides/track-settlement). After a send or timeout error, inspect recorded approvals, source transactions and the order before resubmitting. The module does not revoke allowances or roll back a broadcast.
+
+## Next Steps
+
+<Cards>
+<Card title="Track Settlement" href="/sdk/swidge-modules/swidge-bob/guides/track-settlement">
+Follow the order's payout or refund and reconcile uncertain submissions.
+</Card>
+<Card title="Bitcoin Routes" href="/sdk/swidge-modules/swidge-bob/guides/bitcoin-routes">
+Understand Bitcoin signing and gateway broadcasting.
+</Card>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-bob/api-reference">
+Check approval, execution and result contracts.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

@@ -34,6 +34,10 @@ console.log('Deposit claimed:', walletLeaves)
 
 You can reuse one on-chain deposit address using [`account.getStaticDepositAddress()`](/sdk/wallet-modules/wallet-spark/api-reference), then credit the wallet with [`account.claimStaticDeposit()`](/sdk/wallet-modules/wallet-spark/api-reference) after the Bitcoin transaction confirms:
 
+<Callout type="warn">
+A static-deposit claim hands the deposit's secret key to the Spark Service Provider (SSP) and cannot be undone. The quoted credit must be a safe positive integer number of satoshis, but the module does not compare it with the deposit's on-chain value.
+</Callout>
+
 ```javascript title="Static Deposit Flow"
 const staticAddress = await account.getStaticDepositAddress()
 console.log('Static deposit address:', staticAddress)
@@ -72,8 +76,9 @@ console.log('Offset:', result.offset)
 ## Withdraw to Bitcoin Layer 1
 
 1. Choose a Bitcoin `onchainAddress` and `amountSats`.
-2. Request a cooperative exit quote with [`account.quoteWithdraw()`](/sdk/wallet-modules/wallet-spark/api-reference).
-3. Call [`account.withdraw()`](/sdk/wallet-modules/wallet-spark/api-reference) with the destination and amount.
+2. Set [`withdrawMaxFee`](/sdk/wallet-modules/wallet-spark/configuration#withdrawal-fee-limit) when creating the wallet if you need a quoted-fee limit, in satoshis.
+3. Request a cooperative exit quote with [`account.quoteWithdraw()`](/sdk/wallet-modules/wallet-spark/api-reference).
+4. Call [`account.withdraw()`](/sdk/wallet-modules/wallet-spark/api-reference) with the destination, amount, and exit speed.
 
 You can request a withdrawal fee quote using [`account.quoteWithdraw()`](/sdk/wallet-modules/wallet-spark/api-reference):
 
@@ -90,14 +95,13 @@ You can initiate the withdrawal using [`account.withdraw()`](/sdk/wallet-modules
 ```javascript title="Withdraw to On-Chain Bitcoin"
 const withdrawal = await account.withdraw({
   onchainAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-  amountSats: 100000
+  amountSats: 100000,
+  exitSpeed: 'MEDIUM'
 })
 console.log('Withdrawal request:', withdrawal)
 ```
 
-<Callout type="info">
-[`withdraw()`](/sdk/wallet-modules/wallet-spark/api-reference) accepts `onchainAddress` and `amountSats`. Run [`quoteWithdraw()`](/sdk/wallet-modules/wallet-spark/api-reference) first to understand the cooperative exit costs before initiating the withdrawal.
-</Callout>
+[`withdraw()`](/sdk/wallet-modules/wallet-spark/api-reference#withdrawoptions) fetches a new quote and checks the selected speed's L1 broadcast fee plus user fee against `withdrawMaxFee`. A greater fee throws `MaximumFeeExceededError`; equality is allowed. The earlier quote is for inspection and is not the quote used for this check.
 
 ## Next Steps
 

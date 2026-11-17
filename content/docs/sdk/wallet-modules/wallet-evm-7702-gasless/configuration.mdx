@@ -188,7 +188,7 @@ Passing an already-signed `UserOperationV8` to `sendTransaction()` bypasses `tra
 
 Set `paymasterAddress` to the provider's verified contract for the selected chain and EntryPoint before constructing a token-paymaster wallet or account. Per-call overrides use the merged configuration; switching into token mode requires both this address and `paymasterToken`. Sponsored mode does not require the address.
 
-While building a token-paid UserOperation, a different returned paymaster address throws `ConfigurationError` before the UserOperation is signed or submitted. An owned account may already have signed an EIP-7702 delegation authorization while preparing that operation. Submitting an already-signed UserOperation does not rebuild it or repeat this paymaster check.
+While building a token-paid UserOperation, a different returned paymaster address throws `ConfigurationError` before the UserOperation is signed or submitted. During signing or sending, an owned account may already have signed an EIP-7702 delegation authorization before this check. Quotes do not sign that authorization. Submitting an already-signed UserOperation does not rebuild it or repeat this paymaster check.
 
 ## Bundler and Paymaster Providers
 
@@ -260,8 +260,6 @@ When an override is provided, the merged config is validated before the operatio
 
 The JavaScript runtime also reads `parallel` and `nonceKey` from per-call overrides for `signTransaction()`, `sendTransaction()`, and `transfer()`. The published second-argument TypeScript declarations include only fee-mode fields, so use constructor-level lane configuration in typed code.
 
-<Callout type="info">
-The two-minute quote cache key includes the transaction, sponsorship mode, paymaster token, expected paymaster address, and sponsorship policy ID. A matching operation also rechecks the current EntryPoint nonce before reuse. Changing any keyed fee-mode field causes a fresh quote.
-</Callout>
+Paymaster-token quotes enter the two-minute cache only when the EOA is already delegated to the configured contract. The key includes the transaction, sponsorship mode, paymaster token, expected paymaster address, and sponsorship policy ID. A matching operation rechecks the current EntryPoint nonce before reuse. Changing any keyed fee-mode field causes a fresh quote.
 
-For an undelegated owned EOA in paymaster-token mode, `quoteSendTransaction()` includes the signed EIP-7702 authorization that the later sign or send path uses. Read-only accounts cannot create that authorization, so do not use a read-only quote as proof of the complete undelegated owned-account cost. Sponsored quotes return `0n` without estimating this authorization.
+For an owned EOA not delegated to the configured contract, `quoteSendTransaction()` uses an unsigned authorization tuple only for paymaster-token estimation; it does not sign or cache that operation. `signTransaction()` and `sendTransaction()` obtain a signed authorization when needed and build the operation with it. Read-only quotes cannot create an owner authorization and do not establish the complete undelegated owned-account cost. Sponsored quotes return `0n` without estimating an authorization.

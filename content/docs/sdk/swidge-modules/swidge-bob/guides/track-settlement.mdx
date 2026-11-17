@@ -1,0 +1,110 @@
+---
+title: Track BOB Gateway Settlement
+description: Follow gateway order states, preserve transaction hashes, and reconcile payouts or refunds before retrying.
+docType: how-to
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Retain the `id` returned by `swidge()` as the gateway order ID. Its `hash` is the source transaction hash, not proof of destination settlement. This guide uses the API described in [installation availability](/sdk/swidge-modules/swidge-bob/usage#installation).
+
+## Read an order's status
+
+Call `getSwidgeStatus(orderId)` on an existing `GatewaySwidge` instance. A signing account is not required to query an existing order.
+
+| Status | What the module reports | Application action |
+| --- | --- | --- |
+| `pending` | The gateway reports an in-progress order without a refund transaction marker. | Continue bounded polling. |
+| `refund-pending` | The gateway reports a refund transaction marker on an in-progress or failed order. | Continue tracking the refund; do not create a replacement send. |
+| `completed` | The gateway reports success. | Retain destination hashes and verify the required chain confirmations. |
+| `refunded` | The gateway reports a refund. | Retain refund hashes and verify receipt on the refund chain. |
+| `failed` | The gateway reports failure without a refund transaction marker. | Stop automatic execution and inspect the order and source funds before deciding what to do next. |
+
+These are provider-reported states, not a guaranteed transition sequence. An unrecognized gateway status throws `GatewaySwidgeError` with code `GATEWAY_HTTP_ERROR`; it is not treated as pending.
+
+`transactions` includes every hash exposed by the order: `source`, `destination` and `refund`. Each entry carries its own `chain`. An order can have several destination or refund transfers, and early responses may not contain the source hash yet. Preserve the source hash from the original submission rather than replacing it with an empty status response.
+
+## Poll a bounded number of times
+
+The following application helper performs at most 20 status requests. Supply `onUpdate({ orderId, status, transactions })` to persist and display each update, merging new transaction hashes with the operation record rather than deleting previous ones. It is an application callback, not a package export.
+
+```javascript title="Poll An Existing Gateway Order"
+async function pollOrder(gateway, orderId, onUpdate) {
+  const maxPolls = 20
+  const intervalMs = 3000
+
+  for (let attempt = 0; attempt < maxPolls; attempt++) {
+    const update = await gateway.getSwidgeStatus(orderId)
+    await onUpdate({ orderId, status: update.status, transactions: update.transactions })
+
+    if (['completed', 'refunded', 'failed'].includes(update.status)) return update
+    if (!['pending', 'refund-pending'].includes(update.status)) {
+      throw new Error('Unrecognized order status; retain the order ID and inspect it')
+    }
+    if (attempt + 1 < maxPolls) {
+      await new Promise(resolve => setTimeout(resolve, intervalMs))
+    }
+  }
+  return null
+}
+```
+
+A `null` result means polling stopped while the order was still pending; it does not mean the route failed. Resume with the same order ID later. A `failed` result also requires investigation; it does not prove that funds are available for a new send or that a refund will never follow.
+
+The polling count bounds status calls, not total elapsed time. The default HTTP client applies a per-attempt timeout and retries transient failures. A single status call can take longer than the three-second polling interval. If a request throws, keep the operation record and retry the status lookup separately after investigating the error.
+
+## Reconcile before retrying
+
+A source send, token approval or Bitcoin gateway registration can succeed even when the caller receives an error. Do not automatically rerun `swidge()` after a timeout. It requests another quote and creates a new order; it is not a continuation or idempotent retry of the first order.
+
+Use the saved order ID to query gateway state and the saved hashes to inspect source, payout and refund transactions on their corresponding chains. If the application never received an order ID or source hash, inspect the account's submitted transactions, nonce or Bitcoin outputs before starting another send. A missing record is not evidence that nothing was broadcast.
+
+An approval is independent of the route. After an uncertain approval, inspect its receipt and current token allowance before sending a reset or another approval. The module does not revoke an existing allowance when execution fails.
+
+## Handle errors by stage
+
+Import error classes as runtime values, separately from any type-only imports:
+
+```javascript title="Classify A Failed Status Lookup"
+import { GatewaySwidgeError } from '@gobob/wdk-protocol-swidge-gateway'
+
+async function readOrderStatus(gateway, orderId) {
+  try {
+    return { ok: true, update: await gateway.getSwidgeStatus(orderId) }
+  } catch (error) {
+    if (error instanceof GatewaySwidgeError) {
+      return { ok: false, orderId, code: error.code, httpStatus: error.status }
+    }
+    throw error
+  }
+}
+```
+
+Do not log the full `cause` or client configuration; they can contain provider responses or connection details. `GATEWAY_HTTP_ERROR` can describe a rejected request, unusable response or unknown status, so its code alone does not establish a transient network failure.
+
+Before order creation, invalid amounts, unsupported exact-output requests or an unverifiable configured fee cap stop the operation. After submission begins, preserve known identifiers and reconcile before retrying. See the [API error reference](/sdk/swidge-modules/swidge-bob/api-reference#errors) for the specific classes and thrown codes.
+
+## Next Steps
+
+<Cards>
+<Card title="API Reference" href="/sdk/swidge-modules/swidge-bob/api-reference">
+Inspect status fields, error classes and low-level order queries.
+</Card>
+<Card title="Bitcoin Routes" href="/sdk/swidge-modules/swidge-bob/guides/bitcoin-routes">
+Understand why Bitcoin registration failures can follow a broadcast.
+</Card>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-bob/configuration">
+Review per-request timeout, retry and transport behavior.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />
