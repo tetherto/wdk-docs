@@ -35,12 +35,12 @@
 
 ## Packages
 
-Example versions: standard EVM `1.0.0-beta.23`, ERC-4337 `1.0.0-beta.22`, and EIP-7702 gasless `1.0.0-beta.10`.
+Example versions: standard EVM `1.0.0-beta.26`, ERC-4337 `1.0.0-beta.24`, and EIP-7702 gasless `1.0.0-beta.12`.
 
 ```bash
-npm install @tetherto/wdk-wallet-evm@1.0.0-beta.23
-npm install @tetherto/wdk-wallet-evm-erc-4337@1.0.0-beta.22  # for Account Abstraction
-npm install @tetherto/wdk-wallet-evm-7702-gasless@1.0.0-beta.10  # for EIP-7702 gasless EOAs
+npm install @tetherto/wdk-wallet-evm@1.0.0-beta.26
+npm install @tetherto/wdk-wallet-evm-erc-4337@1.0.0-beta.24  # for Account Abstraction
+npm install @tetherto/wdk-wallet-evm-7702-gasless@1.0.0-beta.12  # for EIP-7702 gasless EOAs
 ```
 
 ```javascript
@@ -58,7 +58,7 @@ import WalletManagerEvm7702Gasless from '@tetherto/wdk-wallet-evm-7702-gasless'
 - ⚠️ **Ethereum USD₮** uses non-standard ERC20 (no bool return on `transfer()`). Use SafeERC20 in custom contracts.
 - ⚠️ `sendTransaction` accepts a `data` field (arbitrary hex calldata) — can execute **any** contract function. Extra scrutiny for non-empty `data`.
 - Transfer and approval options accept gas overrides directly. Object fee quotes use supplied gas limits and fee rates before provider estimates; serialized quotes use their encoded execution-gas fields. Simulation still runs.
-- `transactionMaxFee` applies to sends and provider-backed signing, including sends from transfers and approvals; transfers additionally check `transferMaxFee`. Equality is allowed. The quoted execution-gas fee excludes transferred value, is not the eventual fee paid, and does not lock unspecified object fields. Offline signing does not run the cap check.
+- `transactionMaxFee` applies to sends, approvals and provider-backed signing. ERC-20 `transfer()` uses only `transferMaxFee`; configure it separately. Object sends check populated gas/fee fields before passing them to the signer. `signTransaction()` checks a quote without populating missing fields. Equality is allowed, transferred value is excluded, and the cap is not the eventual fee paid. Offline signing does not run the cap check.
 - Supplied signed transactions are broadcast unchanged after checking their encoded execution-gas fields. Independently review recipient, value, calldata, chain ID, nonce and fee fields. Type 4 transactions reject legacy `gasPrice`; type-3/blob transactions and blob fields are unsupported.
 - Runtime and declarations accept ethers `Provider` inputs. A manager shares one provider across its accounts. A nonzero `chainId` pins module-built URL and EIP-1193 providers without detecting the endpoint's chain or a browser network switch; prebuilt ethers providers retain their own network settings.
 - See the [signer migration](https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm/configuration#signer-migration) for self-relative paths, seed/signer overloads, removed account `index`, and signer ownership. Cleanup depends on the concrete signer and ownership options; account disposal does not imply app-supplied signer disposal or complete secret erasure.
@@ -111,12 +111,12 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
 
 - Ethers providers and mixed provider lists are accepted. The manager shares its RPC client with accounts and read-only conversions. Supplied ethers providers must support JSON-RPC `send(method, params)`. Bundler and paymaster endpoints remain separate.
 - To wrap an existing EVM account, use the same installed EVM beta.19 package instance as the gasless module. Another EVM version or a second package copy fails the class identity check. Newer standard EVM transaction and provider changes do not apply to these UserOperation methods.
-- Token-paymaster mode requires a provider-verified `paymasterAddress` in the merged configuration. Wallet-built operations reject a different returned paymaster address before the UserOperation signature; a delegation authorization may already have been signed. Already-signed submission does not repeat this check. See [paymaster configuration](https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#paymaster-token).
+- Token-paymaster mode requires a provider-verified `paymasterAddress` in the merged configuration. Wallet-built operations reject a different returned paymaster address before the UserOperation signature. During sign/send, a delegation authorization may already have been signed. Already-signed submission does not repeat this check. See [paymaster configuration](https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#paymaster-token).
 - Uses EIP-7702 delegation and ERC-4337 UserOperations while retaining the EOA address.
 - Supports sponsored mode and paymaster-token mode.
 - `entryPointVersion` accepts `'0.8'` (default) or `'0.9'`. Match the delegation implementation, bundler, and paymaster to that version.
 - Optional `chainId` checks the provider's first UserOperation chain lookup and caches success. Owned-account quotes and sends check even sponsored or signed inputs; read-only sponsored quotes skip it. The check does not validate an externally signed payload's chain or EntryPoint.
-- Owned account paymaster-token quotes are cached for up to 2 minutes.
+- Owned-account paymaster-token quotes are cached for up to 2 minutes only when the account is already delegated to the configured contract. An undelegated quote uses an unsigned estimation tuple, does not sign an authorization and does not enter the cache.
 - Before reusing a cached UserOperation, the account validates its EntryPoint nonce and re-quotes if the nonce moved.
 - A send that needs a fresh EIP-7702 authorization rebuilds the UserOperation instead of reusing the cached one.
 - Quote-cache keys include the transaction, sponsorship mode, paymaster token, expected paymaster address, and sponsorship policy. Changing a keyed field creates a fresh quote.

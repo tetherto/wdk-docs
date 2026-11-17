@@ -1,4 +1,4 @@
-import { FilePenLine, Github, Handshake, Mail } from "lucide-react";
+import { Github, Handshake, Mail } from "lucide-react";
 import type { ComponentType } from "react";
 
 function DiscordIcon({ className }: { className?: string }) {
@@ -48,25 +48,6 @@ const supportCards: LinkCard[] = [
       "For sensitive or private matters, contact our team directly",
     href: "mailto:wallet-info@tether.io",
     cta: "Send an email",
-    accent: false,
-  },
-];
-
-const communityCards: LinkCard[] = [
-  {
-    icon: FilePenLine,
-    title: "Community Form",
-    description: "Submit your WDK project for a documentation showcase review",
-    href: "https://forms.gle/wmNwc5epxaa85u8a9",
-    cta: "Submit Project",
-    accent: true,
-  },
-  {
-    icon: DiscordIcon,
-    title: "#wdk-showcase",
-    description: "Share your project directly with the community on Discord",
-    href: "https://discordapp.com/channels/1425125849346216029/1427975123406688267",
-    cta: "Open Channel",
     accent: false,
   },
 ];
@@ -143,10 +124,6 @@ export function SupportCards() {
       <LinkCardGrid cards={supportCards} />
     </div>
   );
-}
-
-export function CommunityCards() {
-  return <LinkCardGrid cards={communityCards} />;
 }
 
 export function GetInvolvedCards() {

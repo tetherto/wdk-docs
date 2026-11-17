@@ -8,6 +8,8 @@ icon: Code
 
 ## API Reference
 
+This reference covers `@tetherto/wdk-wallet-ton@1.0.0-beta.20`.
+
 ### Table of Contents
 
 | Class | Description | Methods |
@@ -91,7 +93,7 @@ const account = await wallet.getAccountByPath("0'/0/1")
 ```
 
 ##### `getFeeRates()`
-Returns normal and fast fee rates from the mainnet TON API configuration. Through `1.0.0-beta.16`, this method always requests `https://tonapi.io/v2`, does not follow the configured `tonClient` network, and returns the same calculated value for both fields.
+Returns normal and fast fee rates from the mainnet TON API configuration. This method requests `https://tonapi.io/v2`, does not follow the configured `tonClient` network, and returns the same calculated value for both fields.
 
 **Returns:** `Promise\<FeeRates\>` - Object containing normal and fast fee rates
 
@@ -168,7 +170,7 @@ const account = new WalletAccountTon(seedPhrase, "0'/0/0", {
 | `transfer(options)` | Transfers Jetton tokens to another address | `Promise\<{hash: string, fee: bigint}\>` |
 | `quoteTransfer(options)` | Estimates the fee for a Jetton transfer | `Promise\<{fee: bigint}\>` |
 | `getBalance()` | Returns the native TON balance (in nanotons) | `Promise\<bigint\>` |
-| `getTokenBalance(tokenAddress)` | Returns the balance of a specific Jetton token | `Promise\<bigint\>` |
+| `getTokenBalance(tokenAddress)` | Returns a verified Jetton wallet's balance, or zero when undeployed | `Promise\<bigint\>` |
 | `getTransaction(hash)` | Returns a normalized receipt for a message-body hash | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
 | `waitForTransaction(hash, options?)` | Waits for the requested TON finality | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
 | `getTransactionReceipt(hash)` | Deprecated: returns the native TON transaction | `Promise\<TonTransactionReceipt \| null\>` |
@@ -217,7 +219,7 @@ console.log('Signature:', signature)
 ```
 
 ##### `signTransaction(tx)`
-Builds and signs an external-message body without broadcasting it. This is not an offline operation: it requires a configured TON client to read the wallet's current sequence number and, when `transactionMaxFee` is set, to estimate the fee. Added in v1.0.0-beta.8.
+Builds and signs an external-message body without broadcasting it. It requires a configured TON client to read the wallet's current sequence number and, when `transactionMaxFee` is set, to estimate the fee. The default expiry is 60 seconds after creation, including the first transfer at sequence number `0`.
 
 **Parameters:**
 - `tx` (object): The transaction object (same shape as `sendTransaction`)
@@ -249,7 +251,7 @@ Sends a TON transaction and returns its signed transfer body hash and fee.
   - `bounceable` (boolean, optional): Whether the address is bounceable (TON-specific, optional)
   - `body` (string | Cell, optional, object input): A `Cell` is used as the message body. A string whose decoded first four bytes match a TON BoC magic is decoded as a base64-serialized `Cell`; any other string is sent as a text comment. A magic-prefixed string that is not a valid BoC throws.
 
-When `tx` is a top-level `Cell`, WDK estimates its fee, enforces `transactionMaxFee`, and passes that exact signed transfer body to the matching opened `WalletContractV5R1.send()` call. It does not rebuild the body, refresh its sequence number, or re-sign it. A base64 string in `TonTransaction.body` is an object-input message body, not a complete signed transaction.
+When `tx` is a top-level `Cell`, WDK estimates its fee, enforces `transactionMaxFee`, and passes that exact signed transfer body to the matching opened `WalletContractV5R1.send()` call. It does not rebuild the body, refresh its sequence number or expiry, or re-sign it. Submit it before its original expiry; build and sign a fresh body if it expires. A base64 string in `TonTransaction.body` is an object-input message body, not a complete signed transaction.
 
 **Returns:** `Promise\<{hash: string, fee: bigint}\>` - Object containing the signed transfer body hash as lowercase hex and the fee in nanotons
 
@@ -289,6 +291,8 @@ console.log('Estimated fee:', quote.fee, 'nanotons');
 ##### `transfer(options)`
 Transfers Jettons (TON tokens) to another address.
 
+The sender's Jetton wallet must be deployed. Before estimating the fee or sending, the method checks its deployed code against the master's wallet code, then checks the owner and Jetton master reported by the wallet.
+
 **Parameters:**
 - `options` (object): Transfer options
   - `token` (string): Jetton master contract address (TON format, e.g., 'EQ...')
@@ -296,6 +300,8 @@ Transfers Jettons (TON tokens) to another address.
   - `amount` (number | bigint): Amount in Jetton's base units
 
 **Returns:** `Promise\<{hash: string, fee: bigint}\>` - Object containing the signed transfer body hash as lowercase hex and the fee in nanotons
+
+**Throws:** Error if the sender's Jetton wallet is undeployed, its code, owner or master fails verification, the RPC request fails, or the fee exceeds `transferMaxFee`. See [token transfer errors](/sdk/wallet-modules/wallet-ton/guides/handle-errors#handle-token-transfer-errors).
 
 **Example:**
 ```javascript
@@ -311,6 +317,8 @@ console.log('Transfer fee:', result.fee, 'nanotons');
 ##### `quoteTransfer(options)`
 Estimates the fee for a Jetton (TON token) transfer.
 
+Checks the code, owner and master of a deployed Jetton wallet. The account's Jetton-wallet address is accepted for estimation even with no deployed code, so a quote does not establish transfer readiness.
+
 **Parameters:**
 - `options` (object): Transfer options (same as transfer)
   - `token` (string): Jetton master contract address (TON format, e.g., 'EQ...')
@@ -318,6 +326,8 @@ Estimates the fee for a Jetton (TON token) transfer.
   - `amount` (number | bigint): Amount in Jetton's base units
 
 **Returns:** `Promise\<{fee: bigint}\>` - Object containing fee estimate (in nanotons)
+
+**Throws:** Error if a deployed Jetton wallet fails verification or an RPC request fails. The quote does not enforce `transferMaxFee`.
 
 **Example:**
 ```javascript
@@ -342,6 +352,8 @@ console.log('Balance:', balance, 'nanotons');
 
 ##### `getTokenBalance(tokenAddress)`
 Returns the balance of a specific Jetton (TON token).
+
+For a deployed Jetton wallet, checks its code against the master's wallet code and verifies its reported owner and master. If the account's Jetton-wallet address has no deployed code, the method returns `0n`; RPC and verification failures throw.
 
 **Parameters:**
 - `tokenAddress` (string): The Jetton master contract address (TON format, e.g., 'EQ...')
@@ -464,8 +476,9 @@ new WalletAccountReadOnlyTon(publicKey, config)
 |--------|-------------|---------|
 | `getAddress()` | Returns the account's TON address | `Promise\<string\>` |
 | `getBalance()` | Returns the native TON balance | `Promise\<bigint\>` |
-| `getTokenBalance(tokenAddress)` | Returns the balance of a specific Jetton | `Promise\<bigint\>` |
+| `getTokenBalance(tokenAddress)` | Returns a verified Jetton wallet's balance, or zero when undeployed | `Promise\<bigint\>` |
 | `quoteSendTransaction(tx)` | Estimates the fee for a TON transaction object, including a serialized BoC body | `Promise\<{fee: bigint}\>` |
+| `quoteTransfer(options)` | Estimates a Jetton transfer fee after checking a deployed wallet | `Promise\<{fee: bigint}\>` |
 | `verify(message, signature)` | Verifies a domain-separated message signature | `Promise\<boolean\>` |
 | `getTransaction(hash)` | Returns a normalized receipt for a message-body hash | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
 | `waitForTransaction(hash, options?)` | Waits for the requested TON finality | `Promise\<TransactionReceipt & TonTransactionDetails\>` |
@@ -483,6 +496,8 @@ Returns the native TON balance.
 
 ##### `getTokenBalance(tokenAddress)`
 Returns the balance of a specific Jetton.
+
+Uses the same deployed-wallet code, owner and master checks as the [writable account](#gettokenbalancetokenaddress). Returns `0n` when no code is deployed at the account's Jetton-wallet address; RPC and verification failures throw.
 
 **Parameters:**
 - `tokenAddress` (string): The Jetton master contract address
@@ -511,6 +526,10 @@ async function quoteReviewedTransaction(readOnlyAccount, reviewedTransaction) {
   return quote
 }
 ```
+
+##### `quoteTransfer(options)`
+
+Quotes a Jetton transfer using the same [options and wallet checks](#quotetransferoptions) as the writable account. The account's Jetton-wallet address is accepted for estimation even with no deployed code. Returns `Promise\<{fee: bigint}\>` without broadcasting; RPC and deployed-wallet verification failures throw.
 
 ##### `verify(message, signature)`
 Verifies a hex-encoded Ed25519 signature over the same domain-separated digest as [`sign()`](#signmessage). Beta.15 does not fall back to the raw-message scheme used by earlier versions.
@@ -645,7 +664,7 @@ interface FeeRates {
   normal: bigint;
 
   /**
-   * Same mainnet-derived fee rate as `normal` through v1.0.0-beta.16
+   * Same mainnet-derived fee rate as `normal`
    * @example 100000000n // 0.1 TON
    */
   fast: bigint;

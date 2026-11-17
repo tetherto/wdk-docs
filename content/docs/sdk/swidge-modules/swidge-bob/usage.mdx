@@ -1,0 +1,133 @@
+---
+title: BOB Gateway Swidge Usage
+description: Prepare BOB Gateway access, discover chain and token identifiers and preview a Bitcoin route.
+docType: how-to
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Use `GatewaySwidge` to discover assets and quote a route before binding a signing account. The examples below make read-only gateway requests; they do not create orders or sign transactions.
+
+## Installation
+
+For Node.js 24, use 24.22.1 or later in the 24.x line to satisfy the packaged TronWeb dependency's engine requirement.
+
+```bash
+npm install @gobob/wdk-protocol-swidge-gateway@0.5.0 @tetherto/wdk-wallet@1.0.0-beta.25
+```
+
+The package uses ESM imports. The command pins the WDK Wallet peer used by these examples; the declared peer range is `>=1.0.0-beta.17 <2.0.0`. Add WDK Core and concrete wallet packages only when your application imports them. TRON source routes require `@tetherto/wdk-wallet-tron >=1.0.0-beta.8`, which can sign the gateway's arbitrary contract calls.
+
+Node.js, Bare and React Native are supported. For React Native, configure the native host with the [React Native Quickstart](/start-building/react-native-quickstart#option-2-add-to-existing-app) and include the protocol and required wallet modules in your [worklet bundle](/tools/worklet-bundler/configuration#create-wdkconfigjs). The package's Bare entry initializes its compatibility layer.
+
+Provide global `fetch`, or inject an HTTP transport or gateway client. See [transport configuration](/sdk/swidge-modules/swidge-bob/configuration) for the available overrides.
+
+## Discover chains and tokens
+
+```javascript title="Read The Gateway Catalog"
+import { GatewaySwidge } from '@gobob/wdk-protocol-swidge-gateway'
+
+const gateway = new GatewaySwidge()
+
+const chains = await gateway.getSupportedChains()
+const tokens = await gateway.getSupportedTokens()
+```
+
+Use each returned token's `chain`, `token`, `symbol` and `decimals` to populate your selector. Match tokens by both chain and token identifier. Metadata comes from the package's token table; tokens with no entry are omitted.
+
+`getSupportedTokens({ fromChain: chainId })` filters the returned token entries to that chain. It does not validate a source/destination pair or filter all tokens reachable from that source. The implementation does not use the shared interface's `fromToken` or `toChain` filters.
+
+A fresh quote establishes whether the provider accepts a particular pair and amount. Discovery can also include destination chains for which this package has no source-signing adapter.
+
+## Preview a Bitcoin route
+
+The function below accepts your selected destination token and chain, the intended recipient, a Bitcoin refund address you control and an input amount in satoshis. Choose those values in your application before calling it. For a USD₮ destination, verify the chain-specific token identifier independently rather than selecting by symbol alone.
+
+```javascript title="Preview A Bitcoin Route"
+import { BTC, GatewaySwidge } from '@gobob/wdk-protocol-swidge-gateway'
+
+export async function previewBitcoinRoute({
+  destinationChain,
+  destinationToken,
+  recipientAddress,
+  refundAddress,
+  amountSats
+}) {
+  const gateway = new GatewaySwidge(undefined, {
+    fromChain: 'bitcoin',
+    refundAddress
+  })
+
+  const quote = await gateway.quoteSwidge({
+    fromToken: BTC,
+    toToken: destinationToken,
+    toChain: destinationChain,
+    fromTokenAmount: amountSats,
+    recipient: recipientAddress,
+    slippage: 0.01
+  })
+
+  return { gateway, quote }
+}
+```
+
+Pass `amountSats` as a `bigint`. JavaScript runtime validation also accepts non-negative decimal integer strings, but the exported TypeScript amount fields admit only `number | bigint`. Native BTC uses satoshis; other amounts use their token's base units. For example, the source amount `100_000n` represents 0.001 BTC, without asserting that this amount currently meets the gateway's route limits.
+
+`BTC` is the package's alias for native Bitcoin. Use it only when the corresponding chain is `bitcoin`; other tokens use their chain-specific identifier.
+
+Cross-chain requests require `recipient`. The recipient must be an address you intend to pay on the destination chain; the refund address is on the source chain. For a same-chain request, an account-bound instance can default the recipient to the account's address.
+
+## Bind the sending account
+
+For execution, use an account your application already initialized with its chain's wallet module and RPC provider. Match `sourceChain` to that account and provider before constructing the protocol:
+
+```javascript title="Bind A Source Account"
+import { GatewaySwidge } from '@gobob/wdk-protocol-swidge-gateway'
+
+export function bindSourceAccount(sourceAccount, sourceChain) {
+  return new GatewaySwidge(sourceAccount, { fromChain: sourceChain })
+}
+```
+
+Bitcoin sources need an account that can sign Bitcoin transactions; EVM and TRON sources need their corresponding transaction sender. An address-only account cannot execute. See [EVM account setup](/sdk/wallet-modules/wallet-evm/guides/getting-started), [Bitcoin account setup](/sdk/wallet-modules/wallet-btc/guides/get-started), or [TRON account setup](/sdk/wallet-modules/wallet-tron/guides/get-started).
+
+## Read the quote
+
+| Field | Interpretation |
+| --- | --- |
+| `fromTokenAmount` | Input amount in source-token base units. |
+| `toTokenAmount` | Estimated destination amount in destination-token base units. |
+| `toTokenAmountMin` | Floor derived from the gateway's echoed slippage. It is zero when no floor can be derived. |
+| `fees` | Individual fee entries, each with its own token and chain context. Do not add amounts from different tokens. |
+| `priceImpact` | Mapped numeric price impact, when available. |
+| `estimatedDuration` | Provider timing estimate, not a completion deadline. |
+| `affiliateApplied` | Whether affiliate configuration was sent for this quote variant. |
+
+See the [API Reference](/sdk/swidge-modules/swidge-bob/api-reference) for the complete result shape and error contracts.
+
+To execute, create an instance bound to the source account and provide a recipient and refund address appropriate to the chosen chains. `swidge()` requests its own quote; the earlier preview does not lock the displayed output. The [execution guide](/sdk/swidge-modules/swidge-bob/guides/execute-swidge) covers approval and fee boundaries, and [Bitcoin Routes](/sdk/swidge-modules/swidge-bob/guides/bitcoin-routes) covers local signing and gateway broadcast.
+
+## Next Steps
+
+<Cards>
+<Card title="Execute a Swidge" href="/sdk/swidge-modules/swidge-bob/guides/execute-swidge">
+Confirm the operation, handle approval and submit the source transaction.
+</Card>
+<Card title="Bitcoin Routes" href="/sdk/swidge-modules/swidge-bob/guides/bitcoin-routes">
+Send or receive BTC and understand simulation side effects.
+</Card>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-bob/configuration">
+Set transports, source accounts and fee controls.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

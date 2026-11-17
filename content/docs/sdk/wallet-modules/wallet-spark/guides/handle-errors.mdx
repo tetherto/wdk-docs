@@ -23,6 +23,8 @@ try {
 
 With `syncAndRetry` enabled, payment failures that are not recovered raise [`LightningPaymentError`](/sdk/wallet-modules/wallet-spark/api-reference#lightningpaymenterror). Keep its `transferId` with the original invoice and options. If you later decide to retry, pass that same ID; do not create a second payment with a new ID. Other failures, including setup or sync failures, may use different error types.
 
+[`withdraw()`](/sdk/wallet-modules/wallet-spark/api-reference#withdrawoptions) throws `MaximumFeeExceededError` when the selected quote's fee sum exceeds `withdrawMaxFee`. With that limit configured, an unrecognized `exitSpeed` throws `ValueError`. [`claimStaticDeposit()`](/sdk/wallet-modules/wallet-spark/api-reference#claimstaticdeposittxid) throws `ValueError` if the provider's credit is not a safe positive integer number of satoshis.
+
 You can preserve the ID while handling [`account.payLightningInvoice()`](/sdk/wallet-modules/wallet-spark/api-reference#paylightninginvoiceoptions):
 
 ```javascript title="Handle Lightning Errors"
@@ -128,13 +130,11 @@ const lightningFee = await account.quotePayLightningInvoice({
 console.log('Estimated Lightning fee:', Number(lightningFee), 'satoshis')
 ```
 
-<Callout type="info">
-[`quoteWithdraw()`](/sdk/wallet-modules/wallet-spark/api-reference) should run before [`withdraw()`](/sdk/wallet-modules/wallet-spark/api-reference) so you understand cooperative exit costs.
-</Callout>
+Inspect cooperative exit costs with [`quoteWithdraw()`](/sdk/wallet-modules/wallet-spark/api-reference). Configure [`withdrawMaxFee`](/sdk/wallet-modules/wallet-spark/configuration#withdrawal-fee-limit) to check the fresh quote fetched during withdrawal; a prior quote alone does not enforce a limit.
 
 ### Dispose of sensitive data
 
-Clear keys from memory when a session ends. Call [`account.dispose()`](/sdk/wallet-modules/wallet-spark/api-reference) for each account and [`wallet.dispose()`](/sdk/wallet-modules/wallet-spark/api-reference) on the manager:
+Call [`account.dispose()`](/sdk/wallet-modules/wallet-spark/api-reference#dispose-1) for each account and [`wallet.dispose()`](/sdk/wallet-modules/wallet-spark/api-reference#dispose) on the manager when a session ends. Account disposal zeroes signer-held private-key bytes and starts connection cleanup. Other derivation copies, including the master key and bigint forms of keys, are left to garbage collection; complete erasure is not guaranteed.
 
 ```javascript title="Dispose Wallet Resources"
 try {
@@ -148,10 +148,6 @@ try {
   wallet.dispose()
 }
 ```
-
-<Callout type="warn">
-After [`dispose()`](/sdk/wallet-modules/wallet-spark/api-reference), the account cannot sign new operations. Call disposal when the wallet UI or job is finished.
-</Callout>
 
 ## Next Steps
 

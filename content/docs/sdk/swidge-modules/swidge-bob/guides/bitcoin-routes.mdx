@@ -1,0 +1,118 @@
+---
+title: Bitcoin Routes with BOB Gateway
+description: Use Bitcoin source or destination routes and distinguish quoting, signing, broadcasting and settlement.
+docType: how-to
+schemaType: TechArticle
+---
+
+<Callout type="warn">
+Community modules are developed and maintained independently by third-party contributors.
+
+Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+</Callout>
+
+Use BOB Gateway to send native BTC into a provider route, or send a supported token to a Bitcoin recipient. Read [installation availability](/sdk/swidge-modules/swidge-bob/usage#installation), then discover a route for your pair and amount. The `BTC` export identifies native Bitcoin; use it only when the corresponding chain is `bitcoin`.
+
+## Choose the sending account
+
+| Direction | Source account and amounts | Destination and refund |
+| --- | --- | --- |
+| BTC to a token | Bitcoin mainnet account exposing `getAddress()` and `signTransaction()`. Input is satoshis. | `recipient` belongs to the destination chain; `refundAddress` is a Bitcoin address. |
+| Token to BTC | Send-capable EVM or TRON account, plus any required token approval. Input uses the source token's base units. | Set `toToken: BTC`, `toChain: 'bitcoin'` and a Bitcoin `recipient`. The refund address belongs to the source EVM/TRON chain. Output minimum is satoshis. |
+
+The Bitcoin source adapter validates standard mainnet deposit addresses; do not configure this flow with a Bitcoin testnet account. An acceptable deposit-address format does not independently verify who controls the address returned by the gateway.
+
+## Send BTC into a route
+
+Supply an already initialized Bitcoin mainnet account owned by your application. Choose the destination token and chain from discovery and verify the intended recipient there. The following application function does not create or dispose the account.
+
+`confirmOperation({ intent, quote })` is an application callback that displays the source amount, destination token and chain, recipient, refund address, minimum output and fee entries, and resolves to a boolean. `recordSubmission({ id, hash, transactions })` durably retains the submitted order and source transaction. Both callbacks must be implemented by the caller.
+
+```javascript title="Submit A Bitcoin Source Route"
+import { GatewaySwidge, BTC } from '@gobob/wdk-protocol-swidge-gateway'
+
+async function sendBitcoinRoute({
+  bitcoinAccount, destinationChain, destinationToken, amountSats,
+  recipientAddress, refundAddress, minAmountOut,
+  confirmOperation, recordSubmission,
+}) {
+  const gateway = new GatewaySwidge(bitcoinAccount, { fromChain: 'bitcoin' })
+  const intent = Object.freeze({
+    fromToken: BTC,
+    toToken: destinationToken,
+    toChain: destinationChain,
+    fromTokenAmount: amountSats,
+    recipient: recipientAddress,
+    refundAddress,
+    minAmountOut,
+  })
+  const quote = await gateway.quoteSwidge(intent)
+  if (!await confirmOperation({ intent, quote })) return null
+
+  const result = await gateway.swidge(intent)
+  await recordSubmission({ id: result.id, hash: result.hash, transactions: result.transactions })
+  return result
+}
+```
+
+Use bigint amounts: `amountSats` is the BTC input, while `minAmountOut` is in the destination token's base units. Include enough BTC for the input and the Bitcoin network fee. Set the protocol's optional `feeRate` in sat/vB when your application chooses the rate; otherwise the account estimates it.
+
+Execution obtains a fresh quote and checks that its BTC input equals the requested input. It creates an order, validates the returned deposit address, and asks the account to sign a transaction. The module sends the signed hex to the gateway's `register-tx` endpoint, which broadcasts it; it does not call the wallet's Bitcoin broadcaster.
+
+The returned `id` is the gateway order ID, and `hash` is the signed source transaction's txid. Preserve both. A successful registration is not Bitcoin confirmation or destination settlement. If recording the result fails, retain the submission details inside the callback; the broadcast is not undone.
+
+## Inspect a Bitcoin simulation
+
+<Callout type="warn">
+`simulateSwidge()` creates a real, unfunded gateway order and signs a Bitcoin transaction. It is not a quote-only operation. Use `quoteSwidge()` when you only need an indicative price.
+</Callout>
+
+For an existing Bitcoin-bound instance and the same intent shape, inspect only the fields the API returns:
+
+```javascript title="Inspect A Bitcoin Simulation"
+async function inspectBitcoinSimulation(gateway, intent) {
+  const simulation = await gateway.simulateSwidge(intent)
+  if (!('onramp' in simulation)) throw new Error('Expected a Bitcoin source route')
+  return {
+    orderId: simulation.orderId,
+    broadcast: simulation.broadcast,
+    txid: simulation.onramp.txid,
+    valid: simulation.onramp.valid,
+    paidToDeposit: simulation.onramp.paidToDeposit,
+  }
+}
+```
+
+`broadcast` is `false`. `valid` means the signed transaction pays exactly the quoted satoshi amount to the order's deposit address. The raw signed transaction is not returned. The later `swidge()` call creates its own order and transaction; it does not reuse the simulation's order or txid.
+
+## Receive BTC from an EVM or TRON account
+
+Use the source token's contract address as `fromToken`, `BTC` as `toToken`, and `bitcoin` as `toChain`. Supply your intended Bitcoin address as `recipient` and a refund address controlled on the source chain. Follow [Execute a Swidge](/sdk/swidge-modules/swidge-bob/guides/execute-swidge) for approval and source submission.
+
+The source account pays its chain's gas or resource costs. A Bitcoin payout is tracked as a destination transaction, separately from the EVM/TRON source hash. Do not interpret the source hash as a Bitcoin transaction hash.
+
+## Recover from uncertain registration
+
+An error from `register-tx` can occur after the gateway has broadcast the signed transaction. The module's registration error identifies the order and signed txid when that registration call fails. Retain those identifiers and check the Bitcoin chain and gateway order before sending again.
+
+Do not infer that the transaction was unsent from an HTTP timeout, missing response or absent local record. Reconcile wallet submissions and spendable outputs when a crash or network failure leaves the outcome unknown. See [Track Settlement](/sdk/swidge-modules/swidge-bob/guides/track-settlement#reconcile-before-retrying).
+
+## Next Steps
+
+<Cards>
+<Card title="Track Settlement" href="/sdk/swidge-modules/swidge-bob/guides/track-settlement">
+Track source, payout and refund transactions from an order ID.
+</Card>
+<Card title="Execute a Swidge" href="/sdk/swidge-modules/swidge-bob/guides/execute-swidge">
+Handle token approvals when the source is EVM or TRON.
+</Card>
+<Card title="Configuration" href="/sdk/swidge-modules/swidge-bob/configuration">
+Choose Bitcoin fee rates and source-chain refund defaults.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

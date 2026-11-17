@@ -12,6 +12,7 @@ import { getMDXComponents } from '@/mdx-components';
 import { resolveIcon } from "@/lib/resolveIcon";
 import { cloneElement, isValidElement } from "react";
 import { LLMCopyButton, ViewOptions } from '@/components/page-actions';
+import { IndexerApiReference } from '@/components/indexer-api-reference';
 import {
   buildDocsMetadata,
   buildJsonLdGraph,
@@ -51,6 +52,7 @@ export default async function Page(props: PageProps<'/[[...slug]]'>) {
   if (!page) notFound();
 
   const MDXContent = page.data.body;
+  const isIndexerReference = page.url.replace(/\/$/, '') === '/tools/indexer-api/api-reference';
 
   const rawIcon =
   typeof page.data.icon === "string" ? resolveIcon(page.data.icon) : page.data.icon;
@@ -70,9 +72,10 @@ export default async function Page(props: PageProps<'/[[...slug]]'>) {
   const seoState = getPageSeoState(page, seoConfig);
   const jsonLd = buildJsonLdGraph(page, seoState, seoConfig);
   const markdownUrl = getMarkdownUrl(page.url);
+  const body = <MDXContent components={getMDXComponents({ a: createRelativeLink(source, page) })} />;
   
   return (
-    <DocsPage toc={filteredToc} tableOfContent={{ style: "clerk" }} tableOfContentPopover={{ style: "clerk" }} full={page.data.full}>
+    <DocsPage toc={filteredToc} tableOfContent={{ enabled: !isIndexerReference, style: "clerk" }} tableOfContentPopover={{ enabled: !isIndexerReference, style: "clerk" }} full={isIndexerReference || page.data.full}>
       {jsonLd ? <DocsJsonLd data={jsonLd} /> : null}
       <DocsTitle>
         <span className="inline-flex items-center gap-2 leading-none">
@@ -96,12 +99,7 @@ export default async function Page(props: PageProps<'/[[...slug]]'>) {
         />
       </div>
       <DocsBody>
-        <MDXContent
-          components={getMDXComponents({
-            // this allows you to link to other pages with relative file paths
-            a: createRelativeLink(source, page),
-          })}
-        />
+        {isIndexerReference ? <IndexerApiReference>{body}</IndexerApiReference> : body}
       </DocsBody>
     </DocsPage>
   );

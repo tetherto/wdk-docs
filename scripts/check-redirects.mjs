@@ -164,6 +164,36 @@ const expectedRedirects = [
     status: '301',
   },
   {
+    source: '/overview/partner-program',
+    target: 'https://wdk.tether.io/partners',
+    status: '301',
+  },
+  {
+    source: '/overview/partner-program/',
+    target: 'https://wdk.tether.io/partners',
+    status: '301',
+  },
+  {
+    source: '/overview/partner-program.md',
+    target: 'https://wdk.tether.io/partners',
+    status: '301',
+  },
+  {
+    source: '/overview/showcase',
+    target: 'https://wdk.tether.io/',
+    status: '301',
+  },
+  {
+    source: '/overview/showcase/',
+    target: 'https://wdk.tether.io/',
+    status: '301',
+  },
+  {
+    source: '/overview/showcase.md',
+    target: 'https://wdk.tether.io/',
+    status: '301',
+  },
+  {
     source: '/__missing-sevalla-404-check',
     target: '/404.html',
     status: '404',
