@@ -2,7 +2,6 @@ import type { TransformSource } from "@inkeep/cxkit-types";
 
 const DOCS_HOSTS = new Set([
   "wallet.tether.io",
-  "wdk.tether.io",
   "docs.wallet.tether.io",
   "docs.wdk.tether.io",
 ]);
