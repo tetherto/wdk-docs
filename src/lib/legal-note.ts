@@ -1,7 +1,7 @@
 export const LEGAL_PAGE = '/resources/legal';
 
 export type LegalNoteProps = {
-  kind: 'community' | 'community-rows' | 'community-marked' | 'service';
+  kind: 'community' | 'community-skill' | 'community-rows' | 'community-marked' | 'service';
   /** Provider the module is built around, with a link to its terms. */
   provider?: string;
   terms?: string;
@@ -50,6 +50,13 @@ export function legalNoteParts(props: LegalNoteProps): LegalNotePart[] {
   if (props.kind === 'community-rows') {
     return [
       'Rows marked Community are maintained independently by third-party contributors. See ',
+      legal('community-modules'),
+      '.',
+    ];
+  }
+  if (props.kind === 'community-skill') {
+    return [
+      'Community skill, maintained independently by a third-party contributor. See ',
       legal('community-modules'),
       '.',
     ];
