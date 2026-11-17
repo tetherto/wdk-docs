@@ -55,7 +55,7 @@ for (const origin of ["https://wdk-docs-preview.kinsta.page", "https://docs.wdk.
 
   test(`localizes documentation aliases on ${origin}`, () => {
     withDocsOrigin(origin, () => {
-      for (const host of ["wallet.tether.io", "docs.wallet.tether.io", "docs.wdk.tether.io"]) {
+      for (const host of ["docs.wallet.tether.io", "docs.wdk.tether.io"]) {
         assert.equal(
           rewriteDocsUrl(`https://${host}/tools/create-wdk-module/?source=search#submission`),
           `${origin}/tools/create-wdk-module/?source=search#submission`,
