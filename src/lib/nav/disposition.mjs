@@ -22,6 +22,7 @@ export default {
       categories: [
         { name: 'Quickstarts', entries: ['home', 'nodejs-bare-quickstart', 'react-native-quickstart', 'react-native-starter', 'which-wallet-module'] },
         { name: 'Understand WDK', entries: [named('get-started', 'Architecture'), 'concepts'] },
+        { name: 'Contribute to WDK', entries: [named('create-wdk-module', 'Create a WDK Module')] },
         { name: 'About WDK', entries: ['about', 'vision', 'support', 'changelog', 'legal'] },
       ],
     },
@@ -87,7 +88,7 @@ export default {
       categories: [
         { name: 'Data', entries: [named('indexer-api', 'Indexer API'), named('price-rates', 'Price Rates'), 'pricing-modules', 'pricing-coingecko-http', named('asset-registry', 'Asset Registry')] },
         { name: 'Infrastructure', entries: [named('failover-provider', 'Failover Provider'), 'p2p-address-book'] },
-        { name: 'Runtimes and packaging', entries: [named('pear-wrk-wdk', 'Pear Worklet'), named('worklet-bundler', 'Worklet Bundler'), named('create-wdk-module', 'Create a WDK Module')] },
+        { name: 'Runtimes and packaging', entries: [named('pear-wrk-wdk', 'Pear Worklet'), named('worklet-bundler', 'Worklet Bundler')] },
       ],
     },
   ],

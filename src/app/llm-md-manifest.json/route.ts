@@ -1,4 +1,3 @@
-import { expandLegalNotes } from '@/lib/legal-note';
 import { source } from '@/lib/source';
 
 export const dynamic = 'force-static';
@@ -9,7 +8,7 @@ function formatPageMarkdown(page: ReturnType<typeof source.getPages>[number]) {
   const body = page.data.getText('processed');
 
   return body.then((content) => {
-    const trimmed = expandLegalNotes(content).trim();
+    const trimmed = content.trim();
     const heading = `# ${title} (${page.url})`;
 
     return trimmed.length > 0 ? `${heading}\n\n${trimmed}\n` : `${heading}\n`;

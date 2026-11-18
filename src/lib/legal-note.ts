@@ -77,18 +77,8 @@ export function legalNoteParts(props: LegalNoteProps): LegalNotePart[] {
   ];
 }
 
-const TAG = /<LegalNote\s+([^>]*?)\/>/g;
-const ATTRIBUTE = /(\w+)="([^"]*)"/g;
-
-/** Replaces `<LegalNote />` tags in exported Markdown with the sentence they render. */
-export function expandLegalNotes(markdown: string): string {
-  return markdown.replace(TAG, (_tag, attributes: string) => {
-    const props = Object.fromEntries(
-      [...attributes.matchAll(ATTRIBUTE)].map((match) => [match[1], match[2]]),
-    ) as LegalNoteProps;
-
-    return legalNoteParts(props)
-      .map((part) => (typeof part === 'string' ? part : `[${part.text}](${part.href})`))
-      .join('');
-  });
+export function legalNoteMarkdown(props: LegalNoteProps): string {
+  return legalNoteParts(props)
+    .map((part) => (typeof part === 'string' ? part : `[${part.text}](${part.href})`))
+    .join('');
 }
