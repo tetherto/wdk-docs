@@ -16,39 +16,7 @@ import WDK from '@tetherto/wdk'
 const wdk = new WDK(seedPhrase)
 ```
 
-The WDK Manager requires a seed phrase or seed bytes. Its optional second argument sets instance-level policy limits and method exclusions; wallet and protocol configuration remains registration-based.
-
-### Policy Condition Timeout Ceiling
-
-```javascript title="Cap Policy Condition Timeouts"
-const wdk = new WDK(seedPhrase, {
-  maxConditionTimeoutMs: 5000
-})
-```
-
-`maxConditionTimeoutMs` is the maximum time any one policy condition can receive through `registerPolicy(..., { conditionTimeoutMs })`. It defaults to `30000` milliseconds and must be a finite positive number. A policy that requests a larger timeout is capped to this ceiling rather than rejected. Each `registerPolicy()` call applies its requested timeout only to the policies registered by that call.
-
-### Policy Method Exclusions
-
-Starting in `@tetherto/wdk` v1.0.0-beta.17, `policyExclusions` optionally adds method names that bypass policy evaluation on this WDK instance. It accepts an array of non-empty strings. The resolved set always includes [`DEFAULT_POLICY_EXCLUSIONS`](/sdk/core-module/api-reference#default-policy-exclusions); passing `[]` does not remove the defaults.
-
-An exclusion applies to existing methods with that exact name across every governed account and protocol on the instance. Configure custom methods before account retrieval; a previously unrecognized function introduced later is not exempt merely because it uses an excluded name. Review the method's behavior on each applicable module before excluding it. To permit a write while retaining evaluation and simulation, register an `ALLOW` rule instead.
-
-You can opt out of evaluating Spark's local balance synchronization using the constructor option:
-
-```javascript title="Configure A Method Exclusion"
-import WDK from '@tetherto/wdk'
-
-const wdk = new WDK(seedPhrase, {
-  policyExclusions: ['syncWalletBalance']
-})
-```
-
-This configuration bypasses evaluation for `syncWalletBalance`, which is governed by default. It does not grant permission to other Spark methods. Wallet and policy registration still happen separately.
-
-Inspect the resolved names with [`getPolicyExclusions()`](/sdk/core-module/api-reference#getpolicyexclusions). Duplicate names appear once, and the returned array is frozen. Names that no installed account exposes are accepted without an existence check. Exclusions are fixed when the WDK instance is created; mutating the input array later does not change them.
-
-`registerPolicy()` rejects a rule that explicitly names an excluded method, including a name inside an operation array. Remove the ineffective rule, or omit that method from your custom exclusions when creating the instance. Default exclusions cannot be removed. See [Transaction Policies](/sdk/core-module/guides/transaction-policies#supported-operations) for migration guidance.
+The WDK manager accepts a seed phrase or raw BIP-32 seed bytes. Configure wallets, protocols, and middleware through their registration methods. Configure policy timeouts and exclusions on the [standalone Policies plugin](/sdk/core-module/guides/transaction-policies#configure-policies).
 
 ## Wallet Registration Configuration
 
@@ -130,12 +98,12 @@ wdk.registerProtocol('ethereum', 'swap', MySwapProtocol, swapProtocolConfig)
 
 ### Middleware Configuration
 
-Middleware functions can be registered to enhance account functionality.
+Middleware runs in registration order on account retrieval, after WDK attaches protocol methods. A non-nullish callback return replaces the account passed to the next callback and the caller.
 
 ```javascript title="Middleware WDK Protocol Configuration"
 // Simple logging middleware
-wdk.registerMiddleware('ethereum', async (account) => {
-  console.log('New account created:', await account.getAddress())
+wdk.registerMiddleware('ethereum', async (account, { blockchain }) => {
+  console.log('Accessed account:', blockchain, await account.getAddress())
 })
 ```
 
@@ -162,7 +130,7 @@ Registration does not validate every downstream module configuration:
 
 In JavaScript, a protocol class that does not extend a supported WDK protocol base class is ignored rather than rejected. Keep protocol classes typed, use distinct labels, and test retrieval during application startup. A global registration shadows an account-scoped provider with the same type and label.
 
-Core beta.20 also defers account-scoped protocol construction until retrieval. Each getter creates a fresh instance; retain that returned instance when its local state is needed later. Governed account-scoped protocols receive the policy proxy, while global protocols receive the raw account. Review the [protocol policy boundary](/sdk/core-module/guides/transaction-policies#runtime-caveats) before choosing the registration scope.
+Core beta.20 also defers account-scoped protocol construction until retrieval. Each getter creates a fresh instance; retain that returned instance when its local state is needed later. With the Policies plugin attached, governed account-scoped protocols receive the policy proxy. Global protocols receive the raw account. Review the [protocol policy boundary](/sdk/core-module/guides/transaction-policies#runtime-caveats) before choosing the registration scope.
 
 ## Error Handling
 

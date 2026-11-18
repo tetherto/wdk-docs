@@ -28,10 +28,21 @@ Use `getAccountByPath(path)` when you need a specific derivation path suffix.
 const account = await wallet.getAccountByPath("0'/0/5")
 
 console.log(account.path)
-console.log(account.index)
 ```
 
 The full derivation path is based on the EVM account path convention, for example `m/44'/60'/0'/0/5`.
+
+## Use a Custom Signer
+
+Use an `ISignerEvm` implementation from `@tetherto/wdk-wallet-evm-7702-gasless/signers` or supply an implementation of that interface. Register it on the manager with `addSigner(name, signer)`. The string overload uses that signer directly. Use the numeric or path overload when the registered signer supports derivation.
+
+```javascript title="Use a signer registered by your application"
+wallet.addSigner('external', externalSigner)
+const externalAccount = await wallet.getAccount('external')
+console.log(await externalAccount.getAddress())
+```
+
+Here `externalSigner` is the signer supplied by your application. Its lifecycle remains your responsibility. To use a custom default signer, pass a derivable signer as the first argument to the manager constructor.
 
 ## Convert to a Read-only Account
 
@@ -65,7 +76,7 @@ const readOnlyAccount = new WalletAccountReadOnlyEvm7702Gasless('0x742C4265F5Ba4
 
 `WalletAccountEvm7702Gasless` can wrap a `WalletAccountEvm` instance. Use this when your application already manages the base EVM account.
 
-Use `@tetherto/wdk-wallet-evm@1.0.0-beta.19` and ensure both imports resolve to the same installed EVM package instance. The constructor checks class identity; an account from another EVM version or a second package copy is not interchangeable. If you do not need an existing account, use the seed-and-path constructor instead.
+Use `@tetherto/wdk-wallet-evm@1.0.0-beta.26` and ensure both imports resolve to the same installed EVM package instance. The constructor checks class identity; an account from another EVM version or a second package copy is not interchangeable. If you do not need an existing account, use the seed-and-path constructor instead.
 
 ```javascript title="Wrap WalletAccountEvm"
 import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
@@ -90,4 +101,4 @@ gaslessAccount.dispose()
 wallet.dispose()
 ```
 
-`dispose()` clears the account quote cache and disposes the wrapped EVM account.
+`dispose()` clears the gasless account quote cache and prevents further signing and writes. The wrapped EVM account in this example is caller-owned. Dispose it separately when all of its consumers have finished.

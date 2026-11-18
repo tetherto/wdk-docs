@@ -9,11 +9,11 @@ Use this guide to handle typed transaction errors, transfer failures, fee limits
 
 ## Handle Typed Transaction Errors
 
-Starting in beta.15, `@tetherto/wdk-wallet-solana` re-exports the shared WDK error classes it uses. Branch on these classes instead of matching error-message text.
+`@tetherto/wdk-wallet-solana` re-exports the shared WDK error classes used below. Branch on these classes instead of matching error-message text.
 
 ```javascript title="Transaction Error Handling"
 import {
-  AssertionError,
+  DisposalError,
   MaximumFeeExceededError,
   ProviderRequiredError,
   ValueError
@@ -31,7 +31,7 @@ try {
     console.error('The transfer fee exceeds transferMaxFee')
   } else if (error instanceof ProviderRequiredError) {
     console.error('Configure a Solana RPC provider')
-  } else if (error instanceof AssertionError) {
+  } else if (error instanceof DisposalError) {
     console.error('The wallet account has been disposed')
   } else if (error instanceof ValueError) {
     console.error('Review the transfer input:', error.message)
@@ -116,7 +116,7 @@ The Solana implementation does not currently return `dropped`; a never-landed or
 
 ## Dispose of Sensitive Data
 
-Call [`dispose()`](/sdk/wallet-modules/wallet-solana/api-reference) on accounts and wallet managers to clear private keys and sensitive data from memory when they are no longer needed.
+Call `dispose()` in a cleanup handler. The manager disposes its seed-created default signer and cached accounts that expose their private key. Dispose retained accounts without an exposed key explicitly, and dispose caller-owned signers after their final use.
 
 ```javascript title="Memory Cleanup"
 account.dispose()
@@ -124,9 +124,6 @@ account.dispose()
 wallet.dispose()
 ```
 
-<Callout type="warn">
-Always call [`dispose()`](/sdk/wallet-modules/wallet-solana/api-reference) in a `finally` block or cleanup handler to ensure sensitive data is cleared even if an error occurs.
-</Callout>
 
 ## Next Steps
 

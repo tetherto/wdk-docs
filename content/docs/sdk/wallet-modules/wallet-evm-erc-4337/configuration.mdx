@@ -106,7 +106,7 @@ The `provider` option specifies an RPC endpoint, ethers provider, or EIP-1193 pr
 The manager shares one RPC client with every account it derives and with their read-only views. Direct constructors create their own client unless you supply the same ethers provider. `Provider` is the ethers type; the supplied object must support JSON-RPC `send(method, params)` for the abstractionkit adapter. Bundler and paymaster endpoints remain separately configured.
 
 <Callout type="warn">
-The documented Velora, USD₮0 bridge, and Aave adapters require EIP-1193 `request()` on non-string provider inputs. Direct and manager-derived accounts configured with an ethers provider lacking `request()` have the same limitation. Construct `WalletAccountEvmErc4337` directly with an RPC URL or genuine EIP-1193 provider for these adapters, retaining all required chain, Safe modules, bundler, and gas-payment settings. Do not mutate internal provider fields. A direct account bypasses WDK Core policy and middleware decoration, so preserve application checks and account-level controls.
+The documented Velora, USD₮0 bridge, and Aave adapters require EIP-1193 `request()` on non-string provider inputs. Direct and manager-derived accounts configured with an ethers provider lacking `request()` have the same limitation. Construct `WalletAccountEvmErc4337` directly with an RPC URL or genuine EIP-1193 provider for these adapters, retaining all required chain, Safe modules, bundler, and gas-payment settings. Do not mutate internal provider fields. A direct account bypasses WDK middleware and the [Policies plugin](/sdk/core-module/guides/transaction-policies), so preserve application checks and account-level controls.
 </Callout>
 
 **Examples:**
@@ -228,11 +228,11 @@ const config = {
 }
 ```
 
-Starting in `v1.0.0-beta.15`, the module validates this address whenever it builds a new token-paymaster UserOperation and the paymaster RPC returns a non-empty `paymaster` address. The comparison is case-insensitive. If the addresses differ, the module throws `ConfigurationError` before returning or submitting that newly built operation because its generated ERC-20 approval would target an unexpected paymaster contract.
+When building a token-paymaster UserOperation, the module requires the final paymaster returned by the RPC to match the configured `paymasterAddress` (case-insensitive). It also checks that the spender used in the generated ERC-20 approval matches the final paymaster. A missing or different final paymaster fails these checks with `ConfigurationError`.
 
 Treat a mismatch as an invalid paymaster URL and address pairing. Confirm the expected contract with your paymaster provider before changing `paymasterAddress`; do not automatically trust the address returned by the RPC.
 
-A matching quote can be cached for up to two minutes by transaction data. The cache key does not include per-call fee-mode or paymaster settings, and reusing the cached UserOperation does not call the paymaster RPC or rerun this address check. Keep `isSponsored`, `useNativeCoins`, `paymasterUrl`, `paymasterHeaders`, `paymasterAddress`, `paymasterToken`, and `sponsorshipPolicyId` consistent between a quote and its matching sign or send operation.
+The default-lane quote cache keys on the transaction, fee mode, `paymasterUrl`, `paymasterHeaders`, paymaster token address, expected paymaster address, and `sponsorshipPolicyId`. A change to any of these values requires a fresh build. A reusable quote can skip a paymaster request for up to two minutes.
 
 ### On-Chain Identifier
 

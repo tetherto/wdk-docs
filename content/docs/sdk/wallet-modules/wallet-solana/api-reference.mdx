@@ -14,7 +14,7 @@ icon: Code
 | [WalletAccountSolana](#walletaccountsolana) | Individual Solana wallet account implementation. Extends `WalletAccountReadOnlySolana` and implements `IWalletAccount`. | [Constructor](#constructor-1), [Methods](#methods-1), [Properties](#properties) |
 | [WalletAccountReadOnlySolana](#walletaccountreadonlysolana) | Read-only Solana wallet account. | [Constructor](#constructor-2), [Methods](#methods-2) |
 
-Starting in beta.15, the package root re-exports `AssertionError`, `MaximumFeeExceededError`, `NoSuchElementError`, `ProviderRequiredError`, `TimeoutError`, `ValueError`, and `WdkError` from `@tetherto/wdk-wallet`.
+The package root re-exports `AssertionError`, `DisposalError`, `InvalidSignerError`, `MaximumFeeExceededError`, `NoSuchElementError`, `ProviderRequiredError`, `TimeoutError`, `UnsupportedOperationError`, `ValueError`, and `WdkError` from `@tetherto/wdk-wallet`.
 
 ### WalletManagerSolana
 
@@ -24,11 +24,11 @@ Extends `WalletManager` from `@tetherto/wdk-wallet`.
 #### Constructor
 
 ```javascript
-new WalletManagerSolana(seed, config)
+new WalletManagerSolana(seedOrSigner, config?)
 ```
 
 **Parameters:**
-- `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or raw BIP-32 master seed (16–64 bytes)
+- `seedOrSigner` (`string | Uint8Array | ISignerSolana`): BIP-39 mnemonic, raw 16–64-byte master seed, or a derivable `ISignerSolana` from `@tetherto/wdk-wallet-solana/signers`. A supplied default signer must support derivation.
 - `config` (object): Configuration object
   - `provider` (`string | SolanaRpc | Array<string | SolanaRpc>`, optional): RPC URL, constructed Solana RPC client, or an ordered list mixing both for failover
   - `rpcUrl` (string | string[], optional): Deprecated alias for `provider`. If both are set, `provider` takes precedence
@@ -36,6 +36,8 @@ new WalletManagerSolana(seed, config)
   - `retries` (number, optional): Additional retry attempts for ordered provider failover (default: 3)
   - `transferMaxFee` (number | bigint, optional): Maximum fee amount for SPL token transfer operations (in lamports)
   - `transactionMaxFee` (number | bigint, optional): Maximum fee amount for native SOL send/sign operations (in lamports)
+
+A seed-backed manager derives accounts through its default signer. Retain any seed your application needs independently of the manager.
 
 **Example:**
 ```javascript
@@ -51,18 +53,23 @@ const wallet = new WalletManagerSolana(seedPhrase, {
 
 | Method | Description | Returns |
 |--------|-------------|---------|
-| `getAccount(index)` | Returns a wallet account at the specified index | `Promise<WalletAccountSolana>` |
-| `getAccountByPath(path)` | Returns a wallet account at the specified SLIP-0010 derivation path | `Promise<WalletAccountSolana>` |
+| `getAccount(indexOrSignerName?, options?)` | Derives an indexed account or returns the account for a named signer | `Promise<WalletAccountSolana>` |
+| `getAccountByPath(path, options?)` | Derives an account at a path relative to the selected signer | `Promise<WalletAccountSolana>` |
+| `addSigner(name, signer)` | Registers a caller-owned `ISignerSolana` | `this` |
+| `getSigner(name?)` | Returns the default signer or the named signer | `ISignerSolana` |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise<{normal: bigint, fast: bigint}>` |
 | `dispose()` | Initiates cleanup of wallet accounts | `void` |
 
 ##### `getAccount(index)`
-Returns a wallet account at the specified index.
+Derives `{index}'/0'` relative to the selected signer. With the default seed-backed signer, derivation starts at `m/44'/501'`.
 
 **Parameters:**
-- `index` (number, optional): The index of the account to get (default: 0)
+- `indexOrSignerName` (`number | string`, optional): A zero-based index from 0 through 2³¹ − 1 (default: 0), or a registered signer name. A string selects that signer directly without deriving a child.
+- `options.signerName` (`string`, optional): Selects a registered root signer for numeric derivation. Omit to use the default signer.
 
 **Returns:** `Promise<WalletAccountSolana>` - The wallet account
+
+**Throws:** `ValueError` for an invalid index, `NoSuchElementError` for an unknown signer, `InvalidSignerError` when a numeric index selects a non-derivable signer, or `DisposalError` when the manager is disposed.
 
 **Example:**
 ```javascript
@@ -70,10 +77,11 @@ const account = await wallet.getAccount(0)
 ```
 
 ##### `getAccountByPath(path)`
-Returns a wallet account at the specified SLIP-0010 derivation path.
+Derives an account relative to the selected signer.
 
 **Parameters:**
-- `path` (string): The derivation path (e.g., "0'/0'/0'"). On Solana, every child segment must be hardened.
+- `path` (`string`): Relative SLIP-0010 path, for example `"0'/0'/0'"`. Every segment must be hardened for the bundled seed signer.
+- `options.signerName` (`string`, optional): Selects a registered root signer. Omit to use the default signer.
 
 **Returns:** `Promise<WalletAccountSolana>` - The wallet account
 
@@ -99,7 +107,7 @@ console.log('Fast fee rate:', feeRates.fast, 'lamports')
 ```
 
 ##### `dispose()`
-Disposes all wallet accounts, clearing private keys from memory.
+Disposes the default signer created from a seed, disposes cached accounts that expose a private key at cleanup time, and clears the account cache. Call `account.dispose()` on any retained account backed by a signer that does not expose private keys, and dispose caller-owned signers separately.
 
 **Example:**
 ```javascript
@@ -113,13 +121,17 @@ Represents an individual Solana wallet account. Extends `WalletAccountReadOnlySo
 #### Constructor
 
 ```javascript
-new WalletAccountSolana(seed, path, config)
+new WalletAccountSolana(seed, path, config?)
+new WalletAccountSolana(signer, config?)
 ```
 
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic seed phrase or raw BIP-32 master seed (16–64 bytes)
 - `path` (string): SLIP-0010 derivation path (e.g., "0'/0'/0'")
-- `config` (SolanaWalletConfig, optional): Configuration object
+- `signer` (`ISignerSolana`): An account signer. Pass config as the second argument in this form.
+- `config` (SolanaWalletConfig, optional): Configuration object. Set `shouldWipeSignerOnDisposal: true` to let the account dispose a supplied signer.
+
+A direct account that creates its own signer from a seed or via `fromPrivateKey(privateKey, config?)` disposes that signer during cleanup.
 
 **Throws:** `ValueError` if a string seed is not a valid BIP-39 mnemonic or a derivation-path segment is not hardened.
 
@@ -167,7 +179,7 @@ Signs the UTF-8 bytes of the supplied text using the account's private key.
 
 **Returns:** `Promise<string>` - The message signature (hex-encoded)
 
-**Throws:** `AssertionError` if the account has been disposed.
+**Throws:** `DisposalError` if the account has been disposed.
 
 **Example:**
 ```javascript
@@ -190,7 +202,7 @@ Treat serialized transactions from another service as untrusted. Decode and inde
 **Returns:** `Promise<FullySignedTransaction>` - The signed transaction
 
 **Throws:**
-- `AssertionError` if the account has been disposed.
+- `DisposalError` if the account has been disposed.
 - `ProviderRequiredError` if the wallet is not connected to a provider.
 - `MaximumFeeExceededError` if the estimated fee is greater than `transactionMaxFee`.
 - `ValueError` if the transaction fee payer does not match the account or the provider cannot calculate the fee.
@@ -237,7 +249,7 @@ When `tx` is a base64-encoded serialized transaction, WDK signs it with this acc
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Object containing transaction hash and fee (in lamports)
 
 **Throws:**
-- `AssertionError` if the account has been disposed.
+- `DisposalError` if the account has been disposed.
 - `ProviderRequiredError` if the wallet is not connected to a provider.
 - `MaximumFeeExceededError` if the estimated fee is greater than `transactionMaxFee`.
 - `ValueError` if the transaction fee payer does not match the account or the provider cannot calculate the fee.
@@ -291,7 +303,7 @@ Transfers SPL tokens to another address, with an optional UTF-8 memo. Token-2022
 **Returns:** `Promise<{hash: string, fee: bigint}>` - Object containing transaction hash and fee (in lamports)
 
 **Throws:**
-- `AssertionError` if the account has been disposed.
+- `DisposalError` if the account has been disposed.
 - `ProviderRequiredError` if the wallet is not connected to a provider.
 - `MaximumFeeExceededError` if the estimated fee is greater than `transferMaxFee`.
 - `ValueError` if the token amount exceeds the supported integer range, the memo is not a string, the transaction exceeds the size limit, or the provider cannot calculate the fee.
@@ -441,7 +453,7 @@ const readOnlyAccount = await account.toReadOnlyAccount()
 ```
 
 ##### `dispose()`
-Disposes the wallet account, clearing private keys from memory.
+Disposes the account. It also disposes its signer when it owns the signer or was configured with `shouldWipeSignerOnDisposal: true`. A signer supplied directly is caller-owned by default.
 
 **Example:**
 ```javascript
@@ -450,11 +462,12 @@ account.dispose()
 
 #### Properties
 
+Each account exposes its signer’s full path when available. If you need the numeric index later, retain the index you used to retrieve the account.
+
 | Property | Type | Description |
 |----------|------|-------------|
-| `index` | `number` | The derivation path's index of this account |
-| `path` | `string` | The full derivation path of this account |
-| `keyPair` | `{publicKey: Uint8Array, privateKey: Uint8Array \| null}` | The account's Ed25519 key pair. The returned arrays are bound to the account and should be treated as read-only. `privateKey` is `null` after `dispose()` is called. |
+| `path` | `string \| null` | The full SLIP-0010 path, or `null` for a non-HD signer |
+| `keyPair` | `{publicKey: Uint8Array, privateKey: Uint8Array \| null} \| null` | The signer’s key pair, or `null` if it does not expose one. For bundled signers, `privateKey` becomes `null` when the signer is disposed. |
 
 ⚠️ **Security Note**: The `keyPair` property contains sensitive cryptographic material. Never log, display, mutate, or expose the private key.
 

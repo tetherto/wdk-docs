@@ -80,7 +80,7 @@ console.log('UserOperation hash:', result.hash)
 Only submit an operation produced by the same account with the intended fee-mode configuration. WDK preserves the signed nonce and configuration, does not rebuild or re-sign the operation, and does not reapply `transactionMaxFee` during signed submission. Do not mutate the operation, and submit it before its nonce becomes stale.
 </Callout>
 
-Quoting and forwarding an already-signed UserOperation skip the provider-chain check. Verify its account, chain, EntryPoint, and paymaster configuration before submission.
+Quoting and forwarding an already-signed UserOperation skip the provider-chain check. Forwarding also skips the builder’s final-paymaster and approval-spender checks. Verify its account, chain, EntryPoint, and paymaster configuration before submission.
 
 For signed UserOperations, sponsored mode quotes `0n`. Other modes quote a 20% buffered native-gas ceiling in wei. In paymaster-token mode, that signed-operation quote is not a token-denominated paymaster charge.
 
@@ -103,12 +103,12 @@ const result = await account.sendTransaction({
 
 ## Reuse a Recent Quote
 
-Default-lane, non-sponsored UserOperations built while quoting can be cached for up to 2 minutes. If you call `sendTransaction()` with the same transaction during that window, the account checks the current on-chain nonce before reusing a cached UserOperation. If the nonce has moved, it rebuilds before sending. Sponsored quotes do not cache a built UserOperation.
+Default-lane, non-sponsored UserOperations built while quoting can be cached for up to 2 minutes. If you call `sendTransaction()` with the same transaction during that window, the account checks the current on-chain nonce before reusing the cached build once. If the nonce has moved, it rebuilds before sending. Sponsored quotes do not cache a built UserOperation.
 
 Quote methods do not resolve or reserve a nonce lane. A later send or sign using `parallel` or `nonceKey` rebuilds in that selected lane instead of reusing the quoted UserOperation.
 
 <Callout type="warning">
-Cache identity does not include per-call fee-mode configuration. Use the same fee mode, `paymasterUrl`, `paymasterHeaders`, paymaster address and token, and sponsorship policy for `quoteSendTransaction()` and the matching `sendTransaction()` or `signTransaction()`. Do not change one of these settings while the quote is cached.
+The default-lane quote cache keys on the transaction, fee mode, `paymasterUrl`, `paymasterHeaders`, paymaster token address, expected paymaster address, and `sponsorshipPolicyId`. A change to any of these values requires a fresh build.
 </Callout>
 
 ```javascript title="Quote Then Send"

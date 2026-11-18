@@ -11,6 +11,7 @@ The orchestrator that manages all WDK modules.
 | Module | Description | Documentation |
 |--------|-------------|---------------|
 | [`@tetherto/wdk`](https://github.com/tetherto/wdk) | Central orchestrator for all WDK modules | [Docs](/sdk/core-module/) |
+| [`@tetherto/wdk-policies`](https://github.com/tetherto/wdk-policies) | Opt-in, in-process transaction rules for accounts obtained through Core | [Docs](/sdk/core-module/guides/transaction-policies/) |
 
 ## Backup and Recovery Tools
 
@@ -81,10 +82,11 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 
 ## Pricing Modules
 
-Pricing modules provide `PricingClient` implementations for market data sources.
+Pricing modules provide a shared provider wrapper and `PricingClient` implementations for market data sources.
 
 | Module | Provider | Description | Documentation |
 |--------|----------|-------------|---------------|
+| [`@tetherto/wdk-pricing-provider`](https://github.com/tetherto/wdk-pricing-provider) | Caller-selected clients | Shared market-data interface with caching, batching, and optional failover | [Docs](/tools/price-rates/api-reference#class-pricingprovider) |
 | [`@tetherto/wdk-pricing-coingecko-http`](https://github.com/tetherto/wdk-pricing-coingecko-http) | CoinGecko | CoinGecko HTTP pricing client for current prices, price data, and historical series | [Docs](/sdk/pricing-modules/pricing-coingecko-http/) |
 | [`@tetherto/wdk-pricing-bitfinex-http`](https://github.com/tetherto/wdk-pricing-bitfinex-http) | Bitfinex | Bitfinex HTTP pricing client for current prices, batched price data, and historical series | [Docs](/tools/price-rates/) |
 

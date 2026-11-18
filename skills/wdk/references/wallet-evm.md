@@ -35,12 +35,12 @@
 
 ## Packages
 
-Example versions: standard EVM `1.0.0-beta.26`, ERC-4337 `1.0.0-beta.24`, and EIP-7702 gasless `1.0.0-beta.12`.
+Example versions: standard EVM `1.0.0-beta.26`, ERC-4337 `1.0.0-beta.26`, and EIP-7702 gasless `1.0.0-beta.13`.
 
 ```bash
 npm install @tetherto/wdk-wallet-evm@1.0.0-beta.26
-npm install @tetherto/wdk-wallet-evm-erc-4337@1.0.0-beta.24  # for Account Abstraction
-npm install @tetherto/wdk-wallet-evm-7702-gasless@1.0.0-beta.12  # for EIP-7702 gasless EOAs
+npm install @tetherto/wdk-wallet-evm-erc-4337@1.0.0-beta.26  # for Account Abstraction
+npm install @tetherto/wdk-wallet-evm-7702-gasless@1.0.0-beta.13  # for EIP-7702 gasless EOAs
 ```
 
 ```javascript
@@ -62,7 +62,7 @@ import WalletManagerEvm7702Gasless from '@tetherto/wdk-wallet-evm-7702-gasless'
 - Supplied signed transactions are broadcast unchanged after checking their encoded execution-gas fields. Independently review recipient, value, calldata, chain ID, nonce and fee fields. Type 4 transactions reject legacy `gasPrice`; type-3/blob transactions and blob fields are unsupported.
 - Runtime and declarations accept ethers `Provider` inputs. A manager shares one provider across its accounts. A nonzero `chainId` pins module-built URL and EIP-1193 providers without detecting the endpoint's chain or a browser network switch; prebuilt ethers providers retain their own network settings.
 - See the [signer migration](https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm/configuration#signer-migration) for self-relative paths, seed/signer overloads, removed account `index`, and signer ownership. Cleanup depends on the concrete signer and ownership options; account disposal does not imply app-supplied signer disposal or complete secret erasure.
-- ⚠️ The documented Velora, USD₮0 bridge, and Aave adapters require EIP-1193 `request()` on non-string provider inputs. A shared ethers provider without `request()` is incompatible. Use the corresponding direct account constructor with its original RPC URL or genuine EIP-1193 input; never mutate internal provider fields. Direct accounts do not receive WDK Core policies or middleware, so retain required application checks and account-level controls.
+- ⚠️ The documented Velora, USD₮0 bridge, and Aave adapters require EIP-1193 `request()` on non-string provider inputs. A shared ethers provider without `request()` is incompatible. Use the corresponding direct account constructor with its original RPC URL or genuine EIP-1193 input; never mutate internal provider fields. Direct accounts bypass WDK middleware and the WDK Policies plugin, so retain required application checks and account-level controls.
 
 ## Configuration — wallet-evm
 
@@ -77,17 +77,19 @@ const wallet = new WalletManagerEvm(seedPhrase, {
 ## Key Details — wallet-evm-erc-4337
 
 - Ethers providers and mixed provider lists are accepted. The manager shares its RPC client with accounts and read-only conversions. A supplied ethers provider must support JSON-RPC `send(method, params)`; bundler and paymaster configuration remain separate.
-- Transfer and approval gas overrides belong in their options. Follow https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm-erc-4337/api-reference for signatures. Its EVM dependency remains beta.19; newer standard EVM transaction and provider changes do not apply to these UserOperation methods.
+- Transfer and approval gas overrides belong in their options. Follow https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm-erc-4337/api-reference for signatures. The module implements its own UserOperation methods.
 - **Gasless** via UserOperations + Paymaster
 - Fees paid in **paymaster token** (e.g., USD₮) instead of native ETH
 - `getPaymasterTokenBalance()` for fee balance
-- [`WalletAccountReadOnlyEvmErc4337.fromSafeAddress()`](https://docs.wallet.tether.io/sdk/wallet-modules/wallet-evm-erc-4337/guides/manage-accounts#read-a-known-safe-address) monitors a supplied Safe address without its owner or a seed. It cannot sign, send, or verify owner signatures. Non-sponsored quotes require a deployed Safe; a sponsored zero-fee quote does not establish deployment or eligibility.
+- [`WalletAccountReadOnlyEvmErc4337.fromSafeAddress()`](https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm-erc-4337/guides/manage-accounts#read-a-known-safe-address) monitors a supplied Safe address without its owner or a seed. A deployed Safe can verify ERC-1271 signatures. An undeployed Safe with an unknown owner cannot verify. Non-sponsored quotes require a deployed Safe; a sponsored zero-fee quote does not establish deployment or eligibility.
 - **Batch transactions**: `sendTransaction([tx1, tx2])` — multiple operations in one call
 - `signTransaction(tx)` signs one `UserOperationV7`; the signed result can be quoted and submitted through `sendTransaction()`.
 - The first UserOperation chain lookup checks the provider against constructor `chainId` and caches success. Sponsored quotes and already-signed quote/send paths skip this check; recreate the account when changing networks.
 - Signed UserOperations preserve their nonce and fee-mode configuration. Submit promptly through the same account and do not mutate them.
 - Signed UserOperation submission does not reapply `transactionMaxFee`. In paymaster-token mode, a signed-operation quote is a buffered native-gas ceiling in wei, not a token-denominated charge.
-- Quote-cache keys omit fee-mode configuration. Keep the same mode, paymaster token, paymaster URL, `paymasterHeaders`, address, and sponsorship policy for a quote and its matching send, sign, or transfer.
+- The default-lane quote cache keys on the transaction, fee mode, `paymasterUrl`, `paymasterHeaders`, paymaster token address, expected paymaster address, and `sponsorshipPolicyId`. A change to any of these values requires a fresh build. The wallet checks the current default-lane nonce before reuse.
+- `sign()` and `signTypedData()` produce SafeMessage signatures. Verification uses the Safe contract after deployment or recovers a known owner before deployment.
+- Custom signer accounts use the `/signers` subpath. Register the signer with `addSigner()` and use `getAccount(signerName)` directly or derive with a named signer. App-supplied signers are caller-owned unless the direct account config opts into signer disposal.
 - Same `data` risk as wallet-evm, plus batch execution risk
 
 ## Configuration — wallet-evm-erc-4337
@@ -110,7 +112,8 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
 ## Key Details — wallet-evm-7702-gasless
 
 - Ethers providers and mixed provider lists are accepted. The manager shares its RPC client with accounts and read-only conversions. Supplied ethers providers must support JSON-RPC `send(method, params)`. Bundler and paymaster endpoints remain separate.
-- To wrap an existing EVM account, use the same installed EVM beta.19 package instance as the gasless module. Another EVM version or a second package copy fails the class identity check. Newer standard EVM transaction and provider changes do not apply to these UserOperation methods.
+- To wrap an existing EVM account, use the same installed EVM beta.26 package instance as the gasless module. The wrapped EVM account remains caller-owned.
+- For custom signers, use the `/signers` subpath. The signer needs typed-data signing for UserOperations and authorization signing when the account needs a new delegation.
 - Token-paymaster mode requires a provider-verified `paymasterAddress` in the merged configuration. Wallet-built operations reject a different returned paymaster address before the UserOperation signature. During sign/send, a delegation authorization may already have been signed. Already-signed submission does not repeat this check. See [paymaster configuration](https://docs.wdk.tether.io/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#paymaster-token).
 - Uses EIP-7702 delegation and ERC-4337 UserOperations while retaining the EOA address.
 - Supports sponsored mode and paymaster-token mode.

@@ -9,7 +9,7 @@ icon: BookOpen
 ## Install
 
 ```bash
-npm install @tetherto/wdk-wallet-aptos@1.0.0-beta.4
+npm install @tetherto/wdk-wallet-aptos@1.0.0-beta.7
 ```
 
 ## Create a Wallet Manager
@@ -19,6 +19,7 @@ import WalletManagerAptos from '@tetherto/wdk-wallet-aptos'
 
 const wallet = new WalletManagerAptos(seedPhrase, {
   provider: 'https://fullnode.mainnet.aptoslabs.com/v1',
+  transactionMaxFee: 100000n,
   transferMaxFee: 100000n
 })
 
@@ -96,7 +97,7 @@ console.log('Fee in octas:', result.fee)
 `sendTransaction()` submits a native APT transfer through `0x1::aptos_account::transfer`.
 
 <Callout type="warn">
-This quote is an advisory preflight, not an enforced fee cap. `sendTransaction()` builds and simulates the transfer again and exposes no native maximum-fee argument, so its gas inputs can differ from the earlier quote. Beta.2 cannot enforce a hard application limit for native APT sends.
+Use the quote for review. `sendTransaction()` simulates again before signing and applies the configured [`transactionMaxFee`](/sdk/wallet-modules/wallet-aptos/configuration#fee-limit) to that later estimate.
 </Callout>
 
 ## Transfer Fungible Assets
@@ -124,7 +125,7 @@ console.log('Fee in octas:', result.fee)
 
 `transfer()` submits `0x1::primary_fungible_store::transfer` and can auto-create the recipient primary store.
 
-When configured, `transferMaxFee` applies to this fungible asset flow only. `transfer()` rejects an estimated fee at or above the cap.
+When configured, `transferMaxFee` applies to this fungible asset flow. `transfer()` throws `MaximumFeeExceededError` before signing if its new simulated fee exceeds the limit.
 
 ## Sign and Verify Messages
 
@@ -155,22 +156,7 @@ Treat the signed transaction as a sensitive authorization payload. Do not write 
 This is not an offline operation. A failed simulation prevents signing. Fungible asset transfers are built and submitted through `transfer()`.
 </Callout>
 
-`transferMaxFee` does not apply to native APT signing or sending. You can quote a native transfer for user review before signing or submitting:
-
-```javascript
-const nativeFeeReviewThreshold = 100000n
-
-const quote = await account.quoteSendTransaction({
-  to: '0x...',
-  value: 100000000n
-})
-
-if (quote.fee >= nativeFeeReviewThreshold) {
-  throw new Error('Native APT fee needs additional user review')
-}
-```
-
-`signTransaction()` also performs its own later simulation and exposes no native maximum-fee argument. If a product requires a hard fee cap rather than an advisory review threshold, the module does not provide that control for native APT operations.
+`signTransaction()` applies the configured [`transactionMaxFee`](/sdk/wallet-modules/wallet-aptos/configuration#fee-limit) to its own simulation. It throws `MaximumFeeExceededError` before signing if the estimate exceeds the limit.
 
 ## Check Transaction Status
 

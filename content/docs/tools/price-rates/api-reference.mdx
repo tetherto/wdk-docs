@@ -90,7 +90,7 @@ The concrete Bitfinex beta.6 implementation returns `{ price, ts }`, with `ts` i
 
 ### Class: `PricingProvider`
 
-Cache-aware wrapper providing a unified API over a `PricingClient` implementation.
+Wrap a caller-supplied `PricingClient` to cache current prices and price data. See [installation with a CoinGecko client](/sdk/pricing-modules/pricing-coingecko-http/guides/get-started#installation).
 
 #### Constructor
 
@@ -104,18 +104,20 @@ new PricingProvider({
 
 - `client` (`PricingClient | PricingClient[]`): a single client instance or an ordered array of client instances. With an array, failures matching `error instanceof Error` can trigger failover within the `retries` limit, including application and HTTP errors. A resolved `null` does not trigger failover.
 - `retries` (number, optional): number of additional retry attempts after the initial call fails. Total attempts = `1 + retries`. When the total attempt budget exceeds the number of clients, attempts can wrap in round-robin order. Default: `3`. Only applies when `client` is an array.
-- `priceCacheDurationMs` (number, optional): cache TTL for last price in ms (default 3,600,000)
+- `priceCacheDurationMs` (number, optional): cache duration for last prices and price data in milliseconds (default 3,600,000)
 
 #### Methods
 
-The table shows the published Provider beta.7 declarations. At runtime, current-price and price-data methods can forward and cache `null` from a client, including individual `null` entries in batch results. Handle unavailable values even though the wrapper's declared return types do not include `null`.
+Pass `{ forceRefresh: true }` in `options` to skip the cache for that call. Historical prices are delegated to the client without caching.
+
+The table shows the declarations from `@tetherto/wdk-pricing-provider@1.0.0-beta.10`. At runtime, current-price and price-data methods can forward and cache `null` from a client, including individual `null` entries in batch results. Handle unavailable values even though the wrapper's declared return types do not include `null`.
 
 | Method | Description | Returns (declared) |
 |--------|-------------|---------|
-| `getLastPrice(base, quote)` | Returns cached last price; refreshes when TTL expires | `Promise\<number\>` |
-| `getMultiLastPrices(pairs)` | Returns cached last prices for multiple pairs | `Promise\<number[]\>` |
-| `getLastPriceData(base, quote)` | Returns cached last price plus daily change data | `Promise\<PriceData\>` |
-| `getMultiLastPriceData(pairs)` | Returns cached price data for multiple pairs | `Promise\<PriceData[]\>` |
+| `getLastPrice(base, quote, options?)` | Returns cached last price; refreshes when TTL expires | `Promise\<number\>` |
+| `getMultiLastPrices(pairs, options?)` | Returns cached last prices for multiple pairs | `Promise\<number[]\>` |
+| `getLastPriceData(base, quote, options?)` | Returns cached last price plus daily change data | `Promise\<PriceData\>` |
+| `getMultiLastPriceData(pairs, options?)` | Returns cached price data for multiple pairs | `Promise\<PriceData[]\>` |
 | `getHistoricalPrice(from, to, opts?)` | Delegates to client for historical data | `Promise\<HistoricalPriceResult[]\>` |
 
 ##### `getLastPrice(base, quote)`
