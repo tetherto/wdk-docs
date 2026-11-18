@@ -31,13 +31,13 @@ These multipliers are internal (`protected static`) and cannot be imported or ov
 ### Constructor
 
 ```javascript
-new WalletManagerEvmErc4337(seed, config)
+new WalletManagerEvmErc4337(seedOrSigner, config)
 ```
 
 The manager builds one RPC client and shares it across derived accounts and their read-only views. See [provider configuration](/sdk/wallet-modules/wallet-evm-erc-4337/configuration#provider).
 
 **Parameters:**
-- `seed` (string | Uint8Array): BIP-39 mnemonic or raw BIP-32 master seed (16–64 bytes)
+- `seedOrSigner` (string | Uint8Array | ISignerEvm): BIP-39 mnemonic, raw BIP-32 master seed (16–64 bytes), or an EVM signer that supports derivation
 - `config` (EvmErc4337WalletConfig): Configuration object with common fields and a gas payment mode
 
 **Common config fields (required for all modes):**
@@ -125,7 +125,7 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
 </Tab>
 </Tabs>
 
-**Throws:** `ValueError` if `provider` is an empty array.
+**Throws:** `ValueError` if `provider` is an empty array. `InvalidSignerError` if a supplied default signer does not support derivation.
 
 ### Methods
 
@@ -133,8 +133,9 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
 |--------|-------------|---------|--------|
 | `getRandomSeedPhrase(wordCount?)` | (static) Returns a random BIP-39 seed phrase | `string` | - |
 | `isValidSeedPhrase(seedPhrase)` | (static) Checks if a seed phrase is valid | `boolean` | - |
-| `getAccount(index?)` | Returns a wallet account at the specified index | `Promise\<WalletAccountEvmErc4337\>` | - |
-| `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise\<WalletAccountEvmErc4337\>` | - |
+| `getAccount(index?, options?)` | Derives a wallet account at an index with the default or selected signer | `Promise\<WalletAccountEvmErc4337\>` | `DisposalError`, `InvalidSignerError`, `NoSuchElementError` |
+| `getAccount(signerName)` | Uses the named signer directly | `Promise\<WalletAccountEvmErc4337\>` | `DisposalError`, `NoSuchElementError` |
+| `getAccountByPath(path, options?)` | Derives a wallet account at a path with the default or selected signer | `Promise\<WalletAccountEvmErc4337\>` | `DisposalError`, `InvalidSignerError`, `NoSuchElementError` |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise\<{normal: bigint, fast: bigint}\>` | `ProviderRequiredError` if no provider |
 | `dispose()` | Initiates cleanup of wallet accounts | `void` | - |
 
@@ -170,10 +171,11 @@ console.log('Valid:', isValid)
 ```
 
 #### `getAccount(index)`
-Returns a wallet account at the specified index using BIP-44 derivation.
+Derives a Safe account at the specified index using the default or selected signer. To use a signer directly, register it with `addSigner(name, signer)` and call `getAccount(signerName)`.
 
 **Parameters:**
 - `index` (number, optional): The index of the account to get (default: 0)
+- `options.signerName` (string, optional): Name of the registered signer to derive from
 
 **Returns:** `Promise\<WalletAccountEvmErc4337\>` - The wallet account
 
@@ -187,10 +189,11 @@ const defaultAccount = await wallet.getAccount()
 ```
 
 #### `getAccountByPath(path)`
-Returns a wallet account at the specified BIP-44 derivation path.
+Derives a wallet account at a path relative to the signer. With a seed-based manager the path is relative to `m/44'/60'`.
 
 **Parameters:**
 - `path` (string): The derivation path (e.g., "0'/0/0")
+- `options.signerName` (string, optional): Name of the registered signer to derive from
 
 **Returns:** `Promise\<WalletAccountEvmErc4337\>` - The wallet account
 
@@ -215,7 +218,7 @@ console.log('Fast fee rate:', feeRates.fast, 'wei')     // base fee × 2.0
 ```
 
 #### `dispose()`
-Initiates cleanup of cached wallet accounts but retains the manager's seed, so accounts can still be derived. Once you have finished using the manager, its accounts, and every other consumer of those seed bytes, overwrite them with `wallet.seed.fill(0)`. Do not reuse the manager afterward.
+Initiates cleanup of managed accounts and the internally created default signer. The manager leaves caller-supplied signers for the caller to dispose. Account retrieval from the disposed manager throws `DisposalError`.
 
 **Example:**
 ```javascript
@@ -227,7 +230,7 @@ wallet.dispose()
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `seed` | `Uint8Array` | Raw BIP-32 master seed bytes, including bytes derived from a supplied mnemonic |
+| `disposed` | `boolean` | Whether the manager has been disposed |
 
 ## WalletAccountEvmErc4337
 
@@ -248,11 +251,14 @@ const SALT_NONCE = '0x69b348339eea4ed93f9d11931c3b894c8f9d8c7663a053024b11cb7eb4
 
 ```javascript
 new WalletAccountEvmErc4337(seed, path, config)
+new WalletAccountEvmErc4337(seed, config)
+new WalletAccountEvmErc4337(signer, config)
 ```
 
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic or raw BIP-32 master seed (16–64 bytes)
-- `path` (string): BIP-44 derivation path (e.g., "0'/0/0")
+- `path` (string, optional for seed-based accounts): BIP-44 path suffix, defaults to `0'/0/0`
+- `signer` (ISignerEvm): Signer for the Safe owner. Use the package’s `/signers` entry point for signer interfaces and implementations.
 - `config` (EvmErc4337WalletConfig): Configuration object (same as [WalletManagerEvmErc4337](#constructor))
 
 **Example:**
@@ -270,6 +276,8 @@ const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 })
 ```
 
+The signer overload accepts `EvmErc4337WalletConfig & SignerOptions`. `WalletAccountEvmErc4337.fromPrivateKey(privateKey, config)` accepts a raw `Uint8Array` or hex string and creates an account-owned signer.
+
 ### Methods
 
 | Method | Description | Returns | Throws |
@@ -277,7 +285,7 @@ const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 | `predictSafeAddress(owner, config)` | (static) Predicts the Safe address for a given owner | `string` | `ValueError` for a malformed owner address |
 | `fromSafeAddress(safeAddress, config)` | (static) Unsupported on the writable class | `never` | Always `UnsupportedOperationError` |
 | `getAddress()` | Returns the Safe account's address | `Promise\<string\>` | - |
-| `sign(message)` | Signs a message using the account's private key | `Promise\<string\>` | - |
+| `sign(message)` | Signs a SafeMessage for the account | `Promise\<string\>` | - |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` | - |
 | `signTransaction(tx, config?)` | Builds and signs one UserOperation without submitting it | `Promise\<UserOperationV7\>` | If a non-sponsored fee exceeds max or the token paymaster address mismatches |
 | `sendTransaction(tx, config?)` | Builds and sends transactions, or submits a signed UserOperation | `Promise\<{hash: string, fee: bigint}\>` | If a newly built operation exceeds max or the token paymaster address mismatches |
@@ -293,7 +301,7 @@ const account = new WalletAccountEvmErc4337(seedPhrase, "0'/0/0", {
 | `getTransaction(hash)` | Returns normalized UserOperation finality using its bundling transaction | `Promise\<TransactionReceipt & EvmErc4337TransactionDetails\>` | If the hash is invalid or unknown |
 | `waitForTransaction(hash, options?)` | Waits for the UserOperation to reach `confirmed` or `final`, or returns `dropped` | `Promise\<TransactionReceipt & EvmErc4337TransactionDetails\>` | If the wait times out |
 | `getUserOperationReceipt(hash)` | Returns a UserOperation receipt | `Promise\<UserOperationReceipt \| null\>` | - |
-| `signTypedData(typedData)` | Signs EIP-712 typed structured data | `Promise\<string\>` | - |
+| `signTypedData(typedData)` | Signs a SafeMessage for EIP-712 typed data | `Promise\<string\>` | - |
 | `verifyTypedData(typedData, signature)` | Verifies an EIP-712 typed data signature | `Promise\<boolean\>` | - |
 | `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise\<Record\<string, bigint\>\>` | - |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise\<WalletAccountReadOnlyEvmErc4337\>` | - |
@@ -319,7 +327,7 @@ console.log('Safe account address:', address) // 0x... (Smart contract address)
 ```
 
 #### `sign(message)`
-Signs a message using the underlying EOA private key.
+Hashes the message and signs an EIP-712 SafeMessage scoped to this Safe address and chain ID. A custom signer must implement `signTypedData()` for this method.
 
 **Parameters:**
 - `message` (string): The message to sign
@@ -334,7 +342,7 @@ console.log('Signature:', signature)
 ```
 
 #### `verify(message, signature)`
-Verifies a message signature against the underlying EOA address.
+For a deployed Safe, verification calls the Safe contract’s ERC-1271 `isValidSignature()`. For an undeployed Safe, it recovers the signer from the SafeMessage signature and compares it with the known owner. An undeployed account created with `fromSafeAddress()` has no owner and throws `UnsupportedOperationError`.
 
 **Parameters:**
 - `message` (string): The original message
@@ -391,10 +399,10 @@ Sends a transaction via UserOperation through the bundler.
 **Throws:**
 - `MaximumFeeExceededError` if a non-sponsored, newly built operation exceeds `transactionMaxFee`.
 - `ValueError` if a raw numeric `nonceKey` is outside `0..2^192-1`.
-- `ConfigurationError` if the override is invalid or the token paymaster address returned while building mismatches the configured address.
+- `ConfigurationError` if the override is invalid or the token-paymaster address or approval spender fails validation while building.
 - `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50 while building or submitting the operation.
 
-When `tx` is a signed `UserOperationV7`, WDK forwards that exact operation to the bundler without checking the provider against `chainId`. It does not rebuild or re-sign it, reapply the current `transactionMaxFee`, call the paymaster RPC, or rerun the paymaster-address check. Only submit an operation produced by the same account after verifying the intended chain, EntryPoint, fee-mode, and paymaster configuration, and submit it before its nonce becomes stale.
+When `tx` is a signed `UserOperationV7`, WDK forwards that exact operation to the bundler without checking the provider against `chainId`. It does not rebuild or re-sign it, reapply the current `transactionMaxFee`, call the paymaster RPC, or repeat the builder’s final-paymaster and ERC-20 approval-spender checks. Only submit an operation produced by the same account after verifying the intended chain, EntryPoint, fee-mode, and paymaster configuration, and submit it before its nonce becomes stale.
 
 **Example:**
 ```javascript
@@ -435,12 +443,12 @@ Beta.17 does not reserve sequential nonces locally. With no lane option, sends u
 #### `quoteSendTransaction(tx, config?)`
 Estimates the fee for a UserOperation without sending it.
 
-Default-lane, non-sponsored UserOperations built while quoting transaction inputs can be cached internally for up to 2 minutes. When a later default-lane `sendTransaction()` or `signTransaction()` matches, the account performs a lightweight on-chain nonce check before reuse and rebuilds if the nonce has moved. Sponsored quotes do not cache a built operation. A supplied signed UserOperation is evaluated directly rather than rebuilt.
+Default-lane, non-sponsored UserOperations built while quoting transaction inputs can be cached internally for up to 2 minutes. When a later default-lane `sendTransaction()` or `signTransaction()` matches, the account performs a lightweight on-chain nonce check before reusing the cached build once. If the nonce has moved, it rebuilds. Sponsored quotes do not cache a built operation. A supplied signed UserOperation is evaluated directly rather than rebuilt.
 
 This quote method does not resolve or reserve a nonce lane. A later send or sign using `parallel` or `nonceKey` rebuilds in that lane instead of reusing the quote.
 
 <Callout type="warning">
-The cache key contains the transaction but not the per-call fee-mode configuration. Keep the same fee mode, paymaster URL, `paymasterHeaders`, paymaster address and token, and sponsorship policy for a quote and its matching send, sign, or transfer. Do not change one of these settings while the quote is cached.
+The default-lane quote cache keys on the transaction, fee mode, `paymasterUrl`, `paymasterHeaders`, paymaster token address, expected paymaster address, and `sponsorshipPolicyId`. A change to any of these values requires a fresh build.
 </Callout>
 
 **Parameters:**
@@ -482,7 +490,7 @@ Transfers ERC20 tokens via UserOperation.
 - Error if insufficient token balance
 - `ValueError` if a raw numeric `nonceKey` is outside `0..2^192-1`.
 - `TransactionError` with `reason: TransactionErrorReason.INSUFFICIENT_BALANCE` if the paymaster reports AA50.
-- `ConfigurationError` if the token paymaster address returned by the RPC mismatches the configured address
+- `ConfigurationError` if the token-paymaster address or approval spender fails validation
 
 **Example:**
 
@@ -684,7 +692,7 @@ if (receipt) {
 ```
 
 #### `signTypedData(typedData)`
-Signs EIP-712 typed structured data using the underlying EOA private key.
+Hashes the EIP-712 typed data and signs that hash as an EIP-712 SafeMessage scoped to this Safe address and chain ID. A custom signer must implement `signTypedData()`.
 
 **Parameters:**
 - `typedData` (TypedData): The typed data object containing domain, types, primaryType, and message
@@ -718,7 +726,7 @@ console.log('Typed data signature:', signature)
 ```
 
 #### `verifyTypedData(typedData, signature)`
-Verifies an EIP-712 typed data signature against the underlying EOA address.
+Verifies the SafeMessage signature for the EIP-712 typed data hash. For a deployed Safe, verification calls the Safe contract’s ERC-1271 `isValidSignature()`. For an undeployed Safe, it recovers the signer from the SafeMessage signature and compares it with the known owner. An undeployed account created with `fromSafeAddress()` has no owner and throws `UnsupportedOperationError`.
 
 **Parameters:**
 - `typedData` (TypedData): The original typed data object
@@ -752,7 +760,7 @@ for (const [address, balance] of Object.entries(balances)) {
 ```
 
 #### `toReadOnlyAccount()`
-Creates a read-only copy with the same Safe address, configuration, and owner EOA address. Unlike an account created by `fromSafeAddress()`, this copy can verify the owner's message and typed-data signatures.
+Creates a read-only copy with the same Safe address, configuration, and owner EOA address. It can verify SafeMessage signatures before or after deployment.
 
 **Returns:** `Promise\<WalletAccountReadOnlyEvmErc4337\>` - Read-only account instance
 
@@ -766,7 +774,7 @@ const balance = await readOnlyAccount.getBalance()
 ```
 
 #### `dispose()`
-Disposes the wallet account, clearing private keys from memory.
+Initiates account cleanup. That includes signers created from a seed or by `fromPrivateKey()`. The direct signer constructor calls a supplied signer’s `dispose()` only if `shouldWipeSignerOnDisposal: true` is configured. The `sign()`, `signTypedData()`, `signTransaction()`, `sendTransaction()`, `approve()`, and `transfer()` methods throw `DisposalError` after disposal.
 
 **Example:**
 ```javascript
@@ -777,22 +785,9 @@ account.dispose()
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `index` | `number` | The derivation path's index of this account |
-| `path` | `string` | The full BIP-44 derivation path of this account |
-| `keyPair` | `{privateKey: Uint8Array \| null, publicKey: Uint8Array}` | The account's key pair (⚠️ Contains sensitive data) |
-
-**Example:**
-```javascript
-console.log('Account index:', account.index) // 0, 1, 2, etc.
-console.log('Account path:', account.path) // m/44'/60'/0'/0/0
-
-// ⚠️ SENSITIVE: Handle with care
-const { privateKey, publicKey } = account.keyPair
-console.log('Public key length:', publicKey.length) // 33 bytes
-console.log('Private key length:', privateKey?.length) // 32 bytes (null after dispose)
-```
-
-⚠️ **Security Note**: The `keyPair` property contains sensitive cryptographic material. Never log, display, or expose the private key.
+| `path` | `string \| null` | Signer derivation path when available |
+| `keyPair` | `KeyPair \| null` | Signer key pair when exposed. Treat its arrays as read-only and protect private key material. |
+| `disposed` | `boolean` | Whether this account has been disposed. This flag tracks the account lifecycle. |
 
 ## WalletAccountReadOnlyEvmErc4337
 Represents a read-only ERC-4337 wallet account that can query balances and allowances but cannot sign or send transactions. Choose the owner-based constructor to predict a Safe address, or the [known-Safe factory](#fromsafeaddresssafeaddress-config-static-1) to use a supplied Safe address directly. Non-sponsored fee estimates for a known-Safe account require deployment.
@@ -893,14 +888,14 @@ console.log('Safe address:', await readOnlyAccount.getAddress())
 
 See [Read a Known Safe Address](/sdk/wallet-modules/wallet-evm-erc-4337/guides/manage-accounts#read-a-known-safe-address) for a complete setup example. The factory performs no network lookup: it does not confirm deployment, discover an owner, or check that the address is a Safe contract. Balance and allowance queries use this address directly, including before deployment.
 
-The owner is unknown, so `verify()` and `verifyTypedData()` throw `UnsupportedOperationError`. There is no signing or transaction-submission capability. A non-sponsored quote that builds a UserOperation throws `ConfigurationError` if the Safe is undeployed, because deployment requires the owner address. Sponsored quotes return `{ fee: 0n }` before checking deployment or chain identity; that result does not confirm sponsorship eligibility or transaction executability.
+The owner is unknown. Verification uses the deployed Safe contract and throws `UnsupportedOperationError` if this Safe is undeployed. The account provides read operations only. A non-sponsored quote that builds a UserOperation throws `ConfigurationError` if the Safe is undeployed, because deployment requires the owner address. Sponsored quotes return `{ fee: 0n }` before checking deployment or chain identity; that result does not confirm sponsorship eligibility or transaction executability.
 
 ### Methods
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
 | `getAddress()` | Returns the Safe account's address | `Promise\<string\>` | - |
-| `verify(message, signature)` | Verifies a message signature against a known owner | `Promise\<boolean\>` | `UnsupportedOperationError` for an account created from a Safe address |
+| `verify(message, signature)` | Verifies a SafeMessage signature | `Promise\<boolean\>` | `UnsupportedOperationError` for an undeployed Safe with no known owner |
 | `getBalance()` | Returns the native token balance (in wei) | `Promise\<bigint\>` | - |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific ERC20 token | `Promise\<bigint\>` | - |
 | `getPaymasterTokenBalance()` | Returns the paymaster token balance | `Promise\<bigint\>` | - |
@@ -911,7 +906,7 @@ The owner is unknown, so `verify()` and `verifyTypedData()` throw `UnsupportedOp
 | `getTransaction(hash)` | Returns normalized UserOperation finality using its bundling transaction | `Promise\<TransactionReceipt & EvmErc4337TransactionDetails\>` | If the hash is invalid or unknown |
 | `waitForTransaction(hash, options?)` | Waits for the UserOperation to reach `confirmed` or `final`, or returns `dropped` | `Promise\<TransactionReceipt & EvmErc4337TransactionDetails\>` | If the wait times out |
 | `getUserOperationReceipt(hash)` | Returns a UserOperation receipt | `Promise\<UserOperationReceipt \| null\>` | - |
-| `verifyTypedData(typedData, signature)` | Verifies typed data against a known owner | `Promise\<boolean\>` | `UnsupportedOperationError` for an account created from a Safe address |
+| `verifyTypedData(typedData, signature)` | Verifies a SafeMessage signature for typed data | `Promise\<boolean\>` | `UnsupportedOperationError` for an undeployed Safe with no known owner |
 | `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise\<Record\<string, bigint\>\>` | - |
 
 #### `getAddress()`
@@ -926,7 +921,7 @@ console.log('Safe address:', address)
 ```
 
 #### `verify(message, signature)`
-Verifies a message signature against the known owner EOA address. Throws `UnsupportedOperationError` if this account was created with `fromSafeAddress()`, because its owner is unknown.
+For a deployed Safe, verification calls the Safe contract’s ERC-1271 `isValidSignature()`. For an undeployed Safe, it recovers the signer from the SafeMessage signature and compares it with the known owner. An undeployed account created with `fromSafeAddress()` has no owner and throws `UnsupportedOperationError`.
 
 **Parameters:**
 - `message` (string): The original message
@@ -1097,7 +1092,7 @@ if (receipt) {
 ```
 
 #### `verifyTypedData(typedData, signature)`
-Verifies an EIP-712 typed data signature against the known owner EOA address. Throws `UnsupportedOperationError` if this account was created with `fromSafeAddress()`, because its owner is unknown.
+Verifies the SafeMessage signature for the EIP-712 typed data hash. For a deployed Safe, verification calls the Safe contract’s ERC-1271 `isValidSignature()`. For an undeployed Safe, it recovers the signer from the SafeMessage signature and compares it with the known owner. An undeployed account created with `fromSafeAddress()` has no owner and throws `UnsupportedOperationError`.
 
 **Parameters:**
 - `typedData` (TypedData): The original typed data object
@@ -1247,7 +1242,7 @@ The runtime additionally honors `parallel` and `nonceKey` per call for `signTran
 
 In token-paymaster mode, every path that builds a UserOperation validates a non-empty paymaster address returned by the RPC against `paymasterAddress`. A case-insensitive mismatch throws `ConfigurationError` before the operation is returned or submitted.
 
-The quote cache does not include fee-mode override fields in its key. Keep the same fee mode, paymaster URL, `paymasterHeaders`, paymaster address and token, and sponsorship policy for a quote and its matching send, sign, or transfer. Lane sends, signs, and transfers bypass cached UserOperations and rebuild in the selected lane.
+The default-lane quote cache keys on the transaction, fee mode, `paymasterUrl`, `paymasterHeaders`, paymaster token address, expected paymaster address, and `sponsorshipPolicyId`. A change to any of these values requires a fresh build. Lane sends, signs, and transfers bypass cached UserOperations and rebuild in the selected lane.
 
 ### EvmErc4337Transaction
 

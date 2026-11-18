@@ -37,10 +37,10 @@ const wdk = new WDK(seedPhrase)
 
 In Core beta.19 and later, [`registerProtocol()`](/sdk/core-module/api-reference#registerprotocolblockchain-label-protocol-config) accepts the provider's remaining constructor arguments in order after its class. A single configuration object keeps the call shape above. Pass multiple constructor arguments separately when the provider requires them; Core supplies the account as the first constructor argument. This also applies to [`account.registerProtocol()`](/sdk/core-module/api-reference#registerprotocollabel-protocol-config).
 
-In Core beta.20, account-scoped registration also defers construction until a getter is called and creates a fresh instance for each retrieval. Retain a retrieved instance when its local state is needed later. Governed account-scoped protocols receive the policy proxy; globally registered protocols receive the raw account. Review the [policy runtime caveats](/sdk/core-module/guides/transaction-policies#runtime-caveats) before selecting a scope.
+In Core beta.20, account-scoped registration also defers construction until a getter is called and creates a fresh instance for each retrieval. Retain a retrieved instance when its local state is needed later. With the Policies plugin attached, governed account-scoped protocols receive the policy proxy. Globally registered protocols receive the raw account. Review the [policy runtime caveats](/sdk/core-module/guides/transaction-policies#runtime-caveats) before selecting a scope.
 
 <Callout type="warn">
-The documented Velora, USD₮0 bridge, and Aave adapters require EIP-1193 `request()` on non-string provider inputs. An account whose manager supplies a shared ethers provider without `request()` cannot initialize these adapters. Use the corresponding direct account constructor with its original RPC URL or genuine EIP-1193 input; never mutate internal provider fields. Direct accounts do not receive WDK Core policies or middleware, so retain required application checks and account-level controls. For Aave, follow the [direct-account configuration](/sdk/lending-modules/lending-aave-evm/configuration#service-setup).
+The documented Velora, USD₮0 bridge, and Aave adapters require EIP-1193 `request()` on non-string provider inputs. An account whose manager supplies a shared ethers provider without `request()` cannot initialize these adapters. Use the corresponding direct account constructor with its original RPC URL or genuine EIP-1193 input; never mutate internal provider fields. Direct accounts bypass WDK middleware and the [Policies plugin](/sdk/core-module/guides/transaction-policies), so retain required application checks and account-level controls. For Aave, follow the [direct-account configuration](/sdk/lending-modules/lending-aave-evm/configuration#service-setup).
 </Callout>
 
 ## Use Protocols
@@ -113,7 +113,7 @@ Existing swap and bridge modules keep their current accessors for released modul
 Construct the standard account directly with its original RPC URL or genuine EIP-1193 provider. Velora cannot use a shared ethers provider that lacks `request()`. Approve the input token for the current Velora spender before running this example; see [Execute Swaps](/sdk/swap-modules/swap-velora-evm/guides/execute-swaps).
 
 <Callout type="warn">
-This compatibility path does not use `wdk.getAccount()`, so WDK transaction policies and middleware do not decorate `swapAccount`. Keep required application checks before approval and swap execution. The account-level `transactionMaxFee` and protocol-level `swapMaxFee` caps remain available, but they do not replace WDK policy rules.
+This compatibility path does not use `wdk.getAccount()`, so WDK middleware, including attached policies, does not decorate `swapAccount`. Keep required application checks before approval and swap execution. The account-level `transactionMaxFee` and protocol-level `swapMaxFee` caps remain available, but they do not replace WDK policy rules.
 </Callout>
 
 ```typescript title="Swap Tokens"
@@ -144,7 +144,7 @@ try {
 Bridge beta.10 requires a directly constructed standard account that retains its RPC URL or EIP-1193 provider. Instantiate the bridge with that account. Before calling `bridge()`, [prepare and confirm a bounded allowance](/sdk/bridge-modules/bridge-usdt0-evm/guides/bridge-tokens#confirm-the-source-token-allowance) for the same source token, spender, and amount. Reuse that confirmed allowance in the example below.
 
 <Callout type="warn">
-This compatibility path does not use `wdk.getAccount()`, so WDK transaction policies and middleware do not decorate `bridgeAccount`. Keep required application checks before approval and bridge execution. Account-level options such as `transactionMaxFee` remain available, but they do not replace WDK policy rules.
+This compatibility path does not use `wdk.getAccount()`, so WDK middleware, including attached policies, does not decorate `bridgeAccount`. Keep required application checks before approval and bridge execution. Account-level options such as `transactionMaxFee` remain available, but they do not replace WDK policy rules.
 </Callout>
 
 ```typescript title="Bridge Assets"

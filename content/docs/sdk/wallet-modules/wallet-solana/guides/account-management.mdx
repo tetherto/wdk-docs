@@ -37,6 +37,29 @@ console.log('Custom account address:', customAddress)
 Solana uses SLIP-0010 derivation paths. Every child segment in a custom path must be hardened, for example `0'/0'/5'`. All accounts inherit the provider configuration from the wallet manager.
 </Callout>
 
+
+## Use a Registered Signer
+
+A manager can use a chain-specific signer as its default root. Use a root at `m/44'/501'` for the standard indexed paths. With a different root, the index path is appended to that signer's path.
+
+You can also register a signer for an existing account. Here, `wallet` is an initialized manager and `privateKey` is the existing account's private key as a `Uint8Array`.
+
+```javascript
+import { PrivateKeySignerSolana } from '@tetherto/wdk-wallet-solana/signers'
+
+const signer = new PrivateKeySignerSolana(privateKey)
+try {
+  wallet.addSigner('treasury', signer)
+  const account = await wallet.getAccount('treasury')
+  console.log(await account.getAddress())
+} finally {
+  wallet.dispose()
+  signer.dispose()
+}
+```
+
+Pass the name as the first argument to use the signer at its own address. For a registered signer that supports derivation, use `wallet.getAccount(0, { signerName })` to derive a child. Dispose of caller-owned signers once every account using them has finished.
+
 ## Iterate Over Multiple Accounts
 
 You can loop through accounts to inspect addresses and balances in bulk.

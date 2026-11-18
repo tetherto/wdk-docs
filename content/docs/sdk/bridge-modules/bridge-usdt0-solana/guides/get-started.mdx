@@ -73,12 +73,12 @@ account.dispose()
 
 ## Register through WDK Core
 
-Core decides that a protocol is a bridge with `instanceof`, against its own copy of `@tetherto/wdk-wallet`. Bridge beta.1 pins `@tetherto/wdk-wallet@1.0.0-beta.22`, while a default install resolves a newer copy for Core. The two classes then differ, registration does nothing and reports no error, and the getter throws `No bridge protocol registered for label: <label>.`
+Core decides that a protocol is a bridge with `instanceof`, against its own copy of `@tetherto/wdk-wallet`. The bridge pins `@tetherto/wdk-wallet@1.0.0-beta.22`, while a default install resolves a newer copy for Core. The two classes then differ, registration does nothing and reports no error, and the getter throws `No bridge protocol registered for label: <label>.`
 
 To register through Core, install that exact `@tetherto/wdk-wallet` version at the root of your project so Core and the bridge share one copy:
 
 ```bash title="Install Core and the bridge with one wallet interface copy"
-npm install --save-exact @tetherto/wdk @tetherto/wdk-wallet-solana @tetherto/wdk-protocol-bridge-usdt0-solana@1.0.0-beta.1 @tetherto/wdk-wallet@1.0.0-beta.22
+npm install --save-exact @tetherto/wdk@1.0.0-beta.23 @tetherto/wdk-wallet-solana@1.0.0-beta.21 @tetherto/wdk-protocol-bridge-usdt0-solana@1.0.0-beta.2 @tetherto/wdk-wallet@1.0.0-beta.22
 npm ls @tetherto/wdk-wallet
 ```
 
@@ -101,10 +101,10 @@ const account = await wdk.getAccount('solana', 0)
 const bridgeProtocol = account.getBridgeProtocol('usdt0')
 ```
 
-If you do not need Core registration, skip the pin and pass the account from `wdk.getAccount()` to `new Usdt0ProtocolSolana(account, config?)` directly.
+If you do not need Core registration, use a direct wallet account to construct the bridge. Direct accounts bypass WDK middleware and the [Policies plugin](/sdk/core-module/guides/transaction-policies).
 
 <Callout type="warn">
-With a [transaction policy](/sdk/core-module/guides/transaction-policies) registered, `wdk.getAccount()` returns a governed account that hides the provider the bridge reads. Direct construction and account-scoped `account.registerProtocol()` then fail with `ProviderRequiredError`. Use the global `wdk.registerProtocol()` shown above.
+When an attached [Policies plugin](/sdk/core-module/guides/transaction-policies) has a policy that applies when you retrieve an account in Core beta.23, the governed account returned by `wdk.getAccount()` hides the RPC fields the bridge needs. Direct construction with that account or account-scoped protocol registration leads to `ProviderRequiredError` when quoting or bridging. Use the global `wdk.registerProtocol()` shown above and define policy rules for the bridge operation. The plugin evaluates the protocol call, while the bridge uses the underlying account for its internal calls.
 </Callout>
 
 ## Supported chains

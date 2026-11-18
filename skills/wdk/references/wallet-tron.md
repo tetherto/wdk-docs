@@ -36,6 +36,7 @@ import WalletManagerTronGasfree from '@tetherto/wdk-wallet-tron-gasfree'
 
 ## Key Details — wallet-tron
 
+- Import `SeedSignerTron` and `PrivateKeySignerTron` from `@tetherto/wdk-wallet-tron/signers`. Use a derivable signer as the manager’s default, or register a signer and call `getAccount(name)` to use it directly. The caller disposes supplied signers after use.
 - **Derivation**: BIP-44 (`m/44'/195'/0'/0/{index}`)
 - **Key type**: secp256k1
 - **Fee unit**: sun (1 TRX = 1,000,000 sun)

@@ -18,6 +18,7 @@ const wallet = new WalletManagerAptos(seedPhrase, {
   ].filter(Boolean),
   retries: 3,
   txnExpirationSecs: 60,
+  transactionMaxFee: 100000n,
   transferMaxFee: 100000n
 })
 ```
@@ -30,11 +31,12 @@ const wallet = new WalletManagerAptos(seedPhrase, {
 | `chainId` | `number` | Optional chain ID. If omitted, the module fetches it from ledger info on first use. |
 | `retries` | `number` | Failover attempts when `provider` is an array. Defaults to `3`. |
 | `txnExpirationSecs` | `number` | Transaction expiration window measured from the current time. Defaults to `60`. |
-| `transferMaxFee` | `number \| bigint` | Optional maximum estimated fee in octas for fungible asset `transfer()` calls. |
+| `transferMaxFee` | `number \| bigint` | Optional gas fee limit in octas for fungible asset `transfer()` calls. |
+| `transactionMaxFee` | `number \| bigint` | Optional gas fee limit in octas for native APT `sendTransaction()` and `signTransaction()`. |
 
 An empty provider array behaves like no provider. Balance reads, quotes, transaction lookup and waiting, transaction signing, and transaction submission then fail because no fullnode is available.
 
-Beta.3 creates one REST client per manager and reuses it across derived accounts and their read-only conversions. An existing `AptosRpc` is reused as-is; `retries` does not reconfigure that instance. `AptosRpc` is an internal package class, not an export you can import from the package root. Use the public URL or URL-array configuration shown above; the option does not accept a generic Aptos SDK client or a mixed array of URLs and clients.
+The manager creates one REST client and reuses it across derived accounts and their read-only conversions. An existing `AptosRpc` is reused as-is; `retries` does not reconfigure that instance. `AptosRpc` is an internal package class, not an export you can import from the package root. Use the public URL or URL-array configuration shown above; the option does not accept a generic Aptos SDK client or a mixed array of URLs and clients.
 
 ## Account Configuration
 
@@ -45,6 +47,7 @@ import { WalletAccountAptos } from '@tetherto/wdk-wallet-aptos'
 
 const account = new WalletAccountAptos(seedPhrase, "0'/0'/0'", {
   provider: 'https://fullnode.mainnet.aptoslabs.com/v1',
+  transactionMaxFee: 100000n,
   transferMaxFee: 100000n
 })
 ```
@@ -100,28 +103,29 @@ const account = await wallet.getAccountByPath("5'/0'/0'")
 Every Aptos path segment must be hardened. A path segment without an apostrophe is invalid for this module's Ed25519 derivation.
 </Callout>
 
-The relative path must contain exactly three hardened indexes without leading zeros, such as `"5'/0'/0'"`.
+The relative path must contain exactly three hardened indexes, such as `"5'/0'/0'"`. The module normalizes leading zeros. For example, `"05'/0'/0'"` and `"5'/0'/0'"` resolve to the same cached account through the manager.
 
 ## Fee Limit
 
-`transferMaxFee` caps the simulated fee for fungible asset `transfer()` calls. The transfer is rejected when the estimated fee is equal to or greater than the cap.
+Set `transactionMaxFee` for native APT sends and signing, and `transferMaxFee` for fungible asset transfers. Both limits use octas. A fresh simulation that exceeds the applicable limit throws `MaximumFeeExceededError` before signing. An estimate equal to the limit passes the fee check.
 
 ```javascript
 const wallet = new WalletManagerAptos(seedPhrase, {
   provider: 'https://fullnode.mainnet.aptoslabs.com/v1',
+  transactionMaxFee: 100000n,
   transferMaxFee: 100000n
 })
 ```
 
-The cap does not apply to native APT `sendTransaction()` or `signTransaction()`. `quoteSendTransaction()` is useful for user review, but send and sign simulate again and expose no native maximum-fee argument. Beta.3 therefore cannot enforce a hard application cap for native APT operations.
+For a positive simulated gas unit price, the wallet also reduces the signed transaction’s maximum gas budget when necessary, so `max_gas_amount * gas_unit_price` stays within the limit. If the transaction needs more gas than that budget allows, execution can fail. Quotes estimate fees for review. The wallet runs a new simulation when you sign or send.
 
 ## Security Notes
 
 - Keep seed phrases and seed bytes outside logs and client-visible error reporting.
 - Use trusted fullnode endpoints for production wallets.
 - Keep a supplied `chainId` consistent with every configured fullnode.
-- Set a fee cap for user-facing fungible asset transfers and treat native APT quotes as advisory preflight values.
-- Call `dispose()` on accounts and managers when they are no longer needed, but do not treat manager disposal as seed zeroization. Beta.3 clears cached accounts and signers while retaining the manager's original `seed` buffer; release every manager and seed reference, and use a stronger isolation boundary when memory reclamation is required.
+- Set fee limits for native and fungible asset operations. Review quotes separately from the fee checks performed when signing.
+- Call `dispose()` on accounts and managers when they are no longer needed, but do not treat manager disposal as seed zeroization. The manager clears cached accounts and signers while retaining the manager's original `seed` buffer; release every manager and seed reference, and use a stronger isolation boundary when memory reclamation is required.
 
 <Cards>
 <Card title="Usage" href="/sdk/wallet-modules/wallet-aptos/usage">

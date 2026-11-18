@@ -5,26 +5,25 @@ docType: how-to
 schemaType: TechArticle
 ---
 
-Middleware allows you to intercept wallet operations. You can use this to add [logging](#logging), implement retry logic, or route provider failover to the supported failover provider.
+Use middleware to inspect, decorate, or replace a wallet account as WDK retrieves it.
 
 ## Register Middleware
 
-Register middleware for the wallet identifier passed to [`registerWallet()`](/sdk/core-module/api-reference#registerwalletblockchain-wallet-config). WDK runs it on each [`getAccount()`](/sdk/core-module/api-reference#getaccountblockchain-index) or [`getAccountByPath()`](/sdk/core-module/api-reference#getaccountbypathblockchain-path) retrieval, including cached accounts, before applying policies.
+Register middleware for the identifier you passed to [`registerWallet()`](/sdk/core-module/api-reference#registerwalletblockchain-wallet-config). WDK attaches the account's protocol methods first, then calls your callbacks in registration order on every [indexed](/sdk/core-module/api-reference#getaccountblockchain-index) or [path-based](/sdk/core-module/api-reference#getaccountbypathblockchain-path) retrieval, including cached accounts.
 
-Add or wrap custom account methods inside this middleware, before WDK returns a governed reference. Assigning functions or defining function/accessor properties through a governed account throws `TypeError`; changing its prototype also throws. Ordinary data properties remain assignable. See [policy method customization](/sdk/core-module/guides/transaction-policies#customize-before-retrieval).
+The second argument is [`MiddlewareContext`](/sdk/core-module/api-reference#middleware-function). It contains the wallet identifier, the original account's captured full path, and the index if you retrieved the account by index. All callbacks on that retrieval receive the same context. The context path comes from the wallet account, so a relative input to `getAccountByPath()` is not echoed as the full path.
+
+Return nothing to keep the current account. A non-nullish result replaces it for the next callback and the caller. When returning a replacement, preserve the wallet methods and protocol getters that the caller needs. If your callback only calls a helper, use a block with no return value so a result from that helper cannot replace the account.
 
 ### Logging
 
-This simple middleware logs a message whenever an account is retrieved.
-
-```typescript title="Logging Middleware"
-wdk.registerMiddleware('ethereum', async (account) => {
-  const address = await account.getAddress()
-  console.log('Accessed Ethereum account:', address)
-  
-  // You can also attach custom properties or wrap methods here
+```javascript title="Logging Middleware"
+wdk.registerMiddleware('ethereum', async (account, { blockchain, index }) => {
+  console.log('Accessed account:', blockchain, index, await account.getAddress())
 })
 ```
+
+Register middleware that adds or wraps account methods **before** [attaching Policies](/sdk/core-module/guides/transaction-policies#register-policies). Later middleware receives the governed account when a policy applies. That account rejects function, accessor, and prototype changes. See [policy method customization](/sdk/core-module/guides/transaction-policies#customize-before-retrieval).
 
 ## Use provider failover
 

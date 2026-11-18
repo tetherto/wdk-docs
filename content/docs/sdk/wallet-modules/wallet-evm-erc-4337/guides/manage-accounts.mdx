@@ -29,6 +29,18 @@ const customAddress = await customAccount.getAddress()
 console.log('Custom account address:', customAddress)
 ```
 
+## Use a Custom Signer
+
+Use an `ISignerEvm` implementation from `@tetherto/wdk-wallet-evm-erc-4337/signers` or supply an implementation of that interface. Register it on the manager with `addSigner(name, signer)`. The string overload uses that signer directly. Use the numeric or path overload when the registered signer supports derivation.
+
+```javascript title="Use a signer registered by your application"
+wallet.addSigner('external', externalSigner)
+const externalAccount = await wallet.getAccount('external')
+console.log(await externalAccount.getAddress())
+```
+
+Here `externalSigner` is the signer supplied by your application. Its lifecycle remains your responsibility. To use a custom default signer, pass a derivable signer as the first argument to the manager constructor.
+
 ## Read a Known Safe Address
 
 Use [`WalletAccountReadOnlyEvmErc4337.fromSafeAddress()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#fromsafeaddresssafeaddress-config-static-1) when your app already has the Safe address. It does not need a seed phrase or owner address. The ordinary [read-only constructor](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#constructor-2) instead takes an owner EOA address and predicts a Safe address from it.
@@ -62,7 +74,7 @@ const readOnlyAccount = WalletAccountReadOnlyEvmErc4337.fromSafeAddress(
 console.log('Safe address:', await readOnlyAccount.getAddress())
 ```
 
-The factory returns an account synchronously and does not check deployment, discover the owner, or validate that the supplied address is a Safe contract. It can [read balances](/sdk/wallet-modules/wallet-evm-erc-4337/guides/check-balances#read-only-account-balances) and allowances, but cannot sign or send transactions. Its owner is unknown, so [signature verification](/sdk/wallet-modules/wallet-evm-erc-4337/guides/sign-verify-messages#verify-a-signature) is unavailable.
+The factory returns an account synchronously and does not check deployment, discover the owner, or validate that the supplied address is a Safe contract. It can [read balances](/sdk/wallet-modules/wallet-evm-erc-4337/guides/check-balances#read-only-account-balances) and allowances, but cannot sign or send transactions. For a deployed Safe, [signature verification](/sdk/wallet-modules/wallet-evm-erc-4337/guides/sign-verify-messages#verify-a-signature) calls the Safe contract.
 
 Non-sponsored quotes require this Safe to be deployed before the module can build a UserOperation. A sponsored quote returns a zero fee without checking deployment or sponsorship eligibility; see [known-Safe errors](/sdk/wallet-modules/wallet-evm-erc-4337/guides/handle-errors#known-safe-address-errors).
 

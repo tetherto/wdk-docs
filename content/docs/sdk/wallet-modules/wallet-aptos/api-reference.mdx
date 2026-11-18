@@ -21,7 +21,7 @@ import WalletManagerAptos, {
 
 Creates and manages seed-derived Aptos accounts.
 
-`seed` accepts a BIP-39 mnemonic or raw 16–64-byte seed for SLIP-0010 derivation. Beta.3 reuses one manager-created REST client across derived accounts and their read-only conversions.
+`seed` accepts a BIP-39 mnemonic or raw 16–64-byte seed for SLIP-0010 derivation. The manager reuses one REST client across derived accounts and their read-only conversions.
 
 ```typescript
 new WalletManagerAptos(
@@ -35,7 +35,7 @@ new WalletManagerAptos(
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `getAccount(index?)` | Returns the account at `m/44'/637'/index'/0'/0'`. | `Promise<WalletAccountAptos>` |
-| `getAccountByPath(path)` | Returns an account at a relative hardened path. | `Promise<WalletAccountAptos>` |
+| `getAccountByPath(path)` | Returns an account at a relative path with three hardened indexes. Leading zeros are normalized before cache lookup. | `Promise<WalletAccountAptos>` |
 | `getFeeRates()` | Returns Aptos fee rates in octas per gas unit. | `Promise<FeeRates>` |
 | `dispose()` | Initiates cleanup of cached accounts and signers and clears their manager caches. It does not erase the manager's `seed` buffer. | `void` |
 
@@ -118,6 +118,7 @@ type AptosWalletConfig = {
   retries?: number
   txnExpirationSecs?: number
   transferMaxFee?: number | bigint
+  transactionMaxFee?: number | bigint
 }
 ```
 
@@ -127,7 +128,8 @@ type AptosWalletConfig = {
 | `chainId` | Fetched from ledger info on first use when omitted. A supplied value must match the provider network. |
 | `retries` | `3` for a provider array. |
 | `txnExpirationSecs` | `60`. |
-| `transferMaxFee` | No default. Applies only to fungible asset `transfer()` and rejects fees at or above the cap. |
+| `transferMaxFee` | No default. Gas fee limit in octas for fungible asset `transfer()`. |
+| `transactionMaxFee` | No default. Gas fee limit in octas for native APT `sendTransaction()` and `signTransaction()`. |
 
 `AptosRpc` is the package's internal REST client class, not a root export. The public configuration examples use URLs. An existing instance retains its retry settings; generic Aptos SDK clients and mixed URL/client arrays are not supported by this type.
 
@@ -221,9 +223,7 @@ type AptosReceiptShape = {
 `signTransaction()` does not broadcast, but it is not an offline operation. It signs native APT transfers only. Use `transfer()` for fungible asset transfers.
 </Callout>
 
-<Callout type="warn">
-`transferMaxFee` does not protect native `sendTransaction()` or `signTransaction()` calls. A native quote can support user review, but send and sign simulate again and expose no hard maximum-fee control in beta.3.
-</Callout>
+The signing and submission methods throw `MaximumFeeExceededError` from the base wallet dependency if the simulated fee exceeds the applicable [configured limit](/sdk/wallet-modules/wallet-aptos/configuration#fee-limit). The Aptos package root does not re-export that error class.
 
 <Cards>
 <Card title="Usage" href="/sdk/wallet-modules/wallet-aptos/usage">

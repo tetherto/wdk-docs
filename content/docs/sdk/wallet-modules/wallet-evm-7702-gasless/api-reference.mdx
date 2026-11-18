@@ -6,7 +6,7 @@ schemaType: APIReference
 icon: Code
 ---
 
-This reference covers `@tetherto/wdk-wallet-evm-7702-gasless@1.0.0-beta.12`.
+This reference covers `@tetherto/wdk-wallet-evm-7702-gasless@1.0.0-beta.13`.
 
 ## Table of Contents
 
@@ -29,12 +29,12 @@ import WalletManagerEvm7702Gasless from '@tetherto/wdk-wallet-evm-7702-gasless'
 ### Constructor
 
 ```javascript
-new WalletManagerEvm7702Gasless(seed, config)
+new WalletManagerEvm7702Gasless(seedOrSigner, config)
 ```
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `seed` | `string \| Uint8Array` | BIP-39 mnemonic or raw BIP-32 master seed (16–64 bytes). |
+| `seedOrSigner` | `string \| Uint8Array \| ISignerEvm` | BIP-39 mnemonic, raw BIP-32 master seed (16–64 bytes), or a default EVM signer that supports derivation. |
 | `config` | `Evm7702GaslessWalletConfig` | Wallet configuration with common fields and one fee mode. |
 
 The manager builds one RPC client and shares it across the accounts it derives. A supplied ethers provider is reused; see [provider configuration](/sdk/wallet-modules/wallet-evm-7702-gasless/configuration#provider-failover).
@@ -43,10 +43,13 @@ The manager builds one RPC client and shares it across the accounts it derives. 
 
 | Method | Parameters | Returns | Notes |
 |--------|------------|---------|-------|
-| `getAccount(index?)` | `index?: number` | `Promise\<WalletAccountEvm7702Gasless\>` | Defaults to index `0` and derives `0'/0/{index}`. |
-| `getAccountByPath(path)` | `path: string` | `Promise\<WalletAccountEvm7702Gasless\>` | Returns a cached account for the derivation path suffix. |
+| `getAccount(index?, options?)` | `index?: number`, `options?: { signerName?: string }` | `Promise\<WalletAccountEvm7702Gasless\>` | Defaults to index `0` and derives `0'/0/{index}`. |
+| `getAccount(signerName)` | `signerName: string` | `Promise\<WalletAccountEvm7702Gasless\>` | Uses the named signer directly. |
+| `getAccountByPath(path, options?)` | `path: string`, `options?: { signerName?: string }` | `Promise\<WalletAccountEvm7702Gasless\>` | Returns a cached account for the derivation path suffix. |
 | `getFeeRates()` | - | `Promise\<{ normal: bigint, fast: bigint }\>` | Uses provider fee data. Throws if no provider is connected. |
-| `dispose()` | - | `void` | Inherited from `WalletManager`; initiates cleanup of managed accounts. |
+| `dispose()` | - | `void` | Initiates cleanup of managed accounts and the internally created default signer. Supplied signers are caller-owned. |
+
+Use `addSigner(name, signer)` to register a named signer before retrieval. The `signerName` option selects a signer for derivation. Retrieval with a disposed manager or selected signer throws `DisposalError`. An unknown signer name throws `NoSuchElementError`. A signer that cannot derive for the requested path throws `InvalidSignerError`.
 
 `getFeeRates()` returns fee rates in wei. The `normal` value applies the EVM wallet normal multiplier, and `fast` applies the EVM wallet fast multiplier to the provider fee.
 
@@ -62,23 +65,28 @@ import { WalletAccountEvm7702Gasless } from '@tetherto/wdk-wallet-evm-7702-gasle
 
 ```javascript
 new WalletAccountEvm7702Gasless(seed, path, config)
+new WalletAccountEvm7702Gasless(seed, config)
+new WalletAccountEvm7702Gasless(signer, config)
 new WalletAccountEvm7702Gasless(walletAccountEvm, config)
 ```
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `seed` | `string \| Uint8Array` | BIP-39 mnemonic or raw BIP-32 master seed (16–64 bytes). |
-| `path` | `string` | EVM derivation path suffix, for example `"0'/0/0"`. |
-| `walletAccountEvm` | `WalletAccountEvm` | Existing EVM account from the same beta.19 package instance used by this module; see [wrapping an account](/sdk/wallet-modules/wallet-evm-7702-gasless/guides/manage-accounts#wrap-an-existing-evm-account). |
+| `path` | `string` | EVM derivation path suffix. Defaults to `"0'/0/0"` for seed-based accounts. |
+| `signer` | `ISignerEvm` | Custom EVM signer. Import signer interfaces and implementations from `@tetherto/wdk-wallet-evm-7702-gasless/signers`. |
+| `walletAccountEvm` | `WalletAccountEvm` | Existing EVM account from the same beta.26 package instance used by this module; see [wrapping an account](/sdk/wallet-modules/wallet-evm-7702-gasless/guides/manage-accounts#wrap-an-existing-evm-account). |
 | `config` | `Evm7702GaslessWalletConfig` | Wallet configuration. |
+
+The signer overload accepts `Evm7702GaslessWalletConfig & SignerOptions`. `WalletAccountEvm7702Gasless.fromPrivateKey(privateKey, config)` accepts a raw `Uint8Array` or hex string and creates an account-owned signer. A custom signer must support typed-data signing for UserOperations and `signAuthorization()` when delegating the EOA to the configured contract.
 
 ### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `index` | `number` | Derivation path index from the wrapped EVM account. |
-| `path` | `string` | Full derivation path from the wrapped EVM account. |
-| `keyPair` | `KeyPair` | Read-only view of the wrapped EVM account key pair. |
+| `path` | `string \| null` | Wrapped account derivation path when available. |
+| `keyPair` | `KeyPair \| null` | Wrapped account key pair when exposed by the signer. |
+| `disposed` | `boolean` | Whether this gasless account has been disposed. |
 
 Treat the arrays returned through `keyPair` as read-only. Call `dispose()` when the account is no longer needed.
 
@@ -86,7 +94,7 @@ Treat the arrays returned through `keyPair` as read-only. Call `dispose()` when 
 
 | Method | Parameters | Returns | Notes |
 |--------|------------|---------|-------|
-| `getAddress()` | - | `Promise\<string\>` | Inherited read-only method. Returns the EOA address. |
+| `getAddress()` | - | `Promise\<string\>` | Returns the EOA address from the wrapped account. |
 | `getBalance()` | - | `Promise\<bigint\>` | Native token balance in wei. |
 | `getTokenBalance(tokenAddress)` | `tokenAddress: string` | `Promise\<bigint\>` | ERC-20 balance in base units. |
 | `getTokenBalances(tokenAddresses)` | `tokenAddresses: string[]` | `Promise\<Record\<string, bigint\>\>` | Multiple ERC-20 balances in base units. |
@@ -107,7 +115,9 @@ Treat the arrays returned through `keyPair` as read-only. Call `dispose()` when 
 | `getTransaction(hash)` | `hash: string` | `Promise\<TransactionReceipt & Evm7702GaslessTransactionDetails\>` | Returns normalized finality for a UserOperation hash. |
 | `waitForTransaction(hash, options?)` | UserOperation hash, `WaitForTransactionOptions` | `Promise\<TransactionReceipt & Evm7702GaslessTransactionDetails\>` | Waits for `confirmed` or `final`, or returns `dropped`. |
 | `toReadOnlyAccount()` | - | `Promise\<WalletAccountReadOnlyEvm7702Gasless\>` | Returns a cached read-only account that shares this account's provider. |
-| `dispose()` | - | `void` | Clears quote cache and initiates cleanup of the wrapped EVM account. |
+| `dispose()` | - | `void` | Clears the quote cache and initiates cleanup of an internally created EVM account. |
+
+After `dispose()`, signing and write methods throw `DisposalError` from `@tetherto/wdk-wallet`. Disposal leaves a wrapped, caller-supplied EVM account untouched. For the direct signer constructor, it disposes the supplied signer only when `shouldWipeSignerOnDisposal` is `true`.
 
 ### Quote and Send Behavior
 
