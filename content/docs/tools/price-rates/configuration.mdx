@@ -6,46 +6,39 @@ schemaType: TechArticle
 icon: Settings
 ---
 
-## Bitfinex HTTP Client
+## Create a Client
 
-In `@tetherto/wdk-pricing-bitfinex-http` beta.6, pass common ticker symbols to the client methods. Symbols are case-insensitive: `USDT` and `usdt` both use Bitfinex's `UST` currency code for USD₮. The same translation applies to current prices, batch price data, and historical lookups.
+Every pricing client implements the same [`PricingClient`](/tools/price-rates/api-reference#interface-pricingclient-abstract) interface. Create the one for your data source; the examples on this page then work with either.
 
-Create a client to use the built-in mappings and Bitfinex's published aliases:
-
-```javascript title="Create Client"
+<Tabs items={["Bitfinex", "CoinGecko"]}>
+<Tab value="Bitfinex">
+```javascript title="Create a Bitfinex client"
 import { BitfinexPricingClient } from '@tetherto/wdk-pricing-bitfinex-http'
 
-// Create the client (no options needed)
 const client = new BitfinexPricingClient()
 ```
+</Tab>
+<Tab value="CoinGecko">
+```javascript title="Create a CoinGecko client"
+import { CoingeckoPricingClient } from '@tetherto/wdk-pricing-coingecko-http'
 
-### Currency-Code Overrides (optional)
-
-Use the optional [`currencyCodes`](/tools/price-rates/api-reference#constructor) object to set explicit common-symbol-to-Bitfinex-code mappings. Entries take precedence over built-in mappings and remote aliases. Both keys and values are uppercased.
-
-For example, these explicit BTC and USD mappings let the client resolve that pair without fetching the remote alias map:
-
-```javascript title="Set Currency-Code Overrides"
-import { BitfinexPricingClient } from '@tetherto/wdk-pricing-bitfinex-http'
-
-const mappedClient = new BitfinexPricingClient({
-  currencyCodes: { btc: 'btc', usd: 'usd' }
-})
-
-const price = await mappedClient.getCurrentPrice('BTC', 'USD')
+const client = new CoingeckoPricingClient()
 ```
+</Tab>
+</Tabs>
 
-For symbols without an explicit or built-in mapping, the client looks up Bitfinex's aliases and caches a successful lookup for that client instance. An unknown or ambiguous alias falls back to the uppercased input symbol. If the alias lookup fails, the client uses that fallback and retries the alias lookup on a later request. Translation does not add support for pairs Bitfinex cannot quote, and errors from price requests can still reject the call.
+Neither client needs options to start. See [Bitfinex Client Options](#bitfinex-client-options) on this page and the [CoinGecko configuration](/sdk/pricing-modules/pricing-coingecko-http/configuration) for API keys and symbol mappings.
+
+## Fetch Prices
 
 ### Current Price
 
-Current-price lookups use Bitfinex's FX conversion endpoint. The client returns a price only when Bitfinex can quote the pair directly. Unsupported pairs return `null`; the client does not try a USD-pivot fallback.
+The client returns a price when its provider can quote the pair, and `null` when it cannot.
 
 ```javascript title="Get Current Price"
 const price = await client.getCurrentPrice('BTC', 'USD')
-const unsupported = await client.getCurrentPrice('BTC', 'BRL') // null when Bitfinex has no direct quote
 
-if (unsupported === null) {
+if (price === null) {
   // Show an unavailable-price state in your UI
 }
 ```
@@ -57,14 +50,13 @@ Batch lookups return results in the same order as the input list. Entries that c
 ```javascript title="Get Batch Current Prices"
 const prices = await client.getMultiCurrentPrices([
   { from: 'BTC', to: 'USD' },
-  { from: 'ETH', to: 'USD' },
-  { from: 'BTC', to: 'BRL' } // null when unsupported
+  { from: 'ETH', to: 'USD' }
 ])
 ```
 
 ### Batch Price Data
 
-Use `getMultiPriceData()` when you need the last price plus 24-hour absolute and relative change. This method uses Bitfinex ticker data and only supports pairs Bitfinex quotes directly.
+Use `getMultiPriceData()` when you need the last price plus 24-hour absolute and relative change.
 
 ```javascript title="Get Batch Price Data"
 const priceData = await client.getMultiPriceData([
@@ -74,7 +66,7 @@ const priceData = await client.getMultiPriceData([
 
 ### Historical Series
 
-Supply `start` and `end` as Unix timestamps in milliseconds; both fields are required by `HistoricalPriceOptions`. Keep `start` within the trailing 365 days to avoid the client's range error. Long histories are downscaled to ≤ 100 points. This example requests the last 24 hours:
+Supply `start` and `end` as Unix timestamps in milliseconds; both fields are required by `HistoricalPriceOptions`. Keep `start` within the trailing 365 days: the Bitfinex client, and the CoinGecko client on its public or Demo host, reject older ranges. This example requests the last 24 hours:
 
 ```javascript title="Get Historical Prices"
 const end = Date.now()
@@ -85,11 +77,9 @@ const series = await client.getHistoricalPrice('BTC', 'USD', {
 })
 ```
 
-The concrete Bitfinex result uses `{ price, ts }`, with `ts` in Unix milliseconds. The inherited `HistoricalPriceResult` declaration instead names the time field `timestamp`; this is a declaration/runtime mismatch. See the [historical API notes](/tools/price-rates/api-reference#gethistoricalpricefrom-to-opts) before consuming the series in TypeScript.
-
 ## Provider Integration
 
-Works with `@tetherto/wdk-pricing-provider` as a `PricingClient` implementation.
+Pass any `PricingClient` to `@tetherto/wdk-pricing-provider` to add in-memory caching of the last price.
 
 You can pass a single client or an array of clients. With an array, failures matching `error instanceof Error` trigger failover within the configured `retries` limit, including application and HTTP errors. A resolved `null` does not trigger failover.
 
@@ -127,9 +117,9 @@ const provider = new PricingProvider({
 const last = await provider.getLastPrice('BTC', 'USD')
 ```
 
-Use [`@tetherto/wdk-pricing-coingecko-http`](/sdk/pricing-modules/pricing-coingecko-http/) as another `PricingClient` when you want CoinGecko as a fallback or primary data source:
+The order of the array sets the priority. This example tries Bitfinex first and fails over to CoinGecko; swap the two entries to make CoinGecko the primary source:
 
-```javascript title="CoinGecko fallback client"
+```javascript title="Combine Bitfinex and CoinGecko"
 import { PricingProvider } from '@tetherto/wdk-pricing-provider'
 import { BitfinexPricingClient } from '@tetherto/wdk-pricing-bitfinex-http'
 import { CoingeckoPricingClient } from '@tetherto/wdk-pricing-coingecko-http'
@@ -142,6 +132,44 @@ const provider = new PricingProvider({
   retries: 1
 })
 ```
+
+## Bitfinex Client Options
+
+In `@tetherto/wdk-pricing-bitfinex-http` beta.6, pass common ticker symbols to the client methods. Symbols are case-insensitive: `USDT` and `usdt` both use Bitfinex's `UST` currency code for USD₮. The same translation applies to current prices, batch price data, and historical lookups.
+
+### Currency-Code Overrides (optional)
+
+Use the optional [`currencyCodes`](/tools/price-rates/api-reference#constructor) object to set explicit common-symbol-to-Bitfinex-code mappings. Entries take precedence over built-in mappings and remote aliases. Both keys and values are uppercased.
+
+For example, these explicit BTC and USD mappings let the client resolve that pair without fetching the remote alias map:
+
+```javascript title="Set Currency-Code Overrides"
+import { BitfinexPricingClient } from '@tetherto/wdk-pricing-bitfinex-http'
+
+const mappedClient = new BitfinexPricingClient({
+  currencyCodes: { btc: 'btc', usd: 'usd' }
+})
+
+const price = await mappedClient.getCurrentPrice('BTC', 'USD')
+```
+
+For symbols without an explicit or built-in mapping, the client looks up Bitfinex's aliases and caches a successful lookup for that client instance. An unknown or ambiguous alias falls back to the uppercased input symbol. If the alias lookup fails, the client uses that fallback and retries the alias lookup on a later request. Translation does not add support for pairs Bitfinex cannot quote, and errors from price requests can still reject the call.
+
+### Direct Quotes Only
+
+Current-price lookups use Bitfinex's FX conversion endpoint, and `getMultiPriceData()` uses Bitfinex ticker data. Both return a result only when Bitfinex can quote the pair directly. Unsupported pairs return `null`; the client does not try a USD-pivot fallback.
+
+```javascript title="Unsupported Pair"
+const unsupported = await mappedClient.getCurrentPrice('BTC', 'BRL') // null when Bitfinex has no direct quote
+```
+
+### Historical Results
+
+Long histories are downscaled to ≤ 100 points. The concrete Bitfinex result uses `{ price, ts }`, with `ts` in Unix milliseconds. The inherited `HistoricalPriceResult` declaration instead names the time field `timestamp`; this is a declaration/runtime mismatch. See the [historical API notes](/tools/price-rates/api-reference#gethistoricalpricefrom-to-opts) before consuming the series in TypeScript.
+
+## CoinGecko Client Options
+
+The CoinGecko client takes an API key, a Pro host, and symbol-to-coin-ID mappings. It throws for a `from` symbol missing from its `coinIds` map. See the [CoinGecko configuration](/sdk/pricing-modules/pricing-coingecko-http/configuration) and [error handling](/sdk/pricing-modules/pricing-coingecko-http/guides/handle-errors) pages.
 
 ***
 
