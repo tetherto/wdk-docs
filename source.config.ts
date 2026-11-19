@@ -13,6 +13,7 @@ import { tetherSeoFrontmatterSchema } from '@tetherto/docs-seo-schema';
 import { z } from "zod";
 import rehypeKatex from 'rehype-katex';
 import remarkMath from 'remark-math';
+import { legalNoteMarkdown, type LegalNoteProps } from './src/lib/legal-note.ts';
 
 const execFile = promisify(execFileCb);
 
@@ -64,7 +65,24 @@ export const docs = defineDocs({
       .extend(tetherSeoFrontmatterSchema.shape)
       .passthrough(),
     postprocess: {
-      includeProcessedMarkdown: true,
+      includeProcessedMarkdown: {
+        stringify(node) {
+          if (
+            (node.type !== 'mdxJsxFlowElement' && node.type !== 'mdxJsxTextElement') ||
+            node.name !== 'LegalNote'
+          ) return undefined;
+
+          const props = Object.fromEntries(node.attributes.flatMap((attribute) =>
+            attribute.type === 'mdxJsxAttribute' &&
+            typeof attribute.name === 'string' &&
+            typeof attribute.value === 'string'
+              ? [[attribute.name, attribute.value]]
+              : [],
+          )) as LegalNoteProps;
+
+          return legalNoteMarkdown(props);
+        },
+      },
     },
   },
   meta: {
