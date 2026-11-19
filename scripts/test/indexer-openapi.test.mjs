@@ -46,7 +46,7 @@ test('all source operations, request bodies, parameters and response media are r
   for (const [path, item] of Object.entries(snapshot.paths)) for (const [method, operation] of Object.entries(item)) {
     if (method === 'parameters') continue;
     count += 1;
-    const heading = `### ${method.toUpperCase()} ${path.replace(/[{}]/g, '\\$&')}`;
+    const heading = `### ${method.toUpperCase()} ${path.replace(/[\\_{}]/g, '\\$&')}`;
     assert.equal(output.split('\n').filter((line) => line === heading).length, 1, heading);
     const security = operation.security ?? snapshot.security ?? [];
     expected.push({
