@@ -10,9 +10,36 @@ export type LegalNoteProps = {
   terms2?: string;
   /** "uses" for protocols that are not an API. Defaults to "Calls the X API". */
   mode?: 'calls' | 'uses';
+  /**
+   * What the reader takes from the providers, such as "pricing information".
+   * Switches a service note to "If you choose to use X ..., you must review the applicable terms".
+   */
+  use?: string;
+  /** Names of the linked terms, such as "Market Data Terms". Default to "terms". */
+  termsName?: string;
+  terms2Name?: string;
 };
 
 export type LegalNotePart = string | { text: string; href: string };
+
+function choiceParts(props: LegalNoteProps): LegalNotePart[] {
+  const { provider, terms, provider2, terms2, use } = props;
+  if (!provider || !terms || !use) return [];
+
+  const first = { text: `${provider}'s ${props.termsName ?? 'terms'}`, href: terms };
+  const lead = (names: string) =>
+    `If you choose to use ${names} ${use}, you must review the applicable terms and satisfy yourself that your use is compliant (`;
+  if (provider2 && terms2) {
+    return [
+      lead(`${provider} or ${provider2}`),
+      first,
+      ' and ',
+      { text: `${provider2}'s ${props.terms2Name ?? 'terms'}`, href: terms2 },
+      '). ',
+    ];
+  }
+  return [lead(provider), first, '). '];
+}
 
 function providerParts(props: LegalNoteProps): LegalNotePart[] {
   const { provider, terms, provider2, terms2 } = props;
@@ -44,6 +71,9 @@ export function legalNoteParts(props: LegalNoteProps): LegalNotePart[] {
     href: `${LEGAL_PAGE}#${section}`,
   });
 
+  if (props.kind === 'service' && props.use) {
+    return [...choiceParts(props), 'See also ', legal('third-party-services'), '.'];
+  }
   if (props.kind === 'service') {
     return [...providerParts(props), 'See ', legal('third-party-services'), '.'];
   }
