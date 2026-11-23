@@ -545,6 +545,7 @@ export const inventory = {
   concepts: page('Concepts', '/resources/concepts', 'GraduationCap'),
   support: page('Support', '/overview/support', 'CircleQuestionMark'),
   changelog: page('Changelog', '/overview/changelog', 'History'),
+  legal: page('Legal and Disclaimers', '/resources/legal', 'Scale'),
 };
 
 // Usage pages that only link to the module's guides (no code). The builder can

@@ -14,6 +14,7 @@ import { ImageCard, ImageCards } from '@/components/image-card';
 import { GetInvolvedCards, SupportCards } from '@/components/support-cards';
 import { WalletModuleChooser } from '@/components/wallet-module-chooser';
 import { ProviderContent, ProviderSelector } from '@/components/provider-selector';
+import { LegalNote } from '@/components/legal-note';
 
 function WrapCode({ children }: { children: React.ReactNode }) {
   return <div className="fd-code-wrap">{children}</div>;
@@ -62,6 +63,7 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     WalletModuleChooser,
     ProviderSelector,
     ProviderContent,
+    LegalNote,
     ...TabsComponents,
     Tabs: CustomTabs,
     Tab: CustomTabsItem,
