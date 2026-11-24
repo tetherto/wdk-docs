@@ -18,13 +18,13 @@ const transferResult = await account.transfer({
   amount: 1000000 // Amount in TRC20's base units
 })
 console.log('GasFree transfer ID:', transferResult.hash)
-console.log('Transfer fee:', transferResult.fee, 'token units')
-console.log('Activation fee:', transferResult.activationFee, 'token units')
+console.log('Submitted fee estimate:', transferResult.fee, 'token units')
+console.log('Submitted activation fee estimate:', transferResult.activationFee, 'token units')
 ```
 
 The returned `hash` is the GasFree transfer ID, not the on-chain TRON transaction ID. Pass it to [`getTransaction()`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference#gettransactionhash) or [`waitForTransaction()`](/sdk/wallet-modules/wallet-tron-gasfree/api-reference#waitfortransactionhash-options); the native receipt exposes the chain transaction after the relay publishes it.
 
-The returned `fee` includes the GasFree transfer fee and, when the GasFree account is not active yet, the token activation fee returned by the provider. Both `fee` and `activationFee` are returned as `bigint`; `activationFee` is `0n` when no activation fee applies.
+The returned `fee` sums the provider's transfer and activation fee estimates in token base units. Both fields are returned as `bigint`. `activationFee` is `0n` when the provider returns no activation estimate.
 
 ## Override Fee Limit
 
@@ -39,11 +39,11 @@ const result = await account.transfer({
   transferMaxFee: 1000 // Maximum fee allowed in token units
 })
 console.log('GasFree transfer ID:', result.hash)
-console.log('Transfer fee:', result.fee, 'token units')
-console.log('Activation fee:', result.activationFee, 'token units')
+console.log('Submitted fee estimate:', result.fee, 'token units')
+console.log('Submitted activation fee estimate:', result.activationFee, 'token units')
 ```
 
-The call rejects only when the quoted total fee is greater than `transferMaxFee`; a fee equal to the cap is allowed. The constructor-level `transferMaxFee` field is not used as a default by the current runtime, so pass the cap on every transfer that needs one.
+Set [`transferMaxFee`](/sdk/wallet-modules/wallet-tron-gasfree/configuration#transfer-max-fee) in the wallet configuration for a default. A per-transfer value overrides it. The wallet rejects the transfer before signing when the estimated total fee is greater than the effective cap. A fee equal to the cap is allowed.
 
 ## Estimate Transfer Fees
 
@@ -59,7 +59,7 @@ console.log('Transfer fee estimate:', transferQuote.fee, 'token units')
 console.log('Activation fee estimate:', transferQuote.activationFee, 'token units')
 ```
 
-If the GasFree account is inactive, the quote includes the token's activation fee in addition to the transfer fee and exposes that portion as `activationFee`.
+If the GasFree account is inactive, the quote includes the token's activation fee in addition to the transfer fee and exposes that portion as `activationFee`. The quote reports the estimate. `transfer()` checks the effective cap against its own estimate.
 
 ## Transfer with Validation
 
@@ -97,9 +97,9 @@ async function transferWithValidation(account, tokenAddress, recipient, amount) 
     recipient,
     amount
   })
-  console.log('Transfer completed:', result.hash)
-  console.log('Fee paid:', result.fee, 'token units')
-  console.log('Activation fee paid:', result.activationFee, 'token units')
+  console.log('GasFree transfer ID:', result.hash)
+  console.log('Submitted fee estimate:', result.fee, 'token units')
+  console.log('Submitted activation fee estimate:', result.activationFee, 'token units')
 
   return result
 }

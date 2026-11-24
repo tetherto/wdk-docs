@@ -35,10 +35,10 @@
 
 ## Packages
 
-Example versions: standard EVM `1.0.0-beta.26`, ERC-4337 `1.0.0-beta.26`, and EIP-7702 gasless `1.0.0-beta.13`.
+Example versions: standard EVM `1.0.0-beta.27`, ERC-4337 `1.0.0-beta.26`, and EIP-7702 gasless `1.0.0-beta.13`.
 
 ```bash
-npm install @tetherto/wdk-wallet-evm@1.0.0-beta.26
+npm install @tetherto/wdk-wallet-evm@1.0.0-beta.27
 npm install @tetherto/wdk-wallet-evm-erc-4337@1.0.0-beta.26  # for Account Abstraction
 npm install @tetherto/wdk-wallet-evm-7702-gasless@1.0.0-beta.13  # for EIP-7702 gasless EOAs
 ```
@@ -58,6 +58,7 @@ import WalletManagerEvm7702Gasless from '@tetherto/wdk-wallet-evm-7702-gasless'
 - ⚠️ **Ethereum USD₮** uses non-standard ERC20 (no bool return on `transfer()`). Use SafeERC20 in custom contracts.
 - ⚠️ `sendTransaction` accepts a `data` field (arbitrary hex calldata) — can execute **any** contract function. Extra scrutiny for non-empty `data`.
 - Transfer and approval options accept gas overrides directly. Object fee quotes use supplied gas limits and fee rates before provider estimates; serialized quotes use their encoded execution-gas fields. Simulation still runs.
+- `account.config` exposes the stored options on standard EVM beta.27 full and read-only accounts. Manager-derived accounts expose the initialized provider. Treat the configuration as read-only and keep credentials out of logs.
 - `transactionMaxFee` applies to sends, approvals and provider-backed signing. ERC-20 `transfer()` uses only `transferMaxFee`; configure it separately. Object sends check populated gas/fee fields before passing them to the signer. `signTransaction()` checks a quote without populating missing fields. Equality is allowed, transferred value is excluded, and the cap is not the eventual fee paid. Offline signing does not run the cap check.
 - Supplied signed transactions are broadcast unchanged after checking their encoded execution-gas fields. Independently review recipient, value, calldata, chain ID, nonce and fee fields. Type 4 transactions reject legacy `gasPrice`; type-3/blob transactions and blob fields are unsupported.
 - Runtime and declarations accept ethers `Provider` inputs. A manager shares one provider across its accounts. A nonzero `chainId` pins module-built URL and EIP-1193 providers without detecting the endpoint's chain or a browser network switch; prebuilt ethers providers retain their own network settings.

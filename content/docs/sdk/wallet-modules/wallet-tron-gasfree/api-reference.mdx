@@ -6,6 +6,8 @@ schemaType: APIReference
 icon: Code
 ---
 
+This reference covers `@tetherto/wdk-wallet-tron-gasfree@1.0.0-beta.14`.
+
 ## Table of Contents
 
 | Class | Description | Methods |
@@ -35,7 +37,7 @@ new WalletManagerTronGasfree(seed, config)
   - `verifyingContract` (string): Gas-free verifying contract address
   - `gasFreeApiKey` (string, optional): API key for signed GasFree provider requests
   - `gasFreeApiSecret` (string, optional): API secret for signed GasFree provider requests. Provide together with `gasFreeApiKey`.
-  - `transferMaxFee` (number | bigint, optional): Shared config field; the current runtime does not use it as a default transfer cap
+  - `transferMaxFee` (number | bigint, optional): Default transfer fee cap in token base units
   - `transactionMaxFee` (number | bigint, optional): Shared config field; native transaction methods remain unsupported, so it has no runtime effect
 
 **Example:**
@@ -130,7 +132,7 @@ new WalletAccountTronGasfree(seed, path, config)
 | `getAddress()` | Returns the account's address | `Promise\<string\>` |
 | `getBalance()` | Returns the native TRX balance (in sun) | `Promise\<bigint\>` |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise\<bigint\>` |
-| `transfer(options, config?)` | Transfers TRC20 tokens with an optional per-call fee cap | `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` |
+| `transfer(options, config?)` | Transfers TRC20 tokens with the configured fee cap or a per-call override | `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` |
 | `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: bigint, activationFee: bigint}\>` |
 | `sign(message)` | Signs a message using the account's private key | `Promise\<string\>` |
 | `signTransaction(tx)` | Unsupported on Tron GasFree; always throws | `Promise\<never\>` |
@@ -143,9 +145,9 @@ new WalletAccountTronGasfree(seed, path, config)
 | `dispose()` | Initiates the account cleanup process | `void` |
 
 ##### `getAddress()`
-Returns the account's gas-free Tron address.
+Returns the owner's GasFree account address. When `verifyingContract` matches the packaged controller for the configured mainnet or Nile `chainId`, the module derives the address locally. For a different valid controller address on these networks, it requests the address from the GasFree provider.
 
-**Returns:** `Promise\<string\>` - The account's Tron address
+**Returns:** `Promise\<string\>` - The GasFree account address
 
 **Example:**
 ```javascript
@@ -187,9 +189,9 @@ Transfers TRC20 tokens to another address using the gas-free service.
   - `recipient` (string): Recipient's Tron address
   - `amount` (number | bigint): Amount in token base units
 - `config` (object, optional): Per-call transfer configuration
-  - `transferMaxFee` (number | bigint, optional): Reject when the quoted total fee is greater than this token-base-unit cap. A fee equal to the cap is allowed.
+  - `transferMaxFee` (number | bigint, optional): Override the wallet or account cap for this call. Omit the field or pass `undefined` to inherit the configured value. The wallet rejects an estimated transfer fee plus activation fee above this amount before signing. A fee equal to the cap is allowed.
 
-**Returns:** `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` - Object containing the GasFree transfer ID, total fee paid in token base units, and the activation-fee portion. `activationFee` is `0n` when no account activation fee applies.
+**Returns:** `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` - Object containing the GasFree transfer ID, provider-reported total fee estimate in token base units, and its estimated activation-fee portion. `activationFee` is `0n` when the provider returns no estimate for that portion.
 
 **Example:**
 ```javascript
@@ -201,7 +203,7 @@ const result = await account.transfer({
   transferMaxFee: 5000n
 })
 console.log('GasFree transfer ID:', result.hash)
-console.log('Fee paid:', result.fee, 'token base units')
+console.log('Submitted fee estimate:', result.fee, 'token base units')
 console.log('Activation fee:', result.activationFee, 'token base units')
 ```
 
@@ -353,9 +355,9 @@ new WalletAccountReadOnlyTronGasfree(address, config)
 | `getTransactionReceipt(hash)` | Deprecated: resolves a GasFree transfer ID to its native TRON receipt | `Promise\<TronTransactionReceipt \| null\>` |
 
 ##### `getAddress()`
-Returns the account's gas-free Tron address.
+Returns the owner's GasFree account address. When `verifyingContract` matches the packaged controller for the configured mainnet or Nile `chainId`, the module derives the address locally. For a different valid controller address on these networks, it requests the address from the GasFree provider.
 
-**Returns:** `Promise\<string\>` - The account's Tron address
+**Returns:** `Promise\<string\>` - The GasFree account address
 
 **Example:**
 ```javascript
@@ -646,7 +648,7 @@ interface TronGasfreeWalletConfig {
 }
 ```
 
-The current runtime also does not use constructor-level `transferMaxFee` as a default. Enforce a GasFree transfer cap with the second argument to `account.transfer()`.
+The `transferMaxFee` field sets the default cap for `transfer()`. Use the method's second argument to override it for one transfer.
 
 ### KeyPair
 Account key pair information.

@@ -58,8 +58,9 @@ const wallet = new WalletManagerSpark(seedPhrase, {
 - `getSingleUseDepositAddress()` — Generate a Bitcoin L1 address for depositing into Spark
 - `claimDeposit(txId)` — Claim a deposit after it confirms on L1
 - `getStaticDepositAddress()` — Reusable deposit address
-- `claimStaticDeposit(depositId)` — Claim from static deposit
-- `refundStaticDeposit(depositId)` — Refund unclaimed static deposit
+- `getClaimStaticDepositQuote({txId, outputIndex, depositAmountSats})` quotes credit and subtracts it from the Bitcoin output value you supply. Verify the exact output and amount.
+- `claimStaticDeposit(txId, {maxFeeSats})` fetches a fresh quote and enforces the approved per-claim fee ceiling. It returns `{transferId}`. The claim is irreversible and selects the first matching output. Use a transaction with one output paying the account’s static addresses.
+- `refundStaticDeposit(options)` returns the signed Bitcoin transaction hex. Review the destination and fee before broadcasting.
 
 ### Withdrawals (Spark → L1)
 - `withdraw({to, value})` — Withdraw to a Bitcoin L1 address

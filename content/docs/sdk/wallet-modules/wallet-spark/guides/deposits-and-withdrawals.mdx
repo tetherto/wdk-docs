@@ -32,21 +32,49 @@ console.log('Deposit claimed:', walletLeaves)
 
 ### 1. (optional) Use a static deposit address
 
-You can reuse one on-chain deposit address using [`account.getStaticDepositAddress()`](/sdk/wallet-modules/wallet-spark/api-reference), then credit the wallet with [`account.claimStaticDeposit()`](/sdk/wallet-modules/wallet-spark/api-reference) after the Bitcoin transaction confirms:
+Get a reusable Bitcoin address with [`account.getStaticDepositAddress()`](/sdk/wallet-modules/wallet-spark/api-reference#getstaticdepositaddress). After the deposit confirms, identify the output paying this address and verify its amount in satoshis.
+
+Request a [claim quote](/sdk/wallet-modules/wallet-spark/api-reference#getclaimstaticdepositquoteoptions). The example uses the transaction ID, output index and value that your application verified against the Bitcoin transaction.
+
+```javascript title="Quote a Static Deposit Claim"
+const quote = await account.getClaimStaticDepositQuote({
+  txId: verifiedDeposit.txId,
+  outputIndex: verifiedDeposit.outputIndex,
+  depositAmountSats: verifiedDeposit.amountSats
+})
+
+if (quote.transactionId !== verifiedDeposit.txId ||
+    quote.outputIndex !== verifiedDeposit.outputIndex ||
+    !Number.isSafeInteger(quote.creditAmountSats) ||
+    quote.creditAmountSats <= 0 ||
+    quote.creditAmountSats > verifiedDeposit.amountSats) {
+  throw new Error('Claim quote does not match the verified deposit')
+}
+
+console.log('Credit in satoshis:', quote.creditAmountSats)
+console.log('Claim fee in satoshis:', quote.claimFeeSats)
+```
+
+The displayed fee depends on the output amount you supplied. At claim time the SDK reads the Bitcoin output value and subtracts the freshly quoted credit to check the fee ceiling. The final credit can differ from the preview.
 
 <Callout type="warn">
-A static-deposit claim hands the deposit's secret key to the Spark Service Provider (SSP) and cannot be undone. The quoted credit must be a safe positive integer number of satoshis, but the module does not compare it with the deposit's on-chain value.
+Claiming gives the Spark Service Provider the deposit's secret key and cannot be undone. The claim selects the first output paying any of the account's static deposit addresses. Use this flow for a transaction with one such output.
 </Callout>
 
-```javascript title="Static Deposit Flow"
-const staticAddress = await account.getStaticDepositAddress()
-console.log('Static deposit address:', staticAddress)
+Pass the fee ceiling your caller approved when invoking [`claimStaticDeposit()`](/sdk/wallet-modules/wallet-spark/api-reference#claimstaticdeposittxid). The returned transfer ID is a Spark identifier.
 
-const staticLeaves = await account.claimStaticDeposit(
-  'f4184fc596403b9d638783cf57adfe4c75c605f6356fbc91338530e9831e9e16'
-)
-console.log('Static deposit claimed:', staticLeaves)
+```javascript title="Claim With an Approved Fee Cap"
+if (!Number.isSafeInteger(approvedMaxFeeSats) || approvedMaxFeeSats < 0) {
+  throw new Error('Provide an approved fee cap in whole satoshis')
+}
+
+const { transferId } = await account.claimStaticDeposit(verifiedDeposit.txId, {
+  maxFeeSats: approvedMaxFeeSats
+})
+console.log('Spark transfer ID:', transferId)
 ```
+
+If the fresh fee exceeds the cap, the claim throws [`StaticDepositFeeExceededError`](/sdk/wallet-modules/wallet-spark/api-reference#staticdepositfeeexceedederror). Review the new fee with the caller before retrying.
 
 <Callout type="info">
 You can list unused single-use addresses with [`account.getUnusedDepositAddresses()`](/sdk/wallet-modules/wallet-spark/api-reference). The method returns a paginated result with `depositAddresses` and `offset` fields.

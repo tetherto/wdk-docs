@@ -5,7 +5,7 @@ docType: reference
 schemaType: TechArticle
 ---
 
-Use `MultisigSafeWalletConfig` for the manager and writable account. The read-only class accepts `MultisigSafeWalletReadOnlyConfig`, declared as `Omit<MultisigSafeWalletConfig, 'transferMaxFee' | 'amountToApprove'>`.
+Use `MultisigSafeWalletConfig` for the manager and writable account. The read-only class accepts `MultisigSafeWalletReadOnlyConfig`, declared as `Omit<MultisigSafeWalletConfig, 'transferMaxFee'>`.
 
 ## Common Options
 
@@ -38,9 +38,15 @@ For Safe's hosted service, set only `safeApiKey` and use a chain in [API Kit 4.0
 | Sponsored | `isSponsored: true`, `paymasterUrl`, optional `sponsorshipPolicyId` | Transaction/transfer quote returns `0n`; this does not prove sponsor acceptance |
 | Token paymaster | `paymasterTokenAddress`, `paymasterUrl`, both mode flags absent or false | Paymaster token base units |
 
-Do not enable native and sponsored modes together. `paymasterAddress` is optional and identifies a custom deployment of a supported paymaster for fee decoding; it does not enable arbitrary paymasters. Confirm the provider, chain, EntryPoint and supported token before choosing it. This package uses `paymasterTokenAddress`, not the single-owner wallet's `paymasterToken` object.
+Enable no more than one of native and sponsored modes. For token mode, set `paymasterTokenAddress`. Confirm the provider, chain, EntryPoint and supported token before configuring a custom paymaster.
 
-`amountToApprove?: number | bigint` controls the paymaster-token allowance placed into the proposed operation. Use a bounded amount appropriate to the reviewed operation. `transferMaxFee?: number | bigint` appears on token and native config types, but beta.2 enforces it only in non-sponsored, token-paid `proposeTransfer()`, against that call's estimate. Equality passes. It is not a general execution-time or native-fee cap. The module exposes no `transactionMaxFee` option.
+`transferMaxFee?: number | bigint` is checked against the estimate in non-sponsored, token-paid `proposeTransfer()`. A fee equal to the limit passes. The cap applies to that estimate, before the proposal is built.
+
+### Token paymaster checks
+
+When a token-paid quote or proposal builds an operation, the final paymaster must match the spender selected for the generated ERC-20 approval. If you set `paymasterAddress`, the final paymaster must also match that address. Otherwise, the package requires a recognized token paymaster. A mismatch throws `ConfigurationError`. Paymaster data that cannot be decoded can also raise `AbstractionKitError`.
+
+Remove `amountToApprove` from token-paymaster configuration when upgrading to beta.4. The SDK builds the approval as part of the operation. Review its calldata and token amount before collecting owner signatures.
 
 ## Per-call Configuration
 

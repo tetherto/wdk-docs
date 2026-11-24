@@ -6,7 +6,7 @@ schemaType: APIReference
 icon: Code
 ---
 
-This reference covers `@tetherto/wdk-wallet-ton-gasless@1.0.0-beta.17`.
+This reference covers `@tetherto/wdk-wallet-ton-gasless@1.0.0-beta.18`.
 
 ## Table of Contents
 
@@ -37,11 +37,11 @@ new WalletManagerTonGasless(seed, config)
     - `secretKey` (string, optional): API key for TON API
   - `paymasterToken` (object): Paymaster token configuration
     - `address` (string): Supported paymaster Jetton master contract address
-  - `retries` (number, optional): Failover retries used when `tonClient` and `tonApiClient` are arrays (default: 3)
+  - `retries` (number, optional): Additional attempts for each client option supplied as an array (default: 3)
   - `transferMaxFee` (number | bigint, optional): Maximum fee for gasless transfer operations
   - `transactionMaxFee` (number | bigint, optional): Shared wallet config option; native `sendTransaction()`, `quoteSendTransaction()`, and `signTransaction()` are unsupported on this module
 
-The manager initializes TON RPC and TON API clients once and shares them across derived accounts and their read-only conversions. Supplied client instances are reused as-is.
+The manager initializes TON RPC and TON API clients once and shares them across derived accounts and their read-only conversions. A standalone `TonApiClient` is reused as supplied. A `tonApiClient` array builds a separate client with failover over the entries' HTTP transports and preserves the supplied clients.
 
 **Example:**
 ```javascript
@@ -577,8 +577,8 @@ type TonGaslessWalletConfig = {
   tonClient: TonClientConfig | TonClient | Array<TonClientConfig | TonClient>;
 
   /**
-   * TON API client configuration or instance. Provide an array of
-   * configurations or instances to enable failover across API clients.
+   * TON API client configuration or instance. A nonempty array builds
+   * a separate client that fails over across the entries' HTTP transports.
    */
   tonApiClient: TonApiClientConfig | TonApiClient | Array<TonApiClientConfig | TonApiClient>;
 
@@ -591,8 +591,8 @@ type TonGaslessWalletConfig = {
   };
 
   /**
-   * Additional failover retry attempts after the initial call fails, used only
-   * when tonClient and tonApiClient are arrays. Total attempts = 1 + retries.
+   * Additional failover attempts after the initial failure for each client
+   * option supplied as an array. Total attempts = 1 + retries.
    * @default 3
    */
   retries?: number;

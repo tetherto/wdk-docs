@@ -8,7 +8,7 @@ icon: Settings
 
 ## Wallet Configuration
 
-The manager shares one TON RPC client and one TON API client across derived accounts and their read-only conversions. Existing client instances are reused as-is; supplied configuration objects and failover lists are initialized once per manager.
+The manager shares one TON RPC client and one TON API client across derived accounts and their read-only conversions. The manager initializes supplied configuration objects and failover lists once. A standalone client instance is reused as supplied.
 
 Gasless `quoteTransfer()` and `transfer()` require `globalThis.crypto.getRandomValues()` to generate a random 64-bit Jetton query ID. This runtime prerequisite also applies to read-only quotes.
 
@@ -100,7 +100,9 @@ When you provide an array, the wallet automatically retries on the next client w
 
 ### tonApiClient
 
-The `tonApiClient` option configures the TON API client used to build and relay gasless transfers. Its URL is the API base URL, not a versioned endpoint. Like `tonClient`, it accepts a single configuration object, a `TonApiClient` instance, or an array of configurations or instances for failover.
+The `tonApiClient` option configures the TON API client used to build and relay gasless transfers. Its URL is the API base URL, not a versioned endpoint. It accepts a single configuration object, a `TonApiClient` instance, or a nonempty array of configurations or instances for failover.
+
+With an array, the wallet builds a new `TonApiClient` and uses each entry's HTTP transport for failover. Supplied client instances keep their own transports. Pass one client directly to reuse it as supplied.
 
 **Type:**
 ```typescript
@@ -156,7 +158,7 @@ const config = {
 
 ### retries
 
-The `retries` option sets the number of additional failover attempts after the initial call fails, used only when `tonClient` and `tonApiClient` are arrays of configurations or instances. Total attempts equal `1 + retries`. If `retries` exceeds the number of clients, failover loops back and retries already-failed clients in round-robin order.
+The `retries` option sets the number of additional failover attempts after the initial call fails, applied separately to each client option configured as an array. Total attempts equal `1 + retries`. If total attempts exceed the number of clients, failover loops back and retries already-failed clients in round-robin order.
 
 **Type:** `number`
 
