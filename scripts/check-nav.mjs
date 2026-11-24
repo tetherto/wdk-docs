@@ -50,7 +50,7 @@ fail('Tab lands on a page that is not in the tab', tree
   .map((tab) => `${tab.name}: ${tab.landing}`));
 
 // A module is marked Community when its own landing page carries the community notice.
-const NOTICE = /community[- ]maintained|maintained independently by third-party|community module/i;
+const NOTICE = /<LegalNote\s+kind="community"|community[- ]maintained|maintained independently by third-party|community module/i;
 const unmarked = [];
 const overmarked = [];
 const walk = (node) => {

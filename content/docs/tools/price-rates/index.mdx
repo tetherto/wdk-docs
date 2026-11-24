@@ -5,19 +5,21 @@ docType: explanation
 schemaType: TechArticle
 ---
 
+<LegalNote kind="service" use="pricing information" provider="Bitfinex" terms="https://www.bitfinex.com/legal/general/market-data/" termsName="Market Data Terms" provider2="CoinGecko" terms2="https://www.coingecko.com/en/api_terms" terms2Name="API Terms" />
+
 Pricing utilities for WDK apps. Includes HTTP clients and providers to retrieve current and historical prices from supported services.
 
-Powered by [`@tetherto/wdk-pricing-bitfinex-http`](https://github.com/tetherto/wdk-pricing-bitfinex-http), compatible with [`@tetherto/wdk-pricing-provider`](https://github.com/tetherto/wdk-pricing-provider), and usable with [`@tetherto/wdk-pricing-coingecko-http`](/sdk/pricing-modules/pricing-coingecko-http/) as a CoinGecko fallback client.
+Each data source ships as its own pricing client: [`@tetherto/wdk-pricing-bitfinex-http`](https://github.com/tetherto/wdk-pricing-bitfinex-http) for Bitfinex and [`@tetherto/wdk-pricing-coingecko-http`](/sdk/pricing-modules/pricing-coingecko-http/) for CoinGecko. Both implement the same `PricingClient` interface, so you can call either one directly or pass one or more of them to [`@tetherto/wdk-pricing-provider`](https://github.com/tetherto/wdk-pricing-provider) for caching and failover.
 
-The Bitfinex client in `v1.0.0-beta.6` translates common ticker symbols into Bitfinex currency codes for current prices, price data, and historical lookups. For example, pass `USDT` for USD₮; the client maps it to Bitfinex's `UST` code. You can also configure [currency-code overrides](/tools/price-rates/configuration#currency-code-overrides-optional).
+Pass common ticker symbols such as `BTC` or `USDT`. Each client translates them into its provider's own identifiers, and lets you add or override mappings: see [currency-code overrides](/tools/price-rates/configuration#currency-code-overrides-optional) for Bitfinex and [coin ID overrides](/sdk/pricing-modules/pricing-coingecko-http/configuration#coin-id-overrides) for CoinGecko.
 
 ## Features
 
 - **Current Prices**: Fetch latest price for one pair or many pairs in a batch (e.g., BTC/USD)
-- **Direct Bitfinex Quotes**: Return prices only for pairs Bitfinex can quote directly; unsupported pairs return `null`
-- **Historical Series**: Retrieve historical price series; long histories optionally downscaled to ≤ 100 points
-- **Provider Compatibility**: Works with `@tetherto/wdk-pricing-provider`
-- **CoinGecko Fallback**: Use `@tetherto/wdk-pricing-coingecko-http` when you want a CoinGecko-backed pricing client
+- **Clear Unavailable State**: Pairs a provider has no quote for return `null` instead of an estimated price
+- **Historical Series**: Retrieve historical price series; long histories can be downscaled for charts
+- **Multiple Data Sources**: Choose Bitfinex or CoinGecko, or implement `PricingClient` for your own source
+- **Caching and Failover**: Wrap one client, or an ordered list of clients, with `@tetherto/wdk-pricing-provider`
 - **Lightweight HTTP Client**: Minimal dependencies; easy to integrate
 
 ## Why this matters

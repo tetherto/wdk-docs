@@ -23,7 +23,7 @@ export default {
         { name: 'Quickstarts', entries: ['home', 'nodejs-bare-quickstart', 'react-native-quickstart', 'react-native-starter', 'which-wallet-module'] },
         { name: 'Understand WDK', entries: [named('get-started', 'Architecture'), 'concepts'] },
         { name: 'Contribute to WDK', entries: [named('create-wdk-module', 'Create a WDK Module')] },
-        { name: 'About WDK', entries: ['about', 'vision', 'support', 'changelog'] },
+        { name: 'About WDK', entries: ['about', 'vision', 'support', 'changelog', 'legal'] },
       ],
     },
     {
