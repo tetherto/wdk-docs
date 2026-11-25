@@ -462,6 +462,11 @@ export const inventory = {
     configuration('/sdk/fiat-modules/fiat-transak/configuration'),
     apiReference('/sdk/fiat-modules/fiat-transak/api-reference'),
   ], undefined, 'community'),
+  'fiat-onramper': folder('Onramper', '/sdk/fiat-modules/fiat-onramper', 'CreditCard', [
+    usage('/sdk/fiat-modules/fiat-onramper/usage'),
+    configuration('/sdk/fiat-modules/fiat-onramper/configuration'),
+    apiReference('/sdk/fiat-modules/fiat-onramper/api-reference'),
+  ], undefined, 'community'),
   cli: folder('WDK CLI', '/cli', 'Terminal', [
     guides([
       page('Get Started', '/cli/guides/get-started', 'Rocket'),

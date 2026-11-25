@@ -1,0 +1,106 @@
+---
+title: Onramper Usage
+description: Quote fiat purchases and sales, then open a signed Onramper checkout.
+docType: how-to
+schemaType: TechArticle
+icon: BookOpen
+---
+
+<LegalNote kind="community" />
+
+## Install
+
+For Node.js, use version 20.19.0 or later. See the [overview](/sdk/fiat-modules/fiat-onramper/) for supported runtimes.
+
+```bash
+npm install @onramper/wdk-protocol-fiat-onramper@0.2.0
+```
+
+Complete the [partner setup](/sdk/fiat-modules/fiat-onramper/configuration) first. Use `getSupportedCryptoAssets()`, `getSupportedFiatCurrencies()` and `getSupportedCountries()` to populate your app's choices. Use the provider's asset and network codes and request a quote for the selected pair.
+
+## Quote a purchase and get a checkout URL
+
+Call the function below from your wallet web app. Supply the publishable key, your same-origin signing endpoint, and the HTTPS widget origin from trusted app configuration. Use the user's chosen currency and asset codes, network, and intended recipient address. Pass `fiatAmount` as a `bigint` in minor units. For a currency with two decimal places, `10000n` represents 100 units.
+
+Your signing endpoint must authenticate the caller and authorize the amount, asset, network, and recipient before signing with server-held credentials. Use the sandbox publishable key and a signing backend configured for the same environment.
+
+```javascript title="Quote a buy and build its checkout URL"
+import OnramperFiatProtocol from '@onramper/wdk-protocol-fiat-onramper'
+
+export async function prepareBuy({
+  apiKey,
+  signingEndpoint,
+  widgetOrigin,
+  fiatCurrency,
+  cryptoAsset,
+  networkCode,
+  fiatAmount,
+  recipient,
+}) {
+  if (typeof recipient !== 'string' || recipient.trim() === '') {
+    throw new Error('Supply the intended recipient address')
+  }
+
+  const fiat = new OnramperFiatProtocol(undefined, {
+    apiKey,
+    environment: 'sandbox',
+    signUrl: async (params) => {
+      const response = await fetch(signingEndpoint, {
+        method: 'POST',
+        mode: 'same-origin',
+        redirect: 'error',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      })
+      if (!response.ok) throw new Error('Could not sign the checkout URL')
+
+      const { url } = await response.json()
+      const checkout = new URL(url)
+      if (checkout.protocol !== 'https:' || checkout.origin !== widgetOrigin) {
+        throw new Error('Unexpected checkout origin')
+      }
+      return checkout.href
+    },
+  })
+
+  const config = { networkCode }
+  const request = { fiatCurrency, cryptoAsset, fiatAmount, config }
+  const quote = await fiat.quoteBuy(request)
+  const { buyUrl } = await fiat.buy({
+    ...request,
+    recipient,
+    config: { ...config, quoteId: quote.metadata.quoteId },
+  })
+
+  return { quote, buyUrl }
+}
+```
+
+Show the quote before offering to open the returned URL. The module forwards the quote ID when present. Confirm the final price and fees in the widget because the SDK does not enforce the quoted price or a fee cap.
+
+## Quote a sale
+
+Use `quoteSell()` with an exact `cryptoAmount` in the asset's base units. Call `sell()` with the same pair, amount, and request options to get `{ sellUrl }`. Set `refundAddress` to the address for returned crypto. The user follows the widget instructions to complete the sale.
+
+For either direction, a bound WDK account can supply the address when you omit it. With no address or account, the module leaves the address for the widget to collect.
+
+## Follow checkout status
+
+Obtain the checkout session ID from your Onramper checkout integration. The URL builders return the signed URL alone. To look up status, configure the [session callback](/sdk/fiat-modules/fiat-onramper/configuration#issue-tokens-for-checkout-status) and call `getTransactionDetail(sessionId)`.
+
+Handle `completed`, `failed`, and `in_progress`. The module maps unknown provider statuses to `in_progress`. Inspect `metadata.status` for the raw value when troubleshooting.
+
+## Next Steps
+
+<Cards>
+<Card title="Configuration" href="/sdk/fiat-modules/fiat-onramper/configuration">
+Set up partner credentials, backend callbacks, and runtime adapters.
+</Card>
+<Card title="API Reference" href="/sdk/fiat-modules/fiat-onramper/api-reference">
+Check the amount units, metadata, and errors.
+</Card>
+</Cards>
+
+## Need Help?
+
+<SupportCards />

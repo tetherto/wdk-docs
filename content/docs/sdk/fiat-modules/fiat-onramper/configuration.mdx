@@ -1,0 +1,49 @@
+---
+title: Onramper Configuration
+description: Configure Onramper environments, backend signing, and session access for checkout status.
+docType: reference
+schemaType: TechArticle
+icon: Settings
+---
+
+<LegalNote kind="community" />
+
+Provision your partner account for the WDK channel with Onramper. You need a publishable key for quote and discovery requests and a registered signing credential for hosted checkout. Ask Onramper to provision session access if you need checkout status.
+
+## Constructor options
+
+Pass the configuration as the second argument to `new OnramperFiatProtocol(account, config)`. Pass `undefined` for `account` when your application supplies addresses explicitly or lets the widget collect one.
+
+| Option | Required | Default | Behavior |
+|--------|----------|---------|----------|
+| `apiKey` | Yes | — | Publishable partner key. The module sends it on API requests and includes it in the widget parameters passed to `signUrl`. |
+| `signUrl` | Yes | — | Callback of type `(params: SignUrlParams) => Promise<string>`. Required at construction, including for quote-only use. |
+| `getSessionToken` | For status lookups | — | Callback of type `() => Promise<SessionTokenResult>`. Returns `{ sessionId, sessionToken }` from your backend. |
+| `environment` | No | `'production'` | Production uses `https://api.onramper.com`. Both `'sandbox'` and `'staging'` use `https://api-stg.onramper.com`. |
+| `baseUrl` | No | From `environment` | Overrides the API URL. Configure the widget environment separately in your signing backend. |
+| `cacheTime` | No | `300000` | Supported-list cache lifetime in milliseconds. Supply a non-negative integer. |
+| `channel` | No | Inferred | `'wdk-web'` for browser runtimes and `'wdk-node'` for Node.js and Bare. |
+| `adapters` | No | Runtime defaults | Override one or more of `crypto`, `http`, `fingerprint`, and `storage`. |
+
+The defaults use WebCrypto on web and Node.js, a P-256 adapter on Bare, and the runtime's global `fetch`. Custom storage can persist the default non-web fingerprint. Session credentials and the device key remain in instance memory.
+
+## Sign widget URLs on your backend
+
+`buy()` and `sell()` pass the direction, publishable key, currency codes, one decimal-string amount, and any address and request options to `signUrl`. Return the signed Onramper widget URL as a string.
+
+Keep the signing credential on your backend. Authenticate the calling user and validate the direction, amounts, destination, and options before signing. Select the partner credential from trusted server configuration. Validate the returned widget origin before opening it in your app.
+
+## Issue tokens for checkout status
+
+Give your backend a way to associate the signed-in user with the checkout session. On each `getSessionToken()` call, return a fresh, short-lived token for the authorized session together with its session ID. The module consumes that token during exchange, then manages the device-bound session and refresh in memory. The callback can run again if the module needs to start a new session exchange.
+
+Keep the backend credential that mints these tokens server-side. Scope SDK instances to the user and checkout session when looking up status. Quotes, supported lists, and widget URL generation work without the session callback.
+
+## Next Steps
+
+- Follow [Usage](/sdk/fiat-modules/fiat-onramper/usage) to connect your callbacks to the module.
+- Check the [API Reference](/sdk/fiat-modules/fiat-onramper/api-reference) for request fields and status values.
+
+## Need Help?
+
+<SupportCards />

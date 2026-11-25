@@ -1,0 +1,183 @@
+---
+title: Fiat Onramper API Reference
+description: Methods, request options, results and errors for the Onramper fiat module.
+docType: reference
+schemaType: APIReference
+icon: Code
+---
+
+<LegalNote kind="community" />
+
+API reference for `@onramper/wdk-protocol-fiat-onramper` version `0.2.0`.
+
+```javascript
+import OnramperFiatProtocol, {
+  OnramperError,
+  OnramperErrorCode,
+} from '@onramper/wdk-protocol-fiat-onramper'
+```
+
+`OnramperFiatProtocol` is also a named export. Interfaces and adapter contracts are TypeScript type exports; adapter factory functions are not exported.
+
+## Constructor
+
+### `new OnramperFiatProtocol(account, config)`
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `account` | `IWalletAccount \| IWalletAccountReadOnly \| undefined` | Supplies the fallback buy recipient or sell refund address. Pass `undefined` when no account is bound. |
+| `config` | `OnramperFiatConfig` | Requires a publishable `apiKey` and a `signUrl` callback, including for instances used only for quotes or discovery. |
+
+See [Configuration](/sdk/fiat-modules/fiat-onramper/configuration) for callback contracts, environments, platform adapters and cache settings. Only `getTransactionDetail()` requires `getSessionToken`.
+
+## Request Options
+
+All four quote and widget methods require `cryptoAsset` and `fiatCurrency`. Use the exact provider codes returned by the discovery methods. Optional provider settings belong under `options.config`.
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `cryptoAsset` | `string` | Provider-specific crypto asset code. |
+| `fiatCurrency` | `string` | Fiat currency code. |
+| `cryptoAmount` | `number \| bigint` | Integer crypto base units, using the asset's decimals. |
+| `fiatAmount` | `number \| bigint` | Integer fiat minor units, using the currency's decimals. |
+| `config` | `OnramperRequestConfig` | Optional settings below. |
+
+Amounts must be non-negative. A `number` must be a safe integer; use `bigint` for larger values. Supply exactly one amount field, subject to each method's restrictions. Local acceptance of an amount does not establish that it meets a provider's purchase or sale limits.
+
+### `OnramperRequestConfig`
+
+| Field | Type | Used by |
+| --- | --- | --- |
+| `networkCode` | `string` | Quote requests and widget-signing callback. Sent as `network` to the quotes API. |
+| `paymentMethod` | `string` | Quote requests and widget-signing callback; identifies the payment or payout method. |
+| `country` | `string` | Quote requests and widget-signing callback; identifies the customer's country for pricing and availability. |
+| `memo` | `string` | Widget-signing callback only; destination memo or tag. |
+| `quoteId` | `string` | Widget-signing callback only; forwards a quote identifier to your backend. |
+
+All fields are optional. Forwarding `quoteId` does not itself enforce a price or expiry in this module; your backend and widget integration determine how it is applied.
+
+## Methods
+
+### `quoteBuy(options)`
+
+Prices a purchase for an exact fiat spend. Requires `fiatAmount`; an exact `cryptoAmount` target is unsupported.
+
+**Returns:** `Promise<OnramperFiatQuote>`.
+
+The requested `fiatAmount` is preserved; `cryptoAmount` is the provider payout converted to crypto base units. See [Quote Results](#quote-results).
+
+### `quoteSell(options)`
+
+Prices a sale of an exact crypto amount. Requires `cryptoAmount`; an exact `fiatAmount` target is unsupported.
+
+**Returns:** `Promise<OnramperFiatQuote>`.
+
+The requested `cryptoAmount` is preserved; `fiatAmount` is the provider payout converted to fiat minor units. See [Quote Results](#quote-results).
+
+### `buy(options)`
+
+Calls `signUrl` with buy widget parameters. Accepts either `fiatAmount` or `cryptoAmount`, plus an optional `recipient: string`.
+
+**Returns:** `Promise<{ buyUrl: string }>`.
+
+The recipient defaults to the bound account's address. Without either address, the callback receives `address: undefined`. Amounts sent to `signUrl` are major-unit decimal strings, converted using the supported asset and currency decimals.
+
+### `sell(options)`
+
+Calls `signUrl` with sell widget parameters. Accepts either `cryptoAmount` or `fiatAmount`, plus an optional `refundAddress: string`.
+
+**Returns:** `Promise<{ sellUrl: string }>`.
+
+The refund address defaults to the bound account's address. Without either address, the callback receives `address: undefined`. Amount conversion follows `buy()`.
+
+Both methods return the callback's URL. They read supported asset data as needed, but do not open the widget, send a wallet transaction or return a checkout session ID.
+
+### `getSupportedCryptoAssets()`
+
+**Returns:** `Promise<SupportedCryptoAsset[]>`, with `code: string`, `networkCode: string`, `decimals: number` and `name: string` per entry.
+
+### `getSupportedFiatCurrencies()`
+
+**Returns:** `Promise<SupportedFiatCurrency[]>`, with `code: string`, `decimals: number` and `name: string` per entry.
+
+These two methods share a cached supported-assets response. Missing display decimals default to `18` for crypto and `2` for fiat. Quote and widget methods instead require finite decimals in the underlying response and fail with `DECODE_ERROR` when they are absent.
+
+### `getSupportedCountries()`
+
+**Returns:** `Promise<SupportedCountry[]>`, with `code: string`, `name: string`, `isBuyAllowed: boolean` and `isSellAllowed: boolean` per entry.
+
+Countries use a separate cache. Missing directional flags default to `true`; these flags do not confirm availability for a particular asset, network, fiat currency or payment method. The default supported-list cache duration is five minutes.
+
+### `getTransactionDetail(txId)`
+
+Retrieves a checkout session's transaction. `txId: string` is the **checkout session ID**, not an on-chain transaction hash. Obtain it through your backend checkout integration; `buy()` and `sell()` do not return it.
+
+Requires the configured `getSessionToken` callback. The module exchanges its result for session credentials and handles refreshes. Session credentials and the DPoP key are held in the protocol instance's memory; injecting a storage adapter does not persist them.
+
+**Returns:** `Promise<OnramperTransactionDetail>`.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `status` | `'completed' \| 'failed' \| 'in_progress'` | Normalized provider status. |
+| `cryptoAsset` | `string` | Asset code, or an empty string when absent. |
+| `fiatCurrency` | `string` | Currency code, or an empty string when absent. |
+| `metadata.status` | `string?` | Raw provider status. |
+| `metadata.txHash` | `string?` | Provider-reported on-chain transaction hash. |
+| `metadata.provider` | `string?` | Provider name. |
+| `metadata.fiatAmount` | `string?` | Provider-reported amount in fiat major units. |
+| `metadata.cryptoAmount` | `string?` | Provider-reported amount in crypto major units. |
+
+Status matching is case-insensitive: `completed`, `success` and `paid` map to `completed`; `failed`, `declined`, `cancelled`, `canceled` and `expired` map to `failed`. Every other value, including a missing status, maps to `in_progress`. Inspect `metadata.status` for unknown provider states rather than assuming they are nonterminal.
+
+## Quote Results
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `fiatAmount` | `bigint` | Fiat amount in minor units. |
+| `cryptoAmount` | `bigint` | Crypto amount in base units. |
+| `fee` | `bigint` | Sum of provider network and transaction fees, converted to fiat minor units. |
+| `rate` | `string` | Provider-reported rate. |
+| `metadata.quoteId` | `string?` | Quote identifier available for forwarding as `config.quoteId`. |
+| `metadata.provider` | `string?` | Quoting provider. |
+| `metadata.paymentMethod` | `string?` | Payment or payout method. |
+| `metadata.networkFee` | `string?` | Provider network fee in fiat major units. |
+| `metadata.transactionFee` | `string?` | Provider transaction fee in fiat major units. |
+
+The module selects the first entry without provider errors that has a rate and a positive payout after conversion; it does not compare all entries locally. Payouts and summed fees truncate toward zero at the relevant precision. Missing or non-finite fee components contribute zero, so a zero `fee` does not prove that the provider charges no fees.
+
+## Errors
+
+`OnramperError` exposes `code`, optional `httpStatus` and an optional underlying `cause`. Handle known codes and retain a fallback for account or custom-adapter errors that may propagate separately.
+
+| `OnramperErrorCode` | When to handle it |
+| --- | --- |
+| `INVALID_CONFIG` | Missing or invalid constructor configuration or platform defaults; also missing `getSessionToken` for transaction lookup. |
+| `INVALID_ARGUMENT` | Both or neither amount fields, a negative amount, or a non-safe-integer numeric amount. |
+| `UNSUPPORTED_OPERATION` | Exact-crypto buy quote or exact-fiat sell quote. |
+| `UNSUPPORTED_ASSET` | Crypto or fiat code is absent from the supported response. |
+| `QUOTE_UNAVAILABLE` | No response entry provides a usable quote. |
+| `DECODE_ERROR` | Invalid response JSON, malformed token response or missing amount-conversion decimals. |
+| `NETWORK_ERROR` | The default HTTP adapter's fetch rejects, including a disallowed redirect. |
+| `UNAUTHORIZED`, `INVALID_SDK_SESSION`, `INVALID_USER_TOKEN` | Mapped API authentication or session rejection. |
+| `FORBIDDEN`, `INSUFFICIENT_SCOPE`, `DEVICE_BLOCKED`, `INVALID_ATTESTATION` | Mapped API or token-endpoint rejection. |
+| `DPOP_REJECTED`, `DPOP_NONCE_REQUIRED`, `INVALID_GRANT` | Mapped token-endpoint error after applicable recovery attempts. |
+| `UPSTREAM_ERROR` | Unmapped API rejection, non-Onramper callback failure or wrapped session-acquisition failure. |
+
+The client can retry a session lookup once after an expired-session rejection and once after a DPoP nonce challenge. These are not general retries for every API failure. Avoid logging credentials or unfiltered error causes.
+
+## Next Steps
+
+<Cards>
+<Card title="Configuration" href="/sdk/fiat-modules/fiat-onramper/configuration">
+Configure backend callbacks, environments and platform adapters.
+</Card>
+<Card title="Usage" href="/sdk/fiat-modules/fiat-onramper/usage">
+Discover assets, request a quote and obtain a widget URL.
+</Card>
+</Cards>
+
+---
+
+## Need Help?
+
+<SupportCards />

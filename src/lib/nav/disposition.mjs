@@ -70,7 +70,7 @@ export default {
         },
         { name: 'Lending', entries: ['lending-modules', 'lending-aave-evm', 'lending-morpho-evm'] },
         { name: 'Smart deposit addresses', entries: ['sda-modules', 'sda-rhinofi', 'sda-candide'] },
-        { name: 'On-ramp and off-ramp', entries: ['fiat-modules', 'fiat-moonpay', 'fiat-transak'] },
+        { name: 'On-ramp and off-ramp', entries: ['fiat-modules', 'fiat-moonpay', 'fiat-transak', 'fiat-onramper'] },
       ],
     },
     {
