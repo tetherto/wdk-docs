@@ -6,13 +6,14 @@ schemaType: APIReference
 icon: Code
 ---
 
-This reference documents `@tetherto/wdk@1.0.0-beta.23`. The [base-wallet contracts](#base-wallet-signer-contracts) identify their separate package versions. For the standalone policy API and migration, see [Transaction Policies](/sdk/core-module/guides/transaction-policies).
+This reference documents `@tetherto/wdk@1.0.0-beta.23`. See the [base-wallet contracts](#base-wallet-signer-contracts) and [WdkPolicies](#wdkpolicies) for their package versions. For policy setup and migration, see [Transaction Policies](/sdk/core-module/guides/transaction-policies).
 
 ## Table of Contents
 
 | Class | Description | Methods |
 |-------|-------------|---------|
 | [WDK](#wdk) | Main class for managing wallets across multiple blockchains. Orchestrates wallet managers, protocols, and middleware. | [Constructor](#constructor), [Methods](#methods) |
+| [WdkPolicies](#wdkpolicies) | Standalone policy plugin, public types, constants, and errors. | [Policy methods](#policy-methods), [Policy types](#policy-types) |
 | [Base wallet signer contracts](#base-wallet-signer-contracts) | Signer capabilities, account configuration, ownership and disposal contracts. | Interfaces and migration notes |
 | [IWalletAccount](#iwalletaccount) | Base single-signer writable wallet account interface from `@tetherto/wdk-wallet`. | [Methods](#methods-1) |
 | [Multisig account contracts](#multisig-account-contracts) | Implementation contracts exported from `@tetherto/wdk-wallet/multisig`. | Interfaces and types |
@@ -291,6 +292,140 @@ console.log('Seed phrase valid:', isValid) // true
 const isInvalid = WDK.isValidSeed('invalid seed phrase')
 console.log('Seed phrase valid:', isInvalid) // false
 ```
+
+## WdkPolicies
+
+`@tetherto/wdk-policies@1.0.0-beta.1` exports the `WdkPolicies` class and the policy types below. Policies run in the caller's process as an opt-in guardrail. They are not a security boundary against code in that process.
+
+```javascript title="Import the Policy Plugin"
+import WdkPolicies, {
+  DEFAULT_POLICY_EXCLUSIONS,
+  DENIAL_CODES,
+  PolicyConfigurationError,
+  PolicyViolationError
+} from '@tetherto/wdk-policies'
+```
+
+### Policy Methods
+
+| Method | Description | Returns |
+| --- | --- | --- |
+| `new WdkPolicies(options?)` | Creates a plugin using `WdkPoliciesOptions`. | `WdkPolicies` |
+| `attach(wdk, ...blockchains)` | Attaches policy middleware to the named wallets of a WDK instance. Attach after middleware whose effects should be governed. | `WdkPolicies` |
+| `register(policies, options?)` | Registers a `Policy` or `Policy[]` using `RegisterPolicyOptions`. A repeated policy ID replaces the earlier policy in the same binding. | `WdkPolicies` |
+| `getExclusions()` | Returns the frozen union of default exclusions and custom additions. | `readonly string[]` |
+| `dispose(blockchains?)` | Removes policy bindings for the named wallet array. Omitting the array clears all policies. | `void` |
+
+Attach the intended wallet identifiers before registering policies bound to them. Invalid options or policy definitions, unknown wallet bindings, and rules that explicitly name excluded methods throw `PolicyConfigurationError`. Policy disposal does not unregister wallets or remove the middleware from Core; see [policy disposal](/sdk/core-module/guides/transaction-policies#dispose-policies).
+
+### Policy Types
+
+These are type-only exports from `@tetherto/wdk-policies`:
+
+```typescript title="Import Policy Types"
+import type {
+  WdkPoliciesOptions,
+  Policy,
+  PolicyRule,
+  PolicyCondition,
+  PolicyContext,
+  PolicyAction,
+  PolicyScope,
+  PolicyOperation,
+  RegisterPolicyOptions,
+  SimulationResult,
+  SimulationTraceEntry,
+  DenialCode
+} from '@tetherto/wdk-policies'
+```
+
+```typescript title="Public Policy Type Definitions"
+interface WdkPoliciesOptions {
+  maxConditionTimeoutMs?: number
+  policyExclusions?: string[]
+}
+
+type PolicyAction = 'ALLOW' | 'DENY'
+type PolicyScope = 'project' | 'account'
+type PolicyOperation = string
+type DenialCode =
+  | 'RULE_DENIED'
+  | 'NO_APPLICABLE_RULE'
+  | 'GOVERNED_BUT_UNMATCHED'
+
+type PolicyCondition = (context: PolicyContext) => boolean | Promise<boolean>
+
+interface PolicyContext {
+  operation: PolicyOperation
+  wallet: string
+  account: import('@tetherto/wdk-wallet').IWalletAccountReadOnly
+  args: readonly unknown[]
+}
+
+interface PolicyRule {
+  name: string
+  reason?: string
+  operation: PolicyOperation | PolicyOperation[]
+  action: PolicyAction
+  override_broader_scope?: boolean
+  conditions: PolicyCondition[]
+  state?: Record<string, unknown>
+  onSuccess?: (c: PolicyContext) => void | Promise<void>
+}
+
+interface Policy {
+  id: string
+  name: string
+  scope: PolicyScope
+  wallet?: string | string[]
+  accounts?: Array<string | number>
+  rules: PolicyRule[]
+}
+
+interface RegisterPolicyOptions {
+  state?: Record<string, unknown>
+  conditionTimeoutMs?: number
+}
+
+interface SimulationTraceEntry {
+  scope: PolicyScope
+  policy_id: string
+  rule_name: string
+  matched: boolean
+  error?: string
+}
+
+interface SimulationResult {
+  decision: 'ALLOW' | 'DENY'
+  code: DenialCode | null
+  policy_id: string | null
+  matched_rule: string | null
+  reason: string | null
+  trace: SimulationTraceEntry[]
+}
+```
+
+`wallet` is the identifier passed to `wdk.registerWallet()` and attached to the plugin. A project policy without `wallet` applies across attached wallets; specifying `wallet` narrows it. Account-scoped policies require both `wallet` and `accounts`. Numeric account entries match indexed retrieval only. String entries match the account's captured full path, not a relative derivation input. See [policy scopes](/sdk/core-module/guides/transaction-policies#scope-policies).
+
+`operation` accepts a non-empty method name, an array of names, or `*`. Conditions receive the frozen context and snapshotted arguments in method-signature order. Read `args[0]` for the first argument and check optional positions before using them. Every condition must match. A condition error or timeout makes an `ALLOW` rule unmatched and makes a `DENY` rule block the call. `override_broader_scope` is valid only on account-scoped `ALLOW` rules; a matching account-scoped `DENY` still wins.
+
+`maxConditionTimeoutMs` sets the plugin-wide ceiling. `conditionTimeoutMs` applies to the policies in one `register()` call and is capped at that ceiling. Both default to `30000` milliseconds and must be positive, finite numbers. `policyExclusions` only adds names to the defaults. `state` on rules or registration options and `onSuccess` are reserved and ignored at runtime; keep counters and durable state in application-owned logic.
+
+Runtime `account.simulate.<method>(...)` mirrors return `SimulationResult` without invoking the governed method. `code` is `null` on an allowed result and identifies the denial path otherwise. `trace` records the rules evaluated, in evaluation order. See [policy simulation](/sdk/core-module/guides/transaction-policies#simulate-before-execution) for its runtime and TypeScript limits.
+
+### Policy Constants And Errors
+
+`DEFAULT_POLICY_EXCLUSIONS` is a frozen `readonly string[]` used during initial method discovery. `getExclusions()` includes custom additions. Exclusions match exact names, not prefixes. Methods excluded during discovery pass through without evaluation and have no simulation mirror. See [method discovery](/sdk/core-module/guides/transaction-policies#supported-operations) for methods added after retrieval.
+
+`DENIAL_CODES` lists the values in `DenialCode`.
+
+| Value | Meaning |
+| --- | --- |
+| `RULE_DENIED` | A matching `DENY` rule blocked the operation. |
+| `NO_APPLICABLE_RULE` | No registered rule addressed the governed operation. |
+| `GOVERNED_BUT_UNMATCHED` | Rules addressed the operation, but none matched. |
+
+`PolicyViolationError` exposes `operation`, `policyId`, `ruleName`, `reason`, and `code`. Use `code` for branching because `reason` can contain application-authored text. `PolicyConfigurationError` reports invalid registration or options, a governed account without the required read-only interface, or arguments that cannot be snapshotted. See [policy error handling](/sdk/core-module/guides/transaction-policies#handle-errors).
 
 ## Base Wallet Signer Contracts
 

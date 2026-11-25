@@ -12948,13 +12948,14 @@ Allow, deny, and simulate local write operations before execution
 URL: https://docs.wdk.tether.io/sdk/core-module/api-reference
 Description: Complete API documentation for @tetherto/wdk
 
-This reference documents `@tetherto/wdk@1.0.0-beta.23`. The [base-wallet contracts](#base-wallet-signer-contracts) identify their separate package versions. For the standalone policy API and migration, see [Transaction Policies](/sdk/core-module/guides/transaction-policies).
+This reference documents `@tetherto/wdk@1.0.0-beta.23`. See the [base-wallet contracts](#base-wallet-signer-contracts) and [WdkPolicies](#wdkpolicies) for their package versions. For policy setup and migration, see [Transaction Policies](/sdk/core-module/guides/transaction-policies).
 
 ## Table of Contents
 
 | Class | Description | Methods |
 |-------|-------------|---------|
 | [WDK](#wdk) | Main class for managing wallets across multiple blockchains. Orchestrates wallet managers, protocols, and middleware. | [Constructor](#constructor), [Methods](#methods) |
+| [WdkPolicies](#wdkpolicies) | Standalone policy plugin, public types, constants, and errors. | [Policy methods](#policy-methods), [Policy types](#policy-types) |
 | [Base wallet signer contracts](#base-wallet-signer-contracts) | Signer capabilities, account configuration, ownership and disposal contracts. | Interfaces and migration notes |
 | [IWalletAccount](#iwalletaccount) | Base single-signer writable wallet account interface from `@tetherto/wdk-wallet`. | [Methods](#methods-1) |
 | [Multisig account contracts](#multisig-account-contracts) | Implementation contracts exported from `@tetherto/wdk-wallet/multisig`. | Interfaces and types |
@@ -13233,6 +13234,140 @@ console.log('Seed phrase valid:', isValid) // true
 const isInvalid = WDK.isValidSeed('invalid seed phrase')
 console.log('Seed phrase valid:', isInvalid) // false
 ```
+
+## WdkPolicies
+
+`@tetherto/wdk-policies@1.0.0-beta.1` exports the `WdkPolicies` class and the policy types below. Policies run in the caller's process as an opt-in guardrail. They are not a security boundary against code in that process.
+
+```javascript title="Import the Policy Plugin"
+import WdkPolicies, {
+  DEFAULT_POLICY_EXCLUSIONS,
+  DENIAL_CODES,
+  PolicyConfigurationError,
+  PolicyViolationError
+} from '@tetherto/wdk-policies'
+```
+
+### Policy Methods
+
+| Method | Description | Returns |
+| --- | --- | --- |
+| `new WdkPolicies(options?)` | Creates a plugin using `WdkPoliciesOptions`. | `WdkPolicies` |
+| `attach(wdk, ...blockchains)` | Attaches policy middleware to the named wallets of a WDK instance. Attach after middleware whose effects should be governed. | `WdkPolicies` |
+| `register(policies, options?)` | Registers a `Policy` or `Policy[]` using `RegisterPolicyOptions`. A repeated policy ID replaces the earlier policy in the same binding. | `WdkPolicies` |
+| `getExclusions()` | Returns the frozen union of default exclusions and custom additions. | `readonly string[]` |
+| `dispose(blockchains?)` | Removes policy bindings for the named wallet array. Omitting the array clears all policies. | `void` |
+
+Attach the intended wallet identifiers before registering policies bound to them. Invalid options or policy definitions, unknown wallet bindings, and rules that explicitly name excluded methods throw `PolicyConfigurationError`. Policy disposal does not unregister wallets or remove the middleware from Core; see [policy disposal](/sdk/core-module/guides/transaction-policies#dispose-policies).
+
+### Policy Types
+
+These are type-only exports from `@tetherto/wdk-policies`:
+
+```typescript title="Import Policy Types"
+import type {
+  WdkPoliciesOptions,
+  Policy,
+  PolicyRule,
+  PolicyCondition,
+  PolicyContext,
+  PolicyAction,
+  PolicyScope,
+  PolicyOperation,
+  RegisterPolicyOptions,
+  SimulationResult,
+  SimulationTraceEntry,
+  DenialCode
+} from '@tetherto/wdk-policies'
+```
+
+```typescript title="Public Policy Type Definitions"
+interface WdkPoliciesOptions {
+  maxConditionTimeoutMs?: number
+  policyExclusions?: string[]
+}
+
+type PolicyAction = 'ALLOW' | 'DENY'
+type PolicyScope = 'project' | 'account'
+type PolicyOperation = string
+type DenialCode =
+  | 'RULE_DENIED'
+  | 'NO_APPLICABLE_RULE'
+  | 'GOVERNED_BUT_UNMATCHED'
+
+type PolicyCondition = (context: PolicyContext) => boolean | Promise<boolean>
+
+interface PolicyContext {
+  operation: PolicyOperation
+  wallet: string
+  account: import('@tetherto/wdk-wallet').IWalletAccountReadOnly
+  args: readonly unknown[]
+}
+
+interface PolicyRule {
+  name: string
+  reason?: string
+  operation: PolicyOperation | PolicyOperation[]
+  action: PolicyAction
+  override_broader_scope?: boolean
+  conditions: PolicyCondition[]
+  state?: Record<string, unknown>
+  onSuccess?: (c: PolicyContext) => void | Promise<void>
+}
+
+interface Policy {
+  id: string
+  name: string
+  scope: PolicyScope
+  wallet?: string | string[]
+  accounts?: Array<string | number>
+  rules: PolicyRule[]
+}
+
+interface RegisterPolicyOptions {
+  state?: Record<string, unknown>
+  conditionTimeoutMs?: number
+}
+
+interface SimulationTraceEntry {
+  scope: PolicyScope
+  policy_id: string
+  rule_name: string
+  matched: boolean
+  error?: string
+}
+
+interface SimulationResult {
+  decision: 'ALLOW' | 'DENY'
+  code: DenialCode | null
+  policy_id: string | null
+  matched_rule: string | null
+  reason: string | null
+  trace: SimulationTraceEntry[]
+}
+```
+
+`wallet` is the identifier passed to `wdk.registerWallet()` and attached to the plugin. A project policy without `wallet` applies across attached wallets; specifying `wallet` narrows it. Account-scoped policies require both `wallet` and `accounts`. Numeric account entries match indexed retrieval only. String entries match the account's captured full path, not a relative derivation input. See [policy scopes](/sdk/core-module/guides/transaction-policies#scope-policies).
+
+`operation` accepts a non-empty method name, an array of names, or `*`. Conditions receive the frozen context and snapshotted arguments in method-signature order. Read `args[0]` for the first argument and check optional positions before using them. Every condition must match. A condition error or timeout makes an `ALLOW` rule unmatched and makes a `DENY` rule block the call. `override_broader_scope` is valid only on account-scoped `ALLOW` rules; a matching account-scoped `DENY` still wins.
+
+`maxConditionTimeoutMs` sets the plugin-wide ceiling. `conditionTimeoutMs` applies to the policies in one `register()` call and is capped at that ceiling. Both default to `30000` milliseconds and must be positive, finite numbers. `policyExclusions` only adds names to the defaults. `state` on rules or registration options and `onSuccess` are reserved and ignored at runtime; keep counters and durable state in application-owned logic.
+
+Runtime `account.simulate.<method>(...)` mirrors return `SimulationResult` without invoking the governed method. `code` is `null` on an allowed result and identifies the denial path otherwise. `trace` records the rules evaluated, in evaluation order. See [policy simulation](/sdk/core-module/guides/transaction-policies#simulate-before-execution) for its runtime and TypeScript limits.
+
+### Policy Constants And Errors
+
+`DEFAULT_POLICY_EXCLUSIONS` is a frozen `readonly string[]` used during initial method discovery. `getExclusions()` includes custom additions. Exclusions match exact names, not prefixes. Methods excluded during discovery pass through without evaluation and have no simulation mirror. See [method discovery](/sdk/core-module/guides/transaction-policies#supported-operations) for methods added after retrieval.
+
+`DENIAL_CODES` lists the values in `DenialCode`.
+
+| Value | Meaning |
+| --- | --- |
+| `RULE_DENIED` | A matching `DENY` rule blocked the operation. |
+| `NO_APPLICABLE_RULE` | No registered rule addressed the governed operation. |
+| `GOVERNED_BUT_UNMATCHED` | Rules addressed the operation, but none matched. |
+
+`PolicyViolationError` exposes `operation`, `policyId`, `ruleName`, `reason`, and `code`. Use `code` for branching because `reason` can contain application-authored text. `PolicyConfigurationError` reports invalid registration or options, a governed account without the required read-only interface, or arguments that cannot be snapshotted. See [policy error handling](/sdk/core-module/guides/transaction-policies#handle-errors).
 
 ## Base Wallet Signer Contracts
 
@@ -49009,7 +49144,7 @@ new WalletManagerTronGasfree(seed, config)
   - `verifyingContract` (string): Gas-free verifying contract address
   - `gasFreeApiKey` (string, optional): API key for signed GasFree provider requests
   - `gasFreeApiSecret` (string, optional): API secret for signed GasFree provider requests. Provide together with `gasFreeApiKey`.
-  - `transferMaxFee` (number | bigint, optional): Default transfer fee cap in token base units
+  - `transferMaxFee` (number | bigint, optional): Default transfer fee cap, compared in the base units of the token being transferred. Override it per call for tokens with different decimals or values.
   - `transactionMaxFee` (number | bigint, optional): Shared config field; native transaction methods remain unsupported, so it has no runtime effect
 
 **Example:**
@@ -49117,7 +49252,7 @@ new WalletAccountTronGasfree(seed, path, config)
 | `dispose()` | Initiates the account cleanup process | `void` |
 
 ##### `getAddress()`
-Returns the owner's GasFree account address. When `verifyingContract` matches the packaged controller for the configured mainnet or Nile `chainId`, the module derives the address locally. For a different valid controller address on these networks, it requests the address from the GasFree provider.
+Returns the owner's GasFree account address. When `verifyingContract` matches the packaged controller for the configured mainnet or Nile `chainId`, the module derives the address locally. Other controller or chain configurations use the provider lookup path. That path rejects any `chainId` other than mainnet or Nile before making a request.
 
 **Returns:** `Promise\<string\>` - The GasFree account address
 
@@ -49327,7 +49462,7 @@ new WalletAccountReadOnlyTronGasfree(address, config)
 | `getTransactionReceipt(hash)` | Deprecated: resolves a GasFree transfer ID to its native TRON receipt | `Promise\<TronTransactionReceipt \| null\>` |
 
 ##### `getAddress()`
-Returns the owner's GasFree account address. When `verifyingContract` matches the packaged controller for the configured mainnet or Nile `chainId`, the module derives the address locally. For a different valid controller address on these networks, it requests the address from the GasFree provider.
+Returns the owner's GasFree account address. When `verifyingContract` matches the packaged controller for the configured mainnet or Nile `chainId`, the module derives the address locally. Other controller or chain configurations use the provider lookup path. That path rejects any `chainId` other than mainnet or Nile before making a request.
 
 **Returns:** `Promise\<string\>` - The GasFree account address
 
@@ -49620,7 +49755,7 @@ interface TronGasfreeWalletConfig {
 }
 ```
 
-The `transferMaxFee` field sets the default cap for `transfer()`. Use the method's second argument to override it for one transfer.
+The `transferMaxFee` field sets one default cap for `transfer()`, compared in the selected token's base units. Use the method's second argument to override it per token when decimals or values differ.
 
 ### KeyPair
 Account key pair information.
@@ -49895,7 +50030,7 @@ Retrieve the current address from the provider's [`GET /api/v1/config/provider/a
 
 ### Verifying Contract
 
-The `verifyingContract` option is the TRON address of the contract that verifies GasFree transfers. When the address matches the packaged GasFree controller for the configured TRON mainnet or Nile `chainId`, `getAddress()` derives the GasFree address locally from the owner's address. For a different valid controller address on these networks, it asks the GasFree provider.
+The `verifyingContract` option is the TRON address of the contract that verifies GasFree transfers. When the address matches the packaged GasFree controller for the configured TRON mainnet or Nile `chainId`, `getAddress()` derives the GasFree address locally from the owner's address. Other controller or chain configurations use the provider lookup path. That path rejects any `chainId` other than mainnet or Nile before making a request.
 
 **Type:** `string`
 
@@ -49935,7 +50070,7 @@ const result = await account.transfer({
 
 ```
 
-The wallet compares the transfer fee plus any activation fee against the cap before signing. A fee equal to the cap is allowed. For wallets that transfer several tokens, set each cap in the selected token's base units. Use an integer or `bigint`.
+The wallet compares the transfer fee plus any activation fee against the cap before signing. A fee equal to the cap is allowed. The configured cap is one value, compared in the base units of whichever token is transferred. If the wallet transfers tokens with different decimals or values, pass `transferMaxFee` per call for each token. Use an integer or `bigint`.
 
 ### Transaction Max Fee
 
@@ -50403,7 +50538,7 @@ console.log('Submitted fee estimate:', result.fee, 'token units')
 console.log('Submitted activation fee estimate:', result.activationFee, 'token units')
 ```
 
-Set [`transferMaxFee`](/sdk/wallet-modules/wallet-tron-gasfree/configuration#transfer-max-fee) in the wallet configuration for a default. A per-transfer value overrides it. The wallet rejects the transfer before signing when the estimated total fee is greater than the effective cap. A fee equal to the cap is allowed.
+Set [`transferMaxFee`](/sdk/wallet-modules/wallet-tron-gasfree/configuration#transfer-max-fee) in the wallet configuration for one default cap, compared in the transferred token's base units. Override it per call for tokens with different decimals or values. The wallet rejects the transfer before signing when the estimated total fee is greater than the effective cap. A fee equal to the cap is allowed.
 
 ## Estimate Transfer Fees
 
@@ -52168,7 +52303,7 @@ To use an external signer, pass its compatible EVM owner account to the [account
 
 ## Integration Requirements
 
-- An EVM RPC and bundler on the same chain. Beta.2 uses Safe modules **0.2.0** and defaults to **EntryPoint v0.6**. The single-owner [ERC-4337 wallet](/sdk/wallet-modules/wallet-evm-erc-4337) uses different configuration; do not copy its module version into this package.
+- An EVM RPC and bundler on the same chain. This release uses Safe modules **0.2.0** and defaults to **EntryPoint v0.6**. The single-owner [ERC-4337 wallet](/sdk/wallet-modules/wallet-evm-erc-4337) uses different configuration; do not copy its module version into this package.
 - An existing compatible Safe, or a predicted Safe with an agreed owner list and threshold.
 - A Safe Transaction Service endpoint/API key or a custom coordinator that all owners use.
 - A fee mode: native coins, sponsored operations, or a supported paymaster token. Deploying a new Safe through this package still needs native gas in the deploying owner's EOA.
@@ -52177,7 +52312,7 @@ To use an external signer, pass its compatible EVM owner account to the [account
 
 `executeProposal()` returns a UserOperation hash after bundler submission. An auto-executing proposal can report `status: 'executed'` at this point, before inclusion. Confirm the UserOperation receipt and its success before treating a payment as complete. Proposal reads depend on coordinator data and do not replace receipts.
 
-This module provides proposal APIs rather than a direct `sendTransaction()` or `transfer()` flow. Its inherited normalized transaction lookup is not implemented in beta.2. Use the documented [receipt lookup](/sdk/wallet-modules/wallet-multisig-safe/api-reference#gettransactionreceipt).
+This module provides proposal APIs rather than a direct `sendTransaction()` or `transfer()` flow. Its inherited normalized transaction lookup is not implemented in this release. Use the documented [receipt lookup](/sdk/wallet-modules/wallet-multisig-safe/api-reference#gettransactionreceipt).
 
 ## Next Steps
 
@@ -52197,7 +52332,7 @@ This module provides proposal APIs rather than a direct `sendTransaction()` or `
 URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-multisig-safe/api-reference
 Description: Reference the public Safe multisig classes, proposal and message methods, configuration and result semantics.
 
-This reference covers `@tetherto/wdk-wallet-multisig-safe` **1.0.0-beta.2**. Runtime behavior and declarations are checked against the [published revision](https://github.com/tetherto/wdk-wallet-multisig-safe/tree/37644bd98a50666f0b587b3ab040e0363da35173).
+This reference covers `@tetherto/wdk-wallet-multisig-safe` **1.0.0-beta.4**. Runtime behavior and declarations are checked against the [published revision](https://github.com/tetherto/wdk-wallet-multisig-safe/tree/17e5d9e0d3d77726e923718762b7be3f5fe38386).
 
 ## Imports
 
@@ -52266,7 +52401,7 @@ The default export derives signer accounts for one configured Safe.
 
 #### dispose
 
-`dispose()` returns `void`. Disposes cached owner accounts. Beta.2 retains the manager's seed bytes; this call does not erase all secret material. Release the manager when finished and clear caller-controlled mutable copies after their final use.
+`dispose()` returns `void`. Disposes cached owner accounts. The manager retains its seed bytes; this call does not erase all secret material. Release the manager when finished and clear caller-controlled mutable copies after their final use.
 
 #### getRandomSeedPhrase
 
@@ -52320,7 +52455,7 @@ Use an account without a seed to inspect Safe state and prepare estimates.
 | `getTransaction(hash)` | `Promise<TransactionReceipt>` |
 | `waitForTransaction(hash, options?)` | `Promise<TransactionReceipt>` |
 
-Inherited polling getters are `defaultWaitInterval: number` (4000 ms) and `defaultWaitTimeout: number` (60000 ms). They do not make normalized lookup work in beta.2.
+Inherited polling getters are `defaultWaitInterval: number` (4000 ms) and `defaultWaitTimeout: number` (60000 ms). They do not make normalized lookup work in this release.
 #### constructor
 
 `new WalletAccountReadOnlyMultisigSafe(config)` returns `WalletAccountReadOnlyMultisigSafe`. Accepts `MultisigSafeWalletReadOnlyConfig`. Supply existing or predicted Safe options and a matching chain/provider/bundler. No seed is accepted.
@@ -52379,23 +52514,23 @@ Inherited polling getters are `defaultWaitInterval: number` (4000 ms) and `defau
 
 #### getProposal
 
-`getProposal(proposalId)` returns `Promise<MultisigProposal or null>`. Reads coordinator data and returns identifier, confirmations, threshold and status. Status is `executed` when the stored UserOperation has an Ethereum transaction hash, otherwise `pending`. This is not a receipt-success check and does not expose the full payment payload. Returns null when the coordinator returns no item; beta.2's default hosted-service lookup rejects for an unknown identifier.
+`getProposal(proposalId)` returns `Promise<MultisigProposal or null>`. Reads coordinator data and returns identifier, confirmations, threshold and status. Status is `executed` when the stored UserOperation has an Ethereum transaction hash, otherwise `pending`. This is not a receipt-success check and does not expose the full payment payload. Returns null when the coordinator returns no item; the default hosted-service lookup rejects for an unknown identifier.
 
 #### getProposals
 
-`getProposals(proposalIds)` returns `Promise<Record<string, MultisigProposal or null>>`. Looks up the supplied string identifiers in parallel. Missing proposals produce null entries only when the coordinator returns null. With beta.2's default hosted service, an unknown identifier rejects the whole batch.
+`getProposals(proposalIds)` returns `Promise<Record<string, MultisigProposal or null>>`. Looks up the supplied string identifiers in parallel. Missing proposals produce null entries only when the coordinator returns null. With the default hosted service, an unknown identifier rejects the whole batch.
 
 #### isReadyToExecute
 
-`isReadyToExecute(proposalId)` returns `Promise<boolean>`. Returns whether the coordinator reports enough confirmations. Returns false when the coordinator returns no proposal; beta.2's default hosted service rejects unknown identifiers. It does not check receipt success or guarantee executable on-chain state.
+`isReadyToExecute(proposalId)` returns `Promise<boolean>`. Returns whether the coordinator reports enough confirmations. Returns false when the coordinator returns no proposal; the default hosted service rejects unknown identifiers. It does not check receipt success or guarantee executable on-chain state.
 
 #### getMessageProposal
 
-`getMessageProposal(messageId)` returns `Promise<MultisigMessageProposal or null>`. Returns the message, confirmations, threshold and optional combined signature from coordinator data, or null when the coordinator returns no message. Beta.2's default hosted service rejects unknown identifiers.
+`getMessageProposal(messageId)` returns `Promise<MultisigMessageProposal or null>`. Returns the message, confirmations, threshold and optional combined signature from coordinator data, or null when the coordinator returns no message. The default hosted service rejects unknown identifiers.
 
 #### getMessageProposals
 
-`getMessageProposals(messageIds)` returns `Promise<Record<string, MultisigMessageProposal or null>>`. Looks up string message identifiers in parallel. Missing entries are null only when the coordinator returns null; an unknown identifier rejects the whole batch with beta.2's default hosted service.
+`getMessageProposals(messageIds)` returns `Promise<Record<string, MultisigMessageProposal or null>>`. Looks up string message identifiers in parallel. Missing entries are null only when the coordinator returns null; an unknown identifier rejects the whole batch with the default hosted service.
 
 #### quoteDeploy
 
@@ -52415,11 +52550,11 @@ Inherited polling getters are `defaultWaitInterval: number` (4000 ms) and `defau
 
 #### getTransaction
 
-`getTransaction(hash)` returns `Promise<TransactionReceipt>`. Inherited from the base wallet but not implemented by Safe beta.2; throws `NotImplementedError`. Use the explicit receipt API.
+`getTransaction(hash)` returns `Promise<TransactionReceipt>`. Inherited from the base wallet but not implemented by this Safe release; throws `NotImplementedError`. Use the explicit receipt API.
 
 #### waitForTransaction
 
-`waitForTransaction(hash, options?)` returns `Promise<TransactionReceipt>`. Inherited polling requires the unimplemented normalized `getTransaction()`, so it is not a working Safe beta.2 tracking path.
+`waitForTransaction(hash, options?)` returns `Promise<TransactionReceipt>`. Inherited polling requires the unimplemented normalized `getTransaction()`, so it is not a working Safe tracking path.
 
 ## WalletAccountMultisigSafe
 
@@ -52606,23 +52741,23 @@ The caller owns a supplied account's lifetime: Safe disposal drops its reference
 
 #### getProposal
 
-`getProposal(proposalId)` returns `Promise<MultisigProposal or null>`. Reads coordinator data and returns identifier, confirmations, threshold and status. Status is `executed` when the stored UserOperation has an Ethereum transaction hash, otherwise `pending`. This is not a receipt-success check and does not expose the full payment payload. Returns null when the coordinator returns no item; beta.2's default hosted-service lookup rejects for an unknown identifier.
+`getProposal(proposalId)` returns `Promise<MultisigProposal or null>`. Reads coordinator data and returns identifier, confirmations, threshold and status. Status is `executed` when the stored UserOperation has an Ethereum transaction hash, otherwise `pending`. This is not a receipt-success check and does not expose the full payment payload. Returns null when the coordinator returns no item; the default hosted-service lookup rejects for an unknown identifier.
 
 #### getProposals
 
-`getProposals(proposalIds)` returns `Promise<Record<string, MultisigProposal or null>>`. Looks up the supplied string identifiers in parallel. Missing proposals produce null entries only when the coordinator returns null. With beta.2's default hosted service, an unknown identifier rejects the whole batch.
+`getProposals(proposalIds)` returns `Promise<Record<string, MultisigProposal or null>>`. Looks up the supplied string identifiers in parallel. Missing proposals produce null entries only when the coordinator returns null. With the default hosted service, an unknown identifier rejects the whole batch.
 
 #### isReadyToExecute
 
-`isReadyToExecute(proposalId)` returns `Promise<boolean>`. Returns whether the coordinator reports enough confirmations. Returns false when the coordinator returns no proposal; beta.2's default hosted service rejects unknown identifiers. It does not check receipt success or guarantee executable on-chain state.
+`isReadyToExecute(proposalId)` returns `Promise<boolean>`. Returns whether the coordinator reports enough confirmations. Returns false when the coordinator returns no proposal; the default hosted service rejects unknown identifiers. It does not check receipt success or guarantee executable on-chain state.
 
 #### getMessageProposal
 
-`getMessageProposal(messageId)` returns `Promise<MultisigMessageProposal or null>`. Returns the message, confirmations, threshold and optional combined signature from coordinator data, or null when the coordinator returns no message. Beta.2's default hosted service rejects unknown identifiers.
+`getMessageProposal(messageId)` returns `Promise<MultisigMessageProposal or null>`. Returns the message, confirmations, threshold and optional combined signature from coordinator data, or null when the coordinator returns no message. The default hosted service rejects unknown identifiers.
 
 #### getMessageProposals
 
-`getMessageProposals(messageIds)` returns `Promise<Record<string, MultisigMessageProposal or null>>`. Looks up string message identifiers in parallel. Missing entries are null only when the coordinator returns null; an unknown identifier rejects the whole batch with beta.2's default hosted service.
+`getMessageProposals(messageIds)` returns `Promise<Record<string, MultisigMessageProposal or null>>`. Looks up string message identifiers in parallel. Missing entries are null only when the coordinator returns null; an unknown identifier rejects the whole batch with the default hosted service.
 
 #### quoteDeploy
 
@@ -52642,11 +52777,11 @@ The caller owns a supplied account's lifetime: Safe disposal drops its reference
 
 #### getTransaction
 
-`getTransaction(hash)` returns `Promise<TransactionReceipt>`. Inherited from the base wallet but not implemented by Safe beta.2; throws `NotImplementedError`. Use the explicit receipt API.
+`getTransaction(hash)` returns `Promise<TransactionReceipt>`. Inherited from the base wallet but not implemented by this Safe release; throws `NotImplementedError`. Use the explicit receipt API.
 
 #### waitForTransaction
 
-`waitForTransaction(hash, options?)` returns `Promise<TransactionReceipt>`. Inherited polling requires the unimplemented normalized `getTransaction()`, so it is not a working Safe beta.2 tracking path.
+`waitForTransaction(hash, options?)` returns `Promise<TransactionReceipt>`. Inherited polling requires the unimplemented normalized `getTransaction()`, so it is not a working Safe tracking path.
 
 ## IMultisigCoordinator
 
@@ -52692,7 +52827,7 @@ Construct with `SafeTxServiceCoordinatorConfig`: required bigint `chainId`, and 
 
 For Safe's hosted service, set only `apiKey`; the chain must appear in [API Kit 4.0.1's network list](https://github.com/safe-global/safe-core-sdk/blob/2b8548a14d11f7b542691eb76e85d22a4c882338/packages/api-kit/src/utils/config.ts). With `txServiceUrl`, the coordinator does not forward `apiKey`: use a self-hosted service or a backend proxy that adds credentials. Supplying a hosted `api.safe.global` or `api.5afe.dev` URL fails API Kit's key requirement, even if `apiKey` is also set.
 
-Service initialization occurs on the first request. The beta.2 service response declarations allow optional confirmations, so this class does not assign to the default `IMultisigCoordinator` interface in TypeScript. Use account `txServiceUrl`/`safeApiKey` configuration for the default coordinator; the explicit instance path works at runtime in JavaScript.
+Service initialization occurs on the first request. The published service response declarations allow optional confirmations, so this class does not assign to the default `IMultisigCoordinator` interface in TypeScript. Use account `txServiceUrl`/`safeApiKey` configuration for the default coordinator; the explicit instance path works at runtime in JavaScript.
 
 | Method | Returns |
 | --- | --- |
@@ -52715,7 +52850,7 @@ Service initialization occurs on the first request. The beta.2 service response 
 
 #### getProposal
 
-`getProposal(proposalId)` returns `Promise<TProposalResponse or null>`. Returns the stored Safe operation with its UserOperation and confirmations. Beta.2 only maps errors containing `not found` to null. The hosted service's unknown-ID response, `No SafeOperation matches the given query.`, instead rejects with a plain `Error`.
+`getProposal(proposalId)` returns `Promise<TProposalResponse or null>`. Returns the stored Safe operation with its UserOperation and confirmations. The default coordinator only maps errors containing `not found` to null. The hosted service's unknown-ID response, `No SafeOperation matches the given query.`, instead rejects with a plain `Error`.
 
 #### confirmProposal
 
@@ -52727,7 +52862,7 @@ Service initialization occurs on the first request. The beta.2 service response 
 
 #### getMessage
 
-`getMessage(messageId)` returns `Promise<TMessageResponse or null>`. Returns the message, confirmations and assembled `preparedSignature` where available. As with proposal lookups, beta.2 only maps errors containing `not found` to null; the hosted service's `No SafeMessage matches the given query.` response rejects with a plain `Error`.
+`getMessage(messageId)` returns `Promise<TMessageResponse or null>`. Returns the message, confirmations and assembled `preparedSignature` where available. As with proposal lookups, the default coordinator only maps errors containing `not found` to null; the hosted service's `No SafeMessage matches the given query.` response rejects with a plain `Error`.
 
 #### confirmMessage
 
@@ -52750,7 +52885,7 @@ Service initialization occurs on the first request. The beta.2 service response 
 
 `MultisigInfo` has owners and threshold. `MultisigProposal` has `proposalId`, `confirmations`, `threshold` and a string `status`; do not narrow the shared public type to a fixed enum. `MultisigInteractionResult` optionally contains `{ hash, fee }` under `transaction`. `MultisigMessageProposal` has `messageId`, `message`, counts and a nullable combined signature; `MultisigSignature` adds the current owner `signature`. `MultisigTransactionOptions` contains optional `autoExecute`; `MultisigOptions` contains optional `threshold`.
 
-Runtime Safe proposal statuses described above reflect coordinator/submission state. Always check the receipt for success. Missing-item results depend on the coordinator: a null response remains null, while beta.2's default hosted service rejects unknown identifiers and any bulk lookup containing one.
+Runtime Safe proposal statuses described above reflect coordinator/submission state. Always check the receipt for success. Missing-item results depend on the coordinator: a null response remains null, while the default hosted service rejects unknown identifiers and any bulk lookup containing one.
 
 `DEFAULT_SAFE_MODULES_VERSION` is `0.2.0`; `DEFAULT_SAFE_VERSION` is `1.4.1`. Only the documented root exports and `./package` metadata subpath are public; do not import internal helpers.
 
@@ -52808,13 +52943,17 @@ For Safe's hosted service, set only `safeApiKey` and use a chain in [API Kit 4.0
 | Sponsored | `isSponsored: true`, `paymasterUrl`, optional `sponsorshipPolicyId` | Transaction/transfer quote returns `0n`; this does not prove sponsor acceptance |
 | Token paymaster | `paymasterTokenAddress`, `paymasterUrl`, both mode flags absent or false | Paymaster token base units |
 
-Enable no more than one of native and sponsored modes. For token mode, set `paymasterTokenAddress`. Confirm the provider, chain, EntryPoint and supported token before configuring a custom paymaster.
+Enable no more than one of native and sponsored modes. Use `paymasterTokenAddress` for token mode. This field differs from the single-owner wallet's `paymasterToken` object.
+
+Use the optional `paymasterAddress` only for a custom deployment of a supported paymaster. In token mode, setting it replaces the known-paymaster check with a case-insensitive match to that exact address. Fee decoding still depends on the provider and paymaster format. Verify the address, chain, EntryPoint and supported token with your provider before configuring it.
 
 `transferMaxFee?: number | bigint` is checked against the estimate in non-sponsored, token-paid `proposeTransfer()`. A fee equal to the limit passes. The cap applies to that estimate, before the proposal is built.
 
 ### Token paymaster checks
 
 When a token-paid quote or proposal builds an operation, the final paymaster must match the spender selected for the generated ERC-20 approval. If you set `paymasterAddress`, the final paymaster must also match that address. Otherwise, the package requires a recognized token paymaster. A mismatch throws `ConfigurationError`. Paymaster data that cannot be decoded can also raise `AbstractionKitError`.
+
+`approveProposal()` and `executeProposal()` check the stored operation hash. They do not rerun the builder's paymaster check against the ERC-20 approval spender. Before approving an operation from another owner or a custom coordinator, verify its paymaster and review the ERC-20 approval calldata.
 
 Remove `amountToApprove` from token-paymaster configuration when upgrading to beta.4. The SDK builds the approval as part of the operation. Review its calldata and token amount before collecting owner signatures.
 
@@ -53433,7 +53572,7 @@ Use proposal APIs for payments. Direct `sendTransaction()`, `signTransaction()`,
 URL: https://docs.wdk.tether.io/sdk/wallet-modules/wallet-multisig-squads/api-reference
 Description: Reference public Squads multisig classes, proposal methods, member permissions and result semantics.
 
-This reference covers `@tetherto/wdk-wallet-multisig-squads` **1.0.0-beta.2**, checked against the [published revision](https://github.com/tetherto/wdk-wallet-multisig-squads/tree/35717e7d606ed120b0306b4d33acfca6eb4f22cd).
+This reference covers `@tetherto/wdk-wallet-multisig-squads` **1.0.0-beta.5**, checked against the [published revision](https://github.com/tetherto/wdk-wallet-multisig-squads/tree/5dd379022030aed42b1b0fc2e1b50683ac346978).
 
 ## Imports
 
@@ -53489,7 +53628,7 @@ The inherited `seed` getter returns seed bytes or undefined. Never log it. Regis
 
 #### getAccount
 
-`getAccount(index?)` returns `Promise<WalletAccountMultisigSquads>`. Derives and caches `m/44'/501'/index'/0'`, default index zero. Although the declaration permits a string, named/external signers are rejected in beta.2.
+`getAccount(index?)` returns `Promise<WalletAccountMultisigSquads>`. Derives and caches `m/44'/501'/index'/0'`, default index zero. Although the declaration permits a string, this release rejects named or external signers.
 
 #### getAccountByPath
 
@@ -53501,7 +53640,7 @@ The inherited `seed` getter returns seed bytes or undefined. Never log it. Regis
 
 #### dispose
 
-`dispose()` returns `void`. Disposes cached member accounts and registered signers. Beta.2 retains the manager's seed bytes; this call does not erase all secret material. Release the manager when finished and clear caller-controlled mutable copies after their final use.
+`dispose()` returns `void`. Disposes cached member accounts and registered signers. The manager retains its seed bytes; this call does not erase all secret material. Release the manager when finished and clear caller-controlled mutable copies after their final use.
 
 #### getRandomSeedPhrase
 
@@ -53886,7 +54025,7 @@ The JavaScript export is an optional base class whose unimplemented methods thro
 
 `MultisigSquadsInfo` extends `{ owners: string[], threshold: number }` with `masks: number[]`, aligned with owners.
 
-`MultisigSquadsProposal` adds `statusName: string` and `approved`, `rejected`, `cancelled` address arrays to the shared proposal fields `proposalId`, `confirmations`, `threshold` and string `status`. Beta.2 maps only the Squads `Executed` state to generic `executed`; all other states map to generic `pending`. Known Squads names are `Draft`, `Active`, `Rejected`, `Approved`, `Executing`, `Executed` and `Cancelled`. Do not narrow the public string type or assume a guaranteed state sequence. Use per-item state and handle missing entries as null.
+`MultisigSquadsProposal` adds `statusName: string` and `approved`, `rejected`, `cancelled` address arrays to the shared proposal fields `proposalId`, `confirmations`, `threshold` and string `status`. The account maps only the Squads `Executed` state to generic `executed`; all other states map to generic `pending`. Known Squads names are `Draft`, `Active`, `Rejected`, `Approved`, `Executing`, `Executed` and `Cancelled`. Do not narrow the public string type or assume a guaranteed state sequence. Use per-item state and handle missing entries as null.
 
 `MultisigSquadsProposalResult` additionally carries optional `transaction: { hash: string, fee: bigint }` from the shared interaction contract and `pendingConfirmations: number`. Broadcast calls populate transaction even if the proposal is still pending. A coordinator-only approval returns `transaction: undefined`: `confirmations` remains the on-chain count and `pendingConfirmations` counts signatures held off-chain. This replaces beta.1's empty-hash, zero-fee transaction object; check for a transaction before reading its hash or fee. A submitted bundle resets pendingConfirmations to zero. Always confirm a nonempty transaction hash before treating its actions as successful.
 

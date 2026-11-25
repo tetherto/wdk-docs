@@ -64,9 +64,9 @@ const wallet = new WalletManagerTron(seedPhrase, {
 - Same derivation and key type as wallet-tron
 - **Gas-free**: Service provider covers transaction fees for TRC20 transfers
 - GasFree beta.10 accepts TRON RPC URL/`TronWeb` arrays and `retries`, sharing the initialized provider across manager-derived accounts. This is RPC failover, not an array of GasFree relay endpoints. Standard TRON beta.14 also shares its manager provider.
-- Configure `chainId`, `gasFreeProvider`, `serviceProvider`, and `verifyingContract`. Supply both `gasFreeApiKey` and `gasFreeApiSecret` when your provider requires signed requests.
-- GasFree beta.14 uses the wallet's `transferMaxFee` by default. A value passed to `transfer(options, { transferMaxFee })` overrides it. Set caps in the transferred token's base units.
-- GasFree beta.14 derives `getAddress()` locally when `verifyingContract` matches the packaged controller for mainnet or Nile. Other valid controllers on these networks use the GasFree provider.
+- Configure `chainId`, `gasFreeProvider`, `serviceProvider`, and `verifyingContract`. Supply both `gasFreeApiKey` and `gasFreeApiSecret` only when your provider requires signed requests. The module signs requests in-process, so keep the secret in a trusted backend. Browser, mobile and distributed desktop apps must proxy authenticated GasFree requests through that backend.
+- GasFree beta.14 uses the wallet's `transferMaxFee` as one default value, compared in the transferred token's base units. A value passed to `transfer(options, { transferMaxFee })` overrides it; set it per call for tokens with different decimals or values. The cap covers the estimated transfer fee plus any activation fee, and equality is allowed.
+- GasFree beta.14 derives `getAddress()` locally when `verifyingContract` matches the packaged controller for mainnet or Nile. Other controller or chain configurations use the provider lookup path, which rejects any other chain ID before making a request.
 - **TRC20 transfers only**: `sendTransaction()` **throws** — use `transfer()` only
 
 ## Configuration — wallet-tron-gasfree
