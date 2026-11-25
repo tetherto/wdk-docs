@@ -362,6 +362,17 @@ export const inventory = {
     configuration('/sdk/swidge-modules/swidge-bob/configuration'),
     apiReference('/sdk/swidge-modules/swidge-bob/api-reference'),
   ], undefined, 'community'),
+  'swidge-layerswap': folder('Layerswap', '/sdk/swidge-modules/swidge-layerswap', 'Waypoints', [
+    usage('/sdk/swidge-modules/swidge-layerswap/usage'),
+    guides([
+      page('Execute a Swidge', '/sdk/swidge-modules/swidge-layerswap/guides/execute-swidge'),
+      page('Bitcoin Deposits', '/sdk/swidge-modules/swidge-layerswap/guides/bitcoin-deposits'),
+      page('TON Deposits', '/sdk/swidge-modules/swidge-layerswap/guides/ton-deposits'),
+      page('Track Settlement', '/sdk/swidge-modules/swidge-layerswap/guides/track-settlement'),
+    ]),
+    configuration('/sdk/swidge-modules/swidge-layerswap/configuration'),
+    apiReference('/sdk/swidge-modules/swidge-layerswap/api-reference'),
+  ], undefined, 'community'),
   'swap-modules': page('Swap modules', '/sdk/swap-modules', 'ArrowLeftRight'),
   'swap-velora-evm': folder('Velora', '/sdk/swap-modules/swap-velora-evm', 'ArrowLeftRight', [
     usage('/sdk/swap-modules/swap-velora-evm/usage'),
