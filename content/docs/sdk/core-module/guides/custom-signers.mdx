@@ -1,0 +1,72 @@
+---
+title: Use a Custom Signer
+description: Connect an application-owned signer to a supporting WDK wallet module.
+docType: how-to
+schemaType: TechArticle
+---
+
+A signer provides addresses and signatures to a wallet account. Use a custom signer when your application manages signing outside the wallet's built-in seed signer. The wallet module prepares chain operations and interacts with its configured RPC. Your signer implements the signing methods those operations require.
+
+This guide uses `@tetherto/wdk-wallet-evm@1.0.0-beta.26`. Signer support and cleanup behavior depend on the concrete wallet module. Pass the signer to the wallet module's manager or account constructor. Core's `WDK` constructor takes a seed.
+
+## Prepare Your Signer
+
+Install the EVM wallet module.
+
+```bash
+npm install @tetherto/wdk-wallet-evm@1.0.0-beta.26
+```
+
+Supply an adapter that implements `ISignerEvm` from your application's signing integration.
+
+The [base signer contract](/sdk/core-module/api-reference#base-wallet-signer-contracts) defines derivation, message signing, address retrieval, and lifecycle members. For an EVM adapter:
+
+- Implement `getAddress()` and the EVM signing methods your application uses. The interface declares `signTransaction()`, `signTypedData()`, and `signAuthorization()`. The inherited stubs throw `NotImplementedError`.
+- Set `isDerivable` to reflect whether `derive(relativePath)` can return another EVM-compatible signer. A fixed-account signer sets it to `false` and rejects derivation.
+- Return `null` from `keyPair` when key material is unavailable, and from `path` when the signer has no derivation position. Do not expose private keys merely to integrate with the wallet.
+- Implement `disposed` and `dispose()` for the resources your adapter owns. In this release, account construction also reads the deprecated synchronous `address` getter. Implement it even if it returns `undefined`, and use `getAddress()` in application code.
+
+Keep the adapter's supported signing operations explicit. For example, message signing does not establish EIP-712 typed-data or ERC-7702 authorization support. See the [EVM signer reference](/sdk/wallet-modules/wallet-evm/api-reference#evm-signers) for the method contracts.
+
+## Use One Account
+
+Construct an account directly when the supplied signer represents the account you want. This works with a fixed-account signer.
+
+```typescript title="Read an Application-Owned Signer's Address"
+import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
+import type { ISignerEvm } from '@tetherto/wdk-wallet-evm/signers'
+
+export async function readSignerAddress(signer: ISignerEvm): Promise<string> {
+  const account = new WalletAccountEvm(signer)
+
+  try {
+    return await account.getAddress()
+  } finally {
+    account.dispose()
+  }
+}
+```
+
+Pass your initialized signer to `readSignerAddress()`. The example only reads the address. The account preserves the supplied signer on disposal, so the caller can continue using it. Configure an [EVM provider](/sdk/wallet-modules/wallet-evm/configuration#provider) before using methods that query or broadcast to the network.
+
+## Use a Wallet Manager
+
+Construct the manager with a derivable default signer using `new WalletManagerEvm(rootSigner)`. For the standard EVM derivation path, position the signer at `m/44'/60'`. Calling `await wallet.getAccount(0)` then derives `0'/0/0` relative to that signer.
+
+To use a fixed-account signer alongside the default, register it with `wallet.addSigner('external', signer)` and retrieve it with `await wallet.getAccount('external')`. The manager wraps the named signer at its current position. For a named derivable signer, use `await wallet.getAccount(index, { signerName })` or `await wallet.getAccountByPath(relativePath, { signerName })`.
+
+## Manage Ownership
+
+The EVM account created directly above preserves its supplied signer unless `shouldWipeSignerOnDisposal: true` is configured. The manager also preserves supplied default and named signers. Derived accounts own their child signers. Dispose accounts explicitly when finished. The manager's pinned base-wallet implementation skips cached-account disposal when the signer exposes no private-key bytes.
+
+Keep supplied signers alive until every consumer has finished, then arrange their cleanup in your application. A disposed signer can make an otherwise live account unusable. Follow your adapter's cleanup contract for any key material or external sessions your application retains. See [signer ownership](/sdk/core-module/api-reference#disposal-and-signer-ownership) and the concrete [EVM cleanup behavior](/sdk/wallet-modules/wallet-evm/configuration#signer-migration).
+
+## Next Steps
+
+- [Manage EVM accounts](/sdk/wallet-modules/wallet-evm/guides/manage-accounts) for account selection and derivation.
+- [Sign and verify messages](/sdk/wallet-modules/wallet-evm/guides/sign-verify-messages) after confirming your adapter supports the required operation.
+- [Configure the EVM wallet](/sdk/wallet-modules/wallet-evm/configuration) for network operations and fee limits.
+
+## Need Help?
+
+<SupportCards />

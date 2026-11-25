@@ -34,6 +34,7 @@ export const inventory = {
       page('Getting Started', '/sdk/core-module/guides/getting-started'),
       page('Register Wallets', '/sdk/core-module/guides/wallet-registration'),
       page('Account Management', '/sdk/core-module/guides/account-management'),
+      page('Use a Custom Signer', '/sdk/core-module/guides/custom-signers'),
       page('Send Transactions', '/sdk/core-module/guides/transactions'),
       page('Transaction Policies', '/sdk/core-module/guides/transaction-policies'),
       page('Protocol Integration', '/sdk/core-module/guides/protocol-integration'),
