@@ -132,6 +132,7 @@ On-ramp and off-ramp functionality for fiat currency integration.
 |--------|----------|-------------|---------------|
 | [`@tetherto/wdk-protocol-fiat-moonpay`](https://github.com/tetherto/wdk-protocol-fiat-moonpay) | MoonPay | MoonPay integration for fiat on-ramp | [Docs](/sdk/fiat-modules/fiat-moonpay/) |
 | [`@transak/wdk-protocol-fiat-transak`](https://github.com/Transak/wdk-protocol-fiat-transak) | Transak | Transak integration for fiat on-ramp and off-ramp | [Docs](/sdk/fiat-modules/fiat-transak/) |
+| [`@onramper/wdk-protocol-fiat-onramper`](https://www.npmjs.com/package/@onramper/wdk-protocol-fiat-onramper) | Onramper | Quotes, hosted on-ramp and off-ramp widgets, and transaction-status lookup | [Docs](/sdk/fiat-modules/fiat-onramper/) |
 
 ## Community Modules
 
@@ -167,3 +168,4 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 | [`@layerswap/wdk-protocol-swidge-layerswap-bitcoin`](https://www.npmjs.com/package/@layerswap/wdk-protocol-swidge-layerswap-bitcoin) | Swidge | Bitcoin source deposits and provider-managed settlement | [Docs](/sdk/swidge-modules/swidge-layerswap/) |
 | [`@layerswap/wdk-protocol-swidge-layerswap-ton`](https://www.npmjs.com/package/@layerswap/wdk-protocol-swidge-layerswap-ton) | Swidge | TON source deposits and provider-managed settlement | [Docs](/sdk/swidge-modules/swidge-layerswap/) |
 | [`@transak/wdk-protocol-fiat-transak`](https://github.com/Transak/wdk-protocol-fiat-transak) | Fiat | Transak integration for fiat on-ramp and off-ramp | [Docs](/sdk/fiat-modules/fiat-transak/) |
+| [`@onramper/wdk-protocol-fiat-onramper`](https://www.npmjs.com/package/@onramper/wdk-protocol-fiat-onramper) | Fiat | Quotes, hosted on-ramp and off-ramp widgets, and transaction-status lookup | [Docs](/sdk/fiat-modules/fiat-onramper/) |
