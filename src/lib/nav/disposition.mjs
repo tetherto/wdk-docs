@@ -63,6 +63,7 @@ export default {
             'swidge-moonpay-trade',
             'swidge-butter',
             'swidge-bob',
+            'swidge-layerswap',
             { group: 'Velora swaps', icon: 'ArrowLeftRight', index: 'swap-modules', entries: ['swap-velora-evm'] },
             { group: 'USD₮0 bridge', icon: 'Waypoints', index: 'bridge-modules', entries: ['bridge-usdt0-evm', 'bridge-usdt0-solana'] },
           ],
