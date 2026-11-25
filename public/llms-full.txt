@@ -6030,31 +6030,45 @@ The below faucets are for testnets. The USD₮ tokens and other tokens available
 
 ## Legal and Disclaimers
 URL: https://docs.wdk.tether.io/resources/legal
-Description: The notices that apply when you build with WDK, covering community modules, third-party services, test tokens and the open source license.
+Description: The notices that apply when you build with WDK, covering general terms, community modules, third-party services, test tokens, the open source license and trademarks.
+
+## General
+
+When you build with WDK, you are using software and documentation made available on an "AS IS" and "AS AVAILABLE" basis, without warranties or conditions of any kind. In particular, WDK and its related documentation do not constitute legal, financial, or investment advice.
+
+Building applications that interact with blockchains, tokens, smart contracts, or financial services involves inherent risks, including software bugs, network congestion or outages, smart contract vulnerabilities, price volatility, and irreversible transactions. You are solely responsible for the security and testing of your application and ensuring it complies with applicable laws.
+
+References to Tether in this documentation mean Tether Operations, S.A. de C.V. and references to WDK mean WDK by Tether.
 
 ## Community modules
 
 Community modules are developed and maintained independently by third-party contributors.
 
-Tether and the WDK Team do not endorse or assume responsibility for their code, security, or maintenance. Use your own judgment and proceed at your own risk.
+Tether and the WDK Team do not endorse, audit or assume any responsibility for community modules, including their code, security, quality, compatibility with WDK, maintenance, or the products or services that may be accessed through them. Use your own judgment and proceed at your own risk.
 
-Community module pages, and rows marked Community in module tables, link to this section.
+Community module pages and rows marked Community in module tables are common ways to know if you're working with a community module.
 
 ## Third-party services
 
-Some WDK modules call services run by third parties, such as price feeds, fiat on-ramps and swap routers. WDK is open source software. It does not grant you any right to use those services or the data they return.
+Some WDK modules (as well as community modules) may integrate with or call products or services provided by third parties, such as price feeds, fiat on-ramps and swap routers. Tether and the WDK Team do not endorse or assume responsibility for any third-party products or services. Use your own judgment and proceed at your own risk.
 
-Each provider sets its own terms. Those terms can restrict commercial use or the redistribution of data, even when the service needs no account or API key. Review the provider's terms before you ship, and make sure they allow your use.
+Tether and the WDK Team do not and cannot grant you any right to use any third-party products or services. You must review the terms for third-party products and services you wish to use.
 
-Community modules can call third-party services too. The same applies to them.
+Each third-party provider of products and services sets its own terms and operating parameters. Those terms can restrict commercial use or the redistribution of their products and services, even when the service needs no account or API key. Their operating parameters like rate limits, downtime, delays, accuracy, pricing and endpoint changes can impact the usefulness of their services. Neither Tether nor the WDK Team can determine for you if your use of a third-party product or service complies with the terms for those products and services or whether their operating parameters are suitable for you. Review the applicable terms and operating parameters before you ship, and make sure your use is compliant and the product or service works for you.
 
 ## Test tokens
 
-The faucets linked in this documentation are for testnets. The USD₮ tokens and other tokens available at those links are not real and do not entitle the holder to anything. In particular, they cannot be redeemed with Tether International, S.A. de C.V. ("Tether International") and are not Tether Tokens as described in [Tether International's Terms of Service](https://tether.to/en/legal). The USD₮ tokens available at those links on various testnets are intended for testing WDK on the applicable testnet. The links are links to third-party websites and are Third-Party Information as described in Tether Operations, S.A. de [C.V.'s Website Terms](https://tether.io/terms/).
+The faucets linked in this documentation are for testnets. The tokens available at those links are not real and do not entitle the holder to anything. In particular, USD₮ tokens available through those faucets cannot be redeemed with Tether International, S.A. de C.V. ("Tether International") and are not Tether Tokens as described in [Tether International's Terms of Service](https://tether.to/en/legal).
+
+The tokens available at the faucets linked in this documentation are intended for testing WDK on the various, applicable testnets. The links are links to third-party websites and are Third-Party Information as described in [Tether's Website Terms](https://tether.io/terms/).
 
 ## Open source license
 
-Tether publishes its open source WDK modules under the Apache License 2.0. The `LICENSE` file in each repository is the reference. The license covers the code, which is provided "AS IS", without warranties or conditions of any kind. Community modules are distributed under their authors' own licenses.
+Tether publishes its open source WDK modules on [GitHub](https://github.com/tetherto) and generally makes its work available under the Apache License 2.0. Review the licensing and attribution information in each repository. WDK may include code licensed on other terms. Community modules are distributed under their authors' own licenses.
+
+## Trademarks
+
+Nothing in WDK or this documentation grants you any rights to use Tether's trademarks, service marks, logos, or brand names including Tether or WDK by Tether.
 
 ***
 
@@ -14407,6 +14421,78 @@ for (const chain of chains) {
 ## Next Steps
 
 Now that you can access your accounts, learn how to [send transactions](/sdk/core-module/guides/transactions).
+
+***
+
+## Use a Custom Signer
+URL: https://docs.wdk.tether.io/sdk/core-module/guides/custom-signers
+Description: Connect an application-owned signer to a supporting WDK wallet module.
+
+A signer provides addresses and signatures to a wallet account. Use a custom signer when your application manages signing outside the wallet's built-in seed signer. The wallet module prepares chain operations and interacts with its configured RPC. Your signer implements the signing methods those operations require.
+
+This guide uses `@tetherto/wdk-wallet-evm@1.0.0-beta.26`. Signer support and cleanup behavior depend on the concrete wallet module. Pass the signer to the wallet module's manager or account constructor. Core's `WDK` constructor takes a seed.
+
+## Prepare Your Signer
+
+Install the EVM wallet module.
+
+```bash
+npm install @tetherto/wdk-wallet-evm@1.0.0-beta.26
+```
+
+Supply an adapter that implements `ISignerEvm` from your application's signing integration.
+
+The [base signer contract](/sdk/core-module/api-reference#base-wallet-signer-contracts) defines derivation, message signing, address retrieval, and lifecycle members. For an EVM adapter:
+
+- Implement `getAddress()` and the EVM signing methods your application uses. The interface declares `signTransaction()`, `signTypedData()`, and `signAuthorization()`. The inherited stubs throw `NotImplementedError`.
+- Set `isDerivable` to reflect whether `derive(relativePath)` can return another EVM-compatible signer. A fixed-account signer sets it to `false` and rejects derivation.
+- Return `null` from `keyPair` when key material is unavailable, and from `path` when the signer has no derivation position. Do not expose private keys merely to integrate with the wallet.
+- Implement `disposed` and `dispose()` for the resources your adapter owns. In this release, account construction also reads the deprecated synchronous `address` getter. Implement it even if it returns `undefined`, and use `getAddress()` in application code.
+
+Keep the adapter's supported signing operations explicit. For example, message signing does not establish EIP-712 typed-data or ERC-7702 authorization support. See the [EVM signer reference](/sdk/wallet-modules/wallet-evm/api-reference#evm-signers) for the method contracts.
+
+## Use One Account
+
+Construct an account directly when the supplied signer represents the account you want. This works with a fixed-account signer.
+
+```typescript title="Read an Application-Owned Signer's Address"
+import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
+import type { ISignerEvm } from '@tetherto/wdk-wallet-evm/signers'
+
+export async function readSignerAddress(signer: ISignerEvm): Promise<string> {
+  const account = new WalletAccountEvm(signer)
+
+  try {
+    return await account.getAddress()
+  } finally {
+    account.dispose()
+  }
+}
+```
+
+Pass your initialized signer to `readSignerAddress()`. The example only reads the address. The account preserves the supplied signer on disposal, so the caller can continue using it. Configure an [EVM provider](/sdk/wallet-modules/wallet-evm/configuration#provider) before using methods that query or broadcast to the network.
+
+## Use a Wallet Manager
+
+Construct the manager with a derivable default signer using `new WalletManagerEvm(rootSigner)`. For the standard EVM derivation path, position the signer at `m/44'/60'`. Calling `await wallet.getAccount(0)` then derives `0'/0/0` relative to that signer.
+
+To use a fixed-account signer alongside the default, register it with `wallet.addSigner('external', signer)` and retrieve it with `await wallet.getAccount('external')`. The manager wraps the named signer at its current position. For a named derivable signer, use `await wallet.getAccount(index, { signerName })` or `await wallet.getAccountByPath(relativePath, { signerName })`.
+
+## Manage Ownership
+
+The EVM account created directly above preserves its supplied signer unless `shouldWipeSignerOnDisposal: true` is configured. The manager also preserves supplied default and named signers. Derived accounts own their child signers. Dispose accounts explicitly when finished. The manager's pinned base-wallet implementation skips cached-account disposal when the signer exposes no private-key bytes.
+
+Keep supplied signers alive until every consumer has finished, then arrange their cleanup in your application. A disposed signer can make an otherwise live account unusable. Follow your adapter's cleanup contract for any key material or external sessions your application retains. See [signer ownership](/sdk/core-module/api-reference#disposal-and-signer-ownership) and the concrete [EVM cleanup behavior](/sdk/wallet-modules/wallet-evm/configuration#signer-migration).
+
+## Next Steps
+
+- [Manage EVM accounts](/sdk/wallet-modules/wallet-evm/guides/manage-accounts) for account selection and derivation.
+- [Sign and verify messages](/sdk/wallet-modules/wallet-evm/guides/sign-verify-messages) after confirming your adapter supports the required operation.
+- [Configure the EVM wallet](/sdk/wallet-modules/wallet-evm/configuration) for network operations and fee limits.
+
+## Need Help?
+
+<SupportCards />
 
 ***
 
@@ -64588,7 +64674,7 @@ Provide a positive interval; the beta.16 helper passes the value to the timer wi
 URL: https://docs.wdk.tether.io/tools/price-rates
 Description: Unified pricing tools for fetching current and historical asset prices
 
-<LegalNote kind="service" provider="Bitfinex" terms="https://www.bitfinex.com/legal/general/market-data/" provider2="CoinGecko" terms2="https://www.coingecko.com/en/api_terms" />
+<LegalNote kind="service" use="pricing information" provider="Bitfinex" terms="https://www.bitfinex.com/legal/general/market-data/" termsName="Market Data Terms" provider2="CoinGecko" terms2="https://www.coingecko.com/en/api_terms" terms2Name="API Terms" />
 
 Pricing utilities for WDK apps. Includes HTTP clients and providers to retrieve current and historical prices from supported services.
 
@@ -64622,6 +64708,12 @@ Check the API Reference and examples
 Use CoinGecko for current prices and historical series
 </Card>
 </Cards>
+
+***
+
+## Need Help?
+
+<SupportCards />
 
 ***
 
