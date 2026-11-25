@@ -6,6 +6,8 @@ schemaType: APIReference
 icon: Code
 ---
 
+This reference covers `@tetherto/wdk-wallet-tron@1.0.0-beta.19`.
+
 ## Table of Contents
 
 | Class | Description | Methods |
@@ -25,21 +27,23 @@ const FEE_RATE_NORMAL_MULTIPLIER = 110n
 const FEE_RATE_FAST_MULTIPLIER = 200n
 ```
 
-One initialized TRON provider is shared by all accounts derived by this manager and their read-only conversions. Provider inputs and retry settings are unchanged in beta.14.
+One initialized TRON provider is shared by all accounts derived by this manager and their read-only conversions.
 
 ### Constructor
 
 ```javascript
-new WalletManagerTron(seed, config?)
+new WalletManagerTron(seedOrSigner, config?)
 ```
 
 **Parameters:**
-- `seed` (string | Uint8Array): BIP-39 mnemonic string or a raw 16–64-byte BIP-32 master seed (`Uint8Array`). Byte input is used directly for derivation.
+- `seedOrSigner` (`string | Uint8Array | ISignerTron`): BIP-39 mnemonic, raw 16–64-byte master seed, or a derivable `ISignerTron` from `@tetherto/wdk-wallet-tron/signers`. A supplied default signer must support derivation.
 - `config` (TronWalletConfig, optional): Configuration object
   - `provider` (`string | TronWeb | Array<string | TronWeb>`, optional): Tron RPC endpoint URL, TronWeb instance, or ordered failover list
   - `retries` (number, optional): Additional failover attempts when `provider` is an array (default: 3)
   - `transferMaxFee` (`number | bigint`, optional): Maximum fee amount for TRC20 transfer operations (in sun)
   - `transactionMaxFee` (`number | bigint`, optional): Maximum fee amount for `sendTransaction()` and `signTransaction()` operations (in sun)
+
+A seed-backed manager derives accounts through its default signer. Retain any seed your application needs independently of the manager.
 
 **Example:**
 ```javascript
@@ -71,18 +75,23 @@ const wallet3 = new WalletManagerTron(seedPhrase, {
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
-| `getAccount(index?)` | Returns a wallet account at the specified index | `Promise\<WalletAccountTron\>` | - |
-| `getAccountByPath(path)` | Returns a wallet account at the specified BIP-44 derivation path | `Promise\<WalletAccountTron\>` | - |
+| `getAccount(indexOrSignerName?, options?)` | Derives an indexed account or returns the account for a named signer | `Promise\<WalletAccountTron\>` | - |
+| `getAccountByPath(path, options?)` | Derives an account at a path relative to the selected signer | `Promise\<WalletAccountTron\>` | - |
+| `addSigner(name, signer)` | Registers a caller-owned `ISignerTron` | `this` | `ValueError` for blank names or `DisposalError` after disposal |
+| `getSigner(name?)` | Returns the default signer or the named signer | `ISignerTron` | `NoSuchElementError` if missing |
 | `getFeeRates()` | Returns current fee rates from Tron network | `Promise\<{normal: bigint, fast: bigint}\>` | If no provider |
 | `dispose()` | Initiates cleanup of wallet accounts | `void` | - |
 
 ##### `getAccount(index?)`
-Returns a wallet account at the specified index using Tron's BIP-44 derivation (m/44'/195').
+Derives `0'/0/{index}` relative to the selected signer. With the default seed-backed signer, derivation starts at `m/44'/195'`.
 
 **Parameters:**
-- `index` (number, optional): The index of the account to get (default: 0)
+- `indexOrSignerName` (`number | string`, optional): A zero-based index from 0 through 2³¹ − 1 (default: 0), or a registered signer name. A string selects that signer directly without deriving a child.
+- `options.signerName` (`string`, optional): Selects a registered root signer for numeric derivation. Omit to use the default signer.
 
 **Returns:** `Promise\<WalletAccountTron\>` - The wallet account
+
+**Throws:** `ValueError` for an invalid index, `NoSuchElementError` for an unknown signer, `InvalidSignerError` when a numeric index selects a non-derivable signer, or `DisposalError` when the manager is disposed.
 
 **Example:**
 ```javascript
@@ -94,10 +103,11 @@ const account1 = await wallet.getAccount(1)
 ```
 
 ##### `getAccountByPath(path)`
-Returns a wallet account at the specified BIP-44 derivation path.
+Derives an account relative to the selected signer.
 
 **Parameters:**
-- `path` (string): The derivation path (e.g., "0'/0/0")
+- `path` (`string`): Relative BIP-44 path, for example `"0'/0/0"`.
+- `options.signerName` (`string`, optional): Selects a registered root signer. Omit to use the default signer.
 
 **Returns:** `Promise\<WalletAccountTron\>` - The wallet account
 
@@ -114,7 +124,7 @@ Returns current fee rates from Tron network chain parameters.
 - `normal`: Base fee × 1.1
 - `fast`: Base fee × 2.0
 
-**Throws:** Error if no TronWeb provider is configured
+**Throws:** `ProviderRequiredError` if no TronWeb provider is configured
 
 **Example:**
 ```javascript
@@ -124,7 +134,7 @@ console.log('Fast fee rate:', feeRates.fast, 'sun')
 ```
 
 ##### `dispose()`
-Disposes all wallet accounts, clearing private keys from memory.
+Disposes the default signer created from a seed, disposes cached accounts that expose a private key at cleanup time, and clears the account cache. Call `account.dispose()` on any retained account backed by a signer that does not expose private keys. Supplied signers and seed input stay caller-owned.
 
 **Example:**
 ```javascript
@@ -146,14 +156,18 @@ const BANDWIDTH_PRICE = 1_000n
 
 ```javascript
 new WalletAccountTron(seed, path, config?)
+new WalletAccountTron(signer, config?)
 ```
 
 **Parameters:**
 - `seed` (string | Uint8Array): BIP-39 mnemonic string or a raw 16–64-byte BIP-32 master seed (`Uint8Array`). Byte input is used directly for derivation.
 - `path` (string): BIP-44 derivation path (e.g., "0'/0/0")
-- `config` (TronWalletConfig, optional): Configuration object
+- `signer` (`ISignerTron`): An account signer. Pass config as the second argument in this form.
+- `config` (TronWalletConfig, optional): Configuration object. Set `shouldWipeSignerOnDisposal: true` to let the account dispose a supplied signer.
 
-**Throws:** Error if the mnemonic fails BIP-39 validation or the raw seed length is outside 16–64 bytes
+A direct account that creates its own signer from a seed or via `fromPrivateKey(privateKey, config?)` disposes that signer during cleanup.
+
+**Throws:** `ValueError` if the mnemonic fails BIP-39 validation or the raw seed length is outside 16–64 bytes
 
 **Example:**
 ```javascript
@@ -169,13 +183,13 @@ const account = new WalletAccountTron(seedPhrase, "0'/0/0", {
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
 | `getAddress()` | Returns the account's Tron address | `Promise\<string\>` | - |
-| `sign(message)` | Signs a message using the account's private key | `Promise\<string\>` | - |
+| `sign(message)` | Signs a message using the account's private key | `Promise\<string\>` | `DisposalError` after account disposal |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` | - |
-| `signTransaction(tx)` | Signs a Tron transaction without broadcasting it | `Promise\<TronSignedTransaction\>` | If no provider, fee exceeds `transactionMaxFee`, or an unsigned pre-built transaction has inconsistent raw data or a missing or mismatched owner |
-| `sendTransaction(tx)` | Builds and sends a transaction, or broadcasts a signed transaction | `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` | If no provider or fee exceeds `transactionMaxFee`; unsigned pre-built inputs also require consistent raw data and a matching owner |
+| `signTransaction(tx)` | Signs a Tron transaction without broadcasting it | `Promise\<TronSignedTransaction\>` | If no provider, fee exceeds `transactionMaxFee`, or an unsigned pre-built transaction has inconsistent raw data or a missing or mismatched owner. `DisposalError` after account disposal |
+| `sendTransaction(tx)` | Builds and sends a transaction, or broadcasts a signed transaction | `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` | If no provider or fee exceeds `transactionMaxFee`; unsigned pre-built inputs also require consistent raw data and a matching owner. `DisposalError` after account disposal |
 | `quoteSendTransaction(tx)` | Estimates the fee for an unsigned or signed Tron transaction | `Promise\<{fee: bigint, activationFee: bigint}\>` | If no provider |
-| `transfer(options)` | Transfers TRC20 tokens to another address | `Promise\<{hash: string, fee: bigint}\>` | If no provider or fee exceeds `transferMaxFee` |
-| `approve(options)` | Approves a specific amount of a TRC20 token for a spender | `Promise\<TransactionResult & TronActivationFee\>` | Generic `Error` if no provider or fee exceeds `transactionMaxFee` |
+| `transfer(options)` | Transfers TRC20 tokens to another address | `Promise\<{hash: string, fee: bigint}\>` | If no provider or fee exceeds `transferMaxFee`. `DisposalError` after account disposal |
+| `approve(options)` | Approves a specific amount of a TRC20 token for a spender | `Promise\<TransactionResult & TronActivationFee\>` | `ProviderRequiredError` if no provider or `MaximumFeeExceededError` if the fee exceeds `transactionMaxFee`. `DisposalError` after account disposal |
 | `quoteTransfer(options)` | Estimates the fee for a TRC20 transfer | `Promise\<{fee: bigint}\>` | If no provider |
 | `getBalance()` | Returns the native TRX balance (in sun) | `Promise\<bigint\>` | If no provider |
 | `getTokenBalance(tokenAddress)` | Returns the balance of a specific TRC20 token | `Promise\<bigint\>` | If no provider |
@@ -236,8 +250,8 @@ Signs a Tron transaction and returns the signed transaction object. This method 
 **Returns:** `Promise\<TronSignedTransaction\>` - Signed Tron transaction object with a `signature` array
 
 **Throws:**
-- Error if no TronWeb provider is configured
-- Error if fee exceeds `transactionMaxFee` when configured
+- `ProviderRequiredError` if no TronWeb provider is configured
+- `MaximumFeeExceededError` if the fee exceeds `transactionMaxFee`
 - Error if an unsigned pre-built transaction's `txID` does not match its serialized raw data
 - Error if a pre-built transaction's first contract omits `owner_address` or names a different account
 
@@ -262,8 +276,8 @@ When `tx` has a signature, WDK quotes it again, enforces `transactionMaxFee`, an
 **Returns:** `Promise\<{hash: string, fee: bigint, activationFee: bigint}\>` - Transaction hash, total fee in sun, and the portion used for account activation
 
 **Throws:** 
-- Error if no TronWeb provider is configured
-- Error if fee exceeds `transactionMaxFee` when configured
+- `ProviderRequiredError` if no TronWeb provider is configured
+- `MaximumFeeExceededError` if the fee exceeds `transactionMaxFee`
 - Error if an unsigned pre-built transaction's `txID` does not match its serialized raw data
 - Error if an unsigned pre-built transaction's first contract omits `owner_address` or names a different account
 
@@ -286,7 +300,7 @@ Estimates the cost for a Tron transaction. Quotes include bandwidth for every tr
 
 **Returns:** `Promise\<{fee: bigint, activationFee: bigint}\>` - Fee estimate in sun and the portion used for account activation
 
-**Throws:** Error if no TronWeb provider is configured
+**Throws:** `ProviderRequiredError` if no TronWeb provider is configured
 
 **Example:**
 ```javascript
@@ -310,8 +324,9 @@ Transfers TRC20 tokens using smart contract call.
 **Returns:** `Promise\<{hash: string, fee: bigint}\>` - Transaction hash and fee in sun
 
 **Throws:** 
-- Error if no TronWeb provider is configured
-- Error if fee exceeds `transferMaxFee`
+- `ProviderRequiredError` if no TronWeb provider is configured
+- `MaximumFeeExceededError` if the fee exceeds `transferMaxFee`
+- `TransferError` with reason `TransferErrorReason.INSUFFICIENT_TOKEN_BALANCE` if transfer simulation reverts and the token balance is below the amount
 
 **Example:**
 ```javascript
@@ -336,8 +351,8 @@ Builds the TRC20 `approve(address,uint256)` call, signs it, broadcasts it, and r
 **Returns:** `Promise\<TransactionResult & TronActivationFee\>` - Transaction hash, fee in sun, and the portion used for account activation
 
 **Throws:**
-- Generic `Error` if no TronWeb provider is configured
-- Generic `Error` if the transaction fee exceeds `transactionMaxFee` when configured
+- `ProviderRequiredError` if no TronWeb provider is configured
+- `MaximumFeeExceededError` if the transaction fee exceeds `transactionMaxFee`
 
 See [Approve a bounded allowance](/sdk/wallet-modules/wallet-tron/guides/transfer-tokens#approve-a-bounded-allowance) for a read-before-change example.
 
@@ -349,7 +364,7 @@ Estimates the TRC20 token transfer cost from current chain parameters, account r
 
 **Returns:** `Promise\<{fee: bigint}\>` - Fee estimate in sun (energy + bandwidth costs)
 
-**Throws:** Error if no TronWeb provider is configured
+**Throws:** `ProviderRequiredError` if no TronWeb provider is configured. A `TransferError` with reason `TransferErrorReason.INSUFFICIENT_TOKEN_BALANCE` is raised if simulation reverts and the token balance is below the amount.
 
 **Example:**
 ```javascript
@@ -366,7 +381,7 @@ Returns the native TRX balance.
 
 **Returns:** `Promise\<bigint\>` - Balance in sun
 
-**Throws:** Error if no TronWeb provider is configured
+**Throws:** `ProviderRequiredError` if no TronWeb provider is configured
 
 **Example:**
 ```javascript
@@ -382,7 +397,7 @@ Returns the balance of a specific TRC20 token.
 
 **Returns:** `Promise\<bigint\>` - Token balance in base units
 
-**Throws:** Error if no TronWeb provider is configured
+**Throws:** `ProviderRequiredError` if no TronWeb provider is configured
 
 **Example:**
 ```javascript
@@ -399,7 +414,7 @@ Returns the remaining amount of a TRC20 token that `spender` can spend on behalf
 
 **Returns:** `Promise\<bigint\>` - Allowance in the token's base units
 
-**Throws:** Error if no TronWeb provider is configured
+**Throws:** `ProviderRequiredError` if no TronWeb provider is configured
 
 **Example:**
 ```javascript
@@ -415,7 +430,7 @@ Returns a native TRON receipt if it has been processed. This method is deprecate
 
 **Returns:** `Promise\<TronTransactionReceipt | null\>` - Transaction receipt or null
 
-**Throws:** Error if no TronWeb provider is configured
+**Throws:** `ProviderRequiredError` if no TronWeb provider is configured
 
 **Example:**
 ```javascript
@@ -460,7 +475,7 @@ const balance = await readOnlyAccount.getBalance()
 ```
 
 ##### `dispose()`
-Disposes the wallet account, clearing private keys from memory using sodium_memzero.
+Disposes the account. It also disposes its signer when it owns the signer or was configured with `shouldWipeSignerOnDisposal: true`. A signer supplied directly is caller-owned by default.
 
 **Example:**
 ```javascript
@@ -469,20 +484,17 @@ account.dispose()
 
 ### Properties
 
+Each account exposes its signer’s full path when available. If you need the numeric index later, retain the index you used to retrieve the account.
+
 | Property | Type | Description |
 |----------|------|-------------|
-| `index` | `number` | The derivation path's index of this account |
-| `path` | `string` | The full BIP-44 derivation path of this account |
-| `keyPair` | `{privateKey: Uint8Array \| null, publicKey: Uint8Array}` | Read-only view of the account's key pair. `privateKey` is `null` after `dispose()` |
+| `config` | `Readonly<Record<string, unknown>>` | [Account configuration](#account-configuration-getter), including configured fee limits. |
+| `path` | `string \| null` | The full BIP-44 path, or `null` for a non-HD signer |
+| `keyPair` | `{privateKey: Uint8Array \| null, publicKey: Uint8Array} \| null` | The signer’s key pair, or `null` if it does not expose one. For bundled signers, `privateKey` becomes `null` when the signer is disposed. |
 
 **Example:**
 ```javascript
-console.log('Account index:', account.index) // 0, 1, 2, etc.
 console.log('Account path:', account.path) // m/44'/195'/0'/0/0
-
-const { privateKey, publicKey } = account.keyPair
-console.log('Public key length:', publicKey.length) // 33 bytes (compressed)
-console.log('Private key length:', privateKey?.length) // 32 bytes before dispose()
 ```
 
 <Callout type="warn">
@@ -510,6 +522,12 @@ const readOnlyAccount = new WalletAccountReadOnlyTron('TLyqzVGLV1srkB7dToTAEqgDS
 })
 ```
 
+### Account Configuration Getter
+
+Use `account.config` on a full or read-only account. A direct constructor exposes the options supplied to that account. A manager-derived account exposes the manager's initialized TronWeb client as `config.provider`, when configured. A read-only conversion exposes its source account's options with the initialized client.
+
+Treat the returned `Readonly<Record<string, unknown>>` as read-only and keep it out of logs that could expose provider credentials.
+
 ### Methods
 
 | Method | Description | Returns | Throws |
@@ -529,7 +547,7 @@ Returns the native TRX balance.
 
 **Returns:** `Promise\<bigint\>` - Balance in sun
 
-**Throws:** Error if no TronWeb provider is configured
+**Throws:** `ProviderRequiredError` if no TronWeb provider is configured
 
 **Example:**
 ```javascript
@@ -545,7 +563,7 @@ Returns the balance of a specific TRC20 token.
 
 **Returns:** `Promise\<bigint\>` - Token balance in base units
 
-**Throws:** Error if no TronWeb provider is configured
+**Throws:** `ProviderRequiredError` if no TronWeb provider is configured
 
 **Example:**
 ```javascript
@@ -562,7 +580,7 @@ Returns the current TRC20 allowance granted by this account to a spender.
 
 **Returns:** `Promise\<bigint\>` - Allowance in the token's base units
 
-**Throws:** Error if no TronWeb provider is configured
+**Throws:** `ProviderRequiredError` if no TronWeb provider is configured
 
 **Example:**
 ```javascript
@@ -581,7 +599,7 @@ Estimates the cost for a Tron transaction. Quotes include bandwidth for every tr
 
 **Returns:** `Promise\<{fee: bigint, activationFee: bigint}\>` - Fee estimate in sun and the portion used for account activation
 
-**Throws:** Error if no TronWeb provider is configured
+**Throws:** `ProviderRequiredError` if no TronWeb provider is configured
 
 ##### `quoteTransfer(options)`
 Estimates the TRC20 token transfer cost from current chain parameters, account resources, contract energy use, and bandwidth use.
@@ -591,7 +609,7 @@ Estimates the TRC20 token transfer cost from current chain parameters, account r
 
 **Returns:** `Promise\<{fee: bigint}\>` - Fee estimate in sun
 
-**Throws:** Error if no TronWeb provider is configured
+**Throws:** `ProviderRequiredError` if no TronWeb provider is configured. A `TransferError` with reason `TransferErrorReason.INSUFFICIENT_TOKEN_BALANCE` is raised if simulation reverts and the token balance is below the amount.
 
 ##### `verify(message, signature)`
 Verifies a message signature using secp256k1.
@@ -617,7 +635,7 @@ Returns a native TRON receipt if it has been processed. This method is deprecate
 
 **Returns:** `Promise\<TronTransactionReceipt | null\>` - Transaction receipt or null
 
-**Throws:** Error if no TronWeb provider is configured
+**Throws:** `ProviderRequiredError` if no TronWeb provider is configured
 
 ## Types
 

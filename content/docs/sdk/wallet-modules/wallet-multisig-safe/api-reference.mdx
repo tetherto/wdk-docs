@@ -5,7 +5,7 @@ docType: reference
 schemaType: APIReference
 ---
 
-This reference covers `@tetherto/wdk-wallet-multisig-safe` **1.0.0-beta.2**. Runtime behavior and declarations are checked against the [published revision](https://github.com/tetherto/wdk-wallet-multisig-safe/tree/37644bd98a50666f0b587b3ab040e0363da35173).
+This reference covers `@tetherto/wdk-wallet-multisig-safe` **1.0.0-beta.4**. Runtime behavior and declarations are checked against the [published revision](https://github.com/tetherto/wdk-wallet-multisig-safe/tree/17e5d9e0d3d77726e923718762b7be3f5fe38386).
 
 ## Imports
 
@@ -74,7 +74,7 @@ The default export derives signer accounts for one configured Safe.
 
 #### dispose
 
-`dispose()` returns `void`. Disposes cached owner accounts. Beta.2 retains the manager's seed bytes; this call does not erase all secret material. Release the manager when finished and clear caller-controlled mutable copies after their final use.
+`dispose()` returns `void`. Disposes cached owner accounts. The manager retains its seed bytes; this call does not erase all secret material. Release the manager when finished and clear caller-controlled mutable copies after their final use.
 
 #### getRandomSeedPhrase
 
@@ -128,7 +128,7 @@ Use an account without a seed to inspect Safe state and prepare estimates.
 | `getTransaction(hash)` | `Promise<TransactionReceipt>` |
 | `waitForTransaction(hash, options?)` | `Promise<TransactionReceipt>` |
 
-Inherited polling getters are `defaultWaitInterval: number` (4000 ms) and `defaultWaitTimeout: number` (60000 ms). They do not make normalized lookup work in beta.2.
+Inherited polling getters are `defaultWaitInterval: number` (4000 ms) and `defaultWaitTimeout: number` (60000 ms). They do not make normalized lookup work in this release.
 #### constructor
 
 `new WalletAccountReadOnlyMultisigSafe(config)` returns `WalletAccountReadOnlyMultisigSafe`. Accepts `MultisigSafeWalletReadOnlyConfig`. Supply existing or predicted Safe options and a matching chain/provider/bundler. No seed is accepted.
@@ -187,23 +187,23 @@ Inherited polling getters are `defaultWaitInterval: number` (4000 ms) and `defau
 
 #### getProposal
 
-`getProposal(proposalId)` returns `Promise<MultisigProposal or null>`. Reads coordinator data and returns identifier, confirmations, threshold and status. Status is `executed` when the stored UserOperation has an Ethereum transaction hash, otherwise `pending`. This is not a receipt-success check and does not expose the full payment payload. Returns null when the coordinator returns no item; beta.2's default hosted-service lookup rejects for an unknown identifier.
+`getProposal(proposalId)` returns `Promise<MultisigProposal or null>`. Reads coordinator data and returns identifier, confirmations, threshold and status. Status is `executed` when the stored UserOperation has an Ethereum transaction hash, otherwise `pending`. This is not a receipt-success check and does not expose the full payment payload. Returns null when the coordinator returns no item; the default hosted-service lookup rejects for an unknown identifier.
 
 #### getProposals
 
-`getProposals(proposalIds)` returns `Promise<Record<string, MultisigProposal or null>>`. Looks up the supplied string identifiers in parallel. Missing proposals produce null entries only when the coordinator returns null. With beta.2's default hosted service, an unknown identifier rejects the whole batch.
+`getProposals(proposalIds)` returns `Promise<Record<string, MultisigProposal or null>>`. Looks up the supplied string identifiers in parallel. Missing proposals produce null entries only when the coordinator returns null. With the default hosted service, an unknown identifier rejects the whole batch.
 
 #### isReadyToExecute
 
-`isReadyToExecute(proposalId)` returns `Promise<boolean>`. Returns whether the coordinator reports enough confirmations. Returns false when the coordinator returns no proposal; beta.2's default hosted service rejects unknown identifiers. It does not check receipt success or guarantee executable on-chain state.
+`isReadyToExecute(proposalId)` returns `Promise<boolean>`. Returns whether the coordinator reports enough confirmations. Returns false when the coordinator returns no proposal; the default hosted service rejects unknown identifiers. It does not check receipt success or guarantee executable on-chain state.
 
 #### getMessageProposal
 
-`getMessageProposal(messageId)` returns `Promise<MultisigMessageProposal or null>`. Returns the message, confirmations, threshold and optional combined signature from coordinator data, or null when the coordinator returns no message. Beta.2's default hosted service rejects unknown identifiers.
+`getMessageProposal(messageId)` returns `Promise<MultisigMessageProposal or null>`. Returns the message, confirmations, threshold and optional combined signature from coordinator data, or null when the coordinator returns no message. The default hosted service rejects unknown identifiers.
 
 #### getMessageProposals
 
-`getMessageProposals(messageIds)` returns `Promise<Record<string, MultisigMessageProposal or null>>`. Looks up string message identifiers in parallel. Missing entries are null only when the coordinator returns null; an unknown identifier rejects the whole batch with beta.2's default hosted service.
+`getMessageProposals(messageIds)` returns `Promise<Record<string, MultisigMessageProposal or null>>`. Looks up string message identifiers in parallel. Missing entries are null only when the coordinator returns null; an unknown identifier rejects the whole batch with the default hosted service.
 
 #### quoteDeploy
 
@@ -223,11 +223,11 @@ Inherited polling getters are `defaultWaitInterval: number` (4000 ms) and `defau
 
 #### getTransaction
 
-`getTransaction(hash)` returns `Promise<TransactionReceipt>`. Inherited from the base wallet but not implemented by Safe beta.2; throws `NotImplementedError`. Use the explicit receipt API.
+`getTransaction(hash)` returns `Promise<TransactionReceipt>`. Inherited from the base wallet but not implemented by this Safe release; throws `NotImplementedError`. Use the explicit receipt API.
 
 #### waitForTransaction
 
-`waitForTransaction(hash, options?)` returns `Promise<TransactionReceipt>`. Inherited polling requires the unimplemented normalized `getTransaction()`, so it is not a working Safe beta.2 tracking path.
+`waitForTransaction(hash, options?)` returns `Promise<TransactionReceipt>`. Inherited polling requires the unimplemented normalized `getTransaction()`, so it is not a working Safe tracking path.
 
 ## WalletAccountMultisigSafe
 
@@ -326,7 +326,7 @@ The caller owns a supplied account's lifetime: Safe disposal drops its reference
 
 #### rejectProposal
 
-`rejectProposal(proposalId)` returns `Promise<MultisigProposal>`. Creates a zero-value self-transaction proposal using the original operation nonce. It needs approvals and execution; calling this method does not cancel a payment on its own.
+`rejectProposal(proposalId)` returns `Promise<MultisigProposal>`. Verifies the stored operation against `proposalId` before creating a zero-value self-transaction proposal with the original nonce. A mismatch throws `HashMismatchError`. A coordinator that returns no proposal triggers `NoSuchElementError`. An operation without a nonce triggers `ValueError`. The rejection proposal needs approvals and execution.
 
 #### executeProposal
 
@@ -414,23 +414,23 @@ The caller owns a supplied account's lifetime: Safe disposal drops its reference
 
 #### getProposal
 
-`getProposal(proposalId)` returns `Promise<MultisigProposal or null>`. Reads coordinator data and returns identifier, confirmations, threshold and status. Status is `executed` when the stored UserOperation has an Ethereum transaction hash, otherwise `pending`. This is not a receipt-success check and does not expose the full payment payload. Returns null when the coordinator returns no item; beta.2's default hosted-service lookup rejects for an unknown identifier.
+`getProposal(proposalId)` returns `Promise<MultisigProposal or null>`. Reads coordinator data and returns identifier, confirmations, threshold and status. Status is `executed` when the stored UserOperation has an Ethereum transaction hash, otherwise `pending`. This is not a receipt-success check and does not expose the full payment payload. Returns null when the coordinator returns no item; the default hosted-service lookup rejects for an unknown identifier.
 
 #### getProposals
 
-`getProposals(proposalIds)` returns `Promise<Record<string, MultisigProposal or null>>`. Looks up the supplied string identifiers in parallel. Missing proposals produce null entries only when the coordinator returns null. With beta.2's default hosted service, an unknown identifier rejects the whole batch.
+`getProposals(proposalIds)` returns `Promise<Record<string, MultisigProposal or null>>`. Looks up the supplied string identifiers in parallel. Missing proposals produce null entries only when the coordinator returns null. With the default hosted service, an unknown identifier rejects the whole batch.
 
 #### isReadyToExecute
 
-`isReadyToExecute(proposalId)` returns `Promise<boolean>`. Returns whether the coordinator reports enough confirmations. Returns false when the coordinator returns no proposal; beta.2's default hosted service rejects unknown identifiers. It does not check receipt success or guarantee executable on-chain state.
+`isReadyToExecute(proposalId)` returns `Promise<boolean>`. Returns whether the coordinator reports enough confirmations. Returns false when the coordinator returns no proposal; the default hosted service rejects unknown identifiers. It does not check receipt success or guarantee executable on-chain state.
 
 #### getMessageProposal
 
-`getMessageProposal(messageId)` returns `Promise<MultisigMessageProposal or null>`. Returns the message, confirmations, threshold and optional combined signature from coordinator data, or null when the coordinator returns no message. Beta.2's default hosted service rejects unknown identifiers.
+`getMessageProposal(messageId)` returns `Promise<MultisigMessageProposal or null>`. Returns the message, confirmations, threshold and optional combined signature from coordinator data, or null when the coordinator returns no message. The default hosted service rejects unknown identifiers.
 
 #### getMessageProposals
 
-`getMessageProposals(messageIds)` returns `Promise<Record<string, MultisigMessageProposal or null>>`. Looks up string message identifiers in parallel. Missing entries are null only when the coordinator returns null; an unknown identifier rejects the whole batch with beta.2's default hosted service.
+`getMessageProposals(messageIds)` returns `Promise<Record<string, MultisigMessageProposal or null>>`. Looks up string message identifiers in parallel. Missing entries are null only when the coordinator returns null; an unknown identifier rejects the whole batch with the default hosted service.
 
 #### quoteDeploy
 
@@ -450,11 +450,11 @@ The caller owns a supplied account's lifetime: Safe disposal drops its reference
 
 #### getTransaction
 
-`getTransaction(hash)` returns `Promise<TransactionReceipt>`. Inherited from the base wallet but not implemented by Safe beta.2; throws `NotImplementedError`. Use the explicit receipt API.
+`getTransaction(hash)` returns `Promise<TransactionReceipt>`. Inherited from the base wallet but not implemented by this Safe release; throws `NotImplementedError`. Use the explicit receipt API.
 
 #### waitForTransaction
 
-`waitForTransaction(hash, options?)` returns `Promise<TransactionReceipt>`. Inherited polling requires the unimplemented normalized `getTransaction()`, so it is not a working Safe beta.2 tracking path.
+`waitForTransaction(hash, options?)` returns `Promise<TransactionReceipt>`. Inherited polling requires the unimplemented normalized `getTransaction()`, so it is not a working Safe tracking path.
 
 ## IMultisigCoordinator
 
@@ -500,7 +500,7 @@ Construct with `SafeTxServiceCoordinatorConfig`: required bigint `chainId`, and 
 
 For Safe's hosted service, set only `apiKey`; the chain must appear in [API Kit 4.0.1's network list](https://github.com/safe-global/safe-core-sdk/blob/2b8548a14d11f7b542691eb76e85d22a4c882338/packages/api-kit/src/utils/config.ts). With `txServiceUrl`, the coordinator does not forward `apiKey`: use a self-hosted service or a backend proxy that adds credentials. Supplying a hosted `api.safe.global` or `api.5afe.dev` URL fails API Kit's key requirement, even if `apiKey` is also set.
 
-Service initialization occurs on the first request. The beta.2 service response declarations allow optional confirmations, so this class does not assign to the default `IMultisigCoordinator` interface in TypeScript. Use account `txServiceUrl`/`safeApiKey` configuration for the default coordinator; the explicit instance path works at runtime in JavaScript.
+Service initialization occurs on the first request. The published service response declarations allow optional confirmations, so this class does not assign to the default `IMultisigCoordinator` interface in TypeScript. Use account `txServiceUrl`/`safeApiKey` configuration for the default coordinator; the explicit instance path works at runtime in JavaScript.
 
 | Method | Returns |
 | --- | --- |
@@ -523,7 +523,7 @@ Service initialization occurs on the first request. The beta.2 service response 
 
 #### getProposal
 
-`getProposal(proposalId)` returns `Promise<TProposalResponse or null>`. Returns the stored Safe operation with its UserOperation and confirmations. Beta.2 only maps errors containing `not found` to null. The hosted service's unknown-ID response, `No SafeOperation matches the given query.`, instead rejects with a plain `Error`.
+`getProposal(proposalId)` returns `Promise<TProposalResponse or null>`. Returns the stored Safe operation with its UserOperation and confirmations. The default coordinator only maps errors containing `not found` to null. The hosted service's unknown-ID response, `No SafeOperation matches the given query.`, instead rejects with a plain `Error`.
 
 #### confirmProposal
 
@@ -535,7 +535,7 @@ Service initialization occurs on the first request. The beta.2 service response 
 
 #### getMessage
 
-`getMessage(messageId)` returns `Promise<TMessageResponse or null>`. Returns the message, confirmations and assembled `preparedSignature` where available. As with proposal lookups, beta.2 only maps errors containing `not found` to null; the hosted service's `No SafeMessage matches the given query.` response rejects with a plain `Error`.
+`getMessage(messageId)` returns `Promise<TMessageResponse or null>`. Returns the message, confirmations and assembled `preparedSignature` where available. As with proposal lookups, the default coordinator only maps errors containing `not found` to null; the hosted service's `No SafeMessage matches the given query.` response rejects with a plain `Error`.
 
 #### confirmMessage
 
@@ -558,13 +558,13 @@ Service initialization occurs on the first request. The beta.2 service response 
 
 `MultisigInfo` has owners and threshold. `MultisigProposal` has `proposalId`, `confirmations`, `threshold` and a string `status`; do not narrow the shared public type to a fixed enum. `MultisigInteractionResult` optionally contains `{ hash, fee }` under `transaction`. `MultisigMessageProposal` has `messageId`, `message`, counts and a nullable combined signature; `MultisigSignature` adds the current owner `signature`. `MultisigTransactionOptions` contains optional `autoExecute`; `MultisigOptions` contains optional `threshold`.
 
-Runtime Safe proposal statuses described above reflect coordinator/submission state. Always check the receipt for success. Missing-item results depend on the coordinator: a null response remains null, while beta.2's default hosted service rejects unknown identifiers and any bulk lookup containing one.
+Runtime Safe proposal statuses described above reflect coordinator/submission state. Always check the receipt for success. Missing-item results depend on the coordinator: a null response remains null, while the default hosted service rejects unknown identifiers and any bulk lookup containing one.
 
 `DEFAULT_SAFE_MODULES_VERSION` is `0.2.0`; `DEFAULT_SAFE_VERSION` is `1.4.1`. Only the documented root exports and `./package` metadata subpath are public; do not import internal helpers.
 
 ## Errors and Unsupported Operations
 
-The root exports `ConfigurationError` and `HashMismatchError`. Calls can also throw WDK base errors, plain errors and provider/coordinator failures. Hosted unknown-ID errors also propagate from approval, rejection and execution lookups as plain `Error`, rather than `NoSuchElementError`; the latter requires a coordinator that returns no item. A hash mismatch must stop signing. Read-only accounts cannot sign or execute proposals. The writable account has no direct `sendTransaction()` or `transfer()` API: use proposals. Normalized `getTransaction()` and inherited `waitForTransaction()` are not implemented by this Safe release.
+The root exports `ConfigurationError` and `HashMismatchError`. Quotes and proposal builders can raise `ConfigurationError` or `AbstractionKitError` during [token paymaster validation](/sdk/wallet-modules/wallet-multisig-safe/configuration#token-paymaster-checks). Calls can also throw WDK base errors, plain errors and provider/coordinator failures. Hosted unknown-ID errors also propagate from approval, rejection and execution lookups as plain `Error`, rather than `NoSuchElementError`; the latter requires a coordinator that returns no item. A hash mismatch must stop signing. Read-only accounts cannot sign or execute proposals. The writable account has no direct `sendTransaction()` or `transfer()` API: use proposals. Normalized `getTransaction()` and inherited `waitForTransaction()` are not implemented by this Safe release.
 
 ## Next Steps
 

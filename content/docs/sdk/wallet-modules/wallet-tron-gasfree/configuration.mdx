@@ -20,7 +20,7 @@ icon: Settings
 For the example that supplies a `TronWeb` client, install the client version declared by this package:
 
 ```bash
-npm install @tetherto/wdk-wallet-tron-gasfree@1.0.0-beta.13 tronweb@6.5.1
+npm install @tetherto/wdk-wallet-tron-gasfree@1.0.0-beta.14 tronweb@6.5.1
 ```
 
 ```javascript
@@ -58,9 +58,7 @@ The module performs HMAC request signing in the application process. Never embed
 
 Retrieve the current service-provider address from the provider's [`GET /api/v1/config/provider/all`](https://docs.gasfree.io/#get-apiv1configproviderall) response. Do not substitute the verifying-contract address for `serviceProvider`.
 
-<Callout type="info">
-`TronGasfreeWalletConfig` includes `transferMaxFee` and `transactionMaxFee` for shared wallet type compatibility. The current GasFree runtime does not use either constructor field as a fee cap. Pass `transferMaxFee` in the second argument to `account.transfer()`; native transaction methods are unsupported, so `transactionMaxFee` has no effect.
-</Callout>
+Set [`transferMaxFee`](#transfer-max-fee) when creating the wallet to cap its GasFree token transfer fees by default.
 
 ## Account Configuration
 
@@ -235,7 +233,7 @@ Retrieve the current address from the provider's [`GET /api/v1/config/provider/a
 
 ### Verifying Contract
 
-The `verifyingContract` option is the Tron address of the contract that verifies gas-free transactions.
+The `verifyingContract` option is the TRON address of the contract that verifies GasFree transfers. When the address matches the packaged GasFree controller for the configured TRON mainnet or Nile `chainId`, `getAddress()` derives the GasFree address locally from the owner's address. Other controller or chain configurations use the provider lookup path. That path rejects any `chainId` other than mainnet or Nile before making a request.
 
 **Type:** `string`
 
@@ -252,7 +250,7 @@ const config = {
 
 ### Transfer Max Fee
 
-Pass `transferMaxFee` in the optional second argument to `account.transfer()` to cap one GasFree TRC20 transfer. The constructor-level field exists in `TronGasfreeWalletConfig` but is not used as a default by the current runtime.
+Set `transferMaxFee` in the wallet or full account configuration to cap GasFree TRC20 transfer fees by default. A value in the second argument to `account.transfer()` overrides that cap for one transfer. An omitted or `undefined` override uses the configured cap.
 
 **Type:** `number | bigint`
 
@@ -275,7 +273,7 @@ const result = await account.transfer({
 
 ```
 
-The transfer is rejected only when the quoted total fee is greater than the cap. A fee equal to `transferMaxFee` is allowed. Use an integer or `bigint` value because the runtime converts the cap with `BigInt()`.
+The wallet compares the transfer fee plus any activation fee against the cap before signing. A fee equal to the cap is allowed. The configured cap is one value, compared in the base units of whichever token is transferred. If the wallet transfers tokens with different decimals or values, pass `transferMaxFee` per call for each token. Use an integer or `bigint`.
 
 ### Transaction Max Fee
 

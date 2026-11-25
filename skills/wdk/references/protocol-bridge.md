@@ -28,7 +28,7 @@ import { WalletAccountEvm } from '@tetherto/wdk-wallet-evm'
 
 From `1.0.0-beta.9`, the constructor accepts shared `IWalletAccountReadOnly` and `IWalletAccount` interfaces. Runtime use still requires EVM-compatible account operations and the account's internal `_config.provider`; implementing the shared interface alone is insufficient. Read-only accounts can quote. Execution additionally requires a callable `sendTransaction()`.
 
-⚠️ Bridge beta.10 is incompatible with accounts derived by `WalletManagerEvm` beta.19. Those accounts contain an ethers `Provider`, while the bridge treats every non-string value as EIP-1193 and rejects it during construction. Use a directly constructed `WalletAccountEvm` with its original URL or EIP-1193 input. Do not mutate `_config`. This direct account is outside WDK Core's policy and middleware decoration, so retain any required application checks and account-level fee caps explicitly.
+⚠️ The bridge is incompatible with manager-derived accounts that retain a shared ethers `Provider` in their configuration. Those accounts contain an ethers `Provider`, while the bridge treats every non-string value as EIP-1193 and rejects it during construction. Use a directly constructed `WalletAccountEvm` with its original URL or EIP-1193 input. Do not mutate `_config`. This direct account is outside WDK Core's policy and middleware decoration, so retain any required application checks and account-level fee caps explicitly.
 
 | Account | Approval behavior | Submission |
 |---|---|---|
@@ -37,7 +37,7 @@ From `1.0.0-beta.9`, the constructor accepts shared `IWalletAccountReadOnly` and
 
 ERC-4337 helper bridging is available from Ethereum, Arbitrum, Plasma, and Polygon. Other supported EVM source chains require a standard account.
 
-Helper selection and batching use the bridge package's concrete ERC-4337 classes. Beta.10 pins `@tetherto/wdk-wallet-evm-erc-4337` to beta.11. An account from a separate package copy or version, including beta.20, takes the non-batched standard path and skips the helper and per-call ERC-4337 configuration. Use the exact isolated pair below; do not override the bridge dependency or downgrade an application that needs beta.20.
+Helper selection and batching use the bridge package's concrete ERC-4337 classes. Bridge beta.13 pins `@tetherto/wdk-wallet-evm-erc-4337` to beta.11. An account from a separate package copy or version, including beta.26, takes the non-batched standard path and skips the helper and per-call ERC-4337 configuration. Use the exact isolated pair below; do not override the bridge dependency or downgrade an application that needs beta.26.
 
 ## Standard account quick reference
 
@@ -79,11 +79,11 @@ For a standard account, `fee` and `bridgeFee` are in source-chain native base un
 ## ERC-4337 quick reference
 
 ```bash
-npm install --save-exact @tetherto/wdk-protocol-bridge-usdt0-evm@1.0.0-beta.10 @tetherto/wdk-wallet-evm-erc-4337@1.0.0-beta.11
+npm install --save-exact @tetherto/wdk-protocol-bridge-usdt0-evm@1.0.0-beta.13 @tetherto/wdk-wallet-evm-erc-4337@1.0.0-beta.11
 npm ls @tetherto/wdk-wallet-evm-erc-4337 --all
 ```
 
-Proceed only when every listed copy is beta.11 and the bridge's entry is `deduped`. If beta.20 is also listed, keep that application on the standard account flow or isolate the beta.10/beta.11 pair in a separate package.
+Proceed only when every listed copy is beta.11 and the bridge's entry is `deduped`. If a separate wallet copy is listed, keep that application on the standard account flow or isolate the beta.13/beta.11 pair in a separate package.
 
 ```javascript
 const bridge = new Usdt0ProtocolEvm(erc4337Account)
@@ -112,9 +112,10 @@ Starting in `1.0.0-beta.10`:
 
 - `bridgeFee` is in source-native base units.
 - `fee` is in source-native base units for native gas, paymaster-token base units for token-paid gas, or zero for sponsored gas.
+- `tokenFee` in bridge beta.13 is the helper’s surcharge in source-token base units, before the approval tolerance. Standard accounts report `0n`.
 - The protocol numerically adds `fee + bridgeFee` when enforcing `bridgeMaxFee`.
 
-Native-gas and sponsored flows use compatible units. Token-paid gas mixes paymaster-token and source-native units, so beta.10 cannot provide a meaningful single-currency `bridgeMaxFee` spending cap for that mode. A separate quote cannot bind a converted cap because `bridge()` requotes during execution. Equality with the cap is rejected.
+Native-gas and sponsored flows use compatible units. Token-paid gas mixes paymaster-token and source-native units, so the bridge cannot provide a meaningful single-currency `bridgeMaxFee` spending cap for that mode. A separate quote cannot bind a converted cap because `bridge()` requotes during execution. Equality with the cap is rejected.
 
 ## Supported routes
 
@@ -169,12 +170,12 @@ const options = {
 }
 
 const quote = await bridge.quoteBridge(options)
-const { hash, fee, bridgeFee } = await bridge.bridge(options)
+const { hash, fee, bridgeFee, oftFee, toTokenAmount } = await bridge.bridge(options)
 ```
 
 - Mainnet only. There is no devnet deployment.
 - `fee` and `bridgeFee` are lamports on a standard account. `bridgeMaxFee` caps their sum and allows a total equal to the cap.
 - `bridgeFee` differs widely by destination. TRON is far above the other routes, so size the cap per route.
-- The Legacy Mesh also deducts a fee from the amount, which the result does not report.
+- Bridge beta.2 reports the Legacy Mesh deduction as `oftFee`, and the calculated net as `toTokenAmount = amount - oftFee`. Both fields use source-token base units. Check destination settlement separately.
 - On `WalletAccountSolanaGasless`, `fee` is in paymaster token units and includes the LayerZero fee. `bridgeFee` stays in lamports. Do not add them. `transactionMaxFee` caps `fee` and `bridgeMaxFee` caps `bridgeFee`.
 - To use `wdk.registerProtocol()`, install `@tetherto/wdk-wallet@1.0.0-beta.22` at the project root. Otherwise `getBridgeProtocol()` throws `No bridge protocol registered`.

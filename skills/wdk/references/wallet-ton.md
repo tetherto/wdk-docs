@@ -73,7 +73,7 @@ const wallet = new WalletManagerTon(seedPhrase, {
 - Transfer fees are returned in paymaster Jetton base units. The account pays them from its configured paymaster Jetton balance; if that Jetton is also being transferred, the same balance must cover both the transfer amount and the final fee.
 - Gasless beta.13 depends on standard TON beta.15 and inherits its domain-separated message signing. Older raw-byte signatures fail the new verifier; align external signers and verifiers before upgrading.
 - Gasless beta.13 requires `globalThis.crypto.getRandomValues()` for owned and read-only Jetton transfer quotes as well as execution. Random 64-bit query IDs are not application idempotency keys.
-- The gasless beta.13 manager shares its TON RPC and TON API clients across derived accounts and their read-only conversions. Existing clients keep their settings.
+- The gasless manager shares TON RPC and TON API clients across derived accounts and their read-only conversions. Gasless beta.18 builds a separate client for a `tonApiClient` failover list, using the supplied clients' HTTP transports without modifying the clients themselves.
 
 ## Configuration — wallet-ton-gasless
 

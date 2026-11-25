@@ -46,7 +46,7 @@ const bridgeProtocol = new Usdt0ProtocolSolana(account, {
 
 The bridge reads internal fields of the WDK Solana accounts: `_rpc` for the connection, `_commitment` for reads, and `_config.paymasterAddress` to select the gasless flow. Implementing the shared wallet interface alone does not make a custom account compatible.
 
-An account governed by a Core [transaction policy](/sdk/core-module/guides/transaction-policies) hides these fields. See [Register through WDK Core](/sdk/bridge-modules/bridge-usdt0-solana/guides/get-started#register-through-wdk-core).
+An account governed by a [Policies plugin](/sdk/core-module/guides/transaction-policies) hides these fields. See [Register through WDK Core](/sdk/bridge-modules/bridge-usdt0-solana/guides/get-started#register-through-wdk-core).
 
 Read-only accounts can use `quoteBridge()` and the discovery methods. They cannot execute `bridge()`.
 
@@ -54,8 +54,8 @@ Read-only accounts can use `quoteBridge()` and the discovery methods. They canno
 
 | Method | Description | Returns | Throws |
 |--------|-------------|---------|--------|
-| `bridge(options, config?)` | Bridges USD₮ to another blockchain | `Promise<BridgeResult>` | If read-only, no provider, invalid options, or a fee cap is exceeded |
-| `quoteBridge(options, config?)` | Estimates the cost of a bridge operation | `Promise<Omit<BridgeResult, 'hash'>>` | If no provider or invalid options |
+| `bridge(options, config?)` | Bridges USD₮ to another blockchain | `Promise<Usdt0BridgeResult>` | If read-only, no provider, invalid options, or a fee cap is exceeded |
+| `quoteBridge(options, config?)` | Estimates the cost of a bridge operation | `Promise<Omit<Usdt0BridgeResult, 'hash'>>` | If no provider or invalid options |
 | `getSupportedChains()` | Returns chain descriptors from bundled configuration | `Promise<SwidgeSupportedChain[]>` | None |
 | `getSupportedTokens(options?)` | Returns token descriptors from bundled configuration, with optional filters | `Promise<SwidgeSupportedToken[]>` | None |
 
@@ -73,7 +73,7 @@ Bridges native USD₮ from Solana to a different blockchain. The account does no
   - `paymasterToken` (`{ address: string }`, optional): Gasless accounts only
   - `transactionMaxFee` (number | bigint, optional): Gasless accounts only
 
-**Returns:** `Promise<BridgeResult>` - Bridge operation result
+**Returns:** `Promise<Usdt0BridgeResult>` - Bridge operation result
 
 **Throws:**
 - `AccountRequiredError` if the account is read-only
@@ -102,7 +102,7 @@ Estimates the cost of a bridge operation without executing it. It simulates the 
 - `options` (`BridgeOptions`): Same as `bridge()`
 - `config` (`Pick<PaymasterConfigOverrides, 'paymasterToken'>`, optional): Overrides a gasless account's paymaster token
 
-**Returns:** `Promise<Omit<BridgeResult, 'hash'>>` - Bridge cost estimate
+**Returns:** `Promise<Omit<Usdt0BridgeResult, 'hash'>>` - Bridge cost estimate
 
 **Throws:**
 - `ProviderRequiredError` if no provider is available
@@ -164,13 +164,19 @@ interface BridgeOptions {
 
 ### BridgeResult
 
+The module exports `Usdt0BridgeResult`, which extends WDK’s shared `BridgeResult`.
+
 ```typescript
-interface BridgeResult {
+interface Usdt0BridgeResult {
   hash: string;                     // Solana transaction hash
   fee: bigint;                      // Unit depends on the account, see below
   bridgeFee: bigint;                // LayerZero fee, in lamports
+  oftFee: bigint;                   // OFT deduction, in source-token base units
+  toTokenAmount: bigint;            // Calculated net amount, in source-token base units
 }
 ```
+
+The module computes `oftFee` from the on-chain OFT store rate, using integer division, and uses `amount - oftFee` as the send’s minimum amount and returned `toTokenAmount`. `bridge()` rebuilds the transaction, so the returned fields can differ from an earlier quote. Check settlement on the destination independently.
 
 ### BridgeProtocolConfig
 
@@ -196,7 +202,7 @@ type PaymasterConfigOverrides = {
 | `WalletAccountSolana` | Lamports | Lamports | `fee + bridgeFee` | `fee`, from the wallet configuration. Per-call overrides are ignored |
 | `WalletAccountSolanaGasless` | Paymaster token base units, includes the LayerZero fee | Lamports | `bridgeFee` | `fee` |
 
-Neither field includes the [Legacy Mesh fee](/sdk/bridge-modules/bridge-usdt0-solana#what-moves), which is deducted from the transferred amount.
+These caps do not cover the [Legacy Mesh fee](/sdk/bridge-modules/bridge-usdt0-solana#what-moves), which is deducted from the transferred amount.
 
 ### Recipient validation
 

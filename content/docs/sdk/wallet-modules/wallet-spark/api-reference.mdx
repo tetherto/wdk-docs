@@ -146,7 +146,8 @@ Represents an individual Spark wallet account. Implements `IWalletAccount` from 
 | `getStaticDepositAddresses()` | Returns all existing static deposit addresses | `Promise<DepositAddressQueryResult[]>` |
 | `getUtxosForDepositAddress(options)` | Returns confirmed UTXOs for a deposit address | `Promise<{utxos: {txid: string, vout: number}[], offset: number}>` |
 | `claimDeposit(txId)` | Claims a Bitcoin deposit to the wallet | `Promise<WalletLeaf[] \| undefined>` |
-| `claimStaticDeposit(txId)` | Claims a static Bitcoin deposit to the wallet | `Promise<WalletLeaf[] \| undefined>` |
+| `getClaimStaticDepositQuote(options)` | Gets a static-deposit credit quote and calculates the claim fee | `Promise<ClaimStaticDepositQuote>` |
+| `claimStaticDeposit(txId, options?)` | Claims a static deposit with an optional fee cap | `Promise<ClaimStaticDepositResult>` |
 | `refundStaticDeposit(options)` | Refunds a static deposit back to a Bitcoin address | `Promise<string>` |
 | `quoteWithdraw(options)` | Gets a fee quote for withdrawing funds | `Promise<CoopExitFeeQuote>` |
 | `withdraw(options)` | Withdraws funds to a Bitcoin address | `Promise<CoopExitRequest \| null \| undefined>` |
@@ -230,7 +231,7 @@ console.log('Identity key:', identityKey) // 02eda8...
 ##### `sendTransaction({to, value})`
 Sends a Spark transaction.
 
-When `syncAndRetry` is enabled, the wallet reads matching transfer history before submitting at most once. After a failed submission response, it syncs and returns a matching new transfer from history when found; otherwise it throws. An initial history-read failure prevents submission. Do not run identical recipient/amount sends concurrently from one wallet, because history matching cannot distinguish them.
+When `syncAndRetry` is enabled, the wallet reads matching transfer history before submitting at most once. After a failed submission response, it syncs and returns a matching new transfer from history when found. For a transfer with multiple recipients, the requested recipient and amount must match the same entry. The wallet throws if it finds no match. An initial history-read failure prevents submission. Do not run identical recipient/amount sends concurrently from one wallet, because history matching cannot distinguish them.
 
 **Parameters:**
 - `to` (string): Recipient's Spark address
@@ -380,7 +381,7 @@ if (transaction.finality === 'dropped') {
 ```
 
 ##### `getTransfers(options?)`
-Returns the Spark transfer history of the account. Only returns Spark transfers, not on-chain Bitcoin transactions.
+Returns the account’s Spark transfer history. The `incoming` filter matches the account against any listed recipient. If the transfer has no recipient list, the filter uses the transfer’s receiver field. The `outgoing` filter keeps the remaining transfers.
 
 **Parameters:**
 - `options` (GetTransfersOptions, optional): Filter options
@@ -477,26 +478,22 @@ const leaves = await account.claimDeposit('bitcoin_tx_id...')
 console.log('Claimed deposit:', leaves)
 ```
 
+##### `getClaimStaticDepositQuote(options)`
+
+Gets a credit quote from the Spark Service Provider (SSP). Supply `txId` and `depositAmountSats` for the confirmed Bitcoin output. Set `outputIndex` to select that output explicitly. When omitted, the SDK selects the first output that matches one of the account's static deposit addresses.
+
+Returns `Promise<ClaimStaticDepositQuote>` with `transactionId`, `outputIndex`, `depositAmountSats`, `creditAmountSats` and `claimFeeSats`. The method calculates `claimFeeSats` as `depositAmountSats - creditAmountSats` using the amount you supplied. Verify the amount and output independently before displaying the fee.
+
 ##### `claimStaticDeposit(txId)`
-Claims a static Bitcoin deposit to add funds to the Spark wallet.
 
-The credit quoted by the Spark Service Provider (SSP) must be a safe positive integer number of satoshis. This checks the amount's representation, not whether it matches the deposit's on-chain value. Claiming hands the deposit's secret key to the SSP and cannot be undone.
+`claimStaticDeposit(txId, options?)` claims a confirmed static Bitcoin deposit. A claim hands the deposit's secret key to the SSP and cannot be undone. Use a transaction with one output matching the account's static deposit addresses. The claim selects the first match and accepts only the transaction ID, even if you selected a specific output when quoting.
 
-**Parameters:**
-- `txId` (string): Bitcoin transaction ID of the deposit
+Set `options.maxFeeSats` to a non-negative safe integer number of satoshis approved by the caller. The SDK fetches the Bitcoin output amount and a fresh credit quote, then checks the fee before signing. The cap bounds the fee calculated from that fresh quote. The credited amount can differ from an earlier preview. A fee equal to the cap passes. A higher fee throws [`StaticDepositFeeExceededError`](#staticdepositfeeexceedederror). When the cap is omitted, the SDK checks that the quoted credit is a positive safe integer and throws `ValueError` otherwise.
 
-**Returns:** `Promise<WalletLeaf[] | undefined>` - Wallet leaves created from the deposit
-
-**Throws:** `ValueError` if the quoted credit is not a safe positive integer number of satoshis.
-
-**Example:**
-```javascript
-const leaves = await account.claimStaticDeposit('bitcoin_tx_id...')
-console.log('Claimed static deposit:', leaves)
-```
+Returns `Promise<ClaimStaticDepositResult>`, an object with a Spark `transferId: string`. See [the static deposit guide](/sdk/wallet-modules/wallet-spark/guides/deposits-and-withdrawals#1-optional-use-a-static-deposit-address) for the quote and claim flow.
 
 ##### `refundStaticDeposit(options)`
-Refunds a deposit made to a static deposit address back to a specified Bitcoin address. The minimum fee is 300 satoshis.
+Builds a refund for a static deposit to the specified Bitcoin address. The SDK rejects fee rates above 150 satoshis per virtual byte and requires a total fee of at least 194 satoshis. The refund amount must be positive.
 
 **Parameters:**
 - `options` (object): Refund options
@@ -905,7 +902,7 @@ console.log('Transfer details:', transfer)
 ```
 
 ##### `getTransfers(options?)`
-Returns the Spark transfer history of the account. Only returns Spark transfers, not on-chain Bitcoin transactions.
+Returns the account’s Spark transfer history. The `incoming` filter matches the account against any listed recipient. If the transfer has no recipient list, the filter uses the transfer’s receiver field. The `outgoing` filter keeps the remaining transfers.
 
 **Parameters:**
 - `options` (GetTransfersOptions, optional): Filter options
@@ -1041,6 +1038,10 @@ Exported from `@tetherto/wdk-wallet-spark`; extends `WdkError`. Its `transferId`
 ```javascript
 import { LightningPaymentError } from '@tetherto/wdk-wallet-spark'
 ```
+
+### StaticDepositFeeExceededError
+
+Exported from `@tetherto/wdk-wallet-spark`. Extends `MaximumFeeExceededError`. The error exposes `code: 'STATIC_DEPOSIT_FEE_EXCEEDED'`, `claimFeeSats`, `maxFeeSats` and `cause`.
 
 ### SparkWalletConfig
 

@@ -9,13 +9,13 @@ This guide shows how to [install the package](#install-the-package), [create an 
 
 ### Prerequisites
 
-* **[Node.js](https://nodejs.org/)**: version 18 or higher.
+* **[Node.js](https://nodejs.org/)**: Use 22.23.4 or later in the 22.x line, 24.22.1 or later in the 24.x line, or 26.12.1 or later. The bridge’s TronWeb dependency requires these versions.
 * **[npm](https://www.npmjs.com/)**: usually bundled with Node.js.
 
 You can add the published package to your project from npm: [@tetherto/wdk-protocol-bridge-usdt0-evm](https://www.npmjs.com/package/@tetherto/wdk-protocol-bridge-usdt0-evm).
 
 ```bash title="Install @tetherto/wdk-protocol-bridge-usdt0-evm"
-npm install @tetherto/wdk-protocol-bridge-usdt0-evm @tetherto/wdk-wallet-evm
+npm install @tetherto/wdk-protocol-bridge-usdt0-evm@1.0.0-beta.13 @tetherto/wdk-wallet-evm
 ```
 
 ## Create an EVM account
@@ -33,7 +33,7 @@ const account = new WalletAccountEvm(seedPhrase, "0'/0/0", {
 ```
 
 <Callout type="warn">
-Bridge beta.11 cannot initialize with accounts derived by standard EVM beta.19 through beta.22, ERC-4337 beta.21, or EIP-7702 beta.7 through beta.9 managers when their shared ethers provider lacks the EIP-1193 `request()` method. The shared ethers `Provider` does not supply the EIP-1193 `request()` method expected by this protocol. Use the corresponding direct account constructor with its original RPC URL or genuine EIP-1193 input; never mutate internal provider fields. Direct accounts do not receive WDK Core policies or middleware, so retain required application checks and account-level controls.
+The bridge requires the account’s RPC URL or an EIP-1193 provider with `request()`. Manager-derived accounts that retain an ethers `Provider` in their configuration cannot be passed directly. Use the corresponding direct account constructor with its original RPC URL or genuine EIP-1193 input; never mutate internal provider fields. Direct accounts bypass WDK middleware and the [Policies plugin](/sdk/core-module/guides/transaction-policies), so retain required application checks and account-level controls.
 </Callout>
 
 <Callout type="error">
@@ -52,7 +52,7 @@ const bridgeProtocol = new Usdt0ProtocolEvm(account, {
 })
 ```
 
-For standard EVM accounts, `fee` and `bridgeFee` are source-chain native base units. Starting in beta.10, ERC-4337 `bridgeFee` also uses source-native base units. Token-paid gas still reports `fee` in paymaster-token units, so beta.11 cannot provide a meaningful single-currency `bridgeMaxFee` spending cap for that mode. Native-gas and sponsored ERC-4337 flows use compatible units; see [Fee units and `bridgeMaxFee`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#fee-units-and-bridgemaxfee).
+For standard EVM accounts, `fee` and `bridgeFee` are source-chain native base units. Starting in beta.10, ERC-4337 `bridgeFee` also uses source-native base units. Token-paid gas still reports `fee` in paymaster-token units, so the bridge cannot provide a meaningful single-currency `bridgeMaxFee` spending cap for that mode. Native-gas and sponsored ERC-4337 flows use compatible units; see [Fee units and `bridgeMaxFee`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#fee-units-and-bridgemaxfee).
 
 <Callout type="info">
 The constructor also accepts the shared WDK account interfaces. [`bridge()`](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#bridgeoptions-config) requires a callable `sendTransaction()` method and EVM transaction support. Read [account requirements](/sdk/bridge-modules/bridge-usdt0-evm/api-reference#account-requirements) before supplying a custom account or combining ERC-4337 package versions.

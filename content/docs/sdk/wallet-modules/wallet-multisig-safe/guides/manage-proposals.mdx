@@ -48,7 +48,7 @@ const approved = await account.approveProposal(requiredEnv('PROPOSAL_ID'))
 console.log(approved.confirmations, approved.threshold)
 ```
 
-The account must represent a different approving owner. Approval returns `status: 'pending'`, even when the threshold is reached. It does not auto-execute. [`rejectProposal()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#rejectproposal) creates a competing zero-value proposal at the same nonce; rejection also needs approvals and execution.
+The account must represent a different approving owner. Approval returns `status: 'pending'`, even when the threshold is reached. It does not auto-execute. [`rejectProposal()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#rejectproposal) checks that the stored operation hashes to the requested proposal ID before creating a competing zero-value proposal at the same nonce. Rejection also needs approvals and execution.
 
 ## Submit and Confirm
 
@@ -72,7 +72,7 @@ const receipt = await account.getTransactionReceipt(submitted.hash)
 console.log(receipt)
 ```
 
-A missing receipt is not success. Apply a bounded retry policy and inspect the returned UserOperation `success` and underlying receipt; an EVM receipt uses its EVM status. The method first queries the EVM provider, so provider errors can interrupt its bundler fallback. Do not use inherited [`waitForTransaction()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#waitfortransaction) in beta.2.
+A missing receipt is not success. Apply a bounded retry policy and inspect the returned UserOperation `success` and underlying receipt; an EVM receipt uses its EVM status. The method first queries the EVM provider, so provider errors can interrupt its bundler fallback. Use the receipt lookup above to check the outcome.
 
 `autoExecute: true` on [`propose()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#propose) or [`proposeTransfer()`](/sdk/wallet-modules/wallet-multisig-safe/api-reference#proposetransfer) submits only when the initial proposal already meets the threshold. Its returned `status: 'executed'` means this submission branch ran, not that a successful receipt was observed. Always confirm receipts.
 

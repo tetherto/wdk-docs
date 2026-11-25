@@ -33,6 +33,29 @@ const customAddress = await customAccount.getAddress()
 console.log('Custom account address:', customAddress)
 ```
 
+
+## Use a Registered Signer
+
+A manager can use a chain-specific signer as its default root. Use a root at `m/44'/195'` for the standard indexed paths. With a different root, the index path is appended to that signer's path.
+
+You can also register a signer for an existing account. Here, `wallet` is an initialized manager and `privateKey` is the existing account's private key as a `Uint8Array`.
+
+```javascript
+import { PrivateKeySignerTron } from '@tetherto/wdk-wallet-tron/signers'
+
+const signer = new PrivateKeySignerTron(privateKey)
+try {
+  wallet.addSigner('treasury', signer)
+  const account = await wallet.getAccount('treasury')
+  console.log(await account.getAddress())
+} finally {
+  wallet.dispose()
+  signer.dispose()
+}
+```
+
+Pass the name as the first argument to use the signer at its own address. For a registered signer that supports derivation, use `wallet.getAccount(0, { signerName })` to derive a child. Dispose of caller-owned signers once every account using them has finished.
+
 ## Iterate Over Multiple Accounts
 
 You can loop through multiple accounts using [`wallet.getAccount()`](/sdk/wallet-modules/wallet-tron/api-reference#getaccountindex) to inspect addresses and balances in bulk:

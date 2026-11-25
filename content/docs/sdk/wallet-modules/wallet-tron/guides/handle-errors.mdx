@@ -12,6 +12,8 @@ This guide covers how to [handle transaction errors](#handle-transaction-errors)
 Wrap transactions in `try/catch` blocks to handle common failure scenarios. Use [`account.sendTransaction()`](/sdk/wallet-modules/wallet-tron/api-reference#sendtransactiontx) with proper error handling:
 
 ```javascript title="Transaction Error Handling"
+import { DisposalError, MaximumFeeExceededError, ProviderRequiredError } from '@tetherto/wdk-wallet-tron'
+
 try {
   const tx = {
     to: 'TLyqzVGLV1srkB7dToTAEqgDSfPtXRJZYH',
@@ -23,10 +25,12 @@ try {
   console.log('Fee paid:', result.fee, 'sun')
   console.log('Activation fee:', result.activationFee, 'sun')
 } catch (error) {
-  if (error.message.toLowerCase().includes('insufficient')) {
-    console.error('Not enough TRX to complete transaction')
-  } else if (error.message.includes('Exceeded maximum fee')) {
+  if (error instanceof MaximumFeeExceededError) {
     console.error('The transaction fee exceeds transactionMaxFee')
+  } else if (error instanceof ProviderRequiredError) {
+    console.error('Configure a TRON RPC provider')
+  } else if (error instanceof DisposalError) {
+    console.error('The account or signer has been disposed')
   } else if (error.message === 'The transaction id does not match its raw data.') {
     console.error('The pre-built transaction failed its txID integrity check')
   } else if (error.message.toLowerCase().includes('transaction owner')) {
@@ -42,6 +46,8 @@ try {
 TRC20 transfers can fail for additional reasons such as insufficient token balances. Use [`account.transfer()`](/sdk/wallet-modules/wallet-tron/api-reference#transferoptions) with error handling:
 
 ```javascript title="Token Transfer Error Handling"
+import { MaximumFeeExceededError, TransferError, TransferErrorReason } from '@tetherto/wdk-wallet-tron'
+
 try {
   const result = await account.transfer({
     token: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', // USDt
@@ -52,9 +58,9 @@ try {
   console.log('Fee paid (sun):', result.fee)
 } catch (error) {
   console.error('Transfer failed:', error.message)
-  if (error.message.toLowerCase().includes('insufficient')) {
-    console.log('Please add more TRC20 tokens to your wallet')
-  } else if (error.message.toLowerCase().includes('max fee')) {
+  if (error instanceof TransferError && error.reason === TransferErrorReason.INSUFFICIENT_TOKEN_BALANCE) {
+    console.log('The wallet holds less than the requested token amount')
+  } else if (error instanceof MaximumFeeExceededError) {
     console.log('The transfer fee exceeds your configured maximum')
   }
 }
@@ -80,14 +86,10 @@ console.log('Fast fee rate:', feeRates.fast, 'sun')
 
 ### Dispose of Sensitive Data
 
-Call [`dispose()`](/sdk/wallet-modules/wallet-tron/api-reference) on accounts and wallet managers to clear private keys and sensitive data from memory when they are no longer needed:
+Call `dispose()` in a cleanup handler. The manager disposes its seed-created default signer and cached accounts that expose their private key. Dispose retained accounts without an exposed key explicitly, and dispose caller-owned signers after their final use.
 
 ```javascript title="Memory Cleanup"
 account.dispose()
 
 wallet.dispose()
 ```
-
-<Callout type="warn">
-Always call [`dispose()`](/sdk/wallet-modules/wallet-tron/api-reference) in a `finally` block or cleanup handler to ensure sensitive data is cleared even if an error occurs.
-</Callout>

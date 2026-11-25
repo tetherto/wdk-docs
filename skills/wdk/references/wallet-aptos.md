@@ -14,7 +14,7 @@
 ## Package
 
 ```bash
-npm install @tetherto/wdk-wallet-aptos@1.0.0-beta.2
+npm install @tetherto/wdk-wallet-aptos@1.0.0-beta.7
 ```
 
 ```javascript
@@ -23,13 +23,13 @@ import WalletManagerAptos from '@tetherto/wdk-wallet-aptos'
 
 ## Key Details
 
-- **Derivation**: SLIP-0010 Ed25519 at `m/44'/637'/{index}'/0'/0'`; every path segment is hardened.
+- **Derivation**: SLIP-0010 Ed25519 at `m/44'/637'/{index}'/0'/0'`; every path segment is hardened. The manager normalizes leading zeros before its account lookup.
 - **Native unit**: APT balances and fees are returned in octas.
 - **Token model**: `getTokenBalance()` and `transfer()` use Aptos fungible-asset metadata addresses.
 - **Native transfers**: `quoteSendTransaction()`, `sendTransaction()`, and `signTransaction()` accept `{ to, value }`.
 - **Fungible-asset transfers**: `quoteTransfer()` and `transfer()` accept `{ token, recipient, amount }`.
 - `signTransaction()` simulates and signs a native APT transfer without broadcasting. It still needs a configured fullnode and is not an offline operation.
-- `transferMaxFee` applies only to fungible-asset `transfer()` and rejects a fee equal to or greater than the cap. It does not protect native send or sign operations.
+- `transferMaxFee` covers fungible-asset `transfer()`. `transactionMaxFee` covers native APT sends and signing. Both use octas. A simulated fee above the limit throws `MaximumFeeExceededError` before signing.
 - `getTransaction()` returns the exported `AptosTransactionInfo`; `waitForTransaction()` polls the same normalized receipt contract. Both accept a trimmed `0x` plus 64-hex-character hash.
 - Aptos mempool transactions are `pending`; any committed transaction is `final`. Finality does not imply execution success, so inspect `success` and the raw `transaction.vm_status`.
 - `getTransactionReceipt()` remains as a deprecated raw lookup. The package root does not export `AptosTransactionReceipt`; its `type` is declared as `string`, with observed `pending_transaction` and `user_transaction` values.
@@ -40,6 +40,7 @@ import WalletManagerAptos from '@tetherto/wdk-wallet-aptos'
 const wallet = new WalletManagerAptos(seedPhrase, {
   provider: 'https://fullnode.mainnet.aptoslabs.com/v1',
   txnExpirationSecs: 60,
+  transactionMaxFee: 100000n,
   transferMaxFee: 100000n
 })
 ```
@@ -56,7 +57,7 @@ An address-only `WalletAccountReadOnlyAptos` can read balances and track transac
 ## Transaction Safety
 
 - Require explicit human confirmation before `sendTransaction()`, `transfer()`, or `signTransaction()`.
-- Quote native APT transfers for user review, but do not present the quote as an enforced cap. Send and sign simulate again, expose no native maximum-fee argument, and do not apply `transferMaxFee`.
+- Quote native APT transfers for review. Signing and sending run their own simulation and enforce `transactionMaxFee` when set. At a positive gas price the wallet also clamps the signed gas budget to the limit.
 - Validate the destination as an Aptos address and treat the fungible-asset metadata address as a separate trust boundary.
 - `waitForTransaction()` treats a valid-but-unknown hash as transient, polls every 4 seconds by default, and times out after 60 seconds unless overridden.
-- Treat `keyPair` and seed material as sensitive and never log signed transactions. Account disposal clears its private key, but manager disposal only disposes cached accounts and signers; beta.2 retains the manager's `seed` buffer, so release all seed and manager references and use process isolation when stronger memory reclamation is required.
+- Treat `keyPair` and seed material as sensitive and never log signed transactions. Account disposal clears its private key, but manager disposal only disposes cached accounts and signers; the manager retains its `seed` buffer, so release all seed and manager references and use process isolation when stronger memory reclamation is required.

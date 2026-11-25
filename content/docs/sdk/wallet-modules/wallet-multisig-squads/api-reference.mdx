@@ -5,7 +5,7 @@ docType: reference
 schemaType: APIReference
 ---
 
-This reference covers `@tetherto/wdk-wallet-multisig-squads` **1.0.0-beta.2**, checked against the [published revision](https://github.com/tetherto/wdk-wallet-multisig-squads/tree/35717e7d606ed120b0306b4d33acfca6eb4f22cd).
+This reference covers `@tetherto/wdk-wallet-multisig-squads` **1.0.0-beta.5**, checked against the [published revision](https://github.com/tetherto/wdk-wallet-multisig-squads/tree/5dd379022030aed42b1b0fc2e1b50683ac346978).
 
 ## Imports
 
@@ -61,7 +61,7 @@ The inherited `seed` getter returns seed bytes or undefined. Never log it. Regis
 
 #### getAccount
 
-`getAccount(index?)` returns `Promise<WalletAccountMultisigSquads>`. Derives and caches `m/44'/501'/index'/0'`, default index zero. Although the declaration permits a string, named/external signers are rejected in beta.2.
+`getAccount(index?)` returns `Promise<WalletAccountMultisigSquads>`. Derives and caches `m/44'/501'/index'/0'`, default index zero. Although the declaration permits a string, this release rejects named or external signers.
 
 #### getAccountByPath
 
@@ -73,7 +73,7 @@ The inherited `seed` getter returns seed bytes or undefined. Never log it. Regis
 
 #### dispose
 
-`dispose()` returns `void`. Disposes cached member accounts and registered signers. Beta.2 retains the manager's seed bytes; this call does not erase all secret material. Release the manager when finished and clear caller-controlled mutable copies after their final use.
+`dispose()` returns `void`. Disposes cached member accounts and registered signers. The manager retains its seed bytes; this call does not erase all secret material. Release the manager when finished and clear caller-controlled mutable copies after their final use.
 
 #### getRandomSeedPhrase
 
@@ -448,7 +448,7 @@ The JavaScript export is an optional base class whose unimplemented methods thro
 
 #### getProposal
 
-`getProposal(proposalId)` returns `Promise<Transaction or null>`. Return the compiled Solana transaction carrying this member approval, or null for an ordinary vote. Transaction here is the compiled type from @solana/transactions, not the module native-transfer input.
+`getProposal(proposalId)` returns `Promise<Transaction or null>`. Return the compiled Solana transaction carrying this member approval, or null for an ordinary vote. Use the compiled transaction type from `@solana/transactions`. Put every instruction’s program ID, the multisig, the proposal, and each approving member in the message’s static accounts. Other accounts may come from address lookup tables. The wallet throws `ValueError` before signing if a required static account is loaded from a table.
 
 #### confirmProposal
 
@@ -458,7 +458,7 @@ The JavaScript export is an optional base class whose unimplemented methods thro
 
 `MultisigSquadsInfo` extends `{ owners: string[], threshold: number }` with `masks: number[]`, aligned with owners.
 
-`MultisigSquadsProposal` adds `statusName: string` and `approved`, `rejected`, `cancelled` address arrays to the shared proposal fields `proposalId`, `confirmations`, `threshold` and string `status`. Beta.2 maps only the Squads `Executed` state to generic `executed`; all other states map to generic `pending`. Known Squads names are `Draft`, `Active`, `Rejected`, `Approved`, `Executing`, `Executed` and `Cancelled`. Do not narrow the public string type or assume a guaranteed state sequence. Use per-item state and handle missing entries as null.
+`MultisigSquadsProposal` adds `statusName: string` and `approved`, `rejected`, `cancelled` address arrays to the shared proposal fields `proposalId`, `confirmations`, `threshold` and string `status`. The account maps only the Squads `Executed` state to generic `executed`; all other states map to generic `pending`. Known Squads names are `Draft`, `Active`, `Rejected`, `Approved`, `Executing`, `Executed` and `Cancelled`. Do not narrow the public string type or assume a guaranteed state sequence. Use per-item state and handle missing entries as null.
 
 `MultisigSquadsProposalResult` additionally carries optional `transaction: { hash: string, fee: bigint }` from the shared interaction contract and `pendingConfirmations: number`. Broadcast calls populate transaction even if the proposal is still pending. A coordinator-only approval returns `transaction: undefined`: `confirmations` remains the on-chain count and `pendingConfirmations` counts signatures held off-chain. This replaces beta.1's empty-hash, zero-fee transaction object; check for a transaction before reading its hash or fee. A submitted bundle resets pendingConfirmations to zero. Always confirm a nonempty transaction hash before treating its actions as successful.
 

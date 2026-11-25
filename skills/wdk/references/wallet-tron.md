@@ -36,6 +36,8 @@ import WalletManagerTronGasfree from '@tetherto/wdk-wallet-tron-gasfree'
 
 ## Key Details — wallet-tron
 
+- Import `SeedSignerTron` and `PrivateKeySignerTron` from `@tetherto/wdk-wallet-tron/signers`. Use a derivable signer as the manager’s default, or register a signer and call `getAccount(name)` to use it directly. The caller disposes supplied signers after use.
+- Standard TRON full and read-only accounts expose `account.config`. Manager-derived accounts expose the initialized TronWeb client. Treat the configuration as read-only and keep credentials out of logs.
 - **Derivation**: BIP-44 (`m/44'/195'/0'/0/{index}`)
 - **Key type**: secp256k1
 - **Fee unit**: sun (1 TRX = 1,000,000 sun)
@@ -62,7 +64,9 @@ const wallet = new WalletManagerTron(seedPhrase, {
 - Same derivation and key type as wallet-tron
 - **Gas-free**: Service provider covers transaction fees for TRC20 transfers
 - GasFree beta.10 accepts TRON RPC URL/`TronWeb` arrays and `retries`, sharing the initialized provider across manager-derived accounts. This is RPC failover, not an array of GasFree relay endpoints. Standard TRON beta.14 also shares its manager provider.
-- Requires `gasFreeProvider`, `gasFreeApiKey`, `serviceProvider`, `verifyingContract`
+- Configure `chainId`, `gasFreeProvider`, `serviceProvider`, and `verifyingContract`. Supply both `gasFreeApiKey` and `gasFreeApiSecret` only when your provider requires signed requests. The module signs requests in-process, so keep the secret in a trusted backend. Browser, mobile and distributed desktop apps must proxy authenticated GasFree requests through that backend.
+- GasFree beta.14 uses the wallet's `transferMaxFee` as one default value, compared in the transferred token's base units. A value passed to `transfer(options, { transferMaxFee })` overrides it; set it per call for tokens with different decimals or values. The cap covers the estimated transfer fee plus any activation fee, and equality is allowed.
+- GasFree beta.14 derives `getAddress()` locally when `verifyingContract` matches the packaged controller for mainnet or Nile. Other controller or chain configurations use the provider lookup path, which rejects any other chain ID before making a request.
 - **TRC20 transfers only**: `sendTransaction()` **throws** — use `transfer()` only
 
 ## Configuration — wallet-tron-gasfree
@@ -71,7 +75,9 @@ const wallet = new WalletManagerTron(seedPhrase, {
 const wallet = new WalletManagerTronGasfree(seedPhrase, {
   provider: 'https://api.trongrid.io',
   gasFreeProvider: 'https://gasfree-api-url.com',
-  gasFreeApiKey: 'your-gasfree-api-key',
+  chainId: 728126428,                    // TRON mainnet
+  gasFreeApiKey,                         // Application-supplied credentials
+  gasFreeApiSecret,
   serviceProvider: 'T...',               // Service provider TRON address
   verifyingContract: 'T...',             // Verifying contract TRON address
   transferMaxFee: 10000000n

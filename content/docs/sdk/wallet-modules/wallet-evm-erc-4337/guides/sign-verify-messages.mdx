@@ -7,7 +7,9 @@ This guide explains how to [sign messages](#sign-a-message), [verify signatures]
 
 ## Sign a Message
 
-You can sign a message with the account's private key using [`account.sign()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference):
+Sign a message as the Safe using [`account.sign()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#signmessage). The owner signs an EIP-712 SafeMessage bound to the Safe address and chain ID.
+
+Configure a working RPC provider for the account's chain before signing. Both `sign()` and `signTypedData()` resolve the SafeMessage chain ID through `eth_chainId`, even when you supply `config.chainId`. The successful lookup is cached. A mismatch with `config.chainId` throws `ConfigurationError`. Disposed accounts or signers can throw `DisposalError`. Custom signers must implement `signTypedData()`. See [signing requirements](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#safemessage-signing-requirements) for propagated provider and signer errors.
 
 ```javascript title="Sign Message"
 const signature = await account.sign('Hello, ERC-4337!')
@@ -16,7 +18,7 @@ console.log('Signature:', signature)
 
 ## Verify a Signature
 
-You can verify a signature using a read-only account that retains the owner EOA address. Use [`account.toReadOnlyAccount()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference) to create one, then call [`readOnlyAccount.verify()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference):
+Use [`account.toReadOnlyAccount()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#toreadonlyaccount) when you need a read-only view that can verify before and after the Safe is deployed:
 
 ```javascript title="Verify Signature"
 const readOnlyAccount = await account.toReadOnlyAccount()
@@ -24,11 +26,17 @@ const isValid = await readOnlyAccount.verify('Hello, ERC-4337!', signature)
 console.log('Signature valid:', isValid)
 ```
 
-Accounts created with [`fromSafeAddress()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#fromsafeaddresssafeaddress-config-static-1) do not know the owner. Their [`verify()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#verifymessage-signature-1) and [`verifyTypedData()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#verifytypeddatatypeddata-signature-1) methods throw `UnsupportedOperationError`; they do not perform Safe contract signature verification. Use an owner-based read-only account when you need to verify that owner's signature.
+For a deployed Safe, verification calls the Safe contract’s ERC-1271 `isValidSignature()`. For an undeployed Safe, it recovers the signer from the SafeMessage signature and compares it with the known owner. An undeployed account created with `fromSafeAddress()` has no owner and throws `UnsupportedOperationError`. Verification checks deployment through the RPC provider.
+
+### Undeployed Safe Signatures
+
+<Callout type="warn">
+WDK can verify a signature before deployment when it knows the Safe owner. Deploy the Safe before using the signature with a permit or login flow that calls ERC-1271 `isValidSignature()` on the Safe contract.
+</Callout>
 
 ## Sign Typed Data (EIP-712)
 
-You can sign EIP-712 structured data using [`account.signTypedData()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference):
+You can sign EIP-712 structured data using [`account.signTypedData()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#signtypeddatatypeddata). The same provider, signer and [undeployed Safe limitations](#undeployed-safe-signatures) apply.
 
 ```javascript title="Sign Typed Data"
 const typedData = {
