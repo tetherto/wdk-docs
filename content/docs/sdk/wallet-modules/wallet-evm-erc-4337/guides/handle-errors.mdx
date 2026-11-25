@@ -38,7 +38,7 @@ The wallet classifies an AbstractionKit error as AA50 from its structured `aaCod
 
 ## Provider-Chain Mismatches
 
-When a new UserOperation is built, a provider that reports a different chain from the configured `chainId` throws [`ConfigurationError`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#configurationerror) before the operation is built or signed. Confirm the intended network and correct the RPC endpoint or constructor configuration before retrying.
+When an account builds a new UserOperation or signs a SafeMessage, a provider that reports a different chain from the configured `chainId` causes the account to throw [`ConfigurationError`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#configurationerror) before the build or signature proceeds. Confirm the intended network and correct the RPC endpoint or constructor configuration before retrying.
 
 The first successful lookup is cached. Recreate the wallet or account when switching networks, and keep every failover provider on the same chain. A sponsored quote or an already-signed operation does not perform this check; see [chain validation](/sdk/wallet-modules/wallet-evm-erc-4337/configuration#chain-id).
 
@@ -117,7 +117,7 @@ Treat a returned hash as submission evidence, not inclusion. Pass the UserOperat
 
 [`fromSafeAddress()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#fromsafeaddresssafeaddress-config-static-1) throws `ValueError` for a malformed Safe address, an invalid mixed-case checksum, or an empty provider list. It throws [`ConfigurationError`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#configurationerror) for an unsupported `safeModulesVersion`. The owner-based constructor and [`predictSafeAddress()`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#predictsafeaddressowner-config-static-1) also reject malformed owner addresses with `ValueError`.
 
-A known-Safe account has no owner or signing key. Its verification methods throw `UnsupportedOperationError`, and calling the factory on the writable [`WalletAccountEvmErc4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#walletaccountevmerc4337) class always throws that error. Import `ValueError` and `UnsupportedOperationError` from `@tetherto/wdk-wallet`.
+A known-Safe account verifies signatures through ERC-1271 when the Safe is deployed. If the Safe is undeployed, its verification methods throw `UnsupportedOperationError` because no owner is available for recovery. Calling the factory on the writable [`WalletAccountEvmErc4337`](/sdk/wallet-modules/wallet-evm-erc-4337/api-reference#walletaccountevmerc4337) class always throws that error. Import `ValueError` and `UnsupportedOperationError` from `@tetherto/wdk-wallet`.
 
 For a non-sponsored quote, an undeployed known Safe throws `ConfigurationError` because building its deployment operation requires the owner address. Confirm the network and address, then use an owner-backed signing flow to deploy the Safe if needed. Do not treat a different address or a sponsored zero-fee quote as a deployment fix: sponsored quotes skip deployment and chain checks and do not prove sponsorship eligibility.
 

@@ -137,7 +137,7 @@ const wallet = new WalletManagerEvmErc4337(seedPhrase, {
 | `getAccount(signerName)` | Uses the named signer directly | `Promise\<WalletAccountEvmErc4337\>` | `DisposalError`, `NoSuchElementError` |
 | `getAccountByPath(path, options?)` | Derives a wallet account at a path with the default or selected signer | `Promise\<WalletAccountEvmErc4337\>` | `DisposalError`, `InvalidSignerError`, `NoSuchElementError` |
 | `getFeeRates()` | Returns current fee rates for transactions | `Promise\<{normal: bigint, fast: bigint}\>` | `ProviderRequiredError` if no provider |
-| `dispose()` | Initiates cleanup of wallet accounts | `void` | - |
+| `dispose()` | Initiates cleanup of cached accounts and the internally created default signer. Caller-supplied signers remain caller-owned. | `void` | - |
 
 #### `getRandomSeedPhrase(wordCount?)` (static)
 Returns a random BIP-39 seed phrase.
@@ -285,7 +285,7 @@ The signer overload accepts `EvmErc4337WalletConfig & SignerOptions`. `WalletAcc
 | `predictSafeAddress(owner, config)` | (static) Predicts the Safe address for a given owner | `string` | `ValueError` for a malformed owner address |
 | `fromSafeAddress(safeAddress, config)` | (static) Unsupported on the writable class | `never` | Always `UnsupportedOperationError` |
 | `getAddress()` | Returns the Safe account's address | `Promise\<string\>` | - |
-| `sign(message)` | Signs a SafeMessage for the account | `Promise\<string\>` | - |
+| `sign(message)` | Signs a SafeMessage for the account | `Promise\<string\>` | `DisposalError`, `ConfigurationError`. See [signing requirements](#safemessage-signing-requirements) |
 | `verify(message, signature)` | Verifies a message signature | `Promise\<boolean\>` | - |
 | `signTransaction(tx, config?)` | Builds and signs one UserOperation without submitting it | `Promise\<UserOperationV7\>` | If a non-sponsored fee exceeds max or the token paymaster address mismatches |
 | `sendTransaction(tx, config?)` | Builds and sends transactions, or submits a signed UserOperation | `Promise\<{hash: string, fee: bigint}\>` | If a newly built operation exceeds max or the token paymaster address mismatches |
@@ -301,11 +301,19 @@ The signer overload accepts `EvmErc4337WalletConfig & SignerOptions`. `WalletAcc
 | `getTransaction(hash)` | Returns normalized UserOperation finality using its bundling transaction | `Promise\<TransactionReceipt & EvmErc4337TransactionDetails\>` | If the hash is invalid or unknown |
 | `waitForTransaction(hash, options?)` | Waits for the UserOperation to reach `confirmed` or `final`, or returns `dropped` | `Promise\<TransactionReceipt & EvmErc4337TransactionDetails\>` | If the wait times out |
 | `getUserOperationReceipt(hash)` | Returns a UserOperation receipt | `Promise\<UserOperationReceipt \| null\>` | - |
-| `signTypedData(typedData)` | Signs a SafeMessage for EIP-712 typed data | `Promise\<string\>` | - |
+| `signTypedData(typedData)` | Signs a SafeMessage for EIP-712 typed data | `Promise\<string\>` | `DisposalError`, `ConfigurationError`. See [signing requirements](#safemessage-signing-requirements) |
 | `verifyTypedData(typedData, signature)` | Verifies an EIP-712 typed data signature | `Promise\<boolean\>` | - |
 | `getTokenBalances(tokenAddresses)` | Returns balances for multiple ERC20 tokens | `Promise\<Record\<string, bigint\>\>` | - |
 | `toReadOnlyAccount()` | Returns a read-only copy of the account | `Promise\<WalletAccountReadOnlyEvmErc4337\>` | - |
 | `dispose()` | Initiates the account cleanup process | `void` | - |
+
+#### SafeMessage Signing Requirements
+
+`sign()` and `signTypedData()` need a working RPC provider to resolve the SafeMessage domain's chain ID through `eth_chainId`. Supplying `config.chainId` does not replace that lookup. A successful lookup is cached. A mismatch with `config.chainId` throws `ConfigurationError` before signing.
+
+Both methods require the custom signer's `signTypedData()` capability. Signing after account disposal throws `DisposalError`. A disposed supplied signer can propagate its own `DisposalError` while the account's `disposed` flag remains `false`. Other errors from the signer or provider propagate to the caller.
+
+Before using these signatures in another application, check the [undeployed Safe limitations](/sdk/wallet-modules/wallet-evm-erc-4337/guides/sign-verify-messages#undeployed-safe-signatures).
 
 #### `predictSafeAddress(owner, config)` (static)
 
@@ -334,6 +342,8 @@ Hashes the message and signs an EIP-712 SafeMessage scoped to this Safe address 
 
 **Returns:** `Promise\<string\>` - The message signature
 
+**Throws:** `DisposalError` for a disposed account or a disposal rejection from its signer. `ConfigurationError` if the first resolved provider chain ID differs from `config.chainId`. See [signing requirements](#safemessage-signing-requirements) for provider and custom-signer prerequisites.
+
 **Example:**
 ```javascript
 const message = 'Hello, ERC-4337!'
@@ -342,7 +352,7 @@ console.log('Signature:', signature)
 ```
 
 #### `verify(message, signature)`
-For a deployed Safe, verification calls the Safe contract’s ERC-1271 `isValidSignature()`. For an undeployed Safe, it recovers the signer from the SafeMessage signature and compares it with the known owner. An undeployed account created with `fromSafeAddress()` has no owner and throws `UnsupportedOperationError`.
+For a deployed Safe, verification calls the Safe contract’s ERC-1271 `isValidSignature()`. For an undeployed Safe, it recovers the signer from the SafeMessage signature and compares it with the known owner. An undeployed account created with `fromSafeAddress()` has no owner and throws `UnsupportedOperationError`. Owner-based verification does not establish that a third-party contract can validate an [undeployed Safe signature](/sdk/wallet-modules/wallet-evm-erc-4337/guides/sign-verify-messages#undeployed-safe-signatures).
 
 **Parameters:**
 - `message` (string): The original message
@@ -699,6 +709,8 @@ Hashes the EIP-712 typed data and signs that hash as an EIP-712 SafeMessage scop
 
 **Returns:** `Promise\<string\>` - The typed data signature
 
+**Throws:** `DisposalError` for a disposed account or a disposal rejection from its signer. `ConfigurationError` if the first resolved provider chain ID differs from `config.chainId`. The [SafeMessage signing requirements](#safemessage-signing-requirements) also apply to typed data.
+
 **Example:**
 ```javascript
 const typedData = {
@@ -726,7 +738,7 @@ console.log('Typed data signature:', signature)
 ```
 
 #### `verifyTypedData(typedData, signature)`
-Verifies the SafeMessage signature for the EIP-712 typed data hash. For a deployed Safe, verification calls the Safe contract’s ERC-1271 `isValidSignature()`. For an undeployed Safe, it recovers the signer from the SafeMessage signature and compares it with the known owner. An undeployed account created with `fromSafeAddress()` has no owner and throws `UnsupportedOperationError`.
+Verifies the SafeMessage signature for the EIP-712 typed data hash. For a deployed Safe, verification calls the Safe contract’s ERC-1271 `isValidSignature()`. For an undeployed Safe, it recovers the signer from the SafeMessage signature and compares it with the known owner. An undeployed account created with `fromSafeAddress()` has no owner and throws `UnsupportedOperationError`. See the [undeployed Safe signature limitations](/sdk/wallet-modules/wallet-evm-erc-4337/guides/sign-verify-messages#undeployed-safe-signatures) before using the signature outside WDK.
 
 **Parameters:**
 - `typedData` (TypedData): The original typed data object
@@ -787,7 +799,7 @@ account.dispose()
 |----------|------|-------------|
 | `path` | `string \| null` | Signer derivation path when available |
 | `keyPair` | `KeyPair \| null` | Signer key pair when exposed. Treat its arrays as read-only and protect private key material. |
-| `disposed` | `boolean` | Whether this account has been disposed. This flag tracks the account lifecycle. |
+| `disposed` | `boolean` | Whether this account's own disposal has completed. Disposing a caller-supplied signer separately leaves this flag `false`, while signer-dependent methods can throw the signer's `DisposalError`. |
 
 ## WalletAccountReadOnlyEvmErc4337
 Represents a read-only ERC-4337 wallet account that can query balances and allowances but cannot sign or send transactions. Choose the owner-based constructor to predict a Safe address, or the [known-Safe factory](#fromsafeaddresssafeaddress-config-static-1) to use a supplied Safe address directly. Non-sponsored fee estimates for a known-Safe account require deployment.
@@ -921,7 +933,7 @@ console.log('Safe address:', address)
 ```
 
 #### `verify(message, signature)`
-For a deployed Safe, verification calls the Safe contract’s ERC-1271 `isValidSignature()`. For an undeployed Safe, it recovers the signer from the SafeMessage signature and compares it with the known owner. An undeployed account created with `fromSafeAddress()` has no owner and throws `UnsupportedOperationError`.
+For a deployed Safe, verification calls the Safe contract’s ERC-1271 `isValidSignature()`. For an undeployed Safe, it recovers the signer from the SafeMessage signature and compares it with the known owner. An undeployed account created with `fromSafeAddress()` has no owner and throws `UnsupportedOperationError`. Owner-based verification does not establish that a third-party contract can validate an [undeployed Safe signature](/sdk/wallet-modules/wallet-evm-erc-4337/guides/sign-verify-messages#undeployed-safe-signatures).
 
 **Parameters:**
 - `message` (string): The original message
@@ -1092,7 +1104,7 @@ if (receipt) {
 ```
 
 #### `verifyTypedData(typedData, signature)`
-Verifies the SafeMessage signature for the EIP-712 typed data hash. For a deployed Safe, verification calls the Safe contract’s ERC-1271 `isValidSignature()`. For an undeployed Safe, it recovers the signer from the SafeMessage signature and compares it with the known owner. An undeployed account created with `fromSafeAddress()` has no owner and throws `UnsupportedOperationError`.
+Verifies the SafeMessage signature for the EIP-712 typed data hash. For a deployed Safe, verification calls the Safe contract’s ERC-1271 `isValidSignature()`. For an undeployed Safe, it recovers the signer from the SafeMessage signature and compares it with the known owner. An undeployed account created with `fromSafeAddress()` has no owner and throws `UnsupportedOperationError`. See the [undeployed Safe signature limitations](/sdk/wallet-modules/wallet-evm-erc-4337/guides/sign-verify-messages#undeployed-safe-signatures) before using the signature outside WDK.
 
 **Parameters:**
 - `typedData` (TypedData): The original typed data object
@@ -1161,7 +1173,7 @@ The package re-exports these types.
 
 The provider union includes ethers `Provider`. Import that type from `ethers`; supplied ethers providers must support JSON-RPC `send(method, params)` for the module's adapter.
 
-The constructor's `chainId` is checked against the provider's first `eth_chainId` response before building a UserOperation. A mismatch throws `ConfigurationError`; a successful lookup is cached. Sponsored quotes and already-signed operation quote/send paths do not perform this check. See [chain validation](/sdk/wallet-modules/wallet-evm-erc-4337/configuration#chain-id).
+The constructor's `chainId` is checked against the provider's first `eth_chainId` response when building a UserOperation or signing a SafeMessage. A mismatch throws `ConfigurationError`. A successful lookup is cached. Sponsored quotes and already-signed operation quote/send paths do not perform this check. See [chain validation](/sdk/wallet-modules/wallet-evm-erc-4337/configuration#chain-id).
 
 The configuration is a union type combining common fields with one of three gas payment modes:
 
@@ -1396,7 +1408,7 @@ class ConfigurationError extends ValueError {
 }
 ```
 
-`ConfigurationError` is part of the shared WDK error taxonomy and can also be caught as `ValueError`. For an account created with `fromSafeAddress()`, it also reports an undeployed Safe when a non-sponsored quote builds a UserOperation. It also reports a mismatch between the constructor's `chainId` and the provider during the first UserOperation chain lookup.
+`ConfigurationError` is part of the shared WDK error taxonomy and can also be caught as `ValueError`. For an account created with `fromSafeAddress()`, it also reports an undeployed Safe when a non-sponsored quote builds a UserOperation. It also reports a mismatch between the constructor's `chainId` and the provider during the first chain lookup, including SafeMessage signing.
 
 ### FeeRates
 
