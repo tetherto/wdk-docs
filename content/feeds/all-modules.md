@@ -146,7 +146,7 @@ Tether and the WDK Team do not endorse or assume responsibility for their code, 
 | Module | Category | Description | Documentation |
 |--------|----------|-------------|---------------|
 | [`@bermuda/wdk-wallet-evm-bermuda`](https://github.com/BermudaBay/wdk-wallet-evm-bermuda) | Wallet | Bermuda shielded-account beta on Plasma testnet; GitHub installation | [Docs](/sdk/wallet-modules/wallet-evm-bermuda/) |
-| [`@utexo/wdk-wallet-rgb`](https://github.com/UTEXO-Protocol/wdk-wallet-rgb) | Wallet | RGB protocol wallet integration | [Docs](/sdk/community-modules/wdk-wallet-rgb/) |
+| [`@utexo/wdk-wallet-rgb`](https://github.com/UTEXO-Protocol/wdk-wallet-rgb) | Wallet | On-chain RGB wallet, currently unavailable on npm | [Docs](/sdk/community-modules/wdk-wallet-rgb/) |
 | [`@utexo/wdk-rgb-lightning`](https://www.npmjs.com/package/@utexo/wdk-rgb-lightning) | Wallet | RGB Lightning node and wallet integration | [Docs](/sdk/community-modules/wdk-rgb-lightning/) |
 | [`@arkade-os/wdk`](https://www.npmjs.com/package/@arkade-os/wdk) | Wallet | Bitcoin wallet module built on the Arkade SDK | [README](https://github.com/arkade-os/arkade-wdk#readme) |
 | [`@base58-io/wdk-wallet-cosmos`](https://github.com/base58-io/wdk-wallet-cosmos) | Wallet | Cosmos-compatible wallet integration | [Docs](/sdk/community-modules/wdk-wallet-cosmos/) |
