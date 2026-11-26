@@ -317,9 +317,9 @@ const walletModules: WalletModule[] = [
     packageName: "@utexo/wdk-wallet-rgb",
     docsHref: "/sdk/community-modules/wdk-wallet-rgb",
     apiHref: "/sdk/community-modules/wdk-wallet-rgb/api-reference",
-    bestFor: "RGB assets on Bitcoin with local RGB wallet state.",
+    bestFor: "RGB assets on Bitcoin with local wallet state. The package is currently unavailable on npm.",
     chooseWhen: [
-      "You need RGB asset issuance, balances, or transfers.",
+      "You already have the package and need RGB asset issuance, balances, or transfers.",
       "Your app can persist RGB state in an app-private data directory.",
     ],
   },
